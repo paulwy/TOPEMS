@@ -311,7 +311,7 @@ export const voucherApi = {
       total: number;
       success: number;
       failed: number;
-      errors: any[];
+      errors: string[];
     }>
   > => {
     const formData = new FormData();

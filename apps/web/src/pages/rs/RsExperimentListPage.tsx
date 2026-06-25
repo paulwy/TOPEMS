@@ -1,160 +1,85 @@
-import { Grid } from '@/components/Grid';
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import {
-  Box,
-  Container,
-  Typography,
-  Card,
-  CardContent,
-  Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TablePagination,
-  Paper,
-  IconButton,
-  TextField,
-  InputAdornment,
-  Menu,
-  MenuItem,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Tooltip,
-  Tabs,
-  Tab,
-  Stack,
-} from '@mui/material';
-import { Button } from '@mui/material';
-import { Plus, Search, Edit, Trash2, Eye, Filter, FlaskConical as Flask } from 'lucide-react';
+import { Box, Chip, Tabs, Tab, Paper, useTheme, useMediaQuery } from '@mui/material';
+import { Plus, Eye, Edit, Trash2, FlaskConical as Flask } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
+import { rsApi, type Experiment } from '@/api/rs';
+import { useAppStore } from '@/store';
+import { apiLogger } from '@/utils/logger';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 
-interface Experiment {
-  id: string;
-  name: string;
-  code: string;
-  project_name: string;
-  phase: string;
-  status: string;
-  experimenter: string;
-  started_at: string;
-  completed_at: string | null;
-  batch_number: string | null;
+interface ExperimentWithProject extends Experiment {
+  project_name?: string;
 }
 
 const RsExperimentListPage: React.FC = () => {
   const navigate = useNavigate();
-  const [experiments, setExperiments] = useState<Experiment[]>([]);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const addNotification = useAppStore((state) => state.addNotification);
+  const [experiments, setExperiments] = useState<ExperimentWithProject[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const [phaseFilter, setPhaseFilter] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(0);
-  const [filterMenuOpen, setFilterMenuOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedExperiment, setSelectedExperiment] = useState<Experiment | null>(null);
+  const [selectedExperiment, setSelectedExperiment] = useState<ExperimentWithProject | null>(null);
 
-  // 模拟数据
   useEffect(() => {
-    const mockExperiments: Experiment[] = [
-      {
-        id: '1',
-        name: '催化剂活性测试-第1轮',
-        code: 'EXP-2024-001',
-        project_name: '新型催化剂研发项目',
-        phase: '小试',
-        status: '已完成',
-        experimenter: '李四',
-        started_at: '2024-04-16',
-        completed_at: '2024-04-25',
-        batch_number: 'B-2024-001',
-      },
-      {
-        id: '2',
-        name: '催化剂活性测试-第2轮',
-        code: 'EXP-2024-002',
-        project_name: '新型催化剂研发项目',
-        phase: '小试',
-        status: '已完成',
-        experimenter: '李四',
-        started_at: '2024-05-01',
-        completed_at: '2024-05-10',
-        batch_number: 'B-2024-002',
-      },
-      {
-        id: '3',
-        name: '催化剂活性测试-第3轮',
-        code: 'EXP-2024-003',
-        project_name: '新型催化剂研发项目',
-        phase: '中试',
-        status: '进行中',
-        experimenter: '王五',
-        started_at: '2024-07-15',
-        completed_at: null,
-        batch_number: 'B-2024-003',
-      },
-      {
-        id: '4',
-        name: '热稳定性评估',
-        code: 'EXP-2024-004',
-        project_name: '新型催化剂研发项目',
-        phase: '小试',
-        status: '已完成',
-        experimenter: '赵六',
-        started_at: '2024-05-15',
-        completed_at: '2024-05-20',
-        batch_number: null,
-      },
-      {
-        id: '5',
-        name: '配方优化实验',
-        code: 'EXP-2024-005',
-        project_name: '新型催化剂研发项目',
-        phase: '中试',
-        status: '进行中',
-        experimenter: '李四',
-        started_at: '2024-08-01',
-        completed_at: null,
-        batch_number: 'B-2024-005',
-      },
-      {
-        id: '6',
-        name: '聚合物拉伸强度测试',
-        code: 'EXP-2024-006',
-        project_name: '聚合物改性研究',
-        phase: '小试',
-        status: '已完成',
-        experimenter: '张三',
-        started_at: '2024-03-01',
-        completed_at: '2024-03-15',
-        batch_number: null,
-      },
-      {
-        id: '7',
-        name: '环保材料降解测试',
-        code: 'EXP-2024-007',
-        project_name: '环保材料开发',
-        phase: '放大',
-        status: '已完成',
-        experimenter: '王五',
-        started_at: '2024-06-01',
-        completed_at: '2024-06-30',
-        batch_number: 'B-2024-007',
-      },
-    ];
-    setExperiments(mockExperiments);
-    setLoading(false);
-  }, []);
+    loadExperiments();
+  }, [activeTab, page, rowsPerPage, searchTerm, statusFilter]);
 
-  const getStatusColor = (
-    status: string
-  ): 'primary' | 'success' | 'warning' | 'error' | 'default' => {
+  const loadExperiments = async () => {
+    setLoading(true);
+    try {
+      let response;
+      const params = {
+        page: page + 1,
+        page_size: rowsPerPage,
+        search: searchTerm || undefined,
+        status: statusFilter || undefined,
+      };
+
+      switch (activeTab) {
+        case 1:
+          response = await rsApi.listLabExperiments(params);
+          break;
+        case 2:
+          response = await rsApi.listPilotExperiments(params);
+          break;
+        case 3:
+          response = await rsApi.listScaleupExperiments(params);
+          break;
+        default:
+          response = await rsApi.listExperiments(params);
+      }
+
+      if (response.success && response.data) {
+        setExperiments(response.data.experiments || []);
+        setTotal(response.data.total || 0);
+      } else {
+        addNotification({
+          type: 'error',
+          title: '加载失败',
+          message: response.message || '加载试验数据失败',
+        });
+      }
+    } catch (err: unknown) {
+      apiLogger.error('加载试验数据失败:', err);
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '加载试验数据失败',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusColor = (status: string): 'primary' | 'success' | 'warning' | 'error' | 'default' => {
     switch (status) {
       case '进行中':
         return 'primary';
@@ -182,321 +107,177 @@ const RsExperimentListPage: React.FC = () => {
     }
   };
 
-  const filteredExperiments = experiments.filter((exp) => {
-    const matchesSearch =
-      exp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      exp.code.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = !statusFilter || exp.status === statusFilter;
-    const matchesPhase = !phaseFilter || exp.phase === phaseFilter;
-
-    // 标签页筛选
-    if (activeTab === 1 && exp.phase !== '小试') return false;
-    if (activeTab === 2 && exp.phase !== '中试') return false;
-    if (activeTab === 3 && exp.phase !== '放大') return false;
-
-    return matchesSearch && matchesStatus && matchesPhase;
-  });
-
-  const handlePageChange = (_: unknown, newPage: number) => {
-    setPage(newPage);
-  };
-
-  const handleRowsPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
-  };
-
-  const handleDeleteClick = (experiment: Experiment) => {
+  const handleDeleteClick = (experiment: ExperimentWithProject) => {
     setSelectedExperiment(experiment);
     setDeleteDialogOpen(true);
   };
 
-  const handleDeleteConfirm = () => {
-    if (selectedExperiment) {
+  const handleDeleteConfirm = async () => {
+    if (!selectedExperiment) return;
+    const response = await rsApi.deleteExperiment(selectedExperiment.id);
+    if (response.success) {
+      addNotification({
+        type: 'success',
+        title: '删除成功',
+        message: '删除试验成功',
+      });
       setExperiments(experiments.filter((e) => e.id !== selectedExperiment.id));
+      setTotal((prev) => Math.max(0, prev - 1));
+    } else {
+      throw new Error(response.message || '删除试验失败');
     }
-    setDeleteDialogOpen(false);
-    setSelectedExperiment(null);
   };
 
-  return (
-    <Container
-      maxWidth='xl'
-      sx={{ py: 3 }}
-    >
-      {/* 页面标题和操作栏 */}
-      <div style={{ marginBottom: 12 }}>
-        <Stack
-          direction='row'
-          sx={{ alignItems: 'center', justifyContent: 'space-between' }}
-        >
-          <div>
-            <Typography
-              variant='h4'
-              sx={{ fontWeight: 'bold' }}
-              gutterBottom
-            >
-              试验管理
-            </Typography>
-            <Typography
-              variant='body2'
-              color='text.secondary'
-            >
-              管理研发试验、记录数据、追踪批次
-            </Typography>
-          </div>
-          <Link to='/rs/experiments/create'>
-            <Button
-              variant='contained'
-              startIcon={<Plus />}
-            >
-              新建试验
-            </Button>
-          </Link>
-        </Stack>
-      </div>
+  const columns: ColumnDef<ExperimentWithProject>[] = [
+    {
+      id: 'code',
+      label: '试验编码',
+      render: (row) => (
+        <Box sx={{ fontWeight: 'medium' }}>{row.code}</Box>
+      ),
+    },
+    { id: 'name', label: '试验名称' },
+    {
+      id: 'project',
+      label: '所属项目',
+      render: (row) => row.project_name || row.project_id,
+    },
+    {
+      id: 'phase',
+      label: '阶段',
+      render: (row) => (
+        <Chip label={row.phase} size='small' color={getPhaseColor(row.phase)} />
+      ),
+    },
+    {
+      id: 'status',
+      label: '状态',
+      render: (row) => (
+        <Chip label={row.status} size='small' color={getStatusColor(row.status)} />
+      ),
+    },
+    { id: 'experimenter', label: '实验员' },
+    { id: 'started_at', label: '开始日期' },
+    {
+      id: 'batchNumber',
+      label: '批次号',
+      render: (row) => row.batch_number || '-',
+    },
+  ];
 
-      {/* 标签页 */}
+  const rowActions: RowAction<ExperimentWithProject>[] = [
+    {
+      label: '查看详情',
+      icon: <Eye size={16} />,
+      onClick: (row) => navigate(`/rs/experiments/${row.id}`),
+    },
+    {
+      label: '编辑',
+      icon: <Edit size={16} />,
+      onClick: (row) => navigate(`/rs/experiments/${row.id}/edit`),
+    },
+    {
+      label: '删除',
+      icon: <Trash2 size={16} />,
+      color: 'error',
+      onClick: handleDeleteClick,
+    },
+  ];
+
+  const headerContent = (
+    <Box>
       <Paper sx={{ mb: 3 }}>
         <Tabs
           value={activeTab}
-          onChange={(_, v) => setActiveTab(v)}
+          onChange={(_, v) => {
+            setActiveTab(v);
+            setPage(0);
+          }}
+          variant={isMobile ? 'scrollable' : 'standard'}
+          scrollButtons={isMobile}
         >
           <Tab label='全部试验' />
-          <Tab
-            label='小试阶段'
-            icon={<Flask />}
-            iconPosition='start'
-          />
-          <Tab
-            label='中试阶段'
-            icon={<Flask />}
-            iconPosition='start'
-          />
-          <Tab
-            label='放大试验'
-            icon={<Flask />}
-            iconPosition='start'
-          />
+          <Tab label='小试阶段' icon={<Flask size={16} />} iconPosition='start' />
+          <Tab label='中试阶段' icon={<Flask size={16} />} iconPosition='start' />
+          <Tab label='放大试验' icon={<Flask size={16} />} iconPosition='start' />
         </Tabs>
       </Paper>
+    </Box>
+  );
 
-      {/* 搜索和筛选 */}
-      <Paper sx={{ p: 2, mb: 3 }}>
-        <Stack
-          direction='row'
-          spacing={2}
-          sx={{ alignItems: 'center' }}
-        >
-          <TextField
-            placeholder='搜索试验名称或编码...'
-            size='small'
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position='start'>
-                    <Search />
-                  </InputAdornment>
-                ),
-              },
-            }}
-            sx={{ width: 300 }}
-          />
-          <Button
-            variant='outlined'
-            startIcon={<Filter />}
-            onClick={(e) => setFilterMenuOpen(true)}
-          >
-            状态筛选
-            {statusFilter && `: ${statusFilter}`}
-          </Button>
-          <Menu
-            open={filterMenuOpen}
-            onClose={() => setFilterMenuOpen(false)}
-            anchorEl={null}
-          >
-            <MenuItem
-              onClick={() => {
-                setStatusFilter(null);
-                setFilterMenuOpen(false);
-              }}
-            >
-              全部
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                setStatusFilter('进行中');
-                setFilterMenuOpen(false);
-              }}
-            >
-              进行中
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                setStatusFilter('已完成');
-                setFilterMenuOpen(false);
-              }}
-            >
-              已完成
-            </MenuItem>
-            <MenuItem
-              onClick={() => {
-                setStatusFilter('暂停');
-                setFilterMenuOpen(false);
-              }}
-            >
-              暂停
-            </MenuItem>
-          </Menu>
-        </Stack>
-      </Paper>
+  const filters = [
+    {
+      id: 'status',
+      label: '状态',
+      type: 'select' as const,
+      options: [
+        { label: '全部', value: '' },
+        { label: '进行中', value: '进行中' },
+        { label: '已完成', value: '已完成' },
+        { label: '暂停', value: '暂停' },
+        { label: '失败', value: '失败' },
+      ],
+      value: statusFilter || '',
+      onChange: (value: string) => {
+        setStatusFilter(value || null);
+        setPage(0);
+      },
+    },
+  ];
 
-      {/* 试验列表表格 */}
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>试验编码</TableCell>
-              <TableCell>试验名称</TableCell>
-              <TableCell>所属项目</TableCell>
-              <TableCell>阶段</TableCell>
-              <TableCell>状态</TableCell>
-              <TableCell>实验员</TableCell>
-              <TableCell>开始日期</TableCell>
-              <TableCell>批次号</TableCell>
-              <TableCell align='center'>操作</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {filteredExperiments
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((exp) => (
-                <TableRow
-                  key={exp.id}
-                  hover
-                >
-                  <TableCell>
-                    <Typography
-                      variant='body2'
-                      sx={{ fontWeight: 'medium' }}
-                    >
-                      {exp.code}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant='body2'>{exp.name}</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant='body2'>{exp.project_name}</Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={exp.phase}
-                      size='small'
-                      color={getPhaseColor(exp.phase)}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={exp.status}
-                      size='small'
-                      color={getStatusColor(exp.status)}
-                    />
-                  </TableCell>
-                  <TableCell>{exp.experimenter}</TableCell>
-                  <TableCell>{exp.started_at}</TableCell>
-                  <TableCell>{exp.batch_number || '-'}</TableCell>
-                  <TableCell align='center'>
-                    <Stack
-                      direction='row'
-                      spacing={1}
-                      sx={{ justifyContent: 'center' }}
-                    >
-                      <Tooltip title='查看详情'>
-                        <IconButton
-                          size='small'
-                          onClick={() => navigate(`/rs/experiments/${exp.id}`)}
-                        >
-                          <Eye />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title='编辑'>
-                        <IconButton
-                          size='small'
-                          onClick={() => navigate(`/rs/experiments/${exp.id}/edit`)}
-                        >
-                          <Edit />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title='删除'>
-                        <IconButton
-                          size='small'
-                          color='error'
-                          onClick={() => handleDeleteClick(exp)}
-                        >
-                          <Trash2 />
-                        </IconButton>
-                      </Tooltip>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              ))}
-            {filteredExperiments.length === 0 && (
-              <TableRow>
-                <TableCell
-                  colSpan={9}
-                  align='center'
-                >
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                    sx={{ py: 4 }}
-                  >
-                    暂无试验数据
-                  </Typography>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-        <TablePagination
-          component='div'
-          count={filteredExperiments.length}
-          page={page}
-          onPageChange={handlePageChange}
-          rowsPerPage={rowsPerPage}
-          onRowsPerPageChange={handleRowsPerPageChange}
-          rowsPerPageOptions={[5, 10, 25, 50]}
-          labelRowsPerPage='每页行数'
-          labelDisplayedRows={({ from, to, count }) =>
-            `${from}-${to} 共 ${count !== -1 ? count : `超过 ${to}`} 条`
-          }
-        />
-      </TableContainer>
+  return (
+    <>
+      <ListPageTemplate
+        title='试验管理'
+        subtitle='管理研发试验、记录数据、追踪批次'
+        columns={columns}
+        data={experiments}
+        loading={loading}
+        pagination={{
+          page,
+          pageSize: rowsPerPage,
+          total,
+          onPageChange: setPage,
+          onPageSizeChange: (size) => {
+            setRowsPerPage(size);
+            setPage(0);
+          },
+        }}
+        searchable
+        searchPlaceholder='搜索试验名称或编码...'
+        searchValue={searchTerm}
+        onSearch={(value) => {
+          setSearchTerm(value);
+          setPage(0);
+        }}
+        filters={filters}
+        actions={[
+          {
+            label: '新建试验',
+            icon: <Plus size={18} />,
+            onClick: () => navigate('/rs/experiments/create'),
+            variant: 'contained',
+          },
+        ]}
+        rowActions={rowActions}
+        headerContent={headerContent}
+        getRowId={(row) => row.id}
+        onRefresh={loadExperiments}
+        emptyMessage='暂无试验数据'
+      />
 
-      {/* 删除确认对话框 */}
-      <Dialog
-        open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
-      >
-        <DialogTitle>确认删除</DialogTitle>
-        <DialogContent>
-          <Typography>确定要删除试验 "{selectedExperiment?.name}" 吗？此操作不可恢复。</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>取消</Button>
-          <Button
-            variant='contained'
-            color='error'
-            onClick={handleDeleteConfirm}
-          >
-            删除
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Container>
+      <ConfirmDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => {
+          setDeleteDialogOpen(false);
+          setSelectedExperiment(null);
+        }}
+        onConfirm={handleDeleteConfirm}
+        title='确认删除'
+        message={`确定要删除试验 "${selectedExperiment?.name}" 吗？此操作不可恢复。`}
+        danger
+      />
+    </>
   );
 };
 

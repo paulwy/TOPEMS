@@ -2,6 +2,10 @@ import apiClient from './client';
 import type { ApiResponse } from './client';
 
 // Integration 相关类型
+export interface IntegrationEventPayload {
+  [key: string]: unknown;
+}
+
 export interface IntegrationEvent {
   id: string;
   source_system: string;
@@ -9,7 +13,7 @@ export interface IntegrationEvent {
   event_type: string;
   source_record_id?: string;
   target_record_id?: string;
-  payload?: any;
+  payload?: IntegrationEventPayload;
   status: string;
   error_message?: string;
   synced_at?: string;
@@ -82,7 +86,7 @@ export interface CreateIntegrationEventRequest {
   target_system: string;
   event_type: string;
   source_record_id?: string;
-  payload?: any;
+  payload?: IntegrationEventPayload;
 }
 
 export interface LimsQmsSync {
@@ -198,8 +202,12 @@ export type TriggerType = 'event' | 'scheduled' | 'manual';
 export interface FieldMapping {
   source_field: string;
   target_field: string;
-  default_value?: any;
+  default_value?: unknown;
   transform?: string;
+}
+
+export interface TriggerCondition {
+  [key: string]: unknown;
 }
 
 export interface ConversionRule {
@@ -212,7 +220,7 @@ export interface ConversionRule {
   target_system: string;
   target_entity: string;
   trigger_type: TriggerType;
-  trigger_condition?: any;
+  trigger_condition?: TriggerCondition;
   field_mappings: FieldMapping[];
   transform_script?: string;
   status: RuleStatus;
@@ -234,7 +242,7 @@ export interface CreateConversionRuleRequest {
   target_system: string;
   target_entity: string;
   trigger_type: TriggerType;
-  trigger_condition?: any;
+  trigger_condition?: TriggerCondition;
   field_mappings: FieldMapping[];
   transform_script?: string;
   priority?: number;
@@ -247,7 +255,7 @@ export interface UpdateConversionRuleRequest {
   name?: string;
   description?: string;
   trigger_type?: TriggerType;
-  trigger_condition?: any;
+  trigger_condition?: TriggerCondition;
   field_mappings?: FieldMapping[];
   transform_script?: string;
   status?: RuleStatus;
@@ -309,8 +317,8 @@ export interface ConversionExecution {
   rule_code: string;
   source_record_id: string;
   target_record_id?: string;
-  source_data?: any;
-  target_data?: any;
+  source_data?: Record<string, unknown>;
+  target_data?: Record<string, unknown>;
   status: string;
   retry_count: number;
   error_message?: string;
@@ -322,14 +330,14 @@ export interface ConversionExecution {
 export interface ExecuteConversionRequest {
   rule_code: string;
   source_record_id: string;
-  source_data: any;
+  source_data: Record<string, unknown>;
 }
 
 export interface ExecuteConversionResponse {
   execution_id: string;
   success: boolean;
   target_record_id?: string;
-  target_data?: any;
+  target_data?: Record<string, unknown>;
   message: string;
   error_message?: string;
 }

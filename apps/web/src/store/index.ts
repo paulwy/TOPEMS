@@ -18,7 +18,7 @@ export interface User {
 // 通知类型
 export interface Notification {
   id: string;
-  title: string;
+  title?: string;
   message: string;
   type: 'info' | 'success' | 'error' | 'warning';
   timestamp: number;
@@ -59,7 +59,7 @@ interface AppState {
 
   // 全局通知状态
   notifications: Notification[];
-  addNotification: (notification: Omit<Notification, 'id' | 'timestamp'>) => void;
+  addNotification: (notification: Omit<Notification, 'id' | 'timestamp'>) => string;
   removeNotification: (id: string) => void;
   clearNotifications: () => void;
 
@@ -118,17 +118,20 @@ export const useAppStore = create<AppState>()(
 
       // 全局通知状态
       notifications: [],
-      addNotification: (notification) =>
+      addNotification: (notification) => {
+        const id = Date.now().toString() + Math.random().toString(36).substr(2, 9);
         set((state) => ({
           notifications: [
             ...state.notifications,
             {
-              id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+              id,
               ...notification,
               timestamp: Date.now(),
             },
           ],
-        })),
+        }));
+        return id;
+      },
       removeNotification: (id) =>
         set((state) => ({
           notifications: state.notifications.filter((n) => n.id !== id),

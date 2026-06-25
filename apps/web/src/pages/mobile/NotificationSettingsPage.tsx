@@ -1,467 +1,152 @@
-import React, { useState } from 'react';
-import {
-  Box,
-  Card,
-  CardHeader,
-  CardContent,
-  Typography,
-  Button,
-  Grid,
-  Chip,
-  FormControlLabel,
-  Switch,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-} from '@mui/material';
-import {
-  Bell,
-  BellOff,
-  MessageSquare,
-  Mail,
-  Smartphone,
-  Clock,
-  CheckCircle,
-  AlertCircle,
-  RefreshCw,
-} from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useAppStore } from '../../store';
+import { Bell, MessageCircle, Mail, Smartphone, Clock, Shield } from 'lucide-react';
+import { SettingsPageTemplate, type SettingSection, type SettingValueType } from '@/components/templates';
 
-interface NotificationType {
-  id: string;
-  name: string;
+interface NotificationSetting {
+  key: string;
+  label: string;
+  value: boolean | string | number;
   description: string;
-  enabled: boolean;
-  pushEnabled: boolean;
-  emailEnabled: boolean;
-  icon: React.ReactNode;
+  type: 'switch' | 'text' | 'number';
 }
 
-interface NotificationHistory {
-  id: string;
-  title: string;
-  type: string;
-  recipient: string;
-  status: 'sent' | 'delivered' | 'failed' | 'read';
-  sentAt: string;
-  deliveryTime?: string;
-}
-
-export const NotificationSettingsPage: React.FC = () => {
-  const [notificationTypes, setNotificationTypes] = useState<NotificationType[]>([
-    {
-      id: 'task-assignment',
-      name: '任务分配',
-      description: '新任务分配通知',
-      enabled: true,
-      pushEnabled: true,
-      emailEnabled: false,
-      icon: <MessageSquare size={20} />,
-    },
-    {
-      id: 'task-update',
-      name: '任务更新',
-      description: '任务状态变更通知',
-      enabled: true,
-      pushEnabled: true,
-      emailEnabled: false,
-      icon: <RefreshCw size={20} />,
-    },
-    {
-      id: 'approval',
-      name: '审批通知',
-      description: '审批流程相关通知',
-      enabled: true,
-      pushEnabled: true,
-      emailEnabled: true,
-      icon: <Bell size={20} />,
-    },
-    {
-      id: 'alert',
-      name: '告警通知',
-      description: '系统告警和异常通知',
-      enabled: true,
-      pushEnabled: true,
-      emailEnabled: true,
-      icon: <AlertCircle size={20} />,
-    },
-    {
-      id: 'news',
-      name: '系统公告',
-      description: '系统更新和公告通知',
-      enabled: false,
-      pushEnabled: false,
-      emailEnabled: false,
-      icon: <Mail size={20} />,
-    },
+const NotificationSettingsPage: React.FC = () => {
+  const addNotification = useAppStore((state) => state.addNotification);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [notificationSettings, setNotificationSettings] = useState<NotificationSetting[]>([
+    { key: 'enabled', label: '启用推送', value: true, description: '允许向移动设备发送推送通知', type: 'switch' },
+    { key: 'sound', label: '通知声音', value: true, description: '通知到达时播放声音', type: 'switch' },
+    { key: 'vibration', label: '振动提醒', value: true, description: '通知到达时触发振动', type: 'switch' },
+    { key: 'badge', label: '角标显示', value: true, description: '在应用图标上显示未读数量', type: 'switch' },
+    { key: 'delay', label: '延迟推送', value: 0, description: '通知延迟发送时间（分钟）', type: 'number' },
+    { key: 'ttl', label: '存活时间', value: 86400, description: '通知在设备上的存活时间（秒）', type: 'number' },
   ]);
 
-  const [priority, setPriority] = useState('high');
+  const loadSettings = useCallback(async () => {
+    try {
+      setLoading(true);
+      const stored = localStorage.getItem('notification_settings');
+      if (stored) {
+        setNotificationSettings(JSON.parse(stored));
+      }
+    } catch (err: unknown) {
+      console.error('Error loading notification settings:', err);
+      addNotification({ title: '加载失败', message: '加载通知设置失败', type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  }, [addNotification]);
 
-  const notificationHistory: NotificationHistory[] = [
-    {
-      id: '1',
-      title: '新任务分配：巡检任务 #20240115',
-      type: '任务分配',
-      recipient: '张三',
-      status: 'delivered',
-      sentAt: '2024-01-15 10:30:00',
-      deliveryTime: '2秒',
-    },
-    {
-      id: '2',
-      title: '审批通过：采购申请 #PR20240012',
-      type: '审批通知',
-      recipient: '李四',
-      status: 'read',
-      sentAt: '2024-01-15 10:25:00',
-      deliveryTime: '1秒',
-    },
-    {
-      id: '3',
-      title: '系统告警：设备 #003 异常',
-      type: '告警通知',
-      recipient: '王五',
-      status: 'sent',
-      sentAt: '2024-01-15 10:20:00',
-    },
-    {
-      id: '4',
-      title: '任务完成：质检任务 #QC20240056',
-      type: '任务更新',
-      recipient: '赵六',
-      status: 'failed',
-      sentAt: '2024-01-15 10:15:00',
-    },
-  ];
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
 
-  const toggleNotificationType = (
-    id: string,
-    field: 'enabled' | 'pushEnabled' | 'emailEnabled'
-  ) => {
-    setNotificationTypes((prev) =>
-      prev.map((type) => (type.id === id ? { ...type, [field]: !type[field] } : type))
-    );
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'delivered':
-        return 'success';
-      case 'read':
-        return 'primary';
-      case 'sent':
-        return 'warning';
-      case 'failed':
-        return 'error';
-      default:
-        return 'default';
+  const handleSave = async (data: Record<string, SettingValueType>) => {
+    try {
+      setSaving(true);
+      const updatedSettings = notificationSettings.map((s) => ({
+        ...s,
+        value: data[s.key] !== undefined ? (data[s.key] as boolean | string | number) : s.value,
+      }));
+      setNotificationSettings(updatedSettings);
+      localStorage.setItem('notification_settings', JSON.stringify(updatedSettings));
+      addNotification({ title: '成功', message: '通知设置保存成功', type: 'success' });
+    } catch (err: unknown) {
+      console.error('Error saving notification settings:', err);
+      addNotification({ title: '失败', message: '保存设置失败', type: 'error' });
+      throw err;
+    } finally {
+      setSaving(false);
     }
   };
 
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'delivered':
-        return '已送达';
-      case 'read':
-        return '已阅读';
-      case 'sent':
-        return '已发送';
-      case 'failed':
-        return '发送失败';
-      default:
-        return status;
-    }
-  };
+  const handleReset = useCallback(() => {
+    setNotificationSettings([
+      { key: 'enabled', label: '启用推送', value: true, description: '允许向移动设备发送推送通知', type: 'switch' },
+      { key: 'sound', label: '通知声音', value: true, description: '通知到达时播放声音', type: 'switch' },
+      { key: 'vibration', label: '振动提醒', value: true, description: '通知到达时触发振动', type: 'switch' },
+      { key: 'badge', label: '角标显示', value: true, description: '在应用图标上显示未读数量', type: 'switch' },
+      { key: 'delay', label: '延迟推送', value: 0, description: '通知延迟发送时间（分钟）', type: 'number' },
+      { key: 'ttl', label: '存活时间', value: 86400, description: '通知在设备上的存活时间（秒）', type: 'number' },
+    ]);
+    addNotification({ title: '已重置', message: '通知设置已恢复默认值', type: 'info' });
+  }, [addNotification]);
 
-  const stats = [
+  const sections: SettingSection[] = [
     {
-      label: '今日发送',
-      value: '128',
-      icon: <Bell size={20} />,
+      id: 'basic',
+      title: '基础设置',
+      icon: <Bell style={{ width: 20, height: 20 }} />,
       color: 'primary',
+      fields: [
+        {
+          id: 'enabled',
+          label: '启用推送',
+          type: 'switch',
+          value: notificationSettings.find((s) => s.key === 'enabled')?.value as boolean,
+          description: '允许向移动设备发送推送通知',
+        },
+        {
+          id: 'sound',
+          label: '通知声音',
+          type: 'switch',
+          value: notificationSettings.find((s) => s.key === 'sound')?.value as boolean,
+          description: '通知到达时播放声音',
+        },
+        {
+          id: 'vibration',
+          label: '振动提醒',
+          type: 'switch',
+          value: notificationSettings.find((s) => s.key === 'vibration')?.value as boolean,
+          description: '通知到达时触发振动',
+        },
+        {
+          id: 'badge',
+          label: '角标显示',
+          type: 'switch',
+          value: notificationSettings.find((s) => s.key === 'badge')?.value as boolean,
+          description: '在应用图标上显示未读数量',
+        },
+      ],
     },
     {
-      label: '已送达',
-      value: '115',
-      icon: <CheckCircle size={20} />,
-      color: 'success',
-    },
-    {
-      label: '已阅读',
-      value: '89',
-      icon: <Smartphone size={20} />,
-      color: 'primary',
-    },
-    {
-      label: '发送失败',
-      value: '3',
-      icon: <AlertCircle size={20} />,
-      color: 'error',
+      id: 'timing',
+      title: '定时设置',
+      icon: <Clock style={{ width: 20, height: 20 }} />,
+      color: 'warning',
+      fields: [
+        {
+          id: 'delay',
+          label: '延迟推送',
+          type: 'text',
+          value: String(notificationSettings.find((s) => s.key === 'delay')?.value),
+          description: '通知延迟发送时间（分钟）',
+        },
+        {
+          id: 'ttl',
+          label: '存活时间',
+          type: 'text',
+          value: String(notificationSettings.find((s) => s.key === 'ttl')?.value),
+          description: '通知在设备上的存活时间（秒）',
+        },
+      ],
     },
   ];
 
   return (
-    <Box sx={{ flex: 1 }}>
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 4,
-        }}
-      >
-        <div>
-          <Typography
-            variant='h4'
-            sx={{ fontWeight: 'bold', mb: 1 }}
-          >
-            通知推送设置
-          </Typography>
-          <Typography
-            variant='body2'
-            color='text.secondary'
-          >
-            管理移动端推送通知类型和发送策略
-          </Typography>
-        </div>
-        <Button
-          variant='contained'
-          startIcon={<RefreshCw />}
-        >
-          测试推送
-        </Button>
-      </Box>
-
-      <Grid
-        container
-        spacing={3}
-        sx={{ mb: 4 }}
-      >
-        {stats.map((stat) => (
-          <Grid
-            size={{ xs: 12, sm: 6, lg: 3 }}
-            key={stat.label}
-          >
-            <Card>
-              <CardContent>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 2,
-                    mb: 2,
-                  }}
-                >
-                  <Box sx={{ color: stat.color }}>{stat.icon}</Box>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    {stat.label}
-                  </Typography>
-                </Box>
-                <Typography
-                  variant='h5'
-                  sx={{ fontWeight: 'bold' }}
-                >
-                  {stat.value}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-
-      <Grid
-        container
-        spacing={3}
-      >
-        <Grid size={{ xs: 12, lg: 5 }}>
-          <Card>
-            <CardHeader title='通知类型配置' />
-            <CardContent>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {notificationTypes.map((type) => (
-                  <Box
-                    key={type.id}
-                    sx={{
-                      p: 2,
-                      borderRadius: 1,
-                      backgroundColor: type.enabled ? 'primary.50' : 'grey.50',
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        mb: 2,
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 2,
-                        }}
-                      >
-                        {type.icon}
-                        <div>
-                          <Typography
-                            variant='body1'
-                            sx={{ fontWeight: 500 }}
-                          >
-                            {type.name}
-                          </Typography>
-                          <Typography
-                            variant='caption'
-                            color='text.secondary'
-                          >
-                            {type.description}
-                          </Typography>
-                        </div>
-                      </Box>
-                      <Switch
-                        checked={type.enabled}
-                        onChange={() => toggleNotificationType(type.id, 'enabled')}
-                      />
-                    </Box>
-                    {type.enabled && (
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          gap: 4,
-                          pl: 3,
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1,
-                          }}
-                        >
-                          <Smartphone size={14} />
-                          <FormControlLabel
-                            control={
-                              <Switch
-                                checked={type.pushEnabled}
-                                onChange={() => toggleNotificationType(type.id, 'pushEnabled')}
-                                size='small'
-                              />
-                            }
-                            label='推送'
-                          />
-                        </Box>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1,
-                          }}
-                        >
-                          <Mail size={14} />
-                          <FormControlLabel
-                            control={
-                              <Switch
-                                checked={type.emailEnabled}
-                                onChange={() => toggleNotificationType(type.id, 'emailEnabled')}
-                                size='small'
-                              />
-                            }
-                            label='邮件'
-                          />
-                        </Box>
-                      </Box>
-                    )}
-                  </Box>
-                ))}
-              </Box>
-            </CardContent>
-          </Card>
-
-          <Card sx={{ mt: 3 }}>
-            <CardHeader title='推送优先级' />
-            <CardContent>
-              <FormControl fullWidth>
-                <InputLabel>默认优先级</InputLabel>
-                <Select
-                  value={priority}
-                  label='默认优先级'
-                  onChange={(e) => setPriority(e.target.value)}
-                >
-                  <MenuItem value='high'>高优先级</MenuItem>
-                  <MenuItem value='normal'>正常优先级</MenuItem>
-                  <MenuItem value='low'>低优先级</MenuItem>
-                </Select>
-              </FormControl>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid size={{ xs: 12, lg: 7 }}>
-          <Card>
-            <CardHeader
-              title='推送历史'
-              subheader='最近的推送记录'
-            />
-            <CardContent>
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>标题</TableCell>
-                      <TableCell>类型</TableCell>
-                      <TableCell>接收人</TableCell>
-                      <TableCell>状态</TableCell>
-                      <TableCell>发送时间</TableCell>
-                      <TableCell>送达耗时</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {notificationHistory.map((record) => (
-                      <TableRow key={record.id}>
-                        <TableCell>{record.title}</TableCell>
-                        <TableCell>
-                          <Chip
-                            size='small'
-                            label={record.type}
-                          />
-                        </TableCell>
-                        <TableCell>{record.recipient}</TableCell>
-                        <TableCell>
-                          <Chip
-                            size='small'
-                            label={getStatusLabel(record.status)}
-                            color={getStatusColor(record.status)}
-                            icon={
-                              record.status === 'delivered' || record.status === 'read' ? (
-                                <CheckCircle size={14} />
-                              ) : record.status === 'failed' ? (
-                                <AlertCircle size={14} />
-                              ) : undefined
-                            }
-                          />
-                        </TableCell>
-                        <TableCell>{record.sentAt}</TableCell>
-                        <TableCell>{record.deliveryTime || '-'}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-    </Box>
+    <SettingsPageTemplate
+      title='通知设置'
+      subtitle='配置移动应用的推送通知参数'
+      sections={sections}
+      loading={loading}
+      saving={saving}
+      onSave={handleSave}
+      onReset={handleReset}
+      saveButtonText='保存设置'
+      resetButtonText='重置默认'
+    />
   );
 };
 

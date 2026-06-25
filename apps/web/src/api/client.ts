@@ -7,7 +7,7 @@ import { csrfRequestInterceptor, csrfResponseInterceptor, initCsrfProtection } f
 
 const logger = createLogger('ApiClient');
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   code: number;
   success: boolean;
   data: T | undefined;
@@ -55,11 +55,19 @@ type TypedAxiosInstance = Omit<AxiosInstance, 'get' | 'post' | 'put' | 'patch' |
   ): Promise<R>;
 };
 
-const isTimeoutError = (error: any): boolean => {
+interface TimeoutError {
+  code?: string;
+  message?: string;
+  response?: {
+    statusText?: string;
+  };
+}
+
+const isTimeoutError = (error: TimeoutError): boolean => {
   return (
     error.code === 'ECONNABORTED' ||
     (error.response?.statusText || '').toLowerCase() === 'timeout' ||
-    error.message?.includes('timeout')
+    (error.message || '').includes('timeout')
   );
 };
 
@@ -118,7 +126,7 @@ export const createBaseAxiosClient = (baseURL: string): AxiosInstance => {
 export const downloadBlob = async (
   baseURL: string,
   url: string,
-  options?: { params?: Record<string, any> }
+  options?: { params?: Record<string, unknown> }
 ): Promise<Blob> => {
   // 在开发环境中，使用相对路径以便 Vite 代理能正确处理
   // 检查是否是 localhost 地址，如果是则使用相对路径
@@ -467,23 +475,23 @@ class ApiClient {
   }
 
   // Generic HTTP methods using master client
-  async get<T = any>(url: string, config?: any): Promise<ApiResponse<T>> {
+  async get<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     return this.clients.master.get<T>(url, config);
   }
 
-  async post<T = any>(url: string, data?: any, config?: any): Promise<ApiResponse<T>> {
+  async post<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     return this.clients.master.post<T>(url, data, config);
   }
 
-  async put<T = any>(url: string, data?: any, config?: any): Promise<ApiResponse<T>> {
+  async put<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     return this.clients.master.put<T>(url, data, config);
   }
 
-  async patch<T = any>(url: string, data?: any, config?: any): Promise<ApiResponse<T>> {
+  async patch<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     return this.clients.master.patch<T>(url, data, config);
   }
 
-  async delete<T = any>(url: string, config?: any): Promise<ApiResponse<T>> {
+  async delete<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     return this.clients.master.delete<T>(url, config);
   }
 

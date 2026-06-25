@@ -14,6 +14,7 @@ const CRMCustomerScoringPage = lazy(() => import('../pages/crm/CRMCustomerScorin
 const CRMSalesForecastPage = lazy(() => import('../pages/crm/CRMSalesForecastPage'));
 const CRMSalesFunnelPage = lazy(() => import('../pages/crm/CRMSalesFunnelPage'));
 const CRMCustomerSegmentationPage = lazy(() => import('../pages/crm/CRMCustomerSegmentationPage'));
+const CRMRecommendationPage = lazy(() => import('../pages/crm/CRMRecommendationPage'));
 const CRMBillingPage = lazy(() => import('../pages/crm/CRMBillingPage'));
 const CustomerDetailPage = lazy(() => import('../pages/crm/CustomerDetailPage'));
 const OpportunityDetailPage = lazy(() => import('../pages/crm/OpportunityDetailPage'));
@@ -91,6 +92,13 @@ export const crmRoutes: RouteConfig[] = [
   {
     path: '/crm/segments',
     element: CRMCustomerSegmentationPage,
+    requiredPermissions: ['crm:read'],
+    module: 'crm',
+    action: 'read',
+  },
+  {
+    path: '/crm/recommendations',
+    element: CRMRecommendationPage,
     requiredPermissions: ['crm:read'],
     module: 'crm',
     action: 'read',

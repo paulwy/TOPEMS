@@ -26,6 +26,9 @@ import {
   type FilterConfig,
   type RowAction,
 } from '@/components/templates';
+import { rsApi } from '@/api/rs';
+import { useAppStore } from '@/store';
+import type { Deploy, CreateDeployRequest } from '@/api/rs';
 
 interface Release {
   id: string;
@@ -38,13 +41,15 @@ interface Release {
 }
 
 const RsReleasePage: React.FC = () => {
+  const { addNotification } = useAppStore();
   const [releases, setReleases] = useState<Release[]>([]);
-  const [loading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
-  const [envFilter, setEnvFilter] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [envFilter, setEnvFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('');
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({
     start: '',
     end: '',
@@ -60,55 +65,47 @@ const RsReleasePage: React.FC = () => {
   const [releasePackageAttachments, setReleasePackageAttachments] = useState<string[]>([]);
 
   useEffect(() => {
-    const mockReleases: Release[] = [
-      {
-        id: '1',
-        version: 'v2.3.1',
-        release_time: '2024-06-15 14:30:00',
-        release_note: '修复用户登录问题，优化性能',
-        environment: 'production',
-        status: 'released',
-        release_by: '张三',
-      },
-      {
-        id: '2',
-        version: 'v2.3.0',
-        release_time: '2024-06-10 10:00:00',
-        release_note: '新增数据分析功能',
-        environment: 'production',
-        status: 'released',
-        release_by: '李四',
-      },
-      {
-        id: '3',
-        version: 'v2.4.0-beta',
-        release_time: '2024-06-20 09:00:00',
-        release_note: '新版本测试发布',
-        environment: 'staging',
-        status: 'planning',
-        release_by: '王五',
-      },
-      {
-        id: '4',
-        version: 'v2.2.5',
-        release_time: '2024-06-05 16:45:00',
-        release_note: '紧急修复生产问题',
-        environment: 'production',
-        status: 'rolled_back',
-        release_by: '赵六',
-      },
-      {
-        id: '5',
-        version: 'v2.2.4',
-        release_time: '2024-06-01 11:20:00',
-        release_note: '常规版本更新',
-        environment: 'production',
-        status: 'released',
-        release_by: '孙七',
-      },
-    ];
-    setReleases(mockReleases);
-  }, []);
+    loadReleases();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, envFilter, statusFilter, page, rowsPerPage]);
+
+  const loadReleases = async () => {
+    try {
+      setLoading(true);
+      const params: any = {
+        page: page + 1,
+        page_size: rowsPerPage,
+      };
+      if (searchTerm) params.search = searchTerm;
+      if (envFilter) params.env = envFilter;
+      if (statusFilter) params.status = statusFilter;
+
+      const response = await rsApi.listDeploys(params);
+      if (response.success && response.data) {
+        const deploys = response.data.deploys || [];
+        const transformed = deploys.map((d: Deploy) => ({
+          id: d.id,
+          version: d.version || d.deploy_no,
+          release_time: d.deploy_time || d.created_at || '',
+          release_note: d.app_name || d.deploy_no,
+          environment: d.env || d.environment || '',
+          status: d.status === 'success' ? 'released' : d.status === 'failed' ? 'rolled_back' : 'planning',
+          release_by: d.deployer || d.operator || '',
+        }));
+        setReleases(transformed);
+        setTotal(response.data.total || 0);
+      }
+    } catch (error: unknown) {
+      console.error('加载发布数据失败:', error);
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载发布数据',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getEnvColor = (env: string): 'error' | 'warning' | 'success' => {
     switch (env) {
@@ -182,36 +179,66 @@ const RsReleasePage: React.FC = () => {
     setDetailDialogOpen(true);
   };
 
-  const handleRollback = (release: Release) => {
-    const newRollback: Release = {
-      id: String(Date.now()),
-      version: '上一版本',
-      release_time: new Date().toLocaleString(),
-      release_note: '回滚操作',
-      environment: releases.find((r) => r.id === release.id)?.environment || 'staging',
-      status: 'planning',
-      release_by: '当前用户',
-    };
-    setReleases([newRollback, ...releases]);
+  const handleRollback = async (release: Release) => {
+    try {
+      const createData: CreateDeployRequest = {
+        project_id: 'default',
+        build_id: 'default',
+        env: release.environment,
+        deploy_type: 'full',
+        environment: release.environment,
+        app_name: release.release_note,
+        version: release.version,
+      };
+      await rsApi.createDeploy(createData);
+      addNotification({
+        type: 'success',
+        title: '操作成功',
+        message: '回滚任务已提交',
+      });
+      loadReleases();
+    } catch (error: unknown) {
+      console.error('回滚失败:', error);
+      addNotification({
+        type: 'error',
+        title: '操作失败',
+        message: '回滚失败',
+      });
+    }
   };
 
-  const handleCreateRelease = () => {
-    const newRelease: Release = {
-      id: String(Date.now()),
-      version: newReleaseForm.version,
-      release_time: new Date().toLocaleString(),
-      release_note: newReleaseForm.release_note,
-      environment: newReleaseForm.environment,
-      status: 'planning',
-      release_by: '当前用户',
-    };
-    setReleases([newRelease, ...releases]);
-    setNewReleaseDialogOpen(false);
-    setNewReleaseForm({
-      version: '',
-      environment: 'staging',
-      release_note: '',
-    });
+  const handleCreateRelease = async () => {
+    try {
+      const createData: CreateDeployRequest = {
+        project_id: 'default',
+        build_id: 'default',
+        env: newReleaseForm.environment,
+        deploy_type: 'full',
+        environment: newReleaseForm.environment,
+        app_name: newReleaseForm.release_note,
+        version: newReleaseForm.version,
+      };
+      await rsApi.createDeploy(createData);
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '新发布已创建',
+      });
+      setNewReleaseDialogOpen(false);
+      setNewReleaseForm({
+        version: '',
+        environment: 'staging',
+        release_note: '',
+      });
+      loadReleases();
+    } catch (error: unknown) {
+      console.error('创建发布失败:', error);
+      addNotification({
+        type: 'error',
+        title: '创建失败',
+        message: '无法创建发布',
+      });
+    }
   };
 
   // 表格列定义
@@ -347,7 +374,7 @@ const RsReleasePage: React.FC = () => {
   const pagination = {
     page,
     pageSize: rowsPerPage,
-    total: filteredReleases.length,
+    total,
     onPageChange: setPage,
     onPageSizeChange: setRowsPerPage,
   };

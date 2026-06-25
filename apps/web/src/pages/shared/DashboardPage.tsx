@@ -70,14 +70,20 @@ import { erpApi } from '@/api/erp';
 import { hrmApi } from '@/api/hrm';
 import { mobileApi } from '@/api/mobile';
 import { pluginApi, type TenantInstalledPlugin } from '@/api/plugin';
+import { qmsApi } from '@/api/qms';
+import { ehsApi } from '@/api/ehs';
+import { srmApi } from '@/api/srm';
+import { limsApi } from '@/api/lims';
+import { rsApi } from '@/api/rs';
+import { biApi } from '@/api/bi';
 import { useInstalledPlugins } from '../../context/PluginContext';
 import MobileNav from '@/components/MobileNav';
 import MobileHeader from '@/components/layout/MobileHeader';
 import { usePermission } from '@/hooks/usePermission';
 import { useAuth } from '@/hooks/useAuth';
 import { useServiceStatus } from '@/hooks/useServiceStatus';
-import { StatsChart } from '@/components/StatsChart';
-import { MetricCard } from '@/components/MetricCard';
+import { StatsChart } from '@/components/bi/StatsChart';
+import { MetricCard } from '@/components/bi/MetricCard';
 import { useAppStore } from '../../store';
 import {
   DashboardQuickActions,
@@ -115,11 +121,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     notificationCount: 5,
   });
   const [moduleStats, setModuleStats] = useState({
-    qms: { total: 25, active: 23 },
-    ehs: { total: 20, active: 18 },
-    srm: { total: 15, active: 14 },
-    lims: { total: 20, active: 19 },
-    rs: { total: 12, active: 10 },
+    qms: { total: 0, active: 0 },
+    ehs: { total: 0, active: 0 },
+    srm: { total: 0, active: 0 },
+    lims: { total: 0, active: 0 },
+    rs: { total: 0, active: 0 },
   });
   const [chartData, setChartData] = useState({
     moduleDistribution: [] as { name: string; value: number; color: string }[],
@@ -128,13 +134,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [recentActivities, setRecentActivities] = useState<ActivityItem[]>([]);
   const [todoTab, setTodoTab] = useState(0);
-  const [todos, setTodos] = useState([
-    { id: 1, title: '审批采购申请 #2024-001', type: 'workflow', done: false },
-    { id: 2, title: '查看实验室检测报告', type: 'lims', done: false },
-    { id: 3, title: '完成安全培训课程', type: 'training', done: true },
-    { id: 4, title: '提交月度工作报告', type: 'report', done: false },
-    { id: 5, title: '参加项目评审会议', type: 'meeting', done: false },
-  ]);
+  const [todos, setTodos] = useState<
+    Array<{ id: number; title: string; type: string; done: boolean }>
+  >([]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const moduleToService: Record<string, string> = {
@@ -190,45 +192,146 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     }
   }, []);
 
+  const loadModuleStats = useCallback(async () => {
+    try {
+      const [qmsRes, srmRes, limsRes, rsRes, ehsRes] = await Promise.allSettled([
+        qmsApi.getStatistics(),
+        srmApi.getStatistics(),
+        limsApi.getStatistics(),
+        rsApi.getStatistics(),
+        ehsApi.listHazards({ page: 1, page_size: 1000 }),
+      ]);
+
+      const newModuleStats = {
+        qms: {
+          total:
+            (qmsRes.status === 'fulfilled' && qmsRes.value.success && qmsRes.value.data?.total_inspections) || 0,
+          active:
+            (qmsRes.status === 'fulfilled' && qmsRes.value.success && qmsRes.value.data?.active_standards) || 0,
+        },
+        ehs: {
+          total:
+            (ehsRes.status === 'fulfilled' && ehsRes.value.success && ehsRes.value.data?.total) || 0,
+          active:
+            (ehsRes.status === 'fulfilled' &&
+              ehsRes.value.success &&
+              ehsRes.value.data?.data?.filter((h: any) => h.status === 'active').length) || 0,
+        },
+        srm: {
+          total:
+            (srmRes.status === 'fulfilled' && srmRes.value.success && srmRes.value.data?.total_suppliers) || 0,
+          active:
+            (srmRes.status === 'fulfilled' && srmRes.value.success && srmRes.value.data?.active_suppliers) || 0,
+        },
+        lims: {
+          total:
+            (limsRes.status === 'fulfilled' && limsRes.value.success && limsRes.value.data?.total_samples) || 0,
+          active:
+            (limsRes.status === 'fulfilled' && limsRes.value.success && limsRes.value.data?.testing_samples) || 0,
+        },
+        rs: {
+          total:
+            (rsRes.status === 'fulfilled' && rsRes.value.success && rsRes.value.data?.total_projects) || 0,
+          active:
+            (rsRes.status === 'fulfilled' && rsRes.value.success && rsRes.value.data?.in_progress_projects) || 0,
+        },
+      };
+
+      setModuleStats(newModuleStats);
+    } catch (err: unknown) {
+      apiLogger.error('加载模块统计失败:', err);
+    }
+  }, []);
+
+  const loadChartData = useCallback(async () => {
+    try {
+      const [summaryRes] = await Promise.allSettled([biApi.fetchSummaryDashboard()]);
+
+      if (summaryRes.status === 'fulfilled' && summaryRes.value.success && summaryRes.value.data) {
+        const summary = summaryRes.value.data;
+        setChartData({
+          moduleDistribution: summary.key_metrics?.map((metric: any) => ({
+            name: metric.title,
+            value: metric.value,
+            color: metric.icon || '#3b82f6',
+          })) || [],
+          monthlyTrend: [],
+        });
+      }
+    } catch (err: unknown) {
+      apiLogger.error('加载图表数据失败:', err);
+    }
+  }, []);
+
+  const loadTodos = useCallback(async () => {
+    try {
+      const [tasksRes] = await Promise.allSettled([
+        flowApi.listApprovalTasks({ status: 'pending', page: 1, page_size: 10 }),
+      ]);
+
+      if (tasksRes.status === 'fulfilled' && tasksRes.value.success && tasksRes.value.data?.items) {
+        const tasks = tasksRes.value.data.items.map((task: any, index: number) => ({
+          id: index + 1,
+          title: task.task_name || '待办任务',
+          type: 'workflow',
+          done: false,
+        }));
+        setTodos(tasks);
+      }
+    } catch (err: unknown) {
+      apiLogger.error('加载待办任务失败:', err);
+    }
+  }, []);
+
   const loadRecentActivities = useCallback(async () => {
-    const activities: ActivityItem[] = [
-      {
-        id: '1',
-        title: '成功登录系统',
-        type: '系统',
-        time: '刚刚',
-        icon: <User size={16} />,
-      },
-      {
-        id: '2',
-        title: '上传文档 "项目报告.pdf"',
-        type: '文档',
-        time: '5分钟前',
-        icon: <FileText size={16} />,
-      },
-      {
-        id: '3',
-        title: '审批通过采购申请',
-        type: '工作流',
-        time: '15分钟前',
-        icon: <GitBranch size={16} />,
-      },
-      {
-        id: '4',
-        title: '创建新文件夹 "研发资料"',
-        type: '文档',
-        time: '1小时前',
-        icon: <Folder size={16} />,
-      },
-      {
-        id: '5',
-        title: '完成安全培训课程',
-        type: '培训',
-        time: '2小时前',
-        icon: <BookOpen size={16} />,
-      },
-    ];
-    setRecentActivities(activities);
+    try {
+      const [logsRes] = await Promise.allSettled([authApi.listAccessLogs(10, 0)]);
+
+      if (logsRes.status === 'fulfilled' && logsRes.value.success && logsRes.value.data) {
+        const logs = logsRes.value.data;
+        const activities: ActivityItem[] = logs.map((log: any) => {
+          let icon = <User size={16} />;
+          let type = '系统';
+
+          if (log.resource.includes('document') || log.resource.includes('file')) {
+            icon = <FileText size={16} />;
+            type = '文档';
+          } else if (log.resource.includes('workflow') || log.resource.includes('approval')) {
+            icon = <GitBranch size={16} />;
+            type = '工作流';
+          } else if (log.resource.includes('folder')) {
+            icon = <Folder size={16} />;
+            type = '文档';
+          }
+
+          const timeDiff = Date.now() - new Date(log.created_at).getTime();
+          const minutes = Math.floor(timeDiff / 60000);
+          const hours = Math.floor(minutes / 60);
+          const days = Math.floor(hours / 24);
+
+          let time = '刚刚';
+          if (days > 0) {
+            time = `${days}天前`;
+          } else if (hours > 0) {
+            time = `${hours}小时前`;
+          } else if (minutes > 0) {
+            time = `${minutes}分钟前`;
+          }
+
+          return {
+            id: log.id,
+            title: log.action || '系统操作',
+            type,
+            time,
+            icon,
+          };
+        });
+
+        setRecentActivities(activities);
+      }
+    } catch (err: unknown) {
+      apiLogger.error('加载最近活动失败:', err);
+    }
   }, []);
 
   const shouldShowModule = useCallback(
@@ -268,6 +371,15 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         await loadStats().catch((err) => {
           apiLogger.warn('加载统计数据失败:', err);
         });
+        await loadModuleStats().catch((err) => {
+          apiLogger.warn('加载模块统计失败:', err);
+        });
+        await loadChartData().catch((err) => {
+          apiLogger.warn('加载图表数据失败:', err);
+        });
+        await loadTodos().catch((err) => {
+          apiLogger.warn('加载待办任务失败:', err);
+        });
         await loadRecentActivities().catch((err) => {
           apiLogger.warn('加载最近活动失败:', err);
         });
@@ -285,7 +397,16 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     }, 30000);
 
     return () => clearInterval(intervalId);
-  }, [navigate, isAuthenticated, refreshServiceStatuses, loadStats, loadRecentActivities]);
+  }, [
+    navigate,
+    isAuthenticated,
+    refreshServiceStatuses,
+    loadStats,
+    loadModuleStats,
+    loadChartData,
+    loadTodos,
+    loadRecentActivities,
+  ]);
 
   const handleLogout = useCallback(() => {
     authLogout();

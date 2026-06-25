@@ -1,20 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { apiLogger } from '@/utils/logger';
-import { useAppStore } from '@/store';
 import {
   FolderKanban,
   TrendingUp,
   Users,
   DollarSign,
+  AlertTriangle,
   CheckCircle,
   Clock,
-  AlertTriangle,
-  Activity,
-  BarChart3,
   Target,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography } from '@mui/material';
+import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import { apiClient } from '@/api/client';
 
 interface ProjectSummary {
@@ -72,7 +69,6 @@ const ProjectDashboardPage: React.FC = () => {
   const [performance, setPerformance] = useState<PerformanceMetrics | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeProjects, setActiveProjects] = useState<Project[]>([]);
 
   useEffect(() => {
     loadDashboardData();
@@ -94,8 +90,7 @@ const ProjectDashboardPage: React.FC = () => {
       if (trendsRes.success) setTrends(trendsRes.data);
       if (perfRes.success) setPerformance(perfRes.data);
       if (projectsRes.success) {
-        setActiveProjects(projectsRes.data || []);
-        setActiveProjects((projectsRes.data || []).filter((p: Project) => p.status === 'active'));
+        setProjects(projectsRes.data || []);
       }
     } catch (error: unknown) {
       apiLogger.error('Failed to load dashboard data:', error);
@@ -113,879 +108,167 @@ const ProjectDashboardPage: React.FC = () => {
     }).format(amount);
   };
 
-  const formatPercent = (value: number) => {
-    return `${value.toFixed(1)}%`;
-  };
+  const activeProjects = projects.filter((p: Project) => p.status === 'active').slice(0, 5);
 
-  const getStatusSx = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'active':
-        return { bgcolor: 'success.light', color: 'success.dark' };
-      case 'completed':
-        return { bgcolor: 'info.light', color: 'info.dark' };
-      case 'delayed':
-        return { bgcolor: 'error.light', color: 'error.dark' };
-      default:
-        return { bgcolor: 'grey.200', color: 'grey.800' };
-    }
-  };
+  const statCards = summary
+    ? [
+        {
+          id: 'total-projects',
+          title: '总项目数',
+          value: summary.total_projects,
+          icon: <FolderKanban size={24} />,
+          color: 'primary',
+          description: `进行中 ${summary.active_projects} | 已完成 ${summary.completed_projects}`,
+        },
+        {
+          id: 'avg-progress',
+          title: '平均进度',
+          value: `${summary.avg_progress.toFixed(1)}%`,
+          icon: <TrendingUp size={24} />,
+          color: 'success',
+        },
+        {
+          id: 'total-budget',
+          title: '总预算',
+          value: formatCurrency(summary.total_budget),
+          icon: <DollarSign size={24} />,
+          color: 'warning',
+          description: `实际支出: ${formatCurrency(summary.total_actual_cost)}`,
+        },
+        {
+          id: 'total-members',
+          title: '团队成员',
+          value: summary.total_members,
+          icon: <Users size={24} />,
+          color: 'info',
+          description: `利用率: ${performance?.resource_utilization_rate?.toFixed(1) || 0}%`,
+        },
+        {
+          id: 'delayed-projects',
+          title: '逾期项目',
+          value: summary.delayed_projects,
+          icon: <AlertTriangle size={24} />,
+          color: 'error',
+        },
+        {
+          id: 'on-time-delivery',
+          title: '准时交付率',
+          value: `${performance?.on_time_delivery_rate?.toFixed(1) || 0}%`,
+          icon: <CheckCircle size={24} />,
+          color: 'success',
+        },
+        {
+          id: 'budget-adherence',
+          title: '预算遵守率',
+          value: `${performance?.budget_adherence_rate?.toFixed(1) || 0}%`,
+          icon: <DollarSign size={24} />,
+          color: 'primary',
+        },
+        {
+          id: 'avg-completion-time',
+          title: '平均完成周期',
+          value: `${performance?.avg_completion_time_days || 0}天`,
+          icon: <Clock size={24} />,
+          color: 'warning',
+        },
+      ]
+    : [];
 
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: 384,
-        }}
-      >
-        <Box
-          sx={{
-            width: 48,
-            height: 48,
-            borderRadius: '50%',
-            border: '2px solid primary.dark',
-            borderTopColor: 'transparent',
-            animation: 'spin 1s linear infinite',
-            '@keyframes spin': {
-              to: { transform: 'rotate(360deg)' },
-            },
-          }}
-        />
-      </Box>
-    );
-  }
+  const charts = [
+    {
+      id: 'project-type-distribution',
+      title: '项目类型分布',
+      type: 'bar',
+      dataKey: 'count',
+      nameKey: 'project_type',
+      data: typeStats.map((stat) => ({
+        name: stat.project_type,
+        value: stat.count,
+      })),
+      colors: ['primary.main', 'success.main', 'warning.main', 'error.main', 'info.main'],
+    },
+    {
+      id: 'project-trend',
+      title: '项目趋势',
+      type: 'line',
+      dataKey: 'project_count',
+      nameKey: 'date',
+      data: trends.slice(0, 5).map((trend) => ({
+        name: trend.date,
+        value: trend.project_count,
+      })),
+      colors: ['success.main'],
+    },
+  ];
+
+  const tables = [
+    {
+      id: 'active-projects',
+      title: '进行中项目',
+      columns: [
+        { id: 'name', label: '项目名称' },
+        { id: 'project_type', label: '类型' },
+        { id: 'status', label: '状态' },
+        { id: 'progress', label: '进度' },
+        { id: 'budget', label: '预算' },
+        { id: 'end_date', label: '结束日期' },
+      ],
+      data: activeProjects.map((project) => ({
+        name: project.name,
+        project_type: project.project_type,
+        status: project.status,
+        progress: `${project.progress}%`,
+        budget: project.budget ? formatCurrency(project.budget) : '-',
+        end_date: project.end_date ? new Date(project.end_date).toLocaleDateString() : '-',
+      })),
+    },
+  ];
+
+  const timeRangeOptions = [
+    { label: '本周', value: 'week' },
+    { label: '本月', value: 'month' },
+    { label: '本季度', value: 'quarter' },
+    { label: '本年', value: 'year' },
+  ];
+
+  const [timeRange, setTimeRange] = useState('month');
 
   return (
-    <Box sx={{ p: 3, bgcolor: 'grey.50', minHeight: '100vh' }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography
-          variant='h4'
-          sx={{ fontWeight: 700, color: 'grey.900' }}
-        >
-          项目管理驾驶舱
-        </Typography>
-        <Typography sx={{ color: 'grey.500', mt: 1 }}>实时监控项目状态、进度和绩效</Typography>
-      </Box>
-
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: {
-            xs: '1fr',
-            md: 'repeat(2, 1fr)',
-            lg: 'repeat(4, 1fr)',
-          },
-          gap: 2,
-          mb: 3,
-        }}
-      >
-        <Box
-          sx={{
-            bgcolor: 'background.paper',
-            borderRadius: 2,
-            boxShadow: 1,
-            p: 3,
+    <StatsPageTemplate
+      title='项目管理驾驶舱'
+      subtitle='实时监控项目状态、进度和绩效'
+      statCards={statCards}
+      statColumns={4}
+      charts={charts}
+      tables={tables}
+      loading={loading}
+      timeRangeOptions={timeRangeOptions}
+      timeRange={timeRange}
+      onTimeRangeChange={setTimeRange}
+      onRefresh={loadDashboardData}
+      showTimeRange={true}
+      showRefresh={true}
+      showExport={true}
+      showSearch={false}
+      chartSectionTitle='数据图表'
+      tableSectionTitle='项目列表'
+      customToolbar={
+        <button
+          onClick={() => navigate('/rs')}
+          style={{
+            fontSize: '0.875rem',
+            color: '#1976d2',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            marginLeft: 'auto',
+            display: 'block',
           }}
         >
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ color: 'grey.500' }}
-              >
-                总项目数
-              </Typography>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 700, color: 'grey.900' }}
-              >
-                {summary?.total_projects || 0}
-              </Typography>
-            </Box>
-            <Box sx={{ p: 1.5, bgcolor: '#dbeafe', borderRadius: '50%' }}>
-              <FolderKanban
-                size={24}
-                color='primary.dark'
-              />
-            </Box>
-          </Box>
-          <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
-            <Box
-              component='span'
-              sx={{
-                fontSize: '0.75rem',
-                px: 1,
-                py: 0.5,
-                bgcolor: 'success.light',
-                color: 'success.dark',
-                borderRadius: 1,
-              }}
-            >
-              进行中 {summary?.active_projects || 0}
-            </Box>
-            <Box
-              component='span'
-              sx={{
-                fontSize: '0.75rem',
-                px: 1,
-                py: 0.5,
-                bgcolor: 'grey.200',
-                color: 'grey.800',
-                borderRadius: 1,
-              }}
-            >
-              已完成 {summary?.completed_projects || 0}
-            </Box>
-          </Box>
-        </Box>
-
-        <Box
-          sx={{
-            bgcolor: 'background.paper',
-            borderRadius: 2,
-            boxShadow: 1,
-            p: 3,
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ color: 'grey.500' }}
-              >
-                平均进度
-              </Typography>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 700, color: 'grey.900' }}
-              >
-                {formatPercent(summary?.avg_progress || 0)}
-              </Typography>
-            </Box>
-            <Box sx={{ p: 1.5, bgcolor: 'success.light', borderRadius: '50%' }}>
-              <TrendingUp
-                size={24}
-                color='success.dark'
-              />
-            </Box>
-          </Box>
-          <Box sx={{ mt: 1 }}>
-            <Box
-              sx={{
-                width: '100%',
-                bgcolor: 'grey.200',
-                borderRadius: '9999px',
-                height: 8,
-              }}
-            >
-              <Box
-                sx={{
-                  bgcolor: 'success.dark',
-                  height: 8,
-                  borderRadius: '9999px',
-                  width: `${summary?.avg_progress || 0}%`,
-                }}
-              />
-            </Box>
-          </Box>
-        </Box>
-
-        <Box
-          sx={{
-            bgcolor: 'background.paper',
-            borderRadius: 2,
-            boxShadow: 1,
-            p: 3,
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ color: 'grey.500' }}
-              >
-                总预算
-              </Typography>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 700, color: 'grey.900' }}
-              >
-                {formatCurrency(summary?.total_budget || 0)}
-              </Typography>
-            </Box>
-            <Box sx={{ p: 1.5, bgcolor: '#e9d5ff', borderRadius: '50%' }}>
-              <DollarSign
-                size={24}
-                color='#7e22ce'
-              />
-            </Box>
-          </Box>
-          <Typography
-            variant='caption'
-            sx={{ color: 'grey.500', mt: 1, display: 'block' }}
-          >
-            实际支出: {formatCurrency(summary?.total_actual_cost || 0)}
-          </Typography>
-        </Box>
-
-        <Box
-          sx={{
-            bgcolor: 'background.paper',
-            borderRadius: 2,
-            boxShadow: 1,
-            p: 3,
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ color: 'grey.500' }}
-              >
-                团队成员
-              </Typography>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 700, color: 'grey.900' }}
-              >
-                {summary?.total_members || 0}
-              </Typography>
-            </Box>
-            <Box sx={{ p: 1.5, bgcolor: '#ffedd5', borderRadius: '50%' }}>
-              <Users
-                size={24}
-                color='#ea580c'
-              />
-            </Box>
-          </Box>
-          <Typography
-            variant='caption'
-            sx={{ color: 'grey.500', mt: 1, display: 'block' }}
-          >
-            利用率: {formatPercent(performance?.resource_utilization_rate || 0)}
-          </Typography>
-        </Box>
-      </Box>
-
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: {
-            xs: '1fr',
-            md: 'repeat(2, 1fr)',
-            lg: 'repeat(4, 1fr)',
-          },
-          gap: 2,
-          mb: 3,
-        }}
-      >
-        <Box
-          sx={{
-            bgcolor: 'background.paper',
-            borderRadius: 2,
-            boxShadow: 1,
-            p: 3,
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ color: 'grey.500' }}
-              >
-                逾期项目
-              </Typography>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 700, color: 'error.dark' }}
-              >
-                {summary?.delayed_projects || 0}
-              </Typography>
-            </Box>
-            <Box sx={{ p: 1.5, bgcolor: 'error.light', borderRadius: '50%' }}>
-              <AlertTriangle
-                size={24}
-                color='error.dark'
-              />
-            </Box>
-          </Box>
-        </Box>
-
-        <Box
-          sx={{
-            bgcolor: 'background.paper',
-            borderRadius: 2,
-            boxShadow: 1,
-            p: 3,
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ color: 'grey.500' }}
-              >
-                准时交付率
-              </Typography>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 700, color: 'success.dark' }}
-              >
-                {formatPercent(performance?.on_time_delivery_rate || 0)}
-              </Typography>
-            </Box>
-            <Box sx={{ p: 1.5, bgcolor: 'success.light', borderRadius: '50%' }}>
-              <CheckCircle
-                size={24}
-                color='success.dark'
-              />
-            </Box>
-          </Box>
-        </Box>
-
-        <Box
-          sx={{
-            bgcolor: 'background.paper',
-            borderRadius: 2,
-            boxShadow: 1,
-            p: 3,
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ color: 'grey.500' }}
-              >
-                预算遵守率
-              </Typography>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 700, color: 'info.dark' }}
-              >
-                {formatPercent(performance?.budget_adherence_rate || 0)}
-              </Typography>
-            </Box>
-            <Box sx={{ p: 1.5, bgcolor: 'info.light', borderRadius: '50%' }}>
-              <DollarSign
-                size={24}
-                color='primary.dark'
-              />
-            </Box>
-          </Box>
-        </Box>
-
-        <Box
-          sx={{
-            bgcolor: 'background.paper',
-            borderRadius: 2,
-            boxShadow: 1,
-            p: 3,
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ color: 'grey.500' }}
-              >
-                平均完成周期
-              </Typography>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 700, color: '#7e22ce' }}
-              >
-                {performance?.avg_completion_time_days || 0}天
-              </Typography>
-            </Box>
-            <Box sx={{ p: 1.5, bgcolor: '#e9d5ff', borderRadius: '50%' }}>
-              <Clock
-                size={24}
-                color='#7e22ce'
-              />
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', lg: 'repeat(2, 1fr)' },
-          gap: 3,
-          mb: 3,
-        }}
-      >
-        <Box
-          sx={{
-            bgcolor: 'background.paper',
-            borderRadius: 2,
-            boxShadow: 1,
-            p: 3,
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              mb: 2,
-            }}
-          >
-            <Typography
-              variant='h6'
-              sx={{
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-              }}
-            >
-              <BarChart3
-                size={20}
-                color='primary.dark'
-              />
-              项目类型分布
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {typeStats.map((stat, index) => (
-              <Box key={index}>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    fontSize: '0.875rem',
-                    mb: 0.5,
-                  }}
-                >
-                  <Box
-                    component='span'
-                    sx={{ fontWeight: 500 }}
-                  >
-                    {stat.project_type}
-                  </Box>
-                  <Box
-                    component='span'
-                    sx={{ color: 'grey.500' }}
-                  >
-                    {stat.count} 个项目
-                  </Box>
-                </Box>
-                <Box
-                  sx={{
-                    width: '100%',
-                    bgcolor: 'grey.200',
-                    borderRadius: '9999px',
-                    height: 8,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      height: 8,
-                      borderRadius: '9999px',
-                      bgcolor: 'primary.dark',
-                      width: `${(stat.count / (summary?.total_projects || 1)) * 100}%`,
-                    }}
-                  />
-                </Box>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    fontSize: '0.75rem',
-                    color: 'grey.500',
-                    mt: 0.5,
-                  }}
-                >
-                  <Box component='span'>预算: {formatCurrency(stat.total_budget)}</Box>
-                  <Box component='span'>平均进度: {formatPercent(stat.avg_progress)}</Box>
-                </Box>
-              </Box>
-            ))}
-          </Box>
-        </Box>
-
-        <Box
-          sx={{
-            bgcolor: 'background.paper',
-            borderRadius: 2,
-            boxShadow: 1,
-            p: 3,
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              mb: 2,
-            }}
-          >
-            <Typography
-              variant='h6'
-              sx={{
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-              }}
-            >
-              <Activity
-                size={20}
-                color='success.dark'
-              />
-              项目趋势
-            </Typography>
-          </Box>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-            {trends.slice(0, 5).map((trend, index) => (
-              <Box
-                key={index}
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  p: 1.5,
-                  bgcolor: 'grey.50',
-                  borderRadius: 2,
-                }}
-              >
-                <Box>
-                  <Typography sx={{ fontWeight: 500 }}>{trend.date}</Typography>
-                  <Typography
-                    variant='caption'
-                    sx={{ color: 'grey.500' }}
-                  >
-                    新建 {trend.project_count} 个，完成 {trend.completed_count} 个
-                  </Typography>
-                </Box>
-                <Box sx={{ textAlign: 'right' }}>
-                  <Typography
-                    variant='body2'
-                    sx={{ fontWeight: 500, color: 'success.dark' }}
-                  >
-                    {formatPercent(trend.avg_progress)}
-                  </Typography>
-                  <Typography
-                    variant='caption'
-                    sx={{ color: 'grey.500' }}
-                  >
-                    {formatCurrency(trend.total_budget)}
-                  </Typography>
-                </Box>
-              </Box>
-            ))}
-          </Box>
-        </Box>
-      </Box>
-
-      <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
-        <Box sx={{ p: 3, borderBottom: '1px solid grey.200' }}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Typography
-              variant='h6'
-              sx={{
-                fontWeight: 600,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-              }}
-            >
-              <Target
-                size={20}
-                color='#7e22ce'
-              />
-              进行中项目
-            </Typography>
-            <button
-              onClick={() => navigate('/rs')}
-              style={{
-                fontSize: '0.875rem',
-                color: 'primary.dark',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-              }}
-            >
-              查看全部 →
-            </button>
-          </Box>
-        </Box>
-        <Box sx={{ overflowX: 'auto' }}>
-          <Box
-            component='table'
-            sx={{ width: '100%' }}
-          >
-            <Box
-              component='thead'
-              sx={{ bgcolor: 'grey.50' }}
-            >
-              <Box component='tr'>
-                <Box
-                  component='th'
-                  sx={{
-                    px: 3,
-                    py: 1.5,
-                    textAlign: 'left',
-                    fontSize: '0.75rem',
-                    fontWeight: 500,
-                    color: 'grey.500',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  项目名称
-                </Box>
-                <Box
-                  component='th'
-                  sx={{
-                    px: 3,
-                    py: 1.5,
-                    textAlign: 'left',
-                    fontSize: '0.75rem',
-                    fontWeight: 500,
-                    color: 'grey.500',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  类型
-                </Box>
-                <Box
-                  component='th'
-                  sx={{
-                    px: 3,
-                    py: 1.5,
-                    textAlign: 'left',
-                    fontSize: '0.75rem',
-                    fontWeight: 500,
-                    color: 'grey.500',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  状态
-                </Box>
-                <Box
-                  component='th'
-                  sx={{
-                    px: 3,
-                    py: 1.5,
-                    textAlign: 'left',
-                    fontSize: '0.75rem',
-                    fontWeight: 500,
-                    color: 'grey.500',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  进度
-                </Box>
-                <Box
-                  component='th'
-                  sx={{
-                    px: 3,
-                    py: 1.5,
-                    textAlign: 'left',
-                    fontSize: '0.75rem',
-                    fontWeight: 500,
-                    color: 'grey.500',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  预算
-                </Box>
-                <Box
-                  component='th'
-                  sx={{
-                    px: 3,
-                    py: 1.5,
-                    textAlign: 'left',
-                    fontSize: '0.75rem',
-                    fontWeight: 500,
-                    color: 'grey.500',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  结束日期
-                </Box>
-              </Box>
-            </Box>
-            <Box component='tbody'>
-              {activeProjects.slice(0, 5).map((project) => (
-                <Box
-                  component='tr'
-                  key={project.id}
-                  sx={{
-                    '&:hover': { bgcolor: 'grey.50' },
-                  }}
-                >
-                  <Box
-                    component='td'
-                    sx={{ px: 3, py: 2 }}
-                  >
-                    <Box>
-                      <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
-                        {project.name}
-                      </Typography>
-                      <Typography
-                        variant='caption'
-                        sx={{ color: 'grey.500' }}
-                      >
-                        {project.code}
-                      </Typography>
-                    </Box>
-                  </Box>
-                  <Box
-                    component='td'
-                    sx={{
-                      px: 3,
-                      py: 2,
-                      fontSize: '0.875rem',
-                      color: 'grey.600',
-                    }}
-                  >
-                    {project.project_type}
-                  </Box>
-                  <Box
-                    component='td'
-                    sx={{ px: 3, py: 2 }}
-                  >
-                    <Box
-                      component='span'
-                      sx={{
-                        px: 1,
-                        py: 0.5,
-                        fontSize: '0.75rem',
-                        borderRadius: '9999px',
-                        display: 'inline-block',
-                        ...getStatusSx(project.status),
-                      }}
-                    >
-                      {project.status}
-                    </Box>
-                  </Box>
-                  <Box
-                    component='td'
-                    sx={{ px: 3, py: 2 }}
-                  >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1,
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          width: 96,
-                          bgcolor: 'grey.200',
-                          borderRadius: '9999px',
-                          height: 8,
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            bgcolor: 'primary.dark',
-                            height: 8,
-                            borderRadius: '9999px',
-                            width: `${project.progress}%`,
-                          }}
-                        />
-                      </Box>
-                      <Box
-                        component='span'
-                        sx={{
-                          fontSize: '0.875rem',
-                          color: 'grey.600',
-                        }}
-                      >
-                        {project.progress}%
-                      </Box>
-                    </Box>
-                  </Box>
-                  <Box
-                    component='td'
-                    sx={{
-                      px: 3,
-                      py: 2,
-                      fontSize: '0.875rem',
-                      color: 'grey.600',
-                    }}
-                  >
-                    {project.budget ? formatCurrency(project.budget) : '-'}
-                  </Box>
-                  <Box
-                    component='td'
-                    sx={{
-                      px: 3,
-                      py: 2,
-                      fontSize: '0.875rem',
-                      color: 'grey.600',
-                    }}
-                  >
-                    {project.end_date ? new Date(project.end_date).toLocaleDateString() : '-'}
-                  </Box>
-                </Box>
-              ))}
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-    </Box>
+          查看全部 →
+        </button>
+      }
+    />
   );
 };
 

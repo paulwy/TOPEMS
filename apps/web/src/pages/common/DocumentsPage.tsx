@@ -31,6 +31,7 @@ import { docApi, type Folder as FolderType } from '@/api/doc';
 import { useAppStore } from '../../store';
 import { DocumentPreviewModal } from '@/components/DocumentPreviewModal';
 import { apiLogger } from '@/utils/logger';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 
 import {
   TextField,
@@ -190,6 +191,13 @@ const DocumentsPage: React.FC = () => {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [fileTypeFilter, setFileTypeFilter] = useState<string>('all');
   const [isDragging, setIsDragging] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [confirmDialogConfig, setConfirmDialogConfig] = useState<{
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    danger?: boolean;
+  } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
 
@@ -311,58 +319,78 @@ const DocumentsPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('确定要删除这个文件吗？')) return;
-
-    try {
-      const response = await docApi.delete(id);
-      if (response.success) {
-        await loadFiles();
-        addNotification({
-          title: '成功',
-          message: '文件删除成功',
-          type: 'success',
-        });
-      } else {
-        addNotification({
-          title: '失败',
-          message: '文件删除失败',
-          type: 'error',
-        });
-      }
-    } catch (err: unknown) {
-      apiLogger.error('删除文件失败:', err);
-      addNotification({
-        title: '失败',
-        message: '文件删除失败',
-        type: 'error',
-      });
-    }
+  const openConfirmDialog = (config: {
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    danger?: boolean;
+  }) => {
+    setConfirmDialogConfig(config);
+    setConfirmDialogOpen(true);
   };
 
-  const handleDeleteFolder = async (id: string, name: string) => {
-    if (!confirm(`确定要删除文件夹 "${name}" 吗？文件夹内的文件不会被删除。`)) return;
+  const handleDelete = (id: string) => {
+    openConfirmDialog({
+      title: '确认删除',
+      message: '确定要删除这个文件吗？',
+      onConfirm: async () => {
+        try {
+          const response = await docApi.delete(id);
+          if (response.success) {
+            await loadFiles();
+            addNotification({
+              title: '成功',
+              message: '文件删除成功',
+              type: 'success',
+            });
+          } else {
+            addNotification({
+              title: '失败',
+              message: '文件删除失败',
+              type: 'error',
+            });
+          }
+        } catch (err: unknown) {
+          apiLogger.error('删除文件失败:', err);
+          addNotification({
+            title: '失败',
+            message: '文件删除失败',
+            type: 'error',
+          });
+        }
+      },
+      danger: true,
+    });
+  };
 
-    try {
-      await docApi.deleteFolder(id);
-      if (selectedFolderId === id) {
-        setSelectedFolderId(null);
-      }
-      await loadFolders();
-      await loadFiles();
-      addNotification({
-        title: '成功',
-        message: '文件夹删除成功',
-        type: 'success',
-      });
-    } catch (err: unknown) {
-      apiLogger.error('删除文件夹失败:', err);
-      addNotification({
-        title: '失败',
-        message: '文件夹删除失败',
-        type: 'error',
-      });
-    }
+  const handleDeleteFolder = (id: string, name: string) => {
+    openConfirmDialog({
+      title: '确认删除',
+      message: `确定要删除文件夹 "${name}" 吗？文件夹内的文件不会被删除。`,
+      onConfirm: async () => {
+        try {
+          await docApi.deleteFolder(id);
+          if (selectedFolderId === id) {
+            setSelectedFolderId(null);
+          }
+          await loadFolders();
+          await loadFiles();
+          addNotification({
+            title: '成功',
+            message: '文件夹删除成功',
+            type: 'success',
+          });
+        } catch (err: unknown) {
+          apiLogger.error('删除文件夹失败:', err);
+          addNotification({
+            title: '失败',
+            message: '文件夹删除失败',
+            type: 'error',
+          });
+        }
+      },
+      danger: true,
+    });
   };
 
   const handleDownload = async (file: File) => {
@@ -435,30 +463,35 @@ const DocumentsPage: React.FC = () => {
     setSelectedFiles([]);
   }, []);
 
-  const handleBatchDelete = useCallback(async () => {
+  const handleBatchDelete = useCallback(() => {
     if (selectedFiles.length === 0) return;
 
-    if (!confirm(`确定要删除选中的 ${selectedFiles.length} 个文件吗？`)) return;
+    openConfirmDialog({
+      title: '确认批量删除',
+      message: `确定要删除选中的 ${selectedFiles.length} 个文件吗？`,
+      onConfirm: async () => {
+        try {
+          const deletePromises = selectedFiles.map((id) => docApi.delete(id));
+          await Promise.all(deletePromises);
 
-    try {
-      const deletePromises = selectedFiles.map((id) => docApi.delete(id));
-      await Promise.all(deletePromises);
-
-      await loadFiles();
-      setSelectedFiles([]);
-      addNotification({
-        title: '成功',
-        message: `已删除 ${selectedFiles.length} 个文件`,
-        type: 'success',
-      });
-    } catch (err: unknown) {
-      apiLogger.error('批量删除失败:', err);
-      addNotification({
-        title: '失败',
-        message: '批量删除失败',
-        type: 'error',
-      });
-    }
+          await loadFiles();
+          setSelectedFiles([]);
+          addNotification({
+            title: '成功',
+            message: `已删除 ${selectedFiles.length} 个文件`,
+            type: 'success',
+          });
+        } catch (err: unknown) {
+          apiLogger.error('批量删除失败:', err);
+          addNotification({
+            title: '失败',
+            message: '批量删除失败',
+            type: 'error',
+          });
+        }
+      },
+      danger: true,
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFiles, addNotification]);
 
@@ -1498,6 +1531,18 @@ const DocumentsPage: React.FC = () => {
         fileId={previewingFile?.id || ''}
         fileName={previewingFile?.name || ''}
         contentType={previewingFile?.contentType || ''}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={() => setConfirmDialogOpen(false)}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogOpen(false);
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
       />
     </Box>
   );

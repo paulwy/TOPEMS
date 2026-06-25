@@ -8,35 +8,39 @@ type NotificationType = 'success' | 'error' | 'info' | 'warning';
 
 interface ToastProps {
   id: string;
-  title: string;
+  title?: string;
   message: string;
   type: NotificationType;
+  duration?: number;
   onClose: () => void;
 }
 
-const Toast = ({ id: _, title, message, type, onClose }: ToastProps) => {
+const Toast = ({ id: _, title, message, type, duration, onClose }: ToastProps) => {
   const [isVisible, setIsVisible] = useState(true);
 
   useEffect(() => {
+    const autoCloseDuration = duration ?? 5000;
+    if (autoCloseDuration <= 0) return;
+
     const timer = setTimeout(() => {
       setIsVisible(false);
       setTimeout(onClose, 300);
-    }, 5000);
+    }, autoCloseDuration);
 
     return () => clearTimeout(timer);
-  }, [onClose]);
+  }, [duration, onClose]);
 
   const getIcon = () => {
     switch (type) {
       case 'success':
-        return <CheckCircle2 sx={{ height: 20, width: 20, color: '#16a34a' }} />;
+        return <CheckCircle2 style={{ height: 20, width: 20, color: '#16a34a', flexShrink: 0 }} />;
       case 'error':
-        return <AlertCircle sx={{ height: 20, width: 20, color: '#dc2626' }} />;
+        return <AlertCircle style={{ height: 20, width: 20, color: '#dc2626', flexShrink: 0 }} />;
       case 'warning':
-        return <AlertTriangle sx={{ height: 20, width: 20, color: '#ca8a04' }} />;
+        return <AlertTriangle style={{ height: 20, width: 20, color: '#ca8a04', flexShrink: 0 }} />;
       case 'info':
       default:
-        return <Info sx={{ height: 20, width: 20, color: '#2563eb' }} />;
+        return <Info style={{ height: 20, width: 20, color: '#2563eb', flexShrink: 0 }} />;
     }
   };
 
@@ -80,6 +84,11 @@ const Toast = ({ id: _, title, message, type, onClose }: ToastProps) => {
 
   const styles = getStyles();
 
+  const handleClose = () => {
+    setIsVisible(false);
+    setTimeout(onClose, 300);
+  };
+
   return (
     <div
       style={{
@@ -97,16 +106,24 @@ const Toast = ({ id: _, title, message, type, onClose }: ToastProps) => {
     >
       {getIcon()}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <p style={{ fontWeight: 500, margin: 0, color: styles.titleColor }}>{title}</p>
-        <p style={{ fontSize: '14px', margin: '4px 0 0', color: styles.messageColor }}>
+        {title && (
+          <p style={{ fontWeight: 600, margin: 0, color: styles.titleColor, fontSize: '14px' }}>
+            {title}
+          </p>
+        )}
+        <p
+          style={{
+            fontSize: '14px',
+            margin: title ? '4px 0 0' : 0,
+            color: styles.messageColor,
+            lineHeight: 1.5,
+          }}
+        >
           {message}
         </p>
       </div>
       <button
-        onClick={() => {
-          setIsVisible(false);
-          setTimeout(onClose, 300);
-        }}
+        onClick={handleClose}
         style={{
           color: '#6b7280',
           border: 'none',
@@ -114,10 +131,14 @@ const Toast = ({ id: _, title, message, type, onClose }: ToastProps) => {
           cursor: 'pointer',
           transition: 'color 0.2s',
           padding: '4px',
+          flexShrink: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
         }}
         aria-label='关闭通知'
       >
-        <X sx={{ height: 16, width: 16 }} />
+        <X style={{ height: 16, width: 16 }} />
       </button>
     </div>
   );
@@ -137,12 +158,13 @@ export function Toaster() {
         position: 'fixed',
         top: '16px',
         right: '16px',
-        zIndex: 50,
+        zIndex: 9999,
         display: 'flex',
         flexDirection: 'column',
         gap: '8px',
         maxWidth: '384px',
-        width: '100%',
+        width: 'calc(100% - 32px)',
+        pointerEvents: 'auto',
       }}
     >
       {notifications.map((notification) => (
@@ -152,6 +174,7 @@ export function Toaster() {
           title={notification.title}
           message={notification.message}
           type={notification.type}
+          duration={notification.duration}
           onClose={() => removeNotification(notification.id)}
         />
       ))}

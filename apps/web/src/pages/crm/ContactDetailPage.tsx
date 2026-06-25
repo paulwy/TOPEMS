@@ -1,35 +1,13 @@
-import {
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  Chip,
-  Grid,
-  Container,
-  Skeleton,
-  Divider,
-  Paper,
-  Avatar,
-} from '@mui/material';
-import { Button } from '@mui/material';
-import React, { useState, useEffect, useCallback } from 'react';
+import { Chip, Typography, Box, InputLabel } from '@mui/material';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Building2, Phone, Mail, Edit2, Trash2, MapPin } from 'lucide-react';
+import { User, Phone, Mail, MapPin, Building2 } from 'lucide-react';
+import { crmApi } from '@/api/modules/crm/crm';
+import type { Contact } from '@/api/modules/crm/crm';
 import { useNotification } from '@/hooks/useNotification';
-import { logger } from '@/utils/logger';
-
-interface Contact {
-  id: string;
-  name: string;
-  customer_id: string;
-  customer_name: string;
-  title?: string;
-  phone?: string;
-  email?: string;
-  address?: string;
-  is_primary: boolean;
-  notes?: string;
-}
+import { apiLogger } from '@/utils/logger';
+import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 
 const ContactDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -38,257 +16,240 @@ const ContactDetailPage: React.FC = () => {
 
   const [contact, setContact] = useState<Contact | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const loadContact = useCallback(
-    async (contactId: string) => {
-      setLoading(true);
-      try {
-        setContact({
-          id: contactId,
-          name: '张经理',
-          customer_id: '1',
-          customer_name: '示例科技有限公司',
-          title: '采购总监',
-          phone: '13800138000',
-          email: 'zhang@example.com',
-          address: '北京市朝阳区',
-          is_primary: true,
-          notes: '主要对接人，负责采购决策',
-        });
-      } catch (err: unknown) {
-        logger.error('Failed to load contact:', err);
-        error('加载联系人信息失败');
-      } finally {
-        setLoading(false);
-      }
-    },
-    [error]
-  );
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [customerName, setCustomerName] = useState<string>('');
 
   useEffect(() => {
     if (id) {
       loadContact(id);
     }
-  }, [id, loadContact]);
+  }, [id]);
 
-  const handleDelete = async () => {
-    if (!id || !window.confirm('确定要删除此联系人吗？')) return;
-    success('联系人删除成功');
-    navigate('/crm/contacts');
+  const loadContact = async (contactId: string) => {
+    setLoading(true);
+    setErrorMessage(undefined);
+    try {
+      const res = await crmApi.contacts.get(contactId);
+      if (res.success && res.data) {
+        setContact(res.data);
+        if (res.data.customer_id) {
+          const customerRes = await crmApi.customers.get(res.data.customer_id);
+          if (customerRes.success && customerRes.data) {
+            setCustomerName(customerRes.data.name);
+          }
+        }
+      } else {
+        throw new Error(res.message || '加载联系人信息失败');
+      }
+    } catch (err: unknown) {
+      apiLogger.error('Failed to load contact:', err);
+      setErrorMessage('加载联系人信息失败');
+      error('加载联系人信息失败');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (loading) {
-    return (
-      <Container
-        maxWidth='lg'
-        sx={{ py: 3 }}
-      >
-        <Skeleton
-          variant='rectangular'
-          height={400}
-          sx={{ borderRadius: 2 }}
-        />
-      </Container>
-    );
-  }
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return '-';
+    return new Date(dateStr).toLocaleDateString('zh-CN');
+  };
 
-  if (!contact) {
+  const getStatusBadge = (status: string) => {
+    const statusMap: Record<string, { label: string; color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' }> = {
+      active: { label: '活跃', color: 'success' },
+      inactive: { label: '非活跃', color: 'default' },
+    };
+    const s = statusMap[status] || { label: status, color: 'default' };
     return (
-      <Container
-        maxWidth='lg'
-        sx={{ py: 3 }}
-      >
-        <Paper sx={{ p: 4, textAlign: 'center' }}>
-          <Typography color='text.secondary'>联系人不存在或已被删除</Typography>
-          <Button
-            variant='outlined'
-            sx={{ mt: 2 }}
-            onClick={() => navigate('/crm/contacts')}
-          >
-            返回联系人列表
-          </Button>
-        </Paper>
-      </Container>
+      <Chip
+        size='small'
+        color={s.color}
+        label={s.label}
+      />
     );
-  }
+  };
 
-  return (
-    <Container
-      maxWidth='lg'
-      sx={{ py: 3 }}
-    >
-      <Box sx={{ mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Button
-              variant='text'
-              onClick={() => navigate('/crm/contacts')}
-              startIcon={<ArrowLeft style={{ width: 20, height: 20 }} />}
-            >
-              返回
-            </Button>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Avatar sx={{ width: 48, height: 48, bgcolor: 'primary.main' }}>
-                {contact.name.charAt(0)}
-              </Avatar>
-              <Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography
-                    variant='h5'
-                    sx={{ fontWeight: 'bold' }}
-                  >
-                    {contact.name}
-                  </Typography>
-                  {contact.is_primary && (
-                    <Chip
-                      label='主要联系人'
-                      size='small'
-                      color='primary'
-                    />
-                  )}
-                </Box>
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
-                  {contact.title || '联系人详情'}
-                </Typography>
-              </Box>
-            </Box>
+  const basicInfoContent = useMemo(() => {
+    if (!contact) return null;
+    return (
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
+          gap: 2,
+        }}
+      >
+        <Box>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>联系人姓名</InputLabel>
+          <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
+            {contact.last_name ? `${contact.last_name}${contact.first_name}` : contact.first_name}
+          </Typography>
+        </Box>
+        <Box>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>所属客户</InputLabel>
+          <Typography sx={{ mt: 0.5 }}>{customerName || '-'}</Typography>
+        </Box>
+        <Box>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>职位</InputLabel>
+          <Typography sx={{ mt: 0.5 }}>{contact.position || '-'}</Typography>
+        </Box>
+        <Box>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>电话</InputLabel>
+          <Typography sx={{ mt: 0.5 }}>{contact.phone || '-'}</Typography>
+        </Box>
+        <Box>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>邮箱</InputLabel>
+          <Typography sx={{ mt: 0.5 }}>{contact.email || '-'}</Typography>
+        </Box>
+        <Box>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>状态</InputLabel>
+          <Box sx={{ mt: 0.5 }}>{getStatusBadge(contact.status)}</Box>
+        </Box>
+        {contact.notes && (
+          <Box sx={{ gridColumn: 'span 3', mt: 2 }}>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>备注</InputLabel>
+            <Typography sx={{ mt: 0.5, color: 'text.secondary' }}>{contact.notes}</Typography>
           </Box>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button
-              variant='outlined'
-              startIcon={<Edit2 style={{ width: 18, height: 18 }} />}
-              onClick={() => navigate(`/crm/contact/${id}/edit`)}
-            >
-              编辑
-            </Button>
-            <Button
-              variant='outlined'
-              color='error'
-              startIcon={<Trash2 style={{ width: 18, height: 18 }} />}
-              onClick={handleDelete}
-            >
-              删除
-            </Button>
+        )}
+      </Box>
+    );
+  }, [contact, customerName]);
+
+  const contactInfoContent = useMemo(() => {
+    if (!contact) return null;
+    return (
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
+          gap: 3,
+        }}
+      >
+        <Box sx={{ p: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
+          <Typography variant='subtitle1' sx={{ fontWeight: 600, mb: 2 }}>
+            <Phone size={16} style={{ marginRight: 8 }} />联系方式
+          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: 1, borderColor: 'divider' }}>
+            <Typography color='text.secondary'>电话</Typography>
+            <Typography sx={{ fontWeight: 'medium' }}>{contact.phone || '-'}</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
+            <Typography color='text.secondary'>邮箱</Typography>
+            <Typography sx={{ fontWeight: 'medium' }}>{contact.email || '-'}</Typography>
+          </Box>
+        </Box>
+        <Box sx={{ p: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
+          <Typography variant='subtitle1' sx={{ fontWeight: 600, mb: 2 }}>
+            <Building2 size={16} style={{ marginRight: 8 }} />关联信息
+          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: 1, borderColor: 'divider' }}>
+            <Typography color='text.secondary'>所属客户</Typography>
+            <Typography sx={{ fontWeight: 'medium' }}>{customerName || '-'}</Typography>
+          </Box>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
+            <Typography color='text.secondary'>职位</Typography>
+            <Typography sx={{ fontWeight: 'medium' }}>{contact.position || '-'}</Typography>
           </Box>
         </Box>
       </Box>
+    );
+  }, [contact, customerName]);
 
-      <Card sx={{ mb: 3 }}>
-        <CardContent sx={{ p: 3 }}>
-          <Typography
-            variant='h6'
-            sx={{ fontWeight: 600, mb: 2 }}
-          >
-            联系信息
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
-          <Grid
-            container
-            spacing={3}
-          >
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Building2 style={{ width: 18, height: 18, color: 'grey.500' }} />
-                <Box>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    所属客户
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ fontWeight: 500 }}
-                  >
-                    {contact.customer_name}
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Phone style={{ width: 18, height: 18, color: 'grey.500' }} />
-                <Box>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    电话
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ fontWeight: 500 }}
-                  >
-                    {contact.phone || '-'}
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Mail style={{ width: 18, height: 18, color: 'grey.500' }} />
-                <Box>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    邮箱
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ fontWeight: 500 }}
-                  >
-                    {contact.email || '-'}
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <MapPin style={{ width: 18, height: 18, color: 'grey.500' }} />
-                <Box>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    地址
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ fontWeight: 500 }}
-                  >
-                    {contact.address || '-'}
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
+  const footerSection = useMemo<SectionConfig>(() => {
+    if (!contact) return { id: 'footer', content: null };
+    return {
+      id: 'footer',
+      title: '其他信息',
+      content: (
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
+            gap: 2,
+          }}
+        >
+          <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
+            <Typography variant='body2' color='text.secondary'>创建时间</Typography>
+            <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>{formatDate(contact.created_at)}</Typography>
+          </Box>
+          <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
+            <Typography variant='body2' color='text.secondary'>更新时间</Typography>
+            <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>{formatDate(contact.updated_at)}</Typography>
+          </Box>
+          <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
+            <Typography variant='body2' color='text.secondary'>联系人ID</Typography>
+            <Typography sx={{ fontWeight: 'medium', mt: 0.5, fontFamily: 'monospace', fontSize: '0.875rem' }}>
+              {contact.id.substring(0, 8)}...
+            </Typography>
+          </Box>
+        </Box>
+      ),
+    };
+  }, [contact]);
 
-      {contact.notes && (
-        <Card>
-          <CardContent sx={{ p: 3 }}>
-            <Typography
-              variant='h6'
-              sx={{ fontWeight: 600, mb: 2 }}
-            >
-              备注
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-            <Typography
-              variant='body2'
-              color='text.secondary'
-            >
-              {contact.notes}
-            </Typography>
-          </CardContent>
-        </Card>
-      )}
-    </Container>
+  const tabs = useMemo<TabConfig[]>(
+    () => [
+      { id: 'basic', label: '基本信息', content: basicInfoContent || <></> },
+      { id: 'contact', label: '联系信息', content: contactInfoContent || <></> },
+    ],
+    [basicInfoContent, contactInfoContent]
+  );
+
+  const infoCard = useMemo(
+    () => ({
+      avatar: (
+        <User
+          size={32}
+          color='#1976d2'
+        />
+      ),
+      title: contact ? (contact.last_name ? `${contact.last_name}${contact.first_name}` : contact.first_name) : undefined,
+      subtitle: contact?.position || undefined,
+      tags: customerName ? [customerName] : [],
+    }),
+    [contact, customerName]
+  );
+
+  const handleDelete = async () => {
+    if (!id) return;
+    try {
+      const res = await crmApi.contacts.delete(id);
+      if (res.success) {
+        success('联系人删除成功');
+        navigate('/crm/contacts');
+      }
+    } catch (err: unknown) {
+      apiLogger.error('Failed to delete contact:', err);
+      error('删除联系人失败');
+    }
+    setDeleteDialogOpen(false);
+  };
+
+  return (
+    <>
+      <DetailPageTemplate
+        title='联系人详情'
+        subtitle='查看和编辑联系人信息'
+        backHref='/crm/contacts'
+        loading={loading}
+        error={errorMessage}
+        onEdit={() => navigate(`/crm/contact/${id}/edit`)}
+        onDelete={() => setDeleteDialogOpen(true)}
+        infoCard={infoCard}
+        tabs={tabs}
+        sections={[footerSection]}
+      />
+      <ConfirmDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={handleDelete}
+        title='确认删除'
+        message='确定要删除此联系人吗？'
+        danger
+      />
+    </>
   );
 };
 

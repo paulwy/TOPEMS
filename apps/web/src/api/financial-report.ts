@@ -6,6 +6,39 @@
 import { apiClient, downloadBlob } from './client';
 import config from '../config/runtime';
 
+export interface ConsolidationEntity {
+  id: string;
+  name: string;
+  code: string;
+  parent_id?: string;
+  entity_type: 'holding' | 'subsidiary' | 'associate' | 'joint_venture';
+  ownership_percentage: number;
+  currency_code?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReportSubscription {
+  id: string;
+  name: string;
+  report_type: 'balance_sheet' | 'income_statement' | 'cash_flow';
+  company_ids: string[];
+  periods: string[];
+  frequency: 'monthly' | 'quarterly' | 'yearly';
+  recipients: {
+    user_id?: string;
+    email?: string;
+  }[];
+  format: 'pdf' | 'xlsx';
+  is_active: boolean;
+  last_run_at?: string;
+  next_run_at?: string;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 // ============================================
 // 一、财务报表生成
 // ============================================
@@ -280,7 +313,7 @@ export const financialReportApi = {
   /**
    * 更新合并主体
    */
-  updateConsolidationEntity: (entityId: string, data: any) =>
+  updateConsolidationEntity: (entityId: string, data: Partial<ConsolidationEntity>) =>
     apiClient.erp.put(`/api/reports/consolidated/entities/${entityId}`, data),
 
   /**
@@ -398,7 +431,7 @@ export const financialReportApi = {
   /**
    * 更新报表订阅
    */
-  updateReportSubscription: (subscriptionId: string, data: any) =>
+  updateReportSubscription: (subscriptionId: string, data: Partial<ReportSubscription>) =>
     apiClient.erp.put(`/api/reports/subscriptions/${subscriptionId}`, data),
 
   /**

@@ -39,6 +39,7 @@ import {
   Tooltip,
 } from '@mui/material';
 import { Button } from '@mui/material';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 
 interface Payment {
   id: string;
@@ -64,6 +65,10 @@ const FinancePaymentPage: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showApproveModal, setShowApproveModal] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [rejectingPayment, setRejectingPayment] = useState<Payment | null>(null);
 
   const [newPayment, setNewPayment] = useState({
     supplier: '',
@@ -236,9 +241,14 @@ const FinancePaymentPage: React.FC = () => {
     setShowApproveModal(false);
   };
 
-  const handleReject = (payment: Payment) => {
-    if (!confirm('确定要拒绝该付款申请吗？')) return;
-    setPaymentData(paymentData.map((p) => (p.id === payment.id ? { ...p, status: '已拒绝' } : p)));
+  const handleRejectClick = (payment: Payment) => {
+    setRejectingPayment(payment);
+    setRejectDialogOpen(true);
+  };
+
+  const handleReject = () => {
+    if (!rejectingPayment) return;
+    setPaymentData(paymentData.map((p) => (p.id === rejectingPayment.id ? { ...p, status: '已拒绝' } : p)));
     addNotification({
       title: '已拒绝',
       message: '付款申请已拒绝',
@@ -246,9 +256,14 @@ const FinancePaymentPage: React.FC = () => {
     });
   };
 
-  const handleDelete = (id: string) => {
-    if (!confirm('确定要删除该付款记录吗？')) return;
-    setPaymentData(paymentData.filter((p) => p.id !== id));
+  const handleDeleteClick = (id: string) => {
+    setDeletingId(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDelete = () => {
+    if (!deletingId) return;
+    setPaymentData(paymentData.filter((p) => p.id !== deletingId));
     addNotification({
       title: '成功',
       message: '付款记录已删除',
@@ -397,7 +412,7 @@ const FinancePaymentPage: React.FC = () => {
             <IconButton
               size='small'
               color='error'
-              onClick={() => handleReject(row)}
+              onClick={() => handleRejectClick(row)}
             >
               <XCircle sx={{ width: 16, height: 16 }} />
             </IconButton>
@@ -415,7 +430,7 @@ const FinancePaymentPage: React.FC = () => {
         <IconButton
           size='small'
           color='error'
-          onClick={() => handleDelete(row.id)}
+          onClick={() => handleDeleteClick(row.id)}
         >
           <Trash2 sx={{ width: 16, height: 16 }} />
         </IconButton>
@@ -731,6 +746,32 @@ const FinancePaymentPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={rejectDialogOpen}
+        onClose={() => {
+          setRejectDialogOpen(false);
+          setRejectingPayment(null);
+        }}
+        onConfirm={handleReject}
+        title='确认拒绝'
+        message='确定要拒绝该付款申请吗？'
+        type='warning'
+        confirmLabel='拒绝'
+        cancelLabel='取消'
+      />
+
+      <ConfirmDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => {
+          setDeleteDialogOpen(false);
+          setDeletingId(null);
+        }}
+        onConfirm={handleDelete}
+        title='确认删除'
+        message='确定要删除该付款记录吗？'
+        danger
+      />
     </>
   );
 };

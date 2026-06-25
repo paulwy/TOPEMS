@@ -3,7 +3,6 @@ import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft,
   Building2,
   Mail,
   Phone,

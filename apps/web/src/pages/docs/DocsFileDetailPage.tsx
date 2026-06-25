@@ -1,81 +1,62 @@
-import {
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  Grid,
-  Container,
-  Skeleton,
-  Divider,
-  Paper,
-} from '@mui/material';
-import { Button } from '@mui/material';
-import React, { useState, useEffect, useCallback } from 'react';
+import { Typography, Box, InputLabel, Chip } from '@mui/material';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, Calendar, User, Edit2, Trash2, Download, Folder } from 'lucide-react';
+import { FileText, Download } from 'lucide-react';
 import { docApi, type FileMetadata } from '@/api/doc';
-import { useAppStore } from '@/store';
+import { useNotification } from '@/hooks/useNotification';
+import { apiLogger } from '@/utils/logger';
+import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 
 const DocsFileDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const addNotification = useAppStore((state) => state.addNotification);
+  const { success, error } = useNotification();
 
   const [file, setFile] = useState<FileMetadata | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const loadFile = useCallback(
-    async (fileId: string) => {
-      setLoading(true);
-      try {
-        const res = await docApi.get(fileId);
-        if (res.code === 200 && res.data) {
-          setFile(res.data);
-        }
-      } catch (err: unknown) {
-        addNotification({
-          title: '错误',
-          message: '加载文件信息失败',
-          type: 'error',
-        });
-      } finally {
-        setLoading(false);
-      }
-    },
-    [addNotification]
-  );
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     if (id) {
       loadFile(id);
     }
-  }, [id, loadFile]);
+  }, [id]);
+
+  const loadFile = async (fileId: string) => {
+    setLoading(true);
+    setErrorMessage(undefined);
+    try {
+      const res = await docApi.get(fileId);
+      if (res.code === 200 && res.data) {
+        setFile(res.data);
+      } else {
+        throw new Error(res.message || '加载文件信息失败');
+      }
+    } catch (err: unknown) {
+      apiLogger.error('Failed to load file:', err);
+      setErrorMessage('加载文件信息失败');
+      error('加载文件信息失败');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleDelete = async () => {
-    if (!id || !window.confirm('确定要删除此文件吗？')) return;
+    if (!id) return;
 
     try {
       const res = await docApi.delete(id);
       if (res.code === 200) {
-        addNotification({
-          title: '成功',
-          message: '文件删除成功',
-          type: 'success',
-        });
+        success('文件删除成功');
         navigate('/documents');
       } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '删除失败',
-          type: 'error',
-        });
+        error(res.message || '删除失败');
       }
     } catch (err: unknown) {
-      addNotification({
-        title: '错误',
-        message: '删除文件失败',
-        type: 'error',
-      });
+      apiLogger.error('Failed to delete file:', err);
+      error('删除文件失败');
     }
   };
 
@@ -92,275 +73,144 @@ const DocsFileDetailPage: React.FC = () => {
     return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
   };
 
-  const getFileIcon = (contentType: string | undefined) => {
-    if (!contentType) return <FileText style={{ width: 48, height: 48 }} />;
-    if (contentType.startsWith('image/')) return <FileText style={{ width: 48, height: 48 }} />;
-    if (contentType.startsWith('video/')) return <FileText style={{ width: 48, height: 48 }} />;
-    if (contentType.includes('pdf')) return <FileText style={{ width: 48, height: 48 }} />;
-    return <FileText style={{ width: 48, height: 48 }} />;
-  };
-
-  if (loading) {
+  const basicInfoContent = useMemo(() => {
+    if (!file) return null;
     return (
-      <Container
-        maxWidth='lg'
-        sx={{ py: 3 }}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
+          gap: 2,
+        }}
       >
-        <Skeleton
-          variant='rectangular'
-          height={400}
-          sx={{ borderRadius: 2 }}
-        />
-      </Container>
-    );
-  }
-
-  if (!file) {
-    return (
-      <Container
-        maxWidth='lg'
-        sx={{ py: 3 }}
-      >
-        <Paper sx={{ p: 4, textAlign: 'center' }}>
-          <Typography color='text.secondary'>文件不存在或已被删除</Typography>
-          <Button
-            variant='outlined'
-            sx={{ mt: 2 }}
-            onClick={() => navigate('/documents')}
-          >
-            返回文件列表
-          </Button>
-        </Paper>
-      </Container>
-    );
-  }
-
-  return (
-    <Container
-      maxWidth='lg'
-      sx={{ py: 3 }}
-    >
-      <Box sx={{ mb: 3 }}>
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Button
-              variant='text'
-              onClick={() => navigate('/documents')}
-              startIcon={<ArrowLeft style={{ width: 20, height: 20 }} />}
-            >
-              返回
-            </Button>
-            <Box>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 'bold' }}
-              >
-                {file.name}
-              </Typography>
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
-                文件详情信息
-              </Typography>
-            </Box>
-          </Box>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button
-              variant='outlined'
-              startIcon={<Download style={{ width: 18, height: 18 }} />}
-              onClick={() => {
-                addNotification({
-                  title: '下载',
-                  message: '文件下载功能开发中',
-                  type: 'info',
-                });
-              }}
-            >
-              下载
-            </Button>
-            <Button
-              variant='outlined'
-              startIcon={<Edit2 style={{ width: 18, height: 18 }} />}
-              onClick={() => navigate(`/documents/${id}/edit`)}
-            >
-              编辑
-            </Button>
-            <Button
-              variant='outlined'
-              color='error'
-              startIcon={<Trash2 style={{ width: 18, height: 18 }} />}
-              onClick={handleDelete}
-            >
-              删除
-            </Button>
-          </Box>
+        <Box>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>文件名称</InputLabel>
+          <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>{file.name}</Typography>
+        </Box>
+        <Box>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>文件类型</InputLabel>
+          <Typography sx={{ mt: 0.5 }}>{file.content_type || '-'}</Typography>
+        </Box>
+        <Box>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>文件大小</InputLabel>
+          <Typography sx={{ mt: 0.5 }}>{formatFileSize(file.size)}</Typography>
+        </Box>
+        <Box>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>所属文件夹</InputLabel>
+          <Typography sx={{ mt: 0.5 }}>{file.folder_id || '根目录'}</Typography>
+        </Box>
+        <Box>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>创建者</InputLabel>
+          <Typography sx={{ mt: 0.5 }}>{file.created_by || '-'}</Typography>
+        </Box>
+        <Box>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>文件ID</InputLabel>
+          <Typography sx={{ mt: 0.5, fontFamily: 'monospace', fontSize: '0.875rem' }}>
+            {file.id.substring(0, 8)}...
+          </Typography>
         </Box>
       </Box>
+    );
+  }, [file]);
 
-      <Card sx={{ mb: 3 }}>
-        <CardContent sx={{ p: 3 }}>
-          <Typography
-            variant='h6'
-            sx={{ fontWeight: 600, mb: 2 }}
-          >
-            文件信息
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
-          <Grid
-            container
-            spacing={3}
-          >
-            <Grid size={{ xs: 12 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 2,
-                  p: 3,
-                  bgcolor: 'grey.50',
-                  borderRadius: 1,
-                }}
-              >
-                <Box sx={{ color: 'primary.main' }}>{getFileIcon(file.content_type)}</Box>
-                <Box>
-                  <Typography
-                    variant='h6'
-                    sx={{ fontWeight: 500 }}
-                  >
-                    {file.name}
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    {file.content_type || '未知类型'}
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
+  const timeInfoContent = useMemo(() => {
+    if (!file) return null;
+    return (
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
+          gap: 2,
+        }}
+      >
+        <Box>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>创建时间</InputLabel>
+          <Typography sx={{ mt: 0.5 }}>{formatDate(file.created_at)}</Typography>
+        </Box>
+        <Box>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>更新时间</InputLabel>
+          <Typography sx={{ mt: 0.5 }}>{formatDate(file.updated_at)}</Typography>
+        </Box>
+      </Box>
+    );
+  }, [file]);
 
-      <Card sx={{ mb: 3 }}>
-        <CardContent sx={{ p: 3 }}>
-          <Typography
-            variant='h6'
-            sx={{ fontWeight: 600, mb: 2 }}
-          >
-            文件属性
-          </Typography>
-          <Divider sx={{ mb: 2 }} />
-          <Grid
-            container
-            spacing={3}
-          >
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <FileText style={{ width: 18, height: 18, color: 'grey.500' }} />
-                <Box>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    文件大小
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ fontWeight: 500 }}
-                  >
-                    {formatFileSize(file.size)}
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Folder style={{ width: 18, height: 18, color: 'grey.500' }} />
-                <Box>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    所属文件夹
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ fontWeight: 500 }}
-                  >
-                    {file.folder_id || '根目录'}
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Calendar style={{ width: 18, height: 18, color: 'grey.500' }} />
-                <Box>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    创建时间
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ fontWeight: 500 }}
-                  >
-                    {formatDate(file.created_at)}
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Calendar style={{ width: 18, height: 18, color: 'grey.500' }} />
-                <Box>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    更新时间
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ fontWeight: 500 }}
-                  >
-                    {formatDate(file.updated_at)}
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <User style={{ width: 18, height: 18, color: 'grey.500' }} />
-                <Box>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    创建者
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ fontWeight: 500 }}
-                  >
-                    {file.created_by || '-'}
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
-    </Container>
+  const footerSection = useMemo<SectionConfig>(() => {
+    if (!file) return { id: 'footer', content: null };
+    return {
+      id: 'footer',
+      title: '其他信息',
+      content: (
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
+            gap: 2,
+          }}
+        >
+          <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
+            <Typography variant='body2' color='text.secondary'>文件ID</Typography>
+            <Typography sx={{ fontWeight: 'medium', mt: 0.5, fontFamily: 'monospace' }}>
+              {file.id.substring(0, 8)}...
+            </Typography>
+          </Box>
+          <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
+            <Typography variant='body2' color='text.secondary'>文件类型</Typography>
+            <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>{file.content_type || '-'}</Typography>
+          </Box>
+          <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
+            <Typography variant='body2' color='text.secondary'>文件大小</Typography>
+            <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>{formatFileSize(file.size)}</Typography>
+          </Box>
+        </Box>
+      ),
+    };
+  }, [file]);
+
+  const tabs = useMemo<TabConfig[]>(
+    () => [
+      { id: 'basic', label: '基本信息', content: basicInfoContent || <></> },
+      { id: 'time', label: '时间信息', content: timeInfoContent || <></> },
+    ],
+    [basicInfoContent, timeInfoContent]
+  );
+
+  const infoCard = useMemo(
+    () => ({
+      avatar: <FileText size={32} color='#1976d2' />,
+      title: file?.name,
+      subtitle: file?.content_type || undefined,
+      tags: [formatFileSize(file?.size) || '-'],
+    }),
+    [file]
+  );
+
+  return (
+    <>
+      <DetailPageTemplate
+        title='文件详情'
+        subtitle='查看文件详细信息'
+        backHref='/documents'
+        loading={loading}
+        error={errorMessage}
+        onEdit={() => navigate(`/documents/${id}/edit`)}
+        onDelete={() => setDeleteDialogOpen(true)}
+        onDownload={() => {
+          success('文件下载功能开发中');
+        }}
+        infoCard={infoCard}
+        tabs={tabs}
+        sections={[footerSection]}
+      />
+      <ConfirmDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+        onConfirm={handleDelete}
+        title='确认删除'
+        message='确定要删除此文件吗？'
+        danger
+      />
+    </>
   );
 };
 

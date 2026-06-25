@@ -4,7 +4,7 @@ import { Button } from '@mui/material';
 import type { ColumnDef } from '@tanstack/react-table';
 import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
 
-import { DataTable } from '@/components/DataTable';
+import { DataTable } from '@/components/common/DataTable';
 import { flowApi, type Workflow } from '@/api/flow';
 import { logger } from '@/utils/logger';
 

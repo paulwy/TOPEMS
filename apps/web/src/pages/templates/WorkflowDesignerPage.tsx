@@ -20,7 +20,8 @@ import { useAppStore } from '../../store';
 import type { Workflow, CreateWorkflowRequest, UpdateWorkflowRequest } from '@/api/flow';
 import { flowApi } from '@/api/flow';
 import { apiLogger } from '@/utils/logger';
-import { Save, ArrowLeft } from 'lucide-react';
+import { Save } from 'lucide-react';
+import BackButton from '@/components/common/BackButton';
 
 const WorkflowDesignerPage: React.FC = () => {
   const navigate = useNavigate();
@@ -243,13 +244,10 @@ const WorkflowDesignerPage: React.FC = () => {
               spacing={2}
               sx={{ alignItems: 'center' }}
             >
-              <Button
+              <BackButton
                 variant='text'
-                onClick={() => navigate('/flow/definitions')}
-                startIcon={<ArrowLeft size={20} />}
-              >
-                返回
-              </Button>
+                fallback='/flow/definitions'
+              />
               <Box>
                 <Typography
                   variant='h6'

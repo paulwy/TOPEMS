@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   Box,
-  ChevronLeft,
   Plus,
   Trash2,
   FileText,
@@ -11,8 +10,7 @@ import {
   Eye,
   RefreshCw,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { DataExport } from '@/components/common';
+import { DataExport, BackButton } from '@/components/common';
 import { ListPageTemplate } from '@/components/templates';
 import type { ColumnDef, RowAction, FilterConfig } from '@/components/templates';
 import { StatCard, StatCardGroup } from '@/components/mui';
@@ -35,7 +33,6 @@ import {
   Box as MuiBox,
   Typography,
   Stack,
-  IconButton,
   CircularProgress,
 } from '@mui/material';
 import { Button } from '@mui/material';
@@ -55,7 +52,6 @@ interface GetInvoiceListParams {
 }
 
 const FinanceInvoicePage: React.FC = () => {
-  const navigate = useNavigate();
   const { success, error, notifications, hideNotification } = useNotification();
 
   const [loading, setLoading] = useState(false);
@@ -481,9 +477,7 @@ const FinanceInvoicePage: React.FC = () => {
               sx={{ alignItems: 'center' }}
               spacing={2}
             >
-              <IconButton onClick={() => navigate('/dashboard')}>
-                <ChevronLeft sx={{ width: 20, height: 20 }} />
-              </IconButton>
+              <BackButton href='/dashboard' />
               <MuiBox>
                 <Typography
                   variant='h5'

@@ -2256,7 +2256,7 @@ const registerDefaultModules = () => {
       {
         code: 'srm',
         label: '供应商管理',
-        icon: 'Users',
+        icon: 'Handshake',
         path: '/srm',
         order: 23,
         permission: 'srm:read',
@@ -2278,13 +2278,38 @@ const registerDefaultModules = () => {
         path: '/srm/suppliers',
         order: 1,
         permission: 'srm:read',
+        children: [
+          {
+            code: 'srm-supplier-detail',
+            label: '供应商详情',
+            icon: 'User',
+            path: '/srm/suppliers/:id',
+            permission: 'srm:read',
+          },
+        ],
       },
       {
         code: 'srm-evaluations',
         label: '供应商评估',
-        icon: 'Star',
+        icon: 'Award',
         path: '/srm/evaluations',
         order: 2,
+        permission: 'srm:read',
+      },
+      {
+        code: 'srm-performance',
+        label: '绩效报表',
+        icon: 'BarChart3',
+        path: '/srm/performance',
+        order: 3,
+        permission: 'srm:read',
+      },
+      {
+        code: 'srm-sourcing',
+        label: '寻源管理',
+        icon: 'Target',
+        path: '/srm/sourcing',
+        order: 4,
         permission: 'srm:read',
       },
       {
@@ -2292,7 +2317,7 @@ const registerDefaultModules = () => {
         label: '采购订单',
         icon: 'ShoppingCart',
         path: '/srm/orders',
-        order: 3,
+        order: 5,
         permission: 'srm:read',
       },
       {
@@ -2300,7 +2325,7 @@ const registerDefaultModules = () => {
         label: '合同管理',
         icon: 'FileSignature',
         path: '/srm/contracts',
-        order: 4,
+        order: 6,
         permission: 'srm:read',
       },
       {
@@ -2308,7 +2333,7 @@ const registerDefaultModules = () => {
         label: '财务结算',
         icon: 'Wallet',
         path: '/srm/finance',
-        order: 5,
+        order: 7,
         permission: 'srm:read',
       },
     ],
@@ -2332,6 +2357,12 @@ const registerDefaultModules = () => {
         permission: 'srm:read',
       },
       {
+        code: 'srm-performance',
+        label: '绩效报表',
+        path: '/srm/performance',
+        permission: 'srm:read',
+      },
+      {
         code: 'srm-orders',
         label: '采购订单',
         path: '/srm/orders',
@@ -2352,8 +2383,8 @@ const registerDefaultModules = () => {
     ],
     module_card: {
       code: 'srm',
-      name: '供应商管理',
-      icon: 'Users',
+      name: '供应商关系管理',
+      icon: 'Handshake',
       path: '/srm',
       status: 'online',
       order: 23,
@@ -2380,6 +2411,15 @@ const registerDefaultModules = () => {
         path: '/lims/samples',
         order: 0,
         permission: 'lims:read',
+        children: [
+          {
+            code: 'lims-sample-detail',
+            label: '样品详情',
+            icon: 'FileText',
+            path: '/lims/sample/:id',
+            permission: 'lims:read',
+          },
+        ],
       },
       {
         code: 'lims-processes',
@@ -2396,6 +2436,15 @@ const registerDefaultModules = () => {
         path: '/lims/tasks',
         order: 2,
         permission: 'lims:read',
+        children: [
+          {
+            code: 'lims-task-detail',
+            label: '任务详情',
+            icon: 'FileText',
+            path: '/lims/task/:id',
+            permission: 'lims:read',
+          },
+        ],
       },
       {
         code: 'lims-instruments',
@@ -2404,6 +2453,15 @@ const registerDefaultModules = () => {
         path: '/lims/instruments',
         order: 3,
         permission: 'lims:read',
+        children: [
+          {
+            code: 'lims-instrument-detail',
+            label: '仪器详情',
+            icon: 'FileText',
+            path: '/lims/instrument/:id',
+            permission: 'lims:read',
+          },
+        ],
       },
     ],
     module_tabs: [
@@ -2462,6 +2520,15 @@ const registerDefaultModules = () => {
         path: '/qms/standards',
         order: 0,
         permission: 'qms:read',
+        children: [
+          {
+            code: 'qms-standard-detail',
+            label: '标准详情',
+            icon: 'FileText',
+            path: '/qms/standard/:id',
+            permission: 'qms:read',
+          },
+        ],
       },
       {
         code: 'qms-checks',
@@ -2512,7 +2579,6 @@ const registerDefaultModules = () => {
       {
         code: 'qms-issues',
         label: '不合格品',
-        icon: 'AlertCircle',
         path: '/qms/issues',
         permission: 'qms:read',
       },
@@ -2520,6 +2586,12 @@ const registerDefaultModules = () => {
         code: 'qms-improvements',
         label: '持续改进',
         path: '/qms/improvements',
+        permission: 'qms:read',
+      },
+      {
+        code: 'qms-audit',
+        label: '审核管理',
+        path: '/qms/audit',
         permission: 'qms:read',
       },
     ],
@@ -2553,6 +2625,15 @@ const registerDefaultModules = () => {
         path: '/ehs/hazards',
         order: 0,
         permission: 'ehs:read',
+        children: [
+          {
+            code: 'ehs-hazard-detail',
+            label: '危险源详情',
+            icon: 'AlertCircle',
+            path: '/ehs/hazard/:id',
+            permission: 'ehs:read',
+          },
+        ],
       },
       {
         code: 'ehs-checks',
@@ -2574,8 +2655,16 @@ const registerDefaultModules = () => {
         code: 'ehs-accidents',
         label: '事故记录',
         icon: 'AlertOctagon',
-        path: '/meeting-room',
+        path: '/ehs/accidents',
         order: 3,
+        permission: 'ehs:read',
+      },
+      {
+        code: 'ehs-plan',
+        label: '应急预案',
+        icon: 'FileText',
+        path: '/ehs/plan',
+        order: 4,
         permission: 'ehs:read',
       },
     ],
@@ -2596,6 +2685,12 @@ const registerDefaultModules = () => {
         code: 'ehs-incident',
         label: '事故报告',
         path: '/ehs/incident',
+        permission: 'ehs:read',
+      },
+      {
+        code: 'ehs-plan',
+        label: '应急预案',
+        path: '/ehs/plan',
         permission: 'ehs:read',
       },
     ],

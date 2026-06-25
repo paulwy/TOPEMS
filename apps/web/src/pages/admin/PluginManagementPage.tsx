@@ -1,29 +1,11 @@
-/**
- * Plugin Management Page
- * 插件管理页面
- */
-
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import {
   Box,
-  Typography,
-  Card,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Chip,
-  IconButton,
-  Tooltip,
-  CircularProgress,
-  Alert,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Stack,
   TextField,
   InputAdornment,
   Tabs,
@@ -35,30 +17,33 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
+  Typography,
+  CircularProgress,
+  Alert,
+  Stack,
 } from '@mui/material';
 import { Button } from '@mui/material';
-import { useAppStore } from '@/store';
 import {
   Package,
   Play,
   Square,
   Trash2,
-  RefreshCw,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
   Store,
   Search,
   Download,
   GitBranch,
   Calendar,
   Shield,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
 } from 'lucide-react';
+import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
+import { useAppStore } from '@/store';
 import {
   type Plugin,
   fetchAllPluginInfo,
   PLUGIN_REGISTRY,
-  type PluginRuntimeInfo,
 } from '@/api/plugin';
 import { usePluginStore } from '@/store/pluginStore';
 import { extractErrorMessage } from '@/utils/errors';
@@ -119,7 +104,7 @@ const PLUGIN_CATEGORIES: Record<string, string> = {
   integration: 'System',
 };
 
-export const PluginManagementPage: React.FC = () => {
+const PluginManagementPage: React.FC = () => {
   const {
     installedPlugins,
     healthStatus,
@@ -136,6 +121,8 @@ export const PluginManagementPage: React.FC = () => {
   const addNotification = useAppStore((state) => state.addNotification);
 
   const [plugins, setPlugins] = useState<Plugin[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState('all');
   const [marketplaceOpen, setMarketplaceOpen] = useState(false);
   const [marketplaceTab, setMarketplaceTab] = useState(0);
   const [marketplaceSearch, setMarketplaceSearch] = useState('');
@@ -293,14 +280,14 @@ export const PluginManagementPage: React.FC = () => {
       return health.healthy ? (
         <Chip
           icon={<CheckCircle size={14} />}
-          label='Running'
+          label='运行中'
           color='success'
           size='small'
         />
       ) : (
         <Chip
           icon={<XCircle size={14} />}
-          label='Unhealthy'
+          label='不健康'
           color='error'
           size='small'
         />
@@ -311,7 +298,7 @@ export const PluginManagementPage: React.FC = () => {
         return (
           <Chip
             icon={<CheckCircle size={14} />}
-            label='Running'
+            label='运行中'
             color='success'
             size='small'
           />
@@ -320,7 +307,7 @@ export const PluginManagementPage: React.FC = () => {
         return (
           <Chip
             icon={<XCircle size={14} />}
-            label='Stopped'
+            label='已停止'
             color='error'
             size='small'
           />
@@ -329,7 +316,7 @@ export const PluginManagementPage: React.FC = () => {
         return (
           <Chip
             icon={<AlertCircle size={14} />}
-            label='Unknown'
+            label='未知'
             color='warning'
             size='small'
           />
@@ -367,47 +354,143 @@ export const PluginManagementPage: React.FC = () => {
     ...installedPlugins.map((p) => p.plugin_id),
   ];
 
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 400 }}>
-        <CircularProgress />
-      </Box>
-    );
-  }
+  const filteredPlugins = useMemo(() => {
+    return plugins.filter((plugin) => {
+      const matchesSearch =
+        plugin.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        plugin.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (plugin.description && plugin.description.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchesType = typeFilter === 'all' || plugin.plugin_type === typeFilter;
+      return matchesSearch && matchesType;
+    });
+  }, [plugins, searchQuery, typeFilter]);
+
+  const columns: ColumnDef<Plugin>[] = useMemo(
+    () => [
+      {
+        id: 'name',
+        label: '名称',
+        width: 250,
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Package size={18} />
+            <Box>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                {row.name}
+              </Typography>
+              {row.description && (
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                  sx={{
+                    display: 'block',
+                    maxWidth: 300,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {row.description}
+                </Typography>
+              )}
+            </Box>
+          </Box>
+        ),
+      },
+      {
+        id: 'code',
+        label: '代码',
+        width: 120,
+        render: (row) => <code style={{ fontSize: 12 }}>{row.code}</code>,
+      },
+      {
+        id: 'version',
+        label: '版本',
+        width: 100,
+      },
+      {
+        id: 'plugin_type',
+        label: '类型',
+        width: 100,
+        render: (row) => (
+          <Chip
+            label={row.plugin_type}
+            size='small'
+            variant='outlined'
+          />
+        ),
+      },
+      {
+        id: 'runtime_status',
+        label: '状态',
+        width: 120,
+        render: (row) => getStatusChip(row.runtime_status, row.code),
+      },
+      {
+        id: 'runtime_url',
+        label: '运行地址',
+        width: 200,
+        render: (row) => (
+          <Typography
+            variant='caption'
+            color='text.secondary'
+            sx={{ fontFamily: 'monospace' }}
+          >
+            {row.runtime_url || '-'}
+          </Typography>
+        ),
+      },
+    ],
+    []
+  );
+
+  const rowActions: RowAction<Plugin>[] = [
+    {
+      label: '启用',
+      icon: <Play size={16} />,
+      onClick: (row) => handleEnable(row.code),
+      color: 'success',
+      show: (row) => row.runtime_status !== 'running',
+    },
+    {
+      label: '禁用',
+      icon: <Square size={16} />,
+      onClick: (row) => handleDisable(row.code),
+      color: 'warning',
+      show: (row) => row.runtime_status === 'running',
+    },
+    {
+      label: '卸载',
+      icon: <Trash2 size={16} />,
+      onClick: (row) => handleUninstall(row.code),
+      color: 'error',
+      divider: true,
+    },
+  ];
+
+  const filters = useMemo(
+    () => [
+      {
+        id: 'plugin_type',
+        label: '插件类型',
+        type: 'select' as const,
+        value: typeFilter,
+        options: [
+          { label: '全部类型', value: 'all' },
+          { label: '核心插件', value: 'core' },
+          { label: '业务插件', value: 'business' },
+        ],
+        onChange: (value: string) => setTypeFilter(value),
+      },
+    ],
+    [typeFilter]
+  );
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Package size={24} />
-          <Typography
-            variant='h5'
-            component='h1'
-          >
-            Plugin Management
-          </Typography>
-        </Box>
-        <Stack
-          direction='row'
-          spacing={2}
-        >
-          <Button
-            variant='outlined'
-            startIcon={<Store size={18} />}
-            onClick={handleOpenMarketplace}
-          >
-            Browse Marketplace
-          </Button>
-          <Button
-            variant='outlined'
-            startIcon={<RefreshCw size={18} />}
-            onClick={loadPlugins}
-          >
-            Refresh
-          </Button>
-        </Stack>
-      </Box>
-
       {error && (
         <Alert
           severity='error'
@@ -418,132 +501,37 @@ export const PluginManagementPage: React.FC = () => {
         </Alert>
       )}
 
-      <Card>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Name</TableCell>
-                <TableCell>Code</TableCell>
-                <TableCell>Version</TableCell>
-                <TableCell>Type</TableCell>
-                <TableCell>Status</TableCell>
-                <TableCell>Runtime URL</TableCell>
-                <TableCell align='right'>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {plugins.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={7}
-                    align='center'
-                  >
-                    <Typography
-                      color='text.secondary'
-                      sx={{ py: 4 }}
-                    >
-                      No plugins installed
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                plugins.map((plugin) => (
-                  <TableRow key={plugin.code}>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Package size={18} />
-                        <Box>
-                          <Typography
-                            variant='body2'
-                            sx={{ fontWeight: 500 }}
-                          >
-                            {plugin.name}
-                          </Typography>
-                          {plugin.description && (
-                            <Typography
-                              variant='caption'
-                              color='text.secondary'
-                              sx={{
-                                display: 'block',
-                                maxWidth: 300,
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                              }}
-                            >
-                              {plugin.description}
-                            </Typography>
-                          )}
-                        </Box>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <code style={{ fontSize: 12 }}>{plugin.code}</code>
-                    </TableCell>
-                    <TableCell>{plugin.version}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={plugin.plugin_type}
-                        size='small'
-                        variant='outlined'
-                      />
-                    </TableCell>
-                    <TableCell>{getStatusChip(plugin.runtime_status, plugin.code)}</TableCell>
-                    <TableCell>
-                      <Typography
-                        variant='caption'
-                        color='text.secondary'
-                        sx={{ fontFamily: 'monospace' }}
-                      >
-                        {plugin.runtime_url || '-'}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align='right'>
-                      <Stack
-                        direction='row'
-                        spacing={1}
-                        sx={{ justifyContent: 'flex-end' }}
-                      >
-                        {plugin.runtime_status === 'running' ? (
-                          <Tooltip title='Disable'>
-                            <IconButton
-                              size='small'
-                              color='warning'
-                              onClick={() => handleDisable(plugin.code)}
-                            >
-                              <Square size={18} />
-                            </IconButton>
-                          </Tooltip>
-                        ) : (
-                          <Tooltip title='Enable'>
-                            <IconButton
-                              size='small'
-                              color='success'
-                              onClick={() => handleEnable(plugin.code)}
-                            >
-                              <Play size={18} />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                        <Tooltip title='Uninstall'>
-                          <IconButton
-                            size='small'
-                            color='error'
-                            onClick={() => handleUninstall(plugin.code)}
-                          >
-                            <Trash2 size={18} />
-                          </IconButton>
-                        </Tooltip>
-                      </Stack>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Card>
+      <ListPageTemplate
+        title='插件管理'
+        subtitle='管理系统插件，启用、禁用或卸载插件'
+        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '系统管理' }, { label: '插件管理' }]}
+        columns={columns}
+        data={filteredPlugins}
+        loading={loading}
+        searchable
+        searchPlaceholder='搜索插件名称或代码...'
+        searchValue={searchQuery}
+        onSearch={setSearchQuery}
+        filters={filters}
+        filtersValue={{ plugin_type: typeFilter }}
+        onFilterChange={(f) => {
+          if (f.plugin_type !== undefined) setTypeFilter(f.plugin_type);
+        }}
+        actions={[
+          {
+            label: '浏览市场',
+            icon: <Store size={16} />,
+            onClick: handleOpenMarketplace,
+            variant: 'outlined',
+          },
+        ]}
+        rowActions={rowActions}
+        onRefresh={loadPlugins}
+        showRowNumber
+        columnConfigurable
+        persistColumnConfig
+        columnConfigStorageKey='admin-plugins-columns'
+      />
 
       <Dialog
         open={confirmDialog.open}
@@ -555,14 +543,14 @@ export const PluginManagementPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setConfirmDialog((prev) => ({ ...prev, open: false }))}>
-            Cancel
+            取消
           </Button>
           <Button
             onClick={confirmDialog.action}
             variant='contained'
             color='error'
           >
-            Confirm
+            确认
           </Button>
         </DialogActions>
       </Dialog>
@@ -576,7 +564,7 @@ export const PluginManagementPage: React.FC = () => {
         <DialogTitle>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Store size={24} />
-            Plugin Marketplace
+            插件市场
           </Box>
         </DialogTitle>
         <DialogContent>
@@ -587,13 +575,13 @@ export const PluginManagementPage: React.FC = () => {
                 sx={{ mb: 3 }}
               >
                 <Step>
-                  <StepLabel>Confirm</StepLabel>
+                  <StepLabel>确认</StepLabel>
                 </Step>
                 <Step>
-                  <StepLabel>Install</StepLabel>
+                  <StepLabel>安装</StepLabel>
                 </Step>
                 <Step>
-                  <StepLabel>Complete</StepLabel>
+                  <StepLabel>完成</StepLabel>
                 </Step>
               </Stepper>
 
@@ -603,17 +591,16 @@ export const PluginManagementPage: React.FC = () => {
                     variant='h6'
                     gutterBottom
                   >
-                    Confirm Installation
+                    确认安装
                   </Typography>
                   <Typography
                     variant='body1'
                     sx={{ mb: 2 }}
                   >
-                    You are about to install the following plugin:
+                    您即将安装以下插件：
                   </Typography>
-                  <Card
-                    variant='outlined'
-                    sx={{ p: 2, mb: 2 }}
+                  <Box
+                    sx={{ p: 2, mb: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}
                   >
                     <Typography
                       variant='subtitle1'
@@ -635,23 +622,23 @@ export const PluginManagementPage: React.FC = () => {
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                         <GitBranch size={14} />
                         <Typography variant='caption'>
-                          Version: {installingPlugin.latest_version}
+                          版本: {installingPlugin.latest_version}
                         </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                         <Download size={14} />
                         <Typography variant='caption'>
-                          Downloads: {installingPlugin.downloads}
+                          下载量: {installingPlugin.downloads}
                         </Typography>
                       </Box>
                     </Stack>
-                  </Card>
+                  </Box>
                   <Typography
                     variant='body2'
                     color='text.secondary'
                     sx={{ mb: 2 }}
                   >
-                    This plugin will request the following permissions:
+                    此插件将请求以下权限：
                   </Typography>
                   <List dense>
                     {installingPlugin.permissions.map((perm) => (
@@ -680,7 +667,7 @@ export const PluginManagementPage: React.FC = () => {
                         size={48}
                         sx={{ mb: 2 }}
                       />
-                      <Typography>Installing {installingPlugin?.name}...</Typography>
+                      <Typography>正在安装 {installingPlugin?.name}...</Typography>
                     </>
                   ) : installError ? (
                     <Alert
@@ -704,10 +691,10 @@ export const PluginManagementPage: React.FC = () => {
                     variant='h6'
                     gutterBottom
                   >
-                    Installation Complete!
+                    安装完成！
                   </Typography>
                   <Typography color='text.secondary'>
-                    {installingPlugin?.name} has been installed successfully.
+                    {installingPlugin?.name} 已成功安装。
                   </Typography>
                 </Box>
               )}
@@ -722,7 +709,7 @@ export const PluginManagementPage: React.FC = () => {
                     onClick={handleInstallBack}
                     disabled={installLoading}
                   >
-                    Back
+                    上一步
                   </Button>
                 )}
                 {installStep < 2 ? (
@@ -731,14 +718,14 @@ export const PluginManagementPage: React.FC = () => {
                     onClick={handleInstallNext}
                     disabled={installLoading}
                   >
-                    {installStep === 0 ? 'Next' : 'Install'}
+                    {installStep === 0 ? '下一步' : '安装'}
                   </Button>
                 ) : (
                   <Button
                     variant='contained'
                     onClick={handleInstallNext}
                   >
-                    Done
+                    完成
                   </Button>
                 )}
               </Stack>
@@ -747,7 +734,7 @@ export const PluginManagementPage: React.FC = () => {
             <Box>
               <TextField
                 fullWidth
-                placeholder='Search plugins...'
+                placeholder='搜索插件...'
                 value={marketplaceSearch}
                 onChange={(e) => setMarketplaceSearch(e.target.value)}
                 sx={{ mb: 2 }}
@@ -766,10 +753,10 @@ export const PluginManagementPage: React.FC = () => {
                 onChange={(_, v) => setMarketplaceTab(v)}
                 sx={{ mb: 2 }}
               >
-                <Tab label='All Plugins' />
-                <Tab label='Business' />
-                <Tab label='Analytics' />
-                <Tab label='System' />
+                <Tab label='全部插件' />
+                <Tab label='业务插件' />
+                <Tab label='分析插件' />
+                <Tab label='系统插件' />
               </Tabs>
               <List>
                 {filteredMarketplace
@@ -788,7 +775,7 @@ export const PluginManagementPage: React.FC = () => {
                         secondaryAction={
                           isInstalled ? (
                             <Chip
-                              label='Installed'
+                              label='已安装'
                               color='success'
                               size='small'
                             />
@@ -799,7 +786,7 @@ export const PluginManagementPage: React.FC = () => {
                               startIcon={<Download size={14} />}
                               onClick={() => handleInstallPlugin(plugin)}
                             >
-                              Install
+                              安装
                             </Button>
                           )
                         }
@@ -851,7 +838,7 @@ export const PluginManagementPage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseMarketplace}>Close</Button>
+          <Button onClick={handleCloseMarketplace}>关闭</Button>
         </DialogActions>
       </Dialog>
     </Box>

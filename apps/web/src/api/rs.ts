@@ -3,6 +3,21 @@ import type { ApiResponse } from './client';
 import config from '../config/runtime';
 
 // 项目相关类型
+export interface TeamMember {
+  id: string;
+  name?: string;
+  role?: string;
+  user_id?: string;
+}
+
+export interface ProjectConfig {
+  [key: string]: unknown;
+}
+
+export interface BenefitTarget {
+  [key: string]: unknown;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -12,7 +27,7 @@ export interface Project {
   project_type: string;
   status: string;
   leader: string;
-  team_members?: any;
+  team_members?: TeamMember[];
   start_date: string;
   end_date?: string;
   budget?: number;
@@ -20,8 +35,8 @@ export interface Project {
   created_by: string;
   created_at: string;
   updated_at: string;
-  project_config?: any;
-  benefit_target?: any;
+  project_config?: ProjectConfig;
+  benefit_target?: BenefitTarget;
   risk_level?: string;
   priority?: number;
   tags?: string[];
@@ -37,12 +52,12 @@ export interface CreateProjectRequest {
   description?: string;
   project_type: string;
   leader: string;
-  team_members?: any;
+  team_members?: TeamMember[];
   start_date: string;
   end_date?: string;
   budget?: number;
-  project_config?: any;
-  benefit_target?: any;
+  project_config?: ProjectConfig;
+  benefit_target?: BenefitTarget;
   risk_level?: string;
   priority?: number;
   tags?: string[];
@@ -55,12 +70,12 @@ export interface UpdateProjectRequest {
   description?: string;
   status?: string;
   leader?: string;
-  team_members?: any;
+  team_members?: TeamMember[];
   end_date?: string;
   budget?: number;
   progress?: number;
-  project_config?: any;
-  benefit_target?: any;
+  project_config?: ProjectConfig;
+  benefit_target?: BenefitTarget;
   risk_level?: string;
   priority?: number;
   tags?: string[];
@@ -71,6 +86,10 @@ export interface UpdateProjectRequest {
 }
 
 // 试验相关类型
+export interface ExperimentResult {
+  [key: string]: unknown;
+}
+
 export interface Experiment {
   id: string;
   name: string;
@@ -82,7 +101,7 @@ export interface Experiment {
   status: string;
   objective: string;
   method: string;
-  results: any;
+  results: ExperimentResult;
   conclusions?: string;
   experimenter: string;
   batch_number?: string;
@@ -113,7 +132,7 @@ export interface CreateExperimentRequest {
 export interface UpdateExperimentRequest {
   name?: string;
   status?: string;
-  results?: any;
+  results?: ExperimentResult;
   conclusions?: string;
   completed_at?: string;
   batch_number?: string;
@@ -246,14 +265,52 @@ export interface BatchOperationResult {
 }
 
 // 项目仪表盘相关
+export interface DashboardProgress {
+  current: number;
+  total: number;
+  percentage: number;
+}
+
+export interface DashboardBudget {
+  total: number;
+  spent: number;
+  remaining: number;
+  percentage: number;
+}
+
+export interface DashboardMember {
+  id: string;
+  name: string;
+  role: string;
+  avatar?: string;
+}
+
+export interface DashboardEquipment {
+  id: string;
+  name: string;
+  status: string;
+  usage_rate?: number;
+}
+
+export interface DashboardBenefit {
+  [key: string]: unknown;
+}
+
+export interface DashboardRisk {
+  id: string;
+  name: string;
+  level: string;
+  status: string;
+}
+
 export interface ProjectDashboardResponse {
   project: Project;
-  progress: any;
-  budget: any;
-  members: any[];
-  equipment: any[];
-  benefits: any;
-  risks: any[];
+  progress: DashboardProgress;
+  budget: DashboardBudget;
+  members: DashboardMember[];
+  equipment: DashboardEquipment[];
+  benefits: DashboardBenefit;
+  risks: DashboardRisk[];
 }
 
 // 甘特图相关
@@ -276,11 +333,19 @@ export interface GanttMilestone {
   status: string;
 }
 
+export interface GanttResourceAssignment {
+  task_id: string;
+  task_name: string;
+  start_date?: string;
+  end_date?: string;
+  allocation?: number;
+}
+
 export interface GanttResource {
   id: string;
   resource_type: string;
   name: string;
-  assignments: any[];
+  assignments: GanttResourceAssignment[];
 }
 
 export interface ProjectGanttResponse {
@@ -345,7 +410,7 @@ export const rsApi = {
   },
 
   exportProjects: async (): Promise<Blob> => {
-    const baseURL = (apiClient.rs as any).defaults?.baseURL || config.services.rs;
+    const baseURL = config.services.rs;
     return downloadBlob(baseURL, '/api/rs/projects/export');
   },
 
@@ -868,8 +933,8 @@ export interface AuditLog {
   entity_ids?: string[] | null;
   user_id?: string;
   user_name?: string;
-  request_details?: any;
-  response_details?: any;
+  request_details?: Record<string, unknown>;
+  response_details?: Record<string, unknown>;
   status: 'success' | 'partial' | 'error';
   error_message?: string;
   ip_address?: string;
@@ -947,7 +1012,7 @@ export const auditRsApi = {
         url += `?${queryString}`;
       }
     }
-    const baseURL = (apiClient.rs as any).defaults?.baseURL || config.services.rs;
+    const baseURL = config.services.rs;
     return downloadBlob(baseURL, url);
   },
 };
@@ -1065,7 +1130,7 @@ export const materialApi = {
   },
 
   exportMaterials: async (): Promise<Blob> => {
-    const baseURL = (apiClient.rs as any).defaults?.baseURL || config.services.rs;
+    const baseURL = config.services.rs;
     return downloadBlob(baseURL, '/api/rs/materials/export');
   },
 };

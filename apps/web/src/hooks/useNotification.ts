@@ -1,13 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useCallback } from 'react';
+import { useAppStore, type Notification } from '@/store';
 
 export type NotificationType = 'success' | 'error' | 'info' | 'warning';
-
-export interface Notification {
-  id: string;
-  type: NotificationType;
-  message: string;
-  duration?: number;
-}
 
 export interface NotificationOptions {
   title?: string;
@@ -16,65 +10,104 @@ export interface NotificationOptions {
   duration?: number;
 }
 
-export function useNotification() {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+export interface UseNotificationResult {
+  notifications: Notification[];
+  success: (message: string, titleOrDuration?: string | number, duration?: number) => string;
+  error: (message: string, titleOrDuration?: string | number, duration?: number) => string;
+  info: (message: string, titleOrDuration?: string | number, duration?: number) => string;
+  warning: (message: string, titleOrDuration?: string | number, duration?: number) => string;
+  showNotification: (type: NotificationType, message: string, titleOrDuration?: string | number, duration?: number) => string;
+  hideNotification: (id: string) => void;
+  addNotification: (options: NotificationOptions) => string;
+  clearNotifications: () => void;
+}
+
+function parseArgs(
+  message: string,
+  titleOrDuration?: string | number,
+  duration?: number
+): { title?: string; duration?: number } {
+  if (typeof titleOrDuration === 'string') {
+    return { title: titleOrDuration, duration };
+  }
+  if (typeof titleOrDuration === 'number') {
+    return { duration: titleOrDuration };
+  }
+  return {};
+}
+
+export function useNotification(): UseNotificationResult {
+  const notifications = useAppStore((state) => state.notifications);
+  const addNotificationStore = useAppStore((state) => state.addNotification);
+  const removeNotification = useAppStore((state) => state.removeNotification);
+  const clearNotifications = useAppStore((state) => state.clearNotifications);
 
   const showNotification = useCallback(
-    (type: NotificationType, message: string, duration: number = 3000) => {
-      const id = Date.now().toString();
-      setNotifications((prev) => [...prev, { id, type, message, duration }]);
-
-      if (duration > 0) {
-        setTimeout(() => {
-          setNotifications((prev) => prev.filter((n) => n.id !== id));
-        }, duration);
-      }
-
-      return id;
+    (
+      type: NotificationType,
+      message: string,
+      titleOrDuration?: string | number,
+      duration?: number
+    ): string => {
+      const { title, duration: dur } = parseArgs(message, titleOrDuration, duration);
+      return addNotificationStore({
+        title,
+        message,
+        type,
+        duration: dur,
+      });
     },
-    []
+    [addNotificationStore]
   );
 
-  const hideNotification = useCallback((id: string) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-  }, []);
+  const hideNotification = useCallback(
+    (id: string) => {
+      removeNotification(id);
+    },
+    [removeNotification]
+  );
 
   const success = useCallback(
-    (message: string, duration?: number) => {
-      return showNotification('success', message, duration);
+    (message: string, titleOrDuration?: string | number, duration?: number) => {
+      return showNotification('success', message, titleOrDuration, duration);
     },
     [showNotification]
   );
 
   const error = useCallback(
-    (message: string, duration?: number) => {
-      return showNotification('error', message, duration);
+    (message: string, titleOrDuration?: string | number, duration?: number) => {
+      return showNotification('error', message, titleOrDuration, duration);
     },
     [showNotification]
   );
 
   const info = useCallback(
-    (message: string, duration?: number) => {
-      return showNotification('info', message, duration);
+    (message: string, titleOrDuration?: string | number, duration?: number) => {
+      return showNotification('info', message, titleOrDuration, duration);
     },
     [showNotification]
   );
 
   const warning = useCallback(
-    (message: string, duration?: number) => {
-      return showNotification('warning', message, duration);
+    (message: string, titleOrDuration?: string | number, duration?: number) => {
+      return showNotification('warning', message, titleOrDuration, duration);
     },
     [showNotification]
   );
 
-  const addNotification = useCallback(
+  const addNotificationWrapper = useCallback(
     (options: NotificationOptions) => {
-      return showNotification(options.type, options.message, options.duration);
+      return addNotificationStore({
+        title: options.title,
+        message: options.message,
+        type: options.type,
+        duration: options.duration,
+      });
     },
-    [showNotification]
+    [addNotificationStore]
   );
 
-  const result = {
+  return {
     notifications,
     showNotification,
     hideNotification,
@@ -82,7 +115,9 @@ export function useNotification() {
     error,
     info,
     warning,
+    addNotification: addNotificationWrapper,
+    clearNotifications,
   };
-
-  return Object.assign(addNotification, result);
 }
+
+export default useNotification;

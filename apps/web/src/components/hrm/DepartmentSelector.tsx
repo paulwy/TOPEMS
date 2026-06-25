@@ -3,8 +3,8 @@ import { Box, Typography, TextField, Paper } from '@mui/material';
 import { Button } from '@mui/material';
 import { Building2, ChevronRight } from 'lucide-react';
 import { type Department } from '@/api/hrm';
-import type { TreeNode } from '../TreeView';
-import TreeView from '../TreeView';
+import type { TreeNode } from '../common/TreeView';
+import TreeView from '../common/TreeView';
 
 interface DepartmentSelectorProps {
   departments: Department[];
@@ -98,7 +98,7 @@ export const DepartmentSelector: React.FC<DepartmentSelectorProps> = ({
         <TreeView
           data={treeData}
           onSelect={onSelect}
-          selectedId={selectedId}
+          selected={selectedId}
         />
       )}
     </Box>

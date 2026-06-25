@@ -1,4 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Box,
+  Stack,
+  Typography,
+  TextField,
+  FormLabel,
+  Chip,
+} from '@mui/material';
+import { Button } from '@mui/material';
 import {
   CheckCircle,
   XCircle,
@@ -6,51 +19,25 @@ import {
   AlertCircle,
   User,
   Users,
-  Search,
-  Loader2,
+  FileText,
   Eye,
   MessageSquare,
-  ChevronRight,
-  List,
-  FileText,
-  Play,
-  CheckCircle2,
+  Loader2,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import type { Approval, WorkflowInstance } from '@/api/flow';
-import { flowApi, ApprovalRecord } from '@/api/flow';
+import type { Approval } from '@/api/flow';
+import { flowApi } from '@/api/flow';
 import { useAppStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
-import {
-  TextField,
-  Chip,
-  Card,
-  CardContent,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Box,
-  Stack,
-  Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  FormLabel,
-  IconButton,
-  Tabs,
-  Tab,
-  Divider,
-} from '@mui/material';
-import { Button } from '@mui/material';
+import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
+import type { ColumnDef, RowAction, FilterConfig } from '@/components/templates/ListPageTemplate';
 
 const FlowApprovalPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
+  const user = useAppStore((state) => state.user);
+
   const [approvals, setApprovals] = useState<Approval[]>([]);
-  const [instances, setInstances] = useState<WorkflowInstance[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('pending');
@@ -60,6 +47,7 @@ const FlowApprovalPage: React.FC = () => {
   const [approvalAction, setApprovalAction] = useState<'approve' | 'reject'>('approve');
   const [comment, setComment] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [error, setError] = useState<string | undefined>();
 
   useEffect(() => {
     loadData();
@@ -69,6 +57,7 @@ const FlowApprovalPage: React.FC = () => {
   const loadData = async () => {
     try {
       setLoading(true);
+      setError(undefined);
 
       const approvalParams = activeTab === 'pending' ? { status: 'pending' } : {};
 
@@ -80,17 +69,9 @@ const FlowApprovalPage: React.FC = () => {
       } else {
         setApprovals([]);
       }
-
-      const instanceResponse = await flowApi.listInstances();
-      if (instanceResponse.success && instanceResponse.data) {
-        const data = instanceResponse.data as any;
-        const instanceList = Array.isArray(data) ? data : data.items || [];
-        setInstances(instanceList);
-      } else {
-        setInstances([]);
-      }
     } catch (err: unknown) {
       apiLogger.error('加载数据失败:', err);
+      setError('加载数据失败');
       addNotification({
         title: '错误',
         message: '加载数据失败',
@@ -117,8 +98,8 @@ const FlowApprovalPage: React.FC = () => {
       const response = await flowApi.processApproval(selectedApproval.id, {
         action: approvalAction,
         comment: comment || undefined,
-        actor_id: 'system-user-id',
-        actor_name: 'Current User',
+        actor_id: user?.id || 'system-user-id',
+        actor_name: user?.fullName || user?.username || 'Current User',
       });
 
       if (response.success) {
@@ -153,33 +134,13 @@ const FlowApprovalPage: React.FC = () => {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'approved':
-        return (
-          <CheckCircle
-            size={20}
-            style={{ color: 'success.dark' }}
-          />
-        );
+        return <CheckCircle size={16} style={{ color: '#16a34a' }} />;
       case 'rejected':
-        return (
-          <XCircle
-            size={20}
-            style={{ color: 'error.dark' }}
-          />
-        );
+        return <XCircle size={16} style={{ color: '#dc2626' }} />;
       case 'pending':
-        return (
-          <Clock
-            size={20}
-            style={{ color: '#ca8a04' }}
-          />
-        );
+        return <Clock size={16} style={{ color: '#ca8a04' }} />;
       default:
-        return (
-          <AlertCircle
-            size={20}
-            style={{ color: 'text.secondary' }}
-          />
-        );
+        return <AlertCircle size={16} style={{ color: '#6b7280' }} />;
     }
   };
 
@@ -205,410 +166,246 @@ const FlowApprovalPage: React.FC = () => {
     }
   };
 
-  const filteredApprovals = approvals.filter((a) => {
-    const matchesSearch = a.task_name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || a.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  const filteredApprovals = useMemo(() => {
+    return approvals.filter((a) => {
+      const matchesSearch = a.task_name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || a.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [approvals, searchTerm, statusFilter]);
 
-  const pendingCount = approvals.filter((a) => a.status === 'pending').length;
+  const pendingCount = useMemo(() => approvals.filter((a) => a.status === 'pending').length, [approvals]);
+
+  const columns = useMemo<ColumnDef<Approval>[]>(
+    () => [
+      {
+        id: 'task_name',
+        label: '任务名称',
+        render: (row) => (
+          <Typography variant='subtitle1' sx={{ fontWeight: 600 }}>
+            {row.task_name}
+          </Typography>
+        ),
+      },
+      {
+        id: 'status',
+        label: '状态',
+        width: 100,
+        render: (row) => (
+          <Stack direction='row' spacing={0.5} sx={{ alignItems: 'center' }}>
+            {getStatusIcon(row.status)}
+            <Chip
+              size='small'
+              icon={getStatusIcon(row.status)}
+              label={getStatusText(row.status)}
+              color={getStatusColor(row.status)}
+            />
+          </Stack>
+        ),
+      },
+      {
+        id: 'node_id',
+        label: '节点',
+        width: 120,
+        render: (row) =>
+          row.node_id ? (
+            <Stack direction='row' spacing={0.5} sx={{ alignItems: 'center' }}>
+              <FileText size={14} style={{ color: 'text.secondary' }} />
+              <Typography variant='body2' sx={{ color: 'grey.600' }}>
+                {row.node_id}
+              </Typography>
+            </Stack>
+          ) : (
+            '-'
+          ),
+      },
+      {
+        id: 'approval_type',
+        label: '审批类型',
+        width: 100,
+        render: (row) =>
+          row.approval_type ? (
+            <Stack direction='row' spacing={0.5} sx={{ alignItems: 'center' }}>
+              <Users size={14} style={{ color: 'text.secondary' }} />
+              <Typography variant='body2' sx={{ color: 'grey.600' }}>
+                {row.approval_type === 'single'
+                  ? '单人审批'
+                  : row.approval_type === 'counter'
+                    ? '会签审批'
+                    : '或签审批'}
+              </Typography>
+            </Stack>
+          ) : (
+            '-'
+          ),
+      },
+      {
+        id: 'comment',
+        label: '审批意见',
+        render: (row) =>
+          row.comment ? (
+            <Stack direction='row' spacing={0.5} sx={{ alignItems: 'flex-start' }}>
+              <MessageSquare size={14} style={{ color: 'text.disabled', marginTop: 2 }} />
+              <Typography variant='body2' sx={{ color: 'grey.500', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {row.comment}
+              </Typography>
+            </Stack>
+          ) : (
+            '-'
+          ),
+      },
+      {
+        id: 'created_at',
+        label: '创建时间',
+        width: 170,
+        sortable: true,
+        render: (row) => (
+          <Typography variant='body2' sx={{ color: 'grey.500' }}>
+            {new Date(row.created_at).toLocaleString()}
+          </Typography>
+        ),
+      },
+      {
+        id: 'approved_at',
+        label: '处理时间',
+        width: 170,
+        render: (row) =>
+          row.approved_at ? (
+            <Typography variant='body2' sx={{ color: 'grey.500' }}>
+              {new Date(row.approved_at).toLocaleString()}
+            </Typography>
+          ) : (
+            '-'
+          ),
+      },
+    ],
+    []
+  );
+
+  const rowActions: RowAction<Approval>[] = [
+    {
+      label: '查看详情',
+      icon: <Eye size={16} />,
+      onClick: (row) => navigate(`/flow/approvals/${row.id}`),
+      color: 'primary',
+    },
+    {
+      label: '通过',
+      icon: <CheckCircle size={16} />,
+      onClick: (row) => {
+        setSelectedApproval(row);
+        setApprovalAction('approve');
+        setComment('');
+        setShowApprovalModal(true);
+      },
+      color: 'success',
+      show: (row) => row.status === 'pending',
+    },
+    {
+      label: '拒绝',
+      icon: <XCircle size={16} />,
+      onClick: (row) => {
+        setSelectedApproval(row);
+        setApprovalAction('reject');
+        setComment('');
+        setShowApprovalModal(true);
+      },
+      color: 'error',
+      show: (row) => row.status === 'pending',
+    },
+  ];
+
+  const filters: FilterConfig[] = [
+    {
+      id: 'status',
+      label: '状态',
+      type: 'select',
+      options: [
+        { label: '待审批', value: 'pending' },
+        { label: '全部', value: 'all' },
+      ],
+      value: statusFilter,
+      onChange: (value) => setStatusFilter(value || 'pending'),
+    },
+  ];
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50', p: 3 }}>
-      <Box sx={{ bgcolor: 'white', borderRadius: 1, boxShadow: 1, p: 3, mb: 3 }}>
-        <Stack
-          direction='row'
-          sx={{ alignItems: 'center' }}
-          spacing={2}
-        >
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              bgcolor: 'primary.light',
-              borderRadius: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <CheckCircle
-              size={24}
-              style={{ color: 'primary.light' }}
-            />
-          </Box>
-          <Box>
-            <Typography
-              variant='h5'
-              sx={{ fontWeight: 700 }}
+    <>
+      <ListPageTemplate
+        title='审批管理'
+        subtitle={pendingCount > 0 ? `${pendingCount} 项待审批` : '暂无待审批项'}
+        columns={columns}
+        data={filteredApprovals}
+        loading={loading}
+        error={error}
+        rowActions={rowActions}
+        filters={activeTab === 'pending' ? filters : undefined}
+        onRefresh={loadData}
+        searchable
+        searchPlaceholder='搜索审批任务...'
+        searchValue={searchTerm}
+        onSearch={setSearchTerm}
+        headerContent={
+          <Box sx={{ display: 'flex', gap: 1, mb: 3 }}>
+            <Button
+              variant={activeTab === 'pending' ? 'contained' : 'outlined'}
+              onClick={() => {
+                setActiveTab('pending');
+                setStatusFilter('pending');
+              }}
+              startIcon={<Clock size={16} />}
             >
-              审批管理
-            </Typography>
-            <Typography
-              variant='body2'
-              sx={{ color: 'grey.500' }}
-            >
-              {pendingCount > 0 ? (
-                <Box
-                  component='span'
-                  sx={{ color: 'primary.main', fontWeight: 500 }}
-                >
-                  {pendingCount} 项待审批
-                </Box>
-              ) : (
-                '暂无待审批项'
-              )}
-            </Typography>
-          </Box>
-        </Stack>
-      </Box>
-
-      <Box sx={{ bgcolor: 'white', borderRadius: 1, boxShadow: 1, mb: 3 }}>
-        <Divider />
-        <Tabs
-          value={activeTab}
-          onChange={(_, v) => setActiveTab(v)}
-          sx={{ px: 3 }}
-        >
-          <Tab
-            value='pending'
-            label={
-              <Stack
-                direction='row'
-                sx={{ alignItems: 'center' }}
-                spacing={1}
-              >
-                <Clock size={20} />
-                <span>待我审批 ({pendingCount})</span>
-              </Stack>
-            }
-          />
-          <Tab
-            value='history'
-            label={
-              <Stack
-                direction='row'
-                sx={{ alignItems: 'center' }}
-                spacing={1}
-              >
-                <List size={20} />
-                <span>审批历史</span>
-              </Stack>
-            }
-          />
-        </Tabs>
-      </Box>
-
-      <Box sx={{ bgcolor: 'white', borderRadius: 1, boxShadow: 1, p: 3, mb: 3 }}>
-        <Stack
-          direction='row'
-          sx={{ alignItems: 'center' }}
-          spacing={2}
-        >
-          <TextField
-            size='small'
-            type='text'
-            placeholder='搜索审批任务...'
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <Search
-                    size={20}
-                    style={{ marginRight: 8, color: 'text.disabled' }}
-                  />
-                ),
-              },
-            }}
-            sx={{ flex: 1 }}
-          />
-          {activeTab === 'pending' && (
-            <FormControl
-              size='small'
-              sx={{ width: 128 }}
-            >
-              <InputLabel>状态</InputLabel>
-              <Select
-                value={statusFilter}
-                label='状态'
-                onChange={(e) => setStatusFilter(e.target.value)}
-              >
-                <MenuItem value='pending'>待审批</MenuItem>
-                <MenuItem value='all'>全部</MenuItem>
-              </Select>
-            </FormControl>
-          )}
-          <IconButton
-            onClick={loadData}
-            title='刷新'
-          >
-            <Loader2
-              size={20}
-              sx={{ animation: loading ? 'spin 1s linear infinite' : 'none' }}
-            />
-          </IconButton>
-        </Stack>
-      </Box>
-
-      <Card>
-        <CardContent sx={{ p: 3 }}>
-          {loading ? (
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                py: 6,
+              待我审批 ({pendingCount})
+            </Button>
+            <Button
+              variant={activeTab === 'history' ? 'contained' : 'outlined'}
+              onClick={() => {
+                setActiveTab('history');
+                setStatusFilter('all');
               }}
             >
-              <Loader2
-                size={32}
-                className='animate-spin'
-                style={{ color: 'primary.light' }}
-              />
-            </Box>
-          ) : filteredApprovals.length === 0 ? (
-            <Box sx={{ textAlign: 'center', py: 6 }}>
-              <CheckCircle2
-                size={64}
-                style={{ margin: '0 auto', color: 'text.disabled', marginBottom: 16 }}
-              />
-              <Typography sx={{ color: 'grey.500' }}>
-                {activeTab === 'pending' ? '暂无待审批项' : '暂无审批记录'}
-              </Typography>
-            </Box>
-          ) : (
-            <Stack spacing={2}>
-              {filteredApprovals.map((approval) => (
-                <Box
-                  key={approval.id}
-                  sx={{
-                    border: 1,
-                    borderColor: 'divider',
-                    borderRadius: 1,
-                    p: 2,
-                    '&:hover': { borderColor: 'primary.light' },
-                    transition: 'border-color 0.2s',
-                  }}
-                >
-                  <Stack
-                    direction='row'
-                    sx={{
-                      alignItems: 'flex-start',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <Box sx={{ flex: 1 }}>
-                      <Stack
-                        direction='row'
-                        sx={{ alignItems: 'center', mb: 1 }}
-                        spacing={1.5}
-                      >
-                        <Typography
-                          variant='subtitle1'
-                          sx={{ fontWeight: 600 }}
-                        >
-                          {approval.task_name}
-                        </Typography>
-                        <Chip
-                          size='small'
-                          icon={getStatusIcon(approval.status)}
-                          label={getStatusText(approval.status)}
-                          color={getStatusColor(approval.status)}
-                        />
-                      </Stack>
-                      <Stack
-                        direction='row'
-                        sx={{ alignItems: 'center', mb: 1 }}
-                        spacing={2}
-                      >
-                        {approval.node_id && (
-                          <Stack
-                            direction='row'
-                            sx={{ alignItems: 'center' }}
-                            spacing={0.5}
-                          >
-                            <FileText
-                              size={16}
-                              style={{ color: 'text.secondary' }}
-                            />
-                            <Typography
-                              variant='body2'
-                              sx={{ color: 'grey.600' }}
-                            >
-                              节点: {approval.node_id}
-                            </Typography>
-                          </Stack>
-                        )}
-                        {approval.approval_type && (
-                          <Stack
-                            direction='row'
-                            sx={{ alignItems: 'center' }}
-                            spacing={0.5}
-                          >
-                            <Users
-                              size={16}
-                              style={{ color: 'text.secondary' }}
-                            />
-                            <Typography
-                              variant='body2'
-                              sx={{ color: 'grey.600' }}
-                            >
-                              {approval.approval_type === 'single'
-                                ? '单人审批'
-                                : approval.approval_type === 'counter'
-                                  ? '会签审批'
-                                  : '或签审批'}
-                            </Typography>
-                          </Stack>
-                        )}
-                      </Stack>
-                      {approval.comment && (
-                        <Typography
-                          variant='body2'
-                          sx={{ color: 'grey.500', mb: 1 }}
-                        >
-                          <MessageSquare
-                            size={16}
-                            style={{ display: 'inline', marginRight: 4 }}
-                          />
-                          {approval.comment}
-                        </Typography>
-                      )}
-                      <Stack
-                        direction='row'
-                        sx={{ alignItems: 'center' }}
-                        spacing={2}
-                      >
-                        <Stack
-                          direction='row'
-                          sx={{ alignItems: 'center' }}
-                          spacing={0.5}
-                        >
-                          <Clock
-                            size={16}
-                            style={{ color: 'text.disabled' }}
-                          />
-                          <Typography
-                            variant='caption'
-                            sx={{ color: 'grey.500' }}
-                          >
-                            创建于 {new Date(approval.created_at).toLocaleString()}
-                          </Typography>
-                        </Stack>
-                        {approval.approved_at && (
-                          <Stack
-                            direction='row'
-                            sx={{ alignItems: 'center' }}
-                            spacing={0.5}
-                          >
-                            <CheckCircle
-                              size={16}
-                              style={{ color: 'text.disabled' }}
-                            />
-                            <Typography
-                              variant='caption'
-                              sx={{ color: 'grey.500' }}
-                            >
-                              处理于 {new Date(approval.approved_at).toLocaleString()}
-                            </Typography>
-                          </Stack>
-                        )}
-                      </Stack>
-                    </Box>
-                    <Stack
-                      direction='row'
-                      sx={{ alignItems: 'center' }}
-                      spacing={1}
-                    >
-                      {approval.status === 'pending' && (
-                        <>
-                          <Button
-                            variant='contained'
-                            color='success'
-                            onClick={() => {
-                              setSelectedApproval(approval);
-                              setApprovalAction('approve');
-                              setComment('');
-                              setShowApprovalModal(true);
-                            }}
-                            startIcon={<CheckCircle size={16} />}
-                          >
-                            通过
-                          </Button>
-                          <Button
-                            variant='contained'
-                            color='error'
-                            onClick={() => {
-                              setSelectedApproval(approval);
-                              setApprovalAction('reject');
-                              setComment('');
-                              setShowApprovalModal(true);
-                            }}
-                            startIcon={<XCircle size={16} />}
-                          >
-                            拒绝
-                          </Button>
-                        </>
-                      )}
-                      <IconButton
-                        size='small'
-                        onClick={() => navigate(`/flow/approvals/${approval.id}`)}
-                        title='查看详情'
-                      >
-                        <Eye size={20} />
-                      </IconButton>
-                    </Stack>
-                  </Stack>
-                </Box>
-              ))}
-            </Stack>
-          )}
-        </CardContent>
-      </Card>
+              审批历史
+            </Button>
+          </Box>
+        }
+      />
 
       <Dialog
         open={showApprovalModal}
-        onClose={() => setShowApprovalModal(false)}
+        onClose={() => {
+          setShowApprovalModal(false);
+          setSelectedApproval(null);
+        }}
       >
         <DialogTitle>{approvalAction === 'approve' ? '通过审批' : '拒绝审批'}</DialogTitle>
         <DialogContent>
-          <DialogContentText>
+          <Typography variant='body2' sx={{ mb: 2 }}>
             {approvalAction === 'approve' ? '确认通过该审批任务' : '确认拒绝该审批任务'}
-          </DialogContentText>
-          <Box sx={{ mt: 2 }}>
-            {selectedApproval && (
-              <>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'grey.600', mb: 1 }}
-                >
-                  任务: {selectedApproval.task_name}
+          </Typography>
+          {selectedApproval && (
+            <>
+              <Typography variant='body2' sx={{ color: 'grey.600', mb: 1 }}>
+                任务: {selectedApproval.task_name}
+              </Typography>
+              {selectedApproval.node_id && (
+                <Typography variant='body2' sx={{ color: 'grey.600', mb: 1 }}>
+                  节点: {selectedApproval.node_id}
                 </Typography>
-                {selectedApproval.node_id && (
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'grey.600', mb: 1 }}
-                  >
-                    节点: {selectedApproval.node_id}
-                  </Typography>
-                )}
-              </>
-            )}
-            <Box sx={{ mt: 2 }}>
-              <FormLabel>{approvalAction === 'reject' ? '拒绝原因 *' : '备注'}</FormLabel>
-              <TextField
-                size='small'
-                fullWidth
-                multiline
-                rows={4}
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder={approvalAction === 'reject' ? '请输入拒绝原因' : '可选备注'}
-                sx={{ mt: 1 }}
-              />
-            </Box>
+              )}
+            </>
+          )}
+          <Box sx={{ mt: 2 }}>
+            <FormLabel>{approvalAction === 'reject' ? '拒绝原因 *' : '备注'}</FormLabel>
+            <TextField
+              size='small'
+              fullWidth
+              multiline
+              rows={4}
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder={approvalAction === 'reject' ? '请输入拒绝原因' : '可选备注'}
+              sx={{ mt: 1 }}
+            />
           </Box>
         </DialogContent>
         <DialogActions>
@@ -628,10 +425,7 @@ const FlowApprovalPage: React.FC = () => {
             color={approvalAction === 'approve' ? 'success' : 'error'}
             startIcon={
               processing ? (
-                <Loader2
-                  size={16}
-                  sx={{ animation: 'spin 1s linear infinite' }}
-                />
+                <Loader2 size={16} className='animate-spin' />
               ) : undefined
             }
           >
@@ -639,7 +433,7 @@ const FlowApprovalPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </>
   );
 };
 

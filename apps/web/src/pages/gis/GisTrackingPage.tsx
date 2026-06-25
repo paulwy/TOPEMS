@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -18,9 +18,10 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  TextField,
   IconButton,
   Slider,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 import {
   MapPin,
@@ -32,86 +33,75 @@ import {
   Clock,
   User,
   Truck,
+  AlertCircle,
 } from 'lucide-react';
-
-interface TrackingDevice {
-  id: string;
-  name: string;
-  type: 'person' | 'vehicle' | 'asset';
-  status: 'online' | 'offline' | 'moving';
-  lastUpdate: string;
-  battery: number;
-  speed: number;
-  location: string;
-}
-
-interface TrackPoint {
-  id: string;
-  timestamp: string;
-  latitude: number;
-  longitude: number;
-  speed: number;
-  accuracy: number;
-}
+import {
+  GisMapTemplate,
+  type MapMarker,
+  type TrackPoint,
+} from '@/components/templates';
+import { useAppStore } from '../../store';
+import { gisApi } from '@/api/gis';
+import type { DevicePoint, DeviceLocationRecord } from '@/api/gis';
 
 export const GisTrackingPage: React.FC = () => {
-  const [selectedDevice, setSelectedDevice] = useState('DEV001');
+  const addNotification = useAppStore((state) => state.addNotification);
+
+  const [selectedDevice, setSelectedDevice] = useState('');
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [trackLoading, setTrackLoading] = useState(false);
+  const [error, setError] = useState<string>('');
 
-  const devices: TrackingDevice[] = [
-    {
-      id: 'DEV001',
-      name: '配送车辆 #001',
-      type: 'vehicle',
-      status: 'moving',
-      lastUpdate: '2024-01-15 14:35:00',
-      battery: 85,
-      speed: 45,
-      location: '39.9042, 116.4074',
-    },
-    {
-      id: 'DEV002',
-      name: '巡检人员 #012',
-      type: 'person',
-      status: 'online',
-      lastUpdate: '2024-01-15 14:34:00',
-      battery: 72,
-      speed: 3,
-      location: '39.9142, 116.4174',
-    },
-    {
-      id: 'DEV003',
-      name: '设备 #003',
-      type: 'asset',
-      status: 'online',
-      lastUpdate: '2024-01-15 14:30:00',
-      battery: 95,
-      speed: 0,
-      location: '39.9242, 116.4274',
-    },
-    {
-      id: 'DEV004',
-      name: '配送车辆 #002',
-      type: 'vehicle',
-      status: 'offline',
-      lastUpdate: '2024-01-15 10:00:00',
-      battery: 20,
-      speed: 0,
-      location: '39.8942, 116.3974',
-    },
-  ];
+  const [devices, setDevices] = useState<DevicePoint[]>([]);
+  const [trackHistory, setTrackHistory] = useState<DeviceLocationRecord[]>([]);
 
-  const trackHistory: TrackPoint[] = [
-    { id: '1', timestamp: '14:35', latitude: 39.9042, longitude: 116.4074, speed: 45, accuracy: 5 },
-    { id: '2', timestamp: '14:34', latitude: 39.9038, longitude: 116.407, speed: 42, accuracy: 5 },
-    { id: '3', timestamp: '14:33', latitude: 39.9034, longitude: 116.4066, speed: 40, accuracy: 6 },
-    { id: '4', timestamp: '14:32', latitude: 39.903, longitude: 116.4062, speed: 38, accuracy: 5 },
-    { id: '5', timestamp: '14:31', latitude: 39.9026, longitude: 116.4058, speed: 35, accuracy: 5 },
-    { id: '6', timestamp: '14:30', latitude: 39.9022, longitude: 116.4054, speed: 32, accuracy: 6 },
-    { id: '7', timestamp: '14:29', latitude: 39.9018, longitude: 116.405, speed: 30, accuracy: 5 },
-    { id: '8', timestamp: '14:28', latitude: 39.9014, longitude: 116.4046, speed: 28, accuracy: 5 },
-  ];
+  const loadDevices = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const res = await gisApi.listDevicePoints({ page_size: 100 });
+      if (res.success && res.data) {
+        setDevices(res.data.data || []);
+        if (res.data.data && res.data.data.length > 0 && !selectedDevice) {
+          setSelectedDevice(res.data.data[0].id);
+        }
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '加载设备列表失败';
+      setError(msg);
+      addNotification({ title: '加载失败', message: msg, type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  }, [addNotification, selectedDevice]);
+
+  const loadTrack = useCallback(async (deviceId: string) => {
+    if (!deviceId) return;
+    try {
+      setTrackLoading(true);
+      const res = await gisApi.getDeviceTrack({ device_id: deviceId, page_size: 100 });
+      if (res.success && res.data) {
+        setTrackHistory(res.data.data || []);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '加载轨迹数据失败';
+      addNotification({ title: '加载失败', message: msg, type: 'error' });
+    } finally {
+      setTrackLoading(false);
+    }
+  }, [addNotification]);
+
+  useEffect(() => {
+    loadDevices();
+  }, [loadDevices]);
+
+  useEffect(() => {
+    if (selectedDevice) {
+      loadTrack(selectedDevice);
+    }
+  }, [selectedDevice, loadTrack]);
 
   const getTypeIcon = (type: string) => {
     switch (type) {
@@ -119,43 +109,104 @@ export const GisTrackingPage: React.FC = () => {
         return <User size={16} />;
       case 'vehicle':
         return <Truck size={16} />;
-      case 'asset':
-        return <MapPin size={16} />;
       default:
         return <MapPin size={16} />;
     }
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'online':
-        return 'success';
-      case 'moving':
-        return 'primary';
-      case 'offline':
-        return 'error';
-      default:
-        return 'default';
-    }
+    const s = status?.toLowerCase();
+    if (s?.includes('active') || s === 'online') return 'success';
+    if (s === 'moving') return 'primary';
+    if (s?.includes('inactive') || s === 'offline') return 'error';
+    return 'default';
   };
 
   const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'online':
-        return '在线';
-      case 'moving':
-        return '移动中';
-      case 'offline':
-        return '离线';
-      default:
-        return status;
-    }
+    const s = status?.toLowerCase();
+    if (s?.includes('active') || s === 'online') return '在线';
+    if (s === 'moving') return '移动中';
+    if (s?.includes('inactive') || s === 'offline') return '离线';
+    return status || '未知';
+  };
+
+  const getMarkerType = (status: string): 'device' | 'storage' | 'warning' | 'custom' => {
+    const s = status?.toLowerCase();
+    if (s?.includes('active') || s === 'online') return 'device';
+    if (s === 'moving') return 'custom';
+    if (s?.includes('inactive') || s === 'offline') return 'warning';
+    return 'custom';
   };
 
   const selectedDeviceData = devices.find((d) => d.id === selectedDevice);
 
+  const mapMarkers: MapMarker[] = devices.map((device) => ({
+    id: device.id,
+    name: device.name,
+    position: [device.latitude, device.longitude],
+    type: getMarkerType(device.status),
+    popupContent: (
+      <Box>
+        <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>{device.name}</Typography>
+        <Typography variant='body2' color='text.secondary'>状态: {getStatusLabel(device.status)}</Typography>
+        <Typography variant='body2' color='text.secondary'>类型: {device.device_type}</Typography>
+      </Box>
+    ),
+  }));
+
+  const mapTrackPoints: TrackPoint[] = trackHistory.map((point) => ({
+    id: point.id,
+    timestamp: point.timestamp,
+    position: [point.latitude, point.longitude],
+    speed: point.speed,
+    accuracy: point.accuracy,
+  }));
+
+  const handleSearch = useCallback((query: string) => {
+    addNotification({ title: '搜索', message: `搜索设备: ${query}`, type: 'info' });
+  }, [addNotification]);
+
+  const handleTrackPlayback = useCallback((playing: boolean) => {
+    setIsPlaying(playing);
+    addNotification({
+      title: '轨迹回放',
+      message: playing ? '开始回放' : '暂停回放',
+      type: 'info',
+    });
+  }, [addNotification]);
+
+  const handleDeviceChange = useCallback((deviceId: string) => {
+    setSelectedDevice(deviceId);
+    setIsPlaying(false);
+    setPlaybackSpeed(1);
+  }, []);
+
+  const handlePlayPause = useCallback(() => {
+    const newPlaying = !isPlaying;
+    setIsPlaying(newPlaying);
+    addNotification({
+      title: '轨迹回放',
+      message: newPlaying ? '开始回放' : '暂停回放',
+      type: 'info',
+    });
+  }, [isPlaying, addNotification]);
+
+  const handleReset = useCallback(() => {
+    setIsPlaying(false);
+    setPlaybackSpeed(1);
+    addNotification({ title: '重置', message: '轨迹已重置', type: 'info' });
+  }, [addNotification]);
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
-    <Box sx={{ flex: 1 }}>
+    <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box
         sx={{
           display: 'flex',
@@ -181,7 +232,7 @@ export const GisTrackingPage: React.FC = () => {
         <Box sx={{ display: 'flex', gap: 2 }}>
           <Button
             variant='contained'
-            onClick={() => setIsPlaying(!isPlaying)}
+            onClick={handlePlayPause}
             color={isPlaying ? 'primary' : 'inherit'}
             size='small'
           >
@@ -190,11 +241,22 @@ export const GisTrackingPage: React.FC = () => {
           <Button
             variant='contained'
             size='small'
+            onClick={handleReset}
           >
             <RotateCcw size={20} />
           </Button>
         </Box>
       </Box>
+
+      {error && (
+        <Alert
+          severity='error'
+          sx={{ mb: 3 }}
+          icon={<AlertCircle size={20} />}
+        >
+          {error}
+        </Alert>
+      )}
 
       <Grid
         container
@@ -206,10 +268,13 @@ export const GisTrackingPage: React.FC = () => {
             <CardHeader title='选择设备' />
             <CardContent>
               <FormControl fullWidth>
+                <InputLabel id='device-select-label'>设备</InputLabel>
                 <Select
+                  labelId='device-select-label'
                   value={selectedDevice}
-                  onChange={(e) => setSelectedDevice(e.target.value)}
+                  onChange={(e) => handleDeviceChange(e.target.value)}
                   sx={{ minHeight: 48 }}
+                  label='设备'
                 >
                   {devices.map((device) => (
                     <MenuItem
@@ -217,7 +282,7 @@ export const GisTrackingPage: React.FC = () => {
                       value={device.id}
                     >
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        {getTypeIcon(device.type)}
+                        {getTypeIcon(device.device_type)}
                         <div>
                           <Typography
                             variant='body1'
@@ -229,7 +294,7 @@ export const GisTrackingPage: React.FC = () => {
                             variant='caption'
                             color='text.secondary'
                           >
-                            {getStatusLabel(device.status)} - {device.location}
+                            {getStatusLabel(device.status)} - {device.latitude.toFixed(4)}, {device.longitude.toFixed(4)}
                           </Typography>
                         </div>
                       </Box>
@@ -258,12 +323,6 @@ export const GisTrackingPage: React.FC = () => {
                       label={getStatusLabel(selectedDeviceData.status)}
                       color={getStatusColor(selectedDeviceData.status)}
                     />
-                    {selectedDeviceData.status === 'moving' && (
-                      <Navigation
-                        size={20}
-                        color='primary'
-                      />
-                    )}
                   </Box>
                 </CardContent>
               </Card>
@@ -276,13 +335,13 @@ export const GisTrackingPage: React.FC = () => {
                     color='text.secondary'
                     sx={{ mb: 2 }}
                   >
-                    当前速度
+                    设备类型
                   </Typography>
                   <Typography
                     variant='h5'
                     sx={{ fontWeight: 'bold' }}
                   >
-                    {selectedDeviceData.speed} <span style={{ fontSize: '14px' }}>km/h</span>
+                    {selectedDeviceData.device_type}
                   </Typography>
                 </CardContent>
               </Card>
@@ -295,21 +354,14 @@ export const GisTrackingPage: React.FC = () => {
                     color='text.secondary'
                     sx={{ mb: 2 }}
                   >
-                    电量
+                    最后更新
                   </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Slider
-                      value={selectedDeviceData.battery}
-                      disabled
-                      sx={{ width: 120 }}
-                    />
-                    <Typography
-                      variant='body1'
-                      sx={{ fontWeight: 500, minWidth: 30 }}
-                    >
-                      {selectedDeviceData.battery}%
-                    </Typography>
-                  </Box>
+                  <Typography
+                    variant='body1'
+                    sx={{ fontWeight: 500 }}
+                  >
+                    {selectedDeviceData.last_inspected || selectedDeviceData.updated_at || '-'}
+                  </Typography>
                 </CardContent>
               </Card>
             </Grid>
@@ -320,55 +372,28 @@ export const GisTrackingPage: React.FC = () => {
       <Grid
         container
         spacing={3}
+        sx={{ flex: 1, minHeight: 0 }}
       >
         <Grid size={{ xs: 12, lg: 7 }}>
-          <Card>
+          <Card sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             <CardHeader title='轨迹地图' />
-            <CardContent>
-              <Box
-                sx={{
-                  height: 450,
-                  backgroundColor: 'grey.100',
-                  borderRadius: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  position: 'relative',
-                }}
-              >
-                <Navigation
-                  size={48}
-                  color='#1976d2'
-                />
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
-                  轨迹地图预览
-                </Typography>
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: 20,
-                    left: 20,
-                    display: 'flex',
-                    gap: 2,
-                  }}
-                >
-                  <Chip
-                    size='small'
-                    label='当前位置'
-                    color='primary'
-                    icon={<MapPin size={14} />}
-                  />
-                  <Chip
-                    size='small'
-                    label='历史轨迹'
-                    color='warning'
-                    icon={<Clock size={14} />}
-                  />
+            <CardContent sx={{ flex: 1, p: 0 }}>
+              {trackLoading ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 450 }}>
+                  <CircularProgress />
                 </Box>
-              </Box>
+              ) : (
+                <GisMapTemplate
+                  initialCenter={selectedDeviceData ? [selectedDeviceData.latitude, selectedDeviceData.longitude] : [31.2304, 121.4737]}
+                  initialZoom={14}
+                  markers={mapMarkers}
+                  trackPoints={mapTrackPoints}
+                  onTrackPlayback={handleTrackPlayback}
+                  searchable
+                  onSearch={handleSearch}
+                  sx={{ height: 450 }}
+                />
+              )}
             </CardContent>
           </Card>
 
@@ -379,7 +404,7 @@ export const GisTrackingPage: React.FC = () => {
                 <Box sx={{ flex: 1 }}>
                   <Slider
                     value={playbackSpeed}
-                    onChange={(e, value) => setPlaybackSpeed(value as number)}
+                    onChange={(_, value) => setPlaybackSpeed(value as number)}
                     min={0.5}
                     max={4}
                     step={0.5}
@@ -401,36 +426,49 @@ export const GisTrackingPage: React.FC = () => {
           <Card>
             <CardHeader title='轨迹历史' />
             <CardContent>
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>时间</TableCell>
-                      <TableCell>经度</TableCell>
-                      <TableCell>纬度</TableCell>
-                      <TableCell>速度</TableCell>
-                      <TableCell>精度</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {trackHistory.map((point) => (
-                      <TableRow key={point.id}>
-                        <TableCell>{point.timestamp}</TableCell>
-                        <TableCell>{point.longitude.toFixed(4)}</TableCell>
-                        <TableCell>{point.latitude.toFixed(4)}</TableCell>
-                        <TableCell>{point.speed} km/h</TableCell>
-                        <TableCell>
-                          <Chip
-                            size='small'
-                            label={`${point.accuracy}m`}
-                            color={point.accuracy <= 5 ? 'success' : 'warning'}
-                          />
-                        </TableCell>
+              {trackLoading ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', py: 6 }}>
+                  <CircularProgress size={24} />
+                </Box>
+              ) : (
+                <TableContainer sx={{ maxHeight: 300 }}>
+                  <Table size='small'>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>时间</TableCell>
+                        <TableCell>经度</TableCell>
+                        <TableCell>纬度</TableCell>
+                        <TableCell>速度</TableCell>
+                        <TableCell>精度</TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                    </TableHead>
+                    <TableBody>
+                      {trackHistory.map((point) => (
+                        <TableRow key={point.id}>
+                          <TableCell>{point.timestamp}</TableCell>
+                          <TableCell>{point.longitude.toFixed(4)}</TableCell>
+                          <TableCell>{point.latitude.toFixed(4)}</TableCell>
+                          <TableCell>{point.speed || 0} km/h</TableCell>
+                          <TableCell>
+                            <Chip
+                              size='small'
+                              label={`${point.accuracy || 0}m`}
+                              color={(point.accuracy || 0) <= 5 ? 'success' : 'warning'}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {trackHistory.length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={5} sx={{ textAlign: 'center', py: 4 }}>
+                            <Typography variant='body2' color='text.secondary'>暂无轨迹数据</Typography>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
             </CardContent>
           </Card>
 
@@ -476,11 +514,7 @@ export const GisTrackingPage: React.FC = () => {
                       variant='body1'
                       sx={{ fontWeight: 500 }}
                     >
-                      {selectedDeviceData.type === 'person'
-                        ? '人员'
-                        : selectedDeviceData.type === 'vehicle'
-                          ? '车辆'
-                          : '资产'}
+                      {selectedDeviceData.device_type}
                     </Typography>
                   </Box>
                   <Box
@@ -500,7 +534,7 @@ export const GisTrackingPage: React.FC = () => {
                       variant='body1'
                       sx={{ fontWeight: 500 }}
                     >
-                      {selectedDeviceData.lastUpdate}
+                      {selectedDeviceData.updated_at || '-'}
                     </Typography>
                   </Box>
                   <Box
@@ -518,9 +552,9 @@ export const GisTrackingPage: React.FC = () => {
                     </Typography>
                     <Typography
                       variant='body1'
-                      sx={{ fontWeight: 500 }}
+                      sx={{ fontWeight: 500, fontFamily: 'monospace', fontSize: '0.875rem' }}
                     >
-                      {selectedDeviceData.location}
+                      {selectedDeviceData.latitude.toFixed(4)}, {selectedDeviceData.longitude.toFixed(4)}
                     </Typography>
                   </Box>
                 </Box>

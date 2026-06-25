@@ -1,40 +1,54 @@
 import {
   Box,
-  Card,
-  CardContent,
   Chip,
   Typography,
   TextField,
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  Tooltip,
 } from '@mui/material';
 import { Button } from '@mui/material';
-import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, ChevronLeft, AlertCircle, ClipboardCheck } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Plus, Edit, ClipboardCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { assetApi, type Asset } from '@/api/erp';
-import { employeeApi, type Employee } from '@/api/hrm';
 import { mesEquipmentApi, type InspectionRecord } from '@/api/mesEquipment';
 import { useAppStore } from '../../store';
-import type { ColumnDef } from '@tanstack/react-table';
-import { DataTable } from '@/components/DataTable';
+import {
+  ListPageTemplate,
+  type ColumnDef,
+  type RowAction,
+} from '@/components/templates';
+import { apiLogger } from '@/utils/logger';
+
+const STATUS_COLOR_MAP: Record<string, 'success' | 'error' | 'default'> = {
+  normal: 'success',
+  abnormal: 'error',
+};
+
+const STATUS_LABEL_MAP: Record<string, string> = {
+  normal: '正常',
+  abnormal: '异常',
+};
 
 const EquipmentInspectionPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
 
   const [assets, setAssets] = useState<Asset[]>([]);
-  const [employees, setEmployees] = useState<Employee[]>([]);
   const [inspections, setInspections] = useState<InspectionRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize, setPageSize] = useState(20);
+  const [totalInspections, setTotalInspections] = useState(0);
+
   const [showInspectionModal, setShowInspectionModal] = useState(false);
   const [selectedForInspection, setSelectedForInspection] = useState<Asset | null>(null);
 
@@ -45,33 +59,47 @@ const EquipmentInspectionPage: React.FC = () => {
   });
 
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setCurrentPage(0);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
     loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [currentPage, pageSize, debouncedSearch]);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const [assetRes, employeeRes, inspectionRes] = await Promise.all([
+      const params: any = {
+        page: currentPage + 1,
+        page_size: pageSize,
+      };
+      if (debouncedSearch) {
+        params.search = debouncedSearch;
+      }
+
+      const [assetRes, inspectionRes] = await Promise.all([
         assetApi.list(),
-        employeeApi.list(),
-        mesEquipmentApi.listInspections(),
+        mesEquipmentApi.listInspections(params),
       ]);
 
       if (assetRes.success && assetRes.data) {
         setAssets(assetRes.data.items || []);
       }
 
-      if (employeeRes.success && employeeRes.data) {
-        setEmployees(employeeRes.data.items || []);
-      }
-
       if (inspectionRes.success && inspectionRes.data) {
         setInspections(inspectionRes.data.items || []);
+        setTotalInspections(inspectionRes.data.total || 0);
       }
     } catch (err: unknown) {
-      setError((err as { message?: string }).message || '加载数据失败');
+      const message = (err as { message?: string }).message || '加载数据失败';
+      setError(message);
+      apiLogger.error('加载点检记录失败:', err);
       addNotification({
         title: '加载失败',
         message: '加载数据失败',
@@ -80,7 +108,7 @@ const EquipmentInspectionPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, pageSize, debouncedSearch, addNotification]);
 
   const handleCreateInspection = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -116,6 +144,7 @@ const EquipmentInspectionPage: React.FC = () => {
         });
       }
     } catch (err: unknown) {
+      apiLogger.error('创建点检记录失败:', err);
       addNotification({
         title: '失败',
         message: (err as { message?: string }).message || '创建点检记录失败',
@@ -124,159 +153,151 @@ const EquipmentInspectionPage: React.FC = () => {
     }
   };
 
-  const inspectionColumns = useMemo<ColumnDef<InspectionRecord>[]>(
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(0);
+  };
+
+  const getStatusBadge = (status: string) => (
+    <Chip
+      size='small'
+      color={STATUS_COLOR_MAP[status] || 'default'}
+      label={STATUS_LABEL_MAP[status] || status}
+      variant='outlined'
+    />
+  );
+
+  const columns = useMemo<ColumnDef<InspectionRecord>[]>(
     () => [
       {
-        accessorKey: 'equipment_code',
-        header: '设备编号',
-        cell: ({ row }) => row.original.equipment_code,
-      },
-      {
-        accessorKey: 'equipment_name',
-        header: '设备名称',
-        cell: ({ row }) => row.original.equipment_name,
-      },
-      {
-        accessorKey: 'inspector',
-        header: '点检人',
-        cell: ({ row }) => row.original.inspector,
-      },
-      {
-        accessorKey: 'inspection_date',
-        header: '点检日期',
-        cell: ({ row }) => row.original.inspection_date,
-      },
-      {
-        accessorKey: 'temperature',
-        header: '温度(°C)',
-        cell: ({ row }) => row.original.temperature || '-',
-      },
-      {
-        accessorKey: 'status',
-        header: '状态',
-        cell: ({ row }) => (
-          <Chip
-            size='small'
-            color={row.original.status === 'normal' ? 'success' : 'error'}
-            label={row.original.status === 'normal' ? '正常' : '异常'}
-          />
+        id: 'equipment_code',
+        label: '设备编号',
+        width: 140,
+        sortable: true,
+        render: (row) => (
+          <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>{row.equipment_code}</Typography>
         ),
       },
       {
-        accessorKey: 'abnormalities',
-        header: '异常情况',
-        cell: ({ row }) => row.original.abnormalities || '-',
+        id: 'equipment_name',
+        label: '设备名称',
+        width: 180,
+        render: (row) => <Typography sx={{ color: 'grey.900' }}>{row.equipment_name}</Typography>,
+      },
+      {
+        id: 'inspector',
+        label: '点检人',
+        width: 100,
+        render: (row) => (
+          <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>{row.inspector || '-'}</Typography>
+        ),
+      },
+      {
+        id: 'inspection_date',
+        label: '点检日期',
+        width: 130,
+        sortable: true,
+        render: (row) => (
+          <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>{row.inspection_date}</Typography>
+        ),
+      },
+      {
+        id: 'temperature',
+        label: '温度(°C)',
+        width: 100,
+        align: 'right',
+        render: (row) => (
+          <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
+            {row.temperature || '-'}
+          </Typography>
+        ),
+      },
+      {
+        id: 'status',
+        label: '状态',
+        width: 100,
+        render: (row) => getStatusBadge(row.status),
+      },
+      {
+        id: 'abnormalities',
+        label: '异常情况',
+        minWidth: 150,
+        render: (row) => (
+          <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
+            {row.abnormalities || '-'}
+          </Typography>
+        ),
       },
     ],
     []
   );
 
-  return (
-    <Box sx={{ minHeight: '100vh', backgroundColor: 'grey.100' }}>
-      <Box sx={{ backgroundColor: 'white', borderBottom: '1px solid border.default' }}>
-        <Box sx={{ maxWidth: 1280, mx: 'auto', px: 3, py: 3 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Button
-                variant='text'
-                onClick={() => navigate('/equipment')}
-              >
-                <ChevronLeft sx={{ width: 20, height: 20, marginRight: 1 }} />
-                返回设备台账
-              </Button>
-              <Box sx={{ ml: 2 }}>
-                <Typography
-                  sx={{
-                    fontSize: '1.5rem',
-                    fontWeight: 700,
-                    color: 'grey.900',
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
-                >
-                  <ClipboardCheck
-                    sx={{
-                      width: 28,
-                      height: 28,
-                      marginRight: 3,
-                      color: 'primary.dark',
-                    }}
-                  />
-                  设备点检记录
-                </Typography>
-                <Typography sx={{ mt: 0.5, fontSize: '0.875rem', color: 'grey.600' }}>
-                  设备点检记录管理
-                </Typography>
-              </Box>
-            </Box>
-            <Button
-              variant='contained'
-              onClick={() => {
-                setSelectedForInspection(assets[0] || null);
-                setShowInspectionModal(true);
-              }}
-            >
-              <Plus sx={{ width: 16, height: 16, marginRight: 8 }} />
-              新增点检
-            </Button>
-          </Box>
-        </Box>
-      </Box>
+  const rowActions = useMemo<RowAction<InspectionRecord>[]>(
+    () => [
+      {
+        label: '编辑',
+        icon: <Edit sx={{ width: 16, height: 16 }} />,
+        onClick: () => {
+          addNotification({
+            title: '提示',
+            message: '编辑功能开发中',
+            type: 'info',
+          });
+        },
+      },
+    ],
+    [addNotification]
+  );
 
-      <Box sx={{ maxWidth: 1280, mx: 'auto', px: 3, py: 4 }}>
-        <Card>
-          <CardContent sx={{ p: 0 }}>
-            {loading ? (
-              <Box sx={{ p: 4, textAlign: 'center' }}>
-                <Box
-                  sx={{
-                    display: 'inline-block',
-                    width: 32,
-                    height: 32,
-                    border: '4px solid primary.dark',
-                    borderTopColor: 'transparent',
-                    borderRadius: '50%',
-                    animation: 'spin 1s linear infinite',
-                  }}
-                />
-                <Typography sx={{ mt: 2, color: 'grey.600' }}>加载中...</Typography>
-              </Box>
-            ) : error ? (
-              <Box sx={{ p: 4, textAlign: 'center' }}>
-                <AlertCircle
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    color: 'error.main',
-                    mx: 'auto',
-                    mb: 2,
-                  }}
-                />
-                <Typography sx={{ color: 'error.dark' }}>{error}</Typography>
-                <Button
-                  sx={{ mt: 2 }}
-                  onClick={loadData}
-                >
-                  重试
-                </Button>
-              </Box>
-            ) : (
-              <DataTable
-                columns={inspectionColumns}
-                data={inspections}
-                searchPlaceholder='搜索点检记录...'
-                searchKey='equipment_name'
-              />
-            )}
-          </CardContent>
-        </Card>
-      </Box>
+  return (
+    <Box sx={{ minHeight: '100vh', backgroundColor: 'grey.50' }}>
+      <ListPageTemplate
+        title='设备点检记录'
+        subtitle='设备点检记录管理'
+        backButton={{
+          onClick: () => navigate('/equipment'),
+        }}
+        columns={columns}
+        data={inspections}
+        loading={loading}
+        error={error || undefined}
+        getRowId={(row) => row.id}
+        sortable
+        defaultSortBy='inspection_date'
+        defaultSortOrder='desc'
+        searchable
+        searchPlaceholder='搜索设备名称、编号、点检人...'
+        searchValue={searchQuery}
+        onSearch={setSearchQuery}
+        pagination={{
+          page: currentPage,
+          pageSize,
+          total: totalInspections,
+          onPageChange: handlePageChange,
+          onPageSizeChange: handlePageSizeChange,
+        }}
+        rowActions={rowActions}
+        onRefresh={loadData}
+        actions={[
+          {
+            label: '新增点检',
+            icon: <Plus sx={{ width: 16, height: 16 }} />,
+            onClick: () => {
+              setSelectedForInspection(assets[0] || null);
+              setShowInspectionModal(true);
+            },
+            variant: 'contained',
+          },
+        ]}
+        showRowNumber
+        columnConfigurable
+        persistColumnConfig
+        columnConfigStorageKey='equipment-inspections-columns'
+      />
 
       <Dialog
         open={showInspectionModal}
@@ -287,7 +308,7 @@ const EquipmentInspectionPage: React.FC = () => {
         <DialogTitle>设备点检记录</DialogTitle>
         <DialogContent>
           <form onSubmit={handleCreateInspection}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
               <Box sx={{ backgroundColor: 'grey.50', p: 2, borderRadius: 2 }}>
                 <Typography
                   sx={{

@@ -34,7 +34,7 @@ import {
   type ColumnDef,
   type RowAction,
 } from '@/components/mui';
-import { StatusBadge } from '@/components/hrm/StatusBadge';
+import { StatusBadge } from '@/components/common/StatusBadge';
 import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
 import {
@@ -192,8 +192,7 @@ const LeaveManagementPage: React.FC = () => {
 
   const getLeaveStatusBadge = (status: string) => (
     <StatusBadge
-      status={status}
-      category='leave'
+      status={`leave_${status}`}
       showIcon
     />
   );

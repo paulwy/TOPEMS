@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -37,6 +37,9 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+import { rsApi } from '@/api/rs';
+import { useAppStore } from '@/store';
+import type { RsStatistics } from '@/api/rs';
 
 interface RepoConfig {
   id: string;
@@ -55,6 +58,7 @@ interface SettingItem {
 }
 
 const RsSettingsPage: React.FC = () => {
+  const { addNotification } = useAppStore();
   const [activeTab, setActiveTab] = useState<string>('repo');
   const [repos, setRepos] = useState<RepoConfig[]>([
     {
@@ -79,6 +83,31 @@ const RsSettingsPage: React.FC = () => {
       enabled: false,
     },
   ]);
+  const [statistics, setStatistics] = useState<RsStatistics | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    loadStatistics();
+  }, []);
+
+  const loadStatistics = async () => {
+    try {
+      setLoading(true);
+      const response = await rsApi.getStatistics();
+      if (response.success && response.data) {
+        setStatistics(response.data);
+      }
+    } catch (error: unknown) {
+      console.error('加载统计数据失败:', error);
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载统计数据',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const tabs = [
     { id: 'repo', label: '仓库管理', icon: <GitBranch size={18} /> },
@@ -325,6 +354,83 @@ const RsSettingsPage: React.FC = () => {
           >
             保存设置
           </Button>
+        </Box>
+
+        {/* 统计概览 */}
+        <Box sx={{ mb: 3 }}>
+          <Typography
+            variant='subtitle2'
+            color='text.secondary'
+            sx={{ mb: 2 }}
+          >
+            系统统计
+          </Typography>
+          <Stack direction='row' spacing={3}>
+            <Card sx={{ flex: 1 }}>
+              <CardContent>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  项目总数
+                </Typography>
+                <Typography
+                  variant='h4'
+                  sx={{ fontWeight: 'bold', mt: 1 }}
+                >
+                  {loading ? '-' : statistics?.total_projects || 0}
+                </Typography>
+              </CardContent>
+            </Card>
+            <Card sx={{ flex: 1 }}>
+              <CardContent>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  试验总数
+                </Typography>
+                <Typography
+                  variant='h4'
+                  sx={{ fontWeight: 'bold', mt: 1 }}
+                >
+                  {loading ? '-' : statistics?.total_experiments || 0}
+                </Typography>
+              </CardContent>
+            </Card>
+            <Card sx={{ flex: 1 }}>
+              <CardContent>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  配方总数
+                </Typography>
+                <Typography
+                  variant='h4'
+                  sx={{ fontWeight: 'bold', mt: 1 }}
+                >
+                  {loading ? '-' : statistics?.total_formulas || 0}
+                </Typography>
+              </CardContent>
+            </Card>
+            <Card sx={{ flex: 1 }}>
+              <CardContent>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  任务总数
+                </Typography>
+                <Typography
+                  variant='h4'
+                  sx={{ fontWeight: 'bold', mt: 1 }}
+                >
+                  {loading ? '-' : statistics?.total_tasks || 0}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Stack>
         </Box>
 
         <Box sx={{ display: 'flex', gap: 3 }}>

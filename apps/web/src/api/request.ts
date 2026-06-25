@@ -62,19 +62,21 @@ export async function safeRequest<T>(
   }
 }
 
+export interface PaginatedRequestParams {
+  page?: number;
+  page_size?: number;
+  search?: string;
+  [key: string]: unknown;
+}
+
 /**
  * 分页请求帮助函数
  */
 export async function paginatedRequest<T>(
   requestFn: (
-    _params: any
+    _params: PaginatedRequestParams
   ) => Promise<ApiResponse<{ items: T[]; total: number; page: number; page_size: number }>>,
-  params: {
-    page?: number;
-    page_size?: number;
-    search?: string;
-    [key: string]: any;
-  } = {}
+  params: PaginatedRequestParams = {}
 ): Promise<{ items: T[]; total: number; page: number; page_size: number }> {
   const response = await requestFn(params);
 

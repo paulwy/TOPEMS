@@ -5,10 +5,6 @@ import {
   Box,
   Chip,
   LinearProgress,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Typography,
   Stack,
 } from '@mui/material';
@@ -18,6 +14,7 @@ import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/component
 import { rsApi } from '@/api/rs';
 import { useAppStore } from '@/store';
 import type { Project } from '@/api/rs';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 
 const RsProjectListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -109,25 +106,13 @@ const RsProjectListPage: React.FC = () => {
 
   const handleDeleteConfirm = async () => {
     if (!selectedProject) return;
-    try {
-      await rsApi.deleteProject(selectedProject.id);
-      addNotification({
-        type: 'success',
-        title: '删除成功',
-        message: '项目已删除',
-      });
-      loadProjects();
-    } catch (error: unknown) {
-      logger.error('删除项目失败:', error);
-      addNotification({
-        type: 'error',
-        title: '删除失败',
-        message: '无法删除项目',
-      });
-    } finally {
-      setDeleteDialogOpen(false);
-      setSelectedProject(null);
-    }
+    await rsApi.deleteProject(selectedProject.id);
+    addNotification({
+      type: 'success',
+      title: '删除成功',
+      message: '项目已删除',
+    });
+    loadProjects();
   };
 
   const handleExport = () => {
@@ -299,25 +284,17 @@ const RsProjectListPage: React.FC = () => {
         emptyMessage='暂无项目数据'
       />
 
-      <Dialog
-        open={deleteDialogOpen}
-        onClose={() => setDeleteDialogOpen(false)}
-      >
-        <DialogTitle>确认删除</DialogTitle>
-        <DialogContent>
-          <Typography>确定要删除项目 "{selectedProject?.name}" 吗？此操作不可恢复。</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>取消</Button>
-          <Button
-            variant='contained'
-            color='error'
-            onClick={handleDeleteConfirm}
-          >
-            删除
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => {
+          setDeleteDialogOpen(false);
+          setSelectedProject(null);
+        }}
+        onConfirm={handleDeleteConfirm}
+        title='确认删除'
+        message={`确定要删除项目 "${selectedProject?.name}" 吗？此操作不可恢复。`}
+        danger
+      />
     </Box>
   );
 };

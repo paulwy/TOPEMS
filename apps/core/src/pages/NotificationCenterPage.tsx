@@ -1,3 +1,8 @@
+/**
+ * @deprecated 此页面已废弃，请使用 apps/web/src/pages/notification/NotificationCenter.tsx
+ * 该页面功能更完善，使用自定义组件，支持更丰富的通知管理功能
+ * 将在下一个版本中移除
+ */
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,

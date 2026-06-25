@@ -21,7 +21,7 @@ export interface Asset {
   rated_power?: number;
   rated_voltage?: number;
   rated_current?: number;
-  specifications?: any;
+  specifications?: Record<string, unknown>;
   image_url?: string;
   department?: string;
 }

@@ -19,6 +19,7 @@ import { useAppStore } from '../../store';
 import { RoleBadge } from '@/components/PermissionGate';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 
 interface UserManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -38,6 +39,13 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
   const [showRolesModal, setShowRolesModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [userRoles, setUserRoles] = useState<Role[]>([]);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [confirmDialogConfig, setConfirmDialogConfig] = useState<{
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    danger?: boolean;
+  } | null>(null);
 
   // 批量选择状态
   const [selectedUserIds, setSelectedUserIds] = useState<(string | number)[]>([]);
@@ -131,8 +139,17 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
     }
   };
 
-  // 批量删除用户
-  const handleBatchDelete = async () => {
+  const openConfirmDialog = (config: {
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    danger?: boolean;
+  }) => {
+    setConfirmDialogConfig(config);
+    setConfirmDialogOpen(true);
+  };
+
+  const handleBatchDelete = () => {
     if (selectedUserIds.length === 0) {
       addNotification({
         title: '提示',
@@ -142,63 +159,72 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
       return;
     }
 
-    if (!confirm(`确定要删除选中的 ${selectedUserIds.length} 个用户吗？此操作不可恢复。`)) {
-      return;
-    }
-
-    try {
-      const res = await authApi.batchDeleteUsers({
-        user_ids: selectedUserIds.map(String),
-      });
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: `已删除 ${selectedUserIds.length} 个用户`,
-          type: 'success',
-        });
-        setSelectedUserIds([]);
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '删除失败',
-          type: 'error',
-        });
-      }
-    } catch (_err: unknown) {
-      addNotification({
-        title: '失败',
-        message: extractErrorMessage(_err, '删除失败'),
-        type: 'error',
-      });
-    }
+    openConfirmDialog({
+      title: '确认批量删除',
+      message: `确定要删除选中的 ${selectedUserIds.length} 个用户吗？此操作不可恢复。`,
+      onConfirm: async () => {
+        try {
+          const res = await authApi.batchDeleteUsers({
+            user_ids: selectedUserIds.map(String),
+          });
+          if (res.success) {
+            addNotification({
+              title: '成功',
+              message: `已删除 ${selectedUserIds.length} 个用户`,
+              type: 'success',
+            });
+            setSelectedUserIds([]);
+            loadData();
+          } else {
+            addNotification({
+              title: '失败',
+              message: res.message || '删除失败',
+              type: 'error',
+            });
+          }
+        } catch (_err: unknown) {
+          addNotification({
+            title: '失败',
+            message: extractErrorMessage(_err, '删除失败'),
+            type: 'error',
+          });
+        }
+      },
+      danger: true,
+    });
   };
 
-  const handleDeleteUser = async (userId: string) => {
-    if (!confirm('确定要删除这个用户吗？')) return;
-    try {
-      const res = await authApi.deleteUser(userId);
-      if (res.success) {
-        addNotification({
-          title: '成功',
-          message: '用户删除成功',
-          type: 'success',
-        });
-        loadData();
-      } else {
-        addNotification({
-          title: '失败',
-          message: res.message || '删除用户失败',
-          type: 'error',
-        });
-      }
-    } catch (_err: unknown) {
-      addNotification({
-        title: '失败',
-        message: extractErrorMessage(_err, '删除用户失败'),
-        type: 'error',
-      });
-    }
+  const handleDeleteUser = (userId: string) => {
+    openConfirmDialog({
+      title: '确认删除',
+      message: '确定要删除这个用户吗？',
+      onConfirm: async () => {
+        try {
+          const res = await authApi.deleteUser(userId);
+          if (res.success) {
+            addNotification({
+              title: '成功',
+              message: '用户删除成功',
+              type: 'success',
+            });
+            loadData();
+          } else {
+            addNotification({
+              title: '失败',
+              message: res.message || '删除用户失败',
+              type: 'error',
+            });
+          }
+        } catch (_err: unknown) {
+          addNotification({
+            title: '失败',
+            message: extractErrorMessage(_err, '删除用户失败'),
+            type: 'error',
+          });
+        }
+      },
+      danger: true,
+    });
   };
 
   const openRolesModal = async (user: User) => {
@@ -827,6 +853,18 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={() => setConfirmDialogOpen(false)}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogOpen(false);
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
+      />
     </Box>
   );
 };

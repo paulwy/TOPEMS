@@ -1,17 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   FileText,
-  ChevronLeft,
   Eye,
   Calculator,
   TrendingUp,
   TrendingDown,
   Wallet,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { ListPageTemplate, StatCardGroup } from '@/components/mui';
 import { useAppStore } from '@/store';
-import { DataExport } from '@/components/common';
+import { DataExport, BackButton } from '@/components/common';
 import { financeApi } from '@/api/finance';
 import type { Account, AccountBalance } from '@/types/finance';
 import type { AccountingSubject } from '@/api/erp';
@@ -26,12 +24,10 @@ import {
   Box,
   Typography,
   Stack,
-  IconButton,
 } from '@mui/material';
 import { Button } from '@mui/material';
 
 const FinanceLedgerPage: React.FC = () => {
-  const navigate = useNavigate();
 
   const [ledgerData, setLedgerData] = useState<Account[]>([]);
   const [accountBalances, setAccountBalances] = useState<AccountBalance[]>([]);
@@ -309,9 +305,7 @@ const FinanceLedgerPage: React.FC = () => {
               sx={{ alignItems: 'center' }}
               spacing={2}
             >
-              <IconButton onClick={() => navigate('/dashboard')}>
-                <ChevronLeft sx={{ width: 20, height: 20 }} />
-              </IconButton>
+              <BackButton href='/dashboard' />
               <Box>
                 <Typography
                   variant='h5'

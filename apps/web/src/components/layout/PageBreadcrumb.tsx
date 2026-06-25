@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Breadcrumbs, Link, Typography } from '@mui/material';
 import { Home, ChevronRight } from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
-import { useAutoBreadcrumbs } from '@/hooks';
+import { useAutoBreadcrumbs, type AutoBreadcrumbItem } from '@/hooks';
 
 export interface BreadcrumbItem {
   label: string;
@@ -12,22 +12,18 @@ export interface BreadcrumbItem {
 }
 
 export interface PageBreadcrumbProps {
-  /** 面包屑项列表（手动配置） */
   items?: BreadcrumbItem[];
-  /** 是否启用自动面包屑（默认启用） */
   auto?: boolean;
-  /** 是否显示首页图标 */
   showHome?: boolean;
-  /** 首页链接 */
   homeHref?: string;
-  /** 首页点击回调 */
+  homeLabel?: string;
   onHomeClick?: () => void;
-  /** 自定义分隔符 */
   separator?: React.ReactNode;
-  /** 最大显示项数 */
   maxItems?: number;
-  /** 自定义样式 */
   sx?: object;
+  customItems?: BreadcrumbItem[];
+  dynamicTitleResolver?: (paramName: string, paramValue: string) => string | undefined;
+  fallbackToPath?: boolean;
 }
 
 export const PageBreadcrumb: React.FC<PageBreadcrumbProps> = ({
@@ -35,17 +31,26 @@ export const PageBreadcrumb: React.FC<PageBreadcrumbProps> = ({
   auto = true,
   showHome = true,
   homeHref = '/dashboard',
+  homeLabel = '首页',
   onHomeClick,
   separator,
   maxItems = 8,
   sx,
+  customItems,
+  dynamicTitleResolver,
+  fallbackToPath = true,
 }) => {
   const autoItems = useAutoBreadcrumbs({
-    includeHome: !showHome,
+    includeHome: false,
     homePath: homeHref,
+    homeLabel,
+    customItems: customItems as AutoBreadcrumbItem[],
+    dynamicTitleResolver,
+    fallbackToPath,
   });
 
-  const items = manualItems && manualItems.length > 0 ? manualItems : autoItems;
+  const hasManualItems = manualItems && manualItems.length > 0;
+  const items = hasManualItems ? manualItems : autoItems;
 
   const defaultSeparator = separator || (
     <ChevronRight style={{ width: 16, height: 16, opacity: 0.5 }} />
@@ -106,9 +111,9 @@ export const PageBreadcrumb: React.FC<PageBreadcrumbProps> = ({
     );
   };
 
-  const breadcrumbItems = [];
+  const breadcrumbItems: React.ReactNode[] = [];
 
-  if (showHome && (!auto || !manualItems || manualItems.length === 0)) {
+  if (showHome) {
     breadcrumbItems.push(
       <Link
         key='home'

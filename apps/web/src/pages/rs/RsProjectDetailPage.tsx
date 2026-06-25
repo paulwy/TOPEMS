@@ -1,6 +1,7 @@
 import { Grid } from '@/components/Grid';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { logger } from '@/utils/logger';
 import {
   Box,
   Typography,
@@ -45,198 +46,95 @@ import {
   AlertTriangle as AlertTriangle,
 } from 'lucide-react';
 import { DetailPageTemplate, type TabConfig } from '@/components/templates';
-
-interface Phase {
-  id: string;
-  name: string;
-  status: string;
-  progress: number;
-  start_date: string;
-  end_date: string | null;
-}
-
-interface Milestone {
-  id: string;
-  name: string;
-  status: string;
-  target_date: string;
-  actual_date: string | null;
-}
-
-interface Experiment {
-  id: string;
-  name: string;
-  phase: string;
-  status: string;
-  experimenter: string;
-}
+import { rsApi } from '@/api/rs';
+import { useAppStore } from '@/store';
+import type { Project, GanttPhase, GanttMilestone, Experiment } from '@/api/rs';
 
 const RsProjectDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { addNotification } = useAppStore();
   const [activeTab, setActiveTab] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [project, setProject] = useState<Project | null>(null);
+  const [phases, setPhases] = useState<GanttPhase[]>([]);
+  const [milestones, setMilestones] = useState<GanttMilestone[]>([]);
+  const [experiments, setExperiments] = useState<Experiment[]>([]);
 
-  // 模拟项目详情数据
-  const project = {
-    id: id || '1',
-    name: '新型催化剂研发项目',
-    code: 'RS-2024-001',
-    description:
-      '开发一种新型高效催化剂，用于石油化工领域的催化裂化工艺，目标是提高转化率15%以上，降低能耗10%。',
-    project_type: '新产品研发',
-    status: '进行中',
-    leader: '张三',
-    team_members: ['李四', '王五', '赵六'],
-    progress: 65,
-    start_date: '2024-01-15',
-    end_date: '2024-12-31',
-    budget: 500000,
-    risk_level: '中',
+  useEffect(() => {
+    if (!id) return;
+    loadProjectData(id);
+  }, [id]);
+
+  const loadProjectData = async (projectId: string) => {
+    try {
+      setLoading(true);
+      const [projectRes, ganttRes, experimentsRes] = await Promise.all([
+        rsApi.getProject(projectId),
+        rsApi.getProjectGantt(projectId),
+        rsApi.listExperiments({ project_id: projectId, page_size: 100 }),
+      ]);
+
+      if (projectRes.success && projectRes.data) {
+        setProject(projectRes.data);
+      }
+      if (ganttRes.success && ganttRes.data) {
+        setPhases(ganttRes.data.phases || []);
+        setMilestones(ganttRes.data.milestones || []);
+      }
+      if (experimentsRes.success && experimentsRes.data) {
+        setExperiments(experimentsRes.data.experiments || []);
+      }
+    } catch (error: unknown) {
+      logger.error('加载项目详情失败:', error);
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载项目详情',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
-
-  const phases: Phase[] = [
-    {
-      id: '1',
-      name: '立项调研',
-      status: '已完成',
-      progress: 100,
-      start_date: '2024-01-15',
-      end_date: '2024-02-28',
-    },
-    {
-      id: '2',
-      name: '方案设计',
-      status: '已完成',
-      progress: 100,
-      start_date: '2024-03-01',
-      end_date: '2024-04-15',
-    },
-    {
-      id: '3',
-      name: '小试阶段',
-      status: '已完成',
-      progress: 100,
-      start_date: '2024-04-16',
-      end_date: '2024-06-30',
-    },
-    {
-      id: '4',
-      name: '中试阶段',
-      status: '进行中',
-      progress: 60,
-      start_date: '2024-07-01',
-      end_date: '2024-09-30',
-    },
-    {
-      id: '5',
-      name: '放大试验',
-      status: '待开始',
-      progress: 0,
-      start_date: '2024-10-01',
-      end_date: '2024-11-30',
-    },
-    {
-      id: '6',
-      name: '成果验收',
-      status: '待开始',
-      progress: 0,
-      start_date: '2024-12-01',
-      end_date: '2024-12-31',
-    },
-  ];
-
-  const milestones: Milestone[] = [
-    {
-      id: '1',
-      name: '完成调研报告',
-      status: '已完成',
-      target_date: '2024-02-15',
-      actual_date: '2024-02-10',
-    },
-    {
-      id: '2',
-      name: '确定技术路线',
-      status: '已完成',
-      target_date: '2024-04-01',
-      actual_date: '2024-03-28',
-    },
-    {
-      id: '3',
-      name: '小试成功',
-      status: '已完成',
-      target_date: '2024-06-15',
-      actual_date: '2024-06-20',
-    },
-    {
-      id: '4',
-      name: '中试验收',
-      status: '进行中',
-      target_date: '2024-09-15',
-      actual_date: null,
-    },
-    {
-      id: '5',
-      name: '产品定型',
-      status: '待开始',
-      target_date: '2024-11-15',
-      actual_date: null,
-    },
-  ];
-
-  const experiments: Experiment[] = [
-    {
-      id: '1',
-      name: '催化剂活性测试-第1轮',
-      phase: '小试',
-      status: '已完成',
-      experimenter: '李四',
-    },
-    {
-      id: '2',
-      name: '催化剂活性测试-第2轮',
-      phase: '小试',
-      status: '已完成',
-      experimenter: '李四',
-    },
-    {
-      id: '3',
-      name: '催化剂活性测试-第3轮',
-      phase: '中试',
-      status: '进行中',
-      experimenter: '王五',
-    },
-    {
-      id: '4',
-      name: '热稳定性评估',
-      phase: '小试',
-      status: '已完成',
-      experimenter: '赵六',
-    },
-    {
-      id: '5',
-      name: '配方优化实验',
-      phase: '中试',
-      status: '进行中',
-      experimenter: '李四',
-    },
-  ];
 
   const getStatusColor = (
     status: string
   ): 'primary' | 'success' | 'warning' | 'error' | 'default' => {
     switch (status) {
       case '已完成':
+      case 'completed':
         return 'success';
       case '进行中':
+      case 'in_progress':
         return 'primary';
       case '待开始':
+      case 'pending':
         return 'default';
       case '暂停':
+      case 'paused':
         return 'warning';
       case '取消':
+      case 'cancelled':
         return 'error';
       default:
         return 'default';
+    }
+  };
+
+  const getStatusLabel = (status: string): string => {
+    switch (status) {
+      case 'in_progress':
+        return '进行中';
+      case 'completed':
+        return '已完成';
+      case 'paused':
+        return '暂停';
+      case 'cancelled':
+        return '取消';
+      case 'pending':
+        return '待开始';
+      default:
+        return status;
     }
   };
 
@@ -266,7 +164,8 @@ const RsProjectDetailPage: React.FC = () => {
     }
   };
 
-  // Tab内容
+  const teamMembers = project?.team_members || [];
+
   const tabContents: TabConfig[] = [
     {
       id: 'phases',
@@ -293,7 +192,7 @@ const RsProjectDetailPage: React.FC = () => {
                   <TableCell>{phase.name}</TableCell>
                   <TableCell>
                     <Chip
-                      label={phase.status}
+                      label={getStatusLabel(phase.status)}
                       size='small'
                       color={getStatusColor(phase.status)}
                     />
@@ -314,7 +213,7 @@ const RsProjectDetailPage: React.FC = () => {
                       <Typography variant='body2'>{phase.progress}%</Typography>
                     </Box>
                   </TableCell>
-                  <TableCell>{phase.start_date}</TableCell>
+                  <TableCell>{phase.start_date || '-'}</TableCell>
                   <TableCell>{phase.end_date || '-'}</TableCell>
                 </TableRow>
               ))}
@@ -332,8 +231,8 @@ const RsProjectDetailPage: React.FC = () => {
           {milestones.map((milestone) => (
             <TimelineItem key={milestone.id}>
               <TimelineSeparator>
-                <TimelineDot color={milestone.status === '已完成' ? 'success' : 'primary'}>
-                  {milestone.status === '已完成' ? <CheckCircleIcon /> : <AlertTriangle />}
+                <TimelineDot color={milestone.status === 'completed' ? 'success' : 'primary'}>
+                  {milestone.status === 'completed' ? <CheckCircleIcon /> : <AlertTriangle />}
                 </TimelineDot>
                 <TimelineConnector />
               </TimelineSeparator>
@@ -352,18 +251,10 @@ const RsProjectDetailPage: React.FC = () => {
                     variant='body2'
                     color='text.secondary'
                   >
-                    目标日期: {milestone.target_date}
+                    目标日期: {milestone.date}
                   </Typography>
-                  {milestone.actual_date && (
-                    <Typography
-                      variant='body2'
-                      color='success.main'
-                    >
-                      完成日期: {milestone.actual_date}
-                    </Typography>
-                  )}
                   <Chip
-                    label={milestone.status}
+                    label={getStatusLabel(milestone.status)}
                     size='small'
                     color={getStatusColor(milestone.status)}
                     sx={{ mt: 1 }}
@@ -407,7 +298,7 @@ const RsProjectDetailPage: React.FC = () => {
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={exp.status}
+                      label={getStatusLabel(exp.status)}
                       size='small'
                       color={getStatusColor(exp.status)}
                     />
@@ -438,10 +329,10 @@ const RsProjectDetailPage: React.FC = () => {
         <List>
           <ListItemButton>
             <ListItemIcon>
-              <Avatar>{project.leader[0]}</Avatar>
+              <Avatar>{project?.leader?.[0] || '-'}</Avatar>
             </ListItemIcon>
             <ListItemText
-              primary={project.leader}
+              primary={project?.leader || '-'}
               secondary='项目负责人'
             />
             <Chip
@@ -450,10 +341,10 @@ const RsProjectDetailPage: React.FC = () => {
               size='small'
             />
           </ListItemButton>
-          {project.team_members.map((member, index) => (
+          {teamMembers.map((member: string, index: number) => (
             <ListItemButton key={index}>
               <ListItemIcon>
-                <Avatar>{member[0]}</Avatar>
+                <Avatar>{member?.[0] || '-'}</Avatar>
               </ListItemIcon>
               <ListItemText
                 primary={member}
@@ -481,34 +372,7 @@ const RsProjectDetailPage: React.FC = () => {
             </ListItemIcon>
             <ListItemText
               primary='项目立项报告'
-              secondary='2024-01-20'
-            />
-          </ListItemButton>
-          <ListItemButton>
-            <ListItemIcon>
-              <DescriptionIcon />
-            </ListItemIcon>
-            <ListItemText
-              primary='技术方案设计书'
-              secondary='2024-03-15'
-            />
-          </ListItemButton>
-          <ListItemButton>
-            <ListItemIcon>
-              <DescriptionIcon />
-            </ListItemIcon>
-            <ListItemText
-              primary='小试阶段总结报告'
-              secondary='2024-06-30'
-            />
-          </ListItemButton>
-          <ListItemButton>
-            <ListItemIcon>
-              <DescriptionIcon />
-            </ListItemIcon>
-            <ListItemText
-              primary='中试阶段进度报告'
-              secondary='2024-08-15'
+              secondary={project?.created_at || '-'}
             />
           </ListItemButton>
         </List>
@@ -516,29 +380,29 @@ const RsProjectDetailPage: React.FC = () => {
     },
   ];
 
-  // 信息卡片数据
-  const infoCard = {
-    title: project.name,
-    subtitle: `编码: ${project.code} | 类型: ${project.project_type} | 负责人: ${project.leader}`,
-    tags: [
-      project.status,
-      `风险: ${project.risk_level}`,
-      `预算: ${(project.budget / 10000).toFixed(1)}万元`,
-    ],
-    stats: [
-      { label: '项目进度', value: `${project.progress}%` },
-      {
-        label: '已完成阶段',
-        value: `${phases.filter((p) => p.status === '已完成').length}/${phases.length}`,
-      },
-      {
-        label: '里程碑',
-        value: `${milestones.filter((m) => m.status === '已完成').length}/${milestones.length}`,
-      },
-    ],
-  };
+  const infoCard = project
+    ? {
+        title: project.name,
+        subtitle: `编码: ${project.code} | 类型: ${project.project_type} | 负责人: ${project.leader}`,
+        tags: [
+          getStatusLabel(project.status),
+          `风险: ${project.risk_level || '-'}`,
+          `预算: ${project.budget ? (project.budget / 10000).toFixed(1) : '-'}万元`,
+        ],
+        stats: [
+          { label: '项目进度', value: `${project.progress}%` },
+          {
+            label: '已完成阶段',
+            value: `${phases.filter((p) => p.status === 'completed').length}/${phases.length}`,
+          },
+          {
+            label: '里程碑',
+            value: `${milestones.filter((m) => m.status === 'completed').length}/${milestones.length}`,
+          },
+        ],
+      }
+    : null;
 
-  // 操作按钮
   const actions = [
     {
       label: '编辑',
@@ -556,12 +420,13 @@ const RsProjectDetailPage: React.FC = () => {
 
   return (
     <DetailPageTemplate
-      title={project.name}
-      subtitle={`编码: ${project.code} | 类型: ${project.project_type} | 负责人: ${project.leader}`}
+      title={project?.name || '项目详情'}
+      subtitle={project ? `编码: ${project.code} | 类型: ${project.project_type} | 负责人: ${project.leader}` : ''}
       infoCard={infoCard}
       tabs={tabContents}
       defaultTab='phases'
       actions={actions}
+      loading={loading}
     />
   );
 };

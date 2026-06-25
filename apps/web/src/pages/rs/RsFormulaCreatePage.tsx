@@ -1,18 +1,11 @@
-import { Grid } from '@/components/Grid';
-import React, { useState, useMemo } from 'react';
-import { logger } from '@/utils/logger';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { FormPageTemplate, type FormSection, type FormField } from '@/components/templates/FormPageTemplate';
+import { formulaApi, rsApi } from '@/api/rs';
+import type { Formula, FormulaIngredient, CreateFormulaRequest, UpdateFormulaRequest } from '@/api/rs';
+import { useAppStore } from '@/store';
 import {
-  Box,
-  Container,
-  Typography,
   Paper,
-  TextField,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Select,
-  Divider,
   Table,
   TableBody,
   TableCell,
@@ -20,284 +13,412 @@ import {
   TableHead,
   TableRow,
   IconButton,
-  Stack,
+  Button,
+  TextField,
+  Typography,
+  Divider,
 } from '@mui/material';
-import { Button } from '@mui/material';
-import { Save, X, Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2 } from 'lucide-react';
 
-interface Component {
-  name: string;
-  percentage: number;
-  unit: string;
-  notes: string;
-}
+const statuses = [
+  { value: 'draft', label: '草稿' },
+  { value: 'testing', label: '测试中' },
+  { value: 'approved', label: '已发布' },
+];
 
 const RsFormulaCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
+  const { addNotification } = useAppStore();
   const isEdit = Boolean(id);
 
-  const [formData, setFormData] = useState({
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
+  const [ingredients, setIngredients] = useState<FormulaIngredient[]>([
+    { name: '', quantity: 0, unit: '%', purity: '', supplier: '', notes: '' },
+  ]);
+
+  const defaultValues = {
     name: '',
     code: '',
     project_id: '',
+    version: 'v1.0',
+    category: '',
     description: '',
-    status: '草稿',
-  });
-
-  const [components, setComponents] = useState<Component[]>([
-    { name: '', percentage: 0, unit: '%', notes: '' },
-  ]);
-
-  const projects = [
-    { id: '1', name: '新型催化剂研发项目' },
-    { id: '2', name: '聚合物改性研究' },
-    { id: '3', name: '环保材料开发' },
-  ];
-
-  const statuses = ['草稿', '测试中', '已发布', '已废弃'];
-
-  const handleAddComponent = () => {
-    setComponents([...components, { name: '', percentage: 0, unit: '%', notes: '' }]);
+    status: 'draft',
+    effective_date: '',
+    expiration_date: '',
   };
 
-  const handleRemoveComponent = (index: number) => {
-    setComponents(components.filter((_, i) => i !== index));
+  const sections: FormSection[] = useMemo(() => [
+    {
+      id: 'basic',
+      title: '基本信息',
+      description: '配方核心信息',
+      collapsible: true,
+      defaultExpanded: true,
+      fields: [
+        {
+          name: 'name',
+          label: '配方名称',
+          type: 'text',
+          required: true,
+          placeholder: '请输入配方名称',
+        },
+        {
+          name: 'code',
+          label: '配方编码',
+          type: 'text',
+          required: true,
+          placeholder: '例如: FM-2024-001',
+        },
+        {
+          name: 'version',
+          label: '版本号',
+          type: 'text',
+          placeholder: '例如: v1.0',
+        },
+        {
+          name: 'project_id',
+          label: '所属项目',
+          type: 'select',
+          required: true,
+          options: projects.map((p) => ({ label: p.name, value: p.id })),
+        },
+        {
+          name: 'status',
+          label: '状态',
+          type: 'select',
+          options: statuses.map((s) => ({ label: s.label, value: s.value })),
+        },
+        {
+          name: 'category',
+          label: '配方类别',
+          type: 'text',
+          placeholder: '请输入配方类别',
+        },
+        {
+          name: 'effective_date',
+          label: '生效日期',
+          type: 'date',
+        },
+        {
+          name: 'expiration_date',
+          label: '过期日期',
+          type: 'date',
+        },
+        {
+          name: 'description',
+          label: '配方描述',
+          type: 'textarea',
+          rows: 3,
+          placeholder: '请输入配方描述',
+        },
+      ],
+    },
+  ], [projects]);
+
+  useEffect(() => {
+    loadProjects();
+    if (isEdit && id) {
+      loadFormula(id);
+    }
+  }, [isEdit, id]);
+
+  const loadProjects = async () => {
+    try {
+      const response = await rsApi.listProjects();
+      if (response.success && response.data) {
+        setProjects(
+          response.data.projects?.map((p) => ({ id: p.id, name: p.name })) || []
+        );
+      }
+    } catch (err: unknown) {
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载项目列表',
+      });
+    }
   };
 
-  const handleComponentChange = (index: number, field: string, value: string | number) => {
-    const newComponents = [...components];
-    (newComponents[index] as unknown as Record<string, string | number>)[field] = value;
-    setComponents(newComponents);
+  const loadFormula = async (formulaId: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await formulaApi.getFormula(formulaId);
+      if (response.success && response.data) {
+        const formula = response.data;
+        setIngredients(formula.ingredients || [
+          { name: '', quantity: 0, unit: '%', purity: '', supplier: '', notes: '' },
+        ]);
+      } else {
+        setError('无法获取配方数据');
+        addNotification({
+          type: 'error',
+          title: '加载失败',
+          message: '无法加载配方数据',
+        });
+      }
+    } catch (err: unknown) {
+      setError('加载配方数据失败');
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载配方数据',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleSubmit = () => {
-    logger.info('提交数据:', { ...formData, components });
-    navigate('/rs/formulas');
+  const handleAddIngredient = () => {
+    setIngredients([
+      ...ingredients,
+      { name: '', quantity: 0, unit: '%', purity: '', supplier: '', notes: '' },
+    ]);
+  };
+
+  const handleRemoveIngredient = (index: number) => {
+    if (ingredients.length === 1) return;
+    setIngredients(ingredients.filter((_, i) => i !== index));
+  };
+
+  const handleIngredientChange = (
+    index: number,
+    field: keyof FormulaIngredient,
+    value: string | number
+  ) => {
+    const newIngredients = [...ingredients];
+    (newIngredients[index] as Record<string, string | number>)[field] = value;
+    setIngredients(newIngredients);
+  };
+
+  const handleSubmit = async (data: unknown) => {
+    setSubmitting(true);
+    try {
+      const formData = data as Record<string, unknown>;
+
+      if (!formData.name || !formData.code || !formData.project_id) {
+        addNotification({
+          type: 'error',
+          title: '验证失败',
+          message: '请填写必填字段',
+        });
+        return;
+      }
+
+      const validIngredients = ingredients.filter((i) => i.name.trim());
+
+      if (isEdit && id) {
+        const updateData: UpdateFormulaRequest = {
+          name: formData.name as string,
+          code: formData.code as string,
+          version: formData.version as string,
+          category: (formData.category as string) || undefined,
+          description: (formData.description as string) || undefined,
+          ingredients: validIngredients.length > 0 ? validIngredients : undefined,
+          status: formData.status as string,
+          effective_date: (formData.effective_date as string) || undefined,
+          expiration_date: (formData.expiration_date as string) || undefined,
+        };
+
+        const response = await formulaApi.updateFormula(id, updateData);
+        if (response.success) {
+          addNotification({
+            type: 'success',
+            title: '更新成功',
+            message: '配方已更新',
+          });
+          navigate('/rs/formulas');
+        } else {
+          addNotification({
+            type: 'error',
+            title: '更新失败',
+            message: '无法更新配方',
+          });
+        }
+      } else {
+        const createData: CreateFormulaRequest = {
+          name: formData.name as string,
+          code: formData.code as string,
+          project_id: formData.project_id as string,
+          version: formData.version as string,
+          category: (formData.category as string) || undefined,
+          description: (formData.description as string) || undefined,
+          ingredients: validIngredients.length > 0 ? validIngredients : undefined,
+          status: formData.status as string,
+          effective_date: (formData.effective_date as string) || undefined,
+          expiration_date: (formData.expiration_date as string) || undefined,
+        };
+
+        const response = await formulaApi.createFormula(createData);
+        if (response.success) {
+          addNotification({
+            type: 'success',
+            title: '创建成功',
+            message: '配方已创建',
+          });
+          navigate('/rs/formulas');
+        } else {
+          addNotification({
+            type: 'error',
+            title: '创建失败',
+            message: '无法创建配方',
+          });
+        }
+      }
+    } catch (err: unknown) {
+      addNotification({
+        type: 'error',
+        title: '提交失败',
+        message: (err as { message?: string }).message || '无法提交配方',
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleCancel = () => {
     navigate('/rs/formulas');
   };
 
+  const additionalContent = (
+    <Paper sx={{ p: 3, mt: 3 }}>
+      <Typography variant='h6' gutterBottom>
+        配方组成
+      </Typography>
+      <Divider sx={{ mb: 2 }} />
+      <TableContainer>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>组分名称</TableCell>
+              <TableCell>数量</TableCell>
+              <TableCell>单位</TableCell>
+              <TableCell>纯度</TableCell>
+              <TableCell>供应商</TableCell>
+              <TableCell>备注</TableCell>
+              <TableCell align='center'>操作</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {ingredients.map((comp, index) => (
+              <TableRow key={index}>
+                <TableCell>
+                  <TextField
+                    size='small'
+                    value={comp.name}
+                    onChange={(e) =>
+                      handleIngredientChange(index, 'name', e.target.value)
+                    }
+                    disabled={submitting}
+                  />
+                </TableCell>
+                <TableCell>
+                  <TextField
+                    size='small'
+                    type='number'
+                    value={comp.quantity}
+                    onChange={(e) =>
+                      handleIngredientChange(
+                        index,
+                        'quantity',
+                        parseFloat(e.target.value) || 0
+                      )
+                    }
+                    disabled={submitting}
+                  />
+                </TableCell>
+                <TableCell>
+                  <TextField
+                    size='small'
+                    value={comp.unit}
+                    onChange={(e) =>
+                      handleIngredientChange(index, 'unit', e.target.value)
+                    }
+                    disabled={submitting}
+                  />
+                </TableCell>
+                <TableCell>
+                  <TextField
+                    size='small'
+                    value={comp.purity}
+                    onChange={(e) =>
+                      handleIngredientChange(index, 'purity', e.target.value)
+                    }
+                    disabled={submitting}
+                  />
+                </TableCell>
+                <TableCell>
+                  <TextField
+                    size='small'
+                    value={comp.supplier}
+                    onChange={(e) =>
+                      handleIngredientChange(index, 'supplier', e.target.value)
+                    }
+                    disabled={submitting}
+                  />
+                </TableCell>
+                <TableCell>
+                  <TextField
+                    size='small'
+                    value={comp.notes}
+                    onChange={(e) =>
+                      handleIngredientChange(index, 'notes', e.target.value)
+                    }
+                    disabled={submitting}
+                  />
+                </TableCell>
+                <TableCell align='center'>
+                  <IconButton
+                    size='small'
+                    color='error'
+                    onClick={() => handleRemoveIngredient(index)}
+                    disabled={submitting || ingredients.length === 1}
+                  >
+                    <Trash2 />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+      <Button
+        startIcon={<Plus />}
+        onClick={handleAddIngredient}
+        sx={{ mt: 2 }}
+        disabled={submitting}
+      >
+        添加组分
+      </Button>
+    </Paper>
+  );
+
   return (
-    <Container
-      maxWidth='lg'
-      sx={{ py: 3 }}
-    >
-      <div style={{ marginBottom: 12 }}>
-        <Typography
-          variant='h4'
-          sx={{ fontWeight: 'bold' }}
-          gutterBottom
-        >
-          {isEdit ? '编辑配方' : '新增配方'}
-        </Typography>
-        <Typography
-          variant='body2'
-          color='text.secondary'
-        >
-          {isEdit ? '修改配方信息' : '创建新的研发配方'}
-        </Typography>
-      </div>
-
-      <Paper sx={{ p: 3 }}>
-        <Grid
-          container
-          spacing={3}
-        >
-          <Grid size={{ xs: 12 }}>
-            <Typography
-              variant='h6'
-              gutterBottom
-            >
-              基本信息
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              fullWidth
-              label='配方名称'
-              required
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              fullWidth
-              label='配方编码'
-              required
-              value={formData.code}
-              onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-              placeholder='例如: FM-2024-001'
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <FormControl fullWidth>
-              <InputLabel>所属项目</InputLabel>
-              <Select
-                value={formData.project_id}
-                label='所属项目'
-                onChange={(e) => setFormData({ ...formData, project_id: e.target.value })}
-              >
-                {projects.map((p) => (
-                  <MenuItem
-                    key={p.id}
-                    value={p.id}
-                  >
-                    {p.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <FormControl fullWidth>
-              <InputLabel>状态</InputLabel>
-              <Select
-                value={formData.status}
-                label='状态'
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              >
-                {statuses.map((s) => (
-                  <MenuItem
-                    key={s}
-                    value={s}
-                  >
-                    {s}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-
-          <Grid size={{ xs: 12 }}>
-            <TextField
-              fullWidth
-              label='配方描述'
-              multiline
-              rows={3}
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12 }}>
-            <Typography
-              variant='h6'
-              gutterBottom
-              sx={{ mt: 2 }}
-            >
-              配方组成
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-          </Grid>
-
-          <Grid size={{ xs: 12 }}>
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>组分名称</TableCell>
-                    <TableCell>占比</TableCell>
-                    <TableCell>单位</TableCell>
-                    <TableCell>备注</TableCell>
-                    <TableCell align='center'>操作</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {components.map((comp, index) => (
-                    <TableRow key={index}>
-                      <TableCell>
-                        <TextField
-                          size='small'
-                          value={comp.name}
-                          onChange={(e) => handleComponentChange(index, 'name', e.target.value)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          size='small'
-                          type='number'
-                          value={comp.percentage}
-                          onChange={(e) =>
-                            handleComponentChange(
-                              index,
-                              'percentage',
-                              parseFloat(e.target.value) || 0
-                            )
-                          }
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          size='small'
-                          value={comp.unit}
-                          onChange={(e) => handleComponentChange(index, 'unit', e.target.value)}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          size='small'
-                          value={comp.notes}
-                          onChange={(e) => handleComponentChange(index, 'notes', e.target.value)}
-                        />
-                      </TableCell>
-                      <TableCell align='center'>
-                        <IconButton
-                          size='small'
-                          color='error'
-                          onClick={() => handleRemoveComponent(index)}
-                        >
-                          <Trash2 />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            <Button
-              startIcon={<Plus />}
-              onClick={handleAddComponent}
-              sx={{ mt: 2 }}
-            >
-              添加组分
-            </Button>
-          </Grid>
-
-          <Grid size={{ xs: 12 }}>
-            <Divider sx={{ mb: 2 }} />
-            <Stack
-              direction='row'
-              spacing={2}
-              sx={{ justifyContent: 'flex-end' }}
-            >
-              <Button
-                variant='outlined'
-                startIcon={<X />}
-                onClick={handleCancel}
-              >
-                取消
-              </Button>
-              <Button
-                variant='contained'
-                startIcon={<Save />}
-                onClick={handleSubmit}
-              >
-                {isEdit ? '保存修改' : '创建配方'}
-              </Button>
-            </Stack>
-          </Grid>
-        </Grid>
-      </Paper>
-    </Container>
+    <FormPageTemplate
+      title={isEdit ? '编辑配方' : '新增配方'}
+      subtitle={isEdit ? '修改配方信息' : '创建新的研发配方'}
+      sections={sections}
+      defaultValues={defaultValues}
+      loading={loading}
+      submitting={submitting}
+      error={error}
+      onSubmit={handleSubmit}
+      onCancel={handleCancel}
+      submitText={isEdit ? '保存修改' : '创建配方'}
+      columns={2}
+      showValidationHints
+      validationToasts={[
+        { message: '提交成功', type: 'success' },
+        { message: '提交失败，请检查表单', type: 'error' },
+      ]}
+      footerContent={additionalContent}
+    />
   );
 };
 

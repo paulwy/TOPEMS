@@ -11,7 +11,7 @@ export interface SafetyHazard {
   description: string | null;
   location: string | null;
   risk_assessment: string | null;
-  control_measures: any;
+  control_measures: string[];
   status: string;
   severity?: 'high' | 'medium' | 'low';
   exposure?: 'high' | 'medium' | 'low';
@@ -272,8 +272,8 @@ export interface SafetyCheck {
   check_date: string | null;
   location: string | null;
   result: string;
-  issues: any;
-  attachments: any | null;
+  issues: string[];
+  attachments: string[] | null;
   status: string;
   created_by: string | null;
   created_at: string;
@@ -462,7 +462,7 @@ export interface EmergencyPlan {
   scope: string | null;
   trigger_conditions: string | null;
   response_procedures: string | null;
-  responsible_persons: any;
+  responsible_persons: string[];
   contact_info: string | null;
   status: string;
   created_by: string | null;
@@ -488,13 +488,13 @@ export interface DrillRecord {
   plan_id: string | null;
   drill_name: string;
   drill_date: string | null;
-  participants: any;
+  participants: string[];
   duration_hours: number;
   location: string | null;
   summary: string | null;
   issues_found: string | null;
   improvements: string | null;
-  attachments: any | null;
+  attachments: string[] | null;
   status: string;
   created_by: string | null;
   created_at: string;
@@ -951,6 +951,15 @@ export interface HealthCheckPlan {
   updated_at: string;
 }
 
+export interface HealthCheckResultItem {
+  item_name: string;
+  result: string;
+  unit?: string;
+  reference_range?: string;
+  status: 'normal' | 'abnormal' | 'warning';
+  remarks?: string;
+}
+
 export interface HealthCheckRecord {
   id: string;
   record_no: string;
@@ -961,7 +970,7 @@ export interface HealthCheckRecord {
   check_date: string | null;
   hospital: string | null;
   check_items: string[] | null;
-  results: any;
+  results: HealthCheckResultItem[];
   conclusion: string | null;
   abnormal_items: string[] | null;
   suggestions: string | null;
@@ -1057,7 +1066,7 @@ export interface CreateHealthCheckRecordRequest {
   check_date?: string | null;
   hospital?: string | null;
   check_items?: string[] | null;
-  results?: any;
+  results?: HealthCheckResultItem[];
   conclusion?: string | null;
   abnormal_items?: string[] | null;
   suggestions?: string | null;
@@ -1071,7 +1080,7 @@ export interface UpdateHealthCheckRecordRequest {
   check_date?: string | null;
   hospital?: string | null;
   check_items?: string[] | null;
-  results?: any;
+  results?: HealthCheckResultItem[];
   conclusion?: string | null;
   abnormal_items?: string[] | null;
   suggestions?: string | null;
@@ -1676,6 +1685,13 @@ export interface ComplianceAssessment {
   updated_at: string;
 }
 
+export interface DischargeLimit {
+  pollutant_name: string;
+  limit_value: number;
+  unit: string;
+  standard?: string;
+}
+
 export interface DischargePermit {
   id: string;
   permit_no: string;
@@ -1689,7 +1705,7 @@ export interface DischargePermit {
   issuing_authority: string | null;
   discharge_location: string | null;
   discharge_standard: string | null;
-  discharge_limits: any;
+  discharge_limits: DischargeLimit[];
   monitoring_requirements: string | null;
   status: 'valid' | 'expired' | 'revoked' | 'pending_renewal';
   attachments: string[] | null;
@@ -1799,7 +1815,7 @@ export interface CreateDischargePermitRequest {
   issuing_authority?: string | null;
   discharge_location?: string | null;
   discharge_standard?: string | null;
-  discharge_limits?: any;
+  discharge_limits?: DischargeLimit[];
   monitoring_requirements?: string | null;
   attachments?: string[] | null;
   status?: 'valid' | 'expired' | 'revoked' | 'pending_renewal';
@@ -1816,7 +1832,7 @@ export interface UpdateDischargePermitRequest {
   issuing_authority?: string | null;
   discharge_location?: string | null;
   discharge_standard?: string | null;
-  discharge_limits?: any;
+  discharge_limits?: DischargeLimit[];
   monitoring_requirements?: string | null;
   attachments?: string[] | null;
   status?: 'valid' | 'expired' | 'revoked' | 'pending_renewal';
@@ -1889,6 +1905,13 @@ export interface EnvironmentalEventListQueryParams extends ListQueryParams {
 }
 
 // ============ Data Sync Types ============
+export interface SyncErrorDetail {
+  code?: string;
+  message?: string;
+  stack?: string;
+  [key: string]: unknown;
+}
+
 export interface SyncRecord {
   id: string;
   sync_no: string;
@@ -1906,7 +1929,7 @@ export interface SyncRecord {
   triggered_by: string | null;
   trigger_type: 'manual' | 'scheduled' | 'event';
   error_message: string | null;
-  error_details: any;
+  error_details: SyncErrorDetail;
   created_at: string;
   updated_at: string;
 }
@@ -1920,12 +1943,23 @@ export interface SyncRecordDetail {
   operation: 'create' | 'update' | 'delete';
   status: 'success' | 'failed' | 'skipped' | 'pending';
   error_message: string | null;
-  source_data: any;
-  target_data: any;
+  source_data: Record<string, unknown>;
+  target_data: Record<string, unknown>;
   retried_count: number;
   last_retry_at: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface SyncFilter {
+  [key: string]: unknown;
+}
+
+export interface SyncFieldMapping {
+  source_field: string;
+  target_field: string;
+  transform?: string;
+  default_value?: unknown;
 }
 
 export interface SyncConfig {
@@ -1940,8 +1974,8 @@ export interface SyncConfig {
   enabled: boolean;
   last_sync_at: string | null;
   next_sync_at: string | null;
-  filters: any;
-  field_mapping: any;
+  filters: SyncFilter;
+  field_mapping: SyncFieldMapping[];
   created_at: string;
   updated_at: string;
 }
@@ -1953,7 +1987,7 @@ export interface CreateSyncRequest {
   entity_type: string;
   trigger_type?: 'manual' | 'scheduled' | 'event';
   entity_ids?: string[] | null;
-  filters?: any;
+  filters?: SyncFilter;
 }
 
 export interface SyncRetryRequest {

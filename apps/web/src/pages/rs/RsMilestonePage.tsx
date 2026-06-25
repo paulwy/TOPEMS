@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Typography,
@@ -14,6 +14,9 @@ import {
 import { Button } from '@mui/material';
 import { Plus, Flag, Calendar, Link2, Eye, Edit } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
+import { rsApi } from '@/api/rs';
+import { useAppStore } from '@/store';
+import type { Build, CreateBuildRequest } from '@/api/rs';
 
 interface Milestone {
   id: string;
@@ -26,12 +29,14 @@ interface Milestone {
 }
 
 const RsMilestonePage: React.FC = () => {
+  const { addNotification } = useAppStore();
   const [milestones, setMilestones] = useState<Milestone[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>('');
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({
     start: '',
     end: '',
@@ -47,56 +52,46 @@ const RsMilestonePage: React.FC = () => {
   });
 
   useEffect(() => {
-    const mockMilestones: Milestone[] = [
-      {
-        id: '1',
-        name: 'v1.0.0 发布',
-        start_date: '2024-06-01',
-        end_date: '2024-06-30',
-        progress: 75,
-        related_project: '用户中心重构',
-        status: 'active',
-      },
-      {
-        id: '2',
-        name: '性能优化',
-        start_date: '2024-05-01',
-        end_date: '2024-05-31',
-        progress: 100,
-        related_project: '系统优化项目',
-        status: 'completed',
-      },
-      {
-        id: '3',
-        name: '移动端适配',
-        start_date: '2024-06-15',
-        end_date: '2024-07-15',
-        progress: 30,
-        related_project: '移动端开发',
-        status: 'active',
-      },
-      {
-        id: '4',
-        name: '数据库迁移',
-        start_date: '2024-04-01',
-        end_date: '2024-04-30',
-        progress: 100,
-        related_project: '数据库升级',
-        status: 'completed',
-      },
-      {
-        id: '5',
-        name: 'API v2开发',
-        start_date: '2024-07-01',
-        end_date: '2024-08-31',
-        progress: 0,
-        related_project: 'API重构',
-        status: 'planning',
-      },
-    ];
-    setMilestones(mockMilestones);
-    setLoading(false);
-  }, []);
+    loadMilestones();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, statusFilter, page, rowsPerPage]);
+
+  const loadMilestones = async () => {
+    try {
+      setLoading(true);
+      const params: any = {
+        page: page + 1,
+        page_size: rowsPerPage,
+      };
+      if (searchTerm) params.search = searchTerm;
+      if (statusFilter) params.status = statusFilter;
+
+      const response = await rsApi.listBuilds(params);
+      if (response.success && response.data) {
+        const builds = response.data.builds || [];
+        const transformed = builds.map((b: Build) => ({
+          id: b.id,
+          name: `${b.build_no} - ${b.project_name}`,
+          start_date: b.created_at?.split('T')[0] || '',
+          end_date: b.created_at?.split('T')[0] || '',
+          progress: b.status === 'success' ? 100 : b.status === 'failed' ? 0 : b.status === 'running' ? 50 : 0,
+          related_project: b.project_name,
+          status: b.status === 'success' ? 'completed' : b.status === 'running' ? 'active' : 'planning',
+        }));
+        setMilestones(transformed);
+        setTotal(response.data.total || 0);
+      }
+    } catch (error: unknown) {
+      console.error('加载里程碑数据失败:', error);
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载里程碑数据',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusColor = (status: string): 'success' | 'primary' | 'warning' | 'default' => {
     switch (status) {
@@ -124,40 +119,54 @@ const RsMilestonePage: React.FC = () => {
     }
   };
 
-  const filteredMilestones = milestones.filter((ms) => {
-    const matchesSearch =
-      ms.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ms.related_project.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = !statusFilter || ms.status === statusFilter;
-    const matchesDateRange =
-      (!dateRange.start || ms.end_date >= dateRange.start) &&
-      (!dateRange.end || ms.start_date <= dateRange.end);
-    return matchesSearch && matchesStatus && matchesDateRange;
-  });
+  const filteredMilestones = useMemo(() => {
+    return milestones.filter((ms) => {
+      const matchesSearch =
+        ms.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ms.related_project.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = !statusFilter || ms.status === statusFilter;
+      const matchesDateRange =
+        (!dateRange.start || ms.end_date >= dateRange.start) &&
+        (!dateRange.end || ms.start_date <= dateRange.end);
+      return matchesSearch && matchesStatus && matchesDateRange;
+    });
+  }, [milestones, searchTerm, statusFilter, dateRange]);
 
   const paginatedMilestones = filteredMilestones.slice(
     page * rowsPerPage,
     page * rowsPerPage + rowsPerPage
   );
 
-  const handleCreateMilestone = () => {
-    const newMs: Milestone = {
-      id: String(Date.now()),
-      name: newMilestoneForm.name,
-      start_date: newMilestoneForm.start_date,
-      end_date: newMilestoneForm.end_date,
-      progress: 0,
-      related_project: newMilestoneForm.related_project,
-      status: 'planning',
-    };
-    setMilestones([newMs, ...milestones]);
-    setNewMilestoneDialogOpen(false);
-    setNewMilestoneForm({
-      name: '',
-      start_date: '',
-      end_date: '',
-      related_project: '',
-    });
+  const handleCreateMilestone = async () => {
+    try {
+      const createData: CreateBuildRequest = {
+        project_id: 'default',
+        branch: 'main',
+        commit_hash: 'HEAD',
+        build_type: 'manual',
+      };
+      await rsApi.createBuild(createData);
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '新里程碑已创建',
+      });
+      setNewMilestoneDialogOpen(false);
+      setNewMilestoneForm({
+        name: '',
+        start_date: '',
+        end_date: '',
+        related_project: '',
+      });
+      loadMilestones();
+    } catch (error: unknown) {
+      console.error('创建里程碑失败:', error);
+      addNotification({
+        type: 'error',
+        title: '创建失败',
+        message: '无法创建里程碑',
+      });
+    }
   };
 
   const handleViewDetail = (ms: Milestone) => {
@@ -321,7 +330,7 @@ const RsMilestonePage: React.FC = () => {
         pagination={{
           page,
           pageSize: rowsPerPage,
-          total: filteredMilestones.length,
+          total,
           onPageChange: setPage,
           onPageSizeChange: setRowsPerPage,
         }}

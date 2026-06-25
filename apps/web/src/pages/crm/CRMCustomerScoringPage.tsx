@@ -1,8 +1,5 @@
 import {
   Box,
-  Card,
-  CardContent,
-  CardHeader,
   Chip,
   Dialog,
   DialogActions,
@@ -13,26 +10,24 @@ import {
   Typography,
 } from '@mui/material';
 import { Button } from '@mui/material';
-import React, { useState, useEffect } from 'react';
-import type { CustomerScore, ScoreFactor } from '@/api/modules/crm/crm';
-import { crmApi } from '@/api/modules/crm/crm';
+import React, { useState, useEffect, useMemo } from 'react';
+import type { CustomerScore, ScoreFactor } from '@/api/crm';
+import { crmApi } from '@/api/crm';
 import { useAppStore } from '@/store';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
-import { logger } from '@/utils/logger';
-import { Star, TrendingUp, TrendingDown, Minus, Award, RefreshCw, Calculator } from 'lucide-react';
+import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
+import { apiLogger } from '@/utils/logger';
+import { Star, TrendingUp, TrendingDown, Minus, Award, Calculator, Eye } from 'lucide-react';
 
 const CRMCustomerScoringPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [scores, setScores] = useState<CustomerScore[]>([]);
   const [selectedScore, setSelectedScore] = useState<CustomerScore | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(0);
+  const pageSize = 10;
 
   const { addNotification } = useAppStore();
-
-  useEffect(() => {
-    loadCustomerScores();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const loadCustomerScores = async () => {
     try {
@@ -40,7 +35,7 @@ const CRMCustomerScoringPage: React.FC = () => {
       const response = await crmApi.customerScoring.list();
       setScores(response.data?.items || []);
     } catch (error: unknown) {
-      logger.error('加载客户评分失败:', error);
+      apiLogger.error('加载客户评分失败:', error);
       addNotification({
         type: 'error',
         title: '加载失败',
@@ -50,6 +45,10 @@ const CRMCustomerScoringPage: React.FC = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadCustomerScores();
+  }, []);
 
   const handleBatchCalculate = async () => {
     try {
@@ -77,7 +76,7 @@ const CRMCustomerScoringPage: React.FC = () => {
       });
       loadCustomerScores();
     } catch (error: unknown) {
-      logger.error('批量计算评分失败:', error);
+      apiLogger.error('批量计算评分失败:', error);
       addNotification({
         type: 'error',
         title: '计算失败',
@@ -138,333 +137,256 @@ const CRMCustomerScoringPage: React.FC = () => {
     }
   };
 
-  const gradeDistribution = {
+  const gradeDistribution = useMemo(() => ({
     A: scores.filter((s) => s.score_level === 'A').length,
     B: scores.filter((s) => s.score_level === 'B').length,
     C: scores.filter((s) => s.score_level === 'C').length,
     D: scores.filter((s) => s.score_level === 'D').length,
-  };
+  }), [scores]);
 
-  if (loading) return <LoadingSpinner />;
+  const filteredScores = useMemo(() => {
+    if (!searchQuery) return scores;
+    return scores.filter(
+      (score) =>
+        score.customer_name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [scores, searchQuery]);
 
-  return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-      <Card>
-        <CardHeader>
-          <Typography
-            variant='h6'
-            sx={{
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-            }}
-          >
-            <Award sx={{ width: 20, height: 20 }} />
-            客户价值评分
-          </Typography>
-          <Typography
-            variant='body2'
-            sx={{ color: 'grey.500' }}
-          >
-            根据客户数据自动计算客户价值评分和等级
-          </Typography>
-        </CardHeader>
-        <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 4 }}>
-            <Button
-              variant='contained'
-              startIcon={<Calculator />}
-              onClick={handleBatchCalculate}
-            >
-              批量计算评分
-            </Button>
-          </Box>
+  const paginatedScores = useMemo(() => {
+    const start = currentPage * pageSize;
+    return filteredScores.slice(start, start + pageSize);
+  }, [filteredScores, currentPage]);
 
+  const columns: ColumnDef<CustomerScore>[] = [
+    {
+      id: 'customer_name',
+      label: '客户名称',
+      width: 200,
+      sortable: true,
+      render: (row) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Box
             sx={{
-              display: 'grid',
-              gridTemplateColumns: {
-                xs: 'repeat(2, 1fr)',
-                md: 'repeat(4, 1fr)',
-              },
-              gap: 2,
-              mb: 4,
+              width: 36,
+              height: 36,
+              bgcolor: 'grey.100',
+              borderRadius: '50%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            <Box sx={{ bgcolor: 'success.light', borderRadius: 2, p: 2 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <Box>
-                  <Typography
-                    variant='body2'
-                    sx={{
-                      color: 'success.dark',
-                      fontWeight: 500,
-                      fontSize: '0.875rem',
-                    }}
-                  >
-                    A级客户
-                  </Typography>
-                  <Typography
-                    variant='h5'
-                    sx={{ fontWeight: 'bold', color: 'success.main', mt: 0.5 }}
-                  >
-                    {gradeDistribution.A}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    bgcolor: 'success.main',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Star sx={{ width: 24, height: 24, color: 'white' }} />
-                </Box>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: 'primary.light', borderRadius: 2, p: 2 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <Box>
-                  <Typography
-                    variant='body2'
-                    sx={{
-                      color: 'primary.dark',
-                      fontWeight: 500,
-                      fontSize: '0.875rem',
-                    }}
-                  >
-                    B级客户
-                  </Typography>
-                  <Typography
-                    variant='h5'
-                    sx={{ fontWeight: 'bold', color: 'primary.main', mt: 0.5 }}
-                  >
-                    {gradeDistribution.B}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    bgcolor: 'primary.main',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Star sx={{ width: 24, height: 24, color: 'white' }} />
-                </Box>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: 'warning.light', borderRadius: 2, p: 2 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <Box>
-                  <Typography
-                    variant='body2'
-                    sx={{
-                      color: 'warning.dark',
-                      fontWeight: 500,
-                      fontSize: '0.875rem',
-                    }}
-                  >
-                    C级客户
-                  </Typography>
-                  <Typography
-                    variant='h5'
-                    sx={{ fontWeight: 'bold', color: 'warning.main', mt: 0.5 }}
-                  >
-                    {gradeDistribution.C}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    bgcolor: 'warning.main',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Star sx={{ width: 24, height: 24, color: 'white' }} />
-                </Box>
-              </Box>
-            </Box>
-
-            <Box sx={{ bgcolor: 'error.light', borderRadius: 2, p: 2 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <Box>
-                  <Typography
-                    variant='body2'
-                    sx={{
-                      color: 'error.dark',
-                      fontWeight: 500,
-                      fontSize: '0.875rem',
-                    }}
-                  >
-                    D级客户
-                  </Typography>
-                  <Typography
-                    variant='h5'
-                    sx={{ fontWeight: 'bold', color: 'error.main', mt: 0.5 }}
-                  >
-                    {gradeDistribution.D}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    bgcolor: 'error.main',
-                    borderRadius: '50%',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Star sx={{ width: 24, height: 24, color: 'white' }} />
-                </Box>
-              </Box>
-            </Box>
+            <Typography variant='body1' sx={{ fontWeight: 'bold' }}>
+              {row.customer_name.charAt(0)}
+            </Typography>
           </Box>
+          <Typography sx={{ fontWeight: 500 }}>{row.customer_name}</Typography>
+        </Box>
+      ),
+    },
+    {
+      id: 'score',
+      label: '综合评分',
+      width: 120,
+      align: 'center',
+      sortable: true,
+      render: (row) => (
+        <Typography
+          variant='h6'
+          sx={{
+            fontWeight: 'bold',
+            color: getScoreColor(row.score),
+          }}
+        >
+          {row.score}
+        </Typography>
+      ),
+    },
+    {
+      id: 'score_level',
+      label: '客户等级',
+      width: 100,
+      align: 'center',
+      render: (row) => getGradeBadge(row.score_level),
+    },
+    {
+      id: 'trend',
+      label: '趋势',
+      width: 80,
+      align: 'center',
+      render: (row) => getScoreTrendIcon(row.trend),
+    },
+    {
+      id: 'scoring_date',
+      label: '评分日期',
+      width: 150,
+      sortable: true,
+      render: (row) => new Date(row.scoring_date).toLocaleDateString('zh-CN'),
+    },
+    {
+      id: 'last_score',
+      label: '上次评分',
+      width: 120,
+      align: 'center',
+      render: (row) => (
+        <Typography
+          variant='body2'
+          sx={{
+            color:
+              row.last_score !== undefined
+                ? row.score > row.last_score
+                  ? 'success.main'
+                  : row.score < row.last_score
+                    ? 'error.main'
+                    : 'text.secondary'
+                : 'text.secondary',
+          }}
+        >
+          {row.last_score !== undefined ? row.last_score : '-'}
+        </Typography>
+      ),
+    },
+  ];
 
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {scores.length > 0 ? (
-              scores.map((score) => (
-                <Box
-                  key={score.id}
-                  sx={{
-                    bgcolor: 'background.paper',
-                    borderRadius: 2,
-                    border: 1,
-                    borderColor: 'divider',
-                    p: 2,
-                    '&:hover': { boxShadow: 3 },
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => {
-                    setSelectedScore(score);
-                    setShowDetailDialog(true);
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Box
-                        sx={{
-                          width: 48,
-                          height: 48,
-                          bgcolor: 'grey.100',
-                          borderRadius: '50%',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <Typography
-                          variant='h6'
-                          sx={{ fontWeight: 'bold' }}
-                        >
-                          {score.customer_name.charAt(0)}
-                        </Typography>
-                      </Box>
-                      <Box>
-                        <Typography
-                          variant='body1'
-                          sx={{ fontWeight: 500 }}
-                        >
-                          {score.customer_name}
-                        </Typography>
-                        <Typography
-                          variant='body2'
-                          sx={{ color: 'text.secondary' }}
-                        >
-                          评分日期: {new Date(score.scoring_date).toLocaleDateString()}
-                        </Typography>
-                      </Box>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <Box sx={{ textAlign: 'center' }}>
-                        <Typography
-                          variant='h5'
-                          sx={{
-                            fontWeight: 'bold',
-                            color: getScoreColor(score.score),
-                          }}
-                        >
-                          {score.score}
-                        </Typography>
-                        <Typography
-                          variant='caption'
-                          sx={{ color: 'text.secondary' }}
-                        >
-                          评分
-                        </Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        {getGradeBadge(score.score_level)}
-                        {getScoreTrendIcon(score.trend)}
-                      </Box>
-                    </Box>
-                  </Box>
-                </Box>
-              ))
-            ) : (
-              <Box sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}>
-                <Award
-                  sx={{
-                    width: 64,
-                    height: 64,
-                    mx: 'auto',
-                    mb: 2,
-                    opacity: 0.3,
-                  }}
-                />
-                <Typography>暂无客户评分数据</Typography>
-                <Typography variant='body2'>点击上方按钮批量计算客户评分</Typography>
-              </Box>
-            )}
-          </Box>
-        </CardContent>
-      </Card>
+  const rowActions: RowAction<CustomerScore>[] = [
+    {
+      label: '详情',
+      icon: <Eye size={16} />,
+      onClick: (row) => {
+        setSelectedScore(row);
+        setShowDetailDialog(true);
+      },
+      color: 'primary',
+    },
+  ];
+
+  const StatCard: React.FC<{
+    label: string;
+    value: number;
+    color: string;
+    bgColor: string;
+  }> = ({ label, value, color, bgColor }) => (
+    <Box sx={{ bgcolor: bgColor, borderRadius: 2, p: 3 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <Box>
+          <Typography
+            variant='body2'
+            sx={{
+              color: color,
+              fontWeight: 500,
+              fontSize: '0.875rem',
+            }}
+          >
+            {label}
+          </Typography>
+          <Typography
+            variant='h5'
+            sx={{ fontWeight: 'bold', color: color, mt: 0.5 }}
+          >
+            {value}
+          </Typography>
+        </Box>
+        <Box
+          sx={{
+            width: 48,
+            height: 48,
+            bgcolor: color,
+            borderRadius: '50%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Star sx={{ width: 24, height: 24, color: 'white' }} />
+        </Box>
+      </Box>
+    </Box>
+  );
+
+  const headerContent = useMemo(() => (
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: {
+          xs: 'repeat(2, 1fr)',
+          md: 'repeat(4, 1fr)',
+        },
+        gap: 2,
+        mb: 3,
+      }}
+    >
+      <StatCard
+        label='A级客户'
+        value={gradeDistribution.A}
+        color='success.main'
+        bgColor='success.light'
+      />
+      <StatCard
+        label='B级客户'
+        value={gradeDistribution.B}
+        color='primary.main'
+        bgColor='primary.light'
+      />
+      <StatCard
+        label='C级客户'
+        value={gradeDistribution.C}
+        color='warning.main'
+        bgColor='warning.light'
+      />
+      <StatCard
+        label='D级客户'
+        value={gradeDistribution.D}
+        color='error.main'
+        bgColor='error.light'
+      />
+    </Box>
+  ), [gradeDistribution]);
+
+  return (
+    <>
+      <ListPageTemplate
+        title='客户价值评分'
+        subtitle='根据客户数据自动计算客户价值评分和等级'
+        breadcrumbs={[
+          { label: '首页', href: '/dashboard' },
+          { label: '客户关系管理', href: '/crm' },
+          { label: '客户评分' },
+        ]}
+        columns={columns}
+        data={paginatedScores}
+        loading={loading}
+        pagination={{
+          page: currentPage,
+          pageSize,
+          total: filteredScores.length,
+          onPageChange: setCurrentPage,
+        }}
+        searchable
+        searchPlaceholder='搜索客户名称...'
+        searchValue={searchQuery}
+        onSearch={(value) => {
+          setSearchQuery(value);
+          setCurrentPage(0);
+        }}
+        actions={[
+          {
+            label: '批量计算评分',
+            icon: <Calculator sx={{ width: 16, height: 16 }} />,
+            onClick: handleBatchCalculate,
+            variant: 'contained',
+          },
+        ]}
+        rowActions={rowActions}
+        onRefresh={loadCustomerScores}
+        showRowNumber
+        headerContent={headerContent}
+      />
 
       <Dialog
         open={showDetailDialog}
@@ -589,7 +511,7 @@ const CRMCustomerScoringPage: React.FC = () => {
           <Button onClick={() => setShowDetailDialog(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </>
   );
 };
 

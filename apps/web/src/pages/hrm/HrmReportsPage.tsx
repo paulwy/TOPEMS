@@ -1,6 +1,4 @@
-import { Card, CardContent, CardHeader, Chip, Typography, Box, Tabs, Tab } from '@mui/material';
-import { Button } from '@mui/material';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Users,
   Briefcase,
@@ -9,16 +7,11 @@ import {
   Clock,
   DollarSign,
   TrendingUp,
-  TrendingDown,
   BarChart3,
-  PieChart,
-  Calendar,
 } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { useNotification } from '@/hooks/useNotification';
-import { FormControl, InputLabel, Select, MenuItem } from '@mui/material';
-import { PageHeader } from '@/components/templates';
-import { StatCardGroup } from '@/components/mui';
+import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 
 interface EmployeeSummary {
   total_employees: number;
@@ -89,19 +82,18 @@ const HrmReportsPage: React.FC = () => {
 
   useEffect(() => {
     loadReports();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeRange]);
 
   const loadReports = async () => {
     setLoading(true);
     try {
       const promises = [
-        fetch('/api/hrm/reports/employee-summary'),
-        fetch('/api/hrm/reports/department-summary'),
-        fetch('/api/hrm/reports/contract-summary'),
-        fetch('/api/hrm/reports/training-summary'),
-        fetch('/api/hrm/reports/attendance-summary'),
-        fetch('/api/hrm/reports/payroll-summary'),
+        fetch(`/api/hrm/reports/employee-summary?time_range=${timeRange}`),
+        fetch(`/api/hrm/reports/department-summary?time_range=${timeRange}`),
+        fetch(`/api/hrm/reports/contract-summary?time_range=${timeRange}`),
+        fetch(`/api/hrm/reports/training-summary?time_range=${timeRange}`),
+        fetch(`/api/hrm/reports/attendance-summary?time_range=${timeRange}`),
+        fetch(`/api/hrm/reports/payroll-summary?time_range=${timeRange}`),
       ];
 
       const responses = await Promise.all(promises);
@@ -129,1429 +121,478 @@ const HrmReportsPage: React.FC = () => {
     return `¥${num.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`;
   };
 
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          minHeight: '100vh',
-          bgcolor: 'grey.100',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Box
-          sx={{
-            width: 48,
-            height: 48,
-            borderRadius: '50%',
-            border: 4,
-            borderColor: 'divider',
-            borderTopColor: 'primary.main',
-            animation: 'spin 1s linear infinite',
-          }}
-        />
-      </Box>
-    );
-  }
+  const tabs = [
+    { label: '概览', value: 'overview', icon: <BarChart3 size={18} /> },
+    { label: '员工分析', value: 'employee', icon: <Users size={18} /> },
+    { label: '培训分析', value: 'training', icon: <BookOpen size={18} /> },
+    { label: '薪资分析', value: 'payroll', icon: <DollarSign size={18} /> },
+  ];
+
+  const statCards = useMemo(() => {
+    switch (activeTab) {
+      case 'overview':
+        return [
+          {
+            id: 'total-employees',
+            title: '总员工数',
+            value: formatNumber(employeeSummary?.total_employees || 0),
+            icon: <Users size={24} />,
+            color: 'primary',
+          },
+          {
+            id: 'active-employees',
+            title: '在职员工',
+            value: formatNumber(employeeSummary?.active_employees || 0),
+            icon: <Briefcase size={24} />,
+            color: 'success',
+          },
+          {
+            id: 'active-contracts',
+            title: '活跃合同',
+            value: formatNumber(contractSummary?.active_contracts || 0),
+            icon: <FileText size={24} />,
+            color: 'secondary',
+          },
+          {
+            id: 'new-hires',
+            title: '本月新入职',
+            value: formatNumber(employeeSummary?.new_hires_this_month || 0),
+            icon: <TrendingUp size={24} />,
+            color: 'warning',
+          },
+          {
+            id: 'training-completion',
+            title: '培训完成率',
+            value: `${trainingSummary?.avg_completion_rate || 0}%`,
+            icon: <BookOpen size={24} />,
+            color: 'error',
+          },
+          {
+            id: 'attendance-rate',
+            title: '考勤率',
+            value: `${attendanceSummary?.attendance_rate || 0}%`,
+            icon: <Clock size={24} />,
+            color: 'info',
+          },
+        ];
+      case 'employee':
+        return [
+          {
+            id: 'total-employees-e',
+            title: '总员工数',
+            value: formatNumber(employeeSummary?.total_employees || 0),
+            icon: <Users size={24} />,
+            color: 'primary',
+          },
+          {
+            id: 'active-employees-e',
+            title: '在职员工',
+            value: formatNumber(employeeSummary?.active_employees || 0),
+            icon: <Briefcase size={24} />,
+            color: 'success',
+          },
+          {
+            id: 'inactive-employees',
+            title: '离职员工',
+            value: formatNumber(employeeSummary?.inactive_employees || 0),
+            icon: <TrendingUp size={24} />,
+            color: 'error',
+          },
+          {
+            id: 'avg-tenure',
+            title: '平均司龄(天)',
+            value: formatNumber(employeeSummary?.avg_tenure_days || 0),
+            icon: <Clock size={24} />,
+            color: 'info',
+          },
+        ];
+      case 'training':
+        return [
+          {
+            id: 'total-plans',
+            title: '培训计划',
+            value: formatNumber(trainingSummary?.total_plans || 0),
+            icon: <BookOpen size={24} />,
+            color: 'primary',
+          },
+          {
+            id: 'active-plans',
+            title: '进行中计划',
+            value: formatNumber(trainingSummary?.active_plans || 0),
+            icon: <TrendingUp size={24} />,
+            color: 'success',
+          },
+          {
+            id: 'total-courses',
+            title: '培训课程',
+            value: formatNumber(trainingSummary?.total_courses || 0),
+            icon: <FileText size={24} />,
+            color: 'warning',
+          },
+          {
+            id: 'completion-rate',
+            title: '完成率',
+            value: `${trainingSummary?.avg_completion_rate || 0}%`,
+            icon: <BarChart3 size={24} />,
+            color: 'info',
+          },
+        ];
+      case 'payroll':
+        return [
+          {
+            id: 'total-payroll',
+            title: '薪资总额',
+            value: formatCurrency(payrollSummary?.total_payroll || 0),
+            icon: <DollarSign size={24} />,
+            color: 'primary',
+          },
+          {
+            id: 'avg-salary',
+            title: '平均薪资',
+            value: formatCurrency(payrollSummary?.avg_salary || 0),
+            icon: <Briefcase size={24} />,
+            color: 'success',
+          },
+          {
+            id: 'max-salary',
+            title: '最高薪资',
+            value: formatCurrency(payrollSummary?.max_salary || 0),
+            icon: <TrendingUp size={24} />,
+            color: 'warning',
+          },
+          {
+            id: 'min-salary',
+            title: '最低薪资',
+            value: formatCurrency(payrollSummary?.min_salary || 0),
+            icon: <Clock size={24} />,
+            color: 'info',
+          },
+        ];
+      default:
+        return [];
+    }
+  }, [activeTab, employeeSummary, contractSummary, trainingSummary, attendanceSummary, payrollSummary]);
+
+  const charts = useMemo(() => {
+    switch (activeTab) {
+      case 'overview':
+        return [
+          {
+            id: 'department-distribution',
+            title: '部门人员分布',
+            type: 'bar' as const,
+            dataKey: 'employee_count',
+            nameKey: 'department_name',
+            data: departmentSummary.map((d) => ({
+              name: d.department_name,
+              value: d.employee_count,
+              active: d.active_count,
+            })),
+          },
+          {
+            id: 'attendance-stats',
+            title: '考勤统计',
+            type: 'pie' as const,
+            dataKey: 'value',
+            nameKey: 'name',
+            data: [
+              { name: '准时', value: attendanceSummary?.on_time_count || 0, color: '#22c55e' },
+              { name: '迟到', value: attendanceSummary?.late_count || 0, color: '#eab308' },
+              { name: '缺勤', value: attendanceSummary?.absent_count || 0, color: '#ef4444' },
+              { name: '请假', value: attendanceSummary?.leave_count || 0, color: '#3b82f6' },
+            ].filter((d) => d.value > 0),
+          },
+          {
+            id: 'contract-expiry',
+            title: '合同到期统计',
+            type: 'bar' as const,
+            dataKey: 'value',
+            nameKey: 'name',
+            data: [
+              { name: '本月到期', value: contractSummary?.expiring_this_month || 0 },
+              { name: '下月到期', value: contractSummary?.expiring_next_month || 0 },
+              { name: '已到期', value: contractSummary?.expired_contracts || 0 },
+              { name: '活跃合同', value: contractSummary?.active_contracts || 0 },
+            ],
+          },
+          {
+            id: 'training-stats',
+            title: '培训统计',
+            type: 'pie' as const,
+            dataKey: 'value',
+            nameKey: 'name',
+            data: [
+              { name: '培训计划', value: trainingSummary?.total_plans || 0 },
+              { name: '培训课程', value: trainingSummary?.total_courses || 0 },
+              { name: '培训记录', value: trainingSummary?.total_records || 0 },
+            ].filter((d) => d.value > 0),
+          },
+        ];
+      case 'employee':
+        return [
+          {
+            id: 'gender-distribution',
+            title: '性别分布',
+            type: 'pie' as const,
+            dataKey: 'value',
+            nameKey: 'name',
+            data: [
+              { name: '男', value: employeeSummary?.male_count || 0, color: '#3b82f6' },
+              { name: '女', value: employeeSummary?.female_count || 0, color: '#ec4899' },
+            ].filter((d) => d.value > 0),
+          },
+          {
+            id: 'monthly-changes',
+            title: '月度人员变动',
+            type: 'bar' as const,
+            dataKey: 'value',
+            nameKey: 'name',
+            data: [
+              { name: '新入职', value: employeeSummary?.new_hires_this_month || 0 },
+              { name: '离职', value: employeeSummary?.terminations_this_month || 0 },
+            ],
+          },
+        ];
+      case 'training':
+        return [
+          {
+            id: 'training-progress',
+            title: '培训完成率趋势',
+            type: 'line' as const,
+            dataKey: 'value',
+            nameKey: 'name',
+            data: [
+              { name: '1月', value: 65 },
+              { name: '2月', value: 72 },
+              { name: '3月', value: 68 },
+              { name: '4月', value: 78 },
+              { name: '5月', value: 82 },
+              { name: '6月', value: trainingSummary?.avg_completion_rate || 75 },
+            ],
+          },
+          {
+            id: 'training-completion-detail',
+            title: '培训完成详情',
+            type: 'bar' as const,
+            dataKey: 'value',
+            nameKey: 'name',
+            data: [
+              { name: '总课程', value: trainingSummary?.total_courses || 0 },
+              { name: '已完成', value: trainingSummary?.completed_courses || 0 },
+              { name: '总记录', value: trainingSummary?.total_records || 0 },
+              { name: '已完成记录', value: trainingSummary?.completed_records || 0 },
+            ],
+          },
+        ];
+      case 'payroll':
+        return [
+          {
+            id: 'payroll-structure',
+            title: '薪资结构分析',
+            type: 'pie' as const,
+            dataKey: 'value',
+            nameKey: 'name',
+            data: [
+              { name: '基本工资', value: (payrollSummary?.total_payroll || 0) * 0.6 },
+              { name: '绩效奖金', value: (payrollSummary?.total_payroll || 0) * 0.25 },
+              { name: '福利补贴', value: (payrollSummary?.total_payroll || 0) * 0.15 },
+            ],
+          },
+          {
+            id: 'salary-range',
+            title: '薪资区间分布',
+            type: 'bar' as const,
+            dataKey: 'value',
+            nameKey: 'name',
+            data: [
+              { name: '5k以下', value: Math.floor((payrollSummary?.employee_count || 0) * 0.1) },
+              { name: '5k-10k', value: Math.floor((payrollSummary?.employee_count || 0) * 0.4) },
+              { name: '10k-15k', value: Math.floor((payrollSummary?.employee_count || 0) * 0.3) },
+              { name: '15k以上', value: Math.floor((payrollSummary?.employee_count || 0) * 0.2) },
+            ],
+          },
+        ];
+      default:
+        return [];
+    }
+  }, [activeTab, employeeSummary, departmentSummary, contractSummary, trainingSummary, attendanceSummary, payrollSummary]);
+
+  const tables = useMemo(() => {
+    switch (activeTab) {
+      case 'overview':
+        return [
+          {
+            id: 'department-summary',
+            title: '部门人员明细',
+            columns: [
+              { id: 'department_name', label: '部门名称', field: 'department_name' },
+              { id: 'employee_count', label: '总人数', field: 'employee_count' },
+              { id: 'active_count', label: '在职人数', field: 'active_count' },
+              { id: 'rate', label: '在职率(%)', field: 'rate' },
+            ],
+            data: departmentSummary.map((d) => ({
+              ...d,
+              rate: d.employee_count > 0 ? Math.round((d.active_count / d.employee_count) * 100) : 0,
+            })),
+          },
+        ];
+      case 'employee':
+        return [
+          {
+            id: 'employee-status',
+            title: '员工状态统计',
+            columns: [
+              { id: 'status', label: '状态', field: 'status' },
+              { id: 'count', label: '人数', field: 'count' },
+              { id: 'rate', label: '占比(%)', field: 'rate' },
+            ],
+            data: [
+              {
+                status: '在职',
+                count: employeeSummary?.active_employees || 0,
+                rate: employeeSummary?.total_employees
+                  ? Math.round((employeeSummary.active_employees / employeeSummary.total_employees) * 100)
+                  : 0,
+              },
+              {
+                status: '离职',
+                count: employeeSummary?.inactive_employees || 0,
+                rate: employeeSummary?.total_employees
+                  ? Math.round((employeeSummary.inactive_employees / employeeSummary.total_employees) * 100)
+                  : 0,
+              },
+            ],
+          },
+          {
+            id: 'employee-gender',
+            title: '性别分布',
+            columns: [
+              { id: 'gender', label: '性别', field: 'gender' },
+              { id: 'count', label: '人数', field: 'count' },
+              { id: 'rate', label: '占比(%)', field: 'rate' },
+            ],
+            data: [
+              {
+                gender: '男',
+                count: employeeSummary?.male_count || 0,
+                rate: employeeSummary?.total_employees
+                  ? Math.round((employeeSummary.male_count / employeeSummary.total_employees) * 100)
+                  : 0,
+              },
+              {
+                gender: '女',
+                count: employeeSummary?.female_count || 0,
+                rate: employeeSummary?.total_employees
+                  ? Math.round((employeeSummary.female_count / employeeSummary.total_employees) * 100)
+                  : 0,
+              },
+            ],
+          },
+        ];
+      case 'training':
+        return [
+          {
+            id: 'training-plans',
+            title: '培训计划统计',
+            columns: [
+              { id: 'type', label: '类型', field: 'type' },
+              { id: 'total', label: '总数', field: 'total' },
+              { id: 'completed', label: '已完成', field: 'completed' },
+              { id: 'rate', label: '完成率(%)', field: 'rate' },
+            ],
+            data: [
+              {
+                type: '培训计划',
+                total: trainingSummary?.total_plans || 0,
+                completed: (trainingSummary?.total_plans || 0) - (trainingSummary?.active_plans || 0),
+                rate: trainingSummary?.total_plans
+                  ? Math.round(((trainingSummary.total_plans - trainingSummary.active_plans) / trainingSummary.total_plans) * 100)
+                  : 0,
+              },
+              {
+                type: '培训课程',
+                total: trainingSummary?.total_courses || 0,
+                completed: trainingSummary?.completed_courses || 0,
+                rate: trainingSummary?.total_courses
+                  ? Math.round((trainingSummary.completed_courses / trainingSummary.total_courses) * 100)
+                  : 0,
+              },
+              {
+                type: '培训记录',
+                total: trainingSummary?.total_records || 0,
+                completed: trainingSummary?.completed_records || 0,
+                rate: trainingSummary?.total_records
+                  ? Math.round((trainingSummary.completed_records / trainingSummary.total_records) * 100)
+                  : 0,
+              },
+            ],
+          },
+        ];
+      case 'payroll':
+        return [
+          {
+            id: 'payroll-details',
+            title: '薪资明细',
+            columns: [
+              { id: 'item', label: '项目', field: 'item' },
+              { id: 'amount', label: '金额', field: 'amount' },
+              { id: 'count', label: '人数', field: 'count' },
+            ],
+            data: [
+              {
+                item: '薪资总额',
+                amount: formatCurrency(payrollSummary?.total_payroll || 0),
+                count: payrollSummary?.employee_count || 0,
+              },
+              {
+                item: '平均薪资',
+                amount: formatCurrency(payrollSummary?.avg_salary || 0),
+                count: '-',
+              },
+              {
+                item: '奖金总额',
+                amount: formatCurrency(payrollSummary?.bonus_total || 0),
+                count: '-',
+              },
+            ],
+          },
+        ];
+      default:
+        return [];
+    }
+  }, [activeTab, employeeSummary, departmentSummary, trainingSummary, payrollSummary]);
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100' }}>
-      <Box sx={{ maxWidth: 1536, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, py: 3 }}>
-        <PageHeader
-          title='HR数据分析报表'
-          subtitle='实时查看人力资源数据统计与分析'
-          breadcrumbs={[{ label: '人力资源', href: '/hrm' }, { label: '报表统计' }]}
-          backButton={{ onClick: () => window.history.back() }}
-          actions={[
-            {
-              label: '导出报表',
-              icon: <BarChart3 sx={{ width: 16, height: 16, mr: 1 }} />,
-              onClick: () => {},
-              variant: 'outlined',
-            },
-          ]}
-        />
-
-        <Box sx={{ mb: 3, display: 'flex', justifyContent: 'flex-end' }}>
-          <FormControl
-            size='small'
-            sx={{ width: 120 }}
-          >
-            <InputLabel>时间范围</InputLabel>
-            <Select
-              value={timeRange}
-              label='时间范围'
-              onChange={(e) => setTimeRange(e.target.value)}
-            >
-              <MenuItem value='week'>本周</MenuItem>
-              <MenuItem value='month'>本月</MenuItem>
-              <MenuItem value='quarter'>本季度</MenuItem>
-              <MenuItem value='year'>本年</MenuItem>
-            </Select>
-          </FormControl>
-        </Box>
-        <StatCardGroup
-          stats={[
-            {
-              title: '总员工数',
-              value: formatNumber(employeeSummary?.total_employees || 0),
-              icon: <Users sx={{ width: 24, height: 24 }} />,
-              color: 'primary',
-            },
-            {
-              title: '在职员工',
-              value: formatNumber(employeeSummary?.active_employees || 0),
-              icon: <Briefcase sx={{ width: 24, height: 24 }} />,
-              color: 'success',
-            },
-            {
-              title: '活跃合同',
-              value: formatNumber(contractSummary?.active_contracts || 0),
-              icon: <FileText sx={{ width: 24, height: 24 }} />,
-              color: 'secondary',
-            },
-            {
-              title: '本月新入职',
-              value: formatNumber(employeeSummary?.new_hires_this_month || 0),
-              icon: <TrendingUp sx={{ width: 24, height: 24 }} />,
-              color: 'warning',
-            },
-            {
-              title: '培训完成率',
-              value: `${trainingSummary?.avg_completion_rate || 0}%`,
-              icon: <BookOpen sx={{ width: 24, height: 24 }} />,
-              color: 'error',
-            },
-            {
-              title: '考勤率',
-              value: `${attendanceSummary?.attendance_rate || 0}%`,
-              icon: <Clock sx={{ width: 24, height: 24 }} />,
-              color: 'info',
-            },
-          ]}
-          columns={6}
-        />
-
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-          <Tabs
-            value={activeTab}
-            onChange={(_, v) => setActiveTab(v as string)}
-          >
-            <Tab
-              value='overview'
-              label={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <BarChart3 sx={{ width: 16, height: 16 }} />
-                  概览
-                </Box>
-              }
-            />
-            <Tab
-              value='employee'
-              label={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Users sx={{ width: 16, height: 16 }} />
-                  员工分析
-                </Box>
-              }
-            />
-            <Tab
-              value='training'
-              label={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <BookOpen sx={{ width: 16, height: 16 }} />
-                  培训分析
-                </Box>
-              }
-            />
-            <Tab
-              value='payroll'
-              label={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <DollarSign sx={{ width: 16, height: 16 }} />
-                  薪资分析
-                </Box>
-              }
-            />
-          </Tabs>
-        </Box>
-
-        {activeTab === 'overview' && (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: {
-                  xs: 'repeat(1, 1fr)',
-                  lg: 'repeat(3, 1fr)',
-                },
-                gap: 3,
-              }}
-            >
-              <Card sx={{ gridColumn: { lg: 'span 2' } }}>
-                <CardHeader sx={{ pb: 0 }}>
-                  <Typography
-                    variant='h6'
-                    sx={{ fontWeight: 600 }}
-                  >
-                    部门人员分布
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'grey.500' }}
-                  >
-                    各部门员工数量统计
-                  </Typography>
-                </CardHeader>
-                <CardContent sx={{ pt: 2 }}>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    {departmentSummary.map((dept) => {
-                      const percentage = employeeSummary?.total_employees
-                        ? (dept.employee_count / employeeSummary.total_employees) * 100
-                        : 0;
-                      return (
-                        <Box
-                          key={dept.department_id}
-                          sx={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: 1,
-                          }}
-                        >
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                            }}
-                          >
-                            <Typography
-                              variant='body2'
-                              sx={{ fontWeight: 500 }}
-                            >
-                              {dept.department_name}
-                            </Typography>
-                            <Typography
-                              variant='body2'
-                              sx={{ color: 'grey.500' }}
-                            >
-                              {dept.active_count} / {dept.employee_count}
-                            </Typography>
-                          </Box>
-                          <Box
-                            sx={{
-                              height: 8,
-                              bgcolor: 'grey.200',
-                              borderRadius: 1,
-                              overflow: 'hidden',
-                            }}
-                          >
-                            <Box
-                              sx={{
-                                height: '100%',
-                                bgcolor: 'blue.500',
-                                borderRadius: 1,
-                                transition: 'all 0.5s',
-                                width: `${percentage}%`,
-                              }}
-                            />
-                          </Box>
-                        </Box>
-                      );
-                    })}
-                  </Box>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader sx={{ pb: 0 }}>
-                  <Typography
-                    variant='h6'
-                    sx={{ fontWeight: 600 }}
-                  >
-                    合同到期提醒
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'grey.500' }}
-                  >
-                    即将到期的合同统计
-                  </Typography>
-                </CardHeader>
-                <CardContent sx={{ pt: 2 }}>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        p: 2,
-                        bgcolor: 'red.50',
-                        borderRadius: 2,
-                      }}
-                    >
-                      <Box>
-                        <Typography
-                          variant='body2'
-                          sx={{ color: 'grey.600' }}
-                        >
-                          本月到期
-                        </Typography>
-                        <Typography
-                          variant='h5'
-                          sx={{ fontWeight: 700, color: 'red.600' }}
-                        >
-                          {contractSummary?.expiring_this_month || 0}
-                        </Typography>
-                      </Box>
-                      <Chip
-                        size='small'
-                        color='error'
-                        label='紧急'
-                      />
-                    </Box>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        p: 2,
-                        bgcolor: 'yellow.50',
-                        borderRadius: 2,
-                      }}
-                    >
-                      <Box>
-                        <Typography
-                          variant='body2'
-                          sx={{ color: 'grey.600' }}
-                        >
-                          下月到期
-                        </Typography>
-                        <Typography
-                          variant='h5'
-                          sx={{ fontWeight: 700, color: 'yellow.700' }}
-                        >
-                          {contractSummary?.expiring_next_month || 0}
-                        </Typography>
-                      </Box>
-                      <Chip
-                        size='small'
-                        variant='outlined'
-                        label='提醒'
-                      />
-                    </Box>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        p: 2,
-                        bgcolor: 'green.50',
-                        borderRadius: 2,
-                      }}
-                    >
-                      <Box>
-                        <Typography
-                          variant='body2'
-                          sx={{ color: 'grey.600' }}
-                        >
-                          活跃合同
-                        </Typography>
-                        <Typography
-                          variant='h5'
-                          sx={{ fontWeight: 700, color: 'green.600' }}
-                        >
-                          {contractSummary?.active_contracts || 0}
-                        </Typography>
-                      </Box>
-                      <Chip
-                        size='small'
-                        label='正常'
-                      />
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Box>
-
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: {
-                  xs: 'repeat(1, 1fr)',
-                  lg: 'repeat(2, 1fr)',
-                },
-                gap: 3,
-              }}
-            >
-              <Card>
-                <CardHeader sx={{ pb: 0 }}>
-                  <Typography
-                    variant='h6'
-                    sx={{ fontWeight: 600 }}
-                  >
-                    考勤统计
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'grey.500' }}
-                  >
-                    近期考勤情况分析
-                  </Typography>
-                </CardHeader>
-                <CardContent sx={{ pt: 2 }}>
-                  <Box sx={{ display: 'grid', gridTemplateColumns: 4, gap: 2 }}>
-                    <Box
-                      sx={{
-                        textAlign: 'center',
-                        p: 2,
-                        bgcolor: 'green.50',
-                        borderRadius: 2,
-                      }}
-                    >
-                      <Typography
-                        variant='h5'
-                        sx={{ fontWeight: 700, color: 'green.600' }}
-                      >
-                        {attendanceSummary?.on_time_count || 0}
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        sx={{ color: 'grey.500', mt: 0.5 }}
-                      >
-                        准时
-                      </Typography>
-                    </Box>
-                    <Box
-                      sx={{
-                        textAlign: 'center',
-                        p: 2,
-                        bgcolor: 'yellow.50',
-                        borderRadius: 2,
-                      }}
-                    >
-                      <Typography
-                        variant='h5'
-                        sx={{ fontWeight: 700, color: 'yellow.700' }}
-                      >
-                        {attendanceSummary?.late_count || 0}
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        sx={{ color: 'grey.500', mt: 0.5 }}
-                      >
-                        迟到
-                      </Typography>
-                    </Box>
-                    <Box
-                      sx={{
-                        textAlign: 'center',
-                        p: 2,
-                        bgcolor: 'red.50',
-                        borderRadius: 2,
-                      }}
-                    >
-                      <Typography
-                        variant='h5'
-                        sx={{ fontWeight: 700, color: 'red.600' }}
-                      >
-                        {attendanceSummary?.absent_count || 0}
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        sx={{ color: 'grey.500', mt: 0.5 }}
-                      >
-                        缺勤
-                      </Typography>
-                    </Box>
-                    <Box
-                      sx={{
-                        textAlign: 'center',
-                        p: 2,
-                        bgcolor: 'blue.50',
-                        borderRadius: 2,
-                      }}
-                    >
-                      <Typography
-                        variant='h5'
-                        sx={{ fontWeight: 700, color: 'blue.600' }}
-                      >
-                        {attendanceSummary?.leave_count || 0}
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        sx={{ color: 'grey.500', mt: 0.5 }}
-                      >
-                        请假
-                      </Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader sx={{ pb: 0 }}>
-                  <Typography
-                    variant='h6'
-                    sx={{ fontWeight: 600 }}
-                  >
-                    培训统计
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'grey.500' }}
-                  >
-                    培训计划与课程完成情况
-                  </Typography>
-                </CardHeader>
-                <CardContent sx={{ pt: 2 }}>
-                  <Box sx={{ display: 'grid', gridTemplateColumns: 3, gap: 2 }}>
-                    <Box
-                      sx={{
-                        textAlign: 'center',
-                        p: 2,
-                        bgcolor: 'purple.50',
-                        borderRadius: 2,
-                      }}
-                    >
-                      <Typography
-                        variant='h5'
-                        sx={{ fontWeight: 700, color: 'purple.600' }}
-                      >
-                        {trainingSummary?.total_plans || 0}
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        sx={{ color: 'grey.500', mt: 0.5 }}
-                      >
-                        培训计划
-                      </Typography>
-                    </Box>
-                    <Box
-                      sx={{
-                        textAlign: 'center',
-                        p: 2,
-                        bgcolor: 'indigo.50',
-                        borderRadius: 2,
-                      }}
-                    >
-                      <Typography
-                        variant='h5'
-                        sx={{ fontWeight: 700, color: 'indigo.600' }}
-                      >
-                        {trainingSummary?.total_courses || 0}
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        sx={{ color: 'grey.500', mt: 0.5 }}
-                      >
-                        培训课程
-                      </Typography>
-                    </Box>
-                    <Box
-                      sx={{
-                        textAlign: 'center',
-                        p: 2,
-                        bgcolor: 'pink.50',
-                        borderRadius: 2,
-                      }}
-                    >
-                      <Typography
-                        variant='h5'
-                        sx={{ fontWeight: 700, color: 'pink.600' }}
-                      >
-                        {trainingSummary?.total_records || 0}
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        sx={{ color: 'grey.500', mt: 0.5 }}
-                      >
-                        培训记录
-                      </Typography>
-                    </Box>
-                  </Box>
-                  <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        mb: 1,
-                      }}
-                    >
-                      <Typography
-                        variant='body2'
-                        sx={{ color: 'grey.600' }}
-                      >
-                        整体完成率
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        sx={{ fontWeight: 700, color: 'green.600' }}
-                      >
-                        {trainingSummary?.avg_completion_rate || 0}%
-                      </Typography>
-                    </Box>
-                    <Box
-                      sx={{
-                        height: 12,
-                        bgcolor: 'grey.300',
-                        borderRadius: 1,
-                        overflow: 'hidden',
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          height: '100%',
-                          background: 'linear-gradient(to right, #4ade80, #16a34a)',
-                          borderRadius: 1,
-                          transition: 'all 0.5s',
-                          width: `${trainingSummary?.avg_completion_rate || 0}%`,
-                        }}
-                      />
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Box>
-          </Box>
-        )}
-
-        {activeTab === 'employee' && (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: {
-                  xs: 'repeat(1, 1fr)',
-                  lg: 'repeat(2, 1fr)',
-                },
-                gap: 3,
-              }}
-            >
-              <Card>
-                <CardHeader sx={{ pb: 0 }}>
-                  <Typography
-                    variant='h6'
-                    sx={{ fontWeight: 600 }}
-                  >
-                    员工基本信息
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'grey.500' }}
-                  >
-                    员工总数与状态分布
-                  </Typography>
-                </CardHeader>
-                <CardContent sx={{ pt: 2 }}>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <Box sx={{ display: 'grid', gridTemplateColumns: 2, gap: 2 }}>
-                      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
-                        <Typography
-                          variant='body2'
-                          sx={{ color: 'grey.500' }}
-                        >
-                          总员工数
-                        </Typography>
-                        <Typography
-                          variant='h4'
-                          sx={{ fontWeight: 700, color: 'grey.900' }}
-                        >
-                          {formatNumber(employeeSummary?.total_employees || 0)}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ p: 2, bgcolor: 'green.50', borderRadius: 2 }}>
-                        <Typography
-                          variant='body2'
-                          sx={{ color: 'grey.500' }}
-                        >
-                          在职员工
-                        </Typography>
-                        <Typography
-                          variant='h4'
-                          sx={{ fontWeight: 700, color: 'green.600' }}
-                        >
-                          {formatNumber(employeeSummary?.active_employees || 0)}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ p: 2, bgcolor: 'red.50', borderRadius: 2 }}>
-                        <Typography
-                          variant='body2'
-                          sx={{ color: 'grey.500' }}
-                        >
-                          离职员工
-                        </Typography>
-                        <Typography
-                          variant='h4'
-                          sx={{ fontWeight: 700, color: 'red.600' }}
-                        >
-                          {formatNumber(employeeSummary?.inactive_employees || 0)}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ p: 2, bgcolor: 'blue.50', borderRadius: 2 }}>
-                        <Typography
-                          variant='body2'
-                          sx={{ color: 'grey.500' }}
-                        >
-                          平均司龄(天)
-                        </Typography>
-                        <Typography
-                          variant='h4'
-                          sx={{ fontWeight: 700, color: 'blue.600' }}
-                        >
-                          {formatNumber(employeeSummary?.avg_tenure_days || 0)}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader sx={{ pb: 0 }}>
-                  <Typography
-                    variant='h6'
-                    sx={{ fontWeight: 600 }}
-                  >
-                    性别分布
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'grey.500' }}
-                  >
-                    男女性员工比例
-                  </Typography>
-                </CardHeader>
-                <CardContent sx={{ pt: 2 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                    <Box sx={{ width: 192, height: 192, position: 'relative' }}>
-                      <svg
-                        viewBox='0 0 100 100'
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          transform: 'rotate(-90deg)',
-                        }}
-                      >
-                        <circle
-                          cx='50'
-                          cy='50'
-                          r='40'
-                          fill='none'
-                          stroke='grey.200'
-                          strokeWidth='12'
-                        />
-                        <circle
-                          cx='50'
-                          cy='50'
-                          r='40'
-                          fill='none'
-                          stroke='primary.main'
-                          strokeWidth='12'
-                          strokeLinecap='round'
-                          strokeDasharray={`${((employeeSummary?.male_count || 0) / ((employeeSummary?.male_count || 0) + (employeeSummary?.female_count || 0) || 1)) * 251.2} 251.2`}
-                        />
-                        <circle
-                          cx='50'
-                          cy='50'
-                          r='40'
-                          fill='none'
-                          stroke='#ec4899'
-                          strokeWidth='12'
-                          strokeLinecap='round'
-                          strokeDasharray={`${((employeeSummary?.female_count || 0) / ((employeeSummary?.male_count || 0) + (employeeSummary?.female_count || 0) || 1)) * 251.2} 251.2`}
-                          transform='rotate(0 50 50)'
-                          style={{
-                            strokeDashoffset: `-${((employeeSummary?.male_count || 0) / ((employeeSummary?.male_count || 0) + (employeeSummary?.female_count || 0) || 1)) * 251.2}`,
-                          }}
-                        />
-                      </svg>
-                      <Box
-                        sx={{
-                          position: 'absolute',
-                          inset: 0,
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <Typography
-                          variant='h5'
-                          sx={{ fontWeight: 700, color: 'grey.900' }}
-                        >
-                          {formatNumber(
-                            (employeeSummary?.male_count || 0) +
-                              (employeeSummary?.female_count || 0)
-                          )}
-                        </Typography>
-                        <Typography
-                          variant='body2'
-                          sx={{ color: 'grey.500' }}
-                        >
-                          总人数
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </Box>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'center',
-                      gap: 4,
-                      mt: 3,
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Box
-                        sx={{
-                          width: 12,
-                          height: 12,
-                          borderRadius: '50%',
-                          bgcolor: 'blue.500',
-                        }}
-                      />
-                      <Typography
-                        variant='body2'
-                        sx={{ color: 'grey.700' }}
-                      >
-                        男: {employeeSummary?.male_count || 0}人
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Box
-                        sx={{
-                          width: 12,
-                          height: 12,
-                          borderRadius: '50%',
-                          bgcolor: 'pink.500',
-                        }}
-                      />
-                      <Typography
-                        variant='body2'
-                        sx={{ color: 'grey.700' }}
-                      >
-                        女: {employeeSummary?.female_count || 0}人
-                      </Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Box>
-
-            <Card>
-              <CardHeader sx={{ pb: 0 }}>
-                <Typography
-                  variant='h6'
-                  sx={{ fontWeight: 600 }}
-                >
-                  月度人员变动
-                </Typography>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'grey.500' }}
-                >
-                  本月入职与离职统计
-                </Typography>
-              </CardHeader>
-              <CardContent sx={{ pt: 2 }}>
-                <Box
-                  sx={{
-                    display: 'grid',
-                    gridTemplateColumns: {
-                      xs: 'repeat(1, 1fr)',
-                      md: 'repeat(2, 1fr)',
-                    },
-                    gap: 3,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      p: 3,
-                      background: 'linear-gradient(135deg, #dcfce7, #bbf7d0)',
-                      borderRadius: 3,
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Box
-                        sx={{
-                          width: 56,
-                          height: 56,
-                          borderRadius: '50%',
-                          bgcolor: 'green.500',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <TrendingUp sx={{ width: 28, height: 28, color: 'white' }} />
-                      </Box>
-                      <Box>
-                        <Typography
-                          variant='body2'
-                          sx={{ color: 'green.700' }}
-                        >
-                          本月新入职
-                        </Typography>
-                        <Typography
-                          variant='h3'
-                          sx={{ fontWeight: 700, color: 'green.600' }}
-                        >
-                          {formatNumber(employeeSummary?.new_hires_this_month || 0)}
-                        </Typography>
-                        <Typography
-                          variant='body2'
-                          sx={{ color: 'green.600', mt: 0.5 }}
-                        >
-                          人
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </Box>
-                  <Box
-                    sx={{
-                      p: 3,
-                      background: 'linear-gradient(135deg, #fee2e2, #fecaca)',
-                      borderRadius: 3,
-                    }}
-                  >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Box
-                        sx={{
-                          width: 56,
-                          height: 56,
-                          borderRadius: '50%',
-                          bgcolor: 'red.500',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <TrendingDown sx={{ width: 28, height: 28, color: 'white' }} />
-                      </Box>
-                      <Box>
-                        <Typography
-                          variant='body2'
-                          sx={{ color: 'red.700' }}
-                        >
-                          本月离职
-                        </Typography>
-                        <Typography
-                          variant='h3'
-                          sx={{ fontWeight: 700, color: 'red.600' }}
-                        >
-                          {formatNumber(employeeSummary?.terminations_this_month || 0)}
-                        </Typography>
-                        <Typography
-                          variant='body2'
-                          sx={{ color: 'red.600', mt: 0.5 }}
-                        >
-                          人
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Box>
-        )}
-
-        {activeTab === 'training' && (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: {
-                  xs: 'repeat(1, 1fr)',
-                  lg: 'repeat(3, 1fr)',
-                },
-                gap: 3,
-              }}
-            >
-              <Card>
-                <CardHeader sx={{ pb: 0 }}>
-                  <Typography
-                    variant='h6'
-                    sx={{ fontWeight: 600 }}
-                  >
-                    培训计划
-                  </Typography>
-                </CardHeader>
-                <CardContent sx={{ pt: 2 }}>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        p: 2,
-                        bgcolor: 'blue.50',
-                        borderRadius: 2,
-                      }}
-                    >
-                      <Typography
-                        variant='body2'
-                        sx={{ color: 'grey.700' }}
-                      >
-                        总计划数
-                      </Typography>
-                      <Typography
-                        variant='h5'
-                        sx={{ fontWeight: 700, color: 'blue.600' }}
-                      >
-                        {trainingSummary?.total_plans || 0}
-                      </Typography>
-                    </Box>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        p: 2,
-                        bgcolor: 'green.50',
-                        borderRadius: 2,
-                      }}
-                    >
-                      <Typography
-                        variant='body2'
-                        sx={{ color: 'grey.700' }}
-                      >
-                        进行中
-                      </Typography>
-                      <Typography
-                        variant='h5'
-                        sx={{ fontWeight: 700, color: 'green.600' }}
-                      >
-                        {trainingSummary?.active_plans || 0}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader sx={{ pb: 0 }}>
-                  <Typography
-                    variant='h6'
-                    sx={{ fontWeight: 600 }}
-                  >
-                    培训课程
-                  </Typography>
-                </CardHeader>
-                <CardContent sx={{ pt: 2 }}>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        p: 2,
-                        bgcolor: 'purple.50',
-                        borderRadius: 2,
-                      }}
-                    >
-                      <Typography
-                        variant='body2'
-                        sx={{ color: 'grey.700' }}
-                      >
-                        总课程数
-                      </Typography>
-                      <Typography
-                        variant='h5'
-                        sx={{ fontWeight: 700, color: 'purple.600' }}
-                      >
-                        {trainingSummary?.total_courses || 0}
-                      </Typography>
-                    </Box>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        p: 2,
-                        bgcolor: 'indigo.50',
-                        borderRadius: 2,
-                      }}
-                    >
-                      <Typography
-                        variant='body2'
-                        sx={{ color: 'grey.700' }}
-                      >
-                        已完成
-                      </Typography>
-                      <Typography
-                        variant='h5'
-                        sx={{ fontWeight: 700, color: 'indigo.600' }}
-                      >
-                        {trainingSummary?.completed_courses || 0}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader sx={{ pb: 0 }}>
-                  <Typography
-                    variant='h6'
-                    sx={{ fontWeight: 600 }}
-                  >
-                    培训记录
-                  </Typography>
-                </CardHeader>
-                <CardContent sx={{ pt: 2 }}>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        p: 2,
-                        bgcolor: 'orange.50',
-                        borderRadius: 2,
-                      }}
-                    >
-                      <Typography
-                        variant='body2'
-                        sx={{ color: 'grey.700' }}
-                      >
-                        总记录数
-                      </Typography>
-                      <Typography
-                        variant='h5'
-                        sx={{ fontWeight: 700, color: 'orange.600' }}
-                      >
-                        {trainingSummary?.total_records || 0}
-                      </Typography>
-                    </Box>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        p: 2,
-                        bgcolor: 'pink.50',
-                        borderRadius: 2,
-                      }}
-                    >
-                      <Typography
-                        variant='body2'
-                        sx={{ color: 'grey.700' }}
-                      >
-                        已完成
-                      </Typography>
-                      <Typography
-                        variant='h5'
-                        sx={{ fontWeight: 700, color: 'pink.600' }}
-                      >
-                        {trainingSummary?.completed_records || 0}
-                      </Typography>
-                    </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            </Box>
-
-            <Card>
-              <CardHeader sx={{ pb: 0 }}>
-                <Typography
-                  variant='h6'
-                  sx={{ fontWeight: 600 }}
-                >
-                  培训完成率趋势
-                </Typography>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'grey.500' }}
-                >
-                  培训完成情况分析
-                </Typography>
-              </CardHeader>
-              <CardContent sx={{ pt: 2 }}>
-                <Box
-                  sx={{
-                    height: 256,
-                    display: 'flex',
-                    alignItems: 'flex-end',
-                    justifyContent: 'space-between',
-                    gap: 2,
-                  }}
-                >
-                  {[1, 2, 3, 4, 5, 6].map((month) => {
-                    const height = Math.floor(Math.random() * 60) + 40;
-                    return (
-                      <Box
-                        key={month}
-                        sx={{
-                          flex: 1,
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            width: '100%',
-                            background: 'linear-gradient(to top, primary.main, #60a5fa)',
-                            borderTopLeftRadius: 8,
-                            borderTopRightRadius: 8,
-                            transition: 'all 0.3s',
-                            height: `${height}%`,
-                            '&:hover': {
-                              background: 'linear-gradient(to top, primary.dark, primary.main)',
-                            },
-                          }}
-                        />
-                        <Typography
-                          variant='caption'
-                          sx={{ color: 'grey.500', mt: 1 }}
-                        >
-                          {['1月', '2月', '3月', '4月', '5月', '6月'][month - 1]}
-                        </Typography>
-                      </Box>
-                    );
-                  })}
-                </Box>
-              </CardContent>
-            </Card>
-          </Box>
-        )}
-
-        {activeTab === 'payroll' && (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: {
-                  xs: 'repeat(1, 1fr)',
-                  lg: 'repeat(4, 1fr)',
-                },
-                gap: 2,
-              }}
-            >
-              <Card>
-                <CardContent sx={{ p: 2 }}>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'grey.500' }}
-                  >
-                    薪资总额
-                  </Typography>
-                  <Typography
-                    variant='h5'
-                    sx={{ fontWeight: 700, color: 'grey.900', mt: 0.5 }}
-                  >
-                    {formatCurrency(payrollSummary?.total_payroll || 0)}
-                  </Typography>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent sx={{ p: 2 }}>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'grey.500' }}
-                  >
-                    平均薪资
-                  </Typography>
-                  <Typography
-                    variant='h5'
-                    sx={{ fontWeight: 700, color: 'grey.900', mt: 0.5 }}
-                  >
-                    {formatCurrency(payrollSummary?.avg_salary || 0)}
-                  </Typography>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent sx={{ p: 2 }}>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'grey.500' }}
-                  >
-                    最高薪资
-                  </Typography>
-                  <Typography
-                    variant='h5'
-                    sx={{ fontWeight: 700, color: 'green.600', mt: 0.5 }}
-                  >
-                    {formatCurrency(payrollSummary?.max_salary || 0)}
-                  </Typography>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent sx={{ p: 2 }}>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'grey.500' }}
-                  >
-                    最低薪资
-                  </Typography>
-                  <Typography
-                    variant='h5'
-                    sx={{ fontWeight: 700, color: 'blue.600', mt: 0.5 }}
-                  >
-                    {formatCurrency(payrollSummary?.min_salary || 0)}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Box>
-
-            <Card>
-              <CardHeader sx={{ pb: 0 }}>
-                <Typography
-                  variant='h6'
-                  sx={{ fontWeight: 600 }}
-                >
-                  薪资结构分析
-                </Typography>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'grey.500' }}
-                >
-                  薪资构成比例
-                </Typography>
-              </CardHeader>
-              <CardContent sx={{ pt: 2 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                  <Box sx={{ width: 256, height: 256, position: 'relative' }}>
-                    <svg
-                      viewBox='0 0 100 100'
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        transform: 'rotate(-90deg)',
-                      }}
-                    >
-                      <circle
-                        cx='50'
-                        cy='50'
-                        r='40'
-                        fill='none'
-                        stroke='grey.200'
-                        strokeWidth='16'
-                      />
-                      <circle
-                        cx='50'
-                        cy='50'
-                        r='40'
-                        fill='none'
-                        stroke='primary.main'
-                        strokeWidth='16'
-                        strokeLinecap='round'
-                        strokeDasharray='150.72 251.2'
-                      />
-                      <circle
-                        cx='50'
-                        cy='50'
-                        r='40'
-                        fill='none'
-                        stroke='success.main'
-                        strokeWidth='16'
-                        strokeLinecap='round'
-                        strokeDasharray='62.8 251.2'
-                        style={{ strokeDashoffset: '-150.72' }}
-                      />
-                      <circle
-                        cx='50'
-                        cy='50'
-                        r='40'
-                        fill='none'
-                        stroke='warning.main'
-                        strokeWidth='16'
-                        strokeLinecap='round'
-                        strokeDasharray='37.68 251.2'
-                        style={{ strokeDashoffset: '-213.52' }}
-                      />
-                    </svg>
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        inset: 0,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <Typography
-                        variant='h5'
-                        sx={{ fontWeight: 700, color: 'grey.900' }}
-                      >
-                        {formatCurrency(payrollSummary?.total_payroll || 0)}
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        sx={{ color: 'grey.500' }}
-                      >
-                        总额
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Box>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    gap: 3,
-                    mt: 3,
-                  }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Box
-                      sx={{
-                        width: 12,
-                        height: 12,
-                        borderRadius: '50%',
-                        bgcolor: 'blue.500',
-                      }}
-                    />
-                    <Typography
-                      variant='body2'
-                      sx={{ color: 'grey.700' }}
-                    >
-                      基本工资 60%
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Box
-                      sx={{
-                        width: 12,
-                        height: 12,
-                        borderRadius: '50%',
-                        bgcolor: 'green.500',
-                      }}
-                    />
-                    <Typography
-                      variant='body2'
-                      sx={{ color: 'grey.700' }}
-                    >
-                      绩效奖金 25%
-                    </Typography>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Box
-                      sx={{
-                        width: 12,
-                        height: 12,
-                        borderRadius: '50%',
-                        bgcolor: 'yellow.500',
-                      }}
-                    />
-                    <Typography
-                      variant='body2'
-                      sx={{ color: 'grey.700' }}
-                    >
-                      福利补贴 15%
-                    </Typography>
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Box>
-        )}
-      </Box>
-    </Box>
+    <StatsPageTemplate
+      title='HR数据分析报表'
+      subtitle='实时查看人力资源数据统计与分析'
+      statCards={statCards}
+      statColumns={6}
+      charts={charts}
+      chartColumns={{ xs: 1, md: 2, lg: 2 }}
+      tables={tables}
+      loading={loading}
+      timeRangeOptions={[
+        { label: '本周', value: 'week' },
+        { label: '本月', value: 'month' },
+        { label: '本季度', value: 'quarter' },
+        { label: '本年', value: 'year' },
+      ]}
+      timeRange={timeRange}
+      onTimeRangeChange={setTimeRange}
+      tabs={tabs}
+      tabValue={activeTab}
+      onTabChange={setActiveTab}
+      showTimeRange={true}
+      showSearch={false}
+      showExport={true}
+      showRefresh={true}
+      onRefresh={loadReports}
+      exportText='导出报表'
+      showStatCards={true}
+      showCharts={true}
+      showTables={true}
+    />
   );
 };
 

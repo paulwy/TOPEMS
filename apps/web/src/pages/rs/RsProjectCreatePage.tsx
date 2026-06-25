@@ -1,91 +1,225 @@
-import { Grid } from '@/components/Grid';
-import React, { useState, useMemo } from 'react';
-import { apiLogger } from '@/utils/logger';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import {
-  Box,
-  Container,
-  Typography,
-  Paper,
-  TextField,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Select,
-  Chip,
-  Autocomplete,
-  Alert,
-  Divider,
-  Card,
-  CardContent,
-  Stack,
-} from '@mui/material';
-import { Button } from '@mui/material';
-import { Save, X, Plus } from 'lucide-react';
+import { FormPageTemplate, type FormSection, type FormField } from '@/components/templates/FormPageTemplate';
+import { rsApi } from '@/api/rs';
+import { useAppStore } from '@/store';
+import type { Project } from '@/api/rs';
+
+const projectTypes = ['新产品研发', '工艺改进', '配方优化', '技术攻关', '设备改造', '其他'];
+const riskLevels = ['低', '中', '高', '极高'];
+const priorities = [
+  { label: '普通', value: 2 },
+  { label: '重要', value: 3 },
+  { label: '紧急', value: 4 },
+  { label: '战略级', value: 5 },
+];
 
 const RsProjectCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isEdit = Boolean(id);
+  const { addNotification } = useAppStore();
 
-  const [formData, setFormData] = useState({
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [teamMembers, setTeamMembers] = useState<string[]>([]);
+  const [tags, setTags] = useState<string[]>([]);
+
+  const availableMembers = ['张三', '李四', '王五', '赵六', '孙七', '周八', '吴九', '郑十'];
+  const availableTags = ['催化剂', '聚合物', '纳米材料', '环保', '新能源', '生物医药', '电子材料'];
+
+  const defaultValues = {
     name: '',
     code: '',
     description: '',
     project_type: '新产品研发',
     leader: '',
-    team_members: [] as string[],
     start_date: '',
     end_date: '',
     budget: '',
     risk_level: '中',
-    priority: '普通',
-    tags: [] as string[],
-  });
+    priority: 2,
+  };
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const sections: FormSection[] = [
+    {
+      id: 'basic',
+      title: '基本信息',
+      description: '项目核心信息',
+      collapsible: true,
+      defaultExpanded: true,
+      fields: [
+        {
+          name: 'name',
+          label: '项目名称',
+          type: 'text',
+          required: true,
+          placeholder: '请输入项目名称',
+        },
+        {
+          name: 'code',
+          label: '项目编码',
+          type: 'text',
+          required: true,
+          disabled: isEdit,
+          placeholder: '例如: RS-2024-001',
+          helperText: '编辑时编码不可修改',
+        },
+        {
+          name: 'project_type',
+          label: '项目类型',
+          type: 'select',
+          required: true,
+          options: projectTypes.map((type) => ({ label: type, value: type })),
+        },
+        {
+          name: 'leader',
+          label: '项目负责人',
+          type: 'text',
+          required: true,
+          placeholder: '请输入负责人姓名',
+        },
+        {
+          name: 'description',
+          label: '项目描述',
+          type: 'textarea',
+          rows: 4,
+          placeholder: '请输入项目描述，包括目标、背景、预期成果等',
+        },
+      ],
+    },
+    {
+      id: 'timing',
+      title: '时间和预算',
+      description: '项目时间安排和预算规划',
+      collapsible: true,
+      defaultExpanded: true,
+      fields: [
+        {
+          name: 'start_date',
+          label: '开始日期',
+          type: 'date',
+          required: true,
+        },
+        {
+          name: 'end_date',
+          label: '结束日期',
+          type: 'date',
+        },
+        {
+          name: 'budget',
+          label: '预算金额',
+          type: 'number',
+          placeholder: '请输入预算金额',
+          helperText: '单位：元',
+        },
+      ],
+    },
+    {
+      id: 'risk',
+      title: '风险评估',
+      description: '项目风险等级和优先级',
+      collapsible: true,
+      defaultExpanded: true,
+      fields: [
+        {
+          name: 'risk_level',
+          label: '风险等级',
+          type: 'select',
+          options: riskLevels.map((level) => ({ label: level, value: level })),
+        },
+        {
+          name: 'priority',
+          label: '优先级',
+          type: 'select',
+          options: priorities.map((p) => ({ label: p.label, value: p.value })),
+        },
+      ],
+    },
+  ];
 
-  const projectTypes = ['新产品研发', '工艺改进', '配方优化', '技术攻关', '设备改造', '其他'];
+  useEffect(() => {
+    if (isEdit && id) {
+      loadProjectData(id);
+    }
+  }, [isEdit, id]);
 
-  const riskLevels = ['低', '中', '高', '极高'];
-  const priorities = ['普通', '重要', '紧急', '战略级'];
-
-  const availableMembers = ['张三', '李四', '王五', '赵六', '孙七', '周八', '吴九', '郑十'];
-
-  const availableTags = ['催化剂', '聚合物', '纳米材料', '环保', '新能源', '生物医药', '电子材料'];
-
-  const handleInputChange = (field: string, value: string | string[]) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    if (errors[field]) {
-      setErrors((prev) => ({ ...prev, [field]: '' }));
+  const loadProjectData = async (projectId: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await rsApi.getProject(projectId);
+      if (response.success && response.data) {
+        const project = response.data;
+        setTeamMembers((project.team_members as string[]) || []);
+        setTags(project.tags || []);
+      } else {
+        setError('无法获取项目数据');
+        addNotification({
+          type: 'error',
+          title: '加载失败',
+          message: '无法加载项目数据',
+        });
+      }
+    } catch (err: unknown) {
+      setError('加载项目数据失败');
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载项目数据',
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-    if (!formData.name.trim()) {
-      newErrors.name = '项目名称不能为空';
-    }
-    if (!formData.code.trim()) {
-      newErrors.code = '项目编码不能为空';
-    }
-    if (!formData.leader.trim()) {
-      newErrors.leader = '项目负责人不能为空';
-    }
-    if (!formData.start_date) {
-      newErrors.start_date = '开始日期不能为空';
-    }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  const handleSubmit = async (data: unknown) => {
+    setSubmitting(true);
+    try {
+      const formData = data as Record<string, unknown>;
 
-  const handleSubmit = () => {
-    if (!validateForm()) {
-      return;
+      const requestData = {
+        name: formData.name as string,
+        code: formData.code as string,
+        description: (formData.description as string) || undefined,
+        project_type: formData.project_type as string,
+        leader: formData.leader as string,
+        team_members: teamMembers.length > 0 ? teamMembers : undefined,
+        start_date: formData.start_date as string,
+        end_date: (formData.end_date as string) || undefined,
+        budget: formData.budget ? Number(formData.budget) : undefined,
+        risk_level: formData.risk_level as string,
+        priority: formData.priority as number,
+        tags: tags.length > 0 ? tags : undefined,
+      };
+
+      if (isEdit && id) {
+        await rsApi.updateProject(id, requestData);
+        addNotification({
+          type: 'success',
+          title: '更新成功',
+          message: '项目信息已更新',
+        });
+      } else {
+        await rsApi.createProject(requestData);
+        addNotification({
+          type: 'success',
+          title: '创建成功',
+          message: '项目已创建',
+        });
+      }
+      navigate('/rs/projects');
+    } catch (err: unknown) {
+      addNotification({
+        type: 'error',
+        title: '提交失败',
+        message: '无法提交项目数据',
+      });
+    } finally {
+      setSubmitting(false);
     }
-    // 提交表单数据
-    apiLogger.info('提交数据:', formData);
-    navigate('/rs/projects');
   };
 
   const handleCancel = () => {
@@ -93,304 +227,24 @@ const RsProjectCreatePage: React.FC = () => {
   };
 
   return (
-    <Container
-      maxWidth='lg'
-      sx={{ py: 3 }}
-    >
-      {/* 页面标题 */}
-      <div style={{ marginBottom: 12 }}>
-        <Typography
-          variant='h4'
-          sx={{ fontWeight: 'bold' }}
-          gutterBottom
-        >
-          {isEdit ? '编辑研发项目' : '新建研发项目'}
-        </Typography>
-        <Typography
-          variant='body2'
-          color='text.secondary'
-        >
-          {isEdit ? '修改项目基本信息和配置' : '创建新的研发项目，设置基本信息和团队'}
-        </Typography>
-      </div>
-
-      {/* 表单 */}
-      <Paper sx={{ p: 3 }}>
-        <Grid
-          container
-          spacing={3}
-        >
-          {/* 基本信息 */}
-          <Grid size={{ xs: 12 }}>
-            <Typography
-              variant='h6'
-              gutterBottom
-            >
-              基本信息
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              fullWidth
-              label='项目名称'
-              required
-              value={formData.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
-              error={Boolean(errors.name)}
-              helperText={errors.name}
-              placeholder='请输入项目名称'
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              fullWidth
-              label='项目编码'
-              required
-              value={formData.code}
-              onChange={(e) => handleInputChange('code', e.target.value)}
-              error={Boolean(errors.code)}
-              helperText={errors.code || '例如: RS-2024-001'}
-              placeholder='请输入项目编码'
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12 }}>
-            <TextField
-              fullWidth
-              label='项目描述'
-              multiline
-              rows={4}
-              value={formData.description}
-              onChange={(e) => handleInputChange('description', e.target.value)}
-              placeholder='请输入项目描述，包括目标、背景、预期成果等'
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <FormControl fullWidth>
-              <InputLabel>项目类型</InputLabel>
-              <Select
-                value={formData.project_type}
-                label='项目类型'
-                onChange={(e) => handleInputChange('project_type', e.target.value)}
-              >
-                {projectTypes.map((type) => (
-                  <MenuItem
-                    key={type}
-                    value={type}
-                  >
-                    {type}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              fullWidth
-              label='项目负责人'
-              required
-              value={formData.leader}
-              onChange={(e) => handleInputChange('leader', e.target.value)}
-              error={Boolean(errors.leader)}
-              helperText={errors.leader}
-              placeholder='请输入负责人姓名'
-            />
-          </Grid>
-
-          {/* 时间和预算 */}
-          <Grid size={{ xs: 12 }}>
-            <Typography
-              variant='h6'
-              gutterBottom
-              sx={{ mt: 2 }}
-            >
-              时间和预算
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              fullWidth
-              label='开始日期'
-              type='date'
-              required
-              value={formData.start_date}
-              onChange={(e) => handleInputChange('start_date', e.target.value)}
-              error={Boolean(errors.start_date)}
-              helperText={errors.start_date}
-              slotProps={{ inputLabel: { shrink: true } }}
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              fullWidth
-              label='结束日期'
-              type='date'
-              value={formData.end_date}
-              onChange={(e) => handleInputChange('end_date', e.target.value)}
-              slotProps={{ inputLabel: { shrink: true } }}
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              fullWidth
-              label='预算金额'
-              type='number'
-              value={formData.budget}
-              onChange={(e) => handleInputChange('budget', e.target.value)}
-              placeholder='请输入预算金额'
-              slotProps={{
-                input: {
-                  endAdornment: <Typography variant='body2'>元</Typography>,
-                },
-              }}
-            />
-          </Grid>
-
-          {/* 风险和优先级 */}
-          <Grid size={{ xs: 12 }}>
-            <Typography
-              variant='h6'
-              gutterBottom
-              sx={{ mt: 2 }}
-            >
-              风险评估
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <FormControl fullWidth>
-              <InputLabel>风险等级</InputLabel>
-              <Select
-                value={formData.risk_level}
-                label='风险等级'
-                onChange={(e) => handleInputChange('risk_level', e.target.value)}
-              >
-                {riskLevels.map((level) => (
-                  <MenuItem
-                    key={level}
-                    value={level}
-                  >
-                    {level}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <FormControl fullWidth>
-              <InputLabel>优先级</InputLabel>
-              <Select
-                value={formData.priority}
-                label='优先级'
-                onChange={(e) => handleInputChange('priority', e.target.value)}
-              >
-                {priorities.map((priority) => (
-                  <MenuItem
-                    key={priority}
-                    value={priority}
-                  >
-                    {priority}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-
-          {/* 团队成员 */}
-          <Grid size={{ xs: 12 }}>
-            <Typography
-              variant='h6'
-              gutterBottom
-              sx={{ mt: 2 }}
-            >
-              团队成员
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-          </Grid>
-
-          <Grid size={{ xs: 12 }}>
-            <Autocomplete
-              multiple
-              options={availableMembers}
-              value={formData.team_members}
-              onChange={(_, newValue) => handleInputChange('team_members', newValue)}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label='团队成员'
-                  placeholder='选择团队成员'
-                />
-              )}
-            />
-          </Grid>
-
-          {/* 标签 */}
-          <Grid size={{ xs: 12 }}>
-            <Typography
-              variant='h6'
-              gutterBottom
-              sx={{ mt: 2 }}
-            >
-              项目标签
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-          </Grid>
-
-          <Grid size={{ xs: 12 }}>
-            <Autocomplete
-              multiple
-              freeSolo
-              options={availableTags}
-              value={formData.tags}
-              onChange={(_, newValue) => handleInputChange('tags', newValue)}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label='项目标签'
-                  placeholder='添加标签'
-                />
-              )}
-            />
-          </Grid>
-
-          {/* 操作按钮 */}
-          <Grid size={{ xs: 12 }}>
-            <Divider sx={{ mb: 2 }} />
-            <Stack
-              direction='row'
-              spacing={2}
-              sx={{ justifyContent: 'flex-end' }}
-            >
-              <Button
-                variant='outlined'
-                startIcon={<X />}
-                onClick={handleCancel}
-              >
-                取消
-              </Button>
-              <Button
-                variant='contained'
-                startIcon={<Save />}
-                onClick={handleSubmit}
-              >
-                {isEdit ? '保存修改' : '创建项目'}
-              </Button>
-            </Stack>
-          </Grid>
-        </Grid>
-      </Paper>
-    </Container>
+    <FormPageTemplate
+      title={isEdit ? '编辑研发项目' : '新建研发项目'}
+      subtitle={isEdit ? '修改项目基本信息和配置' : '创建新的研发项目，设置基本信息和团队'}
+      sections={sections}
+      defaultValues={defaultValues}
+      loading={loading}
+      submitting={submitting}
+      error={error}
+      onSubmit={handleSubmit}
+      onCancel={handleCancel}
+      submitText={isEdit ? '保存修改' : '创建项目'}
+      columns={2}
+      showValidationHints
+      validationToasts={[
+        { message: '提交成功', type: 'success' },
+        { message: '提交失败，请检查表单', type: 'error' },
+      ]}
+    />
   );
 };
 

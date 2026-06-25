@@ -19,7 +19,6 @@ import {
 import { Button } from '@mui/material';
 import {
   ChevronRight,
-  ArrowLeft,
   RefreshCw,
   Plus,
   Download,
@@ -29,6 +28,7 @@ import {
 } from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
 import { useAutoBreadcrumbs } from '@/hooks';
+import { BackButton } from '../common';
 
 export interface BreadcrumbItem {
   label: string;
@@ -355,16 +355,11 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             {/* 返回按钮 */}
             {backButton && backButton.visible !== false && (
-              <Tooltip title='返回'>
-                <IconButton
-                  size='small'
-                  onClick={backButton.onClick}
-                  component={backButton.href ? RouterLink : 'button'}
-                  to={backButton.href}
-                >
-                  <ArrowLeft style={{ width: 20, height: 20 }} />
-                </IconButton>
-              </Tooltip>
+              <BackButton
+                size='small'
+                onClick={backButton.onClick}
+                href={backButton.href}
+              />
             )}
 
             {/* 页面图标 */}

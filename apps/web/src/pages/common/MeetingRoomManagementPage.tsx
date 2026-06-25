@@ -1,54 +1,39 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
-  Typography,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Tooltip,
-  Box,
-  TextField,
-  Stack,
-} from '@mui/material';
-import { Button } from '@mui/material';
-import React, { useState, useEffect, useMemo } from 'react';
-import {
-  Calendar,
-  Search,
-  Plus,
-  Edit,
-  Trash2,
-  ChevronLeft,
-  AlertCircle,
-  Users,
-  MapPin,
-} from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect, useCallback } from 'react';
+import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
 import {
   meetingRoomApi,
   meetingBookingApi,
   type MeetingRoom,
   type MeetingBooking,
 } from '@/api/erp';
-import { useAppStore } from '../../store';
-import type { ColumnDef } from '@tanstack/react-table';
-import { DataTable } from '@/components/DataTable';
+import { useAppStore } from '@/store';
+import {
+  Calendar,
+  Plus,
+  Edit,
+  Trash2,
+  Users,
+  MapPin,
+  CheckCircle,
+  AlertCircle,
+} from 'lucide-react';
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Box,
+  Chip,
+  Stack,
+} from '@mui/material';
 
-import { ModeToggle } from '@/components/ModeToggle';
-
-interface MeetingRoomManagementPageProps {
-  onNavigate?: (page: string) => void;
-}
-
-const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({ onNavigate }) => {
-  const navigate = useNavigate();
+const MeetingRoomManagementPage: React.FC = () => {
   const addNotification = useAppStore((state) => state.addNotification);
 
   const [rooms, setRooms] = useState<MeetingRoom[]>([]);
@@ -61,6 +46,12 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({ o
   const [selectedRoom, setSelectedRoom] = useState<MeetingRoom | null>(null);
   const [selectedBooking, setSelectedBooking] = useState<Partial<MeetingBooking>>({});
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [total, setTotal] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+
   const [newRoom, setNewRoom] = useState<Partial<MeetingRoom>>({
     name: '',
     capacity: 0,
@@ -69,32 +60,34 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({ o
     status: 'active',
   });
 
-  useEffect(() => {
-    loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
       const [roomsRes, bookingsRes] = await Promise.all([
-        meetingRoomApi.list(),
+        meetingRoomApi.list({
+          page: currentPage,
+          page_size: pageSize,
+          search: searchQuery,
+          status: statusFilter,
+        }),
         meetingBookingApi.list(),
       ]);
 
       if (roomsRes.success && roomsRes.data) {
         setRooms(roomsRes.data.items || []);
+        setTotal(roomsRes.data.total);
       }
 
       if (bookingsRes.success && bookingsRes.data) {
         setBookings(bookingsRes.data.items || []);
       }
     } catch (err: unknown) {
-      setError((err as { message?: string }).message || '加载数据失败');
+      const errorMsg = (err as { message?: string }).message || '加载数据失败';
+      setError(errorMsg);
       addNotification({
         title: '加载失败',
-        message: '加载数据失败',
+        message: errorMsg,
         type: 'error',
       });
       setRooms([]);
@@ -102,7 +95,11 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({ o
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, pageSize, searchQuery, statusFilter, addNotification]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleCreateRoom = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,9 +128,10 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({ o
         });
       }
     } catch (err: unknown) {
+      const errorMsg = (err as { message?: string }).message || '创建会议室失败';
       addNotification({
         title: '失败',
-        message: (err as { message?: string }).message || '创建会议室失败',
+        message: errorMsg,
         type: 'error',
       });
     }
@@ -158,9 +156,10 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({ o
         });
       }
     } catch (err: unknown) {
+      const errorMsg = (err as { message?: string }).message || '删除会议室失败';
       addNotification({
         title: '失败',
-        message: (err as { message?: string }).message || '删除会议室失败',
+        message: errorMsg,
         type: 'error',
       });
     }
@@ -188,9 +187,10 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({ o
         });
       }
     } catch (err: unknown) {
+      const errorMsg = (err as { message?: string }).message || '更新会议室失败';
       addNotification({
         title: '失败',
-        message: (err as { message?: string }).message || '更新会议室失败',
+        message: errorMsg,
         type: 'error',
       });
     }
@@ -217,21 +217,22 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({ o
         });
       }
     } catch (err: unknown) {
+      const errorMsg = (err as { message?: string }).message || '预约失败';
       addNotification({
         title: '失败',
-        message: (err as { message?: string }).message || '预约失败',
+        message: errorMsg,
         type: 'error',
       });
     }
   };
 
   const getStatusBadge = (status: string) => {
-    const colors: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
-      active: 'default',
-      inactive: 'secondary',
-      confirmed: 'default',
-      pending: 'outline',
-      cancelled: 'destructive',
+    const colors: Record<string, string> = {
+      active: 'success',
+      inactive: 'default',
+      confirmed: 'success',
+      pending: 'warning',
+      cancelled: 'error',
     };
     const labels: Record<string, string> = {
       active: '可用',
@@ -243,352 +244,197 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({ o
     return (
       <Chip
         size='small'
-        variant={(colors[status] || 'outlined') as 'filled' | 'outlined'}
+        color={colors[status] || 'default'}
         label={labels[status] || status}
       />
     );
   };
 
-  const roomsColumns = useMemo<ColumnDef<MeetingRoom>[]>(
-    () => [
-      {
-        accessorKey: 'name',
-        header: '会议室名称',
-        cell: ({ row }) => (
-          <Typography
-            variant='body2'
-            sx={{ fontWeight: 500, color: 'grey.900' }}
-          >
-            {row.original.name}
-          </Typography>
-        ),
-      },
-      {
-        accessorKey: 'capacity',
-        header: '容量',
-        cell: ({ row }) => (
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              fontSize: '0.875rem',
-              color: 'grey.900',
-            }}
-          >
-            <Users sx={{ width: 12, height: 12, mr: 0.5, color: 'primary.main' }} />
-            {row.original.capacity} 人
-          </Box>
-        ),
-      },
-      {
-        accessorKey: 'location',
-        header: '位置',
-        cell: ({ row }) => (
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              fontSize: '0.875rem',
-              color: 'grey.500',
-            }}
-          >
-            <MapPin sx={{ width: 12, height: 12, mr: 0.5, color: 'primary.main' }} />
-            {row.original.location || '-'}
-          </Box>
-        ),
-      },
-      {
-        accessorKey: 'facilities',
-        header: '设施',
-        cell: ({ row }) => (
-          <Typography
-            variant='body2'
-            sx={{ fontSize: '0.875rem', color: 'grey.500' }}
-          >
-            {row.original.facilities?.join(', ') || '-'}
-          </Typography>
-        ),
-      },
-      {
-        accessorKey: 'status',
-        header: '状态',
-        cell: ({ row }) => getStatusBadge(row.original.status),
-      },
-      {
-        id: 'actions',
-        header: '操作',
-        cell: ({ row }) => {
-          const room = row.original;
-          return (
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
-              <Tooltip title='预约'>
-                <Button
-                  variant='text'
-                  size='small'
-                  onClick={() => {
-                    setSelectedBooking({
-                      room_id: room.id,
-                      room_name: room.name,
-                      status: 'confirmed',
-                    });
-                    setShowBookingModal(true);
-                  }}
-                >
-                  <Calendar sx={{ width: 16, height: 16 }} />
-                </Button>
-              </Tooltip>
+  const roomsColumns = [
+    {
+      id: 'name',
+      label: '会议室名称',
+      sortable: true,
+      minWidth: 150,
+    },
+    {
+      id: 'capacity',
+      label: '容量',
+      width: 100,
+      align: 'center' as const,
+      render: (row: MeetingRoom) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, justifyContent: 'center' }}>
+          <Users size={14} style={{ color: '#1976d2' }} />
+          {row.capacity} 人
+        </Box>
+      ),
+    },
+    {
+      id: 'location',
+      label: '位置',
+      width: 150,
+      render: (row: MeetingRoom) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <MapPin size={14} style={{ color: '#1976d2' }} />
+          {row.location || '-'}
+        </Box>
+      ),
+    },
+    {
+      id: 'facilities',
+      label: '设施',
+      width: 200,
+      render: (row: MeetingRoom) => (row.facilities?.join(', ') || '-'),
+    },
+    {
+      id: 'status',
+      label: '状态',
+      width: 100,
+      align: 'center' as const,
+      render: (row: MeetingRoom) => getStatusBadge(row.status),
+    },
+    {
+      id: 'created_at',
+      label: '创建时间',
+      width: 180,
+      sortable: true,
+      render: (row: MeetingRoom) => new Date(row.created_at).toLocaleDateString(),
+    },
+  ];
 
-              <Tooltip title='编辑'>
-                <Button
-                  variant='text'
-                  size='small'
-                  onClick={() => {
-                    setSelectedRoom(room);
-                    setShowEditModal(true);
-                  }}
-                >
-                  <Edit sx={{ width: 16, height: 16 }} />
-                </Button>
-              </Tooltip>
+  const roomsRowActions = [
+    {
+      label: '预约',
+      icon: <Calendar size={16} />,
+      color: 'primary' as const,
+      onClick: (row: MeetingRoom) => {
+        setSelectedBooking({
+          room_id: row.id,
+          room_name: row.name,
+          status: 'confirmed',
+        });
+        setShowBookingModal(true);
+      },
+      show: (row: MeetingRoom) => row.status === 'active',
+    },
+    {
+      label: '编辑',
+      icon: <Edit size={16} />,
+      color: 'primary' as const,
+      onClick: (row: MeetingRoom) => {
+        setSelectedRoom(row);
+        setShowEditModal(true);
+      },
+    },
+    {
+      label: '删除',
+      icon: <Trash2 size={16} />,
+      color: 'error' as const,
+      onClick: (row: MeetingRoom) => handleDeleteRoom(row.id),
+    },
+  ];
 
-              <Tooltip title='删除'>
-                <Button
-                  variant='text'
-                  size='small'
-                  sx={{ color: 'error.main' }}
-                  onClick={() => handleDeleteRoom(room.id)}
-                >
-                  <Trash2 sx={{ width: 16, height: 16 }} />
-                </Button>
-              </Tooltip>
-            </Box>
-          );
-        },
-      },
-    ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
-
-  const bookingsColumns = useMemo<ColumnDef<MeetingBooking>[]>(
-    () => [
-      {
-        accessorKey: 'room_name',
-        header: '会议室',
-        cell: ({ row }) => (
-          <Typography
-            variant='body2'
-            sx={{ fontWeight: 500, color: 'grey.900' }}
-          >
-            {row.original.room_name}
-          </Typography>
-        ),
-      },
-      {
-        accessorKey: 'title',
-        header: '会议主题',
-        cell: ({ row }) => (
-          <Typography
-            variant='body2'
-            sx={{ fontSize: '0.875rem', color: 'grey.500' }}
-          >
-            {row.original.title}
-          </Typography>
-        ),
-      },
-      {
-        accessorKey: 'organizer',
-        header: '组织者',
-        cell: ({ row }) => (
-          <Typography
-            variant='body2'
-            sx={{ fontSize: '0.875rem', color: 'grey.500' }}
-          >
-            {row.original.organizer}
-          </Typography>
-        ),
-      },
-      {
-        accessorKey: 'start_time',
-        header: '开始时间',
-        cell: ({ row }) => (
-          <Typography
-            variant='body2'
-            sx={{ fontSize: '0.875rem', color: 'grey.500' }}
-          >
-            {new Date(row.original.start_time).toLocaleString()}
-          </Typography>
-        ),
-      },
-      {
-        accessorKey: 'end_time',
-        header: '结束时间',
-        cell: ({ row }) => (
-          <Typography
-            variant='body2'
-            sx={{ fontSize: '0.875rem', color: 'grey.500' }}
-          >
-            {new Date(row.original.end_time).toLocaleString()}
-          </Typography>
-        ),
-      },
-      {
-        accessorKey: 'status',
-        header: '状态',
-        cell: ({ row }) => getStatusBadge(row.original.status),
-      },
-    ],
-    []
-  );
+  const bookingsColumns = [
+    {
+      id: 'room_name',
+      label: '会议室',
+      sortable: true,
+      minWidth: 150,
+    },
+    {
+      id: 'title',
+      label: '会议主题',
+      sortable: true,
+      minWidth: 150,
+    },
+    {
+      id: 'organizer',
+      label: '组织者',
+      width: 120,
+    },
+    {
+      id: 'start_time',
+      label: '开始时间',
+      width: 180,
+      sortable: true,
+      render: (row: MeetingBooking) => new Date(row.start_time).toLocaleString(),
+    },
+    {
+      id: 'end_time',
+      label: '结束时间',
+      width: 180,
+      sortable: true,
+      render: (row: MeetingBooking) => new Date(row.end_time).toLocaleString(),
+    },
+    {
+      id: 'status',
+      label: '状态',
+      width: 100,
+      align: 'center' as const,
+      render: (row: MeetingBooking) => getStatusBadge(row.status),
+    },
+  ];
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100' }}>
-      <Box
-        sx={{
-          bgcolor: 'background.paper',
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: 'divider',
+    <Stack spacing={4}>
+      <ListPageTemplate
+        title='会议室管理'
+        subtitle='管理会议室信息和预约安排'
+        columns={roomsColumns}
+        data={rooms}
+        loading={loading}
+        error={error}
+        searchable
+        searchPlaceholder='搜索会议室名称、位置...'
+        searchValue={searchQuery}
+        onSearch={setSearchQuery}
+        filters={[
+          {
+            id: 'status',
+            label: '状态',
+            type: 'select' as const,
+            options: [
+              { label: '全部', value: '' },
+              { label: '可用', value: 'active' },
+              { label: '停用', value: 'inactive' },
+            ],
+            value: statusFilter,
+            onChange: (_: unknown, filter: any) => {
+              setStatusFilter(filter.value);
+              setCurrentPage(1);
+            },
+          },
+        ]}
+        pagination={{
+          page: currentPage,
+          pageSize: pageSize,
+          total: total,
+          onPageChange: setCurrentPage,
+          onPageSizeChange: setPageSize,
         }}
-      >
-        <Box sx={{ maxWidth: 1280, mx: 'auto', px: 3, py: 3 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Button
-                variant='text'
-                onClick={() => navigate('/dashboard')}
-              >
-                <ChevronLeft sx={{ width: 20, height: 20 }} />
-              </Button>
-              <Box>
-                <Typography
-                  variant='h5'
-                  sx={{
-                    fontWeight: 700,
-                    color: 'grey.900',
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Calendar
-                    sx={{
-                      width: 28,
-                      height: 28,
-                      mr: 1.5,
-                      color: 'secondary.main',
-                    }}
-                  />
-                  会议室管理
-                </Typography>
-                <Typography
-                  variant='body2'
-                  sx={{ mt: 0.5, color: 'grey.500' }}
-                >
-                  管理会议室信息和预约安排
-                </Typography>
-              </Box>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <ModeToggle />
-              <Button onClick={() => setShowCreateModal(true)}>
-                <Plus sx={{ width: 20, height: 20, mr: 1 }} />
-                新增会议室
-              </Button>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
+        sortable
+        actions={[
+          {
+            label: '新增会议室',
+            icon: <Plus size={18} />,
+            onClick: () => setShowCreateModal(true),
+          },
+        ]}
+        rowActions={roomsRowActions}
+        onRefresh={loadData}
+      />
 
-      <Box sx={{ maxWidth: 1280, mx: 'auto', px: 3, py: 4 }}>
-        <Stack spacing={4}>
-          <Card>
-            <CardHeader>
-              <Typography
-                variant='h6'
-                sx={{ fontWeight: 600 }}
-              >
-                会议室列表
-              </Typography>
-            </CardHeader>
-            <CardContent sx={{ p: 0 }}>
-              {loading ? (
-                <Box sx={{ p: 4, textAlign: 'center' }}>
-                  <Box
-                    sx={{
-                      display: 'inline-block',
-                      width: 32,
-                      height: 32,
-                      border: 4,
-                      borderColor: 'secondary.main',
-                      borderTopColor: 'transparent',
-                      borderRadius: '50%',
-                      animation: 'spin 1s linear infinite',
-                      '@keyframes spin': {
-                        '0%': { transform: 'rotate(0deg)' },
-                        '100%': { transform: 'rotate(360deg)' },
-                      },
-                    }}
-                  />
-                  <Typography sx={{ mt: 1, color: 'grey.500' }}>加载中...</Typography>
-                </Box>
-              ) : error ? (
-                <Box sx={{ p: 4, textAlign: 'center' }}>
-                  <AlertCircle
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      color: 'error.main',
-                      mx: 'auto',
-                      mb: 1.5,
-                    }}
-                  />
-                  <Typography sx={{ color: 'error.main' }}>{error}</Typography>
-                  <Button
-                    sx={{ mt: 2 }}
-                    onClick={loadData}
-                  >
-                    重试
-                  </Button>
-                </Box>
-              ) : (
-                <DataTable
-                  columns={roomsColumns}
-                  data={rooms}
-                  searchPlaceholder='搜索会议室名称、位置...'
-                  searchKey='name'
-                />
-              )}
-            </CardContent>
-          </Card>
-
-          {bookings.length > 0 && (
-            <Card>
-              <CardHeader>
-                <Typography
-                  variant='h6'
-                  sx={{ fontWeight: 600 }}
-                >
-                  预约记录
-                </Typography>
-              </CardHeader>
-              <CardContent sx={{ p: 0 }}>
-                <DataTable
-                  columns={bookingsColumns}
-                  data={bookings}
-                  searchPlaceholder='搜索预约记录...'
-                  searchKey='title'
-                />
-              </CardContent>
-            </Card>
-          )}
-        </Stack>
-      </Box>
+      {bookings.length > 0 && (
+        <ListPageTemplate
+          title='预约记录'
+          subtitle='查看近期会议室预约'
+          columns={bookingsColumns}
+          data={bookings}
+          searchable
+          searchPlaceholder='搜索预约记录...'
+          sortable
+        />
+      )}
 
       <Dialog
         open={showCreateModal}
@@ -606,6 +452,7 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({ o
                 placeholder='请输入会议室名称'
                 size='small'
                 fullWidth
+                required
               />
 
               <Box sx={{ display: 'flex', gap: 2 }}>
@@ -622,6 +469,7 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({ o
                   placeholder='请输入容量'
                   size='small'
                   fullWidth
+                  required
                 />
                 <TextField
                   label='位置'
@@ -641,8 +489,8 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({ o
                     ...newRoom,
                     facilities: e.target.value
                       .split(',')
-                      .map((s) => s.trim())
-                      .filter((s) => s),
+                      .map((s: string) => s.trim())
+                      .filter((s: string) => s),
                   })
                 }
                 placeholder='如：投影仪, 麦克风, 白板'
@@ -650,10 +498,7 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({ o
                 fullWidth
               />
 
-              <FormControl
-                size='small'
-                fullWidth
-              >
+              <FormControl size='small' fullWidth>
                 <InputLabel>状态</InputLabel>
                 <Select
                   value={newRoom.status || 'active'}
@@ -667,14 +512,12 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({ o
             </Box>
 
             <DialogActions sx={{ mt: 3 }}>
-              <Button
-                type='button'
-                variant='contained'
-                onClick={() => setShowCreateModal(false)}
-              >
+              <Button type='button' onClick={() => setShowCreateModal(false)}>
                 取消
               </Button>
-              <Button type='submit'>创建</Button>
+              <Button type='submit' variant='contained'>
+                创建
+              </Button>
             </DialogActions>
           </form>
         </DialogContent>
@@ -689,20 +532,14 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({ o
         <DialogContent sx={{ maxWidth: 540, overflowY: 'auto' }}>
           {selectedRoom && (
             <form onSubmit={handleEditRoom}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 2.5,
-                  pt: 1,
-                }}
-              >
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1 }}>
                 <TextField
                   label='会议室名称 *'
                   value={selectedRoom.name}
                   onChange={(e) => setSelectedRoom({ ...selectedRoom, name: e.target.value })}
                   size='small'
                   fullWidth
+                  required
                 />
 
                 <Box sx={{ display: 'flex', gap: 2 }}>
@@ -718,6 +555,7 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({ o
                     }
                     size='small'
                     fullWidth
+                    required
                   />
                   <TextField
                     label='位置'
@@ -741,18 +579,15 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({ o
                       ...selectedRoom,
                       facilities: e.target.value
                         .split(',')
-                        .map((s) => s.trim())
-                        .filter((s) => s),
+                        .map((s: string) => s.trim())
+                        .filter((s: string) => s),
                     })
                   }
                   size='small'
                   fullWidth
                 />
 
-                <FormControl
-                  size='small'
-                  fullWidth
-                >
+                <FormControl size='small' fullWidth>
                   <InputLabel>状态</InputLabel>
                   <Select
                     value={selectedRoom.status}
@@ -773,7 +608,6 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({ o
               <DialogActions sx={{ mt: 3 }}>
                 <Button
                   type='button'
-                  variant='contained'
                   onClick={() => {
                     setShowEditModal(false);
                     setSelectedRoom(null);
@@ -781,7 +615,9 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({ o
                 >
                   取消
                 </Button>
-                <Button type='submit'>保存</Button>
+                <Button type='submit' variant='contained'>
+                  保存
+                </Button>
               </DialogActions>
             </form>
           )}
@@ -817,6 +653,7 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({ o
                 placeholder='请输入会议主题'
                 size='small'
                 fullWidth
+                required
               />
 
               <TextField
@@ -831,6 +668,7 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({ o
                 placeholder='请输入组织者'
                 size='small'
                 fullWidth
+                required
               />
 
               <Box sx={{ display: 'flex', gap: 2 }}>
@@ -850,6 +688,7 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({ o
                   }
                   size='small'
                   fullWidth
+                  required
                   slotProps={{ inputLabel: { shrink: true } }}
                 />
                 <TextField
@@ -868,6 +707,7 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({ o
                   }
                   size='small'
                   fullWidth
+                  required
                   slotProps={{ inputLabel: { shrink: true } }}
                 />
               </Box>
@@ -876,7 +716,6 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({ o
             <DialogActions sx={{ mt: 3 }}>
               <Button
                 type='button'
-                variant='contained'
                 onClick={() => {
                   setShowBookingModal(false);
                   setSelectedBooking({});
@@ -884,12 +723,14 @@ const MeetingRoomManagementPage: React.FC<MeetingRoomManagementPageProps> = ({ o
               >
                 取消
               </Button>
-              <Button type='submit'>预约</Button>
+              <Button type='submit' variant='contained'>
+                预约
+              </Button>
             </DialogActions>
           </form>
         </DialogContent>
       </Dialog>
-    </Box>
+    </Stack>
   );
 };
 

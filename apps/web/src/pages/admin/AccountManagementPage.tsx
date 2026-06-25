@@ -1,54 +1,38 @@
-/**
- * 会计科目管理页面
- * 管理企业会计科目体系，支持科目的增删改查和树形结构展示
- */
-
 import React, { useState, useMemo } from 'react';
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
+  Box,
   Typography,
+  Chip,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogActions,
   TextField,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogActions,
-  Box,
-  IconButton,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import type { ColumnDef } from '@tanstack/react-table';
-import { logger } from '@/utils/logger';
-import { useAppStore } from '@/store';
 import {
   Plus,
   Edit,
   Trash2,
-  ChevronRight,
-  ChevronDown,
-  Search,
-  Building2,
   RefreshCw,
+  Building2,
 } from 'lucide-react';
+import { ListPageTemplate, ColumnDef, RowAction } from '@/components/templates/ListPageTemplate';
 import {
   useAccounts,
-  useAccountTree,
   useCreateAccount,
   useUpdateAccount,
   useDeleteAccount,
   useAccountBalances,
 } from '@/hooks/useFinance';
 import type { Account, BalanceDirection } from '@/types/finance';
-import { EnhancedDataTable } from '@/components/EnhancedDataTable';
+import { useAppStore } from '@/store';
+import { logger } from '@/utils/logger';
 
-/** 科目类型配置 */
 const ACCOUNT_TYPE_CONFIG: Record<
   string,
   {
@@ -64,7 +48,6 @@ const ACCOUNT_TYPE_CONFIG: Record<
   cost: { label: '成本', color: 'default' },
 };
 
-/** 余额方向配置 */
 const BALANCE_DIRECTION_CONFIG: Record<string, { label: string; color: 'primary' | 'error' }> = {
   debit: { label: '借', color: 'primary' },
   credit: { label: '贷', color: 'error' },
@@ -81,21 +64,17 @@ interface AccountFormData {
   description?: string;
 }
 
-type AccountNode = Account & { children?: AccountNode[] };
-
 export default function AccountManagementPage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const addNotification = useAppStore((state) => state.addNotification);
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [isDetailFilter, setIsDetailFilter] = useState<string>('all');
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'tree' | 'table'>('tree');
 
-  // 获取科目列表
+  const addNotification = useAppStore((state) => state.addNotification);
+
   const {
     data: accountsData,
     isLoading,
@@ -106,25 +85,15 @@ export default function AccountManagementPage() {
       isDetailFilter === 'detail' ? true : isDetailFilter === 'summary' ? false : undefined,
   });
 
-  // 获取科目树
-  const { data: accountTree, isLoading: treeLoading } = useAccountTree({});
-
-  // 科目余额
   const { data: balancesData } = useAccountBalances({
     company_id: 'default',
     period: new Date().toISOString().slice(0, 7),
   });
 
-  // 创建科目
   const createAccount = useCreateAccount();
-
-  // 更新科目
   const updateAccount = useUpdateAccount();
-
-  // 删除科目
   const deleteAccount = useDeleteAccount();
 
-  // 过滤后的科目列表
   const filteredAccounts = useMemo(() => {
     if (!accountsData?.data?.items) return [];
     const accounts = accountsData.data.items;
@@ -138,194 +107,147 @@ export default function AccountManagementPage() {
     );
   }, [accountsData, searchQuery]);
 
-  // 构键树形结构
-  const treeData = useMemo(() => {
-    if (!accountTree?.data) return [] as AccountNode[];
-
-    const buildTree = (items: Account[], parentId: string | null = null): AccountNode[] => {
-      return items
-        .filter((item) => item.parent_id === parentId)
-        .map((item) => ({
-          ...item,
-          children: buildTree(items, item.id),
-        }))
-        .sort((a, b) => a.code.localeCompare(b.code));
-    };
-
-    return buildTree(accountTree.data);
-  }, [accountTree]);
-
-  // 展开/折叠
-  const toggleExpand = (id: string) => {
-    const newExpanded = new Set(expandedIds);
-    if (newExpanded.has(id)) {
-      newExpanded.delete(id);
-    } else {
-      newExpanded.add(id);
-    }
-    setExpandedIds(newExpanded);
+  const getBalance = (accountId: string) => {
+    if (!balancesData?.data) return null;
+    return balancesData.data.find((b: { account_id: string }) => b.account_id === accountId);
   };
 
-  // 展开所有
-  const expandAll = () => {
-    const allIds = new Set<string>();
-    const collectIds = (items: AccountNode[]) => {
-      items.forEach((item) => {
-        if (item.children && item.children.length > 0) {
-          allIds.add(item.id);
-          collectIds(item.children);
-        }
-      });
-    };
-    collectIds(treeData);
-    setExpandedIds(allIds);
-  };
-
-  // 折叠所有
-  const collapseAll = () => {
-    setExpandedIds(new Set());
-  };
-
-  // 处理创建
   const handleCreate = async (data: AccountFormData) => {
     try {
       await createAccount.mutateAsync(data as any);
       setIsCreating(false);
+      addNotification({
+        title: '创建成功',
+        message: '科目创建成功',
+        type: 'success',
+      });
+      refetch();
     } catch (error: unknown) {
       logger.error('创建科目失败:', error);
+      addNotification({
+        title: '创建失败',
+        message: '创建科目失败',
+        type: 'error',
+      });
     }
   };
 
-  // 处理更新
   const handleUpdate = async (data: AccountFormData) => {
     if (!selectedAccount) return;
     try {
       await updateAccount.mutateAsync({ id: selectedAccount.id, data });
       setIsEditing(false);
       setSelectedAccount(null);
+      addNotification({
+        title: '更新成功',
+        message: '科目更新成功',
+        type: 'success',
+      });
+      refetch();
     } catch (error: unknown) {
       logger.error('更新科目失败:', error);
+      addNotification({
+        title: '更新失败',
+        message: '更新科目失败',
+        type: 'error',
+      });
     }
   };
 
-  // 处理删除
   const handleDelete = async () => {
     if (!deletingId) return;
     try {
       await deleteAccount.mutateAsync(deletingId);
       setDeletingId(null);
+      addNotification({
+        title: '删除成功',
+        message: '科目删除成功',
+        type: 'success',
+      });
+      refetch();
     } catch (error: unknown) {
       logger.error('删除科目失败:', error);
+      addNotification({
+        title: '删除失败',
+        message: '删除科目失败',
+        type: 'error',
+      });
     }
   };
 
-  // 获取余额
-  const getBalance = (accountId: string) => {
-    if (!balancesData?.data) return null;
-    return balancesData.data.find((b: { account_id: string }) => b.account_id === accountId);
-  };
-
-  // 表格列定义
   const columns: ColumnDef<Account>[] = [
     {
       id: 'code',
-      header: '科目编码',
-      accessorKey: 'code',
-      cell: ({ row }) => (
-        <span style={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
-          {row.getValue('code')}
-        </span>
+      label: '科目编码',
+      sortable: true,
+      render: (row) => (
+        <Typography sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>{row.code}</Typography>
       ),
     },
     {
       id: 'name',
-      header: '科目名称',
-      accessorKey: 'name',
-      cell: ({ row }) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          {row.original.is_detail ? (
-            <span style={{ fontSize: '0.875rem' }}>{row.getValue('name')}</span>
-          ) : (
-            <span style={{ fontWeight: 500 }}>{row.getValue('name')}</span>
-          )}
-        </Box>
+      label: '科目名称',
+      sortable: true,
+      render: (row) => (
+        <Typography sx={{ fontWeight: row.is_detail ? 400 : 500 }}>{row.name}</Typography>
       ),
     },
     {
       id: 'type',
-      header: '科目类型',
-      accessorKey: 'type',
-      cell: ({ row }) => {
-        const type = row.getValue<string>('type');
-        const config = ACCOUNT_TYPE_CONFIG[type as keyof typeof ACCOUNT_TYPE_CONFIG] || {
-          label: type,
+      label: '科目类型',
+      render: (row) => {
+        const config = ACCOUNT_TYPE_CONFIG[row.type as keyof typeof ACCOUNT_TYPE_CONFIG] || {
+          label: row.type,
           color: 'default' as const,
         };
-        return (
-          <Chip
-            size='small'
-            color={config.color}
-            label={config.label}
-          />
-        );
+        return <Chip size='small' color={config.color} label={config.label} />;
       },
     },
     {
       id: 'balance_direction',
-      header: '余额方向',
-      accessorKey: 'balance_direction',
-      cell: ({ row }) => {
-        const balanceDirection = row.getValue<string>('balance_direction');
-        const config = BALANCE_DIRECTION_CONFIG[
-          balanceDirection as keyof typeof BALANCE_DIRECTION_CONFIG
-        ] || {
-          label: balanceDirection,
+      label: '余额方向',
+      render: (row) => {
+        const config = BALANCE_DIRECTION_CONFIG[row.balance_direction as keyof typeof BALANCE_DIRECTION_CONFIG] || {
+          label: row.balance_direction,
           color: 'default' as const,
         };
-        return (
-          <Chip
-            size='small'
-            color={config.color}
-            label={config.label}
-          />
-        );
+        return <Chip size='small' color={config.color} label={config.label} />;
       },
     },
     {
       id: 'is_detail',
-      header: '明细',
-      accessorKey: 'is_detail',
-      cell: ({ row }) => (
+      label: '明细',
+      render: (row) => (
         <Chip
           size='small'
-          variant={row.original.is_detail ? 'filled' : 'outlined'}
-          label={row.original.is_detail ? '明细科目' : '总账科目'}
+          variant={row.is_detail ? 'filled' : 'outlined'}
+          label={row.is_detail ? '明细科目' : '总账科目'}
         />
       ),
     },
     {
       id: 'is_active',
-      header: '状态',
-      accessorKey: 'is_active',
-      cell: ({ row }) => (
+      label: '状态',
+      render: (row) => (
         <Chip
           size='small'
-          variant={row.original.is_active ? 'filled' : 'outlined'}
-          color={row.original.is_active ? 'success' : 'default'}
-          label={row.original.is_active ? '启用' : '停用'}
+          variant={row.is_active ? 'filled' : 'outlined'}
+          color={row.is_active ? 'success' : 'default'}
+          label={row.is_active ? '启用' : '停用'}
         />
       ),
     },
     {
       id: 'balance',
-      header: '余额',
-      cell: ({ row }) => {
-        const balance = getBalance(row.original.id);
+      label: '余额',
+      align: 'right',
+      render: (row) => {
+        const balance = getBalance(row.id);
         if (!balance) return '-';
         const amount = balance.debit_balance || balance.credit_balance || 0;
         return (
-          <span
-            style={{
+          <Typography
+            sx={{
               fontFamily: 'monospace',
               fontSize: '0.875rem',
               color: amount >= 0 ? 'green' : 'red',
@@ -335,256 +257,44 @@ export default function AccountManagementPage() {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
-          </span>
+          </Typography>
         );
       },
     },
+  ];
+
+  const rowActions: RowAction<Account>[] = [
     {
-      id: 'actions',
-      header: '操作',
-      cell: ({ row }) => (
-        <Box sx={{ display: 'flex', gap: 0.5 }}>
-          <IconButton
-            size='small'
-            onClick={() => {
-              setSelectedAccount(row.original);
-              setIsEditing(true);
-            }}
-          >
-            <Edit sx={{ width: 16, height: 16 }} />
-          </IconButton>
-          <IconButton
-            size='small'
-            onClick={() => setDeletingId(row.original.id)}
-            sx={{ color: 'error.main' }}
-          >
-            <Trash2 sx={{ width: 16, height: 16 }} />
-          </IconButton>
-        </Box>
-      ),
+      label: '编辑',
+      icon: <Edit sx={{ width: 16, height: 16 }} />,
+      onClick: (row) => {
+        setSelectedAccount(row);
+        setIsEditing(true);
+      },
+      color: 'primary',
+    },
+    {
+      label: '删除',
+      icon: <Trash2 sx={{ width: 16, height: 16 }} />,
+      onClick: (row) => setDeletingId(row.id),
+      color: 'error',
     },
   ];
 
-  // 渲染树节点
-  const renderTreeNode = (account: AccountNode, level: number = 0) => {
-    const children = account.children || [];
-    const hasChildren = children.length > 0;
-    const isExpanded = expandedIds.has(account.id);
-    const balance = getBalance(account.id);
-    const typeConfig = ACCOUNT_TYPE_CONFIG[account.type ?? 'other'] || {
-      label: account.type,
-      color: 'default' as const,
+  const stats = useMemo(() => {
+    const accounts = accountsData?.data?.items || [];
+    return {
+      total: accounts.length,
+      detail: accounts.filter((a: Account) => a.is_detail).length,
+      summary: accounts.filter((a: Account) => !a.is_detail).length,
+      inactive: accounts.filter((a: Account) => !a.is_active).length,
     };
-    const directionConfig = BALANCE_DIRECTION_CONFIG[account.balance_direction] || {
-      label: account.balance_direction,
-      color: 'default' as const,
-    };
-
-    return (
-      <Box key={account.id}>
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            '&:hover': { bgcolor: 'grey.50' },
-            borderBottom: 1,
-            borderColor: 'grey.100',
-            bgcolor: !account.is_detail ? 'grey.50' : 'transparent',
-            fontWeight: !account.is_detail ? 500 : 400,
-            pl: `${level * 24 + 12}px`,
-          }}
-        >
-          {/* 展开/折叠按钮 */}
-          <Box sx={{ width: 24, flexShrink: 0 }}>
-            {hasChildren ? (
-              <IconButton
-                size='small'
-                sx={{ width: 24, height: 24 }}
-                onClick={() => toggleExpand(account.id)}
-              >
-                {isExpanded ? (
-                  <ChevronDown sx={{ width: 16, height: 16 }} />
-                ) : (
-                  <ChevronRight sx={{ width: 16, height: 16 }} />
-                )}
-              </IconButton>
-            ) : (
-              <Box sx={{ width: 24 }} />
-            )}
-          </Box>
-
-          {/* 科目编码 */}
-          <Box
-            sx={{
-              width: 128,
-              flexShrink: 0,
-              fontFamily: 'monospace',
-              fontSize: '0.875rem',
-            }}
-          >
-            {account.code}
-          </Box>
-
-          {/* 科目名称 */}
-          <Box sx={{ flex: 1, fontSize: '0.875rem' }}>{account.name}</Box>
-
-          {/* 科目类型 */}
-          <Box sx={{ width: 80, flexShrink: 0 }}>
-            <Chip
-              size='small'
-              color={typeConfig.color}
-              variant='outlined'
-              label={typeConfig.label}
-            />
-          </Box>
-
-          {/* 余额方向 */}
-          <Box sx={{ width: 64, flexShrink: 0 }}>
-            <Chip
-              size='small'
-              color={directionConfig.color}
-              variant='outlined'
-              label={directionConfig.label}
-            />
-          </Box>
-
-          {/* 余额 */}
-          <Box
-            sx={{
-              width: 128,
-              textAlign: 'right',
-              fontFamily: 'monospace',
-              fontSize: '0.875rem',
-            }}
-          >
-            {balance ? (
-              <span
-                style={{
-                  color: (balance.debit_balance || 0) >= 0 ? 'green' : 'red',
-                }}
-              >
-                {(balance.debit_balance || balance.credit_balance || 0).toLocaleString('zh-CN', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              </span>
-            ) : (
-              '-'
-            )}
-          </Box>
-
-          {/* 状态 */}
-          <Box sx={{ width: 64, flexShrink: 0 }}>
-            <Chip
-              size='small'
-              variant={account.is_active ? 'filled' : 'outlined'}
-              color={account.is_active ? 'success' : 'default'}
-              label={account.is_active ? '启用' : '停用'}
-            />
-          </Box>
-
-          {/* 操作 */}
-          <Box sx={{ width: 96, flexShrink: 0, display: 'flex', gap: 0.5 }}>
-            <IconButton
-              size='small'
-              sx={{ width: 32, height: 32 }}
-              onClick={() => {
-                setSelectedAccount(account);
-                setIsEditing(true);
-              }}
-            >
-              <Edit sx={{ width: 16, height: 16 }} />
-            </IconButton>
-            <IconButton
-              size='small'
-              sx={{ width: 32, height: 32, color: 'error.main' }}
-              onClick={() => setDeletingId(account.id)}
-            >
-              <Trash2 sx={{ width: 16, height: 16 }} />
-            </IconButton>
-          </Box>
-        </Box>
-
-        {/* 子节点 */}
-        {hasChildren && isExpanded && (
-          <Box>{children.map((child: AccountNode) => renderTreeNode(child, level + 1))}</Box>
-        )}
-      </Box>
-    );
-  };
+  }, [accountsData]);
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50', p: 3 }}>
-      <Box sx={{ maxWidth: 1280, mx: 'auto' }}>
-        {/* 头部 */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            mb: 3,
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Box
-              sx={{
-                width: 48,
-                height: 48,
-                borderRadius: 2,
-                bgcolor: 'primary.main',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Building2 sx={{ width: 24, height: 24, color: 'white' }} />
-            </Box>
-            <Box>
-              <Typography
-                variant='h4'
-                sx={{ fontWeight: 'bold' }}
-              >
-                会计科目管理
-              </Typography>
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
-                管理企业会计科目体系，支持多级科目结构
-              </Typography>
-            </Box>
-          </Box>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button
-              variant='outlined'
-              size='small'
-              onClick={() => refetch()}
-            >
-              <RefreshCw sx={{ width: 16, height: 16, marginRight: 8 }} />
-              刷新
-            </Button>
-            <Button
-              variant='outlined'
-              size='small'
-              onClick={() => setViewMode(viewMode === 'tree' ? 'table' : 'tree')}
-            >
-              {viewMode === 'tree' ? '表格视图' : '树形视图'}
-            </Button>
-            <Button
-              size='small'
-              variant='contained'
-              onClick={() => {
-                setSelectedAccount(null);
-                setIsCreating(true);
-              }}
-            >
-              <Plus sx={{ width: 16, height: 16, marginRight: 8 }} />
-              新增科目
-            </Button>
-          </Box>
-        </Box>
-
-        {/* 统计卡片 */}
+    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
+      {/* 统计卡片 */}
+      <Box sx={{ p: 3, maxWidth: 1280, mx: 'auto' }}>
         <Box
           sx={{
             display: 'grid',
@@ -593,281 +303,94 @@ export default function AccountManagementPage() {
             mb: 3,
           }}
         >
-          <Card>
-            <CardContent sx={{ pt: 3 }}>
-              <Typography
-                variant='h4'
-                sx={{ fontWeight: 'bold', color: 'primary.main' }}
-              >
-                {accountsData?.data?.items?.length || 0}
-              </Typography>
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
-                科目总数
-              </Typography>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ pt: 3 }}>
-              <Typography
-                variant='h4'
-                sx={{ fontWeight: 'bold', color: 'success.main' }}
-              >
-                {accountsData?.data?.items?.filter((a: Account) => a.is_detail).length || 0}
-              </Typography>
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
-                明细科目
-              </Typography>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ pt: 3 }}>
-              <Typography
-                variant='h4'
-                sx={{ fontWeight: 'bold', color: 'info.main' }}
-              >
-                {accountsData?.data?.items?.filter((a: Account) => !a.is_detail).length || 0}
-              </Typography>
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
-                总账科目
-              </Typography>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ pt: 3 }}>
-              <Typography
-                variant='h4'
-                sx={{ fontWeight: 'bold', color: 'warning.main' }}
-              >
-                {accountsData?.data?.items?.filter((a: Account) => !a.is_active).length || 0}
-              </Typography>
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
-                已停用
-              </Typography>
-            </CardContent>
-          </Card>
+          <Box sx={{ bgcolor: 'white', borderRadius: 2, p: 3 }}>
+            <Typography variant='h4' sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+              {stats.total}
+            </Typography>
+            <Typography variant='body2' color='text.secondary'>科目总数</Typography>
+          </Box>
+          <Box sx={{ bgcolor: 'white', borderRadius: 2, p: 3 }}>
+            <Typography variant='h4' sx={{ fontWeight: 'bold', color: 'success.main' }}>
+              {stats.detail}
+            </Typography>
+            <Typography variant='body2' color='text.secondary'>明细科目</Typography>
+          </Box>
+          <Box sx={{ bgcolor: 'white', borderRadius: 2, p: 3 }}>
+            <Typography variant='h4' sx={{ fontWeight: 'bold', color: 'info.main' }}>
+              {stats.summary}
+            </Typography>
+            <Typography variant='body2' color='text.secondary'>总账科目</Typography>
+          </Box>
+          <Box sx={{ bgcolor: 'white', borderRadius: 2, p: 3 }}>
+            <Typography variant='h4' sx={{ fontWeight: 'bold', color: 'warning.main' }}>
+              {stats.inactive}
+            </Typography>
+            <Typography variant='body2' color='text.secondary'>已停用</Typography>
+          </Box>
         </Box>
-
-        {/* 筛选和搜索 */}
-        <Card sx={{ mb: 3 }}>
-          <CardContent sx={{ pt: 3 }}>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 2,
-                flexWrap: 'wrap',
-              }}
-            >
-              <Box sx={{ flex: 1, minWidth: 200 }}>
-                <TextField
-                  size='small'
-                  placeholder='搜索科目编码或名称...'
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <Box sx={{ mr: 1, display: 'flex' }}>
-                          <Search sx={{ width: 16, height: 16, color: 'text.secondary' }} />
-                        </Box>
-                      ),
-                    },
-                  }}
-                  sx={{ width: '100%' }}
-                />
-              </Box>
-              <FormControl
-                size='small'
-                sx={{ minWidth: 160 }}
-              >
-                <Select
-                  value={typeFilter}
-                  onChange={(e) => setTypeFilter(e.target.value)}
-                  displayEmpty
-                >
-                  <MenuItem value='all'>全部类型</MenuItem>
-                  <MenuItem value='asset'>资产</MenuItem>
-                  <MenuItem value='liability'>负债</MenuItem>
-                  <MenuItem value='equity'>权益</MenuItem>
-                  <MenuItem value='revenue'>收入</MenuItem>
-                  <MenuItem value='expense'>费用</MenuItem>
-                  <MenuItem value='cost'>成本</MenuItem>
-                </Select>
-              </FormControl>
-              <FormControl
-                size='small'
-                sx={{ minWidth: 140 }}
-              >
-                <Select
-                  value={isDetailFilter}
-                  onChange={(e) => setIsDetailFilter(e.target.value)}
-                  displayEmpty
-                >
-                  <MenuItem value='all'>全部</MenuItem>
-                  <MenuItem value='detail'>明细科目</MenuItem>
-                  <MenuItem value='summary'>总账科目</MenuItem>
-                </Select>
-              </FormControl>
-              {viewMode === 'tree' && (
-                <>
-                  <Button
-                    variant='outlined'
-                    size='small'
-                    onClick={expandAll}
-                  >
-                    展开全部
-                  </Button>
-                  <Button
-                    variant='outlined'
-                    size='small'
-                    onClick={collapseAll}
-                  >
-                    折叠全部
-                  </Button>
-                </>
-              )}
-            </Box>
-          </CardContent>
-        </Card>
-
-        {/* 科目列表 */}
-        <Card>
-          <CardHeader>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <Typography
-                variant='h6'
-                sx={{ fontWeight: 600 }}
-              >
-                会计科目列表
-              </Typography>
-              <Box
-                sx={{
-                  display: 'flex',
-                  gap: 1,
-                  typography: 'body2',
-                  color: 'text.secondary',
-                }}
-              >
-                <span>共 {filteredAccounts.length || 0} 个科目</span>
-              </Box>
-            </Box>
-          </CardHeader>
-          <CardContent>
-            {isLoading || treeLoading ? (
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  py: 6,
-                }}
-              >
-                <RefreshCw
-                  sx={{
-                    width: 32,
-                    height: 32,
-                    animation: 'spin 1s linear infinite',
-                    color: 'text.secondary',
-                  }}
-                />
-              </Box>
-            ) : viewMode === 'tree' ? (
-              // 树形视图
-              <Box
-                sx={{
-                  border: 1,
-                  borderColor: 'divider',
-                  borderRadius: 1,
-                  overflow: 'hidden',
-                }}
-              >
-                {/* 表头 */}
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    bgcolor: 'grey.100',
-                    borderBottom: 1,
-                    borderColor: 'divider',
-                    px: 2,
-                    py: 1.5,
-                    typography: 'body2',
-                    fontWeight: 500,
-                    color: 'grey.700',
-                  }}
-                >
-                  <Box sx={{ width: 24, flexShrink: 0 }} />
-                  <Box sx={{ width: 128, flexShrink: 0 }}>科目编码</Box>
-                  <Box sx={{ flex: 1 }}>科目名称</Box>
-                  <Box sx={{ width: 80, flexShrink: 0 }}>类型</Box>
-                  <Box sx={{ width: 64, flexShrink: 0 }}>方向</Box>
-                  <Box sx={{ width: 128, textAlign: 'right', flexShrink: 0 }}>余额</Box>
-                  <Box sx={{ width: 64, flexShrink: 0 }}>状态</Box>
-                  <Box sx={{ width: 96, flexShrink: 0 }}>操作</Box>
-                </Box>
-                {/* 树内容 */}
-                <Box>{treeData.map((account) => renderTreeNode(account))}</Box>
-                {treeData.length === 0 && (
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      py: 6,
-                      color: 'text.secondary',
-                    }}
-                  >
-                    <Building2
-                      sx={{
-                        width: 48,
-                        height: 48,
-                        marginBottom: 16,
-                        color: 'grey.300',
-                      }}
-                    />
-                    <Typography>暂无科目数据</Typography>
-                    <Typography
-                      variant='body2'
-                      color='text.disabled'
-                      sx={{ mt: 1 }}
-                    >
-                      点击"新增科目"创建第一个会计科目
-                    </Typography>
-                  </Box>
-                )}
-              </Box>
-            ) : (
-              // 表格视图
-              <EnhancedDataTable
-                columns={columns}
-                data={filteredAccounts || []}
-                searchPlaceholder='搜索科目...'
-              />
-            )}
-          </CardContent>
-        </Card>
       </Box>
 
-      {/* 创建/编辑对话框 */}
+      <ListPageTemplate
+        title='会计科目管理'
+        subtitle='管理企业会计科目体系，支持多级科目结构'
+        columns={columns}
+        data={filteredAccounts}
+        loading={isLoading}
+        searchable
+        searchPlaceholder='搜索科目编码或名称...'
+        searchValue={searchQuery}
+        onSearch={setSearchQuery}
+        filters={[
+          {
+            id: 'type',
+            label: '科目类型',
+            type: 'select',
+            value: typeFilter,
+            options: [
+              { label: '全部类型', value: 'all' },
+              { label: '资产', value: 'asset' },
+              { label: '负债', value: 'liability' },
+              { label: '权益', value: 'equity' },
+              { label: '收入', value: 'revenue' },
+              { label: '费用', value: 'expense' },
+              { label: '成本', value: 'cost' },
+            ],
+            onChange: (value) => setTypeFilter(value as string),
+          },
+          {
+            id: 'is_detail',
+            label: '明细类型',
+            type: 'select',
+            value: isDetailFilter,
+            options: [
+              { label: '全部', value: 'all' },
+              { label: '明细科目', value: 'detail' },
+              { label: '总账科目', value: 'summary' },
+            ],
+            onChange: (value) => setIsDetailFilter(value as string),
+          },
+        ]}
+        actions={[
+          {
+            label: '刷新',
+            icon: <RefreshCw sx={{ width: 16, height: 16 }} />,
+            onClick: refetch,
+            variant: 'outlined',
+          },
+          {
+            label: '新增科目',
+            icon: <Plus sx={{ width: 16, height: 16 }} />,
+            onClick: () => {
+              setSelectedAccount(null);
+              setIsCreating(true);
+            },
+          },
+        ]}
+        rowActions={rowActions}
+        onRefresh={refetch}
+        showRowNumber
+      />
+
       <Dialog
         open={isCreating || isEditing}
         onClose={() => {
@@ -894,7 +417,6 @@ export default function AccountManagementPage() {
         </DialogContent>
       </Dialog>
 
-      {/* 删除确认对话框 */}
       <Dialog
         open={!!deletingId}
         onClose={() => setDeletingId(null)}
@@ -903,21 +425,14 @@ export default function AccountManagementPage() {
         <DialogContent>
           <Typography>确定要删除该科目吗？此操作不可恢复。</Typography>
           {accountsData?.data?.items?.some((a: Account) => a.parent_id === deletingId) && (
-            <Typography
-              color='warning.main'
-              sx={{ mt: 2 }}
-            >
+            <Typography color='warning.main' sx={{ mt: 2 }}>
               警告：该科目存在下级科目，删除后将同时删除所有下级科目。
             </Typography>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeletingId(null)}>取消</Button>
-          <Button
-            color='error'
-            onClick={handleDelete}
-            variant='contained'
-          >
+          <Button color='error' onClick={handleDelete} variant='contained'>
             删除
           </Button>
         </DialogActions>
@@ -926,7 +441,6 @@ export default function AccountManagementPage() {
   );
 }
 
-/** 科目表单组件 */
 interface AccountFormProps {
   account: Account | null;
   accounts: Account[];
@@ -977,10 +491,7 @@ function AccountForm({ account, accounts, onSubmit, onCancel, isLoading }: Accou
       />
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-        <FormControl
-          size='small'
-          fullWidth
-        >
+        <FormControl size='small' fullWidth>
           <InputLabel>科目类型 *</InputLabel>
           <Select
             value={formData.type}
@@ -996,10 +507,7 @@ function AccountForm({ account, accounts, onSubmit, onCancel, isLoading }: Accou
           </Select>
         </FormControl>
 
-        <FormControl
-          size='small'
-          fullWidth
-        >
+        <FormControl size='small' fullWidth>
           <InputLabel>余额方向 *</InputLabel>
           <Select
             value={formData.balance_direction}
@@ -1017,10 +525,7 @@ function AccountForm({ account, accounts, onSubmit, onCancel, isLoading }: Accou
         </FormControl>
       </Box>
 
-      <FormControl
-        size='small'
-        fullWidth
-      >
+      <FormControl size='small' fullWidth>
         <InputLabel>上级科目</InputLabel>
         <Select
           value={formData.parent_id || ''}
@@ -1036,10 +541,7 @@ function AccountForm({ account, accounts, onSubmit, onCancel, isLoading }: Accou
           {accounts
             .filter((a) => !a.is_detail && a.id !== account?.id)
             .map((a) => (
-              <MenuItem
-                key={a.id}
-                value={a.id}
-              >
+              <MenuItem key={a.id} value={a.id}>
                 {a.code} - {a.name}
               </MenuItem>
             ))}
@@ -1047,10 +549,7 @@ function AccountForm({ account, accounts, onSubmit, onCancel, isLoading }: Accou
       </FormControl>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-        <FormControl
-          size='small'
-          fullWidth
-        >
+        <FormControl size='small' fullWidth>
           <InputLabel>明细标志</InputLabel>
           <Select
             value={formData.is_detail ? 'detail' : 'summary'}
@@ -1067,10 +566,7 @@ function AccountForm({ account, accounts, onSubmit, onCancel, isLoading }: Accou
           </Select>
         </FormControl>
 
-        <FormControl
-          size='small'
-          fullWidth
-        >
+        <FormControl size='small' fullWidth>
           <InputLabel>状态</InputLabel>
           <Select
             value={formData.is_active ? 'active' : 'inactive'}
@@ -1108,18 +604,10 @@ function AccountForm({ account, accounts, onSubmit, onCancel, isLoading }: Accou
           borderColor: 'divider',
         }}
       >
-        <Button
-          type='button'
-          variant='outlined'
-          onClick={onCancel}
-        >
+        <Button type='button' variant='outlined' onClick={onCancel}>
           取消
         </Button>
-        <Button
-          type='submit'
-          variant='contained'
-          disabled={isLoading}
-        >
+        <Button type='submit' variant='contained' disabled={isLoading}>
           {isLoading ? '保存中...' : '保存'}
         </Button>
       </Box>

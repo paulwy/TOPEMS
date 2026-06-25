@@ -27,7 +27,7 @@ const CRMCustomerSegmentationPage: React.FC = () => {
   const loadSegments = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await apiClient.crm.get('/api/crm/customer-segments', {
+      const res = await apiClient.crm.get('/api/crm/segments', {
         params: { page: 1, page_size: 50 },
       });
       if (res.success && res.data) {

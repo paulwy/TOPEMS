@@ -1,3 +1,7 @@
 export { EmployeeForm } from './EmployeeForm';
 export { DepartmentSelector, DepartmentBreadcrumb } from './DepartmentSelector';
-export { StatusBadge, AttendanceStatusBadge, LeaveStatusBadge } from './StatusBadge';
+export {
+  StatusBadge,
+  AttendanceStatusBadge,
+  LeaveStatusBadge,
+} from '@/components/common/StatusBadge';

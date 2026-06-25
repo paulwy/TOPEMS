@@ -14,9 +14,9 @@ import {
 } from '@mui/material';
 import { Button } from '@mui/material';
 import { Plus, DollarSign, Search, CreditCard, Receipt, TrendingUp, RefreshCw } from 'lucide-react';
-import { DataTable } from '@/components/DataTable';
-import { MetricCard } from '@/components/MetricCard';
-import { StatsChart } from '@/components/StatsChart';
+import { DataTable } from '@/components/common/DataTable';
+import { MetricCard } from '@/components/bi/MetricCard';
+import { StatsChart } from '@/components/bi/StatsChart';
 import type { ColumnDef } from '@tanstack/react-table';
 import { srmApi } from '@/api/srm';
 import type {

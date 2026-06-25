@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  ChevronLeft,
   Plus,
   Edit,
   Trash2,
@@ -14,9 +13,8 @@ import {
   XCircle,
   DollarSign,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../../store';
-import { DataExport } from '@/components/common';
+import { DataExport, BackButton } from '@/components/common';
 import { ListPageTemplate, StatCardGroup } from '@/components/mui';
 import { financeApi, accountApi } from '@/api/finance';
 import type { Account } from '@/types/finance';
@@ -37,13 +35,12 @@ import {
   Box as MuiBox,
   Typography,
   Stack,
-  IconButton,
   Tooltip,
 } from '@mui/material';
 import { Button } from '@mui/material';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 
 const FinanceAssetPage: React.FC = () => {
-  const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
 
   const [assetData, setAssetData] = useState<Account[]>([]);
@@ -56,6 +53,10 @@ const FinanceAssetPage: React.FC = () => {
   const [showDepreciationModal, setShowDepreciationModal] = useState(false);
   const [editingAsset, setEditingAsset] = useState<Account | null>(null);
   const [selectedAsset, setSelectedAsset] = useState<Account | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [disableDialogOpen, setDisableDialogOpen] = useState(false);
+  const [disablingAsset, setDisablingAsset] = useState<Account | null>(null);
 
   const [newAsset, setNewAsset] = useState<{
     code: string;
@@ -242,25 +243,46 @@ const FinanceAssetPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('确定要删除该资产科目吗？')) return;
-    try {
-      const response = await financeApi.account.delete(id);
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '资产科目删除成功',
-          type: 'success',
-        });
-        loadAssets();
-      }
-    } catch (err: unknown) {
-      apiLogger.error('删除资产科目失败:', err);
+  const handleDeleteClick = (id: string) => {
+    setDeletingId(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!deletingId) return;
+    const response = await financeApi.account.delete(deletingId);
+    if (response.success) {
       addNotification({
-        title: '错误',
-        message: '删除资产科目失败',
-        type: 'error',
+        title: '成功',
+        message: '资产科目删除成功',
+        type: 'success',
       });
+      loadAssets();
+    } else {
+      throw new Error('删除资产科目失败');
+    }
+  };
+
+  const handleDisableClick = (asset: Account) => {
+    setDisablingAsset(asset);
+    setDisableDialogOpen(true);
+  };
+
+  const handleDisable = async () => {
+    if (!disablingAsset) return;
+    const response = await financeApi.account.update(disablingAsset.id, {
+      ...disablingAsset,
+      status: 'disabled',
+    });
+    if (response.success) {
+      addNotification({
+        title: '成功',
+        message: `科目 "${disablingAsset.name}" 已停用`,
+        type: 'success',
+      });
+      loadAssets();
+    } else {
+      throw new Error('停用科目失败');
     }
   };
 
@@ -310,22 +332,8 @@ const FinanceAssetPage: React.FC = () => {
     }
   };
 
-  const handleScrap = async (asset: Account) => {
-    if (!confirm(`确定要停用科目 "${asset.name}" 吗？`)) return;
-    try {
-      await financeApi.account.update(asset.id, {
-        status: 'disabled',
-      });
-      addNotification({ title: '成功', message: '科目已停用', type: 'success' });
-      loadAssets();
-    } catch (err: unknown) {
-      apiLogger.error('停用科目失败:', err);
-      addNotification({
-        title: '错误',
-        message: '停用科目失败',
-        type: 'error',
-      });
-    }
+  const handleScrap = (asset: Account) => {
+    handleDisableClick(asset);
   };
 
   const handleExport = () => {
@@ -499,13 +507,11 @@ const FinanceAssetPage: React.FC = () => {
             sx={{ justifyContent: 'space-between', alignItems: 'center' }}
           >
             <Stack
-              direction='row'
-              sx={{ alignItems: 'center' }}
-              spacing={2}
-            >
-              <IconButton onClick={() => navigate('/dashboard')}>
-                <ChevronLeft sx={{ width: 20, height: 20 }} />
-              </IconButton>
+            direction='row'
+            sx={{ alignItems: 'center' }}
+            spacing={2}
+          >
+            <BackButton href='/dashboard' />
               <MuiBox>
                 <Typography
                   variant='h5'
@@ -868,6 +874,32 @@ const FinanceAssetPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => {
+          setDeleteDialogOpen(false);
+          setDeletingId(null);
+        }}
+        onConfirm={handleDelete}
+        title='确认删除'
+        message='确定要删除该资产科目吗？'
+        danger
+      />
+
+      <ConfirmDialog
+        isOpen={disableDialogOpen}
+        onClose={() => {
+          setDisableDialogOpen(false);
+          setDisablingAsset(null);
+        }}
+        onConfirm={handleDisable}
+        title='确认停用'
+        message={`确定要停用科目 "${disablingAsset?.name}" 吗？`}
+        type='warning'
+        confirmLabel='停用'
+        cancelLabel='取消'
+      />
     </MuiBox>
   );
 };

@@ -17,7 +17,7 @@ export interface PaginatedResponse<T> {
 }
 
 interface RawPaginatedResponse {
-  [key: string]: any[] | number;
+  [key: string]: unknown;
   total: number;
 }
 
@@ -257,7 +257,7 @@ export interface CreateFactoryMapRequest {
   code: string;
   map_type: string;
   file_url: string;
-  bounds?: any;
+  bounds?: { north: number; south: number; east: number; west: number };
   description?: string;
 }
 
@@ -289,9 +289,9 @@ export interface GeoJSONFeature {
   type: 'Feature';
   geometry: {
     type: 'Point' | 'LineString' | 'Polygon';
-    coordinates: any;
+    coordinates: number[] | number[][] | number[][][];
   };
-  properties: Record<string, any>;
+  properties: Record<string, unknown>;
 }
 
 export interface GeoJSON {

@@ -1,3 +1,8 @@
+/**
+ * @deprecated 此页面已废弃，请使用 apps/web/src/pages/hrm/HrmEmployeePage.tsx
+ * 该页面功能更完善，使用模板组件，支持列表/树形视图切换、统计概览和AI功能
+ * 将在下一个版本中移除
+ */
 import React, { useState, useEffect } from 'react';
 import {
   Box,

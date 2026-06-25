@@ -1,96 +1,140 @@
-import {
-  Card,
-  CardContent,
-  Typography,
-  Box,
-  Chip,
-  Grid,
-  Container,
-  Skeleton,
-  Divider,
-  Paper,
-} from '@mui/material';
-import { Button } from '@mui/material';
-import React, { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, FileText, Calendar, User, Building2, Edit2, Trash2, Clock } from 'lucide-react';
-import { contractApi, type Contract } from '@/api/hrm';
+import React, { useState, useEffect, useMemo } from 'react';
+import { Box, Typography, InputLabel, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { FileText, Calendar, User, Building2, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { hrmApi } from '@/api/hrm';
 import { useNotification } from '@/hooks/useNotification';
-import { logger } from '@/utils/logger';
+import { apiLogger } from '@/utils/logger';
+import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
+
+interface ContractDetail {
+  id: string;
+  employee_id: string;
+  employee_name: string;
+  employee_no: string;
+  contract_no: string;
+  contract_type: string;
+  contract_name: string;
+  department: string;
+  position: string;
+  status: 'draft' | 'pending' | 'approved' | 'active' | 'expired' | 'terminated';
+  start_date: string;
+  end_date: string;
+  probation_period: number;
+  probation_end_date: string;
+  salary_type: string;
+  base_salary: number;
+  currency: string;
+  work_location: string;
+  contract_file: string;
+  remark: string;
+  created_at: string;
+  updated_at: string;
+}
 
 const HrmContractDetailPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
   const { success, error } = useNotification();
 
-  const [contract, setContract] = useState<Contract | null>(null);
+  const [contract, setContract] = useState<ContractDetail | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const loadContract = useCallback(
-    async (contractId: string) => {
-      setLoading(true);
-      try {
-        const res = await contractApi.get(contractId);
-        if (res.code === 200 && res.data) {
-          setContract(res.data.contract);
-        }
-      } catch (err: unknown) {
-        logger.error('Failed to load contract:', err);
-        error('加载合同信息失败');
-      } finally {
-        setLoading(false);
-      }
-    },
-    [error]
-  );
+  const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
+  const [showRenewDialog, setShowRenewDialog] = useState(false);
 
   useEffect(() => {
-    if (id) {
-      loadContract(id);
-    }
-  }, [id, loadContract]);
+    loadContractDetail();
+  }, [id]);
 
-  const handleDelete = async () => {
-    if (!id || !window.confirm('确定要删除此合同吗？')) return;
-
+  const loadContractDetail = async () => {
+    setLoading(true);
+    setErrorMessage(undefined);
     try {
-      const res = await contractApi.delete(id);
-      if (res.code === 200) {
-        success('合同删除成功');
-        navigate('/hrm/contracts');
-      } else {
-        error(res.message || '删除失败');
+      if (!id) {
+        throw new Error('合同ID为空');
       }
+
+      const res = await hrmApi.contract.get(id);
+
+      if (!res.success || !res.data) {
+        throw new Error('获取合同详情失败');
+      }
+
+      const contractData = res.data;
+      const employeeRes = await hrmApi.employee.get(contractData.employee_id);
+
+      setContract({
+        id: contractData.id,
+        employee_id: contractData.employee_id,
+        employee_name: employeeRes.data?.name || contractData.employee_name || '',
+        employee_no: employeeRes.data?.employee_no || '',
+        contract_no: contractData.contract_no,
+        contract_type: contractData.contract_type || '',
+        contract_name: contractData.contract_name || `${employeeRes.data?.name || contractData.employee_name || ''}劳动合同`,
+        department: employeeRes.data?.department_name || '',
+        position: employeeRes.data?.position || '',
+        status: contractData.status as ContractDetail['status'],
+        start_date: contractData.start_date,
+        end_date: contractData.end_date,
+        probation_period: contractData.probation_period || 0,
+        probation_end_date: contractData.probation_end_date,
+        salary_type: contractData.salary_type || '',
+        base_salary: contractData.base_salary || 0,
+        currency: contractData.currency || 'CNY',
+        work_location: contractData.work_location || '',
+        contract_file: contractData.contract_file || '',
+        remark: contractData.remark || '',
+        created_at: contractData.created_at,
+        updated_at: contractData.updated_at,
+      });
     } catch (err: unknown) {
-      logger.error('Failed to delete contract:', err);
-      error('删除合同失败');
+      apiLogger.error('加载合同详情失败:', err);
+      setErrorMessage('加载合同详情失败');
+      error('加载合同详情失败');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active':
-        return 'success';
-      case 'expired':
-        return 'error';
-      case 'pending':
-        return 'warning';
-      default:
-        return 'default';
-    }
+  const handleRenew = () => {
+    navigate(`/hrm/contracts/${id}/renew`);
   };
 
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'active':
-        return '生效中';
-      case 'expired':
-        return '已过期';
-      case 'pending':
-        return '待生效';
-      default:
-        return status;
-    }
+  const getStatusConfig = (status: string) => {
+    const config: Record<string, { color: 'success' | 'error' | 'default' | 'warning'; label: string; icon: React.ReactNode }> = {
+      draft: { color: 'default', label: '草稿', icon: <FileText size={14} /> },
+      pending: { color: 'warning', label: '待审批', icon: <Clock size={14} /> },
+      approved: { color: 'success', label: '已审批', icon: <CheckCircle2 size={14} /> },
+      active: { color: 'success', label: '生效中', icon: <CheckCircle2 size={14} /> },
+      expired: { color: 'error', label: '已到期', icon: <AlertCircle size={14} /> },
+      terminated: { color: 'error', label: '已终止', icon: <AlertCircle size={14} /> },
+    };
+    return config[status] || config.draft;
+  };
+
+  const getContractTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      labor: '劳动合同',
+      probation: '试用期合同',
+      project: '项目合同',
+      outsourcing: '外包合同',
+      internship: '实习协议',
+      part_time: '兼职协议',
+      other: '其他',
+    };
+    return labels[type] || type;
+  };
+
+  const getSalaryTypeLabel = (type: string) => {
+    const labels: Record<string, string> = {
+      monthly: '月薪',
+      daily: '日薪',
+      hourly: '时薪',
+      project: '项目制',
+      commission: '提成制',
+      other: '其他',
+    };
+    return labels[type] || type;
   };
 
   const formatDate = (date: string | undefined) => {
@@ -98,210 +142,242 @@ const HrmContractDetailPage: React.FC = () => {
     return new Date(date).toLocaleDateString('zh-CN');
   };
 
-  if (loading) {
-    return (
-      <Container
-        maxWidth='lg'
-        sx={{ py: 3 }}
-      >
-        <Skeleton
-          variant='rectangular'
-          height={400}
-          sx={{ borderRadius: 2 }}
-        />
-      </Container>
-    );
-  }
+  const formatCurrency = (amount: number) =>
+    `${amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })} ${contract?.currency}`;
 
-  if (!contract) {
+  const calculateDaysRemaining = () => {
+    if (!contract?.end_date) return null;
+    const endDate = new Date(contract.end_date);
+    const today = new Date();
+    const diffTime = endDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  const basicInfoContent = useMemo(() => {
+    if (!contract) return null;
+    const statusConfig = getStatusConfig(contract.status);
+    const daysRemaining = calculateDaysRemaining();
+
     return (
-      <Container
-        maxWidth='lg'
-        sx={{ py: 3 }}
-      >
-        <Paper sx={{ p: 4, textAlign: 'center' }}>
-          <Typography color='text.secondary'>合同不存在或已被删除</Typography>
-          <Button
-            variant='outlined'
-            sx={{ mt: 2 }}
-            onClick={() => navigate('/hrm/contracts')}
+      <Box>
+        {daysRemaining !== null && (
+          <Box
+            sx={{
+              mb: 3,
+              p: 2,
+              borderRadius: 1,
+              bgcolor: daysRemaining < 30 ? 'error.light' : daysRemaining < 90 ? 'warning.light' : 'success.light',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+            }}
           >
-            返回合同列表
-          </Button>
-        </Paper>
-      </Container>
-    );
-  }
+            {daysRemaining < 30 ? (
+              <AlertCircle sx={{ width: 20, height: 20, color: 'error.main' }} />
+            ) : daysRemaining < 90 ? (
+              <Clock sx={{ width: 20, height: 20, color: 'warning.main' }} />
+            ) : (
+              <CheckCircle2 sx={{ width: 20, height: 20, color: 'success.main' }} />
+            )}
+            <Typography variant='body1' sx={{ fontWeight: 'medium' }}>
+              {daysRemaining < 0
+                ? `合同已过期 ${Math.abs(daysRemaining)} 天`
+                : daysRemaining === 0
+                ? '合同今日到期'
+                : daysRemaining < 30
+                ? `合同将在 ${daysRemaining} 天后到期，请及时处理续签`
+                : daysRemaining < 90
+                ? `合同将在 ${daysRemaining} 天后到期`
+                : `合同有效期剩余 ${daysRemaining} 天`}
+            </Typography>
+          </Box>
+        )}
 
-  return (
-    <Container
-      maxWidth='lg'
-      sx={{ py: 3 }}
-    >
-      <Box sx={{ mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
+            gap: 2,
+            mb: 3,
+          }}
+        >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Button
-              variant='text'
-              onClick={() => navigate('/hrm/contracts')}
-              startIcon={<ArrowLeft style={{ width: 20, height: 20 }} />}
-            >
-              返回
-            </Button>
+            <User sx={{ width: 48, height: 48, color: 'primary.main' }} />
             <Box>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 'bold' }}
-              >
-                {contract.contract_no || '合同详情'}
-              </Typography>
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
-                查看合同详细信息
+              <Typography variant='h6'>{contract.employee_name}</Typography>
+              <Typography variant='body2' color='text.secondary'>
+                {contract.employee_no} | {contract.department} | {contract.position}
               </Typography>
             </Box>
           </Box>
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button
-              variant='outlined'
-              startIcon={<Edit2 style={{ width: 18, height: 18 }} />}
-              onClick={() => navigate(`/hrm/contract/${id}/edit`)}
-            >
-              编辑
-            </Button>
-            <Button
-              variant='outlined'
-              color='error'
-              startIcon={<Trash2 style={{ width: 18, height: 18 }} />}
-              onClick={handleDelete}
-            >
-              删除
-            </Button>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, justifyContent: 'flex-end' }}>
+            <Chip
+              label={statusConfig.label}
+              color={statusConfig.color}
+              icon={statusConfig.icon}
+              sx={{ fontSize: 14, padding: '4px 16px' }}
+            />
+          </Box>
+        </Box>
+
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
+            gap: 2,
+          }}
+        >
+          <Box>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>合同编号</InputLabel>
+            <Typography sx={{ mt: 0.5, fontFamily: 'monospace' }}>{contract.contract_no}</Typography>
+          </Box>
+          <Box>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>合同类型</InputLabel>
+            <Typography sx={{ mt: 0.5 }}>{getContractTypeLabel(contract.contract_type)}</Typography>
+          </Box>
+          <Box>
+            <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>合同名称</InputLabel>
+            <Typography sx={{ mt: 0.5 }}>{contract.contract_name}</Typography>
           </Box>
         </Box>
       </Box>
+    );
+  }, [contract]);
 
-      <Card sx={{ mb: 3 }}>
-        <CardContent sx={{ p: 3 }}>
-          <Box
-            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}
-          >
-            <Typography
-              variant='h6'
-              sx={{ fontWeight: 600 }}
-            >
-              基本信息
-            </Typography>
-            <Chip
-              label={getStatusLabel(contract.status)}
-              color={getStatusColor(contract.status) as 'success' | 'error' | 'warning' | 'default'}
-              size='small'
-            />
-          </Box>
-          <Divider sx={{ mb: 2 }} />
-          <Grid
-            container
-            spacing={3}
-          >
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <FileText style={{ width: 18, height: 18, color: 'grey.500' }} />
-                <Box>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    合同编号
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ fontWeight: 500 }}
-                  >
-                    {contract.contract_no || '-'}
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <FileText style={{ width: 18, height: 18, color: 'grey.500' }} />
-                <Box>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    合同类型
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ fontWeight: 500 }}
-                  >
-                    {contract.contract_type || '-'}
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
+  const durationContent = useMemo(() => {
+    if (!contract) return null;
+    return (
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
+          gap: 2,
+        }}
+      >
+        <Box>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>合同开始日期</InputLabel>
+          <Typography sx={{ mt: 0.5 }}>{formatDate(contract.start_date)}</Typography>
+        </Box>
+        <Box>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>合同结束日期</InputLabel>
+          <Typography sx={{ mt: 0.5 }}>{formatDate(contract.end_date)}</Typography>
+        </Box>
+        <Box>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>试用期</InputLabel>
+          <Typography sx={{ mt: 0.5 }}>{contract.probation_period} 个月</Typography>
+        </Box>
+        <Box>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>试用期结束日期</InputLabel>
+          <Typography sx={{ mt: 0.5 }}>{formatDate(contract.probation_end_date)}</Typography>
+        </Box>
+        <Box>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>工作地点</InputLabel>
+          <Typography sx={{ mt: 0.5 }}>{contract.work_location || '-'}</Typography>
+        </Box>
+        <Box>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>薪资类型</InputLabel>
+          <Typography sx={{ mt: 0.5 }}>{getSalaryTypeLabel(contract.salary_type)}</Typography>
+        </Box>
+      </Box>
+    );
+  }, [contract]);
 
-      <Card>
-        <CardContent sx={{ p: 3 }}>
-          <Typography
-            variant='h6'
-            sx={{ fontWeight: 600, mb: 2 }}
-          >
-            合同期限
+  const salaryContent = useMemo(() => {
+    if (!contract) return null;
+    return (
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
+          gap: 2,
+        }}
+      >
+        <Box>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>基本工资</InputLabel>
+          <Typography variant='h6' sx={{ mt: 0.5, color: 'primary.main' }}>{formatCurrency(contract.base_salary)}</Typography>
+        </Box>
+        <Box>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>货币类型</InputLabel>
+          <Typography sx={{ mt: 0.5 }}>{contract.currency}</Typography>
+        </Box>
+        <Box>
+          <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>备注</InputLabel>
+          <Typography sx={{ mt: 0.5 }}>{contract.remark || '-'}</Typography>
+        </Box>
+      </Box>
+    );
+  }, [contract]);
+
+  const tabs = useMemo<TabConfig[]>(
+    () => [
+      { id: 'basic', label: '基本信息', content: basicInfoContent || <></> },
+      { id: 'duration', label: '期限信息', content: durationContent || <></> },
+      { id: 'salary', label: '薪资信息', content: salaryContent || <></> },
+    ],
+    [basicInfoContent, durationContent, salaryContent]
+  );
+
+  const infoCard = useMemo(
+    () => ({
+      avatar: <FileText size={32} color='#1976d2' />,
+      title: contract?.contract_name,
+      subtitle: contract?.contract_no || undefined,
+      tags: [getContractTypeLabel(contract?.contract_type || '')],
+      stats: [
+        { label: '员工', value: contract?.employee_name || '-' },
+        { label: '状态', value: getStatusConfig(contract?.status || '').label },
+      ],
+    }),
+    [contract]
+  );
+
+  return (
+    <>
+      <DetailPageTemplate
+        title='合同详情'
+        subtitle='查看和管理员工合同信息'
+        backHref='/hrm/contracts'
+        loading={loading}
+        error={errorMessage}
+        onEdit={() => navigate(`/hrm/contracts/${id}/edit`)}
+        infoCard={infoCard}
+        tabs={tabs}
+        actions={[
+          {
+            label: '续签',
+            icon: <Calendar style={{ width: 18, height: 18 }} />,
+            onClick: () => setShowRenewDialog(true),
+          },
+        ]}
+      />
+
+      <Dialog
+        open={showRenewDialog}
+        onClose={() => setShowRenewDialog(false)}
+        maxWidth='sm'
+        fullWidth
+      >
+        <DialogTitle>确认续签</DialogTitle>
+        <DialogContent>
+          <Typography variant='body1'>
+            确定要为 <strong>{contract?.employee_name}</strong> 的合同进行续签吗？
           </Typography>
-          <Divider sx={{ mb: 2 }} />
-          <Grid
-            container
-            spacing={3}
-          >
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Calendar style={{ width: 18, height: 18, color: 'grey.500' }} />
-                <Box>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    开始日期
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ fontWeight: 500 }}
-                  >
-                    {formatDate(contract.start_date)}
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Calendar style={{ width: 18, height: 18, color: 'grey.500' }} />
-                <Box>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    结束日期
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ fontWeight: 500 }}
-                  >
-                    {formatDate(contract.end_date)}
-                  </Typography>
-                </Box>
-              </Box>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
-    </Container>
+          <Box sx={{ mt: 2 }}>
+            <Typography variant='body2' color='text.secondary'>
+              当前合同：{contract?.contract_no}
+            </Typography>
+            <Typography variant='body2' color='text.secondary'>
+              到期日期：{formatDate(contract?.end_date)}
+            </Typography>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowRenewDialog(false)}>取消</Button>
+          <Button onClick={handleRenew} color='primary'>确认续签</Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 };
 

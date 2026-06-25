@@ -1,21 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
+  Chip,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   TextField,
-  Chip,
-  Card,
-  CardContent,
-  CardHeader,
   Typography,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
+  Card,
+  CardContent,
 } from '@mui/material';
 import { Button } from '@mui/material';
 import {
@@ -23,18 +22,14 @@ import {
   Eye,
   AlertCircle,
   AlertTriangle,
-  FileText,
-  Search,
   MapPin,
   User,
   Calendar,
   Trash2,
-  Edit3,
 } from 'lucide-react';
-import { DataTable } from '@/components/DataTable';
-import type { ColumnDef } from '@tanstack/react-table';
+import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { ehsApi } from '@/api/ehs';
-import type { Accident, AccidentDetail } from '@/api/ehs';
+import type { Accident, AccidentDetail, TreatmentAction } from '@/api/ehs';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
@@ -42,15 +37,17 @@ const EhsAccidentPage: React.FC = () => {
   const navigate = useNavigate();
   const [accidents, setAccidents] = useState<Accident[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [severityFilter, setSeverityFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [severityFilter, setSeverityFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [currentPage, setCurrentPage] = useState(0);
+  const pageSize = 10;
+
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [selectedAccident, setSelectedAccident] = useState<AccidentDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [formData, setFormData] = useState({
-
     title: '',
     description: '',
     accident_type: '',
@@ -61,6 +58,7 @@ const EhsAccidentPage: React.FC = () => {
     casualties: 0,
     economic_loss: 0,
   });
+
   const addNotification = useAppStore((state) => state.addNotification);
 
   useEffect(() => {
@@ -137,7 +135,7 @@ const EhsAccidentPage: React.FC = () => {
     return severityMap[severity] || severity;
   };
 
-  const getSeverityBadge = (severity: string) => {
+  const getSeverityChip = (severity: string) => {
     const severityMap: Record<string, { bg: string; color: string }> = {
       轻微: { bg: 'success.lighter', color: 'success.dark' },
       一般: { bg: '#fef9c3', color: '#ca8a04' },
@@ -158,7 +156,7 @@ const EhsAccidentPage: React.FC = () => {
     );
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusChip = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
       待处理: { bg: '#fef9c3', color: '#ca8a04' },
       调查中: { bg: '#dbeafe', color: 'primary.dark' },
@@ -180,91 +178,215 @@ const EhsAccidentPage: React.FC = () => {
     );
   };
 
+  const filteredAccidents = useMemo(() => {
+    return accidents.filter((accident) => {
+      const matchesSearch =
+        accident.accident_no?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        accident.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (accident.location && accident.location.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchesSeverity = !severityFilter || accident.severity === severityFilter;
+      const matchesStatus = !statusFilter || accident.status === statusFilter;
+      return matchesSearch && matchesSeverity && matchesStatus;
+    });
+  }, [accidents, searchQuery, severityFilter, statusFilter]);
+
+  const paginatedAccidents = useMemo(() => {
+    const start = currentPage * pageSize;
+    return filteredAccidents.slice(start, start + pageSize);
+  }, [filteredAccidents, currentPage]);
+
+  const stats = useMemo(() => ({
+    total: accidents.length,
+    pending: accidents.filter((a) => a.status === '待处理').length,
+    investigating: accidents.filter((a) => a.status === '调查中').length,
+    processing: accidents.filter((a) => a.status === '处理中').length,
+    closed: accidents.filter((a) => a.status === '已结案').length,
+    serious: accidents.filter((a) => a.severity === '严重' || a.severity === '致命').length,
+  }), [accidents]);
+
   const columns: ColumnDef<Accident>[] = [
-    { accessorKey: 'accident_no', header: '事故编号' },
     {
-      accessorKey: 'title',
-      header: '事故标题',
-      cell: ({ row }) => (
-        <Typography sx={{ fontWeight: 500, color: 'slate.900' }}>
-          {row.original.title}
+      id: 'accident_no',
+      label: '事故编号',
+      width: 150,
+      sortable: true,
+      render: (row) => (
+        <Typography sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
+          {row.accident_no}
         </Typography>
       ),
     },
     {
-      accessorKey: 'accident_type',
-      header: '事故类型',
-      cell: ({ row }) => row.original.accident_type || '-',
+      id: 'title',
+      label: '事故标题',
+      width: 200,
+      sortable: true,
+      render: (row) => (
+        <Typography sx={{ fontWeight: 500 }}>{row.title}</Typography>
+      ),
     },
     {
-      accessorKey: 'severity',
-      header: '严重程度',
-      cell: ({ row }) => getSeverityBadge(row.original.severity),
+      id: 'accident_type',
+      label: '事故类型',
+      width: 120,
+      render: (row) => row.accident_type || '-',
     },
     {
-      accessorKey: 'location',
-      header: '地点',
-      cell: ({ row }) => (
+      id: 'severity',
+      label: '严重程度',
+      width: 100,
+      align: 'center',
+      render: (row) => getSeverityChip(row.severity),
+    },
+    {
+      id: 'location',
+      label: '地点',
+      width: 150,
+      render: (row) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <MapPin style={{ width: 14, height: 14 }} />
-          {row.original.location || '-'}
+          {row.location || '-'}
         </Box>
       ),
     },
     {
-      accessorKey: 'occurred_at',
-      header: '发生时间',
-      cell: ({ row }) =>
-        row.original.occurred_at
-          ? new Date(row.original.occurred_at).toLocaleString('zh-CN')
-          : '-',
+      id: 'occurred_at',
+      label: '发生时间',
+      width: 160,
+      sortable: true,
+      render: (row) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <Calendar style={{ width: 14, height: 14 }} />
+          {row.occurred_at ? new Date(row.occurred_at).toLocaleString('zh-CN') : '-'}
+        </Box>
+      ),
     },
     {
-      accessorKey: 'reported_by',
-      header: '报告人',
-      cell: ({ row }) => (
+      id: 'reported_by',
+      label: '报告人',
+      width: 100,
+      render: (row) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <User style={{ width: 14, height: 14 }} />
-          {row.original.reported_by || '-'}
+          {row.reported_by || '-'}
         </Box>
       ),
     },
     {
-      accessorKey: 'status',
-      header: '状态',
-      cell: ({ row }) => getStatusBadge(row.original.status),
-    },
-    {
-      id: 'actions',
-      header: '操作',
-      cell: ({ row }) => (
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button
-            size='small'
-            onClick={() => handleView(row.original)}
-            startIcon={<Eye style={{ width: 16, height: 16 }} />}
-          >
-            详情
-          </Button>
-        </Box>
-      ),
+      id: 'status',
+      label: '状态',
+      width: 100,
+      align: 'center',
+      render: (row) => getStatusChip(row.status),
     },
   ];
 
-  const filteredAccidents = accidents.filter((accident) => {
-    const matchesSearch =
-      accident.accident_no?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      accident.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (accident.location && accident.location.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesSeverity = severityFilter === 'all' || accident.severity === severityFilter;
-    const matchesStatus = statusFilter === 'all' || accident.status === statusFilter;
-    return matchesSearch && matchesSeverity && matchesStatus;
-  });
+  const rowActions: RowAction<Accident>[] = [
+    {
+      label: '详情',
+      icon: <Eye size={16} />,
+      onClick: async (row) => {
+        await loadAccidentDetail(row.id);
+        setShowDetailModal(true);
+      },
+      color: 'primary',
+    },
+  ];
 
-  const handleView = async (accident: Accident) => {
-    await loadAccidentDetail(accident.id);
-    setShowDetailModal(true);
-  };
+  const StatCard: React.FC<{
+    label: string;
+    value: number;
+    icon: React.ReactNode;
+    bgColor: string;
+    iconBgColor: string;
+    iconColor: string;
+  }> = ({ label, value, icon, bgColor, iconBgColor, iconColor }) => (
+    <Card sx={{ bgcolor: bgColor }}>
+      <CardContent sx={{ p: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Box
+            sx={{
+              width: 40,
+              height: 40,
+              bgcolor: iconBgColor,
+              borderRadius: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Box sx={{ color: iconColor, display: 'flex' }}>{icon}</Box>
+          </Box>
+          <Box>
+            <Typography
+              variant='body2'
+              sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+            >
+              {label}
+            </Typography>
+            <Typography
+              variant='h5'
+              sx={{ fontWeight: 700, color: 'slate.900' }}
+            >
+              {value}
+            </Typography>
+          </Box>
+        </Box>
+      </CardContent>
+    </Card>
+  );
+
+  const headerContent = useMemo(() => (
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(5, 1fr)' },
+        gap: 2,
+        mb: 3,
+      }}
+    >
+      <StatCard
+        label='事故总数'
+        value={stats.total}
+        icon={<AlertCircle />}
+        bgColor='error.light'
+        iconBgColor='error.lighter'
+        iconColor='error.main'
+      />
+      <StatCard
+        label='待处理'
+        value={stats.pending}
+        icon={<AlertCircle />}
+        bgColor='background.paper'
+        iconBgColor='#fef9c3'
+        iconColor='#ca8a04'
+      />
+      <StatCard
+        label='调查中'
+        value={stats.investigating}
+        icon={<AlertTriangle />}
+        bgColor='background.paper'
+        iconBgColor='#dbeafe'
+        iconColor='primary.dark'
+      />
+      <StatCard
+        label='已结案'
+        value={stats.closed}
+        icon={<AlertCircle />}
+        bgColor='background.paper'
+        iconBgColor='success.lighter'
+        iconColor='success.dark'
+      />
+      <StatCard
+        label='严重事故'
+        value={stats.serious}
+        icon={<AlertTriangle />}
+        bgColor='background.paper'
+        iconBgColor='error.lighter'
+        iconColor='error.dark'
+      />
+    </Box>
+  ), [stats]);
 
   const handleCreate = () => {
     setFormData({
@@ -310,7 +432,7 @@ const EhsAccidentPage: React.FC = () => {
   const handleDelete = async (id: string) => {
     if (!confirm('确定要删除此事故记录吗？')) return;
     try {
-      await ehsApi.deleteAccident(id);
+      await ehsApi.deleteIncident(id);
       addNotification({ title: '成功', message: '删除成功', type: 'success' });
       setShowDetailModal(false);
       loadAccidents();
@@ -320,375 +442,81 @@ const EhsAccidentPage: React.FC = () => {
     }
   };
 
-  const stats = {
-    total: accidents.length,
-    pending: accidents.filter((a) => a.status === '待处理').length,
-    investigating: accidents.filter((a) => a.status === '调查中').length,
-    processing: accidents.filter((a) => a.status === '处理中').length,
-    closed: accidents.filter((a) => a.status === '已结案').length,
-    serious: accidents.filter((a) => a.severity === '严重' || a.severity === '致命').length,
-  };
-
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'linear-gradient(135deg, error.light 0%, #f8fafc 100%)',
-        }}
-      >
-        <Box sx={{ textAlign: 'center' }}>
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              border: 4,
-              borderColor: 'error.main',
-              borderTopColor: 'error.dark',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-              mx: 'auto',
-              mb: 2,
-            }}
-          />
-          <Typography sx={{ color: 'slate.600' }}>加载中...</Typography>
-        </Box>
-      </Box>
-    );
-  }
-
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, error.light 0%, #f8fafc 100%)',
-      }}
-    >
-      <Box
-        component='header'
-        sx={{
-          bgcolor: 'background.paper',
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: 'divider',
-          position: 'sticky',
-          top: 0,
-          zIndex: 10,
+    <>
+      <ListPageTemplate
+        title='事故记录'
+        subtitle='管理安全事故记录，包括事故上报、调查和处理'
+        breadcrumbs={[
+          { label: '首页', href: '/dashboard' },
+          { label: 'EHS管理', href: '/ehs' },
+          { label: '事故记录' },
+        ]}
+        columns={columns}
+        data={paginatedAccidents}
+        loading={loading}
+        pagination={{
+          page: currentPage,
+          pageSize,
+          total: filteredAccidents.length,
+          onPageChange: setCurrentPage,
         }}
-      >
-        <Box sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 } }}>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              height: 64,
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  background: 'linear-gradient(135deg, error.main 0%, error.dark 100%)',
-                  borderRadius: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <AlertCircle sx={{ width: 24, height: 24, color: 'white' }} />
-              </Box>
-              <Box>
-                <Typography
-                  variant='h6'
-                  sx={{
-                    fontWeight: 700,
-                    color: 'slate.900',
-                    fontSize: '1.25rem',
-                  }}
-                >
-                  事故记录
-                </Typography>
-                <Typography
-                  variant='caption'
-                  sx={{ color: 'slate.500', fontSize: '0.75rem' }}
-                >
-                  Accident Records
-                </Typography>
-              </Box>
-            </Box>
-            <Button
-              variant='contained'
-              startIcon={<Plus style={{ width: 18, height: 18 }} />}
-              onClick={handleCreate}
-              sx={{ bgcolor: 'error.main', '&:hover': { bgcolor: 'error.dark' } }}
-            >
-              事故上报
-            </Button>
-          </Box>
-        </Box>
-      </Box>
-
-      <Box
-        component='main'
-        sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}
-      >
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(5, 1fr)' },
-            gap: 2,
-            mb: 4,
-          }}
-        >
-          <Card sx={{ bgcolor: 'error.light' }}>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: 'error.lighter',
-                    borderRadius: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <AlertCircle sx={{ width: 20, height: 20, color: 'error.main' }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'slate.600', fontSize: '0.875rem' }}
-                  >
-                    事故总数
-                  </Typography>
-                  <Typography
-                    variant='h5'
-                    sx={{ fontWeight: 700, color: 'slate.900' }}
-                  >
-                    {stats.total}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: '#fef9c3',
-                    borderRadius: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <FileText sx={{ width: 20, height: 20, color: '#ca8a04' }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'slate.600', fontSize: '0.875rem' }}
-                  >
-                    待处理
-                  </Typography>
-                  <Typography
-                    variant='h5'
-                    sx={{ fontWeight: 700, color: 'slate.900' }}
-                  >
-                    {stats.pending}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: '#dbeafe',
-                    borderRadius: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <AlertTriangle sx={{ width: 20, height: 20, color: 'primary.dark' }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'slate.600', fontSize: '0.875rem' }}
-                  >
-                    调查中
-                  </Typography>
-                  <Typography
-                    variant='h5'
-                    sx={{ fontWeight: 700, color: 'slate.900' }}
-                  >
-                    {stats.investigating}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: 'success.lighter',
-                    borderRadius: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <FileText sx={{ width: 20, height: 20, color: 'success.dark' }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'slate.600', fontSize: '0.875rem' }}
-                  >
-                    已结案
-                  </Typography>
-                  <Typography
-                    variant='h5'
-                    sx={{ fontWeight: 700, color: 'slate.900' }}
-                  >
-                    {stats.closed}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: 'error.lighter',
-                    borderRadius: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <AlertTriangle sx={{ width: 20, height: 20, color: 'error.dark' }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'slate.600', fontSize: '0.875rem' }}
-                  >
-                    严重事故
-                  </Typography>
-                  <Typography
-                    variant='h5'
-                    sx={{ fontWeight: 700, color: 'slate.900' }}
-                  >
-                    {stats.serious}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
-
-        <Card>
-          <CardHeader
-            sx={{
-              display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              pb: 0,
-            }}
-          >
-            <Typography
-              variant='h6'
-              sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-            >
-              <AlertCircle style={{ width: 20, height: 20, color: 'error.main' }} />
-              事故列表
-            </Typography>
-          </CardHeader>
-          <CardContent>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
-              <TextField
-                size='small'
-                placeholder='搜索事故编号、标题或地点...'
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{ minWidth: 250 }}
-                slotProps={{
-                  input: {
-                    startAdornment: <Search style={{ width: 18, height: 18, marginRight: 8 }} />,
-                  },
-                }}
-              />
-              <FormControl size='small' sx={{ minWidth: 150 }}>
-                <InputLabel>严重程度</InputLabel>
-                <Select
-                  value={severityFilter}
-                  label='严重程度'
-                  onChange={(e) => setSeverityFilter(e.target.value)}
-                >
-                  <MenuItem value='all'>全部</MenuItem>
-                  <MenuItem value='轻微'>轻微</MenuItem>
-                  <MenuItem value='一般'>一般</MenuItem>
-                  <MenuItem value='严重'>严重</MenuItem>
-                  <MenuItem value='致命'>致命</MenuItem>
-                </Select>
-              </FormControl>
-              <FormControl size='small' sx={{ minWidth: 150 }}>
-                <InputLabel>状态</InputLabel>
-                <Select
-                  value={statusFilter}
-                  label='状态'
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                >
-                  <MenuItem value='all'>全部</MenuItem>
-                  <MenuItem value='待处理'>待处理</MenuItem>
-                  <MenuItem value='调查中'>调查中</MenuItem>
-                  <MenuItem value='处理中'>处理中</MenuItem>
-                  <MenuItem value='已结案'>已结案</MenuItem>
-                </Select>
-              </FormControl>
-              <Button
-                size='small'
-                variant='outlined'
-                onClick={loadAccidents}
-                startIcon={<FileText style={{ width: 16, height: 16 }} />}
-              >
-                刷新
-              </Button>
-            </Box>
-            <DataTable
-              columns={columns}
-              data={filteredAccidents}
-              enablePagination
-            />
-          </CardContent>
-        </Card>
-      </Box>
+        searchable
+        searchPlaceholder='搜索事故编号、标题或地点...'
+        searchValue={searchQuery}
+        onSearch={(value) => {
+          setSearchQuery(value);
+          setCurrentPage(0);
+        }}
+        filters={[
+          {
+            id: 'severity',
+            label: '严重程度',
+            type: 'select',
+            value: severityFilter,
+            onChange: (value) => {
+              setSeverityFilter(String(value));
+              setCurrentPage(0);
+            },
+            options: [
+              { label: '全部', value: '' },
+              { label: '轻微', value: '轻微' },
+              { label: '一般', value: '一般' },
+              { label: '严重', value: '严重' },
+              { label: '致命', value: '致命' },
+            ],
+          },
+          {
+            id: 'status',
+            label: '状态',
+            type: 'select',
+            value: statusFilter,
+            onChange: (value) => {
+              setStatusFilter(String(value));
+              setCurrentPage(0);
+            },
+            options: [
+              { label: '全部', value: '' },
+              { label: '待处理', value: '待处理' },
+              { label: '调查中', value: '调查中' },
+              { label: '处理中', value: '处理中' },
+              { label: '已结案', value: '已结案' },
+            ],
+          },
+        ]}
+        actions={[
+          {
+            label: '事故上报',
+            icon: <Plus sx={{ width: 16, height: 16 }} />,
+            onClick: handleCreate,
+            variant: 'contained',
+          },
+        ]}
+        rowActions={rowActions}
+        onRefresh={loadAccidents}
+        showRowNumber
+        headerContent={headerContent}
+      />
 
       <Dialog
         open={showCreateModal}
@@ -784,17 +612,10 @@ const EhsAccidentPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button
-            variant='outlined'
-            onClick={() => setShowCreateModal(false)}
-          >
+          <Button variant='outlined' onClick={() => setShowCreateModal(false)}>
             取消
           </Button>
-          <Button
-            variant='contained'
-            onClick={handleSave}
-            sx={{ bgcolor: 'error.main' }}
-          >
+          <Button variant='contained' onClick={handleSave} sx={{ bgcolor: 'error.main' }}>
             上报
           </Button>
         </DialogActions>
@@ -860,7 +681,7 @@ const EhsAccidentPage: React.FC = () => {
                     严重程度
                   </Typography>
                   <Typography sx={{ mt: 0.5 }}>
-                    {getSeverityBadge(selectedAccident.accident.severity)}
+                    {getSeverityChip(selectedAccident.accident.severity)}
                   </Typography>
                 </Box>
                 <Box>
@@ -897,7 +718,7 @@ const EhsAccidentPage: React.FC = () => {
                     状态
                   </Typography>
                   <Typography sx={{ mt: 0.5 }}>
-                    {getStatusBadge(selectedAccident.accident.status)}
+                    {getStatusChip(selectedAccident.accident.status)}
                   </Typography>
                 </Box>
                 <Box>
@@ -915,10 +736,7 @@ const EhsAccidentPage: React.FC = () => {
               </Box>
 
               <Box sx={{ mb: 3 }}>
-                <Typography
-                  variant='subtitle2'
-                  sx={{ fontWeight: 600, mb: 1 }}
-                >
+                <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 1 }}>
                   事故描述
                 </Typography>
                 <Typography>{selectedAccident.accident.description || '暂无描述'}</Typography>
@@ -927,19 +745,10 @@ const EhsAccidentPage: React.FC = () => {
               {selectedAccident.investigation && (
                 <Card sx={{ mb: 3 }}>
                   <CardContent>
-                    <Typography
-                      variant='subtitle2'
-                      sx={{ fontWeight: 600, mb: 2 }}
-                    >
+                    <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2 }}>
                       调查信息
                     </Typography>
-                    <Box
-                      sx={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr 1fr',
-                        gap: 2,
-                      }}
-                    >
+                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
                       <Box>
                         <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                           调查状态
@@ -976,20 +785,10 @@ const EhsAccidentPage: React.FC = () => {
               {selectedAccident.treatment && (
                 <Card sx={{ mb: 3 }}>
                   <CardContent>
-                    <Typography
-                      variant='subtitle2'
-                      sx={{ fontWeight: 600, mb: 2 }}
-                    >
+                    <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2 }}>
                       处理措施
                     </Typography>
-                    <Box
-                      sx={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr 1fr',
-                        gap: 2,
-                        mb: 2,
-                      }}
-                    >
+                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2, mb: 2 }}>
                       <Box>
                         <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                           处理状态
@@ -1006,13 +805,11 @@ const EhsAccidentPage: React.FC = () => {
                     {selectedAccident.treatment.actions &&
                       selectedAccident.treatment.actions.length > 0 && (
                         <Box>
-                          <Typography
-                            sx={{ color: 'text.secondary', fontSize: '0.875rem', mb: 1 }}
-                          >
+                          <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem', mb: 1 }}>
                             处理行动
                           </Typography>
                           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                            {selectedAccident.treatment.actions.map((action, index) => (
+                            {(selectedAccident.treatment.actions as TreatmentAction[]).map((action, index) => (
                               <Box
                                 key={index}
                                 sx={{
@@ -1048,19 +845,10 @@ const EhsAccidentPage: React.FC = () => {
               {selectedAccident.review && (
                 <Card>
                   <CardContent>
-                    <Typography
-                      variant='subtitle2'
-                      sx={{ fontWeight: 600, mb: 2 }}
-                    >
+                    <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2 }}>
                       结案评审
                     </Typography>
-                    <Box
-                      sx={{
-                        display: 'grid',
-                        gridTemplateColumns: '1fr 1fr',
-                        gap: 2,
-                      }}
-                    >
+                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
                       <Box>
                         <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                           评审人
@@ -1134,7 +922,7 @@ const EhsAccidentPage: React.FC = () => {
           <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </>
   );
 };
 

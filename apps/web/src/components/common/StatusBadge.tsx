@@ -62,6 +62,8 @@ export type StatusVariant = 'filled' | 'outlined' | 'soft';
  */
 export type StatusSize = 'sm' | 'md' | 'lg';
 
+export type ModuleStatus = 'online' | 'beta' | 'plan' | 'new';
+
 /**
  * 状态配置接口
  */

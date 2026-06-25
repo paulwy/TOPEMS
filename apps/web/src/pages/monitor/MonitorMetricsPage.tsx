@@ -1,313 +1,181 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
-  Box,
-  Card,
-  CardHeader,
-  CardContent,
-  Typography,
-  Button,
-  Grid,
-  Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  TextField,
-  Slider,
-} from '@mui/material';
-import { Cpu, HardDrive, Wifi, Activity, TrendingUp, Clock, RefreshCw } from 'lucide-react';
-import {
+  Activity,
+  Cpu,
+  HardDrive,
+  Database,
+  Wifi,
+  TrendingUp,
+  TrendingDown,
+  BarChart3,
+  PieChart,
   LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-} from 'recharts';
-
-const metricsData = [
-  { name: 'CPU', value: 72, threshold: 85, unit: '%', status: 'normal' },
-  { name: '内存', value: 68, threshold: 90, unit: '%', status: 'normal' },
-  { name: '磁盘', value: 45, threshold: 80, unit: '%', status: 'normal' },
-  { name: '网络', value: 15, threshold: 100, unit: 'ms', status: 'normal' },
-  { name: 'API响应', value: 120, threshold: 500, unit: 'ms', status: 'normal' },
-  { name: '数据库', value: 85, threshold: 200, unit: 'ms', status: 'normal' },
-];
-
-const hourlyData = [
-  { hour: '00:00', cpu: 45, memory: 60, disk: 42 },
-  { hour: '02:00', cpu: 38, memory: 55, disk: 42 },
-  { hour: '04:00', cpu: 32, memory: 52, disk: 43 },
-  { hour: '06:00', cpu: 48, memory: 58, disk: 43 },
-  { hour: '08:00', cpu: 65, memory: 72, disk: 44 },
-  { hour: '10:00', cpu: 78, memory: 78, disk: 44 },
-  { hour: '12:00', cpu: 82, memory: 85, disk: 45 },
-  { hour: '14:00', cpu: 75, memory: 78, disk: 45 },
-  { hour: '16:00', cpu: 70, memory: 75, disk: 46 },
-  { hour: '18:00', cpu: 68, memory: 70, disk: 46 },
-  { hour: '20:00', cpu: 62, memory: 68, disk: 47 },
-  { hour: '22:00', cpu: 48, memory: 62, disk: 47 },
-];
-
-interface MetricLog {
-  id: string;
-  timestamp: string;
-  metric: string;
-  value: number;
-  unit: string;
-  status: 'normal' | 'warning' | 'critical';
-}
-
-const metricLogs: MetricLog[] = [
-  { id: '1', timestamp: '14:35:22', metric: 'CPU', value: 72, unit: '%', status: 'normal' },
-  { id: '2', timestamp: '14:35:21', metric: '内存', value: 68, unit: '%', status: 'normal' },
-  { id: '3', timestamp: '14:35:20', metric: '磁盘', value: 45, unit: '%', status: 'normal' },
-  { id: '4', timestamp: '14:35:19', metric: '网络', value: 15, unit: 'ms', status: 'normal' },
-  { id: '5', timestamp: '14:35:18', metric: 'API响应', value: 120, unit: 'ms', status: 'normal' },
-  { id: '6', timestamp: '14:35:17', metric: '数据库', value: 85, unit: 'ms', status: 'normal' },
-];
+  Gauge,
+  Clock,
+  Server,
+  Zap,
+} from 'lucide-react';
+import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
+import type { StatCard, ChartConfig, DataTable, TableColumn } from '@/components/templates/StatsPageTemplate';
+import { monitorApi } from '@/api/monitor';
+import type { SystemMetrics, ApiPerformance, DatabaseMetrics } from '@/api/monitor';
+import { useNotification } from '@/hooks/useNotification';
+import { apiLogger } from '@/utils/logger';
 
 export const MonitorMetricsPage: React.FC = () => {
-  const [selectedMetric, setSelectedMetric] = useState('cpu');
+  const { error: notifyError } = useNotification();
   const [timeRange, setTimeRange] = useState('24h');
+  const [loading, setLoading] = useState(true);
+  const [systemMetrics, setSystemMetrics] = useState<SystemMetrics | null>(null);
+  const [apiPerformance, setApiPerformance] = useState<ApiPerformance[]>([]);
+  const [databaseMetrics, setDatabaseMetrics] = useState<DatabaseMetrics | null>(null);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'normal':
-        return 'success';
-      case 'warning':
-        return 'warning';
-      case 'critical':
-        return 'error';
-      default:
-        return 'default';
+  useEffect(() => {
+    loadData();
+  }, [timeRange]);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [systemRes, apiRes, dbRes] = await Promise.all([
+        monitorApi.getSystemMetrics(),
+        monitorApi.getApiPerformance(),
+        monitorApi.getDatabaseMetrics(),
+      ]);
+
+      if (systemRes.success && systemRes.data) {
+        setSystemMetrics(systemRes.data);
+      }
+      if (apiRes.success && apiRes.data) {
+        setApiPerformance(apiRes.data);
+      }
+      if (dbRes.success && dbRes.data) {
+        setDatabaseMetrics(dbRes.data);
+      }
+    } catch (err: unknown) {
+      apiLogger.error('加载性能指标数据失败:', err);
+      notifyError('加载性能指标数据失败');
+    } finally {
+      setLoading(false);
     }
   };
 
+  const statCards = useMemo<StatCard[]>(() => [
+    {
+      id: 'cpu-usage',
+      title: 'CPU 使用率',
+      value: systemMetrics ? `${systemMetrics.cpu_usage.toFixed(1)}%` : '-',
+      icon: <Cpu size={24} />,
+      gradient: ['#1976D2', '#1565C0'] as [string, string],
+      trend: { value: 2.3, direction: 'down', label: '+2.3%' },
+    },
+    {
+      id: 'memory-usage',
+      title: '内存使用率',
+      value: systemMetrics ? `${systemMetrics.memory_usage.toFixed(1)}%` : '-',
+      icon: <Server size={24} />,
+      gradient: ['#00C897', '#00A878'] as [string, string],
+      trend: { value: 1.5, direction: 'down', label: '+1.5%' },
+    },
+    {
+      id: 'disk-usage',
+      title: '磁盘使用率',
+      value: systemMetrics ? `${systemMetrics.disk_usage.toFixed(1)}%` : '-',
+      icon: <HardDrive size={24} />,
+      gradient: ['#F59E0B', '#D97706'] as [string, string],
+      trend: { value: 0.8, direction: 'down', label: '+0.8%' },
+    },
+    {
+      id: 'api-avg-response',
+      title: 'API 平均响应',
+      value: apiPerformance.length > 0
+        ? `${Math.round(apiPerformance.reduce((acc, p) => acc + p.avg_response_time, 0) / apiPerformance.length)}ms`
+        : '-',
+      icon: <Zap size={24} />,
+      gradient: ['#8B5CF6', '#7C3AED'] as [string, string],
+      trend: { value: 5, direction: 'up', label: '-5ms' },
+    },
+  ], [systemMetrics, apiPerformance]);
+
+  const charts = useMemo<ChartConfig[]>(() => [
+    {
+      id: 'system-metrics',
+      title: '系统资源使用率',
+      type: 'bar',
+      dataKey: 'value',
+      nameKey: 'name',
+      data: systemMetrics ? [
+        { name: 'CPU', value: systemMetrics.cpu_usage, fill: '#1976D2' },
+        { name: '内存', value: systemMetrics.memory_usage, fill: '#00C897' },
+        { name: '磁盘', value: systemMetrics.disk_usage, fill: '#F59E0B' },
+      ] : [],
+      height: 280,
+    },
+    {
+      id: 'database-metrics',
+      title: '数据库性能指标',
+      type: 'bar',
+      dataKey: 'value',
+      nameKey: 'name',
+      data: databaseMetrics ? [
+        { name: '连接数', value: databaseMetrics.connections, fill: '#1976D2' },
+        { name: '最大连接', value: databaseMetrics.max_connections, fill: '#00C897' },
+        { name: '慢查询', value: databaseMetrics.slow_query_count, fill: '#EF4444' },
+      ] : [],
+      height: 280,
+    },
+  ], [systemMetrics, databaseMetrics]);
+
+  const tables = useMemo<DataTable[]>(() => [
+    {
+      id: 'api-performance',
+      title: 'API 接口性能',
+      columns: [
+        { id: 'endpoint', label: '接口地址', field: 'endpoint' },
+        { id: 'method', label: '方法', field: 'method' },
+        { id: 'avg_response_time', label: '平均响应(ms)', field: 'avg_response_time' },
+        { id: 'p95_response_time', label: 'P95响应(ms)', field: 'p95_response_time' },
+        { id: 'p99_response_time', label: 'P99响应(ms)', field: 'p99_response_time' },
+        { id: 'request_count', label: '请求数', field: 'request_count' },
+        { 
+          id: 'error_rate', 
+          label: '错误率', 
+          field: 'error_rate', 
+          render: (value: any) => `${(value as number).toFixed(2)}%` 
+        },
+      ],
+      data: apiPerformance,
+    },
+  ], [apiPerformance]);
+
+  const timeRangeOptions = [
+    { label: '1小时', value: '1h' },
+    { label: '24小时', value: '24h' },
+    { label: '7天', value: '7d' },
+    { label: '30天', value: '30d' },
+  ];
+
   return (
-    <Box sx={{ flex: 1 }}>
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 4,
-        }}
-      >
-        <div>
-          <Typography
-            variant='h4'
-            sx={{ fontWeight: 'bold', mb: 1 }}
-          >
-            性能指标监控
-          </Typography>
-          <Typography
-            variant='body2'
-            color='text.secondary'
-          >
-            实时监控系统性能指标，追踪资源使用情况
-          </Typography>
-        </div>
-        <Button
-          variant='contained'
-          startIcon={<RefreshCw />}
-        >
-          刷新数据
-        </Button>
-      </Box>
-
-      <Grid
-        container
-        spacing={3}
-        sx={{ mb: 4 }}
-      >
-        <Grid size={{ xs: 12, lg: 9 }}>
-          <Card>
-            <CardHeader
-              title='指标趋势图'
-              action={
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                  <FormControl
-                    size='small'
-                    sx={{ minWidth: 120 }}
-                  >
-                    <InputLabel>时间范围</InputLabel>
-                    <Select
-                      value={timeRange}
-                      label='时间范围'
-                      onChange={(e) => setTimeRange(e.target.value)}
-                    >
-                      <MenuItem value='1h'>1小时</MenuItem>
-                      <MenuItem value='6h'>6小时</MenuItem>
-                      <MenuItem value='24h'>24小时</MenuItem>
-                      <MenuItem value='7d'>7天</MenuItem>
-                    </Select>
-                  </FormControl>
-                  <FormControl
-                    size='small'
-                    sx={{ minWidth: 120 }}
-                  >
-                    <InputLabel>监控指标</InputLabel>
-                    <Select
-                      value={selectedMetric}
-                      label='监控指标'
-                      onChange={(e) => setSelectedMetric(e.target.value)}
-                    >
-                      <MenuItem value='cpu'>CPU</MenuItem>
-                      <MenuItem value='memory'>内存</MenuItem>
-                      <MenuItem value='disk'>磁盘</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Box>
-              }
-            />
-            <CardContent>
-              <ResponsiveContainer
-                width='100%'
-                height={350}
-              >
-                <AreaChart data={hourlyData}>
-                  <CartesianGrid strokeDasharray='3 3' />
-                  <XAxis dataKey='hour' />
-                  <YAxis domain={[0, 100]} />
-                  <Tooltip />
-                  <Area
-                    type='monotone'
-                    dataKey='cpu'
-                    stroke='#1976d2'
-                    fill='#1976d2'
-                    fillOpacity={0.3}
-                    name='CPU'
-                  />
-                  <Area
-                    type='monotone'
-                    dataKey='memory'
-                    stroke='#4caf50'
-                    fill='#4caf50'
-                    fillOpacity={0.3}
-                    name='内存'
-                  />
-                  <Area
-                    type='monotone'
-                    dataKey='disk'
-                    stroke='#ff9800'
-                    fill='#ff9800'
-                    fillOpacity={0.3}
-                    name='磁盘'
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid size={{ xs: 12, lg: 3 }}>
-          <Card>
-            <CardHeader title='指标状态' />
-            <CardContent>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                {metricsData.map((metric) => (
-                  <Box key={metric.name}>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        mb: 1,
-                      }}
-                    >
-                      <Typography
-                        variant='body2'
-                        sx={{ fontWeight: 500 }}
-                      >
-                        {metric.name}
-                      </Typography>
-                      <Typography variant='body2'>
-                        {metric.value}
-                        {metric.unit}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Slider
-                        value={metric.value}
-                        disabled
-                        sx={{
-                          flex: 1,
-                          color:
-                            metric.value > metric.threshold * 0.8 ? 'warning.main' : 'success.dark',
-                        }}
-                      />
-                      <Chip
-                        size='small'
-                        label='正常'
-                        color={getStatusColor(metric.status)}
-                      />
-                    </Box>
-                  </Box>
-                ))}
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      <Card>
-        <CardHeader title='实时指标日志' />
-        <CardContent>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>时间</TableCell>
-                  <TableCell>指标</TableCell>
-                  <TableCell>数值</TableCell>
-                  <TableCell>状态</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {metricLogs.map((log) => (
-                  <TableRow key={log.id}>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Clock size={14} />
-                        {log.timestamp}
-                      </Box>
-                    </TableCell>
-                    <TableCell>{log.metric}</TableCell>
-                    <TableCell>
-                      {log.value}
-                      {log.unit}
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        size='small'
-                        label={
-                          log.status === 'normal'
-                            ? '正常'
-                            : log.status === 'warning'
-                              ? '警告'
-                              : '严重'
-                        }
-                        color={getStatusColor(log.status)}
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </CardContent>
-      </Card>
-    </Box>
+    <StatsPageTemplate
+      title='性能指标监控'
+      subtitle='系统资源、API性能和数据库指标监控'
+      statCards={statCards}
+      statColumns={4}
+      charts={charts}
+      chartColumns={{ xs: 1, md: 2 }}
+      tables={tables}
+      loading={loading}
+      timeRangeOptions={timeRangeOptions}
+      timeRange={timeRange}
+      onTimeRangeChange={setTimeRange}
+      showTimeRange={true}
+      showRefresh={true}
+      onRefresh={loadData}
+      showStatCards={true}
+      showCharts={true}
+      showTables={true}
+      statCardDirection='row'
+    />
   );
 };
 

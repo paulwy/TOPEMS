@@ -46,6 +46,7 @@ import {
 import { EmptyState } from '@/components/mui';
 import { ImageUpload } from '@/components/common';
 import { logger } from '@/utils/logger';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 
 const HrmDepartmentPage: React.FC = () => {
   const theme = useTheme();
@@ -72,6 +73,23 @@ const HrmDepartmentPage: React.FC = () => {
   const [formData, setFormData] = useState<Partial<Department>>({});
   const [selectedDeptId, setSelectedDeptId] = useState<string | undefined>();
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [confirmDialogConfig, setConfirmDialogConfig] = useState<{
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    danger?: boolean;
+  } | null>(null);
+
+  const openConfirmDialog = (config: {
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    danger?: boolean;
+  }) => {
+    setConfirmDialogConfig(config);
+    setConfirmDialogOpen(true);
+  };
 
   // ============ 数据获取 ============
   const fetchDepartments = useCallback(
@@ -231,32 +249,38 @@ const HrmDepartmentPage: React.FC = () => {
     {
       label: '删除',
       icon: <Trash2 style={{ width: 16, height: 16 }} />,
-      onClick: async (node) => {
+      onClick: (node) => {
         const dept = node.data as Department;
-        if (!confirm('确定要删除这个部门吗？')) return;
-        try {
-          const response = await departmentApi.delete(dept.id);
-          if (response.code === 200) {
-            addNotification({
-              title: '成功',
-              message: '部门删除成功',
-              type: 'success',
-            });
-            fetchDepartments();
-          } else {
-            addNotification({
-              title: '失败',
-              message: '删除部门失败',
-              type: 'error',
-            });
-          }
-        } catch (error: unknown) {
-          addNotification({
-            title: '失败',
-            message: (error as { message?: string }).message || '删除部门失败',
-            type: 'error',
-          });
-        }
+        openConfirmDialog({
+          title: '确认删除',
+          message: '确定要删除这个部门吗？',
+          onConfirm: async () => {
+            try {
+              const response = await departmentApi.delete(dept.id);
+              if (response.code === 200) {
+                addNotification({
+                  title: '成功',
+                  message: '部门删除成功',
+                  type: 'success',
+                });
+                fetchDepartments();
+              } else {
+                addNotification({
+                  title: '失败',
+                  message: '删除部门失败',
+                  type: 'error',
+                });
+              }
+            } catch (error: unknown) {
+              addNotification({
+                title: '失败',
+                message: (error as { message?: string }).message || '删除部门失败',
+                type: 'error',
+              });
+            }
+          },
+          danger: true,
+        });
       },
       color: 'error',
       divider: true,
@@ -594,35 +618,41 @@ const HrmDepartmentPage: React.FC = () => {
   }, []);
 
   const handleDelete = useCallback(
-    async (id: string) => {
-      if (!confirm('确定要删除这个部门吗？')) return;
-      try {
-        const response = await departmentApi.delete(id);
-        if (response.code === 200) {
-          addNotification({
-            title: '成功',
-            message: '部门删除成功',
-            type: 'success',
-          });
-          fetchDepartments();
-          if (selectedDeptId === id) {
-            setSelectedDeptId(undefined);
-            setEmployees([]);
+    (id: string) => {
+      openConfirmDialog({
+        title: '确认删除',
+        message: '确定要删除这个部门吗？',
+        onConfirm: async () => {
+          try {
+            const response = await departmentApi.delete(id);
+            if (response.code === 200) {
+              addNotification({
+                title: '成功',
+                message: '部门删除成功',
+                type: 'success',
+              });
+              fetchDepartments();
+              if (selectedDeptId === id) {
+                setSelectedDeptId(undefined);
+                setEmployees([]);
+              }
+            } else {
+              addNotification({
+                title: '失败',
+                message: '删除部门失败',
+                type: 'error',
+              });
+            }
+          } catch (error: unknown) {
+            addNotification({
+              title: '失败',
+              message: (error as { message?: string }).message || '删除部门失败',
+              type: 'error',
+            });
           }
-        } else {
-          addNotification({
-            title: '失败',
-            message: '删除部门失败',
-            type: 'error',
-          });
-        }
-      } catch (error: unknown) {
-        addNotification({
-          title: '失败',
-          message: (error as { message?: string }).message || '删除部门失败',
-          type: 'error',
-        });
-      }
+        },
+        danger: true,
+      });
     },
     [addNotification, fetchDepartments, selectedDeptId]
   );
@@ -897,6 +927,18 @@ const HrmDepartmentPage: React.FC = () => {
         }}
         onApplySuggestions={handleApplySuggestions}
         onFixIssue={handleFixIssue}
+      />
+
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={() => setConfirmDialogOpen(false)}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogOpen(false);
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
       />
     </>
   );

@@ -1,15 +1,6 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
-  Typography,
-  Box,
-  TextField,
-  Switch,
-} from '@mui/material';
-import { Button } from '@mui/material';
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAppStore } from '@/store';
 import {
   Activity,
   Clock,
@@ -21,13 +12,8 @@ import {
   Trash2,
   ChevronLeft,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor';
-import { useAppStore } from '../../store';
-import type { ColumnDef } from '@tanstack/react-table';
-import { DataTable } from '@/components/DataTable';
-
-import { ModeToggle } from '@/components/ModeToggle';
+import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 
 const PerformanceMonitorPage: React.FC = () => {
   const navigate = useNavigate();
@@ -50,7 +36,6 @@ const PerformanceMonitorPage: React.FC = () => {
     if (!autoRefresh) return;
 
     const interval = setInterval(() => {
-      // 触发重新渲染以更新数据
       _setTrigger((prev) => prev + 1);
     }, 5000);
 
@@ -87,608 +72,289 @@ const PerformanceMonitorPage: React.FC = () => {
     });
   };
 
-  const columns = useMemo<ColumnDef<ReturnType<typeof getApiCallHistory>[0]>[]>(
-    () => [
-      {
-        accessorKey: 'timestamp',
-        header: '时间',
-        cell: ({ row }) => (
-          <div style={{ fontSize: 14, color: 'text.primary' }}>
-            {new Date(row.original.timestamp).toLocaleTimeString()}
-          </div>
-        ),
-      },
-      {
-        accessorKey: 'endpoint',
-        header: 'API 端点',
-        cell: ({ row }) => (
-          <div style={{ fontSize: 14, fontWeight: 500, color: 'text.primary' }}>
-            {row.original.endpoint}
-          </div>
-        ),
-      },
-      {
-        accessorKey: 'duration',
-        header: '响应时间',
-        cell: ({ row }) => {
-          const duration = row.original.duration;
-          let colorClass = 'text-green-600';
-          if (duration >= 1000) colorClass = 'text-red-600';
-          else if (duration >= 500) colorClass = 'text-yellow-600';
+  const statCards = [
+    {
+      id: 'page-load-time',
+      title: '页面加载时间',
+      value: `${(metrics.pageLoadTime / 1000).toFixed(2)}s`,
+      icon: <Clock size={24} />,
+      color: metrics.pageLoadTime < 2000 ? 'success' : 'warning',
+    },
+    {
+      id: 'api-avg-response',
+      title: 'API 平均响应',
+      value: `${avgResponseTime.toFixed(0)}ms`,
+      icon: <TrendingUp size={24} />,
+      color: avgResponseTime < 500 ? 'success' : avgResponseTime < 1000 ? 'warning' : 'error',
+    },
+    {
+      id: 'api-success-rate',
+      title: 'API 成功率',
+      value: `${successRate.toFixed(1)}%`,
+      icon: successRate >= 95 ? <CheckCircle size={24} /> : <XCircle size={24} />,
+      color: successRate >= 95 ? 'success' : successRate >= 80 ? 'warning' : 'error',
+    },
+    {
+      id: 'slow-api-calls',
+      title: '慢 API 调用',
+      value: slowCalls.length,
+      icon: <AlertTriangle size={24} />,
+      color: slowCalls.length === 0 ? 'success' : 'warning',
+    },
+  ];
 
-          return <span style={{ fontSize: 14, fontWeight: 500 }}>{duration.toFixed(0)}ms</span>;
+  const charts = [];
+
+  const tables = [
+    {
+      id: 'api-call-history',
+      title: 'API 调用历史',
+      columns: [
+        {
+          id: 'timestamp',
+          label: '时间',
+          render: (value: number) => new Date(value).toLocaleTimeString(),
         },
-      },
-      {
-        accessorKey: 'status',
-        header: '状态',
-        cell: ({ row }) => {
-          return (
-            <Chip
-              size='small'
-              variant={row.original.status === 'success' ? 'filled' : 'outlined'}
-              label={row.original.status === 'success' ? '成功' : '失败'}
-            />
-          );
+        { id: 'endpoint', label: 'API 端点' },
+        {
+          id: 'duration',
+          label: '响应时间',
+          render: (value: number) => `${value.toFixed(0)}ms`,
         },
-      },
-    ],
-    []
-  );
+        {
+          id: 'status',
+          label: '状态',
+          render: (value: string) =>
+            value === 'success' ? (
+              <span style={{ color: '#22c55e', fontWeight: 500 }}>成功</span>
+            ) : (
+              <span style={{ color: '#ef4444', fontWeight: 500 }}>失败</span>
+            ),
+        },
+      ],
+      data: apiHistory.slice(-20).reverse(),
+    },
+  ];
+
+  const timeRangeOptions = [
+    { label: '最近1小时', value: '1h' },
+    { label: '最近6小时', value: '6h' },
+    { label: '最近24小时', value: '24h' },
+  ];
+
+  const [timeRange, setTimeRange] = useState('1h');
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', p: 3 }}>
-      {/* Header */}
-      <Card sx={{ mb: 3, p: 3 }}>
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Button
-              variant='text'
-              onClick={() => navigate('/dashboard')}
-            >
-              <ChevronLeft sx={{ width: 20, height: 20 }} />
-            </Button>
-            <Box
-              sx={{
-                width: 48,
-                height: 48,
-                bgcolor: 'primary.light',
-                borderRadius: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Activity style={{ width: 24, height: 24 }} />
-            </Box>
-            <Box>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 'bold' }}
-              >
-                性能监控
-              </Typography>
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
-                实时监控系统性能指标
-              </Typography>
-            </Box>
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <ModeToggle />
-            <Button
-              variant='outlined'
-              onClick={handleExport}
-            >
-              <Download sx={{ width: 20, height: 20, marginRight: 8 }} />
-              导出报告
-            </Button>
-            <Button
-              variant='contained'
-              onClick={handleClear}
-            >
-              <Trash2 sx={{ width: 20, height: 20, marginRight: 8 }} />
-              清除数据
-            </Button>
-          </Box>
-        </Box>
-      </Card>
-
-      {/* Summary Cards */}
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: {
-            xs: '1fr',
-            md: '1fr 1fr',
-            lg: '1fr 1fr 1fr 1fr',
-          },
-          gap: 3,
-          mb: 3,
+    <>
+      <div
+        style={{
+          backgroundColor: '#fff',
+          marginBottom: 12,
+          padding: 24,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
         }}
       >
-        <Card sx={{ p: 3 }}>
-          <Box
-            sx={{
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <button
+            onClick={() => navigate('/dashboard')}
+            style={{ padding: 8, borderRadius: 8, border: 'none', background: 'none', cursor: 'pointer' }}
+          >
+            <ChevronLeft style={{ width: 20, height: 20, color: '#6b7280' }} />
+          </button>
+          <div
+            style={{
+              width: 48,
+              height: 48,
+              backgroundColor: '#e0e7ff',
+              borderRadius: 8,
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
+              justifyContent: 'center',
             }}
           >
-            <Box>
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
-                页面加载时间
-              </Typography>
-              <Typography
-                variant='h4'
-                sx={{ fontWeight: 'bold' }}
-              >
-                {(metrics.pageLoadTime / 1000).toFixed(2)}s
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                width: 48,
-                height: 48,
-                borderRadius: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                bgcolor: metrics.pageLoadTime < 2000 ? 'success.light' : 'warning.light',
-              }}
-            >
-              <Clock
-                style={{
-                  width: 24,
-                  height: 24,
-                  color:
-                    metrics.pageLoadTime < 2000
-                      ? 'var(--mui-palette-success-main)'
-                      : 'var(--mui-palette-warning-main)',
-                }}
-              />
-            </Box>
-          </Box>
-        </Card>
-
-        <Card sx={{ p: 3 }}>
-          <Box
-            sx={{
+            <Activity style={{ width: 24, height: 24 }} />
+          </div>
+          <div>
+            <h1 style={{ fontSize: '1.25rem', fontWeight: 700, margin: 0 }}>性能监控</h1>
+            <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: '4px 0 0' }}>
+              实时监控系统性能指标
+            </p>
+          </div>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <button
+            onClick={handleExport}
+            style={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
+              gap: 8,
+              padding: '8px 16px',
+              border: '1px solid #d1d5db',
+              borderRadius: 8,
+              backgroundColor: 'white',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
             }}
           >
-            <Box>
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
-                API 平均响应
-              </Typography>
-              <Typography
-                variant='h4'
-                sx={{ fontWeight: 'bold' }}
-              >
-                {avgResponseTime.toFixed(0)}ms
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                width: 48,
-                height: 48,
-                borderRadius: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                bgcolor:
-                  avgResponseTime < 500
-                    ? 'success.light'
-                    : avgResponseTime < 1000
-                      ? 'warning.light'
-                      : 'error.light',
-              }}
-            >
-              <TrendingUp
-                style={{
-                  width: 24,
-                  height: 24,
-                  color:
-                    avgResponseTime < 500
-                      ? 'var(--mui-palette-success-main)'
-                      : avgResponseTime < 1000
-                        ? 'var(--mui-palette-warning-main)'
-                        : 'var(--mui-palette-error-main)',
-                }}
-              />
-            </Box>
-          </Box>
-        </Card>
-
-        <Card sx={{ p: 3 }}>
-          <Box
-            sx={{
+            <Download style={{ width: 20, height: 20 }} />
+            导出报告
+          </button>
+          <button
+            onClick={handleClear}
+            style={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
+              gap: 8,
+              padding: '8px 16px',
+              border: 'none',
+              borderRadius: 8,
+              backgroundColor: '#ef4444',
+              color: 'white',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
             }}
           >
-            <Box>
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
-                API 成功率
-              </Typography>
-              <Typography
-                variant='h4'
-                sx={{ fontWeight: 'bold' }}
-              >
-                {successRate.toFixed(1)}%
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                width: 48,
-                height: 48,
-                borderRadius: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                bgcolor:
-                  successRate >= 95
-                    ? 'success.light'
-                    : successRate >= 80
-                      ? 'warning.light'
-                      : 'error.light',
-              }}
-            >
-              {successRate >= 95 ? (
-                <CheckCircle
-                  style={{
-                    width: 24,
-                    height: 24,
-                    color: 'var(--mui-palette-success-main)',
-                  }}
-                />
-              ) : (
-                <XCircle
-                  style={{
-                    width: 24,
-                    height: 24,
-                    color:
-                      successRate >= 80
-                        ? 'var(--mui-palette-warning-main)'
-                        : 'var(--mui-palette-error-main)',
-                  }}
-                />
-              )}
-            </Box>
-          </Box>
-        </Card>
+            <Trash2 style={{ width: 20, height: 20 }} />
+            清除数据
+          </button>
+        </div>
+      </div>
 
-        <Card sx={{ p: 3 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Box>
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
-                慢 API 调用
-              </Typography>
-              <Typography
-                variant='h4'
-                sx={{ fontWeight: 'bold' }}
-              >
-                {slowCalls.length}
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                width: 48,
-                height: 48,
-                borderRadius: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                bgcolor: slowCalls.length === 0 ? 'success.light' : 'warning.light',
-              }}
-            >
-              <AlertTriangle
-                style={{
-                  width: 24,
-                  height: 24,
-                  color:
-                    slowCalls.length === 0
-                      ? 'var(--mui-palette-success-main)'
-                      : 'var(--mui-palette-warning-main)',
-                }}
-              />
-            </Box>
-          </Box>
-        </Card>
-      </Box>
-
-      {/* Performance Details */}
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
-          gap: 3,
-          mb: 3,
+      {/* 页面性能指标 */}
+      <div
+        style={{
+          backgroundColor: 'white',
+          borderRadius: 8,
+          padding: 24,
+          marginBottom: 12,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
         }}
       >
-        {/* Page Performance */}
-        <Card>
-          <CardHeader>
-            <Typography
-              variant='h6'
-              sx={{ fontWeight: 600 }}
-            >
-              页面性能指标
-            </Typography>
-          </CardHeader>
-          <CardContent>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
-                  首次绘制 (FP)
-                </Typography>
-                <Typography
-                  variant='body2'
-                  sx={{ fontWeight: 500 }}
-                >
-                  {metrics.firstPaint.toFixed(0)}ms
-                </Typography>
-              </Box>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
-                  首次内容绘制 (FCP)
-                </Typography>
-                <Typography
-                  variant='body2'
-                  sx={{ fontWeight: 500 }}
-                >
-                  {metrics.firstContentfulPaint.toFixed(0)}ms
-                </Typography>
-              </Box>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
-                  DOM 内容加载
-                </Typography>
-                <Typography
-                  variant='body2'
-                  sx={{ fontWeight: 500 }}
-                >
-                  {metrics.domContentLoaded.toFixed(0)}ms
-                </Typography>
-              </Box>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                }}
-              >
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
-                  页面完全加载
-                </Typography>
-                <Typography
-                  variant='body2'
-                  sx={{ fontWeight: 500 }}
-                >
-                  {metrics.pageLoadTime.toFixed(0)}ms
-                </Typography>
-              </Box>
-            </Box>
-          </CardContent>
-        </Card>
+        <h3 style={{ fontSize: '1.125rem', fontWeight: 600, marginBottom: 16 }}>页面性能指标</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>首次绘制 (FP)</span>
+            <span style={{ fontWeight: 500 }}>{metrics.firstPaint.toFixed(0)}ms</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>首次内容绘制 (FCP)</span>
+            <span style={{ fontWeight: 500 }}>{metrics.firstContentfulPaint.toFixed(0)}ms</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>DOM 内容加载</span>
+            <span style={{ fontWeight: 500 }}>{metrics.domContentLoaded.toFixed(0)}ms</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>页面完全加载</span>
+            <span style={{ fontWeight: 500 }}>{metrics.pageLoadTime.toFixed(0)}ms</span>
+          </div>
+        </div>
+      </div>
 
-        {/* Slow API Calls */}
-        <Card>
-          <CardHeader>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <Typography
-                variant='h6'
-                sx={{ fontWeight: 600 }}
-              >
-                慢 API 调用
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
-                  阈值:
-                </Typography>
-                <TextField
-                  id='slowThreshold'
-                  type='number'
-                  value={slowCallThreshold}
-                  onChange={(e) => setSlowCallThreshold(Number(e.target.value))}
-                  size='small'
-                  sx={{ width: 80 }}
-                />
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
-                  ms
-                </Typography>
-              </Box>
-            </Box>
-          </CardHeader>
-          <CardContent>
-            {slowCalls.length === 0 ? (
-              <Box sx={{ textAlign: 'center', py: 4 }}>
-                <CheckCircle
-                  style={{
-                    width: 48,
-                    height: 48,
-                    color: 'var(--mui-palette-success-main)',
-                    marginBottom: 8,
-                  }}
-                />
-                <Typography color='text.secondary'>没有慢 API 调用</Typography>
-              </Box>
-            ) : (
-              <Box
-                sx={{
+      {/* 慢 API 调用 */}
+      <div
+        style={{
+          backgroundColor: 'white',
+          borderRadius: 8,
+          padding: 24,
+          marginBottom: 12,
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <h3 style={{ fontSize: '1.125rem', fontWeight: 600, margin: 0 }}>慢 API 调用</h3>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>阈值:</span>
+            <input
+              type='number'
+              value={slowCallThreshold}
+              onChange={(e) => setSlowCallThreshold(Number(e.target.value))}
+              style={{ width: 80, padding: 4, fontSize: '0.875rem', borderRadius: 4, border: '1px solid #d1d5db' }}
+            />
+            <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>ms</span>
+          </div>
+        </div>
+        {slowCalls.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: 32 }}>
+            <CheckCircle style={{ width: 48, height: 48, color: '#22c55e', marginBottom: 8 }} />
+            <p style={{ color: '#6b7280' }}>没有慢 API 调用</p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 256, overflow: 'auto', marginTop: 16 }}>
+            {slowCalls.map((call, idx) => (
+              <div
+                key={idx}
+                style={{
                   display: 'flex',
-                  flexDirection: 'column',
-                  gap: 1,
-                  maxHeight: 256,
-                  overflow: 'auto',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: 16,
+                  backgroundColor: '#fef3c7',
+                  borderRadius: 8,
                 }}
               >
-                {slowCalls.map((call, idx) => (
-                  <Box
-                    key={idx}
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      p: 2,
-                      bgcolor: 'warning.light',
-                      borderRadius: 1,
+                <div>
+                  <p style={{ fontWeight: 500, margin: 0 }}>{call.endpoint}</p>
+                  <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: '4px 0 0' }}>
+                    {new Date(call.timestamp).toLocaleString()}
+                  </p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <p style={{ fontWeight: 500, color: '#ef4444', margin: 0 }}>
+                    {(call.duration / 1000).toFixed(2)}s
+                  </p>
+                  <p
+                    style={{
+                      fontSize: '0.75rem',
+                      margin: '4px 0 0',
+                      color: call.status === 'success' ? '#22c55e' : '#ef4444',
                     }}
                   >
-                    <Box>
-                      <Typography
-                        variant='body2'
-                        sx={{ fontWeight: 500 }}
-                      >
-                        {call.endpoint}
-                      </Typography>
-                      <Typography
-                        variant='caption'
-                        color='text.secondary'
-                      >
-                        {new Date(call.timestamp).toLocaleString()}
-                      </Typography>
-                    </Box>
-                    <Box sx={{ textAlign: 'right' }}>
-                      <Typography
-                        variant='body2'
-                        sx={{ fontWeight: 500, color: 'error.main' }}
-                      >
-                        {(call.duration / 1000).toFixed(2)}s
-                      </Typography>
-                      <Typography
-                        variant='caption'
-                        color={call.status === 'success' ? 'success.main' : 'error.main'}
-                      >
-                        {call.status === 'success' ? '成功' : '失败'}
-                      </Typography>
-                    </Box>
-                  </Box>
-                ))}
-              </Box>
-            )}
-          </CardContent>
-        </Card>
-      </Box>
+                    {call.status === 'success' ? '成功' : '失败'}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
-      {/* API Call History */}
-      <Card>
-        <CardHeader>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Typography
-              variant='h6'
-              sx={{ fontWeight: 600 }}
-            >
-              API 调用历史
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Switch
-                id='autoRefresh'
+      <StatsPageTemplate
+        title=''
+        subtitle=''
+        statCards={statCards}
+        charts={charts}
+        tables={tables}
+        loading={false}
+        timeRangeOptions={timeRangeOptions}
+        timeRange={timeRange}
+        onTimeRangeChange={setTimeRange}
+        onRefresh={() => _setTrigger((prev) => prev + 1)}
+        showTimeRange={true}
+        showRefresh={true}
+        showExport={false}
+        showSearch={false}
+        showStatCards={false}
+        showCharts={false}
+        tableSectionTitle='API 调用历史'
+        customToolbar={
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.875rem', color: '#6b7280' }}>
+              <input
+                type='checkbox'
                 checked={autoRefresh}
                 onChange={(e) => setAutoRefresh(e.target.checked)}
+                style={{ width: 18, height: 18 }}
               />
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
-                自动刷新
-              </Typography>
-            </Box>
-          </Box>
-        </CardHeader>
-        <CardContent sx={{ p: 0 }}>
-          {apiHistory.length === 0 ? (
-            <Box sx={{ textAlign: 'center', py: 6 }}>
-              <Typography color='text.secondary'>暂无 API 调用记录</Typography>
-            </Box>
-          ) : (
-            <DataTable
-              columns={columns}
-              data={apiHistory.slice(-20).reverse()}
-              searchKey='endpoint'
-              searchPlaceholder='搜索 API 端点...'
-            />
-          )}
-        </CardContent>
-      </Card>
-    </Box>
+              自动刷新
+            </label>
+          </div>
+        }
+      />
+    </>
   );
 };
 

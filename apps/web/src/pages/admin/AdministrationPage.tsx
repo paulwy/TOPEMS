@@ -1,7 +1,7 @@
 import { Grid } from '@/components/Grid';
 import { apiLogger } from '@/utils/logger';
 import { extractErrorMessage } from '@/utils/errors';
-import { QuickSearch } from '@/components/common';
+import { QuickSearch, BackButton } from '@/components/common';
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
@@ -2322,9 +2322,7 @@ const AdministrationPage: React.FC = () => {
             spacing={1.5}
             sx={{ alignItems: 'center' }}
           >
-            <IconButton onClick={() => navigate(-1)}>
-              <ChevronLeft />
-            </IconButton>
+            <BackButton />
             <Typography
               variant='h4'
               component='div'

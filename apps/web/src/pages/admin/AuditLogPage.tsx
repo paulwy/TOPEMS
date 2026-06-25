@@ -9,7 +9,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -22,7 +21,6 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   Clock,
   Search,
-  ChevronLeft,
   Shield,
   User,
   Activity,
@@ -35,7 +33,7 @@ import {
   Calendar,
   X,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { BackButton } from '@/components/common';
 import type { AuditLog as LimsAuditLog } from '@/api/lims';
 import { auditLimsApi } from '@/api/lims';
 import type { AuditLog as RsAuditLog } from '@/api/rs';
@@ -55,7 +53,6 @@ type AuditLogSource = 'lims' | 'rs';
 type AuditLog = LimsAuditLog | RsAuditLog;
 
 const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
-  const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
 
   const [logs, setLogs] = useState<AuditLog[]>([]);
@@ -426,9 +423,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <IconButton onClick={() => navigate('/dashboard')}>
-                <ChevronLeft />
-              </IconButton>
+              <BackButton href='/dashboard' />
               <Box>
                 <Typography
                   variant='h5'
