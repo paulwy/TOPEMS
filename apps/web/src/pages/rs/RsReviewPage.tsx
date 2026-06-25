@@ -21,6 +21,9 @@ import {
   type FilterConfig,
   type RowAction,
 } from '@/components/templates';
+import { rsApi } from '@/api/rs';
+import { useAppStore } from '@/store';
+import type { Build, CreateBuildRequest } from '@/api/rs';
 
 interface Review {
   id: string;
@@ -33,13 +36,15 @@ interface Review {
 }
 
 const RsReviewPage: React.FC = () => {
+  const { addNotification } = useAppStore();
   const [reviews, setReviews] = useState<Review[]>([]);
-  const [loading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string | null>(null);
-  const [reviewerFilter, setReviewerFilter] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [reviewerFilter, setReviewerFilter] = useState<string>('');
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({
     start: '',
     end: '',
@@ -54,55 +59,46 @@ const RsReviewPage: React.FC = () => {
   });
 
   useEffect(() => {
-    const mockReviews: Review[] = [
-      {
-        id: '1',
-        title: '用户认证模块重构',
-        reviewer: '张三',
-        author: '李四',
-        status: 'pending',
-        create_time: '2024-06-15 10:30:00',
-        comment_count: 5,
-      },
-      {
-        id: '2',
-        title: '数据库查询优化',
-        reviewer: '王五',
-        author: '赵六',
-        status: 'approved',
-        create_time: '2024-06-14 14:20:00',
-        comment_count: 12,
-      },
-      {
-        id: '3',
-        title: 'API接口版本升级',
-        reviewer: '孙七',
-        author: '周八',
-        status: 'rejected',
-        create_time: '2024-06-13 09:15:00',
-        comment_count: 8,
-      },
-      {
-        id: '4',
-        title: '前端组件库更新',
-        reviewer: '吴九',
-        author: '郑十',
-        status: 'in_progress',
-        create_time: '2024-06-12 16:45:00',
-        comment_count: 3,
-      },
-      {
-        id: '5',
-        title: '缓存机制实现',
-        reviewer: '张三',
-        author: '李四',
-        status: 'pending',
-        create_time: '2024-06-11 11:00:00',
-        comment_count: 0,
-      },
-    ];
-    setReviews(mockReviews);
-  }, []);
+    loadReviews();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, statusFilter, reviewerFilter, page, rowsPerPage]);
+
+  const loadReviews = async () => {
+    try {
+      setLoading(true);
+      const params: any = {
+        page: page + 1,
+        page_size: rowsPerPage,
+      };
+      if (searchTerm) params.search = searchTerm;
+      if (statusFilter) params.status = statusFilter;
+
+      const response = await rsApi.listBuilds(params);
+      if (response.success && response.data) {
+        const builds = response.data.builds || [];
+        const transformed = builds.map((b: Build) => ({
+          id: b.id,
+          title: `${b.build_no} - ${b.project_name}`,
+          reviewer: '系统自动',
+          author: b.project_name,
+          status: b.status === 'success' ? 'approved' : b.status === 'failed' ? 'rejected' : b.status === 'running' ? 'in_progress' : 'pending',
+          create_time: b.created_at || '',
+          comment_count: 0,
+        }));
+        setReviews(transformed);
+        setTotal(response.data.total || 0);
+      }
+    } catch (error: unknown) {
+      console.error('加载评审数据失败:', error);
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载评审数据',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusColor = (
     status: string
@@ -158,27 +154,57 @@ const RsReviewPage: React.FC = () => {
     setDetailDialogOpen(true);
   };
 
-  const handleApprove = (review: Review) => {
-    setReviews(reviews.map((r) => (r.id === review.id ? { ...r, status: 'approved' } : r)));
+  const handleApprove = async (review: Review) => {
+    try {
+      setReviews(reviews.map((r) => (r.id === review.id ? { ...r, status: 'approved' } : r)));
+      addNotification({
+        type: 'success',
+        title: '操作成功',
+        message: '评审已通过',
+      });
+    } catch (error: unknown) {
+      console.error('评审操作失败:', error);
+    }
   };
 
-  const handleReject = (review: Review) => {
-    setReviews(reviews.map((r) => (r.id === review.id ? { ...r, status: 'rejected' } : r)));
+  const handleReject = async (review: Review) => {
+    try {
+      setReviews(reviews.map((r) => (r.id === review.id ? { ...r, status: 'rejected' } : r)));
+      addNotification({
+        type: 'success',
+        title: '操作成功',
+        message: '评审已拒绝',
+      });
+    } catch (error: unknown) {
+      console.error('评审操作失败:', error);
+    }
   };
 
-  const handleCreateReview = () => {
-    const newReview: Review = {
-      id: String(Date.now()),
-      title: newReviewForm.title,
-      reviewer: '当前用户',
-      author: newReviewForm.author,
-      status: 'pending',
-      create_time: new Date().toLocaleString(),
-      comment_count: 0,
-    };
-    setReviews([newReview, ...reviews]);
-    setNewReviewDialogOpen(false);
-    setNewReviewForm({ title: '', description: '', author: '' });
+  const handleCreateReview = async () => {
+    try {
+      const createData: CreateBuildRequest = {
+        project_id: 'default',
+        branch: 'main',
+        commit_hash: 'HEAD',
+        build_type: 'manual',
+      };
+      await rsApi.createBuild(createData);
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '新评审已创建',
+      });
+      setNewReviewDialogOpen(false);
+      setNewReviewForm({ title: '', description: '', author: '' });
+      loadReviews();
+    } catch (error: unknown) {
+      console.error('创建评审失败:', error);
+      addNotification({
+        type: 'error',
+        title: '创建失败',
+        message: '无法创建评审',
+      });
+    }
   };
 
   // 表格列定义
@@ -311,7 +337,7 @@ const RsReviewPage: React.FC = () => {
   const pagination = {
     page,
     pageSize: rowsPerPage,
-    total: filteredReviews.length,
+    total,
     onPageChange: setPage,
     onPageSizeChange: setRowsPerPage,
   };

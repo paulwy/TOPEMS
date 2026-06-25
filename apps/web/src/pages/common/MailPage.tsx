@@ -47,6 +47,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../../store';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 import {
   emailApi,
   templateApi,
@@ -144,6 +145,15 @@ const MailPage: React.FC = () => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [stats, setStats] = useState<EmailStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
+
+  const [deleteEmailDialogOpen, setDeleteEmailDialogOpen] = useState(false);
+  const [deletingEmailId, setDeletingEmailId] = useState<string | null>(null);
+  const [resendEmailDialogOpen, setResendEmailDialogOpen] = useState(false);
+  const [resendingEmailId, setResendingEmailId] = useState<string | null>(null);
+  const [batchDeleteDialogOpen, setBatchDeleteDialogOpen] = useState(false);
+  const [batchResendDialogOpen, setBatchResendDialogOpen] = useState(false);
+  const [deleteTemplateDialogOpen, setDeleteTemplateDialogOpen] = useState(false);
+  const [deletingTemplateId, setDeletingTemplateId] = useState<string | null>(null);
 
   useEffect(() => {
     if (activeTab === 'emails') {
@@ -381,17 +391,17 @@ const MailPage: React.FC = () => {
     setSelectedTemplateForSend(null);
   };
 
-  const handleDeleteEmail = async (emailId: string) => {
-    if (!confirm('确定要删除这个邮件记录吗？')) return;
+  const handleDeleteEmail = async () => {
+    if (!deletingEmailId) return;
     try {
-      const res = await emailApi.delete(emailId);
+      const res = await emailApi.delete(deletingEmailId);
       if (res.success) {
         addNotification({
           title: '成功',
           message: '邮件记录删除成功',
           type: 'success',
         });
-        setSelectedEmails((prev) => prev.filter((id) => id !== emailId));
+        setSelectedEmails((prev) => prev.filter((id) => id !== deletingEmailId));
         loadEmails();
       } else {
         addNotification({
@@ -409,10 +419,15 @@ const MailPage: React.FC = () => {
     }
   };
 
-  const handleResendEmail = async (emailId: string) => {
-    if (!confirm('确定要重新发送这封邮件吗？')) return;
+  const openDeleteEmailDialog = (emailId: string) => {
+    setDeletingEmailId(emailId);
+    setDeleteEmailDialogOpen(true);
+  };
+
+  const handleResendEmail = async () => {
+    if (!resendingEmailId) return;
     try {
-      const res = await emailApi.get(emailId);
+      const res = await emailApi.get(resendingEmailId);
       if (res.success && res.data) {
         const email = res.data;
         const toAddresses = Array.isArray(email.to_addresses)
@@ -462,10 +477,13 @@ const MailPage: React.FC = () => {
     }
   };
 
+  const openResendEmailDialog = (emailId: string) => {
+    setResendingEmailId(emailId);
+    setResendEmailDialogOpen(true);
+  };
+
   const handleBatchDeleteEmails = async () => {
     if (selectedEmails.length === 0) return;
-    if (!confirm(`确定要删除选中的 ${selectedEmails.length} 条邮件记录吗？`)) return;
-
     let successCount = 0;
     for (const emailId of selectedEmails) {
       try {
@@ -487,8 +505,6 @@ const MailPage: React.FC = () => {
 
   const handleBatchResendEmails = async () => {
     if (selectedEmails.length === 0) return;
-    if (!confirm(`确定要重新发送选中的 ${selectedEmails.length} 条邮件吗？`)) return;
-
     try {
       const res = await emailApi.resend(selectedEmails);
       if (res.success && res.data) {
@@ -698,10 +714,10 @@ const MailPage: React.FC = () => {
     }
   };
 
-  const handleDeleteTemplate = async (templateId: string) => {
-    if (!confirm('确定要删除这个模板吗？')) return;
+  const handleDeleteTemplate = async () => {
+    if (!deletingTemplateId) return;
     try {
-      const res = await templateApi.delete(templateId);
+      const res = await templateApi.delete(deletingTemplateId);
       if (res.success) {
         addNotification({
           title: '成功',
@@ -723,6 +739,11 @@ const MailPage: React.FC = () => {
         type: 'error',
       });
     }
+  };
+
+  const openDeleteTemplateDialog = (templateId: string) => {
+    setDeletingTemplateId(templateId);
+    setDeleteTemplateDialogOpen(true);
   };
 
   const openEditTemplate = (template: EmailTemplate) => {
@@ -1240,7 +1261,7 @@ const MailPage: React.FC = () => {
                         <Button
                           variant='contained'
                           size='small'
-                          onClick={handleBatchResendEmails}
+                          onClick={() => setBatchResendDialogOpen(true)}
                           sx={{ gap: 1 }}
                         >
                           <RefreshCw size={16} />
@@ -1249,7 +1270,7 @@ const MailPage: React.FC = () => {
                         <Button
                           variant='contained'
                           size='small'
-                          onClick={handleBatchDeleteEmails}
+                          onClick={() => setBatchDeleteDialogOpen(true)}
                           sx={{ gap: 1 }}
                         >
                           <Trash size={16} />
@@ -1557,7 +1578,7 @@ const MailPage: React.FC = () => {
                                     <Button
                                       variant='text'
                                       size='small'
-                                      onClick={() => handleResendEmail(email.id)}
+                                      onClick={() => openResendEmailDialog(email.id)}
                                       sx={{
                                         color: 'success.main',
                                         '&:hover': { color: 'success.dark' },
@@ -1574,7 +1595,7 @@ const MailPage: React.FC = () => {
                                       color: 'error.main',
                                       '&:hover': { color: 'error.dark' },
                                     }}
-                                    onClick={() => handleDeleteEmail(email.id)}
+                                    onClick={() => openDeleteEmailDialog(email.id)}
                                     title='删除'
                                   >
                                     <Trash2 size={16} />
@@ -1970,7 +1991,7 @@ const MailPage: React.FC = () => {
                                       color: 'error.main',
                                       '&:hover': { color: 'error.dark' },
                                     }}
-                                    onClick={() => handleDeleteTemplate(template.id)}
+                                    onClick={() => openDeleteTemplateDialog(template.id)}
                                     title='删除'
                                   >
                                     <Trash2 size={16} />
@@ -2860,6 +2881,64 @@ const MailPage: React.FC = () => {
           </DialogActions>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={deleteEmailDialogOpen}
+        onClose={() => {
+          setDeleteEmailDialogOpen(false);
+          setDeletingEmailId(null);
+        }}
+        onConfirm={handleDeleteEmail}
+        title='确认删除'
+        message='确定要删除这个邮件记录吗？'
+        danger
+      />
+
+      <ConfirmDialog
+        isOpen={resendEmailDialogOpen}
+        onClose={() => {
+          setResendEmailDialogOpen(false);
+          setResendingEmailId(null);
+        }}
+        onConfirm={handleResendEmail}
+        title='确认重发'
+        message='确定要重新发送这封邮件吗？'
+        type='warning'
+        confirmLabel='重发'
+        cancelLabel='取消'
+      />
+
+      <ConfirmDialog
+        isOpen={batchDeleteDialogOpen}
+        onClose={() => setBatchDeleteDialogOpen(false)}
+        onConfirm={handleBatchDeleteEmails}
+        title='确认批量删除'
+        message={`确定要删除选中的 ${selectedEmails.length} 条邮件记录吗？`}
+        danger
+      />
+
+      <ConfirmDialog
+        isOpen={batchResendDialogOpen}
+        onClose={() => setBatchResendDialogOpen(false)}
+        onConfirm={handleBatchResendEmails}
+        title='确认批量重发'
+        message={`确定要重新发送选中的 ${selectedEmails.length} 条邮件吗？`}
+        type='warning'
+        confirmLabel='批量重发'
+        cancelLabel='取消'
+      />
+
+      <ConfirmDialog
+        isOpen={deleteTemplateDialogOpen}
+        onClose={() => {
+          setDeleteTemplateDialogOpen(false);
+          setDeletingTemplateId(null);
+        }}
+        onConfirm={handleDeleteTemplate}
+        title='确认删除'
+        message='确定要删除这个模板吗？'
+        danger
+      />
     </Box>
   );
 };

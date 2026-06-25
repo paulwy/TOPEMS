@@ -799,6 +799,171 @@ const billingApi = {
   },
 };
 
+// ==================== Customer Segmentation API ====================
+
+export interface CustomerSegment {
+  id: string;
+  name: string;
+  description?: string;
+  criteria: SegmentCriteria;
+  customer_count: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SegmentCriteria {
+  score_levels?: string[];
+  industries?: string[];
+  company_sizes?: string[];
+  statuses?: string[];
+  customer_types?: string[];
+  revenue_min?: number;
+  revenue_max?: number;
+  score_min?: number;
+  score_max?: number;
+  interaction_min?: number;
+  opportunity_min?: number;
+  tags?: string[];
+}
+
+export interface SegmentedCustomer {
+  id: string;
+  name: string;
+  code?: string;
+  industry?: string;
+  status: string;
+  score?: number;
+  score_level?: string;
+  revenue?: number;
+  segment_tags: string[];
+}
+
+export interface CreateSegmentRequest {
+  name: string;
+  description?: string;
+  criteria: SegmentCriteria;
+}
+
+export interface SegmentQueryParams extends PaginationParams {}
+
+const customerSegmentationApi = {
+  /**
+   * 获取客户分群列表
+   */
+  list: async (
+    params?: SegmentQueryParams
+  ): Promise<ApiResponse<PaginatedResponse<CustomerSegment>>> => {
+    return apiClient.crm.get('/api/crm/segments', { params });
+  },
+
+  /**
+   * 创建客户分群
+   */
+  create: async (data: CreateSegmentRequest): Promise<ApiResponse<CustomerSegment>> => {
+    return apiClient.crm.post('/api/crm/segments', data);
+  },
+
+  /**
+   * 获取客户分群详情
+   */
+  get: async (id: string): Promise<ApiResponse<CustomerSegment>> => {
+    return apiClient.crm.get(`/api/crm/segments/${id}`);
+  },
+
+  /**
+   * 删除客户分群
+   */
+  delete: async (id: string): Promise<ApiResponse<void>> => {
+    return apiClient.crm.delete(`/api/crm/segments/${id}`);
+  },
+
+  /**
+   * 获取分群中的客户列表
+   */
+  getCustomers: async (
+    id: string,
+    params?: PaginationParams
+  ): Promise<ApiResponse<PaginatedResponse<SegmentedCustomer>>> => {
+    return apiClient.crm.get(`/api/crm/segments/${id}/customers`, { params });
+  },
+
+  /**
+   * 自动分群
+   */
+  autoSegment: async (): Promise<ApiResponse<{ segments: any[] }>> => {
+    return apiClient.crm.get('/api/crm/segments/auto');
+  },
+};
+
+// ==================== Customer Recommendation API ====================
+
+export interface RecommendationResult {
+  customer_id: string;
+  customer_name: string;
+  recommendations: RecommendationItem[];
+  recommendation_type: string;
+  model: string;
+  confidence: number;
+  created_at: string;
+}
+
+export interface RecommendationItem {
+  id: string;
+  name: string;
+  item_type: string;
+  confidence: number;
+  reason: string;
+  score: number;
+  metadata: any;
+}
+
+export interface RecommendationRequest {
+  customer_id: string;
+  recommendation_type: string;
+  top_k?: number;
+  context?: any;
+}
+
+export interface RecommendationQueryParams extends PaginationParams {
+  customer_id?: string;
+  recommendation_type?: string;
+}
+
+const customerRecommendationApi = {
+  /**
+   * 获取推荐列表
+   */
+  list: async (
+    params?: RecommendationQueryParams
+  ): Promise<ApiResponse<PaginatedResponse<RecommendationResult>>> => {
+    return apiClient.crm.get('/api/crm/recommendations', { params });
+  },
+
+  /**
+   * 创建推荐
+   */
+  create: async (data: RecommendationRequest): Promise<ApiResponse<RecommendationResult>> => {
+    return apiClient.crm.post('/api/crm/recommendations', data);
+  },
+
+  /**
+   * 获取推荐详情
+   */
+  get: async (id: string): Promise<ApiResponse<RecommendationResult>> => {
+    return apiClient.crm.get(`/api/crm/recommendations/${id}`);
+  },
+
+  /**
+   * 获取客户推荐
+   */
+  getCustomerRecommendations: async (
+    customerId: string,
+    params?: RecommendationQueryParams
+  ): Promise<ApiResponse<RecommendationResult>> => {
+    return apiClient.crm.get(`/api/crm/customers/${customerId}/recommendations`, { params });
+  },
+};
+
 // ==================== CRM API Export ====================
 
 /**
@@ -813,6 +978,8 @@ export const crmApi = {
   customerScoring: customerScoringApi,
   salesForecast: salesForecastApi,
   billing: billingApi,
+  customerSegmentation: customerSegmentationApi,
+  customerRecommendation: customerRecommendationApi,
 
   /**
    * 健康检查
@@ -832,4 +999,6 @@ export {
   customerScoringApi,
   salesForecastApi,
   billingApi,
+  customerSegmentationApi,
+  customerRecommendationApi,
 };

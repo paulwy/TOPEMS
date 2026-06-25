@@ -1,31 +1,30 @@
-import { Grid } from '@/components/Grid';
-import React, { useState, useMemo } from 'react';
-import { logger } from '@/utils/logger';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import {
-  Box,
-  Container,
-  Typography,
-  Paper,
-  TextField,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Select,
-  Chip,
-  Autocomplete,
-  Divider,
-  Stack,
-} from '@mui/material';
-import { Button } from '@mui/material';
-import { Save, X } from 'lucide-react';
+import { FormPageTemplate, type FormSection, type FormField } from '@/components/templates/FormPageTemplate';
+import { rsApi, formulaApi } from '@/api/rs';
+import { useAppStore } from '@/store';
+import type { Project, Formula } from '@/api/rs';
+
+const experimentTypes = ['活性测试', '稳定性测试', '配方优化', '工艺验证', '性能评估', '其他'];
+const phases = ['小试', '中试', '放大', '生产验证'];
+const scaleUnits = ['g', 'kg', 't', 'mL', 'L'];
 
 const RsExperimentCreatePage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isEdit = Boolean(id);
+  const { addNotification } = useAppStore();
 
-  const [formData, setFormData] = useState({
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [formulas, setFormulas] = useState<Formula[]>([]);
+  const [projectsLoading, setProjectsLoading] = useState(false);
+  const [formulasLoading, setFormulasLoading] = useState(false);
+
+  const defaultValues = {
     name: '',
     code: '',
     project_id: '',
@@ -38,34 +37,243 @@ const RsExperimentCreatePage: React.FC = () => {
     batch_number: '',
     scale: '',
     scale_unit: 'kg',
-  });
-
-  const experimentTypes = ['活性测试', '稳定性测试', '配方优化', '工艺验证', '性能评估', '其他'];
-
-  const phases = ['小试', '中试', '放大', '生产验证'];
-  const scaleUnits = ['g', 'kg', 't', 'mL', 'L'];
-
-  const projects = [
-    { id: '1', name: '新型催化剂研发项目' },
-    { id: '2', name: '聚合物改性研究' },
-    { id: '3', name: '环保材料开发' },
-  ];
-
-  const formulas = [
-    { id: '1', name: '配方A-001' },
-    { id: '2', name: '配方B-002' },
-    { id: '3', name: '配方C-003' },
-  ];
-
-  const experimenters = ['张三', '李四', '王五', '赵六', '孙七'];
-
-  const handleInputChange = (field: string, value: string) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = () => {
-    logger.info('提交数据:', formData);
-    navigate('/rs/experiments');
+  const sections: FormSection[] = useMemo(() => [
+    {
+      id: 'basic',
+      title: '基本信息',
+      description: '试验核心信息',
+      collapsible: true,
+      defaultExpanded: true,
+      fields: [
+        {
+          name: 'name',
+          label: '试验名称',
+          type: 'text',
+          required: true,
+          placeholder: '请输入试验名称',
+        },
+        {
+          name: 'code',
+          label: '试验编码',
+          type: 'text',
+          required: true,
+          disabled: isEdit,
+          placeholder: '例如: EXP-2024-001',
+          helperText: '编辑时编码不可修改',
+        },
+        {
+          name: 'project_id',
+          label: '所属项目',
+          type: 'select',
+          required: true,
+          options: projectsLoading
+            ? [{ label: '加载中...', value: '' }]
+            : projects.map((p) => ({
+                label: p.name || p.project_name || p.code,
+                value: p.id,
+              })),
+        },
+        {
+          name: 'formula_id',
+          label: '关联配方',
+          type: 'select',
+          options: formulasLoading
+            ? [{ label: '加载中...', value: '' }]
+            : [{ label: '无', value: '' }, ...formulas.map((f) => ({
+                label: `${f.name} (${f.version})`,
+                value: f.id,
+              }))],
+        },
+        {
+          name: 'experiment_type',
+          label: '试验类型',
+          type: 'select',
+          options: experimentTypes.map((type) => ({ label: type, value: type })),
+        },
+        {
+          name: 'phase',
+          label: '试验阶段',
+          type: 'select',
+          options: phases.map((phase) => ({ label: phase, value: phase })),
+        },
+      ],
+    },
+    {
+      id: 'content',
+      title: '试验内容',
+      description: '试验目标和方法',
+      collapsible: true,
+      defaultExpanded: true,
+      fields: [
+        {
+          name: 'objective',
+          label: '试验目标',
+          type: 'textarea',
+          rows: 3,
+          placeholder: '请输入试验目标',
+        },
+        {
+          name: 'method',
+          label: '实验方法',
+          type: 'textarea',
+          rows: 4,
+          placeholder: '请输入实验方法描述',
+        },
+      ],
+    },
+    {
+      id: 'execution',
+      title: '执行信息',
+      description: '实验员和批次信息',
+      collapsible: true,
+      defaultExpanded: true,
+      fields: [
+        {
+          name: 'experimenter',
+          label: '实验员',
+          type: 'text',
+          placeholder: '请输入实验员姓名',
+        },
+        {
+          name: 'batch_number',
+          label: '批次号',
+          type: 'text',
+          placeholder: '例如: B-2024-001',
+        },
+        {
+          name: 'scale',
+          label: '试验规模',
+          type: 'number',
+          placeholder: '请输入规模数值',
+        },
+        {
+          name: 'scale_unit',
+          label: '规模单位',
+          type: 'select',
+          options: scaleUnits.map((unit) => ({ label: unit, value: unit })),
+        },
+      ],
+    },
+  ], [projects, formulas, projectsLoading, formulasLoading, isEdit]);
+
+  useEffect(() => {
+    loadProjects();
+    loadFormulas();
+    if (isEdit && id) {
+      loadExperiment(id);
+    }
+  }, [isEdit, id]);
+
+  const loadProjects = async () => {
+    setProjectsLoading(true);
+    try {
+      const response = await rsApi.listProjects();
+      if (response.success && response.data) {
+        setProjects(response.data.projects || []);
+      }
+    } catch (err: unknown) {
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载项目列表',
+      });
+    } finally {
+      setProjectsLoading(false);
+    }
+  };
+
+  const loadFormulas = async () => {
+    setFormulasLoading(true);
+    try {
+      const response = await formulaApi.listFormulas();
+      if (response.success && response.data) {
+        setFormulas(response.data || []);
+      }
+    } catch (err: unknown) {
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载配方列表',
+      });
+    } finally {
+      setFormulasLoading(false);
+    }
+  };
+
+  const loadExperiment = async (experimentId: string) => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await rsApi.getExperiment(experimentId);
+      if (response.success && response.data) {
+        const exp = response.data;
+      } else {
+        setError('无法获取试验数据');
+        addNotification({
+          type: 'error',
+          title: '加载失败',
+          message: response.message || '无法加载试验数据',
+        });
+      }
+    } catch (err: unknown) {
+      setError('加载试验数据失败');
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载试验数据',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (data: unknown) => {
+    setSubmitting(true);
+    try {
+      const formData = data as Record<string, unknown>;
+
+      const requestData = {
+        name: formData.name as string,
+        code: formData.code as string,
+        project_id: formData.project_id as string,
+        formula_id: (formData.formula_id as string) || undefined,
+        experiment_type: formData.experiment_type as string,
+        phase: formData.phase as string,
+        objective: formData.objective as string,
+        method: formData.method as string,
+        experimenter: formData.experimenter as string,
+        batch_number: (formData.batch_number as string) || undefined,
+        scale: formData.scale ? Number(formData.scale) : undefined,
+        scale_unit: formData.scale_unit as string,
+      };
+
+      if (isEdit && id) {
+        await rsApi.updateExperiment(id, requestData);
+        addNotification({
+          type: 'success',
+          title: '更新成功',
+          message: '试验信息已更新',
+        });
+      } else {
+        await rsApi.createExperiment(requestData);
+        addNotification({
+          type: 'success',
+          title: '创建成功',
+          message: '试验已创建',
+        });
+      }
+      navigate('/rs/experiments');
+    } catch (err: unknown) {
+      addNotification({
+        type: 'error',
+        title: '提交失败',
+        message: '无法提交试验数据',
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleCancel = () => {
@@ -73,276 +281,24 @@ const RsExperimentCreatePage: React.FC = () => {
   };
 
   return (
-    <Container
-      maxWidth='lg'
-      sx={{ py: 3 }}
-    >
-      <div style={{ marginBottom: 12 }}>
-        <Typography
-          variant='h4'
-          sx={{ fontWeight: 'bold' }}
-          gutterBottom
-        >
-          {isEdit ? '编辑试验' : '新建试验'}
-        </Typography>
-        <Typography
-          variant='body2'
-          color='text.secondary'
-        >
-          {isEdit ? '修改试验信息' : '创建新的研发试验记录'}
-        </Typography>
-      </div>
-
-      <Paper sx={{ p: 3 }}>
-        <Grid
-          container
-          spacing={3}
-        >
-          <Grid size={{ xs: 12 }}>
-            <Typography
-              variant='h6'
-              gutterBottom
-            >
-              基本信息
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              fullWidth
-              label='试验名称'
-              required
-              value={formData.name}
-              onChange={(e) => handleInputChange('name', e.target.value)}
-              placeholder='请输入试验名称'
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              fullWidth
-              label='试验编码'
-              required
-              value={formData.code}
-              onChange={(e) => handleInputChange('code', e.target.value)}
-              placeholder='例如: EXP-2024-001'
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <FormControl fullWidth>
-              <InputLabel>所属项目</InputLabel>
-              <Select
-                value={formData.project_id}
-                label='所属项目'
-                onChange={(e) => handleInputChange('project_id', e.target.value)}
-              >
-                {projects.map((p) => (
-                  <MenuItem
-                    key={p.id}
-                    value={p.id}
-                  >
-                    {p.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <FormControl fullWidth>
-              <InputLabel>关联配方</InputLabel>
-              <Select
-                value={formData.formula_id}
-                label='关联配方'
-                onChange={(e) => handleInputChange('formula_id', e.target.value)}
-              >
-                {formulas.map((f) => (
-                  <MenuItem
-                    key={f.id}
-                    value={f.id}
-                  >
-                    {f.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <FormControl fullWidth>
-              <InputLabel>试验类型</InputLabel>
-              <Select
-                value={formData.experiment_type}
-                label='试验类型'
-                onChange={(e) => handleInputChange('experiment_type', e.target.value)}
-              >
-                {experimentTypes.map((type) => (
-                  <MenuItem
-                    key={type}
-                    value={type}
-                  >
-                    {type}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <FormControl fullWidth>
-              <InputLabel>试验阶段</InputLabel>
-              <Select
-                value={formData.phase}
-                label='试验阶段'
-                onChange={(e) => handleInputChange('phase', e.target.value)}
-              >
-                {phases.map((phase) => (
-                  <MenuItem
-                    key={phase}
-                    value={phase}
-                  >
-                    {phase}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-
-          <Grid size={{ xs: 12 }}>
-            <Typography
-              variant='h6'
-              gutterBottom
-              sx={{ mt: 2 }}
-            >
-              试验内容
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-          </Grid>
-
-          <Grid size={{ xs: 12 }}>
-            <TextField
-              fullWidth
-              label='试验目标'
-              multiline
-              rows={3}
-              value={formData.objective}
-              onChange={(e) => handleInputChange('objective', e.target.value)}
-              placeholder='请输入试验目标'
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12 }}>
-            <TextField
-              fullWidth
-              label='实验方法'
-              multiline
-              rows={4}
-              value={formData.method}
-              onChange={(e) => handleInputChange('method', e.target.value)}
-              placeholder='请输入实验方法描述'
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12 }}>
-            <Typography
-              variant='h6'
-              gutterBottom
-              sx={{ mt: 2 }}
-            >
-              执行信息
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <FormControl fullWidth>
-              <InputLabel>实验员</InputLabel>
-              <Select
-                value={formData.experimenter}
-                label='实验员'
-                onChange={(e) => handleInputChange('experimenter', e.target.value)}
-              >
-                {experimenters.map((exp) => (
-                  <MenuItem
-                    key={exp}
-                    value={exp}
-                  >
-                    {exp}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              fullWidth
-              label='批次号'
-              value={formData.batch_number}
-              onChange={(e) => handleInputChange('batch_number', e.target.value)}
-              placeholder='例如: B-2024-001'
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <TextField
-              fullWidth
-              label='试验规模'
-              type='number'
-              value={formData.scale}
-              onChange={(e) => handleInputChange('scale', e.target.value)}
-              placeholder='请输入规模数值'
-            />
-          </Grid>
-
-          <Grid size={{ xs: 12, md: 6 }}>
-            <FormControl fullWidth>
-              <InputLabel>规模单位</InputLabel>
-              <Select
-                value={formData.scale_unit}
-                label='规模单位'
-                onChange={(e) => handleInputChange('scale_unit', e.target.value)}
-              >
-                {scaleUnits.map((unit) => (
-                  <MenuItem
-                    key={unit}
-                    value={unit}
-                  >
-                    {unit}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-
-          <Grid size={{ xs: 12 }}>
-            <Divider sx={{ mb: 2 }} />
-            <Stack
-              direction='row'
-              spacing={2}
-              sx={{ justifyContent: 'flex-end' }}
-            >
-              <Button
-                variant='outlined'
-                startIcon={<X />}
-                onClick={handleCancel}
-              >
-                取消
-              </Button>
-              <Button
-                variant='contained'
-                startIcon={<Save />}
-                onClick={handleSubmit}
-              >
-                {isEdit ? '保存修改' : '创建试验'}
-              </Button>
-            </Stack>
-          </Grid>
-        </Grid>
-      </Paper>
-    </Container>
+    <FormPageTemplate
+      title={isEdit ? '编辑试验' : '新建试验'}
+      subtitle={isEdit ? '修改试验信息' : '创建新的研发试验记录'}
+      sections={sections}
+      defaultValues={defaultValues}
+      loading={loading}
+      submitting={submitting}
+      error={error}
+      onSubmit={handleSubmit}
+      onCancel={handleCancel}
+      submitText={isEdit ? '保存修改' : '创建试验'}
+      columns={2}
+      showValidationHints
+      validationToasts={[
+        { message: '提交成功', type: 'success' },
+        { message: '提交失败，请检查表单', type: 'error' },
+      ]}
+    />
   );
 };
 

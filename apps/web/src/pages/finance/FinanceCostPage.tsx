@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  ChevronLeft,
   TrendingUp,
   TrendingDown,
   AlertCircle,
@@ -9,8 +8,7 @@ import {
   Wallet,
   Download,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { DataExport } from '@/components/common';
+import { DataExport, BackButton } from '@/components/common';
 import { useAppStore } from '@/store';
 import { ListPageTemplate, StatCardGroup } from '@/components/mui';
 import { financeApi, accountApi } from '@/api/finance';
@@ -26,12 +24,10 @@ import {
   Box as MuiBox,
   Typography,
   Stack,
-  IconButton,
 } from '@mui/material';
 import { Button } from '@mui/material';
 
 const FinanceCostPage: React.FC = () => {
-  const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
 
   const [costData, setCostData] = useState<Account[]>([]);
@@ -289,13 +285,11 @@ const FinanceCostPage: React.FC = () => {
             sx={{ justifyContent: 'space-between', alignItems: 'center' }}
           >
             <Stack
-              direction='row'
-              sx={{ alignItems: 'center' }}
-              spacing={2}
-            >
-              <IconButton onClick={() => navigate('/dashboard')}>
-                <ChevronLeft size={20} />
-              </IconButton>
+            direction='row'
+            sx={{ alignItems: 'center' }}
+            spacing={2}
+          >
+            <BackButton href='/dashboard' />
               <MuiBox>
                 <Typography
                   variant='h5'

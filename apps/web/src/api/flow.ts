@@ -44,10 +44,14 @@ export interface MonthlyData {
   approvals_processed: number;
 }
 
+export interface ConditionValue {
+  [key: string]: unknown;
+}
+
 export interface Condition {
   field: string;
   operator: string;
-  value: any;
+  value: ConditionValue;
 }
 
 export type ApprovalType = 'single' | 'counter' | 'or';
@@ -72,11 +76,20 @@ export interface WorkflowDefinition {
   timeout_action?: string;
 }
 
+export interface WorkflowData {
+  type?: string;
+  scope?: string;
+  usageCount?: number;
+  applicant?: string;
+  name?: string;
+  [key: string]: unknown;
+}
+
 export interface Workflow {
   id: string;
   name: string;
   description?: string;
-  definition: WorkflowDefinition | any;
+  definition: WorkflowDefinition;
   is_active: boolean;
   created_by?: string;
   created_at: string;
@@ -84,19 +97,10 @@ export interface Workflow {
   data?: WorkflowData;
 }
 
-export interface WorkflowData {
-  type?: string;
-  scope?: string;
-  usageCount?: number;
-  applicant?: string;
-  name?: string;
-  [key: string]: any;
-}
-
 export interface CreateWorkflowRequest {
   name: string;
   description?: string;
-  definition?: WorkflowDefinition | any;
+  definition?: WorkflowDefinition;
   is_active?: boolean;
   created_by?: string;
 }
@@ -104,8 +108,12 @@ export interface CreateWorkflowRequest {
 export interface UpdateWorkflowRequest {
   name?: string;
   description?: string;
-  definition?: WorkflowDefinition | any;
+  definition?: WorkflowDefinition;
   is_active?: boolean;
+}
+
+export interface WorkflowInstanceData {
+  [key: string]: unknown;
 }
 
 export interface WorkflowInstance {
@@ -114,7 +122,7 @@ export interface WorkflowInstance {
   status: 'pending' | 'running' | 'completed' | 'rejected' | string;
   current_node?: string;
   initiator_id?: string;
-  data?: any;
+  data?: WorkflowInstanceData;
   started_at?: string;
   completed_at?: string;
   created_at: string;
@@ -123,7 +131,7 @@ export interface WorkflowInstance {
 export interface CreateWorkflowInstanceRequest {
   workflow_id: string;
   initiator_id?: string;
-  data?: any;
+  data?: WorkflowInstanceData;
 }
 
 export interface Approval {
@@ -139,6 +147,10 @@ export interface Approval {
   approved_at?: string;
   timeout_at?: string;
   created_at: string;
+}
+
+export interface ApprovalTaskData {
+  [key: string]: unknown;
 }
 
 export interface ApprovalTask {
@@ -160,7 +172,7 @@ export interface ApprovalTask {
   approved_at?: string;
   timeout_at?: string;
   priority?: 'low' | 'medium' | 'high';
-  data?: any;
+  data?: ApprovalTaskData;
   created_at: string;
   updated_at?: string;
 }
@@ -178,7 +190,7 @@ export interface WorkflowVersion {
   id: string;
   workflow_id: string;
   version: string;
-  definition: any;
+  definition: WorkflowDefinition;
   change_description?: string;
   created_by?: string;
   created_at: string;
@@ -187,7 +199,7 @@ export interface WorkflowVersion {
 
 export interface CreateVersionRequest {
   version: string;
-  definition?: any;
+  definition?: WorkflowDefinition;
   change_description?: string;
   created_by?: string;
 }
@@ -237,7 +249,7 @@ export interface WorkflowTemplate {
   description?: string;
   type?: string;
   scope?: string;
-  definition?: WorkflowDefinition | any;
+  definition?: WorkflowDefinition;
   usage_count?: number;
   is_active?: boolean;
   created_by?: string;
@@ -255,6 +267,10 @@ export interface WorkflowSetting {
   updated_at?: string;
 }
 
+export interface WorkflowHistoryData {
+  [key: string]: unknown;
+}
+
 export interface WorkflowHistory {
   id: string;
   workflow_instance_id?: string;
@@ -268,7 +284,7 @@ export interface WorkflowHistory {
   status_before?: string;
   status_after?: string;
   comment?: string;
-  data?: any;
+  data?: WorkflowHistoryData;
   created_at: string;
 }
 
@@ -574,7 +590,7 @@ export const templateApi = {
     return apiClient.flow.get(`/api/flow/templates/${id}/export`);
   },
 
-  importTemplate: (data: { file: File | any; name?: string }) => {
+  importTemplate: (data: { file: File; name?: string }) => {
     return apiClient.flow.post('/api/flow/templates/import', data);
   },
 };

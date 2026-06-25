@@ -443,114 +443,129 @@ export interface PrintConfig {
 
 export interface TestMethod {
   id: string;
-  name: string;
-  code: string;
+  method_code: string;
+  method_name: string;
   category_id?: string;
   category_name?: string;
+  standard?: string;
   version: string;
   description?: string;
-  scope?: string;
   principle?: string;
-  instruments?: string[];
-  reagents?: string[];
-  steps?: string[];
+  instruments?: Record<string, any>;
+  reagents?: Record<string, any>;
+  parameters?: Record<string, any>;
+  steps?: Record<string, any>;
   calculation_formula?: string;
-  uncertainty_budget?: string;
-  reference_standard?: string;
+  uncertainty_ref?: string;
   status: string;
-  is_validated: boolean;
+  validated: boolean;
+  validated_at?: string;
+  validated_by?: string;
   created_by?: string;
-  approved_by?: string;
-  effective_date?: string;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface CreateTestMethodRequest {
-  name: string;
-  code: string;
+  method_code: string;
+  method_name: string;
   category_id?: string;
-  version?: string;
+  standard?: string;
   description?: string;
-  scope?: string;
   principle?: string;
-  instruments?: string[];
-  reagents?: string[];
-  steps?: string[];
+  instruments?: Record<string, any>;
+  reagents?: Record<string, any>;
+  parameters?: Record<string, any>;
+  steps?: Record<string, any>;
   calculation_formula?: string;
-  uncertainty_budget?: string;
-  reference_standard?: string;
-  status?: string;
+  uncertainty_ref?: string;
 }
 
-export interface UpdateTestMethodRequest extends Partial<CreateTestMethodRequest> {}
+export interface UpdateTestMethodRequest {
+  method_name?: string;
+  category_id?: string;
+  standard?: string;
+  description?: string;
+  principle?: string;
+  instruments?: Record<string, any>;
+  reagents?: Record<string, any>;
+  parameters?: Record<string, any>;
+  steps?: Record<string, any>;
+  calculation_formula?: string;
+  uncertainty_ref?: string;
+  status?: string;
+}
 
 export interface MethodVersion {
   id: string;
   method_id: string;
   version: string;
-  change_description?: string;
-  changed_by?: string;
-  effective_date?: string;
+  version_description?: string;
+  change_log?: string;
   is_current: boolean;
+  created_by?: string;
   created_at: string;
 }
 
 export interface CreateMethodVersionRequest {
-  method_id: string;
-  version: string;
-  change_description?: string;
-  changed_by?: string;
-  effective_date?: string;
+  version_description?: string;
+  change_log?: string;
 }
 
 export interface MethodCategory {
   id: string;
-  name: string;
-  code: string;
+  category_code: string;
+  category_name: string;
   parent_id?: string;
+  sort_order: number;
   description?: string;
-  sort_order?: number;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  status: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface CreateMethodCategoryRequest {
-  name: string;
-  code: string;
+  category_code: string;
+  category_name: string;
   parent_id?: string;
-  description?: string;
   sort_order?: number;
+  description?: string;
 }
 
-export interface UpdateMethodCategoryRequest extends Partial<CreateMethodCategoryRequest> {}
+export interface UpdateMethodCategoryRequest {
+  category_name?: string;
+  parent_id?: string;
+  sort_order?: number;
+  description?: string;
+  status?: string;
+}
 
 export interface MethodValidation {
   id: string;
   method_id: string;
-  method_version?: string;
+  method_code: string;
+  method_name: string;
+  version: string;
   validation_type: string;
   validation_date: string;
-  result: string;
-  conclusion?: string;
-  performed_by?: string;
-  validated_by?: string;
+  validated_by: string;
+  conclusion: string;
   parameters?: Record<string, any>;
-  attachments?: string[];
+  report_url?: string;
+  notes?: string;
+  status: string;
   created_at: string;
 }
 
 export interface CreateMethodValidationRequest {
   method_id: string;
-  method_version?: string;
   validation_type: string;
-  validation_date: string;
-  result: string;
-  conclusion?: string;
-  performed_by?: string;
-  validated_by?: string;
+  validation_date?: string;
+  validated_by: string;
+  conclusion: string;
   parameters?: Record<string, any>;
+  report_url?: string;
+  notes?: string;
 }
 
 // ========== 能力验证类型定义 ==========
@@ -558,137 +573,188 @@ export interface CreateMethodValidationRequest {
 export interface PtPlan {
   id: string;
   plan_no: string;
-  name: string;
-  year: number;
+  plan_name: string;
   provider?: string;
-  plan_type?: string;
+  test_item?: string;
+  test_method?: string;
+  plan_year?: string;
+  sample_type?: string;
+  expected_result?: Record<string, any>;
+  registration_date?: string;
+  test_deadline?: string;
+  report_deadline?: string;
   status: string;
-  start_date?: string;
-  end_date?: string;
-  description?: string;
-  budget?: number;
-  responsible_person?: string;
-  created_at: string;
-  updated_at: string;
+  contact_person?: string;
+  contact_phone?: string;
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface CreatePtPlanRequest {
-  plan_no: string;
-  name: string;
-  year: number;
+  plan_name: string;
   provider?: string;
-  plan_type?: string;
-  status?: string;
-  start_date?: string;
-  end_date?: string;
-  description?: string;
-  budget?: number;
-  responsible_person?: string;
+  test_item?: string;
+  test_method?: string;
+  plan_year?: string;
+  sample_type?: string;
+  expected_result?: Record<string, any>;
+  registration_date?: string;
+  test_deadline?: string;
+  report_deadline?: string;
+  contact_person?: string;
+  contact_phone?: string;
+  notes?: string;
 }
 
-export interface UpdatePtPlanRequest extends Partial<CreatePtPlanRequest> {}
+export interface UpdatePtPlanRequest {
+  plan_name?: string;
+  provider?: string;
+  test_item?: string;
+  test_method?: string;
+  plan_year?: string;
+  sample_type?: string;
+  expected_result?: Record<string, any>;
+  registration_date?: string;
+  test_deadline?: string;
+  report_deadline?: string;
+  status?: string;
+  contact_person?: string;
+  contact_phone?: string;
+  notes?: string;
+}
 
 export interface PtSample {
   id: string;
   plan_id: string;
+  plan_no: string;
+  plan_name: string;
   sample_code: string;
   sample_name?: string;
-  test_item?: string;
   received_date?: string;
   received_by?: string;
-  status: string;
   storage_condition?: string;
-  description?: string;
-  created_at: string;
+  sample_status: string;
+  notes?: string;
+  created_at?: string;
+}
+
+export interface PtSampleReceiveRequest {
+  plan_id: string;
+  sample_code: string;
+  sample_name?: string;
+  received_by?: string;
+  storage_condition?: string;
+  notes?: string;
 }
 
 export interface PtResult {
   id: string;
   plan_id: string;
+  plan_no: string;
   sample_id: string;
+  sample_code: string;
   test_item: string;
-  measured_value?: number;
-  measured_unit?: string;
-  uncertainty?: number;
-  test_method?: string;
+  test_result?: number;
+  result_unit?: string;
   test_date?: string;
   tested_by?: string;
-  submitted: boolean;
+  instrument?: string;
+  test_method?: string;
+  replicate_results?: Record<string, any>;
+  mean_value?: number;
+  standard_deviation?: number;
+  coefficient_variation?: number;
+  notes?: string;
   submitted_at?: string;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface CreatePtResultRequest {
+  plan_id: string;
+  sample_id: string;
+  test_item: string;
+  test_result?: number;
+  result_unit?: string;
+  test_date?: string;
+  tested_by?: string;
+  instrument?: string;
+  test_method?: string;
+  replicate_results?: Record<string, any>;
+  notes?: string;
 }
 
 export interface PtEvaluation {
   id: string;
   plan_id: string;
-  result_id: string;
-  evaluation_method: string;
+  plan_no: string;
+  sample_id: string;
+  sample_code: string;
+  test_item: string;
+  test_result?: number;
+  assigned_value?: number;
+  standard_deviation?: number;
   z_score?: number;
   en_score?: number;
-  result: 'satisfactory' | 'questionable' | 'unsatisfactory';
-  conclusion?: string;
+  measurement_uncertainty?: number;
+  reference_uncertainty?: number;
+  evaluation_method?: string;
+  evaluation_result?: string;
   evaluated_by?: string;
   evaluated_at?: string;
-  created_at: string;
+  notes?: string;
+  created_at?: string;
+}
+
+export interface PtEvaluateRequest {
+  plan_id: string;
+  result_id: string;
+  assigned_value: number;
+  standard_deviation?: number;
+  measurement_uncertainty?: number;
+  reference_uncertainty?: number;
+  evaluation_method?: string;
+  evaluated_by?: string;
+  notes?: string;
 }
 
 export interface PtCorrectiveAction {
   id: string;
   plan_id: string;
-  evaluation_id?: string;
-  issue_description: string;
-  cause_analysis?: string;
-  corrective_action?: string;
-  preventive_action?: string;
+  plan_no: string;
+  evaluation_id: string;
+  unsatisfactory_item: string;
+  root_cause?: string;
+  corrective_measures?: string;
   responsible_person?: string;
-  due_date?: string;
+  deadline?: string;
   status: string;
-  completed_at?: string;
+  verification_result?: string;
   verified_by?: string;
-  created_at: string;
-  updated_at: string;
+  verified_at?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface CreatePtCorrectiveActionRequest {
   plan_id: string;
-  evaluation_id?: string;
-  issue_description: string;
-  cause_analysis?: string;
-  corrective_action?: string;
-  preventive_action?: string;
+  evaluation_id: string;
+  unsatisfactory_item: string;
+  root_cause?: string;
+  corrective_measures?: string;
   responsible_person?: string;
-  due_date?: string;
+  deadline?: string;
+}
+
+export interface UpdatePtCorrectiveActionRequest {
+  root_cause?: string;
+  corrective_measures?: string;
+  responsible_person?: string;
+  deadline?: string;
   status?: string;
-}
-
-export interface UpdatePtCorrectiveActionRequest extends Partial<CreatePtCorrectiveActionRequest> {}
-
-export interface ReceivePtSampleRequest {
-  sample_id: string;
-  received_date?: string;
-  received_by?: string;
-  condition?: string;
-}
-
-export interface SubmitPtResultRequest {
-  result_id: string;
-  measured_value?: number;
-  measured_unit?: string;
-  uncertainty?: number;
-  test_method?: string;
-  test_date?: string;
-  tested_by?: string;
-}
-
-export interface EvaluatePtResultRequest {
-  result_id: string;
-  evaluation_method: string;
-  z_score?: number;
-  en_score?: number;
-  result: 'satisfactory' | 'questionable' | 'unsatisfactory';
-  conclusion?: string;
-  evaluated_by?: string;
+  verification_result?: string;
+  verified_by?: string;
 }
 
 // ========== 不确定度评定类型定义 ==========
@@ -696,102 +762,170 @@ export interface EvaluatePtResultRequest {
 export interface UncertaintyProject {
   id: string;
   project_no: string;
-  name: string;
-  test_method_id?: string;
-  test_method_name?: string;
-  test_item: string;
+  project_name: string;
+  method_id?: string;
+  method_name?: string;
+  test_item?: string;
   measurand?: string;
   measurement_range?: string;
+  unit?: string;
   status: string;
-  responsible_person?: string;
-  start_date?: string;
-  completed_date?: string;
-  description?: string;
+  evaluator?: string;
+  evaluation_date?: string;
   combined_uncertainty?: number;
   expanded_uncertainty?: number;
   coverage_factor?: number;
   confidence_level?: number;
-  created_at: string;
-  updated_at: string;
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface CreateUncertaintyProjectRequest {
-  project_no: string;
-  name: string;
-  test_method_id?: string;
-  test_item: string;
+  project_name: string;
+  method_id?: string;
+  method_name?: string;
+  test_item?: string;
   measurand?: string;
   measurement_range?: string;
-  status?: string;
-  responsible_person?: string;
-  start_date?: string;
-  description?: string;
-  coverage_factor?: number;
-  confidence_level?: number;
+  unit?: string;
+  evaluator?: string;
+  notes?: string;
 }
 
-export interface UpdateUncertaintyProjectRequest extends Partial<CreateUncertaintyProjectRequest> {}
+export interface UpdateUncertaintyProjectRequest {
+  project_name?: string;
+  method_id?: string;
+  method_name?: string;
+  test_item?: string;
+  measurand?: string;
+  measurement_range?: string;
+  unit?: string;
+  status?: string;
+  evaluator?: string;
+  evaluation_date?: string;
+  coverage_factor?: number;
+  confidence_level?: number;
+  notes?: string;
+}
 
 export interface UncertaintySource {
   id: string;
   project_id: string;
-  name: string;
-  source_type: 'A' | 'B';
+  source_name: string;
+  source_type: string;
   description?: string;
-  symbol?: string;
   distribution_type?: string;
   sensitivity_coefficient?: number;
-  created_at: string;
-  updated_at: string;
+  sort_order: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface CreateUncertaintySourceRequest {
   project_id: string;
-  name: string;
-  source_type: 'A' | 'B';
+  source_name: string;
+  source_type: string;
   description?: string;
-  symbol?: string;
   distribution_type?: string;
   sensitivity_coefficient?: number;
+  sort_order?: number;
+}
+
+export interface UpdateUncertaintySourceRequest {
+  source_name?: string;
+  source_type?: string;
+  description?: string;
+  distribution_type?: string;
+  sensitivity_coefficient?: number;
+  sort_order?: number;
 }
 
 export interface UncertaintyComponent {
   id: string;
   project_id: string;
-  source_id?: string;
-  name: string;
-  symbol?: string;
-  standard_uncertainty: number;
-  sensitivity_coefficient: number;
-  uncertainty_contribution: number;
-  distribution_type?: string;
-  degrees_of_freedom?: number;
+  source_id: string;
+  source_name: string;
+  component_type: string;
+  component_name: string;
+  standard_uncertainty?: number;
+  relative_uncertainty?: number;
+  sensitivity_coefficient?: number;
+  degrees_freedom?: number;
+  calculation_method?: string;
+  parameters?: Record<string, any>;
   description?: string;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface CreateUncertaintyComponentRequest {
+  project_id: string;
+  source_id: string;
+  component_type: string;
+  component_name: string;
+  standard_uncertainty?: number;
+  relative_uncertainty?: number;
+  sensitivity_coefficient?: number;
+  degrees_freedom?: number;
+  calculation_method?: string;
+  parameters?: Record<string, any>;
+  description?: string;
+}
+
+export interface UpdateUncertaintyComponentRequest {
+  component_name?: string;
+  standard_uncertainty?: number;
+  relative_uncertainty?: number;
+  sensitivity_coefficient?: number;
+  degrees_freedom?: number;
+  calculation_method?: string;
+  parameters?: Record<string, any>;
+  description?: string;
+}
+
+export interface TypeACalculationRequest {
+  project_id: string;
+  source_id: string;
+  component_name: string;
+  measurements: number[];
+  sensitivity_coefficient?: number;
+}
+
+export interface TypeBCalculationRequest {
+  project_id: string;
+  source_id: string;
+  component_name: string;
+  uncertainty_value: number;
+  distribution_type: string;
+  sensitivity_coefficient?: number;
+  degrees_freedom?: number;
+  description?: string;
 }
 
 export interface UncertaintyCalculationResult {
-  project_id: string;
   combined_uncertainty: number;
   expanded_uncertainty: number;
   coverage_factor: number;
-  confidence_level: number;
   effective_degrees_of_freedom?: number;
-  components: UncertaintyComponent[];
+  component_count: number;
 }
 
 export interface UncertaintyReport {
-  project_id: string;
-  project_name: string;
-  report_date: string;
-  combined_uncertainty: number;
-  expanded_uncertainty: number;
-  coverage_factor: number;
-  confidence_level: number;
-  sources: UncertaintySource[];
-  components: UncertaintyComponent[];
-  conclusion?: string;
+  report_title: string;
+  report_no: string;
+  generated_at: string;
+  project: Record<string, any>;
+  sources: Record<string, any>[];
+  components: Record<string, any>[];
+  summary: {
+    source_count: number;
+    component_count: number;
+  };
+  sections: Array<{
+    title: string;
+    content: string;
+  }>;
 }
 
 // ========== 数据同步类型定义 ==========
@@ -1069,10 +1203,9 @@ export const methodCategoryApi = {
 
 export const methodValidationApi = {
   listMethodValidations: async (
-    methodId: string,
     params?: ListParams
-  ): Promise<ApiResponse<PaginatedResult<MethodValidation>>> => {
-    return apiClient.lims.get(`/api/lims/test-methods/${methodId}/validations`, { params });
+  ): Promise<ApiResponse<MethodValidation[]>> => {
+    return apiClient.lims.get('/api/lims/method-validations', { params });
   },
 
   createValidation: async (
@@ -1118,28 +1251,25 @@ export const ptPlanApi = {
 
 export const ptSampleApi = {
   receivePtSample: async (
-    sampleId: string,
-    data: ReceivePtSampleRequest
+    data: PtSampleReceiveRequest
   ): Promise<ApiResponse<PtSample>> => {
-    return apiClient.lims.post(`/api/lims/pt-samples/${sampleId}/receive`, data);
+    return apiClient.lims.post('/api/lims/pt-samples/receive', data);
   },
 };
 
 export const ptResultApi = {
   submitPtResult: async (
-    resultId: string,
-    data: SubmitPtResultRequest
+    data: CreatePtResultRequest
   ): Promise<ApiResponse<PtResult>> => {
-    return apiClient.lims.post(`/api/lims/pt-results/${resultId}/submit`, data);
+    return apiClient.lims.post('/api/lims/pt-results', data);
   },
 };
 
 export const ptEvaluationApi = {
   evaluatePtResult: async (
-    resultId: string,
-    data: EvaluatePtResultRequest
+    data: PtEvaluateRequest
   ): Promise<ApiResponse<PtEvaluation>> => {
-    return apiClient.lims.post(`/api/lims/pt-results/${resultId}/evaluate`, data);
+    return apiClient.lims.post('/api/lims/pt-evaluations', data);
   },
 };
 
@@ -1191,6 +1321,17 @@ export const uncertaintySourceApi = {
   ): Promise<ApiResponse<UncertaintySource>> => {
     return apiClient.lims.post('/api/lims/uncertainty-sources', data);
   },
+
+  updateUncertaintySource: async (
+    id: string,
+    data: UpdateUncertaintySourceRequest
+  ): Promise<ApiResponse<UncertaintySource>> => {
+    return apiClient.lims.put(`/api/lims/uncertainty-sources/${id}`, data);
+  },
+
+  deleteUncertaintySource: async (id: string): Promise<ApiResponse<boolean>> => {
+    return apiClient.lims.delete(`/api/lims/uncertainty-sources/${id}`);
+  },
 };
 
 export const uncertaintyComponentApi = {
@@ -1198,6 +1339,35 @@ export const uncertaintyComponentApi = {
     projectId: string
   ): Promise<ApiResponse<UncertaintyComponent[]>> => {
     return apiClient.lims.get(`/api/lims/uncertainty-projects/${projectId}/components`);
+  },
+
+  createUncertaintyComponent: async (
+    data: CreateUncertaintyComponentRequest
+  ): Promise<ApiResponse<UncertaintyComponent>> => {
+    return apiClient.lims.post('/api/lims/uncertainty-components', data);
+  },
+
+  updateUncertaintyComponent: async (
+    id: string,
+    data: UpdateUncertaintyComponentRequest
+  ): Promise<ApiResponse<UncertaintyComponent>> => {
+    return apiClient.lims.put(`/api/lims/uncertainty-components/${id}`, data);
+  },
+
+  deleteUncertaintyComponent: async (id: string): Promise<ApiResponse<boolean>> => {
+    return apiClient.lims.delete(`/api/lims/uncertainty-components/${id}`);
+  },
+
+  calculateTypeA: async (
+    data: TypeACalculationRequest
+  ): Promise<ApiResponse<UncertaintyComponent>> => {
+    return apiClient.lims.post('/api/lims/uncertainty/calculate-type-a', data);
+  },
+
+  calculateTypeB: async (
+    data: TypeBCalculationRequest
+  ): Promise<ApiResponse<UncertaintyComponent>> => {
+    return apiClient.lims.post('/api/lims/uncertainty/calculate-type-b', data);
   },
 
   calculateCombinedUncertainty: async (
@@ -1413,8 +1583,8 @@ export interface AuditLog {
   entity_ids?: string[] | null;
   user_id?: string;
   user_name?: string;
-  request_details?: any;
-  response_details?: any;
+  request_details?: Record<string, unknown>;
+  response_details?: Record<string, unknown>;
   status: 'success' | 'partial' | 'error';
   error_message?: string;
   ip_address?: string;
@@ -1616,7 +1786,14 @@ export const limsApi = {
   deleteUncertaintyProject: uncertaintyProjectApi.deleteUncertaintyProject,
   listUncertaintySources: uncertaintySourceApi.listUncertaintySources,
   createUncertaintySource: uncertaintySourceApi.createUncertaintySource,
+  updateUncertaintySource: uncertaintySourceApi.updateUncertaintySource,
+  deleteUncertaintySource: uncertaintySourceApi.deleteUncertaintySource,
   listUncertaintyComponents: uncertaintyComponentApi.listUncertaintyComponents,
+  createUncertaintyComponent: uncertaintyComponentApi.createUncertaintyComponent,
+  updateUncertaintyComponent: uncertaintyComponentApi.updateUncertaintyComponent,
+  deleteUncertaintyComponent: uncertaintyComponentApi.deleteUncertaintyComponent,
+  calculateTypeA: uncertaintyComponentApi.calculateTypeA,
+  calculateTypeB: uncertaintyComponentApi.calculateTypeB,
   calculateCombinedUncertainty: uncertaintyComponentApi.calculateCombinedUncertainty,
   generateUncertaintyReport: uncertaintyComponentApi.generateUncertaintyReport,
 

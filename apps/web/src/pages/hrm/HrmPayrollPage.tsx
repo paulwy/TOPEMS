@@ -20,7 +20,7 @@ import { Button } from '@mui/material';
 import { apiLogger } from '@/utils/logger';
 import { useNotification } from '@/hooks/useNotification';
 import { StatsChart } from '@/components/bi/StatsChart';
-import { StatusBadge } from '@/components/hrm/StatusBadge';
+import { StatusBadge } from '@/components/common/StatusBadge';
 import { ListPageTemplate, StatCard } from '@/components/mui';
 import type { ColumnDef, RowAction } from '@/components/mui';
 import {
@@ -166,8 +166,7 @@ const HrmPayrollPage: React.FC = () => {
 
   const getPayrollStatusBadge = (status: string) => (
     <StatusBadge
-      status={status}
-      category='payroll'
+      status={`payroll_${status}`}
       showIcon
     />
   );
@@ -491,8 +490,7 @@ const HrmPayrollPage: React.FC = () => {
         label: '状态',
         render: (row) => (
           <StatusBadge
-            status={row.status}
-            category='employee'
+            status={`employee_${row.status}`}
             showIcon
           />
         ),

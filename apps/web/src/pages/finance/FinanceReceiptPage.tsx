@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
-  ChevronLeft,
   Plus,
   Trash2,
   Banknote,
@@ -10,8 +9,7 @@ import {
   Check,
   RefreshCw,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { DataExport } from '@/components/common';
+import { DataExport, BackButton } from '@/components/common';
 import { ListPageTemplate, StatCardGroup } from '@/components/mui';
 import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
@@ -32,9 +30,9 @@ import {
   Box as MuiBox,
   Typography,
   Stack,
-  IconButton,
 } from '@mui/material';
 import { Button } from '@mui/material';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 
 interface Receipt {
   id: string;
@@ -48,7 +46,6 @@ interface Receipt {
 }
 
 const FinanceReceiptPage: React.FC = () => {
-  const navigate = useNavigate();
   const { success, error, notifications, hideNotification } = useNotification();
 
   const [receiptData, setReceiptData] = useState<Receipt[]>([]);
@@ -61,6 +58,8 @@ const FinanceReceiptPage: React.FC = () => {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedReceipt, setSelectedReceipt] = useState<Receipt | null>(null);
   const [selectedIds, setSelectedIds] = useState<(string | number)[]>([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [newReceipt, setNewReceipt] = useState({
     customer: '',
@@ -260,9 +259,14 @@ const FinanceReceiptPage: React.FC = () => {
     success('收款已核销');
   };
 
-  const handleDelete = (id: string) => {
-    if (!confirm('确定要删除该收款记录吗？')) return;
-    setReceiptData(receiptData.filter((r) => r.id !== id));
+  const handleDeleteClick = (id: string) => {
+    setDeletingId(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDelete = () => {
+    if (!deletingId) return;
+    setReceiptData(receiptData.filter((r) => r.id !== deletingId));
     success('收款记录已删除');
   };
 
@@ -376,7 +380,7 @@ const FinanceReceiptPage: React.FC = () => {
         label: '删除',
         icon: <Trash2 sx={{ width: 16, height: 16 }} />,
         color: 'error' as const,
-        onClick: (row: Receipt) => handleDelete(row.id),
+        onClick: (row: Receipt) => handleDeleteClick(row.id),
       },
     ],
     []
@@ -455,9 +459,7 @@ const FinanceReceiptPage: React.FC = () => {
               sx={{ alignItems: 'center' }}
               spacing={2}
             >
-              <IconButton onClick={() => navigate('/dashboard')}>
-                <ChevronLeft sx={{ width: 20, height: 20 }} />
-              </IconButton>
+              <BackButton href='/dashboard' />
               <MuiBox>
                 <Typography
                   variant='h5'
@@ -750,6 +752,18 @@ const FinanceReceiptPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => {
+          setDeleteDialogOpen(false);
+          setDeletingId(null);
+        }}
+        onConfirm={handleDelete}
+        title='确认删除'
+        message='确定要删除该收款记录吗？'
+        danger
+      />
     </MuiBox>
   );
 };

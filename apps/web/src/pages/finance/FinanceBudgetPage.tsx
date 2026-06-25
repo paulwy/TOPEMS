@@ -43,8 +43,9 @@ import { ListPageTemplate, StatCardGroup } from '@/components/mui';
 import OrganizationFilter, {
   type OrganizationFilterValue,
 } from '@/components/ui/OrganizationFilter';
-import { StatsChart } from '@/components/StatsChart';
+import { StatsChart } from '@/components/bi/StatsChart';
 import { apiLogger } from '@/utils/logger';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 
 const FinanceBudgetPage: React.FC = () => {
   const navigate = useNavigate();
@@ -63,6 +64,8 @@ const FinanceBudgetPage: React.FC = () => {
   const [organizationFilter, setOrganizationFilter] = useState<OrganizationFilterValue>({});
   const [selectedIds, setSelectedIds] = useState<(string | number)[]>([]);
   const [accountBalances, setAccountBalances] = useState<AccountBalance[]>([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     department_id: '',
@@ -165,25 +168,23 @@ const FinanceBudgetPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('确定要删除此预算吗？')) return;
-    try {
-      const response = await budgetApi.delete(id);
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '预算删除成功',
-          type: 'success',
-        });
-        loadBudgets();
-      }
-    } catch (err: unknown) {
-      apiLogger.error('删除预算失败:', err);
+  const handleDeleteClick = (id: string) => {
+    setDeletingId(id);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!deletingId) return;
+    const response = await budgetApi.delete(deletingId);
+    if (response.success) {
       addNotification({
-        title: '错误',
-        message: '删除预算失败',
-        type: 'error',
+        title: '成功',
+        message: '预算删除成功',
+        type: 'success',
       });
+      loadBudgets();
+    } else {
+      throw new Error('删除预算失败');
     }
   };
 
@@ -508,7 +509,7 @@ const FinanceBudgetPage: React.FC = () => {
         label: '删除',
         icon: <Trash2 sx={{ width: 16, height: 16 }} />,
         color: 'error' as const,
-        onClick: (row: Budget) => handleDelete(row.id),
+        onClick: (row: Budget) => handleDeleteClick(row.id),
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps

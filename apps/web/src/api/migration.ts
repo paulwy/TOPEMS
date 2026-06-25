@@ -21,20 +21,35 @@ export interface MigrationStatus {
   applied: AppliedMigration[];
 }
 
+export interface MigrationReport {
+  file: string;
+  success: boolean;
+  message?: string;
+}
+
 export interface MigrationApplyResult {
   files: string[];
-  reports: any[];
+  reports: MigrationReport[];
 }
 
 export interface RollbackResult {
-  record: any;
+  record: MigrationReport;
 }
 
-const extractMessage = (err: any): string => {
+const extractMessage = (err: unknown): string => {
   if (!err) return '未知错误';
   if (typeof err === 'string') return err;
-  if (err.message) return err.message;
-  if (err.response?.data?.message) return err.response.data.message;
+  if (err && typeof err === 'object' && 'message' in err && typeof (err as { message?: unknown }).message === 'string') {
+    return (err as { message: string }).message;
+  }
+  if (
+    err &&
+    typeof err === 'object' &&
+    'response' in err &&
+    (err as { response?: { data?: { message?: string } } }).response?.data?.message
+  ) {
+    return (err as { response: { data: { message: string } } }).response.data.message;
+  }
   return '请求失败，请稍后重试';
 };
 

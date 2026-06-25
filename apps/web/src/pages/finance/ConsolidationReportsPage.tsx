@@ -1,124 +1,38 @@
-import { Grid } from '@/components/Grid';
-
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { ColumnDef } from '@tanstack/react-table';
-import {
-  Plus,
-  Search,
-  Download,
-  RefreshCw,
-  FileSpreadsheet,
-  FileText,
-  TrendingUp,
-  TrendingDown,
-  Building2,
-  DollarSign,
-  BarChart3,
-  GitMerge,
-  Check,
-  X,
-  Eye,
-  Send,
-} from 'lucide-react';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  FormControl,
-  IconButton,
-  InputLabel,
-  MenuItem,
-  Paper,
-  Select,
-  Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
-  Typography,
-  Box,
-} from '@mui/material';
-import { Button } from '@mui/material';
-import {
-  useConsolidationReports,
-  useConsolidationReport,
-  useConsolidationReportLines,
-  useApproveConsolidationReport,
-  usePublishConsolidationReport,
-  useConsolidationScopes,
-} from '@/hooks/useConsolidation';
+import { GitMerge, Building2, TrendingUp, DollarSign, BarChart3, FileSpreadsheet, Plus, Eye, Send, Check, Download, Search, RefreshCw } from 'lucide-react';
+import { Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, IconButton, InputLabel, MenuItem, Select, TextField, Typography } from '@mui/material';
+import { useConsolidationReports, useConsolidationReportLines, useConsolidationScopes, useApproveConsolidationReport, usePublishConsolidationReport } from '@/hooks/useConsolidation';
 import { useNotification } from '@/hooks/useNotification';
-import { EnhancedDataTable } from '@/components/EnhancedDataTable';
-import { StatCardGroup } from '@/components/mui';
-import type {
-  ConsolidationReport,
-  ConsolidationReportLine,
-  ConsolidationReportType,
-} from '@/types/consolidation';
+import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
+import type { StatCard, ChartConfig, DataTable, TableColumn } from '@/components/templates/StatsPageTemplate';
+import type { ConsolidationReport, ConsolidationReportType } from '@/types/consolidation';
 
-// 报表类型配置
-type ReportTypeConfig = {
-  name: string;
-  icon: React.ElementType;
-  color: 'primary' | 'success' | 'warning' | 'error' | 'secondary' | 'info';
-};
-const REPORT_TYPE_CONFIG: Record<ConsolidationReportType, ReportTypeConfig> = {
-  consolidated_balance_sheet: {
-    name: '合并资产负债表',
-    icon: Building2,
-    color: 'primary',
-  },
-  consolidated_income_statement: {
-    name: '合并利润表',
-    icon: TrendingUp,
-    color: 'success',
-  },
-  consolidated_cash_flow: {
-    name: '合并现金流量表',
-    icon: DollarSign,
-    color: 'secondary',
-  },
-  consolidated_statement_changes: {
-    name: '合并所有者权益变动表',
-    icon: BarChart3,
-    color: 'warning',
-  },
-  elimination_work_sheet: {
-    name: '抵消工作底稿',
-    icon: FileSpreadsheet,
-    color: 'info',
-  },
+const REPORT_TYPE_CONFIG: Record<ConsolidationReportType, { name: string; icon: React.ElementType; color: string }> = {
+  consolidated_balance_sheet: { name: '合并资产负债表', icon: Building2, color: '#1976D2' },
+  consolidated_income_statement: { name: '合并利润表', icon: TrendingUp, color: '#00C897' },
+  consolidated_cash_flow: { name: '合并现金流量表', icon: DollarSign, color: '#8B5CF6' },
+  consolidated_statement_changes: { name: '合并所有者权益变动表', icon: BarChart3, color: '#F59E0B' },
+  elimination_work_sheet: { name: '抵消工作底稿', icon: FileSpreadsheet, color: '#6366F1' },
 };
 
-// 报表状态配置
-const STATUS_CONFIG = {
-  draft: { label: '草稿', color: 'bg-gray-100 text-gray-800' },
-  calculating: { label: '计算中', color: 'bg-blue-100 text-blue-800' },
-  completed: { label: '已完成', color: 'bg-green-100 text-green-800' },
-  published: { label: '已发布', color: 'bg-purple-100 text-purple-800' },
+const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
+  draft: { label: '草稿', color: 'grey' },
+  calculating: { label: '计算中', color: 'primary' },
+  completed: { label: '已完成', color: 'success' },
+  published: { label: '已发布', color: 'secondary' },
 };
 
-// 审批状态配置
-const APPROVAL_STATUS_CONFIG = {
-  pending: { label: '待审批', color: 'bg-yellow-100 text-yellow-800' },
-  approved: { label: '已审批', color: 'bg-green-100 text-green-800' },
-  rejected: { label: '已驳回', color: 'bg-red-100 text-red-800' },
+const APPROVAL_STATUS_CONFIG: Record<string, { label: string; color: string }> = {
+  pending: { label: '待审批', color: 'warning' },
+  approved: { label: '已审批', color: 'success' },
+  rejected: { label: '已驳回', color: 'error' },
 };
 
 export default function ConsolidationReportsPage() {
   const navigate = useNavigate();
   const { error: notifyError } = useNotification();
 
-  // 状态
   const [searchKeyword, setSearchKeyword] = useState('');
   const [selectedScope, setSelectedScope] = useState<string>('');
   const [reportType, setReportType] = useState<ConsolidationReportType | ''>('');
@@ -126,763 +40,279 @@ export default function ConsolidationReportsPage() {
   const [selectedReport, setSelectedReport] = useState<ConsolidationReport | null>(null);
   const [showDetail, setShowDetail] = useState(false);
 
-  // 查询合并范围列表
   const { data: scopesData, error: scopesError } = useConsolidationScopes();
 
-  // 查询合并报表列表
-  const {
-    data: reportsData,
-    isLoading,
-    refetch,
-    error: reportsError,
-  } = useConsolidationReports({
+  const { data: reportsData, isLoading, refetch, error: reportsError } = useConsolidationReports({
     scope_id: selectedScope || undefined,
     report_type: reportType || undefined,
     period_from: period,
     period_to: period,
   });
 
-  // 查询选中报表详情
-  const { data: reportDetail, error: reportDetailError } = useConsolidationReportLines(
-    selectedReport?.id || ''
-  );
+  const { data: reportDetail } = useConsolidationReportLines(selectedReport?.id || '');
 
-  // 审批报表
   const approveReport = useApproveConsolidationReport();
-
-  // 发布报表
   const publishReport = usePublishConsolidationReport();
 
   useEffect(() => {
-    if (scopesError) {
-      notifyError('获取合并范围列表失败');
-    }
+    if (scopesError) notifyError('获取合并范围列表失败');
   }, [scopesError, notifyError]);
 
   useEffect(() => {
-    if (reportsError) {
-      notifyError('获取报表列表失败');
-    }
+    if (reportsError) notifyError('获取报表列表失败');
   }, [reportsError, notifyError]);
 
-  useEffect(() => {
-    if (reportDetailError) {
-      notifyError('获取报表详情失败');
-    }
-  }, [reportDetailError, notifyError]);
-
-  // 处理查看报表详情
   const handleViewReport = (report: ConsolidationReport) => {
     setSelectedReport(report);
     setShowDetail(true);
   };
 
-  // 报表列定义
-  const columns: ColumnDef<ConsolidationReport>[] = [
-    {
-      id: 'report_no',
-      header: '报表编号',
-      accessorKey: 'report_no',
-      cell: ({ row }) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <GitMerge style={{ width: 16, height: 16, color: 'primary.dark' }} />
-          <Typography
-            variant='body2'
-            sx={{ fontFamily: 'monospace' }}
-          >
-            {row.getValue('report_no')}
-          </Typography>
-        </Box>
-      ),
-    },
-    {
-      id: 'report_type',
-      header: '报表类型',
-      accessorKey: 'report_type',
-      cell: ({ row }) => {
-        const reportType = row.getValue<string>('report_type');
-        let IconComponent: React.ElementType = FileText;
-        let name = reportType;
-        let color = 'text.secondary';
+  const reports = reportsData?.items || [];
 
-        switch (reportType) {
-          case 'consolidated_balance_sheet':
-            IconComponent = Building2;
-            name = '合并资产负债表';
-            color = 'primary.dark';
-            break;
-          case 'consolidated_income_statement':
-            IconComponent = TrendingUp;
-            name = '合并利润表';
-            color = 'success.dark';
-            break;
-          case 'consolidated_cash_flow':
-            IconComponent = DollarSign;
-            name = '合并现金流量表';
-            color = '#9333ea';
-            break;
-          case 'consolidated_statement_changes':
-            IconComponent = BarChart3;
-            name = '合并所有者权益变动表';
-            color = '#ea580c';
-            break;
-          case 'elimination_work_sheet':
-            IconComponent = FileSpreadsheet;
-            name = '抵消工作底稿';
-            color = 'text.secondary';
-            break;
-        }
-
-        return (
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              fontWeight: 500,
-              color,
-            }}
-          >
-            <IconComponent style={{ width: 16, height: 16 }} />
-            {name}
-          </Box>
-        );
-      },
-    },
+  const statCards = useMemo<StatCard[]>(() => [
     {
-      id: 'scope_name',
-      header: '合并范围',
-      accessorKey: 'scope_name',
-      cell: ({ row }) => (
-        <Chip
-          size='small'
-          variant='outlined'
-          label={row.getValue('scope_name')}
-        />
-      ),
-    },
-    {
-      id: 'period',
-      header: '期间',
-      accessorKey: 'period',
-      cell: ({ row }) => (
-        <Typography
-          variant='body2'
-          sx={{ fontFamily: 'monospace' }}
-        >
-          {row.getValue('period')}
-        </Typography>
-      ),
-    },
-    {
-      id: 'company_count',
-      header: '公司数',
-      accessorKey: 'company_count',
-      cell: ({ row }) => (
-        <Typography variant='body2'>
-          {row.getValue('company_count')}家
-          {row.original.eliminated_company_count > 0 && (
-            <Typography
-              component='span'
-              color='text.secondary'
-            >
-              {' '}
-              (抵消{row.original.eliminated_company_count}家)
-            </Typography>
-          )}
-        </Typography>
-      ),
-    },
-    {
-      id: 'total_assets',
-      header: '资产总计',
-      accessorKey: 'total_assets',
-      cell: ({ row }) => (
-        <Typography
-          variant='body2'
-          sx={{ fontFamily: 'monospace', textAlign: 'right' }}
-        >
-          {row.original.total_assets
-            ? `¥${row.original.total_assets.toLocaleString('zh-CN')}`
-            : '-'}
-        </Typography>
-      ),
-    },
-    {
-      id: 'net_profit',
-      header: '净利润',
-      accessorKey: 'net_profit',
-      cell: ({ row }) => {
-        const value = row.original.归属于母公司净利润 || row.original.net_profit;
-        if (!value) return <Typography color='text.disabled'>-</Typography>;
-        const isPositive = value >= 0;
-        return (
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 0.5,
-              fontFamily: 'monospace',
-              justifyContent: 'flex-end',
-              color: isPositive ? 'success.main' : 'error.main',
-            }}
-          >
-            {isPositive ? (
-              <TrendingUp style={{ width: 16, height: 16 }} />
-            ) : (
-              <TrendingDown style={{ width: 16, height: 16 }} />
-            )}
-            ¥{Math.abs(value).toLocaleString('zh-CN')}
-          </Box>
-        );
-      },
-    },
-    {
-      id: 'status',
-      header: '状态',
-      accessorKey: 'status',
-      cell: ({ row }) => {
-        const status = row.getValue<string>('status');
-        const config = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG] || {
-          label: status,
-          color: 'bg-gray-100 text-gray-800',
-        };
-        return (
-          <Chip
-            size='small'
-            label={config.label}
-            sx={{
-              bgcolor: config.color.split(' ')[0].replace('bg-', '').replace('-100', '.lighter'),
-              color: config.color.split(' ')[1].replace('text-', '').replace('-800', '.main'),
-            }}
-          />
-        );
-      },
-    },
-    {
-      id: 'approval_status',
-      header: '审批',
-      accessorKey: 'approval_status',
-      cell: ({ row }) => {
-        const approvalStatus = row.getValue<string>('approval_status');
-        const config = APPROVAL_STATUS_CONFIG[
-          approvalStatus as keyof typeof APPROVAL_STATUS_CONFIG
-        ] || {
-          label: approvalStatus,
-          color: 'bg-gray-100 text-gray-800',
-        };
-        return (
-          <Chip
-            size='small'
-            label={config.label}
-            sx={{
-              bgcolor: config.color.split(' ')[0].replace('bg-', '').replace('-100', '.lighter'),
-              color: config.color.split(' ')[1].replace('text-', '').replace('-800', '.main'),
-            }}
-          />
-        );
-      },
-    },
-    {
-      id: 'actions',
-      header: '操作',
-      cell: ({ row }) => (
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <IconButton
-            size='small'
-            onClick={() => handleViewReport(row.original)}
-          >
-            <Eye style={{ width: 16, height: 16 }} />
-          </IconButton>
-          {row.original.approval_status === 'pending' && row.original.status === 'completed' && (
-            <IconButton
-              size='small'
-              onClick={() => approveReport.mutate(row.original.id)}
-            >
-              <Check style={{ width: 16, height: 16, color: 'success.dark' }} />
-            </IconButton>
-          )}
-          {row.original.approval_status === 'approved' && row.original.status === 'completed' && (
-            <IconButton
-              size='small'
-              onClick={() => publishReport.mutate(row.original.id)}
-            >
-              <Send style={{ width: 16, height: 16, color: 'primary.dark' }} />
-            </IconButton>
-          )}
-          <IconButton size='small'>
-            <Download style={{ width: 16, height: 16 }} />
-          </IconButton>
-        </Box>
-      ),
-    },
-  ];
-
-  // 报表汇总统计数据
-  const reportStats = [
-    {
+      id: 'balance-sheet',
       title: '合并资产负债表',
-      value:
-        reportsData?.items?.filter((r) => r.report_type === 'consolidated_balance_sheet').length ||
-        0,
-      icon: <Building2 style={{ width: 24, height: 24 }} />,
-      color: 'primary' as const,
-      onClick: () => setReportType('consolidated_balance_sheet' as ConsolidationReportType),
+      value: reports.filter((r) => r.report_type === 'consolidated_balance_sheet').length,
+      icon: <Building2 sx={{ width: 24, height: 24 }} />,
+      gradient: ['#1976D2', '#1565C0'] as [string, string],
     },
     {
+      id: 'income-statement',
       title: '合并利润表',
-      value:
-        reportsData?.items?.filter((r) => r.report_type === 'consolidated_income_statement')
-          .length || 0,
-      icon: <TrendingUp style={{ width: 24, height: 24 }} />,
-      color: 'success' as const,
-      onClick: () => setReportType('consolidated_income_statement' as ConsolidationReportType),
+      value: reports.filter((r) => r.report_type === 'consolidated_income_statement').length,
+      icon: <TrendingUp sx={{ width: 24, height: 24 }} />,
+      gradient: ['#00C897', '#00A878'] as [string, string],
     },
     {
+      id: 'cash-flow',
       title: '合并现金流量表',
-      value:
-        reportsData?.items?.filter((r) => r.report_type === 'consolidated_cash_flow').length || 0,
-      icon: <DollarSign style={{ width: 24, height: 24 }} />,
-      color: 'secondary' as const,
-      onClick: () => setReportType('consolidated_cash_flow' as ConsolidationReportType),
+      value: reports.filter((r) => r.report_type === 'consolidated_cash_flow').length,
+      icon: <DollarSign sx={{ width: 24, height: 24 }} />,
+      gradient: ['#8B5CF6', '#7C3AED'] as [string, string],
     },
     {
-      title: '合并所有者权益变动表',
-      value:
-        reportsData?.items?.filter((r) => r.report_type === 'consolidated_statement_changes')
-          .length || 0,
-      icon: <BarChart3 style={{ width: 24, height: 24 }} />,
-      color: 'warning' as const,
-      onClick: () => setReportType('consolidated_statement_changes' as ConsolidationReportType),
+      id: 'equity-changes',
+      title: '所有者权益变动表',
+      value: reports.filter((r) => r.report_type === 'consolidated_statement_changes').length,
+      icon: <BarChart3 sx={{ width: 24, height: 24 }} />,
+      gradient: ['#F59E0B', '#D97706'] as [string, string],
     },
+  ], [reports]);
+
+  const charts = useMemo<ChartConfig[]>(() => {
+    const statusDistribution = {
+      draft: reports.filter((r) => r.status === 'draft').length,
+      calculating: reports.filter((r) => r.status === 'calculating').length,
+      completed: reports.filter((r) => r.status === 'completed').length,
+      published: reports.filter((r) => r.status === 'published').length,
+    };
+
+    return [
+      {
+        id: 'status-distribution',
+        title: '报表状态分布',
+        type: 'pie',
+        dataKey: 'value',
+        nameKey: 'name',
+        data: [
+          { name: '草稿', value: statusDistribution.draft, color: 'grey' },
+          { name: '计算中', value: statusDistribution.calculating, color: '#1976D2' },
+          { name: '已完成', value: statusDistribution.completed, color: '#00C897' },
+          { name: '已发布', value: statusDistribution.published, color: '#8B5CF6' },
+        ].filter((d) => d.value > 0),
+        height: 250,
+      },
+    ];
+  }, [reports]);
+
+  const tableColumns: TableColumn[] = [
+    { id: 'report_no', label: '报表编号', field: 'report_no' },
+    { id: 'report_type', label: '报表类型', field: 'report_type' },
+    { id: 'scope_name', label: '合并范围', field: 'scope_name' },
+    { id: 'period', label: '期间', field: 'period' },
+    { id: 'company_count', label: '公司数', field: 'company_count' },
+    { id: 'total_assets', label: '资产总计', field: 'total_assets', align: 'right' },
+    { id: 'net_profit', label: '净利润', field: 'net_profit', align: 'right' },
+    { id: 'status', label: '状态', field: 'status', align: 'center' },
+    { id: 'approval_status', label: '审批', field: 'approval_status', align: 'center' },
+    { id: 'actions', label: '操作', field: 'actions', align: 'center' },
   ];
 
-  return (
-    <Box
-      sx={{
-        containerType: 'inline-size',
-        mx: 'auto',
-        p: 3,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 3,
-      }}
-    >
-      {/* 页面标题 */}
-      <Stack
-        direction='row'
-        sx={{ alignItems: 'center', justifyContent: 'space-between' }}
-      >
-        <Box>
-          <Typography
-            variant='h5'
-            sx={{
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-            }}
-          >
-            <GitMerge style={{ width: 24, height: 24, color: 'primary.dark' }} />
-            合并报表
-          </Typography>
-          <Typography
-            variant='body2'
-            color='text.secondary'
-            sx={{ mt: 0.5 }}
-          >
-            查看多公司合并后的财务报表
-          </Typography>
-        </Box>
-        <Button
-          variant='contained'
-          onClick={() => navigate('/finance/consolidation/reports/generate')}
-        >
-          <Plus style={{ width: 16, height: 16, marginRight: 8 }} />
-          生成合并报表
-        </Button>
-      </Stack>
+  const tables = useMemo<DataTable[]>(() => [
+    {
+      id: 'report-list',
+      title: '合并报表列表',
+      columns: tableColumns,
+      data: reports.map((report) => ({
+        report_no: report.report_no,
+        report_type: REPORT_TYPE_CONFIG[report.report_type]?.name || report.report_type,
+        scope_name: report.scope_name,
+        period: report.period,
+        company_count: `${report.company_count}家${report.eliminated_company_count > 0 ? ` (抵消${report.eliminated_company_count}家)` : ''}`,
+        total_assets: report.total_assets ? `¥${report.total_assets.toLocaleString('zh-CN')}` : '-',
+        net_profit: (report.归属于母公司净利润 || report.net_profit)
+          ? `¥${Math.abs(report.归属于母公司净利润 || report.net_profit).toLocaleString('zh-CN')}`
+          : '-',
+        status: STATUS_CONFIG[report.status]?.label || report.status,
+        approval_status: APPROVAL_STATUS_CONFIG[report.approval_status]?.label || report.approval_status,
+        actions: '',
+      })),
+      loading: isLoading,
+    },
+  ], [reports, isLoading]);
 
-      {/* 搜索筛选栏 */}
-      <Card>
-        <CardContent sx={{ pt: 3 }}>
-          <Grid
-            container
-            spacing={2}
-          >
-            <Grid size={{ xs: 12, md: 2.4 }}>
-              <Typography
-                variant='caption'
-                color='text.secondary'
-                sx={{ mb: 1, display: 'block' }}
-              >
-                合并范围
-              </Typography>
-              <FormControl
-                size='small'
-                fullWidth
-              >
-                <Select
-                  value={selectedScope}
-                  onChange={(e) => setSelectedScope(e.target.value)}
-                  displayEmpty
-                >
-                  <MenuItem value=''>全部范围</MenuItem>
-                  {scopesData?.items?.map((scope) => (
-                    <MenuItem
-                      key={scope.id}
-                      value={scope.id}
-                    >
-                      {scope.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12, md: 2.4 }}>
-              <Typography
-                variant='caption'
-                color='text.secondary'
-                sx={{ mb: 1, display: 'block' }}
-              >
-                报表类型
-              </Typography>
-              <FormControl
-                size='small'
-                fullWidth
-              >
-                <Select
-                  value={reportType}
-                  onChange={(e) => setReportType(e.target.value as ConsolidationReportType)}
-                  displayEmpty
-                >
-                  <MenuItem value=''>全部类型</MenuItem>
-                  {Object.entries(REPORT_TYPE_CONFIG).map(([key, config]) => (
-                    <MenuItem
-                      key={key}
-                      value={key}
-                    >
-                      {config.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Grid>
-            <Grid size={{ xs: 12, md: 2.4 }}>
-              <Typography
-                variant='caption'
-                color='text.secondary'
-                sx={{ mb: 1, display: 'block' }}
-              >
-                会计期间
-              </Typography>
-              <TextField
-                size='small'
-                type='month'
-                fullWidth
-                value={period}
-                onChange={(e) => setPeriod(e.target.value)}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 2.4 }}>
-              <Typography
-                variant='caption'
-                color='text.secondary'
-                sx={{ mb: 1, display: 'block' }}
-              >
-                搜索
-              </Typography>
-              <Box sx={{ position: 'relative' }}>
-                <Search
-                  style={{
-                    position: 'absolute',
-                    left: 12,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    width: 16,
-                    height: 16,
-                    color: 'text.disabled',
-                  }}
-                />
-                <TextField
-                  size='small'
-                  placeholder='报表编号...'
-                  fullWidth
-                  value={searchKeyword}
-                  onChange={(e) => setSearchKeyword(e.target.value)}
-                  sx={{ '& .MuiOutlinedInput-root': { pl: 4 } }}
-                />
-              </Box>
-            </Grid>
-            <Grid
-              size={{ xs: 12, md: 2.4 }}
-              sx={{ display: 'flex', alignItems: 'flex-end', gap: 1 }}
-            >
-              <Button
-                variant='outlined'
-                onClick={() => refetch()}
-              >
-                <RefreshCw style={{ width: 16, height: 16, marginRight: 8 }} />
-                刷新
-              </Button>
-              <Button variant='outlined'>
-                <Download style={{ width: 16, height: 16, marginRight: 8 }} />
-                导出
-              </Button>
-            </Grid>
-          </Grid>
-        </CardContent>
-      </Card>
+  const customToolbar = (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+      <FormControl size='small' sx={{ minWidth: 140 }}>
+        <InputLabel>合并范围</InputLabel>
+        <Select value={selectedScope} onChange={(e) => setSelectedScope(e.target.value)} displayEmpty>
+          <MenuItem value=''>全部范围</MenuItem>
+          {scopesData?.items?.map((scope) => (
+            <MenuItem key={scope.id} value={scope.id}>{scope.name}</MenuItem>
+          ))}
+        </Select>
+      </FormControl>
 
-      {/* 报表汇总卡片 */}
-      <StatCardGroup
-        stats={reportStats}
-        loading={isLoading}
+      <FormControl size='small' sx={{ minWidth: 140 }}>
+        <InputLabel>报表类型</InputLabel>
+        <Select value={reportType} onChange={(e) => setReportType(e.target.value as ConsolidationReportType)} displayEmpty>
+          <MenuItem value=''>全部类型</MenuItem>
+          {Object.entries(REPORT_TYPE_CONFIG).map(([key, config]) => (
+            <MenuItem key={key} value={key}>{config.name}</MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+
+      <TextField
+        size='small'
+        type='month'
+        label='会计期间'
+        value={period}
+        onChange={(e) => setPeriod(e.target.value)}
+        sx={{ minWidth: 140 }}
       />
 
-      {/* 报表列表 */}
-      <Card>
-        <CardHeader
-          title={
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <FileSpreadsheet style={{ width: 20, height: 20, color: 'primary.dark' }} />
-              <Typography variant='subtitle1'>合并报表列表</Typography>
-            </Box>
-          }
-        />
-        <CardContent>
-          <EnhancedDataTable
-            columns={columns}
-            data={reportsData?.items || []}
-            loading={isLoading}
-          />
-        </CardContent>
-      </Card>
+      <Button variant='contained' onClick={() => navigate('/finance/consolidation/reports/generate')}>
+        <Plus sx={{ width: 16, height: 16, marginRight: 8 }} />
+        生成合并报表
+      </Button>
+    </Box>
+  );
 
-      {/* 报表详情Modal */}
+  return (
+    <>
+      <StatsPageTemplate
+        title='合并报表'
+        subtitle='查看多公司合并后的财务报表'
+        statCards={statCards}
+        statColumns={4}
+        charts={charts}
+        chartColumns={{ xs: 1, md: 2 }}
+        tables={tables}
+        loading={isLoading}
+        search={{
+          value: searchKeyword,
+          onChange: setSearchKeyword,
+          placeholder: '报表编号...',
+        }}
+        onRefresh={refetch}
+        showExport={true}
+        showRefresh={true}
+        showTimeRange={false}
+        showSearch={true}
+        customToolbar={customToolbar}
+        statCardDirection='row'
+      />
+
       {showDetail && selectedReport && (
-        <Dialog
-          open={showDetail}
-          onClose={() => setShowDetail(false)}
-          maxWidth='lg'
-          fullWidth
-        >
+        <Dialog open={showDetail} onClose={() => setShowDetail(false)} maxWidth='lg' fullWidth>
           <DialogTitle>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <Box>
-                <Typography variant='h6'>
-                  {REPORT_TYPE_CONFIG[selectedReport.report_type]?.name ||
-                    selectedReport.report_type}
-                </Typography>
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
-                  {selectedReport.scope_name} | {selectedReport.period}
-                </Typography>
+                <Typography variant='h6'>{REPORT_TYPE_CONFIG[selectedReport.report_type]?.name || selectedReport.report_type}</Typography>
+                <Typography variant='body2' color='text.secondary'>{selectedReport.scope_name} | {selectedReport.period}</Typography>
               </Box>
-              <IconButton onClick={() => setShowDetail(false)}>
-                <X style={{ width: 20, height: 20 }} />
-              </IconButton>
+              <IconButton onClick={() => setShowDetail(false)}><X style={{ width: 20, height: 20 }} /></IconButton>
             </Box>
           </DialogTitle>
           <DialogContent dividers>
-            {/* 汇总数据 */}
-            <Grid
-              container
-              spacing={2}
-              sx={{ mb: 3 }}
-            >
-              {selectedReport.total_assets && (
-                <Grid size={{ xs: 12, md: 3 }}>
-                  <Card variant='outlined'>
-                    <CardContent>
-                      <Typography
-                        variant='body2'
-                        color='text.secondary'
-                      >
-                        资产总计
-                      </Typography>
-                      <Typography
-                        variant='h6'
-                        sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}
-                      >
-                        ¥{selectedReport.total_assets.toLocaleString('zh-CN')}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              )}
-              {selectedReport.total_liabilities && (
-                <Grid size={{ xs: 12, md: 3 }}>
-                  <Card variant='outlined'>
-                    <CardContent>
-                      <Typography
-                        variant='body2'
-                        color='text.secondary'
-                      >
-                        负债合计
-                      </Typography>
-                      <Typography
-                        variant='h6'
-                        sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}
-                      >
-                        ¥{selectedReport.total_liabilities.toLocaleString('zh-CN')}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              )}
-              {selectedReport.total_equity && (
-                <Grid size={{ xs: 12, md: 3 }}>
-                  <Card variant='outlined'>
-                    <CardContent>
-                      <Typography
-                        variant='body2'
-                        color='text.secondary'
-                      >
-                        所有者权益
-                      </Typography>
-                      <Typography
-                        variant='h6'
-                        sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}
-                      >
-                        ¥{selectedReport.total_equity.toLocaleString('zh-CN')}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              )}
-              {selectedReport.net_profit && (
-                <Grid size={{ xs: 12, md: 3 }}>
-                  <Card variant='outlined'>
-                    <CardContent>
-                      <Typography
-                        variant='body2'
-                        color='text.secondary'
-                      >
-                        净利润
-                      </Typography>
-                      <Typography
-                        variant='h6'
-                        sx={{
-                          fontFamily: 'monospace',
-                          fontWeight: 'bold',
-                          color: selectedReport.net_profit >= 0 ? 'success.main' : 'error.main',
-                        }}
-                      >
-                        ¥{selectedReport.net_profit.toLocaleString('zh-CN')}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                </Grid>
-              )}
-            </Grid>
+            {selectedReport.total_assets && (
+              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2, mb: 3 }}>
+                <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+                  <Typography variant='body2' color='text.secondary'>资产总计</Typography>
+                  <Typography variant='h6' sx={{ fontWeight: 'bold', mt: 0.5 }}>¥{selectedReport.total_assets.toLocaleString('zh-CN')}</Typography>
+                </Box>
+                {selectedReport.total_liabilities && (
+                  <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+                    <Typography variant='body2' color='text.secondary'>负债合计</Typography>
+                    <Typography variant='h6' sx={{ fontWeight: 'bold', mt: 0.5 }}>¥{selectedReport.total_liabilities.toLocaleString('zh-CN')}</Typography>
+                  </Box>
+                )}
+                {selectedReport.total_equity && (
+                  <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+                    <Typography variant='body2' color='text.secondary'>所有者权益</Typography>
+                    <Typography variant='h6' sx={{ fontWeight: 'bold', mt: 0.5 }}>¥{selectedReport.total_equity.toLocaleString('zh-CN')}</Typography>
+                  </Box>
+                )}
+                {selectedReport.net_profit && (
+                  <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
+                    <Typography variant='body2' color='text.secondary'>净利润</Typography>
+                    <Typography variant='h6' sx={{ fontWeight: 'bold', mt: 0.5, color: selectedReport.net_profit >= 0 ? 'success.main' : 'error.main' }}>¥{selectedReport.net_profit.toLocaleString('zh-CN')}</Typography>
+                  </Box>
+                )}
+              </Box>
+            )}
 
-            {/* 报表行项目 */}
-            <TableContainer
-              component={Paper}
-              variant='outlined'
-            >
-              <Table size='small'>
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ width: 200 }}>项目</TableCell>
-                    <TableCell align='right'>本期金额</TableCell>
-                    <TableCell align='right'>上期金额</TableCell>
-                    <TableCell align='right'>变动</TableCell>
-                    <TableCell align='right'>变动率</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {reportDetail?.data?.map((line) => {
-                    const change = line.current_period - (line.prior_period || 0);
-                    const changeRate =
-                      line.prior_period && line.prior_period !== 0
-                        ? (change / line.prior_period) * 100
-                        : 0;
-                    return (
-                      <TableRow key={line.id}>
-                        <TableCell
-                          sx={{
-                            pl: `${line.item_level * 16 + 12}px`,
-                          }}
-                        >
-                          {line.item_name}
-                        </TableCell>
-                        <TableCell
-                          align='right'
-                          sx={{ fontFamily: 'monospace' }}
-                        >
-                          {line.current_period.toLocaleString('zh-CN', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </TableCell>
-                        <TableCell
-                          align='right'
-                          sx={{
-                            fontFamily: 'monospace',
-                            color: 'text.secondary',
-                          }}
-                        >
-                          {line.prior_period?.toLocaleString('zh-CN', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          }) || '-'}
-                        </TableCell>
-                        <TableCell
-                          align='right'
-                          sx={{
-                            fontFamily: 'monospace',
-                            color: change >= 0 ? 'success.main' : 'error.main',
-                          }}
-                        >
-                          {change.toLocaleString('zh-CN', {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                          })}
-                        </TableCell>
-                        <TableCell
-                          align='right'
-                          sx={{
-                            fontFamily: 'monospace',
-                            color: changeRate >= 0 ? 'success.main' : 'error.main',
-                          }}
-                        >
-                          {changeRate.toFixed(2)}%
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </TableContainer>
+            {reportDetail?.data?.length > 0 && (
+              <Box sx={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr>
+                      <th style={{ textAlign: 'left', padding: '12px', fontWeight: 600, bgcolor: 'grey.50' }}>项目</th>
+                      <th style={{ textAlign: 'right', padding: '12px', fontWeight: 600, bgcolor: 'grey.50' }}>本期金额</th>
+                      <th style={{ textAlign: 'right', padding: '12px', fontWeight: 600, bgcolor: 'grey.50' }}>上期金额</th>
+                      <th style={{ textAlign: 'right', padding: '12px', fontWeight: 600, bgcolor: 'grey.50' }}>变动</th>
+                      <th style={{ textAlign: 'right', padding: '12px', fontWeight: 600, bgcolor: 'grey.50' }}>变动率</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {reportDetail.data.map((line) => {
+                      const change = line.current_period - (line.prior_period || 0);
+                      const changeRate = line.prior_period && line.prior_period !== 0 ? (change / line.prior_period) * 100 : 0;
+                      return (
+                        <tr key={line.id}>
+                          <td style={{ padding: '12px', borderBottom: '1px solid', paddingLeft: `${line.item_level * 16 + 12}px` }}>{line.item_name}</td>
+                          <td style={{ textAlign: 'right', padding: '12px', borderBottom: '1px solid', fontFamily: 'monospace' }}>{line.current_period.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}</td>
+                          <td style={{ textAlign: 'right', padding: '12px', borderBottom: '1px solid', fontFamily: 'monospace', color: '#6B7280' }}>{line.prior_period?.toLocaleString('zh-CN', { minimumFractionDigits: 2 }) || '-'}</td>
+                          <td style={{ textAlign: 'right', padding: '12px', borderBottom: '1px solid', fontFamily: 'monospace', color: change >= 0 ? '#10B981' : '#EF4444' }}>{change.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}</td>
+                          <td style={{ textAlign: 'right', padding: '12px', borderBottom: '1px solid', fontFamily: 'monospace', color: changeRate >= 0 ? '#10B981' : '#EF4444' }}>{changeRate.toFixed(2)}%</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </Box>
+            )}
           </DialogContent>
-          <DialogActions sx={{ px: 3, py: 2 }}>
-            <Button
-              variant='outlined'
-              onClick={() => setShowDetail(false)}
-            >
-              关闭
-            </Button>
-            <Button variant='outlined'>
-              <Download style={{ width: 16, height: 16, marginRight: 8 }} />
-              导出Excel
-            </Button>
-            <Button variant='contained'>
-              <Download style={{ width: 16, height: 16, marginRight: 8 }} />
-              导出PDF
-            </Button>
+          <DialogActions>
+            {selectedReport.approval_status === 'pending' && selectedReport.status === 'completed' && (
+              <Button onClick={() => approveReport.mutate(selectedReport.id)}><Check style={{ width: 16, height: 16, marginRight: 8 }} />审批通过</Button>
+            )}
+            {selectedReport.approval_status === 'approved' && selectedReport.status === 'completed' && (
+              <Button onClick={() => publishReport.mutate(selectedReport.id)}><Send style={{ width: 16, height: 16, marginRight: 8 }} />发布</Button>
+            )}
+            <Button variant='outlined'><Download style={{ width: 16, height: 16, marginRight: 8 }} />导出Excel</Button>
+            <Button onClick={() => setShowDetail(false)}>关闭</Button>
           </DialogActions>
         </Dialog>
       )}
-    </Box>
+    </>
   );
 }
+
+const X: React.FC<{ style?: React.CSSProperties }> = ({ style }) => (
+  <svg style={style} viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2'>
+    <path d='M18 6L6 18M6 6l12 12' />
+  </svg>
+);

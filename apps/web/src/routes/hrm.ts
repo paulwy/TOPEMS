@@ -125,6 +125,13 @@ export const hrmRoutes: RouteConfig[] = [
     action: 'read',
   },
   {
+    path: '/hrm/salary-adjustments',
+    element: HrmSalaryAdjustmentPage,
+    requiredPermissions: ['hrm:read'],
+    module: 'hrm',
+    action: 'read',
+  },
+  {
     path: '/hrm/performance',
     element: HrmPerformancePage,
     requiredPermissions: ['hrm:read'],

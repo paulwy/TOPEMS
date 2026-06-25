@@ -15,7 +15,6 @@ import { Button } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft,
   Truck,
   Edit2,
   FileText,

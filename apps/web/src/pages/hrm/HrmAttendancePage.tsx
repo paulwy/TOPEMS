@@ -26,7 +26,7 @@ import {
   StatsPageTemplate,
   type StatsStatCard,
 } from '@/components/templates';
-import { StatusBadge } from '@/components/hrm/StatusBadge';
+import { StatusBadge } from '@/components/common/StatusBadge';
 import { Button, TextField, Box, Typography, Chip, Dialog, DialogTitle, DialogContent, DialogActions, FormLabel, FormControl, Select, MenuItem } from '@mui/material';
 
 const HrmAttendancePage: React.FC = () => {
@@ -235,7 +235,7 @@ const HrmAttendancePage: React.FC = () => {
       id: 'status',
       label: '状态',
       width: 100,
-      render: (row) => <StatusBadge status={row.status} category="attendance" showIcon />,
+      render: (row) => <StatusBadge status={`attendance_${row.status}`} showIcon />,
     },
   ];
 
@@ -296,7 +296,7 @@ const HrmAttendancePage: React.FC = () => {
       id: 'status',
       label: '状态',
       width: 100,
-      render: (row) => <StatusBadge status={row.status} category="leave" showIcon />,
+      render: (row) => <StatusBadge status={`leave_${row.status}`} showIcon />,
     },
   ];
 

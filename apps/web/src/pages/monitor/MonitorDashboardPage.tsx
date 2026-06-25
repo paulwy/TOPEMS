@@ -1,411 +1,203 @@
-import React from 'react';
-import { Box, Card, CardHeader, CardContent, Typography, Grid, Chip, Button } from '@mui/material';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Activity,
+  Server,
+  Database,
+  Shield,
+  Clock,
+  TrendingUp,
+  AlertTriangle,
+  CheckCircle2,
   Cpu,
   HardDrive,
   Wifi,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  TrendingUp,
+  Zap,
 } from 'lucide-react';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
-} from 'recharts';
-
-const cpuData = [
-  { name: '00:00', value: 45 },
-  { name: '04:00', value: 38 },
-  { name: '08:00', value: 65 },
-  { name: '12:00', value: 82 },
-  { name: '16:00', value: 75 },
-  { name: '20:00', value: 68 },
-];
-
-const memoryData = [
-  { name: '00:00', value: 60 },
-  { name: '04:00', value: 55 },
-  { name: '08:00', value: 72 },
-  { name: '12:00', value: 85 },
-  { name: '16:00', value: 78 },
-  { name: '20:00', value: 70 },
-];
-
-const responseTimeData = [
-  { name: 'API', value: 120 },
-  { name: '数据库', value: 85 },
-  { name: '缓存', value: 15 },
-  { name: '前端', value: 45 },
-];
-
-const alertSeverityData = [
-  { name: '严重', value: 3 },
-  { name: '警告', value: 8 },
-  { name: '信息', value: 15 },
-];
-
-const COLORS = ['error.main', 'warning.main', 'primary.main'];
-
-interface AlertItem {
-  id: string;
-  title: string;
-  severity: 'critical' | 'warning' | 'info';
-  source: string;
-  time: string;
-  status: 'open' | 'acknowledged' | 'resolved';
-}
-
-const recentAlerts: AlertItem[] = [
-  {
-    id: '1',
-    title: 'CPU 使用率超过 80%',
-    severity: 'critical',
-    source: '服务器 #01',
-    time: '5分钟前',
-    status: 'open',
-  },
-  {
-    id: '2',
-    title: '内存使用率接近阈值',
-    severity: 'warning',
-    source: '服务器 #02',
-    time: '15分钟前',
-    status: 'acknowledged',
-  },
-  {
-    id: '3',
-    title: '磁盘空间不足',
-    severity: 'critical',
-    source: '存储服务器',
-    time: '30分钟前',
-    status: 'open',
-  },
-  {
-    id: '4',
-    title: 'API 响应时间超时',
-    severity: 'warning',
-    source: 'API 网关',
-    time: '1小时前',
-    status: 'resolved',
-  },
-];
-
-const getSeverityColor = (severity: string) => {
-  switch (severity) {
-    case 'critical':
-      return 'error';
-    case 'warning':
-      return 'warning';
-    case 'info':
-      return 'info';
-    default:
-      return 'default';
-  }
-};
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'open':
-      return 'error';
-    case 'acknowledged':
-      return 'warning';
-    case 'resolved':
-      return 'success';
-    default:
-      return 'default';
-  }
-};
-
-const stats = [
-  {
-    label: 'CPU 使用率',
-    value: '72%',
-    icon: <Cpu size={24} />,
-    color: 'primary',
-    trend: 5,
-  },
-  {
-    label: '内存使用率',
-    value: '68%',
-    icon: <HardDrive size={24} />,
-    color: 'success',
-    trend: -3,
-  },
-  {
-    label: '网络延迟',
-    value: '15ms',
-    icon: <Wifi size={24} />,
-    color: 'info',
-    trend: 0,
-  },
-  {
-    label: '活跃告警',
-    value: '5',
-    icon: <AlertTriangle size={24} />,
-    color: 'error',
-    trend: 2,
-  },
-];
+import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
+import type { StatCard, ChartConfig, DataTable, TableColumn } from '@/components/templates/StatsPageTemplate';
+import { monitorApi } from '@/api/monitor';
+import type { SystemMetrics, ServiceHealth, DatabaseMetrics } from '@/api/monitor';
+import { useNotification } from '@/hooks/useNotification';
+import { apiLogger } from '@/utils/logger';
 
 export const MonitorDashboardPage: React.FC = () => {
+  const { error: notifyError } = useNotification();
+  const [timeRange, setTimeRange] = useState('24h');
+  const [loading, setLoading] = useState(true);
+  const [systemMetrics, setSystemMetrics] = useState<SystemMetrics | null>(null);
+  const [serviceHealth, setServiceHealth] = useState<ServiceHealth[]>([]);
+  const [databaseMetrics, setDatabaseMetrics] = useState<DatabaseMetrics | null>(null);
+
+  useEffect(() => {
+    loadData();
+  }, [timeRange]);
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [systemRes, serviceRes, dbRes] = await Promise.all([
+        monitorApi.getSystemMetrics(),
+        monitorApi.getServiceHealth(),
+        monitorApi.getDatabaseMetrics(),
+      ]);
+
+      if (systemRes.success && systemRes.data) {
+        setSystemMetrics(systemRes.data);
+      }
+      if (serviceRes.success && serviceRes.data) {
+        setServiceHealth(serviceRes.data);
+      }
+      if (dbRes.success && dbRes.data) {
+        setDatabaseMetrics(dbRes.data);
+      }
+    } catch (err: unknown) {
+      apiLogger.error('加载监控仪表盘数据失败:', err);
+      notifyError('加载监控仪表盘数据失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'healthy': return '正常';
+      case 'degraded': return '降级';
+      case 'unhealthy': return '异常';
+      default: return status;
+    }
+  };
+
+  const statCards = useMemo<StatCard[]>(() => [
+    {
+      id: 'system-health',
+      title: '系统健康度',
+      value: systemMetrics ? `${Math.round(100 - systemMetrics.cpu_usage * 0.5 - systemMetrics.memory_usage * 0.3)}%` : '-',
+      icon: <Activity size={24} />,
+      gradient: ['#00C897', '#00A878'] as [string, string],
+      trend: { value: 2.3, direction: 'up', label: '+2.3%' },
+    },
+    {
+      id: 'service-status',
+      title: '服务正常率',
+      value: serviceHealth.length > 0 
+        ? `${Math.round((serviceHealth.filter((s) => s.status === 'healthy').length / serviceHealth.length) * 100)}%`
+        : '-',
+      icon: <Server size={24} />,
+      gradient: ['#1976D2', '#1565C0'] as [string, string],
+      trend: { value: 0.5, direction: 'up', label: '+0.5%' },
+    },
+    {
+      id: 'response-time',
+      title: '平均响应时间',
+      value: serviceHealth.length > 0
+        ? `${Math.round(serviceHealth.reduce((acc, s) => acc + s.latency, 0) / serviceHealth.length)}ms`
+        : '-',
+      icon: <Zap size={24} />,
+      gradient: ['#8B5CF6', '#7C3AED'] as [string, string],
+      trend: { value: 12, direction: 'down', label: '-12ms' },
+    },
+    {
+      id: 'uptime',
+      title: '系统可用性',
+      value: systemMetrics ? '99.98%' : '-',
+      icon: <Clock size={24} />,
+      gradient: ['#F59E0B', '#D97706'] as [string, string],
+      trend: { value: 0.02, direction: 'up', label: '+0.02%' },
+    },
+  ], [systemMetrics, serviceHealth]);
+
+  const charts = useMemo<ChartConfig[]>(() => [
+    {
+      id: 'resource-usage',
+      title: '系统资源使用率',
+      type: 'bar',
+      dataKey: 'value',
+      nameKey: 'name',
+      data: systemMetrics ? [
+        { name: 'CPU', value: systemMetrics.cpu_usage, fill: '#1976D2' },
+        { name: '内存', value: systemMetrics.memory_usage, fill: '#00C897' },
+        { name: '磁盘', value: systemMetrics.disk_usage, fill: '#F59E0B' },
+      ] : [],
+      height: 280,
+    },
+    {
+      id: 'network-traffic',
+      title: '网络流量',
+      type: 'line',
+      dataKey: 'value',
+      nameKey: 'name',
+      data: systemMetrics ? [
+        { name: '入站', value: systemMetrics.network_in, stroke: '#1976D2' },
+        { name: '出站', value: systemMetrics.network_out, stroke: '#00C897' },
+      ] : [],
+      height: 280,
+    },
+  ], [systemMetrics]);
+
+  const tables = useMemo<DataTable[]>(() => [
+    {
+      id: 'service-health',
+      title: '服务健康状态',
+      columns: [
+        { id: 'service_name', label: '服务名称', field: 'service_name' },
+        { 
+          id: 'status', 
+          label: '状态', 
+          field: 'status', 
+          render: (value: any) => getStatusLabel(value as string) 
+        },
+        { id: 'latency', label: '延迟(ms)', field: 'latency' },
+        { 
+          id: 'error_rate', 
+          label: '错误率', 
+          field: 'error_rate', 
+          render: (value: any) => `${(value as number).toFixed(2)}%` 
+        },
+        { 
+          id: 'uptime_percentage', 
+          label: '可用率', 
+          field: 'uptime_percentage', 
+          render: (value: any) => `${(value as number).toFixed(2)}%` 
+        },
+        { 
+          id: 'last_checked', 
+          label: '最后检查', 
+          field: 'last_checked', 
+          render: (value: any) => new Date(value as string).toLocaleTimeString('zh-CN') 
+        },
+      ],
+      data: serviceHealth,
+    },
+  ], [serviceHealth]);
+
+  const timeRangeOptions = [
+    { label: '1小时', value: '1h' },
+    { label: '24小时', value: '24h' },
+    { label: '7天', value: '7d' },
+    { label: '30天', value: '30d' },
+  ];
+
   return (
-    <Box sx={{ flex: 1 }}>
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 4,
-        }}
-      >
-        <div>
-          <Typography
-            variant='h4'
-            sx={{ fontWeight: 'bold', mb: 1 }}
-          >
-            监控中心
-          </Typography>
-          <Typography
-            variant='body2'
-            color='text.secondary'
-          >
-            系统性能指标概览与告警监控
-          </Typography>
-        </div>
-        <Button
-          variant='contained'
-          startIcon={<Activity />}
-        >
-          实时刷新
-        </Button>
-      </Box>
-
-      <Grid
-        container
-        spacing={3}
-        sx={{ mb: 4 }}
-      >
-        {stats.map((stat) => (
-          <Grid
-            size={{ xs: 6, sm: 3 }}
-            key={stat.label}
-          >
-            <Card>
-              <CardContent>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 2,
-                    mb: 2,
-                  }}
-                >
-                  <Box sx={{ color: stat.color }}>{stat.icon}</Box>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    {stat.label}
-                  </Typography>
-                  {stat.trend !== 0 && (
-                    <TrendingUp
-                      size={14}
-                      color={stat.trend > 0 ? 'error.main' : 'success.dark'}
-                      style={{
-                        transform: stat.trend < 0 ? 'rotate(180deg)' : 'none',
-                      }}
-                    />
-                  )}
-                </Box>
-                <Typography
-                  variant='h5'
-                  sx={{ fontWeight: 'bold' }}
-                >
-                  {stat.value}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-
-      <Grid
-        container
-        spacing={3}
-      >
-        <Grid size={{ xs: 12, lg: 8 }}>
-          <Card>
-            <CardHeader title='性能趋势' />
-            <CardContent>
-              <ResponsiveContainer
-                width='100%'
-                height={300}
-              >
-                <LineChart data={cpuData}>
-                  <CartesianGrid strokeDasharray='3 3' />
-                  <XAxis dataKey='name' />
-                  <YAxis domain={[0, 100]} />
-                  <Tooltip />
-                  <Line
-                    type='monotone'
-                    dataKey='value'
-                    stroke='#1976d2'
-                    name='CPU'
-                  />
-                  <Line
-                    type='monotone'
-                    dataKey='value'
-                    stroke='#4caf50'
-                    name='内存'
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          <Card sx={{ mt: 3 }}>
-            <CardHeader title='响应时间分析' />
-            <CardContent>
-              <ResponsiveContainer
-                width='100%'
-                height={250}
-              >
-                <BarChart data={responseTimeData}>
-                  <CartesianGrid strokeDasharray='3 3' />
-                  <XAxis dataKey='name' />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar
-                    dataKey='value'
-                    fill='#1976d2'
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <Card>
-            <CardHeader title='告警分布' />
-            <CardContent>
-              <ResponsiveContainer
-                width='100%'
-                height={200}
-              >
-                <PieChart>
-                  <Pie
-                    data={alertSeverityData}
-                    cx='50%'
-                    cy='50%'
-                    innerRadius={40}
-                    outerRadius={80}
-                    paddingAngle={2}
-                    dataKey='value'
-                    label={({ name, value }) => `${name}: ${value}`}
-                  >
-                    {alertSeverityData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
-                      />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          <Card sx={{ mt: 3 }}>
-            <CardHeader title='最近告警' />
-            <CardContent>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {recentAlerts.map((alert) => (
-                  <Box
-                    key={alert.id}
-                    sx={{
-                      p: 2,
-                      borderRadius: 1,
-                      backgroundColor:
-                        alert.status === 'open'
-                          ? 'error.50'
-                          : alert.status === 'acknowledged'
-                            ? 'warning.50'
-                            : 'success.50',
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        mb: 1,
-                      }}
-                    >
-                      <Typography
-                        variant='body2'
-                        sx={{ fontWeight: 500 }}
-                      >
-                        {alert.title}
-                      </Typography>
-                      <Chip
-                        size='small'
-                        label={
-                          alert.severity === 'critical'
-                            ? '严重'
-                            : alert.severity === 'warning'
-                              ? '警告'
-                              : '信息'
-                        }
-                        color={getSeverityColor(alert.severity)}
-                      />
-                    </Box>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <Typography
-                        variant='caption'
-                        color='text.secondary'
-                      >
-                        {alert.source} - {alert.time}
-                      </Typography>
-                      <Chip
-                        size='small'
-                        label={
-                          alert.status === 'open'
-                            ? '未处理'
-                            : alert.status === 'acknowledged'
-                              ? '已确认'
-                              : '已解决'
-                        }
-                        color={getStatusColor(alert.status)}
-                      />
-                    </Box>
-                  </Box>
-                ))}
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-    </Box>
+    <StatsPageTemplate
+      title='监控仪表盘'
+      subtitle='实时监控系统运行状态和性能指标'
+      statCards={statCards}
+      statColumns={4}
+      charts={charts}
+      chartColumns={{ xs: 1, md: 2 }}
+      tables={tables}
+      loading={loading}
+      timeRangeOptions={timeRangeOptions}
+      timeRange={timeRange}
+      onTimeRangeChange={setTimeRange}
+      showTimeRange={true}
+      showRefresh={true}
+      onRefresh={loadData}
+      showStatCards={true}
+      showCharts={true}
+      showTables={true}
+      statCardDirection='row'
+    />
   );
 };
 

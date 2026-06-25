@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Plus,
   Save,
-  ArrowLeft,
   Undo2,
   Redo2,
   Eye,
@@ -17,6 +16,7 @@ import {
   Target,
   Table,
 } from 'lucide-react';
+import { BackButton } from '../common';
 import {
   Box,
   Typography,
@@ -356,14 +356,11 @@ export const DashboardEditor: React.FC<{
       <Box sx={{ flex: 1, p: 3, overflow: 'auto' }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Button
-              variant='outlined'
+            <BackButton
+              variant='text'
               size='small'
-              startIcon={<ArrowLeft />}
               onClick={onCancel}
-            >
-              返回
-            </Button>
+            />
             <TextField
               value={dashboardName}
               onChange={(e) => setDashboardName(e.target.value)}

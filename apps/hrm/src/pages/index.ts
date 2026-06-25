@@ -1,5 +1,7 @@
 export { DashboardPage } from './DashboardPage';
+/** @deprecated 使用 apps/web/src/pages/hrm/HrmEmployeePage.tsx 替代 */
 export { EmployeeManagementPage } from './EmployeeManagementPage';
+/** @deprecated 使用 apps/web/src/pages/hrm/HrmDepartmentPage.tsx 替代 */
 export { DepartmentManagementPage } from './DepartmentManagementPage';
 export { AttendancePage } from './AttendancePage';
 export { PayrollPage } from './PayrollPage';

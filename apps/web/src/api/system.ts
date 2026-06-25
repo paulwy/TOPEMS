@@ -20,7 +20,7 @@ export interface DictItem {
   value?: string;
   sort_order: number;
   parent_id?: string;
-  extra_data?: any;
+  extra_data?: Record<string, unknown>;
   status: string;
   created_at: string;
   updated_at: string;
@@ -54,12 +54,12 @@ export interface DbChange {
   change_type: string;
   table_name: string;
   column_name?: string;
-  old_definition?: any;
-  new_definition?: any;
+  old_definition?: Record<string, unknown>;
+  new_definition?: Record<string, unknown>;
   sql_statement: string;
   executed_by?: string;
   executed_at: string;
-  backup_data?: any;
+  backup_data?: unknown;
 }
 
 export interface DbColumnDefinition {

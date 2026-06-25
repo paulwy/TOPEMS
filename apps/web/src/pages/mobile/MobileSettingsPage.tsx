@@ -1,182 +1,141 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Box, Card, CardContent, Typography, Grid, Button } from '@mui/material';
-import {
-  Smartphone,
-  RefreshCw,
-  QrCode,
-  Bell,
-  Settings,
-  Cloud,
-  Database,
-  Battery,
-} from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useAppStore } from '../../store';
+import { Smartphone, Shield, Bell, Battery, RefreshCw } from 'lucide-react';
+import { SettingsPageTemplate, type SettingSection, type SettingValueType } from '@/components/templates';
 
-export const MobileSettingsPage: React.FC = () => {
-  const navigate = useNavigate();
+interface MobileSetting {
+  key: string;
+  label: string;
+  value: boolean | string;
+  description: string;
+  type: 'switch' | 'text' | 'number';
+}
 
-  const menuItems = [
-    {
-      id: 'offline-sync',
-      title: '离线数据同步',
-      description: '管理离线数据缓存和同步策略',
-      icon: <Cloud size={28} />,
-      color: 'primary.main',
-      path: '/mobile/offline-sync',
-    },
-    {
-      id: 'scan',
-      title: '扫码功能',
-      description: '配置扫码识别和数据关联',
-      icon: <QrCode size={28} />,
-      color: 'success.main',
-      path: '/mobile/scan',
-    },
-    {
-      id: 'notifications',
-      title: '通知推送',
-      description: '管理移动端消息推送设置',
-      icon: <Bell size={28} />,
-      color: 'warning.main',
-      path: '/mobile/notifications',
-    },
-    {
-      id: 'settings',
-      title: '系统设置',
-      description: '通用配置和设备管理',
-      icon: <Settings size={28} />,
-      color: '#8B5CF6',
-      path: '/mobile/settings',
-    },
-  ];
+const MobileSettingsPage: React.FC = () => {
+  const addNotification = useAppStore((state) => state.addNotification);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [mobileSettings, setMobileSettings] = useState<MobileSetting[]>([
+    { key: 'force_update', label: '强制更新', value: false, description: '用户打开应用时强制更新到最新版本', type: 'switch' },
+    { key: 'auto_update', label: '自动更新', value: true, description: '在后台自动下载更新包', type: 'switch' },
+    { key: 'version_min', label: '最低版本要求', value: '2.0.0', description: '低于此版本的用户将无法使用', type: 'text' },
+    { key: 'app_key', label: '应用Key', value: '', description: '用于推送通知的应用标识', type: 'text' },
+  ]);
 
-  const stats = [
-    { label: '在线设备', value: '12', icon: <Smartphone size={20} /> },
-    { label: '离线缓存', value: '2.3 GB', icon: <Database size={20} /> },
-    { label: '同步状态', value: '正常', icon: <RefreshCw size={20} /> },
-    { label: '电池优化', value: '已开启', icon: <Battery size={20} /> },
+  const loadSettings = useCallback(async () => {
+    try {
+      setLoading(true);
+      const stored = localStorage.getItem('mobile_settings');
+      if (stored) {
+        setMobileSettings(JSON.parse(stored));
+      }
+    } catch (err: unknown) {
+      console.error('Error loading mobile settings:', err);
+      addNotification({ title: '加载失败', message: '加载设置失败', type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  }, [addNotification]);
+
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
+
+  const handleSave = async (data: Record<string, SettingValueType>) => {
+    try {
+      setSaving(true);
+      const updatedSettings = mobileSettings.map((s) => ({
+        ...s,
+        value: data[s.key] !== undefined ? (data[s.key] as boolean | string) : s.value,
+      }));
+      setMobileSettings(updatedSettings);
+      localStorage.setItem('mobile_settings', JSON.stringify(updatedSettings));
+      addNotification({ title: '成功', message: '移动应用设置保存成功', type: 'success' });
+    } catch (err: unknown) {
+      console.error('Error saving mobile settings:', err);
+      addNotification({ title: '失败', message: '保存设置失败', type: 'error' });
+      throw err;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleReset = useCallback(() => {
+    setMobileSettings([
+      { key: 'force_update', label: '强制更新', value: false, description: '用户打开应用时强制更新到最新版本', type: 'switch' },
+      { key: 'auto_update', label: '自动更新', value: true, description: '在后台自动下载更新包', type: 'switch' },
+      { key: 'version_min', label: '最低版本要求', value: '2.0.0', description: '低于此版本的用户将无法使用', type: 'text' },
+      { key: 'app_key', label: '应用Key', value: '', description: '用于推送通知的应用标识', type: 'text' },
+    ]);
+    addNotification({ title: '已重置', message: '设置已恢复默认值', type: 'info' });
+  }, [addNotification]);
+
+  const sections: SettingSection[] = [
+    {
+      id: 'app',
+      title: '应用设置',
+      icon: <Smartphone style={{ width: 20, height: 20 }} />,
+      color: 'primary',
+      fields: [
+        {
+          id: 'force_update',
+          label: '强制更新',
+          type: 'switch',
+          value: mobileSettings.find((s) => s.key === 'force_update')?.value as boolean,
+          description: '用户打开应用时强制更新到最新版本',
+        },
+        {
+          id: 'auto_update',
+          label: '自动更新',
+          type: 'switch',
+          value: mobileSettings.find((s) => s.key === 'auto_update')?.value as boolean,
+          description: '在后台自动下载更新包',
+        },
+        {
+          id: 'version_min',
+          label: '最低版本要求',
+          type: 'text',
+          value: mobileSettings.find((s) => s.key === 'version_min')?.value as string,
+          description: '低于此版本的用户将无法使用',
+        },
+      ],
+    },
+    {
+      id: 'security',
+      title: '安全设置',
+      icon: <Shield style={{ width: 20, height: 20 }} />,
+      color: 'success',
+      fields: [
+        {
+          id: 'app_key',
+          label: '应用Key',
+          type: 'text',
+          value: mobileSettings.find((s) => s.key === 'app_key')?.value as string,
+          description: '用于推送通知的应用标识',
+        },
+      ],
+    },
+    {
+      id: 'other',
+      title: '其他设置',
+      icon: <RefreshCw style={{ width: 20, height: 20 }} />,
+      color: 'info',
+      fields: [],
+    },
   ];
 
   return (
-    <Box sx={{ flex: 1 }}>
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 4,
-        }}
-      >
-        <div>
-          <Typography
-            variant='h4'
-            sx={{ fontWeight: 'bold', mb: 1 }}
-          >
-            移动端管理
-          </Typography>
-          <Typography
-            variant='body2'
-            color='text.secondary'
-          >
-            配置移动端应用的各项功能和同步策略
-          </Typography>
-        </div>
-      </Box>
-
-      <Grid
-        container
-        spacing={3}
-        sx={{ mb: 4 }}
-      >
-        {stats.map((stat) => (
-          <Grid
-            size={{ xs: 6, sm: 3 }}
-            key={stat.label}
-          >
-            <Card>
-              <CardContent>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 2,
-                    mb: 2,
-                  }}
-                >
-                  {stat.icon}
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    {stat.label}
-                  </Typography>
-                </Box>
-                <Typography
-                  variant='h5'
-                  sx={{ fontWeight: 'bold' }}
-                >
-                  {stat.value}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-
-      <Grid
-        container
-        spacing={3}
-      >
-        {menuItems.map((item) => (
-          <Grid
-            size={{ xs: 12, sm: 6, lg: 3 }}
-            key={item.id}
-          >
-            <Card
-              sx={{
-                height: '100%',
-                cursor: 'pointer',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                '&:hover': {
-                  transform: 'translateY(-4px)',
-                  boxShadow: 4,
-                },
-              }}
-              onClick={() => navigate(item.path)}
-            >
-              <CardContent>
-                <Box
-                  sx={{
-                    width: 56,
-                    height: 56,
-                    borderRadius: 2,
-                    backgroundColor: `${item.color}15`,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    mb: 3,
-                  }}
-                >
-                  <Box sx={{ color: item.color }}>{item.icon}</Box>
-                </Box>
-                <Typography
-                  variant='h6'
-                  sx={{ fontWeight: 600, mb: 1 }}
-                >
-                  {item.title}
-                </Typography>
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
-                  {item.description}
-                </Typography>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-    </Box>
+    <SettingsPageTemplate
+      title='移动应用设置'
+      subtitle='配置移动客户端的各项参数'
+      sections={sections}
+      loading={loading}
+      saving={saving}
+      onSave={handleSave}
+      onReset={handleReset}
+      saveButtonText='保存设置'
+      resetButtonText='重置默认'
+    />
   );
 };
 

@@ -9,7 +9,6 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  IconButton,
   Chip,
   Tooltip,
 } from '@mui/material';
@@ -23,10 +22,10 @@ import {
   RotateCcw,
   Trash2,
   Loader2,
-  ArrowLeft,
   Calendar,
 } from 'lucide-react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
+import { BackButton } from '@/components/common';
 import type { Workflow, WorkflowVersion } from '@/api/flow';
 import { flowApi } from '@/api/flow';
 import { useAppStore } from '../../store';
@@ -34,7 +33,6 @@ import { apiLogger } from '@/utils/logger';
 
 const FlowVersionHistoryPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
   const [workflow, setWorkflow] = useState<Workflow | null>(null);
   const [versions, setVersions] = useState<WorkflowVersion[]>([]);
@@ -291,9 +289,7 @@ const FlowVersionHistoryPage: React.FC = () => {
               spacing={1.5}
               sx={{ alignItems: 'center' }}
             >
-              <IconButton onClick={() => navigate(`/flow/workflows`)}>
-                <ArrowLeft size={20} />
-              </IconButton>
+              <BackButton href='/flow/workflows' />
               <Box
                 sx={{
                   width: 48,

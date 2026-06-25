@@ -1,29 +1,35 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Chip, Typography } from '@mui/material';
+import {
+  Box,
+  Chip,
+  Typography,
+  Tabs,
+  Tab,
+  LinearProgress,
+} from '@mui/material';
 import { Button } from '@mui/material';
-import type { BillingRecord } from '@/api/modules/crm/crm';
-import { crmApi } from '@/api/modules/crm/crm';
+import type { BillingRecord } from '@/api/crm';
+import { crmApi } from '@/api/crm';
 import { useAppStore } from '@/store';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
-import { Receipt, CheckCircle, Clock, AlertCircle, Send } from 'lucide-react';
-import { PageHeader } from '@/components/templates';
+import { Receipt, CheckCircle, Clock, AlertCircle, Send, TrendingUp } from 'lucide-react';
+import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { apiLogger } from '@/utils/logger';
+
+type TabType = 'invoices' | 'collections' | 'aging';
 
 const CRMBillingPage: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'invoices' | 'collections' | 'aging'>('invoices');
+  const [activeTab, setActiveTab] = useState<TabType>('invoices');
   const [loading, setLoading] = useState(true);
   const [bills, setBills] = useState<BillingRecord[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(0);
+  const pageSize = 10;
 
   const { addNotification } = useAppStore();
 
-  useEffect(() => {
-    loadBills();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
-
-  const loadBills = async () => {
+  const loadBills = useCallback(async () => {
     try {
       setLoading(true);
       const status =
@@ -40,7 +46,11 @@ const CRMBillingPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab, addNotification]);
+
+  useEffect(() => {
+    loadBills();
+  }, [loadBills]);
 
   const handleMarkPaid = async (id: string) => {
     try {
@@ -80,31 +90,18 @@ const CRMBillingPage: React.FC = () => {
   };
 
   const getStatusChip = (status: string) => {
-    const config: Record<string, { label: string; color: string; icon?: React.ReactElement }> = {
-      pending: {
-        label: '待支付',
-        color: 'warning.light',
-        icon: <Clock sx={{ width: 14, height: 14 }} />,
-      },
-      paid: {
-        label: '已支付',
-        color: 'success.light',
-        icon: <CheckCircle sx={{ width: 14, height: 14 }} />,
-      },
-      overdue: {
-        label: '已逾期',
-        color: 'error.light',
-        icon: <AlertCircle sx={{ width: 14, height: 14 }} />,
-      },
-      cancelled: { label: '已取消', color: 'grey.light' },
+    const config: Record<string, { label: string; color: 'success' | 'warning' | 'error' | 'default' }> = {
+      pending: { label: '待支付', color: 'warning' },
+      paid: { label: '已支付', color: 'success' },
+      overdue: { label: '已逾期', color: 'error' },
+      cancelled: { label: '已取消', color: 'default' },
     };
-    const cfg = config[status] || { label: status, color: 'info.light' };
+    const cfg = config[status] || { label: status, color: 'default' as const };
     return (
       <Chip
         size='small'
         label={cfg.label}
-        icon={cfg.icon}
-        sx={{ bgcolor: cfg.color }}
+        color={cfg.color}
       />
     );
   };
@@ -114,13 +111,42 @@ const CRMBillingPage: React.FC = () => {
     const now = new Date();
     const daysDiff = Math.floor((now.getTime() - due.getTime()) / (1000 * 60 * 60 * 24));
 
-    if (daysDiff <= 0) return { label: '正常', color: 'success' };
-    if (daysDiff <= 30) return { label: '30天内', color: 'warning' };
-    if (daysDiff <= 60) return { label: '60天内', color: 'warning' };
-    return { label: '90天以上', color: 'error' };
+    if (daysDiff <= 0) return { label: '正常', color: 'success' as const };
+    if (daysDiff <= 30) return { label: '30天内', color: 'warning' as const };
+    if (daysDiff <= 60) return { label: '60天内', color: 'warning' as const };
+    return { label: '90天以上', color: 'error' as const };
   };
 
-  const agingSummary = {
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('zh-CN', {
+      style: 'currency',
+      currency: 'CNY',
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const formatDate = (dateStr?: string) => {
+    if (!dateStr) return '-';
+    return new Date(dateStr).toLocaleDateString('zh-CN');
+  };
+
+  const filteredBills = useMemo(() => {
+    if (!searchQuery) return bills;
+    return bills.filter(
+      (bill) =>
+        bill.invoice_no.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        bill.customer_name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [bills, searchQuery]);
+
+  const paginatedBills = useMemo(() => {
+    const start = currentPage * pageSize;
+    return filteredBills.slice(start, start + pageSize);
+  }, [filteredBills, currentPage]);
+
+  const totalAmount = bills.reduce((sum, b) => sum + b.amount, 0);
+
+  const agingSummary = useMemo(() => ({
     normal: bills
       .filter((b) => getAgingStatus(b.due_date).color === 'success')
       .reduce((sum, b) => sum + b.amount, 0),
@@ -133,532 +159,253 @@ const CRMBillingPage: React.FC = () => {
     days90: bills
       .filter((b) => getAgingStatus(b.due_date).label === '90天以上')
       .reduce((sum, b) => sum + b.amount, 0),
+  }), [bills]);
+
+  const getColumns = (): ColumnDef<BillingRecord>[] => {
+    if (activeTab === 'aging') {
+      return [
+        {
+          id: 'customer_name',
+          label: '客户',
+          width: 200,
+          sortable: true,
+        },
+        {
+          id: 'amount',
+          label: '应收总额',
+          width: 150,
+          align: 'right',
+          sortable: true,
+          render: (row) => (
+            <Typography sx={{ fontWeight: 500, fontFamily: 'monospace' }}>
+              {formatCurrency(row.amount)}
+            </Typography>
+          ),
+        },
+        {
+          id: 'due_date',
+          label: '到期日',
+          width: 150,
+          sortable: true,
+          render: (row) => formatDate(row.due_date),
+        },
+        {
+          id: 'aging_status',
+          label: '账龄状态',
+          width: 120,
+          render: (row) => {
+            const aging = getAgingStatus(row.due_date);
+            return <Chip size='small' label={aging.label} color={aging.color} />;
+          },
+        },
+        {
+          id: 'risk_level',
+          label: '风险等级',
+          width: 120,
+          render: (row) => {
+            const aging = getAgingStatus(row.due_date);
+            const riskLabel = aging.color === 'error' ? '高风险' : aging.color === 'warning' ? '中风险' : '低风险';
+            return <Chip size='small' label={riskLabel} color={aging.color} />;
+          },
+        },
+      ];
+    }
+
+    const baseColumns: ColumnDef<BillingRecord>[] = [
+      {
+        id: 'invoice_no',
+        label: '发票号',
+        width: 150,
+        sortable: true,
+        render: (row) => (
+          <Typography sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
+            {row.invoice_no}
+          </Typography>
+        ),
+      },
+      {
+        id: 'customer_name',
+        label: '客户',
+        width: 200,
+        sortable: true,
+      },
+      {
+        id: 'amount',
+        label: '金额',
+        width: 150,
+        align: 'right',
+        sortable: true,
+        render: (row) => (
+          <Typography sx={{ fontWeight: 500, fontFamily: 'monospace' }}>
+            {formatCurrency(row.amount)}
+          </Typography>
+        ),
+      },
+      {
+        id: 'status',
+        label: '状态',
+        width: 120,
+        render: (row) => getStatusChip(row.status),
+      },
+    ];
+
+    if (activeTab === 'invoices') {
+      baseColumns.splice(3, 0, {
+        id: 'due_date',
+        label: '到期日',
+        width: 150,
+        sortable: true,
+        render: (row) => formatDate(row.due_date),
+      });
+    } else {
+      baseColumns.splice(3, 0, {
+        id: 'paid_at',
+        label: '支付日期',
+        width: 150,
+        sortable: true,
+        render: (row) => formatDate(row.paid_at),
+      });
+    }
+
+    return baseColumns;
   };
 
-  if (loading) return <LoadingSpinner />;
+  const getRowActions = (): RowAction<BillingRecord>[] => {
+    if (activeTab === 'invoices') {
+      return [
+        {
+          label: '标记支付',
+          icon: <CheckCircle size={16} />,
+          onClick: (row) => handleMarkPaid(row.id),
+          color: 'success',
+        },
+        {
+          label: '发送通知',
+          icon: <Send size={16} />,
+          onClick: (row) => handleSendNotification(row.id),
+          color: 'primary',
+        },
+      ];
+    }
+    return [];
+  };
 
-  return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-      <Box sx={{ maxWidth: 1200, mx: 'auto', px: 3, py: 4 }}>
-        <PageHeader
-          title='账单管理'
-          subtitle='管理客户账单、收款和账龄分析'
-          breadcrumbs={[{ label: '客户关系管理', href: '/crm' }, { label: '账单管理' }]}
-          backButton={{ onClick: () => navigate('/crm') }}
-        />
-
+  const headerContent = useMemo(() => {
+    if (activeTab === 'aging') {
+      return (
         <Box
           sx={{
-            display: 'flex',
-            gap: 1,
-            p: 1,
-            bgcolor: 'grey.100',
-            borderRadius: 1,
+            display: 'grid',
+            gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+            gap: 2,
             mb: 3,
           }}
         >
-          <TabButton
-            active={activeTab === 'invoices'}
-            onClick={() => setActiveTab('invoices')}
-          >
-            <Receipt sx={{ width: 16, height: 16, mr: 1 }} />
-            待收账单
-          </TabButton>
-          <TabButton
-            active={activeTab === 'collections'}
-            onClick={() => setActiveTab('collections')}
-          >
-            <CheckCircle sx={{ width: 16, height: 16, mr: 1 }} />
-            已收账单
-          </TabButton>
-          <TabButton
-            active={activeTab === 'aging'}
-            onClick={() => setActiveTab('aging')}
-          >
-            <Clock sx={{ width: 16, height: 16, mr: 1 }} />
-            账龄分析
-          </TabButton>
+          <StatCard
+            label='正常'
+            value={formatCurrency(agingSummary.normal)}
+            color='success'
+          />
+          <StatCard
+            label='30天内'
+            value={formatCurrency(agingSummary.days30)}
+            color='warning'
+          />
+          <StatCard
+            label='60天内'
+            value={formatCurrency(agingSummary.days60)}
+            color='warning'
+          />
+          <StatCard
+            label='90天以上'
+            value={formatCurrency(agingSummary.days90)}
+            color='error'
+          />
         </Box>
+      );
+    }
+    return null;
+  }, [activeTab, agingSummary]);
 
-        {activeTab === 'invoices' && (
-          <Box sx={{ mt: 3 }}>
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                mb: 3,
-              }}
-            >
-              <Box sx={{ bgcolor: 'info.light', borderRadius: 1, p: 2 }}>
-                <Typography
-                  variant='body2'
-                  color='info.main'
-                >
-                  待收账单模块 - 管理客户待收账单，支持标记支付、发送通知等操作
-                </Typography>
-              </Box>
-              <Typography
-                variant='body1'
-                sx={{ fontWeight: 500 }}
-              >
-                待收总额: ¥{bills.reduce((sum, b) => sum + b.amount, 0).toLocaleString()}
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                border: 1,
-                borderColor: 'divider',
-                borderRadius: 1,
-                overflow: 'hidden',
-              }}
-            >
-              <table style={{ width: '100%', fontSize: '0.875rem' }}>
-                <thead style={{ backgroundColor: 'grey.100' }}>
-                  <tr>
-                    <th
-                      style={{
-                        padding: '12px 16px',
-                        textAlign: 'left',
-                        fontWeight: 500,
-                      }}
-                    >
-                      发票号
-                    </th>
-                    <th
-                      style={{
-                        padding: '12px 16px',
-                        textAlign: 'left',
-                        fontWeight: 500,
-                      }}
-                    >
-                      客户
-                    </th>
-                    <th
-                      style={{
-                        padding: '12px 16px',
-                        textAlign: 'right',
-                        fontWeight: 500,
-                      }}
-                    >
-                      金额
-                    </th>
-                    <th
-                      style={{
-                        padding: '12px 16px',
-                        textAlign: 'left',
-                        fontWeight: 500,
-                      }}
-                    >
-                      到期日
-                    </th>
-                    <th
-                      style={{
-                        padding: '12px 16px',
-                        textAlign: 'center',
-                        fontWeight: 500,
-                      }}
-                    >
-                      状态
-                    </th>
-                    <th
-                      style={{
-                        padding: '12px 16px',
-                        textAlign: 'center',
-                        fontWeight: 500,
-                      }}
-                    >
-                      操作
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {bills.length > 0 ? (
-                    bills.map((bill) => (
-                      <tr
-                        key={bill.id}
-                        style={{ borderBottom: '1px solid' }}
-                      >
-                        <td style={{ padding: '12px 16px' }}>{bill.invoice_no}</td>
-                        <td style={{ padding: '12px 16px' }}>{bill.customer_name}</td>
-                        <td
-                          style={{
-                            padding: '12px 16px',
-                            textAlign: 'right',
-                            fontWeight: 500,
-                          }}
-                        >
-                          ¥{bill.amount.toLocaleString()}
-                        </td>
-                        <td style={{ padding: '12px 16px' }}>
-                          {new Date(bill.due_date).toLocaleDateString()}
-                        </td>
-                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                          {getStatusChip(bill.status)}
-                        </td>
-                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              gap: 1,
-                              justifyContent: 'center',
-                            }}
-                          >
-                            <Button
-                              size='small'
-                              color='success'
-                              onClick={() => handleMarkPaid(bill.id)}
-                            >
-                              标记支付
-                            </Button>
-                            <Button
-                              size='small'
-                              color='primary'
-                              onClick={() => handleSendNotification(bill.id)}
-                              startIcon={<Send sx={{ width: 14, height: 14 }} />}
-                            >
-                              发通知
-                            </Button>
-                          </Box>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan={6}
-                        style={{
-                          padding: '32px 16px',
-                          textAlign: 'center',
-                          color: 'text.disabled',
-                        }}
-                      >
-                        暂无待收账单
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </Box>
-          </Box>
-        )}
+  const tabTotalLabel = activeTab === 'invoices' ? '待收总额' : activeTab === 'collections' ? '已收总额' : '应收总额';
 
-        {activeTab === 'collections' && (
-          <Box sx={{ mt: 3 }}>
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                mb: 3,
-              }}
+  return (
+    <ListPageTemplate
+      title='账单管理'
+      subtitle='管理客户账单、收款和账龄分析'
+      breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '客户关系管理', href: '/crm' }, { label: '账单管理' }]}
+      backButton={{ onClick: () => navigate('/crm') }}
+      columns={getColumns()}
+      data={paginatedBills}
+      loading={loading}
+      pagination={{
+        page: currentPage,
+        pageSize,
+        total: filteredBills.length,
+        onPageChange: setCurrentPage,
+      }}
+      searchable
+      searchPlaceholder={activeTab === 'aging' ? '搜索客户...' : '搜索发票号或客户...'}
+      searchValue={searchQuery}
+      onSearch={(value) => {
+        setSearchQuery(value);
+        setCurrentPage(0);
+      }}
+      actions={activeTab === 'invoices' ? [
+        {
+          label: tabTotalLabel + ': ' + formatCurrency(totalAmount),
+          variant: 'text',
+        },
+      ] : [
+        {
+          label: tabTotalLabel + ': ' + formatCurrency(totalAmount),
+          variant: 'text',
+        },
+      ]}
+      rowActions={getRowActions()}
+      onRefresh={loadBills}
+      showRowNumber
+      columnConfigurable
+      persistColumnConfig
+      columnConfigStorageKey={`crm-billing-${activeTab}-columns`}
+      headerContent={
+        <Box>
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 1,
+              p: 1,
+              bgcolor: 'grey.100',
+              borderRadius: 1,
+              mb: 3,
+            }}
+          >
+            <TabButton
+              active={activeTab === 'invoices'}
+              onClick={() => setActiveTab('invoices')}
             >
-              <Box sx={{ bgcolor: 'success.light', borderRadius: 1, p: 2 }}>
-                <Typography
-                  variant='body2'
-                  color='success.main'
-                >
-                  已收账单模块 - 查看已支付的账单记录
-                </Typography>
-              </Box>
-              <Typography
-                variant='body1'
-                sx={{ fontWeight: 500 }}
-              >
-                已收总额: ¥{bills.reduce((sum, b) => sum + b.amount, 0).toLocaleString()}
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                border: 1,
-                borderColor: 'divider',
-                borderRadius: 1,
-                overflow: 'hidden',
-              }}
+              <Receipt sx={{ width: 16, height: 16, mr: 1 }} />
+              待收账单
+            </TabButton>
+            <TabButton
+              active={activeTab === 'collections'}
+              onClick={() => setActiveTab('collections')}
             >
-              <table style={{ width: '100%', fontSize: '0.875rem' }}>
-                <thead style={{ backgroundColor: 'grey.100' }}>
-                  <tr>
-                    <th
-                      style={{
-                        padding: '12px 16px',
-                        textAlign: 'left',
-                        fontWeight: 500,
-                      }}
-                    >
-                      发票号
-                    </th>
-                    <th
-                      style={{
-                        padding: '12px 16px',
-                        textAlign: 'left',
-                        fontWeight: 500,
-                      }}
-                    >
-                      客户
-                    </th>
-                    <th
-                      style={{
-                        padding: '12px 16px',
-                        textAlign: 'right',
-                        fontWeight: 500,
-                      }}
-                    >
-                      金额
-                    </th>
-                    <th
-                      style={{
-                        padding: '12px 16px',
-                        textAlign: 'left',
-                        fontWeight: 500,
-                      }}
-                    >
-                      支付日期
-                    </th>
-                    <th
-                      style={{
-                        padding: '12px 16px',
-                        textAlign: 'center',
-                        fontWeight: 500,
-                      }}
-                    >
-                      状态
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {bills.length > 0 ? (
-                    bills.map((bill) => (
-                      <tr
-                        key={bill.id}
-                        style={{ borderBottom: '1px solid' }}
-                      >
-                        <td style={{ padding: '12px 16px' }}>{bill.invoice_no}</td>
-                        <td style={{ padding: '12px 16px' }}>{bill.customer_name}</td>
-                        <td
-                          style={{
-                            padding: '12px 16px',
-                            textAlign: 'right',
-                            fontWeight: 500,
-                          }}
-                        >
-                          ¥{bill.amount.toLocaleString()}
-                        </td>
-                        <td style={{ padding: '12px 16px' }}>
-                          {bill.paid_at ? new Date(bill.paid_at).toLocaleDateString() : '-'}
-                        </td>
-                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                          {getStatusChip(bill.status)}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan={5}
-                        style={{
-                          padding: '32px 16px',
-                          textAlign: 'center',
-                          color: 'text.disabled',
-                        }}
-                      >
-                        暂无已收账单
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </Box>
+              <CheckCircle sx={{ width: 16, height: 16, mr: 1 }} />
+              已收账单
+            </TabButton>
+            <TabButton
+              active={activeTab === 'aging'}
+              onClick={() => setActiveTab('aging')}
+            >
+              <Clock sx={{ width: 16, height: 16, mr: 1 }} />
+              账龄分析
+            </TabButton>
           </Box>
-        )}
-
-        {activeTab === 'aging' && (
-          <Box sx={{ mt: 3 }}>
-            <Box sx={{ bgcolor: 'info.light', borderRadius: 1, p: 2, mb: 3 }}>
-              <Typography
-                variant='body2'
-                color='info.main'
-              >
-                应收账龄分析 - 分析客户应收账款账龄，提供逾期预警
-              </Typography>
-            </Box>
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(4, 1fr)',
-                gap: 2,
-                mb: 3,
-              }}
-            >
-              <StatCard
-                label='正常'
-                value={`¥${agingSummary.normal.toLocaleString()}`}
-                color='success'
-              />
-              <StatCard
-                label='30天内'
-                value={`¥${agingSummary.days30.toLocaleString()}`}
-                color='warning'
-              />
-              <StatCard
-                label='60天内'
-                value={`¥${agingSummary.days60.toLocaleString()}`}
-                color='warning'
-              />
-              <StatCard
-                label='90天以上'
-                value={`¥${agingSummary.days90.toLocaleString()}`}
-                color='error'
-              />
-            </Box>
-            <Box
-              sx={{
-                border: 1,
-                borderColor: 'divider',
-                borderRadius: 1,
-                overflow: 'hidden',
-              }}
-            >
-              <table style={{ width: '100%', fontSize: '0.875rem' }}>
-                <thead style={{ backgroundColor: 'grey.100' }}>
-                  <tr>
-                    <th
-                      style={{
-                        padding: '12px 16px',
-                        textAlign: 'left',
-                        fontWeight: 500,
-                      }}
-                    >
-                      客户
-                    </th>
-                    <th
-                      style={{
-                        padding: '12px 16px',
-                        textAlign: 'right',
-                        fontWeight: 500,
-                      }}
-                    >
-                      应收总额
-                    </th>
-                    <th
-                      style={{
-                        padding: '12px 16px',
-                        textAlign: 'right',
-                        fontWeight: 500,
-                      }}
-                    >
-                      到期日
-                    </th>
-                    <th
-                      style={{
-                        padding: '12px 16px',
-                        textAlign: 'center',
-                        fontWeight: 500,
-                      }}
-                    >
-                      账龄状态
-                    </th>
-                    <th
-                      style={{
-                        padding: '12px 16px',
-                        textAlign: 'center',
-                        fontWeight: 500,
-                      }}
-                    >
-                      风险等级
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {bills.length > 0 ? (
-                    bills.map((bill) => {
-                      const aging = getAgingStatus(bill.due_date);
-                      return (
-                        <tr
-                          key={bill.id}
-                          style={{ borderBottom: '1px solid' }}
-                        >
-                          <td style={{ padding: '12px 16px' }}>{bill.customer_name}</td>
-                          <td
-                            style={{
-                              padding: '12px 16px',
-                              textAlign: 'right',
-                              fontWeight: 500,
-                            }}
-                          >
-                            ¥{bill.amount.toLocaleString()}
-                          </td>
-                          <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                            {new Date(bill.due_date).toLocaleDateString()}
-                          </td>
-                          <td
-                            style={{
-                              padding: '12px 16px',
-                              textAlign: 'center',
-                            }}
-                          >
-                            <Chip
-                              size='small'
-                              label={aging.label}
-                              sx={{
-                                bgcolor:
-                                  aging.color === 'success'
-                                    ? 'success.light'
-                                    : aging.color === 'warning'
-                                      ? 'warning.light'
-                                      : 'error.light',
-                              }}
-                            />
-                          </td>
-                          <td
-                            style={{
-                              padding: '12px 16px',
-                              textAlign: 'center',
-                            }}
-                          >
-                            <Chip
-                              size='small'
-                              label={
-                                aging.color === 'error'
-                                  ? '高风险'
-                                  : aging.color === 'warning'
-                                    ? '中风险'
-                                    : '低风险'
-                              }
-                              sx={{
-                                bgcolor:
-                                  aging.color === 'success'
-                                    ? 'success.light'
-                                    : aging.color === 'warning'
-                                      ? 'warning.light'
-                                      : 'error.light',
-                              }}
-                            />
-                          </td>
-                        </tr>
-                      );
-                    })
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan={5}
-                        style={{
-                          padding: '32px 16px',
-                          textAlign: 'center',
-                          color: 'text.disabled',
-                        }}
-                      >
-                        暂无账龄数据
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </Box>
-          </Box>
-        )}
-      </Box>
-    </Box>
+          {headerContent}
+        </Box>
+      }
+    />
   );
 };
 

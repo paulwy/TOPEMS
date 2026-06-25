@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from 'react';
-import type { ModuleStatus } from './StatusBadge';
-import { StatusBadge } from './StatusBadge';
+import { ModuleStatusBadge } from '@/components/common/StatusBadge';
+import type { StatusBadgeProps } from '@/components/common/StatusBadge';
+type ModuleStatus = 'online' | 'beta' | 'plan' | 'new';
 
 type IconComponent = React.ComponentType<{
   className?: string;
@@ -167,7 +168,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ item, onClick, size = 'm
             >
               {item.title}
             </h3>
-            <StatusBadge status={item.status} />
+            <ModuleStatusBadge status={item.status} />
           </div>
           <p
             style={{

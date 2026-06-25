@@ -13,7 +13,7 @@ export interface EmailLog {
   errorMessage?: string;
   sentAt?: string;
   templateId?: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 }
@@ -51,7 +51,7 @@ export interface BatchSendEmailRequest {
   subject: string;
   body: string;
   templateId?: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 export interface BatchSendEmailResponse {
@@ -72,7 +72,7 @@ export interface SendEmailRequest {
   subject: string;
   body: string;
   templateId?: string;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 export interface SendEmailWithTemplateRequest {
@@ -81,7 +81,7 @@ export interface SendEmailWithTemplateRequest {
   bccEmail?: string;
   templateId: string;
   variables?: Record<string, string>;
-  metadata?: any;
+  metadata?: Record<string, unknown>;
 }
 
 export const getEmailLogs = async (

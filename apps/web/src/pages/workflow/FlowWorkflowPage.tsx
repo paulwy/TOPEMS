@@ -13,14 +13,12 @@ import {
   GitBranch,
   CheckCircle,
   XCircle,
-  ChevronLeft,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import type { Workflow } from '@/api/flow';
 import { flowApi, CreateWorkflowRequest } from '@/api/flow';
 import { useAppStore } from '../../store';
 import type { ColumnDef } from '@tanstack/react-table';
-import { DataTable } from '@/components/DataTable';
+import { DataTable, BackButton } from '@/components/common';
 import {
   Box,
   TextField,
@@ -333,9 +331,7 @@ const FlowWorkflowPage: React.FC = () => {
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <IconButton onClick={() => navigate('/dashboard')}>
-                <ChevronLeft sx={{ width: 20, height: 20 }} />
-              </IconButton>
+              <BackButton href='/dashboard' />
               <Box
                 sx={{
                   width: 48,

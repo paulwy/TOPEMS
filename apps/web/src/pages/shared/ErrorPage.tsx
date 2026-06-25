@@ -1,17 +1,9 @@
 import React from 'react';
-import { AlertCircle, ArrowLeft } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import { Box, Typography } from '@mui/material';
-import { Button } from '@mui/material';
+import BackButton from '@/components/common/BackButton';
 
 const ErrorPage: React.FC = () => {
-  const handleGoBack = () => {
-    if (window.history.length > 1) {
-      window.history.back();
-    } else {
-      window.location.href = '/dashboard';
-    }
-  };
-
   return (
     <Box
       sx={{
@@ -62,24 +54,11 @@ const ErrorPage: React.FC = () => {
         >
           抱歉，页面加载时出现错误，请返回重试
         </Typography>
-        <Button
-          variant='contained'
-          onClick={handleGoBack}
-          sx={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            px: 3,
-            py: 1,
-            bgcolor: 'primary.main',
-            color: 'white',
-            borderRadius: 2,
-            '&:hover': { bgcolor: 'primary.dark' },
-            transition: 'background-color 0.2s',
-          }}
-          startIcon={<ArrowLeft sx={{ width: 16, height: 16, mr: 1 }} />}
-        >
-          返回上一页
-        </Button>
+        <BackButton
+          fallback='/dashboard'
+          variant='text'
+          label='返回上一页'
+        />
       </Box>
     </Box>
   );

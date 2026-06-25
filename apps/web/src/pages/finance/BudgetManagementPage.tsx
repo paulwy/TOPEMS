@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   TrendingUp,
-  ChevronLeft,
   Plus,
   Edit,
   Trash2,
@@ -9,8 +8,8 @@ import {
   Calendar,
   Settings,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { budgetApi, type Budget } from '@/api/erp';
+import { BackButton } from '@/components/common';
 import { departmentApi, type Department } from '@/api/hrm';
 import { financeApi } from '@/api/finance';
 import { apiLogger } from '@/utils/logger';
@@ -32,7 +31,6 @@ import {
   Chip,
   Box,
   Typography,
-  IconButton,
   Stack,
 } from '@mui/material';
 import { Button } from '@mui/material';
@@ -42,7 +40,6 @@ import OrganizationFilter, {
 } from '@/components/ui/OrganizationFilter';
 
 const BudgetManagementPage: React.FC = () => {
-  const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
 
   const [budgets, setBudgets] = useState<Budget[]>([]);
@@ -554,9 +551,7 @@ const BudgetManagementPage: React.FC = () => {
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <IconButton onClick={() => navigate('/dashboard')}>
-                <ChevronLeft sx={{ width: 20, height: 20 }} />
-              </IconButton>
+              <BackButton href='/dashboard' />
               <Box>
                 <Typography
                   variant='h5'

@@ -1,10 +1,30 @@
 import apiClient from './client';
+import type { ApiResponse } from './client';
+
+export interface DashboardLayout {
+  [key: string]: unknown;
+}
+
+export interface WidgetConfig {
+  [key: string]: unknown;
+}
+
+export interface WidgetPosition {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+export interface ReportConfig {
+  [key: string]: unknown;
+}
 
 export interface Dashboard {
   id: string;
   name: string;
   description?: string;
-  layout?: any;
+  layout?: DashboardLayout;
   owner_id?: string;
   is_public?: boolean;
   created_at: string;
@@ -15,7 +35,7 @@ export interface DashboardTemplate {
   id: string;
   name: string;
   description?: string;
-  layout: any;
+  layout: DashboardLayout;
   preview_image?: string;
   category?: string;
   tags?: string[];
@@ -29,8 +49,8 @@ export interface Widget {
   dashboard_id?: string;
   name: string;
   widget_type: string;
-  config?: any;
-  position?: any;
+  config?: WidgetConfig;
+  position?: WidgetPosition;
   created_at: string;
   updated_at: string;
 }
@@ -40,7 +60,7 @@ export interface Report {
   name: string;
   description?: string;
   report_type: string;
-  config: any;
+  config: ReportConfig;
   data_source?: string;
   created_by?: string;
   created_at: string;
@@ -136,14 +156,18 @@ export interface LaboratoryAnalytics {
   generated_at: string;
 }
 
+export interface ModuleAnalyticsData {
+  [key: string]: unknown;
+}
+
 export interface ModuleAnalytics {
-  rs?: any;
-  lims?: any;
-  qms?: any;
-  ehs?: any;
-  srm?: any;
-  pdm?: any;
-  [key: string]: any;
+  rs?: ModuleAnalyticsData;
+  lims?: ModuleAnalyticsData;
+  qms?: ModuleAnalyticsData;
+  ehs?: ModuleAnalyticsData;
+  srm?: ModuleAnalyticsData;
+  pdm?: ModuleAnalyticsData;
+  [key: string]: ModuleAnalyticsData | undefined;
 }
 
 export interface DataSource {
@@ -165,6 +189,10 @@ export interface DataSource {
   updated_at: string;
 }
 
+export interface ComparisonAnalysisFilters {
+  [key: string]: string | number | boolean | undefined;
+}
+
 export interface ComparisonAnalysis {
   id: string;
   name: string;
@@ -173,12 +201,16 @@ export interface ComparisonAnalysis {
   dimension_a: string;
   dimension_b: string;
   indicators: string[];
-  filters?: Record<string, any>;
+  filters?: ComparisonAnalysisFilters;
   status: 'draft' | 'running' | 'completed' | 'failed';
   last_run_at?: string;
   created_by?: string;
   created_at: string;
   updated_at: string;
+}
+
+export interface ComparisonResultSummary {
+  [key: string]: unknown;
 }
 
 export interface ComparisonResult {
@@ -192,7 +224,7 @@ export interface ComparisonResult {
     difference: number;
     change_rate: number;
   }>;
-  summary?: Record<string, any>;
+  summary?: ComparisonResultSummary;
   generated_at: string;
 }
 

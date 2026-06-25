@@ -25,7 +25,7 @@ export interface TemplateVariable {
   label: string;
   type: VariableType;
   required?: boolean;
-  default_value?: any;
+  default_value?: unknown;
   options?: SelectOption[];
   data_source?: string;
   validation_rules?: Record<string, any>;

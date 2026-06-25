@@ -187,6 +187,18 @@ export interface PayrollItem {
   updated_at: string;
 }
 
+export interface PayrollDetail {
+  id: string;
+  payroll_item_id: string;
+  item_type: string;
+  item_name: string;
+  amount: number;
+  is_deduction?: boolean;
+  is_tax?: boolean;
+  description?: string;
+  created_at: string;
+}
+
 export interface PerformanceReview {
   id: string;
   employee_id: string;
@@ -543,7 +555,7 @@ export const payrollItemApi = {
     return apiClient.hrm.get(`/api/hrm/payroll-items${queryString}`);
   },
 
-  get(id: string): Promise<ApiResponse<{ item: PayrollItem; details: any[] }>> {
+  get(id: string): Promise<ApiResponse<{ item: PayrollItem; details: PayrollDetail[] }>> {
     return apiClient.hrm.get(`/api/hrm/payroll-items/${id}`);
   },
 };

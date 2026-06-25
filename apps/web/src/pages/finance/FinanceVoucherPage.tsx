@@ -34,6 +34,7 @@ import {
   Clock,
   Building2,
 } from 'lucide-react';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 import { useNavigate } from 'react-router-dom';
 import {
   voucherApi,
@@ -68,6 +69,9 @@ const FinanceVoucherPage: React.FC = () => {
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [currentVoucher, setCurrentVoucher] = useState<FinancialVoucher | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [batchDeleteDialogOpen, setBatchDeleteDialogOpen] = useState(false);
 
   const [newVoucher, setNewVoucher] = useState({
     voucher_number: '',
@@ -171,11 +175,15 @@ const FinanceVoucherPage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('确定要删除该凭证吗？')) return;
+  const handleDelete = (id: string) => {
+    setDeletingId(id);
+    setDeleteDialogOpen(true);
+  };
 
+  const confirmDelete = async () => {
+    if (!deletingId) return;
     try {
-      const result = await voucherApi.delete(id);
+      const result = await voucherApi.delete(deletingId);
       if (result.success) {
         addNotification({
           title: '成功',
@@ -192,13 +200,18 @@ const FinanceVoucherPage: React.FC = () => {
       }
     } catch (err: unknown) {
       addNotification({ title: '错误', message: '操作失败', type: 'error' });
+    } finally {
+      setDeleteDialogOpen(false);
+      setDeletingId(null);
     }
   };
 
-  const handleBatchDelete = async () => {
+  const handleBatchDelete = () => {
     if (selectedIds.length === 0) return;
-    if (!confirm(`确定要删除选中的 ${selectedIds.length} 张凭证吗？`)) return;
+    setBatchDeleteDialogOpen(true);
+  };
 
+  const confirmBatchDelete = async () => {
     try {
       const promises = selectedIds.map((id) => voucherApi.delete(id));
       const results = await Promise.all(promises);
@@ -226,6 +239,8 @@ const FinanceVoucherPage: React.FC = () => {
         message: (err as { message?: string }).message || '批量删除失败',
         type: 'error',
       });
+    } finally {
+      setBatchDeleteDialogOpen(false);
     }
   };
 
@@ -1532,6 +1547,26 @@ const FinanceVoucherPage: React.FC = () => {
           </DialogActions>
         </DialogContent>
       </Dialog>
+
+      {/* 删除确认对话框 */}
+      <ConfirmDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => { setDeleteDialogOpen(false); setDeletingId(null); }}
+        onConfirm={confirmDelete}
+        title='确认删除'
+        message='确定要删除该凭证吗？'
+        danger
+      />
+
+      {/* 批量删除确认对话框 */}
+      <ConfirmDialog
+        isOpen={batchDeleteDialogOpen}
+        onClose={() => setBatchDeleteDialogOpen(false)}
+        onConfirm={confirmBatchDelete}
+        title='确认批量删除'
+        message={`确定要删除选中的 ${selectedIds.length} 张凭证吗？`}
+        danger
+      />
     </Box>
   );
 };

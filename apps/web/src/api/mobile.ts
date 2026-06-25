@@ -101,7 +101,11 @@ export interface VideoRecording {
   description?: string;
   start_location_lat: number;
   start_location_lng: number;
-  location_track: any;
+  location_track: Array<{
+    lat: number;
+    lng: number;
+    timestamp?: string;
+  }>;
   duration_seconds?: number;
   file_url?: string;
   thumbnail_url?: string;

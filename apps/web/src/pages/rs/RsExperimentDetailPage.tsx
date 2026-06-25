@@ -1,6 +1,6 @@
 import { Grid } from '@/components/Grid';
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useParams, useNavigate } from 'react-router-dom';
 import {
   Box,
   Container,
@@ -19,6 +19,16 @@ import {
   Tabs,
   Tab,
   Stack,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import { Button } from '@mui/material';
 import {
@@ -35,66 +45,138 @@ import {
   FileText as DescriptionIcon,
   CheckCircle as CheckCircleIcon,
   TrendingUp as TrendingUpIcon,
+  Plus as PlusIcon,
 } from 'lucide-react';
+import {
+  rsApi,
+  type Experiment,
+  type ExperimentRecord,
+  type CreateExperimentRecordRequest,
+} from '@/api/rs';
+import { useAppStore } from '@/store';
+import { apiLogger } from '@/utils/logger';
+
+interface ExperimentWithProject extends Experiment {
+  project_name?: string;
+}
 
 const RsExperimentDetailPage: React.FC = () => {
-  // 模拟试验详情数据
-  const experiment = {
-    id: '1',
-    name: '催化剂活性测试-第3轮',
-    code: 'EXP-2024-003',
-    project_name: '新型催化剂研发项目',
-    phase: '中试',
-    status: '进行中',
-    experimenter: '王五',
-    objective: '验证催化剂在中试条件下的活性表现，评估其稳定性和重复性',
-    method: '采用标准测试方法，在反应温度350-400°C范围内进行活性测试',
-    started_at: '2024-07-15',
-    completed_at: null,
-    batch_number: 'B-2024-003',
-    scale: 50,
-    scale_unit: 'kg',
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const addNotification = useAppStore((state) => state.addNotification);
+
+  const [experiment, setExperiment] = useState<ExperimentWithProject | null>(null);
+  const [records, setRecords] = useState<ExperimentRecord[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState(0);
+  const [showAddRecordDialog, setShowAddRecordDialog] = useState(false);
+  const [recordForm, setRecordForm] = useState<CreateExperimentRecordRequest>({
+    record_type: '实验记录',
+    content: '',
+    recorded_by: '',
+  });
+  const [addRecordLoading, setAddRecordLoading] = useState(false);
+  const [advancePhaseLoading, setAdvancePhaseLoading] = useState(false);
+
+  const recordTypes = ['实验记录', '数据记录', '观察记录', '问题记录', '其他'];
+
+  const loadExperiment = async () => {
+    if (!id) return;
+    setLoading(true);
+    try {
+      const [expResponse, recordsResponse] = await Promise.all([
+        rsApi.getExperiment(id),
+        rsApi.getExperimentRecords(id),
+      ]);
+
+      if (expResponse.success && expResponse.data) {
+        setExperiment(expResponse.data);
+      } else {
+        addNotification({
+          type: 'error',
+          message: expResponse.message || '加载试验详情失败',
+        });
+      }
+
+      if (recordsResponse.success && recordsResponse.data) {
+        setRecords(recordsResponse.data);
+      }
+    } catch (err: unknown) {
+      apiLogger.error('加载试验详情失败:', err);
+      addNotification({
+        type: 'error',
+        message: '加载试验详情失败',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const records = [
-    {
-      id: '1',
-      type: '实验记录',
-      content: '第一组样品测试完成，转化率达到预期目标',
-      recorded_by: '王五',
-      recorded_at: '2024-07-16',
-    },
-    {
-      id: '2',
-      type: '数据记录',
-      content: '温度曲线数据已记录，峰值温度385°C',
-      recorded_by: '王五',
-      recorded_at: '2024-07-17',
-    },
-    {
-      id: '3',
-      type: '观察记录',
-      content: '催化剂颗粒状态良好，无明显磨损',
-      recorded_by: '李四',
-      recorded_at: '2024-07-18',
-    },
-  ];
+  useEffect(() => {
+    loadExperiment();
+  }, [id]);
 
-  const materials = [
-    {
-      name: '催化剂样品A',
-      batch: 'CAT-001',
-      amount: '10kg',
-      supplier: '实验室自制',
-    },
-    {
-      name: '反应原料',
-      batch: 'RAW-001',
-      amount: '100kg',
-      supplier: '供应商A',
-    },
-    { name: '标准试剂', batch: 'STD-001', amount: '5kg', supplier: '试剂公司' },
-  ];
+  const handleAdvancePhase = async () => {
+    if (!id) return;
+    setAdvancePhaseLoading(true);
+    try {
+      const response = await rsApi.advancePhase(id);
+      if (response.success && response.data) {
+        setExperiment(response.data);
+        addNotification({
+          type: 'success',
+          message: '阶段推进成功',
+        });
+      } else {
+        addNotification({
+          type: 'error',
+          message: response.message || '阶段推进失败',
+        });
+      }
+    } catch (err: unknown) {
+      apiLogger.error('阶段推进失败:', err);
+      addNotification({
+        type: 'error',
+        message: '阶段推进失败',
+      });
+    } finally {
+      setAdvancePhaseLoading(false);
+    }
+  };
+
+  const handleAddRecord = async () => {
+    if (!id) return;
+    setAddRecordLoading(true);
+    try {
+      const response = await rsApi.createExperimentRecord(id, recordForm);
+      if (response.success) {
+        addNotification({
+          type: 'success',
+          message: '添加记录成功',
+        });
+        setShowAddRecordDialog(false);
+        setRecordForm({
+          record_type: '实验记录',
+          content: '',
+          recorded_by: '',
+        });
+        await loadExperiment();
+      } else {
+        addNotification({
+          type: 'error',
+          message: response.message || '添加记录失败',
+        });
+      }
+    } catch (err: unknown) {
+      apiLogger.error('添加记录失败:', err);
+      addNotification({
+        type: 'error',
+        message: '添加记录失败',
+      });
+    } finally {
+      setAddRecordLoading(false);
+    }
+  };
 
   const getPhaseColor = (phase: string): 'info' | 'warning' | 'error' | 'default' => {
     switch (phase) {
@@ -123,6 +205,32 @@ const RsExperimentDetailPage: React.FC = () => {
         return 'default';
     }
   };
+
+  if (loading) {
+    return (
+      <Container
+        maxWidth='xl'
+        sx={{ py: 3 }}
+      >
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+          <CircularProgress />
+        </div>
+      </Container>
+    );
+  }
+
+  if (!experiment) {
+    return (
+      <Container
+        maxWidth='xl'
+        sx={{ py: 3 }}
+      >
+        <Typography variant='h4' sx={{ fontWeight: 'bold' }}>
+          试验不存在或已删除
+        </Typography>
+      </Container>
+    );
+  }
 
   return (
     <Container
@@ -162,7 +270,7 @@ const RsExperimentDetailPage: React.FC = () => {
               color='text.secondary'
               sx={{ mt: 1 }}
             >
-              编码: {experiment.code} | 项目: {experiment.project_name} | 实验员:{' '}
+              编码: {experiment.code} | 项目: {experiment.project_name || experiment.project_id} | 实验员:{' '}
               {experiment.experimenter}
             </Typography>
           </div>
@@ -173,14 +281,17 @@ const RsExperimentDetailPage: React.FC = () => {
             <Button
               variant='outlined'
               startIcon={<EditIcon />}
+              onClick={() => navigate(`/rs/experiments/${id}/edit`)}
             >
               编辑
             </Button>
             <Button
               variant='contained'
               startIcon={<TrendingUpIcon />}
+              onClick={handleAdvancePhase}
+              disabled={advancePhaseLoading}
             >
-              推进阶段
+              {advancePhaseLoading ? <CircularProgress size={20} /> : '推进阶段'}
             </Button>
           </Stack>
         </Stack>
@@ -234,7 +345,7 @@ const RsExperimentDetailPage: React.FC = () => {
                   </Typography>
                 </Grid>
                 <Grid size={{ xs: 6 }}>
-                  <Typography variant='body2'>批次号: {experiment.batch_number}</Typography>
+                  <Typography variant='body2'>批次号: {experiment.batch_number || '-'}</Typography>
                 </Grid>
                 <Grid size={{ xs: 6 }}>
                   <Typography variant='body2'>
@@ -253,31 +364,14 @@ const RsExperimentDetailPage: React.FC = () => {
                 variant='h6'
                 gutterBottom
               >
-                试验物料
+                试验结论
               </Typography>
-              <Stack spacing={2}>
-                {materials.map((material, index) => (
-                  <Paper
-                    key={index}
-                    variant='outlined'
-                    sx={{ p: 2 }}
-                  >
-                    <Typography variant='subtitle2'>{material.name}</Typography>
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >
-                      批次: {material.batch} | 数量: {material.amount}
-                    </Typography>
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >
-                      来源: {material.supplier}
-                    </Typography>
-                  </Paper>
-                ))}
-              </Stack>
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
+                {experiment.conclusions || '暂无结论'}
+              </Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -285,7 +379,7 @@ const RsExperimentDetailPage: React.FC = () => {
 
       {/* 详细信息标签页 */}
       <Paper>
-        <Tabs defaultValue={0}>
+        <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
           <Tab
             label='实验记录'
             icon={<ScienceIcon />}
@@ -304,50 +398,166 @@ const RsExperimentDetailPage: React.FC = () => {
         </Tabs>
 
         <div style={{ padding: 12 }}>
+          {activeTab === 0 && (
+            <Stack direction='row' sx={{ justifyContent: 'flex-end', mb: 2 }}>
+              <Button
+                variant='outlined'
+                startIcon={<PlusIcon />}
+                onClick={() => setShowAddRecordDialog(true)}
+              >
+                添加记录
+              </Button>
+            </Stack>
+          )}
+
           {/* 实验记录 */}
-          <Timeline>
-            {records.map((record) => (
-              <TimelineItem key={record.id}>
-                <TimelineSeparator>
-                  <TimelineDot color='primary'>
-                    <ScienceIcon />
-                  </TimelineDot>
-                  <TimelineConnector />
-                </TimelineSeparator>
-                <TimelineContent>
-                  <Paper
-                    variant='outlined'
-                    sx={{ p: 2 }}
-                  >
-                    <Stack
-                      direction='row'
-                      sx={{
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                    >
-                      <div>
-                        <Chip
-                          label={record.type}
-                          size='small'
-                          sx={{ mb: 1 }}
-                        />
-                        <Typography variant='body2'>{record.content}</Typography>
-                        <Typography
-                          variant='caption'
-                          color='text.secondary'
+          {activeTab === 0 && (
+            <Timeline>
+              {records.length === 0 ? (
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                  sx={{ py: 4, textAlign: 'center', width: '100%' }}
+                >
+                  暂无实验记录
+                </Typography>
+              ) : (
+                records.map((record) => (
+                  <TimelineItem key={record.id}>
+                    <TimelineSeparator>
+                      <TimelineDot color='primary'>
+                        <ScienceIcon />
+                      </TimelineDot>
+                      <TimelineConnector />
+                    </TimelineSeparator>
+                    <TimelineContent>
+                      <Paper
+                        variant='outlined'
+                        sx={{ p: 2 }}
+                      >
+                        <Stack
+                          direction='row'
+                          sx={{
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                          }}
                         >
-                          记录人: {record.recorded_by} | 时间: {record.recorded_at}
-                        </Typography>
-                      </div>
-                    </Stack>
-                  </Paper>
-                </TimelineContent>
-              </TimelineItem>
-            ))}
-          </Timeline>
+                          <div>
+                            <Chip
+                              label={record.record_type}
+                              size='small'
+                              sx={{ mb: 1 }}
+                            />
+                            <Typography variant='body2'>{record.content}</Typography>
+                            <Typography
+                              variant='caption'
+                              color='text.secondary'
+                            >
+                              记录人: {record.recorded_by} | 时间: {record.recorded_at}
+                            </Typography>
+                          </div>
+                        </Stack>
+                      </Paper>
+                    </TimelineContent>
+                  </TimelineItem>
+                ))
+              )}
+            </Timeline>
+          )}
+
+          {/* 数据结果 */}
+          {activeTab === 1 && (
+            <Card>
+              <CardContent>
+                <Typography variant='h6' gutterBottom>
+                  试验结果数据
+                </Typography>
+                {experiment.results && typeof experiment.results === 'object' ? (
+                  <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                    {JSON.stringify(experiment.results, null, 2)}
+                  </pre>
+                ) : (
+                  <Typography variant='body2' color='text.secondary'>
+                    暂无结果数据
+                  </Typography>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 批次追溯 */}
+          {activeTab === 2 && (
+            <Card>
+              <CardContent>
+                <Typography variant='h6' gutterBottom>
+                  批次追溯信息
+                </Typography>
+                {experiment.batch_number ? (
+                  <Typography variant='body2'>
+                    批次号: {experiment.batch_number}
+                  </Typography>
+                ) : (
+                  <Typography variant='body2' color='text.secondary'>
+                    暂无批次信息
+                  </Typography>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </Paper>
+
+      {/* 添加记录对话框 */}
+      <Dialog
+        open={showAddRecordDialog}
+        onClose={() => setShowAddRecordDialog(false)}
+      >
+        <DialogTitle>添加实验记录</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 2 }}>
+            <FormControl fullWidth>
+              <InputLabel>记录类型</InputLabel>
+              <Select
+                value={recordForm.record_type}
+                label='记录类型'
+                onChange={(e) => setRecordForm((prev) => ({ ...prev, record_type: e.target.value }))}
+              >
+                {recordTypes.map((type) => (
+                  <MenuItem key={type} value={type}>
+                    {type}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <TextField
+              fullWidth
+              label='记录内容'
+              multiline
+              rows={4}
+              value={recordForm.content}
+              onChange={(e) => setRecordForm((prev) => ({ ...prev, content: e.target.value }))}
+              placeholder='请输入记录内容'
+            />
+            <TextField
+              fullWidth
+              label='记录人'
+              value={recordForm.recorded_by}
+              onChange={(e) => setRecordForm((prev) => ({ ...prev, recorded_by: e.target.value }))}
+              placeholder='请输入记录人姓名'
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowAddRecordDialog(false)}>取消</Button>
+          <Button
+            variant='contained'
+            onClick={handleAddRecord}
+            disabled={addRecordLoading}
+          >
+            {addRecordLoading ? <CircularProgress size={20} /> : '添加'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

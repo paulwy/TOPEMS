@@ -1,11 +1,5 @@
-import { Grid } from '@/components/Grid';
-import { useAppStore } from '@/store';
-import React, { useEffect, useState } from 'react';
-import { ClipboardList, ChevronRight, FileText, Play, Clock, CheckCircle, X } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import {
   Box,
-  Container,
   Paper,
   Typography,
   IconButton,
@@ -14,23 +8,46 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Card,
-  CardContent,
-  Snackbar,
-  Alert,
-  LinearProgress,
   Avatar,
   Stack,
 } from '@mui/material';
 import { Button } from '@mui/material';
-import type { InspectionProcess, LimsStatistics } from '@/api/lims';
-import { limsApi } from '@/api/lims';
-import { MetricCard } from '@/components/MetricCard';
-import { StatsChart } from '@/components/StatsChart';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
+import { ClipboardList, ChevronRight, FileText, Play, Clock, CheckCircle, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { limsApi, type InspectionProcess, type LimsStatistics } from '@/api/lims';
+import { useAppStore } from '@/store';
+import {
+  ListPageTemplate,
+  type ColumnDef,
+  type RowAction,
+  type FilterConfig,
+} from '@/components/templates';
+import { MetricCard } from '@/components/bi/MetricCard';
 import { apiLogger } from '@/utils/logger';
+
+const STATUS_COLOR_MAP: Record<string, 'success' | 'warning' | 'default'> = {
+  active: 'success',
+  inactive: 'warning',
+  draft: 'default',
+};
+
+const STATUS_LABEL_MAP: Record<string, string> = {
+  active: '启用',
+  inactive: '禁用',
+  draft: '草稿',
+};
+
+const STATUS_OPTIONS = [
+  { value: '', label: '全部状态' },
+  { value: 'active', label: '启用' },
+  { value: 'inactive', label: '禁用' },
+  { value: 'draft', label: '草稿' },
+];
 
 const LimsProcessPage: React.FC = () => {
   const navigate = useNavigate();
+  const addNotification = useAppStore((state) => state.addNotification);
   const [processes, setProcesses] = useState<InspectionProcess[]>([]);
   const [stats, setStats] = useState<LimsStatistics>({
     total_samples: 0,
@@ -50,11 +67,21 @@ const LimsProcessPage: React.FC = () => {
     disabled_instruments: 0,
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [filterStatus, setFilterStatus] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalProcesses, setTotalProcesses] = useState(0);
   const [serviceStatuses, setServiceStatuses] = useState<{
     [key: string]: boolean;
   }>({
     lims: false,
   });
+
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [selectedProcess, setSelectedProcess] = useState<InspectionProcess | null>(null);
 
   const isServiceUp = (serviceName: string): boolean => {
     return serviceStatuses[serviceName] || false;
@@ -93,12 +120,13 @@ const LimsProcessPage: React.FC = () => {
     return () => clearInterval(intervalId);
   }, []);
 
-  const [showTaskModal, setShowTaskModal] = useState(false);
-  const [selectedProcess, setSelectedProcess] = useState<InspectionProcess | null>(null);
-  const [notification, setNotification] = useState<{
-    type: 'success' | 'error';
-    message: string;
-  } | null>(null);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      setCurrentPage(0);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   useEffect(() => {
     if (isServiceUp('lims')) {
@@ -107,7 +135,7 @@ const LimsProcessPage: React.FC = () => {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [serviceStatuses.lims]);
+  }, [serviceStatuses.lims, currentPage, pageSize, debouncedSearch, filterStatus]);
 
   const loadStatistics = async () => {
     try {
@@ -120,44 +148,48 @@ const LimsProcessPage: React.FC = () => {
     }
   };
 
-  const loadAllData = async () => {
+  const loadAllData = useCallback(async () => {
     try {
       setLoading(true);
+      setError(null);
       await Promise.all([loadProcesses(), loadStatistics()]);
+    } catch (err: unknown) {
+      const message = (err as { message?: string }).message || '加载数据失败';
+      setError(message);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const loadProcesses = async () => {
     try {
-      const response = await limsApi.listProcesses();
+      const params: any = {
+        page: currentPage + 1,
+        page_size: pageSize,
+      };
+      if (debouncedSearch) {
+        params.search = debouncedSearch;
+      }
+      if (filterStatus) {
+        params.status = filterStatus;
+      }
+
+      const response = await limsApi.processes.list(params);
       if (response.success && response.data) {
-        let processData = response.data as any;
-        let rawProcesses: any[] = [];
-
-        if (Array.isArray(processData)) {
-          rawProcesses = processData;
-        } else if (processData.processes && Array.isArray(processData.processes)) {
-          rawProcesses = processData.processes;
-        }
-
-        setProcesses(rawProcesses);
+        const data = response.data as any;
+        const items = data.items || data.processes || [];
+        const total = data.total || items.length;
+        setProcesses(items);
+        setTotalProcesses(total);
       } else {
         setProcesses([]);
+        setTotalProcesses(0);
       }
     } catch (err: unknown) {
       apiLogger.error('加载检验流程失败:', err);
       setProcesses([]);
+      setTotalProcesses(0);
     }
-  };
-
-  const showNotification = (type: 'success' | 'error', message: string) => {
-    setNotification({ type, message });
-  };
-
-  const handleCloseNotification = () => {
-    setNotification(null);
   };
 
   const openTaskModal = (process?: InspectionProcess) => {
@@ -165,31 +197,159 @@ const LimsProcessPage: React.FC = () => {
     setShowTaskModal(true);
   };
 
-  const safeProcesses = Array.isArray(processes) ? processes : [];
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'linear-gradient(135deg, #f8fafc 0%, border.default 100%)',
-        }}
-      >
-        <Box sx={{ textAlign: 'center' }}>
-          <LinearProgress
-            sx={{ width: 240, mb: 3, borderRadius: 1 }}
-            color='secondary'
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(0);
+  };
+
+  const handleFilterChange = (filters: Record<string, any>) => {
+    if (filters.status !== undefined) {
+      setFilterStatus(filters.status);
+      setCurrentPage(0);
+    }
+  };
+
+  const getStatusBadge = (status: string) => (
+    <Chip
+      size='small'
+      color={STATUS_COLOR_MAP[status] || 'default'}
+      label={STATUS_LABEL_MAP[status] || status}
+      variant='outlined'
+    />
+  );
+
+  const filters = useMemo<FilterConfig[]>(
+    () => [
+      {
+        id: 'status',
+        label: '状态',
+        type: 'select',
+        options: STATUS_OPTIONS,
+        value: filterStatus,
+        onChange: (value: any) => setFilterStatus(value),
+      },
+    ],
+    [filterStatus]
+  );
+
+  const columns = useMemo<ColumnDef<InspectionProcess>[]>(
+    () => [
+      {
+        id: 'name',
+        label: '流程名称',
+        width: 200,
+        sortable: true,
+        render: (row) => (
+          <Typography sx={{ fontWeight: 600, color: 'grey.900' }}>{row.name}</Typography>
+        ),
+      },
+      {
+        id: 'description',
+        label: '描述',
+        minWidth: 250,
+        render: (row) => (
+          <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
+            {row.description || '-'}
+          </Typography>
+        ),
+      },
+      {
+        id: 'steps',
+        label: '步骤数',
+        width: 100,
+        align: 'center',
+        sortable: true,
+        render: (row) => (
+          <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'grey.900' }}>
+            {row.steps?.length || 0}
+          </Typography>
+        ),
+      },
+      {
+        id: 'status',
+        label: '状态',
+        width: 100,
+        render: (row) => getStatusBadge(row.status),
+      },
+      {
+        id: 'created_at',
+        label: '创建时间',
+        width: 130,
+        sortable: true,
+        render: (row) => (
+          <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
+            {row.created_at?.substring(0, 10) || '-'}
+          </Typography>
+        ),
+      },
+    ],
+    []
+  );
+
+  const rowActions = useMemo<RowAction<InspectionProcess>[]>(
+    () => [
+      {
+        label: '使用此流程',
+        icon: <Play sx={{ width: 16, height: 16 }} />,
+        color: 'secondary',
+        onClick: (row) => openTaskModal(row),
+      },
+    ],
+    []
+  );
+
+  const headerContent = useMemo(
+    () => (
+      <Box sx={{ mb: 4 }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' },
+            gap: 2,
+            mb: 4,
+          }}
+        >
+          <MetricCard
+            title='样品总数'
+            value={stats.total_samples}
+            icon={<ClipboardList size={24} />}
+            gradient={['#8B5CF6', '#7C3AED']}
+            subtitle={`待测试: ${stats.pending_samples}`}
+            trend={stats.pending_samples > 0 ? 'up' : 'neutral'}
           />
-          <Typography color='text.secondary'>加载中...</Typography>
+          <MetricCard
+            title='检验任务'
+            value={stats.total_tasks}
+            icon={<ClipboardList size={24} />}
+            gradient={['#6366F1', '#4F46E5']}
+            subtitle={`进行中: ${stats.in_progress_tasks}`}
+            trend={stats.in_progress_tasks > 0 ? 'up' : 'neutral'}
+          />
+          <MetricCard
+            title='检验流程'
+            value={stats.total_processes}
+            icon={<FileText size={24} />}
+            gradient={['warning.main', '#D97706']}
+            trend='neutral'
+          />
+          <MetricCard
+            title='已完成样品'
+            value={stats.completed_samples}
+            icon={<CheckCircle size={24} />}
+            gradient={['#00C897', '#00A878']}
+            trend='up'
+          />
         </Box>
       </Box>
-    );
-  }
+    ),
+    [stats]
+  );
 
-  if (!isServiceUp('lims')) {
+  if (!isServiceUp('lims') && !loading) {
     return (
       <Box
         sx={{
@@ -250,338 +410,51 @@ const LimsProcessPage: React.FC = () => {
   }
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #f8fafc 0%, border.default 100%)',
-      }}
-    >
-      <Paper
-        elevation={0}
-        sx={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 10,
-          borderRadius: 0,
-          borderBottom: 1,
-          borderColor: 'divider',
+    <Box sx={{ minHeight: '100vh', backgroundColor: 'grey.50' }}>
+      <ListPageTemplate
+        title='检验流程'
+        subtitle='Inspection Processes'
+        backButton={{
+          onClick: () => navigate('/dashboard'),
         }}
-      >
-        <Container
-          maxWidth='xl'
-          sx={{ px: { xs: 2, sm: 3 } }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              minHeight: 64,
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <IconButton onClick={() => navigate('/dashboard')}>
-                <ChevronRight style={{ transform: 'rotate(180deg)' }} />
-              </IconButton>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    background: 'linear-gradient(135deg, warning.main 0%, warning.dark 100%)',
-                    borderRadius: 1.5,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <FileText
-                    size={24}
-                    color='white'
-                  />
-                </Box>
-                <Box>
-                  <Typography
-                    variant='h6'
-                    sx={{ fontWeight: 'bold' }}
-                  >
-                    检验流程
-                  </Typography>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    Inspection Processes
-                  </Typography>
-                </Box>
-              </Box>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Button
-                variant='contained'
-                color='secondary'
-                startIcon={<Play size={16} />}
-                onClick={() => openTaskModal()}
-              >
-                新建任务
-              </Button>
-            </Box>
-          </Box>
-        </Container>
-      </Paper>
-
-      <Snackbar
-        open={Boolean(notification)}
-        autoHideDuration={3000}
-        onClose={handleCloseNotification}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-      >
-        <Alert
-          onClose={handleCloseNotification}
-          severity={notification?.type || 'success'}
-          variant='filled'
-          sx={{ borderRadius: 2 }}
-        >
-          {notification?.message}
-        </Alert>
-      </Snackbar>
-
-      <Container
-        maxWidth='xl'
-        sx={{ py: 4, px: { xs: 2, sm: 3 } }}
-      >
-        <Grid
-          container
-          spacing={2}
-          sx={{ mb: 4 }}
-        >
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <MetricCard
-              title='样品总数'
-              value={stats.total_samples}
-              icon={<ClipboardList size={24} />}
-              gradient={['#8B5CF6', '#7C3AED']}
-              subtitle={`待测试: ${stats.pending_samples}`}
-              trend={stats.pending_samples > 0 ? 'up' : 'neutral'}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <MetricCard
-              title='检验任务'
-              value={stats.total_tasks}
-              icon={<ClipboardList size={24} />}
-              gradient={['#6366F1', '#4F46E5']}
-              subtitle={`进行中: ${stats.in_progress_tasks}`}
-              trend={stats.in_progress_tasks > 0 ? 'up' : 'neutral'}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <MetricCard
-              title='检验流程'
-              value={stats.total_processes}
-              icon={<FileText size={24} />}
-              gradient={['warning.main', '#D97706']}
-              trend='neutral'
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <MetricCard
-              title='已完成样品'
-              value={stats.completed_samples}
-              icon={<CheckCircle size={24} />}
-              gradient={['#00C897', '#00A878']}
-              trend='up'
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <MetricCard
-              title='测试中样品'
-              value={stats.testing_samples}
-              icon={<Clock size={24} />}
-              gradient={['#EC4899', '#DB2777']}
-              trend='neutral'
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <MetricCard
-              title='仪器设备'
-              value={stats.total_instruments}
-              icon={<ClipboardList size={24} />}
-              gradient={['#14B8A6', '#0D9488']}
-              subtitle={`正常: ${stats.normal_instruments}`}
-              trend='neutral'
-            />
-          </Grid>
-        </Grid>
-
-        <Grid
-          container
-          spacing={3}
-          sx={{ mb: 4 }}
-        >
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <Card
-              sx={{ borderRadius: 2 }}
-              variant='outlined'
-            >
-              <CardContent>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <Box>
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                      sx={{ mb: 1 }}
-                    >
-                      流程总数
-                    </Typography>
-                    <Typography
-                      variant='h4'
-                      sx={{ fontWeight: 'bold' }}
-                    >
-                      {safeProcesses.length}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 1.5,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      bgcolor: 'secondary.light',
-                    }}
-                  >
-                    <FileText
-                      size={24}
-                      color='secondary.dark'
-                    />
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
-
-        <Paper
-          sx={{ borderRadius: 2 }}
-          variant='outlined'
-        >
-          <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
-            <Typography
-              variant='h6'
-              sx={{ fontWeight: 'semibold' }}
-            >
-              检验流程
-            </Typography>
-          </Box>
-          <Box>
-            {safeProcesses.length === 0 ? (
-              <Box sx={{ p: 6, textAlign: 'center' }}>
-                <FileText
-                  size={64}
-                  color='grey.400'
-                  style={{ marginBottom: 16 }}
-                />
-                <Typography color='text.secondary'>暂无检验流程</Typography>
-              </Box>
-            ) : (
-              safeProcesses.map((process) => (
-                <Box
-                  key={process.id}
-                  sx={{
-                    p: 3,
-                    borderBottom: 1,
-                    borderColor: 'divider',
-                    transition: 'background 0.2s',
-                    '&:hover': { bgcolor: 'grey.50' },
-                    '&:last-of-type': { borderBottom: 0 },
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <Box sx={{ flex: 1 }}>
-                      <Typography
-                        variant='h6'
-                        sx={{ ...{ mb: 1 }, fontWeight: 'semibold' }}
-                      >
-                        {process.name}
-                      </Typography>
-                      <Typography
-                        color='text.secondary'
-                        sx={{ mb: 2 }}
-                      >
-                        {process.description}
-                      </Typography>
-                      <Stack
-                        direction='row'
-                        spacing={1.5}
-                        useFlexGap
-                        sx={{ flexWrap: 'wrap' }}
-                      >
-                        {(process.steps || []).map((step, idx) => (
-                          <Box
-                            key={step.id}
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 1,
-                            }}
-                          >
-                            <Avatar
-                              sx={{
-                                width: 24,
-                                height: 24,
-                                bgcolor: 'secondary.light',
-                                color: 'secondary.dark',
-                                fontSize: 12,
-                                fontWeight: 500,
-                              }}
-                            >
-                              {idx + 1}
-                            </Avatar>
-                            <Typography variant='body2'>{step.name}</Typography>
-                            {idx < process.steps.length - 1 && (
-                              <Typography color='text.disabled'>→</Typography>
-                            )}
-                          </Box>
-                        ))}
-                      </Stack>
-                    </Box>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 0.5,
-                      }}
-                    >
-                      <Button
-                        size='small'
-                        color='secondary'
-                        startIcon={<Play size={16} />}
-                        onClick={() => openTaskModal(process)}
-                      >
-                        使用此流程
-                      </Button>
-                    </Box>
-                  </Box>
-                </Box>
-              ))
-            )}
-          </Box>
-        </Paper>
-      </Container>
+        columns={columns}
+        data={processes}
+        loading={loading}
+        error={error || undefined}
+        getRowId={(row) => row.id}
+        sortable
+        defaultSortBy='created_at'
+        defaultSortOrder='desc'
+        searchable
+        searchPlaceholder='搜索检验流程名称...'
+        searchValue={searchQuery}
+        onSearch={setSearchQuery}
+        filters={filters}
+        filtersValue={{ status: filterStatus }}
+        onFilterChange={handleFilterChange}
+        pagination={{
+          page: currentPage,
+          pageSize,
+          total: totalProcesses,
+          onPageChange: handlePageChange,
+          onPageSizeChange: handlePageSizeChange,
+        }}
+        rowActions={rowActions}
+        onRefresh={loadAllData}
+        headerContent={headerContent}
+        actions={[
+          {
+            label: '新建任务',
+            icon: <Play sx={{ width: 16, height: 16 }} />,
+            onClick: () => openTaskModal(),
+            variant: 'contained',
+          },
+        ]}
+        showRowNumber
+        columnConfigurable
+        persistColumnConfig
+        columnConfigStorageKey='lims-processes-columns'
+      />
 
       <Dialog
         open={showTaskModal}

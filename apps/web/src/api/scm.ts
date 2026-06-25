@@ -672,8 +672,8 @@ export interface AuditLogDetail {
   created_at: string;
   change_fields?: Array<{
     field: string;
-    old_value: any;
-    new_value: any;
+    old_value: unknown;
+    new_value: unknown;
   }>;
 }
 

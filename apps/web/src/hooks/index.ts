@@ -22,6 +22,7 @@ export type { AIRecommendation, AIContextState, QuickCommand } from './useAICont
 export { useTopNav } from './useTopNav';
 export { useBatchSelection } from './useBatchSelection';
 export { useAutoBreadcrumbs } from './useAutoBreadcrumbs';
+export type { AutoBreadcrumbItem, UseAutoBreadcrumbsOptions } from './useAutoBreadcrumbs';
 export { useDataTable, useExportData } from './useDataTable';
 export type { UseDataTableOptions, UseDataTableResult } from './useDataTable';
 export { useImportExport } from './useImportExport';

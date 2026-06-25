@@ -7,6 +7,19 @@ import { apiClient, downloadBlob } from './client';
 import type { VoucherTemplate, VoucherTemplateType, VoucherTemplateEntry } from '../types/finance';
 import config from '../config/runtime';
 
+export interface VoucherGenerationRule {
+  id: string;
+  name: string;
+  source_module: string;
+  source_type: string;
+  template_id: string;
+  condition?: string;
+  priority: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 // ============================================
 // 一、凭证模板管理
 // ============================================
@@ -230,7 +243,7 @@ export const voucherTemplateApi = {
   /**
    * 更新凭证生成规则
    */
-  updateGenerationRule: (ruleId: string, data: any) =>
+  updateGenerationRule: (ruleId: string, data: Partial<VoucherGenerationRule>) =>
     apiClient.erp.put(`/api/voucher/rules/${ruleId}`, data),
 
   /**

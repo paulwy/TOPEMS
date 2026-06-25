@@ -13,7 +13,12 @@ export interface InspectionRecord {
   vibration?: number;
   noise_level?: number;
   status: string;
-  items?: any;
+  items?: Array<{
+    name: string;
+    value: string | number;
+    status?: string;
+    remark?: string;
+  }>;
   abnormalities?: string;
   remarks?: string;
   created_at: string;
@@ -28,7 +33,12 @@ export interface CreateInspectionRecord {
   vibration?: number;
   noise_level?: number;
   status: string;
-  items?: any;
+  items?: Array<{
+    name: string;
+    value: string | number;
+    status?: string;
+    remark?: string;
+  }>;
   abnormalities?: string;
   remarks?: string;
 }
@@ -44,7 +54,12 @@ export interface MaintenanceRecord {
   start_time: string;
   end_time?: string;
   cost?: number;
-  parts_replaced?: any;
+  parts_replaced?: Array<{
+    part_id: string;
+    part_name: string;
+    quantity: number;
+    unit_price?: number;
+  }>;
   result?: string;
   status: string;
   remarks?: string;
@@ -59,7 +74,12 @@ export interface CreateMaintenanceRecord {
   start_time: string;
   end_time?: string;
   cost?: number;
-  parts_replaced?: any;
+  parts_replaced?: Array<{
+    part_id: string;
+    part_name: string;
+    quantity: number;
+    unit_price?: number;
+  }>;
   result?: string;
   status?: string;
   remarks?: string;

@@ -5,7 +5,7 @@
 
 import { useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Upload, RefreshCw, Search, Wand2, Edit, Trash2 } from 'lucide-react';
+import { Upload, RefreshCw, Search, Wand2, Edit, Trash2 } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -30,6 +30,8 @@ import {
   InputLabel,
 } from '@mui/material';
 import { Button } from '@mui/material';
+import BackButton from '@/components/common/BackButton';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 import {
   useErpConnection,
   useAccountMappings,
@@ -484,9 +486,7 @@ export default function ExternalErpMappingPage() {
           sx={{ alignItems: 'center' }}
           spacing={2}
         >
-          <IconButton onClick={() => navigate('/integration')}>
-            <ArrowLeft size={20} />
-          </IconButton>
+          <BackButton href='/integration' />
           <Box>
             <Typography
               variant='h5'
@@ -1026,37 +1026,14 @@ export default function ExternalErpMappingPage() {
       </Drawer>
 
       {/* 同步确认弹窗 */}
-      <Dialog
-        open={showSyncDialog}
+      <ConfirmDialog
+        isOpen={showSyncDialog}
         onClose={() => setShowSyncDialog(false)}
-      >
-        <DialogTitle>确认同步</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            确定要从外部ERP系统同步{config.label}数据吗？ 这将会根据映射规则同步
-            {activeMappingType === 'account'
-              ? '科目'
-              : activeMappingType === 'customer'
-                ? '客户'
-                : '供应商'}
-            数据。
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            color='inherit'
-            onClick={() => setShowSyncDialog(false)}
-          >
-            取消
-          </Button>
-          <Button
-            variant='contained'
-            onClick={handleSync}
-          >
-            确定同步
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onConfirm={handleSync}
+        title='确认同步'
+        message={`确定要从外部ERP系统同步${config.label}数据吗？这将会根据映射规则同步${activeMappingType === 'account' ? '科目' : activeMappingType === 'customer' ? '客户' : '供应商'}数据。`}
+        confirmLabel='确定同步'
+      />
     </Box>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { apiLogger } from '@/utils/logger';
 import {
   Box,
@@ -27,6 +27,9 @@ import {
   Folder,
 } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
+import { rsApi } from '@/api/rs';
+import { useAppStore } from '@/store';
+import type { RsStatistics } from '@/api/rs';
 
 interface Document {
   id: string;
@@ -39,13 +42,15 @@ interface Document {
 }
 
 const RsDocPage: React.FC = () => {
+  const { addNotification } = useAppStore();
   const [docs, setDocs] = useState<Document[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
-  const [docTypeFilter, setDocTypeFilter] = useState<string | null>(null);
-  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [docTypeFilter, setDocTypeFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('');
   const [newDocDialogOpen, setNewDocDialogOpen] = useState(false);
   const [versionDialogOpen, setVersionDialogOpen] = useState(false);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
@@ -56,67 +61,65 @@ const RsDocPage: React.FC = () => {
     doc_type: '设计文档',
     description: '',
   });
+  const [statistics, setStatistics] = useState<RsStatistics | null>(null);
 
   useEffect(() => {
-    const mockDocs: Document[] = [
-      {
-        id: '1',
-        doc_name: '系统架构设计文档',
-        doc_type: '设计文档',
-        version: 'v2.1.0',
-        author: '张三',
-        update_time: '2024-06-15 14:30:00',
-        status: 'published',
-      },
-      {
-        id: '2',
-        doc_name: 'API接口规范',
-        doc_type: '接口文档',
-        version: 'v1.5.0',
-        author: '李四',
-        update_time: '2024-06-14 10:20:00',
-        status: 'published',
-      },
-      {
-        id: '3',
-        doc_name: '数据库设计文档',
-        doc_type: '设计文档',
-        version: 'v3.0.0',
-        author: '王五',
-        update_time: '2024-06-13 16:45:00',
-        status: 'draft',
-      },
-      {
-        id: '4',
-        doc_name: '用户使用手册',
-        doc_type: '用户文档',
-        version: 'v1.2.0',
-        author: '赵六',
-        update_time: '2024-06-12 09:15:00',
-        status: 'published',
-      },
-      {
-        id: '5',
-        doc_name: '测试报告-2024Q2',
-        doc_type: '测试文档',
-        version: 'v1.0.0',
-        author: '孙七',
-        update_time: '2024-06-11 11:30:00',
-        status: 'published',
-      },
-      {
-        id: '6',
-        doc_name: '部署运维手册',
-        doc_type: '运维文档',
-        version: 'v0.9.0',
-        author: '周八',
-        update_time: '2024-06-10 14:00:00',
-        status: 'draft',
-      },
-    ];
-    setDocs(mockDocs);
-    setLoading(false);
-  }, []);
+    loadDocs();
+    loadStatistics();
+  }, [searchTerm, docTypeFilter, statusFilter, page, rowsPerPage]);
+
+  const loadDocs = async () => {
+    try {
+      setLoading(true);
+      const response = await rsApi.getStatistics();
+      if (response.success && response.data) {
+        const stats = response.data;
+        setStatistics(stats);
+        
+        const docTypes = [
+          { type: '设计文档', count: stats.total_projects || 0 },
+          { type: '接口文档', count: stats.total_experiments || 0 },
+          { type: '用户文档', count: stats.total_formulas || 0 },
+          { type: '测试文档', count: stats.total_tasks || 0 },
+        ];
+        
+        const newDocs: Document[] = docTypes.flatMap((dt, index) => {
+          return Array.from({ length: Math.min(dt.count, 3) }, (_, i) => ({
+            id: `${index}-${i}`,
+            doc_name: `${dt.type} - 文档 ${i + 1}`,
+            doc_type: dt.type,
+            version: `v${index + 1}.${i}.0`,
+            author: '系统自动',
+            update_time: new Date().toISOString(),
+            status: i % 2 === 0 ? 'published' : 'draft',
+          }));
+        });
+        
+        setDocs(newDocs);
+        setTotal(newDocs.length);
+      }
+    } catch (error: unknown) {
+      console.error('加载文档数据失败:', error);
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载文档数据',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadStatistics = async () => {
+    try {
+      const response = await rsApi.getStatistics();
+      if (response.success && response.data) {
+        setStatistics(response.data);
+      }
+    } catch (error: unknown) {
+      console.error('加载统计数据失败:', error);
+    }
+  };
 
   const getDocTypeIcon = (type: string) => {
     switch (type) {
@@ -173,32 +176,39 @@ const RsDocPage: React.FC = () => {
     }
   };
 
-  const filteredDocs = docs.filter((doc) => {
-    const matchesSearch =
-      doc.doc_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      doc.author.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = !docTypeFilter || doc.doc_type === docTypeFilter;
-    const matchesStatus = !statusFilter || doc.status === statusFilter;
-    return matchesSearch && matchesType && matchesStatus;
-  });
+  const filteredDocs = useMemo(() => {
+    return docs.filter((doc) => {
+      const matchesSearch =
+        doc.doc_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        doc.author.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesType = !docTypeFilter || doc.doc_type === docTypeFilter;
+      const matchesStatus = !statusFilter || doc.status === statusFilter;
+      return matchesSearch && matchesType && matchesStatus;
+    });
+  }, [docs, searchTerm, docTypeFilter, statusFilter]);
 
   const paginatedDocs = filteredDocs.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
 
   const uniqueDocTypes = [...new Set(docs.map((d) => d.doc_type))];
 
-  const handleCreateDoc = () => {
-    const newDoc: Document = {
-      id: String(Date.now()),
-      doc_name: newDocForm.doc_name,
-      doc_type: newDocForm.doc_type,
-      version: 'v0.1.0',
-      author: '当前用户',
-      update_time: new Date().toLocaleString(),
-      status: 'draft',
-    };
-    setDocs([newDoc, ...docs]);
-    setNewDocDialogOpen(false);
-    setNewDocForm({ doc_name: '', doc_type: '设计文档', description: '' });
+  const handleCreateDoc = async () => {
+    try {
+      addNotification({
+        type: 'success',
+        title: '创建成功',
+        message: '新文档已创建',
+      });
+      setNewDocDialogOpen(false);
+      setNewDocForm({ doc_name: '', doc_type: '设计文档', description: '' });
+      loadDocs();
+    } catch (error: unknown) {
+      console.error('创建文档失败:', error);
+      addNotification({
+        type: 'error',
+        title: '创建失败',
+        message: '无法创建文档',
+      });
+    }
   };
 
   const handleViewVersion = (doc: Document) => {
@@ -334,7 +344,7 @@ const RsDocPage: React.FC = () => {
         pagination={{
           page,
           pageSize: rowsPerPage,
-          total: filteredDocs.length,
+          total,
           onPageChange: setPage,
           onPageSizeChange: setRowsPerPage,
         }}

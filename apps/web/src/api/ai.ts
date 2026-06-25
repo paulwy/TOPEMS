@@ -190,7 +190,11 @@ export interface QAHistoryItem {
   question: string;
   answer: string;
   context?: Record<string, any>;
-  sources?: any[];
+  sources?: Array<{
+    title: string;
+    url?: string;
+    content?: string;
+  }>;
   feedback?: string;
   rating?: number;
   created_at: string;
@@ -334,7 +338,11 @@ export const aiApi = {
   }): Promise<
     ApiResponse<{
       answer: string;
-      sources: any[];
+      sources: Array<{
+        title: string;
+        url?: string;
+        content?: string;
+      }>;
       qa_id: string;
       confidence: number;
     }>
@@ -349,7 +357,11 @@ export const aiApi = {
   }): Promise<
     ApiResponse<{
       answer: string;
-      sources: any[];
+      sources: Array<{
+        title: string;
+        url?: string;
+        content?: string;
+      }>;
       qa_id: string;
       confidence: number;
     }>
@@ -381,7 +393,11 @@ export const aiApi = {
   }): Promise<
     ApiResponse<{
       answer: string;
-      sources: any[];
+      sources: Array<{
+        title: string;
+        url?: string;
+        content?: string;
+      }>;
       qa_id: string;
       confidence: number;
     }>

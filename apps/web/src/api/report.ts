@@ -195,7 +195,7 @@ export interface ReportSchedule {
   template_name?: string;
   schedule_type: ScheduleType;
   schedule_expression: string;
-  parameters: any;
+  parameters: Record<string, unknown>;
   recipients: string[];
   status: ScheduleStatus;
   last_run_at?: string;
@@ -211,7 +211,7 @@ export interface CreateScheduleRequest {
   template_id: string;
   schedule_type: ScheduleType;
   schedule_expression: string;
-  parameters?: any;
+  parameters?: Record<string, unknown>;
   recipients: string[];
 }
 
@@ -220,7 +220,7 @@ export interface UpdateScheduleRequest {
   template_id?: string;
   schedule_type?: ScheduleType;
   schedule_expression?: string;
-  parameters?: any;
+  parameters?: Record<string, unknown>;
   recipients?: string[];
   status?: ScheduleStatus;
 }

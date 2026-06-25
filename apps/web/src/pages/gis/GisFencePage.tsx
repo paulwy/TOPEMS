@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Card,
@@ -26,6 +26,8 @@ import {
   DialogActions,
   Checkbox,
   FormControlLabel,
+  CircularProgress,
+  Alert,
 } from '@mui/material';
 import {
   MapPin,
@@ -37,9 +39,18 @@ import {
   AlertTriangle,
   CheckCircle,
   Clock,
+  AlertCircle,
 } from 'lucide-react';
+import {
+  GisMapTemplate,
+  type MapMarker,
+  type GeoFence,
+} from '@/components/templates';
+import { useAppStore } from '../../store';
+import { gisApi } from '@/api/gis';
+import type { MapMarker as GisMapMarker } from '@/api/gis';
 
-interface GeoFence {
+interface FenceData {
   id: string;
   name: string;
   type: 'circle' | 'polygon' | 'rectangle';
@@ -54,10 +65,14 @@ interface GeoFence {
 }
 
 export const GisFencePage: React.FC = () => {
+  const addNotification = useAppStore((state) => state.addNotification);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string>('');
 
-  const geoFences: GeoFence[] = [
+  const [fences, setFences] = useState<FenceData[]>([
     {
       id: 'F001',
       name: '仓库区域',
@@ -107,7 +122,30 @@ export const GisFencePage: React.FC = () => {
       createdAt: '2024-01-05 09:00:00',
       triggerCount: 12,
     },
-  ];
+  ]);
+
+  const [mapMarkers, setMapMarkers] = useState<GisMapMarker[]>([]);
+
+  const loadMapMarkers = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const res = await gisApi.listMapMarkers({ page_size: 50 });
+      if (res.success && res.data) {
+        setMapMarkers(res.data.data || []);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '加载地图标记失败';
+      setError(msg);
+      addNotification({ title: '加载失败', message: msg, type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  }, [addNotification]);
+
+  useEffect(() => {
+    loadMapMarkers();
+  }, [loadMapMarkers]);
 
   const getTypeLabel = (type: string) => {
     switch (type) {
@@ -122,15 +160,96 @@ export const GisFencePage: React.FC = () => {
     }
   };
 
-  const stats = [
-    { label: '围栏总数', value: '24', icon: <Shield size={20} />, color: 'primary' },
-    { label: '激活围栏', value: '18', icon: <CheckCircle size={20} />, color: 'success' },
-    { label: '今日触发', value: '45', icon: <AlertTriangle size={20} />, color: 'warning' },
-    { label: '待处理告警', value: '3', icon: <Clock size={20} />, color: 'error' },
+  const parseCoordinates = (coords: string): [number, number] => {
+    const [lat, lng] = coords.split(',').map((c) => parseFloat(c.trim()));
+    return [lat || 0, lng || 0];
+  };
+
+  const mapFences: GeoFence[] = fences.map((fence) => ({
+    id: fence.id,
+    name: fence.name,
+    type: fence.type,
+    position: parseCoordinates(fence.coordinates),
+    radius: fence.radius,
+    color: fence.status === 'active' ? '#f44336' : '#9e9e9e',
+    alertOnEnter: fence.alertOnEnter,
+    alertOnExit: fence.alertOnExit,
+  }));
+
+  const allMarkers: MapMarker[] = [
+    ...fences.map((fence) => ({
+      id: fence.id,
+      name: fence.name,
+      position: parseCoordinates(fence.coordinates),
+      type: (fence.status === 'active' ? 'warning' : 'custom') as MapMarker['type'],
+      popupContent: (
+        <Box>
+          <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>{fence.name}</Typography>
+          <Typography variant='body2' color='text.secondary'>类型: {getTypeLabel(fence.type)}</Typography>
+          <Typography variant='body2' color='text.secondary'>触发次数: {fence.triggerCount}</Typography>
+          {fence.alertOnEnter && <Chip size='small' label='进入告警' color='warning' sx={{ mt: 0.5 }} />}
+          {fence.alertOnExit && <Chip size='small' label='离开告警' color='info' sx={{ mt: 0.5, ml: 0.5 }} />}
+        </Box>
+      ),
+    })),
+    ...mapMarkers.map((marker) => ({
+      id: `marker-${marker.id}`,
+      name: marker.name,
+      position: [marker.position.lat, marker.position.lng] as [number, number],
+      type: 'storage' as const,
+      popupContent: (
+        <Box>
+          <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>{marker.name}</Typography>
+          <Typography variant='body2' color='text.secondary'>类型: {marker.marker_type}</Typography>
+        </Box>
+      ),
+    })),
   ];
 
+  const stats = [
+    { id: 'total', title: '围栏总数', value: fences.length, icon: <Shield style={{ width: 24, height: 24 }} />, color: 'primary' },
+    { id: 'active', title: '激活围栏', value: fences.filter(f => f.status === 'active').length, icon: <CheckCircle style={{ width: 24, height: 24 }} />, color: 'success' },
+    { id: 'triggered', title: '今日触发', value: '45', icon: <AlertTriangle style={{ width: 24, height: 24 }} />, color: 'warning' },
+    { id: 'pending', title: '待处理告警', value: '3', icon: <Clock style={{ width: 24, height: 24 }} />, color: 'error' },
+  ];
+
+  const handleSearch = useCallback((query: string) => {
+    setSearchTerm(query);
+    addNotification({ title: '搜索', message: `搜索: ${query}`, type: 'info' });
+  }, [addNotification]);
+
+  const handleFenceClick = useCallback((fence: GeoFence) => {
+    addNotification({ title: '围栏详情', message: `选中: ${fence.name}`, type: 'info' });
+  }, [addNotification]);
+
+  const handleCreateFence = useCallback(() => {
+    setOpenDialog(true);
+  }, []);
+
+  const handleSaveFence = useCallback(() => {
+    addNotification({ title: '成功', message: '围栏创建成功', type: 'success' });
+    setOpenDialog(false);
+  }, [addNotification]);
+
+  const handleDeleteFence = useCallback((fenceId: string) => {
+    addNotification({ title: '成功', message: '围栏删除成功', type: 'success' });
+    setFences((prev) => prev.filter((f) => f.id !== fenceId));
+  }, [addNotification]);
+
+  const filteredFences = fences.filter((f) =>
+    f.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
-    <Box sx={{ flex: 1 }}>
+    <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box
         sx={{
           display: 'flex',
@@ -156,11 +275,21 @@ export const GisFencePage: React.FC = () => {
         <Button
           variant='contained'
           startIcon={<Plus />}
-          onClick={() => setOpenDialog(true)}
+          onClick={handleCreateFence}
         >
           创建围栏
         </Button>
       </Box>
+
+      {error && (
+        <Alert
+          severity='error'
+          sx={{ mb: 3 }}
+          icon={<AlertCircle size={20} />}
+        >
+          {error}
+        </Alert>
+      )}
 
       <Grid
         container
@@ -170,7 +299,7 @@ export const GisFencePage: React.FC = () => {
         {stats.map((stat) => (
           <Grid
             size={{ xs: 6, sm: 3 }}
-            key={stat.label}
+            key={stat.id}
           >
             <Card>
               <CardContent>
@@ -187,7 +316,7 @@ export const GisFencePage: React.FC = () => {
                     variant='caption'
                     color='text.secondary'
                   >
-                    {stat.label}
+                    {stat.title}
                   </Typography>
                 </Box>
                 <Typography
@@ -205,9 +334,10 @@ export const GisFencePage: React.FC = () => {
       <Grid
         container
         spacing={3}
+        sx={{ flex: 1, minHeight: 0 }}
       >
         <Grid size={{ xs: 12, lg: 8 }}>
-          <Card>
+          <Card sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             <CardHeader
               title='围栏列表'
               action={
@@ -230,7 +360,7 @@ export const GisFencePage: React.FC = () => {
                 />
               }
             />
-            <CardContent>
+            <CardContent sx={{ flex: 1, overflowY: 'auto' }}>
               <TableContainer>
                 <Table>
                   <TableHead>
@@ -245,7 +375,7 @@ export const GisFencePage: React.FC = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {geoFences.map((fence) => (
+                    {filteredFences.map((fence) => (
                       <TableRow key={fence.id}>
                         <TableCell>
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -272,7 +402,7 @@ export const GisFencePage: React.FC = () => {
                           )}
                         </TableCell>
                         <TableCell>
-                          <Box sx={{ display: 'flex', gap: 1 }}>
+                          <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                             {fence.alertOnEnter && (
                               <Chip
                                 size='small'
@@ -305,6 +435,7 @@ export const GisFencePage: React.FC = () => {
                             <IconButton
                               size='small'
                               color='error'
+                              onClick={() => handleDeleteFence(fence.id)}
                             >
                               <Delete size={16} />
                             </IconButton>
@@ -320,54 +451,19 @@ export const GisFencePage: React.FC = () => {
         </Grid>
 
         <Grid size={{ xs: 12, lg: 4 }}>
-          <Card>
+          <Card sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             <CardHeader title='地图预览' />
-            <CardContent>
-              <Box
-                sx={{
-                  height: 400,
-                  backgroundColor: 'grey.100',
-                  borderRadius: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  position: 'relative',
-                }}
-              >
-                <MapPin
-                  size={48}
-                  color='#1976d2'
-                />
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
-                  地图预览区域
-                </Typography>
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: 20,
-                    left: 20,
-                    right: 20,
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <Chip
-                    size='small'
-                    label='围栏区域'
-                    color='primary'
-                    icon={<Shield size={14} />}
-                  />
-                  <Chip
-                    size='small'
-                    label='告警区域'
-                    color='error'
-                    icon={<AlertTriangle size={14} />}
-                  />
-                </Box>
-              </Box>
+            <CardContent sx={{ flex: 1, p: 0 }}>
+              <GisMapTemplate
+                initialCenter={[39.9042, 116.4074]}
+                initialZoom={13}
+                markers={allMarkers}
+                fences={mapFences}
+                onFenceClick={handleFenceClick}
+                searchable
+                onSearch={handleSearch}
+                sx={{ height: 400 }}
+              />
             </CardContent>
           </Card>
 
@@ -491,7 +587,7 @@ export const GisFencePage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDialog(false)}>取消</Button>
-          <Button variant='contained'>创建围栏</Button>
+          <Button variant='contained' onClick={handleSaveFence}>创建围栏</Button>
         </DialogActions>
       </Dialog>
     </Box>

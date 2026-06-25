@@ -14,7 +14,7 @@ import {
   Legend,
 } from 'recharts';
 
-interface StatsChartProps {
+export interface StatsChartProps {
   type: 'bar' | 'pie' | 'line';
   title?: string;
   data: any[];

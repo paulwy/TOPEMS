@@ -1,49 +1,34 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
+import { announcementApi, type Announcement } from '@/api/erp';
+import { useAppStore } from '@/store';
 import {
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
-  Typography,
-  Box,
-  TextField,
+  Bell,
+  Plus,
+  Edit,
+  Trash2,
+  CheckCircle,
+  XCircle,
+  Calendar,
+  User,
+  AlertCircle,
+} from 'lucide-react';
+import {
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
+  TextField,
+  Button,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
-  Tooltip,
-  IconButton,
+  Box,
+  Chip,
 } from '@mui/material';
-import { Button } from '@mui/material';
-import {
-  Bell,
-  Search,
-  Plus,
-  Edit,
-  Trash2,
-  ChevronLeft,
-  AlertCircle,
-  Calendar,
-  User,
-} from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { announcementApi, type Announcement } from '@/api/erp';
-import { useAppStore } from '../../store';
-import type { ColumnDef } from '@tanstack/react-table';
-import { DataTable } from '@/components/DataTable';
 
-import { ModeToggle } from '@/components/ModeToggle';
-
-interface AnnouncementManagementPageProps {
-  onNavigate?: (page: string) => void;
-}
-
-const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({ onNavigate }) => {
-  const navigate = useNavigate();
+const AnnouncementManagementPage: React.FC = () => {
   const addNotification = useAppStore((state) => state.addNotification);
 
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
@@ -52,6 +37,10 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [total, setTotal] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const [newAnnouncement, setNewAnnouncement] = useState<Partial<Announcement>>({
     title: '',
@@ -61,32 +50,36 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
     priority: 'normal',
   });
 
-  useEffect(() => {
-    loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await announcementApi.list();
+      const res = await announcementApi.list({
+        page: currentPage,
+        page_size: pageSize,
+        search: searchQuery,
+      });
       if (res.success && res.data) {
         setAnnouncements(res.data.items || []);
+        setTotal(res.data.total);
       }
     } catch (err: unknown) {
-      const error = err as { message?: string };
-      setError(error.message || '加载数据失败');
+      const errorMsg = (err as { message?: string }).message || '加载数据失败';
+      setError(errorMsg);
       addNotification({
         title: '加载失败',
-        message: '加载数据失败',
+        message: errorMsg,
         type: 'error',
       });
       setAnnouncements([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, pageSize, searchQuery, addNotification]);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
   const handleCreateAnnouncement = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,10 +108,10 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
         });
       }
     } catch (err: unknown) {
-      const error = err as { message?: string };
+      const errorMsg = (err as { message?: string }).message || '创建公告失败';
       addNotification({
         title: '失败',
-        message: error.message || '创建公告失败',
+        message: errorMsg,
         type: 'error',
       });
     }
@@ -143,10 +136,10 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
         });
       }
     } catch (err: unknown) {
-      const error = err as { message?: string };
+      const errorMsg = (err as { message?: string }).message || '删除公告失败';
       addNotification({
         title: '失败',
-        message: error.message || '删除公告失败',
+        message: errorMsg,
         type: 'error',
       });
     }
@@ -174,10 +167,10 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
         });
       }
     } catch (err: unknown) {
-      const error = err as { message?: string };
+      const errorMsg = (err as { message?: string }).message || '更新公告失败';
       addNotification({
         title: '失败',
-        message: error.message || '更新公告失败',
+        message: errorMsg,
         type: 'error',
       });
     }
@@ -201,10 +194,10 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
         });
       }
     } catch (err: unknown) {
-      const error = err as { message?: string };
+      const errorMsg = (err as { message?: string }).message || '发布公告失败';
       addNotification({
         title: '失败',
-        message: error.message || '发布公告失败',
+        message: errorMsg,
         type: 'error',
       });
     }
@@ -228,19 +221,17 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
         });
       }
     } catch (err: unknown) {
+      const errorMsg = (err as { message?: string }).message || '下架公告失败';
       addNotification({
         title: '失败',
-        message: (err as { message?: string }).message || '下架公告失败',
+        message: errorMsg,
         type: 'error',
       });
     }
   };
 
   const getStatusBadge = (status: string) => {
-    const colors: Record<
-      string,
-      'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'
-    > = {
+    const colors: Record<string, string> = {
       draft: 'default',
       published: 'success',
       archived: 'default',
@@ -260,10 +251,7 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
   };
 
   const getPriorityBadge = (priority?: string) => {
-    const colors: Record<
-      string,
-      'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'
-    > = {
+    const colors: Record<string, string> = {
       low: 'default',
       normal: 'info',
       high: 'warning',
@@ -284,233 +272,123 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
     );
   };
 
-  const columns = useMemo<ColumnDef<Announcement>[]>(
-    () => [
-      {
-        accessorKey: 'title',
-        header: '标题',
-        cell: ({ row }) => (
-          <Box sx={{ fontWeight: 'medium', color: 'text.primary' }}>{row.original.title}</Box>
-        ),
+  const columns = [
+    {
+      id: 'title',
+      label: '标题',
+      sortable: true,
+      minWidth: 200,
+    },
+    {
+      id: 'author',
+      label: '作者',
+      width: 120,
+      render: (row: Announcement) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <User size={14} style={{ color: '#1976d2' }} />
+          {row.author}
+        </Box>
+      ),
+    },
+    {
+      id: 'priority',
+      label: '优先级',
+      width: 100,
+      align: 'center' as const,
+      render: (row: Announcement) => getPriorityBadge(row.priority),
+    },
+    {
+      id: 'status',
+      label: '状态',
+      width: 100,
+      align: 'center' as const,
+      render: (row: Announcement) => getStatusBadge(row.status),
+    },
+    {
+      id: 'publish_at',
+      label: '发布时间',
+      width: 180,
+      sortable: true,
+      render: (row: Announcement) => (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+          <Calendar size={14} />
+          {row.publish_at ? new Date(row.publish_at).toLocaleString() : '-'}
+        </Box>
+      ),
+    },
+    {
+      id: 'created_at',
+      label: '创建时间',
+      width: 180,
+      sortable: true,
+      render: (row: Announcement) => new Date(row.created_at).toLocaleDateString(),
+    },
+  ];
+
+  const rowActions = [
+    {
+      label: '发布',
+      icon: <CheckCircle size={16} />,
+      color: 'success' as const,
+      onClick: (row: Announcement) => handlePublish(row.id),
+      show: (row: Announcement) => row.status === 'draft',
+    },
+    {
+      label: '下架',
+      icon: <XCircle size={16} />,
+      color: 'warning' as const,
+      onClick: (row: Announcement) => handleUnpublish(row.id),
+      show: (row: Announcement) => row.status === 'published',
+    },
+    {
+      label: '编辑',
+      icon: <Edit size={16} />,
+      color: 'primary' as const,
+      onClick: (row: Announcement) => {
+        setSelectedAnnouncement(row);
+        setShowEditModal(true);
       },
-      {
-        accessorKey: 'author',
-        header: '作者',
-        cell: ({ row }) => (
-          <Box sx={{ display: 'flex', alignItems: 'center', fontSize: '0.875rem' }}>
-            <User
-              size={12}
-              style={{ marginRight: 4, color: '#1976d2' }}
-            />
-            {row.original.author}
-          </Box>
-        ),
-      },
-      {
-        accessorKey: 'priority',
-        header: '优先级',
-        cell: ({ row }) => getPriorityBadge(row.original.priority),
-      },
-      {
-        accessorKey: 'status',
-        header: '状态',
-        cell: ({ row }) => getStatusBadge(row.original.status),
-      },
-      {
-        accessorKey: 'publish_at',
-        header: '发布时间',
-        cell: ({ row }) => (
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              fontSize: '0.875rem',
-              color: 'text.secondary',
-            }}
-          >
-            <Calendar
-              size={12}
-              style={{ marginRight: 4 }}
-            />
-            {row.original.publish_at ? new Date(row.original.publish_at).toLocaleString() : '-'}
-          </Box>
-        ),
-      },
-      {
-        accessorKey: 'created_at',
-        header: '创建时间',
-        cell: ({ row }) => (
-          <Box sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
-            {new Date(row.original.created_at).toLocaleDateString()}
-          </Box>
-        ),
-      },
-      {
-        id: 'actions',
-        header: '操作',
-        cell: ({ row }) => {
-          const announcement = row.original;
-          return (
-            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5 }}>
-              {announcement.status === 'draft' && (
-                <Tooltip title='发布公告'>
-                  <Button
-                    variant='text'
-                    size='small'
-                    sx={{ color: 'success.main' }}
-                    onClick={() => handlePublish(announcement.id)}
-                  >
-                    发布
-                  </Button>
-                </Tooltip>
-              )}
-              {announcement.status === 'published' && (
-                <Tooltip title='下架公告'>
-                  <Button
-                    variant='text'
-                    size='small'
-                    sx={{ color: 'warning.main' }}
-                    onClick={() => handleUnpublish(announcement.id)}
-                  >
-                    下架
-                  </Button>
-                </Tooltip>
-              )}
-              <Tooltip title='编辑'>
-                <IconButton
-                  size='small'
-                  onClick={() => {
-                    setSelectedAnnouncement(announcement);
-                    setShowEditModal(true);
-                  }}
-                >
-                  <Edit size={16} />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title='删除'>
-                <IconButton
-                  size='small'
-                  sx={{ color: 'error.main' }}
-                  onClick={() => handleDeleteAnnouncement(announcement.id)}
-                >
-                  <Trash2 size={16} />
-                </IconButton>
-              </Tooltip>
-            </Box>
-          );
-        },
-      },
-    ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
-  );
+    },
+    {
+      label: '删除',
+      icon: <Trash2 size={16} />,
+      color: 'error' as const,
+      onClick: (row: Announcement) => handleDeleteAnnouncement(row.id),
+    },
+  ];
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100' }}>
-      {/* 顶部导航 */}
-      <Box
-        sx={{
-          bgcolor: 'background.paper',
-          borderBottom: 1,
-          borderColor: 'divider',
+    <>
+      <ListPageTemplate
+        title='公告管理'
+        subtitle='管理企业公告和通知'
+        columns={columns}
+        data={announcements}
+        loading={loading}
+        error={error}
+        searchable
+        searchPlaceholder='搜索公告标题、作者...'
+        searchValue={searchQuery}
+        onSearch={setSearchQuery}
+        pagination={{
+          page: currentPage,
+          pageSize: pageSize,
+          total: total,
+          onPageChange: setCurrentPage,
+          onPageSizeChange: setPageSize,
         }}
-      >
-        <Box sx={{ maxWidth: 1200, mx: 'auto', px: 3, py: 3 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <IconButton onClick={() => navigate('/dashboard')}>
-                <ChevronLeft />
-              </IconButton>
-              <Box>
-                <Typography
-                  variant='h5'
-                  sx={{
-                    fontWeight: 'bold',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                  }}
-                >
-                  <Bell
-                    size={28}
-                    color='#1976d2'
-                  />
-                  公告管理
-                </Typography>
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
-                  管理企业公告和通知
-                </Typography>
-              </Box>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <ModeToggle />
-              <Button
-                variant='contained'
-                onClick={() => setShowCreateModal(true)}
-                startIcon={<Plus size={20} />}
-              >
-                新增公告
-              </Button>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
+        sortable
+        actions={[
+          {
+            label: '新增公告',
+            icon: <Plus size={18} />,
+            onClick: () => setShowCreateModal(true),
+          },
+        ]}
+        rowActions={rowActions}
+        onRefresh={loadData}
+      />
 
-      <Box sx={{ maxWidth: 1200, mx: 'auto', px: 3, py: 4 }}>
-        <Card>
-          <CardContent sx={{ p: 0 }}>
-            {loading ? (
-              <Box sx={{ p: 4, textAlign: 'center' }}>
-                <Box
-                  sx={{
-                    display: 'inline-block',
-                    width: 32,
-                    height: 32,
-                    border: 4,
-                    borderColor: 'primary.main',
-                    borderTop: 'transparent',
-                    borderRadius: '50%',
-                    animation: 'spin 1s linear infinite',
-                  }}
-                />
-                <Typography sx={{ mt: 2, color: 'text.secondary' }}>加载中...</Typography>
-              </Box>
-            ) : error ? (
-              <Box sx={{ p: 4, textAlign: 'center' }}>
-                <AlertCircle
-                  size={48}
-                  color='#d32f2f'
-                />
-                <Typography sx={{ color: 'error.main', mt: 2 }}>{error}</Typography>
-                <Button
-                  sx={{ mt: 2 }}
-                  onClick={loadData}
-                >
-                  重试
-                </Button>
-              </Box>
-            ) : (
-              <DataTable
-                columns={columns}
-                data={announcements}
-                searchPlaceholder='搜索公告标题、作者...'
-                searchKey='title'
-              />
-            )}
-          </CardContent>
-        </Card>
-      </Box>
-
-      {/* 创建公告对话框 */}
       <Dialog
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
@@ -629,17 +507,13 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setShowCreateModal(false)}>取消</Button>
-            <Button
-              type='submit'
-              variant='contained'
-            >
+            <Button type='submit' variant='contained'>
               创建
             </Button>
           </DialogActions>
         </form>
       </Dialog>
 
-      {/* 编辑公告对话框 */}
       <Dialog
         open={showEditModal}
         onClose={() => setShowEditModal(false)}
@@ -766,17 +640,14 @@ const AnnouncementManagementPage: React.FC<AnnouncementManagementPageProps> = ({
               >
                 取消
               </Button>
-              <Button
-                type='submit'
-                variant='contained'
-              >
+              <Button type='submit' variant='contained'>
                 保存
               </Button>
             </DialogActions>
           </form>
         )}
       </Dialog>
-    </Box>
+    </>
   );
 };
 

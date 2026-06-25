@@ -1,20 +1,11 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Plus,
-  Search,
-  Filter,
-  FileText,
-  Calendar,
-  DollarSign,
-  CheckCircle,
-  AlertCircle,
-} from 'lucide-react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Plus, Search, Eye, Edit, Trash2, FileText, CheckCircle, AlertCircle, DollarSign } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography } from '@mui/material';
+import { Box, Chip, LinearProgress, IconButton, Tooltip } from '@mui/material';
 import type { Contract } from '@/api/pm';
-import { useAppStore } from '@/store';
 import { pmApi } from '@/api/pm';
 import { apiLogger } from '@/utils/logger';
+import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 
 const CONTRACT_TYPES = [
   { value: '', label: '全部类型' },
@@ -34,6 +25,31 @@ const STATUS_OPTIONS = [
   { value: 'cancelled', label: '已取消' },
 ];
 
+const STATUS_LABELS: Record<string, string> = {
+  active: '执行中',
+  completed: '已完成',
+  pending: '待审批',
+  approved: '已批准',
+  cancelled: '已取消',
+  draft: '草稿',
+};
+
+const STATUS_COLORS: Record<string, 'success' | 'primary' | 'warning' | 'default' | 'error'> = {
+  active: 'success',
+  completed: 'primary',
+  pending: 'warning',
+  approved: 'primary',
+  cancelled: 'default',
+  draft: 'default',
+};
+
+const CONTRACT_TYPE_LABELS: Record<string, string> = {
+  construction: '工程合同',
+  service: '服务合同',
+  purchase: '采购合同',
+  sales: '销售合同',
+};
+
 const PmContractListPage: React.FC = () => {
   const navigate = useNavigate();
   const [contracts, setContracts] = useState<Contract[]>([]);
@@ -41,30 +57,61 @@ const PmContractListPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const pageSize = 10;
+
+  const loadContracts = useCallback(
+    async (page: number) => {
+      setLoading(true);
+      try {
+        const response = await pmApi.contracts.list();
+        if (response.success && response.data) {
+          let filtered = response.data;
+          if (selectedType) {
+            filtered = filtered.filter((c: Contract) => c.contract_type === selectedType);
+          }
+          if (selectedStatus) {
+            filtered = filtered.filter((c: Contract) => c.status === selectedStatus);
+          }
+          setContracts(filtered);
+          setTotalCount(filtered.length);
+          setTotalPages(Math.ceil(filtered.length / pageSize));
+        }
+      } catch (error: unknown) {
+        apiLogger.error('Failed to load contracts:', error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [selectedType, selectedStatus]
+  );
 
   useEffect(() => {
-    loadContracts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedType, selectedStatus]);
+    setCurrentPage(1);
+    loadContracts(1);
+  }, [selectedType, selectedStatus, loadContracts]);
 
-  const loadContracts = async () => {
-    setLoading(true);
-    try {
-      const response = await pmApi.contracts.list();
-      if (response.success && response.data) {
-        const filtered = response.data.filter((c: Contract) => {
-          const typeMatch = !selectedType || c.contract_type === selectedType;
-          const statusMatch = !selectedStatus || c.status === selectedStatus;
-          return typeMatch && statusMatch;
-        });
-        setContracts(filtered);
-      }
-    } catch (error: unknown) {
-      apiLogger.error('Failed to load contracts:', error);
-    } finally {
-      setLoading(false);
-    }
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    loadContracts(page);
   };
+
+  const handleDelete = useCallback(
+    async (id: string) => {
+      if (!window.confirm('确定要删除这个合同吗？')) return;
+      try {
+        const response = await pmApi.contracts.delete(id);
+        if (response.success) {
+          loadContracts(currentPage);
+        }
+      } catch (error: unknown) {
+        apiLogger.error('Failed to delete contract:', error);
+      }
+    },
+    [currentPage, loadContracts]
+  );
 
   const formatDate = (dateStr?: string) => {
     if (!dateStr) return '-';
@@ -80,630 +127,265 @@ const PmContractListPage: React.FC = () => {
     }).format(amount);
   };
 
-  const getStatusSx = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'active':
-        return { bgcolor: 'success.light', color: 'success.dark' };
-      case 'completed':
-        return { bgcolor: 'info.light', color: 'info.dark' };
-      case 'pending':
-        return { bgcolor: 'warning.light', color: 'warning.dark' };
-      case 'approved':
-        return { bgcolor: '#e9d5ff', color: '#6b21a8' };
-      case 'cancelled':
-        return { bgcolor: 'grey.200', color: 'grey.800' };
-      case 'draft':
-        return { bgcolor: 'grey.200', color: 'grey.600' };
-      default:
-        return { bgcolor: 'grey.200', color: 'grey.800' };
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'active':
-        return '执行中';
-      case 'completed':
-        return '已完成';
-      case 'pending':
-        return '待审批';
-      case 'approved':
-        return '已批准';
-      case 'cancelled':
-        return '已取消';
-      case 'draft':
-        return '草稿';
-      default:
-        return status;
-    }
-  };
-
-  const getTypeLabel = (type: string) => {
-    const found = CONTRACT_TYPES.find((t) => t.value === type);
-    return found ? found.label : type;
-  };
-
-  const filteredContracts = contracts.filter(
-    (contract) =>
-      contract.contract_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      contract.contract_code.toLowerCase().includes(searchTerm.toLowerCase())
+  const columns: ColumnDef<Contract>[] = useMemo(
+    () => [
+      {
+        id: 'contract_name',
+        label: '合同名称',
+        width: 200,
+        sortable: true,
+      },
+      {
+        id: 'contract_code',
+        label: '合同编号',
+        width: 120,
+      },
+      {
+        id: 'contract_type',
+        label: '类型',
+        width: 100,
+        render: (row) => CONTRACT_TYPE_LABELS[row.contract_type] || row.contract_type,
+      },
+      {
+        id: 'party_b_name',
+        label: '乙方',
+        width: 150,
+        render: (row) => row.party_b_name || '-',
+      },
+      {
+        id: 'amount',
+        label: '金额',
+        width: 140,
+        render: (row) => formatCurrency(row.amount),
+      },
+      {
+        id: 'status',
+        label: '状态',
+        width: 100,
+        render: (row) => (
+          <Chip
+            size='small'
+            label={STATUS_LABELS[row.status] || row.status}
+            color={STATUS_COLORS[row.status]}
+          />
+        ),
+      },
+      {
+        id: 'signing_date',
+        label: '签署日期',
+        width: 150,
+        render: (row) => formatDate(row.signing_date),
+      },
+      {
+        id: 'end_date',
+        label: '到期日期',
+        width: 150,
+        render: (row) => formatDate(row.end_date),
+      },
+      {
+        id: 'actions',
+        label: '操作',
+        width: 120,
+        align: 'center',
+        render: (row) => (
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
+            <Tooltip title='查看详情'>
+              <IconButton
+                size='small'
+                onClick={() => navigate(`/pm/contracts/${row.id}`)}
+              >
+                <Eye size={16} />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title='编辑'>
+              <IconButton
+                size='small'
+                onClick={() => navigate(`/pm/contracts/${row.id}/edit`)}
+              >
+                <Edit size={16} />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title='删除'>
+              <IconButton
+                size='small'
+                onClick={() => handleDelete(row.id)}
+                sx={{ color: 'error.main' }}
+              >
+                <Trash2 size={16} />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        ),
+      },
+    ],
+    [navigate, handleDelete]
   );
 
+  const filters = useMemo(
+    () => [
+      {
+        id: 'contract_type',
+        label: '类型',
+        type: 'select' as const,
+        options: CONTRACT_TYPES,
+        value: selectedType,
+        onChange: setSelectedType,
+      },
+      {
+        id: 'status',
+        label: '状态',
+        type: 'select' as const,
+        options: STATUS_OPTIONS,
+        value: selectedStatus,
+        onChange: setSelectedStatus,
+      },
+    ],
+    [selectedType, selectedStatus]
+  );
+
+  const filteredData = useMemo(() => {
+    if (!searchTerm) return contracts;
+    return contracts.filter(
+      (contract) =>
+        contract.contract_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        contract.contract_code.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [contracts, searchTerm]);
+
+  const activeCount = contracts.filter((c) => c.status === 'active').length;
+  const pendingCount = contracts.filter((c) => c.status === 'pending').length;
+  const totalAmount = contracts.reduce((sum, c) => sum + (c.amount || 0), 0);
+
   return (
-    <Box sx={{ p: 3, bgcolor: 'grey.50', minHeight: '100vh' }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography
-          variant='h4'
-          sx={{ fontWeight: 700, color: 'grey.900' }}
-        >
-          合同管理
-        </Typography>
-        <Typography sx={{ color: 'grey.500', mt: 1 }}>
-          管理项目相关的合同，跟踪合同执行状态
-        </Typography>
-      </Box>
-
-      <Box
-        sx={{
-          bgcolor: 'background.paper',
-          borderRadius: 2,
-          boxShadow: 1,
-          p: 3,
-          mb: 3,
-        }}
-      >
+    <ListPageTemplate
+      title='合同管理'
+      subtitle='管理项目相关的合同，跟踪合同执行状态'
+      breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '项目管理' }, { label: '合同' }]}
+      columns={columns}
+      data={filteredData}
+      loading={loading}
+      selectable
+      pagination={{
+        page: currentPage,
+        pageSize,
+        total: totalCount,
+        onPageChange: handlePageChange,
+      }}
+      searchable
+      searchPlaceholder='搜索合同名称或编号...'
+      searchValue={searchTerm}
+      onSearch={setSearchTerm}
+      filters={filters}
+      filtersValue={{ contract_type: selectedType, status: selectedStatus }}
+      onFilterChange={(f) => {
+        if (f.contract_type !== undefined) setSelectedType(f.contract_type);
+        if (f.status !== undefined) setSelectedStatus(f.status);
+      }}
+      actions={[
+        {
+          label: '创建合同',
+          icon: <Plus size={16} />,
+          onClick: () => navigate('/pm/contracts/create'),
+          variant: 'contained',
+        },
+      ]}
+      showRowNumber
+      columnConfigurable
+      persistColumnConfig
+      columnConfigStorageKey='pm-contracts-columns'
+      onRefresh={() => loadContracts(currentPage)}
+      headerContent={
         <Box
           sx={{
-            display: 'flex',
-            flexDirection: { xs: 'column', md: 'row' },
-            alignItems: { md: 'center' },
-            justifyContent: { md: 'space-between' },
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' },
             gap: 2,
-          }}
-        >
-          <Box sx={{ flex: 1 }}>
-            <Box sx={{ position: 'relative' }}>
-              <Search
-                size={20}
-                color='text.disabled'
-                style={{
-                  position: 'absolute',
-                  left: 12,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                }}
-              />
-              <input
-                type='text'
-                placeholder='搜索合同名称或编号...'
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                style={{
-                  width: '100%',
-                  paddingLeft: 40,
-                  paddingRight: 16,
-                  paddingTop: 8,
-                  paddingBottom: 8,
-                  border: '1px solid grey.300',
-                  borderRadius: 8,
-                  outline: 'none',
-                }}
-              />
-            </Box>
-          </Box>
-          <Box sx={{ display: 'flex', gap: 1.5 }}>
-            <select
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
-              style={{
-                paddingLeft: 16,
-                paddingRight: 16,
-                paddingTop: 8,
-                paddingBottom: 8,
-                border: '1px solid grey.300',
-                borderRadius: 8,
-                outline: 'none',
-              }}
-            >
-              {CONTRACT_TYPES.map((type) => (
-                <option
-                  key={type.value}
-                  value={type.value}
-                >
-                  {type.label}
-                </option>
-              ))}
-            </select>
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              style={{
-                paddingLeft: 16,
-                paddingRight: 16,
-                paddingTop: 8,
-                paddingBottom: 8,
-                border: '1px solid grey.300',
-                borderRadius: 8,
-                outline: 'none',
-              }}
-            >
-              {STATUS_OPTIONS.map((status) => (
-                <option
-                  key={status.value}
-                  value={status.value}
-                >
-                  {status.label}
-                </option>
-              ))}
-            </select>
-            <button
-              onClick={() => navigate('/pm/contracts/create')}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                paddingLeft: 16,
-                paddingRight: 16,
-                paddingTop: 8,
-                paddingBottom: 8,
-                backgroundColor: 'primary.dark',
-                color: 'white',
-                borderRadius: 8,
-                border: 'none',
-                cursor: 'pointer',
-              }}
-            >
-              <Plus size={20} />
-              创建合同
-            </button>
-          </Box>
-        </Box>
-      </Box>
-
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: {
-            xs: '1fr',
-            md: 'repeat(4, 1fr)',
-          },
-          gap: 2,
-          mb: 3,
-        }}
-      >
-        <Box
-          sx={{
-            bgcolor: 'background.paper',
-            borderRadius: 2,
-            boxShadow: 1,
-            p: 3,
+            mb: 3,
           }}
         >
           <Box
             sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
+              bgcolor: 'background.paper',
+              borderRadius: 2,
+              boxShadow: 1,
+              p: 3,
             }}
           >
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ color: 'grey.500' }}
-              >
-                合同总数
-              </Typography>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 700, color: 'grey.900' }}
-              >
-                {contracts.length}
-              </Typography>
-            </Box>
-            <Box sx={{ p: 1.5, bgcolor: '#dbeafe', borderRadius: '50%' }}>
-              <FileText
-                size={24}
-                color='primary.dark'
-              />
-            </Box>
-          </Box>
-        </Box>
-        <Box
-          sx={{
-            bgcolor: 'background.paper',
-            borderRadius: 2,
-            boxShadow: 1,
-            p: 3,
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ color: 'grey.500' }}
-              >
-                执行中
-              </Typography>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 700, color: 'success.dark' }}
-              >
-                {contracts.filter((c) => c.status === 'active').length}
-              </Typography>
-            </Box>
-            <Box sx={{ p: 1.5, bgcolor: 'success.light', borderRadius: '50%' }}>
-              <CheckCircle
-                size={24}
-                color='success.dark'
-              />
-            </Box>
-          </Box>
-        </Box>
-        <Box
-          sx={{
-            bgcolor: 'background.paper',
-            borderRadius: 2,
-            boxShadow: 1,
-            p: 3,
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ color: 'grey.500' }}
-              >
-                待审批
-              </Typography>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 700, color: 'warning.dark' }}
-              >
-                {contracts.filter((c) => c.status === 'pending').length}
-              </Typography>
-            </Box>
-            <Box sx={{ p: 1.5, bgcolor: 'warning.light', borderRadius: '50%' }}>
-              <AlertCircle
-                size={24}
-                color='#ca8a04'
-              />
-            </Box>
-          </Box>
-        </Box>
-        <Box
-          sx={{
-            bgcolor: 'background.paper',
-            borderRadius: 2,
-            boxShadow: 1,
-            p: 3,
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ color: 'grey.500' }}
-              >
-                合同总金额
-              </Typography>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 700, color: '#7e22ce' }}
-              >
-                {formatCurrency(contracts.reduce((sum, c) => sum + (c.amount || 0), 0))}
-              </Typography>
-            </Box>
-            <Box sx={{ p: 1.5, bgcolor: '#e9d5ff', borderRadius: '50%' }}>
-              <DollarSign
-                size={24}
-                color='#7e22ce'
-              />
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-
-      <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
-        <Box sx={{ overflowX: 'auto' }}>
-          <Box
-            component='table'
-            sx={{ width: '100%' }}
-          >
-            <Box
-              component='thead'
-              sx={{ bgcolor: 'grey.50' }}
-            >
-              <Box component='tr'>
-                <Box
-                  component='th'
-                  sx={{
-                    px: 3,
-                    py: 1.5,
-                    textAlign: 'left',
-                    fontSize: '0.75rem',
-                    fontWeight: 500,
-                    color: 'grey.500',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  合同名称
-                </Box>
-                <Box
-                  component='th'
-                  sx={{
-                    px: 3,
-                    py: 1.5,
-                    textAlign: 'left',
-                    fontSize: '0.75rem',
-                    fontWeight: 500,
-                    color: 'grey.500',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  类型
-                </Box>
-                <Box
-                  component='th'
-                  sx={{
-                    px: 3,
-                    py: 1.5,
-                    textAlign: 'left',
-                    fontSize: '0.75rem',
-                    fontWeight: 500,
-                    color: 'grey.500',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  乙方
-                </Box>
-                <Box
-                  component='th'
-                  sx={{
-                    px: 3,
-                    py: 1.5,
-                    textAlign: 'left',
-                    fontSize: '0.75rem',
-                    fontWeight: 500,
-                    color: 'grey.500',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  金额
-                </Box>
-                <Box
-                  component='th'
-                  sx={{
-                    px: 3,
-                    py: 1.5,
-                    textAlign: 'left',
-                    fontSize: '0.75rem',
-                    fontWeight: 500,
-                    color: 'grey.500',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  状态
-                </Box>
-                <Box
-                  component='th'
-                  sx={{
-                    px: 3,
-                    py: 1.5,
-                    textAlign: 'left',
-                    fontSize: '0.75rem',
-                    fontWeight: 500,
-                    color: 'grey.500',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  时间
-                </Box>
-                <Box
-                  component='th'
-                  sx={{
-                    px: 3,
-                    py: 1.5,
-                    textAlign: 'left',
-                    fontSize: '0.75rem',
-                    fontWeight: 500,
-                    color: 'grey.500',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  操作
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box sx={{ p: 1.5, bgcolor: '#dbeafe', borderRadius: '50%' }}>
+                <FileText size={24} color='primary.dark' />
+              </Box>
+              <Box>
+                <Box sx={{ fontSize: '0.875rem', color: 'grey.500' }}>合同总数</Box>
+                <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'grey.900' }}>
+                  {contracts.length}
                 </Box>
               </Box>
             </Box>
-            <Box component='tbody'>
-              {loading ? (
-                <Box component='tr'>
-                  <Box
-                    component='td'
-                    colSpan={7}
-                    sx={{ px: 3, py: 6, textAlign: 'center' }}
-                  >
-                    <Box
-                      sx={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: '50%',
-                        border: '2px solid primary.dark',
-                        borderTopColor: 'transparent',
-                        animation: 'spin 1s linear infinite',
-                        mx: 'auto',
-                        '@keyframes spin': {
-                          to: { transform: 'rotate(360deg)' },
-                        },
-                      }}
-                    />
-                  </Box>
+          </Box>
+          <Box
+            sx={{
+              bgcolor: 'background.paper',
+              borderRadius: 2,
+              boxShadow: 1,
+              p: 3,
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box sx={{ p: 1.5, bgcolor: 'success.light', borderRadius: '50%' }}>
+                <CheckCircle size={24} color='success.dark' />
+              </Box>
+              <Box>
+                <Box sx={{ fontSize: '0.875rem', color: 'grey.500' }}>执行中</Box>
+                <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'success.dark' }}>
+                  {activeCount}
                 </Box>
-              ) : filteredContracts.length === 0 ? (
-                <Box component='tr'>
-                  <Box
-                    component='td'
-                    colSpan={7}
-                    sx={{
-                      px: 3,
-                      py: 6,
-                      textAlign: 'center',
-                      color: 'grey.500',
-                    }}
-                  >
-                    暂无合同数据
-                  </Box>
+              </Box>
+            </Box>
+          </Box>
+          <Box
+            sx={{
+              bgcolor: 'background.paper',
+              borderRadius: 2,
+              boxShadow: 1,
+              p: 3,
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box sx={{ p: 1.5, bgcolor: 'warning.light', borderRadius: '50%' }}>
+                <AlertCircle size={24} color='#ca8a04' />
+              </Box>
+              <Box>
+                <Box sx={{ fontSize: '0.875rem', color: 'grey.500' }}>待审批</Box>
+                <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'warning.dark' }}>
+                  {pendingCount}
                 </Box>
-              ) : (
-                filteredContracts.map((contract) => (
-                  <Box
-                    component='tr'
-                    key={contract.id}
-                    sx={{
-                      '&:hover': { bgcolor: 'grey.50' },
-                    }}
-                  >
-                    <Box
-                      component='td'
-                      sx={{ px: 3, py: 2 }}
-                    >
-                      <Box>
-                        <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
-                          {contract.contract_name}
-                        </Typography>
-                        <Typography
-                          variant='caption'
-                          sx={{ color: 'grey.500' }}
-                        >
-                          {contract.contract_code}
-                        </Typography>
-                      </Box>
-                    </Box>
-                    <Box
-                      component='td'
-                      sx={{ px: 3, py: 2 }}
-                    >
-                      <Typography
-                        variant='body2'
-                        sx={{ color: 'grey.600' }}
-                      >
-                        {getTypeLabel(contract.contract_type)}
-                      </Typography>
-                    </Box>
-                    <Box
-                      component='td'
-                      sx={{
-                        px: 3,
-                        py: 2,
-                        fontSize: '0.875rem',
-                        color: 'grey.600',
-                      }}
-                    >
-                      {contract.party_b_name || '-'}
-                    </Box>
-                    <Box
-                      component='td'
-                      sx={{
-                        px: 3,
-                        py: 2,
-                        fontSize: '0.875rem',
-                        fontWeight: 500,
-                        color: 'grey.900',
-                      }}
-                    >
-                      {formatCurrency(contract.amount)}
-                    </Box>
-                    <Box
-                      component='td'
-                      sx={{ px: 3, py: 2 }}
-                    >
-                      <Box
-                        component='span'
-                        sx={{
-                          px: 1,
-                          py: 0.5,
-                          fontSize: '0.75rem',
-                          borderRadius: '9999px',
-                          display: 'inline-block',
-                          ...getStatusSx(contract.status || ''),
-                        }}
-                      >
-                        {getStatusLabel(contract.status || '')}
-                      </Box>
-                    </Box>
-                    <Box
-                      component='td'
-                      sx={{
-                        px: 3,
-                        py: 2,
-                        fontSize: '0.875rem',
-                        color: 'grey.600',
-                      }}
-                    >
-                      <Box>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 0.5,
-                          }}
-                        >
-                          <Calendar
-                            size={16}
-                            color='text.disabled'
-                          />
-                          {formatDate(contract.signing_date)}
-                        </Box>
-                        <Typography
-                          variant='caption'
-                          sx={{ color: 'grey.400' }}
-                        >
-                          至 {formatDate(contract.end_date)}
-                        </Typography>
-                      </Box>
-                    </Box>
-                    <Box
-                      component='td'
-                      sx={{ px: 3, py: 2 }}
-                    >
-                      <button
-                        onClick={() => navigate(`/pm/contracts/${contract.id}`)}
-                        style={{
-                          color: 'primary.dark',
-                          background: 'none',
-                          border: 'none',
-                          cursor: 'pointer',
-                          fontSize: '0.875rem',
-                        }}
-                      >
-                        查看详情
-                      </button>
-                    </Box>
-                  </Box>
-                ))
-              )}
+              </Box>
+            </Box>
+          </Box>
+          <Box
+            sx={{
+              bgcolor: 'background.paper',
+              borderRadius: 2,
+              boxShadow: 1,
+              p: 3,
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box sx={{ p: 1.5, bgcolor: '#e9d5ff', borderRadius: '50%' }}>
+                <DollarSign size={24} color='#7e22ce' />
+              </Box>
+              <Box>
+                <Box sx={{ fontSize: '0.875rem', color: 'grey.500' }}>合同总金额</Box>
+                <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: '#7e22ce' }}>
+                  {formatCurrency(totalAmount)}
+                </Box>
+              </Box>
             </Box>
           </Box>
         </Box>
-      </Box>
-    </Box>
+      }
+    />
   );
 };
 

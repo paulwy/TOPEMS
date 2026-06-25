@@ -19,7 +19,7 @@ export interface Notification {
   notification_type: NotificationTypeEnum;
   title: string;
   content: string;
-  data?: any;
+  data?: Record<string, unknown>;
   is_read: boolean;
   priority: number;
   link_url?: string;
@@ -62,7 +62,7 @@ export interface NotificationTemplate {
   notification_type: NotificationTypeEnum;
   status: TemplateStatusEnum;
   variables?: string[];
-  data_schema?: any;
+  data_schema?: Record<string, unknown>;
   default_priority?: number;
   created_at: string;
   updated_at: string;
@@ -78,7 +78,7 @@ export interface CreateTemplateRequest {
   notification_type: NotificationTypeEnum;
   status?: TemplateStatusEnum;
   variables?: string[];
-  data_schema?: any;
+  data_schema?: Record<string, unknown>;
   default_priority?: number;
 }
 
@@ -104,7 +104,7 @@ export interface CreateNotificationRequest {
   title: string;
   content: string;
   notification_type?: NotificationTypeEnum;
-  data?: any;
+  data?: Record<string, unknown>;
   priority?: number;
   link_url?: string;
 }

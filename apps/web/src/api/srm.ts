@@ -245,6 +245,80 @@ export interface ScoreLevelDefinitions {
   description: string;
 }
 
+export interface PerformanceReportParams {
+  page?: number;
+  page_size?: number;
+  search?: string;
+  category?: string;
+  status?: string;
+  supplier_id?: string;
+  start_date?: string;
+  end_date?: string;
+  [key: string]: string | number | boolean | undefined;
+}
+
+export interface PerformanceReportDetail {
+  id: string;
+  supplier_id: string;
+  supplier_name: string;
+  report_period: string;
+  overall_score: number;
+  quality_score?: number;
+  delivery_score?: number;
+  service_score?: number;
+  price_score?: number;
+  on_time_delivery_rate?: number;
+  defect_rate?: number;
+  total_orders: number;
+  total_amount: number;
+  evaluation_count: number;
+  strengths?: string[];
+  weaknesses?: string[];
+  recommendations?: string[];
+  generated_at: string;
+}
+
+export interface PerformanceTrendItem {
+  period: string;
+  avg_overall_score: number;
+  avg_quality_score?: number;
+  avg_delivery_score?: number;
+  avg_service_score?: number;
+  avg_price_score?: number;
+  order_count: number;
+  total_amount: number;
+}
+
+export interface PerformanceTrendResponse {
+  supplier_id?: string;
+  supplier_name?: string;
+  period: string;
+  trends: PerformanceTrendItem[];
+}
+
+export interface SupplierComparison {
+  supplier_id: string;
+  supplier_name: string;
+  overall_score: number;
+  quality_score?: number;
+  delivery_score?: number;
+  service_score?: number;
+  price_score?: number;
+  on_time_delivery_rate?: number;
+  defect_rate?: number;
+  total_orders: number;
+  total_amount: number;
+  evaluation_count: number;
+  rank: number;
+}
+
+export interface SupplierComparisonResponse {
+  suppliers: SupplierComparison[];
+  comparison_date: string;
+  best_supplier?: string;
+  worst_supplier?: string;
+}
+
 export const srmApi = {
   // Suppliers
   listSuppliers: async (): Promise<ApiResponse<Supplier[]>> => {
@@ -370,7 +444,7 @@ export const srmApi = {
 
   // Performance Reports
   getPerformanceReports: async (
-    params?: Record<string, any>
+    params?: PerformanceReportParams
   ): Promise<
     ApiResponse<{
       performances: SupplierPerformance[];
@@ -379,10 +453,10 @@ export const srmApi = {
       page_size: number;
     }>
   > => {
-    const query = new URLSearchParams(params).toString();
+    const query = new URLSearchParams(params as Record<string, string>).toString();
     return apiClient.srm.get(`/api/srm/performance/reports${query ? `?${query}` : ''}`);
   },
-  getPerformanceReport: async (id: string): Promise<ApiResponse<any>> => {
+  getPerformanceReport: async (id: string): Promise<ApiResponse<PerformanceReportDetail>> => {
     return apiClient.srm.get(`/api/srm/performance/reports/${id}`);
   },
   getPerformanceSummary: async (): Promise<ApiResponse<PerformanceSummary>> => {
@@ -407,11 +481,11 @@ export const srmApi = {
   getPerformanceTrend: async (params?: {
     supplier_id?: string;
     period?: string;
-  }): Promise<ApiResponse<any>> => {
+  }): Promise<ApiResponse<PerformanceTrendResponse>> => {
     const query = new URLSearchParams(params).toString();
     return apiClient.srm.get(`/api/srm/performance/trend${query ? `?${query}` : ''}`);
   },
-  compareSupplierPerformance: async (supplier_ids: string[]): Promise<ApiResponse<any>> => {
+  compareSupplierPerformance: async (supplier_ids: string[]): Promise<ApiResponse<SupplierComparisonResponse>> => {
     return apiClient.srm.get(`/api/srm/performance/compare?supplier_ids=${supplier_ids.join(',')}`);
   },
 

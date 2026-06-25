@@ -25,7 +25,7 @@ import { ListPageTemplate, type ColumnDef as ListColumnDef } from '@/components/
 import type { StatCard } from '@/components/templates/DashboardTemplate';
 import type { OrganizationFilterValue } from '@/components/ui/OrganizationFilter';
 import OrganizationFilter from '@/components/ui/OrganizationFilter';
-import { StatsChart } from '@/components/StatsChart';
+import { StatsChart } from '@/components/bi/StatsChart';
 import { apiLogger } from '@/utils/logger';
 
 import {
@@ -40,7 +40,6 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Chip,
   Box,
   Typography,
   Stack,
@@ -50,6 +49,8 @@ import {
 import { Button } from '@mui/material';
 import { ModeToggle } from '@/components/ModeToggle';
 import { DashboardTemplate } from '@/components/templates/DashboardTemplate';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { StatusBadge } from '@/components/common/StatusBadge';
 
 const FinanceExpensePage: React.FC = () => {
   const navigate = useNavigate();
@@ -67,6 +68,9 @@ const FinanceExpensePage: React.FC = () => {
     employeeId: undefined,
   });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [batchDeleteDialogOpen, setBatchDeleteDialogOpen] = useState(false);
 
   const [newExpense, setNewExpense] = useState<Partial<Account>>({
     code: '',
@@ -105,31 +109,6 @@ const FinanceExpensePage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const getStatusChip = (status: string) => {
-    const configs: Record<
-      string,
-      {
-        color: 'default' | 'primary' | 'secondary' | 'success' | 'error' | 'info' | 'warning';
-        label: string;
-      }
-    > = {
-      active: { color: 'success', label: '启用' },
-      disabled: { color: 'error', label: '停用' },
-    };
-
-    const config = configs[status] || {
-      color: 'default' as const,
-      label: status,
-    };
-    return (
-      <Chip
-        label={config.label}
-        color={config.color}
-        size='small'
-      />
-    );
   };
 
   const handleCreate = async () => {
@@ -201,11 +180,11 @@ const FinanceExpensePage: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('确定要删除这条费用科目吗？')) return;
+  const handleDelete = async () => {
+    if (!deletingId) return;
 
     try {
-      const res = await financeApi.account.delete(id);
+      const res = await financeApi.account.delete(deletingId);
       if (res.success) {
         addNotification({
           title: '成功',
@@ -227,6 +206,9 @@ const FinanceExpensePage: React.FC = () => {
         message: (err as { message?: string }).message || '删除失败',
         type: 'error',
       });
+    } finally {
+      setDeleteDialogOpen(false);
+      setDeletingId(null);
     }
   };
 
@@ -296,7 +278,6 @@ const FinanceExpensePage: React.FC = () => {
 
   const handleBatchDelete = async () => {
     if (selectedIds.length === 0) return;
-    if (!confirm(`确定要删除选中的 ${selectedIds.length} 条费用科目吗？`)) return;
 
     try {
       const promises = selectedIds.map((id) => financeApi.account.delete(id));
@@ -326,6 +307,8 @@ const FinanceExpensePage: React.FC = () => {
         message: (err as { message?: string }).message || '批量删除失败',
         type: 'error',
       });
+    } finally {
+      setBatchDeleteDialogOpen(false);
     }
   };
 
@@ -452,7 +435,12 @@ const FinanceExpensePage: React.FC = () => {
       {
         id: 'status',
         label: '状态',
-        render: (row) => getStatusChip(row.status),
+        render: (row) => (
+          <StatusBadge
+            status={row.status === 'active' ? 'active' : 'inactive'}
+            showIcon
+          />
+        ),
       },
       {
         id: 'actions',
@@ -487,7 +475,10 @@ const FinanceExpensePage: React.FC = () => {
                 <IconButton
                   size='small'
                   color='error'
-                  onClick={() => handleDelete(expense.id)}
+                  onClick={() => {
+                    setDeletingId(expense.id);
+                    setDeleteDialogOpen(true);
+                  }}
                 >
                   <Trash2 sx={{ width: 16, height: 16 }} />
                 </IconButton>
@@ -685,10 +676,7 @@ const FinanceExpensePage: React.FC = () => {
                 color='primary'
               >
                 已选择{' '}
-                <Chip
-                  label={selectedIds.length}
-                  size='small'
-                />{' '}
+                <Box component='span' sx={{ fontWeight: 600 }}>{selectedIds.length}</Box>{' '}
                 条记录
               </Typography>
               <Stack
@@ -718,7 +706,7 @@ const FinanceExpensePage: React.FC = () => {
                   size='small'
                   color='error'
                   startIcon={<Trash2 sx={{ width: 16, height: 16 }} />}
-                  onClick={handleBatchDelete}
+                  onClick={() => setBatchDeleteDialogOpen(true)}
                 >
                   批量删除
                 </Button>
@@ -770,7 +758,7 @@ const FinanceExpensePage: React.FC = () => {
             color: 'error',
             confirm: true,
             confirmMessage: `确定要删除选中的 ${selectedIds.length} 条科目记录吗？`,
-            onClick: handleBatchDelete,
+            onClick: () => setBatchDeleteDialogOpen(true),
           },
         ]}
       />
@@ -984,6 +972,27 @@ const FinanceExpensePage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={deleteDialogOpen}
+        onClose={() => {
+          setDeleteDialogOpen(false);
+          setDeletingId(null);
+        }}
+        onConfirm={handleDelete}
+        title='确认删除'
+        message='确定要删除这条费用科目吗？'
+        danger
+      />
+
+      <ConfirmDialog
+        isOpen={batchDeleteDialogOpen}
+        onClose={() => setBatchDeleteDialogOpen(false)}
+        onConfirm={handleBatchDelete}
+        title='确认批量删除'
+        message={`确定要删除选中的 ${selectedIds.length} 条费用科目吗？`}
+        danger
+      />
     </DashboardTemplate>
   );
 };

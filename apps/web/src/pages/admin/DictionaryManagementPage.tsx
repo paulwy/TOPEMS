@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   Book,
-  ChevronLeft,
   Plus,
   Edit,
   Trash2,
@@ -14,6 +12,7 @@ import {
   Upload,
   RefreshCw,
 } from 'lucide-react';
+import { BackButton } from '@/components/common';
 import { dictTypeApi, dictItemApi, type DictType, type DictItem } from '@/api/system';
 import { useAppStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
@@ -34,7 +33,6 @@ import {
   Select,
   MenuItem,
   Chip,
-  IconButton,
   CircularProgress,
   Checkbox,
   Paper,
@@ -42,6 +40,7 @@ import {
 } from '@mui/material';
 import { Button } from '@mui/material';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 
 interface DictionaryManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -60,7 +59,6 @@ const statusLabels: Record<string, string> = {
 };
 
 const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onNavigate }) => {
-  const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
 
   const [dictTypes, setDictTypes] = useState<DictType[]>([]);
@@ -80,6 +78,23 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
   const [showExportModal, setShowExportModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [confirmDialogConfig, setConfirmDialogConfig] = useState<{
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    danger?: boolean;
+  } | null>(null);
+
+  const openConfirmDialog = (config: {
+    title: string;
+    message: string;
+    onConfirm: () => void;
+    danger?: boolean;
+  }) => {
+    setConfirmDialogConfig(config);
+    setConfirmDialogOpen(true);
+  };
 
   // 分页状态
   const [page, setPage] = useState(1);
@@ -640,9 +655,12 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
               color='error'
               onClick={(e) => {
                 e.stopPropagation();
-                if (confirm('确定要删除这个字典项吗？')) {
-                  handleDeleteItem(item.id);
-                }
+                openConfirmDialog({
+                  title: '确认删除',
+                  message: '确定要删除这个字典项吗？',
+                  onConfirm: () => handleDeleteItem(item.id),
+                  danger: true,
+                });
               }}
             >
               <Trash2 size={16} />
@@ -690,9 +708,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <IconButton onClick={() => navigate('/dashboard')}>
-                <ChevronLeft size={20} />
-              </IconButton>
+              <BackButton href='/dashboard' />
               <Box>
                 <Typography
                   variant='h5'
@@ -981,9 +997,12 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
                       color='error'
                       startIcon={<Trash2 size={16} />}
                       onClick={() => {
-                        if (confirm('确定要删除这个字典类型吗？所有字典项也会被删除！')) {
-                          handleDeleteType(selectedType.id);
-                        }
+                        openConfirmDialog({
+                          title: '确认删除',
+                          message: '确定要删除这个字典类型吗？所有字典项也会被删除！',
+                          onConfirm: () => handleDeleteType(selectedType.id),
+                          danger: true,
+                        });
                       }}
                     >
                       删除
@@ -1382,6 +1401,18 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
           </DialogActions>
         </Box>
       </Dialog>
+
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={() => setConfirmDialogOpen(false)}
+        onConfirm={() => {
+          confirmDialogConfig?.onConfirm();
+          setConfirmDialogOpen(false);
+        }}
+        title={confirmDialogConfig?.title || ''}
+        message={confirmDialogConfig?.message || ''}
+        danger={confirmDialogConfig?.danger}
+      />
     </Box>
   );
 };

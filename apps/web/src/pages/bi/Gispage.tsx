@@ -28,9 +28,9 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useGis, GisProvider } from '../../context/GisContext';
 import MapView from '@/components/gis/MapView';
-import MetricCard from '@/components/MetricCard';
-import StatsChart from '@/components/StatsChart';
-import { DataTable } from '@/components/DataTable';
+import MetricCard from '@/components/bi/MetricCard';
+import StatsChart from '@/components/bi/StatsChart';
+import { DataTable } from '@/components/common/DataTable';
 import type { ColumnDef } from '@tanstack/react-table';
 import type {
   DevicePoint,

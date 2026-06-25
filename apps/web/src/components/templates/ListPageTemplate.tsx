@@ -56,7 +56,6 @@ import {
   ChevronRight,
   Settings2,
   Columns3,
-  ArrowLeft,
   Trash,
   Copy,
   DownloadCloud,
@@ -66,6 +65,7 @@ import {
 } from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
 import { useAutoBreadcrumbs } from '@/hooks';
+import { BackButton } from '../common';
 
 // 从 FilterBar 导入 FilterConfig 类型以确保类型一致
 import type { FilterConfig } from '../mui/FilterBar';
@@ -1387,17 +1387,12 @@ export function ListPageTemplate<T>({
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               {/* 返回按钮 */}
               {backButton && (
-                <Tooltip title='返回'>
-                  <IconButton
-                    onClick={backButton.onClick}
-                    component={backButton.href ? RouterLink : 'button'}
-                    to={backButton.href}
-                    size='small'
-                    sx={{ bgcolor: 'action.hover' }}
-                  >
-                    <ArrowLeft size={18} />
-                  </IconButton>
-                </Tooltip>
+                <BackButton
+                  onClick={backButton.onClick}
+                  href={backButton.href}
+                  size='small'
+                  sx={{ bgcolor: 'action.hover' }}
+                />
               )}
 
               {/* 标题和副标题 */}

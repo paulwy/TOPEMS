@@ -117,4 +117,38 @@ export type {
   SettingsPageTemplateProps,
 } from './SettingsPageTemplate';
 
+export { MarkdownEditorTemplate } from './MarkdownEditorTemplate';
+export type {
+  MarkdownVersion,
+  MarkdownEditorToolbarAction,
+  MarkdownEditorTemplateProps,
+} from './MarkdownEditorTemplate';
+
 export { default as TemplateDemoPage } from './TemplateDemoPage';
+
+export { ReportDesignerTemplate } from './ReportDesignerTemplate';
+export type {
+  DataSourceType,
+  LayoutType,
+  ChartType,
+  FilterOperator,
+  SortDirection,
+  DataSourceField,
+  DataSourceConfig,
+  SelectedField,
+  FilterCondition,
+  GroupByConfig,
+  ReportChartConfig,
+  LayoutConfig,
+  ReportDesignerTemplateProps,
+  ReportDesignerState,
+} from './ReportDesignerTemplate';
+
+export { GisMapTemplate } from './GisMapTemplate';
+export type {
+  MapMarker,
+  MapLayer,
+  GeoFence,
+  TrackPoint,
+  GisMapTemplateProps,
+} from './GisMapTemplate';

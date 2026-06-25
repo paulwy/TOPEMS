@@ -6,7 +6,6 @@ import {
   Trash2,
   Copy,
   Eye,
-  ChevronLeft,
   Search,
   Grid,
   List,
@@ -14,7 +13,7 @@ import {
   ToggleLeft,
   ToggleRight,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { BackButton } from '@/components/common';
 import {
   templateApi,
   type Template,
@@ -45,7 +44,6 @@ import {
 import { Button } from '@mui/material';
 
 const TemplateManagementPage: React.FC = () => {
-  const navigate = useNavigate();
   const { success, error, notifications, hideNotification } = useNotification();
 
   const [templates, setTemplates] = useState<Template[]>([]);
@@ -187,9 +185,7 @@ const TemplateManagementPage: React.FC = () => {
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <IconButton onClick={() => navigate('/dashboard')}>
-                <ChevronLeft sx={{ width: 20, height: 20 }} />
-              </IconButton>
+              <BackButton href='/dashboard' />
               <Box>
                 <Typography
                   variant='h5'

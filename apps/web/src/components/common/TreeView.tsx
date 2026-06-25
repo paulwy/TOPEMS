@@ -4,11 +4,13 @@ import { ChevronRight, ChevronDown, Folder, File } from 'lucide-react';
 
 export interface TreeNode {
   id: string;
-  label: string;
+  label?: string;
+  name?: string;
   icon?: React.ReactNode;
   children?: TreeNode[];
   badge?: string | number;
   disabled?: boolean;
+  [key: string]: any;
 }
 
 export interface TreeViewProps {
@@ -167,7 +169,7 @@ function TreeNodeItem({
               whiteSpace: 'nowrap',
             }}
           >
-            {node.label}
+            {node.label || node.name || node.id}
           </Typography>
 
           {node.badge !== undefined && (

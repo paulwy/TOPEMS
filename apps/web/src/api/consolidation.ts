@@ -320,7 +320,7 @@ export const getCompanyTree = async (): Promise<
     name: string;
     code: string;
     level: number;
-    children: any[];
+    children: ConsolidationCompany[];
   }>
 > => {
   return apiClient.erp.get('/api/consolidation/company-tree');

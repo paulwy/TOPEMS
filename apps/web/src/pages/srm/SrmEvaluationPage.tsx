@@ -1,759 +1,356 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Chip,
-  Card,
-  CardContent,
-  CardHeader,
-  Typography,
-} from '@mui/material';
-import { Button } from '@mui/material';
-import { Plus, Award, Search, Star, Edit2, Trash2 } from 'lucide-react';
-import { DataTable } from '@/components/DataTable';
-import type { ColumnDef } from '@tanstack/react-table';
-import { srmApi } from '@/api/srm';
-import type { SupplierEvaluation, CreateSupplierEvaluationRequest } from '@/api/srm';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Box, Chip, Rating } from '@mui/material';
+import { Plus, Eye, Edit, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
+import { srmApi, type SupplierEvaluation, type Supplier } from '@/api/srm';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
+
+interface EvaluationWithSupplier extends SupplierEvaluation {
+  supplier_name?: string;
+}
+
+const STATUS_OPTIONS = [
+  { label: '全部', value: '' },
+  { label: '进行中', value: 'in_progress' },
+  { label: '待审核', value: 'pending' },
+  { label: '已完成', value: 'completed' },
+  { label: '已驳回', value: 'rejected' },
+];
 
 const SrmEvaluationPage: React.FC = () => {
-  const [evaluations, setEvaluations] = useState<SupplierEvaluation[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [formData, setFormData] = useState<Partial<CreateSupplierEvaluationRequest>>({
-    supplier_id: '',
-    evaluator: '',
-    overall_score: 50,
-    quality_score: 0,
-    delivery_score: 0,
-    service_score: 0,
-    price_score: 0,
-    comments: '',
-    status: 'completed',
-  });
+  const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
+  const [allEvaluations, setAllEvaluations] = useState<EvaluationWithSupplier[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string>('');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedEvaluation, setSelectedEvaluation] = useState<EvaluationWithSupplier | null>(null);
 
-  useEffect(() => {
-    loadEvaluations();
-  }, []);
-
-  const loadEvaluations = async () => {
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    setError('');
     try {
-      setLoading(true);
-      const response = await srmApi.listEvaluations();
-      if (response.success && response.data) {
-        const data = response.data as any;
-        const items = Array.isArray(data) ? data : data.evaluations || [];
-        const adapted = items.map((item: { [key: string]: unknown }) => ({
-          ...item,
-          evaluation_date: item.evaluation_date || item.created_at,
-          overall_score: item.overall_score || 0,
+      const [evalResponse, supplierResponse] = await Promise.all([
+        srmApi.listEvaluations(),
+        srmApi.listSuppliers(),
+      ]);
+
+      if (supplierResponse.success && supplierResponse.data) {
+        setSuppliers(supplierResponse.data);
+      }
+
+      if (evalResponse.success && evalResponse.data) {
+        const supplierMap = new Map(
+          (supplierResponse.data || []).map((s) => [s.id, s.name])
+        );
+        const evaluationsWithSupplier = evalResponse.data.map((evalItem) => ({
+          ...evalItem,
+          supplier_name: supplierMap.get(evalItem.supplier_id),
         }));
-        setEvaluations(adapted);
+        setAllEvaluations(evaluationsWithSupplier);
       } else {
-        setEvaluations([]);
+        setError(evalResponse.message || '加载评估数据失败');
+        addNotification({
+          type: 'error',
+          title: '加载失败',
+          message: evalResponse.message || '加载评估数据失败',
+        });
       }
     } catch (err: unknown) {
       apiLogger.error('加载评估数据失败:', err);
-      setEvaluations([]);
+      setError('加载评估数据失败');
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '加载评估数据失败',
+      });
     } finally {
       setLoading(false);
     }
-  };
+  }, [addNotification]);
 
-  const getScoreBadge = (score: number) => {
-    if (score >= 80) return { bg: 'success.lighter', color: '#15803d', label: '优秀' };
-    if (score >= 60) return { bg: 'warning.light', color: '#b45309', label: '良好' };
-    if (score >= 40) return { bg: 'warning.light', color: '#92400e', label: '一般' };
-    return { bg: 'error.lighter', color: 'error.darker', label: '较差' };
-  };
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
 
-  const ScoreChip: React.FC<{ score: number }> = ({ score }) => {
-    const style = getScoreBadge(score);
-    return (
-      <Chip
-        label={`${score}分 - ${style.label}`}
-        size='small'
-        sx={{ bgcolor: style.bg, color: style.color, fontWeight: 500 }}
-      />
-    );
-  };
+  const handleDeleteClick = useCallback((evaluation: EvaluationWithSupplier) => {
+    setSelectedEvaluation(evaluation);
+    setDeleteDialogOpen(true);
+  }, []);
 
-  const columns: ColumnDef<SupplierEvaluation>[] = [
-    { accessorKey: 'evaluation_no', header: '评估编号' },
-    {
-      accessorKey: 'overall_score',
-      header: '评分',
-      cell: ({ row }) => <ScoreChip score={row.original.overall_score || 0} />,
-    },
-    {
-      id: 'star',
-      header: '星级',
-      cell: ({ row }) => {
-        const score = row.original.overall_score || 0;
-        const stars = Math.round(score / 20);
-        return (
-          <Box sx={{ display: 'flex', gap: 0.5 }}>
-            {[1, 2, 3, 4, 5].map((i) => (
-              <Star
-                key={i}
-                style={{
-                  width: 16,
-                  height: 16,
-                  color: i <= stars ? 'warning.light' : 'grey.200',
-                  fill: i <= stars ? 'warning.light' : 'none',
-                }}
-              />
-            ))}
-          </Box>
-        );
-      },
-    },
-    { accessorKey: 'evaluator', header: '评估人' },
-    {
-      accessorKey: 'evaluation_date',
-      header: '评估日期',
-      cell: ({ row }) => {
-        const date = row.original.evaluation_date;
-        return date ? new Date(date).toLocaleDateString('zh-CN') : '';
-      },
-    },
-    { accessorKey: 'comment', header: '备注', maxSize: 100 },
-  ];
-
-  const filteredEvaluations = evaluations.filter((e) => {
-    return e.evaluator?.toLowerCase().includes(searchTerm.toLowerCase());
-  });
-
-  const handleCreate = () => {
-    setFormData({
-      supplier_id: '',
-      evaluation_no: `EVAL-${Date.now()}`,
-      evaluator: '',
-      overall_score: 50,
-      quality_score: 0,
-      delivery_score: 0,
-      service_score: 0,
-      price_score: 0,
-      comments: '',
-      status: 'completed',
-    });
-    setShowCreateModal(true);
-  };
-
-  const handleSave = async () => {
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!selectedEvaluation) return;
     try {
-      await srmApi.createEvaluation({
-        supplier_id: formData.supplier_id || '',
-        evaluation_no: `EVAL-${Date.now()}`,
-        overall_score: formData.overall_score || 0,
-        quality_score: formData.quality_score,
-        delivery_score: formData.delivery_score,
-        service_score: formData.service_score,
-        price_score: formData.price_score,
-        comments: formData.comments,
-        evaluator: formData.evaluator,
-        status: formData.status || 'completed',
-      });
-      addNotification({ title: '成功', message: '评估创建成功', type: 'success' });
-      setShowCreateModal(false);
-      loadEvaluations();
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '创建失败', type: 'error' });
-      apiLogger.error('创建评估失败:', err);
-    }
-  };
-
-  const handleEdit = (row: SupplierEvaluation) => {
-    setEditingId(row.id);
-    setFormData({
-      supplier_id: row.supplier_id,
-      evaluator: row.evaluator,
-      overall_score: row.overall_score || 0,
-      quality_score: row.quality_score,
-      delivery_score: row.delivery_score,
-      service_score: row.service_score,
-      price_score: row.price_score,
-      comments: row.comments,
-      status: row.status,
-    });
-    setShowEditModal(true);
-  };
-
-  const handleUpdate = async () => {
-    if (!editingId) return;
-    try {
-      await srmApi.updateEvaluation(editingId, {
-        supplier_id: formData.supplier_id || '',
-        evaluation_no: `EVAL-${Date.now()}`,
-        overall_score: formData.overall_score || 0,
-        quality_score: formData.quality_score,
-        delivery_score: formData.delivery_score,
-        service_score: formData.service_score,
-        price_score: formData.price_score,
-        comments: formData.comments,
-        evaluator: formData.evaluator,
-        status: formData.status || 'completed',
-      });
-      addNotification({ title: '成功', message: '评估更新成功', type: 'success' });
-      setShowEditModal(false);
-      setEditingId(null);
-      loadEvaluations();
-    } catch (err: unknown) {
-      addNotification({ title: '错误', message: '更新失败', type: 'error' });
-      apiLogger.error('更新评估失败:', err);
-    }
-  };
-
-  const handleDelete = async (row: SupplierEvaluation) => {
-    try {
-      const response = await srmApi.deleteEvaluation(row.id);
+      const response = await srmApi.deleteEvaluation(selectedEvaluation.id);
       if (response.success) {
-        addNotification({ title: '成功', message: '评估删除成功', type: 'success' });
-        loadEvaluations();
+        addNotification({
+          type: 'success',
+          title: '删除成功',
+          message: '删除评估成功',
+        });
+        setAllEvaluations((prev) => prev.filter((e) => e.id !== selectedEvaluation.id));
       } else {
-        addNotification({ title: '错误', message: '删除失败', type: 'error' });
+        throw new Error(response.message || '删除评估失败');
       }
     } catch (err: unknown) {
-      addNotification({ title: '错误', message: '删除失败', type: 'error' });
       apiLogger.error('删除评估失败:', err);
+      addNotification({
+        type: 'error',
+        title: '删除失败',
+        message: '删除评估失败',
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setSelectedEvaluation(null);
     }
-  };
+  }, [selectedEvaluation, addNotification]);
 
-  const stats = {
-    total: evaluations.length,
-    avgScore:
-      evaluations.length > 0
-        ? (
-            evaluations.reduce((sum, e) => sum + (e.overall_score || 0), 0) / evaluations.length
-          ).toFixed(1)
-        : '0',
-    excellent: evaluations.filter((e) => (e.overall_score || 0) >= 80).length,
-    poor: evaluations.filter((e) => (e.overall_score || 0) < 40).length,
-  };
+  const filteredEvaluations = useMemo(() => {
+    return allEvaluations.filter((e) => {
+      const matchesSearch =
+        !searchTerm ||
+        e.evaluation_no.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        e.supplier_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        e.evaluator?.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = !statusFilter || e.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [allEvaluations, searchTerm, statusFilter]);
 
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'linear-gradient(135deg, secondary.light 0%, #f8fafc 100%)',
-        }}
-      >
-        <Box sx={{ textAlign: 'center' }}>
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              border: 4,
-              borderColor: 'warning.main',
-              borderTopColor: 'warning.dark',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-              mx: 'auto',
-              mb: 2,
-            }}
-          />
-          <Typography sx={{ color: 'slate.600' }}>加载中...</Typography>
-        </Box>
-      </Box>
-    );
-  }
+  const paginatedEvaluations = useMemo(() => {
+    const start = page * rowsPerPage;
+    return filteredEvaluations.slice(start, start + rowsPerPage);
+  }, [filteredEvaluations, page, rowsPerPage]);
+
+  const getStatusColor = useCallback(
+    (status: string): 'primary' | 'success' | 'warning' | 'error' | 'default' => {
+      switch (status) {
+        case '进行中':
+        case 'in_progress':
+          return 'primary';
+        case '已完成':
+        case 'completed':
+          return 'success';
+        case '待审核':
+        case 'pending':
+          return 'warning';
+        case '已驳回':
+        case 'rejected':
+          return 'error';
+        default:
+          return 'default';
+      }
+    },
+    []
+  );
+
+  const getStatusLabel = useCallback((status: string): string => {
+    switch (status) {
+      case 'in_progress':
+        return '进行中';
+      case 'completed':
+        return '已完成';
+      case 'pending':
+        return '待审核';
+      case 'rejected':
+        return '已驳回';
+      default:
+        return status;
+    }
+  }, []);
+
+  const columns: ColumnDef<EvaluationWithSupplier>[] = useMemo(
+    () => [
+      {
+        id: 'evaluation_no',
+        label: '评估编号',
+        width: 150,
+        sortable: true,
+        render: (row) => <Box sx={{ fontWeight: 'medium' }}>{row.evaluation_no}</Box>,
+      },
+      {
+        id: 'supplier',
+        label: '供应商',
+        width: 180,
+        sortable: true,
+        render: (row) => row.supplier_name || '-',
+      },
+      { id: 'evaluation_date', label: '评估日期', width: 120, sortable: true },
+      {
+        id: 'overall_score',
+        label: '综合评分',
+        width: 180,
+        sortable: true,
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Rating value={row.overall_score || 0} readOnly max={10} precision={0.5} size='small' />
+            <span>{row.overall_score || '-'}</span>
+          </Box>
+        ),
+      },
+      {
+        id: 'quality_score',
+        label: '质量',
+        width: 100,
+        sortable: true,
+        render: (row) => row.quality_score || '-',
+      },
+      {
+        id: 'delivery_score',
+        label: '交付',
+        width: 100,
+        sortable: true,
+        render: (row) => row.delivery_score || '-',
+      },
+      {
+        id: 'service_score',
+        label: '服务',
+        width: 100,
+        sortable: true,
+        render: (row) => row.service_score || '-',
+      },
+      {
+        id: 'price_score',
+        label: '价格',
+        width: 100,
+        sortable: true,
+        render: (row) => row.price_score || '-',
+      },
+      {
+        id: 'evaluator',
+        label: '评估人',
+        width: 100,
+        render: (row) => row.evaluator || '-',
+      },
+      {
+        id: 'status',
+        label: '状态',
+        width: 100,
+        sortable: true,
+        render: (row) => (
+          <Chip label={getStatusLabel(row.status)} size='small' color={getStatusColor(row.status)} />
+        ),
+      },
+    ],
+    [getStatusColor, getStatusLabel]
+  );
+
+  const rowActions: RowAction<EvaluationWithSupplier>[] = useMemo(
+    () => [
+      {
+        label: '查看详情',
+        icon: <Eye size={16} />,
+        onClick: (row) => navigate(`/srm/evaluations/${row.id}`),
+      },
+      {
+        label: '编辑',
+        icon: <Edit size={16} />,
+        onClick: (row) => navigate(`/srm/evaluations/${row.id}/edit`),
+      },
+      {
+        label: '删除',
+        icon: <Trash2 size={16} />,
+        color: 'error',
+        onClick: handleDeleteClick,
+      },
+    ],
+    [navigate, handleDeleteClick]
+  );
+
+  const filters = useMemo(
+    () => [
+      {
+        id: 'status',
+        label: '状态',
+        type: 'select' as const,
+        options: STATUS_OPTIONS,
+        value: statusFilter,
+        onChange: (value: string) => {
+          setStatusFilter(value);
+          setPage(0);
+        },
+      },
+    ],
+    [statusFilter]
+  );
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, warning.light 0%, #f8fafc 100%)',
-      }}
-    >
-      <Box
-        component='header'
-        sx={{
-          bgcolor: 'background.paper',
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: 'divider',
-          position: 'sticky',
-          top: 0,
-          zIndex: 10,
+    <>
+      <ListPageTemplate
+        title='供应商评估'
+        subtitle='管理供应商评估、跟踪评估进度、分析评分数据'
+        breadcrumbs={[
+          { label: '首页', href: '/dashboard' },
+          { label: '供应商管理', href: '/srm' },
+          { label: '供应商评估' },
+        ]}
+        columns={columns}
+        data={paginatedEvaluations}
+        loading={loading}
+        error={error}
+        pagination={{
+          page,
+          pageSize: rowsPerPage,
+          total: filteredEvaluations.length,
+          onPageChange: setPage,
+          onPageSizeChange: (size) => {
+            setRowsPerPage(size);
+            setPage(0);
+          },
         }}
-      >
-        <Box sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 } }}>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              height: 64,
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  background: 'linear-gradient(135deg, warning.main 0%, warning.dark 100%)',
-                  borderRadius: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Award sx={{ width: 24, height: 24, color: 'white' }} />
-              </Box>
-              <Box>
-                <Typography
-                  variant='h6'
-                  sx={{
-                    fontWeight: 700,
-                    color: 'slate.900',
-                    fontSize: '1.25rem',
-                  }}
-                >
-                  供应商评估
-                </Typography>
-                <Typography
-                  variant='caption'
-                  sx={{ color: 'slate.500', fontSize: '0.75rem' }}
-                >
-                  Supplier Evaluation
-                </Typography>
-              </Box>
-            </Box>
-            <Button
-              variant='contained'
-              startIcon={<Plus style={{ width: 18, height: 18 }} />}
-              onClick={handleCreate}
-              sx={{ bgcolor: 'warning.main', '&:hover': { bgcolor: 'warning.dark' } }}
-            >
-              新增评估
-            </Button>
-          </Box>
-        </Box>
-      </Box>
+        searchable
+        searchPlaceholder='搜索评估编号、供应商或评估人...'
+        searchValue={searchTerm}
+        onSearch={(value) => {
+          setSearchTerm(value);
+          setPage(0);
+        }}
+        filters={filters}
+        filtersValue={{ status: statusFilter }}
+        onFilterChange={(f) => {
+          if (f.status !== undefined) {
+            setStatusFilter(f.status);
+            setPage(0);
+          }
+        }}
+        actions={[
+          {
+            label: '新建评估',
+            icon: <Plus size={18} />,
+            onClick: () => navigate('/srm/evaluations/create'),
+            variant: 'contained',
+          },
+        ]}
+        rowActions={rowActions}
+        getRowId={(row) => row.id}
+        onRefresh={loadData}
+        emptyMessage='暂无评估数据'
+        showRowNumber
+        columnConfigurable
+        persistColumnConfig
+        columnConfigStorageKey='srm-evaluation-list-columns'
+      />
 
-      <Box
-        component='main'
-        sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}
-      >
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(4, 1fr)' },
-            gap: 2,
-            mb: 4,
-          }}
-        >
-          <Card sx={{ bgcolor: 'warning.light' }}>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: 'warning.light',
-                    borderRadius: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Award sx={{ width: 20, height: 20, color: 'warning.dark' }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'slate.600', fontSize: '0.875rem' }}
-                  >
-                    评估总数
-                  </Typography>
-                  <Typography
-                    variant='h5'
-                    sx={{ fontWeight: 700, color: 'slate.900' }}
-                  >
-                    {stats.total}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: 'success.lighter',
-                    borderRadius: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Star sx={{ width: 20, height: 20, color: 'success.dark' }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'slate.600', fontSize: '0.875rem' }}
-                  >
-                    平均评分
-                  </Typography>
-                  <Typography
-                    variant='h5'
-                    sx={{ fontWeight: 700, color: 'slate.900' }}
-                  >
-                    {stats.avgScore}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: 'success.lighter',
-                    borderRadius: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Star sx={{ width: 20, height: 20, color: 'success.dark' }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'slate.600', fontSize: '0.875rem' }}
-                  >
-                    优秀
-                  </Typography>
-                  <Typography
-                    variant='h5'
-                    sx={{ fontWeight: 700, color: 'slate.900' }}
-                  >
-                    {stats.excellent}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: 'error.lighter',
-                    borderRadius: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Star sx={{ width: 20, height: 20, color: 'error.dark' }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'slate.600', fontSize: '0.875rem' }}
-                  >
-                    较差
-                  </Typography>
-                  <Typography
-                    variant='h5'
-                    sx={{ fontWeight: 700, color: 'slate.900' }}
-                  >
-                    {stats.poor}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
-
-        <Card>
-          <CardHeader
-            sx={{
-              display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              pb: 0,
-            }}
-          >
-            <Typography
-              variant='h6'
-              sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-            >
-              <Award style={{ width: 20, height: 20, color: 'warning.main' }} />
-              评估列表
-            </Typography>
-          </CardHeader>
-          <CardContent>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
-              <TextField
-                size='small'
-                placeholder='搜索供应商名称或评估人...'
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{ minWidth: 250 }}
-                slotProps={{
-                  input: {
-                    startAdornment: <Search style={{ width: 18, height: 18, marginRight: 8 }} />,
-                  },
-                }}
-              />
-            </Box>
-            <DataTable
-              columns={columns}
-              data={filteredEvaluations}
-              enablePagination
-            />
-          </CardContent>
-        </Card>
-      </Box>
-
-      <Dialog
-        open={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        maxWidth='md'
-        fullWidth
-      >
-        <DialogTitle>新增评估</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField
-              fullWidth
-              label='供应商ID'
-              value={formData.supplier_id}
-              onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
-              placeholder='请输入供应商ID'
-            />
-            <TextField
-              fullWidth
-              label='综合评分'
-              type='number'
-              value={formData.overall_score}
-              onChange={(e) =>
-                setFormData({ ...formData, overall_score: parseFloat(e.target.value) || 0 })
-              }
-              placeholder='请输入评分(0-100)'
-              slotProps={{ htmlInput: { min: 0, max: 100 } }}
-            />
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <TextField
-                fullWidth
-                label='质量评分'
-                type='number'
-                value={formData.quality_score}
-                onChange={(e) =>
-                  setFormData({ ...formData, quality_score: parseFloat(e.target.value) || 0 })
-                }
-                placeholder='0-100'
-                slotProps={{ htmlInput: { min: 0, max: 100 } }}
-              />
-              <TextField
-                fullWidth
-                label='交付评分'
-                type='number'
-                value={formData.delivery_score}
-                onChange={(e) =>
-                  setFormData({ ...formData, delivery_score: parseFloat(e.target.value) || 0 })
-                }
-                placeholder='0-100'
-                slotProps={{ htmlInput: { min: 0, max: 100 } }}
-              />
-              <TextField
-                fullWidth
-                label='服务评分'
-                type='number'
-                value={formData.service_score}
-                onChange={(e) =>
-                  setFormData({ ...formData, service_score: parseFloat(e.target.value) || 0 })
-                }
-                placeholder='0-100'
-                slotProps={{ htmlInput: { min: 0, max: 100 } }}
-              />
-              <TextField
-                fullWidth
-                label='价格评分'
-                type='number'
-                value={formData.price_score}
-                onChange={(e) =>
-                  setFormData({ ...formData, price_score: parseFloat(e.target.value) || 0 })
-                }
-                placeholder='0-100'
-                slotProps={{ htmlInput: { min: 0, max: 100 } }}
-              />
-            </Box>
-            <TextField
-              fullWidth
-              label='评估人'
-              value={formData.evaluator}
-              onChange={(e) => setFormData({ ...formData, evaluator: e.target.value })}
-              placeholder='请输入评估人'
-            />
-            <TextField
-              fullWidth
-              label='备注'
-              value={formData.comments}
-              onChange={(e) => setFormData({ ...formData, comments: e.target.value })}
-              placeholder='请输入备注'
-              multiline
-              rows={2}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            variant='outlined'
-            onClick={() => setShowCreateModal(false)}
-          >
-            取消
-          </Button>
-          <Button
-            variant='contained'
-            onClick={handleSave}
-            sx={{ bgcolor: 'warning.main' }}
-          >
-            保存
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog
-        open={showEditModal}
+      <ConfirmDialog
+        isOpen={deleteDialogOpen}
         onClose={() => {
-          setShowEditModal(false);
-          setEditingId(null);
+          setDeleteDialogOpen(false);
+          setSelectedEvaluation(null);
         }}
-        maxWidth='md'
-        fullWidth
-      >
-        <DialogTitle>编辑评估</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField
-              fullWidth
-              label='供应商ID'
-              value={formData.supplier_id}
-              onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
-              placeholder='请输入供应商ID'
-            />
-            <TextField
-              fullWidth
-              label='综合评分'
-              type='number'
-              value={formData.overall_score}
-              onChange={(e) =>
-                setFormData({ ...formData, overall_score: parseFloat(e.target.value) || 0 })
-              }
-              placeholder='请输入评分(0-100)'
-              slotProps={{ htmlInput: { min: 0, max: 100 } }}
-            />
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <TextField
-                fullWidth
-                label='质量评分'
-                type='number'
-                value={formData.quality_score}
-                onChange={(e) =>
-                  setFormData({ ...formData, quality_score: parseFloat(e.target.value) || 0 })
-                }
-                placeholder='0-100'
-                slotProps={{ htmlInput: { min: 0, max: 100 } }}
-              />
-              <TextField
-                fullWidth
-                label='交付评分'
-                type='number'
-                value={formData.delivery_score}
-                onChange={(e) =>
-                  setFormData({ ...formData, delivery_score: parseFloat(e.target.value) || 0 })
-                }
-                placeholder='0-100'
-                slotProps={{ htmlInput: { min: 0, max: 100 } }}
-              />
-              <TextField
-                fullWidth
-                label='服务评分'
-                type='number'
-                value={formData.service_score}
-                onChange={(e) =>
-                  setFormData({ ...formData, service_score: parseFloat(e.target.value) || 0 })
-                }
-                placeholder='0-100'
-                slotProps={{ htmlInput: { min: 0, max: 100 } }}
-              />
-              <TextField
-                fullWidth
-                label='价格评分'
-                type='number'
-                value={formData.price_score}
-                onChange={(e) =>
-                  setFormData({ ...formData, price_score: parseFloat(e.target.value) || 0 })
-                }
-                placeholder='0-100'
-                slotProps={{ htmlInput: { min: 0, max: 100 } }}
-              />
-            </Box>
-            <TextField
-              fullWidth
-              label='评估人'
-              value={formData.evaluator}
-              onChange={(e) => setFormData({ ...formData, evaluator: e.target.value })}
-              placeholder='请输入评估人'
-            />
-            <TextField
-              fullWidth
-              label='备注'
-              value={formData.comments}
-              onChange={(e) => setFormData({ ...formData, comments: e.target.value })}
-              placeholder='请输入备注'
-              multiline
-              rows={2}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            variant='outlined'
-            onClick={() => {
-              setShowEditModal(false);
-              setEditingId(null);
-            }}
-          >
-            取消
-          </Button>
-          <Button
-            variant='contained'
-            onClick={handleUpdate}
-            sx={{ bgcolor: 'warning.main' }}
-          >
-            更新
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+        onConfirm={handleDeleteConfirm}
+        title='确认删除'
+        message={`确定要删除评估 "${selectedEvaluation?.evaluation_no}" 吗？此操作不可恢复。`}
+        danger
+      />
+    </>
   );
 };
 

@@ -1,384 +1,193 @@
-import React, { useState } from 'react';
-import {
-  Box,
-  Card,
-  CardHeader,
-  CardContent,
-  Typography,
-  Button,
-  Grid,
-  Chip,
-  FormControlLabel,
-  Switch,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Divider,
-} from '@mui/material';
-import { QrCode, Barcode, Package, Search, Settings, CheckCircle, Smartphone } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { useAppStore } from '../../store';
+import { Barcode, Camera, Shield, Clock, Sparkles } from 'lucide-react';
+import { SettingsPageTemplate, type SettingSection, type SettingValueType } from '@/components/templates';
 
-interface ScanType {
-  id: string;
-  name: string;
+interface ScanSetting {
+  key: string;
+  label: string;
+  value: boolean | string | number;
   description: string;
-  enabled: boolean;
-  icon: React.ReactNode;
+  type: 'switch' | 'text' | 'select';
+  options?: { value: string; label: string }[];
 }
 
-interface ScanHistory {
-  id: string;
-  barcode: string;
-  itemType: string;
-  itemName: string;
-  scannedAt: string;
-  operator: string;
-  status: 'success' | 'warning' | 'error';
-}
-
-export const ScanSettingsPage: React.FC = () => {
-  const [scanTypes, setScanTypes] = useState<ScanType[]>([
-    {
-      id: 'qr',
-      name: '二维码',
-      description: '支持 QR Code 格式',
-      enabled: true,
-      icon: <QrCode size={24} />,
-    },
-    {
-      id: 'barcode',
-      name: '条形码',
-      description: '支持 Code128、EAN、UPC 等格式',
-      enabled: true,
-      icon: <Barcode size={24} />,
-    },
-    {
-      id: 'data-matrix',
-      name: 'Data Matrix',
-      description: '支持 Data Matrix 二维条码',
-      enabled: false,
-      icon: <Package size={24} />,
-    },
+const ScanSettingsPage: React.FC = () => {
+  const addNotification = useAppStore((state) => state.addNotification);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [scanSettings, setScanSettings] = useState<ScanSetting[]>([
+    { key: 'enabled', label: '启用扫码', value: true, description: '允许使用摄像头扫描条码', type: 'switch' },
+    { key: 'auto_scan', label: '自动识别', value: true, description: '识别到条码后自动完成扫描', type: 'switch' },
+    { key: 'continuous', label: '连续扫描', value: false, description: '支持连续扫描多个条码', type: 'switch' },
+    { key: 'format', label: '条码格式', value: 'all', description: '支持的条码类型', type: 'select', options: [
+      { value: 'all', label: '全部格式' },
+      { value: 'code128', label: 'Code 128' },
+      { value: 'ean13', label: 'EAN-13' },
+      { value: 'qr', label: 'QR Code' },
+      { value: 'upc', label: 'UPC' },
+    ]},
+    { key: 'timeout', label: '超时时间', value: '10', description: '扫描超时时间（秒）', type: 'text' },
+    { key: 'history', label: '保存历史', value: true, description: '保存扫描历史记录', type: 'switch' },
+    { key: 'history_limit', label: '历史数量', value: '50', description: '最多保存的历史记录数', type: 'text' },
   ]);
 
-  const [scanMode, setScanMode] = useState('single');
-  const [autoFocus, setAutoFocus] = useState(true);
-  const [vibration, setVibration] = useState(true);
-  const [sound, setSound] = useState(true);
+  const loadSettings = useCallback(async () => {
+    try {
+      setLoading(true);
+      const stored = localStorage.getItem('scan_settings');
+      if (stored) {
+        setScanSettings(JSON.parse(stored));
+      }
+    } catch (err: unknown) {
+      console.error('Error loading scan settings:', err);
+      addNotification({ title: '加载失败', message: '加载扫描设置失败', type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  }, [addNotification]);
 
-  const scanHistory: ScanHistory[] = [
-    {
-      id: '1',
-      barcode: 'QR-2024-001234',
-      itemType: '原材料',
-      itemName: '聚乙烯颗粒 A级',
-      scannedAt: '2024-01-15 10:30:00',
-      operator: '张三',
-      status: 'success',
-    },
-    {
-      id: '2',
-      barcode: 'BC-2024-005678',
-      itemType: '半成品',
-      itemName: '塑料板材 1mm',
-      scannedAt: '2024-01-15 10:28:00',
-      operator: '李四',
-      status: 'success',
-    },
-    {
-      id: '3',
-      barcode: 'QR-2024-009999',
-      itemType: '设备',
-      itemName: '注塑机 #003',
-      scannedAt: '2024-01-15 10:25:00',
-      operator: '王五',
-      status: 'warning',
-    },
-  ];
+  useEffect(() => {
+    loadSettings();
+  }, [loadSettings]);
 
-  const toggleScanType = (id: string) => {
-    setScanTypes((prev) =>
-      prev.map((type) => (type.id === id ? { ...type, enabled: !type.enabled } : type))
-    );
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'success':
-        return 'success';
-      case 'warning':
-        return 'warning';
-      case 'error':
-        return 'error';
-      default:
-        return 'default';
+  const handleSave = async (data: Record<string, SettingValueType>) => {
+    try {
+      setSaving(true);
+      const updatedSettings = scanSettings.map((s) => ({
+        ...s,
+        value: data[s.key] !== undefined ? (data[s.key] as boolean | string | number) : s.value,
+      }));
+      setScanSettings(updatedSettings);
+      localStorage.setItem('scan_settings', JSON.stringify(updatedSettings));
+      addNotification({ title: '成功', message: '扫描设置保存成功', type: 'success' });
+    } catch (err: unknown) {
+      console.error('Error saving scan settings:', err);
+      addNotification({ title: '失败', message: '保存设置失败', type: 'error' });
+      throw err;
+    } finally {
+      setSaving(false);
     }
   };
 
+  const handleReset = useCallback(() => {
+    setScanSettings([
+      { key: 'enabled', label: '启用扫码', value: true, description: '允许使用摄像头扫描条码', type: 'switch' },
+      { key: 'auto_scan', label: '自动识别', value: true, description: '识别到条码后自动完成扫描', type: 'switch' },
+      { key: 'continuous', label: '连续扫描', value: false, description: '支持连续扫描多个条码', type: 'switch' },
+      { key: 'format', label: '条码格式', value: 'all', description: '支持的条码类型', type: 'select', options: [
+        { value: 'all', label: '全部格式' },
+        { value: 'code128', label: 'Code 128' },
+        { value: 'ean13', label: 'EAN-13' },
+        { value: 'qr', label: 'QR Code' },
+        { value: 'upc', label: 'UPC' },
+      ]},
+      { key: 'timeout', label: '超时时间', value: '10', description: '扫描超时时间（秒）', type: 'text' },
+      { key: 'history', label: '保存历史', value: true, description: '保存扫描历史记录', type: 'switch' },
+      { key: 'history_limit', label: '历史数量', value: '50', description: '最多保存的历史记录数', type: 'text' },
+    ]);
+    addNotification({ title: '已重置', message: '扫描设置已恢复默认值', type: 'info' });
+  }, [addNotification]);
+
+  const formatSetting = scanSettings.find((s) => s.key === 'format')!;
+
+  const sections: SettingSection[] = [
+    {
+      id: 'basic',
+      title: '基础设置',
+      icon: <Barcode style={{ width: 20, height: 20 }} />,
+      color: 'primary',
+      fields: [
+        {
+          id: 'enabled',
+          label: '启用扫码',
+          type: 'switch',
+          value: scanSettings.find((s) => s.key === 'enabled')?.value as boolean,
+          description: '允许使用摄像头扫描条码',
+        },
+        {
+          id: 'auto_scan',
+          label: '自动识别',
+          type: 'switch',
+          value: scanSettings.find((s) => s.key === 'auto_scan')?.value as boolean,
+          description: '识别到条码后自动完成扫描',
+        },
+        {
+          id: 'continuous',
+          label: '连续扫描',
+          type: 'switch',
+          value: scanSettings.find((s) => s.key === 'continuous')?.value as boolean,
+          description: '支持连续扫描多个条码',
+        },
+      ],
+    },
+    {
+      id: 'format',
+      title: '格式设置',
+      icon: <Sparkles style={{ width: 20, height: 20 }} />,
+      color: 'success',
+      fields: [
+        {
+          id: 'format',
+          label: '条码格式',
+          type: 'select',
+          value: formatSetting.value as string,
+          description: '支持的条码类型',
+          options: formatSetting.options,
+        },
+      ],
+    },
+    {
+      id: 'timing',
+      title: '定时设置',
+      icon: <Clock style={{ width: 20, height: 20 }} />,
+      color: 'warning',
+      fields: [
+        {
+          id: 'timeout',
+          label: '超时时间',
+          type: 'text',
+          value: scanSettings.find((s) => s.key === 'timeout')?.value as string,
+          description: '扫描超时时间（秒）',
+        },
+      ],
+    },
+    {
+      id: 'history',
+      title: '历史记录',
+      icon: <Camera style={{ width: 20, height: 20 }} />,
+      color: 'info',
+      fields: [
+        {
+          id: 'history',
+          label: '保存历史',
+          type: 'switch',
+          value: scanSettings.find((s) => s.key === 'history')?.value as boolean,
+          description: '保存扫描历史记录',
+        },
+        {
+          id: 'history_limit',
+          label: '历史数量',
+          type: 'text',
+          value: scanSettings.find((s) => s.key === 'history_limit')?.value as string,
+          description: '最多保存的历史记录数',
+        },
+      ],
+    },
+  ];
+
   return (
-    <Box sx={{ flex: 1 }}>
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 4,
-        }}
-      >
-        <div>
-          <Typography
-            variant='h4'
-            sx={{ fontWeight: 'bold', mb: 1 }}
-          >
-            扫码功能配置
-          </Typography>
-          <Typography
-            variant='body2'
-            color='text.secondary'
-          >
-            配置扫码识别格式、扫描模式和反馈设置
-          </Typography>
-        </div>
-        <Button
-          variant='contained'
-          startIcon={<QrCode />}
-        >
-          测试扫描
-        </Button>
-      </Box>
-
-      <Grid
-        container
-        spacing={3}
-      >
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <Card>
-            <CardHeader title='支持的码制' />
-            <CardContent>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {scanTypes.map((type) => (
-                  <Box
-                    key={type.id}
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      p: 2,
-                      borderRadius: 1,
-                      backgroundColor: type.enabled ? 'primary.50' : 'grey.50',
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 2,
-                      }}
-                    >
-                      {type.icon}
-                      <div>
-                        <Typography
-                          variant='body1'
-                          sx={{ fontWeight: 500 }}
-                        >
-                          {type.name}
-                        </Typography>
-                        <Typography
-                          variant='caption'
-                          color='text.secondary'
-                        >
-                          {type.description}
-                        </Typography>
-                      </div>
-                    </Box>
-                    <Switch
-                      checked={type.enabled}
-                      onChange={() => toggleScanType(type.id)}
-                    />
-                  </Box>
-                ))}
-              </Box>
-            </CardContent>
-          </Card>
-
-          <Card sx={{ mt: 3 }}>
-            <CardHeader title='扫描设置' />
-            <CardContent>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                <FormControl fullWidth>
-                  <InputLabel>扫描模式</InputLabel>
-                  <Select
-                    value={scanMode}
-                    label='扫描模式'
-                    onChange={(e) => setScanMode(e.target.value)}
-                  >
-                    <MenuItem value='single'>单次扫描</MenuItem>
-                    <MenuItem value='continuous'>连续扫描</MenuItem>
-                    <MenuItem value='batch'>批量扫描</MenuItem>
-                  </Select>
-                </FormControl>
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={autoFocus}
-                      onChange={(e) => setAutoFocus(e.target.checked)}
-                    />
-                  }
-                  label='自动对焦'
-                />
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={vibration}
-                      onChange={(e) => setVibration(e.target.checked)}
-                    />
-                  }
-                  label='扫描震动反馈'
-                />
-                <FormControlLabel
-                  control={
-                    <Switch
-                      checked={sound}
-                      onChange={(e) => setSound(e.target.checked)}
-                    />
-                  }
-                  label='扫描提示音'
-                />
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid size={{ xs: 12, lg: 8 }}>
-          <Card>
-            <CardHeader
-              title='扫描历史'
-              subheader='最近的扫码记录'
-            />
-            <CardContent>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {scanHistory.map((record) => (
-                  <Box
-                    key={record.id}
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      p: 3,
-                      borderRadius: 1,
-                      backgroundColor: 'grey.50',
-                      borderLeft: `3px solid ${getStatusColor(record.status)}`,
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 3,
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          width: 48,
-                          height: 48,
-                          borderRadius: 1,
-                          backgroundColor: 'primary.light',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <QrCode size={24} />
-                      </Box>
-                      <div>
-                        <Typography
-                          variant='body1'
-                          sx={{ fontWeight: 600 }}
-                        >
-                          {record.barcode}
-                        </Typography>
-                        <Typography
-                          variant='body2'
-                          color='text.secondary'
-                        >
-                          {record.itemType} - {record.itemName}
-                        </Typography>
-                        <Typography
-                          variant='caption'
-                          color='text.secondary'
-                        >
-                          {record.scannedAt} | {record.operator}
-                        </Typography>
-                      </div>
-                    </Box>
-                    <Chip
-                      size='small'
-                      label={
-                        record.status === 'success'
-                          ? '识别成功'
-                          : record.status === 'warning'
-                            ? '需确认'
-                            : '识别失败'
-                      }
-                      color={getStatusColor(record.status)}
-                      icon={record.status === 'success' ? <CheckCircle size={14} /> : undefined}
-                    />
-                  </Box>
-                ))}
-              </Box>
-            </CardContent>
-          </Card>
-
-          <Card sx={{ mt: 3 }}>
-            <CardHeader title='扫码关联配置' />
-            <CardContent>
-              <Typography
-                variant='body2'
-                color='text.secondary'
-                sx={{ mb: 2 }}
-              >
-                扫码后自动关联的业务模块
-              </Typography>
-              <Grid
-                container
-                spacing={2}
-              >
-                {[
-                  { name: '仓储管理', code: 'wms', enabled: true },
-                  { name: '生产管理', code: 'mes', enabled: true },
-                  { name: '质量管理', code: 'qms', enabled: false },
-                  { name: '设备管理', code: 'equipment', enabled: true },
-                ].map((item) => (
-                  <Grid
-                    size={{ xs: 6 }}
-                    key={item.code}
-                  >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        p: 2,
-                        borderRadius: 1,
-                        backgroundColor: item.enabled ? 'success.50' : 'grey.50',
-                      }}
-                    >
-                      <Typography variant='body1'>{item.name}</Typography>
-                      <Chip
-                        size='small'
-                        label={item.enabled ? '已关联' : '未关联'}
-                        color={item.enabled ? 'success' : 'default'}
-                      />
-                    </Box>
-                  </Grid>
-                ))}
-              </Grid>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-    </Box>
+    <SettingsPageTemplate
+      title='扫码设置'
+      subtitle='配置条码扫描的各项参数'
+      sections={sections}
+      loading={loading}
+      saving={saving}
+      onSave={handleSave}
+      onReset={handleReset}
+      saveButtonText='保存设置'
+      resetButtonText='重置默认'
+    />
   );
 };
 

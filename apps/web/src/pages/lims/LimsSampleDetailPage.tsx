@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ArrowLeft,
   Package,
   Calendar,
   User,
@@ -30,7 +29,7 @@ import {
 } from '@mui/material';
 import { Button } from '@mui/material';
 
-import { DataTable } from '@/components/DataTable';
+import { DataTable } from '@/components/common/DataTable';
 import type { ColumnDef } from '@tanstack/react-table';
 import { limsApi } from '@/api/lims';
 import type { Sample, InspectionTask, InspectionRecord } from '@/api/lims';
