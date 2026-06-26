@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TOPEMS HRM 员工详情</title>
+    <style id="theme-vars">
+:root {
+  /* ===== Primary Color (Blue - from TOPEMS tokens.ts) ===== */
+  --color-primary: #3b82f6;
+  --color-primary-hover: #2563eb;
+  --color-primary-light: #60a5fa;
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6;
+  --color-primary-600: #2563eb;
+  --color-primary-700: #1d4ed8;
+  --color-primary-800: #1e40af;
+  --color-primary-900: #1e3a8a;
+  --color-primary-foreground: #ffffff;
+
+  /* ===== Secondary Color (Violet - from TOPEMS tokens.ts) ===== */
+  --color-secondary: #8b5cf6;
+  --color-secondary-hover: #7c3aed;
+  --color-secondary-light: #a78bfa;
+  --color-secondary-50: #f5f3ff;
+  --color-secondary-100: #ede9fe;
+  --color-secondary-200: #ddd6fe;
+  --color-secondary-foreground: #ffffff;
+
+  /* ===== State Colors ===== */
+  --state-success: #22c55e;
+  --state-success-hover: #16a34a;
+  --state-success-light: #86efac;
+  --state-success-foreground: #ffffff;
+  --state-warning: #f59e0b;
+  --state-warning-hover: #d97706;
+  --state-warning-light: #fde68a;
+  --state-warning-foreground: #0f172a;
+  --state-error: #ef4444;
+  --state-error-hover: #dc2626;
+  --state-error-light: #fca5a5;
+  --state-error-foreground: #ffffff;
+  --state-info: #0ea5e9;
+  --state-info-hover: #0284c7;
+  --state-info-light: #7dd3fc;
+  --state-info-foreground: #ffffff;
+
+  /* ===== Background & Surface (Light Mode Default) ===== */
+  --color-background: #f8fafc;
+  --color-surface: #ffffff;
+  --color-surface-light: #f1f5f9;
+  --color-surface-hover: #e2e8f0;
+  --color-card: #ffffff;
+  --color-card-hover: #f1f5f9;
+
+  /* ===== Text ===== */
+  --color-text-primary: #1e293b;
+  --color-text-secondary: #64748b;
+  --color-text-muted: #94a3b8;
+
+  /* ===== Border & Input ===== */
+  --color-border: #e2e8f0;
+  --color-border-light: #f1f5f9;
+  --color-input: #e2e8f0;
+  --color-ring: #3b82f6;
+
+  /* ===== Radius ===== */
+  --radius-none: 0;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* ===== Shadow (static surfaces: border-first, alpha <= 0.05) ===== */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08);
+  --shadow-float: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+
+  /* ===== Typography ===== */
+  --font-sans: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'SF Mono', Monaco, 'Inconsolata', 'Fira Mono', 'Roboto Mono', monospace;
+
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  --font-size-4xl: 2.25rem;
+  --font-size-5xl: 3rem;
+
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* ===== Spacing ===== */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+  --spacing-3xl: 4rem;
+
+  /* ===== Transition ===== */
+  --transition-fast: 150ms ease;
+  --transition-normal: 200ms ease;
+  --transition-slow: 300ms ease;
+
+  /* ===== Module Gradient Accents (from TOPEMS gradients.ts) ===== */
+  --gradient-primary: linear-gradient(135deg, #3b82f6, #2563eb);
+  --gradient-secondary: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  --gradient-brand: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  --gradient-text: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6);
+  --gradient-module-hrm: linear-gradient(135deg, #3b82f6, #60a5fa);
+  --gradient-module-crm: linear-gradient(135deg, #22c55e, #4ade80);
+  --gradient-module-pm: linear-gradient(135deg, #f59e0b, #fbbf24);
+  --gradient-module-finance: linear-gradient(135deg, #6366f1, #818cf8);
+  --gradient-module-mes: linear-gradient(135deg, #14b8a6, #2dd4bf);
+  --gradient-module-bi: linear-gradient(135deg, #ec4899, #f472b6);
+  --gradient-module-scm: linear-gradient(135deg, #10b981, #34d399);
+  --gradient-module-im: linear-gradient(135deg, #f43f5e, #fb7185);
+}
+
+/* ===== Dark Mode Variables ===== */
+.dark {
+  --color-primary: #60a5fa;
+  --color-primary-hover: #3b82f6;
+  --color-primary-foreground: #0f172a;
+
+  --color-secondary: #a78bfa;
+  --color-secondary-hover: #8b5cf6;
+  --color-secondary-foreground: #0f172a;
+
+  --color-background: #0f172a;
+  --color-surface: #1e293b;
+  --color-surface-light: #334155;
+  --color-surface-hover: #475569;
+  --color-card: #1e293b;
+  --color-card-hover: #334155;
+
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #94a3b8;
+  --color-text-muted: #64748b;
+
+  --color-border: #334155;
+  --color-border-light: #475569;
+  --color-input: #334155;
+  --color-ring: #60a5fa;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.25);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.35);
+}
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.3.1/dist/index.global.js"></script>
+    <script src="https://unpkg.com/lucide@1.8.0/dist/umd/lucide.min.js"></script>
+    <style type="text/tailwindcss">
+  @theme inline {
+    --color-background: var(--color-background);
+    --color-card: var(--color-card);
+    --color-primary: var(--color-primary);
+    --color-primary-foreground: var(--color-primary-foreground);
+    --color-secondary: var(--color-secondary);
+    --color-secondary-foreground: var(--color-secondary-foreground);
+    --color-border: var(--color-border);
+    --color-input: var(--color-input);
+    --color-ring: var(--color-ring);
+  }
+  @layer base {
+    body { background: var(--color-background); color: var(--color-text-primary); }
+    td, th { @apply break-words; word-break: break-all; word-break: auto-phrase; }
+    th { @apply whitespace-nowrap; }
+  }
+    </style>
+    <style>
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      [data-icon] {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        background-color: currentColor;
+      }
+    </style>
+</head>
+<body class="min-h-screen font-sans antialiased">
+
+<!-- ============================== -->
+<!-- HEADER NAVIGATION BAR          -->
+<!-- ============================== -->
+<header
+  id="topems-header"
+  class="sticky top-0 z-50 w-full"
+  style="height:56px; background:var(--color-surface); border-bottom:1px solid var(--color-border); box-shadow:var(--shadow-sm);"
+>
+  <div class="flex items-center justify-between h-full px-4 lg:px-6 max-w-[1800px] mx-auto">
+    <!-- Left: Logo + Brand Name -->
+    <div class="flex items-center gap-3">
+      <div
+        class="flex items-center justify-center text-white font-bold"
+        style="width:36px; height:36px; border-radius:var(--radius-md); background:linear-gradient(135deg, #3b82f6, #8b5cf6); font-size:var(--font-size-xl); font-family:var(--font-sans);"
+        aria-label="TOPEMS Logo"
+      >T</div>
+      <span
+        class="text-lg font-bold select-none"
+        style="font-family:var(--font-sans); font-weight:var(--font-weight-bold); background:linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;"
+      >TOPEMS</span>
+    </div>
+
+    <!-- Center: Navigation Links -->
+    <nav class="hidden md:flex items-center gap-1" id="header-nav">
+      <a
+        href="#"
+        class="relative flex items-center px-4 py-2 text-sm font-medium transition-colors duration-150 rounded-md header-nav-link"
+        style="color:var(--color-text-secondary); font-family:var(--font-sans); font-weight:var(--font-weight-medium);"
+        data-nav="home"
+      >
+        首页
+      </a>
+      <a
+        href="#"
+        class="relative flex items-center px-4 py-2 text-sm font-medium transition-colors duration-150 rounded-md header-nav-link"
+        style="color:var(--color-text-secondary); font-family:var(--font-sans); font-weight:var(--font-weight-medium);"
+        data-nav="modules"
+      >
+        模块概览
+      </a>
+      <a
+        href="#"
+        class="relative flex items-center px-4 py-2 text-sm font-medium transition-colors duration-150 rounded-md header-nav-link"
+        style="color:var(--color-text-secondary); font-family:var(--font-sans); font-weight:var(--font-weight-medium);"
+        data-nav="dashboard"
+      >
+        数据仪表盘
+      </a>
+    </nav>
+
+    <!-- Right: Actions -->
+    <div class="flex items-center gap-2">
+      <!-- Notification Bell -->
+      <button
+        class="relative flex items-center justify-center transition-colors duration-150 rounded-md"
+        style="width:36px; height:36px; color:var(--color-text-secondary);"
+        aria-label="通知"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span class="absolute top-1 right-1 w-2 h-2 rounded-full" style="background:var(--state-error);"></span>
+      </button>
+
+      <!-- Theme Toggle -->
+      <button
+        class="flex items-center justify-center transition-colors duration-150 rounded-md"
+        style="width:36px; height:36px; color:var(--color-text-secondary);"
+        aria-label="切换主题"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+      </button>
+
+      <!-- User Avatar -->
+      <button
+        class="flex items-center justify-center text-sm font-semibold text-white rounded-full"
+        style="width:34px; height:34px; background:linear-gradient(135deg, #3b82f6, #8b5cf6); font-family:var(--font-sans);"
+        aria-label="用户菜单"
+      >张</button>
+    </div>
+  </div>
+</header>
+
+<!-- ============================== -->
+<!-- BODY WRAPPER (Header + Sidebar + Content + Footer) -->
+<!-- ============================== -->
+<div class="flex" style="min-height:calc(100vh - 56px);">
+
+  <!-- ============================== -->
+  <!-- LEFT SIDEBAR                   -->
+  <!-- ============================== -->
+  <aside
+    id="topems-sidebar"
+    class="hidden lg:flex flex-col flex-shrink-0 transition-all duration-300"
+    style="width:240px; background:var(--color-surface); border-right:1px solid var(--color-border);"
+  >
+    <!-- User Info Card -->
+    <div class="px-4 py-4" style="border-bottom:1px solid var(--color-border);">
+      <div class="flex items-center gap-3">
+        <div
+          class="flex items-center justify-center text-sm font-semibold text-white rounded-full flex-shrink-0"
+          style="width:40px; height:40px; background:linear-gradient(135deg, #3b82f6, #8b5cf6); font-family:var(--font-sans);"
+        >张</div>
+        <div class="min-w-0">
+          <p class="text-sm font-semibold truncate" style="color:var(--color-text-primary); font-family:var(--font-sans);">张三</p>
+          <p class="text-xs truncate" style="color:var(--color-text-muted); font-family:var(--font-sans);">系统管理员</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="flex-1 overflow-y-auto py-2 px-2" id="sidebar-nav">
+      <ul class="space-y-0.5">
+        <!-- Dashboard -->
+        <li>
+          <a href="#" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors duration-150" data-module="dashboard" style="color:var(--color-text-secondary); border-left:3px solid transparent; font-family:var(--font-sans);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <!-- HRM - ACTIVE -->
+        <li>
+          <a href="#" class="sidebar-nav-item active flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors duration-150" data-module="hrm" style="background:var(--color-primary-50); border-left:3px solid var(--color-primary); color:var(--color-primary); font-family:var(--font-sans);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>人力资源</span>
+          </a>
+        </li>
+        <!-- CRM -->
+        <li>
+          <a href="#" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors duration-150" data-module="crm" style="color:var(--color-text-secondary); border-left:3px solid transparent; font-family:var(--font-sans);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+            <span>客户关系</span>
+          </a>
+        </li>
+        <!-- MES -->
+        <li>
+          <a href="#" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors duration-150" data-module="mes" style="color:var(--color-text-secondary); border-left:3px solid transparent; font-family:var(--font-sans);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+            <span>制造执行</span>
+          </a>
+        </li>
+        <!-- SCM -->
+        <li>
+          <a href="#" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors duration-150" data-module="scm" style="color:var(--color-text-secondary); border-left:3px solid transparent; font-family:var(--font-sans);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16" y1="5" x2="22" y2="5"/><line x1="18" y1="3" x2="18" y2="7"/><polyline points="12 14 15 11 18 14 22 10"/><polyline points="2 18 5 15 8 18 12 14"/><line x1="2" y1="22" x2="12" y2="22"/><polyline points="2 16 6 12 10 16"/><line x1="6" y1="22" x2="6" y2="16"/></svg>
+            <span>供应链</span>
+          </a>
+        </li>
+        <!-- WMS -->
+        <li>
+          <a href="#" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors duration-150" data-module="wms" style="color:var(--color-text-secondary); border-left:3px solid transparent; font-family:var(--font-sans);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+            <span>仓储管理</span>
+          </a>
+        </li>
+        <!-- PM -->
+        <li>
+          <a href="#" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors duration-150" data-module="pm" style="color:var(--color-text-secondary); border-left:3px solid transparent; font-family:var(--font-sans);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            <span>项目管理</span>
+          </a>
+        </li>
+        <!-- Finance -->
+        <li>
+          <a href="#" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors duration-150" data-module="finance" style="color:var(--color-text-secondary); border-left:3px solid transparent; font-family:var(--font-sans);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span>财务管理</span>
+          </a>
+        </li>
+        <!-- BI -->
+        <li>
+          <a href="#" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors duration-150" data-module="bi" style="color:var(--color-text-secondary); border-left:3px solid transparent; font-family:var(--font-sans);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            <span>商业智能</span>
+          </a>
+        </li>
+        <!-- IM -->
+        <li>
+          <a href="#" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors duration-150" data-module="im" style="color:var(--color-text-secondary); border-left:3px solid transparent; font-family:var(--font-sans);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span>即时通讯</span>
+          </a>
+        </li>
+        <!-- AI -->
+        <li>
+          <a href="#" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors duration-150" data-module="ai" style="color:var(--color-text-secondary); border-left:3px solid transparent; font-family:var(--font-sans);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 1 4 4c0 1.95-1.4 3.58-3.25 3.93"/><path d="M8.24 9.93A4 4 0 0 1 8 6a4 4 0 0 1 4-4"/><path d="M12 18a4 4 0 0 1-4-4c0-1.95 1.4-3.58 3.25-3.93"/><path d="M15.76 10.07A4 4 0 0 1 16 14a4 4 0 0 1-4 4"/><circle cx="12" cy="12" r="1"/><path d="M4 12h2"/><path d="M18 12h2"/></svg>
+            <span>智能助手</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Sidebar Collapse Toggle -->
+    <div class="px-3 py-3" style="border-top:1px solid var(--color-border);">
+      <button
+        id="sidebar-collapse-btn"
+        class="flex items-center gap-2 w-full px-3 py-2 rounded-md text-xs font-medium transition-colors duration-150"
+        style="color:var(--color-text-muted); font-family:var(--font-sans);"
+        aria-label="折叠侧栏"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        <span>收起菜单</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ============================== -->
+  <!-- MAIN CONTENT AREA              -->
+  <!-- ============================== -->
+  <main
+    id="topems-main"
+    class="flex-1 overflow-y-auto"
+    style="background:var(--color-background);"
+  >
+    <div class="mx-auto" style="max-width:1600px; padding:16px;">
+      <!-- Responsive padding overrides -->
+      <style>
+        @media (min-width: 640px) {
+          #topems-main > div { padding-left: 24px !important; padding-right: 24px !important; }
+        }
+        @media (min-width: 1024px) {
+          #topems-main > div { padding-left: 32px !important; padding-right: 32px !important; }
+        }
+      </style>
+
+      <!-- ===== PAGE CONTENT START ===== -->
+
+      <!-- 1. Page Header: Breadcrumb + Title + Actions -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <!-- Breadcrumb -->
+          <nav class="flex items-center gap-1.5 text-sm mb-2" style="font-family:var(--font-sans);">
+            <a href="#" class="transition-colors duration-150" style="color:var(--color-text-muted);" data-dom-id="breadcrumb-dashboard" data-dom-wire="breadcrumb-dashboard -> page-hrm-dashboard" data-dom-props='{"hideEdge":true}' hidden>HRM</a>
+            <span style="color:var(--color-text-muted); display:none;" class="breadcrumb-sep">/</span>
+            <a href="#" class="transition-colors duration-150" style="color:var(--color-text-muted);" data-dom-id="breadcrumb-employees" data-dom-wire="breadcrumb-employees -> page-hrm-employees" data-dom-props='{"hideEdge":true}' hidden>员工管理</a>
+            <span style="color:var(--color-text-muted); display:none;" class="breadcrumb-sep">/</span>
+            <span style="color:var(--color-text-primary); font-weight:var(--font-weight-medium);">张伟</span>
+          </nav>
+          <!-- Title & Subtitle -->
+          <div>
+            <h1 class="text-2xl font-bold" style="color:var(--color-text-primary); font-family:var(--font-sans); font-weight:var(--font-weight-bold);">张伟</h1>
+            <p class="text-sm mt-1" style="color:var(--color-text-secondary); font-family:var(--font-sans);">EMP001 · 技术研发部 · 高级工程师</p>
+          </div>
+        </div>
+        <!-- Action Buttons -->
+        <div class="flex items-center gap-2">
+          <button
+            class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white transition-colors duration-150 rounded-md"
+            style="background:var(--color-primary); font-family:var(--font-sans); font-weight:var(--font-weight-medium);"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            编辑
+          </button>
+          <div class="relative">
+            <button
+              class="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium transition-colors duration-150 rounded-md"
+              style="border:1px solid var(--color-border); color:var(--color-text-secondary); background:var(--color-surface); font-family:var(--font-sans); font-weight:var(--font-weight-medium);"
+            >
+              更多操作
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Profile Card -->
+      <div class="rounded-xl mb-6" style="background:var(--color-card); border:1px solid var(--color-border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm);">
+        <div class="p-6">
+          <div class="flex flex-col lg:flex-row lg:items-start gap-6">
+            <!-- Left: Avatar + Basic Info -->
+            <div class="flex items-start gap-5 flex-1">
+              <!-- Avatar -->
+              <div
+                class="flex items-center justify-center text-white font-bold flex-shrink-0"
+                style="width:64px; height:64px; border-radius:var(--radius-full); background:var(--gradient-module-hrm); font-size:var(--font-size-2xl); font-family:var(--font-sans);"
+              >张</div>
+              <!-- Info Grid -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 flex-1" style="font-family:var(--font-sans);">
+                <div class="flex items-center gap-2 text-sm">
+                  <span style="color:var(--color-text-muted); min-width:56px;">姓名</span>
+                  <span style="color:var(--color-text-primary); font-weight:var(--font-weight-medium);">张伟</span>
+                  <span style="color:var(--color-border);">|</span>
+                  <span style="color:var(--color-text-muted); min-width:40px;">工号</span>
+                  <span style="color:var(--color-text-primary);">EMP001</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm">
+                  <span style="color:var(--color-text-muted); min-width:56px;">部门</span>
+                  <span style="color:var(--color-text-primary);">技术研发部</span>
+                  <span style="color:var(--color-border);">|</span>
+                  <span style="color:var(--color-text-muted); min-width:40px;">职位</span>
+                  <span style="color:var(--color-text-primary);">高级工程师</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm">
+                  <span style="color:var(--color-text-muted); min-width:56px;">职级</span>
+                  <span style="color:var(--color-text-primary);">P7</span>
+                  <span style="color:var(--color-border);">|</span>
+                  <span style="color:var(--color-text-muted); min-width:40px;">类型</span>
+                  <span style="color:var(--color-text-primary);">全职</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm">
+                  <span style="color:var(--color-text-muted); min-width:56px;">入职</span>
+                  <span style="color:var(--color-text-primary);">2020-03-15</span>
+                  <span style="color:var(--color-border);">|</span>
+                  <span style="color:var(--color-text-muted); min-width:40px;">转正</span>
+                  <span style="color:var(--color-text-primary);">2020-06-15</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm">
+                  <span style="color:var(--color-text-muted); min-width:56px;">状态</span>
+                  <span class="inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full" style="background:#ecfdf5; color:#059669;">在职</span>
+                  <span style="color:var(--color-border);">|</span>
+                  <span style="color:var(--color-text-muted); min-width:40px;">地点</span>
+                  <span style="color:var(--color-text-primary);">北京总部</span>
+                </div>
+              </div>
+            </div>
+            <!-- Right: Contact Info -->
+            <div class="lg:border-l lg:pl-6 flex-shrink-0" style="border-color:var(--color-border);">
+              <div class="flex flex-col gap-3" style="font-family:var(--font-sans);">
+                <div class="flex items-center gap-2 text-sm">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-text-muted);"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                  <span style="color:var(--color-text-muted);">邮箱</span>
+                  <span style="color:var(--color-primary); font-weight:var(--font-weight-medium);">zhangwei@topems.com</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-text-muted);"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                  <span style="color:var(--color-text-muted);">手机</span>
+                  <span style="color:var(--color-text-primary);">138****5678</span>
+                </div>
+                <div class="flex items-center gap-2 text-sm">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--color-text-muted);"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  <span style="color:var(--color-text-muted);">上级</span>
+                  <span style="color:var(--color-text-primary);">李总</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Tab Navigation -->
+      <div class="mb-6" style="border-bottom:1px solid var(--color-border); font-family:var(--font-sans);">
+        <nav class="flex gap-0 overflow-x-auto no-scrollbar">
+          <a href="#" class="relative flex items-center px-4 py-3 text-sm font-medium transition-colors duration-150 whitespace-nowrap" style="color:var(--color-primary);">
+            基本信息
+            <span class="absolute bottom-0 left-0 right-0 h-0.5 rounded-full" style="background:var(--color-primary);"></span>
+          </a>
+          <a href="#" class="relative flex items-center px-4 py-3 text-sm font-medium transition-colors duration-150 whitespace-nowrap" style="color:var(--color-text-secondary);">
+            合同信息
+          </a>
+          <a href="#" class="relative flex items-center px-4 py-3 text-sm font-medium transition-colors duration-150 whitespace-nowrap" style="color:var(--color-text-secondary);">
+            考勤记录
+          </a>
+          <a href="#" class="relative flex items-center px-4 py-3 text-sm font-medium transition-colors duration-150 whitespace-nowrap" style="color:var(--color-text-secondary);">
+            薪资记录
+          </a>
+          <a href="#" class="relative flex items-center px-4 py-3 text-sm font-medium transition-colors duration-150 whitespace-nowrap" style="color:var(--color-text-secondary);">
+            绩效评估
+          </a>
+          <a href="#" class="relative flex items-center px-4 py-3 text-sm font-medium transition-colors duration-150 whitespace-nowrap" style="color:var(--color-text-secondary);">
+            培训记录
+          </a>
+        </nav>
+      </div>
+
+      <!-- 4. Tab Content - 基本信息 (Two Column Layout) -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Left Column: Personal Info -->
+        <div class="rounded-xl" style="background:var(--color-card); border:1px solid var(--color-border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm);">
+          <div class="px-6 py-4" style="border-bottom:1px solid var(--color-border);">
+            <h3 class="text-base font-semibold" style="color:var(--color-text-primary); font-family:var(--font-sans);">个人信息</h3>
+          </div>
+          <div class="p-6">
+            <div class="space-y-4" style="font-family:var(--font-sans);">
+              <div class="flex items-center gap-4 text-sm">
+                <span style="color:var(--color-text-muted); min-width:80px;">性别</span>
+                <span style="color:var(--color-text-primary);">男</span>
+                <span style="color:var(--color-border);">|</span>
+                <span style="color:var(--color-text-muted); min-width:80px;">生日</span>
+                <span style="color:var(--color-text-primary);">1988-05-12</span>
+              </div>
+              <div class="flex items-center gap-4 text-sm">
+                <span style="color:var(--color-text-muted); min-width:80px;">身份证</span>
+                <span style="color:var(--color-text-primary);">110***********1234</span>
+              </div>
+              <div class="flex items-center gap-4 text-sm">
+                <span style="color:var(--color-text-muted); min-width:80px;">学历</span>
+                <span style="color:var(--color-text-primary);">硕士</span>
+                <span style="color:var(--color-border);">|</span>
+                <span style="color:var(--color-text-muted); min-width:80px;">民族</span>
+                <span style="color:var(--color-text-primary);">汉</span>
+              </div>
+              <div class="flex items-center gap-4 text-sm">
+                <span style="color:var(--color-text-muted); min-width:80px;">户籍</span>
+                <span style="color:var(--color-text-primary);">北京市海淀区</span>
+              </div>
+              <div class="flex items-center gap-4 text-sm">
+                <span style="color:var(--color-text-muted); min-width:80px;">现住址</span>
+                <span style="color:var(--color-text-primary);">北京市朝阳区xxx路xxx号</span>
+              </div>
+              <div class="flex items-center gap-4 text-sm">
+                <span style="color:var(--color-text-muted); min-width:80px;">紧急联系人</span>
+                <span style="color:var(--color-text-primary);">张父 (父子) 139****8765</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Work Info -->
+        <div class="rounded-xl" style="background:var(--color-card); border:1px solid var(--color-border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm);">
+          <div class="px-6 py-4" style="border-bottom:1px solid var(--color-border);">
+            <h3 class="text-base font-semibold" style="color:var(--color-text-primary); font-family:var(--font-sans);">工作信息</h3>
+          </div>
+          <div class="p-6">
+            <div class="space-y-4" style="font-family:var(--font-sans);">
+              <div class="flex items-center gap-4 text-sm">
+                <span style="color:var(--color-text-muted); min-width:80px;">公司</span>
+                <span style="color:var(--color-text-primary);">TOPEMS集团</span>
+              </div>
+              <div class="flex items-center gap-4 text-sm">
+                <span style="color:var(--color-text-muted); min-width:80px;">部门</span>
+                <span style="color:var(--color-text-primary);">技术研发部</span>
+              </div>
+              <div class="flex items-center gap-4 text-sm">
+                <span style="color:var(--color-text-muted); min-width:80px;">职位</span>
+                <span style="color:var(--color-text-primary);">高级工程师</span>
+              </div>
+              <div class="flex items-center gap-4 text-sm">
+                <span style="color:var(--color-text-muted); min-width:80px;">直属上级</span>
+                <span style="color:var(--color-text-primary);">李总监</span>
+              </div>
+              <div class="flex items-center gap-4 text-sm">
+                <span style="color:var(--color-text-muted); min-width:80px;">合同类型</span>
+                <span style="color:var(--color-text-primary);">固定期限</span>
+              </div>
+              <div class="flex items-center gap-4 text-sm">
+                <span style="color:var(--color-text-muted); min-width:80px;">合同期限</span>
+                <span style="color:var(--color-text-primary);">2024-01-01 至 2026-12-31</span>
+              </div>
+              <div class="flex items-center gap-4 text-sm">
+                <span style="color:var(--color-text-muted); min-width:80px;">基本工资</span>
+                <span style="color:var(--color-primary); font-weight:var(--font-weight-semibold);">¥25,000/月</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom: Career Timeline -->
+      <div class="rounded-xl" style="background:var(--color-card); border:1px solid var(--color-border); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm);">
+        <div class="px-6 py-4" style="border-bottom:1px solid var(--color-border);">
+          <h3 class="text-base font-semibold" style="color:var(--color-text-primary); font-family:var(--font-sans);">职业轨迹</h3>
+        </div>
+        <div class="p-6">
+          <div class="relative ml-4" style="font-family:var(--font-sans);">
+            <!-- Timeline Line -->
+            <div class="absolute left-0 top-1 bottom-1 w-0.5" style="background:var(--color-border);"></div>
+
+            <!-- Timeline Entry 1: Latest -->
+            <div class="relative flex items-start gap-4 pb-6 last:pb-0">
+              <div class="absolute -left-4 flex items-center justify-center w-2.5 h-2.5 rounded-full" style="background:#3b82f6; margin-top:5px; left:-5px;"></div>
+              <div class="ml-2">
+                <p class="text-sm font-medium" style="color:var(--color-text-primary);">职级晋升 P6 → P7</p>
+                <p class="text-xs mt-0.5" style="color:var(--color-text-muted);">2024-01</p>
+              </div>
+            </div>
+
+            <!-- Timeline Entry 2 -->
+            <div class="relative flex items-start gap-4 pb-6 last:pb-0">
+              <div class="absolute -left-4 flex items-center justify-center w-2.5 h-2.5 rounded-full" style="background:#22c55e; margin-top:5px; left:-5px;"></div>
+              <div class="ml-2">
+                <p class="text-sm font-medium" style="color:var(--color-text-primary);">调入技术研发部</p>
+                <p class="text-xs mt-0.5" style="color:var(--color-text-muted);">2022-06</p>
+              </div>
+            </div>
+
+            <!-- Timeline Entry 3 -->
+            <div class="relative flex items-start gap-4 pb-6 last:pb-0">
+              <div class="absolute -left-4 flex items-center justify-center w-2.5 h-2.5 rounded-full" style="background:#f59e0b; margin-top:5px; left:-5px;"></div>
+              <div class="ml-2">
+                <p class="text-sm font-medium" style="color:var(--color-text-primary);">试用期转正</p>
+                <p class="text-xs mt-0.5" style="color:var(--color-text-muted);">2020-06</p>
+              </div>
+            </div>
+
+            <!-- Timeline Entry 4 -->
+            <div class="relative flex items-start gap-4 pb-0">
+              <div class="absolute -left-4 flex items-center justify-center w-2.5 h-2.5 rounded-full" style="background:#94a3b8; margin-top:5px; left:-5px;"></div>
+              <div class="ml-2">
+                <p class="text-sm font-medium" style="color:var(--color-text-primary);">入职</p>
+                <p class="text-xs mt-0.5" style="color:var(--color-text-muted);">2020-03</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== PAGE CONTENT END ===== -->
+
+    </div>
+
+    <!-- ============================== -->
+    <!-- FOOTER                         -->
+    <!-- ============================== -->
+    <footer
+      id="topems-footer"
+      class="mt-8"
+      style="border-top:1px solid var(--color-border); background:var(--color-surface);"
+    >
+      <div class="flex flex-col sm:flex-row items-center justify-between px-4 py-4 lg:px-6" style="max-width:1600px; margin:0 auto;">
+        <p class="text-xs" style="color:var(--color-text-muted); font-family:var(--font-sans);">
+          &copy; 2024 TOPEMS 化工新材料数字化平台
+        </p>
+        <div class="flex items-center gap-4 mt-2 sm:mt-0">
+          <a href="#" class="text-xs transition-colors duration-150" style="color:var(--color-text-muted); font-family:var(--font-sans);">帮助中心</a>
+          <a href="#" class="text-xs transition-colors duration-150" style="color:var(--color-text-muted); font-family:var(--font-sans);">使用文档</a>
+          <a href="#" class="text-xs transition-colors duration-150" style="color:var(--color-text-muted); font-family:var(--font-sans);">联系支持</a>
+        </div>
+      </div>
+    </footer>
+  </main>
+</div>
+
+<!-- ============================== -->
+<!-- SHELL-LEVEL INLINE STYLES      -->
+<!-- ============================== -->
+<style>
+  /* Header nav link hover */
+  .header-nav-link:hover {
+    background: var(--color-surface-light);
+  }
+
+  /* Sidebar nav item hover */
+  .sidebar-nav-item:hover {
+    background: var(--color-surface-light);
+    color: var(--color-text-primary) !important;
+  }
+
+  /* Sidebar nav item active */
+  .sidebar-nav-item.active,
+  .sidebar-nav-item[data-active="true"] {
+    background: var(--color-primary-50);
+    border-left-color: var(--color-primary);
+    color: var(--color-primary) !important;
+  }
+
+  /* Header nav active indicator */
+  .header-nav-link.active::after,
+  .header-nav-link[data-active="true"]::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 8px;
+    right: 8px;
+    height: 2px;
+    border-radius: 9999px;
+    background: var(--color-primary);
+  }
+
+  /* Active nav link text color */
+  .header-nav-link.active,
+  .header-nav-link[data-active="true"] {
+    color: var(--color-primary) !important;
+  }
+
+  /* Footer links hover */
+  #topems-footer a:hover {
+    color: var(--color-primary) !important;
+  }
+
+  /* Sidebar collapsed state */
+  #topems-sidebar.collapsed {
+    width: 64px;
+  }
+  #topems-sidebar.collapsed .sidebar-nav-item span,
+  #topems-sidebar.collapsed .sidebar-nav-item svg + span,
+  #topems-sidebar.collapsed [data-user-info] {
+    display: none;
+  }
+  #topems-sidebar.collapsed .sidebar-nav-item {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  /* Custom scrollbar for sidebar */
+  #sidebar-nav::-webkit-scrollbar {
+    width: 4px;
+  }
+  #sidebar-nav::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 9999px;
+  }
+  #sidebar-nav::-webkit-scrollbar-track {
+    background: transparent;
+  }
+</style>
+
+<!-- ============================== -->
+<!-- SHELL-LEVEL INLINE SCRIPTS     -->
+<!-- ============================== -->
+<script>
+(function() {
+  'use strict';
+
+  // Sidebar collapse toggle
+  var collapseBtn = document.getElementById('sidebar-collapse-btn');
+  var sidebar = document.getElementById('topems-sidebar');
+  if (collapseBtn && sidebar) {
+    collapseBtn.addEventListener('click', function() {
+      sidebar.classList.toggle('collapsed');
+      var isCollapsed = sidebar.classList.contains('collapsed');
+      collapseBtn.querySelector('span').textContent = isCollapsed ? '展开菜单' : '收起菜单';
+      collapseBtn.querySelector('svg').style.transform = isCollapsed ? 'rotate(180deg)' : '';
+    });
+  }
+
+  // Header nav active state management
+  var headerLinks = document.querySelectorAll('.header-nav-link');
+  headerLinks.forEach(function(link) {
+    link.addEventListener('click', function(e) {
+      headerLinks.forEach(function(l) {
+        l.classList.remove('active');
+        l.removeAttribute('data-active');
+        l.style.color = 'var(--color-text-secondary)';
+        var indicator = l.querySelector('span');
+        if (indicator && indicator.classList.contains('h-0\\.5')) {
+          indicator.style.display = 'none';
+        }
+      });
+      this.classList.add('active');
+      this.setAttribute('data-active', 'true');
+      this.style.color = 'var(--color-primary)';
+    });
+  });
+
+  // Sidebar nav active state management
+  var sidebarLinks = document.querySelectorAll('.sidebar-nav-item');
+  sidebarLinks.forEach(function(link) {
+    link.addEventListener('click', function(e) {
+      sidebarLinks.forEach(function(l) {
+        l.classList.remove('active');
+        l.removeAttribute('data-active');
+        l.style.color = 'var(--color-text-secondary)';
+        l.style.borderLeftColor = 'transparent';
+        l.style.background = 'transparent';
+      });
+      this.classList.add('active');
+      this.setAttribute('data-active', 'true');
+      this.style.color = 'var(--color-primary)';
+      this.style.borderLeftColor = 'var(--color-primary)';
+      this.style.background = 'var(--color-primary-50)';
+    });
+  });
+})();
+</script>
+
+<script>lucide.createIcons();</script>
+</body>
+</html>

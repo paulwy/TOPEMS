@@ -1,0 +1,117 @@
+{
+  "data": [
+    {
+      "id": "page-hrm-dashboard",
+      "title": "HRM 仪表盘",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1750995200000,
+      "canvasData": {
+        "x": 0,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/hrm-dashboard.html",
+        "interactions": [
+          {
+            "domId": "cta-employees",
+            "targetPageId": "page-hrm-employees",
+            "transitionLabel": "员工管理"
+          },
+          {
+            "domId": "cta-org",
+            "targetPageId": "page-hrm-org",
+            "transitionLabel": "组织架构"
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-hrm-employees",
+      "title": "HRM 员工列表",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1750995200000,
+      "canvasData": {
+        "x": 620,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/hrm-employees.html",
+        "interactions": [
+          {
+            "domId": "breadcrumb-dashboard",
+            "targetPageId": "page-hrm-dashboard",
+            "hideEdge": true,
+            "transitionLabel": "返回仪表盘"
+          },
+          {
+            "domId": "cta-employee-detail",
+            "targetPageId": "page-hrm-employee-detail",
+            "transitionLabel": "查看员工详情"
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-hrm-employee-detail",
+      "title": "HRM 员工详情",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1750995200000,
+      "canvasData": {
+        "x": 1240,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/hrm-employee-detail.html",
+        "interactions": [
+          {
+            "domId": "breadcrumb-employees",
+            "targetPageId": "page-hrm-employees",
+            "hideEdge": true,
+            "transitionLabel": "返回员工列表"
+          },
+          {
+            "domId": "breadcrumb-dashboard",
+            "targetPageId": "page-hrm-dashboard",
+            "hideEdge": true,
+            "transitionLabel": "返回仪表盘"
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-hrm-org",
+      "title": "HRM 组织架构",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1750995200000,
+      "canvasData": {
+        "x": 620,
+        "y": 430,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/hrm-org.html",
+        "interactions": [
+          {
+            "domId": "breadcrumb-dashboard",
+            "targetPageId": "page-hrm-dashboard",
+            "hideEdge": true,
+            "transitionLabel": "返回仪表盘"
+          }
+        ]
+      }
+    }
+  ],
+  "config": {
+    "autoLayout": true,
+    "deviceType": "desktop",
+    "projectName": "TOPEMS HRM 人力资源管理",
+    "designLibrary": null
+  }
+}

@@ -25,6 +25,5 @@ anyhow.workspace = true
 reqwest.workspace = true
 rand.workspace = true
 
-[[bin]]
-name = "topems-mes"
-path = "src/main.rs"
+[dev-dependencies]
+tower = "0.5"

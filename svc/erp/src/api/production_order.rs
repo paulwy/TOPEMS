@@ -27,15 +27,15 @@ pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/api/erp/production-orders", get(list_production_orders).post(create_production_order))
         .route(
-            "/api/erp/production-orders/:id",
+            "/api/erp/production-orders/{id}",
             get(get_production_order).put(update_production_order).delete(delete_production_order),
         )
         .route(
-            "/api/erp/production-orders/:id/progress",
+            "/api/erp/production-orders/{id}/progress",
             put(update_production_progress),
         )
         .route(
-            "/api/erp/production-orders/:id/status",
+            "/api/erp/production-orders/{id}/status",
             post(update_production_status),
         )
         .route(

@@ -1,6 +1,7 @@
 use topems_shared::error::{
     ErrorContext, ErrorRecovery, ErrorStatistics, SafeErrorHandler, TopemsError,
 };
+use topems_shared::response::ApiResponse;
 
 #[test]
 fn test_topems_error_display_database_connection() {
@@ -243,7 +244,7 @@ fn test_error_recovery_try_or_response_validation_error() {
 
 #[test]
 fn test_error_recovery_try_or_response_not_found() {
-    let response = ErrorRecovery::try_or_response(|| {
+    let response: ApiResponse<()> = ErrorRecovery::try_or_response(|| {
         Err(TopemsError::ResourceNotFound("item".to_string()))
     });
     assert!(!response.success);
@@ -252,7 +253,7 @@ fn test_error_recovery_try_or_response_not_found() {
 
 #[test]
 fn test_error_recovery_try_or_response_permission_denied() {
-    let response = ErrorRecovery::try_or_response(|| {
+    let response: ApiResponse<()> = ErrorRecovery::try_or_response(|| {
         Err(TopemsError::PermissionDenied {
             required: "admin".to_string(),
         })
@@ -263,7 +264,7 @@ fn test_error_recovery_try_or_response_permission_denied() {
 
 #[test]
 fn test_error_recovery_try_or_response_internal_error() {
-    let response =
+    let response: ApiResponse<()> =
         ErrorRecovery::try_or_response(|| Err(TopemsError::Internal("oops".to_string())));
     assert!(!response.success);
     assert_eq!(response.code, 500);

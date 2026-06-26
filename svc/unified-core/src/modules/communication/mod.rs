@@ -29,6 +29,36 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
+    // Notification Templates table
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS core_notification_templates (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            name VARCHAR(128) NOT NULL,
+            title_template VARCHAR(256) NOT NULL,
+            content_template TEXT NOT NULL,
+            notification_type VARCHAR(64) DEFAULT 'info',
+            description TEXT,
+            is_deleted BOOLEAN DEFAULT FALSE,
+            created_by UUID,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW(),
+            deleted_at TIMESTAMP
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    // Notification Archives table
+    sqlx::query(
+        r#"
+        ALTER TABLE core_notifications ADD COLUMN IF NOT EXISTS is_archived BOOLEAN DEFAULT FALSE
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
     // IM Chat Rooms table
     sqlx::query(
         r#"

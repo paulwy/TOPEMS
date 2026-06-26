@@ -1,0 +1,47 @@
+{
+  "root": {
+    "nodeId": "gen-project-shell",
+    "kind": "project-shell",
+    "pageIds": ["page-home", "page-modules", "page-dashboard"],
+    "output": "partials/project-shell.html",
+    "sharedRegions": ["header-nav", "sidebar", "footer", "brand-css-usage", "typography", "radius-scale", "surface-layering"],
+    "privateRegions": [],
+    "mutableSlots": ["activeNavItem", "pageTitle", "breadcrumb"],
+    "status": "planned",
+    "children": [
+      {
+        "nodeId": "gen-page-home",
+        "kind": "page-leaf",
+        "pageIds": ["page-home"],
+        "output": "pages/home.html",
+        "sharedRegions": [],
+        "privateRegions": ["hero-banner", "quick-stats", "module-shortcuts", "recent-activities", "cta-section"],
+        "mutableSlots": [],
+        "status": "planned",
+        "children": []
+      },
+      {
+        "nodeId": "gen-page-modules",
+        "kind": "page-leaf",
+        "pageIds": ["page-modules"],
+        "output": "pages/modules.html",
+        "sharedRegions": [],
+        "privateRegions": ["module-grid", "module-categories", "search-filter"],
+        "mutableSlots": [],
+        "status": "planned",
+        "children": []
+      },
+      {
+        "nodeId": "gen-page-dashboard",
+        "kind": "page-leaf",
+        "pageIds": ["page-dashboard"],
+        "output": "pages/dashboard.html",
+        "sharedRegions": [],
+        "privateRegions": ["kpi-cards", "charts-grid", "data-table", "status-panel"],
+        "mutableSlots": [],
+        "status": "planned",
+        "children": []
+      }
+    ]
+  }
+}

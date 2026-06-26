@@ -48,7 +48,7 @@ qms         svc/qms                topems-qms                  8050
 lims        svc/lims               topems-lims                 8051
 ehs         svc/ehs                topems-ehs                  8052
 rs          svc/rs                 topems-rs                   8053
-bi          svc/bi                 topems-bi                   8060
+bi          svc/analytics          bi-service                  8060
 report      svc/report             topems-report               8061
 monitor     svc/monitor            topems-monitor              8062
 portal      svc/portal             topems-portal               8063
@@ -120,12 +120,12 @@ build_all_backend() {
     
     for service in $(get_all_services); do
         if build_service "$service" 2>/dev/null; then
-            ((success_count++))
+            success_count=$((success_count + 1))
         else
-            ((fail_count++))
+            fail_count=$((fail_count + 1))
         fi
     done
-    
+
     echo ""
     if [ $fail_count -eq 0 ]; then
         success "所有后端服务编译完成 ($success_count 成功)"
@@ -198,10 +198,10 @@ test_backend() {
 
         info "测试 $service 服务..."
         if cargo test --release -- --test-threads=1 2>&1 | grep -q "test result:"; then
-            ((success_count++))
+            success_count=$((success_count + 1))
             success "$service 测试通过"
         else
-            ((fail_count++))
+            fail_count=$((fail_count + 1))
             error "$service 测试失败"
         fi
     done
@@ -404,9 +404,9 @@ start_all_services() {
     info "启动核心服务..."
     for service in $CORE_SERVICES; do
         if start_service "$service" 2>/dev/null; then
-            ((success_count++))
+            success_count=$((success_count + 1))
         else
-            ((fail_count++))
+            fail_count=$((fail_count + 1))
         fi
     done
 
@@ -416,17 +416,17 @@ start_all_services() {
             continue
         fi
         if start_service "$service" 2>/dev/null; then
-            ((success_count++))
+            success_count=$((success_count + 1))
         else
-            ((fail_count++))
+            fail_count=$((fail_count + 1))
         fi
     done
-    
+
     # 启动前端
     if start_frontend 2>/dev/null; then
-        ((success_count++))
+        success_count=$((success_count + 1))
     else
-        ((fail_count++))
+        fail_count=$((fail_count + 1))
     fi
 
     echo ""
@@ -576,12 +576,19 @@ show_all_status() {
 
     for service in $(get_all_services); do
         status_service "$service"
-        ((total_count++))
-        check_port $(get_service_port "$service") && ((running_count++))
+        total_count=$((total_count + 1))
+        if check_port $(get_service_port "$service"); then
+            running_count=$((running_count + 1))
+        fi
     done
 
-    check_port 3000 && { echo -e "${GREEN}✅${NC} 前端 (端口 3000) 运行中"; ((running_count++)); } || echo -e "${RED}❌${NC} 前端 (端口 3000) 未运行"
-    ((total_count++))
+    if check_port 3000; then
+        echo -e "${GREEN}✅${NC} 前端 (端口 3000) 运行中"
+        running_count=$((running_count + 1))
+    else
+        echo -e "${RED}❌${NC} 前端 (端口 3000) 未运行"
+    fi
+    total_count=$((total_count + 1))
     
     echo "=================================================="
     info "状态统计: ${running_count}/${total_count} 服务运行中"
