@@ -107,7 +107,7 @@ export const FloatingAIHelper: React.FC = () => {
       label: '查看审批',
       description: '查看待我审批的事项',
       icon: <FileText style={{ width: 18, height: 18 }} />,
-      action: () => navigate('/workflow/approvals'),
+      action: () => navigate('/flow/approvals'),
     },
     {
       id: 'attendance',
@@ -171,7 +171,7 @@ export const FloatingAIHelper: React.FC = () => {
       label: '编码生成',
       icon: <Code style={{ width: 18, height: 18 }} />,
       description: '批量生成编号',
-      action: () => navigate('/ai?tool=code'),
+      action: () => navigate('/ai/chat'),
     },
     {
       id: 'mask',
@@ -480,19 +480,19 @@ export const FloatingAIHelper: React.FC = () => {
                       icon={<Wand2 style={{ width: 14, height: 14 }} />}
                       label='文档生成'
                       size='small'
-                      onClick={() => navigate('/ai/documents')}
+                      onClick={() => navigate('/documents')}
                     />
                     <Chip
                       icon={<BarChart3 style={{ width: 14, height: 14 }} />}
                       label='文本分析'
                       size='small'
-                      onClick={() => navigate('/ai/analysis')}
+                      onClick={() => navigate('/ai')}
                     />
                     <Chip
                       icon={<FileText style={{ width: 14, height: 14 }} />}
                       label='数据补全'
                       size='small'
-                      onClick={() => navigate('/ai?tool=complete')}
+                      onClick={() => navigate('/ai/assistant')}
                     />
                   </Box>
                 </Box>

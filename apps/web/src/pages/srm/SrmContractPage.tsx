@@ -233,12 +233,12 @@ const SrmContractPage: React.FC = () => {
     {
       label: '查看详情',
       icon: <Eye size={16} />,
-      onClick: (row) => navigate(`/srm/contracts/${row.id}`),
+      onClick: (row) => navigate(`/srm/contracts`),
     },
     {
       label: '编辑',
       icon: <Edit size={16} />,
-      onClick: (row) => navigate(`/srm/contracts/${row.id}/edit`),
+      onClick: (row) => navigate(`/srm/contracts`),
     },
     {
       label: '删除',
@@ -318,14 +318,7 @@ const SrmContractPage: React.FC = () => {
             setPage(0);
           }
         }}
-        actions={[
-          {
-            label: '新建合同',
-            icon: <Plus size={18} />,
-            onClick: () => navigate('/srm/contracts/create'),
-            variant: 'contained',
-          },
-        ]}
+        actions={[]}
         rowActions={rowActions}
         getRowId={(row) => row.id}
         onRefresh={loadContracts}

@@ -30,6 +30,9 @@ sqlx.workspace = true
 md5 = "0.7"
 sha2 = "0.10"
 hex = "0.4"
+aes-gcm = "0.10"
+base64 = "0.22"
+hmac = "0.12"
 redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
 regex.workspace = true
 url = "2.5"
@@ -44,6 +47,14 @@ event-listener = "2.5"
 flate2 = "1.0"
 brotli = "3.5"
 hyper = "1.4"
+
+opentelemetry = { version = "0.21", features = ["trace"] }
+opentelemetry_sdk = { version = "0.21", features = ["rt-tokio", "trace"] }
+opentelemetry-otlp = { version = "0.14", features = ["tonic", "trace"] }
+opentelemetry-stdout = { version = "0.2", features = ["trace"] }
+opentelemetry-jaeger = { version = "0.20", features = ["rt-tokio"] }
+opentelemetry-semantic-conventions = "0.13"
+tracing-opentelemetry = "0.22"
 
 [dev-dependencies]
 tokio-test.workspace = true

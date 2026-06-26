@@ -19,20 +19,19 @@ import {
   Card,
   CardContent,
   CardHeader,
-  Badge,
   LinearProgress,
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableRow,
-  Button,
 } from '@mui/material';
 
 import GanttChart from '@/components/pm/GanttChart';
 import { pmApi } from '@/api/pm';
 import type { Project, ProjectPhase, ProjectMilestone, GanttPhase, GanttMilestone } from '@/api/pm';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
+import { ActionButton, StatusBadge } from '@/components/common';
 
 const STATUS_LABELS: Record<string, string> = {
   active: '进行中',
@@ -226,9 +225,11 @@ const PmProjectDetailPage: React.FC = () => {
               }}
             >
               <Typography sx={{ color: 'grey.500' }}>风险等级</Typography>
-              <Badge sx={RISK_COLORS[project.risk_level || ''] || RISK_COLORS.low}>
-                {RISK_LABELS[project.risk_level || ''] || '未评估'}
-              </Badge>
+              <StatusBadge
+                status={project.risk_level || 'low'}
+                label={RISK_LABELS[project.risk_level || ''] || '未评估'}
+                color={project.risk_level === 'high' ? 'error' : project.risk_level === 'medium' ? 'warning' : 'success'}
+              />
             </Box>
           </CardContent>
         ),
@@ -308,7 +309,7 @@ const PmProjectDetailPage: React.FC = () => {
         }}
       >
         <Typography variant='h6' sx={{ fontSize: '1.125rem' }}>阶段列表</Typography>
-        <Button variant='outlined' size='small'>添加阶段</Button>
+        <ActionButton label='添加阶段' variant='secondary' size='small' />
       </CardHeader>
       <CardContent sx={{ p: 0 }}>
         <Box sx={{ overflowX: 'auto' }}>
@@ -341,21 +342,11 @@ const PmProjectDetailPage: React.FC = () => {
                       </Box>
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        sx={
-                          phase.status === 'completed'
-                            ? { bgcolor: 'success.lighter', color: '#166534' }
-                            : phase.status === 'active'
-                              ? { bgcolor: '#dbeafe', color: '#1e40af' }
-                              : { bgcolor: 'grey.100', color: 'grey.700' }
-                        }
-                      >
-                        {phase.status === 'completed'
-                          ? '已完成'
-                          : phase.status === 'active'
-                            ? '进行中'
-                            : '未开始'}
-                      </Badge>
+                      <StatusBadge
+                        status={phase.status}
+                        label={phase.status === 'completed' ? '已完成' : phase.status === 'active' ? '进行中' : '未开始'}
+                        color={phase.status === 'completed' ? 'success' : phase.status === 'active' ? 'primary' : 'default'}
+                      />
                     </TableCell>
                     <TableCell>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -374,10 +365,7 @@ const PmProjectDetailPage: React.FC = () => {
                       </Box>
                     </TableCell>
                     <TableCell>
-                      <Button variant='text' size='small' sx={{ gap: 0.5 }}>
-                        <Edit sx={{ width: 16, height: 16 }} />
-                        编辑
-                      </Button>
+                      <ActionButton label='编辑' icon={<Edit size={16} />} variant='text' size='small' />
                     </TableCell>
                   </TableRow>
                 ))
@@ -401,7 +389,7 @@ const PmProjectDetailPage: React.FC = () => {
         }}
       >
         <Typography variant='h6' sx={{ fontSize: '1.125rem' }}>里程碑列表</Typography>
-        <Button variant='outlined' size='small'>添加里程碑</Button>
+        <ActionButton label='添加里程碑' variant='secondary' size='small' />
       </CardHeader>
       <CardContent sx={{ p: 0 }}>
         <Box sx={{ overflowX: 'auto' }}>
@@ -435,21 +423,11 @@ const PmProjectDetailPage: React.FC = () => {
                     </TableCell>
                     <TableCell sx={{ fontSize: '0.875rem', color: 'grey.600' }}>{formatDate(milestone.date)}</TableCell>
                     <TableCell>
-                      <Badge
-                        sx={
-                          milestone.status === 'completed'
-                            ? { bgcolor: 'success.lighter', color: '#166534' }
-                            : milestone.status === 'active'
-                              ? { bgcolor: '#dbeafe', color: '#1e40af' }
-                              : { bgcolor: 'grey.100', color: 'grey.700' }
-                        }
-                      >
-                        {milestone.status === 'completed'
-                          ? '已完成'
-                          : milestone.status === 'active'
-                            ? '进行中'
-                            : '未开始'}
-                      </Badge>
+                      <StatusBadge
+                        status={milestone.status}
+                        label={milestone.status === 'completed' ? '已完成' : milestone.status === 'active' ? '进行中' : '未开始'}
+                        color={milestone.status === 'completed' ? 'success' : milestone.status === 'active' ? 'primary' : 'default'}
+                      />
                     </TableCell>
                     <TableCell sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
                       {milestone.phase_id
@@ -457,10 +435,7 @@ const PmProjectDetailPage: React.FC = () => {
                         : '-'}
                     </TableCell>
                     <TableCell>
-                      <Button variant='text' size='small' sx={{ gap: 0.5 }}>
-                        <Edit sx={{ width: 16, height: 16 }} />
-                        编辑
-                      </Button>
+                      <ActionButton label='编辑' icon={<Edit size={16} />} variant='text' size='small' />
                     </TableCell>
                   </TableRow>
                 ))
@@ -660,7 +635,7 @@ const PmProjectDetailPage: React.FC = () => {
             }}
           >
             <Typography variant='h6' sx={{ fontSize: '1.125rem' }}>成本构成分析</Typography>
-            <Button variant='outlined' size='small'>查看详情</Button>
+            <ActionButton label='查看详情' variant='secondary' size='small' />
           </CardHeader>
           <CardContent>
             <Box
@@ -734,21 +709,11 @@ const PmProjectDetailPage: React.FC = () => {
               }}
             >
               <Typography sx={{ color: 'grey.500' }}>执行状态</Typography>
-              <Badge
-                sx={
-                  project.budget_utilization_rate && project.budget_utilization_rate > 100
-                    ? { bgcolor: 'error.lighter', color: '#991b1b' }
-                    : project.budget_utilization_rate && project.budget_utilization_rate > 80
-                      ? { bgcolor: '#fef9c3', color: '#a16207' }
-                      : { bgcolor: 'success.lighter', color: '#166534' }
-                }
-              >
-                {project.budget_utilization_rate && project.budget_utilization_rate > 100
-                  ? '超预算'
-                  : project.budget_utilization_rate && project.budget_utilization_rate > 80
-                    ? '预警'
-                    : '正常'}
-              </Badge>
+              <StatusBadge
+                status={project.budget_utilization_rate && project.budget_utilization_rate > 100 ? 'overbudget' : project.budget_utilization_rate && project.budget_utilization_rate > 80 ? 'warning' : 'normal'}
+                label={project.budget_utilization_rate && project.budget_utilization_rate > 100 ? '超预算' : project.budget_utilization_rate && project.budget_utilization_rate > 80 ? '预警' : '正常'}
+                color={project.budget_utilization_rate && project.budget_utilization_rate > 100 ? 'error' : project.budget_utilization_rate && project.budget_utilization_rate > 80 ? 'warning' : 'success'}
+              />
             </Box>
           </CardContent>
         </Card>
@@ -758,22 +723,10 @@ const PmProjectDetailPage: React.FC = () => {
             <Typography variant='h6' sx={{ fontSize: '1.125rem' }}>快速操作</Typography>
           </CardHeader>
           <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            <Button variant='outlined' sx={{ justifyContent: 'flex-start' }}>
-              <DollarSign sx={{ width: 16, height: 16, mr: 1 }} />
-              查看成本明细
-            </Button>
-            <Button variant='outlined' sx={{ justifyContent: 'flex-start' }}>
-              <FileText sx={{ width: 16, height: 16, mr: 1 }} />
-              查看项目发票
-            </Button>
-            <Button variant='outlined' sx={{ justifyContent: 'flex-start' }}>
-              <TrendingUp sx={{ width: 16, height: 16, mr: 1 }} />
-              预算执行分析
-            </Button>
-            <Button variant='outlined' sx={{ justifyContent: 'flex-start' }}>
-              <FileText sx={{ width: 16, height: 16, mr: 1 }} />
-              生成项目凭证
-            </Button>
+            <ActionButton label='查看成本明细' icon={<DollarSign size={16} />} variant='secondary' sx={{ justifyContent: 'flex-start' }} />
+            <ActionButton label='查看项目发票' icon={<FileText size={16} />} variant='secondary' sx={{ justifyContent: 'flex-start' }} />
+            <ActionButton label='预算执行分析' icon={<TrendingUp size={16} />} variant='secondary' sx={{ justifyContent: 'flex-start' }} />
+            <ActionButton label='生成项目凭证' icon={<FileText size={16} />} variant='secondary' sx={{ justifyContent: 'flex-start' }} />
           </CardContent>
         </Card>
       </Box>
@@ -845,16 +798,13 @@ const PmProjectDetailPage: React.FC = () => {
     if (!project) return undefined;
 
     const statusKey = project.status || 'draft';
-    const statusSx = STATUS_COLORS[statusKey];
 
     return {
       title: project.name,
       subtitle: project.code,
       tags: [
-        <Badge key='status' sx={statusSx}>{STATUS_LABELS[statusKey]}</Badge>,
-        <Badge key='risk' variant='standard' sx={RISK_COLORS[project.risk_level || ''] || RISK_COLORS.low}>
-          {RISK_LABELS[project.risk_level || ''] || '未评估'}
-        </Badge>,
+        STATUS_LABELS[statusKey],
+        RISK_LABELS[project.risk_level || ''] || '未评估',
       ],
       stats: [
         { label: '项目进度', value: `${project.progress}%` },

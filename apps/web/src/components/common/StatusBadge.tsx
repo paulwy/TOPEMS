@@ -251,6 +251,18 @@ export const DEFAULT_STATUS_MAP: StatusMapConfig = {
     icon: <Clock size={14} />,
   },
 
+  // 部门状态
+  department_active: {
+    label: '启用',
+    color: 'success',
+    icon: <Building2 size={14} />,
+  },
+  department_inactive: {
+    label: '禁用',
+    color: 'default',
+    icon: <Minus size={14} />,
+  },
+
   // 考勤状态
   attendance_normal: {
     label: '正常',

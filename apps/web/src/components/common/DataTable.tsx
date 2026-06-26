@@ -1,8 +1,8 @@
 /**
  * 统一的DataTable组件
- * 整合了根目录和common目录的DataTable组件
+ * 整合了根目录和common目录的DataTable组件，以及EnhancedDataTable的功能
  * 使用TanStack React Table，支持搜索、排序、筛选、分页、选择、导出等功能
- * 增强特性：列配置持久化、行展开功能、虚拟滚动支持
+ * 增强特性：列配置持久化、行展开功能、虚拟滚动支持、高级筛选、Excel导出
  */
 import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import {
@@ -20,6 +20,11 @@ import {
   Checkbox,
   Tooltip,
   Skeleton,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  TextField,
+  Chip,
 } from '@mui/material';
 import { Button } from '@mui/material';
 import {
@@ -50,6 +55,7 @@ import {
   type VisibilityState,
 } from '@tanstack/react-table';
 import { useAppStore } from '@/store';
+import { useExportData } from '@/hooks/useDataTable';
 
 // ============ 类型定义 ============
 
@@ -57,6 +63,18 @@ import { useAppStore } from '@/store';
  * 行展开内容渲染函数类型
  */
 export type ExpandedRowRender<TData> = (row: TData) => React.ReactNode;
+
+/**
+ * 高级筛选配置
+ */
+export interface AdvancedFilter {
+  label: string;
+  key: string;
+  type: 'text' | 'select' | 'date' | 'number';
+  options?: { value: string; label: string }[];
+  value?: string;
+  onChange?: (_value: string) => void;
+}
 
 /**
  * DataTable属性
@@ -122,8 +140,8 @@ export interface DataTableProps<TData, TValue> {
   /** 行点击回调 */
   onRowClick?: (row: TData) => void;
 
-  /** 选择变化回调 */
-  onSelectionChange?: (keys: Set<string>) => void;
+  /** 选择变化回调（selectionKey存在时传入string[]，否则传入Set<string>） */
+  onSelectionChange?: (keys: Set<string> | string[]) => void;
 
   /** 是否显示刷新按钮 */
   showRefresh?: boolean;
@@ -172,6 +190,27 @@ export interface DataTableProps<TData, TValue> {
 
   /** 是否显示行号 */
   showRowNumber?: boolean;
+
+  /** 是否启用高级筛选 */
+  enableAdvancedFilter?: boolean;
+
+  /** 高级筛选配置 */
+  advancedFilters?: AdvancedFilter[];
+
+  /** 是否显示行条纹 */
+  striped?: boolean;
+
+  /** 是否紧凑模式 */
+  compact?: boolean;
+
+  /** 空状态自定义内容 */
+  emptyState?: React.ReactNode;
+
+  /** 选择key */
+  selectionKey?: keyof TData;
+
+  /** 已选中的id列表（受控） */
+  selectedIds?: string[];
 }
 
 /**
@@ -276,6 +315,13 @@ export function DataTable<TData, TValue>({
   rowHeight = 52,
   enableStickyHeader = false,
   showRowNumber = false,
+  enableAdvancedFilter = false,
+  advancedFilters = [],
+  striped = true,
+  compact = false,
+  emptyState,
+  selectionKey,
+  selectedIds = [],
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -283,17 +329,27 @@ export function DataTable<TData, TValue>({
     pageIndex: currentPage,
     pageSize: pageSize,
   });
+  const [localSearch, setLocalSearch] = useState('');
+  const [showAdvancedFilterDialog, setShowAdvancedFilterDialog] = useState(false);
+  const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(null);
 
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
     persistColumnConfig ? loadColumnVisibility(columnConfigKey) : {}
   );
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set());
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set(selectedIds));
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const addNotification = useAppStore((state) => state.addNotification);
 
-  // 列配置持久化
+  const { exportToCSV, exportToExcel } = useExportData(columns);
+
+  useEffect(() => {
+    if (selectedIds) {
+      setSelectedKeys(new Set(selectedIds));
+    }
+  }, [selectedIds]);
+
   useEffect(() => {
     if (persistColumnConfig) {
       saveColumnVisibility(columnConfigKey, columnVisibility);
@@ -338,6 +394,7 @@ export function DataTable<TData, TValue>({
 
   const handleSearch = useCallback(
     (value: string) => {
+      setLocalSearch(value);
       if (searchKey) {
         table.getColumn(searchKey)?.setFilterValue(value);
       }
@@ -355,26 +412,43 @@ export function DataTable<TData, TValue>({
 
   const handleSelectAll = useCallback(() => {
     const filteredRows = table.getFilteredRowModel().rows;
-    if (selectedKeys.size === filteredRows.length && filteredRows.length > 0) {
-      handleSelectionChange(new Set());
+    if (selectionKey && onSelectionChange) {
+      if (selectedIds.length === filteredRows.length && filteredRows.length > 0) {
+        onSelectionChange([]);
+      } else {
+        const allIds = filteredRows.map((row) => String(row.original[selectionKey]));
+        onSelectionChange(allIds);
+      }
     } else {
-      const allKeys = new Set(filteredRows.map((row) => getRowKey(row.original)));
-      handleSelectionChange(allKeys);
+      if (selectedKeys.size === filteredRows.length && filteredRows.length > 0) {
+        handleSelectionChange(new Set());
+      } else {
+        const allKeys = new Set(filteredRows.map((row) => getRowKey(row.original)));
+        handleSelectionChange(allKeys);
+      }
     }
-  }, [selectedKeys, table, getRowKey, handleSelectionChange]);
+  }, [selectedKeys, table, getRowKey, handleSelectionChange, selectedIds, selectionKey, onSelectionChange]);
 
   const handleSelectRow = useCallback(
     (row: TData) => {
-      const key = getRowKey(row);
-      const newKeys = new Set(selectedKeys);
-      if (newKeys.has(key)) {
-        newKeys.delete(key);
+      if (selectionKey && onSelectionChange) {
+        const id = String(row[selectionKey]);
+        const newSelected = selectedIds.includes(id)
+          ? selectedIds.filter((selectedId) => selectedId !== id)
+          : [...selectedIds, id];
+        onSelectionChange(newSelected);
       } else {
-        newKeys.add(key);
+        const key = getRowKey(row);
+        const newKeys = new Set(selectedKeys);
+        if (newKeys.has(key)) {
+          newKeys.delete(key);
+        } else {
+          newKeys.add(key);
+        }
+        handleSelectionChange(newKeys);
       }
-      handleSelectionChange(newKeys);
     },
-    [selectedKeys, getRowKey, handleSelectionChange]
+    [selectedKeys, getRowKey, handleSelectionChange, selectedIds, selectionKey, onSelectionChange]
   );
 
   const handleRowExpand = useCallback(
@@ -391,53 +465,53 @@ export function DataTable<TData, TValue>({
     [expandedRows, getRowKey]
   );
 
-  const exportToCSV = useCallback(() => {
-    try {
-      const visibleColumns = table.getAllLeafColumns().filter((column) => column.getIsVisible());
-      const headerNames = visibleColumns.map((col) => (col.columnDef.header as string) || col.id);
-
-      const csvData = [
-        headerNames.join(','),
-        ...table.getFilteredRowModel().rows.map((row) => {
-          return visibleColumns
-            .map((col) => {
-              const value = row.getValue(col.id);
-              if (typeof value === 'string') {
-                return `"${value.replace(/"/g, '""')}"`;
-              }
-              return value;
-            })
-            .join(',');
-        }),
-      ].join('\n');
-
-      const blob = new Blob(['\ufeff' + csvData], {
-        type: 'text/csv;charset=utf-8;',
-      });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute(
-        'download',
-        `${exportFileName}-${new Date().toISOString().split('T')[0]}.csv`
-      );
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
+  const handleExportCSV = useCallback(() => {
+    setExportAnchorEl(null);
+    const result = exportToCSV(
+      table.getFilteredRowModel().rows.map((r) => r.original),
+      exportFileName
+    );
+    if (result.success) {
       addNotification({
         title: '导出成功',
         message: '数据已成功导出为 CSV 文件',
         type: 'success',
       });
-    } catch {
+    } else {
       addNotification({
         title: '导出失败',
         message: '导出过程中发生错误',
         type: 'error',
       });
     }
-  }, [table, exportFileName, addNotification]);
+  }, [exportToCSV, table, exportFileName, addNotification]);
+
+  const handleExportExcel = useCallback(() => {
+    setExportAnchorEl(null);
+    const result = exportToExcel(
+      table.getFilteredRowModel().rows.map((r) => r.original),
+      exportFileName
+    );
+    if (result.success) {
+      addNotification({
+        title: '导出成功',
+        message: '数据已成功导出为 Excel 文件',
+        type: 'success',
+      });
+    } else {
+      addNotification({
+        title: '导出失败',
+        message: '导出过程中发生错误',
+        type: 'error',
+      });
+    }
+  }, [exportToExcel, table, exportFileName, addNotification]);
+
+  const hasSelected = selectedIds.length > 0 || selectedKeys.size > 0;
+  const isAllSelected =
+    hasSelected &&
+    (selectedIds.length === table.getFilteredRowModel().rows.length ||
+      selectedKeys.size === table.getFilteredRowModel().rows.length);
 
   const currentPageIndex = currentPage;
   const totalRecords =
@@ -453,145 +527,182 @@ export function DataTable<TData, TValue>({
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, ...sx }}>
-      {/* 顶部操作栏 */}
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: { xs: 'column', sm: 'row' },
-          alignItems: 'flex-start',
-          justifyContent: 'space-between',
-          gap: 2,
-          flexWrap: 'wrap',
-        }}
-      >
-        {/* 左侧：搜索框 */}
-        {showSearch && searchKey && (
-          <Box
-            sx={{
-              width: { xs: '100%', sm: 'auto' },
-              flex: { sm: 1 },
-              maxWidth: { sm: 320 },
-            }}
-          >
-            <Box sx={{ position: 'relative' }}>
-              <Search
-                sx={{
-                  position: 'absolute',
-                  left: 12,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  width: 18,
-                  height: 18,
-                  color: 'text.disabled',
-                }}
-              />
-              <input
-                type='text'
-                placeholder={searchPlaceholder}
-                value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ''}
-                onChange={(event) => handleSearch(event.target.value)}
-                style={{
-                  width: '100%',
-                  padding: '10px 12px 10px 40px',
-                  border: '1px solid',
-                  borderColor: '#e0e0e0',
-                  borderRadius: 4,
-                  fontSize: 14,
-                  backgroundColor: 'white',
-                  outline: 'none',
-                }}
-              />
-            </Box>
-          </Box>
-        )}
-
-        {/* 右侧：操作按钮 */}
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <Box
           sx={{
             display: 'flex',
-            alignItems: 'center',
-            gap: 1,
             flexWrap: 'wrap',
-            justifyContent: { xs: 'flex-start', sm: 'flex-end' },
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: 2,
           }}
         >
-          {/* 筛选按钮 */}
-          {showFilters && (
-            <Tooltip title='筛选'>
-              <IconButton
-                size='small'
-                sx={{ display: { xs: 'flex', sm: 'flex' } }}
-              >
-                <Filter sx={{ width: 18, height: 18 }} />
-              </IconButton>
-            </Tooltip>
-          )}
+          <Box
+            sx={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              gap: 2,
+              width: '100%',
+            }}
+          >
+            {showSearch && searchKey && (
+              <Box sx={{ position: 'relative', width: '100%', maxWidth: 320 }}>
+                <Search
+                  style={{
+                    position: 'absolute',
+                    left: 12,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: 16,
+                    height: 16,
+                    color: 'rgba(0,0,0,0.25)',
+                  }}
+                />
+                <input
+                  type='text'
+                  placeholder={searchPlaceholder}
+                  value={localSearch}
+                  onChange={(event) => handleSearch(event.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '10px 12px 10px 40px',
+                    border: '1px solid',
+                    borderColor: '#e0e0e0',
+                    borderRadius: 4,
+                    fontSize: 14,
+                    backgroundColor: 'white',
+                    outline: 'none',
+                  }}
+                />
+              </Box>
+            )}
 
-          {/* 刷新按钮 */}
-          {showRefresh && onRefresh && (
-            <Tooltip title='刷新'>
-              <IconButton
+            {enableAdvancedFilter && advancedFilters.length > 0 && (
+              <Button
+                variant='outlined'
+                size='small'
+                onClick={() => setShowAdvancedFilterDialog(true)}
+                startIcon={<Filter style={{ width: 16, height: 16 }} />}
+              >
+                高级筛选
+              </Button>
+            )}
+          </Box>
+
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
+              flexWrap: 'wrap',
+              justifyContent: 'center',
+            }}
+          >
+            {onRefresh && (
+              <Button
+                variant='outlined'
                 size='small'
                 onClick={onRefresh}
-                sx={{ display: { xs: 'flex', sm: 'flex' } }}
+                startIcon={<RefreshCw style={{ width: 16, height: 16 }} />}
               >
-                <RefreshCw sx={{ width: 18, height: 18 }} />
-              </IconButton>
-            </Tooltip>
-          )}
+                刷新
+              </Button>
+            )}
 
-          {/* 列设置按钮 */}
-          <Tooltip title='列设置'>
-            <IconButton
-              size='small'
-              onClick={handleMenuOpen}
-              sx={{ display: { xs: 'none', sm: 'flex' } }}
-            >
-              <Settings2 sx={{ width: 18, height: 18 }} />
-            </IconButton>
-          </Tooltip>
+            {showExport && (
+              <>
+                <Button
+                  variant='outlined'
+                  size='small'
+                  onClick={(e) => setExportAnchorEl(e.currentTarget)}
+                  endIcon={<ChevronDown style={{ width: 16, height: 16 }} />}
+                  startIcon={<Download style={{ width: 16, height: 16 }} />}
+                >
+                  导出
+                </Button>
+                <Menu
+                  anchorEl={exportAnchorEl}
+                  open={Boolean(exportAnchorEl)}
+                  onClose={() => setExportAnchorEl(null)}
+                  anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                  transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                >
+                  <MenuItem onClick={handleExportCSV}>导出 CSV</MenuItem>
+                  <MenuItem onClick={handleExportExcel}>导出 Excel</MenuItem>
+                </Menu>
+              </>
+            )}
 
-          {/* 导出按钮 */}
-          {showExport && (
-            <Button
-              variant='outlined'
-              size='small'
-              onClick={exportToCSV}
-              startIcon={<Download sx={{ width: 16, height: 16 }} />}
-              sx={{ display: { xs: 'none', sm: 'flex' } }}
-            >
-              导出 CSV
-            </Button>
-          )}
-
-          {/* 移动端导出按钮 */}
-          {showExport && (
-            <Tooltip title='导出 CSV'>
-              <IconButton
+            <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+              <Button
+                variant='outlined'
                 size='small'
-                onClick={exportToCSV}
-                sx={{ display: { xs: 'flex', sm: 'none' } }}
+                onClick={handleMenuOpen}
+                startIcon={<Settings2 style={{ width: 16, height: 16 }} />}
               >
-                <Download sx={{ width: 20, height: 20 }} />
-              </IconButton>
-            </Tooltip>
-          )}
+                列设置
+              </Button>
+            </Box>
 
-          {/* 新建按钮 */}
-          {showCreate && onCreate && (
-            <Button
-              variant='contained'
-              size='small'
-              onClick={onCreate}
-              startIcon={<Plus sx={{ width: 16, height: 16 }} />}
-            >
-              {createLabel}
-            </Button>
-          )}
+            {/* 新建按钮 */}
+            {showCreate && onCreate && (
+              <Button
+                variant='contained'
+                size='small'
+                onClick={onCreate}
+                startIcon={<Plus sx={{ width: 16, height: 16 }} />}
+              >
+                {createLabel}
+              </Button>
+            )}
 
-          {/* 额外操作 */}
-          {extraActions}
+            {/* 额外操作 */}
+            {extraActions}
+          </Box>
         </Box>
+
+        {hasSelected && (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              bgcolor: 'primary.light',
+              px: 2,
+              py: 1.5,
+              borderRadius: 1,
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <span style={{ fontSize: '0.875rem', color: 'primary.dark' }}>
+                已选择{' '}
+                <Chip
+                  label={selectedIds.length > 0 ? selectedIds.length : selectedKeys.size}
+                  size='small'
+                  color='primary'
+                  sx={{ mx: 0.5 }}
+                />{' '}
+                条记录
+              </span>
+            </Box>
+            {(onSelectionChange || (selectionKey && onSelectionChange)) && (
+              <Button
+                variant='outlined'
+                size='small'
+                onClick={() => {
+                  if (selectionKey && onSelectionChange) {
+                    onSelectionChange([]);
+                  } else {
+                    onSelectionChange?.(new Set());
+                  }
+                }}
+              >
+                取消选择
+              </Button>
+            )}
+          </Box>
+        )}
       </Box>
 
       {/* 列设置菜单 */}
@@ -674,18 +785,13 @@ export function DataTable<TData, TValue>({
                         left: 0,
                         zIndex: 2,
                         bgcolor: 'grey.50',
+                        width: 40,
                       }}
                     >
                       <Checkbox
-                        checked={
-                          selectedKeys.size === table.getFilteredRowModel().rows.length &&
-                          table.getFilteredRowModel().rows.length > 0
-                        }
-                        onChange={handleSelectAll}
-                        indeterminate={
-                          selectedKeys.size > 0 &&
-                          selectedKeys.size < table.getFilteredRowModel().rows.length
-                        }
+                        checked={isAllSelected}
+                        onChange={(e) => handleSelectAll()}
+                        indeterminate={hasSelected && !isAllSelected}
                       />
                     </TableCell>
                   )}
@@ -758,14 +864,14 @@ export function DataTable<TData, TValue>({
                       (showRowNumber ? 1 : 0) +
                       (enableRowExpansion ? 1 : 0)
                     }
-                    sx={{ height: 120, textAlign: 'center' }}
+                    sx={{ height: 96, textAlign: 'center' }}
                   >
                     <Box
                       sx={{
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: 2,
+                        gap: 1,
                       }}
                     >
                       <Skeleton
@@ -796,9 +902,11 @@ export function DataTable<TData, TValue>({
                         sx={{
                           cursor: onRowClick ? 'pointer' : 'default',
                           '&:hover': {
-                            backgroundColor: onRowClick ? 'grey.50' : 'inherit',
+                            backgroundColor: onRowClick ? 'action.hover' : 'inherit',
                           },
                           '&:last-child td': { borderBottom: 0 },
+                          bgcolor: striped && row.index % 2 === 0 ? 'action.hover' : 'inherit',
+                          ...(compact && { fontSize: '0.875rem' }),
                         }}
                       >
                         {/* 选择列 */}
@@ -810,11 +918,17 @@ export function DataTable<TData, TValue>({
                               left: 0,
                               zIndex: 1,
                               bgcolor: 'inherit',
+                              width: 40,
                             }}
                           >
                             <Checkbox
-                              checked={selectedKeys.has(rowKey)}
+                              checked={
+                                selectionKey
+                                  ? selectedIds.includes(String(row.original[selectionKey]))
+                                  : selectedKeys.has(rowKey)
+                              }
                               onChange={() => handleSelectRow(row.original)}
+                              onClick={(e) => e.stopPropagation()}
                             />
                           </TableCell>
                         )}
@@ -868,6 +982,7 @@ export function DataTable<TData, TValue>({
                             sx={{
                               whiteSpace: 'nowrap',
                               fontSize: 14,
+                              ...(compact && { py: 1 }),
                             }}
                           >
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -1037,6 +1152,98 @@ export function DataTable<TData, TValue>({
             </IconButton>
           </Box>
         </Box>
+      )}
+
+      {/* 高级筛选对话框 */}
+      {enableAdvancedFilter && advancedFilters.length > 0 && (
+        <Dialog
+          open={showAdvancedFilterDialog}
+          onClose={() => setShowAdvancedFilterDialog(false)}
+          maxWidth='sm'
+          fullWidth
+        >
+          <DialogTitle>高级筛选</DialogTitle>
+          <DialogContent>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
+              {advancedFilters.map((filter) => (
+                <Box
+                  key={String(filter.key)}
+                  sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}
+                >
+                  <Box
+                    sx={{
+                      fontSize: '0.875rem',
+                      fontWeight: 500,
+                      color: 'text.primary',
+                    }}
+                  >
+                    {filter.label}
+                  </Box>
+                  {filter.type === 'select' && filter.options ? (
+                    <Box
+                      component='select'
+                      value={filter.value || ''}
+                      onChange={(e) => filter.onChange?.(e.target.value)}
+                      sx={{
+                        width: '100%',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        borderRadius: 1,
+                        px: 1.5,
+                        py: 1,
+                        fontSize: '0.875rem',
+                        outline: 'none',
+                        '&:focus': { borderColor: 'primary.main' },
+                      }}
+                    >
+                      <option value=''>全部</option>
+                      {filter.options.map((option) => (
+                        <option
+                          key={option.value}
+                          value={option.value}
+                        >
+                          {option.label}
+                        </option>
+                      ))}
+                    </Box>
+                  ) : (
+                    <TextField
+                      type={filter.type}
+                      size='small'
+                      value={filter.value || ''}
+                      onChange={(e) => filter.onChange?.(e.target.value)}
+                      sx={{ width: '100%' }}
+                    />
+                  )}
+                </Box>
+              ))}
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: 1,
+                  mt: 2,
+                }}
+              >
+                <Button
+                  variant='outlined'
+                  onClick={() => {
+                    advancedFilters.forEach((f) => f.onChange?.(''));
+                    setShowAdvancedFilterDialog(false);
+                  }}
+                >
+                  重置
+                </Button>
+                <Button
+                  variant='contained'
+                  onClick={() => setShowAdvancedFilterDialog(false)}
+                >
+                  应用筛选
+                </Button>
+              </Box>
+            </Box>
+          </DialogContent>
+        </Dialog>
       )}
     </Box>
   );

@@ -1,0 +1,118 @@
+import apiClient from '../client';
+import type { ApiResponse } from '../client';
+import type {
+  DevicePoint,
+  CreateDevicePointRequest,
+  ListQueryParams,
+  PaginatedResponse,
+  TrackQueryParams,
+  DeviceLocationRecord,
+} from './types';
+import { adaptResponse } from './utils';
+
+export const deviceApi = {
+  listDevicePoints: async (
+    params?: ListQueryParams
+  ): Promise<ApiResponse<PaginatedResponse<DevicePoint>>> => {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.status) queryParams.append('status', params.status);
+
+    const response = await apiClient.gis.get<any>(
+      `/api/gis/device-locations?${queryParams.toString()}`
+    );
+    if (response.success && response.data) {
+      const adapted = adaptResponse<any>(response.data, 'device_locations');
+      adapted.data = adapted.data.map(
+        (item: {
+          position?: { lat?: number; lng?: number };
+          latitude?: number;
+          longitude?: number;
+        }) => ({
+          ...item,
+          latitude: item.position?.lat ?? item.latitude ?? 0,
+          longitude: item.position?.lng ?? item.longitude ?? 0,
+        })
+      );
+      response.data = adapted;
+    }
+    return response as ApiResponse<PaginatedResponse<DevicePoint>>;
+  },
+
+  getDevicePoint: async (id: string): Promise<ApiResponse<DevicePoint>> => {
+    return apiClient.gis.get<DevicePoint>(`/api/gis/device-locations/${id}`);
+  },
+
+  listDevicePointsByMap: async (
+    mapId: string,
+    params?: ListQueryParams
+  ): Promise<ApiResponse<PaginatedResponse<DevicePoint>>> => {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+
+    return apiClient.gis.get<PaginatedResponse<DevicePoint>>(
+      `/api/gis/device-locations/map/${mapId}?${queryParams.toString()}`
+    );
+  },
+
+  createDevicePoint: async (
+    data: CreateDevicePointRequest
+  ): Promise<ApiResponse<DevicePoint>> => {
+    return apiClient.gis.post<DevicePoint>('/api/gis/device-locations', data);
+  },
+
+  updateDevicePoint: async (
+    id: string,
+    data: Partial<CreateDevicePointRequest>
+  ): Promise<ApiResponse<DevicePoint>> => {
+    return apiClient.gis.put<DevicePoint>(`/api/gis/device-locations/${id}`, data);
+  },
+
+  deleteDevicePoint: async (id: string): Promise<ApiResponse<void>> => {
+    return apiClient.gis.delete<void>(`/api/gis/device-locations/${id}`);
+  },
+
+  getDeviceTrack: async (
+    params: TrackQueryParams
+  ): Promise<ApiResponse<PaginatedResponse<DeviceLocationRecord>>> => {
+    const queryParams = new URLSearchParams();
+    queryParams.append('device_id', params.device_id);
+    if (params.start_time) queryParams.append('start_time', params.start_time);
+    if (params.end_time) queryParams.append('end_time', params.end_time);
+    if (params.page) queryParams.append('page', params.page.toString());
+    if (params.page_size) queryParams.append('page_size', params.page_size.toString());
+
+    return apiClient.gis.get<PaginatedResponse<DeviceLocationRecord>>(
+      `/api/gis/device-tracks?${queryParams.toString()}`
+    );
+  },
+
+  getDeviceTrackStatistics: async (
+    device_id: string
+  ): Promise<
+    ApiResponse<{
+      total_distance: number;
+      avg_speed: number;
+      max_speed: number;
+      track_points: number;
+      start_time: string;
+      end_time: string;
+    }>
+  > => {
+    return apiClient.gis.get<{
+      total_distance: number;
+      avg_speed: number;
+      max_speed: number;
+      track_points: number;
+      start_time: string;
+      end_time: string;
+    }>(`/api/gis/device-tracks/${device_id}/statistics`);
+  },
+
+  listDevicesWithTracks: async (): Promise<ApiResponse<DevicePoint[]>> => {
+    return apiClient.gis.get<DevicePoint[]>('/api/gis/device-tracks/devices');
+  },
+};

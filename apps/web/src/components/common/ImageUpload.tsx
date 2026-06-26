@@ -1,3 +1,7 @@
+/**
+ * 图片上传组件
+ * 支持拖拽上传、预览、删除、多图上传和裁剪功能
+ */
 import React, { useState, useCallback, useRef } from 'react';
 import {
   Box,
@@ -15,27 +19,29 @@ import { styled } from '@mui/material/styles';
 import { Image, X, Upload, Crop, Trash2, ZoomIn, ZoomOut, RotateCw, Check } from 'lucide-react';
 import { logger } from '@/utils/logger';
 
+// ============ 类型定义 ============
+
 /**
  * 图片上传组件属性
  */
 export interface ImageUploadProps {
-  /** 当前图片URL列表 */
+  /** 当前图片URL列表，支持受控模式 */
   value?: string[];
-  /** 值改变回调 */
+  /** 值改变回调，返回更新后的图片URL列表 */
   onChange?: (files: string[]) => void;
-  /** 最大上传数量 */
+  /** 最大上传数量，默认为 9 */
   maxCount?: number;
-  /** 允许的文件类型 */
+  /** 允许的文件类型，默认为 'image/*' */
   accept?: string;
-  /** 单张图片最大大小（MB） */
+  /** 单张图片最大大小（MB），默认为 5 */
   maxSize?: number;
-  /** 是否支持裁剪 */
+  /** 是否支持裁剪功能，默认为 true */
   cropEnabled?: boolean;
-  /** 裁剪比例，如 16/9 */
+  /** 裁剪比例，如 16/9，默认为 1（正方形） */
   cropAspect?: number;
-  /** 上传区域高度 */
+  /** 上传区域高度，支持数字（px）或字符串 */
   height?: number | string;
-  /** 是否禁用 */
+  /** 是否禁用上传功能，默认为 false */
   disabled?: boolean;
   /** 自定义类名 */
   className?: string;
@@ -52,6 +58,43 @@ interface ImageFile {
 /**
  * 图片上传组件
  * 支持拖拽上传、预览、删除、多图上传和裁剪功能
+ *
+ * @example
+ * ```tsx
+ * // 基础用法
+ * <ImageUpload
+ *   value={images}
+ *   onChange={(newImages) => setImages(newImages)}
+ * />
+ *
+ * // 限制上传数量和大小
+ * <ImageUpload
+ *   value={avatarImages}
+ *   onChange={(newImages) => setAvatarImages(newImages)}
+ *   maxCount={1}
+ *   maxSize={2}
+ * />
+ *
+ * // 禁用裁剪功能
+ * <ImageUpload
+ *   value={galleryImages}
+ *   onChange={(newImages) => setGalleryImages(newImages)}
+ *   cropEnabled={false}
+ * />
+ *
+ * // 自定义上传区域高度
+ * <ImageUpload
+ *   value={bannerImages}
+ *   onChange={(newImages) => setBannerImages(newImages)}
+ *   height={300}
+ * />
+ *
+ * // 禁用上传
+ * <ImageUpload
+ *   value={readOnlyImages}
+ *   disabled
+ * />
+ * ```
  */
 const ImageUpload: React.FC<ImageUploadProps> = ({
   value = [],

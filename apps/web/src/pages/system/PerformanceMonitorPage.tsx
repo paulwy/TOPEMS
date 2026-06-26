@@ -13,7 +13,7 @@ import {
   ChevronLeft,
 } from 'lucide-react';
 import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor';
-import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
+import { StatsPageTemplate, type ChartConfig, type StatCard } from '@/components/templates/StatsPageTemplate';
 
 const PerformanceMonitorPage: React.FC = () => {
   const navigate = useNavigate();
@@ -72,7 +72,7 @@ const PerformanceMonitorPage: React.FC = () => {
     });
   };
 
-  const statCards = [
+  const statCards: StatCard[] = [
     {
       id: 'page-load-time',
       title: '页面加载时间',
@@ -103,7 +103,7 @@ const PerformanceMonitorPage: React.FC = () => {
     },
   ];
 
-  const charts = [];
+  const charts: ChartConfig[] = [];
 
   const tables = [
     {

@@ -91,7 +91,6 @@ export default defineConfig({
         './pages/FlowMonitorPage': './src/pages/FlowMonitorPage',
         './pages/FlowTemplatePage': './src/pages/FlowTemplatePage',
         './pages/DocumentCenterPage': './src/pages/DocumentCenterPage',
-        './pages/NotificationCenterPage': './src/pages/NotificationCenterPage',
         './pages/ReportListPage': './src/pages/ReportListPage',
         './pages/ReportViewerPage': './src/pages/ReportViewerPage',
         './pages': './src/pages/index.ts',

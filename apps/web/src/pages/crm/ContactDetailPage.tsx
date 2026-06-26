@@ -2,8 +2,8 @@ import { Chip, Typography, Box, InputLabel } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { User, Phone, Mail, MapPin, Building2 } from 'lucide-react';
-import { crmApi } from '@/api/modules/crm/crm';
-import type { Contact } from '@/api/modules/crm/crm';
+import { crmApi } from '@/api/crm';
+import type { Contact } from '@/api/crm';
 import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
@@ -235,7 +235,7 @@ const ContactDetailPage: React.FC = () => {
         backHref='/crm/contacts'
         loading={loading}
         error={errorMessage}
-        onEdit={() => navigate(`/crm/contact/${id}/edit`)}
+        onEdit={() => navigate(`/crm/contacts/${id}`)}
         onDelete={() => setDeleteDialogOpen(true)}
         infoCard={infoCard}
         tabs={tabs}

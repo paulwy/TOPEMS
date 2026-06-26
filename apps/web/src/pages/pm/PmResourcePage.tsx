@@ -332,7 +332,7 @@ const PmResourcePage: React.FC = () => {
         {
           label: '新增资源',
           icon: <Plus size={16} />,
-          onClick: () => navigate('/pm/resources/create'),
+          onClick: () => navigate('#'),
           variant: 'contained',
         },
       ]}

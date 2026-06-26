@@ -15,7 +15,7 @@ import { assetApi, type Asset } from '@/api/erp';
 import { employeeApi, type Employee } from '@/api/hrm';
 import { useAppStore } from '../../store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
-import { ModeToggle } from '@/components/ModeToggle';
+import { ModeToggle } from '@/components/theme/ModeToggle';
 
 import {
   Box,

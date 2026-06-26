@@ -1,0 +1,162 @@
+#!/usr/bin/env sh
+
+echo "🔍 Running pre-commit checks..."
+
+ERRORS=0
+
+# 获取暂存的文件列表
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
+
+# ============================================================
+# 1. 检查大文件 (>500KB)
+# ============================================================
+echo ""
+echo "📦 Checking for large files (>500KB)..."
+LARGE_FILES=""
+MAX_SIZE=512000
+
+for file in $STAGED_FILES; do
+  if [ -f "$file" ]; then
+    FILE_SIZE=$(wc -c < "$file")
+    if [ "$FILE_SIZE" -gt "$MAX_SIZE" ]; then
+      SIZE_KB=$((FILE_SIZE / 1024))
+      LARGE_FILES="$LARGE_FILES  - $file (${SIZE_KB}KB)\n"
+    fi
+  fi
+done
+
+if [ -n "$LARGE_FILES" ]; then
+  echo "❌ Large files detected:"
+  printf "$LARGE_FILES"
+  echo ""
+  echo "   Please remove these files or use Git LFS instead."
+  ERRORS=$((ERRORS + 1))
+else
+  echo "✅ No large files detected"
+fi
+
+# ============================================================
+# 2. 检查敏感信息（简单正则检查）
+# ============================================================
+echo ""
+echo "🔐 Checking for sensitive information..."
+
+SENSITIVE_PATTERNS=(
+  "password\s*=\s*['\"][^'\"]+['\"]"
+  "secret\s*=\s*['\"][^'\"]+['\"]"
+  "api[_-]?key\s*=\s*['\"][^'\"]+['\"]"
+  "private[_-]?key\s*=\s*['\"][^'\"]+['\"]"
+  "token\s*=\s*['\"][^'\"]+['\"]"
+  "AWS_ACCESS_KEY_ID\s*=\s*['\"][A-Z0-9]{16,}['\"]"
+  "AWS_SECRET_ACCESS_KEY\s*=\s*['\"][A-Za-z0-9/+=]{40,}['\"]"
+  "-----BEGIN PRIVATE KEY-----"
+  "-----BEGIN RSA PRIVATE KEY-----"
+)
+
+SENSITIVE_FILES=""
+
+for file in $STAGED_FILES; do
+  if [ -f "$file" ]; then
+    case "$file" in
+      *.key|*.pem|*.p12|*.pfx)
+        SENSITIVE_FILES="$SENSITIVE_FILES  - $file (potential key/cert file)\n"
+        continue
+        ;;
+    esac
+    
+    for pattern in "${SENSITIVE_PATTERNS[@]}"; do
+      if grep -qiE "$pattern" "$file" 2>/dev/null; then
+        SENSITIVE_FILES="$SENSITIVE_FILES  - $file (matched: $pattern)\n"
+        break
+      fi
+    done
+  fi
+done
+
+if [ -n "$SENSITIVE_FILES" ]; then
+  echo "⚠️  Potential sensitive information detected in:"
+  printf "$SENSITIVE_FILES"
+  echo ""
+  echo "   Please review and ensure no real secrets are being committed."
+  echo "   If this is a false positive, you can skip this check with --no-verify"
+else
+  echo "✅ No sensitive information detected"
+fi
+
+# ============================================================
+# 3. 运行 lint-staged（按文件类型检查）
+# ============================================================
+echo ""
+echo "🎨 Running lint-staged (eslint, prettier, cargo fmt)..."
+
+npx lint-staged
+LINT_STAGED_EXIT=$?
+
+if [ $LINT_STAGED_EXIT -ne 0 ]; then
+  echo "❌ lint-staged failed"
+  ERRORS=$((ERRORS + 1))
+else
+  echo "✅ lint-staged passed"
+fi
+
+# ============================================================
+# 4. 组件命名检查（仅当有前端文件变更时）
+# ============================================================
+echo ""
+echo "📛 Checking component naming conventions..."
+
+HAS_TSX_FILES=$(echo "$STAGED_FILES" | grep -E "\.tsx$" | head -1)
+
+if [ -n "$HAS_TSX_FILES" ]; then
+  python3 scripts/check_component_naming.py --ci
+  NAMING_EXIT=$?
+  
+  if [ $NAMING_EXIT -ne 0 ]; then
+    echo "❌ Component naming check failed"
+    ERRORS=$((ERRORS + 1))
+  else
+    echo "✅ Component naming check passed"
+  fi
+else
+  echo "⏭️  Skipped (no .tsx files staged)"
+fi
+
+# ============================================================
+# 5. API 路径检查（仅当有后端 Rust 文件变更时）
+# ============================================================
+echo ""
+echo "🔗 Checking API path duplicates..."
+
+HAS_RS_FILES=$(echo "$STAGED_FILES" | grep -E "^svc/.*\.rs$" | head -1)
+
+if [ -n "$HAS_RS_FILES" ]; then
+  python3 scripts/check_api_duplicates_ci.py --ci
+  API_EXIT=$?
+  
+  if [ $API_EXIT -ne 0 ]; then
+    echo "❌ API path check failed"
+    ERRORS=$((ERRORS + 1))
+  else
+    echo "✅ API path check passed"
+  fi
+else
+  echo "⏭️  Skipped (no Rust backend files staged)"
+fi
+
+# ============================================================
+# 总结
+# ============================================================
+echo ""
+echo "========================================"
+if [ $ERRORS -eq 0 ]; then
+  echo "✅ All pre-commit checks passed!"
+  echo "========================================"
+  exit 0
+else
+  echo "❌ Pre-commit checks failed with $ERRORS error(s)"
+  echo "========================================"
+  echo ""
+  echo "Please fix the issues above and try again."
+  echo "To skip these checks (not recommended), use: git commit --no-verify"
+  exit 1
+fi

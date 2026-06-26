@@ -34,7 +34,7 @@ const RsFormulaCreatePage: React.FC = () => {
 
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | undefined>(undefined);
 
   const [projects, setProjects] = useState<{ id: string; name: string }[]>([]);
   const [ingredients, setIngredients] = useState<FormulaIngredient[]>([
@@ -148,7 +148,7 @@ const RsFormulaCreatePage: React.FC = () => {
   const loadFormula = async (formulaId: string) => {
     try {
       setLoading(true);
-      setError(null);
+      setError(undefined);
       const response = await formulaApi.getFormula(formulaId);
       if (response.success && response.data) {
         const formula = response.data;
@@ -193,7 +193,7 @@ const RsFormulaCreatePage: React.FC = () => {
     value: string | number
   ) => {
     const newIngredients = [...ingredients];
-    (newIngredients[index] as Record<string, string | number>)[field] = value;
+    (newIngredients[index] as unknown as Record<string, string | number>)[field] = value;
     setIngredients(newIngredients);
   };
 

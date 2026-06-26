@@ -5,13 +5,17 @@
  * 请优先使用 templates 目录下的新版本组件
  */
 
-// DataTable - 已增强，保留原导出
+// DataTable - 已增强，整合了EnhancedDataTable的功能
 export { DataTable } from './DataTable';
-export type { DataTableProps, DataTableRow, ExpandedRowRender } from './DataTable';
+export type { DataTableProps, DataTableRow, ExpandedRowRender, AdvancedFilter } from './DataTable';
 
 // FormBuilder - 保留原导出
 export { default as FormBuilder } from './FormBuilder';
 export type { FormFieldConfig, FormBuilderConfig } from './FormBuilder';
+
+// Dialog - 统一对话框组件
+export { Dialog } from './Dialog';
+export type { DialogProps, DialogSize } from './Dialog';
 
 // ConfirmDialog - 已增强，保留原导出
 export {
@@ -73,6 +77,14 @@ export type { StatCardBaseProps, MetricCardProps, ChartCardProps } from './StatC
 export { default as AmountDisplay } from './AmountDisplay';
 export type { AmountDisplayProps } from './AmountDisplay';
 
+// DateRangeQuickSelect - 快速日期范围选择
+export { default as DateRangeQuickSelect } from './DateRangeQuickSelect';
+export type { DateRangeQuickSelectProps, DateRange } from './DateRangeQuickSelect';
+
+// RelativeTime - 相对时间显示
+export { default as RelativeTime } from './RelativeTime';
+export type { RelativeTimeProps } from './RelativeTime';
+
 // DateRangePicker - 保留原导出
 export { default as DateRangePicker } from './DateRangePicker';
 export type { DateRangePickerProps } from './DateRangePicker';
@@ -115,3 +127,24 @@ export { Grid } from './Grid';
 // BackButton - 统一返回按钮（支持智能返回）
 export { default as BackButton } from './BackButton';
 export type { BackButtonProps } from './BackButton';
+
+// ===== 统一表单组件 =====
+// FormField - 统一 TextField 包装
+export { default as FormField } from './FormField';
+export type { FormFieldProps } from './FormField';
+
+// FormSelect - 统一 Select 包装
+export { default as FormSelect } from './FormSelect';
+export type { FormSelectProps, FormSelectOption } from './FormSelect';
+
+// ActionButton - 统一按钮组件
+export { default as ActionButton } from './ActionButton';
+export type { ActionButtonProps, ActionButtonVariant, ActionButtonSize } from './ActionButton';
+
+// LoadingSpinner - 加载状态组件
+export { default as LoadingSpinner } from './LoadingSpinner';
+// 注意：LoadingSpinnerProps 是 interface，会自动导出
+
+// AdvancedFilterPanel - 高级筛选面板组件
+export { default as AdvancedFilterPanel } from './AdvancedFilter';
+export type { AdvancedFilterProps, FilterCondition } from './AdvancedFilter';

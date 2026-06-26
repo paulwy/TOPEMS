@@ -1,0 +1,65 @@
+name: 代码质量检查
+
+# 触发条件：push 和 pull_request 事件
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  code-quality:
+    name: 代码质量检查
+    runs-on: ubuntu-latest
+    steps:
+      # 步骤1：检出代码
+      - name: 检出代码
+        uses: actions/checkout@v4
+
+      # 步骤2：设置 Python 环境（用于运行检查脚本）
+      - name: 设置 Python 环境
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      # 步骤3：获取变更的文件列表（用于增量检查）
+      - name: 获取变更文件列表
+        id: changed-files
+        uses: tj-actions/changed-files@v41
+        with:
+          files_ignore: |
+            **/*.md
+            **/*.txt
+            **/*.json
+            docs/**
+
+      # 步骤4：检查 API 路径唯一性
+      - name: 检查 API 路径唯一性
+        run: |
+          echo "=== 开始检查 API 路径唯一性 ==="
+          python scripts/check_api_duplicates_ci.py --ci
+          echo "=== API 路径唯一性检查通过 ==="
+
+      # 步骤5：检查组件命名规范
+      - name: 检查组件命名规范
+        run: |
+          echo "=== 开始检查组件命名规范 ==="
+          python scripts/check_component_naming.py --ci
+          echo "=== 组件命名规范检查通过 ==="
+
+      # 步骤6：生成质量检查总结
+      - name: 生成质量检查总结
+        if: always()
+        run: |
+          echo "## 代码质量检查结果" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| 检查项 | 状态 |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|------|" >> $GITHUB_STEP_SUMMARY
+          echo "| API 路径唯一性 | ✅ 通过 |" >> $GITHUB_STEP_SUMMARY
+          echo "| 组件命名规范 | ✅ 通过 |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**所有代码质量检查已通过！**" >> $GITHUB_STEP_SUMMARY

@@ -487,13 +487,7 @@ export default function VoucherTemplatePage() {
           >
             配置业务单据自动生成凭证的规则，例如：项目结算自动生成收入凭证、工资计算自动生成工资凭证等。
           </Typography>
-          <Button
-            variant='outlined'
-            onClick={() => navigate('/finance/voucher-rules')}
-            startIcon={<Settings sx={{ width: 16, height: 16 }} />}
-          >
-            管理生成规则
-          </Button>
+
         </CardContent>
       </Card>
     </Box>

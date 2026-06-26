@@ -31,7 +31,7 @@ export interface AdvancedFilterProps<T> {
   initialConditions?: FilterCondition[];
 }
 
-export const AdvancedFilter = <T extends Record<string, any>>({
+export const AdvancedFilterPanel = <T extends Record<string, any>>({
   fields,
   selectOptions,
   onFilterChange,
@@ -387,4 +387,4 @@ export const AdvancedFilter = <T extends Record<string, any>>({
   );
 };
 
-export default AdvancedFilter;
+export default AdvancedFilterPanel;

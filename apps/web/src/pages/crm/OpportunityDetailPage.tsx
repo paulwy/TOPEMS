@@ -2,8 +2,8 @@ import { Chip, Typography, Box, InputLabel, LinearProgress } from '@mui/material
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { TrendingUp, Calendar, DollarSign, Building2, Clock } from 'lucide-react';
-import { crmApi } from '@/api/modules/crm/crm';
-import type { Opportunity } from '@/api/modules/crm/crm';
+import { crmApi } from '@/api/crm';
+import type { Opportunity } from '@/api/crm';
 import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
@@ -252,7 +252,7 @@ const OpportunityDetailPage: React.FC = () => {
         backHref='/crm/opportunities'
         loading={loading}
         error={errorMessage}
-        onEdit={() => navigate(`/crm/opportunity/${id}/edit`)}
+        onEdit={() => navigate(`/crm/opportunities/${id}`)}
         onDelete={() => setDeleteDialogOpen(true)}
         infoCard={infoCard}
         tabs={tabs}

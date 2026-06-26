@@ -9,10 +9,10 @@ import {
 } from '@mui/material';
 import { Button } from '@mui/material';
 import React, { useState, useEffect } from 'react';
-import { monitorApi } from '@/api/shared/monitor';
+import { monitorApi } from '@/api/monitor';
 import { apiLogger } from '@/utils/logger';
 import { useAppStore } from '@/store';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import {
   Cpu,
   HardDrive,

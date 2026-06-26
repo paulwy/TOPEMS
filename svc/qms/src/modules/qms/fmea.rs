@@ -413,43 +413,43 @@ pub async fn get_fmea_statistics(
     let total: Option<i64> = sqlx::query_scalar::<_, _>(r#"SELECT COUNT(*) FROM qa_fmea_items WHERE fmea_id = $1"#).bind(id)
     .fetch_one(&state.pool)
     .await
-    .unwrap_or(None);
+    .ok();
     let total_items = total.unwrap_or(0);
 
     let high_risk: Option<i64> = sqlx::query_scalar::<_, _>(r#"SELECT COUNT(*) FROM qa_fmea_items WHERE fmea_id = $1 AND rpn >= 100"#).bind(id)
     .fetch_one(&state.pool)
     .await
-    .unwrap_or(None);
+    .ok();
     let high_risk_count = high_risk.unwrap_or(0);
 
     let medium_risk: Option<i64> = sqlx::query_scalar::<_, _>(r#"SELECT COUNT(*) FROM qa_fmea_items WHERE fmea_id = $1 AND rpn >= 36 AND rpn < 100"#).bind(id)
     .fetch_one(&state.pool)
     .await
-    .unwrap_or(None);
+    .ok();
     let medium_risk_count = medium_risk.unwrap_or(0);
 
     let low_risk: Option<i64> = sqlx::query_scalar::<_, _>(r#"SELECT COUNT(*) FROM qa_fmea_items WHERE fmea_id = $1 AND rpn < 36"#).bind(id)
     .fetch_one(&state.pool)
     .await
-    .unwrap_or(None);
+    .ok();
     let low_risk_count = low_risk.unwrap_or(0);
 
     let avg_rpn: Option<bigdecimal::BigDecimal> = sqlx::query_scalar::<_, _>(r#"SELECT COALESCE(AVG(rpn), 0) FROM qa_fmea_items WHERE fmea_id = $1"#).bind(id)
     .fetch_one(&state.pool)
     .await
-    .unwrap_or(None);
+    .ok();
     let average_rpn: f64 = avg_rpn.and_then(|v| v.to_f64()).unwrap_or(0.0);
 
     let max_rpn_val: Option<i32> = sqlx::query_scalar::<_, _>(r#"SELECT COALESCE(MAX(rpn), 0) FROM qa_fmea_items WHERE fmea_id = $1"#).bind(id)
     .fetch_one(&state.pool)
     .await
-    .unwrap_or(None);
+    .ok();
     let max_rpn = max_rpn_val.unwrap_or(0) as i64;
 
     let min_rpn_val: Option<i32> = sqlx::query_scalar::<_, _>(r#"SELECT COALESCE(MIN(rpn), 0) FROM qa_fmea_items WHERE fmea_id = $1"#).bind(id)
     .fetch_one(&state.pool)
     .await
-    .unwrap_or(None);
+    .ok();
     let min_rpn = min_rpn_val.unwrap_or(0) as i64;
 
     let stats = FmeaStatistics {

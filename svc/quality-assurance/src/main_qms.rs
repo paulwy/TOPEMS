@@ -2,7 +2,7 @@
 
 #![allow(clippy::match_like_matches_macro)]
 #![allow(clippy::manual_ok_err)]
-#![allow(clippy::redundant_pattern_matching)]
+#![allow(clippy::redundant_pattern_macro)]
 #![allow(clippy::useless_format)]
 #![allow(clippy::useless_vec)]
 #![allow(clippy::clone_on_copy)]
@@ -13,13 +13,14 @@
 #![allow(dead_code)]
 
 mod shared;
-
-pub mod modules;
+mod api;
+mod models;
+mod services;
 
 use std::net::SocketAddr;
 
 use axum::{
-    routing::{get, post, put},
+    routing::get,
     Json, Router,
 };
 use axum_prometheus::PrometheusMetricLayer;
@@ -87,9 +88,8 @@ async fn main() {
         }
     };
 
-    // Initialize QMS database
-    if let Err(e) = modules::qms::init_database(&pool).await {
-        tracing::warn!("QMS module database init warning: {}", e);
+    if let Err(e) = models::init_qms_database(&pool).await {
+        tracing::warn!("QMS database init warning: {}", e);
     }
 
     let auth_state = AuthState::from_env();
@@ -105,32 +105,17 @@ async fn main() {
     let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
-        .route("/api/plugins/info", get(modules::qms::qms_plugin::get_plugin_info))
-        .route("/api/plugins/health", get(modules::qms::qms_plugin::plugin_health_check))
+        .route("/api/plugins/info", get(services::qms_plugin::get_plugin_info))
+        .route("/api/plugins/health", get(services::qms_plugin::plugin_health_check))
         .route("/api/info", get(|| get_api_info_handler("qms-service")))
         .route("/metrics", get(move || async move { metric_handle.render() }));
 
     // Protected routes
     let protected_routes = Router::new()
-        // Quality Inspection
-        .route("/api/qa/quality/inspection", get(modules::qms::quality_inspection::list_inspections))
-        .route("/api/qa/quality/inspection", post(modules::qms::quality_inspection::create_inspection))
-        .route("/api/qa/quality/inspection/{id}", get(modules::qms::quality_inspection::get_inspection))
-        .route("/api/qa/quality/inspection/{id}", put(modules::qms::quality_inspection::update_inspection))
-        .route("/api/qa/quality/inspection/{id}/result", post(modules::qms::quality_inspection::submit_result))
-        // Quality Issue
-        .route("/api/qa/quality/issue", get(modules::qms::quality_issue::list_issues))
-        .route("/api/qa/quality/issue", post(modules::qms::quality_issue::create_issue))
-        .route("/api/qa/quality/issue/{id}", get(modules::qms::quality_issue::get_issue))
-        .route("/api/qa/quality/issue/{id}", put(modules::qms::quality_issue::update_issue))
-        .route("/api/qa/quality/issue/{id}/resolve", post(modules::qms::quality_issue::resolve_issue))
-        // Quality Standard
-        .route("/api/qa/quality/standard", get(modules::qms::quality_standard::list_standards))
-        .route("/api/qa/quality/standard", post(modules::qms::quality_standard::create_standard))
-        .route("/api/qa/quality/standard/{id}", get(modules::qms::quality_standard::get_standard))
-        .route("/api/qa/quality/standard/{id}", put(modules::qms::quality_standard::update_standard))
-        // Dashboard
-        .route("/api/qa/quality/dashboard", get(modules::qms::dashboard::get_dashboard_stats))
+        .merge(api::quality_inspection::create_routes())
+        .merge(api::quality_issue::create_routes())
+        .merge(api::quality_standard::create_routes())
+        .merge(api::qms_dashboard::create_routes())
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),
             auth_middleware,
@@ -153,7 +138,7 @@ async fn main() {
     // Auto-register to Core
     let core_url = std::env::var("CORE_URL").ok();
     tokio::spawn(async move {
-        modules::qms::qms_plugin::auto_register_to_core(core_url.as_deref()).await;
+        services::qms_plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
     axum::serve(

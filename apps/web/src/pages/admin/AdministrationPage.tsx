@@ -1,7 +1,7 @@
-import { Grid } from '@/components/Grid';
+import { Grid } from '@/components';
 import { apiLogger } from '@/utils/logger';
 import { extractErrorMessage } from '@/utils/errors';
-import { QuickSearch, BackButton } from '@/components/common';
+import { PageHeader } from '@/components';
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
@@ -2307,40 +2307,17 @@ const AdministrationPage: React.FC = () => {
       </Drawer>
 
       <Box sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, md: 3 }, py: 3 }}>
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            mb: 3,
-            flexWrap: 'wrap',
-            gap: 2,
+        <PageHeader
+          title='行政管理'
+          backButton={{ visible: true }}
+          searchBox={{
+            value: '',
+            onSearch: (query) => {
+              apiLogger.info('搜索:', query);
+            },
+            placeholder: '搜索行政内容...',
           }}
-        >
-          <Stack
-            component='div'
-            direction='row'
-            spacing={1.5}
-            sx={{ alignItems: 'center' }}
-          >
-            <BackButton />
-            <Typography
-              variant='h4'
-              component='div'
-              sx={{ fontWeight: 'bold' }}
-            >
-              行政管理
-            </Typography>
-          </Stack>
-          <Box sx={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
-            <QuickSearch
-              placeholder='搜索行政内容...'
-              onSearch={(query) => {
-                apiLogger.info('搜索:', query);
-              }}
-              width={320}
-            />
-          </Box>
-        </Box>
+        />
 
         <Tabs
           value={activeTab}

@@ -15,8 +15,8 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
-import type { WorkflowInstance, Approval, ApprovalRecord } from '@/api/flow';
-import { flowApi } from '@/api/flow';
+import type { WorkflowInstance, Approval, ApprovalRecord } from '@/api/workflow';
+import { workflowApi } from '@/api/workflow';
 import { useAppStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate } from '@/components/templates/DetailPageTemplate';
@@ -51,7 +51,7 @@ const FlowInstanceDetailPage: React.FC = () => {
       setLoading(true);
       setError(undefined);
 
-      const response = await flowApi.getInstanceDetails(id);
+      const response = await workflowApi.getInstanceDetails(id);
       if (response.success && response.data) {
         const data = response.data as any;
         setDetails(data);

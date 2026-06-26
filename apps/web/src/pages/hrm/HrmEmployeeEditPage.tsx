@@ -106,8 +106,8 @@ const HrmEmployeeEditPage: React.FC = () => {
       hire_date: employee.hire_date || '',
       status: employee.status || 'active',
       address: employee.address || '',
-      emergency_contact_name: employee.emergency_contact_name || '',
-      emergency_contact_phone: employee.emergency_contact_phone || '',
+      emergency_contact_name: employee.emergency_contact || '',
+      emergency_contact_phone: employee.emergency_phone || '',
     };
   }, [employee]);
 

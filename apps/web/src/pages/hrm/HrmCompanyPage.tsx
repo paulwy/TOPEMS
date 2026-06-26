@@ -19,9 +19,9 @@ import {
   Divider,
   IconButton,
   Tooltip,
-  Grid,
 } from '@mui/material';
 import { Button } from '@mui/material';
+import { Grid } from '@/components/common';
 import {
   Building,
   Plus,
@@ -48,7 +48,7 @@ import { useAppStore } from '../../store';
 import {
   TreePageTemplate,
   type TreeNode,
-  type StatCard,
+  type TreeStatCard as StatCard,
   type TreeAction,
 } from '@/components/templates';
 import { EmptyState } from '@/components/mui';

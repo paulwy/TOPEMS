@@ -30,6 +30,7 @@ import {
   Box as MuiBox,
   Typography,
   Stack,
+  IconButton,
 } from '@mui/material';
 import { Button } from '@mui/material';
 import ConfirmDialog from '@/components/common/ConfirmDialog';

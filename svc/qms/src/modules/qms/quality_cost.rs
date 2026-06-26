@@ -220,7 +220,7 @@ pub async fn get_cost_statistics(
     let total: Option<BigDecimal> = sqlx::query_scalar::<_, _>(r#"SELECT COALESCE(SUM(amount), 0) FROM qa_quality_costs"#)
     .fetch_one(&state.pool)
     .await
-    .unwrap_or(None);
+    .ok();
     let total_cost: f64 = total.map(|v| v.to_f64().unwrap_or(0.0)).unwrap_or(0.0);
 
     let category_rows = sqlx::query(r#"SELECT cost_category as category, COALESCE(SUM(amount), 0) as total, COUNT(*) as count FROM qa_quality_costs GROUP BY cost_category ORDER BY total DESC"#)

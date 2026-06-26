@@ -1,0 +1,366 @@
+use axum::{extract::Path, extract::State, routing::{delete, get, post, put}, Json, Router};
+use chrono::Utc;
+use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
+use uuid::Uuid;
+
+use crate::AppState;
+use topems_shared::ApiResponse;
+
+pub fn create_routes() -> Router<AppState> {
+    Router::new()
+        .route("/api/pdm/change-notices", get(list_change_notices).post(create_change_notice))
+        .route("/api/pdm/change-notices/{id}", get(get_change_notice).put(update_change_notice).delete(delete_change_notice))
+        .route("/api/pdm/change-notices/{id}/submit", post(submit_change_notice))
+        .route("/api/pdm/change-notices/{id}/approve", post(approve_change_notice))
+        .route("/api/pdm/change-notices/{id}/reject", post(reject_change_notice))
+}
+
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct ChangeNotice {
+    pub id: Uuid,
+    pub ecn_no: String,
+    pub title: String,
+    pub description: Option<String>,
+    pub change_type: String,
+    pub affected_items: serde_json::Value,
+    pub reason: Option<String>,
+    pub priority: String,
+    pub status: String,
+    pub initiator: String,
+    pub approver: Option<String>,
+    pub approved_at: Option<chrono::DateTime<chrono::Utc>>,
+    pub effective_date: Option<chrono::DateTime<chrono::Utc>>,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: chrono::DateTime<chrono::Utc>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateChangeNoticeRequest {
+    pub title: String,
+    pub description: Option<String>,
+    pub change_type: String,
+    pub affected_items: Vec<String>,
+    pub reason: Option<String>,
+    pub priority: String,
+    pub initiator: String,
+    pub effective_date: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateChangeNoticeRequest {
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub change_type: Option<String>,
+    pub affected_items: Option<Vec<String>>,
+    pub reason: Option<String>,
+    pub priority: Option<String>,
+    pub status: Option<String>,
+    pub approver: Option<String>,
+    pub approved_at: Option<String>,
+    pub effective_date: Option<String>,
+}
+
+pub async fn list_change_notices(
+    State(state): State<AppState>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    let result = sqlx::query_as::<_, ChangeNotice>(
+        r#"
+        SELECT id, ecn_no, title, description, change_type, affected_items,
+               reason, priority, status, initiator, approver, approved_at,
+               effective_date, created_at, updated_at
+        FROM pdm_change_notices
+        ORDER BY created_at DESC
+        "#,
+    )
+    .fetch_all(&state.pool)
+    .await;
+
+    match result {
+        Ok(notices) => Json(ApiResponse::success(
+            serde_json::json!({
+                "notices": notices,
+                "total": notices.len()
+            }),
+            "获取变更通知列表成功",
+        )),
+        Err(e) => {
+            tracing::error!("获取变更通知列表失败: {}", e);
+            Json(ApiResponse::error(500, "获取变更通知列表失败"))
+        }
+    }
+}
+
+pub async fn create_change_notice(
+    State(state): State<AppState>,
+    Json(req): Json<CreateChangeNoticeRequest>,
+) -> Json<ApiResponse<ChangeNotice>> {
+    if req.title.is_empty() {
+        return Json(ApiResponse::error(400, "变更通知标题不能为空"));
+    }
+
+    let id = Uuid::new_v4();
+    let now = Utc::now();
+    let ecn_no = format!("ECN-{}-{}", now.format("%Y%m%d"), id.to_string().split('-').next().unwrap());
+
+    let result = sqlx::query_as::<_, ChangeNotice>(
+        r#"
+        INSERT INTO pdm_change_notices (
+            id, ecn_no, title, description, change_type, affected_items,
+            reason, priority, status, initiator, effective_date, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        RETURNING id, ecn_no, title, description, change_type, affected_items,
+                  reason, priority, status, initiator, approver, approved_at,
+                  effective_date, created_at, updated_at
+        "#,
+    )
+    .bind(id)
+    .bind(&ecn_no)
+    .bind(&req.title)
+    .bind(&req.description)
+    .bind(&req.change_type)
+    .bind(serde_json::to_value(req.affected_items).unwrap())
+    .bind(&req.reason)
+    .bind(&req.priority)
+    .bind("draft")
+    .bind(&req.initiator)
+    .bind(req.effective_date)
+    .bind(now)
+    .bind(now)
+    .fetch_one(&state.pool)
+    .await;
+
+    match result {
+        Ok(notice) => Json(ApiResponse::success(notice, "变更通知创建成功")),
+        Err(e) => {
+            tracing::error!("创建变更通知失败: {}", e);
+            Json(ApiResponse::error(500, "创建变更通知失败"))
+        }
+    }
+}
+
+pub async fn get_change_notice(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<ChangeNotice>> {
+    let result = sqlx::query_as::<_, ChangeNotice>(
+        r#"
+        SELECT id, ecn_no, title, description, change_type, affected_items,
+               reason, priority, status, initiator, approver, approved_at,
+               effective_date, created_at, updated_at
+        FROM pdm_change_notices WHERE id = $1
+        "#,
+    )
+    .bind(id)
+    .fetch_optional(&state.pool)
+    .await;
+
+    match result {
+        Ok(Some(notice)) => Json(ApiResponse::success(notice, "获取变更通知成功")),
+        Ok(None) => Json(ApiResponse::error(404, "变更通知不存在")),
+        Err(e) => {
+            tracing::error!("获取变更通知失败: {}", e);
+            Json(ApiResponse::error(500, "获取变更通知失败"))
+        }
+    }
+}
+
+pub async fn update_change_notice(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<UpdateChangeNoticeRequest>,
+) -> Json<ApiResponse<ChangeNotice>> {
+    let existing = sqlx::query_as::<_, ChangeNotice>(
+        r#"
+        SELECT id, ecn_no, title, description, change_type, affected_items,
+               reason, priority, status, initiator, approver, approved_at,
+               effective_date, created_at, updated_at
+        FROM pdm_change_notices WHERE id = $1
+        "#,
+    )
+    .bind(id)
+    .fetch_optional(&state.pool)
+    .await;
+
+    let existing = match existing {
+        Ok(Some(e)) => e,
+        Ok(None) => return Json(ApiResponse::error(404, "变更通知不存在")),
+        Err(e) => {
+            tracing::error!("查询变更通知失败: {}", e);
+            return Json(ApiResponse::error(500, "查询变更通知失败"));
+        }
+    };
+
+    let title = req.title.unwrap_or(existing.title);
+    let description = req.description.or(existing.description);
+    let change_type = req.change_type.unwrap_or(existing.change_type);
+    let affected_items = req.affected_items
+        .map(|v| serde_json::to_value(v).unwrap())
+        .unwrap_or(existing.affected_items);
+    let reason = req.reason.or(existing.reason);
+    let priority = req.priority.unwrap_or(existing.priority);
+    let status = req.status.unwrap_or(existing.status);
+    let approver = req.approver.or(existing.approver);
+    let approved_at = req.approved_at.or(existing.approved_at.map(|d| d.to_rfc3339()));
+    let effective_date = req.effective_date.or(existing.effective_date.map(|d| d.to_rfc3339()));
+    let now = Utc::now();
+
+    let result = sqlx::query_as::<_, ChangeNotice>(
+        r#"
+        UPDATE pdm_change_notices SET
+            title = $2, description = $3, change_type = $4, affected_items = $5,
+            reason = $6, priority = $7, status = $8, approver = $9,
+            approved_at = $10, effective_date = $11, updated_at = $12
+        WHERE id = $1
+        RETURNING id, ecn_no, title, description, change_type, affected_items,
+                  reason, priority, status, initiator, approver, approved_at,
+                  effective_date, created_at, updated_at
+        "#,
+    )
+    .bind(id)
+    .bind(&title)
+    .bind(&description)
+    .bind(&change_type)
+    .bind(affected_items)
+    .bind(&reason)
+    .bind(&priority)
+    .bind(&status)
+    .bind(&approver)
+    .bind(approved_at)
+    .bind(effective_date)
+    .bind(now)
+    .fetch_one(&state.pool)
+    .await;
+
+    match result {
+        Ok(notice) => Json(ApiResponse::success(notice, "变更通知更新成功")),
+        Err(e) => {
+            tracing::error!("更新变更通知失败: {}", e);
+            Json(ApiResponse::error(500, "更新变更通知失败"))
+        }
+    }
+}
+
+pub async fn delete_change_notice(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<bool>> {
+    let result = sqlx::query("DELETE FROM pdm_change_notices WHERE id = $1")
+        .bind(id)
+        .execute(&state.pool)
+        .await;
+
+    match result {
+        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(true, "变更通知删除成功")),
+        Ok(_) => Json(ApiResponse::error(404, "变更通知不存在")),
+        Err(e) => {
+            tracing::error!("删除变更通知失败: {}", e);
+            Json(ApiResponse::error(500, "删除变更通知失败"))
+        }
+    }
+}
+
+pub async fn submit_change_notice(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<ChangeNotice>> {
+    let now = Utc::now();
+
+    let result = sqlx::query_as::<_, ChangeNotice>(
+        r#"
+        UPDATE pdm_change_notices SET status = $2, updated_at = $3
+        WHERE id = $1 AND status = 'draft'
+        RETURNING id, ecn_no, title, description, change_type, affected_items,
+                  reason, priority, status, initiator, approver, approved_at,
+                  effective_date, created_at, updated_at
+        "#,
+    )
+    .bind(id)
+    .bind("pending")
+    .bind(now)
+    .fetch_optional(&state.pool)
+    .await;
+
+    match result {
+        Ok(Some(notice)) => Json(ApiResponse::success(notice, "变更通知已提交审批")),
+        Ok(None) => Json(ApiResponse::error(400, "变更通知状态不正确，无法提交")),
+        Err(e) => {
+            tracing::error!("提交变更通知失败: {}", e);
+            Json(ApiResponse::error(500, "提交变更通知失败"))
+        }
+    }
+}
+
+pub async fn approve_change_notice(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<serde_json::Value>,
+) -> Json<ApiResponse<ChangeNotice>> {
+    let approver = req.get("approver").and_then(|v| v.as_str()).unwrap_or("system");
+    let now = Utc::now();
+
+    let result = sqlx::query_as::<_, ChangeNotice>(
+        r#"
+        UPDATE pdm_change_notices SET
+            status = $2, approver = $3, approved_at = $4, updated_at = $5
+        WHERE id = $1 AND status = 'pending'
+        RETURNING id, ecn_no, title, description, change_type, affected_items,
+                  reason, priority, status, initiator, approver, approved_at,
+                  effective_date, created_at, updated_at
+        "#,
+    )
+    .bind(id)
+    .bind("approved")
+    .bind(approver)
+    .bind(now)
+    .bind(now)
+    .fetch_optional(&state.pool)
+    .await;
+
+    match result {
+        Ok(Some(notice)) => Json(ApiResponse::success(notice, "变更通知审批通过")),
+        Ok(None) => Json(ApiResponse::error(400, "变更通知状态不正确，无法审批")),
+        Err(e) => {
+            tracing::error!("审批变更通知失败: {}", e);
+            Json(ApiResponse::error(500, "审批变更通知失败"))
+        }
+    }
+}
+
+pub async fn reject_change_notice(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<serde_json::Value>,
+) -> Json<ApiResponse<ChangeNotice>> {
+    let approver = req.get("approver").and_then(|v| v.as_str()).unwrap_or("system");
+    let reason = req.get("reason").and_then(|v| v.as_str()).unwrap_or("审批未通过");
+    let now = Utc::now();
+
+    let result = sqlx::query_as::<_, ChangeNotice>(
+        r#"
+        UPDATE pdm_change_notices SET
+            status = $2, approver = $3, approved_at = $4, reason = $5, updated_at = $6
+        WHERE id = $1 AND status = 'pending'
+        RETURNING id, ecn_no, title, description, change_type, affected_items,
+                  reason, priority, status, initiator, approver, approved_at,
+                  effective_date, created_at, updated_at
+        "#,
+    )
+    .bind(id)
+    .bind("rejected")
+    .bind(approver)
+    .bind(now)
+    .bind(reason)
+    .bind(now)
+    .fetch_optional(&state.pool)
+    .await;
+
+    match result {
+        Ok(Some(notice)) => Json(ApiResponse::success(notice, "变更通知已驳回")),
+        Ok(None) => Json(ApiResponse::error(400, "变更通知状态不正确，无法驳回")),
+        Err(e) => {
+            tracing::error!("驳回变更通知失败: {}", e);
+            Json(ApiResponse::error(500, "驳回变更通知失败"))
+        }
+    }
+}

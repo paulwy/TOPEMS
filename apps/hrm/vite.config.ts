@@ -63,8 +63,6 @@ export default defineConfig({
         './store/hrmStore': './src/store/hrmStore.ts',
         './store': './src/store/index.ts',
         './pages/DashboardPage': './src/pages/DashboardPage.tsx',
-        './pages/EmployeeManagementPage': './src/pages/EmployeeManagementPage.tsx',
-        './pages/DepartmentManagementPage': './src/pages/DepartmentManagementPage.tsx',
         './pages/AttendancePage': './src/pages/AttendancePage.tsx',
         './pages/PayrollPage': './src/pages/PayrollPage.tsx',
         './pages/PerformancePage': './src/pages/PerformancePage.tsx',

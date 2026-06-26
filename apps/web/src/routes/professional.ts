@@ -15,13 +15,8 @@ const QmsIssuePage = lazy(() => import('../pages/qms/QmsNonconformancePage'));
 const QmsAuditPage = lazy(() => import('../pages/qms/QmsAuditManagementPage'));
 const EhsHazardPage = lazy(() => import('../pages/ehs/EhsHazardPage'));
 const EhsCheckPage = lazy(() => import('../pages/ehs/EhsCheckPage'));
-const SrmDashboardPage = lazy(() => import('../pages/srm/SrmDashboardPage'));
-const SrmSupplierPage = lazy(() => import('../pages/srm/SrmSupplierPage'));
-const SrmEvaluationPage = lazy(() => import('../pages/srm/SrmEvaluationPage'));
-const SrmOrderPage = lazy(() => import('../pages/srm/SrmOrderPage'));
-const SrmContractPage = lazy(() => import('../pages/srm/SrmContractPage'));
-const SrmFinancePage = lazy(() => import('../pages/srm/SrmFinancePage'));
-const SupplierDetailPage = lazy(() => import('../pages/wms/SupplierDetailPage'));
+const EhsDrillPage = lazy(() => import('../pages/ehs/EhsDrillPage'));
+const EhsPlanPage = lazy(() => import('../pages/ehs/EhsPlanPage'));
 const IntegrationDashboardPage = lazy(
   () => import('../pages/integration/IntegrationDashboardPage')
 );
@@ -45,9 +40,11 @@ const LimsTaskDetailPage = lazy(() => import('../pages/lims/LimsTaskDetailPage')
 const LimsInstrumentMaintenancePage = lazy(
   () => import('../pages/lims/LimsInstrumentMaintenancePage')
 );
+const LimsInstrumentDataPage = lazy(() => import('../pages/lims/LimsInstrumentDataPage'));
 
 const QmsStandardDetailPage = lazy(() => import('../pages/qms/QmsStandardDetailPage'));
 const QmsAuditManagementPage = lazy(() => import('../pages/qms/QmsAuditManagementPage'));
+const QmsApqpPage = lazy(() => import('../pages/qms/QmsApqpPage'));
 
 const EhsHazardDetailPage = lazy(() => import('../pages/ehs/EhsHazardDetailPage'));
 const EhsIncidentReportPage = lazy(() => import('../pages/ehs/EhsIncidentReportPage'));
@@ -113,6 +110,13 @@ export const professionalRoutes: RouteConfig[] = [
     action: 'read',
   },
   {
+    path: '/lims/instrument-data',
+    element: LimsInstrumentDataPage,
+    requiredPermissions: [],
+    module: 'lims',
+    action: 'read',
+  },
+  {
     path: '/qms',
     element: React.createElement(Navigate, {
       to: '/qms/standards',
@@ -165,6 +169,13 @@ export const professionalRoutes: RouteConfig[] = [
     action: 'read',
   },
   {
+    path: '/qms/apqp',
+    element: QmsApqpPage,
+    requiredPermissions: ['qms:read'],
+    module: 'qms',
+    action: 'read',
+  },
+  {
     path: '/ehs',
     element: React.createElement(Navigate, {
       to: '/ehs/hazards',
@@ -203,62 +214,17 @@ export const professionalRoutes: RouteConfig[] = [
     action: 'read',
   },
   {
-    path: '/srm',
-    element: React.createElement(Navigate, {
-      to: '/srm/dashboard',
-      replace: true,
-    }),
-    requiredPermissions: ['srm:read'],
-    module: 'srm',
+    path: '/ehs/drills',
+    element: EhsDrillPage,
+    requiredPermissions: ['ehs:read'],
+    module: 'ehs',
     action: 'read',
   },
   {
-    path: '/srm/dashboard',
-    element: SrmDashboardPage,
-    requiredPermissions: ['srm:read'],
-    module: 'srm',
-    action: 'read',
-  },
-  {
-    path: '/srm/suppliers',
-    element: SrmSupplierPage,
-    requiredPermissions: ['srm:read'],
-    module: 'srm',
-    action: 'read',
-  },
-  {
-    path: '/srm/suppliers/:id',
-    element: SupplierDetailPage,
-    requiredPermissions: ['srm:read'],
-    module: 'srm',
-    action: 'read',
-  },
-  {
-    path: '/srm/evaluations',
-    element: SrmEvaluationPage,
-    requiredPermissions: ['srm:read'],
-    module: 'srm',
-    action: 'read',
-  },
-  {
-    path: '/srm/orders',
-    element: SrmOrderPage,
-    requiredPermissions: ['srm:read'],
-    module: 'srm',
-    action: 'read',
-  },
-  {
-    path: '/srm/contracts',
-    element: SrmContractPage,
-    requiredPermissions: ['srm:read'],
-    module: 'srm',
-    action: 'read',
-  },
-  {
-    path: '/srm/finance',
-    element: SrmFinancePage,
-    requiredPermissions: ['srm:read'],
-    module: 'srm',
+    path: '/ehs/plan',
+    element: EhsPlanPage,
+    requiredPermissions: ['ehs:read'],
+    module: 'ehs',
     action: 'read',
   },
   {

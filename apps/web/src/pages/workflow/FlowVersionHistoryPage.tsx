@@ -11,9 +11,11 @@ import {
   TextField,
   Chip,
   Tooltip,
+  IconButton,
 } from '@mui/material';
 import { Button } from '@mui/material';
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   GitBranch,
   Plus,
@@ -26,12 +28,13 @@ import {
 } from 'lucide-react';
 import { useParams } from 'react-router-dom';
 import { BackButton } from '@/components/common';
-import type { Workflow, WorkflowVersion } from '@/api/flow';
-import { flowApi } from '@/api/flow';
+import type { Workflow, WorkflowVersion } from '@/api/workflow';
+import { workflowApi } from '@/api/workflow';
 import { useAppStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
 
 const FlowVersionHistoryPage: React.FC = () => {
+  const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const addNotification = useAppStore((state) => state.addNotification);
   const [workflow, setWorkflow] = useState<Workflow | null>(null);
@@ -61,12 +64,12 @@ const FlowVersionHistoryPage: React.FC = () => {
     try {
       setLoading(true);
 
-      const workflowResponse = await flowApi.getWorkflow(id);
+      const workflowResponse = await workflowApi.getWorkflow(id);
       if (workflowResponse.success && workflowResponse.data) {
         setWorkflow(workflowResponse.data as any);
       }
 
-      const versionsResponse = await flowApi.getVersions(id);
+      const versionsResponse = await workflowApi.getVersions(id);
       if (versionsResponse.success && versionsResponse.data) {
         const data = versionsResponse.data as any;
         const versionList = Array.isArray(data) ? data : data.items || [];
@@ -93,7 +96,7 @@ const FlowVersionHistoryPage: React.FC = () => {
     try {
       setActionLoading(true);
 
-      const workflow = await flowApi.getWorkflow(id);
+      const workflow = await workflowApi.getWorkflow(id);
       if (!workflow.success || !workflow.data) {
         addNotification({
           title: '错误',
@@ -104,7 +107,7 @@ const FlowVersionHistoryPage: React.FC = () => {
       }
 
       const workflowData = workflow.data as any;
-      const response = await flowApi.createVersion(id, {
+      const response = await workflowApi.createVersion(id, {
         version: createForm.version,
         definition: workflowData.definition || {},
         change_description: createForm.change_description,
@@ -145,7 +148,7 @@ const FlowVersionHistoryPage: React.FC = () => {
     try {
       setActionLoading(true);
 
-      const response = await flowApi.activateVersion(id, version.id);
+      const response = await workflowApi.activateVersion(id, version.id);
       if (response.success) {
         addNotification({
           title: '成功',
@@ -178,7 +181,7 @@ const FlowVersionHistoryPage: React.FC = () => {
     try {
       setActionLoading(true);
 
-      const response = await flowApi.rollbackVersion(id, {
+      const response = await workflowApi.rollbackVersion(id, {
         to_version: selectedVersion.version,
         reason: rollbackForm.reason,
         rolled_back_by: 'current-user',
@@ -224,7 +227,7 @@ const FlowVersionHistoryPage: React.FC = () => {
     try {
       setActionLoading(true);
 
-      const response = await flowApi.deleteVersion(id, version.id);
+      const response = await workflowApi.deleteVersion(id, version.id);
       if (response.success) {
         addNotification({
           title: '成功',
@@ -252,7 +255,7 @@ const FlowVersionHistoryPage: React.FC = () => {
   };
 
   const handleCompare = (version1: string, version2: string) => {
-    navigate(`/flow/workflows/${id}/compare/${version1}/${version2}`);
+    navigate(`/flow/definitions`);
   };
 
   if (loading) {
@@ -289,7 +292,7 @@ const FlowVersionHistoryPage: React.FC = () => {
               spacing={1.5}
               sx={{ alignItems: 'center' }}
             >
-              <BackButton href='/flow/workflows' />
+              <BackButton href='/flow/definitions' />
               <Box
                 sx={{
                   width: 48,

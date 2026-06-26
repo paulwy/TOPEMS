@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Box, Button } from '@mui/material';
 import { Plus } from 'lucide-react';
-import type { SalesForecast, ForecastFactor } from '@/api/modules/crm/crm';
-import { crmApi } from '@/api/modules/crm/crm';
+import type { SalesForecast, ForecastFactor } from '@/api/crm';
+import { crmApi } from '@/api/crm';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { TrendingUp, Target, Calendar, Calculator, BarChart3 } from 'lucide-react';

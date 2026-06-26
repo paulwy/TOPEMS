@@ -2,7 +2,6 @@ import React, { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
-  Chip,
   FormControl,
   InputLabel,
   Select,
@@ -11,10 +10,6 @@ import {
   Typography,
   IconButton,
   Stack,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   TextField,
   Tabs,
   Tab,
@@ -22,8 +17,15 @@ import {
   Divider,
   useTheme,
   useMediaQuery,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Chip,
 } from '@mui/material';
 import { Button } from '@mui/material';
+import { StatusBadge } from '@/components/common/StatusBadge';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
 import { apiLogger } from '@/utils/logger';
 import {
   Users,
@@ -298,42 +300,54 @@ const HrmEmployeePage: React.FC = () => {
     setShowViewModal(true);
   }, []);
 
-  // 删除
-  const handleDelete = useCallback(
-    async (id: string) => {
-      if (!confirm('确定要删除这个员工吗？')) return;
-      try {
-        const response = await employeeApi.delete(id);
-        if (response.code === 200) {
-          addNotification({
-            title: '成功',
-            message: '员工删除成功',
-            type: 'success',
-          });
-          if (viewMode === 'list') {
-            fetchEmployees();
-          } else {
-            const newEmps = filteredEmployees.filter((e) => e.id !== id);
-            setFilteredEmployees(newEmps);
-            const tree = buildTree(departments, newEmps);
-            setTreeData(tree);
-          }
+  // 删除确认状态
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const handleDeleteConfirm = useCallback(async () => {
+    if (!deleteId) return;
+    try {
+      const response = await employeeApi.delete(deleteId);
+      if (response.code === 200) {
+        addNotification({
+          title: '成功',
+          message: '员工删除成功',
+          type: 'success',
+        });
+        if (viewMode === 'list') {
+          fetchEmployees();
         } else {
-          addNotification({
-            title: '失败',
-            message: '删除员工失败',
-            type: 'error',
-          });
+          const newEmps = filteredEmployees.filter((e) => e.id !== deleteId);
+          setFilteredEmployees(newEmps);
+          const tree = buildTree(departments, newEmps);
+          setTreeData(tree);
         }
-      } catch (error: unknown) {
+      } else {
         addNotification({
           title: '失败',
-          message: (error as { message?: string }).message || '删除员工失败',
+          message: '删除员工失败',
           type: 'error',
         });
       }
+    } catch (error: unknown) {
+      addNotification({
+        title: '失败',
+        message: (error as { message?: string }).message || '删除员工失败',
+        type: 'error',
+      });
+    } finally {
+      setConfirmDeleteOpen(false);
+      setDeleteId(null);
+    }
+  }, [deleteId, addNotification, viewMode, fetchEmployees, filteredEmployees, departments, buildTree]);
+
+  // 删除
+  const handleDelete = useCallback(
+    (id: string) => {
+      setDeleteId(id);
+      setConfirmDeleteOpen(true);
     },
-    [addNotification, viewMode, fetchEmployees, filteredEmployees, departments, buildTree]
+    []
   );
 
   // 创建
@@ -438,22 +452,7 @@ const HrmEmployeePage: React.FC = () => {
 
   // 状态徽章
   const getStatusBadge = useCallback((status: string) => {
-    const colors: Record<string, 'success' | 'default'> = {
-      active: 'success',
-      inactive: 'default',
-    };
-    const labels: Record<string, string> = {
-      active: '在职',
-      inactive: '离职',
-    };
-    return (
-      <Chip
-        size='small'
-        color={colors[status] || 'default'}
-        label={labels[status] || status}
-        sx={{ fontWeight: 500 }}
-      />
-    );
+    return <StatusBadge status={`employee_${status}`} showIcon />;
   }, []);
 
   // 统计卡片数据
@@ -1301,6 +1300,16 @@ const HrmEmployeePage: React.FC = () => {
         }}
         onApplySuggestions={handleApplyValidationSuggestions}
         onFixIssue={() => {}}
+      />
+
+      {/* 删除确认对话框 */}
+      <ConfirmDialog
+        isOpen={confirmDeleteOpen}
+        onClose={() => setConfirmDeleteOpen(false)}
+        onConfirm={handleDeleteConfirm}
+        title='确认删除'
+        message='确定要删除这个员工吗？'
+        danger
       />
     </Box>
   );

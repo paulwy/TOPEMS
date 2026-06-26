@@ -6,7 +6,5 @@ export { FlowDesignerPage } from './FlowDesignerPage';
 export { FlowMonitorPage } from './FlowMonitorPage';
 export { FlowTemplatePage } from './FlowTemplatePage';
 export { DocumentCenterPage } from './DocumentCenterPage';
-/** @deprecated 使用 apps/web/src/pages/notification/NotificationCenter.tsx 替代 */
-export { NotificationCenterPage } from './NotificationCenterPage';
 export { ReportListPage } from './ReportListPage';
 export { ReportViewerPage } from './ReportViewerPage';

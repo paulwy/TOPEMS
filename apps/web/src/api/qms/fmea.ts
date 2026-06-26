@@ -1,0 +1,153 @@
+import apiClient from '../client';
+import type { ApiResponse } from '../client';
+import type {
+  FmeaAnalysis,
+  CreateFmeaAnalysisRequest,
+  FmeaAnalysisBackend,
+  UpdateFmeaAnalysisRequestBackend,
+  FmeaItem,
+  FmeaItemBackend,
+  CreateFmeaItemRequestBackend,
+  UpdateFmeaItemRequestBackend,
+  FmeaStatistics,
+  FmeaStatisticsBackend,
+} from './types';
+import {
+  adaptFmeaAnalysisToFrontend,
+  adaptFmeaAnalysisToBackend,
+  adaptFmeaItemToFrontend,
+  adaptFmeaItemToBackend,
+  adaptFmeaStatisticsToFrontend,
+} from './adapters';
+
+export const fmeaApi = {
+  listFmeaAnalyses: async (): Promise<ApiResponse<FmeaAnalysis[]>> => {
+    const response = await apiClient.qms.get<{ fmeas?: FmeaAnalysisBackend[] }>('/api/qms/fmea');
+    const adaptedData = (response.data?.fmeas || []).map(adaptFmeaAnalysisToFrontend);
+    return { ...response, data: adaptedData };
+  },
+
+  getFmeaAnalysis: async (id: string): Promise<ApiResponse<FmeaAnalysis>> => {
+    const response = await apiClient.qms.get<FmeaAnalysisBackend>(`/api/qms/fmea/${id}`);
+    return {
+      ...response,
+      data: response.data ? adaptFmeaAnalysisToFrontend(response.data) : undefined,
+    };
+  },
+
+  createFmeaAnalysis: async (
+    data: CreateFmeaAnalysisRequest
+  ): Promise<ApiResponse<FmeaAnalysis>> => {
+    const backendData = adaptFmeaAnalysisToBackend(data);
+    const response = await apiClient.qms.post<FmeaAnalysisBackend>('/api/qms/fmea', backendData);
+    return {
+      ...response,
+      data: response.data ? adaptFmeaAnalysisToFrontend(response.data) : undefined,
+    };
+  },
+
+  updateFmeaAnalysis: async (
+    id: string,
+    data: Partial<CreateFmeaAnalysisRequest>
+  ): Promise<ApiResponse<FmeaAnalysis>> => {
+    const backendData: UpdateFmeaAnalysisRequestBackend = {
+      fmea_name: data.fmeaName,
+      fmea_type: data.fmeaType,
+      product_id: data.productId,
+      product_name: data.productName,
+      process_id: data.processId,
+      process_name: data.processName,
+      version: data.version,
+      status: data.status,
+      scope: data.scope,
+      team_leader: data.teamLeader,
+      team_members: data.teamMembers,
+      description: data.description,
+    };
+    const response = await apiClient.qms.put<FmeaAnalysisBackend>(
+      `/api/qms/fmea/${id}`,
+      backendData
+    );
+    return {
+      ...response,
+      data: response.data ? adaptFmeaAnalysisToFrontend(response.data) : undefined,
+    };
+  },
+
+  deleteFmeaAnalysis: async (id: string): Promise<ApiResponse<boolean>> => {
+    return apiClient.qms.delete<boolean>(`/api/qms/fmea/${id}`);
+  },
+
+  getFmeaStatistics: async (fmeaId: string): Promise<ApiResponse<FmeaStatistics>> => {
+    const response = await apiClient.qms.get<FmeaStatisticsBackend>(
+      `/api/qms/fmea/${fmeaId}/statistics`
+    );
+    return {
+      ...response,
+      data: response.data ? adaptFmeaStatisticsToFrontend(response.data) : undefined,
+    };
+  },
+
+  listFmeaItems: async (fmeaId: string): Promise<ApiResponse<FmeaItem[]>> => {
+    const response = await apiClient.qms.get<{ items?: FmeaItemBackend[] }>(
+      `/api/qms/fmea-items?fmea_id=${fmeaId}`
+    );
+    const adaptedData = (response.data?.items || []).map(adaptFmeaItemToFrontend);
+    return { ...response, data: adaptedData };
+  },
+
+  getFmeaItem: async (id: string): Promise<ApiResponse<FmeaItem>> => {
+    const response = await apiClient.qms.get<FmeaItemBackend>(`/api/qms/fmea-items/${id}`);
+    return {
+      ...response,
+      data: response.data ? adaptFmeaItemToFrontend(response.data) : undefined,
+    };
+  },
+
+  createFmeaItem: async (
+    data: Omit<FmeaItem, 'id' | 'rpn' | 'rpnRevised' | 'createdAt' | 'updatedAt' | 'actionsTaken' | 'severityRevised' | 'occurrenceRevised' | 'detectionRevised'>
+  ): Promise<ApiResponse<FmeaItem>> => {
+    const backendData = adaptFmeaItemToBackend(data);
+    const response = await apiClient.qms.post<FmeaItemBackend>('/api/qms/fmea-items', backendData);
+    return {
+      ...response,
+      data: response.data ? adaptFmeaItemToFrontend(response.data) : undefined,
+    };
+  },
+
+  updateFmeaItem: async (
+    id: string,
+    data: Partial<Omit<FmeaItem, 'id' | 'fmeaId' | 'createdAt' | 'updatedAt' | 'rpn' | 'rpnRevised'>>
+  ): Promise<ApiResponse<FmeaItem>> => {
+    const backendData: UpdateFmeaItemRequestBackend = {
+      function_description: data.functionDescription,
+      failure_mode: data.failureMode,
+      failure_effect: data.failureEffect,
+      severity: data.severity,
+      failure_cause: data.failureCause,
+      occurrence: data.occurrence,
+      current_controls: data.currentControls,
+      detection: data.detection,
+      recommended_actions: data.recommendedActions,
+      responsibility: data.responsibility,
+      target_date: data.targetDate,
+      actions_taken: data.actionsTaken,
+      severity_revised: data.severityRevised,
+      occurrence_revised: data.occurrenceRevised,
+      detection_revised: data.detectionRevised,
+      status: data.status,
+    };
+    const response = await apiClient.qms.put<FmeaItemBackend>(
+      `/api/qms/fmea-items/${id}`,
+      backendData
+    );
+    return {
+      ...response,
+      data: response.data ? adaptFmeaItemToFrontend(response.data) : undefined,
+    };
+  },
+
+  deleteFmeaItem: async (id: string): Promise<ApiResponse<boolean>> => {
+    return apiClient.qms.delete<boolean>(`/api/qms/fmea-items/${id}`);
+  },
+};

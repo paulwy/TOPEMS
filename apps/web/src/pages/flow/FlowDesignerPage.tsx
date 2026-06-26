@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { logger } from '@/utils/logger';
-import { flowApi } from '@/api/flow';
-import type { Workflow } from '@/api/flow';
+import { workflowApi } from '@/api/workflow';
+import type { Workflow, WorkflowDefinition, ApprovalNode } from '@/api/workflow';
 import { useNotification } from '@/hooks/useNotification';
 import {
   Box,
@@ -72,15 +72,36 @@ const FlowDesignerPage: React.FC = () => {
     if (!workflowId) return;
     try {
       setLoading(true);
-      const res = await flowApi.getWorkflow(workflowId);
+      const res = await workflowApi.getWorkflow(workflowId);
       if (res.success && res.data) {
         setWorkflow(res.data);
         const definition = res.data.definition;
         if (definition?.nodes) {
-          setNodes(definition.nodes);
+          const approvalNodes = definition.nodes;
+          const convertedNodes: FlowNode[] = approvalNodes.map((node, index) => ({
+            id: node.node_id,
+            type: index === 0 ? 'start' : node.approvers?.length > 0 ? 'approval' : 'task',
+            label: node.name || node.node_id,
+            x: 100 + (index % 3) * 200,
+            y: 150 + Math.floor(index / 3) * 150,
+            config: {
+              approvers: node.approvers,
+              approval_type: node.approval_type,
+              timeout_hours: node.timeout_hours,
+            },
+          }));
+          setNodes(convertedNodes);
         }
-        if (definition?.edges) {
-          setEdges(definition.edges);
+        if (definition?.nodes) {
+          const approvalNodes = definition.nodes;
+          const convertedEdges: FlowEdge[] = approvalNodes.flatMap((node) =>
+            (node.next_nodes || []).map((targetId: string) => ({
+              id: `edge-${node.node_id}-${targetId}`,
+              source: node.node_id,
+              target: targetId,
+            }))
+          );
+          setEdges(convertedEdges);
         }
       }
     } catch (err: unknown) {
@@ -124,18 +145,35 @@ const FlowDesignerPage: React.FC = () => {
   const handleSave = async () => {
     try {
       setSaving(true);
-      const definition = {
-        nodes,
-        edges,
-        start_node: nodes.find((n) => n.type === 'start')?.id,
+      const approvalNodes: ApprovalNode[] = nodes
+        .filter((n) => n.type === 'approval' || n.type === 'task')
+        .map((node) => ({
+          node_id: node.id,
+          name: node.label,
+          approvers: node.config?.approvers || [],
+          approval_type: node.config?.approval_type || 'single',
+          conditions: undefined,
+          timeout_hours: node.config?.timeout_hours || 24,
+          auto_action: undefined,
+          notification_users: undefined,
+          next_nodes: edges.filter((e) => e.source === node.id).map((e) => e.target),
+        }));
+
+      const startNodeId = nodes.find((n) => n.type === 'start')?.id || '';
+
+      const definition: WorkflowDefinition = {
+        version: workflow?.definition?.version || '1.0',
+        nodes: approvalNodes,
+        start_node: startNodeId,
         end_nodes: nodes.filter((n) => n.type === 'end').map((n) => n.id),
+        timeout_action: 'reject',
       };
 
       if (workflowId) {
-        await flowApi.updateWorkflow(workflowId, { definition });
+        await workflowApi.updateWorkflow(workflowId, { definition });
         success('流程更新成功');
       } else {
-        await flowApi.createWorkflow({
+        await workflowApi.createWorkflow({
           name: '新流程',
           definition,
           is_active: false,

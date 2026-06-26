@@ -270,18 +270,6 @@ export const DashboardPage: React.FC = () => {
         onClick: () => navigate('/pm/projects/create'),
       },
       {
-        id: 'assign',
-        label: '分配任务',
-        icon: <CheckSquare size={20} />,
-        onClick: () => navigate('/pm/tasks/assign'),
-      },
-      {
-        id: 'timeline',
-        label: '查看时间线',
-        icon: <FolderKanban size={20} />,
-        onClick: () => navigate('/pm/timeline'),
-      },
-      {
         id: 'report',
         label: '生成报表',
         icon: <Trophy size={20} />,

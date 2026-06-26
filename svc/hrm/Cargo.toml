@@ -31,6 +31,8 @@ bigdecimal.workspace = true
 rust_decimal.workspace = true
 reqwest.workspace = true
 rand.workspace = true
+sha2 = "0.10"
+base64 = "0.22"
 
 [dev-dependencies]
 tokio-test.workspace = true

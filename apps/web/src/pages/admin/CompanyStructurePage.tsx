@@ -350,13 +350,7 @@ export default function CompanyStructurePage() {
             管理母子公司关系，用于多公司合并报表
           </Typography>
         </Box>
-        <Button
-          variant='contained'
-          onClick={() => navigate('/finance/company-structure/create')}
-          startIcon={<Plus sx={{ width: 16, height: 16 }} />}
-        >
-          添加公司关系
-        </Button>
+
       </Box>
 
       {/* 搜索栏 */}

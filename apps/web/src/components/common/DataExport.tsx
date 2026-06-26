@@ -1,3 +1,7 @@
+/**
+ * 数据导出组件
+ * 支持导出 Excel、CSV、PDF 格式，支持选择导出字段和自定义文件名
+ */
 import React, { useState, useCallback } from 'react';
 import {
   Box,
@@ -22,6 +26,8 @@ import { styled } from '@mui/material/styles';
 import { Download, FileSpreadsheet, FileText, File, ChevronDown, Settings, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
+// ============ 类型定义 ============
+
 /**
  * 导出格式类型
  */
@@ -31,13 +37,13 @@ export type ExportFormat = 'xlsx' | 'csv' | 'pdf';
  * 导出字段配置
  */
 export interface ExportField {
-  /** 字段键名 */
+  /** 字段键名，对应数据对象的属性名 */
   key: string;
-  /** 显示标题 */
+  /** 显示标题，导出时作为列标题 */
   title: string;
   /** 是否选中（默认选中） */
   selected?: boolean;
-  /** 字段宽度（仅 PDF 有效） */
+  /** 字段宽度（仅 Excel 有效），单位为字符数 */
   width?: number;
 }
 
@@ -45,31 +51,73 @@ export interface ExportField {
  * 数据导出组件属性
  */
 export interface DataExportProps {
-  /** 数据源 */
+  /** 数据源，数组形式，每个元素为一个对象 */
   data: Record<string, unknown>[];
   /** 可导出的字段配置 */
   fields: ExportField[];
-  /** 默认文件名（不含扩展名） */
+  /** 默认文件名（不含扩展名），默认为 'export' */
   defaultFileName?: string;
-  /** 组件触发器按钮文本 */
+  /** 组件触发器按钮文本，默认为 '导出' */
   buttonText?: string;
-  /** 是否显示字段选择 */
+  /** 是否显示字段选择功能，默认为 true */
   showFieldSelection?: boolean;
-  /** 是否显示格式选择 */
+  /** 是否显示格式选择菜单，默认为 true */
   showFormatSelection?: boolean;
-  /** 是否在点击后打开设置弹窗 */
+  /** 是否在点击后打开设置弹窗，默认为 true */
   showSettingsDialog?: boolean;
-  /** 是否禁用 */
+  /** 是否禁用导出功能，默认为 false */
   disabled?: boolean;
   /** 自定义类名 */
   className?: string;
-  /** 导出前回调，可用于数据处理 */
+  /** 导出前回调，可用于数据处理和转换 */
   beforeExport?: (data: Record<string, unknown>[]) => Record<string, unknown>[];
 }
 
 /**
  * 数据导出组件
  * 支持导出 Excel、CSV、PDF 格式，支持选择导出字段和自定义文件名
+ *
+ * @example
+ * ```tsx
+ * // 基础用法
+ * <DataExport
+ *   data={employeeData}
+ *   fields={[
+ *     { key: 'name', title: '姓名' },
+ *     { key: 'department', title: '部门' },
+ *     { key: 'position', title: '职位' },
+ *     { key: 'hireDate', title: '入职日期' },
+ *   ]}
+ * />
+ *
+ * // 自定义文件名和按钮文本
+ * <DataExport
+ *   data={customerData}
+ *   fields={customerFields}
+ *   defaultFileName="客户列表"
+ *   buttonText="导出数据"
+ * />
+ *
+ * // 仅导出 Excel（不显示格式选择）
+ * <DataExport
+ *   data={reportData}
+ *   fields={reportFields}
+ *   showFormatSelection={false}
+ * />
+ *
+ * // 导出前数据处理
+ * <DataExport
+ *   data={rawData}
+ *   fields={fields}
+ *   beforeExport={(data) =>
+ *     data.map((row) => ({
+ *       ...row,
+ *       amount: `¥${row.amount}`,
+ *       date: formatDate(row.date),
+ *     }))
+ *   }
+ * />
+ * ```
  */
 const DataExport: React.FC<DataExportProps> = ({
   data,

@@ -17,7 +17,7 @@ const RsExperimentCreatePage: React.FC = () => {
 
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | undefined>(undefined);
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [formulas, setFormulas] = useState<Formula[]>([]);
@@ -205,7 +205,7 @@ const RsExperimentCreatePage: React.FC = () => {
   const loadExperiment = async (experimentId: string) => {
     try {
       setLoading(true);
-      setError(null);
+      setError(undefined);
       const response = await rsApi.getExperiment(experimentId);
       if (response.success && response.data) {
         const exp = response.data;

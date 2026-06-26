@@ -12,7 +12,11 @@
 #![allow(clippy::redundant_closure)]
 #![allow(dead_code)]
 
-mod modules;
+mod api;
+mod models;
+mod services;
+mod plugin;
+mod shared;
 
 use std::net::SocketAddr;
 
@@ -77,9 +81,8 @@ async fn main() {
         }
     };
 
-    // Initialize MES database
-    if let Err(e) = modules::mes::init_database(&pool).await {
-        tracing::warn!("MES module database init warning: {}", e);
+    if let Err(e) = models::init_database(&pool).await {
+        tracing::warn!("MES database init warning: {}", e);
     }
 
     let auth_state = AuthState::from_env();
@@ -96,41 +99,41 @@ async fn main() {
         .route("/", get(home))
         .route("/health", get(health))
         .route("/api/info", get(|| get_api_info_handler("mes-service")))
-        .route("/api/plugins/info", get(modules::mes::plugin::get_plugin_info))
-        .route("/api/plugins/health", get(modules::mes::plugin::plugin_health_check))
+        .route("/api/plugins/info", get(plugin::get_plugin_info))
+        .route("/api/plugins/health", get(plugin::plugin_health_check))
         .route("/metrics", get(move || async move { metric_handle.render() }));
 
     // Protected routes
     let protected_routes = Router::new()
         // Production Order
-        .route("/api/mfg/production-order", get(modules::mes::production_order::list_production_orders))
-        .route("/api/mfg/production-order", post(modules::mes::production_order::create_production_order))
-        .route("/api/mfg/production-order/{id}", get(modules::mes::production_order::get_production_order))
-        .route("/api/mfg/production-order/{id}", put(modules::mes::production_order::update_production_order))
-        .route("/api/mfg/production-order/{id}", delete(modules::mes::production_order::delete_production_order))
-        .route("/api/mfg/production-order/{id}/start", post(modules::mes::production_order::start_production_order))
-        .route("/api/mfg/production-order/{id}/complete", post(modules::mes::production_order::complete_production_order))
-        .route("/api/mfg/production-order/{id}/cancel", post(modules::mes::production_order::cancel_production_order))
+        .route("/api/mfg/production-order", get(api::mes::production_order::list_production_orders))
+        .route("/api/mfg/production-order", post(api::mes::production_order::create_production_order))
+        .route("/api/mfg/production-order/{id}", get(api::mes::production_order::get_production_order))
+        .route("/api/mfg/production-order/{id}", put(api::mes::production_order::update_production_order))
+        .route("/api/mfg/production-order/{id}", delete(api::mes::production_order::delete_production_order))
+        .route("/api/mfg/production-order/{id}/start", post(api::mes::production_order::start_production_order))
+        .route("/api/mfg/production-order/{id}/complete", post(api::mes::production_order::complete_production_order))
+        .route("/api/mfg/production-order/{id}/cancel", post(api::mes::production_order::cancel_production_order))
         // Production Process
-        .route("/api/mfg/process", get(modules::mes::production_process::list_processes))
-        .route("/api/mfg/process", post(modules::mes::production_process::create_process))
-        .route("/api/mfg/process/{id}", get(modules::mes::production_process::get_process))
-        .route("/api/mfg/process/{id}", put(modules::mes::production_process::update_process))
-        .route("/api/mfg/process/{id}", delete(modules::mes::production_process::delete_process))
+        .route("/api/mfg/process", get(api::mes::production_process::list_processes))
+        .route("/api/mfg/process", post(api::mes::production_process::create_process))
+        .route("/api/mfg/process/{id}", get(api::mes::production_process::get_process))
+        .route("/api/mfg/process/{id}", put(api::mes::production_process::update_process))
+        .route("/api/mfg/process/{id}", delete(api::mes::production_process::delete_process))
         // Production Record
-        .route("/api/mfg/record", get(modules::mes::production_record::list_records))
-        .route("/api/mfg/record", post(modules::mes::production_record::create_record))
-        .route("/api/mfg/record/{id}", get(modules::mes::production_record::get_record))
+        .route("/api/mfg/record", get(api::mes::production_record::list_records))
+        .route("/api/mfg/record", post(api::mes::production_record::create_record))
+        .route("/api/mfg/record/{id}", get(api::mes::production_record::get_record))
         // Equipment
-        .route("/api/mfg/equipment", get(modules::mes::equipment::list_equipment))
-        .route("/api/mfg/equipment", post(modules::mes::equipment::create_equipment))
-        .route("/api/mfg/equipment/{id}", get(modules::mes::equipment::get_equipment))
-        .route("/api/mfg/equipment/{id}", put(modules::mes::equipment::update_equipment))
+        .route("/api/mfg/equipment", get(api::mes::equipment::list_equipment))
+        .route("/api/mfg/equipment", post(api::mes::equipment::create_equipment))
+        .route("/api/mfg/equipment/{id}", get(api::mes::equipment::get_equipment))
+        .route("/api/mfg/equipment/{id}", put(api::mes::equipment::update_equipment))
         // Work Station
-        .route("/api/mfg/work-station", get(modules::mes::work_station::list_work_stations))
-        .route("/api/mfg/work-station", post(modules::mes::work_station::create_work_station))
-        .route("/api/mfg/work-station/{id}", get(modules::mes::work_station::get_work_station))
-        .route("/api/mfg/work-station/{id}", put(modules::mes::work_station::update_work_station))
+        .route("/api/mfg/work-station", get(api::mes::work_station::list_work_stations))
+        .route("/api/mfg/work-station", post(api::mes::work_station::create_work_station))
+        .route("/api/mfg/work-station/{id}", get(api::mes::work_station::get_work_station))
+        .route("/api/mfg/work-station/{id}", put(api::mes::work_station::update_work_station))
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),
             auth_middleware,
@@ -153,7 +156,7 @@ async fn main() {
     // Auto-register to Core
     let core_url = std::env::var("CORE_URL").ok();
     tokio::spawn(async move {
-        modules::mes::plugin::auto_register_to_core(core_url.as_deref()).await;
+        plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
     axum::serve(

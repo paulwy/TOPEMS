@@ -144,57 +144,57 @@ pub async fn get_quality_overview(
     let total_insp: Option<i64> = sqlx::query_scalar::<_, _>("SELECT COUNT(*) FROM qa_quality_inspections WHERE status = 'completed'")
     .fetch_one(&state.pool)
     .await
-    .unwrap_or(None);
+    .ok();
     let total_inspections = total_insp.unwrap_or(0);
 
     let qualified_insp: Option<i64> = sqlx::query_scalar::<_, _>("SELECT COUNT(*) FROM qa_quality_inspections WHERE status = 'completed' AND result = 'qualified'")
     .fetch_one(&state.pool)
     .await
-    .unwrap_or(None);
+    .ok();
     let qualified_inspections = qualified_insp.unwrap_or(0);
 
     let unqualified_insp: Option<i64> = sqlx::query_scalar::<_, _>("SELECT COUNT(*) FROM qa_quality_inspections WHERE status = 'completed' AND result = 'unqualified'")
     .fetch_one(&state.pool)
     .await
-    .unwrap_or(None);
+    .ok();
     let unqualified_inspections = unqualified_insp.unwrap_or(0);
 
     let avg_rate: Option<BigDecimal> = sqlx::query_scalar::<_, _>(r#"SELECT COALESCE(AVG(qualification_rate), 0) FROM qa_quality_inspections WHERE status = 'completed'"#)
     .fetch_one(&state.pool)
     .await
-    .unwrap_or(None);
+    .ok();
     let qualification_rate: f64 = avg_rate.map(|v| v.to_f64().unwrap_or(0.0)).unwrap_or(0.0);
     let defect_rate = 100.0 - qualification_rate;
 
     let total_issues_count: Option<i64> = sqlx::query_scalar::<_, _>("SELECT COUNT(*) FROM qa_quality_issues")
     .fetch_one(&state.pool)
     .await
-    .unwrap_or(None);
+    .ok();
     let total_issues = total_issues_count.unwrap_or(0);
 
     let open_issues_count: Option<i64> = sqlx::query_scalar::<_, _>("SELECT COUNT(*) FROM qa_quality_issues WHERE status = 'open' OR status = 'in_progress'")
     .fetch_one(&state.pool)
     .await
-    .unwrap_or(None);
+    .ok();
     let open_issues = open_issues_count.unwrap_or(0);
 
     let complaint_count_val: Option<i64> = sqlx::query_scalar::<_, _>("SELECT COUNT(*) FROM qa_quality_issues WHERE source = 'customer_complaint'")
     .fetch_one(&state.pool)
     .await
-    .unwrap_or(None);
+    .ok();
     let complaint_count = complaint_count_val.unwrap_or(0);
     let complaint_rate = if total_inspections > 0 { (complaint_count as f64 / total_inspections as f64) * 100.0 } else { 0.0 };
 
     let in_progress_8d: Option<i64> = sqlx::query_scalar::<_, _>("SELECT COUNT(*) FROM qa_eightd_reports WHERE status = 'in_progress'")
     .fetch_one(&state.pool)
     .await
-    .unwrap_or(None);
+    .ok();
     let in_progress_eightd = in_progress_8d.unwrap_or(0);
 
     let pending_act: Option<i64> = sqlx::query_scalar::<_, _>("SELECT COUNT(*) FROM qa_corrective_actions WHERE status = 'pending' OR status = 'in_progress'")
     .fetch_one(&state.pool)
     .await
-    .unwrap_or(None);
+    .ok();
     let pending_actions = pending_act.unwrap_or(0);
 
     let overview = QualityOverview {
@@ -262,7 +262,7 @@ pub async fn get_defect_distribution(
     let total: Option<i64> = sqlx::query_scalar::<_, _>("SELECT COUNT(*) FROM qa_inspection_results WHERE is_qualified = false")
     .fetch_one(&state.pool)
     .await
-    .unwrap_or(None);
+    .ok();
     let total_count = total.unwrap_or(0);
 
     let rows = sqlx::query(r#"

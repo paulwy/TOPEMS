@@ -16,7 +16,9 @@
 
 mod shared;
 
-pub mod modules;
+pub mod api;
+pub mod models;
+pub mod services;
 pub mod plugin;
 
 use std::net::SocketAddr;
@@ -85,7 +87,7 @@ async fn main() {
         }
     };
 
-    if let Err(e) = modules::lims::init_database(&pool).await {
+    if let Err(e) = models::init_database(&pool).await {
         tracing::warn!("LIMS module database init warning: {}", e);
     }
 
@@ -112,122 +114,7 @@ async fn main() {
         .route("/metrics", get(move || async move { metric_handle.render() }));
 
     let protected_routes = Router::new()
-        // ===== LIMS routes (prefix: /api/lims) =====
-        // Sample Management
-        .route("/api/lims/samples", get(modules::lims::sample::list_samples))
-        .route("/api/lims/samples", post(modules::lims::sample::register_sample))
-        .route("/api/lims/samples/{id}", get(modules::lims::sample::get_sample))
-        .route("/api/lims/samples/{id}", put(modules::lims::sample::update_sample))
-        .route("/api/lims/samples/{id}", delete(modules::lims::sample::delete_sample))
-        // Sample Lifecycle Tracking
-        .route("/api/lims/samples/{id}/lifecycle", get(modules::lims::sample::get_sample_lifecycle))
-        .route("/api/lims/samples/lifecycle", post(modules::lims::sample::record_lifecycle_event))
-        .route("/api/lims/samples/{id}/stage/{to_stage}", post(modules::lims::sample::transition_sample_stage))
-        .route("/api/lims/samples/{id}/traceability", get(modules::lims::sample::get_sample_traceability))
-        .route("/api/lims/lifecycle-stages", get(modules::lims::sample::get_lifecycle_stages))
-        // Inspection Task
-        .route("/api/lims/tasks", get(modules::lims::inspection_task::list_tasks))
-        .route("/api/lims/tasks", post(modules::lims::inspection_task::create_task))
-        .route("/api/lims/tasks/{id}", get(modules::lims::inspection_task::get_task))
-        .route("/api/lims/tasks/{id}", put(modules::lims::inspection_task::update_task))
-        .route("/api/lims/tasks/{id}", delete(modules::lims::inspection_task::delete_task))
-        .route("/api/lims/tasks/{id}/result", post(modules::lims::inspection_task::submit_result))
-        // Inspection Record
-        .route("/api/lims/records", get(modules::lims::inspection_record::list_records))
-        .route("/api/lims/records", post(modules::lims::inspection_record::create_record))
-        .route("/api/lims/records/{id}", get(modules::lims::inspection_record::get_record))
-        .route("/api/lims/records/{id}", delete(modules::lims::inspection_record::delete_record))
-        // Instrument
-        .route("/api/lims/instruments", get(modules::lims::instrument::list_instruments))
-        .route("/api/lims/instruments", post(modules::lims::instrument::create_instrument))
-        .route("/api/lims/instruments/{id}", get(modules::lims::instrument::get_instrument))
-        .route("/api/lims/instruments/{id}", put(modules::lims::instrument::update_instrument))
-        .route("/api/lims/instruments/{id}", delete(modules::lims::instrument::delete_instrument))
-        .route("/api/lims/instruments/{id}/calibration", post(modules::lims::instrument::calibrate))
-        // Reagent
-        .route("/api/lims/reagents", get(modules::lims::reagent::list_reagents))
-        .route("/api/lims/reagents", post(modules::lims::reagent::create_reagent))
-        .route("/api/lims/reagents/{id}", get(modules::lims::reagent::get_reagent))
-        .route("/api/lims/reagents/{id}", put(modules::lims::reagent::update_reagent))
-        .route("/api/lims/reagents/{id}", delete(modules::lims::reagent::delete_reagent))
-        // Statistics
-        .route("/api/lims/statistics", get(modules::lims::statistics::get_statistics))
-        // Data Sync
-        .route("/api/lims/sync-records", get(modules::lims::data_sync::list_sync_records))
-        .route("/api/lims/sync-records/{id}", get(modules::lims::data_sync::get_sync_record))
-        .route("/api/lims/sync-records/{id}", delete(modules::lims::data_sync::delete_sync_record))
-        .route("/api/lims/sync-records/{id}/retry", post(modules::lims::data_sync::retry_sync))
-        .route("/api/lims/sync/record-to-qms", post(modules::lims::data_sync::sync_record_to_qms))
-        .route("/api/lims/sync/reagent-to-ehs", post(modules::lims::data_sync::sync_reagent_to_ehs))
-
-        // Sample Barcode & RFID Management
-        .route("/api/lims/barcodes", get(modules::lims::sample_barcode::list_barcodes))
-        .route("/api/lims/barcodes", post(modules::lims::sample_barcode::generate_barcode))
-        .route("/api/lims/barcodes/{id}", get(modules::lims::sample_barcode::get_barcode))
-        .route("/api/lims/barcodes/{id}", put(modules::lims::sample_barcode::update_barcode))
-        .route("/api/lims/barcodes/{id}", delete(modules::lims::sample_barcode::delete_barcode))
-        .route("/api/lims/barcodes/{id}/print", post(modules::lims::sample_barcode::print_barcode))
-        .route("/api/lims/barcodes/scan", post(modules::lims::sample_barcode::scan_barcode))
-        .route("/api/lims/barcodes/types", get(modules::lims::sample_barcode::get_barcode_types))
-        .route("/api/lims/barcodes/trace/{barcode}", get(modules::lims::sample_barcode::trace_sample_by_barcode))
-        .route("/api/lims/print-config", get(modules::lims::sample_barcode::get_print_config))
-        .route("/api/lims/print-config", put(modules::lims::sample_barcode::update_print_config))
-        .route("/api/lims/rfid-tags", get(modules::lims::sample_barcode::list_rfid_tags))
-        .route("/api/lims/rfid-tags", post(modules::lims::sample_barcode::create_rfid_tag))
-        .route("/api/lims/rfid-tags/{id}", delete(modules::lims::sample_barcode::delete_rfid_tag))
-        .route("/api/lims/rfid-tags/{tag_id}/assign/{sample_id}", post(modules::lims::sample_barcode::assign_rfid_tag))
-        .route("/api/lims/rfid-tags/{tag_id}/unassign", post(modules::lims::sample_barcode::unassign_rfid_tag))
-
-        // Test Method Library
-        .route("/api/lims/test-methods", get(modules::lims::test_method::list_methods))
-        .route("/api/lims/test-methods", post(modules::lims::test_method::create_method))
-        .route("/api/lims/test-methods/{id}", get(modules::lims::test_method::get_method))
-        .route("/api/lims/test-methods/{id}", put(modules::lims::test_method::update_method))
-        .route("/api/lims/test-methods/{id}", delete(modules::lims::test_method::delete_method))
-        .route("/api/lims/test-methods/{id}/versions", get(modules::lims::test_method::list_method_versions))
-        .route("/api/lims/test-methods/{id}/new-version", post(modules::lims::test_method::create_new_version))
-        .route("/api/lims/method-categories", get(modules::lims::test_method::list_categories))
-        .route("/api/lims/method-categories", post(modules::lims::test_method::create_category))
-        .route("/api/lims/method-categories/{id}", put(modules::lims::test_method::update_category))
-        .route("/api/lims/method-categories/{id}", delete(modules::lims::test_method::delete_category))
-        .route("/api/lims/method-validations", get(modules::lims::test_method::list_validations))
-        .route("/api/lims/method-validations", post(modules::lims::test_method::create_validation))
-
-        // Proficiency Testing
-        .route("/api/lims/pt-plans", get(modules::lims::proficiency_testing::list_plans))
-        .route("/api/lims/pt-plans", post(modules::lims::proficiency_testing::create_plan))
-        .route("/api/lims/pt-plans/{id}", get(modules::lims::proficiency_testing::get_plan))
-        .route("/api/lims/pt-plans/{id}", put(modules::lims::proficiency_testing::update_plan))
-        .route("/api/lims/pt-plans/{id}", delete(modules::lims::proficiency_testing::delete_plan))
-        .route("/api/lims/pt-plans/{id}/samples", get(modules::lims::proficiency_testing::list_plan_samples))
-        .route("/api/lims/pt-plans/{id}/results", get(modules::lims::proficiency_testing::list_plan_results))
-        .route("/api/lims/pt-plans/{id}/evaluations", get(modules::lims::proficiency_testing::list_plan_evaluations))
-        .route("/api/lims/pt-plans/{id}/corrective-actions", get(modules::lims::proficiency_testing::list_plan_corrective_actions))
-        .route("/api/lims/pt-samples/receive", post(modules::lims::proficiency_testing::receive_sample))
-        .route("/api/lims/pt-results", post(modules::lims::proficiency_testing::submit_result))
-        .route("/api/lims/pt-evaluations", post(modules::lims::proficiency_testing::evaluate_result))
-        .route("/api/lims/pt-corrective-actions", post(modules::lims::proficiency_testing::create_corrective_action))
-        .route("/api/lims/pt-corrective-actions/{id}", put(modules::lims::proficiency_testing::update_corrective_action))
-
-        // Uncertainty Evaluation
-        .route("/api/lims/uncertainty-projects", get(modules::lims::uncertainty::list_projects))
-        .route("/api/lims/uncertainty-projects", post(modules::lims::uncertainty::create_project))
-        .route("/api/lims/uncertainty-projects/{id}", get(modules::lims::uncertainty::get_project))
-        .route("/api/lims/uncertainty-projects/{id}", put(modules::lims::uncertainty::update_project))
-        .route("/api/lims/uncertainty-projects/{id}", delete(modules::lims::uncertainty::delete_project))
-        .route("/api/lims/uncertainty-projects/{id}/sources", get(modules::lims::uncertainty::list_sources))
-        .route("/api/lims/uncertainty-projects/{id}/components", get(modules::lims::uncertainty::list_components))
-        .route("/api/lims/uncertainty-projects/{id}/combined", post(modules::lims::uncertainty::calculate_combined))
-        .route("/api/lims/uncertainty-projects/{id}/report", get(modules::lims::uncertainty::generate_report))
-        .route("/api/lims/uncertainty-sources", post(modules::lims::uncertainty::create_source))
-        .route("/api/lims/uncertainty-sources/{id}", put(modules::lims::uncertainty::update_source))
-        .route("/api/lims/uncertainty-sources/{id}", delete(modules::lims::uncertainty::delete_source))
-        .route("/api/lims/uncertainty-components", post(modules::lims::uncertainty::create_component))
-        .route("/api/lims/uncertainty-components/{id}", put(modules::lims::uncertainty::update_component))
-        .route("/api/lims/uncertainty-components/{id}", delete(modules::lims::uncertainty::delete_component))
-        .route("/api/lims/uncertainty/type-a", post(modules::lims::uncertainty::calculate_type_a))
-        .route("/api/lims/uncertainty/type-b", post(modules::lims::uncertainty::calculate_type_b))
-
+        .merge(api::create_api_routes())
         // Health & Metrics
         .route("/api/v1/health/detailed", get(detailed_health))
         .layer(axum::middleware::from_fn_with_state(

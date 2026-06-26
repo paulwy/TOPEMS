@@ -1,0 +1,79 @@
+import apiClient from '../client';
+import type { ApiResponse } from '../client';
+import type {
+  CreateDrillRecordRequest,
+  CreateEmergencyPlanRequest,
+  DrillRecord,
+  EmergencyPlan,
+  ListQueryParams,
+  PaginatedResponse,
+} from './types';
+
+export const emergencyApi = {
+  listPlans: async (
+    params?: ListQueryParams
+  ): Promise<ApiResponse<PaginatedResponse<EmergencyPlan>>> => {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.status) queryParams.append('status', params.status);
+  
+    return apiClient.ehs.get<PaginatedResponse<EmergencyPlan>>(
+      `/api/ehs/plans?${queryParams.toString()}`
+    );
+  },
+
+  getPlan: async (id: string): Promise<ApiResponse<EmergencyPlan>> => {
+    return apiClient.ehs.get<EmergencyPlan>(`/api/ehs/plans/${id}`);
+  },
+
+  createPlan: async (data: CreateEmergencyPlanRequest): Promise<ApiResponse<EmergencyPlan>> => {
+    return apiClient.ehs.post<EmergencyPlan>('/api/ehs/plans', data);
+  },
+
+  updatePlan: async (
+    id: string,
+    data: Partial<CreateEmergencyPlanRequest>
+  ): Promise<ApiResponse<EmergencyPlan>> => {
+    return apiClient.ehs.put<EmergencyPlan>(`/api/ehs/plans/${id}`, data);
+  },
+
+  deletePlan: async (id: string): Promise<ApiResponse<void>> => {
+    return apiClient.ehs.delete<void>(`/api/ehs/plans/${id}`);
+  },
+
+  listDrills: async (
+    params?: ListQueryParams
+  ): Promise<ApiResponse<PaginatedResponse<DrillRecord>>> => {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.search) queryParams.append('search', params.search);
+  
+    return apiClient.ehs.get<PaginatedResponse<DrillRecord>>(
+      `/api/ehs/drills?${queryParams.toString()}`
+    );
+  },
+
+  getDrill: async (id: string): Promise<ApiResponse<DrillRecord>> => {
+    return apiClient.ehs.get<DrillRecord>(`/api/ehs/drills/${id}`);
+  },
+
+  createDrill: async (data: CreateDrillRecordRequest): Promise<ApiResponse<DrillRecord>> => {
+    return apiClient.ehs.post<DrillRecord>('/api/ehs/drills', data);
+  },
+
+  updateDrill: async (
+    id: string,
+    data: Partial<CreateDrillRecordRequest>
+  ): Promise<ApiResponse<DrillRecord>> => {
+    return apiClient.ehs.put<DrillRecord>(`/api/ehs/drills/${id}`, data);
+  },
+
+  deleteDrill: async (id: string): Promise<ApiResponse<void>> => {
+    return apiClient.ehs.delete<void>(`/api/ehs/drills/${id}`);
+  },
+};
+
+export default emergencyApi;

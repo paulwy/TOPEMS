@@ -1,0 +1,63 @@
+import apiClient from '../client';
+import type { ApiResponse } from '../client';
+import type {
+  Pipeline,
+  CreatePipelineRequest,
+  ListQueryParams,
+  PaginatedResponse,
+} from './types';
+import { adaptResponse } from './utils';
+
+export const pipelineApi = {
+  listPipelines: async (
+    params?: ListQueryParams
+  ): Promise<ApiResponse<PaginatedResponse<Pipeline>>> => {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.status) queryParams.append('status', params.status);
+
+    const response = await apiClient.gis.get<any>(
+      `/api/gis/pipelines?${queryParams.toString()}`
+    );
+    if (response.success && response.data) {
+      response.data = adaptResponse<Pipeline>(response.data, 'pipelines');
+    }
+    return response as ApiResponse<PaginatedResponse<Pipeline>>;
+  },
+
+  getPipeline: async (id: string): Promise<ApiResponse<Pipeline>> => {
+    return apiClient.gis.get<Pipeline>(`/api/gis/pipelines/${id}`);
+  },
+
+  listPipelinesByMap: async (
+    mapId: string,
+    params?: ListQueryParams
+  ): Promise<ApiResponse<PaginatedResponse<Pipeline>>> => {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+
+    return apiClient.gis.get<PaginatedResponse<Pipeline>>(
+      `/api/gis/pipelines/map/${mapId}?${queryParams.toString()}`
+    );
+  },
+
+  createPipeline: async (
+    data: CreatePipelineRequest
+  ): Promise<ApiResponse<Pipeline>> => {
+    return apiClient.gis.post<Pipeline>('/api/gis/pipelines', data);
+  },
+
+  updatePipeline: async (
+    id: string,
+    data: Partial<CreatePipelineRequest>
+  ): Promise<ApiResponse<Pipeline>> => {
+    return apiClient.gis.put<Pipeline>(`/api/gis/pipelines/${id}`, data);
+  },
+
+  deletePipeline: async (id: string): Promise<ApiResponse<void>> => {
+    return apiClient.gis.delete<void>(`/api/gis/pipelines/${id}`);
+  },
+};

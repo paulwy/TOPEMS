@@ -12,21 +12,11 @@ import {
   XCircle,
 } from 'lucide-react';
 import {
-  TextField,
   Card,
   CardContent,
   Typography,
-  Dialog,
-  DialogContent,
-  DialogActions,
-  DialogTitle,
   Box,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import {
   ListPageTemplate,
   StatCard,
@@ -35,6 +25,10 @@ import {
   type RowAction,
 } from '@/components/mui';
 import { StatusBadge } from '@/components/common/StatusBadge';
+import { ActionButton } from '@/components/common/ActionButton';
+import { FormField } from '@/components/common/FormField';
+import { FormSelect } from '@/components/common/FormSelect';
+import { Dialog } from '@/components/common/Dialog';
 import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
 import {
@@ -391,13 +385,12 @@ const LeaveManagementPage: React.FC = () => {
           >
             休假管理
           </Typography>
-          <Button
-            variant='contained'
-            startIcon={<Plus size={18} />}
+          <ActionButton
+            label='新增申请'
+            icon={<Plus size={18} />}
             onClick={handleAdd}
-          >
-            新增申请
-          </Button>
+            variant='primary'
+          />
         </Box>
 
         {/* 统计卡片 */}
@@ -487,180 +480,181 @@ const LeaveManagementPage: React.FC = () => {
         <Dialog
           open={isModalVisible}
           onClose={() => setIsModalVisible(false)}
+          title={editingLeave ? '编辑休假申请' : '新增休假申请'}
           maxWidth='sm'
           fullWidth
-          slotProps={{
-            paper: {
-              sx: { borderRadius: 2 },
-            },
-          }}
+          cancelButton={{ label: '取消' }}
+          confirmButton={{ label: '确定', onClick: handleModalOk }}
         >
-          <DialogTitle sx={{ fontWeight: 'bold' }}>
-            {editingLeave ? '编辑休假申请' : '新增休假申请'}
-          </DialogTitle>
-          <DialogContent dividers>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1 }}>
-              <FormControl fullWidth>
-                <InputLabel>员工 *</InputLabel>
-                <Select
-                  value={(formData as LeaveRequest)?.employee_id || ''}
-                  label='员工 *'
-                  onChange={(e) => handleInputChange('employee_id', e.target.value)}
-                >
-                  <MenuItem value=''>请选择员工</MenuItem>
-                  {employees.map((e) => (
-                    <MenuItem
-                      key={e.id}
-                      value={e.id}
-                    >
-                      {e.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <FormControl fullWidth>
-                <InputLabel>休假类型 *</InputLabel>
-                <Select
-                  value={(formData as LeaveRequest)?.leave_type || ''}
-                  label='休假类型 *'
-                  onChange={(e) => handleInputChange('leave_type', e.target.value)}
-                >
-                  <MenuItem value=''>请选择休假类型</MenuItem>
-                  {leaveTypes.map((t) => (
-                    <MenuItem
-                      key={t.value}
-                      value={t.value}
-                    >
-                      {t.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <TextField
-                  type='date'
-                  label='开始日期 *'
-                  value={(formData as LeaveRequest)?.start_date || ''}
-                  onChange={(e) => handleInputChange('start_date', e.target.value)}
-                  fullWidth
-                  slotProps={{ inputLabel: { shrink: true } }}
-                />
-                <TextField
-                  type='date'
-                  label='结束日期 *'
-                  value={(formData as LeaveRequest)?.end_date || ''}
-                  onChange={(e) => handleInputChange('end_date', e.target.value)}
-                  fullWidth
-                  slotProps={{ inputLabel: { shrink: true } }}
-                />
-              </Box>
-              <TextField
-                type='number'
-                label='休假天数 *'
-                value={(formData as LeaveRequest)?.days || ''}
-                onChange={(e) => handleInputChange('days', parseFloat(e.target.value) || 0)}
-                placeholder='请输入休假天数'
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1 }}>
+            <FormSelect
+              name='employee_id'
+              label='员工 *'
+              value={(formData as LeaveRequest)?.employee_id || ''}
+              options={[{ value: '', label: '请选择员工' }, ...employees.map((e) => ({ value: e.id, label: e.name }))]}
+              onChange={(value) => handleInputChange('employee_id', value as string | number)}
+            />
+            <FormSelect
+              name='leave_type'
+              label='休假类型 *'
+              value={(formData as LeaveRequest)?.leave_type || ''}
+              options={[{ value: '', label: '请选择休假类型' }, ...leaveTypes]}
+              onChange={(value) => handleInputChange('leave_type', value as string | number)}
+            />
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <FormField
+                name='start_date'
+                label='开始日期 *'
+                type='date'
+                value={(formData as LeaveRequest)?.start_date || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('start_date', e.target.value)}
                 fullWidth
+                slotProps={{ inputLabel: { shrink: true } }}
               />
-              <TextField
-                label='备注'
-                value={(formData as LeaveRequest)?.reason || ''}
-                onChange={(e) => handleInputChange('reason', e.target.value)}
-                multiline
-                rows={3}
-                placeholder='请输入备注信息'
+              <FormField
+                name='end_date'
+                label='结束日期 *'
+                type='date'
+                value={(formData as LeaveRequest)?.end_date || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('end_date', e.target.value)}
                 fullWidth
+                slotProps={{ inputLabel: { shrink: true } }}
               />
             </Box>
-          </DialogContent>
-          <DialogActions sx={{ px: 3, py: 2 }}>
-            <Button
-              onClick={() => setIsModalVisible(false)}
-              variant='outlined'
-            >
-              取消
-            </Button>
-            <Button
-              onClick={handleModalOk}
-              variant='contained'
-              startIcon={<Check size={18} />}
-            >
-              确定
-            </Button>
-          </DialogActions>
+            <FormField
+              name='days'
+              label='休假天数 *'
+              type='number'
+              value={(formData as LeaveRequest)?.days || ''}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('days', parseFloat(e.target.value) || 0)}
+              placeholder='请输入休假天数'
+              fullWidth
+            />
+            <FormField
+              name='reason'
+              label='备注'
+              value={(formData as LeaveRequest)?.reason || ''}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('reason', e.target.value)}
+              multiline
+              rows={3}
+              placeholder='请输入备注信息'
+              fullWidth
+            />
+          </Box>
         </Dialog>
 
         {/* 查看详情 Dialog */}
         <Dialog
           open={isViewModalVisible}
           onClose={() => setIsViewModalVisible(false)}
+          title='休假详情'
           maxWidth='sm'
           fullWidth
-          slotProps={{
-            paper: {
-              sx: { borderRadius: 2 },
-            },
-          }}
+          confirmButton={{ label: '关闭', onClick: () => setIsViewModalVisible(false) }}
         >
-          <DialogTitle sx={{ fontWeight: 'bold' }}>休假详情</DialogTitle>
-          <DialogContent dividers>
-            {editingLeave && (
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+          {editingLeave && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  员工:
+                </Typography>
+                <Typography variant='body2'>
+                  {employees.find((e) => e.id === editingLeave.employee_id)?.name || '-'}
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  休假类型:
+                </Typography>
+                <Typography variant='body2'>
+                  {getLeaveTypeText(editingLeave.leave_type)}
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  开始日期:
+                </Typography>
+                <Typography variant='body2'>{editingLeave.start_date}</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  结束日期:
+                </Typography>
+                <Typography variant='body2'>{editingLeave.end_date}</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  休假天数:
+                </Typography>
+                <Typography variant='body2'>{editingLeave.days}</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  备注:
+                </Typography>
+                <Typography
+                  variant='body2'
+                  sx={{
+                    maxWidth: 200,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {editingLeave.reason || '-'}
+                </Typography>
+              </Box>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  状态:
+                </Typography>
+                {getLeaveStatusBadge(editingLeave.status)}
+              </Box>
+              {editingLeave.approver_id && (
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography
                     variant='body2'
                     color='text.secondary'
                   >
-                    员工:
+                    审批人:
                   </Typography>
-                  <Typography variant='body2'>
-                    {employees.find((e) => e.id === editingLeave.employee_id)?.name || '-'}
-                  </Typography>
+                  <Typography variant='body2'>{editingLeave.approver_id}</Typography>
                 </Box>
+              )}
+              {editingLeave.rejection_reason && (
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography
                     variant='body2'
                     color='text.secondary'
                   >
-                    休假类型:
-                  </Typography>
-                  <Typography variant='body2'>
-                    {getLeaveTypeText(editingLeave.leave_type)}
-                  </Typography>
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    开始日期:
-                  </Typography>
-                  <Typography variant='body2'>{editingLeave.start_date}</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    结束日期:
-                  </Typography>
-                  <Typography variant='body2'>{editingLeave.end_date}</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    休假天数:
-                  </Typography>
-                  <Typography variant='body2'>{editingLeave.days}</Typography>
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    备注:
+                    审批意见:
                   </Typography>
                   <Typography
                     variant='body2'
@@ -671,76 +665,21 @@ const LeaveManagementPage: React.FC = () => {
                       whiteSpace: 'nowrap',
                     }}
                   >
-                    {editingLeave.reason || '-'}
+                    {editingLeave.rejection_reason}
                   </Typography>
                 </Box>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                  }}
+              )}
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
                 >
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    状态:
-                  </Typography>
-                  {getLeaveStatusBadge(editingLeave.status)}
-                </Box>
-                {editingLeave.approver_id && (
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >
-                      审批人:
-                    </Typography>
-                    <Typography variant='body2'>{editingLeave.approver_id}</Typography>
-                  </Box>
-                )}
-                {editingLeave.rejection_reason && (
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >
-                      审批意见:
-                    </Typography>
-                    <Typography
-                      variant='body2'
-                      sx={{
-                        maxWidth: 200,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {editingLeave.rejection_reason}
-                    </Typography>
-                  </Box>
-                )}
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    创建时间:
-                  </Typography>
-                  <Typography variant='body2'>{editingLeave.created_at}</Typography>
-                </Box>
+                  创建时间:
+                </Typography>
+                <Typography variant='body2'>{editingLeave.created_at}</Typography>
               </Box>
-            )}
-          </DialogContent>
-          <DialogActions sx={{ px: 3, py: 2 }}>
-            <Button
-              onClick={() => setIsViewModalVisible(false)}
-              variant='contained'
-            >
-              关闭
-            </Button>
-          </DialogActions>
+            </Box>
+          )}
         </Dialog>
       </Box>
     </Box>

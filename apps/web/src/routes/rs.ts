@@ -17,6 +17,16 @@ const RsFormulaDetailPage = lazy(() => import('../pages/rs/RsFormulaDetailPage')
 const RsFormulaCreatePage = lazy(() => import('../pages/rs/RsFormulaCreatePage'));
 const RsMaterialListPage = lazy(() => import('../pages/rs/RsMaterialListPage'));
 const RsReportPage = lazy(() => import('../pages/rs/RsReportPage'));
+const RsBugPage = lazy(() => import('../pages/rs/RsBugPage'));
+const RsBuildPage = lazy(() => import('../pages/rs/RsBuildPage'));
+const RsCodePage = lazy(() => import('../pages/rs/RsCodePage'));
+const RsDeployPage = lazy(() => import('../pages/rs/RsDeployPage'));
+const RsDocPage = lazy(() => import('../pages/rs/RsDocPage'));
+const RsMilestonePage = lazy(() => import('../pages/rs/RsMilestonePage'));
+const RsReleasePage = lazy(() => import('../pages/rs/RsReleasePage'));
+const RsReviewPage = lazy(() => import('../pages/rs/RsReviewPage'));
+const RsSettingsPage = lazy(() => import('../pages/rs/RsSettingsPage'));
+const RsTestPage = lazy(() => import('../pages/rs/RsTestPage'));
 
 export const rsRoutes: RouteConfig[] = [
   // RS 仪表盘
@@ -126,6 +136,86 @@ export const rsRoutes: RouteConfig[] = [
   {
     path: '/rs/reports',
     element: RsReportPage,
+    requiredPermissions: [],
+    module: 'rs',
+    action: 'read',
+  },
+  // 缺陷管理
+  {
+    path: '/rs/bugs',
+    element: RsBugPage,
+    requiredPermissions: [],
+    module: 'rs',
+    action: 'read',
+  },
+  // 构建管理
+  {
+    path: '/rs/builds',
+    element: RsBuildPage,
+    requiredPermissions: [],
+    module: 'rs',
+    action: 'read',
+  },
+  // 代码管理
+  {
+    path: '/rs/code',
+    element: RsCodePage,
+    requiredPermissions: [],
+    module: 'rs',
+    action: 'read',
+  },
+  // 部署管理
+  {
+    path: '/rs/deploy',
+    element: RsDeployPage,
+    requiredPermissions: [],
+    module: 'rs',
+    action: 'read',
+  },
+  // 文档管理
+  {
+    path: '/rs/docs',
+    element: RsDocPage,
+    requiredPermissions: [],
+    module: 'rs',
+    action: 'read',
+  },
+  // 里程碑管理
+  {
+    path: '/rs/milestones',
+    element: RsMilestonePage,
+    requiredPermissions: [],
+    module: 'rs',
+    action: 'read',
+  },
+  // 版本发布
+  {
+    path: '/rs/releases',
+    element: RsReleasePage,
+    requiredPermissions: [],
+    module: 'rs',
+    action: 'read',
+  },
+  // 评审管理
+  {
+    path: '/rs/reviews',
+    element: RsReviewPage,
+    requiredPermissions: [],
+    module: 'rs',
+    action: 'read',
+  },
+  // 研发设置
+  {
+    path: '/rs/settings',
+    element: RsSettingsPage,
+    requiredPermissions: [],
+    module: 'rs',
+    action: 'read',
+  },
+  // 测试管理
+  {
+    path: '/rs/tests',
+    element: RsTestPage,
     requiredPermissions: [],
     module: 'rs',
     action: 'read',

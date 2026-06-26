@@ -39,7 +39,7 @@ const MeetingRoomManagementPage: React.FC = () => {
   const [rooms, setRooms] = useState<MeetingRoom[]>([]);
   const [bookings, setBookings] = useState<MeetingBooking[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | undefined>(undefined);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
@@ -62,7 +62,7 @@ const MeetingRoomManagementPage: React.FC = () => {
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    setError(null);
+    setError(undefined);
     try {
       const [roomsRes, bookingsRes] = await Promise.all([
         meetingRoomApi.list({
@@ -227,7 +227,7 @@ const MeetingRoomManagementPage: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const colors: Record<string, string> = {
+    const colors: Record<string, 'primary' | 'secondary' | 'default' | 'error' | 'info' | 'success' | 'warning'> = {
       active: 'success',
       inactive: 'default',
       confirmed: 'success',

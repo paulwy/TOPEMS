@@ -90,28 +90,28 @@ const NotificationStatsPage: React.FC = () => {
           title: '总通知数',
           value: stats.total_notifications,
           icon: <Bell size={24} />,
-          color: 'primary',
+          color: 'primary' as const,
         },
         {
           id: 'unread-notifications',
           title: '未读通知',
           value: stats.unread_notifications,
           icon: <Bell size={24} />,
-          color: 'error',
+          color: 'error' as const,
         },
         {
           id: 'read-notifications',
           title: '已读通知',
           value: stats.read_notifications,
           icon: <CheckCircle size={24} />,
-          color: 'success',
+          color: 'success' as const,
         },
         {
           id: 'archived-notifications',
           title: '归档通知',
           value: stats.archived_notifications,
           icon: <Archive size={24} />,
-          color: 'warning',
+          color: 'warning' as const,
         },
       ]
     : [];
@@ -120,7 +120,7 @@ const NotificationStatsPage: React.FC = () => {
     {
       id: 'notification-type-distribution',
       title: '通知类型分布',
-      type: 'bar',
+      type: 'bar' as const,
       dataKey: 'value',
       nameKey: 'name',
       data: getTypeStats(),
@@ -129,7 +129,7 @@ const NotificationStatsPage: React.FC = () => {
     {
       id: 'daily-trend',
       title: '近7天趋势',
-      type: 'line',
+      type: 'line' as const,
       dataKey: 'value',
       nameKey: 'name',
       data: getDailyStats(),

@@ -16,7 +16,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Plus, Edit, Wrench } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { assetApi, type Asset } from '@/api/erp';
-import { mesEquipmentApi, type MaintenanceRecord } from '@/api/mesEquipment';
+import { mesEquipmentApi, type MaintenanceRecord } from '@/api/mes';
 import { useAppStore } from '../../store';
 import {
   ListPageTemplate,

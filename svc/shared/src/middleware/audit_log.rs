@@ -3,6 +3,7 @@
 //! Records audit logs for critical operations.
 
 use std::sync::Arc;
+use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -171,7 +172,7 @@ pub struct AuditContext {
 }
 
 impl AuditContext {
-    pub fn from_request<B>(request: &axum::extract::Request<B>) -> Self {
+    pub fn from_request(request: &axum::extract::Request) -> Self {
         let mut ctx = Self::default();
         
         // Extract from extensions
@@ -208,7 +209,7 @@ impl AuditContext {
             }
         }
 
-        Self::default()
+        ctx
     }
 
     pub fn apply_to_log(&self, log: AuditLog) -> AuditLog {
@@ -225,9 +226,10 @@ impl AuditContext {
 }
 
 /// Audit logger trait for different storage backends
+#[async_trait]
 pub trait AuditLogger: Send + Sync {
-    fn log(&self, entry: &AuditLog) -> impl std::future::Future<Output = Result<(), String>> + Send;
-    fn query(&self, filter: &AuditFilter) -> impl std::future::Future<Output = Result<Vec<AuditLog>, String>> + Send;
+    async fn log(&self, entry: &AuditLog) -> Result<(), String>;
+    async fn query(&self, filter: &AuditFilter) -> Result<Vec<AuditLog>, String>;
 }
 
 /// Filter for querying audit logs
@@ -260,6 +262,7 @@ impl DbAuditLogger {
     }
 }
 
+#[async_trait]
 impl AuditLogger for DbAuditLogger {
     async fn log(&self, entry: &AuditLog) -> Result<(), String> {
         sqlx::query(
@@ -300,80 +303,27 @@ impl AuditLogger for DbAuditLogger {
     }
 
     async fn query(&self, filter: &AuditFilter) -> Result<Vec<AuditLog>, String> {
-        let mut conditions = Vec::new();
-        let mut params: Vec<Box<dyn sqlx::Encode<'_, sqlx::Postgres::Database> + Send + Sync>> = Vec::new();
-        let mut param_idx = 1;
-
-        if let Some(ref user_id) = filter.user_id {
-            conditions.push(format!("user_id = ${}", param_idx));
-            params.push(Box::new(user_id.clone()));
-            param_idx += 1;
-        }
-
-        if let Some(ref service) = filter.service {
-            conditions.push(format!("service = ${}", param_idx));
-            params.push(Box::new(service.clone()));
-            param_idx += 1;
-        }
-
-        if let Some(ref module) = filter.module {
-            conditions.push(format!("module = ${}", param_idx));
-            params.push(Box::new(module.clone()));
-            param_idx += 1;
-        }
-
-        if let Some(ref start_time) = filter.start_time {
-            conditions.push(format!("timestamp >= ${}", param_idx));
-            params.push(Box::new(*start_time));
-            param_idx += 1;
-        }
-
-        if let Some(ref end_time) = filter.end_time {
-            conditions.push(format!("timestamp <= ${}", param_idx));
-            params.push(Box::new(*end_time));
-            param_idx += 1;
-        }
-
-        if let Some(success) = filter.success {
-            conditions.push(format!("success = ${}", param_idx));
-            params.push(Box::new(success));
-            param_idx += 1;
-        }
-
-        let where_clause = if conditions.is_empty() {
-            String::new()
-        } else {
-            format!("WHERE {}", conditions.join(" AND "))
-        };
-
-        let limit = filter.limit.unwrap_or(100);
-        let offset = filter.offset.unwrap_or(0);
+        let limit = filter.limit.unwrap_or(100) as i64;
+        let offset = filter.offset.unwrap_or(0) as i64;
 
         let sql = format!(
             r#"
             SELECT * FROM sys_audit_logs
-            {}
             ORDER BY timestamp DESC
             LIMIT {} OFFSET {}
             "#,
-            where_clause, limit, offset
+            limit, offset
         );
 
-        // Simplified query without dynamic params for now
-        let rows = sqlx::query_as::<_, sqlx::postgres::PgRow>(
-            &format!(
-                "SELECT * FROM sys_audit_logs {} ORDER BY timestamp DESC LIMIT {} OFFSET {}",
-                where_clause, limit, offset
-            ),
-        )
-        .fetch_all(&self.pool)
-        .await
-        .map_err(|e| format!("Failed to query audit logs: {}", e))?;
+        let rows = sqlx::query(&sql)
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| format!("Failed to query audit logs: {}", e))?;
 
         Ok(rows
             .into_iter()
             .map(|row| {
-                // Map row to AuditLog struct
+                use sqlx::Row;
                 AuditLog {
                     id: row.get("id"),
                     timestamp: row.get("timestamp"),
@@ -420,6 +370,7 @@ impl Default for InMemoryAuditLogger {
     }
 }
 
+#[async_trait]
 impl AuditLogger for InMemoryAuditLogger {
     async fn log(&self, entry: &AuditLog) -> Result<(), String> {
         let mut logs = self.logs.lock().unwrap();
@@ -434,10 +385,10 @@ impl AuditLogger for InMemoryAuditLogger {
 }
 
 /// Middleware for automatic audit logging
-pub async fn audit_middleware<B>(
+pub async fn audit_middleware(
     logger: Arc<dyn AuditLogger>,
-    request: axum::extract::Request<B>,
-    next: axum::middleware::Next<B>,
+    request: axum::extract::Request,
+    next: axum::middleware::Next,
 ) -> axum::response::Response {
     let context = AuditContext::from_request(&request);
     let method = request.method().to_string();
@@ -465,8 +416,9 @@ pub async fn audit_middleware<B>(
     let log = AuditLog::new("api", "http", AuditCategory::DataAccess, action)
         .with_severity(severity)
         .with_resource("endpoint", &path)
-        .apply_to_log(AuditLog::new("api", "http", AuditCategory::DataAccess, action))
         .with_success(response.status().is_success(), None);
+    
+    let log = context.apply_to_log(log);
 
     if let Err(e) = logger.log(&log).await {
         tracing::error!("Failed to write audit log: {}", e);

@@ -14,13 +14,16 @@
 #![allow(clippy::redundant_closure)]
 #![allow(dead_code)]
 
-mod modules;
+mod api;
+mod models;
+mod services;
+mod plugin;
 
 use std::net::SocketAddr;
 
 use axum::{
     extract::State,
-    routing::{delete, get, post, put},
+    routing::get,
     Json, Router,
 };
 use axum_prometheus::PrometheusMetricLayer;
@@ -74,7 +77,7 @@ async fn main() {
         }
     };
 
-    if let Err(e) = modules::pdm::init_database(&pool).await {
+    if let Err(e) = models::init_database(&pool).await {
         tracing::warn!("PDM database init warning: {}", e);
     }
 
@@ -95,95 +98,15 @@ async fn main() {
     let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
-        .route("/api/plugins/info", get(modules::pdm::plugin::get_plugin_info))
-        .route("/api/plugins/health", get(modules::pdm::plugin::plugin_health_check))
+        .route("/api/plugins/info", get(plugin::get_plugin_info))
+        .route("/api/plugins/health", get(plugin::plugin_health_check))
         .route("/api", get(|| get_api_info_handler("pdm-service")))
         .route("/api/info", get(|| get_api_info_handler("pdm-service")))
         .route("/metrics", get(move || async move { metric_handle.render() }));
 
     // Protected routes (auth required)
     let protected_routes = Router::new()
-        // ===== PDM routes (prefix: /api/pdm) =====
-        // Product
-        .route("/api/pdm/products", get(modules::pdm::product::list_products))
-        .route("/api/pdm/products", post(modules::pdm::product::create_product))
-        .route("/api/pdm/products/{id}", get(modules::pdm::product::get_product))
-        .route("/api/pdm/products/{id}", put(modules::pdm::product::update_product))
-        .route("/api/pdm/products/{id}", delete(modules::pdm::product::delete_product))
-        // Material
-        .route("/api/pdm/materials", get(modules::pdm::material::list_materials))
-        .route("/api/pdm/materials", post(modules::pdm::material::create_material))
-        .route("/api/pdm/materials/{id}", get(modules::pdm::material::get_material))
-        .route("/api/pdm/materials/{id}", put(modules::pdm::material::update_material))
-        // Configuration
-        .route("/api/pdm/configurations", get(modules::pdm::configuration::list_configurations))
-        .route("/api/pdm/configurations", post(modules::pdm::configuration::create_configuration))
-        .route("/api/pdm/configurations/{id}", get(modules::pdm::configuration::get_configuration))
-        .route("/api/pdm/configurations/{id}", put(modules::pdm::configuration::update_configuration))
-        // Document
-        .route("/api/pdm/documents", get(modules::pdm::document::list_documents))
-        .route("/api/pdm/documents", post(modules::pdm::document::create_document))
-        .route("/api/pdm/documents/{id}", get(modules::pdm::document::get_document))
-        .route("/api/pdm/documents/{id}", put(modules::pdm::document::update_document))
-        .route("/api/pdm/documents/{id}", delete(modules::pdm::document::delete_document))
-        // Document Approval
-        .route("/api/pdm/documents/{id}/approve", post(modules::pdm::document::start_document_approval))
-        .route("/api/pdm/documents/{id}/approval-history", get(modules::pdm::document::get_document_approval_history))
-        .route("/api/pdm/documents/pending-approval", get(modules::pdm::document::list_pending_documents))
-        // Version
-        .route("/api/pdm/versions", get(modules::pdm::version::list_versions))
-        .route("/api/pdm/versions", post(modules::pdm::version::create_version))
-        .route("/api/pdm/versions/{id}", get(modules::pdm::version::get_version))
-        .route("/api/pdm/versions/{id}", put(modules::pdm::version::update_version))
-        // Production Processes
-        .route("/api/pdm/production-processes", get(modules::pdm::production_process::list_processes))
-        .route("/api/pdm/production-processes", post(modules::pdm::production_process::create_process))
-        .route("/api/pdm/production-processes/{id}", get(modules::pdm::production_process::get_process))
-        .route("/api/pdm/production-processes/{id}", put(modules::pdm::production_process::update_process))
-        .route("/api/pdm/production-processes/{id}", delete(modules::pdm::production_process::delete_process))
-        // Production Steps
-        .route("/api/pdm/production-steps", get(modules::pdm::production_step::list_steps))
-        .route("/api/pdm/production-steps", post(modules::pdm::production_step::create_step))
-        .route("/api/pdm/production-steps/{id}", get(modules::pdm::production_step::get_step))
-        .route("/api/pdm/production-steps/{id}", put(modules::pdm::production_step::update_step))
-        .route("/api/pdm/production-steps/{id}", delete(modules::pdm::production_step::delete_step))
-        // Production Formulas
-        .route("/api/pdm/production-formulas", get(modules::pdm::production_formula::list_formulas))
-        .route("/api/pdm/production-formulas", post(modules::pdm::production_formula::create_formula))
-        .route("/api/pdm/production-formulas/{id}", get(modules::pdm::production_formula::get_formula))
-        .route("/api/pdm/production-formulas/{id}", put(modules::pdm::production_formula::update_formula))
-        .route("/api/pdm/production-formulas/{id}", delete(modules::pdm::production_formula::delete_formula))
-        // Production Batches
-        .route("/api/pdm/production-batches", get(modules::pdm::production_batch::list_batches))
-        .route("/api/pdm/production-batches", post(modules::pdm::production_batch::create_batch))
-        .route("/api/pdm/production-batches/{id}", get(modules::pdm::production_batch::get_batch))
-        .route("/api/pdm/production-batches/{id}", put(modules::pdm::production_batch::update_batch))
-        .route("/api/pdm/production-batches/{id}", delete(modules::pdm::production_batch::delete_batch))
-        // Production Statistics
-        .route("/api/pdm/production-statistics", get(modules::pdm::production_statistics::list_statistics))
-        .route("/api/pdm/statistics", get(modules::pdm::production_statistics::get_statistics))
-
-        // Change Notices (ECN)
-        .route("/api/pdm/change-notices", get(modules::pdm::change_notice::list_change_notices))
-        .route("/api/pdm/change-notices", post(modules::pdm::change_notice::create_change_notice))
-        .route("/api/pdm/change-notices/{id}", get(modules::pdm::change_notice::get_change_notice))
-        .route("/api/pdm/change-notices/{id}", put(modules::pdm::change_notice::update_change_notice))
-        .route("/api/pdm/change-notices/{id}", delete(modules::pdm::change_notice::delete_change_notice))
-        .route("/api/pdm/change-notices/{id}/submit", post(modules::pdm::change_notice::submit_change_notice))
-        .route("/api/pdm/change-notices/{id}/approve", post(modules::pdm::change_notice::approve_change_notice))
-        .route("/api/pdm/change-notices/{id}/reject", post(modules::pdm::change_notice::reject_change_notice))
-
-        // Workflows
-        .route("/api/pdm/workflows", get(modules::pdm::workflow::list_workflows))
-        .route("/api/pdm/workflows", post(modules::pdm::workflow::create_workflow))
-        .route("/api/pdm/workflows/{id}", get(modules::pdm::workflow::get_workflow))
-        .route("/api/pdm/workflows/{id}", put(modules::pdm::workflow::update_workflow))
-        .route("/api/pdm/workflows/{id}", delete(modules::pdm::workflow::delete_workflow))
-        .route("/api/pdm/workflows/start", post(modules::pdm::workflow::start_workflow))
-        .route("/api/pdm/workflow-instances", get(modules::pdm::workflow::list_workflow_instances))
-        .route("/api/pdm/workflow-instances/{id}", get(modules::pdm::workflow::get_workflow_instance))
-        .route("/api/pdm/workflow-instances/{id}/advance", post(modules::pdm::workflow::advance_workflow))
-
+        .merge(api::create_api_routes())
         // Health & Metrics
         .route("/api/v1/health/detailed", get(detailed_health))
         .layer(axum::middleware::from_fn_with_state(

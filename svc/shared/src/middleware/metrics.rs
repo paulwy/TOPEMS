@@ -4,7 +4,7 @@
 
 use std::sync::Arc;
 use std::time::Instant;
-use prometheus::{Counter, CounterVec, Gauge, GaugeVec, Histogram, HistogramOpts, HistogramVec, Registry, TextEncoder, Encoder};
+use prometheus::{CounterVec, Gauge, GaugeVec, HistogramOpts, HistogramVec, Registry, TextEncoder, Encoder};
 
 /// HTTP metrics collector
 #[derive(Clone)]
@@ -125,10 +125,10 @@ impl BusinessMetrics {
 }
 
 /// Metrics middleware for Axum
-pub async fn metrics_middleware<B>(
+pub async fn metrics_middleware(
     metrics: Arc<HttpMetrics>,
-    request: axum::extract::Request<B>,
-    next: axum::middleware::Next<B>,
+    request: axum::extract::Request,
+    next: axum::middleware::Next,
 ) -> axum::response::Response {
     let start = Instant::now();
     let method = request.method().to_string();

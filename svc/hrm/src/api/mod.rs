@@ -2,7 +2,7 @@ use axum::{extract::FromRef, Router};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use std::time::Instant;
-use topems_shared::{AuthState, CacheService, SystemMetrics};
+use topems_shared::{AuthState, CacheService, FieldEncryptionService, SystemMetrics};
 
 pub mod attendance;
 pub mod audit;
@@ -30,6 +30,7 @@ pub struct ApiState {
     pub metrics: Arc<SystemMetrics>,
     pub start_time: Instant,
     pub cache: Arc<dyn CacheService + Send + Sync>,
+    pub encryption: Arc<FieldEncryptionService>,
 }
 
 impl FromRef<ApiState> for AuthState {

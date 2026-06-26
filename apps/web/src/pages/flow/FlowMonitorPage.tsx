@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { logger } from '@/utils/logger';
-import { flowApi } from '@/api/flow';
-import type { WorkflowInstance, StatisticsResponse } from '@/api/flow';
+import { workflowApi } from '@/api/workflow';
+import type { WorkflowInstance, StatisticsResponse } from '@/api/workflow';
 import { useNotification } from '@/hooks/useNotification';
 import {
   Box,
@@ -79,8 +79,8 @@ const FlowMonitorPage: React.FC = () => {
     try {
       setLoading(true);
       const [instancesRes, statsRes] = await Promise.all([
-        flowApi.listInstances(),
-        flowApi.getStatistics(),
+        workflowApi.listInstances(),
+        workflowApi.getStatistics(),
       ]);
 
       if (instancesRes.success && instancesRes.data) {
@@ -103,8 +103,8 @@ const FlowMonitorPage: React.FC = () => {
 
   const filteredData = data.filter((item) => {
     const matchesSearch =
-      item.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (item.data?.applicant?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
+      String(item.id).toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ((item.data?.applicant ? String(item.data.applicant) : '').toLowerCase().includes(searchTerm.toLowerCase()) || false);
     const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -116,7 +116,7 @@ const FlowMonitorPage: React.FC = () => {
   const runningCount = useMemo(() => data.filter((d) => d.status === 'running').length, [data]);
   const completedCount = useMemo(() => data.filter((d) => d.status === 'completed').length, [data]);
 
-  const uniqueFlowNames = [...new Set(data.map((d) => d.data?.name || d.id))];
+  const uniqueFlowNames = [...new Set(data.map((d) => String(d.data?.name || d.id)))];
 
   const handleView = (instance: WorkflowInstance) => {
     logger.info('查看实例:', instance.id);
@@ -134,7 +134,7 @@ const FlowMonitorPage: React.FC = () => {
   const confirmTerminate = async () => {
     if (!selectedInstance) return;
     try {
-      await flowApi.instances.delete(selectedInstance.id);
+      await workflowApi.instances.delete(selectedInstance.id);
       setData((prev) => prev.filter((d) => d.id !== selectedInstance.id));
       success('流程实例已终止');
     } catch (err: unknown) {
@@ -355,9 +355,9 @@ const FlowMonitorPage: React.FC = () => {
                       },
                     }}
                   >
-                    <td>{instance.id}</td>
-                    <td>{instance.data?.name || instance.workflow_id}</td>
-                    <td>{instance.data?.applicant || instance.initiator_id || '-'}</td>
+                    <td>{String(instance.id)}</td>
+                    <td>{String(instance.data?.name || instance.workflow_id || '-')}</td>
+                    <td>{String(instance.data?.applicant || instance.initiator_id || '-')}</td>
                     <td>{instance.current_node || '-'}</td>
                     <td>
                       <Chip

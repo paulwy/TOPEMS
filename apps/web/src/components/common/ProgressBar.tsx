@@ -400,3 +400,5 @@ export default function ProgressBar({
       return renderLinear();
   }
 }
+
+export { ProgressBar };

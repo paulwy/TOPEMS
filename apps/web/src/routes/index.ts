@@ -24,4 +24,5 @@ export { pluginRoutes } from './plugin';
 export { reportRoutes } from './report';
 export { mobileRoutes } from './mobile';
 export { pdmRoutes } from './pdm';
+export { srmRoutes } from './srm';
 export { type RouteConfig, lazyWithRetry } from './utils';

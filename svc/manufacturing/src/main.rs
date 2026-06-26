@@ -14,13 +14,17 @@
 #![allow(clippy::redundant_closure)]
 #![allow(dead_code)]
 
-mod modules;
+mod api;
+mod models;
+mod services;
+mod plugin;
+mod shared;
 
 use std::net::SocketAddr;
 
 use axum::{
     extract::State,
-    routing::{delete, get, post, put},
+    routing::get,
     Json, Router,
 };
 use axum_prometheus::PrometheusMetricLayer;
@@ -74,12 +78,8 @@ async fn main() {
         }
     };
 
-    // Initialize databases for all modules
-    if let Err(e) = modules::mes::init_database(&pool).await {
-        tracing::warn!("MES module database init warning: {}", e);
-    }
-    if let Err(e) = modules::pdm::init_database(&pool).await {
-        tracing::warn!("PDM module database init warning: {}", e);
+    if let Err(e) = models::init_database(&pool).await {
+        tracing::warn!("Manufacturing database init warning: {}", e);
     }
 
     let auth_state = AuthState::from_env();
@@ -101,71 +101,13 @@ async fn main() {
         .route("/health", get(health))
         .route("/api", get(|| get_api_info_handler("manufacturing-service")))
         .route("/api/info", get(|| get_api_info_handler("manufacturing-service")))
-        .route("/api/plugins/info", get(modules::mes::plugin::get_plugin_info))
-        .route("/api/plugins/health", get(modules::mes::plugin::plugin_health_check))
+        .route("/api/plugins/info", get(plugin::get_plugin_info))
+        .route("/api/plugins/health", get(plugin::plugin_health_check))
         .route("/metrics", get(move || async move { metric_handle.render() }));
 
     // Protected routes (auth required)
     let protected_routes = Router::new()
-        // ===== MES routes (prefix: /api/mfg) =====
-        // Production Order
-        .route("/api/mfg/production-order", get(modules::mes::production_order::list_production_orders))
-        .route("/api/mfg/production-order", post(modules::mes::production_order::create_production_order))
-        .route("/api/mfg/production-order/{id}", get(modules::mes::production_order::get_production_order))
-        .route("/api/mfg/production-order/{id}", put(modules::mes::production_order::update_production_order))
-        .route("/api/mfg/production-order/{id}", delete(modules::mes::production_order::delete_production_order))
-        .route("/api/mfg/production-order/{id}/start", post(modules::mes::production_order::start_production_order))
-        .route("/api/mfg/production-order/{id}/complete", post(modules::mes::production_order::complete_production_order))
-        .route("/api/mfg/production-order/{id}/cancel", post(modules::mes::production_order::cancel_production_order))
-        // Production Process
-        .route("/api/mfg/process", get(modules::mes::production_process::list_processes))
-        .route("/api/mfg/process", post(modules::mes::production_process::create_process))
-        .route("/api/mfg/process/{id}", get(modules::mes::production_process::get_process))
-        .route("/api/mfg/process/{id}", put(modules::mes::production_process::update_process))
-        .route("/api/mfg/process/{id}", delete(modules::mes::production_process::delete_process))
-        // Production Record
-        .route("/api/mfg/record", get(modules::mes::production_record::list_records))
-        .route("/api/mfg/record", post(modules::mes::production_record::create_record))
-        .route("/api/mfg/record/{id}", get(modules::mes::production_record::get_record))
-        // Equipment
-        .route("/api/mfg/equipment", get(modules::mes::equipment::list_equipment))
-        .route("/api/mfg/equipment", post(modules::mes::equipment::create_equipment))
-        .route("/api/mfg/equipment/{id}", get(modules::mes::equipment::get_equipment))
-        .route("/api/mfg/equipment/{id}", put(modules::mes::equipment::update_equipment))
-        // Work Station
-        .route("/api/mfg/work-station", get(modules::mes::work_station::list_work_stations))
-        .route("/api/mfg/work-station", post(modules::mes::work_station::create_work_station))
-        .route("/api/mfg/work-station/{id}", get(modules::mes::work_station::get_work_station))
-        .route("/api/mfg/work-station/{id}", put(modules::mes::work_station::update_work_station))
-
-        // ===== PDM routes (prefix: /api/mfg/pdm) =====
-        // Product
-        .route("/api/mfg/pdm/product", get(modules::pdm::product::list_products))
-        .route("/api/mfg/pdm/product", post(modules::pdm::product::create_product))
-        .route("/api/mfg/pdm/product/{id}", get(modules::pdm::product::get_product))
-        .route("/api/mfg/pdm/product/{id}", put(modules::pdm::product::update_product))
-        .route("/api/mfg/pdm/product/{id}", delete(modules::pdm::product::delete_product))
-        // Material
-        .route("/api/mfg/pdm/material", get(modules::pdm::material::list_materials))
-        .route("/api/mfg/pdm/material", post(modules::pdm::material::create_material))
-        .route("/api/mfg/pdm/material/{id}", get(modules::pdm::material::get_material))
-        .route("/api/mfg/pdm/material/{id}", put(modules::pdm::material::update_material))
-        // Configuration
-        .route("/api/mfg/pdm/configuration", get(modules::pdm::configuration::list_configurations))
-        .route("/api/mfg/pdm/configuration", post(modules::pdm::configuration::create_configuration))
-        .route("/api/mfg/pdm/configuration/{id}", get(modules::pdm::configuration::get_configuration))
-        .route("/api/mfg/pdm/configuration/{id}", put(modules::pdm::configuration::update_configuration))
-        // Document
-        .route("/api/mfg/pdm/document", get(modules::pdm::document::list_documents))
-        .route("/api/mfg/pdm/document", post(modules::pdm::document::create_document))
-        .route("/api/mfg/pdm/document/{id}", get(modules::pdm::document::get_document))
-        .route("/api/mfg/pdm/document/{id}", put(modules::pdm::document::update_document))
-        // Version
-        .route("/api/mfg/pdm/version", get(modules::pdm::version::list_versions))
-        .route("/api/mfg/pdm/version", post(modules::pdm::version::create_version))
-        .route("/api/mfg/pdm/version/{id}", get(modules::pdm::version::get_version))
-        .route("/api/mfg/pdm/version/{id}", put(modules::pdm::version::update_version))
-
+        .merge(api::create_api_routes())
         // Health & Metrics
         .route("/api/v1/health/detailed", get(detailed_health))
         .layer(axum::middleware::from_fn_with_state(
@@ -190,7 +132,7 @@ async fn main() {
     // 启动时自动注册到统一核心
     let core_url = std::env::var("CORE_URL").ok();
     tokio::spawn(async move {
-        modules::mes::plugin::auto_register_to_core(core_url.as_deref()).await;
+        plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
     axum::serve(

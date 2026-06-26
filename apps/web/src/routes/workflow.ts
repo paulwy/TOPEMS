@@ -15,6 +15,11 @@ const FlowApprovalDetailPage = lazy(() => import('../pages/workflow/FlowApproval
 const FlowNotificationCenter = lazy(() => import('../pages/workflow/FlowNotificationCenter'));
 const FlowStatisticsPage = lazy(() => import('../pages/workflow/FlowStatisticsPage'));
 const FlowVersionHistoryPage = lazy(() => import('../pages/workflow/FlowVersionHistoryPage'));
+const FlowDefinitionPage = lazy(() => import('../pages/flow/FlowDefinitionPage'));
+const FlowDesignerPage = lazy(() => import('../pages/flow/FlowDesignerPage'));
+const FlowMonitorPage = lazy(() => import('../pages/flow/FlowMonitorPage'));
+const FlowSettingsPage = lazy(() => import('../pages/flow/FlowSettingsPage'));
+const FlowTemplatePage = lazy(() => import('../pages/flow/FlowTemplatePage'));
 
 export const workflowRoutes: RouteConfig[] = [
   {
@@ -83,6 +88,41 @@ export const workflowRoutes: RouteConfig[] = [
   {
     path: '/flow/history',
     element: FlowVersionHistoryPage,
+    requiredPermissions: ['workflow:read'],
+    module: 'workflow',
+    action: 'read',
+  },
+  {
+    path: '/flow/definition',
+    element: FlowDefinitionPage,
+    requiredPermissions: ['workflow:read'],
+    module: 'workflow',
+    action: 'read',
+  },
+  {
+    path: '/flow/flow-designer',
+    element: FlowDesignerPage,
+    requiredPermissions: ['workflow:write'],
+    module: 'workflow',
+    action: 'write',
+  },
+  {
+    path: '/flow/monitor',
+    element: FlowMonitorPage,
+    requiredPermissions: ['workflow:read'],
+    module: 'workflow',
+    action: 'read',
+  },
+  {
+    path: '/flow/settings',
+    element: FlowSettingsPage,
+    requiredPermissions: ['workflow:read'],
+    module: 'workflow',
+    action: 'read',
+  },
+  {
+    path: '/flow/templates',
+    element: FlowTemplatePage,
     requiredPermissions: ['workflow:read'],
     module: 'workflow',
     action: 'read',

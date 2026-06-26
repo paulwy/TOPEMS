@@ -9,6 +9,9 @@ const ScmSupplierPage = lazy(() => import('../pages/scm/ScmSupplierPage'));
 const ScmPurchaseOrderPage = lazy(() => import('../pages/scm/ScmPurchaseOrderPage'));
 const ScmPurchaseItemPage = lazy(() => import('../pages/scm/ScmPurchaseItemPage'));
 const ScmEvaluationPage = lazy(() => import('../pages/scm/ScmEvaluationPage'));
+const ScmDeliveryAppointmentPage = lazy(
+  () => import('../pages/scm/ScmDeliveryAppointmentPage')
+);
 const SupplierDetailPage = lazy(() => import('../pages/wms/SupplierDetailPage'));
 
 export const scmRoutes: RouteConfig[] = [
@@ -50,6 +53,13 @@ export const scmRoutes: RouteConfig[] = [
   {
     path: '/scm/evaluations',
     element: ScmEvaluationPage,
+    requiredPermissions: ['scm:read'],
+    module: 'scm',
+    action: 'read',
+  },
+  {
+    path: '/scm/delivery-appointments',
+    element: ScmDeliveryAppointmentPage,
     requiredPermissions: ['scm:read'],
     module: 'scm',
     action: 'read',

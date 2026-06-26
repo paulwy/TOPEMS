@@ -23,6 +23,13 @@ axum-prometheus.workspace = true
 prometheus.workspace = true
 anyhow.workspace = true
 reqwest.workspace = true
+rand = "0.8"
+dashmap = { workspace = true }
+csv = { workspace = true }
+lopdf = { workspace = true }
+tokio-stream = { workspace = true }
+futures = { workspace = true }
+once_cell = { workspace = true }
 
 [[bin]]
 name = "bi-service"

@@ -274,8 +274,8 @@ const RsFormulaDetailPage: React.FC = () => {
     title: formula.name,
     subtitle: `编码: ${formula.code}`,
     tags: [
-      { label: formula.version },
-      { label: getStatusLabel(formula.status), color: getStatusColor(formula.status) },
+      formula.version,
+      getStatusLabel(formula.status),
     ],
     stats: [
       { label: '创建人', value: formula.created_by },

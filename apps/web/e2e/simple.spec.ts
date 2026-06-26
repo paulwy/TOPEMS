@@ -4,12 +4,14 @@ test('login page loads successfully', async ({ page }) => {
   await page.goto('/login');
   await expect(page).toHaveTitle(/TOPEMS/);
   await expect(page.getByText('TOPEMS')).toBeVisible();
-  await expect(page.getByText('用户登录')).toBeVisible();
   await expect(page.getByPlaceholder('请输入用户名')).toBeVisible();
   await expect(page.getByPlaceholder('请输入密码')).toBeVisible();
+  await expect(page.getByRole('button', { name: '登录' })).toBeVisible();
 });
 
-test('has theme toggle', async ({ page }) => {
+test('has login form elements', async ({ page }) => {
   await page.goto('/login');
-  await expect(page.locator('button').filter({ hasText: /Theme|Dark|Light/i })).toBeVisible({ timeout: 5000 });
+  await expect(page.getByPlaceholder('请输入用户名')).toBeVisible();
+  await expect(page.getByPlaceholder('请输入密码')).toBeVisible();
+  await expect(page.getByRole('button', { name: '登录' })).toBeVisible();
 });

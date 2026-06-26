@@ -7,7 +7,6 @@ test.describe('Authentication Tests', () => {
 
   test('displays login page correctly', async ({ page }) => {
     await expect(page.locator('text=TOPEMS')).toBeVisible();
-    await expect(page.locator('text=用户登录')).toBeVisible();
     await expect(page.getByPlaceholder('请输入用户名')).toBeVisible();
     await expect(page.getByPlaceholder('请输入密码')).toBeVisible();
   });

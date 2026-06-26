@@ -248,12 +248,12 @@ const SrmEvaluationPage: React.FC = () => {
       {
         label: '查看详情',
         icon: <Eye size={16} />,
-        onClick: (row) => navigate(`/srm/evaluations/${row.id}`),
+        onClick: (row) => navigate(`/srm/evaluations`),
       },
       {
         label: '编辑',
         icon: <Edit size={16} />,
-        onClick: (row) => navigate(`/srm/evaluations/${row.id}/edit`),
+        onClick: (row) => navigate(`/srm/evaluations`),
       },
       {
         label: '删除',
@@ -321,14 +321,7 @@ const SrmEvaluationPage: React.FC = () => {
             setPage(0);
           }
         }}
-        actions={[
-          {
-            label: '新建评估',
-            icon: <Plus size={18} />,
-            onClick: () => navigate('/srm/evaluations/create'),
-            variant: 'contained',
-          },
-        ]}
+        actions={[]}
         rowActions={rowActions}
         getRowId={(row) => row.id}
         onRefresh={loadData}

@@ -2,13 +2,13 @@ import React, { Suspense, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import { AuthProvider, useAuth } from './hooks/useAuth';
-import { ProtectedRoute, GuestRoute } from './components/ProtectedRoute';
+import { ProtectedRoute, GuestRoute } from './components/auth/ProtectedRoute';
 import { ModuleGate } from './components/PermissionGate';
 import ErrorBoundary from './components/ErrorBoundary';
 import { NotificationProvider } from './components/notification/NotificationProvider';
 import { LoadingProvider } from './components/LoadingProvider';
 import { ThemeProvider } from './components/ThemeProvider';
-import { LoadingSpinner } from './components/LoadingSpinner';
+import { LoadingSpinner } from './components/common/LoadingSpinner';
 import { TemplateDemoPage } from './components/templates/index';
 import { GlobalLayout } from './components/layout';
 import { DynamicRouter } from './modules/loader/DynamicRouter';
@@ -34,15 +34,18 @@ import {
   notificationRoutes,
   docsRoutes,
   aiRoutes,
+  imRoutes,
   professionalRoutes,
   monitorRoutes,
   mesRoutes,
   scmRoutes,
   wmsRoutes,
   gisRoutes,
+  pluginRoutes,
   reportRoutes,
   mobileRoutes,
   pdmRoutes,
+  srmRoutes,
   type RouteConfig,
 } from './routes';
 
@@ -222,9 +225,12 @@ const AppContent: React.FC = () => {
         {renderRoutes(scmRoutes)}
         {renderRoutes(wmsRoutes)}
         {renderRoutes(gisRoutes)}
+        {renderRoutes(pluginRoutes)}
         {renderRoutes(reportRoutes)}
         {renderRoutes(mobileRoutes)}
         {renderRoutes(pdmRoutes)}
+        {renderRoutes(srmRoutes)}
+        {renderRoutes(imRoutes)}
 
         {/* Core module routes - only load via Module Federation when not in static mode */}
         {!IS_STATIC_MODE && (
@@ -310,7 +316,7 @@ const AppContent: React.FC = () => {
           path='/config-debug'
           element={
             <Navigate
-              to='/debug'
+              to='/system/config-debug'
               replace
             />
           }

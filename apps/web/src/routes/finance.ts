@@ -23,7 +23,6 @@ const FinanceBudgetPage = lazy(() => import('../pages/finance/FinanceBudgetPage'
 const BudgetManagementPage = lazy(() => import('../pages/finance/BudgetManagementPage'));
 const FinanceBudgetDetailPage = lazy(() => import('../pages/finance/FinanceBudgetDetailPage'));
 const FinanceReportsPage = lazy(() => import('../pages/finance/FinanceReportsPage'));
-const FinancialReportsPage = lazy(() => import('../pages/finance/FinancialReportsPage'));
 const ConsolidationScopePage = lazy(() => import('../pages/finance/ConsolidationScopePage'));
 const ConsolidationReportsPage = lazy(() => import('../pages/finance/ConsolidationReportsPage'));
 const OpeningBalancePage = lazy(() => import('../pages/finance/OpeningBalancePage'));
@@ -157,7 +156,7 @@ export const financeRoutes: RouteConfig[] = [
   },
   {
     path: '/finance/financial-reports',
-    element: FinancialReportsPage,
+    element: FinanceReportsPage,
     requiredPermissions: ['finance:read'],
     module: 'finance',
     action: 'read',

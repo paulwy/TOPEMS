@@ -6,7 +6,7 @@ use std::collections::HashMap;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use hmac::{Hmac, Mac};
-use sha2::Sha256;
+use sha2::{Digest, Sha256};
 
 type HmacSha256 = Hmac<Sha256>;
 
@@ -224,7 +224,7 @@ impl SignatureVerifier {
         mac.update(string_to_sign.as_bytes());
         let result = mac.finalize();
         
-        Ok(format!("{:x}", result))
+        Ok(format!("{:x}", result.into_bytes()))
     }
 }
 
@@ -293,10 +293,10 @@ pub fn extract_nonce(headers: &axum::http::HeaderMap) -> Option<String> {
 }
 
 /// Middleware for verifying API signatures
-pub async fn signature_middleware<B>(
+pub async fn signature_middleware(
     verifier: SignatureVerifier,
-    request: axum::extract::Request<B>,
-    next: axum::middleware::Next<B>,
+    request: axum::extract::Request,
+    next: axum::middleware::Next,
 ) -> Result<axum::response::Response, axum::http::StatusCode> {
     let headers = request.headers();
     
@@ -316,10 +316,8 @@ pub async fn signature_middleware<B>(
     
     let mut header_map = HashMap::new();
     for (name, value) in headers.iter() {
-        if let Ok(name_str) = name.to_str() {
-            if let Ok(value_str) = value.to_str() {
-                header_map.insert(name_str, value_str);
-            }
+        if let Ok(value_str) = value.to_str() {
+            header_map.insert(name.as_str(), value_str);
         }
     }
 
@@ -336,8 +334,8 @@ pub async fn signature_middleware<B>(
         sig_data = sig_data.with_query_string(query);
     }
     
-    if let Some(n) = nonce {
-        sig_data = sig_data.with_nonce(&n);
+    if let Some(ref n) = nonce {
+        sig_data = sig_data.with_nonce(n);
     }
 
     // Verify signature

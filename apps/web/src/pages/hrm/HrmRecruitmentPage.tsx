@@ -166,7 +166,7 @@ const HrmRecruitmentPage: React.FC = () => {
       // 转换候选人数据
       const candidates =
         candidatesResult.status === 'fulfilled' ? candidatesResult.value.data?.items || [] : [];
-      const transformedCandidates: Candidate[] = candidates.map((candidate) => {
+      const transformedCandidates: Candidate[] = candidates.map((candidate: ApiCandidate) => {
         const pos = positionMap[candidate.position_id || ''];
         const opening = transformedPositions.find((o) => o.id === candidate.job_opening_id);
         return {

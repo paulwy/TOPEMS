@@ -15,6 +15,7 @@ import {
   DialogActions,
   Grid,
   Paper,
+  IconButton,
 } from '@mui/material';
 import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
@@ -34,6 +35,7 @@ import {
   X,
 } from 'lucide-react';
 import { BackButton } from '@/components/common';
+import { PageHeader } from '@/components';
 import type { AuditLog as LimsAuditLog } from '@/api/lims';
 import { auditLimsApi } from '@/api/lims';
 import type { AuditLog as RsAuditLog } from '@/api/rs';
@@ -43,7 +45,7 @@ import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
 
-import { ModeToggle } from '@/components/ModeToggle';
+import { ModeToggle } from '@/components/theme/ModeToggle';
 
 interface AuditLogPageProps {
   onNavigate?: (page: string) => void;

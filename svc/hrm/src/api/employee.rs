@@ -90,7 +90,7 @@ async fn list_employees(
     let page = params.page.unwrap_or(1).max(1);
     let page_size = params.page_size.unwrap_or(20).min(100);
 
-    let service = EmployeeService::new(state.db.clone());
+    let service = EmployeeService::new(state.db.clone(), (*state.encryption).clone());
     let result = service
         .list_employees(
             page,
@@ -133,7 +133,7 @@ async fn get_employee(
         }
     }
 
-    let service = EmployeeService::new(state.db.clone());
+    let service = EmployeeService::new(state.db.clone(), (*state.encryption).clone());
     let result = service.get_employee(&id).await;
 
     if let ApiResponse {
@@ -249,7 +249,7 @@ async fn create_employee(
         return e;
     }
 
-    let service = EmployeeService::new(state.db.clone());
+    let service = EmployeeService::new(state.db.clone(), (*state.encryption).clone());
     let result = service.create_employee(req).await;
 
     let status_str: String;
@@ -322,7 +322,7 @@ async fn update_employee(
         return e;
     }
 
-    let service = EmployeeService::new(state.db.clone());
+    let service = EmployeeService::new(state.db.clone(), (*state.encryption).clone());
     let result = service.update_employee(&id, req).await;
 
     if result.code == 200 {
@@ -381,7 +381,7 @@ async fn delete_employee(
         return e;
     }
 
-    let service = EmployeeService::new(state.db.clone());
+    let service = EmployeeService::new(state.db.clone(), (*state.encryption).clone());
     let result = service.delete_employee(&id).await;
 
     if result.code == 200 {

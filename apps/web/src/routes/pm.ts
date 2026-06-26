@@ -13,6 +13,7 @@ const PmContractDetailPage = lazy(() => import('../pages/pm/PmContractDetailPage
 const PmContractCreatePage = lazy(() => import('../pages/pm/PmContractCreatePage'));
 const PmTemplatePage = lazy(() => import('../pages/pm/PmTemplatePage'));
 const PmReportPage = lazy(() => import('../pages/pm/PmReportPage'));
+const PmResourcePage = lazy(() => import('../pages/pm/PmResourcePage'));
 const ProjectDashboardPage = lazy(() => import('../pages/shared/ProjectDashboardPage'));
 
 export const pmRoutes: RouteConfig[] = [
@@ -96,6 +97,13 @@ export const pmRoutes: RouteConfig[] = [
   {
     path: '/pm/reports/:projectId',
     element: PmReportPage,
+    requiredPermissions: [],
+    module: 'pm',
+    action: 'read',
+  },
+  {
+    path: '/pm/resources',
+    element: PmResourcePage,
     requiredPermissions: [],
     module: 'pm',
     action: 'read',

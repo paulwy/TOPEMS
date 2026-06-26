@@ -40,7 +40,8 @@ import {
 
 import { pmApi } from '@/api/pm';
 import type { PmStatistics, ProjectBenefit } from '@/api/pm';
-import { StatsPageTemplate, type StatCard, type ChartConfig } from '@/components/templates';
+import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
+import type { StatCard, ChartConfig } from '@/components/templates/StatsPageTemplate';
 
 const PmReportPage: React.FC = () => {
   const navigate = useNavigate();

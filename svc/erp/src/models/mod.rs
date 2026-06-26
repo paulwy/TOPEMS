@@ -6,6 +6,7 @@ pub mod dict;
 pub mod finance;
 pub mod meeting_room;
 pub mod office_supplies;
+pub mod production_order;
 pub mod uuid_helpers;
 pub mod vehicle;
 

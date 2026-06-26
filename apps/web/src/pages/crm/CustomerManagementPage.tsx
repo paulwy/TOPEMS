@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  TextField,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -9,20 +8,16 @@ import {
   Box,
   Typography,
   Grid,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   OutlinedInput,
 } from '@mui/material';
-import { Button } from '@mui/material';
+import { FormField, FormSelect, ActionButton } from '@/components/common';
 import type {
   Customer,
   CreateCustomerRequest,
   UpdateCustomerRequest,
   Tag,
-} from '@/api/modules/crm/crm';
-import { crmApi } from '@/api/modules/crm/crm';
+} from '@/api/crm';
+import { crmApi } from '@/api/crm';
 import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { DataExport } from '@/components/common';
@@ -648,82 +643,59 @@ const CustomerManagementPage: React.FC = () => {
               spacing={3}
             >
               <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
+                <FormField
+                  name='name'
                   label='客户名称'
                   value={formData.name}
                   onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                   fullWidth
-                  margin='normal'
                   required
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
+                <FormField
+                  name='code'
                   label='客户代码'
                   value={formData.code}
                   onChange={(e) => setFormData((prev) => ({ ...prev, code: e.target.value }))}
                   fullWidth
-                  margin='normal'
                 />
               </Grid>
 
               <Grid size={{ xs: 12, md: 6 }}>
-                <FormControl
-                  fullWidth
-                  margin='normal'
-                >
-                  <InputLabel>客户类型</InputLabel>
-                  <Select
-                    value={formData.customer_type}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        customer_type: e.target.value as string,
-                      }))
-                    }
-                    label='客户类型'
-                  >
-                    {customerTypes.map((option) => (
-                      <MenuItem
-                        key={option.value}
-                        value={option.value}
-                      >
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                <FormSelect
+                  name='customer_type'
+                  label='客户类型'
+                  value={formData.customer_type}
+                  options={customerTypes.filter(c => c.value !== undefined)}
+                  onChange={(value) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      customer_type: value as string,
+                    }))
+                  }
+                  placeholder='请选择客户类型'
+                />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
-                <FormControl
-                  fullWidth
-                  margin='normal'
-                >
-                  <InputLabel>评级</InputLabel>
-                  <Select
-                    value={formData.rating}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        rating: e.target.value as string,
-                      }))
-                    }
-                    label='评级'
-                  >
-                    {ratingOptions.map((option) => (
-                      <MenuItem
-                        key={option.value}
-                        value={option.value}
-                      >
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                <FormSelect
+                  name='rating'
+                  label='评级'
+                  value={formData.rating}
+                  options={ratingOptions.filter(r => r.value !== undefined)}
+                  onChange={(value) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      rating: value as string,
+                    }))
+                  }
+                  placeholder='请选择评级'
+                />
               </Grid>
 
               <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
+                <FormField
+                  name='industry'
                   label='行业'
                   value={formData.industry}
                   onChange={(e) =>
@@ -733,48 +705,36 @@ const CustomerManagementPage: React.FC = () => {
                     }))
                   }
                   fullWidth
-                  margin='normal'
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
-                <FormControl
-                  fullWidth
-                  margin='normal'
-                >
-                  <InputLabel>公司规模</InputLabel>
-                  <Select
-                    value={formData.company_size}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        company_size: e.target.value as string,
-                      }))
-                    }
-                    label='公司规模'
-                  >
-                    {companySizes.map((option) => (
-                      <MenuItem
-                        key={option.value}
-                        value={option.value}
-                      >
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                <FormSelect
+                  name='company_size'
+                  label='公司规模'
+                  value={formData.company_size}
+                  options={companySizes.filter(c => c.value !== undefined)}
+                  onChange={(value) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      company_size: value as string,
+                    }))
+                  }
+                  placeholder='请选择公司规模'
+                />
               </Grid>
 
               <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
+                <FormField
+                  name='source'
                   label='客户来源'
                   value={formData.source}
                   onChange={(e) => setFormData((prev) => ({ ...prev, source: e.target.value }))}
                   fullWidth
-                  margin='normal'
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
+                <FormField
+                  name='employee_count'
                   label='员工数量'
                   type='number'
                   value={formData.employee_count || ''}
@@ -785,12 +745,12 @@ const CustomerManagementPage: React.FC = () => {
                     }))
                   }
                   fullWidth
-                  margin='normal'
                 />
               </Grid>
 
               <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
+                <FormField
+                  name='revenue'
                   label='年营收(元)'
                   type='number'
                   value={formData.revenue || ''}
@@ -801,11 +761,11 @@ const CustomerManagementPage: React.FC = () => {
                     }))
                   }
                   fullWidth
-                  margin='normal'
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
+                <FormField
+                  name='website'
                   label='网站'
                   value={formData.website}
                   onChange={(e) =>
@@ -815,41 +775,41 @@ const CustomerManagementPage: React.FC = () => {
                     }))
                   }
                   fullWidth
-                  margin='normal'
                 />
               </Grid>
 
               <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
+                <FormField
+                  name='email'
                   label='邮箱'
                   type='email'
                   value={formData.email}
                   onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
                   fullWidth
-                  margin='normal'
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
+                <FormField
+                  name='phone'
                   label='电话'
                   value={formData.phone}
                   onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
                   fullWidth
-                  margin='normal'
                 />
               </Grid>
 
               <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
+                <FormField
+                  name='fax'
                   label='传真'
                   value={formData.fax}
                   onChange={(e) => setFormData((prev) => ({ ...prev, fax: e.target.value }))}
                   fullWidth
-                  margin='normal'
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
-                <TextField
+                <FormField
+                  name='postal_code'
                   label='邮编'
                   value={formData.postal_code}
                   onChange={(e) =>
@@ -859,12 +819,12 @@ const CustomerManagementPage: React.FC = () => {
                     }))
                   }
                   fullWidth
-                  margin='normal'
                 />
               </Grid>
 
               <Grid size={{ xs: 12, md: 4 }}>
-                <TextField
+                <FormField
+                  name='country'
                   label='国家'
                   value={formData.country}
                   onChange={(e) =>
@@ -874,11 +834,11 @@ const CustomerManagementPage: React.FC = () => {
                     }))
                   }
                   fullWidth
-                  margin='normal'
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>
-                <TextField
+                <FormField
+                  name='province'
                   label='省份'
                   value={formData.province}
                   onChange={(e) =>
@@ -888,21 +848,21 @@ const CustomerManagementPage: React.FC = () => {
                     }))
                   }
                   fullWidth
-                  margin='normal'
                 />
               </Grid>
               <Grid size={{ xs: 12, md: 4 }}>
-                <TextField
+                <FormField
+                  name='city'
                   label='城市'
                   value={formData.city}
                   onChange={(e) => setFormData((prev) => ({ ...prev, city: e.target.value }))}
                   fullWidth
-                  margin='normal'
                 />
               </Grid>
 
               <Grid size={{ xs: 12 }}>
-                <TextField
+                <FormField
+                  name='address'
                   label='详细地址'
                   value={formData.address}
                   onChange={(e) =>
@@ -912,30 +872,32 @@ const CustomerManagementPage: React.FC = () => {
                     }))
                   }
                   fullWidth
-                  margin='normal'
                 />
               </Grid>
 
               <Grid size={{ xs: 12 }}>
-                <TextField
+                <FormField
+                  name='notes'
                   label='备注'
-                  multiline
-                  rows={3}
                   value={formData.notes}
                   onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
                   fullWidth
-                  margin='normal'
+                  multiline
+                  rows={3}
                 />
               </Grid>
             </Grid>
             <DialogActions>
-              <Button onClick={() => setShowDialog(false)}>取消</Button>
-              <Button
+              <ActionButton
+                label='取消'
+                variant='secondary'
+                onClick={() => setShowDialog(false)}
+              />
+              <ActionButton
+                label={selectedCustomer ? '保存修改' : '创建客户'}
+                variant='primary'
                 type='submit'
-                variant='contained'
-              >
-                {selectedCustomer ? '保存修改' : '创建客户'}
-              </Button>
+              />
             </DialogActions>
           </Box>
         </DialogContent>
@@ -1011,7 +973,11 @@ const CustomerManagementPage: React.FC = () => {
             )}
           </Box>
           <DialogActions>
-            <Button onClick={() => setShowTagDialog(false)}>关闭</Button>
+            <ActionButton
+              label='关闭'
+              variant='secondary'
+              onClick={() => setShowTagDialog(false)}
+            />
           </DialogActions>
         </DialogContent>
       </Dialog>

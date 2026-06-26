@@ -12,7 +12,11 @@
 #![allow(clippy::redundant_closure)]
 #![allow(dead_code)]
 
-mod modules;
+mod api;
+mod models;
+mod services;
+mod plugin;
+mod shared;
 
 use std::net::SocketAddr;
 
@@ -77,9 +81,8 @@ async fn main() {
         }
     };
 
-    // Initialize PDM database
-    if let Err(e) = modules::pdm::init_database(&pool).await {
-        tracing::warn!("PDM module database init warning: {}", e);
+    if let Err(e) = models::init_database(&pool).await {
+        tracing::warn!("PDM database init warning: {}", e);
     }
 
     let auth_state = AuthState::from_env();
@@ -96,38 +99,38 @@ async fn main() {
         .route("/", get(home))
         .route("/health", get(health))
         .route("/api/info", get(|| get_api_info_handler("pdm-service")))
-        .route("/api/plugins/info", get(modules::pdm::plugin::get_plugin_info))
-        .route("/api/plugins/health", get(modules::pdm::plugin::plugin_health_check))
+        .route("/api/plugins/info", get(plugin::get_plugin_info))
+        .route("/api/plugins/health", get(plugin::plugin_health_check))
         .route("/metrics", get(move || async move { metric_handle.render() }));
 
     // Protected routes
     let protected_routes = Router::new()
         // Product
-        .route("/api/pdm/product", get(modules::pdm::product::list_products))
-        .route("/api/pdm/product", post(modules::pdm::product::create_product))
-        .route("/api/pdm/product/{id}", get(modules::pdm::product::get_product))
-        .route("/api/pdm/product/{id}", put(modules::pdm::product::update_product))
-        .route("/api/pdm/product/{id}", delete(modules::pdm::product::delete_product))
+        .route("/api/pdm/product", get(api::pdm::product::list_products))
+        .route("/api/pdm/product", post(api::pdm::product::create_product))
+        .route("/api/pdm/product/{id}", get(api::pdm::product::get_product))
+        .route("/api/pdm/product/{id}", put(api::pdm::product::update_product))
+        .route("/api/pdm/product/{id}", delete(api::pdm::product::delete_product))
         // Material
-        .route("/api/pdm/material", get(modules::pdm::material::list_materials))
-        .route("/api/pdm/material", post(modules::pdm::material::create_material))
-        .route("/api/pdm/material/{id}", get(modules::pdm::material::get_material))
-        .route("/api/pdm/material/{id}", put(modules::pdm::material::update_material))
+        .route("/api/pdm/material", get(api::pdm::material::list_materials))
+        .route("/api/pdm/material", post(api::pdm::material::create_material))
+        .route("/api/pdm/material/{id}", get(api::pdm::material::get_material))
+        .route("/api/pdm/material/{id}", put(api::pdm::material::update_material))
         // Configuration
-        .route("/api/pdm/configuration", get(modules::pdm::configuration::list_configurations))
-        .route("/api/pdm/configuration", post(modules::pdm::configuration::create_configuration))
-        .route("/api/pdm/configuration/{id}", get(modules::pdm::configuration::get_configuration))
-        .route("/api/pdm/configuration/{id}", put(modules::pdm::configuration::update_configuration))
+        .route("/api/pdm/configuration", get(api::pdm::configuration::list_configurations))
+        .route("/api/pdm/configuration", post(api::pdm::configuration::create_configuration))
+        .route("/api/pdm/configuration/{id}", get(api::pdm::configuration::get_configuration))
+        .route("/api/pdm/configuration/{id}", put(api::pdm::configuration::update_configuration))
         // Document
-        .route("/api/pdm/document", get(modules::pdm::document::list_documents))
-        .route("/api/pdm/document", post(modules::pdm::document::create_document))
-        .route("/api/pdm/document/{id}", get(modules::pdm::document::get_document))
-        .route("/api/pdm/document/{id}", put(modules::pdm::document::update_document))
+        .route("/api/pdm/document", get(api::pdm::document::list_documents))
+        .route("/api/pdm/document", post(api::pdm::document::create_document))
+        .route("/api/pdm/document/{id}", get(api::pdm::document::get_document))
+        .route("/api/pdm/document/{id}", put(api::pdm::document::update_document))
         // Version
-        .route("/api/pdm/version", get(modules::pdm::version::list_versions))
-        .route("/api/pdm/version", post(modules::pdm::version::create_version))
-        .route("/api/pdm/version/{id}", get(modules::pdm::version::get_version))
-        .route("/api/pdm/version/{id}", put(modules::pdm::version::update_version))
+        .route("/api/pdm/version", get(api::pdm::version::list_versions))
+        .route("/api/pdm/version", post(api::pdm::version::create_version))
+        .route("/api/pdm/version/{id}", get(api::pdm::version::get_version))
+        .route("/api/pdm/version/{id}", put(api::pdm::version::update_version))
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),
             auth_middleware,
@@ -150,7 +153,7 @@ async fn main() {
     // Auto-register to Core
     let core_url = std::env::var("CORE_URL").ok();
     tokio::spawn(async move {
-        modules::pdm::plugin::auto_register_to_core(core_url.as_deref()).await;
+        plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
     axum::serve(

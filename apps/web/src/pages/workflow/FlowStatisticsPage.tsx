@@ -16,7 +16,7 @@ import {
   GitBranch,
   AlertCircle,
 } from 'lucide-react';
-import { flowApi, StatisticsResponse, WorkflowStat, MonthlyData } from '@/api/flow';
+import { workflowApi, StatisticsResponse, WorkflowStat, MonthlyData } from '@/api/workflow';
 import { useAppStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
@@ -38,7 +38,7 @@ const FlowStatisticsPage: React.FC = () => {
     try {
       setLoading(true);
 
-      const response = await flowApi.getStatistics();
+      const response = await workflowApi.getStatistics();
       if (response.success && response.data) {
         setStats(response.data);
       } else {

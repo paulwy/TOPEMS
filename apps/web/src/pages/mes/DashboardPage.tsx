@@ -260,13 +260,7 @@ export const DashboardPage: React.FC = () => {
 
   const quickActions: QuickAction[] = useMemo(
     () => [
-      {
-        id: 'create-order',
-        label: '创建工单',
-        icon: <ArrowRight size={20} />,
-        href: '/mes/orders/create',
-        color: 'primary.main',
-      },
+      
       {
         id: 'order-list',
         label: '工单列表',

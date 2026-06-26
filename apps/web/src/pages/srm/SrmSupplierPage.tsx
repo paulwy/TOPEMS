@@ -179,7 +179,7 @@ const SrmSupplierPage: React.FC = () => {
         label: '评估',
         icon: <Award style={{ width: 16, height: 16 }} />,
         onClick: (row) =>
-          navigate(`/srm/evaluation?supplier_id=${row.id}&supplier_name=${row.name}`),
+          navigate(`'/srm/evaluations'`),
       },
     ],
     [navigate]

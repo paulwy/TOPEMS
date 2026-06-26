@@ -1,0 +1,1262 @@
+{
+  "summary": {
+    "matched": 131,
+    "frontend_only": 1183,
+    "backend_only": 1548,
+    "service_mismatch": 6
+  },
+  "frontend_only": [
+    {
+      "key": "GET:/api/srm/performance/reports$:param",
+      "service": "srm",
+      "path": "/api/srm/performance/reports${query ? ",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/srm.ts"
+    },
+    {
+      "key": "GET:/api/srm/performance/reports/$:param",
+      "service": "srm",
+      "path": "/api/srm/performance/reports/${id}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/srm.ts"
+    },
+    {
+      "key": "GET:/api/srm/performance/trend$:param",
+      "service": "srm",
+      "path": "/api/srm/performance/trend${query ? ",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/srm.ts"
+    },
+    {
+      "key": "GET:/api/srm/performance/compare?supplier_ids=$:param",
+      "service": "srm",
+      "path": "/api/srm/performance/compare?supplier_ids=${supplier_ids.join(",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/srm.ts"
+    },
+    {
+      "key": "GET:/api/migrations/services",
+      "service": "migration",
+      "path": "/api/migrations/services",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/migration.ts"
+    },
+    {
+      "key": "POST:/api/migrations/services/$:param/apply",
+      "service": "migration",
+      "path": "/api/migrations/services/${encodeURIComponent(serviceName)}/apply",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/migration.ts"
+    },
+    {
+      "key": "POST:/api/migrations/services/$:param/rollback",
+      "service": "migration",
+      "path": "/api/migrations/services/${encodeURIComponent(serviceName)}/rollback",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/migration.ts"
+    },
+    {
+      "key": "GET:/api/migrations/services/$:param/status",
+      "service": "migration",
+      "path": "/api/migrations/services/${encodeURIComponent(serviceName)}/status",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/migration.ts"
+    },
+    {
+      "key": "GET:/api/hrm/employees/$:param/finance",
+      "service": "hrm",
+      "path": "/api/hrm/employees/${employeeId}/finance",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/hrm-finance.ts"
+    },
+    {
+      "key": "PUT:/api/hrm/employees/$:param/finance",
+      "service": "hrm",
+      "path": "/api/hrm/employees/${employeeId}/finance",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/hrm-finance.ts"
+    },
+    {
+      "key": "POST:/api/hrm/employees/finance/batch-update",
+      "service": "hrm",
+      "path": "/api/hrm/employees/finance/batch-update",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/hrm-finance.ts"
+    },
+    {
+      "key": "POST:/api/hrm/payroll/calculate",
+      "service": "hrm",
+      "path": "/api/hrm/payroll/calculate",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/hrm-finance.ts"
+    },
+    {
+      "key": "GET:/api/hrm/payroll/records",
+      "service": "hrm",
+      "path": "/api/hrm/payroll/records",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/hrm-finance.ts"
+    },
+    {
+      "key": "GET:/api/hrm/payroll/records/$:param",
+      "service": "hrm",
+      "path": "/api/hrm/payroll/records/${recordId}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/hrm-finance.ts"
+    },
+    {
+      "key": "POST:/api/hrm/payroll/approve",
+      "service": "hrm",
+      "path": "/api/hrm/payroll/approve",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/hrm-finance.ts"
+    },
+    {
+      "key": "POST:/api/hrm/payroll/batch-approve",
+      "service": "hrm",
+      "path": "/api/hrm/payroll/batch-approve",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/hrm-finance.ts"
+    },
+    {
+      "key": "POST:/api/hrm/payroll/generate-voucher",
+      "service": "hrm",
+      "path": "/api/hrm/payroll/generate-voucher",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/hrm-finance.ts"
+    },
+    {
+      "key": "POST:/api/hrm/payroll/batch-generate-vouchers",
+      "service": "hrm",
+      "path": "/api/hrm/payroll/batch-generate-vouchers",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/hrm-finance.ts"
+    },
+    {
+      "key": "PUT:/api/hrm/payroll/payment-status",
+      "service": "hrm",
+      "path": "/api/hrm/payroll/payment-status",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/hrm-finance.ts"
+    },
+    {
+      "key": "GET:/api/hrm/social-security/configs",
+      "service": "hrm",
+      "path": "/api/hrm/social-security/configs",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/hrm-finance.ts"
+    },
+    {
+      "key": "GET:/api/hrm/social-security/configs/$:param",
+      "service": "hrm",
+      "path": "/api/hrm/social-security/configs/${configId}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/hrm-finance.ts"
+    },
+    {
+      "key": "POST:/api/hrm/social-security/configs",
+      "service": "hrm",
+      "path": "/api/hrm/social-security/configs",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/hrm-finance.ts"
+    },
+    {
+      "key": "PUT:/api/hrm/social-security/configs/$:param",
+      "service": "hrm",
+      "path": "/api/hrm/social-security/configs/${configId}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/hrm-finance.ts"
+    },
+    {
+      "key": "DELETE:/api/hrm/social-security/configs/$:param",
+      "service": "hrm",
+      "path": "/api/hrm/social-security/configs/${configId}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/hrm-finance.ts"
+    },
+    {
+      "key": "POST:/api/hrm/social-security/calculate",
+      "service": "hrm",
+      "path": "/api/hrm/social-security/calculate",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/hrm-finance.ts"
+    },
+    {
+      "key": "GET:/api/hrm/attendance/summary",
+      "service": "hrm",
+      "path": "/api/hrm/attendance/summary",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/hrm-finance.ts"
+    },
+    {
+      "key": "GET:/api/hrm/payroll/payment-records",
+      "service": "hrm",
+      "path": "/api/hrm/payroll/payment-records",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/hrm-finance.ts"
+    },
+    {
+      "key": "POST:/api/hrm/payroll/payment-records",
+      "service": "hrm",
+      "path": "/api/hrm/payroll/payment-records",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/hrm-finance.ts"
+    },
+    {
+      "key": "GET:/api/hrm/payroll/reports/summary",
+      "service": "hrm",
+      "path": "/api/hrm/payroll/reports/summary",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/hrm-finance.ts"
+    },
+    {
+      "key": "GET:/api/hrm/payroll/reports/department-comparison",
+      "service": "hrm",
+      "path": "/api/hrm/payroll/reports/department-comparison",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/hrm-finance.ts"
+    },
+    {
+      "key": "POST:/api/scm/suppliers",
+      "service": "scm",
+      "path": "/api/scm/suppliers",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "GET:/api/scm/suppliers/$:param",
+      "service": "scm",
+      "path": "/api/scm/suppliers/${id}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "PUT:/api/scm/suppliers/$:param",
+      "service": "scm",
+      "path": "/api/scm/suppliers/${id}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "DELETE:/api/scm/suppliers/$:param",
+      "service": "scm",
+      "path": "/api/scm/suppliers/${id}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "POST:/api/scm/purchase-orders",
+      "service": "scm",
+      "path": "/api/scm/purchase-orders",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "GET:/api/scm/purchase-orders/$:param",
+      "service": "scm",
+      "path": "/api/scm/purchase-orders/${id}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "PUT:/api/scm/purchase-orders/$:param",
+      "service": "scm",
+      "path": "/api/scm/purchase-orders/${id}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "DELETE:/api/scm/purchase-orders/$:param",
+      "service": "scm",
+      "path": "/api/scm/purchase-orders/${id}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "POST:/api/scm/purchase-orders/$:param/approve",
+      "service": "scm",
+      "path": "/api/scm/purchase-orders/${id}/approve",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "POST:/api/scm/purchase-orders/$:param/confirm",
+      "service": "scm",
+      "path": "/api/scm/purchase-orders/${id}/confirm",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "POST:/api/scm/purchase-orders/$:param/cancel",
+      "service": "scm",
+      "path": "/api/scm/purchase-orders/${id}/cancel",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "POST:/api/scm/purchase-orders/$:param/close",
+      "service": "scm",
+      "path": "/api/scm/purchase-orders/${id}/close",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "POST:/api/scm/purchase-items",
+      "service": "scm",
+      "path": "/api/scm/purchase-items",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "GET:/api/scm/purchase-items/$:param",
+      "service": "scm",
+      "path": "/api/scm/purchase-items/${id}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "PUT:/api/scm/purchase-items/$:param",
+      "service": "scm",
+      "path": "/api/scm/purchase-items/${id}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "POST:/api/scm/evaluations",
+      "service": "scm",
+      "path": "/api/scm/evaluations",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "GET:/api/scm/evaluations/$:param",
+      "service": "scm",
+      "path": "/api/scm/evaluations/${id}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "PUT:/api/scm/evaluations/$:param",
+      "service": "scm",
+      "path": "/api/scm/evaluations/${id}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "DELETE:/api/scm/evaluations/$:param",
+      "service": "scm",
+      "path": "/api/scm/evaluations/${id}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "GET:/api/scm/mrp-plans",
+      "service": "scm",
+      "path": "/api/scm/mrp-plans",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "POST:/api/scm/mrp-plans",
+      "service": "scm",
+      "path": "/api/scm/mrp-plans",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "GET:/api/scm/mrp-plans/$:param",
+      "service": "scm",
+      "path": "/api/scm/mrp-plans/${id}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "PUT:/api/scm/mrp-plans/$:param",
+      "service": "scm",
+      "path": "/api/scm/mrp-plans/${id}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "DELETE:/api/scm/mrp-plans/$:param",
+      "service": "scm",
+      "path": "/api/scm/mrp-plans/${id}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "POST:/api/scm/mrp-calculations/$:param",
+      "service": "scm",
+      "path": "/api/scm/mrp-calculations/${id}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "GET:/api/scm/mrp-suggestions",
+      "service": "scm",
+      "path": "/api/scm/mrp-suggestions",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "GET:/api/scm/mrp-suggestions/$:param",
+      "service": "scm",
+      "path": "/api/scm/mrp-suggestions/${id}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "GET:/api/scm/mrp-suggestions/summary",
+      "service": "scm",
+      "path": "/api/scm/mrp-suggestions/summary",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "POST:/api/scm/incoming-inspections",
+      "service": "scm",
+      "path": "/api/scm/incoming-inspections",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "GET:/api/scm/incoming-inspections/$:param",
+      "service": "scm",
+      "path": "/api/scm/incoming-inspections/${id}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "PUT:/api/scm/incoming-inspections/$:param",
+      "service": "scm",
+      "path": "/api/scm/incoming-inspections/${id}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "DELETE:/api/scm/incoming-inspections/$:param",
+      "service": "scm",
+      "path": "/api/scm/incoming-inspections/${id}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "POST:/api/scm/incoming-inspections/$:param/pass",
+      "service": "scm",
+      "path": "/api/scm/incoming-inspections/${id}/pass",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "POST:/api/scm/incoming-inspections/$:param/reject",
+      "service": "scm",
+      "path": "/api/scm/incoming-inspections/${id}/reject",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "GET:/api/scm/incoming-inspections/$:param/records",
+      "service": "scm",
+      "path": "/api/scm/incoming-inspections/${inspectionId}/records",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "POST:/api/scm/inspection-records",
+      "service": "scm",
+      "path": "/api/scm/inspection-records",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "GET:/api/scm/inspection-records/$:param",
+      "service": "scm",
+      "path": "/api/scm/inspection-records/${id}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "PUT:/api/scm/inspection-records/$:param",
+      "service": "scm",
+      "path": "/api/scm/inspection-records/${id}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "DELETE:/api/scm/inspection-records/$:param",
+      "service": "scm",
+      "path": "/api/scm/inspection-records/${id}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "GET:/api/scm/inventory-turnover/$:param",
+      "service": "scm",
+      "path": "/api/scm/inventory-turnover/${id}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "GET:/api/scm/inventory-turnover/abc-classification",
+      "service": "scm",
+      "path": "/api/scm/inventory-turnover/abc-classification",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "GET:/api/scm/supply-chain-dashboard/overview",
+      "service": "scm",
+      "path": "/api/scm/supply-chain-dashboard/overview",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "GET:/api/scm/supply-chain-dashboard/full-link-stats",
+      "service": "scm",
+      "path": "/api/scm/supply-chain-dashboard/full-link-stats",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "GET:/api/scm/supply-chain-dashboard/supplier-performance",
+      "service": "scm",
+      "path": "/api/scm/supply-chain-dashboard/supplier-performance",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "GET:/api/scm/price-comparisons",
+      "service": "scm",
+      "path": "/api/scm/price-comparisons",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "POST:/api/scm/price-comparisons",
+      "service": "scm",
+      "path": "/api/scm/price-comparisons",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "GET:/api/scm/price-comparisons/$:param",
+      "service": "scm",
+      "path": "/api/scm/price-comparisons/${id}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "PUT:/api/scm/price-comparisons/$:param",
+      "service": "scm",
+      "path": "/api/scm/price-comparisons/${id}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "DELETE:/api/scm/price-comparisons/$:param",
+      "service": "scm",
+      "path": "/api/scm/price-comparisons/${id}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "GET:/api/scm/price-comparisons/$:param/result",
+      "service": "scm",
+      "path": "/api/scm/price-comparisons/${id}/result",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "GET:/api/scm/price-comparisons/$:param/quotes",
+      "service": "scm",
+      "path": "/api/scm/price-comparisons/${comparisonId}/quotes",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "POST:/api/scm/price-comparisons/quotes",
+      "service": "scm",
+      "path": "/api/scm/price-comparisons/quotes",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "GET:/api/scm/sync-records",
+      "service": "scm",
+      "path": "/api/scm/sync-records",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "POST:/api/scm/sync-records",
+      "service": "scm",
+      "path": "/api/scm/sync-records",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "GET:/api/scm/sync-records/$:param",
+      "service": "scm",
+      "path": "/api/scm/sync-records/${id}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "POST:/api/scm/sync-records/$:param/retry",
+      "service": "scm",
+      "path": "/api/scm/sync-records/${id}/retry",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "POST:/api/scm/sync/wms/$:param",
+      "service": "scm",
+      "path": "/api/scm/sync/wms/${syncType}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "POST:/api/scm/sync/srm/$:param",
+      "service": "scm",
+      "path": "/api/scm/sync/srm/${syncType}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "GET:/api/scm/sync-records/$:param/details",
+      "service": "scm",
+      "path": "/api/scm/sync-records/${syncId}/details",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "GET:/api/scm/audit-logs/$:param",
+      "service": "scm",
+      "path": "/api/scm/audit-logs/${id}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "POST:/api/scm/delivery-appointments",
+      "service": "scm",
+      "path": "/api/scm/delivery-appointments",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "GET:/api/scm/delivery-appointments/$:param",
+      "service": "scm",
+      "path": "/api/scm/delivery-appointments/${id}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "PUT:/api/scm/delivery-appointments/$:param",
+      "service": "scm",
+      "path": "/api/scm/delivery-appointments/${id}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "DELETE:/api/scm/delivery-appointments/$:param",
+      "service": "scm",
+      "path": "/api/scm/delivery-appointments/${id}",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "POST:/api/scm/delivery-appointments/$:param/approve",
+      "service": "scm",
+      "path": "/api/scm/delivery-appointments/${id}/approve",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "POST:/api/scm/delivery-appointments/$:param/reject",
+      "service": "scm",
+      "path": "/api/scm/delivery-appointments/${id}/reject",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "POST:/api/scm/delivery-appointments/$:param/confirm-arrival",
+      "service": "scm",
+      "path": "/api/scm/delivery-appointments/${id}/confirm-arrival",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "POST:/api/scm/delivery-appointments/$:param/complete",
+      "service": "scm",
+      "path": "/api/scm/delivery-appointments/${id}/complete",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "POST:/api/scm/delivery-appointments/$:param/cancel",
+      "service": "scm",
+      "path": "/api/scm/delivery-appointments/${id}/cancel",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/scm.ts"
+    },
+    {
+      "key": "GET:/api/voucher/templates",
+      "service": "erp",
+      "path": "/api/voucher/templates",
+      "file": "/Users/xingzhai/TOPEMS/apps/web/src/api/voucher-template.ts"
+    }
+  ],
+  "service_mismatch": [
+    {
+      "key": "GET:/api/flow/instances",
+      "frontend_service": "flow",
+      "backend_services": [
+        "unified-core"
+      ],
+      "frontend_file": "/Users/xingzhai/TOPEMS/apps/web/src/api/flow.ts"
+    },
+    {
+      "key": "POST:/api/flow/instances",
+      "frontend_service": "flow",
+      "backend_services": [
+        "unified-core"
+      ],
+      "frontend_file": "/Users/xingzhai/TOPEMS/apps/web/src/api/flow.ts"
+    },
+    {
+      "key": "GET:/api/flow/approval-tasks",
+      "frontend_service": "flow",
+      "backend_services": [
+        "unified-core"
+      ],
+      "frontend_file": "/Users/xingzhai/TOPEMS/apps/web/src/api/flow.ts"
+    },
+    {
+      "key": "GET:/api/flow/statistics",
+      "frontend_service": "flow",
+      "backend_services": [
+        "unified-core"
+      ],
+      "frontend_file": "/Users/xingzhai/TOPEMS/apps/web/src/api/flow.ts"
+    },
+    {
+      "key": "GET:/api/analytics/report",
+      "frontend_service": "bi",
+      "backend_services": [
+        "analytics"
+      ],
+      "frontend_file": "/Users/xingzhai/TOPEMS/apps/web/src/api/bi.ts"
+    },
+    {
+      "key": "POST:/api/analytics/report",
+      "frontend_service": "bi",
+      "backend_services": [
+        "analytics"
+      ],
+      "frontend_file": "/Users/xingzhai/TOPEMS/apps/web/src/api/bi.ts"
+    }
+  ],
+  "backend_only_sample": [
+    {
+      "key": "POST:/api/ai/search",
+      "service": "ai",
+      "path": "/api/ai/search",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/chat",
+      "service": "ai",
+      "path": "/api/ai/chat",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/generate",
+      "service": "ai",
+      "path": "/api/ai/generate",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/validate",
+      "service": "ai",
+      "path": "/api/ai/validate",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/complete",
+      "service": "ai",
+      "path": "/api/ai/complete",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/summarize",
+      "service": "ai",
+      "path": "/api/ai/summarize",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "GET:/api/ai/templates",
+      "service": "ai",
+      "path": "/api/ai/templates",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "GET:/api/ai/documents",
+      "service": "ai",
+      "path": "/api/ai/documents",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/documents/upload",
+      "service": "ai",
+      "path": "/api/ai/documents/upload",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/documents/vectorize-from-file",
+      "service": "ai",
+      "path": "/api/ai/documents/vectorize-from-file",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "GET:/api/ai/documents/:param",
+      "service": "ai",
+      "path": "/api/ai/documents/{id}",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "DELETE:/api/ai/documents/:param",
+      "service": "ai",
+      "path": "/api/ai/documents/{id}",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/documents/:param/process",
+      "service": "ai",
+      "path": "/api/ai/documents/{id}/process",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/documents/:param/extract",
+      "service": "ai",
+      "path": "/api/ai/documents/{id}/extract",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/documents/:param/summarize",
+      "service": "ai",
+      "path": "/api/ai/documents/{id}/summarize",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/documents/:param/key-points",
+      "service": "ai",
+      "path": "/api/ai/documents/{id}/key-points",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/documents/qa",
+      "service": "ai",
+      "path": "/api/ai/documents/qa",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "GET:/api/ai/vectors/stats",
+      "service": "ai",
+      "path": "/api/ai/vectors/stats",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/vectors/search",
+      "service": "ai",
+      "path": "/api/ai/vectors/search",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/vectors/store",
+      "service": "ai",
+      "path": "/api/ai/vectors/store",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "GET:/api/ai/vectors/:param",
+      "service": "ai",
+      "path": "/api/ai/vectors/{id}",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "DELETE:/api/ai/vectors/:param",
+      "service": "ai",
+      "path": "/api/ai/vectors/{id}",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/vectors/batch-store",
+      "service": "ai",
+      "path": "/api/ai/vectors/batch-store",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/embedding/generate",
+      "service": "ai",
+      "path": "/api/ai/embedding/generate",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/vectors/hybrid-search",
+      "service": "ai",
+      "path": "/api/ai/vectors/hybrid-search",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/vectors/clear",
+      "service": "ai",
+      "path": "/api/ai/vectors/clear",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "GET:/api/ai/qa/history",
+      "service": "ai",
+      "path": "/api/ai/qa/history",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "DELETE:/api/ai/qa/history/:param",
+      "service": "ai",
+      "path": "/api/ai/qa/history/{id}",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "GET:/api/ai/connectors",
+      "service": "ai",
+      "path": "/api/ai/connectors",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "GET:/api/ai/connectors/get",
+      "service": "ai",
+      "path": "/api/ai/connectors/get",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/connectors/create",
+      "service": "ai",
+      "path": "/api/ai/connectors/create",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/connectors/update",
+      "service": "ai",
+      "path": "/api/ai/connectors/update",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/connectors/delete",
+      "service": "ai",
+      "path": "/api/ai/connectors/delete",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "GET:/api/ai/connectors/test",
+      "service": "ai",
+      "path": "/api/ai/connectors/test",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/connectors/query",
+      "service": "ai",
+      "path": "/api/ai/connectors/query",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/analysis/sentiment",
+      "service": "ai",
+      "path": "/api/ai/analysis/sentiment",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/analysis/classify",
+      "service": "ai",
+      "path": "/api/ai/analysis/classify",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/analysis/entities",
+      "service": "ai",
+      "path": "/api/ai/analysis/entities",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/analysis/keywords",
+      "service": "ai",
+      "path": "/api/ai/analysis/keywords",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/analysis/history",
+      "service": "ai",
+      "path": "/api/ai/analysis/history",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/recommend",
+      "service": "ai",
+      "path": "/api/ai/recommend",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/recommend/documents",
+      "service": "ai",
+      "path": "/api/ai/recommend/documents",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/recommend/opportunities",
+      "service": "ai",
+      "path": "/api/ai/recommend/opportunities",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/recommend/knowledge",
+      "service": "ai",
+      "path": "/api/ai/recommend/knowledge",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/profile/get",
+      "service": "ai",
+      "path": "/api/ai/profile/get",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/profile/update",
+      "service": "ai",
+      "path": "/api/ai/profile/update",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/multimodal/image/analyze",
+      "service": "ai",
+      "path": "/api/ai/multimodal/image/analyze",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/multimodal/image/caption",
+      "service": "ai",
+      "path": "/api/ai/multimodal/image/caption",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/multimodal/image/objects",
+      "service": "ai",
+      "path": "/api/ai/multimodal/image/objects",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/multimodal/image/text",
+      "service": "ai",
+      "path": "/api/ai/multimodal/image/text",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/multimodal/image/describe",
+      "service": "ai",
+      "path": "/api/ai/multimodal/image/describe",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/multimodal/video/analyze",
+      "service": "ai",
+      "path": "/api/ai/multimodal/video/analyze",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/multimodal/video/summary",
+      "service": "ai",
+      "path": "/api/ai/multimodal/video/summary",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/main.rs"
+    },
+    {
+      "key": "POST:/api/ai/agent/run",
+      "service": "ai",
+      "path": "/api/ai/agent/run",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/api/agent.rs"
+    },
+    {
+      "key": "GET:/api/ai/agent/tools",
+      "service": "ai",
+      "path": "/api/ai/agent/tools",
+      "file": "/Users/xingzhai/TOPEMS/svc/ai/src/api/agent.rs"
+    },
+    {
+      "key": "GET:/api",
+      "service": "analytics",
+      "path": "/api",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "GET:/api/bi/dashboard/:param",
+      "service": "analytics",
+      "path": "/api/bi/dashboard/{id}",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "PUT:/api/bi/dashboard/:param",
+      "service": "analytics",
+      "path": "/api/bi/dashboard/{id}",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "DELETE:/api/bi/dashboard/:param",
+      "service": "analytics",
+      "path": "/api/bi/dashboard/{id}",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "GET:/api/bi/widget/:param",
+      "service": "analytics",
+      "path": "/api/bi/widget/{id}",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "PUT:/api/bi/widget/:param",
+      "service": "analytics",
+      "path": "/api/bi/widget/{id}",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "DELETE:/api/bi/widget/:param",
+      "service": "analytics",
+      "path": "/api/bi/widget/{id}",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "GET:/api/bi/widget/:param/data",
+      "service": "analytics",
+      "path": "/api/bi/widget/{id}/data",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "GET:/api/bi/datasource",
+      "service": "analytics",
+      "path": "/api/bi/datasource",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "POST:/api/bi/datasource",
+      "service": "analytics",
+      "path": "/api/bi/datasource",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "GET:/api/bi/datasource/:param",
+      "service": "analytics",
+      "path": "/api/bi/datasource/{id}",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "PUT:/api/bi/datasource/:param",
+      "service": "analytics",
+      "path": "/api/bi/datasource/{id}",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "GET:/api/bi/visualization",
+      "service": "analytics",
+      "path": "/api/bi/visualization",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "POST:/api/bi/visualization",
+      "service": "analytics",
+      "path": "/api/bi/visualization",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "GET:/api/bi/visualization/:param",
+      "service": "analytics",
+      "path": "/api/bi/visualization/{id}",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "GET:/api/bi/analysis",
+      "service": "analytics",
+      "path": "/api/bi/analysis",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "POST:/api/bi/analysis",
+      "service": "analytics",
+      "path": "/api/bi/analysis",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "GET:/api/bi/analysis/:param",
+      "service": "analytics",
+      "path": "/api/bi/analysis/{id}",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "POST:/api/bi/analysis/:param/execute",
+      "service": "analytics",
+      "path": "/api/bi/analysis/{id}/execute",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "GET:/api/analytics/report/:param",
+      "service": "analytics",
+      "path": "/api/analytics/report/{id}",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "PUT:/api/analytics/report/:param",
+      "service": "analytics",
+      "path": "/api/analytics/report/{id}",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "DELETE:/api/analytics/report/:param",
+      "service": "analytics",
+      "path": "/api/analytics/report/{id}",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "POST:/api/analytics/report/:param/export",
+      "service": "analytics",
+      "path": "/api/analytics/report/{id}/export",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "POST:/api/analytics/report/:param/run",
+      "service": "analytics",
+      "path": "/api/analytics/report/{id}/run",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "GET:/api/analytics/report/template",
+      "service": "analytics",
+      "path": "/api/analytics/report/template",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "POST:/api/analytics/report/template",
+      "service": "analytics",
+      "path": "/api/analytics/report/template",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "GET:/api/analytics/report/template/:param",
+      "service": "analytics",
+      "path": "/api/analytics/report/template/{id}",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "PUT:/api/analytics/report/template/:param",
+      "service": "analytics",
+      "path": "/api/analytics/report/template/{id}",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "GET:/api/analytics/report/schedule",
+      "service": "analytics",
+      "path": "/api/analytics/report/schedule",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "POST:/api/analytics/report/schedule",
+      "service": "analytics",
+      "path": "/api/analytics/report/schedule",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "GET:/api/analytics/report/schedule/:param",
+      "service": "analytics",
+      "path": "/api/analytics/report/schedule/{id}",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "PUT:/api/analytics/report/schedule/:param",
+      "service": "analytics",
+      "path": "/api/analytics/report/schedule/{id}",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "DELETE:/api/analytics/report/schedule/:param",
+      "service": "analytics",
+      "path": "/api/analytics/report/schedule/{id}",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main.rs"
+    },
+    {
+      "key": "GET:/api/analytics/template",
+      "service": "analytics",
+      "path": "/api/analytics/template",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main_report.rs"
+    },
+    {
+      "key": "POST:/api/analytics/template",
+      "service": "analytics",
+      "path": "/api/analytics/template",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main_report.rs"
+    },
+    {
+      "key": "GET:/api/analytics/template/:param",
+      "service": "analytics",
+      "path": "/api/analytics/template/{id}",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main_report.rs"
+    },
+    {
+      "key": "PUT:/api/analytics/template/:param",
+      "service": "analytics",
+      "path": "/api/analytics/template/{id}",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main_report.rs"
+    },
+    {
+      "key": "GET:/api/analytics/schedule",
+      "service": "analytics",
+      "path": "/api/analytics/schedule",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main_report.rs"
+    },
+    {
+      "key": "POST:/api/analytics/schedule",
+      "service": "analytics",
+      "path": "/api/analytics/schedule",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main_report.rs"
+    },
+    {
+      "key": "GET:/api/analytics/schedule/:param",
+      "service": "analytics",
+      "path": "/api/analytics/schedule/{id}",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main_report.rs"
+    },
+    {
+      "key": "PUT:/api/analytics/schedule/:param",
+      "service": "analytics",
+      "path": "/api/analytics/schedule/{id}",
+      "file": "/Users/xingzhai/TOPEMS/svc/analytics/src/main_report.rs"
+    },
+    {
+      "key": "GET:/api/bi/dashboard/user/:param",
+      "service": "bi",
+      "path": "/api/bi/dashboard/user/{owner_id}",
+      "file": "/Users/xingzhai/TOPEMS/svc/bi/src/main.rs"
+    },
+    {
+      "key": "POST:/api/bi/dashboard/:param/share",
+      "service": "bi",
+      "path": "/api/bi/dashboard/{id}/share",
+      "file": "/Users/xingzhai/TOPEMS/svc/bi/src/main.rs"
+    },
+    {
+      "key": "GET:/api/bi/dashboard/:param/shares",
+      "service": "bi",
+      "path": "/api/bi/dashboard/{id}/shares",
+      "file": "/Users/xingzhai/TOPEMS/svc/bi/src/main.rs"
+    },
+    {
+      "key": "GET:/api/bi/dashboard/share/:param",
+      "service": "bi",
+      "path": "/api/bi/dashboard/share/{share_id}",
+      "file": "/Users/xingzhai/TOPEMS/svc/bi/src/main.rs"
+    }
+  ]
+}

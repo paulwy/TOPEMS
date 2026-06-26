@@ -70,7 +70,7 @@ export interface StatCard {
   title: string;
   value: string | number;
   icon?: React.ReactNode;
-  color?: 'primary' | 'success' | 'warning' | 'error' | 'info';
+  color?: 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info';
   trend?: {
     value: number;
     direction: 'up' | 'down' | 'neutral';

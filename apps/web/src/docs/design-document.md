@@ -68,10 +68,9 @@
 | `/vehicles` | `VehicleManagementPage` | 车辆管理 |
 | `/announcements` | `AnnouncementManagementPage` | 公告管理 |
 | `/finance/voucher-templates` | `VoucherTemplatePage` | 凭证模板 |
-| `/finance/financial-reports` | `FinancialReportsPage` | 财务报告 |
+| `/finance/financial-reports` | `FinanceReportsPage` | 财务报告 |
 | `/finance/accounts` | `AccountManagementPage` | 账户管理 |
 | `/finance/bank-accounts` | `BankAccountManagementPage` | 银行账户管理 |
-| `/finance/fixed-assets` | `FixedAssetManagementPage` | 固定资产管理 |
 | `/finance/consolidation/scopes` | `ConsolidationScopePage` | 合并范围 |
 | `/finance/consolidation/reports` | `ConsolidationReportsPage` | 合并报表 |
 | `/finance/company-structure` | `CompanyStructurePage` | 公司结构 |

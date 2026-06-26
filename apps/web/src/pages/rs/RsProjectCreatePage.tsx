@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { FormPageTemplate, type FormSection, type FormField } from '@/components/templates/FormPageTemplate';
 import { rsApi } from '@/api/rs';
 import { useAppStore } from '@/store';
-import type { Project } from '@/api/rs';
+import type { Project, TeamMember } from '@/api/rs';
 
 const projectTypes = ['新产品研发', '工艺改进', '配方优化', '技术攻关', '设备改造', '其他'];
 const riskLevels = ['低', '中', '高', '极高'];
@@ -22,12 +22,21 @@ const RsProjectCreatePage: React.FC = () => {
 
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | undefined>(undefined);
 
-  const [teamMembers, setTeamMembers] = useState<string[]>([]);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [tags, setTags] = useState<string[]>([]);
 
-  const availableMembers = ['张三', '李四', '王五', '赵六', '孙七', '周八', '吴九', '郑十'];
+  const availableMembers = [
+    { id: '1', name: '张三' },
+    { id: '2', name: '李四' },
+    { id: '3', name: '王五' },
+    { id: '4', name: '赵六' },
+    { id: '5', name: '孙七' },
+    { id: '6', name: '周八' },
+    { id: '7', name: '吴九' },
+    { id: '8', name: '郑十' },
+  ];
   const availableTags = ['催化剂', '聚合物', '纳米材料', '环保', '新能源', '生物医药', '电子材料'];
 
   const defaultValues = {
@@ -149,11 +158,11 @@ const RsProjectCreatePage: React.FC = () => {
   const loadProjectData = async (projectId: string) => {
     try {
       setLoading(true);
-      setError(null);
+      setError(undefined);
       const response = await rsApi.getProject(projectId);
       if (response.success && response.data) {
         const project = response.data;
-        setTeamMembers((project.team_members as string[]) || []);
+        setTeamMembers(project.team_members || []);
         setTags(project.tags || []);
       } else {
         setError('无法获取项目数据');

@@ -43,7 +43,7 @@ impl TraceContext {
     pub fn from_headers(headers: &axum::http::HeaderMap) -> Option<Self> {
         let trace_id = headers.get("x-trace-id")?.to_str().ok()?;
         let parent_span_id = headers.get("x-span-id")?.to_str().ok()?;
-        let service_name = headers.get("x-service-name")?.to_str().ok_or("unknown").ok()?;
+        let service_name = headers.get("x-service-name")?.to_str().unwrap_or("unknown");
 
         Some(Self {
             trace_id: trace_id.to_string(),
@@ -73,7 +73,7 @@ impl TelemetrySpan {
         }
     }
 
-    pub fn with_attribute(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+    pub fn with_attribute(self, key: impl Into<String>, value: impl Into<String>) -> Self {
         let key = key.into();
         let value = value.into();
         tracing::info!(parent: &self.span, %key, %value, "attribute");
@@ -103,9 +103,9 @@ impl TelemetrySpan {
 }
 
 /// Middleware for distributed tracing
-pub async fn trace_middleware<B>(
-    request: axum::extract::Request<B>,
-    next: axum::middleware::Next<B>,
+pub async fn trace_middleware(
+    request: axum::extract::Request,
+    next: axum::middleware::Next,
 ) -> axum::response::Response {
     let start = Instant::now();
     let method = request.method().to_string();

@@ -1,39 +1,41 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Box,
-  Card,
-  CardHeader,
-  CardContent,
-  Typography,
-  Button,
-  Grid,
-  Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  TextField,
-  IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Grid,
+  Chip,
   Checkbox,
   FormGroup,
   FormControlLabel,
-  CircularProgress,
 } from '@mui/material';
-import { Settings, Plus, Edit, Delete, Search, Layers, Package, Zap, Shield } from 'lucide-react';
+import { Button } from '@mui/material';
+import {
+  Settings,
+  Plus,
+  Edit,
+  Delete,
+  Zap,
+  Package,
+  Shield,
+} from 'lucide-react';
 import { pdmApi } from '@/api/pdm';
 import type { ProductConfig } from '@/api/pdm';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
+import {
+  ListPageTemplate,
+  type ColumnDef,
+  type RowAction,
+  type FilterConfig,
+} from '@/components/templates';
 
 interface ConfigAttribute {
   name: string;
@@ -56,8 +58,8 @@ interface FormData {
 }
 
 export const PdmProductConfigPage: React.FC = () => {
-  const [selectedConfig, setSelectedConfig] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
   const [configs, setConfigs] = useState<ProductConfig[]>([]);
   const [loading, setLoading] = useState(true);
@@ -118,9 +120,6 @@ export const PdmProductConfigPage: React.FC = () => {
         const data = response.data as any;
         const items = Array.isArray(data) ? data : data.configs || [];
         setConfigs(items);
-        if (items.length > 0 && !selectedConfig) {
-          setSelectedConfig(items[0].id);
-        }
       } else {
         setConfigs([]);
       }
@@ -232,269 +231,216 @@ export const PdmProductConfigPage: React.FC = () => {
     }
   };
 
-  const filteredConfigs = configs.filter((config) => {
-    return (
-      config.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      config.code.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  });
+  const filteredConfigs = useMemo(() => {
+    return configs.filter((config) => {
+      const matchesSearch =
+        !searchTerm ||
+        config.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        config.code.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesStatus = !statusFilter || config.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [configs, searchTerm, statusFilter]);
 
-  const stats = {
-    total: configs.length,
-    active: configs.filter((c) => c.status === 'active').length,
-    draft: configs.filter((c) => c.status === 'draft').length,
-    archived: configs.filter((c) => c.status === 'archived').length,
-  };
+  const stats = useMemo(
+    () => ({
+      total: configs.length,
+      active: configs.filter((c) => c.status === 'active').length,
+      draft: configs.filter((c) => c.status === 'draft').length,
+      archived: configs.filter((c) => c.status === 'archived').length,
+    }),
+    [configs]
+  );
 
-  return (
-    <Box sx={{ flex: 1 }}>
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 4,
-        }}
-      >
-        <div>
-          <Typography
-            variant='h4'
-            sx={{ fontWeight: 'bold', mb: 1 }}
-          >
-            产品配置管理
-          </Typography>
-          <Typography
-            variant='body2'
-            color='text.secondary'
-          >
-            管理产品的配置选项和属性定义
-          </Typography>
-        </div>
-        <Button
-          variant='contained'
-          startIcon={<Plus />}
-          onClick={handleCreate}
-          sx={{ bgcolor: 'primary.main' }}
-        >
-          创建配置
-        </Button>
-      </Box>
+  const filters: FilterConfig[] = useMemo(
+    () => [
+      {
+        id: 'status',
+        label: '状态',
+        type: 'select',
+        options: [
+          { label: '草稿', value: 'draft' },
+          { label: '启用', value: 'active' },
+          { label: '归档', value: 'archived' },
+        ],
+      },
+    ],
+    []
+  );
 
-      <Grid
-        container
-        spacing={3}
-        sx={{ mb: 4 }}
-      >
+  const handleFilterChange = useCallback((values: Record<string, any>) => {
+    setStatusFilter(values.status || '');
+  }, []);
+
+  const handleSearch = useCallback((value: string) => {
+    setSearchTerm(value);
+  }, []);
+
+  const columns: ColumnDef<ProductConfig>[] = useMemo(
+    () => [
+      { id: 'name', label: '配置名称', minWidth: 140 },
+      { id: 'code', label: '配置编码', minWidth: 120 },
+      {
+        id: 'attributes',
+        label: '属性',
+        minWidth: 160,
+        render: (row) => (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+            <span style={{ fontSize: '0.875rem' }}>
+              {row.attributes?.color || '-'} / {row.attributes?.size || '-'}
+            </span>
+            <span style={{ fontSize: '0.75rem', color: '#888' }}>
+              {row.attributes?.material || '-'} / {row.attributes?.grade || '-'}
+            </span>
+          </Box>
+        ),
+      },
+      {
+        id: 'options',
+        label: '选项',
+        minWidth: 160,
+        render: (row) => (
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+            {(row.options || []).map((option, idx) => (
+              <Chip key={idx} size='small' label={option} variant='outlined' />
+            ))}
+          </Box>
+        ),
+      },
+      {
+        id: 'status',
+        label: '状态',
+        minWidth: 100,
+        align: 'center',
+        render: (row) => (
+          <Chip
+            size='small'
+            label={getStatusLabel(row.status)}
+            color={getStatusColor(row.status) as any}
+          />
+        ),
+      },
+    ],
+    []
+  );
+
+  const rowActions: RowAction<ProductConfig>[] = useMemo(
+    () => [
+      {
+        label: '编辑',
+        icon: <Edit size={16} />,
+        color: 'primary',
+        onClick: (row) => handleEdit(row),
+      },
+      {
+        label: '删除',
+        icon: <Delete size={16} />,
+        color: 'error',
+        onClick: (row) => handleDelete(row.id),
+        confirm: true,
+        confirmMessage: '确定要删除这个配置吗？',
+      },
+    ],
+    []
+  );
+
+  const headerContent = (
+    <Box>
+      <Grid container spacing={3} sx={{ mb: 2 }}>
         {[
           { label: '配置总数', value: stats.total, icon: <Settings size={20} />, color: 'primary' },
           { label: '启用配置', value: stats.active, icon: <Zap size={20} />, color: 'success' },
           { label: '草稿配置', value: stats.draft, icon: <Package size={20} />, color: 'warning' },
           { label: '归档配置', value: stats.archived, icon: <Shield size={20} />, color: 'error' },
         ].map((stat) => (
-          <Grid
-            size={{ xs: 6, sm: 3 }}
-            key={stat.label}
-          >
-            <Card>
-              <CardContent>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 2,
-                    mb: 2,
-                  }}
-                >
-                  <Box sx={{ color: stat.color }}>{stat.icon}</Box>
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                  >
-                    {stat.label}
-                  </Typography>
-                </Box>
-                <Typography
-                  variant='h5'
-                  sx={{ fontWeight: 'bold' }}
-                >
-                  {stat.value}
-                </Typography>
-              </CardContent>
-            </Card>
+          <Grid size={{ xs: 6, sm: 3 }} key={stat.label}>
+            <Box
+              sx={{
+                p: 2,
+                borderRadius: 2,
+                bgcolor: 'background.paper',
+                border: 1,
+                borderColor: 'divider',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1, color: stat.color + '.main' }}>
+                {stat.icon}
+                <Box sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>{stat.label}</Box>
+              </Box>
+              <Box sx={{ fontWeight: 'bold', fontSize: '1.5rem' }}>{stat.value}</Box>
+            </Box>
           </Grid>
         ))}
       </Grid>
 
-      <Grid
-        container
-        spacing={3}
+      <Box
+        sx={{
+          p: 2,
+          borderRadius: 2,
+          bgcolor: 'background.paper',
+          border: 1,
+          borderColor: 'divider',
+          mb: 2,
+        }}
       >
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <Card>
-            <CardHeader title='属性定义' />
-            <CardContent>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {configAttributes.map((attr) => (
-                  <Box
-                    key={attr.name}
-                    sx={{
-                      p: 2,
-                      borderRadius: 1,
-                      backgroundColor: attr.required ? 'primary.50' : 'grey.50',
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        mb: 1,
-                      }}
-                    >
-                      <Typography
-                        variant='body1'
-                        sx={{ fontWeight: 500 }}
-                      >
-                        {attr.name}
-                      </Typography>
-                      <Chip
-                        size='small'
-                        label={attr.required ? '必填' : '选填'}
-                        color={attr.required ? 'primary' : 'default'}
-                      />
-                    </Box>
-                    <Typography
-                      variant='caption'
-                      color='text.secondary'
-                    >
-                      类型: {attr.type}
-                      {attr.values && attr.values.length > 0 && (
-                        <span> - 可选值: {attr.values.join(', ')}</span>
-                      )}
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid size={{ xs: 12, lg: 8 }}>
-          <Card>
-            <CardHeader
-              title='配置列表'
-              action={
-                <TextField
-                  placeholder='搜索配置...'
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  size='small'
-                  sx={{ width: 200 }}
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <Search
-                          size={16}
-                          sx={{ mr: 1 }}
-                        />
-                      ),
-                    },
-                  }}
-                />
-              }
-            />
-            <CardContent>
-              {loading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-                  <CircularProgress />
+        <Box sx={{ fontWeight: 600, mb: 2 }}>属性定义</Box>
+        <Grid container spacing={2}>
+          {configAttributes.map((attr) => (
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={attr.name}>
+              <Box
+                sx={{
+                  p: 2,
+                  borderRadius: 1,
+                  backgroundColor: attr.required ? 'primary.50' : 'grey.50',
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                  <Box sx={{ fontWeight: 500 }}>{attr.name}</Box>
+                  <Chip size='small' label={attr.required ? '必填' : '选填'} color={attr.required ? 'primary' : 'default'} />
                 </Box>
-              ) : (
-                <TableContainer>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>配置名称</TableCell>
-                        <TableCell>配置编码</TableCell>
-                        <TableCell>属性</TableCell>
-                        <TableCell>选项</TableCell>
-                        <TableCell>状态</TableCell>
-                        <TableCell>操作</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {filteredConfigs.map((config) => (
-                        <TableRow key={config.id}>
-                          <TableCell>{config.name}</TableCell>
-                          <TableCell>{config.code}</TableCell>
-                          <TableCell>
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: 0.5,
-                              }}
-                            >
-                              <Typography variant='caption'>
-                                {config.attributes?.color || '-'} / {config.attributes?.size || '-'}
-                              </Typography>
-                              <Typography
-                                variant='caption'
-                                color='text.secondary'
-                              >
-                                {config.attributes?.material || '-'} / {config.attributes?.grade || '-'}
-                              </Typography>
-                            </Box>
-                          </TableCell>
-                          <TableCell>
-                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                              {(config.options || []).map((option, idx) => (
-                                <Chip
-                                  key={idx}
-                                  size='small'
-                                  label={option}
-                                  variant='outlined'
-                                />
-                              ))}
-                            </Box>
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              size='small'
-                              label={getStatusLabel(config.status)}
-                              color={getStatusColor(config.status)}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Box sx={{ display: 'flex', gap: 1 }}>
-                              <IconButton size='small' onClick={() => handleEdit(config)}>
-                                <Edit size={16} />
-                              </IconButton>
-                              <IconButton
-                                size='small'
-                                color='error'
-                                onClick={() => handleDelete(config.id)}
-                              >
-                                <Delete size={16} />
-                              </IconButton>
-                            </Box>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              )}
-            </CardContent>
-          </Card>
+                <Box sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                  类型: {attr.type}
+                  {attr.values && attr.values.length > 0 && (
+                    <span> - 可选值: {attr.values.join(', ')}</span>
+                  )}
+                </Box>
+              </Box>
+            </Grid>
+          ))}
         </Grid>
-      </Grid>
+      </Box>
+    </Box>
+  );
 
-      <Dialog
-        open={openDialog}
-        onClose={() => setOpenDialog(false)}
-        maxWidth='sm'
-        fullWidth
-      >
+  return (
+    <>
+      <ListPageTemplate
+        title='产品配置管理'
+        subtitle='管理产品的配置选项和属性定义'
+        columns={columns}
+        data={filteredConfigs}
+        loading={loading}
+        searchable
+        searchPlaceholder='搜索配置名称或编码...'
+        onSearch={handleSearch}
+        filters={filters}
+        filtersValue={{ status: statusFilter }}
+        onFilterChange={handleFilterChange}
+        rowActions={rowActions}
+        actions={[
+          {
+            label: '创建配置',
+            icon: <Plus size={16} />,
+            onClick: handleCreate,
+            variant: 'contained',
+          },
+        ]}
+        onRefresh={loadConfigs}
+        headerContent={headerContent}
+        emptyMessage='暂无配置数据'
+      />
+
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth='sm' fullWidth>
         <DialogTitle>{editingConfig ? '编辑产品配置' : '创建产品配置'}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
@@ -526,23 +472,20 @@ export const PdmProductConfigPage: React.FC = () => {
                 <MenuItem value='archived'>归档</MenuItem>
               </Select>
             </FormControl>
-            <Typography
-              variant='body2'
-              sx={{ fontWeight: 500 }}
-            >
-              属性配置
-            </Typography>
-            <Grid
-              container
-              spacing={3}
-            >
+            <Box sx={{ fontWeight: 500 }}>属性配置</Box>
+            <Grid container spacing={3}>
               <Grid size={{ xs: 6 }}>
                 <FormControl fullWidth>
                   <InputLabel>颜色</InputLabel>
                   <Select
                     value={formData.attributes.color}
                     label='颜色'
-                    onChange={(e) => setFormData({ ...formData, attributes: { ...formData.attributes, color: e.target.value } })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        attributes: { ...formData.attributes, color: e.target.value },
+                      })
+                    }
                   >
                     <MenuItem value='红色'>红色</MenuItem>
                     <MenuItem value='蓝色'>蓝色</MenuItem>
@@ -558,7 +501,12 @@ export const PdmProductConfigPage: React.FC = () => {
                   <Select
                     value={formData.attributes.size}
                     label='尺寸'
-                    onChange={(e) => setFormData({ ...formData, attributes: { ...formData.attributes, size: e.target.value } })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        attributes: { ...formData.attributes, size: e.target.value },
+                      })
+                    }
                   >
                     <MenuItem value='S'>S</MenuItem>
                     <MenuItem value='M'>M</MenuItem>
@@ -574,7 +522,12 @@ export const PdmProductConfigPage: React.FC = () => {
                   <Select
                     value={formData.attributes.material}
                     label='材质'
-                    onChange={(e) => setFormData({ ...formData, attributes: { ...formData.attributes, material: e.target.value } })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        attributes: { ...formData.attributes, material: e.target.value },
+                      })
+                    }
                   >
                     <MenuItem value='塑料'>塑料</MenuItem>
                     <MenuItem value='金属'>金属</MenuItem>
@@ -589,7 +542,12 @@ export const PdmProductConfigPage: React.FC = () => {
                   <Select
                     value={formData.attributes.grade}
                     label='等级'
-                    onChange={(e) => setFormData({ ...formData, attributes: { ...formData.attributes, grade: e.target.value } })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        attributes: { ...formData.attributes, grade: e.target.value },
+                      })
+                    }
                   >
                     <MenuItem value='A级'>A级</MenuItem>
                     <MenuItem value='B级'>B级</MenuItem>
@@ -598,12 +556,7 @@ export const PdmProductConfigPage: React.FC = () => {
                 </FormControl>
               </Grid>
             </Grid>
-            <Typography
-              variant='body2'
-              sx={{ fontWeight: 500 }}
-            >
-              可选服务
-            </Typography>
+            <Box sx={{ fontWeight: 500 }}>可选服务</Box>
             <FormGroup>
               {['快速发货', '免费配送', '质量保证', '专属客服'].map((option) => (
                 <FormControlLabel
@@ -622,12 +575,12 @@ export const PdmProductConfigPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDialog(false)}>取消</Button>
-          <Button variant='contained' onClick={handleSave} sx={{ bgcolor: 'primary.main' }}>
+          <Button variant='contained' onClick={handleSave}>
             {editingConfig ? '更新配置' : '创建配置'}
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </>
   );
 };
 

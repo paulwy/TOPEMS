@@ -1,0 +1,280 @@
+export interface ListQueryParams {
+  page?: number;
+  page_size?: number;
+  search?: string;
+  status?: string;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
+export interface RawPaginatedResponse {
+  [key: string]: unknown;
+  total: number;
+}
+
+export interface GisStatistics {
+  device_points: number;
+  pipelines: number;
+  storage_locations: number;
+  evidence_records: number;
+  business_locations: number;
+  factory_maps: number;
+  active_devices: number;
+  active_pipelines: number;
+}
+
+export interface DevicePoint {
+  id: string;
+  name: string;
+  description?: string;
+  device_type: string;
+  latitude: number;
+  longitude: number;
+  status: string;
+  last_inspected?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DeviceLocationRecord {
+  id: string;
+  device_id: string;
+  device_name: string;
+  latitude: number;
+  longitude: number;
+  timestamp: string;
+  accuracy?: number;
+  speed?: number;
+  heading?: number;
+  battery_level?: number;
+  created_at: string;
+}
+
+export interface TrackQueryParams {
+  device_id: string;
+  start_time?: string;
+  end_time?: string;
+  page?: number;
+  page_size?: number;
+}
+
+export interface CreateDevicePointRequest {
+  name: string;
+  description?: string;
+  device_type: string;
+  latitude: number;
+  longitude: number;
+  status?: string;
+}
+
+export interface Pipeline {
+  id: string;
+  name: string;
+  description?: string;
+  pipeline_type: string;
+  start_point: [number, number];
+  end_point: [number, number];
+  status: string;
+  created_at: string;
+  updated_at: string;
+  code?: string;
+}
+
+export interface CreatePipelineRequest {
+  name: string;
+  description?: string;
+  pipeline_type: string;
+  start_point: [number, number];
+  end_point: [number, number];
+  status?: string;
+}
+
+export interface StorageLocation {
+  id: string;
+  name: string;
+  description?: string;
+  location_type: string;
+  latitude: number;
+  longitude: number;
+  capacity?: number;
+  current_usage?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateStorageLocationRequest {
+  name: string;
+  description?: string;
+  location_type: string;
+  latitude: number;
+  longitude: number;
+  capacity?: number;
+  current_usage?: number;
+}
+
+export interface EvidenceRecord {
+  id: string;
+  title: string;
+  description?: string;
+  evidence_type: string;
+  latitude: number;
+  longitude: number;
+  file_url?: string;
+  recorded_by: string;
+  recorded_at: string;
+  created_at: string;
+}
+
+export interface CreateEvidenceRecordRequest {
+  title: string;
+  description?: string;
+  evidence_type: string;
+  latitude: number;
+  longitude: number;
+  file_url?: string;
+  recorded_by: string;
+}
+
+export interface WarehouseLocation {
+  id: string;
+  warehouse_name: string;
+  zone?: string;
+  position: { lat: number; lng: number };
+  capacity?: number;
+  usage_rate?: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LocationPhoto {
+  id: string;
+  position: { lat: number; lng: number };
+  photo_url: string;
+  description?: string;
+  taken_by: string;
+  taken_at: string;
+  created_at: string;
+}
+
+export interface BusinessLocation {
+  id: string;
+  business_type: string;
+  business_name: string;
+  business_code?: string;
+  category?: string;
+  position: { lat: number; lng: number };
+  address?: string;
+  contact_person?: string;
+  contact_phone?: string;
+  capacity?: number;
+  current_usage?: number;
+  status: string;
+  properties?: Record<string, any>;
+  description?: string;
+  external_id?: string;
+  external_type?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateBusinessLocationRequest {
+  business_type: string;
+  business_name: string;
+  business_code?: string;
+  category?: string;
+  position: { lat: number; lng: number };
+  address?: string;
+  contact_person?: string;
+  contact_phone?: string;
+  capacity?: number;
+  current_usage?: number;
+  status?: string;
+  properties?: Record<string, any>;
+  description?: string;
+  external_id?: string;
+  external_type?: string;
+}
+
+export interface MapMarker {
+  id: string;
+  marker_type: string;
+  name: string;
+  marker_style?: string;
+  position: { lat: number; lng: number };
+  icon_svg?: string;
+  color?: string;
+  size?: number;
+  popup_content?: string;
+  click_action?: string;
+  action_data?: Record<string, any>;
+  visible?: boolean;
+  z_index?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateMapMarkerRequest {
+  marker_type: string;
+  name: string;
+  marker_style?: string;
+  position: { lat: number; lng: number };
+  icon_svg?: string;
+  color?: string;
+  size?: number;
+  popup_content?: string;
+  click_action?: string;
+  action_data?: Record<string, any>;
+  visible?: boolean;
+  z_index?: number;
+}
+
+export interface CreateFactoryMapRequest {
+  name: string;
+  code: string;
+  map_type: string;
+  file_url: string;
+  bounds?: { north: number; south: number; east: number; west: number };
+  description?: string;
+}
+
+export interface FactoryMap {
+  id: string;
+  name: string;
+  code: string;
+  map_type: string;
+  file_url: string;
+  bounds?: { north: number; south: number; east: number; west: number };
+  description?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SearchResult {
+  type: string;
+  id: string;
+  name: string;
+  code?: string;
+  position?: { lat: number; lng: number };
+  status: string;
+}
+
+export interface GeoJSONFeature {
+  type: 'Feature';
+  geometry: {
+    type: 'Point' | 'LineString' | 'Polygon';
+    coordinates: number[] | number[][] | number[][][];
+  };
+  properties: Record<string, unknown>;
+}
+
+export interface GeoJSON {
+  type: 'FeatureCollection';
+  features: GeoJSONFeature[];
+}

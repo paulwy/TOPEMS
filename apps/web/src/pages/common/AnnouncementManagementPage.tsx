@@ -231,7 +231,7 @@ const AnnouncementManagementPage: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const colors: Record<string, string> = {
+    const colors: Record<string, 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'> = {
       draft: 'default',
       published: 'success',
       archived: 'default',
@@ -251,7 +251,7 @@ const AnnouncementManagementPage: React.FC = () => {
   };
 
   const getPriorityBadge = (priority?: string) => {
-    const colors: Record<string, string> = {
+    const colors: Record<string, 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'> = {
       low: 'default',
       normal: 'info',
       high: 'warning',
@@ -365,7 +365,7 @@ const AnnouncementManagementPage: React.FC = () => {
         columns={columns}
         data={announcements}
         loading={loading}
-        error={error}
+        error={error ?? undefined}
         searchable
         searchPlaceholder='搜索公告标题、作者...'
         searchValue={searchQuery}

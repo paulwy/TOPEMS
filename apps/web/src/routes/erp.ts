@@ -20,7 +20,6 @@ const AnnouncementManagementPage = lazy(() => import('../pages/common/Announceme
 const VoucherTemplatePage = lazy(() => import('../pages/fixed/VoucherTemplatePage'));
 const AccountManagementPage = lazy(() => import('../pages/admin/AccountManagementPage'));
 const BankAccountManagementPage = lazy(() => import('../pages/admin/BankAccountManagementPage'));
-const FixedAssetManagementPage = lazy(() => import('../pages/fixed/FixedAssetManagementPage'));
 const ConsolidationScopePage = lazy(() => import('../pages/finance/ConsolidationScopePage'));
 const ConsolidationReportsPage = lazy(() => import('../pages/finance/ConsolidationReportsPage'));
 const CompanyStructurePage = lazy(() => import('../pages/admin/CompanyStructurePage'));

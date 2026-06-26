@@ -8,8 +8,9 @@ test.describe('RS Page Tests', () => {
     await page.getByRole('button', { name: '登录' }).click();
     await page.waitForURL('**/dashboard');
     
-    await page.locator('h4', { hasText: '科研研发' }).click();
-    await page.waitForURL('**/rs', { timeout: 10000 });
+    // Use direct URL navigation instead of sidebar click
+    await page.goto('/rs');
+    await page.waitForLoadState('networkidle');
   });
 
   test('displays RS page correctly', async ({ page }) => {

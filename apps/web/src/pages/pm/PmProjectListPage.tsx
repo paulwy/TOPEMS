@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Plus, Search, Edit, Trash2, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Chip, LinearProgress, IconButton, Tooltip, MenuItem } from '@mui/material';
-import { Button } from '@mui/material';
+import { Box, LinearProgress, IconButton, Tooltip, MenuItem } from '@mui/material';
 import type { Project } from '@/api/pm';
 import { useAppStore } from '@/store';
 import { pmApi } from '@/api/pm';
-import { DataExport } from '@/components/common';
+import { DataExport, StatusBadge } from '@/components/common';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 
@@ -158,8 +157,8 @@ const PmProjectListPage: React.FC = () => {
         label: '状态',
         width: 100,
         render: (row) => (
-          <Chip
-            size='small'
+          <StatusBadge
+            status={row.status}
             label={STATUS_OPTIONS_MAP[row.status] || row.status}
             color={STATUS_COLOR_MAP[row.status]}
           />

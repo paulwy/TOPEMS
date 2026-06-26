@@ -2,7 +2,7 @@
 
 #![allow(clippy::match_like_matches_macro)]
 #![allow(clippy::manual_ok_err)]
-#![allow(clippy::redundant_pattern_matching)]
+#![allow(clippy::redundant_pattern_macro)]
 #![allow(clippy::useless_format)]
 #![allow(clippy::useless_vec)]
 #![allow(clippy::clone_on_copy)]
@@ -13,13 +13,14 @@
 #![allow(dead_code)]
 
 mod shared;
-
-pub mod modules;
+mod api;
+mod models;
+mod services;
 
 use std::net::SocketAddr;
 
 use axum::{
-    routing::{get, post, put},
+    routing::get,
     Json, Router,
 };
 use axum_prometheus::PrometheusMetricLayer;
@@ -87,9 +88,8 @@ async fn main() {
         }
     };
 
-    // Initialize LIMS database
-    if let Err(e) = modules::lims::init_database(&pool).await {
-        tracing::warn!("LIMS module database init warning: {}", e);
+    if let Err(e) = models::init_lims_database(&pool).await {
+        tracing::warn!("LIMS database init warning: {}", e);
     }
 
     let auth_state = AuthState::from_env();
@@ -105,38 +105,19 @@ async fn main() {
     let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
-        .route("/api/plugins/info", get(modules::lims::lims_plugin::get_plugin_info))
-        .route("/api/plugins/health", get(modules::lims::lims_plugin::plugin_health_check))
+        .route("/api/plugins/info", get(services::lims_plugin::get_plugin_info))
+        .route("/api/plugins/health", get(services::lims_plugin::plugin_health_check))
         .route("/api/info", get(|| get_api_info_handler("lims-service")))
         .route("/metrics", get(move || async move { metric_handle.render() }));
 
     // Protected routes
     let protected_routes = Router::new()
-        // Sample Management
-        .route("/api/qa/lab/sample", get(modules::lims::sample::list_samples))
-        .route("/api/qa/lab/sample", post(modules::lims::sample::register_sample))
-        .route("/api/qa/lab/sample/{id}", get(modules::lims::sample::get_sample))
-        .route("/api/qa/lab/sample/{id}", put(modules::lims::sample::update_sample))
-        // Inspection Task
-        .route("/api/qa/lab/task", get(modules::lims::inspection_task::list_tasks))
-        .route("/api/qa/lab/task", post(modules::lims::inspection_task::create_task))
-        .route("/api/qa/lab/task/{id}", get(modules::lims::inspection_task::get_task))
-        .route("/api/qa/lab/task/{id}/result", post(modules::lims::inspection_task::submit_result))
-        // Inspection Record
-        .route("/api/qa/lab/record", get(modules::lims::inspection_record::list_records))
-        .route("/api/qa/lab/record", post(modules::lims::inspection_record::create_record))
-        .route("/api/qa/lab/record/{id}", get(modules::lims::inspection_record::get_record))
-        // Instrument
-        .route("/api/qa/lab/instrument", get(modules::lims::instrument::list_instruments))
-        .route("/api/qa/lab/instrument", post(modules::lims::instrument::create_instrument))
-        .route("/api/qa/lab/instrument/{id}", get(modules::lims::instrument::get_instrument))
-        .route("/api/qa/lab/instrument/{id}/calibration", post(modules::lims::instrument::calibrate))
-        // Reagent
-        .route("/api/qa/lab/reagent", get(modules::lims::reagent::list_reagents))
-        .route("/api/qa/lab/reagent", post(modules::lims::reagent::create_reagent))
-        .route("/api/qa/lab/reagent/{id}", get(modules::lims::reagent::get_reagent))
-        // Statistics
-        .route("/api/qa/lab/statistics", get(modules::lims::statistics::get_statistics))
+        .merge(api::lab_sample::create_routes())
+        .merge(api::lab_task::create_routes())
+        .merge(api::lab_record::create_routes())
+        .merge(api::lab_instrument::create_routes())
+        .merge(api::lab_reagent::create_routes())
+        .merge(api::lab_statistics::create_routes())
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),
             auth_middleware,
@@ -159,7 +140,7 @@ async fn main() {
     // Auto-register to Core
     let core_url = std::env::var("CORE_URL").ok();
     tokio::spawn(async move {
-        modules::lims::lims_plugin::auto_register_to_core(core_url.as_deref()).await;
+        services::lims_plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
     axum::serve(

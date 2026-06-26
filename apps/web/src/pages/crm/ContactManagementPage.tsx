@@ -1,20 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
-  TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Chip,
   Box,
   Typography,
 } from '@mui/material';
-import { Button } from '@mui/material';
-import type { Contact, CreateContactRequest, UpdateContactRequest } from '@/api/modules/crm/crm';
-import { crmApi } from '@/api/modules/crm/crm';
+import type { Contact, CreateContactRequest, UpdateContactRequest } from '@/api/crm';
+import { crmApi } from '@/api/crm';
 import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
-import { DataExport } from '@/components/common';
+import { DataExport, ActionButton, FormField, Dialog, StatusBadge } from '@/components/common';
 import { Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { ListPageTemplate } from '@/components/templates';
 import type { ColumnDef, RowAction, FilterConfig } from '@/components/templates';
@@ -173,10 +166,10 @@ const ContactManagementPage: React.FC = () => {
     };
     const s = statusMap[status] || { label: status, color: 'default' };
     return (
-      <Chip
-        size='small'
-        color={s.color}
+      <StatusBadge
+        status={status}
         label={s.label}
+        color={s.color}
       />
     );
   };
@@ -336,179 +329,175 @@ const ContactManagementPage: React.FC = () => {
       <Dialog
         open={showDialog}
         onClose={() => setShowDialog(false)}
+        title={selectedContact ? '编辑联系人' : '新增联系人'}
         maxWidth='md'
         fullWidth
+        cancelButton={{ label: '取消' }}
+        confirmButton={{ label: '保存', onClick: () => handleSubmit({ preventDefault: () => {} } as React.FormEvent) }}
       >
-        <DialogTitle>{selectedContact ? '编辑联系人' : '新增联系人'}</DialogTitle>
         <form onSubmit={handleSubmit}>
-          <DialogContent>
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(2, 1fr)',
-                gap: 2,
-                pt: 1,
-              }}
-            >
-              <TextField
-                label='名 *'
-                required
-                value={formData.first_name}
-                onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                fullWidth
-              />
-              <TextField
-                label='姓'
-                value={formData.last_name}
-                onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                fullWidth
-              />
-              <TextField
-                label='邮箱'
-                type='email'
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                fullWidth
-              />
-              <TextField
-                label='电话'
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                fullWidth
-              />
-              <TextField
-                label='职位'
-                value={formData.position}
-                onChange={(e) => setFormData({ ...formData, position: e.target.value })}
-                fullWidth
-                sx={{ gridColumn: 'span 2' }}
-              />
-              <TextField
-                label='备注'
-                multiline
-                rows={3}
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                fullWidth
-                sx={{ gridColumn: 'span 2' }}
-              />
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setShowDialog(false)}>取消</Button>
-            <Button
-              type='submit'
-              variant='contained'
-            >
-              保存
-            </Button>
-          </DialogActions>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: 2,
+              pt: 1,
+            }}
+          >
+            <FormField
+              name='first_name'
+              label='名 *'
+              required
+              value={formData.first_name}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, first_name: e.target.value })}
+              fullWidth
+            />
+            <FormField
+              name='last_name'
+              label='姓'
+              value={formData.last_name}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, last_name: e.target.value })}
+              fullWidth
+            />
+            <FormField
+              name='email'
+              label='邮箱'
+              type='email'
+              value={formData.email}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, email: e.target.value })}
+              fullWidth
+            />
+            <FormField
+              name='phone'
+              label='电话'
+              value={formData.phone}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, phone: e.target.value })}
+              fullWidth
+            />
+            <FormField
+              name='position'
+              label='职位'
+              value={formData.position}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, position: e.target.value })}
+              fullWidth
+              sx={{ gridColumn: 'span 2' }}
+            />
+            <FormField
+              name='notes'
+              label='备注'
+              multiline
+              rows={3}
+              value={formData.notes}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, notes: e.target.value })}
+              fullWidth
+              sx={{ gridColumn: 'span 2' }}
+            />
+          </Box>
         </form>
       </Dialog>
 
       <Dialog
         open={showDetailDialog}
         onClose={() => setShowDetailDialog(false)}
+        title='联系人详情'
         maxWidth='md'
         fullWidth
+        confirmButton={{ label: '关闭' }}
       >
-        <DialogTitle>联系人详情</DialogTitle>
         {selectedContact && (
-          <DialogContent>
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(2, 1fr)',
-                gap: 2,
-              }}
-            >
-              <Box>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  名
-                </Typography>
-                <Typography sx={{ fontWeight: 'medium' }}>{selectedContact.first_name}</Typography>
-              </Box>
-              <Box>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  姓
-                </Typography>
-                <Typography>{selectedContact.last_name || '-'}</Typography>
-              </Box>
-              <Box>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  邮箱
-                </Typography>
-                <Typography>{selectedContact.email || '-'}</Typography>
-              </Box>
-              <Box>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  电话
-                </Typography>
-                <Typography>{selectedContact.phone || '-'}</Typography>
-              </Box>
-              <Box>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  职位
-                </Typography>
-                <Typography>{selectedContact.position || '-'}</Typography>
-              </Box>
-              <Box>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  状态
-                </Typography>
-                <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedContact.status)}</Box>
-              </Box>
-              <Box>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  创建时间
-                </Typography>
-                <Typography>
-                  {new Date(selectedContact.created_at).toLocaleString('zh-CN')}
-                </Typography>
-              </Box>
-              <Box>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  更新时间
-                </Typography>
-                <Typography>
-                  {new Date(selectedContact.updated_at).toLocaleString('zh-CN')}
-                </Typography>
-              </Box>
-              <Box sx={{ gridColumn: 'span 2' }}>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  备注
-                </Typography>
-                <Typography>{selectedContact.notes || '-'}</Typography>
-              </Box>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: 2,
+            }}
+          >
+            <Box>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                名
+              </Typography>
+              <Typography sx={{ fontWeight: 'medium' }}>{selectedContact.first_name}</Typography>
             </Box>
-          </DialogContent>
+            <Box>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                姓
+              </Typography>
+              <Typography>{selectedContact.last_name || '-'}</Typography>
+            </Box>
+            <Box>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                邮箱
+              </Typography>
+              <Typography>{selectedContact.email || '-'}</Typography>
+            </Box>
+            <Box>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                电话
+              </Typography>
+              <Typography>{selectedContact.phone || '-'}</Typography>
+            </Box>
+            <Box>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                职位
+              </Typography>
+              <Typography>{selectedContact.position || '-'}</Typography>
+            </Box>
+            <Box>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                状态
+              </Typography>
+              <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedContact.status)}</Box>
+            </Box>
+            <Box>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                创建时间
+              </Typography>
+              <Typography>
+                {new Date(selectedContact.created_at).toLocaleString('zh-CN')}
+              </Typography>
+            </Box>
+            <Box>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                更新时间
+              </Typography>
+              <Typography>
+                {new Date(selectedContact.updated_at).toLocaleString('zh-CN')}
+              </Typography>
+            </Box>
+            <Box sx={{ gridColumn: 'span 2' }}>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                备注
+              </Typography>
+              <Typography>{selectedContact.notes || '-'}</Typography>
+            </Box>
+          </Box>
         )}
       </Dialog>
     </>

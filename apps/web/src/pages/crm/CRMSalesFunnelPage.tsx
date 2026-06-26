@@ -24,6 +24,15 @@ interface FunnelMetrics {
   weighted_value: number;
 }
 
+const stageLabelMap: Record<string, string> = {
+  lead: '潜在客户',
+  qualified: '意向确认',
+  proposal: '方案提交',
+  negotiation: '商务谈判',
+  closed_won: '赢单',
+  closed_lost: '输单',
+};
+
 const CRMSalesFunnelPage: React.FC = () => {
   const addNotification = useAppStore((state) => state.addNotification);
   const [metrics, setMetrics] = useState<FunnelMetrics | null>(null);
@@ -35,20 +44,25 @@ const CRMSalesFunnelPage: React.FC = () => {
       setLoading(true);
       const [metricsRes, stagesRes] = await Promise.allSettled([
         apiClient.crm.get('/api/crm/sales-funnel/metrics'),
-        apiClient.crm.get('/api/crm/sales-funnel/stages'),
+        apiClient.crm.get('/api/crm/sales-funnel'),
       ]);
       if (metricsRes.status === 'fulfilled' && metricsRes.value.success) {
         setMetrics(metricsRes.value.data as FunnelMetrics);
       }
       if (stagesRes.status === 'fulfilled' && stagesRes.value.success) {
-        setStages(((stagesRes.value.data as any) || []).stages || stagesRes.value.data as FunnelStage[] || []);
+        const data = (stagesRes.value.data as any) || {};
+        setStages(data.stages || []);
       }
     } catch (err) {
-      // 静默失败
+      addNotification({
+        type: 'error',
+        title: '加载失败',
+        message: '无法加载销售漏斗数据',
+      });
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [addNotification]);
 
   useEffect(() => {
     loadFunnel();
@@ -65,14 +79,14 @@ const CRMSalesFunnelPage: React.FC = () => {
     {
       id: 'value',
       title: '总价值',
-      value: `¥${(metrics?.total_value ?? 0).toLocaleString()}`,
+      value: `¥${Math.round(Number(metrics?.total_value ?? 0)).toLocaleString()}`,
       icon: <DollarSign size={20} />,
       color: 'success',
     },
     {
       id: 'avg',
       title: '平均价值',
-      value: `¥${Math.round(metrics?.avg_value ?? 0).toLocaleString()}`,
+      value: `¥${Math.round(Number(metrics?.avg_value ?? 0)).toLocaleString()}`,
       icon: <Target size={20} />,
       color: 'info',
     },
@@ -93,8 +107,8 @@ const CRMSalesFunnelPage: React.FC = () => {
       dataKey: 'value',
       nameKey: 'name',
       data: stages.flatMap((stage) => [
-        { name: `${stage.stage}-商机数`, value: stage.count, color: '#3b82f6' },
-        { name: `${stage.stage}-总价值(万)`, value: Math.round(stage.total_value / 10000), color: '#10b981' },
+        { name: `${stageLabelMap[stage.stage] || stage.stage}-商机数`, value: stage.count, color: '#3b82f6' },
+        { name: `${stageLabelMap[stage.stage] || stage.stage}-总价值(万)`, value: Math.round(Number(stage.total_value) / 10000), color: '#10b981' },
       ]),
     },
   ];
@@ -153,12 +167,12 @@ const CRMSalesFunnelPage: React.FC = () => {
                         阶段 {idx + 1}
                       </Typography>
                       <Typography variant='h6' sx={{ fontWeight: 600 }}>
-                        {stage.stage}
+                        {stageLabelMap[stage.stage] || stage.stage}
                       </Typography>
                     </Box>
                     {stage.probability !== undefined && (
                       <Chip
-                        label={`${stage.probability}%`}
+                        label={`${Math.round(Number(stage.probability))}%`}
                         color='primary'
                         size='small'
                       />
@@ -177,10 +191,10 @@ const CRMSalesFunnelPage: React.FC = () => {
                     </Typography>
                   </Box>
                   <Typography variant='body2' color='text.secondary'>
-                    总价值: ¥{stage.total_value.toLocaleString()}
+                    总价值: ¥{Math.round(Number(stage.total_value)).toLocaleString()}
                   </Typography>
                   <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
-                    平均价值: ¥{Math.round(stage.avg_value).toLocaleString()}
+                    平均价值: ¥{Math.round(Number(stage.avg_value)).toLocaleString()}
                   </Typography>
                   <LinearProgress
                     variant='determinate'

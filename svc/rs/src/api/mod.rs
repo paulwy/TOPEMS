@@ -20,6 +20,7 @@ pub mod project_milestone;
 pub mod project_phase;
 pub mod project_report;
 pub mod research_cost;
+pub mod statistics;
 
 #[derive(Clone)]
 pub struct ApiState {
@@ -58,4 +59,5 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(project_milestone::create_routes())
         .merge(project_member::create_routes())
         .merge(project_report::create_routes())
+        .merge(statistics::create_routes())
 }

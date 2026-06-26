@@ -41,7 +41,7 @@ import {
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useResponsive } from '../../hooks/useResponsive';
-import { ModeToggle } from '../ModeToggle';
+import { ModeToggle } from '../theme/ModeToggle';
 import type { NavGroup as NavItem } from '@/types/navigation';
 
 // 模块图标映射

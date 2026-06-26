@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { apiLogger } from '@/utils/logger';
-import { flowApi } from '@/api/flow';
-import type { Workflow } from '@/api/flow';
+import { workflowApi } from '@/api/workflow';
+import type { Workflow } from '@/api/workflow';
 import { useNotification } from '@/hooks/useNotification';
 import { Box, Dialog, DialogActions, DialogContent, DialogTitle, Typography } from '@mui/material';
 import { Button } from '@mui/material';
@@ -47,7 +47,7 @@ const FlowTemplatePage: React.FC = () => {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await flowApi.listWorkflows();
+      const res = await workflowApi.listWorkflows();
       if (res.success && res.data) {
         const workflows = res.data.items || [];
         const templates: FlowTemplate[] = workflows.map((w: Workflow) => ({
@@ -89,10 +89,10 @@ const FlowTemplatePage: React.FC = () => {
 
   const handleCopy = async (template: FlowTemplate) => {
     try {
-      const workflowRes = await flowApi.getWorkflow(template.id);
+      const workflowRes = await workflowApi.getWorkflow(template.id);
       if (workflowRes.success && workflowRes.data) {
         const workflow = workflowRes.data;
-        await flowApi.createWorkflow({
+        await workflowApi.createWorkflow({
           name: `${workflow.name} (副本)`,
           description: workflow.description,
           definition: workflow.definition,
@@ -115,7 +115,7 @@ const FlowTemplatePage: React.FC = () => {
   const confirmDelete = async () => {
     if (!selectedTemplate) return;
     try {
-      await flowApi.deleteWorkflow(selectedTemplate.id);
+      await workflowApi.deleteWorkflow(selectedTemplate.id);
       setData((prev) => prev.filter((t) => t.id !== selectedTemplate.id));
       success('模板删除成功');
     } catch (err: unknown) {

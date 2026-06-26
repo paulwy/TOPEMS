@@ -19,7 +19,7 @@ import {
 } from '@mui/material';
 import { Button } from '@mui/material';
 
-import { ModeToggle } from '@/components/ModeToggle';
+import { ModeToggle } from '@/components/theme/ModeToggle';
 
 const loginFormSchema = z.object({
   username: z

@@ -418,16 +418,13 @@ const PmContractDetailPage: React.FC = () => {
     if (!contract) return undefined;
 
     const statusKey = contract.status || 'draft';
-    const statusSx = STATUS_COLORS[statusKey];
 
     return {
       title: contract.contract_name,
       subtitle: contract.contract_code,
       tags: [
-        <Badge key='status' sx={statusSx}>{STATUS_LABELS[statusKey]}</Badge>,
-        <Badge key='type' variant='standard' sx={{ bgcolor: '#f3e8ff', color: '#6b21a8' }}>
-          {CONTRACT_TYPE_LABELS[contract.contract_type] || contract.contract_type}
-        </Badge>,
+        STATUS_LABELS[statusKey],
+        CONTRACT_TYPE_LABELS[contract.contract_type] || contract.contract_type,
       ],
       stats: [
         { label: '合同金额', value: formatCurrency(contract.amount) },
@@ -446,7 +443,7 @@ const PmContractDetailPage: React.FC = () => {
       loading={loading}
       error={error}
       backHref='/pm/contracts'
-      onEdit={() => id && navigate(`/pm/contracts/${id}/edit`)}
+      onEdit={() => id && navigate(`/pm/contracts/${id}`)}
       tabs={tabs}
       defaultTab='overview'
       infoCard={infoCard}

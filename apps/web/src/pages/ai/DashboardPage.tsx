@@ -130,19 +130,19 @@ export const DashboardPage: React.FC = () => {
       id: 'data-analysis',
       label: '数据分析',
       icon: <ArrowRight size={18} />,
-      onClick: () => navigate('/ai/analytics'),
+      onClick: () => navigate('/ai/chat'),
     },
     {
       id: 'create-workflow',
       label: '创建工作流',
       icon: <ArrowRight size={18} />,
-      onClick: () => navigate('/ai/workflows/create'),
+      onClick: () => navigate('/ai/chat'),
     },
     {
       id: 'model-management',
       label: '模型管理',
       icon: <ArrowRight size={18} />,
-      onClick: () => navigate('/ai/models'),
+      onClick: () => navigate('/ai/chat'),
     },
   ];
 

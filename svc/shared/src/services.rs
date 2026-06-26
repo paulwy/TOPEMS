@@ -11,6 +11,7 @@ use crate::models::*;
 /// ID 序列号的 TTL（秒）- 24小时
 const SEQUENCE_TTL_SECONDS: u64 = 86400;
 
+#[derive(Clone)]
 pub struct SharedService {
     repository: Arc<SharedRepository>,
     redis_client: redis::Client,
@@ -47,7 +48,7 @@ impl SharedService {
         let seq: u64 = conn.incr(&key, 1).await?;
         
         // 为序列号添加 TTL，防止 Redis 键无限增长
-        let _: () = conn.expire(&key, SEQUENCE_TTL_SECONDS).await?;
+        let _: () = conn.expire(&key, SEQUENCE_TTL_SECONDS as usize).await?;
 
         let id = format!("{}{:08}", prefix, seq);
 

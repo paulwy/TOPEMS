@@ -63,7 +63,7 @@ const CRMRecommendationPage: React.FC = () => {
       setLoading(true);
       const res = await crmApi.customerRecommendation.list({
         page: 1,
-        page_size: 50,
+        pageSize: 50,
       });
       if (res.success && res.data) {
         setRecommendations(res.data.items || []);
@@ -81,7 +81,7 @@ const CRMRecommendationPage: React.FC = () => {
 
   const loadCustomers = useCallback(async () => {
     try {
-      const res = await crmApi.customers.list({ page: 1, page_size: 100 });
+      const res = await crmApi.customers.list({ page: 1, pageSize: 100 });
       if (res.success && res.data) {
         setCustomers(res.data.items || []);
       }
@@ -133,12 +133,12 @@ const CRMRecommendationPage: React.FC = () => {
     }
   };
 
-  const getRecommendationTypeIcon = (type: string) => {
-    const icons: Record<string, React.ReactNode> = {
+  const getRecommendationTypeIcon = (type: string): React.ReactElement => {
+    const icons: Record<string, React.ReactElement> = {
       product: <Package size={16} />,
       opportunity: <Target size={16} />,
       service: <Users size={16} />,
-      cross_sell: <ShoppingCart size={16} />,
+      'cross-sell': <ShoppingCart size={16} />,
       upsell: <TrendingUp size={16} />,
       content: <FileText size={16} />,
       general: <Lightbulb size={16} />,
@@ -151,7 +151,7 @@ const CRMRecommendationPage: React.FC = () => {
       product: '产品推荐',
       opportunity: '商机推荐',
       service: '服务推荐',
-      cross_sell: '交叉销售',
+      'cross-sell': '交叉销售',
       upsell: '增值销售',
       content: '内容推荐',
       general: '综合推荐',
@@ -172,7 +172,7 @@ const CRMRecommendationPage: React.FC = () => {
       label: '客户名称',
       render: (row) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Typography variant="body2" fontWeight="medium">
+          <Typography variant="body2" sx={{ fontWeight: 500 }}>
             {row.customer_name}
           </Typography>
         </Box>
@@ -210,7 +210,7 @@ const CRMRecommendationPage: React.FC = () => {
             sx={{ width: 100, height: 6, borderRadius: 3 }}
             color={getConfidenceColor(row.confidence)}
           />
-          <Typography variant="body2" fontWeight="medium">
+          <Typography variant="body2" sx={{ fontWeight: 500 }}>
             {(row.confidence * 100).toFixed(0)}%
           </Typography>
         </Box>
@@ -268,7 +268,7 @@ const CRMRecommendationPage: React.FC = () => {
         {selectedRecommendation && (
           <Box sx={{ pt: 2 }}>
             <Grid container spacing={2}>
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <Paper sx={{ p: 2, bgcolor: 'grey.50' }}>
                   <Typography variant="subtitle2" gutterBottom>
                     基本信息
@@ -286,7 +286,7 @@ const CRMRecommendationPage: React.FC = () => {
                   </Box>
                 </Paper>
               </Grid>
-              <Grid item xs={12}>
+              <Grid size={12}>
                 <Typography variant="subtitle2" gutterBottom>
                   推荐项目 ({selectedRecommendation.recommendations.length})
                 </Typography>
@@ -296,7 +296,7 @@ const CRMRecommendationPage: React.FC = () => {
                       <CardContent>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                           <Box>
-                            <Typography variant="subtitle1" fontWeight="medium">
+                            <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
                               {item.name}
                             </Typography>
                             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
@@ -379,7 +379,7 @@ const CRMRecommendationPage: React.FC = () => {
               <MenuItem value="product">产品推荐</MenuItem>
               <MenuItem value="opportunity">商机推荐</MenuItem>
               <MenuItem value="service">服务推荐</MenuItem>
-              <MenuItem value="cross_sell">交叉销售</MenuItem>
+              <MenuItem value="cross-sell">交叉销售</MenuItem>
               <MenuItem value="upsell">增值销售</MenuItem>
               <MenuItem value="content">内容推荐</MenuItem>
               <MenuItem value="general">综合推荐</MenuItem>
@@ -390,7 +390,7 @@ const CRMRecommendationPage: React.FC = () => {
             type="number"
             value={formData.top_k}
             onChange={(e) => setFormData({ ...formData, top_k: parseInt(e.target.value) || 10 })}
-            inputProps={{ min: 1, max: 20 }}
+            slotProps={{ input: { min: 1, max: 20 } }}
             fullWidth
           />
         </Box>
@@ -414,14 +414,18 @@ const CRMRecommendationPage: React.FC = () => {
       <ListPageTemplate
         title="客户推荐"
         subtitle="基于 AI 的智能客户推荐系统"
-        icon={<Lightbulb size={24} />}
         columns={columns}
         data={recommendations}
         loading={loading}
         rowActions={rowActions}
-        onCreate={() => setShowCreateDialog(true)}
-        createButtonLabel="生成推荐"
-        createButtonIcon={<Sparkles size={16} />}
+        actions={[
+          {
+            label: '生成推荐',
+            icon: <Sparkles size={16} />,
+            onClick: () => setShowCreateDialog(true),
+            variant: 'contained',
+          },
+        ]}
       />
       <RecommendationDetailDialog />
       <CreateRecommendationDialog />

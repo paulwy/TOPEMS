@@ -18,8 +18,6 @@ pub struct RateLimiter {
     last_refill: Instant,
     /// Current tokens available
     tokens: f64,
-    /// Lock for thread-safe operations
-    lock: Arc<RwLock<()>>,
 }
 
 impl RateLimiter {
@@ -29,13 +27,11 @@ impl RateLimiter {
             refill_rate,
             last_refill: Instant::now(),
             tokens: capacity as f64,
-            lock: Arc::new(RwLock::new(())),
         }
     }
 
     /// Try to acquire a token, returns true if allowed
-    pub async fn try_acquire(&mut self) -> bool {
-        let _guard = self.lock.write().await;
+    pub fn try_acquire(&mut self) -> bool {
         self.refill();
         
         if self.tokens >= 1.0 {
@@ -56,14 +52,12 @@ impl RateLimiter {
     }
 
     /// Get remaining tokens
-    pub async fn remaining(&self) -> f64 {
-        let _guard = self.lock.read().await;
+    pub fn remaining(&self) -> f64 {
         self.tokens
     }
 
     /// Get time until next token is available
-    pub async fn time_until_next(&self) -> Duration {
-        let _guard = self.lock.read().await;
+    pub fn time_until_next(&self) -> Duration {
         if self.tokens >= 1.0 {
             Duration::from_secs(0)
         } else {
@@ -150,19 +144,13 @@ impl RateLimiterManager {
         let limiter = limiters.entry(key.to_string())
             .or_insert_with(|| RateLimiter::new(self.config.burst, self.config.rpm / 60));
         
-        limiter.try_acquire().await
+        limiter.try_acquire()
     }
 
     /// Clean up expired limiters (call periodically)
-    pub async fn cleanup(&self, max_idle_secs: u64) {
+    pub async fn cleanup(&self, _max_idle_secs: u64) {
         // Note: In production, track last access time and remove stale entries
-        let mut limiters = self.limiters.write().await;
-        limiters.retain(|_, limiter| {
-            // Keep limiters that have tokens or were recently used
-            async move {
-                limiter.remaining().await > 0.0
-            }.now_or_never().is_some()
-        });
+        // For now, we keep all limiters since they're lightweight
     }
 }
 
@@ -233,10 +221,10 @@ impl RateLimitHeaders {
 }
 
 /// Middleware for applying rate limits
-pub async fn rate_limit_middleware<B>(
+pub async fn rate_limit_middleware(
     extension: Arc<RateLimiterManager>,
-    request: axum::extract::Request<B>,
-    next: axum::middleware::Next<B>,
+    request: axum::extract::Request,
+    next: axum::middleware::Next,
 ) -> Result<axum::response::Response, axum::http::StatusCode> {
     let client_id = extract_client_id(
         request.headers(),
@@ -254,30 +242,30 @@ pub async fn rate_limit_middleware<B>(
 mod tests {
     use super::*;
 
-    #[tokio::test]
-    async fn test_rate_limiter_acquire() {
+    #[test]
+    fn test_rate_limiter_acquire() {
         let mut limiter = RateLimiter::new(5, 1); // 5 burst, 1 per second
         
         // Should allow burst requests
         for _ in 0..5 {
-            assert!(limiter.try_acquire().await);
+            assert!(limiter.try_acquire());
         }
         
         // Should deny after burst exhausted
-        assert!(!limiter.try_acquire().await);
+        assert!(!limiter.try_acquire());
     }
 
     #[tokio::test]
     async fn test_rate_limiter_refill() {
         let mut limiter = RateLimiter::new(2, 10); // 2 burst, 10 per second
         
-        assert!(limiter.try_acquire().await);
-        assert!(limiter.try_acquire().await);
-        assert!(!limiter.try_acquire().await);
+        assert!(limiter.try_acquire());
+        assert!(limiter.try_acquire());
+        assert!(!limiter.try_acquire());
         
         // Wait for refill
         tokio::time::sleep(Duration::from_millis(200)).await;
         
-        assert!(limiter.try_acquire().await);
+        assert!(limiter.try_acquire());
     }
 }

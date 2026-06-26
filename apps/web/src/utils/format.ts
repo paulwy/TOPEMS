@@ -18,7 +18,6 @@ export {
   throttle,
   deepClone,
   generateId,
-  sharedFormatFileSize as formatFileSize,
   sharedFormatNumber as formatNumberBase,
   sharedFormatCurrency as formatCurrencyBase,
   sharedTruncateText as truncateText,
@@ -131,4 +130,128 @@ export const formatDuration = (seconds: number): string => {
     return `${minutes}分钟${secs}秒`;
   }
   return `${secs}秒`;
+};
+
+export const formatRelativeTime = (dateString: string): string => {
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return dateString;
+
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const minute = 60 * 1000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+  const week = 7 * day;
+  const month = 30 * day;
+  const year = 365 * day;
+
+  if (diff < minute) {
+    return '刚刚';
+  } else if (diff < hour) {
+    return `${Math.floor(diff / minute)}分钟前`;
+  } else if (diff < day) {
+    return `${Math.floor(diff / hour)}小时前`;
+  } else if (diff < week) {
+    return `${Math.floor(diff / day)}天前`;
+  } else if (diff < month) {
+    return `${Math.floor(diff / week)}周前`;
+  } else if (diff < year) {
+    return `${Math.floor(diff / month)}个月前`;
+  } else {
+    return `${Math.floor(diff / year)}年前`;
+  }
+};
+
+export const formatStatus = (status: string | number): string => {
+  const statusMap: Record<string, string> = {
+    0: '未启用',
+    1: '已启用',
+    active: '活跃',
+    inactive: '停用',
+    pending: '待处理',
+    approved: '已批准',
+    rejected: '已拒绝',
+    completed: '已完成',
+    processing: '处理中',
+    cancelled: '已取消',
+    draft: '草稿',
+    published: '已发布',
+    deleted: '已删除',
+    success: '成功',
+    failed: '失败',
+    warning: '警告',
+    error: '错误',
+  };
+  return statusMap[String(status).toLowerCase()] || String(status);
+};
+
+export const formatPercent = (value: number | string, decimals: number = 1): string => {
+  const number = typeof value === 'string' ? parseFloat(value) : value;
+  if (isNaN(number)) return '0%';
+  return `${sharedFormatNumber(number * 100, decimals)}%`;
+};
+
+export const formatFileSize = (bytes: number | string): string => {
+  const number = typeof bytes === 'string' ? parseFloat(bytes) : bytes;
+  if (isNaN(number) || number <= 0) return '0 B';
+
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(number) / Math.log(k));
+  return `${sharedFormatNumber(number / Math.pow(k, i), 2)} ${sizes[i]}`;
+};
+
+export const formatPhone = (phone: string): string => {
+  if (!phone) return '';
+  return phone.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
+};
+
+export const formatEmail = (email: string): string => {
+  if (!email) return '';
+  const [prefix, domain] = email.split('@');
+  if (!prefix || !domain) return email;
+  return `${prefix.slice(0, 2)}***@${domain}`;
+};
+
+export const formatIdCard = (idCard: string): string => {
+  if (!idCard) return '';
+  return idCard.replace(/(\d{4})\d+(\d{4})/, '$1**********$2');
+};
+
+export const formatDateRange = (startDate: string, endDate: string): string => {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return `${startDate} - ${endDate}`;
+
+  const sameYear = start.getFullYear() === end.getFullYear();
+  const sameMonth = sameYear && start.getMonth() === end.getMonth();
+  const sameDay = sameMonth && start.getDate() === end.getDate();
+
+  if (sameDay) {
+    return formatDate(startDate, 'YYYY-MM-DD');
+  } else if (sameMonth) {
+    return `${formatDate(startDate, 'MM-DD')} - ${formatDate(endDate, 'MM-DD')}`;
+  } else if (sameYear) {
+    return `${formatDate(startDate, 'MM-DD')} - ${formatDate(endDate, 'MM-DD')}`;
+  } else {
+    return `${formatDate(startDate, 'YYYY-MM-DD')} - ${formatDate(endDate, 'YYYY-MM-DD')}`;
+  }
+};
+
+export const formatMonth = (dateString: string): string => {
+  return formatDate(dateString, 'YYYY年MM月');
+};
+
+export const formatWeek = (dateString: string): string => {
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return dateString;
+
+  const day = date.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  const weekStart = new Date(date);
+  weekStart.setDate(date.getDate() + diff);
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 6);
+
+  return `${formatDate(weekStart.toISOString(), 'MM-DD')} ~ ${formatDate(weekEnd.toISOString(), 'MM-DD')}`;
 };

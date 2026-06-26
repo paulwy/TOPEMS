@@ -183,7 +183,7 @@ const ReportListPage: React.FC = () => {
     {
       label: '查看详情',
       icon: <Eye size={16} />,
-      onClick: (row) => navigate(`/report/reports/${row.id}`),
+      onClick: (row) => navigate(`'/report/list'`),
     },
     {
       label: '导出',
@@ -299,14 +299,7 @@ const ReportListPage: React.FC = () => {
           setSearchTerm(value);
           setPage(0);
         }}
-        actions={[
-          {
-            label: '新建报表',
-            icon: <FileTextIcon size={18} />,
-            onClick: () => navigate('/report/reports/create'),
-            variant: 'contained',
-          },
-        ]}
+        actions={[]}
         rowActions={rowActions}
         headerContent={headerContent}
         getRowId={(row) => row.id}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Plus,
   Search,
@@ -14,8 +15,8 @@ import {
   CheckCircle,
   XCircle,
 } from 'lucide-react';
-import type { Workflow } from '@/api/flow';
-import { flowApi, CreateWorkflowRequest } from '@/api/flow';
+import type { Workflow } from '@/api/workflow';
+import { workflowApi, CreateWorkflowRequest } from '@/api/workflow';
 import { useAppStore } from '../../store';
 import type { ColumnDef } from '@tanstack/react-table';
 import { DataTable, BackButton } from '@/components/common';
@@ -76,7 +77,7 @@ const FlowWorkflowPage: React.FC = () => {
         params.is_active = statusFilter === 'active';
       }
 
-      const response = await flowApi.listWorkflows(params);
+      const response = await workflowApi.listWorkflows(params);
       if (response.success && response.data) {
         const data = response.data as any;
         const workflowList = Array.isArray(data) ? data : data.items || [];
@@ -108,7 +109,7 @@ const FlowWorkflowPage: React.FC = () => {
 
     try {
       setCreating(true);
-      const response = await flowApi.createWorkflow({
+      const response = await workflowApi.createWorkflow({
         name: formData.name,
         description: formData.description,
         is_active: formData.is_active,
@@ -123,7 +124,7 @@ const FlowWorkflowPage: React.FC = () => {
         setShowCreateDialog(false);
         setFormData({ name: '', description: '', is_active: true });
         loadWorkflows();
-        navigate(`/flow/designer?id=${response.data.id}`);
+        navigate(`/flow/definitions`);
       } else {
         addNotification({
           title: '失败',
@@ -147,7 +148,7 @@ const FlowWorkflowPage: React.FC = () => {
     if (!window.confirm('确定要删除这个工作流吗？')) return;
 
     try {
-      const response = await flowApi.deleteWorkflow(id);
+      const response = await workflowApi.deleteWorkflow(id);
       if (response.success) {
         addNotification({
           title: '成功',
@@ -174,7 +175,7 @@ const FlowWorkflowPage: React.FC = () => {
 
   const handleToggleActive = async (workflow: Workflow) => {
     try {
-      const response = await flowApi.updateWorkflow(workflow.id, {
+      const response = await workflowApi.updateWorkflow(workflow.id, {
         is_active: !workflow.is_active,
       });
       if (response.success) {
@@ -268,7 +269,7 @@ const FlowWorkflowPage: React.FC = () => {
             <Tooltip title='编辑设计'>
               <IconButton
                 size='small'
-                onClick={() => navigate(`/flow/designer?id=${row.original.id}`)}
+                onClick={() => navigate(`/flow/definitions`)}
               >
                 <Edit sx={{ width: 16, height: 16 }} />
               </IconButton>
@@ -277,7 +278,7 @@ const FlowWorkflowPage: React.FC = () => {
             <Tooltip title='版本历史'>
               <IconButton
                 size='small'
-                onClick={() => navigate(`/flow/history?id=${row.original.id}`)}
+                onClick={() => navigate(`/flow/history`)}
               >
                 <History sx={{ width: 16, height: 16 }} />
               </IconButton>

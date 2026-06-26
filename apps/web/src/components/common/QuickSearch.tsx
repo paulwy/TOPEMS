@@ -589,4 +589,5 @@ const SearchAction = styled('div')(({ theme }) => ({
   },
 }));
 
+export { QuickSearch };
 export default QuickSearch;

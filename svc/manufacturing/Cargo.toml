@@ -25,9 +25,14 @@ anyhow.workspace = true
 reqwest.workspace = true
 
 [[bin]]
+name = "manufacturing-service"
+path = "src/main.rs"
+
+[[bin]]
 name = "mes-service"
 path = "src/main_mes.rs"
 
 [[bin]]
 name = "pdm-service"
 path = "src/main_pdm.rs"
+

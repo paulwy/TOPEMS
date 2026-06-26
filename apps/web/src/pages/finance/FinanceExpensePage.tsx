@@ -29,11 +29,6 @@ import { StatsChart } from '@/components/bi/StatsChart';
 import { apiLogger } from '@/utils/logger';
 
 import {
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Card,
   CardContent,
   Dialog,
@@ -46,8 +41,8 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material';
-import { Button } from '@mui/material';
-import { ModeToggle } from '@/components/ModeToggle';
+import { FormField, FormSelect, ActionButton } from '@/components/common';
+import { ModeToggle } from '@/components/theme/ModeToggle';
 import { DashboardTemplate } from '@/components/templates/DashboardTemplate';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 import { StatusBadge } from '@/components/common/StatusBadge';
@@ -575,13 +570,12 @@ const FinanceExpensePage: React.FC = () => {
           spacing={1}
         >
           <ModeToggle />
-          <Button
-            variant='contained'
-            startIcon={<Plus sx={{ width: 20, height: 20 }} />}
+          <ActionButton
+            label='新增科目'
+            variant='primary'
+            icon={<Plus sx={{ width: 20, height: 20 }} />}
             onClick={() => setShowCreateModal(true)}
-          >
-            新增科目
-          </Button>
+          />
         </Stack>
       }
       chartsArea={
@@ -654,14 +648,12 @@ const FinanceExpensePage: React.FC = () => {
           showDepartment={true}
           showEmployee={true}
         />
-        <Button
-          variant='outlined'
-          size='small'
-          startIcon={<RefreshCw sx={{ width: 16, height: 16 }} />}
-          onClick={loadData}
-        >
-          刷新
-        </Button>
+        <ActionButton
+            label='刷新'
+            variant='secondary'
+            icon={<RefreshCw sx={{ width: 16, height: 16 }} />}
+            onClick={loadData}
+          />
       </Stack>
 
       {selectedIds.length > 0 && (
@@ -683,40 +675,33 @@ const FinanceExpensePage: React.FC = () => {
                 direction='row'
                 spacing={1}
               >
-                <Button
-                  variant='outlined'
+                <ActionButton
+                  label='批量启用'
+                  variant='secondary'
                   size='small'
-                  color='success'
-                  startIcon={<Check sx={{ width: 16, height: 16 }} />}
+                  icon={<Check sx={{ width: 16, height: 16 }} />}
                   onClick={handleBatchApprove}
-                >
-                  批量启用
-                </Button>
-                <Button
-                  variant='outlined'
+                />
+                <ActionButton
+                  label='批量停用'
+                  variant='secondary'
                   size='small'
-                  color='warning'
-                  startIcon={<AlertCircle sx={{ width: 16, height: 16 }} />}
+                  icon={<AlertCircle sx={{ width: 16, height: 16 }} />}
                   onClick={handleBatchReject}
-                >
-                  批量停用
-                </Button>
-                <Button
-                  variant='outlined'
+                />
+                <ActionButton
+                  label='批量删除'
+                  variant='danger'
                   size='small'
-                  color='error'
-                  startIcon={<Trash2 sx={{ width: 16, height: 16 }} />}
+                  icon={<Trash2 sx={{ width: 16, height: 16 }} />}
                   onClick={() => setBatchDeleteDialogOpen(true)}
-                >
-                  批量删除
-                </Button>
-                <Button
-                  variant='outlined'
+                />
+                <ActionButton
+                  label='取消选择'
+                  variant='secondary'
                   size='small'
                   onClick={() => setSelectedIds([])}
-                >
-                  取消选择
-                </Button>
+                />
               </Stack>
             </Stack>
           </CardContent>
@@ -780,7 +765,8 @@ const FinanceExpensePage: React.FC = () => {
               direction='row'
               spacing={2}
             >
-              <TextField
+              <FormField
+                name='code'
                 label='科目编码 *'
                 required
                 fullWidth
@@ -793,7 +779,8 @@ const FinanceExpensePage: React.FC = () => {
                 }
                 placeholder='请输入科目编码'
               />
-              <TextField
+              <FormField
+                name='name'
                 label='科目名称 *'
                 required
                 fullWidth
@@ -812,43 +799,44 @@ const FinanceExpensePage: React.FC = () => {
               direction='row'
               spacing={2}
             >
-              <FormControl fullWidth>
-                <InputLabel>余额方向</InputLabel>
-                <Select
-                  value={newExpense.balance_direction}
-                  label='余额方向'
-                  onChange={(e) =>
-                    setNewExpense({
-                      ...newExpense,
-                      balance_direction: e.target.value as 'debit' | 'credit',
-                    })
-                  }
-                >
-                  <MenuItem value='debit'>借方</MenuItem>
-                  <MenuItem value='credit'>贷方</MenuItem>
-                </Select>
-              </FormControl>
-              <FormControl fullWidth>
-                <InputLabel>层级</InputLabel>
-                <Select
-                  value={newExpense.level}
-                  label='层级'
-                  onChange={(e) =>
-                    setNewExpense({
-                      ...newExpense,
-                      level: Number(e.target.value) || 1,
-                    })
-                  }
-                >
-                  <MenuItem value={1}>1级</MenuItem>
-                  <MenuItem value={2}>2级</MenuItem>
-                  <MenuItem value={3}>3级</MenuItem>
-                  <MenuItem value={4}>4级</MenuItem>
-                </Select>
-              </FormControl>
+              <FormSelect
+                name='balance_direction'
+                label='余额方向'
+                value={newExpense.balance_direction}
+                options={[
+                  { value: 'debit', label: '借方' },
+                  { value: 'credit', label: '贷方' },
+                ]}
+                onChange={(value) =>
+                  setNewExpense({
+                    ...newExpense,
+                    balance_direction: value as 'debit' | 'credit',
+                  })
+                }
+                placeholder='请选择余额方向'
+              />
+              <FormSelect
+                name='level'
+                label='层级'
+                value={newExpense.level}
+                options={[
+                  { value: 1, label: '1级' },
+                  { value: 2, label: '2级' },
+                  { value: 3, label: '3级' },
+                  { value: 4, label: '4级' },
+                ]}
+                onChange={(value) =>
+                  setNewExpense({
+                    ...newExpense,
+                    level: Number(value) || 1,
+                  })
+                }
+                placeholder='请选择层级'
+              />
             </Stack>
 
-            <TextField
+            <FormField
+              name='description'
               label='科目描述'
               fullWidth
               multiline
@@ -860,13 +848,16 @@ const FinanceExpensePage: React.FC = () => {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setShowCreateModal(false)}>取消</Button>
-          <Button
-            variant='contained'
+          <ActionButton
+            label='取消'
+            variant='secondary'
+            onClick={() => setShowCreateModal(false)}
+          />
+          <ActionButton
+            label='保存'
+            variant='primary'
             onClick={handleCreate}
-          >
-            保存
-          </Button>
+          />
         </DialogActions>
       </Dialog>
 
@@ -885,16 +876,18 @@ const FinanceExpensePage: React.FC = () => {
               sx={{ pt: 2 }}
             >
               <Stack
-                direction='row'
-                spacing={2}
-              >
-                <TextField
+              direction='row'
+              spacing={2}
+            >
+                <FormField
+                  name='code'
                   label='科目编码'
                   fullWidth
                   value={editingExpense.code}
                   slotProps={{ input: { readOnly: true } }}
                 />
-                <TextField
+                <FormField
+                  name='name'
                   label='科目名称'
                   fullWidth
                   value={editingExpense.name}
@@ -911,41 +904,42 @@ const FinanceExpensePage: React.FC = () => {
                 direction='row'
                 spacing={2}
               >
-                <FormControl fullWidth>
-                  <InputLabel>余额方向</InputLabel>
-                  <Select
-                    value={editingExpense.balance_direction}
-                    label='余额方向'
-                    onChange={(e) =>
-                      setEditingExpense({
-                        ...editingExpense,
-                        balance_direction: e.target.value as 'debit' | 'credit',
-                      })
-                    }
-                  >
-                    <MenuItem value='debit'>借方</MenuItem>
-                    <MenuItem value='credit'>贷方</MenuItem>
-                  </Select>
-                </FormControl>
-                <FormControl fullWidth>
-                  <InputLabel>状态</InputLabel>
-                  <Select
-                    value={editingExpense.status}
-                    label='状态'
-                    onChange={(e) =>
-                      setEditingExpense({
-                        ...editingExpense,
-                        status: e.target.value as 'active' | 'disabled',
-                      })
-                    }
-                  >
-                    <MenuItem value='active'>启用</MenuItem>
-                    <MenuItem value='disabled'>停用</MenuItem>
-                  </Select>
-                </FormControl>
+                <FormSelect
+                  name='balance_direction'
+                  label='余额方向'
+                  value={editingExpense.balance_direction}
+                  options={[
+                    { value: 'debit', label: '借方' },
+                    { value: 'credit', label: '贷方' },
+                  ]}
+                  onChange={(value) =>
+                    setEditingExpense({
+                      ...editingExpense,
+                      balance_direction: value as 'debit' | 'credit',
+                    })
+                  }
+                  placeholder='请选择余额方向'
+                />
+                <FormSelect
+                  name='status'
+                  label='状态'
+                  value={editingExpense.status}
+                  options={[
+                    { value: 'active', label: '启用' },
+                    { value: 'disabled', label: '停用' },
+                  ]}
+                  onChange={(value) =>
+                    setEditingExpense({
+                      ...editingExpense,
+                      status: value as 'active' | 'disabled',
+                    })
+                  }
+                  placeholder='请选择状态'
+                />
               </Stack>
 
-              <TextField
+              <FormField
+                name='description'
                 label='科目描述'
                 fullWidth
                 multiline
@@ -963,13 +957,16 @@ const FinanceExpensePage: React.FC = () => {
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setEditingExpense(null)}>取消</Button>
-          <Button
-            variant='contained'
+          <ActionButton
+            label='取消'
+            variant='secondary'
+            onClick={() => setEditingExpense(null)}
+          />
+          <ActionButton
+            label='保存'
+            variant='primary'
             onClick={handleUpdate}
-          >
-            保存
-          </Button>
+          />
         </DialogActions>
       </Dialog>
 

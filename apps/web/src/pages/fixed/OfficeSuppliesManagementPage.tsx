@@ -29,7 +29,7 @@ import { useNavigate } from 'react-router-dom';
 import { officeSupplyApi, type OfficeSupply } from '@/api/erp';
 import { useAppStore } from '../../store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
-import { ModeToggle } from '@/components/ModeToggle';
+import { ModeToggle } from '@/components/theme/ModeToggle';
 
 interface OfficeSuppliesManagementPageProps {
   onNavigate?: (page: string) => void;

@@ -1,8 +1,12 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Database, RefreshCw, Play, Eye, FileSearch, RotateCcw } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { Play, Eye, RotateCcw, FileSearch } from 'lucide-react';
 import {
   Box,
-  Paper,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Chip,
+  CircularProgress,
   Typography,
   Table,
   TableBody,
@@ -10,14 +14,14 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  Chip,
-  CircularProgress,
+  Paper,
 } from '@mui/material';
 import { Button } from '@mui/material';
 import { useAppStore } from '@/store';
+import {
+  ListPageTemplate,
+  type ColumnDef,
+} from '@/components/templates';
 import { migrationApi, type MigrationService, type MigrationStatus } from '@/api/migration';
 
 interface ServiceStatusMap {
@@ -35,6 +39,7 @@ const MigrationAdminPage: React.FC = () => {
   const [statusMap, setStatusMap] = useState<ServiceStatusMap>({});
   const [activeService, setActiveService] = useState<MigrationService | null>(null);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [searchValue, setSearchValue] = useState('');
 
   const fetchServices = useCallback(async () => {
     setLoading(true);
@@ -149,247 +154,179 @@ const MigrationAdminPage: React.FC = () => {
   };
 
   const getPendingCount = (serviceName: string) => statusMap[serviceName]?.pending?.length ?? 0;
-
   const getAppliedCount = (serviceName: string) => statusMap[serviceName]?.applied?.length ?? 0;
 
-  return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
-      <Paper sx={{ boxShadow: 1, borderBottom: 1, borderColor: 'divider' }}>
-        <Box sx={{ maxWidth: '1200px', mx: 'auto', px: 4, py: 6 }}>
+  const filteredData = useMemo(() => {
+    if (!searchValue) return services;
+    const query = searchValue.toLowerCase();
+    return services.filter(
+      (svc) =>
+        svc.name.toLowerCase().includes(query) ||
+        svc.schema.toLowerCase().includes(query) ||
+        (svc.description || '').toLowerCase().includes(query)
+    );
+  }, [services, searchValue]);
+
+  const handleSearch = useCallback((value: string) => {
+    setSearchValue(value);
+  }, []);
+
+  const columns: ColumnDef<MigrationService>[] = useMemo(
+    () => [
+      {
+        id: 'name',
+        label: '服务名',
+        minWidth: 180,
+        render: (row) => <span style={{ fontWeight: 500 }}>{row.name}</span>,
+      },
+      { id: 'schema', label: 'Schema', minWidth: 120 },
+      {
+        id: 'port',
+        label: '端口',
+        minWidth: 80,
+        align: 'right',
+      },
+      {
+        id: 'tables',
+        label: '表数',
+        minWidth: 80,
+        align: 'right',
+      },
+      {
+        id: 'description',
+        label: '描述',
+        minWidth: 200,
+        render: (row) => (
           <Box
             sx={{
-              display: 'flex',
-              flexDirection: { xs: 'column', sm: 'row' },
-              alignItems: { sm: 'center' },
-              justifyContent: { sm: 'space-between' },
-              gap: 4,
+              maxWidth: 300,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-              <Box sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 2 }}>
-                <Database sx={{ width: 24, height: 24, color: 'primary.main' }} />
-              </Box>
-              <Box>
-                <Typography
-                  variant='h4'
-                  sx={{ fontWeight: 700 }}
-                >
-                  数据库迁移管理
-                </Typography>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'text.secondary', mt: 1 }}
-                >
-                  查看各服务迁移状态，生成并执行 schema / index / audit 迁移
-                </Typography>
-              </Box>
-            </Box>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-              <Button
-                variant='outlined'
-                onClick={fetchServices}
-                disabled={loading}
-                startIcon={loading ? <CircularProgress size={16} /> : <RefreshCw size={16} />}
-              >
-                刷新列表
-              </Button>
-              <Button
-                variant='contained'
-                onClick={handleBatchApply}
-                disabled={batchApplying || loading || services.length === 0}
-                startIcon={batchApplying ? <CircularProgress size={16} /> : <Play size={16} />}
-              >
-                批量生成全部服务迁移
-              </Button>
-            </Box>
+            {row.description || '-'}
           </Box>
+        ),
+      },
+      {
+        id: 'status',
+        label: '状态',
+        minWidth: 140,
+        align: 'center',
+        render: (row) => {
+          const isLoadingStatus = statusLoading === row.name;
+          const pending = getPendingCount(row.name);
+          const applied = getAppliedCount(row.name);
+          if (isLoadingStatus) {
+            return (
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, color: 'text.secondary' }}>
+                <CircularProgress size={14} />
+                <Typography variant='caption'>加载中</Typography>
+              </Box>
+            );
+          }
+          return (
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+              <Chip
+                label={`待执行 ${pending}`}
+                size='small'
+                sx={{ bgcolor: 'warning.light', color: 'warning.main', fontSize: 11 }}
+              />
+              <Chip
+                label={`已执行 ${applied}`}
+                size='small'
+                sx={{ bgcolor: 'success.light', color: 'success.main', fontSize: 11 }}
+              />
+            </Box>
+          );
+        },
+      },
+    ],
+    [statusLoading]
+  );
+
+  const renderRowActions = useCallback(
+    (row: MigrationService) => {
+      const isApplying = applyingService === row.name;
+      const isRolling = rollingBackService === row.name;
+      const isLoadingStatus = statusLoading === row.name;
+      return (
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+          <Button
+            size='small'
+            variant='outlined'
+            onClick={(e) => {
+              e.stopPropagation();
+              handleShowStatus(row);
+            }}
+            disabled={isLoadingStatus}
+            startIcon={<Eye size={14} />}
+          >
+            查看状态
+          </Button>
+          <Button
+            size='small'
+            variant='text'
+            onClick={(e) => {
+              e.stopPropagation();
+              handleRollback(row);
+            }}
+            disabled={isRolling || isApplying || getAppliedCount(row.name) === 0}
+            sx={{ color: 'warning.main' }}
+            startIcon={isRolling ? <CircularProgress size={14} /> : <RotateCcw size={14} />}
+          >
+            回滚
+          </Button>
+          <Button
+            size='small'
+            variant='contained'
+            onClick={(e) => {
+              e.stopPropagation();
+              handleApply(row);
+            }}
+            disabled={isApplying || isRolling}
+            startIcon={isApplying ? <CircularProgress size={14} /> : <Play size={14} />}
+          >
+            生成迁移
+          </Button>
         </Box>
-      </Paper>
+      );
+    },
+    [applyingService, rollingBackService, statusLoading]
+  );
 
-      <Box sx={{ maxWidth: '1200px', mx: 'auto', px: 4, py: 6 }}>
-        <Paper sx={{ borderRadius: 2 }}>
-          {loading ? (
-            <Box
-              sx={{
-                py: 16,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <CircularProgress size={48} />
-              <Typography
-                variant='body2'
-                sx={{ color: 'text.secondary', mt: 4 }}
-              >
-                加载服务列表中...
-              </Typography>
-            </Box>
-          ) : services.length === 0 ? (
-            <Box
-              sx={{
-                py: 16,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: 'text.secondary',
-              }}
-            >
-              <FileSearch sx={{ width: 48, height: 48, color: 'text.disabled', mb: 3 }} />
-              <Typography variant='body1'>暂无可管理的迁移服务</Typography>
-            </Box>
-          ) : (
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell sx={{ width: 180, fontWeight: 600 }}>服务名</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>Schema</TableCell>
-                    <TableCell sx={{ textAlign: 'right', fontWeight: 600 }}>端口</TableCell>
-                    <TableCell sx={{ textAlign: 'right', fontWeight: 600 }}>表数</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>描述</TableCell>
-                    <TableCell sx={{ textAlign: 'center', fontWeight: 600 }}>状态</TableCell>
-                    <TableCell sx={{ textAlign: 'right', fontWeight: 600 }}>操作</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {services.map((svc) => {
-                    const isApplying = applyingService === svc.name;
-                    const isRolling = rollingBackService === svc.name;
-                    const isLoadingStatus = statusLoading === svc.name;
-                    const pending = getPendingCount(svc.name);
-                    const applied = getAppliedCount(svc.name);
-                    return (
-                      <TableRow key={svc.name}>
-                        <TableCell sx={{ fontWeight: 500 }}>{svc.name}</TableCell>
-                        <TableCell>{svc.schema}</TableCell>
-                        <TableCell sx={{ textAlign: 'right' }}>{svc.port}</TableCell>
-                        <TableCell sx={{ textAlign: 'right' }}>{svc.tables}</TableCell>
-                        <TableCell
-                          sx={{
-                            maxWidth: 200,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          {svc.description || '-'}
-                        </TableCell>
-                        <TableCell sx={{ textAlign: 'center' }}>
-                          {isLoadingStatus ? (
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 1,
-                                color: 'text.secondary',
-                              }}
-                            >
-                              <CircularProgress size={14} />
-                              <Typography variant='caption'>加载中</Typography>
-                            </Box>
-                          ) : (
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                gap: 0.5,
-                              }}
-                            >
-                              <Chip
-                                label={`待执行 ${pending}`}
-                                size='small'
-                                sx={{
-                                  bgcolor: 'warning.light',
-                                  color: 'warning.main',
-                                  fontSize: 11,
-                                }}
-                              />
-                              <Chip
-                                label={`已执行 ${applied}`}
-                                size='small'
-                                sx={{
-                                  bgcolor: 'success.light',
-                                  color: 'success.main',
-                                  fontSize: 11,
-                                }}
-                              />
-                            </Box>
-                          )}
-                        </TableCell>
-                        <TableCell sx={{ textAlign: 'right' }}>
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              justifyContent: 'flex-end',
-                              gap: 1,
-                            }}
-                          >
-                            <Button
-                              size='small'
-                              variant='outlined'
-                              onClick={() => handleShowStatus(svc)}
-                              disabled={isLoadingStatus}
-                              startIcon={<Eye size={14} />}
-                            >
-                              查看状态
-                            </Button>
-                            <Button
-                              size='small'
-                              variant='text'
-                              onClick={() => handleRollback(svc)}
-                              disabled={isRolling || isApplying || getAppliedCount(svc.name) === 0}
-                              sx={{ color: 'warning.main' }}
-                              title={
-                                getAppliedCount(svc.name) === 0
-                                  ? '暂无可回滚记录'
-                                  : '回滚最近一次迁移'
-                              }
-                              startIcon={
-                                isRolling ? <CircularProgress size={14} /> : <RotateCcw size={14} />
-                              }
-                            >
-                              回滚
-                            </Button>
-                            <Button
-                              size='small'
-                              variant='contained'
-                              onClick={() => handleApply(svc)}
-                              disabled={isApplying || isRolling}
-                              startIcon={
-                                isApplying ? <CircularProgress size={14} /> : <Play size={14} />
-                              }
-                            >
-                              生成迁移
-                            </Button>
-                          </Box>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-        </Paper>
-      </Box>
+  return (
+    <>
+      <ListPageTemplate
+        title='数据库迁移管理'
+        subtitle='查看各服务迁移状态，生成并执行 schema / index / audit 迁移'
+        columns={columns}
+        data={filteredData}
+        loading={loading}
+        searchable
+        searchPlaceholder='搜索服务名、Schema或描述...'
+        onSearch={handleSearch}
+        renderRowActions={renderRowActions}
+        actions={[
+          {
+            label: '批量生成全部服务迁移',
+            icon: batchApplying ? <CircularProgress size={16} /> : <Play size={16} />,
+            onClick: handleBatchApply,
+            variant: 'contained',
+          },
+        ]}
+        onRefresh={fetchServices}
+        emptyMessage='暂无可管理的迁移服务'
+        emptyIcon={<FileSearch style={{ width: 48, height: 48, color: 'text.disabled' }} />}
+      />
 
-      <Dialog
-        open={statusDialogOpen}
-        onClose={() => setStatusDialogOpen(false)}
-        maxWidth='lg'
-      >
+      <Dialog open={statusDialogOpen} onClose={() => setStatusDialogOpen(false)} maxWidth='lg' fullWidth>
         <DialogContent>
           <DialogTitle>
             {activeService ? `${activeService.name} · 迁移状态` : '迁移状态'}
           </DialogTitle>
-          <Typography
-            variant='body2'
-            sx={{ color: 'text.secondary', mb: 4 }}
-          >
+          <Typography variant='body2' sx={{ color: 'text.secondary', mb: 4 }}>
             {activeService ? `Schema: ${activeService.schema} ｜ 端口: ${activeService.port}` : ''}
           </Typography>
 
@@ -405,15 +342,12 @@ const MigrationAdminPage: React.FC = () => {
               }}
             >
               <CircularProgress size={40} />
-              <Typography
-                variant='body2'
-                sx={{ mt: 3 }}
-              >
+              <Typography variant='body2' sx={{ mt: 3 }}>
                 加载迁移状态中...
               </Typography>
             </Box>
           ) : activeService && statusMap[activeService.name] ? (
-            <Box sx={{ spaceY: 6, maxHeight: '60vh', overflowY: 'auto' }}>
+            <Box sx={{ maxHeight: '60vh', overflowY: 'auto' }}>
               <Box sx={{ mt: 4 }}>
                 <Typography
                   variant='subtitle2'
@@ -437,10 +371,7 @@ const MigrationAdminPage: React.FC = () => {
                 </Typography>
                 {statusMap[activeService.name].pending.length === 0 ? (
                   <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'grey.50' }}>
-                    <Typography
-                      variant='body2'
-                      sx={{ color: 'text.secondary' }}
-                    >
+                    <Typography variant='body2' sx={{ color: 'text.secondary' }}>
                       暂无待执行的迁移文件
                     </Typography>
                   </Paper>
@@ -454,10 +385,7 @@ const MigrationAdminPage: React.FC = () => {
                     }}
                   >
                     {statusMap[activeService.name].pending.map((file) => (
-                      <Typography
-                        key={file}
-                        variant='body2'
-                      >
+                      <Typography key={file} variant='body2'>
                         {file}
                       </Typography>
                     ))}
@@ -488,10 +416,7 @@ const MigrationAdminPage: React.FC = () => {
                 </Typography>
                 {statusMap[activeService.name].applied.length === 0 ? (
                   <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'grey.50' }}>
-                    <Typography
-                      variant='body2'
-                      sx={{ color: 'text.secondary' }}
-                    >
+                    <Typography variant='body2' sx={{ color: 'text.secondary' }}>
                       暂无已执行记录
                     </Typography>
                   </Paper>
@@ -548,7 +473,7 @@ const MigrationAdminPage: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
-    </Box>
+    </>
   );
 };
 

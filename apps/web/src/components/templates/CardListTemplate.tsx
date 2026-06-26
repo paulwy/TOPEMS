@@ -61,7 +61,7 @@ export interface FilterConfig {
  */
 export interface CardAction {
   label: string;
-  icon?: React.ReactNode;
+  icon?: React.ReactNode | ((item: unknown) => React.ReactNode);
   onClick: (item: unknown) => void;
   color?: 'primary' | 'secondary' | 'success' | 'error' | 'warning' | 'info';
   disabled?: (item: unknown) => boolean;
@@ -701,20 +701,23 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {cardActions.map((action, idx) => (
-              <Button
-                key={idx}
-                size='small'
-                variant={action.variant || 'text'}
-                color={action.color || 'primary'}
-                onClick={() => action.onClick(item)}
-                disabled={action.disabled?.(item)}
-                startIcon={action.icon}
-                sx={{ textTransform: 'none' }}
-              >
-                {action.label}
-              </Button>
-            ))}
+            {cardActions.map((action, idx) => {
+              const actionIcon = typeof action.icon === 'function' ? action.icon(item) : action.icon;
+              return (
+                <Button
+                  key={idx}
+                  size='small'
+                  variant={action.variant || 'text'}
+                  color={action.color || 'primary'}
+                  onClick={() => action.onClick(item)}
+                  disabled={action.disabled?.(item)}
+                  startIcon={actionIcon}
+                  sx={{ textTransform: 'none' }}
+                >
+                  {action.label}
+                </Button>
+              );
+            })}
           </Box>
         )}
       </Paper>

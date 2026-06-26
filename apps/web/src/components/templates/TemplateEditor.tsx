@@ -157,7 +157,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
     let content = formData.content;
     (formData.variables || []).forEach((v) => {
       const pattern = new RegExp(`{{\\s*${v.key}\\s*}}`, 'g');
-      content = content.replace(pattern, v.default_value || `[${v.label}]`);
+      content = content.replace(pattern, String(v.default_value || `[${v.label}]`));
     });
     return content;
   };

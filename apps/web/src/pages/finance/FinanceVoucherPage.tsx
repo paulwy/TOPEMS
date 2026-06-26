@@ -1,20 +1,9 @@
 import {
-  Chip,
   Typography,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogActions,
   Tabs,
   Tab,
   Box,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   FileText,
@@ -34,7 +23,7 @@ import {
   Clock,
   Building2,
 } from 'lucide-react';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ActionButton, FormField, FormSelect, Dialog, ConfirmDialog, StatusBadge } from '@/components/common';
 import { useNavigate } from 'react-router-dom';
 import {
   voucherApi,
@@ -359,25 +348,25 @@ const FinanceVoucherPage: React.FC = () => {
     const badges: Record<
       string,
       {
-        variant: 'default' | 'secondary' | 'destructive' | 'outline';
+        color: 'success' | 'warning' | 'default' | 'secondary';
         label: string;
       }
     > = {
-      draft: { variant: 'outline', label: '草稿' },
-      pending: { variant: 'secondary', label: '待审核' },
-      approved: { variant: 'default', label: '已审核' },
-      posted: { variant: 'default', label: '已记账' },
-      imported: { variant: 'secondary', label: '已导入' },
+      draft: { color: 'default', label: '草稿' },
+      pending: { color: 'warning', label: '待审核' },
+      approved: { color: 'success', label: '已审核' },
+      posted: { color: 'success', label: '已记账' },
+      imported: { color: 'secondary', label: '已导入' },
     };
     const config = badges[status] || {
-      variant: 'outline' as const,
+      color: 'default' as const,
       label: status,
     };
     return (
-      <Chip
-        size='small'
-        variant={config.variant === 'outline' ? 'outlined' : 'filled'}
+      <StatusBadge
+        status={status}
         label={config.label}
+        color={config.color}
       />
     );
   };
@@ -656,12 +645,12 @@ const FinanceVoucherPage: React.FC = () => {
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <Button
+              <ActionButton
+                label='返回'
+                icon={<ChevronLeft size={20} />}
                 variant='text'
                 onClick={() => navigate('/dashboard')}
-              >
-                <ChevronLeft sx={{ width: 20, height: 20 }} />
-              </Button>
+              />
               <Box>
                 <Typography
                   variant='h5'
@@ -684,25 +673,21 @@ const FinanceVoucherPage: React.FC = () => {
               </Box>
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Button
+              <ActionButton
+                label='导入用友凭证'
+                icon={<Upload size={16} />}
+                variant='primary'
                 onClick={() => setShowImportModal(true)}
-                sx={{
-                  backgroundColor: 'green.600',
-                  '&:hover': { backgroundColor: 'green.700' },
-                }}
-              >
-                <Upload sx={{ width: 16, height: 16, mr: 1 }} />
-                导入用友凭证
-              </Button>
-              <Button
+              />
+              <ActionButton
+                label='新增凭证'
+                icon={<Plus size={16} />}
+                variant='primary'
                 onClick={() => {
                   resetForm();
                   setShowCreateModal(true);
                 }}
-              >
-                <Plus sx={{ width: 16, height: 16, mr: 1 }} />
-                新增凭证
-              </Button>
+              />
             </Box>
           </Box>
         </Box>
@@ -755,48 +740,35 @@ const FinanceVoucherPage: React.FC = () => {
                   sx={{ color: 'blue.700' }}
                 >
                   已选择{' '}
-                  <Chip
-                    size='small'
-                    sx={{ ml: 2 }}
+                  <StatusBadge
+                    status='selected'
                     label={selectedIds.length.toString()}
+                    color='primary'
                   />
                   条记录
                 </Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Button
-                  variant='outlined'
+                <ActionButton
+                  label='批量审核'
+                  icon={<Check size={16} />}
+                  variant='secondary'
                   size='small'
                   onClick={handleBatchAudit}
-                  sx={{
-                    color: 'green.600',
-                    borderColor: 'green.600',
-                    '&:hover': { color: 'green.700', borderColor: 'green.700' },
-                  }}
-                >
-                  <Check sx={{ width: 16, height: 16, mr: 0.5 }} />
-                  批量审核
-                </Button>
-                <Button
-                  variant='outlined'
+                />
+                <ActionButton
+                  label='批量删除'
+                  icon={<Trash2 size={16} />}
+                  variant='secondary'
                   size='small'
                   onClick={handleBatchDelete}
-                  sx={{
-                    color: 'red.600',
-                    borderColor: 'red.600',
-                    '&:hover': { color: 'red.700', borderColor: 'red.700' },
-                  }}
-                >
-                  <Trash2 sx={{ width: 16, height: 16, mr: 0.5 }} />
-                  批量删除
-                </Button>
-                <Button
-                  variant='outlined'
+                />
+                <ActionButton
+                  label='取消选择'
+                  variant='secondary'
                   size='small'
                   onClick={() => setSelectedIds([])}
-                >
-                  取消选择
-                </Button>
+                />
               </Box>
             </Box>
           )}
@@ -875,19 +847,17 @@ const FinanceVoucherPage: React.FC = () => {
                       {subject.code}
                     </Typography>
                     {subject.is_cash_flow && (
-                      <Chip
-                        size='small'
-                        variant='outlined'
-                        sx={{ fontSize: '0.75rem' }}
+                      <StatusBadge
+                        status='cash_flow'
                         label='现金流量'
+                        color='secondary'
                       />
                     )}
                   </Box>
-                  <Chip
-                    size='small'
-                    variant={subject.status === 'active' ? 'filled' : 'outlined'}
-                    sx={{ backgroundColor: 'green.100', color: 'green.700' }}
+                  <StatusBadge
+                    status={subject.status}
                     label={subject.status === 'active' ? '启用' : '禁用'}
+                    color={subject.status === 'active' ? 'success' : 'default'}
                   />
                 </Box>
                 <Typography
@@ -962,11 +932,20 @@ const FinanceVoucherPage: React.FC = () => {
           setShowCreateModal(false);
           resetForm();
         }}
-        maxWidth='lg'
+        title={newVoucher.voucher_number ? '编辑凭证' : '新增财务凭证'}
+        cancelButton={{
+          label: '取消',
+          onClick: () => {
+            setShowCreateModal(false);
+            resetForm();
+          },
+        }}
+        confirmButton={{
+          label: '保存凭证',
+          onClick: handleCreate,
+        }}
       >
-        <DialogTitle>{newVoucher.voucher_number ? '编辑凭证' : '新增财务凭证'}</DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             <Box
               sx={{
                 display: 'grid',
@@ -974,7 +953,8 @@ const FinanceVoucherPage: React.FC = () => {
                 gap: 2,
               }}
             >
-              <TextField
+              <FormField
+                name='voucher_number'
                 label='凭证编号 *'
                 value={newVoucher.voucher_number}
                 onChange={(e) =>
@@ -984,9 +964,9 @@ const FinanceVoucherPage: React.FC = () => {
                   }))
                 }
                 placeholder='请输入凭证编号'
-                fullWidth
               />
-              <TextField
+              <FormField
+                name='voucher_date'
                 label='凭证日期 *'
                 type='date'
                 value={newVoucher.voucher_date}
@@ -996,9 +976,9 @@ const FinanceVoucherPage: React.FC = () => {
                     voucher_date: e.target.value,
                   }))
                 }
-                fullWidth
               />
-              <TextField
+              <FormField
+                name='period'
                 label='期间 *'
                 value={newVoucher.period}
                 onChange={(e) =>
@@ -1008,7 +988,6 @@ const FinanceVoucherPage: React.FC = () => {
                   }))
                 }
                 placeholder='如: 2024-06'
-                fullWidth
               />
             </Box>
             <Box
@@ -1018,7 +997,8 @@ const FinanceVoucherPage: React.FC = () => {
                 gap: 2,
               }}
             >
-              <TextField
+              <FormField
+                name='attachment_count'
                 label='附件数量'
                 type='number'
                 value={newVoucher.attachment_count}
@@ -1028,9 +1008,9 @@ const FinanceVoucherPage: React.FC = () => {
                     attachment_count: parseInt(e.target.value) || 0,
                   }))
                 }
-                fullWidth
               />
-              <TextField
+              <FormField
+                name='maker_name'
                 label='制单人'
                 value={newVoucher.maker_name}
                 onChange={(e) =>
@@ -1040,10 +1020,10 @@ const FinanceVoucherPage: React.FC = () => {
                   }))
                 }
                 placeholder='制单人姓名'
-                fullWidth
               />
             </Box>
-            <TextField
+            <FormField
+              name='summary'
               label='摘要'
               multiline
               rows={2}
@@ -1055,7 +1035,6 @@ const FinanceVoucherPage: React.FC = () => {
                 }))
               }
               placeholder='凭证摘要'
-              fullWidth
             />
 
             <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 2 }}>
@@ -1073,13 +1052,13 @@ const FinanceVoucherPage: React.FC = () => {
                 >
                   凭证明细
                 </Typography>
-                <Button
+                <ActionButton
+                  label='添加分录'
+                  icon={<Plus size={16} />}
+                  variant='secondary'
                   size='small'
                   onClick={addVoucherItem}
-                >
-                  <Plus sx={{ width: 16, height: 16 }} />
-                  添加分录
-                </Button>
+                />
               </Box>
               <Box
                 sx={{
@@ -1112,30 +1091,27 @@ const FinanceVoucherPage: React.FC = () => {
                     >
                       {item.line_number}
                     </Typography>
-                    <FormControl fullWidth>
-                      <InputLabel>选择科目</InputLabel>
-                      <Select
-                        value={item.subject_code}
-                        label='选择科目'
-                        onChange={(e) => updateVoucherItem(index, 'subject_code', e.target.value)}
-                      >
-                        {subjects.map((s) => (
-                          <MenuItem
-                            key={s.id}
-                            value={s.code}
-                          >
-                            {s.code} - {s.name}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                    <TextField
+                    <FormSelect
+                      name={`subject_code_${index}`}
+                      label='选择科目'
+                      value={item.subject_code}
+                      onChange={(value) => updateVoucherItem(index, 'subject_code', value)}
+                      options={subjects.map((s) => ({
+                        value: s.code,
+                        label: `${s.code} - ${s.name}`,
+                      }))}
+                    />
+                    <FormField
+                      name={`subject_name_${index}`}
+                      label=''
                       sx={{ width: 100 }}
                       value={item.subject_name}
                       slotProps={{ input: { readOnly: true } }}
                       placeholder='科目名称'
                     />
-                    <TextField
+                    <FormField
+                      name={`debit_amount_${index}`}
+                      label=''
                       sx={{ width: 100 }}
                       type='number'
                       value={item.debit_amount || ''}
@@ -1144,7 +1120,9 @@ const FinanceVoucherPage: React.FC = () => {
                       }
                       placeholder='借方'
                     />
-                    <TextField
+                    <FormField
+                      name={`credit_amount_${index}`}
+                      label=''
                       sx={{ width: 100 }}
                       type='number'
                       value={item.credit_amount || ''}
@@ -1153,14 +1131,13 @@ const FinanceVoucherPage: React.FC = () => {
                       }
                       placeholder='贷方'
                     />
-                    <Button
+                    <ActionButton
+                      label='删除'
+                      icon={<X size={16} />}
                       variant='text'
                       size='small'
-                      sx={{ color: 'red' }}
                       onClick={() => removeVoucherItem(index)}
-                    >
-                      <X sx={{ width: 16, height: 16 }} />
-                    </Button>
+                    />
                   </Box>
                 ))}
               </Box>
@@ -1201,32 +1178,34 @@ const FinanceVoucherPage: React.FC = () => {
               </Box>
             </Box>
           </Box>
-          <DialogActions>
-            <Button
-              variant='outlined'
-              onClick={() => {
-                setShowCreateModal(false);
-                resetForm();
-              }}
-            >
-              取消
-            </Button>
-            <Button onClick={handleCreate}>
-              <Check sx={{ width: 16, height: 16, mr: 1 }} />
-              保存凭证
-            </Button>
-          </DialogActions>
-        </DialogContent>
       </Dialog>
 
       {/* 导入凭证对话框 */}
       <Dialog
         open={showImportModal}
         onClose={() => setShowImportModal(false)}
-        maxWidth='lg'
+        title='导入用友财务凭证'
+        cancelButton={{
+          label: '取消',
+          onClick: () => setShowImportModal(false),
+        }}
+        confirmButton={{
+          label: '开始导入',
+          onClick: () => {
+            const content = (document.getElementById('importData') as HTMLTextAreaElement)
+              .value;
+            if (!content.trim()) {
+              addNotification({
+                title: '提示',
+                message: '请输入凭证数据',
+                type: 'warning',
+              });
+              return;
+            }
+            handleImport(content);
+          },
+        }}
       >
-        <DialogTitle>导入用友财务凭证</DialogTitle>
-        <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
             <Box sx={{ p: 2, bgcolor: 'blue.50', borderRadius: 1 }}>
               <AlertCircle sx={{ width: 20, height: 20, color: 'blue.600', mb: 1 }} />
@@ -1244,18 +1223,21 @@ const FinanceVoucherPage: React.FC = () => {
               >
                 用友凭证数据 (JSON格式)
               </Typography>
-              <TextField
+              <FormField
+                name='importData'
                 id='importData'
+                label=''
                 multiline
                 rows={12}
                 placeholder='[{"voucher_number": "记-001", "voucher_date": "2024-01-15", "period": "2024-01", "summary": "支付办公费用", "maker": "张三", "items": [{"line_number": 1, "subject_code": "6602", "subject_name": "管理费用", "summary": "办公用品", "debit_amount": 500.00, "credit_amount": 0}]}]'
-                fullWidth
                 sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
               />
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Button
-                variant='outlined'
+              <ActionButton
+                label='加载示例数据'
+                icon={<Download size={16} />}
+                variant='secondary'
                 onClick={() => {
                   const sampleData = JSON.stringify(
                     [
@@ -1290,55 +1272,19 @@ const FinanceVoucherPage: React.FC = () => {
                   );
                   (document.getElementById('importData') as HTMLTextAreaElement).value = sampleData;
                 }}
-              >
-                <Download sx={{ width: 16, height: 16, mr: 1 }} />
-                加载示例数据
-              </Button>
+              />
             </Box>
           </Box>
-          <DialogActions>
-            <Button
-              variant='outlined'
-              onClick={() => setShowImportModal(false)}
-            >
-              取消
-            </Button>
-            <Button
-              sx={{
-                backgroundColor: 'green',
-                '&:hover': { backgroundColor: 'green' },
-              }}
-              onClick={() => {
-                const content = (document.getElementById('importData') as HTMLTextAreaElement)
-                  .value;
-                if (!content.trim()) {
-                  addNotification({
-                    title: '提示',
-                    message: '请输入凭证数据',
-                    type: 'warning',
-                  });
-                  return;
-                }
-                handleImport(content);
-              }}
-            >
-              <Upload sx={{ width: 16, height: 16, mr: 1 }} />
-              开始导入
-            </Button>
-          </DialogActions>
-        </DialogContent>
       </Dialog>
 
       {/* 凭证详情对话框 */}
       <Dialog
         open={showDetailModal}
         onClose={() => setShowDetailModal(false)}
-        maxWidth='lg'
+        title='凭证详情'
       >
-        <DialogTitle>凭证详情</DialogTitle>
-        <DialogContent>
           {currentVoucher && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
               <Box
                 sx={{
                   display: 'grid',
@@ -1542,10 +1488,6 @@ const FinanceVoucherPage: React.FC = () => {
               </Box>
             </Box>
           )}
-          <DialogActions>
-            <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
-          </DialogActions>
-        </DialogContent>
       </Dialog>
 
       {/* 删除确认对话框 */}

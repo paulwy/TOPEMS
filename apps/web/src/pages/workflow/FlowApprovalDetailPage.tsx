@@ -25,8 +25,8 @@ import {
   Eye,
 } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
-import type { Approval, ApprovalRecord } from '@/api/flow';
-import { flowApi } from '@/api/flow';
+import type { Approval, ApprovalRecord } from '@/api/workflow';
+import { workflowApi } from '@/api/workflow';
 import { useAppStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate } from '@/components/templates/DetailPageTemplate';
@@ -61,12 +61,12 @@ const FlowApprovalDetailPage: React.FC = () => {
       setLoading(true);
       setError(undefined);
 
-      const approvalResponse = await flowApi.getApproval(id);
+      const approvalResponse = await workflowApi.getApproval(id);
       if (approvalResponse.success && approvalResponse.data) {
         const data = approvalResponse.data as any;
         setApproval(data);
 
-        const recordsResponse = await flowApi.getRecordsByApproval(id);
+        const recordsResponse = await workflowApi.getRecordsByApproval(id);
         if (recordsResponse.success && recordsResponse.data) {
           const recordsData = recordsResponse.data as any;
           const recordsList = Array.isArray(recordsData) ? recordsData : recordsData.items || [];
@@ -101,7 +101,7 @@ const FlowApprovalDetailPage: React.FC = () => {
 
     try {
       setProcessing(true);
-      const response = await flowApi.processApproval(approval.id, {
+      const response = await workflowApi.processApproval(approval.id, {
         action: approvalAction,
         comment: comment || undefined,
         actor_id: user?.id || 'system-user-id',
@@ -328,8 +328,8 @@ const FlowApprovalDetailPage: React.FC = () => {
           setComment('');
           setShowApprovalModal(true);
         },
-        variant: 'contained',
-        color: 'success',
+        variant: 'contained' as const,
+        color: 'success' as const,
       },
       {
         label: '拒绝',
@@ -339,8 +339,8 @@ const FlowApprovalDetailPage: React.FC = () => {
           setComment('');
           setShowApprovalModal(true);
         },
-        variant: 'contained',
-        color: 'error',
+        variant: 'contained' as const,
+        color: 'error' as const,
       },
     ];
   }, [approval]);

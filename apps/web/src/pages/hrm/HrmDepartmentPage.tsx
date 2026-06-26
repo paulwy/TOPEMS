@@ -16,13 +16,14 @@ import {
   Box,
   Avatar,
   Typography,
-  Chip,
   Divider,
   IconButton,
   Tooltip,
   useTheme,
   useMediaQuery,
+  Chip,
 } from '@mui/material';
+import { StatusBadge } from '@/components/common/StatusBadge';
 import { Button } from '@mui/material';
 import { Plus, Edit, Trash2, Eye, Building2, Building, User, Mail, Phone } from 'lucide-react';
 import {
@@ -331,14 +332,7 @@ const HrmDepartmentPage: React.FC = () => {
               </Box>
             </Box>
           }
-          action={
-            <Chip
-              size='small'
-              color={selectedDept.status === 'active' ? 'success' : 'default'}
-              label={selectedDept.status === 'active' ? '启用' : '禁用'}
-              variant='outlined'
-            />
-          }
+          action={<StatusBadge status={`department_${selectedDept.status}`} showIcon />}
         />
         <CardContent>
           {/* 统计卡片 */}
@@ -490,12 +484,7 @@ const HrmDepartmentPage: React.FC = () => {
                         >
                           {emp.name}
                         </Typography>
-                        <Chip
-                          size='small'
-                          color={emp.status === 'active' ? 'success' : 'default'}
-                          label={emp.status === 'active' ? '在职' : '离职'}
-                          sx={{ height: 20, fontSize: '0.7rem' }}
-                        />
+                        <StatusBadge status={`employee_${emp.status}`} size='sm' />
                       </Box>
                       <Typography
                         variant='caption'
@@ -872,12 +861,7 @@ const HrmDepartmentPage: React.FC = () => {
                   状态
                 </Typography>
                 <Box sx={{ mt: 0.5 }}>
-                  <Chip
-                    size='small'
-                    color={selectedDepartment.status === 'active' ? 'success' : 'default'}
-                    label={selectedDepartment.status === 'active' ? '启用' : '禁用'}
-                    variant='outlined'
-                  />
+                  <StatusBadge status={`department_${selectedDepartment.status}`} showIcon />
                 </Box>
               </Box>
               <Box>

@@ -14,8 +14,8 @@ import type {
   Interaction,
   CreateInteractionRequest,
   UpdateInteractionRequest,
-} from '@/api/modules/crm/crm';
-import { crmApi } from '@/api/modules/crm/crm';
+} from '@/api/crm';
+import { crmApi } from '@/api/crm';
 import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { Plus, Edit, Trash2, Eye } from 'lucide-react';

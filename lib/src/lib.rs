@@ -34,6 +34,7 @@ pub mod service_client;
 pub mod service_discovery;
 pub mod storage;
 pub mod tenant;
+pub mod telemetry;
 pub mod validation;
 pub mod vector_store;
 
@@ -156,6 +157,7 @@ pub use tenant::{
     Tenant, TenantContext, TenantError, TenantManager, TenantPlan, TenantRole, TenantSettings,
     TenantStatus, TenantUpdate, TenantUser, UsageLimitExceeded, UsageMetrics,
 };
+pub use telemetry::{init_telemetry, telemetry_middleware, inject_trace_context, TelemetryConfig, TelemetryExporter, TelemetryGuard};
 pub use validation::{ValidationError, ValidationResult, Validator};
 
 // 向量存储模块

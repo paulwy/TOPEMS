@@ -5,80 +5,151 @@ global:
   smtp_auth_username: 'alertmanager@topems.com'
   smtp_auth_password: 'your-smtp-password'
 
-# 告警模板
 templates:
   - '/etc/alertmanager/templates/*.tmpl'
 
-# 路由树
 route:
-  # 根路由配置
   receiver: 'default-receiver'
-  group_by: ['alertname', 'cluster', 'service']
-  group_wait: 10s
-  group_interval: 10s
+  group_by: ['alertname', 'job', 'severity', 'category']
+  group_wait: 30s
+  group_interval: 5m
   repeat_interval: 4h
-  # 允许告警被抑制的最大时间
-  moderation: 5m
-  
-  # 嵌套路由 - 按严重级别分流
+
   routes:
-    # Critical 级别 - 立即通知
+    # P0 - 紧急告警 - 立即通知所有渠道
     - match:
-        severity: critical
-      receiver: 'critical-receiver'
+        severity: P0
+      receiver: 'p0-critical-receiver'
       group_wait: 0s
-      repeat_interval: 1h
+      group_interval: 1m
+      repeat_interval: 30m
+      continue: true
+      routes:
+        - match:
+            escalation: "true"
+          receiver: 'p0-escalation-receiver'
+          repeat_interval: 15m
+
+    # P1 - 重要告警 - 快速通知
+    - match:
+        severity: P1
+      receiver: 'p1-important-receiver'
+      group_wait: 10s
+      group_interval: 3m
+      repeat_interval: 2h
+      continue: true
+      routes:
+        - match:
+            escalation: "true"
+          receiver: 'p1-escalation-receiver'
+          repeat_interval: 1h
+
+    # P2 - 一般告警 - 正常通知
+    - match:
+        severity: P2
+      receiver: 'p2-warning-receiver'
+      group_wait: 1m
+      group_interval: 10m
+      repeat_interval: 8h
+
+    # P3 - 提示告警 - 仅邮件汇总
+    - match:
+        severity: P3
+      receiver: 'p3-info-receiver'
+      group_wait: 5m
+      group_interval: 30m
+      repeat_interval: 24h
+
+    # 按团队路由
+    - match_re:
+        team: .*
+      group_by: ['team', 'severity']
+      receiver: 'team-receiver'
       continue: true
 
-    # Warning 级别 - 正常通知
-    - match:
-        severity: warning
-      receiver: 'warning-receiver'
-      group_wait: 30s
-      repeat_interval: 4h
-
-    # Info 级别 - 静默通知
-    - match:
-        severity: info
-      receiver: 'info-receiver'
-      group_wait: 1m
-      repeat_interval: 8h
+    # 按类别路由
+    - match_re:
+        category: .*
+      group_by: ['category', 'severity']
+      receiver: 'category-receiver'
 
 # 接收器定义
 receivers:
-  # 默认接收器（webhook）
+  # 默认接收器
   - name: 'default-receiver'
     webhook_configs:
       - url: 'http://topems-portal:8080/webhook/alertmanager'
         send_resolved: true
         max_alerts: 100
 
-  # Critical 接收器 - 飞书 + 短信 + 电话
-  - name: 'critical-receiver'
-    # 飞书通知
+  # P0 紧急接收器 - 所有渠道立即通知
+  - name: 'p0-critical-receiver'
     webhook_configs:
       - url: 'http://topems-portal:8080/webhook/feishu'
         send_resolved: true
         max_alerts: 10
-    # 邮件通知
+      - url: 'http://topems-portal:8080/webhook/alertmanager'
+        send_resolved: true
+        max_alerts: 10
+    email_configs:
+      - to: 'oncall@topems.com,devops-lead@topems.com,cto@topems.com'
+        send_resolved: true
+        headers:
+          X-Priority: '1'
+          Subject: '[P0紧急] {{ .GroupLabels.alertname }} - {{ .GroupLabels.job }}'
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#alert-p0-critical'
+        send_resolved: true
+        title: '[P0] {{ .GroupLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+        color: 'danger'
+
+  # P0 升级接收器
+  - name: 'p0-escalation-receiver'
+    email_configs:
+      - to: 'cto@topems.com,vp-engineering@topems.com'
+        send_resolved: false
+        headers:
+          X-Priority: '1'
+          Subject: '[P0升级] {{ .GroupLabels.alertname }} 持续告警'
+
+  # P1 重要接收器
+  - name: 'p1-important-receiver'
+    webhook_configs:
+      - url: 'http://topems-portal:8080/webhook/feishu'
+        send_resolved: true
+        max_alerts: 20
+      - url: 'http://topems-portal:8080/webhook/alertmanager'
+        send_resolved: true
+        max_alerts: 20
     email_configs:
       - to: 'oncall@topems.com,devops@topems.com'
         send_resolved: true
         headers:
-          X-Priority: '1'
-    # Slack通知
+          X-Priority: '2'
+          Subject: '[P1重要] {{ .GroupLabels.alertname }} - {{ .GroupLabels.job }}'
     slack_configs:
       - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
-        channel: '#alert-critical'
+        channel: '#alert-p1-important'
         send_resolved: true
-        title: '{{ template "slack.default.title" . }}'
-        text: '{{ template "slack.default.content" . }}'
-        color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+        title: '[P1] {{ .GroupLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+        color: 'danger'
 
-  # Warning 接收器 - 飞书 + 邮件
-  - name: 'warning-receiver'
+  # P1 升级接收器
+  - name: 'p1-escalation-receiver'
+    email_configs:
+      - to: 'devops-lead@topems.com'
+        send_resolved: false
+        headers:
+          X-Priority: '2'
+          Subject: '[P1升级] {{ .GroupLabels.alertname }} 持续告警'
+
+  # P2 一般接收器
+  - name: 'p2-warning-receiver'
     webhook_configs:
-      - url: 'http://topems-portal:8080/webhook/feishu'
+      - url: 'http://topems-portal:8080/webhook/alertmanager'
         send_resolved: true
         max_alerts: 50
     email_configs:
@@ -86,56 +157,147 @@ receivers:
         send_resolved: true
         headers:
           X-Priority: '3'
+          Subject: '[P2一般] {{ .GroupLabels.alertname }} - {{ .GroupLabels.job }}'
     slack_configs:
       - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
-        channel: '#alert-warning'
+        channel: '#alert-p2-warning'
         send_resolved: true
-        title: '{{ template "slack.default.title" . }}'
-        text: '{{ template "slack.default.content" . }}'
-        color: '{{ if eq .Status "firing" }}warning{{ else }}good{{ end }}'
+        title: '[P2] {{ .GroupLabels.alertname }}'
+        text: '{{ range .Alerts }}{{ .Annotations.description }}{{ end }}'
+        color: 'warning'
 
-  # Info 接收器 - 仅邮件
-  - name: 'info-receiver'
+  # P3 提示接收器 - 仅每日汇总
+  - name: 'p3-info-receiver'
     email_configs:
       - to: 'devops@topems.com'
         send_resolved: true
         headers:
           X-Priority: '5'
+          Subject: '[P3提示] {{ .GroupLabels.alertname }}'
+
+  # 团队接收器
+  - name: 'team-receiver'
+    email_configs:
+      - to: '{{ .GroupLabels.team }}@topems.com'
+        send_resolved: true
+        headers:
+          Subject: '[{{ .GroupLabels.severity }}] {{ .GroupLabels.team }} 团队告警'
+
+  # 类别接收器
+  - name: 'category-receiver'
+    webhook_configs:
+      - url: 'http://topems-portal:8080/webhook/alertmanager'
+        send_resolved: true
 
 # 告警抑制规则
-# 当更严重的告警触发时，抑制较轻的同类告警
 inhibit_rules:
-  # Critical 抑制 Warning
+  # P0 抑制 P1/P2/P3 - 同一服务同一类别
   - source_match:
-      severity: 'critical'
-    target_match:
-      severity: 'warning'
-    equal: ['alertname', 'instance']
-
-  # Warning 抑制 Info
-  - source_match:
-      severity: 'warning'
-    target_match:
-      severity: 'info'
-    equal: ['alertname', 'instance']
-
-  # 服务down抑制该服务所有其他告警
-  - source_match:
-      alertname: 'ServiceDown'
+      severity: 'P0'
     target_match_re:
-      alertname: '.*'
+      severity: 'P[123]'
+    equal: ['job', 'category']
+
+  # P1 抑制 P2/P3 - 同一服务同一类别
+  - source_match:
+      severity: 'P1'
+    target_match_re:
+      severity: 'P[23]'
+    equal: ['job', 'category']
+
+  # P2 抑制 P3 - 同一服务同一类别
+  - source_match:
+      severity: 'P2'
+    target_match:
+      severity: 'P3'
+    equal: ['job', 'category']
+
+  # 服务宕机抑制该服务所有其他告警
+  - source_match:
+      alertname: 'ServiceDownP0'
+    target_match_re:
+      alertname: '.*P[123]'
     equal: ['job']
 
   # 数据库连接池耗尽抑制慢查询
   - source_match:
-      alertname: 'DatabasePoolCritical'
-    target_match:
-      alertname: 'SlowDatabaseQueries'
+      alertname: 'DatabasePoolCriticalP0'
+    target_match_re:
+      alertname: 'DatabaseSlowQueriesP[12]'
+    equal: ['instance']
+
+  # 数据库连接池高抑制锁等待
+  - source_match:
+      alertname: 'DatabasePoolCriticalP0'
+    target_match_re:
+      alertname: 'DatabaseLockWaitP[1]'
     equal: ['instance']
 
   # Redis内存耗尽抑制其他Redis告警
   - source_match:
-      alertname: 'RedisCriticalMemoryUsage'
+      alertname: 'RedisCriticalMemoryP0'
     target_match_re:
-      alertname: 'Redis.*'
+      alertname: 'Redis.*P[123]'
     equal: ['instance']
+
+  # 磁盘严重告警抑制磁盘一般告警
+  - source_match:
+      severity: 'P0'
+      category: 'system'
+    target_match_re:
+      severity: 'P[12]'
+      alertname: 'DiskUsage.*'
+    equal: ['instance']
+
+  # CPU严重告警抑制CPU一般告警
+  - source_match:
+      severity: 'P0'
+      category: 'system'
+    target_match_re:
+      severity: 'P[12]'
+      alertname: 'CPUUsage.*'
+    equal: ['instance']
+
+  # 内存严重告警抑制内存一般告警
+  - source_match:
+      severity: 'P0'
+      category: 'system'
+    target_match_re:
+      severity: 'P[12]'
+      alertname: 'MemoryUsage.*'
+    equal: ['instance']
+
+  # 备份失败抑制备份未执行
+  - source_match:
+      alertname: 'BackupFailedP0'
+    target_match:
+      alertname: 'BackupNotRunningP1'
+    equal: ['job']
+
+  # 证书过期抑制证书即将过期
+  - source_match:
+      alertname: 'TlsCertExpiredP0'
+    target_match_re:
+      alertname: 'TlsCertExpiringSoonP[12]'
+    equal: ['instance']
+
+  # 容器内存高抑制容器CPU高（内存问题更紧急）
+  - source_match:
+      alertname: 'ContainerHighMemoryP1'
+    target_match:
+      alertname: 'ContainerHighCPUP1'
+    equal: ['name']
+
+# 静默时间窗口配置
+# 注意: 静默规则通常通过 Alertmanager API 动态创建，
+# 以下是建议的静默策略，可通过脚本或监控服务自动管理
+
+# 夜间非工作时间降敏策略 (22:00 - 08:00):
+# - P0: 保持正常通知
+# - P1: 延迟到工作时间通知 (通过 repeat_interval 调整)
+# - P2/P3: 静默，仅记录不通知
+
+# 周末降敏策略 (周六周日):
+# - P0: 保持正常通知
+# - P1: 仅邮件通知，不发送即时消息
+# - P2/P3: 静默

@@ -3,7 +3,7 @@ import { Box, Typography, IconButton } from '@mui/material';
 import { Button } from '@mui/material';
 import { Clock, LogOut, Zap } from 'lucide-react';
 import { NotificationBell } from '../notifications';
-import { ModeToggle } from '../ModeToggle';
+import { ModeToggle } from '../theme/ModeToggle';
 import { useAuth } from '../../hooks/useAuth';
 import { useRole } from '../../hooks/useRole';
 

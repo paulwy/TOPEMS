@@ -88,7 +88,7 @@ const RsReportPage: React.FC = () => {
       title: '项目统计',
       value: reportData.projects.total,
       icon: <FolderIcon size={24} />,
-      color: 'primary',
+      color: 'primary' as const,
       description: `进行中 ${reportData.projects.active} | 已完成 ${reportData.projects.completed}`,
     },
     {
@@ -96,11 +96,11 @@ const RsReportPage: React.FC = () => {
       title: '试验统计',
       value: reportData.experiments.total,
       icon: <ScienceIcon size={24} />,
-      color: 'warning',
+      color: 'warning' as const,
       description: `成功率 ${reportData.experiments.successRate}%`,
       trend: {
         value: reportData.experiments.successRate,
-        direction: 'up',
+        direction: 'up' as const,
         label: '成功率',
       },
     },
@@ -109,7 +109,7 @@ const RsReportPage: React.FC = () => {
       title: '配方统计',
       value: reportData.formulas.total,
       icon: <AnalyticsIcon size={24} />,
-      color: 'info',
+      color: 'info' as const,
       description: `已发布 ${reportData.formulas.published} | 测试中 ${reportData.formulas.testing}`,
     },
   ];
@@ -118,7 +118,7 @@ const RsReportPage: React.FC = () => {
     {
       id: 'experiment-phase-distribution',
       title: '试验阶段分布',
-      type: 'pie',
+      type: 'pie' as const,
       dataKey: 'value',
       nameKey: 'name',
       data: [
@@ -131,7 +131,7 @@ const RsReportPage: React.FC = () => {
     {
       id: 'monthly-progress-trend',
       title: '月度进展趋势',
-      type: 'bar',
+      type: 'bar' as const,
       dataKey: 'projects',
       nameKey: 'month',
       data: reportData.monthlyProgress.map((item) => ({

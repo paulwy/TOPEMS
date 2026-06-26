@@ -82,7 +82,7 @@ const NotificationDetailPage: React.FC = () => {
   };
 
   const getLevelConfig = (level: string) => {
-    const config: Record<string, { color: 'success' | 'error' | 'default' | 'warning'; label: string; icon: React.ReactNode }> = {
+    const config: Record<string, { color: 'success' | 'error' | 'default' | 'warning'; label: string; icon: React.ReactElement }> = {
       info: { color: 'default', label: '信息', icon: <MessageSquare size={16} /> },
       warning: { color: 'warning', label: '警告', icon: <AlertCircle size={16} /> },
       error: { color: 'error', label: '错误', icon: <AlertCircle size={16} /> },
@@ -106,7 +106,7 @@ const NotificationDetailPage: React.FC = () => {
   const basicInfoContent = useMemo(() => {
     if (!notification) return null;
     const statusConfig = getStatusConfig(notification.is_read ? 'read' : 'unread');
-    const levelConfig = getLevelConfig(notification.level);
+    const levelConfig = getLevelConfig(notification.level || 'info');
 
     return (
       <Box>
@@ -129,7 +129,7 @@ const NotificationDetailPage: React.FC = () => {
           <Box>
             <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>通知类型</InputLabel>
             <Box sx={{ mt: 0.5 }}>
-              <Chip label={getTypeLabel(notification.type)} size='small' variant='outlined' />
+              <Chip label={getTypeLabel(notification.type || 'other')} size='small' variant='outlined' />
             </Box>
           </Box>
           <Box>

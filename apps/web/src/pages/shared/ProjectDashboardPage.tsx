@@ -11,7 +11,7 @@ import {
   Target,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
+import { StatsPageTemplate, StatCard, ChartConfig } from '@/components/templates/StatsPageTemplate';
 import { apiClient } from '@/api/client';
 
 interface ProjectSummary {
@@ -110,7 +110,7 @@ const ProjectDashboardPage: React.FC = () => {
 
   const activeProjects = projects.filter((p: Project) => p.status === 'active').slice(0, 5);
 
-  const statCards = summary
+  const statCards: StatCard[] = summary
     ? [
         {
           id: 'total-projects',
@@ -174,7 +174,7 @@ const ProjectDashboardPage: React.FC = () => {
       ]
     : [];
 
-  const charts = [
+  const charts: ChartConfig[] = [
     {
       id: 'project-type-distribution',
       title: '项目类型分布',
