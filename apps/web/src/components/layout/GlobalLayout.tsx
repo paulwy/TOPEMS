@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { logger } from '@/utils/logger';
 import {
   Box,
@@ -7,13 +7,11 @@ import {
   Typography,
   Tabs,
   Tab,
-  Popover,
   Avatar,
   Badge,
   Tooltip,
   useTheme,
   useMediaQuery,
-  Fade,
   Menu,
   MenuItem,
 } from '@mui/material';
@@ -25,7 +23,6 @@ import {
   BarChart3,
   Settings,
   Bell,
-  ChevronDown,
   ChevronRight,
   Menu as MenuIcon,
   X,
@@ -115,17 +112,20 @@ import {
   GanttChart,
   ShieldAlert,
   Plus,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { usePermission } from '../../hooks/usePermission';
 import { navigationRegistry, type NavItem } from '@/lib/NavigationRegistry';
 import type { TabItem } from '@/types/navigation';
-import { ModeToggle } from '../theme/ModeToggle';
+import { useAppStore } from '@/store';
 import { FloatingAIHelper } from '../ai/FloatingAIHelper';
 import { ModuleTabs } from './ModuleTabs';
 import { MobileNav } from './MobileNav';
-import { Sidebar } from './Sidebar';
+import { Sidebar as AIPluginSidebar } from './Sidebar';
+import { AppSidebar } from './AppSidebar';
 
 // 从路径解析模块名的辅助函数
 function getModuleFromPath(pathname: string): string | null {
@@ -149,7 +149,6 @@ const lucideIcons: Record<string, React.ComponentType<{ style?: React.CSSPropert
   Calendar,
   DollarSign,
   ChevronRight,
-  ChevronDown,
   LayoutDashboard,
   FolderKanban,
   FlaskConical,
@@ -251,6 +250,9 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
   const { logout } = useAuth();
   const { checkPermission } = usePermission();
+  const appTheme = useAppStore((state) => state.theme);
+  const toggleTheme = useAppStore((state) => state.toggleTheme);
+  const isDark = appTheme === 'dark';
 
   // 从 NavigationRegistry 动态获取导航项（带权限过滤）
   const [topNavItems, setTopNavItems] = useState<NavItem[]>(() => {
@@ -268,10 +270,9 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
     };
   }, [checkPermission]);
 
-  const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
-  const [openMenu, setOpenMenu] = useState<NavItem | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [userMenuAnchorEl, setUserMenuAnchorEl] = useState<HTMLElement | null>(null);
   const userMenuOpen = Boolean(userMenuAnchorEl);
 
@@ -289,252 +290,8 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
     handleUserMenuClose();
   };
 
-  // 获取当前模块和Tab
+  // 获取当前模块
   const currentModule = getModuleFromPath(location.pathname);
-  const moduleTabs = currentModule ? navigationRegistry.getModuleTabs(currentModule) || [] : [];
-
-  const handleNavHover = useCallback(
-    (event: React.MouseEvent<HTMLElement>, item: NavItem) => {
-      if (item.children) {
-        setAnchorEl(event.currentTarget);
-        setOpenMenu(item);
-      } else if (item.path) {
-        navigate(item.path);
-      }
-    },
-    [navigate]
-  );
-
-  const handleNavLeave = useCallback(() => {
-    // 延迟关闭，允许进入下拉菜单
-    setTimeout(() => {
-      if (!anchorEl) return;
-      // 检查鼠标是否在popover内
-    }, 100);
-  }, [anchorEl]);
-
-  const handleCloseMenu = useCallback(() => {
-    setAnchorEl(null);
-    setOpenMenu(null);
-  }, []);
-
-  const handleMenuItemClick = useCallback(
-    (item: NavItem) => {
-      if (item.path) {
-        navigate(item.path);
-      }
-      handleCloseMenu();
-    },
-    [navigate, handleCloseMenu]
-  );
-
-  const isMenuOpen = Boolean(anchorEl) && Boolean(openMenu?.children);
-
-  // 渲染下拉菜单内容
-  const renderDropdownContent = (item: NavItem) => {
-    if (!item.children) return null;
-
-    const menuItems = item.children as NavItem[];
-    return (
-      <Box
-        sx={{
-          minWidth: 220,
-          maxWidth: 340,
-          p: 1.5,
-          maxHeight: isMobile ? '60vh' : '70vh',
-          overflowY: 'auto',
-          // 自定义滚动条
-          scrollbarWidth: 'thin',
-          scrollbarColor: 'divider transparent',
-          '&::-webkit-scrollbar': {
-            width: 6,
-          },
-          '&::-webkit-scrollbar-thumb': {
-            backgroundColor: 'divider',
-            borderRadius: 3,
-          },
-        }}
-        onMouseEnter={() => {
-          if (anchorEl) setAnchorEl(anchorEl);
-        }}
-        onMouseLeave={handleCloseMenu}
-      >
-        {menuItems.map((child: NavItem, idx: number) => {
-          const childIsActive =
-            child.path === location.pathname ||
-            (child.path && location.pathname.startsWith(child.path + '/'));
-          return (
-            <Box
-              key={child.code}
-              onClick={() => handleMenuItemClick(child)}
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 2,
-                p: 1.5,
-                mb: idx < menuItems.length - 1 ? 0.5 : 0,
-                borderRadius: 2,
-                cursor: 'pointer',
-                transition: 'all 0.15s ease-in-out',
-                position: 'relative',
-                backgroundColor: childIsActive ? 'primary.50' : 'transparent',
-                '&:hover': {
-                  backgroundColor: childIsActive ? 'primary.50' : 'action.hover',
-                  transform: 'translateX(4px)',
-                },
-              }}
-            >
-              {/* 左侧激活指示条 */}
-              {childIsActive && (
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    left: 4,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    width: 3,
-                    height: '50%',
-                    borderRadius: '3px',
-                    backgroundColor: 'primary.main',
-                  }}
-                />
-              )}
-
-              <Box
-                sx={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 1.5,
-                  backgroundColor: childIsActive ? 'primary.main' : 'grey.100',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexShrink: 0,
-                  transition: 'all 0.15s ease-in-out',
-                }}
-              >
-                {child.icon ? (
-                  renderIcon(child.icon, 18)
-                ) : (
-                  <Typography
-                    variant='body2'
-                    sx={{
-                      color: childIsActive ? 'common.white' : 'primary.main',
-                      fontWeight: 600,
-                    }}
-                  >
-                    {child.label.charAt(0)}
-                  </Typography>
-                )}
-              </Box>
-              <Box sx={{ minWidth: 0, flex: 1 }}>
-                <Typography
-                  variant='body2'
-                  sx={{
-                    fontWeight: childIsActive ? 600 : 500,
-                    color: childIsActive ? 'primary.main' : 'text.primary',
-                    fontSize: '0.875rem',
-                  }}
-                >
-                  {child.label}
-                </Typography>
-                {child.description && (
-                  <Typography
-                    variant='caption'
-                    color='text.secondary'
-                    sx={{
-                      display: 'block',
-                      mt: 0.25,
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {child.description}
-                  </Typography>
-                )}
-              </Box>
-            </Box>
-          );
-        })}
-      </Box>
-    );
-  };
-
-  // 渲染顶部导航项
-  const renderNavItem = (item: NavItem, index: number) => {
-    const isActive =
-      item.path === location.pathname ||
-      (item.path && location.pathname.startsWith(item.path + '/'));
-
-    return (
-      <Box
-        key={item.label + index}
-        onMouseEnter={(e) => handleNavHover(e, item)}
-        onMouseLeave={handleNavLeave}
-        sx={{
-          position: 'relative',
-        }}
-      >
-        <Button
-          onClick={() => item.path && navigate(item.path)}
-          endIcon={
-            item.children && item.children.length > 0 ? (
-              <ChevronDown style={{ width: 14, height: 14 }} />
-            ) : null
-          }
-          sx={{
-            color: isActive ? 'primary.main' : 'text.primary',
-            fontWeight: isActive ? 600 : 500,
-            px: 1.5,
-            py: 1,
-            minWidth: 'auto',
-            textTransform: 'none',
-            borderRadius: 1,
-            backgroundColor: isActive ? 'primary.light' : 'transparent',
-            transition: 'all 0.2s ease-in-out',
-            '&:hover': {
-              backgroundColor: isActive ? 'primary.light' : 'action.hover',
-              transform: 'translateY(-1px)',
-            },
-            cursor: item.path ? 'pointer' : 'default',
-          }}
-        >
-          {item.label}
-        </Button>
-        {/* 激活项底部指示条 */}
-        {isActive && (
-          <Box
-            sx={{
-              position: 'absolute',
-              bottom: -2,
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: '60%',
-              height: 3,
-              borderRadius: '3px 3px 0 0',
-              backgroundColor: 'primary.main',
-            }}
-          />
-        )}
-      </Box>
-    );
-  };
-
-  // 渲染Tab
-  const renderTabs = () => {
-    if (moduleTabs.length === 0) return null;
-
-    return (
-      <ModuleTabs
-        tabs={moduleTabs}
-        onTabsChange={(newTabs) => {
-          // 可以在这里保存用户自定义的标签配置到localStorage
-          logger.info('Tabs changed:', newTabs);
-        }}
-      />
-    );
-  };
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -548,6 +305,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
           position: 'sticky',
           top: 0,
           zIndex: 1100,
+          boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.03)',
         }}
       >
         <Box
@@ -555,8 +313,8 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
             display: 'flex',
             alignItems: 'center',
             height: 56,
-            px: 2,
-            maxWidth: 1600,
+            px: { xs: 2, lg: 3 },
+            maxWidth: 1800,
             mx: 'auto',
             width: '100%',
           }}
@@ -600,17 +358,66 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
             </Typography>
           </Box>
 
-          {/* 导航菜单 - 桌面端 */}
+          {/* 中央导航 Tab */}
           <Box
             sx={{
-              display: { xs: 'none', lg: 'flex' },
+              display: { xs: 'none', md: 'flex' },
               alignItems: 'center',
               gap: 0.5,
               flex: 1,
-              overflow: 'auto',
+              justifyContent: 'center',
             }}
           >
-            {topNavItems.map((item, index) => renderNavItem(item, index))}
+            {[
+              { label: '首页', path: '/', icon: <LayoutDashboard style={{ width: 16, height: 16 }} /> },
+              { label: '模块概览', path: '/modules', icon: <Grid3X3 style={{ width: 16, height: 16 }} /> },
+              { label: '数据仪表盘', path: '/dashboard', icon: <BarChart3 style={{ width: 16, height: 16 }} /> },
+            ].map((tab) => {
+              const isActive = location.pathname === tab.path;
+              return (
+                <Box
+                  key={tab.path + tab.label}
+                  onClick={() => navigate(tab.path)}
+                  sx={{
+                    position: 'relative',
+                  }}
+                >
+                  <Button
+                    startIcon={tab.icon}
+                    sx={{
+                      color: isActive ? 'primary.main' : 'text.secondary',
+                      fontWeight: isActive ? 600 : 500,
+                      px: 2,
+                      py: 1,
+                      minWidth: 'auto',
+                      textTransform: 'none',
+                      borderRadius: 1,
+                      backgroundColor: 'transparent',
+                      transition: 'all 150ms ease',
+                      gap: 1,
+                      '&:hover': {
+                        backgroundColor: 'action.hover',
+                      },
+                    }}
+                  >
+                    {tab.label}
+                  </Button>
+                  {isActive && (
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        bottom: 0,
+                        left: 8,
+                        right: 8,
+                        height: 2,
+                        borderRadius: '999px 999px 0 0',
+                        backgroundColor: 'primary.main',
+                      }}
+                    />
+                  )}
+                </Box>
+              );
+            })}
           </Box>
 
           {/* 右侧工具 */}
@@ -618,20 +425,30 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
             sx={{
               display: 'flex',
               alignItems: 'center',
-              gap: { xs: 0.5, sm: 1 },
+              gap: 1,
             }}
           >
             <Tooltip title='通知'>
-              <IconButton size='small'>
-                <Badge
-                  badgeContent={3}
-                  color='error'
-                >
-                  <Bell style={{ width: 20, height: 20 }} />
-                </Badge>
+              <IconButton size='small' sx={{ width: 36, height: 36 }}>
+                <Box sx={{ position: 'relative', display: 'inline-flex' }}>
+                  <Bell style={{ width: 18, height: 18 }} />
+                  <Box sx={{
+                    position: 'absolute', top: 3, right: 3,
+                    width: 8, height: 8, borderRadius: '50%',
+                    bgcolor: 'error.main',
+                  }} />
+                </Box>
               </IconButton>
             </Tooltip>
-            <ModeToggle />
+            <Tooltip title={isDark ? '切换浅色模式' : '切换深色模式'}>
+              <IconButton
+                onClick={toggleTheme}
+                sx={{ width: 36, height: 36, '&:hover': { bgcolor: 'action.hover' } }}
+                size="small"
+              >
+                {isDark ? <Sun style={{ width: 18, height: 18 }} /> : <Moon style={{ width: 18, height: 18 }} />}
+              </IconButton>
+            </Tooltip>
             <Tooltip title='用户菜单'>
               <IconButton
                 size='small'
@@ -639,8 +456,8 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
               >
                 <Avatar
                   sx={{
-                    width: 32,
-                    height: 32,
+                    width: 34,
+                    height: 34,
                     fontSize: 14,
                     background: 'linear-gradient(135deg, primary.main, secondary.main)',
                   }}
@@ -680,103 +497,78 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
           </Box>
         </Box>
 
-        {/* 下拉菜单 Popover */}
-        <Popover
-          open={isMenuOpen}
-          anchorEl={anchorEl}
-          onClose={handleCloseMenu}
-          anchorOrigin={{
-            vertical: 'bottom',
-            horizontal: 'left',
-          }}
-          transformOrigin={{
-            vertical: 'top',
-            horizontal: 'left',
-          }}
-          slotProps={{
-            paper: {
-              elevation: 3,
-              sx: {
-                borderRadius: 2,
-                mt: 0.5,
-                overflow: 'hidden',
-                boxShadow: '0 10px 40px rgba(0, 0, 0, 0.15)',
-              },
-            },
-          }}
-        >
-          {openMenu && <Fade in={isMenuOpen}>{renderDropdownContent(openMenu) || <Box />}</Fade>}
-        </Popover>
       </Box>
 
-      {/* 模块Tab */}
-      {renderTabs()}
-
-      {/* 主内容区 */}
-      <Box
-        component='main'
-        sx={{
-          flex: 1,
-          backgroundColor: 'grey.50',
-          p: { xs: 2, sm: 3, lg: 4 },
-          maxWidth: 1600,
-          mx: 'auto',
-          width: '100%',
-        }}
-      >
-        {children}
-      </Box>
-
-      {/* Footer */}
-      <Box
-        component='footer'
-        sx={{
-          backgroundColor: 'background.paper',
-          borderTop: 1,
-          borderColor: 'divider',
-          py: 2,
-          px: { xs: 2, sm: 3, lg: 4 },
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: 1,
-        }}
-      >
-        <Typography
-          variant='body2'
-          color='text.secondary'
-          sx={{ fontSize: 12 }}
+      {/* 侧边栏 + 主内容区 */}
+      <Box sx={{ display: 'flex', flexDirection: 'row', flex: 1 }}>
+        <AppSidebar collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(prev => !prev)} />
+        {/* 主内容区 */}
+        <Box
+          component='main'
+          sx={{
+            flex: 1,
+            backgroundColor: 'grey.50',
+            p: { xs: 2, sm: 3, lg: 4 },
+            maxWidth: 1800,
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
         >
-          © 2024 TOPEMS 化工新材料数字化平台
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 2 }}>
-          <Button
-            size='small'
-            variant='text'
-            sx={{ fontSize: 12 }}
+          {children}
+          {/* Footer */}
+          <Box
+            component='footer'
+            sx={{
+              mt: 'auto',
+              backgroundColor: 'background.paper',
+              borderTop: 1,
+              borderColor: 'divider',
+              py: 2,
+              px: { xs: 2, sm: 3, lg: 4 },
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: 1,
+            }}
           >
-            帮助中心
-          </Button>
-          <Button
-            size='small'
-            variant='text'
-            sx={{ fontSize: 12 }}
-          >
-            使用文档
-          </Button>
-          <Button
-            size='small'
-            variant='text'
-            sx={{ fontSize: 12 }}
-          >
-            联系支持
-          </Button>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{ fontSize: 12 }}
+            >
+              © 2024 TOPEMS 化工新材料数字化平台
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <Typography
+                component="a"
+                href="#"
+                sx={{ fontSize: 12, color: 'text.secondary', textDecoration: 'none', cursor: 'pointer', '&:hover': { color: 'primary.main' } }}
+              >
+                帮助中心
+              </Typography>
+              <Typography
+                component="a"
+                href="#"
+                sx={{ fontSize: 12, color: 'text.secondary', textDecoration: 'none', cursor: 'pointer', '&:hover': { color: 'primary.main' } }}
+              >
+                使用文档
+              </Typography>
+              <Typography
+                component="a"
+                href="#"
+                sx={{ fontSize: 12, color: 'text.secondary', textDecoration: 'none', cursor: 'pointer', '&:hover': { color: 'primary.main' } }}
+              >
+                联系支持
+              </Typography>
+            </Box>
+          </Box>
         </Box>
       </Box>
 
       {/* AI浮动助手 */}
-      <Sidebar
+      <AIPluginSidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         pluginCode={currentModule || undefined}

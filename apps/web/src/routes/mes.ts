@@ -15,6 +15,16 @@ const MesDashboardPage = lazy(() => import('../pages/mes/DashboardPage'));
 const ProductionDashboardPage = lazy(
   () => import('../pages/mes/ProductionDashboardPage')
 );
+const QualityTraceabilityPage = lazy(
+  () => import('../pages/mes/QualityTraceabilityPage')
+);
+const WIPPage = lazy(() => import('../pages/mes/WIPPage'));
+const ProductionSchedulePage = lazy(() => import('../pages/mes/ProductionSchedulePage'));
+const EquipmentManagementPage = lazy(() => import('../pages/mes/EquipmentManagementPage'));
+const EquipmentOEEPage = lazy(() => import('../pages/mes/EquipmentOEEPage'));
+const MaterialBOMPage = lazy(() => import('../pages/mes/MaterialBOMPage'));
+const MaterialIssuePage = lazy(() => import('../pages/mes/MaterialIssuePage'));
+const MaterialReturnPage = lazy(() => import('../pages/mes/MaterialReturnPage'));
 
 export const mesRoutes: RouteConfig[] = [
   {
@@ -55,6 +65,62 @@ export const mesRoutes: RouteConfig[] = [
   {
     path: '/mes/records',
     element: ProductionRecordPage,
+    requiredPermissions: ['mes:read'],
+    module: 'mes',
+    action: 'read',
+  },
+  {
+    path: '/mes/quality-traceability',
+    element: QualityTraceabilityPage,
+    requiredPermissions: ['mes:read'],
+    module: 'mes',
+    action: 'read',
+  },
+  {
+    path: '/mes/wip',
+    element: WIPPage,
+    requiredPermissions: ['mes:read'],
+    module: 'mes',
+    action: 'read',
+  },
+  {
+    path: '/mes/schedules',
+    element: ProductionSchedulePage,
+    requiredPermissions: ['mes:read'],
+    module: 'mes',
+    action: 'read',
+  },
+  {
+    path: '/mes/equipment',
+    element: EquipmentManagementPage,
+    requiredPermissions: ['mes:read'],
+    module: 'mes',
+    action: 'read',
+  },
+  {
+    path: '/mes/equipment-oee',
+    element: EquipmentOEEPage,
+    requiredPermissions: ['mes:read'],
+    module: 'mes',
+    action: 'read',
+  },
+  {
+    path: '/mes/boms',
+    element: MaterialBOMPage,
+    requiredPermissions: ['mes:read'],
+    module: 'mes',
+    action: 'read',
+  },
+  {
+    path: '/mes/material-issues',
+    element: MaterialIssuePage,
+    requiredPermissions: ['mes:read'],
+    module: 'mes',
+    action: 'read',
+  },
+  {
+    path: '/mes/material-returns',
+    element: MaterialReturnPage,
     requiredPermissions: ['mes:read'],
     module: 'mes',
     action: 'read',

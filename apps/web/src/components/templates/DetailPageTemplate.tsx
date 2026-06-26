@@ -93,6 +93,12 @@ export interface DetailPageTemplateProps extends BoxProps {
     stats?: Array<{ label: string; value: React.ReactNode }>;
   };
 
+  // 模块主题
+  /** 模块专属渐变背景（如 gradients.modules.hrm） */
+  moduleGradient?: string;
+  /** 模块名称标签（如 "HRM", "CRM"） */
+  moduleChip?: string;
+
   // 子组件
   headerContent?: React.ReactNode;
   children?: React.ReactNode;
@@ -121,6 +127,8 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
   sidebar,
   sidebarWidth = 320,
   infoCard,
+  moduleGradient,
+  moduleChip,
   headerContent,
   children,
   ...props
@@ -179,13 +187,15 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
   const renderInfoCard = () => {
     if (!infoCard) return null;
 
+    const gradientBg = moduleGradient || `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`;
+
     return (
       <Paper
         sx={{
           p: 3,
           mb: 3,
           borderRadius: 2,
-          background: 'linear-gradient(135deg, primary.main 0%, secondary.main 100%)',
+          background: gradientBg,
           color: 'white',
         }}
       >
@@ -227,6 +237,9 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
                   sx={{ fontWeight: 600, mb: 0.5 }}
                 >
                   {infoCard.title || title}
+                  {moduleChip && (
+                    <Chip label={moduleChip} sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: '#fff', fontWeight: 600, ml: 1 }} size="small" />
+                  )}
                 </Typography>
                 {infoCard.subtitle && (
                   <Typography

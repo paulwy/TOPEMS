@@ -19,6 +19,7 @@ export interface StatCardProps {
   icon?: React.ReactNode;
   color?: 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info';
   gradient?: boolean;
+  customGradient?: string;
 
   // 交互
   onClick?: () => void;
@@ -44,6 +45,7 @@ export const StatCard: React.FC<StatCardProps> = ({
   icon,
   color = 'primary',
   gradient = false,
+  customGradient,
   onClick,
   tooltip,
   loading,
@@ -93,7 +95,7 @@ export const StatCard: React.FC<StatCardProps> = ({
             }
           : {},
         ...(gradient && {
-          background: `linear-gradient(135deg, ${colors.main} 0%, ${colors.dark} 100%)`,
+          background: customGradient || `linear-gradient(135deg, ${colors.main} 0%, ${colors.dark} 100%)`,
           color: 'white',
         }),
       }}
@@ -209,8 +211,9 @@ export const StatCard: React.FC<StatCardProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                bgcolor: gradient ? 'rgba(255,255,255,0.2)' : `${colors.main}15`,
+                bgcolor: gradient ? 'rgba(255,255,255,0.2)' : customGradient ? undefined : `${colors.main}15`,
                 color: gradient ? 'white' : colors.main,
+                ...(customGradient && !gradient && { background: customGradient, color: '#fff' }),
               }}
             >
               {icon}

@@ -12,6 +12,8 @@ const DatabaseStructurePage = lazy(() => import('../pages/admin/DatabaseStructur
 const MigrationAdminPage = lazy(() => import('../pages/system/MigrationAdminPage'));
 const ConfigDebugPage = lazy(() => import('../pages/admin/ConfigDebugPage'));
 const PluginMarketplacePage = lazy(() => import('../pages/plugin/PluginMarketplacePage'));
+const AccountManagementPage = lazy(() => import('../pages/admin/AccountManagementPage'));
+const BankAccountManagementPage = lazy(() => import('../pages/admin/BankAccountManagementPage'));
 
 export const iamRoutes: RouteConfig[] = [
   {
@@ -88,6 +90,20 @@ export const iamRoutes: RouteConfig[] = [
     path: '/iam/plugins',
     element: PluginMarketplacePage,
     requiredPermissions: ['iam:plugins_read'],
+    module: 'iam',
+    action: 'read',
+  },
+  {
+    path: '/iam/accounts',
+    element: AccountManagementPage,
+    requiredPermissions: ['iam:users_read'],
+    module: 'iam',
+    action: 'read',
+  },
+  {
+    path: '/iam/bank-accounts',
+    element: BankAccountManagementPage,
+    requiredPermissions: ['iam:users_read'],
     module: 'iam',
     action: 'read',
   },

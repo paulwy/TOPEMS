@@ -187,25 +187,6 @@ const AppContent: React.FC = () => {
           );
         })}
 
-        {dashboardRoutes.map((route) => {
-          const Element = route.element as React.ComponentType;
-          return (
-            <Route
-              key={route.path}
-              path={route.path}
-              element={
-                <ProtectedRoute>
-                  <GlobalLayout>
-                    <Suspense fallback={<PageLoader />}>
-                      <Element />
-                    </Suspense>
-                  </GlobalLayout>
-                </ProtectedRoute>
-              }
-            />
-          );
-        })}
-
         {renderRoutes(dashboardRoutes)}
         {renderRoutes(commonRoutes)}
         {renderRoutes(hrmRoutes)}
@@ -317,15 +298,6 @@ const AppContent: React.FC = () => {
           element={
             <Navigate
               to='/system/config-debug'
-              replace
-            />
-          }
-        />
-        <Route
-          path='/'
-          element={
-            <Navigate
-              to='/dashboard'
               replace
             />
           }

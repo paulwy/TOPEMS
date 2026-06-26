@@ -26,6 +26,7 @@ const FinanceReportsPage = lazy(() => import('../pages/finance/FinanceReportsPag
 const ConsolidationScopePage = lazy(() => import('../pages/finance/ConsolidationScopePage'));
 const ConsolidationReportsPage = lazy(() => import('../pages/finance/ConsolidationReportsPage'));
 const OpeningBalancePage = lazy(() => import('../pages/finance/OpeningBalancePage'));
+const VoucherTemplatePage = lazy(() => import('../pages/fixed/VoucherTemplatePage'));
 
 export const financeRoutes: RouteConfig[] = [
   {
@@ -178,6 +179,13 @@ export const financeRoutes: RouteConfig[] = [
   {
     path: '/finance/opening-balance',
     element: OpeningBalancePage,
+    requiredPermissions: ['finance:read'],
+    module: 'finance',
+    action: 'read',
+  },
+  {
+    path: '/finance/voucher-templates',
+    element: VoucherTemplatePage,
     requiredPermissions: ['finance:read'],
     module: 'finance',
     action: 'read',

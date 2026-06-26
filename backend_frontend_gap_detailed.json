@@ -1,0 +1,228 @@
+{
+  "summary": {
+    "total_backend_apis": 1530,
+    "total_frontend_apis": 1394,
+    "critical_missing_count": 4,
+    "partial_missing_count": 4,
+    "complete_count": 16
+  },
+  "critical_missing": [
+    {
+      "module": "manufacturing",
+      "description": "制造执行（生产管理）",
+      "backend_api_count": 62,
+      "frontend_api_count": 1,
+      "frontend_page_count": 9,
+      "frontend_modules": [
+        "mes"
+      ],
+      "subsystem_analysis": [],
+      "coverage_ratio": 0.016129032258064516
+    },
+    {
+      "module": "erp",
+      "description": "企业资源计划",
+      "backend_api_count": 50,
+      "frontend_api_count": 7,
+      "frontend_page_count": 1,
+      "frontend_modules": [
+        "erp",
+        "addressbook",
+        "financial-report",
+        "voucher-template"
+      ],
+      "subsystem_analysis": [],
+      "coverage_ratio": 0.14
+    },
+    {
+      "module": "mes",
+      "description": "制造执行系统",
+      "backend_api_count": 44,
+      "frontend_api_count": 1,
+      "frontend_page_count": 9,
+      "frontend_modules": [
+        "mes"
+      ],
+      "subsystem_analysis": [],
+      "coverage_ratio": 0.022727272727272728
+    },
+    {
+      "module": "shared",
+      "description": "共享服务",
+      "backend_api_count": 7,
+      "frontend_api_count": 0,
+      "frontend_page_count": 16,
+      "frontend_modules": [
+        "shared",
+        "common"
+      ],
+      "subsystem_analysis": [],
+      "coverage_ratio": 0.0
+    }
+  ],
+  "partial_missing": [
+    {
+      "module": "unified-core",
+      "description": "统一核心服务（IAM认证、工作流、通知、文档、即时通讯、财务）",
+      "backend_api_count": 339,
+      "frontend_api_count": 106,
+      "frontend_page_count": 13,
+      "frontend_modules": [
+        "iam",
+        "workflow",
+        "notification",
+        "doc",
+        "im",
+        "financial-report"
+      ],
+      "coverage_ratio": 0.31268436578171094
+    },
+    {
+      "module": "analytics",
+      "description": "BI分析与报表",
+      "backend_api_count": 179,
+      "frontend_api_count": 73,
+      "frontend_page_count": 7,
+      "frontend_modules": [
+        "bi"
+      ],
+      "coverage_ratio": 0.40782122905027934
+    },
+    {
+      "module": "mobile",
+      "description": "移动端服务",
+      "backend_api_count": 44,
+      "frontend_api_count": 9,
+      "frontend_page_count": 9,
+      "frontend_modules": [
+        "mobile"
+      ],
+      "coverage_ratio": 0.20454545454545456
+    },
+    {
+      "module": "monitor",
+      "description": "监控告警",
+      "backend_api_count": 28,
+      "frontend_api_count": 10,
+      "frontend_page_count": 3,
+      "frontend_modules": [
+        "monitor"
+      ],
+      "coverage_ratio": 0.35714285714285715
+    }
+  ],
+  "complete_modules": [
+    {
+      "module": "qms",
+      "description": "质量管理系统",
+      "backend_api_count": 131,
+      "frontend_api_count": 103,
+      "frontend_page_count": 6
+    },
+    {
+      "module": "ehs",
+      "description": "环境健康安全",
+      "backend_api_count": 101,
+      "frontend_api_count": 161,
+      "frontend_page_count": 7
+    },
+    {
+      "module": "lims",
+      "description": "实验室信息管理",
+      "backend_api_count": 79,
+      "frontend_api_count": 90,
+      "frontend_page_count": 8
+    },
+    {
+      "module": "ai",
+      "description": "AI智能服务",
+      "backend_api_count": 64,
+      "frontend_api_count": 34,
+      "frontend_page_count": 2
+    },
+    {
+      "module": "wms",
+      "description": "仓储管理系统",
+      "backend_api_count": 55,
+      "frontend_api_count": 123,
+      "frontend_page_count": 8
+    },
+    {
+      "module": "quality-assurance",
+      "description": "质量保证",
+      "backend_api_count": 50,
+      "frontend_api_count": 103,
+      "frontend_page_count": 6
+    },
+    {
+      "module": "rs",
+      "description": "研发管理",
+      "backend_api_count": 42,
+      "frontend_api_count": 48,
+      "frontend_page_count": 22
+    },
+    {
+      "module": "crm",
+      "description": "客户关系管理",
+      "backend_api_count": 40,
+      "frontend_api_count": 66,
+      "frontend_page_count": 16
+    },
+    {
+      "module": "integration",
+      "description": "集成中心",
+      "backend_api_count": 40,
+      "frontend_api_count": 43,
+      "frontend_page_count": 9
+    },
+    {
+      "module": "pdm",
+      "description": "产品数据管理",
+      "backend_api_count": 37,
+      "frontend_api_count": 43,
+      "frontend_page_count": 8
+    },
+    {
+      "module": "hrm",
+      "description": "人力资源管理",
+      "backend_api_count": 34,
+      "frontend_api_count": 44,
+      "frontend_page_count": 19
+    },
+    {
+      "module": "scm",
+      "description": "供应链管理",
+      "backend_api_count": 29,
+      "frontend_api_count": 80,
+      "frontend_page_count": 6
+    },
+    {
+      "module": "pm",
+      "description": "项目管理",
+      "backend_api_count": 23,
+      "frontend_api_count": 140,
+      "frontend_page_count": 10
+    },
+    {
+      "module": "gis",
+      "description": "地理信息系统",
+      "backend_api_count": 19,
+      "frontend_api_count": 41,
+      "frontend_page_count": 4
+    },
+    {
+      "module": "report",
+      "description": "报表服务",
+      "backend_api_count": 18,
+      "frontend_api_count": 31,
+      "frontend_page_count": 4
+    },
+    {
+      "module": "srm",
+      "description": "供应商关系管理",
+      "backend_api_count": 15,
+      "frontend_api_count": 37,
+      "frontend_page_count": 7
+    }
+  ]
+}

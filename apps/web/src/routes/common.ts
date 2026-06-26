@@ -10,6 +10,7 @@ const DatabaseStructurePage = lazy(() => import('../pages/admin/DatabaseStructur
 const ConfigDebugPage = lazy(() => import('../pages/admin/ConfigDebugPage'));
 const CompanyStructurePage = lazy(() => import('../pages/admin/CompanyStructurePage'));
 const MonitorPage = lazy(() => import('../pages/system/MonitorPage'));
+const DocumentsPage = lazy(() => import('../pages/common/DocumentsPage'));
 
 export const commonRoutes: RouteConfig[] = [
   {
@@ -53,5 +54,10 @@ export const commonRoutes: RouteConfig[] = [
     path: '/ehs/accidents',
     element: EhsAccidentPage,
     requiredPermissions: ['ehs:read'],
+  },
+  {
+    path: '/common/documents',
+    element: DocumentsPage,
+    requiredPermissions: ['doc:read'],
   },
 ];

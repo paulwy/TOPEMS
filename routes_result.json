@@ -1,0 +1,1152 @@
+{
+  "auth": [
+    {
+      "path": "/login",
+      "componentPath": "../pages/shared/LoginPage"
+    }
+  ],
+  "dashboard": [
+    {
+      "path": "/",
+      "componentPath": "../pages/shared/HybridHomePage"
+    },
+    {
+      "path": "/modules",
+      "componentPath": "../pages/modules/ModulesOverviewPage"
+    },
+    {
+      "path": "/dashboard",
+      "componentPath": "../pages/shared/DashboardPage"
+    },
+    {
+      "path": "/profile",
+      "componentPath": "../pages/shared/ProfilePage"
+    },
+    {
+      "path": "/addressbook",
+      "componentPath": "../pages/common/AddressbookPage"
+    }
+  ],
+  "common": [
+    {
+      "path": "/meeting-room",
+      "componentPath": "../pages/common/MeetingRoomManagementPage"
+    },
+    {
+      "path": "/system/settings",
+      "componentPath": "../pages/admin/SystemSettingsPage"
+    },
+    {
+      "path": "/system/management",
+      "componentPath": "../pages/admin/SystemManagementPage"
+    },
+    {
+      "path": "/system/database",
+      "componentPath": "../pages/admin/DatabaseStructurePage"
+    },
+    {
+      "path": "/system/config-debug",
+      "componentPath": "../pages/admin/ConfigDebugPage"
+    },
+    {
+      "path": "/system/company-structure",
+      "componentPath": "../pages/admin/CompanyStructurePage"
+    },
+    {
+      "path": "/system/monitor",
+      "componentPath": "../pages/system/MonitorPage"
+    },
+    {
+      "path": "/ehs/accidents",
+      "componentPath": "../pages/ehs/EhsAccidentPage"
+    }
+  ],
+  "hrm": [
+    {
+      "path": "/hrm",
+      "componentPath": "../pages/hrm/DashboardPage"
+    },
+    {
+      "path": "/hrm/companies",
+      "componentPath": "../pages/hrm/HrmCompanyPage"
+    },
+    {
+      "path": "/hrm/departments",
+      "componentPath": "../pages/hrm/HrmDepartmentPage"
+    },
+    {
+      "path": "/hrm/organization",
+      "componentPath": "../pages/hrm/HrmOrganizationPage"
+    },
+    {
+      "path": "/hrm/positions",
+      "componentPath": "../pages/hrm/HrmPositionPage"
+    },
+    {
+      "path": "/hrm/employees",
+      "componentPath": "../pages/hrm/HrmEmployeePage"
+    },
+    {
+      "path": "/hrm/employee/:id",
+      "componentPath": "../pages/hrm/HrmEmployeeDetailPage"
+    },
+    {
+      "path": "/hrm/employee/create",
+      "componentPath": "../pages/hrm/HrmEmployeeCreatePage"
+    },
+    {
+      "path": "/hrm/employee/:id/edit",
+      "componentPath": "../pages/hrm/HrmEmployeeEditPage"
+    },
+    {
+      "path": "/hrm/leave",
+      "componentPath": "../pages/hrm/HrmLeavePage"
+    },
+    {
+      "path": "/hrm/contracts",
+      "componentPath": "../pages/hrm/HrmContractPage"
+    },
+    {
+      "path": "/hrm/contract/:id",
+      "componentPath": "../pages/hrm/HrmContractDetailPage"
+    },
+    {
+      "path": "/hrm/recruitment",
+      "componentPath": "../pages/hrm/HrmRecruitmentPage"
+    },
+    {
+      "path": "/hrm/payroll",
+      "componentPath": "../pages/hrm/HrmPayrollPage"
+    },
+    {
+      "path": "/hrm/salary-adjustments",
+      "componentPath": "../pages/hrm/HrmSalaryAdjustmentPage"
+    },
+    {
+      "path": "/hrm/performance",
+      "componentPath": "../pages/hrm/HrmPerformancePage"
+    },
+    {
+      "path": "/hrm/attendance",
+      "componentPath": "../pages/hrm/HrmAttendancePage"
+    },
+    {
+      "path": "/hrm/training",
+      "componentPath": "../pages/hrm/HrmTrainingPage"
+    },
+    {
+      "path": "/hrm/reports",
+      "componentPath": "../pages/hrm/HrmReportsPage"
+    }
+  ],
+  "crm": [
+    {
+      "path": "/crm/dashboard",
+      "componentPath": "../pages/crm/DashboardPage"
+    },
+    {
+      "path": "/crm/customers",
+      "componentPath": "../pages/crm/CustomerManagementPage"
+    },
+    {
+      "path": "/crm/contacts",
+      "componentPath": "../pages/crm/ContactManagementPage"
+    },
+    {
+      "path": "/crm/opportunities",
+      "componentPath": "../pages/crm/OpportunityManagementPage"
+    },
+    {
+      "path": "/crm/interactions",
+      "componentPath": "../pages/crm/InteractionManagementPage"
+    },
+    {
+      "path": "/crm/scoring",
+      "componentPath": "../pages/crm/CRMCustomerScoringPage"
+    },
+    {
+      "path": "/crm/forecast",
+      "componentPath": "../pages/crm/CRMSalesForecastPage"
+    },
+    {
+      "path": "/crm/funnel",
+      "componentPath": "../pages/crm/CRMSalesFunnelPage"
+    },
+    {
+      "path": "/crm/segments",
+      "componentPath": "../pages/crm/CRMCustomerSegmentationPage"
+    },
+    {
+      "path": "/crm/recommendations",
+      "componentPath": "../pages/crm/CRMRecommendationPage"
+    },
+    {
+      "path": "/crm/billing",
+      "componentPath": "../pages/crm/CRMBillingPage"
+    },
+    {
+      "path": "/crm/customers/:id",
+      "componentPath": "../pages/crm/CustomerDetailPage"
+    },
+    {
+      "path": "/crm/customers/create",
+      "componentPath": "../pages/crm/CustomerCreatePage"
+    },
+    {
+      "path": "/crm/customers/:id/edit",
+      "componentPath": "../pages/crm/CustomerEditPage"
+    },
+    {
+      "path": "/crm/opportunities/:id",
+      "componentPath": "../pages/crm/OpportunityDetailPage"
+    },
+    {
+      "path": "/crm/contacts/:id",
+      "componentPath": "../pages/crm/ContactDetailPage"
+    }
+  ],
+  "finance": [
+    {
+      "path": "/finance",
+      "componentPath": "../pages/finance/DashboardPage"
+    },
+    {
+      "path": "/finance/vouchers",
+      "componentPath": "../pages/finance/FinanceVoucherPage"
+    },
+    {
+      "path": "/finance/voucher/:id",
+      "componentPath": "../pages/finance/VoucherDetailPage"
+    },
+    {
+      "path": "/finance/voucher/create",
+      "componentPath": "../pages/finance/VoucherCreatePage"
+    },
+    {
+      "path": "/finance/ledger",
+      "componentPath": "../pages/finance/FinanceLedgerPage"
+    },
+    {
+      "path": "/finance/receivable",
+      "componentPath": "../pages/finance/FinanceReceivablePayablePage"
+    },
+    {
+      "path": "/finance/payable",
+      "componentPath": "../pages/finance/FinanceReceivablePayablePage"
+    },
+    {
+      "path": "/finance/receipts",
+      "componentPath": "../pages/finance/FinanceReceiptPage"
+    },
+    {
+      "path": "/finance/payments",
+      "componentPath": "../pages/finance/FinancePaymentPage"
+    },
+    {
+      "path": "/finance/invoices",
+      "componentPath": "../pages/finance/FinanceInvoicePage"
+    },
+    {
+      "path": "/finance/tax",
+      "componentPath": "../pages/finance/FinanceTaxPage"
+    },
+    {
+      "path": "/finance/assets",
+      "componentPath": "../pages/finance/FinanceAssetPage"
+    },
+    {
+      "path": "/finance/expense",
+      "componentPath": "../pages/finance/FinanceExpensePage"
+    },
+    {
+      "path": "/finance/cost",
+      "componentPath": "../pages/finance/FinanceCostPage"
+    },
+    {
+      "path": "/finance/budget",
+      "componentPath": "../pages/finance/FinanceBudgetPage"
+    },
+    {
+      "path": "/finance/budget-management",
+      "componentPath": "../pages/finance/BudgetManagementPage"
+    },
+    {
+      "path": "/finance/budget/:id",
+      "componentPath": "../pages/finance/FinanceBudgetDetailPage"
+    },
+    {
+      "path": "/finance/reports",
+      "componentPath": "../pages/finance/FinanceReportsPage"
+    },
+    {
+      "path": "/finance/financial-reports",
+      "componentPath": "../pages/finance/FinanceReportsPage"
+    },
+    {
+      "path": "/finance/consolidation",
+      "componentPath": "../pages/finance/ConsolidationScopePage"
+    },
+    {
+      "path": "/finance/consolidation-reports",
+      "componentPath": "../pages/finance/ConsolidationReportsPage"
+    },
+    {
+      "path": "/finance/opening-balance",
+      "componentPath": "../pages/finance/OpeningBalancePage"
+    }
+  ],
+  "erp": [
+    {
+      "path": "/erp",
+      "componentPath": "../pages/erp/DashboardPage"
+    },
+    {
+      "path": "/erp/dashboard",
+      "componentPath": "../pages/erp/DashboardPage"
+    },
+    {
+      "path": "/assets",
+      "componentPath": "../pages/fixed/AssetManagementPage"
+    },
+    {
+      "path": "/equipment",
+      "componentPath": "../pages/fixed/EquipmentManagementPage"
+    },
+    {
+      "path": "/equipment/inspections",
+      "componentPath": "../pages/fixed/EquipmentInspectionPage"
+    },
+    {
+      "path": "/equipment/maintenances",
+      "componentPath": "../pages/fixed/EquipmentMaintenancePage"
+    },
+    {
+      "path": "/equipment/:id",
+      "componentPath": "../pages/equipment/EquipmentDetailPage"
+    },
+    {
+      "path": "/administration",
+      "componentPath": "../pages/admin/AdministrationPage"
+    },
+    {
+      "path": "/budget",
+      "componentPath": "../pages/finance/BudgetManagementPage"
+    },
+    {
+      "path": "/office-supplies",
+      "componentPath": "../pages/fixed/OfficeSuppliesManagementPage"
+    },
+    {
+      "path": "/meeting-rooms",
+      "componentPath": "../pages/common/MeetingRoomManagementPage"
+    },
+    {
+      "path": "/vehicles",
+      "componentPath": "../pages/fixed/VehicleManagementPage"
+    },
+    {
+      "path": "/announcements",
+      "componentPath": "../pages/common/AnnouncementManagementPage"
+    },
+    {
+      "path": "/erp/purchase/order",
+      "componentPath": "../pages/srm/SrmOrderPage"
+    },
+    {
+      "path": "/erp/purchase/receipt",
+      "componentPath": "../pages/srm/SrmOrderPage"
+    },
+    {
+      "path": "/erp/sales/order",
+      "componentPath": "../pages/crm/OpportunityManagementPage"
+    },
+    {
+      "path": "/erp/sales/delivery",
+      "componentPath": "../pages/crm/OpportunityManagementPage"
+    },
+    {
+      "path": "/erp/customer",
+      "componentPath": "../pages/crm/CustomerManagementPage"
+    }
+  ],
+  "iam": [
+    {
+      "path": "/iam",
+      "componentPath": "../pages/iam/DashboardPage"
+    },
+    {
+      "path": "/iam/users",
+      "componentPath": "../pages/admin/UserManagementPage"
+    },
+    {
+      "path": "/iam/roles",
+      "componentPath": "../pages/admin/RoleManagementPage"
+    },
+    {
+      "path": "/iam/permissions",
+      "componentPath": "../pages/admin/PermissionManagementPage"
+    },
+    {
+      "path": "/iam/audit",
+      "componentPath": "../pages/admin/AuditLogPage"
+    },
+    {
+      "path": "/iam/system",
+      "componentPath": "../pages/admin/SystemManagementPage"
+    },
+    {
+      "path": "/iam/dictionaries",
+      "componentPath": "../pages/admin/DictionaryManagementPage"
+    },
+    {
+      "path": "/iam/database",
+      "componentPath": "../pages/admin/DatabaseStructurePage"
+    },
+    {
+      "path": "/iam/migration",
+      "componentPath": "../pages/system/MigrationAdminPage"
+    },
+    {
+      "path": "/iam/debug",
+      "componentPath": "../pages/admin/ConfigDebugPage"
+    },
+    {
+      "path": "/iam/plugins",
+      "componentPath": "../pages/plugin/PluginMarketplacePage"
+    }
+  ],
+  "workflow": [
+    {
+      "path": "/flow",
+      "componentPath": "../pages/workflow/DashboardPage"
+    },
+    {
+      "path": "/flow/definitions",
+      "componentPath": "../pages/workflow/FlowWorkflowPage"
+    },
+    {
+      "path": "/flow/designer",
+      "componentPath": "../pages/templates/WorkflowDesignerPage"
+    },
+    {
+      "path": "/flow/instances",
+      "componentPath": "../pages/workflow/FlowInstanceListPage"
+    },
+    {
+      "path": "/flow/instance/:id",
+      "componentPath": "../pages/workflow/FlowInstanceDetailPage"
+    },
+    {
+      "path": "/flow/approvals",
+      "componentPath": "../pages/workflow/FlowApprovalPage"
+    },
+    {
+      "path": "/flow/approval/:id",
+      "componentPath": "../pages/workflow/FlowApprovalDetailPage"
+    },
+    {
+      "path": "/flow/notifications",
+      "componentPath": "../pages/workflow/FlowNotificationCenter"
+    },
+    {
+      "path": "/flow/statistics",
+      "componentPath": "../pages/workflow/FlowStatisticsPage"
+    },
+    {
+      "path": "/flow/history",
+      "componentPath": "../pages/workflow/FlowVersionHistoryPage"
+    },
+    {
+      "path": "/flow/definition",
+      "componentPath": "../pages/flow/FlowDefinitionPage"
+    },
+    {
+      "path": "/flow/flow-designer",
+      "componentPath": "../pages/flow/FlowDesignerPage"
+    },
+    {
+      "path": "/flow/monitor",
+      "componentPath": "../pages/flow/FlowMonitorPage"
+    },
+    {
+      "path": "/flow/settings",
+      "componentPath": "../pages/flow/FlowSettingsPage"
+    },
+    {
+      "path": "/flow/templates",
+      "componentPath": "../pages/flow/FlowTemplatePage"
+    }
+  ],
+  "bi": [
+    {
+      "path": "/bi",
+      "componentPath": "../pages/bi/BIDashboardPage"
+    },
+    {
+      "path": "/bi/dashboard",
+      "componentPath": "../pages/bi/BIDashboardPage"
+    },
+    {
+      "path": "/bi/analytics",
+      "componentPath": "../pages/bi/BIAnalyticsPage"
+    },
+    {
+      "path": "/bi/comparison",
+      "componentPath": "../pages/bi/BIComparisonPage"
+    },
+    {
+      "path": "/bi/reports",
+      "componentPath": "../pages/bi/BIReportPage"
+    },
+    {
+      "path": "/bi/datasources",
+      "componentPath": "../pages/bi/BIDataSourcePage"
+    },
+    {
+      "path": "/bi/visualizations",
+      "componentPath": "../pages/bi/BIVisualizationPage"
+    },
+    {
+      "path": "/bi/module/:moduleId",
+      "componentPath": "../pages/bi/BIModuleDetailPage"
+    },
+    {
+      "path": "/bi/gis",
+      "componentPath": "../pages/bi/Gispage"
+    }
+  ],
+  "pm": [
+    {
+      "path": "/pm",
+      "componentPath": "../pages/pm/DashboardPage"
+    },
+    {
+      "path": "/pm/projects",
+      "componentPath": "../pages/pm/PmProjectListPage"
+    },
+    {
+      "path": "/pm/projects/create",
+      "componentPath": "../pages/pm/PmProjectCreatePage"
+    },
+    {
+      "path": "/pm/projects/:id",
+      "componentPath": "../pages/pm/PmProjectDetailPage"
+    },
+    {
+      "path": "/pm/projects/:id/edit",
+      "componentPath": "../pages/pm/PmProjectCreatePage"
+    },
+    {
+      "path": "/pm/contracts",
+      "componentPath": "../pages/pm/PmContractListPage"
+    },
+    {
+      "path": "/pm/contracts/create",
+      "componentPath": "../pages/pm/PmContractCreatePage"
+    },
+    {
+      "path": "/pm/contracts/:id",
+      "componentPath": "../pages/pm/PmContractDetailPage"
+    },
+    {
+      "path": "/pm/dashboard",
+      "componentPath": "../pages/shared/ProjectDashboardPage"
+    },
+    {
+      "path": "/pm/templates",
+      "componentPath": "../pages/pm/PmTemplatePage"
+    },
+    {
+      "path": "/pm/reports",
+      "componentPath": "../pages/pm/PmReportPage"
+    },
+    {
+      "path": "/pm/reports/:projectId",
+      "componentPath": "../pages/pm/PmReportPage"
+    },
+    {
+      "path": "/pm/resources",
+      "componentPath": "../pages/pm/PmResourcePage"
+    }
+  ],
+  "notifications": [
+    {
+      "path": "/notifications",
+      "componentPath": "../pages/notification/NotificationCenter"
+    },
+    {
+      "path": "/notifications/templates",
+      "componentPath": "../pages/notification/NotificationTemplatesPage"
+    },
+    {
+      "path": "/notifications/archive",
+      "componentPath": "../pages/notification/NotificationArchivePage"
+    },
+    {
+      "path": "/notifications/stats",
+      "componentPath": "../pages/notification/NotificationStatsPage"
+    },
+    {
+      "path": "/notifications/:id",
+      "componentPath": "../pages/notification/NotificationDetailPage"
+    }
+  ],
+  "docs": [
+    {
+      "path": "/documents",
+      "componentPath": "../pages/common/DashboardPage"
+    },
+    {
+      "path": "/document-center",
+      "componentPath": "../pages/common/DocumentCenterPage"
+    },
+    {
+      "path": "/documents/:id",
+      "componentPath": "../pages/docs/DocsFileDetailPage"
+    },
+    {
+      "path": "/knowledge-base",
+      "componentPath": "../pages/common/KnowledgeBasePage"
+    },
+    {
+      "path": "/templates",
+      "componentPath": "../pages/templates/TemplateManagementPage"
+    },
+    {
+      "path": "/help",
+      "componentPath": "../pages/shared/HelpCenterPage"
+    }
+  ],
+  "ai": [
+    {
+      "path": "/ai",
+      "componentPath": "../pages/ai/DashboardPage"
+    },
+    {
+      "path": "/ai/chat",
+      "componentPath": "../pages/ai/AiChatPage"
+    },
+    {
+      "path": "/ai/assistant",
+      "componentPath": "../pages/shared/AIPage"
+    }
+  ],
+  "im": [
+    {
+      "path": "/im",
+      "componentPath": "../pages/shared/Impage"
+    },
+    {
+      "path": "/mail",
+      "componentPath": "../pages/common/MailPage"
+    }
+  ],
+  "professional": [
+    {
+      "path": "/lims/samples",
+      "componentPath": "../pages/lims/LimsSamplePage"
+    },
+    {
+      "path": "/lims/processes",
+      "componentPath": "../pages/lims/LimsProcessPage"
+    },
+    {
+      "path": "/lims/tasks",
+      "componentPath": "../pages/lims/LimsTaskPage"
+    },
+    {
+      "path": "/lims/instruments",
+      "componentPath": "../pages/lims/LimsInstrumentPage"
+    },
+    {
+      "path": "/lims/sample/:id",
+      "componentPath": "../pages/lims/LimsSampleDetailPage"
+    },
+    {
+      "path": "/lims/task/:id",
+      "componentPath": "../pages/lims/LimsTaskDetailPage"
+    },
+    {
+      "path": "/lims/instrument/:id",
+      "componentPath": "../pages/lims/LimsInstrumentMaintenancePage"
+    },
+    {
+      "path": "/lims/instrument-data",
+      "componentPath": "../pages/lims/LimsInstrumentDataPage"
+    },
+    {
+      "path": "/qms/standards",
+      "componentPath": "../pages/qms/QmsQualityControlPage"
+    },
+    {
+      "path": "/qms/checks",
+      "componentPath": "../pages/qms/QmsInspectionPage"
+    },
+    {
+      "path": "/qms/issues",
+      "componentPath": "../pages/qms/QmsNonconformancePage"
+    },
+    {
+      "path": "/qms/improvements",
+      "componentPath": "../pages/qms/QmsAuditManagementPage"
+    },
+    {
+      "path": "/qms/standard/:id",
+      "componentPath": "../pages/qms/QmsStandardDetailPage"
+    },
+    {
+      "path": "/qms/audit",
+      "componentPath": "../pages/qms/QmsAuditManagementPage"
+    },
+    {
+      "path": "/qms/apqp",
+      "componentPath": "../pages/qms/QmsApqpPage"
+    },
+    {
+      "path": "/ehs/hazards",
+      "componentPath": "../pages/ehs/EhsHazardPage"
+    },
+    {
+      "path": "/ehs/checks",
+      "componentPath": "../pages/ehs/EhsCheckPage"
+    },
+    {
+      "path": "/ehs/hazard/:id",
+      "componentPath": "../pages/ehs/EhsHazardDetailPage"
+    },
+    {
+      "path": "/ehs/incident",
+      "componentPath": "../pages/ehs/EhsIncidentReportPage"
+    },
+    {
+      "path": "/ehs/drills",
+      "componentPath": "../pages/ehs/EhsDrillPage"
+    },
+    {
+      "path": "/ehs/plan",
+      "componentPath": "../pages/ehs/EhsPlanPage"
+    },
+    {
+      "path": "/integration/external-erp",
+      "componentPath": "../pages/integration/ExternalErpConnectionsPage"
+    },
+    {
+      "path": "/integration/external-erp/:connectionId/mappings",
+      "componentPath": "../pages/integration/ExternalErpMappingPage"
+    },
+    {
+      "path": "/integration/dashboard",
+      "componentPath": "../pages/integration/IntegrationDashboardPage"
+    },
+    {
+      "path": "/integration/lims-qms",
+      "componentPath": "../pages/integration/IntegrationLimsQmsPage"
+    },
+    {
+      "path": "/integration/mes-erp",
+      "componentPath": "../pages/integration/IntegrationMesErpPage"
+    },
+    {
+      "path": "/integration/wms-scm",
+      "componentPath": "../pages/integration/IntegrationWmsScmPage"
+    },
+    {
+      "path": "/integration/events",
+      "componentPath": "../pages/integration/IntegrationEventsPage"
+    },
+    {
+      "path": "/integration/rules",
+      "componentPath": "../pages/integration/ConversionRulesPage"
+    },
+    {
+      "path": "/integration/external-erp-overview",
+      "componentPath": "../pages/integration/IntegrationExternalErpOverviewPage"
+    },
+    {
+      "path": "/mobile-workstation",
+      "componentPath": "../pages/mes/MobileWorkstationPage"
+    },
+    {
+      "path": "/performance",
+      "componentPath": "../pages/system/PerformanceMonitorPage"
+    }
+  ],
+  "monitor": [
+    {
+      "path": "/monitor",
+      "componentPath": "../pages/monitor/MonitorDashboardPage"
+    },
+    {
+      "path": "/monitor/dashboard",
+      "componentPath": "../pages/monitor/MonitorDashboardPage"
+    },
+    {
+      "path": "/monitor/metrics",
+      "componentPath": "../pages/monitor/MonitorMetricsPage"
+    },
+    {
+      "path": "/monitor/alerts",
+      "componentPath": "../pages/monitor/MonitorAlertsPage"
+    }
+  ],
+  "mes": [
+    {
+      "path": "/mes",
+      "componentPath": "../pages/mes/DashboardPage"
+    },
+    {
+      "path": "/mes/board",
+      "componentPath": "../pages/mes/ProductionDashboardPage"
+    },
+    {
+      "path": "/mes/orders",
+      "componentPath": "../pages/mes/ProductionOrderManagementPage"
+    },
+    {
+      "path": "/mes/processes",
+      "componentPath": "../pages/mes/ProductionProcessPage"
+    },
+    {
+      "path": "/mes/workstations",
+      "componentPath": "../pages/mes/WorkStationPage"
+    },
+    {
+      "path": "/mes/records",
+      "componentPath": "../pages/mes/ProductionRecordPage"
+    }
+  ],
+  "scm": [
+    {
+      "path": "/scm",
+      "componentPath": "../pages/scm/DashboardPage"
+    },
+    {
+      "path": "/scm/suppliers",
+      "componentPath": "../pages/scm/ScmSupplierPage"
+    },
+    {
+      "path": "/scm/suppliers/:id",
+      "componentPath": "../pages/wms/SupplierDetailPage"
+    },
+    {
+      "path": "/scm/purchase-orders",
+      "componentPath": "../pages/scm/ScmPurchaseOrderPage"
+    },
+    {
+      "path": "/scm/purchase-items",
+      "componentPath": "../pages/scm/ScmPurchaseItemPage"
+    },
+    {
+      "path": "/scm/evaluations",
+      "componentPath": "../pages/scm/ScmEvaluationPage"
+    },
+    {
+      "path": "/scm/delivery-appointments",
+      "componentPath": "../pages/scm/ScmDeliveryAppointmentPage"
+    }
+  ],
+  "wms": [
+    {
+      "path": "/wms",
+      "componentPath": "../pages/wms/DashboardPage"
+    },
+    {
+      "path": "/wms/warehouses",
+      "componentPath": "../pages/wms/WarehouseManagementPage"
+    },
+    {
+      "path": "/wms/inventory",
+      "componentPath": "../pages/wms/InventoryPage"
+    },
+    {
+      "path": "/wms/inbound-orders",
+      "componentPath": "../pages/wms/InboundOrderPage"
+    },
+    {
+      "path": "/wms/outbound-orders",
+      "componentPath": "../pages/wms/OutboundOrderPage"
+    },
+    {
+      "path": "/wms/stock-takes",
+      "componentPath": "../pages/wms/StockTakePage"
+    },
+    {
+      "path": "/wms/suppliers",
+      "componentPath": "../pages/wms/SupplierManagementPage"
+    }
+  ],
+  "gis": [
+    {
+      "path": "/gis",
+      "componentPath": "../pages/gis/DashboardPage"
+    },
+    {
+      "path": "/gis/map",
+      "componentPath": "../pages/gis/DashboardPage"
+    },
+    {
+      "path": "/gis/fence",
+      "componentPath": "../pages/gis/GisFencePage"
+    },
+    {
+      "path": "/gis/tracking",
+      "componentPath": "../pages/gis/GisTrackingPage"
+    }
+  ],
+  "plugin": [
+    {
+      "path": "/admin/plugins",
+      "componentPath": "../pages/admin/PluginManagementPage"
+    },
+    {
+      "path": "/plugin/marketplace",
+      "componentPath": "../pages/plugin/PluginMarketplacePage"
+    }
+  ],
+  "report": [
+    {
+      "path": "/report/list",
+      "componentPath": "../pages/report/ReportListPage"
+    },
+    {
+      "path": "/report/design",
+      "componentPath": "../pages/report/ReportDesignPage"
+    },
+    {
+      "path": "/report/schedules",
+      "componentPath": "../pages/report/ReportSchedulePage"
+    },
+    {
+      "path": "/report/subscriptions",
+      "componentPath": "../pages/report/ReportSubscriptionPage"
+    },
+    {
+      "path": "/report/templates",
+      "componentPath": "../pages/templates/ReportPage"
+    },
+    {
+      "path": "/report/builder",
+      "componentPath": "../pages/templates/ReportBuilder"
+    },
+    {
+      "path": "/report/viewer",
+      "componentPath": "../pages/templates/ReportViewer"
+    }
+  ],
+  "mobile": [
+    {
+      "path": "/mobile",
+      "componentPath": "../pages/mobile/MobileHomePage"
+    },
+    {
+      "path": "/mobile/home",
+      "componentPath": "../pages/mobile/MobileHomePage"
+    },
+    {
+      "path": "/mobile/tasks",
+      "componentPath": "../pages/mobile/MobileTaskListPage"
+    },
+    {
+      "path": "/mobile/scan-page",
+      "componentPath": "../pages/mobile/MobileScanPage"
+    },
+    {
+      "path": "/mobile/approvals",
+      "componentPath": "../pages/mobile/MobileApprovalPage"
+    },
+    {
+      "path": "/mobile/settings",
+      "componentPath": "../pages/mobile/MobileProfilePage"
+    },
+    {
+      "path": "/mobile/settings-app",
+      "componentPath": "../pages/mobile/MobileSettingsPage"
+    },
+    {
+      "path": "/mobile/offline-sync",
+      "componentPath": "../pages/mobile/OfflineSyncPage"
+    },
+    {
+      "path": "/mobile/scan",
+      "componentPath": "../pages/mobile/ScanSettingsPage"
+    },
+    {
+      "path": "/mobile/notifications",
+      "componentPath": "../pages/mobile/NotificationSettingsPage"
+    }
+  ],
+  "pdm": [
+    {
+      "path": "/pdm",
+      "componentPath": "../pages/pdm/PdmStatsPage"
+    },
+    {
+      "path": "/pdm/stats",
+      "componentPath": "../pages/pdm/PdmStatsPage"
+    },
+    {
+      "path": "/pdm/formula",
+      "componentPath": "../pages/pdm/PdmFormulaPage"
+    },
+    {
+      "path": "/pdm/process",
+      "componentPath": "../pages/pdm/PdmProcessPage"
+    },
+    {
+      "path": "/pdm/batch",
+      "componentPath": "../pages/pdm/PdmBatchPage"
+    },
+    {
+      "path": "/pdm/step",
+      "componentPath": "../pages/pdm/PdmStepPage"
+    },
+    {
+      "path": "/pdm/bom",
+      "componentPath": "../pages/pdm/PdmBomPage"
+    },
+    {
+      "path": "/pdm/version",
+      "componentPath": "../pages/pdm/PdmVersionPage"
+    },
+    {
+      "path": "/pdm/product-config",
+      "componentPath": "../pages/pdm/PdmProductConfigPage"
+    }
+  ],
+  "srm": [
+    {
+      "path": "/srm/dashboard",
+      "componentPath": "../pages/srm/SrmDashboardPage"
+    },
+    {
+      "path": "/srm/suppliers",
+      "componentPath": "../pages/srm/SrmSupplierPage"
+    },
+    {
+      "path": "/srm/suppliers/:id",
+      "componentPath": "../pages/wms/SupplierDetailPage"
+    },
+    {
+      "path": "/srm/evaluations",
+      "componentPath": "../pages/srm/SrmEvaluationPage"
+    },
+    {
+      "path": "/srm/orders",
+      "componentPath": "../pages/srm/SrmOrderPage"
+    },
+    {
+      "path": "/srm/contracts",
+      "componentPath": "../pages/srm/SrmContractPage"
+    },
+    {
+      "path": "/srm/finance",
+      "componentPath": "../pages/srm/SrmFinancePage"
+    },
+    {
+      "path": "/srm/performance",
+      "componentPath": "../pages/srm/SrmPerformancePage"
+    }
+  ],
+  "rs": [
+    {
+      "path": "/rs",
+      "componentPath": "../pages/rs/DashboardPage"
+    },
+    {
+      "path": "/rs/projects",
+      "componentPath": "../pages/rs/RsProjectListPage"
+    },
+    {
+      "path": "/rs/projects/create",
+      "componentPath": "../pages/rs/RsProjectCreatePage"
+    },
+    {
+      "path": "/rs/projects/:id",
+      "componentPath": "../pages/rs/RsProjectDetailPage"
+    },
+    {
+      "path": "/rs/projects/:id/edit",
+      "componentPath": "../pages/rs/RsProjectCreatePage"
+    },
+    {
+      "path": "/rs/experiments",
+      "componentPath": "../pages/rs/RsExperimentListPage"
+    },
+    {
+      "path": "/rs/experiments/create",
+      "componentPath": "../pages/rs/RsExperimentCreatePage"
+    },
+    {
+      "path": "/rs/experiments/:id",
+      "componentPath": "../pages/rs/RsExperimentDetailPage"
+    },
+    {
+      "path": "/rs/experiments/:id/edit",
+      "componentPath": "../pages/rs/RsExperimentCreatePage"
+    },
+    {
+      "path": "/rs/formulas",
+      "componentPath": "../pages/rs/RsFormulaListPage"
+    },
+    {
+      "path": "/rs/formulas/create",
+      "componentPath": "../pages/rs/RsFormulaCreatePage"
+    },
+    {
+      "path": "/rs/formulas/:id",
+      "componentPath": "../pages/rs/RsFormulaDetailPage"
+    },
+    {
+      "path": "/rs/formulas/:id/edit",
+      "componentPath": "../pages/rs/RsFormulaCreatePage"
+    },
+    {
+      "path": "/rs/materials",
+      "componentPath": "../pages/rs/RsMaterialListPage"
+    },
+    {
+      "path": "/rs/reports",
+      "componentPath": "../pages/rs/RsReportPage"
+    },
+    {
+      "path": "/rs/bugs",
+      "componentPath": "../pages/rs/RsBugPage"
+    },
+    {
+      "path": "/rs/builds",
+      "componentPath": "../pages/rs/RsBuildPage"
+    },
+    {
+      "path": "/rs/code",
+      "componentPath": "../pages/rs/RsCodePage"
+    },
+    {
+      "path": "/rs/deploy",
+      "componentPath": "../pages/rs/RsDeployPage"
+    },
+    {
+      "path": "/rs/docs",
+      "componentPath": "../pages/rs/RsDocPage"
+    },
+    {
+      "path": "/rs/milestones",
+      "componentPath": "../pages/rs/RsMilestonePage"
+    },
+    {
+      "path": "/rs/releases",
+      "componentPath": "../pages/rs/RsReleasePage"
+    },
+    {
+      "path": "/rs/reviews",
+      "componentPath": "../pages/rs/RsReviewPage"
+    },
+    {
+      "path": "/rs/settings",
+      "componentPath": "../pages/rs/RsSettingsPage"
+    },
+    {
+      "path": "/rs/tests",
+      "componentPath": "../pages/rs/RsTestPage"
+    }
+  ]
+}

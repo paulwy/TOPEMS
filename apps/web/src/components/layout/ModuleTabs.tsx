@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import React, { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import {
   Box,
   IconButton,
@@ -8,10 +8,13 @@ import {
   ListItemText,
   useTheme,
   useMediaQuery,
+  Typography,
 } from '@mui/material';
-import { Pin, PinOff, X, GripVertical, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Pin, PinOff, X, GripVertical, ChevronLeft, ChevronRight, Home } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { navigationRegistry, type NavItem } from '../../lib/NavigationRegistry';
+
+// ─── Legacy Types (kept for backward compatibility) ─────────────────────────
 
 export interface TabItem {
   label: string;
@@ -20,13 +23,153 @@ export interface TabItem {
   pinned?: boolean;
 }
 
-interface ModuleTabsProps {
+interface LegacyModuleTabsProps {
   tabs: TabItem[];
   pluginCode?: string;
   onTabsChange?: (tabs: TabItem[]) => void;
 }
 
-export const ModuleTabs: React.FC<ModuleTabsProps> = ({ tabs, pluginCode, onTabsChange }) => {
+// ─── New Types ─────────────────────────────────────────────────────────────
+
+export interface ModuleTabItem {
+  label: string;
+  path: string;
+  icon?: React.ReactNode;
+}
+
+export interface ModuleTabsProps {
+  /** Navigation items to display as tabs */
+  items?: ModuleTabItem[];
+  /** Whether to show the module home tab (navigates to /dashboard) */
+  showHomeTab?: boolean; // default true
+  /** Plugin code for fetching tabs from NavigationRegistry */
+  pluginCode?: string;
+  /** Tab change callback */
+  onTabChange?: (path: string) => void;
+  /** Whether to show the legacy draggable mode */
+  legacyMode?: boolean; // default false
+
+  // ── Legacy props (backward compatible) ──
+  /** @deprecated Use `items` + new props instead. Triggers legacy mode automatically. */
+  tabs?: TabItem[];
+  /** @deprecated */
+  onTabsChange?: (tabs: TabItem[]) => void;
+}
+
+// ─── New Mode: Simple Tab Bar ──────────────────────────────────────────────
+
+const SimpleTabBar: React.FC<{
+  items: ModuleTabItem[];
+  showHomeTab: boolean;
+  onTabChange?: (path: string) => void;
+}> = ({ items, showHomeTab, onTabChange }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  const allItems = useMemo(() => {
+    const list: ModuleTabItem[] = [];
+    if (showHomeTab) {
+      list.push({
+        label: '首页',
+        path: '/dashboard',
+        icon: <Home style={{ width: 16, height: 16 }} />,
+      });
+    }
+    list.push(...items);
+    return list;
+  }, [items, showHomeTab]);
+
+  if (allItems.length === 0) return null;
+
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        px: { xs: 2, lg: 3 },
+        py: 0.5,
+        bgcolor: 'background.paper',
+        borderBottom: 1,
+        borderColor: 'divider',
+        overflowX: 'auto',
+        overflowY: 'hidden',
+        scrollbarWidth: 'none',
+        '&::-webkit-scrollbar': {
+          display: 'none',
+        },
+      }}
+    >
+      {allItems.map((tab) => {
+        const isActive = location.pathname === tab.path;
+
+        return (
+          <Box
+            key={tab.path}
+            onClick={() => {
+              onTabChange?.(tab.path);
+              navigate(tab.path);
+            }}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.75,
+              px: 2,
+              py: 1,
+              borderRadius: '4px 4px 0 0',
+              color: isActive ? 'primary.main' : 'text.secondary',
+              fontWeight: isActive ? 600 : 400,
+              borderBottom: isActive ? '2px solid' : '2px solid transparent',
+              borderColor: isActive ? 'primary.main' : 'transparent',
+              textTransform: 'none',
+              fontSize: '0.875rem',
+              cursor: 'pointer',
+              transition: 'all 150ms ease',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+              userSelect: 'none',
+              '&:hover': {
+                color: 'text.primary',
+                bgcolor: 'action.hover',
+              },
+            }}
+          >
+            {tab.icon && (
+              <Box
+                component='span'
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  '& svg': { width: 16, height: 16 },
+                }}
+              >
+                {tab.icon}
+              </Box>
+            )}
+            <Typography
+              component='span'
+              sx={{
+                fontWeight: 'inherit',
+                fontSize: 'inherit',
+                color: 'inherit',
+                lineHeight: 1,
+              }}
+            >
+              {tab.label}
+            </Typography>
+          </Box>
+        );
+      })}
+    </Box>
+  );
+};
+
+// ─── Legacy Mode: Draggable Chrome-like Tabs ────────────────────────────────
+
+const LegacyModuleTabs: React.FC<LegacyModuleTabsProps> = ({
+  tabs,
+  pluginCode,
+  onTabsChange,
+}) => {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
@@ -376,6 +519,86 @@ export const ModuleTabs: React.FC<ModuleTabsProps> = ({ tabs, pluginCode, onTabs
         <MenuItem onClick={handleCloseAll}>关闭所有标签</MenuItem>
       </Menu>
     </Box>
+  );
+};
+
+// ─── Main Component ──────────────────────────────────────────────────────────
+
+export const ModuleTabs: React.FC<ModuleTabsProps> = ({
+  items,
+  showHomeTab = true,
+  pluginCode,
+  onTabChange,
+  legacyMode = false,
+
+  // Legacy props
+  tabs: legacyTabs,
+  onTabsChange,
+}) => {
+  // 自动检测向后兼容模式：如果传入了旧版 tabs prop，则启用 legacy 模式
+  const isLegacy = legacyMode || !!legacyTabs;
+
+  // ── Legacy 模式 ──
+  if (isLegacy) {
+    return (
+      <LegacyModuleTabs
+        tabs={legacyTabs || []}
+        pluginCode={pluginCode}
+        onTabsChange={onTabsChange}
+      />
+    );
+  }
+
+  // ── 新模式：从 items 或 pluginCode 获取数据 ──
+  const resolvedItems = useMemo<ModuleTabItem[]>(() => {
+    // 优先级 1：直接使用 items prop
+    if (items && items.length > 0) {
+      return items;
+    }
+
+    // 优先级 2：从 navigationRegistry 获取
+    if (pluginCode) {
+      const registryTabs = navigationRegistry.getModuleTabs(pluginCode);
+      const sidebarItems = navigationRegistry.getSidebarNavItems(pluginCode);
+
+      // 合并并按 path 去重
+      const pathMap = new Map<string, ModuleTabItem>();
+
+      const addItems = (navItems: NavItem[] | undefined) => {
+        if (!navItems) return;
+        for (const item of navItems) {
+          if (!pathMap.has(item.path)) {
+            pathMap.set(item.path, {
+              label: item.label,
+              path: item.path,
+            });
+          }
+        }
+      };
+
+      addItems(registryTabs);
+      addItems(sidebarItems);
+
+      // 按 order 排序（使用 sidebar 的顺序作为主顺序）
+      const orderedPaths = new Set<string>();
+      if (sidebarItems) sidebarItems.forEach((item) => orderedPaths.add(item.path));
+      if (registryTabs) registryTabs.forEach((item) => orderedPaths.add(item.path));
+
+      return Array.from(orderedPaths)
+        .filter((path) => pathMap.has(path))
+        .map((path) => pathMap.get(path)!);
+    }
+
+    // 优先级 3：无数据源，不渲染
+    return [];
+  }, [items, pluginCode]);
+
+  return (
+    <SimpleTabBar
+      items={resolvedItems}
+      showHomeTab={showHomeTab}
+      onTabChange={onTabChange}
+    />
   );
 };
 

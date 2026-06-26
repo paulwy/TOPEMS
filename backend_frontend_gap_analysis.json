@@ -1,0 +1,1489 @@
+{
+  "summary": {
+    "total_backend_apis": 1530,
+    "total_frontend_apis": 1331,
+    "total_frontend_routes": 199,
+    "total_frontend_pages": 231,
+    "completely_missing_count": 3,
+    "partially_missing_count": 6,
+    "complete_count": 15
+  },
+  "completely_missing": [
+    {
+      "module": "unified-core",
+      "backend_api_count": 339,
+      "frontend_api_count": 51,
+      "frontend_page_count": 18,
+      "features": [
+        {
+          "name": "comm",
+          "backend_api_count": 46,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/core/comm/ws/connect",
+            "/api/core/comm/notify/list",
+            "/api/core/comm/im/rooms"
+          ]
+        },
+        {
+          "name": "file",
+          "backend_api_count": 32,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/core/file/download/{id}",
+            "/api/core/file/preview/{id}",
+            "/api/core/file/thumbnail/{id}"
+          ]
+        },
+        {
+          "name": "plugin",
+          "backend_api_count": 23,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": true,
+          "has_page": true,
+          "sample_routes": [
+            "/api/core/plugin/marketplace",
+            "/api/core/plugin/marketplace/list",
+            "/api/core/plugin/marketplace/categories"
+          ]
+        },
+        {
+          "name": "finance",
+          "backend_api_count": 23,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/core/finance/accounts",
+            "/api/core/finance/accounts/{id}",
+            "/api/core/finance/vouchers"
+          ]
+        },
+        {
+          "name": "workflows",
+          "backend_api_count": 22,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/flow/workflows",
+            "/api/flow/workflows/{id}",
+            "/api/flow/workflows/{workflow_id}/versions"
+          ]
+        },
+        {
+          "name": "iam",
+          "backend_api_count": 21,
+          "frontend_api_count": 50,
+          "has_frontend_api": true,
+          "has_route": true,
+          "has_page": false,
+          "sample_routes": [
+            "/api/core/iam/users",
+            "/api/core/iam/users/{id}",
+            "/api/core/iam/users/me"
+          ]
+        },
+        {
+          "name": "doc",
+          "backend_api_count": 17,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/core/doc/documents",
+            "/api/core/doc/documents/{id}",
+            "/api/core/doc/templates"
+          ]
+        },
+        {
+          "name": "instances",
+          "backend_api_count": 17,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/flow/instances",
+            "/api/flow/instances/{id}",
+            "/api/flow/instances/{id}/details"
+          ]
+        },
+        {
+          "name": "ai",
+          "backend_api_count": 16,
+          "frontend_api_count": 1,
+          "has_frontend_api": true,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/core/ai/templates",
+            "/api/core/ai/vectors/stats",
+            "/api/core/ai/health"
+          ]
+        },
+        {
+          "name": "notifications",
+          "backend_api_count": 15,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/v1/notifications",
+            "/api/v1/notifications/unread-count",
+            "/api/v1/notifications/unread"
+          ]
+        },
+        {
+          "name": "auth",
+          "backend_api_count": 12,
+          "frontend_api_count": 12,
+          "has_frontend_api": true,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/v1/auth/login",
+            "/api/v1/auth/register",
+            "/api/v1/auth/refresh"
+          ]
+        },
+        {
+          "name": "approval-tasks",
+          "backend_api_count": 12,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/flow/approval-tasks",
+            "/api/flow/approval-tasks/{id}",
+            "/api/flow/approval-tasks/{id}/approve"
+          ]
+        },
+        {
+          "name": "tenant",
+          "backend_api_count": 11,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/core/tenant/tenants",
+            "/api/core/tenant/tenants/{id}",
+            "/api/core/tenant/tenants/{id}/quota"
+          ]
+        },
+        {
+          "name": "approvals",
+          "backend_api_count": 10,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/flow/approvals/pending",
+            "/api/flow/approvals",
+            "/api/flow/approvals/{id}"
+          ]
+        },
+        {
+          "name": "users",
+          "backend_api_count": 9,
+          "frontend_api_count": 23,
+          "has_frontend_api": true,
+          "has_route": true,
+          "has_page": false,
+          "sample_routes": [
+            "/api/iam/users",
+            "/api/iam/users/{id}",
+            "/api/iam/users/me"
+          ]
+        },
+        {
+          "name": "sync",
+          "backend_api_count": 9,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/core/sync/task/{task_id}",
+            "/api/core/sync/pending",
+            "/api/core/sync/statistics"
+          ]
+        },
+        {
+          "name": "billing",
+          "backend_api_count": 8,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/core/billing/plans",
+            "/api/core/billing/plans/{id}",
+            "/api/core/billing/subscriptions/{tenant_id}"
+          ]
+        },
+        {
+          "name": "templates",
+          "backend_api_count": 7,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/flow/templates",
+            "/api/flow/templates/{id}",
+            "/api/flow/templates/{id}/export"
+          ]
+        },
+        {
+          "name": "settings",
+          "backend_api_count": 6,
+          "frontend_api_count": 2,
+          "has_frontend_api": true,
+          "has_route": false,
+          "has_page": true,
+          "sample_routes": [
+            "/api/flow/settings",
+            "/api/flow/settings/{id}",
+            "/api/flow/settings/key/{key}"
+          ]
+        },
+        {
+          "name": "notification-templates",
+          "backend_api_count": 5,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/v1/notification-templates",
+            "/api/v1/notification-templates/{id}",
+            "/api/v1/notification-templates"
+          ]
+        },
+        {
+          "name": "history",
+          "backend_api_count": 4,
+          "frontend_api_count": 1,
+          "has_frontend_api": true,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/flow/history",
+            "/api/flow/history/{id}",
+            "/api/flow/history/instance/{instance_id}"
+          ]
+        },
+        {
+          "name": "health",
+          "backend_api_count": 2,
+          "frontend_api_count": 1,
+          "has_frontend_api": true,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/plugins/health",
+            "/api/v1/health/detailed"
+          ]
+        },
+        {
+          "name": "roles",
+          "backend_api_count": 2,
+          "frontend_api_count": 11,
+          "has_frontend_api": true,
+          "has_route": true,
+          "has_page": false,
+          "sample_routes": [
+            "/api/iam/roles",
+            "/api/iam/roles/{id}"
+          ]
+        },
+        {
+          "name": "records",
+          "backend_api_count": 2,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/flow/records",
+            "/api/flow/records/{approval_id}"
+          ]
+        },
+        {
+          "name": "statistics",
+          "backend_api_count": 2,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/flow/statistics",
+            "/api/flow/statistics"
+          ]
+        },
+        {
+          "name": "performance",
+          "backend_api_count": 2,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": true,
+          "sample_routes": [
+            "/api/flow/performance",
+            "/api/flow/performance/reset"
+          ]
+        },
+        {
+          "name": "info",
+          "backend_api_count": 1,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/plugins/info"
+          ]
+        },
+        {
+          "name": "{plugin_code}",
+          "backend_api_count": 1,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/plugins/{plugin_code}/{*path}"
+          ]
+        },
+        {
+          "name": "permissions",
+          "backend_api_count": 1,
+          "frontend_api_count": 11,
+          "has_frontend_api": true,
+          "has_route": true,
+          "has_page": false,
+          "sample_routes": [
+            "/api/iam/permissions"
+          ]
+        },
+        {
+          "name": "plugins",
+          "backend_api_count": 1,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": true,
+          "has_page": false,
+          "sample_routes": [
+            "/api/core/plugins/my"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "manufacturing",
+      "backend_api_count": 62,
+      "frontend_api_count": 1,
+      "frontend_page_count": 9,
+      "features": [
+        {
+          "name": "production-order",
+          "backend_api_count": 8,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/mfg/production-order",
+            "/api/mfg/production-order",
+            "/api/mfg/production-order/{id}"
+          ]
+        },
+        {
+          "name": "process",
+          "backend_api_count": 6,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": true,
+          "has_page": true,
+          "sample_routes": [
+            "/api/mfg/process",
+            "/api/mfg/process",
+            "/api/mfg/process"
+          ]
+        },
+        {
+          "name": "equipment",
+          "backend_api_count": 5,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/mfg/equipment",
+            "/api/mfg/equipment",
+            "/api/mfg/equipment"
+          ]
+        },
+        {
+          "name": "record",
+          "backend_api_count": 5,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": true,
+          "has_page": true,
+          "sample_routes": [
+            "/api/mfg/record",
+            "/api/mfg/record/{id}",
+            "/api/mfg/record"
+          ]
+        },
+        {
+          "name": "health",
+          "backend_api_count": 5,
+          "frontend_api_count": 1,
+          "has_frontend_api": true,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/plugins/health",
+            "/api/v1/health/detailed",
+            "/api/plugins/health"
+          ]
+        },
+        {
+          "name": "product",
+          "backend_api_count": 5,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": true,
+          "sample_routes": [
+            "/api/pdm/product",
+            "/api/pdm/product",
+            "/api/pdm/product/{id}"
+          ]
+        },
+        {
+          "name": "pdm",
+          "backend_api_count": 4,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/mfg/pdm/document",
+            "/api/mfg/pdm/material",
+            "/api/mfg/pdm/product"
+          ]
+        },
+        {
+          "name": "info",
+          "backend_api_count": 4,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/plugins/info",
+            "/api/plugins/info",
+            "/api/plugins/info"
+          ]
+        },
+        {
+          "name": "work-station",
+          "backend_api_count": 4,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/mfg/work-station",
+            "/api/mfg/work-station",
+            "/api/mfg/work-station/{id}"
+          ]
+        },
+        {
+          "name": "material",
+          "backend_api_count": 4,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/pdm/material",
+            "/api/pdm/material",
+            "/api/pdm/material/{id}"
+          ]
+        },
+        {
+          "name": "configuration",
+          "backend_api_count": 4,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/pdm/configuration",
+            "/api/pdm/configuration",
+            "/api/pdm/configuration/{id}"
+          ]
+        },
+        {
+          "name": "document",
+          "backend_api_count": 4,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/pdm/document",
+            "/api/pdm/document",
+            "/api/pdm/document/{id}"
+          ]
+        },
+        {
+          "name": "version",
+          "backend_api_count": 4,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/pdm/version",
+            "/api/pdm/version",
+            "/api/pdm/version/{id}"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "mes",
+      "backend_api_count": 44,
+      "frontend_api_count": 1,
+      "frontend_page_count": 9,
+      "features": [
+        {
+          "name": "orders",
+          "backend_api_count": 7,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": true,
+          "has_page": false,
+          "sample_routes": [
+            "/api/mes/orders",
+            "/api/mes/orders/from-erp",
+            "/api/mes/orders/{id}"
+          ]
+        },
+        {
+          "name": "wips",
+          "backend_api_count": 5,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/mes/wips",
+            "/api/mes/wips/{id}",
+            "/api/mes/wips/transfer"
+          ]
+        },
+        {
+          "name": "equipment-oee",
+          "backend_api_count": 4,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/mes/equipment-oee",
+            "/api/mes/equipment-oee/{id}",
+            "/api/mes/equipment-oee/statistics"
+          ]
+        },
+        {
+          "name": "schedules",
+          "backend_api_count": 4,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/mes/schedules",
+            "/api/mes/schedules/{id}",
+            "/api/mes/schedules/adjust"
+          ]
+        },
+        {
+          "name": "workstations",
+          "backend_api_count": 4,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": true,
+          "has_page": false,
+          "sample_routes": [
+            "/api/mes/workstations",
+            "/api/mes/workstations/{id}",
+            "/api/mes/workstations/{id}/activate"
+          ]
+        },
+        {
+          "name": "equipment",
+          "backend_api_count": 3,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/mes/equipment",
+            "/api/mes/equipment/{id}",
+            "/api/mes/equipment/{id}/maintenance"
+          ]
+        },
+        {
+          "name": "processes",
+          "backend_api_count": 3,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": true,
+          "has_page": false,
+          "sample_routes": [
+            "/api/mes/processes",
+            "/api/mes/processes/{id}",
+            "/api/mes/processes/{id}/deactivate"
+          ]
+        },
+        {
+          "name": "records",
+          "backend_api_count": 3,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": true,
+          "has_page": false,
+          "sample_routes": [
+            "/api/mes/records",
+            "/api/mes/records/{id}",
+            "/api/mes/records/{id}/complete"
+          ]
+        },
+        {
+          "name": "traceability",
+          "backend_api_count": 3,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": true,
+          "has_page": true,
+          "sample_routes": [
+            "/api/mes/traceability/forward/{order_id}",
+            "/api/mes/traceability/backward/{batch_no}",
+            "/api/mes/traceability/chain/{id}"
+          ]
+        },
+        {
+          "name": "boms",
+          "backend_api_count": 2,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/mes/boms",
+            "/api/mes/boms/{id}"
+          ]
+        },
+        {
+          "name": "health",
+          "backend_api_count": 2,
+          "frontend_api_count": 1,
+          "has_frontend_api": true,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/plugins/health",
+            "/api/v1/health/detailed"
+          ]
+        },
+        {
+          "name": "material-issues",
+          "backend_api_count": 1,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/mes/material-issues"
+          ]
+        },
+        {
+          "name": "material-returns",
+          "backend_api_count": 1,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/mes/material-returns"
+          ]
+        },
+        {
+          "name": "quality-records",
+          "backend_api_count": 1,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/mes/quality-records"
+          ]
+        },
+        {
+          "name": "info",
+          "backend_api_count": 1,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/plugins/info"
+          ]
+        }
+      ]
+    }
+  ],
+  "partially_missing": [
+    {
+      "module": "analytics",
+      "backend_api_count": 179,
+      "frontend_api_count": 73,
+      "frontend_page_count": 7,
+      "missing_features": [
+        {
+          "name": "permission",
+          "backend_api_count": 9,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/bi/permission/rule",
+            "/api/bi/permission/rule",
+            "/api/bi/permission/rule/{id}"
+          ]
+        },
+        {
+          "name": "drilldown",
+          "backend_api_count": 8,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/bi/drilldown/path",
+            "/api/bi/drilldown/path",
+            "/api/bi/drilldown/path/{id}"
+          ]
+        },
+        {
+          "name": "multidim",
+          "backend_api_count": 7,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/bi/multidim/cube",
+            "/api/bi/multidim/slice",
+            "/api/bi/multidim/dice"
+          ]
+        },
+        {
+          "name": "health",
+          "backend_api_count": 6,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/plugins/health",
+            "/api/v1/health/detailed",
+            "/api/plugins/health"
+          ]
+        },
+        {
+          "name": "info",
+          "backend_api_count": 5,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/plugins/info",
+            "/api/plugins/info",
+            "/api/plugins/info"
+          ]
+        },
+        {
+          "name": "prediction",
+          "backend_api_count": 5,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/bi/prediction/methods",
+            "/api/bi/prediction/moving-average",
+            "/api/bi/prediction/exponential-smoothing"
+          ]
+        },
+        {
+          "name": "schedule",
+          "backend_api_count": 4,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/analytics/schedule",
+            "/api/analytics/schedule",
+            "/api/analytics/schedule/{id}"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "ai",
+      "backend_api_count": 64,
+      "frontend_api_count": 34,
+      "frontend_page_count": 2,
+      "missing_features": [
+        {
+          "name": "vectors",
+          "backend_api_count": 7,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/ai/vectors/stats",
+            "/api/ai/vectors/search",
+            "/api/ai/vectors/store"
+          ]
+        },
+        {
+          "name": "connectors",
+          "backend_api_count": 7,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/ai/connectors",
+            "/api/ai/connectors/get",
+            "/api/ai/connectors/create"
+          ]
+        },
+        {
+          "name": "multimodal",
+          "backend_api_count": 7,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/ai/multimodal/image/analyze",
+            "/api/ai/multimodal/image/caption",
+            "/api/ai/multimodal/image/objects"
+          ]
+        },
+        {
+          "name": "recommend",
+          "backend_api_count": 4,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/ai/recommend",
+            "/api/ai/recommend/documents",
+            "/api/ai/recommend/opportunities"
+          ]
+        },
+        {
+          "name": "agent",
+          "backend_api_count": 2,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/ai/agent/run",
+            "/api/ai/agent/tools"
+          ]
+        },
+        {
+          "name": "info",
+          "backend_api_count": 2,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/plugins/info",
+            "/api/plugins/info"
+          ]
+        },
+        {
+          "name": "profile",
+          "backend_api_count": 2,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/ai/profile/get",
+            "/api/ai/profile/update"
+          ]
+        },
+        {
+          "name": "metrics",
+          "backend_api_count": 1,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/ai/metrics"
+          ]
+        },
+        {
+          "name": "embedding",
+          "backend_api_count": 1,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/ai/embedding/generate"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "erp",
+      "backend_api_count": 50,
+      "frontend_api_count": 0,
+      "frontend_page_count": 1,
+      "missing_features": [
+        {
+          "name": "reports",
+          "backend_api_count": 11,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/erp/reports/balance-sheet",
+            "/api/erp/reports/income-statement",
+            "/api/erp/reports/cash-flow"
+          ]
+        },
+        {
+          "name": "vouchers",
+          "backend_api_count": 6,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/erp/vouchers",
+            "/api/erp/vouchers/{id}/items",
+            "/api/erp/vouchers/{id}/approve"
+          ]
+        },
+        {
+          "name": "addressbook",
+          "backend_api_count": 5,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/erp/addressbook",
+            "/api/erp/addressbook/{id}",
+            "/api/erp/addressbook/search"
+          ]
+        },
+        {
+          "name": "db",
+          "backend_api_count": 5,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/erp/db/tables",
+            "/api/erp/db/tables/{name}",
+            "/api/erp/db/columns/preview"
+          ]
+        },
+        {
+          "name": "example",
+          "backend_api_count": 3,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/erp/example/employees",
+            "/api/erp/example/employees/{id}",
+            "/api/erp/example/companies"
+          ]
+        },
+        {
+          "name": "audit-logs",
+          "backend_api_count": 2,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/erp/audit-logs",
+            "/api/erp/audit-logs/{id}"
+          ]
+        },
+        {
+          "name": "dict-items",
+          "backend_api_count": 2,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/erp/dict-items",
+            "/api/erp/dict-items/batch"
+          ]
+        },
+        {
+          "name": "health",
+          "backend_api_count": 2,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/plugins/health",
+            "/api/v1/health/detailed"
+          ]
+        },
+        {
+          "name": "vehicles",
+          "backend_api_count": 2,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": true,
+          "has_page": false,
+          "sample_routes": [
+            "/api/erp/vehicles",
+            "/api/erp/vehicles/{id}/requests"
+          ]
+        },
+        {
+          "name": "assets",
+          "backend_api_count": 1,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": true,
+          "has_page": false,
+          "sample_routes": [
+            "/api/erp/assets"
+          ]
+        },
+        {
+          "name": "bank-transactions",
+          "backend_api_count": 1,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/erp/bank-transactions/{id}"
+          ]
+        },
+        {
+          "name": "consolidation",
+          "backend_api_count": 1,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/erp/consolidation/company-tree"
+          ]
+        },
+        {
+          "name": "dict-types",
+          "backend_api_count": 1,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/erp/dict-types/{id}/items"
+          ]
+        },
+        {
+          "name": "expenses",
+          "backend_api_count": 1,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/erp/expenses"
+          ]
+        },
+        {
+          "name": "budgets",
+          "backend_api_count": 1,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/erp/budgets"
+          ]
+        },
+        {
+          "name": "payables",
+          "backend_api_count": 1,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/erp/payables"
+          ]
+        },
+        {
+          "name": "fixed-assets",
+          "backend_api_count": 1,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/erp/fixed-assets/depreciate"
+          ]
+        },
+        {
+          "name": "meeting-rooms",
+          "backend_api_count": 1,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": true,
+          "has_page": false,
+          "sample_routes": [
+            "/api/erp/meeting-rooms"
+          ]
+        },
+        {
+          "name": "info",
+          "backend_api_count": 1,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/plugins/info"
+          ]
+        },
+        {
+          "name": "production-orders",
+          "backend_api_count": 1,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/erp/production-orders"
+          ]
+        },
+        {
+          "name": "metrics",
+          "backend_api_count": 1,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/v1/metrics"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "mobile",
+      "backend_api_count": 44,
+      "frontend_api_count": 9,
+      "frontend_page_count": 9,
+      "missing_features": [
+        {
+          "name": "approvals",
+          "backend_api_count": 8,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": true,
+          "has_page": false,
+          "sample_routes": [
+            "/api/mobile/approvals/pending",
+            "/api/mobile/approvals/approved",
+            "/api/mobile/approvals/rejected"
+          ]
+        },
+        {
+          "name": "push",
+          "backend_api_count": 7,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/mobile/push/devices",
+            "/api/mobile/push/devices/register",
+            "/api/mobile/push/notifications"
+          ]
+        },
+        {
+          "name": "photos",
+          "backend_api_count": 5,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/mobile/photos/upload",
+            "/api/mobile/photos/batch-upload",
+            "/api/mobile/photos"
+          ]
+        },
+        {
+          "name": "auth",
+          "backend_api_count": 4,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/mobile/auth/login",
+            "/api/mobile/auth/verify-code",
+            "/api/mobile/auth/logout"
+          ]
+        },
+        {
+          "name": "barcode",
+          "backend_api_count": 4,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/mobile/barcode/scan",
+            "/api/mobile/barcode/history",
+            "/api/mobile/barcode/history/{id}"
+          ]
+        },
+        {
+          "name": "media",
+          "backend_api_count": 3,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/mobile/media/photos",
+            "/api/mobile/media/audio",
+            "/api/mobile/media/video"
+          ]
+        },
+        {
+          "name": "user",
+          "backend_api_count": 1,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/mobile/user/avatar"
+          ]
+        },
+        {
+          "name": "info",
+          "backend_api_count": 1,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/plugins/info"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "monitor",
+      "backend_api_count": 28,
+      "frontend_api_count": 10,
+      "frontend_page_count": 3,
+      "missing_features": [
+        {
+          "name": "info",
+          "backend_api_count": 1,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/plugins/info"
+          ]
+        }
+      ]
+    },
+    {
+      "module": "shared",
+      "backend_api_count": 7,
+      "frontend_api_count": 0,
+      "frontend_page_count": 16,
+      "missing_features": [
+        {
+          "name": "sequences",
+          "backend_api_count": 3,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/shared/sequences",
+            "/api/shared/sequences",
+            "/api/shared/sequences/{code_type}/next"
+          ]
+        },
+        {
+          "name": "mappings",
+          "backend_api_count": 2,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/shared/mappings",
+            "/api/shared/mappings"
+          ]
+        },
+        {
+          "name": "sync",
+          "backend_api_count": 2,
+          "frontend_api_count": 0,
+          "has_frontend_api": false,
+          "has_route": false,
+          "has_page": false,
+          "sample_routes": [
+            "/api/shared/sync",
+            "/api/shared/sync/logs"
+          ]
+        }
+      ]
+    }
+  ],
+  "complete_modules": [
+    {
+      "module": "qms",
+      "backend_api_count": 131,
+      "frontend_api_count": 103
+    },
+    {
+      "module": "ehs",
+      "backend_api_count": 101,
+      "frontend_api_count": 161
+    },
+    {
+      "module": "lims",
+      "backend_api_count": 79,
+      "frontend_api_count": 90
+    },
+    {
+      "module": "wms",
+      "backend_api_count": 55,
+      "frontend_api_count": 123
+    },
+    {
+      "module": "quality-assurance",
+      "backend_api_count": 50,
+      "frontend_api_count": 103
+    },
+    {
+      "module": "rs",
+      "backend_api_count": 42,
+      "frontend_api_count": 48
+    },
+    {
+      "module": "crm",
+      "backend_api_count": 40,
+      "frontend_api_count": 66
+    },
+    {
+      "module": "integration",
+      "backend_api_count": 40,
+      "frontend_api_count": 43
+    },
+    {
+      "module": "pdm",
+      "backend_api_count": 37,
+      "frontend_api_count": 43
+    },
+    {
+      "module": "hrm",
+      "backend_api_count": 34,
+      "frontend_api_count": 43
+    },
+    {
+      "module": "scm",
+      "backend_api_count": 29,
+      "frontend_api_count": 80
+    },
+    {
+      "module": "pm",
+      "backend_api_count": 23,
+      "frontend_api_count": 140
+    },
+    {
+      "module": "gis",
+      "backend_api_count": 19,
+      "frontend_api_count": 41
+    },
+    {
+      "module": "report",
+      "backend_api_count": 18,
+      "frontend_api_count": 31
+    },
+    {
+      "module": "srm",
+      "backend_api_count": 15,
+      "frontend_api_count": 37
+    }
+  ]
+}

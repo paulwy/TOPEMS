@@ -26,14 +26,21 @@ import {
   Filter,
   MoreHorizontal,
 } from 'lucide-react';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAutoBreadcrumbs } from '@/hooks';
+import { navigationRegistry } from '@/lib/NavigationRegistry';
 import { BackButton } from '../common';
 
 export interface BreadcrumbItem {
   label: string;
   href?: string;
   icon?: React.ReactNode;
+}
+
+export interface PathTabItem {
+  label: string;
+  href?: string;
+  active?: boolean;
 }
 
 export interface PageAction {
@@ -53,7 +60,11 @@ export interface PageHeaderProps {
   title: string;
   subtitle?: string;
   description?: string;
+  /** @deprecated Use pathTabs instead for path-based tab navigation */
   breadcrumbs?: BreadcrumbItem[];
+  /** Path-based navigation context - replaces breadcrumbs. If provided, auto-derivation is skipped. */
+  pathTabs?: PathTabItem[];
+  /** When true and breadcrumbs are provided, auto-derive pathTabs from breadcrumbs + title. Default: true */
   autoBreadcrumbs?: boolean;
   actions?: PageAction[];
   backButton?: {
@@ -64,14 +75,23 @@ export interface PageHeaderProps {
   onRefresh?: () => void;
   loading?: boolean;
   children?: React.ReactNode;
+  /** @deprecated Hidden by default. Pass only when explicitly needed. */
   pageIcon?: React.ReactNode;
   pageColor?: string;
+  pageGradient?: string;
+  banner?: {
+    gradient: string;
+    chip?: string;
+    summary?: string;
+    height?: number;
+  };
   search?: {
     value: string;
     onChange: (value: string) => void;
     placeholder?: string;
     size?: 'small' | 'medium';
   };
+  /** @deprecated Hidden by default. Pass only when explicitly needed. */
   stats?: {
     label: string;
     value: string | number;
@@ -94,6 +114,8 @@ export interface PageHeaderProps {
   compact?: boolean;
   showDivider?: boolean;
   customToolbar?: React.ReactNode;
+  /** Entity name for detail pages (e.g. employee name). Used as the last path tab label. */
+  detailItemName?: string;
 }
 
 export const PageHeader: React.FC<PageHeaderProps> = ({
@@ -101,6 +123,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   subtitle,
   description,
   breadcrumbs: manualBreadcrumbs,
+  pathTabs: manualPathTabs,
   autoBreadcrumbs = true,
   actions,
   backButton,
@@ -109,6 +132,8 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   children,
   pageIcon,
   pageColor,
+  pageGradient,
+  banner,
   search,
   stats,
   tabs,
@@ -118,9 +143,12 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
   compact = false,
   showDivider = true,
   customToolbar,
+  detailItemName,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const autoItems = useAutoBreadcrumbs({
     includeHome: true,
@@ -131,6 +159,75 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
     : autoBreadcrumbs
     ? autoItems
     : undefined;
+
+  // Determine pathTabs: explicit > auto-derived from route path > legacy breadcrumbs
+  const resolvedPathTabs: PathTabItem[] | undefined = React.useMemo(() => {
+    // 1. If explicit pathTabs provided, use them
+    if (manualPathTabs && manualPathTabs.length > 0) {
+      return manualPathTabs;
+    }
+
+    // 2. Auto-derive from current route path using NavigationRegistry
+    const pathname = location.pathname;
+
+    // Don't show path tabs for platform-level pages
+    const platformPaths = ['/', '/dashboard', '/modules'];
+    if (platformPaths.includes(pathname)) return undefined;
+
+    const segments = pathname.split('/').filter(Boolean);
+    const tabs: PathTabItem[] = [];
+
+    // Always add "首页"
+    tabs.push({ label: '首页', href: '/dashboard' });
+
+    // First segment = module code (e.g., 'hrm', 'pm')
+    if (segments.length >= 1) {
+      const moduleCode = segments[0];
+      // Look up module name from NavigationRegistry
+      const moduleCard = navigationRegistry.getModuleCard(moduleCode);
+      const moduleName = moduleCard?.name || moduleCode;
+
+      if (segments.length === 1) {
+        // On module root: 首页 > 人力资源 (active)
+        tabs.push({ label: moduleName, href: `/${moduleCode}`, active: true });
+      } else {
+        // On sub-page: add module as non-active
+        tabs.push({ label: moduleName, href: `/${moduleCode}` });
+
+        // Second segment = sub-page path (e.g., 'employees')
+        if (segments.length >= 2) {
+          const subPath = segments.slice(0, 2).join('/');
+          const fullSubPath = `/${subPath}`;
+
+          // Look up the sidebar_nav item for this sub-page to get its label
+          const sidebarItems = navigationRegistry.getSidebarNavItems(moduleCode) || [];
+          const matchedItem = sidebarItems.find(
+            (item: any) => item.path === fullSubPath || item.path === `/${moduleCode}/${segments[1]}`
+          );
+          const subLabel = matchedItem?.label || segments[1];
+
+          if (segments.length === 2) {
+            // On sub-page: 首页 > 人力资源 > 员工管理 (active)
+            tabs.push({ label: subLabel, href: fullSubPath, active: true });
+          } else {
+            // On detail page: add sub-page as non-active
+            tabs.push({ label: subLabel, href: fullSubPath });
+
+            // Third segment = detail page (e.g., employee/123)
+            if (segments.length >= 3) {
+              const detailPath = segments.slice(2).join('/');
+              // Try to find a readable label for the detail page
+              // Use the detailItemName prop or fall back to a generic label
+              const detailLabel = detailItemName || (segments.length === 3 ? '详情' : detailPath);
+              tabs.push({ label: detailLabel, active: true });
+            }
+          }
+        }
+      }
+    }
+
+    return tabs.length > 1 ? tabs : undefined;
+  }, [manualPathTabs, location.pathname, detailItemName]);
 
   const renderBreadcrumbs = () => {
     if (!breadcrumbs || breadcrumbs.length === 0) return null;
@@ -184,6 +281,36 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
           );
         })}
       </Breadcrumbs>
+    );
+  };
+
+  const renderPathTabs = () => {
+    if (!resolvedPathTabs || resolvedPathTabs.length === 0) return null;
+
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1, flexWrap: 'wrap' }}>
+        {resolvedPathTabs.map((tab, index) => (
+          <React.Fragment key={index}>
+            {index > 0 && (
+              <ChevronRight sx={{ fontSize: 14, color: 'text.disabled', flexShrink: 0 }} />
+            )}
+            <Box
+              component="span"
+              onClick={() => tab.href && navigate(tab.href)}
+              sx={{
+                fontSize: 13,
+                color: tab.active ? 'primary.main' : 'text.secondary',
+                fontWeight: tab.active ? 600 : 400,
+                cursor: tab.href ? 'pointer' : 'default',
+                whiteSpace: 'nowrap',
+                '&:hover': tab.href && !tab.active ? { color: 'primary.main' } : {},
+              }}
+            >
+              {tab.label}
+            </Box>
+          </React.Fragment>
+        ))}
+      </Box>
     );
   };
 
@@ -320,6 +447,9 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
     );
   };
 
+  // Whether to show old-style breadcrumbs (only when pathTabs are not active)
+  const showLegacyBreadcrumbs = !resolvedPathTabs && breadcrumbs && breadcrumbs.length > 0;
+
   return (
     <Paper
       elevation={0}
@@ -339,10 +469,74 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
           py: compact ? 1.5 : 3,
         }}
       >
-        {/* 面包屑导航 */}
-        {renderBreadcrumbs()}
+        {/* 路径标签导航（替代面包屑） */}
+        {renderPathTabs()}
+
+        {/* 面包屑导航（向后兼容，仅在 pathTabs 未激活时显示） */}
+        {showLegacyBreadcrumbs && renderBreadcrumbs()}
+
+        {/* Banner 模式 */}
+        {banner && !loading && (
+          <Paper
+            elevation={0}
+            sx={{
+              background: banner.gradient,
+              borderRadius: 2,
+              height: banner.height || 80,
+              mb: 2,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              px: 3,
+              color: '#fff',
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+              <Typography variant='h5' sx={{ fontWeight: 700, color: '#fff' }}>
+                {title}
+              </Typography>
+              {banner.chip && (
+                <Chip
+                  label={banner.chip}
+                  size='small'
+                  sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: '#fff', fontWeight: 600, ml: 2 }}
+                />
+              )}
+              {banner.summary && (
+                <Typography variant='body2' sx={{ opacity: 0.9, ml: 2, color: '#fff' }}>
+                  {banner.summary}
+                </Typography>
+              )}
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {actions && actions.map((action, index) => (
+                <Button
+                  key={index}
+                  variant='outlined'
+                  onClick={action.onClick}
+                  disabled={action.disabled || action.loading}
+                  href={action.href}
+                  component={action.href ? RouterLink : 'button'}
+                  size={action.size || (isMobile ? 'small' : 'medium')}
+                  startIcon={action.icon}
+                  sx={{
+                    color: '#fff',
+                    borderColor: 'rgba(255,255,255,0.5)',
+                    '&:hover': {
+                      borderColor: '#fff',
+                      bgcolor: 'rgba(255,255,255,0.1)',
+                    },
+                  }}
+                >
+                  {!isMobile && action.label}
+                </Button>
+              ))}
+            </Box>
+          </Paper>
+        )}
 
         {/* 标题栏 */}
+        {!banner && (
         <Box
           sx={{
             display: 'flex',
@@ -362,7 +556,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
               />
             )}
 
-            {/* 页面图标 */}
+            {/* 页面图标 - only render when explicitly provided */}
             {pageIcon && (
               <Box
                 sx={{
@@ -373,6 +567,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                   alignItems: 'center',
                   justifyContent: 'center',
                   bgcolor: pageColor || 'primary.main',
+                  ...(pageGradient && { bgcolor: undefined, background: pageGradient }),
                   color: 'white',
                 }}
               >
@@ -414,7 +609,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                       {subtitle}
                     </Typography>
                   )}
-                  {description && (
+                  {description && !compact && (
                     <Typography
                       variant='body2'
                       color='text.secondary'
@@ -452,12 +647,13 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             )}
           </Box>
         </Box>
+        )}
 
         {/* 移动端搜索 */}
         {search && isMobile && <Box sx={{ mt: 2 }}>{renderSearch()}</Box>}
 
         {/* 统计信息 */}
-        {stats && !loading && <Box sx={{ mt: 2 }}>{renderStats()}</Box>}
+        {stats && stats.length > 0 && !loading && <Box sx={{ mt: 2 }}>{renderStats()}</Box>}
 
         {/* 标签页 */}
         {tabs && renderTabs()}
