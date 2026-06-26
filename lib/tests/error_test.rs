@@ -221,7 +221,7 @@ fn test_error_recovery_try_or_log_ok() {
 
 #[test]
 fn test_error_recovery_try_or_log_err() {
-    let result =
+    let result: Option<String> =
         ErrorRecovery::try_or_log(|| Err(TopemsError::Internal("test error".to_string())));
     assert_eq!(result, None);
 }
@@ -235,7 +235,7 @@ fn test_error_recovery_try_or_response_ok() {
 
 #[test]
 fn test_error_recovery_try_or_response_validation_error() {
-    let response = ErrorRecovery::try_or_response(|| {
+    let response: ApiResponse<()> = ErrorRecovery::try_or_response(|| {
         Err(TopemsError::ValidationFailed("bad input".to_string()))
     });
     assert!(!response.success);
