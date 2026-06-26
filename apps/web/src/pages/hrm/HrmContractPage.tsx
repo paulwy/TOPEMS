@@ -28,16 +28,6 @@ import {
   Typography,
   Box,
   Stack,
-  Chip,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   Checkbox,
   FormControlLabel,
   Tabs,
@@ -48,8 +38,13 @@ import {
   FormLabel,
   Alert,
   Snackbar,
+  Chip,
 } from '@mui/material';
-import { Button } from '@mui/material';
+import { ActionButton } from '@/components/common/ActionButton';
+import { FormField } from '@/components/common/FormField';
+import { FormSelect } from '@/components/common/FormSelect';
+import { StatusBadge } from '@/components/common/StatusBadge';
+import { Dialog } from '@/components/common/Dialog';
 import { FileUpload } from '@/components/common';
 
 const contractTypes = [
@@ -607,8 +602,8 @@ export default function ContractManagementPage() {
         label: '状态',
         width: 80,
         render: (row) => (
-          <Chip
-            size='small'
+          <StatusBadge
+            status={row.status}
             label={statusMap[row.status]?.text || row.status}
             color={statusMap[row.status]?.color || 'default'}
           />
@@ -671,26 +666,11 @@ export default function ContractManagementPage() {
       <Dialog
         open={!!confirmDialog}
         onClose={() => setConfirmDialog(null)}
+        title={confirmDialog?.title}
         maxWidth='sm'
+        cancelButton={{ label: '取消' }}
+        confirmButton={{ label: '确定', onClick: () => { confirmDialog?.onConfirm(); setConfirmDialog(null); }, color: 'error' }}
       >
-        <DialogTitle>{confirmDialog?.title}</DialogTitle>
-        <DialogActions>
-          <Button
-            color='inherit'
-            onClick={() => setConfirmDialog(null)}
-          >
-            取消
-          </Button>
-          <Button
-            color='error'
-            onClick={() => {
-              confirmDialog?.onConfirm();
-              setConfirmDialog(null);
-            }}
-          >
-            确定
-          </Button>
-        </DialogActions>
       </Dialog>
 
       <Box
@@ -751,13 +731,12 @@ export default function ContractManagementPage() {
                 管理员工合同信息，包括合同创建、到期提醒和续签流程
               </Typography>
             </Box>
-            <Button
-              variant='contained'
+            <ActionButton
+              label='新建合同'
+              icon={<Plus size={18} />}
               onClick={handleCreate}
-              startIcon={<Plus size={18} />}
-            >
-              新建合同
-            </Button>
+              variant='primary'
+            />
           </Stack>
         </Box>
       </Box>
@@ -852,259 +831,155 @@ export default function ContractManagementPage() {
       <Dialog
         open={modalVisible}
         onClose={() => setModalVisible(false)}
+        title={modalType === 'create' ? '新建合同' : modalType === 'edit' ? '编辑合同' : '合同详情'}
         maxWidth='md'
         fullWidth
+        cancelButton={modalType !== 'view' ? { label: '取消' } : undefined}
+        confirmButton={modalType !== 'view' ? { label: modalType === 'create' ? '创建' : '保存', onClick: handleSave } : { label: '关闭' }}
       >
-        <DialogTitle>
-          {modalType === 'create' ? '新建合同' : modalType === 'edit' ? '编辑合同' : '合同详情'}
-        </DialogTitle>
-        <DialogContent dividers>
-          {modalType !== 'view' ? (
-            <Stack spacing={2}>
-              <Box>
-                <FormLabel>员工 *</FormLabel>
-                <FormControl
-                  fullWidth
-                  size='small'
-                  sx={{ mt: 1 }}
-                >
-                  <InputLabel>员工</InputLabel>
-                  <Select
-                    value={formState.employee_id}
-                    label='员工'
-                    onChange={(e) =>
-                      setFormState((s) => ({
-                        ...s,
-                        employee_id: e.target.value,
-                      }))
-                    }
-                  >
-                    <MenuItem value=''>请选择员工</MenuItem>
-                    {employees.map((e) => (
-                      <MenuItem
-                        key={e.id}
-                        value={e.id}
-                      >
-                        {e.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
+        {modalType !== 'view' ? (
+          <Stack spacing={2}>
+            <FormSelect
+              name='employee_id'
+              label='员工 *'
+              value={formState.employee_id}
+              options={[{ value: '', label: '请选择员工' }, ...employees.map((e) => ({ value: e.id, label: e.name }))]}
+              onChange={(value) => setFormState((s) => ({ ...s, employee_id: value as string }))}
+            />
 
-              <TextField
-                label='合同编号'
-                size='small'
+            <FormField
+              name='contract_no'
+              label='合同编号'
+              value={formState.contract_no}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormState((s) => ({ ...s, contract_no: e.target.value }))}
+              disabled={modalType === 'create'}
+              placeholder={modalType === 'create' ? '自动生成' : ''}
+              fullWidth
+            />
+
+            <FormSelect
+              name='contract_type'
+              label='合同类型 *'
+              value={formState.contract_type}
+              options={[{ value: '', label: '请选择合同类型' }, ...contractTypes]}
+              onChange={(value) => setFormState((s) => ({ ...s, contract_type: value as string }))}
+            />
+
+            <Stack direction='row' spacing={2}>
+              <FormField
+                name='party_a_name'
+                label='甲方名称'
+                value={formState.party_a_name}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormState((s) => ({ ...s, party_a_name: e.target.value }))}
+                placeholder='公司名称'
                 fullWidth
-                value={formState.contract_no}
-                onChange={(e) =>
-                  setFormState((s) => ({
-                    ...s,
-                    contract_no: e.target.value,
-                  }))
-                }
-                disabled={modalType === 'create'}
-                placeholder={modalType === 'create' ? '自动生成' : ''}
               />
-
-              <Box>
-                <FormLabel>合同类型 *</FormLabel>
-                <FormControl
-                  fullWidth
-                  size='small'
-                  sx={{ mt: 1 }}
-                >
-                  <InputLabel>合同类型</InputLabel>
-                  <Select
-                    value={formState.contract_type}
-                    label='合同类型'
-                    onChange={(e) =>
-                      setFormState((s) => ({
-                        ...s,
-                        contract_type: e.target.value,
-                      }))
-                    }
-                  >
-                    <MenuItem value=''>请选择合同类型</MenuItem>
-                    {contractTypes.map((t) => (
-                      <MenuItem
-                        key={t.value}
-                        value={t.value}
-                      >
-                        {t.label}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
-
-              <Stack
-                direction='row'
-                spacing={2}
-              >
-                <TextField
-                  label='甲方名称'
-                  size='small'
-                  fullWidth
-                  value={formState.party_a_name}
-                  onChange={(e) =>
-                    setFormState((s) => ({
-                      ...s,
-                      party_a_name: e.target.value,
-                    }))
-                  }
-                  placeholder='公司名称'
-                />
-                <TextField
-                  label='甲方联系人'
-                  size='small'
-                  fullWidth
-                  value={formState.party_a_contact}
-                  onChange={(e) =>
-                    setFormState((s) => ({
-                      ...s,
-                      party_a_contact: e.target.value,
-                    }))
-                  }
-                  placeholder='联系人姓名'
-                />
-              </Stack>
-
-              <Stack
-                direction='row'
-                spacing={2}
-              >
-                <TextField
-                  label='乙方名称'
-                  size='small'
-                  fullWidth
-                  value={formState.party_b_name}
-                  onChange={(e) =>
-                    setFormState((s) => ({
-                      ...s,
-                      party_b_name: e.target.value,
-                    }))
-                  }
-                  placeholder='员工姓名'
-                />
-                <TextField
-                  label='乙方联系人'
-                  size='small'
-                  fullWidth
-                  value={formState.party_b_contact}
-                  onChange={(e) =>
-                    setFormState((s) => ({
-                      ...s,
-                      party_b_contact: e.target.value,
-                    }))
-                  }
-                  placeholder='员工联系方式'
-                />
-              </Stack>
-
-              <Stack
-                direction='row'
-                spacing={2}
-              >
-                <TextField
-                  label='开始日期 *'
-                  size='small'
-                  type='date'
-                  fullWidth
-                  value={formState.start_date}
-                  onChange={(e) =>
-                    setFormState((s) => ({
-                      ...s,
-                      start_date: e.target.value,
-                    }))
-                  }
-                  slotProps={{ inputLabel: { shrink: true } }}
-                />
-                <TextField
-                  label='结束日期'
-                  size='small'
-                  type='date'
-                  fullWidth
-                  value={formState.end_date}
-                  onChange={(e) =>
-                    setFormState((s) => ({
-                      ...s,
-                      end_date: e.target.value,
-                    }))
-                  }
-                  placeholder='无固定期限'
-                  slotProps={{ inputLabel: { shrink: true } }}
-                />
-              </Stack>
-
-              <Stack
-                direction='row'
-                spacing={2}
-              >
-                <TextField
-                  label='薪资'
-                  size='small'
-                  type='number'
-                  fullWidth
-                  value={formState.salary}
-                  onChange={(e) => setFormState((s) => ({ ...s, salary: e.target.value }))}
-                  placeholder='0'
-                />
-                <TextField
-                  label='试用期(天)'
-                  size='small'
-                  type='number'
-                  fullWidth
-                  value={formState.probation_period_days}
-                  onChange={(e) =>
-                    setFormState((s) => ({
-                      ...s,
-                      probation_period_days: e.target.value,
-                    }))
-                  }
-                  placeholder='0'
-                />
-                <TextField
-                  label='提前提醒天数'
-                  size='small'
-                  type='number'
-                  fullWidth
-                  value={formState.reminder_days}
-                  onChange={(e) =>
-                    setFormState((s) => ({
-                      ...s,
-                      reminder_days: e.target.value,
-                    }))
-                  }
-                  placeholder='30'
-                />
-              </Stack>
-
-              <Box>
-                <FormLabel sx={{ mb: 1, display: 'block' }}>合同附件</FormLabel>
-                <FileUpload
-                  value={contractAttachments}
-                  onChange={setContractAttachments}
-                  accept={['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png']}
-                  maxCount={5}
-                  maxSize={20}
-                  maxTotalSize={50}
-                  uploadText='上传合同附件'
-                />
-              </Box>
-
-              <TextField
-                label='备注'
-                size='small'
+              <FormField
+                name='party_a_contact'
+                label='甲方联系人'
+                value={formState.party_a_contact}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormState((s) => ({ ...s, party_a_contact: e.target.value }))}
+                placeholder='联系人姓名'
                 fullWidth
-                multiline
-                rows={3}
-                value={formState.notes}
-                onChange={(e) => setFormState((s) => ({ ...s, notes: e.target.value }))}
-                placeholder='备注信息'
               />
             </Stack>
-          ) : (
+
+            <Stack direction='row' spacing={2}>
+              <FormField
+                name='party_b_name'
+                label='乙方名称'
+                value={formState.party_b_name}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormState((s) => ({ ...s, party_b_name: e.target.value }))}
+                placeholder='员工姓名'
+                fullWidth
+              />
+              <FormField
+                name='party_b_contact'
+                label='乙方联系人'
+                value={formState.party_b_contact}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormState((s) => ({ ...s, party_b_contact: e.target.value }))}
+                placeholder='员工联系方式'
+                fullWidth
+              />
+            </Stack>
+
+            <Stack direction='row' spacing={2}>
+              <FormField
+                name='start_date'
+                label='开始日期 *'
+                type='date'
+                value={formState.start_date}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormState((s) => ({ ...s, start_date: e.target.value }))}
+                fullWidth
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
+              <FormField
+                name='end_date'
+                label='结束日期'
+                type='date'
+                value={formState.end_date}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormState((s) => ({ ...s, end_date: e.target.value }))}
+                placeholder='无固定期限'
+                fullWidth
+                slotProps={{ inputLabel: { shrink: true } }}
+              />
+            </Stack>
+
+            <Stack direction='row' spacing={2}>
+              <FormField
+                name='salary'
+                label='薪资'
+                type='number'
+                value={formState.salary}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormState((s) => ({ ...s, salary: e.target.value }))}
+                placeholder='0'
+                fullWidth
+              />
+              <FormField
+                name='probation_period_days'
+                label='试用期(天)'
+                type='number'
+                value={formState.probation_period_days}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormState((s) => ({ ...s, probation_period_days: e.target.value }))}
+                placeholder='0'
+                fullWidth
+              />
+              <FormField
+                name='reminder_days'
+                label='提前提醒天数'
+                type='number'
+                value={formState.reminder_days}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormState((s) => ({ ...s, reminder_days: e.target.value }))}
+                placeholder='30'
+                fullWidth
+              />
+            </Stack>
+
+            <Box>
+              <FormLabel sx={{ mb: 1, display: 'block' }}>合同附件</FormLabel>
+              <FileUpload
+                value={contractAttachments}
+                onChange={setContractAttachments}
+                accept={['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png']}
+                maxCount={5}
+                maxSize={20}
+                maxTotalSize={50}
+                uploadText='上传合同附件'
+              />
+            </Box>
+
+            <FormField
+              name='notes'
+              label='备注'
+              value={formState.notes}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormState((s) => ({ ...s, notes: e.target.value }))}
+              multiline
+              rows={3}
+              placeholder='备注信息'
+              fullWidth
+            />
+          </Stack>
+        ) : (
             <Box>
               {currentContract && (
                 <Stack spacing={2}>
@@ -1304,8 +1179,8 @@ export default function ContractManagementPage() {
                                   {new Date(renewal.created_at).toLocaleString('zh-CN')}
                                 </Typography>
                               </Box>
-                              <Chip
-                                size='small'
+                              <StatusBadge
+                                status={renewal.status}
                                 label={renewalStatusMap[renewal.status]?.text || renewal.status}
                                 color={renewalStatusMap[renewal.status]?.color || 'default'}
                               />
@@ -1351,34 +1226,30 @@ export default function ContractManagementPage() {
                             >
                               {renewal.status === 'pending' && (
                                 <>
-                                  <Button
-                                    size='small'
-                                    variant='contained'
+                                  <ActionButton
+                                    label='批准'
+                                    icon={<Check size={12} />}
                                     onClick={() => handleApproveRenewal(renewal.id)}
-                                    startIcon={<Check size={12} />}
-                                  >
-                                    批准
-                                  </Button>
-                                  <Button
+                                    variant='success'
                                     size='small'
-                                    color='error'
-                                    variant='contained'
+                                  />
+                                  <ActionButton
+                                    label='拒绝'
+                                    icon={<X size={12} />}
                                     onClick={() => handleRejectRenewal(renewal.id)}
-                                    startIcon={<X size={12} />}
-                                  >
-                                    拒绝
-                                  </Button>
+                                    variant='danger'
+                                    size='small'
+                                  />
                                 </>
                               )}
                               {renewal.status === 'approved' && (
-                                <Button
-                                  size='small'
-                                  variant='outlined'
+                                <ActionButton
+                                  label='执行续签'
+                                  icon={<RefreshCw size={12} />}
                                   onClick={() => handleExecuteRenewal(renewal.id)}
-                                  startIcon={<RefreshCw size={12} />}
-                                >
-                                  执行续签
-                                </Button>
+                                  variant='secondary'
+                                  size='small'
+                                />
                               )}
                             </Stack>
                           </CardContent>
@@ -1390,165 +1261,69 @@ export default function ContractManagementPage() {
               )}
             </Box>
           )}
-        </DialogContent>
-        <DialogActions>
-          {modalType !== 'view' ? (
-            <>
-              <Button
-                color='inherit'
-                onClick={() => setModalVisible(false)}
-              >
-                取消
-              </Button>
-              <Button
-                variant='contained'
-                onClick={handleSave}
-              >
-                {modalType === 'create' ? '创建' : '保存'}
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button
-                color='inherit'
-                onClick={() => setShowRenewals(!showRenewals)}
-              >
-                {showRenewals ? '隐藏续签记录' : '查看续签记录'}
-              </Button>
-              <Button
-                variant='contained'
-                onClick={() => setModalVisible(false)}
-              >
-                关闭
-              </Button>
-            </>
-          )}
-        </DialogActions>
       </Dialog>
 
       <Dialog
         open={renewModalVisible}
         onClose={() => setRenewModalVisible(false)}
+        title='合同续签申请'
         maxWidth='sm'
         fullWidth
+        cancelButton={{ label: '取消' }}
+        confirmButton={{ label: '提交申请', onClick: handleSubmitRenew }}
       >
-        <DialogTitle>合同续签申请</DialogTitle>
-        <DialogContent dividers>
-          <Stack
-            spacing={2}
-            sx={{ pt: 1 }}
-          >
-            <Box>
-              <FormLabel>续签类型 *</FormLabel>
-              <FormControl
-                fullWidth
-                size='small'
-                sx={{ mt: 1 }}
-              >
-                <InputLabel>续签类型</InputLabel>
-                <Select
-                  value={renewFormState.renewal_type}
-                  label='续签类型'
-                  onChange={(e) =>
-                    setRenewFormState((s) => ({
-                      ...s,
-                      renewal_type: e.target.value,
-                    }))
-                  }
-                >
-                  {renewalTypes.map((t) => (
-                    <MenuItem
-                      key={t.value}
-                      value={t.value}
-                    >
-                      {t.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Box>
+        <Stack spacing={2} sx={{ pt: 1 }}>
+          <FormSelect
+            name='renewal_type'
+            label='续签类型 *'
+            value={renewFormState.renewal_type}
+            options={renewalTypes}
+            onChange={(value) => setRenewFormState((s) => ({ ...s, renewal_type: value as string }))}
+          />
 
-            <Stack
-              direction='row'
-              spacing={2}
-            >
-              <TextField
-                label='新合同开始日期 *'
-                size='small'
-                type='date'
-                fullWidth
-                value={renewFormState.new_start_date}
-                onChange={(e) =>
-                  setRenewFormState((s) => ({
-                    ...s,
-                    new_start_date: e.target.value,
-                  }))
-                }
-                slotProps={{ inputLabel: { shrink: true } }}
-              />
-              <TextField
-                label='新合同结束日期'
-                size='small'
-                type='date'
-                fullWidth
-                value={renewFormState.new_end_date}
-                onChange={(e) =>
-                  setRenewFormState((s) => ({
-                    ...s,
-                    new_end_date: e.target.value,
-                  }))
-                }
-                placeholder='无固定期限'
-                slotProps={{ inputLabel: { shrink: true } }}
-              />
-            </Stack>
-
-            <TextField
-              label='新薪资'
-              size='small'
-              type='number'
+          <Stack direction='row' spacing={2}>
+            <FormField
+              name='new_start_date'
+              label='新合同开始日期 *'
+              type='date'
+              value={renewFormState.new_start_date}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRenewFormState((s) => ({ ...s, new_start_date: e.target.value }))}
               fullWidth
-              value={renewFormState.new_salary}
-              onChange={(e) =>
-                setRenewFormState((s) => ({
-                  ...s,
-                  new_salary: e.target.value,
-                }))
-              }
-              placeholder='不修改请留空'
+              slotProps={{ inputLabel: { shrink: true } }}
             />
-
-            <TextField
-              label='续签原因'
-              size='small'
+            <FormField
+              name='new_end_date'
+              label='新合同结束日期'
+              type='date'
+              value={renewFormState.new_end_date}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRenewFormState((s) => ({ ...s, new_end_date: e.target.value }))}
+              placeholder='无固定期限'
               fullWidth
-              multiline
-              rows={3}
-              value={renewFormState.renewal_reason}
-              onChange={(e) =>
-                setRenewFormState((s) => ({
-                  ...s,
-                  renewal_reason: e.target.value,
-                }))
-              }
-              placeholder='请说明续签原因'
+              slotProps={{ inputLabel: { shrink: true } }}
             />
           </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            color='inherit'
-            onClick={() => setRenewModalVisible(false)}
-          >
-            取消
-          </Button>
-          <Button
-            variant='contained'
-            onClick={handleSubmitRenew}
-          >
-            提交申请
-          </Button>
-        </DialogActions>
+
+          <FormField
+            name='new_salary'
+            label='新薪资'
+            type='number'
+            value={renewFormState.new_salary}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRenewFormState((s) => ({ ...s, new_salary: e.target.value }))}
+            placeholder='不修改请留空'
+            fullWidth
+          />
+
+          <FormField
+            name='renewal_reason'
+            label='续签原因'
+            value={renewFormState.renewal_reason}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRenewFormState((s) => ({ ...s, renewal_reason: e.target.value }))}
+            multiline
+            rows={3}
+            placeholder='请说明续签原因'
+            fullWidth
+          />
+        </Stack>
       </Dialog>
     </Box>
   );

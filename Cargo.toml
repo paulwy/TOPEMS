@@ -19,6 +19,7 @@ members = [
     "svc/mobile",
     "svc/monitor",
     # [生产制造]
+    "svc/manufacturing",
     "svc/mes",
     "svc/pdm",
     # [质量与研发]
@@ -26,7 +27,7 @@ members = [
     "svc/lims",
     "svc/ehs",
     # [数据分析]
-    "svc/bi",
+    "svc/analytics",
     "svc/report",
 ]
 resolver = "2"
@@ -36,7 +37,7 @@ resolver = "2"
 # ================================================
 # svc/manufacturing    → svc/mes + svc/pdm（已拆分独立部署）
 # svc/quality-assurance → svc/qms + svc/lims + svc/ehs（已拆分独立部署）
-# svc/analytics        → svc/bi + svc/report（已拆分独立部署）
+# svc/bi               → svc/analytics（已整合到 analytics 统一服务，2026-06）
 # svc/config-center    → 功能已整合到 etcd + unified-core 配置管理
 # svc/shared           → 功能已整合到 lib/topems_shared
 # ================================================

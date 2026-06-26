@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { apiLogger } from '@/utils/logger';
-import { flowApi } from '@/api/flow';
-import type { Workflow } from '@/api/flow';
+import { workflowApi } from '@/api/workflow';
+import type { Workflow } from '@/api/workflow';
 import { useNotification } from '@/hooks/useNotification';
 import {
   Box,
@@ -60,7 +60,7 @@ const FlowDefinitionPage: React.FC = () => {
   const loadData = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await flowApi.listWorkflows();
+      const res = await workflowApi.listWorkflows();
       if (res.success && res.data) {
         setData(res.data.items || []);
       }
@@ -94,7 +94,7 @@ const FlowDefinitionPage: React.FC = () => {
 
   const handlePublish = async (flow: Workflow) => {
     try {
-      await flowApi.updateWorkflow(flow.id, { is_active: true });
+      await workflowApi.updateWorkflow(flow.id, { is_active: true });
       setData((prev) =>
         prev.map((f) => (f.id === flow.id ? { ...f, is_active: true } : f))
       );
@@ -107,7 +107,7 @@ const FlowDefinitionPage: React.FC = () => {
 
   const handleDisable = async (flow: Workflow) => {
     try {
-      await flowApi.updateWorkflow(flow.id, { is_active: false });
+      await workflowApi.updateWorkflow(flow.id, { is_active: false });
       setData((prev) =>
         prev.map((f) => (f.id === flow.id ? { ...f, is_active: false } : f))
       );

@@ -12,7 +12,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { Warehouse, CreateWarehouseRequest, UpdateWarehouseRequest } from '@/api/wms';
 import { wmsApi } from '@/api/wms';
 import { useAppStore } from '@/store';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { EmptyState } from '@/components/mui/EmptyState';
 import { Search, Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';

@@ -2,42 +2,17 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Box, Typography, InputLabel, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import { FileText, Calendar, User, Building2, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { hrmApi } from '@/api/hrm';
+import { hrmApi, type Contract } from '@/api/hrm';
 import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
-
-interface ContractDetail {
-  id: string;
-  employee_id: string;
-  employee_name: string;
-  employee_no: string;
-  contract_no: string;
-  contract_type: string;
-  contract_name: string;
-  department: string;
-  position: string;
-  status: 'draft' | 'pending' | 'approved' | 'active' | 'expired' | 'terminated';
-  start_date: string;
-  end_date: string;
-  probation_period: number;
-  probation_end_date: string;
-  salary_type: string;
-  base_salary: number;
-  currency: string;
-  work_location: string;
-  contract_file: string;
-  remark: string;
-  created_at: string;
-  updated_at: string;
-}
 
 const HrmContractDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const { success, error } = useNotification();
 
-  const [contract, setContract] = useState<ContractDetail | null>(null);
+  const [contract, setContract] = useState<Contract | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | undefined>(undefined);
   const [showRenewDialog, setShowRenewDialog] = useState(false);
@@ -54,38 +29,30 @@ const HrmContractDetailPage: React.FC = () => {
         throw new Error('合同ID为空');
       }
 
-      const res = await hrmApi.contract.get(id);
+      const res = await hrmApi.contracts.get(id);
 
       if (!res.success || !res.data) {
         throw new Error('获取合同详情失败');
       }
 
       const contractData = res.data;
-      const employeeRes = await hrmApi.employee.get(contractData.employee_id);
+      const employeeRes = await hrmApi.employees.get(contractData.contract.employee_id);
 
       setContract({
-        id: contractData.id,
-        employee_id: contractData.employee_id,
-        employee_name: employeeRes.data?.name || contractData.employee_name || '',
-        employee_no: employeeRes.data?.employee_no || '',
-        contract_no: contractData.contract_no,
-        contract_type: contractData.contract_type || '',
-        contract_name: contractData.contract_name || `${employeeRes.data?.name || contractData.employee_name || ''}劳动合同`,
-        department: employeeRes.data?.department_name || '',
-        position: employeeRes.data?.position || '',
-        status: contractData.status as ContractDetail['status'],
-        start_date: contractData.start_date,
-        end_date: contractData.end_date,
-        probation_period: contractData.probation_period || 0,
-        probation_end_date: contractData.probation_end_date,
-        salary_type: contractData.salary_type || '',
-        base_salary: contractData.base_salary || 0,
-        currency: contractData.currency || 'CNY',
-        work_location: contractData.work_location || '',
-        contract_file: contractData.contract_file || '',
-        remark: contractData.remark || '',
-        created_at: contractData.created_at,
-        updated_at: contractData.updated_at,
+        ...contractData.contract,
+        employee_name: employeeRes.data?.name || contractData.contract.employee_name || '',
+        employee_no: employeeRes.data?.employee_no || contractData.contract.employee_no || '',
+        contract_name: contractData.contract.contract_name || `${employeeRes.data?.name || contractData.contract.employee_name || ''}劳动合同`,
+        department: employeeRes.data?.department_name || contractData.contract.department || '',
+        position: employeeRes.data?.position || contractData.contract.position || '',
+        probation_period: contractData.contract.probation_period || 0,
+        probation_end_date: contractData.contract.probation_end_date || '',
+        salary_type: contractData.contract.salary_type || '',
+        base_salary: contractData.contract.base_salary || 0,
+        currency: contractData.contract.currency || 'CNY',
+        work_location: contractData.contract.work_location || '',
+        contract_file: contractData.contract.contract_file || '',
+        remark: contractData.contract.remark || '',
       });
     } catch (err: unknown) {
       apiLogger.error('加载合同详情失败:', err);
@@ -97,11 +64,11 @@ const HrmContractDetailPage: React.FC = () => {
   };
 
   const handleRenew = () => {
-    navigate(`/hrm/contracts/${id}/renew`);
+    navigate(`/hrm/contract/${id}`);
   };
 
   const getStatusConfig = (status: string) => {
-    const config: Record<string, { color: 'success' | 'error' | 'default' | 'warning'; label: string; icon: React.ReactNode }> = {
+    const config: Record<string, { color: 'success' | 'error' | 'default' | 'warning'; label: string; icon: React.ReactElement }> = {
       draft: { color: 'default', label: '草稿', icon: <FileText size={14} /> },
       pending: { color: 'warning', label: '待审批', icon: <Clock size={14} /> },
       approved: { color: 'success', label: '已审批', icon: <CheckCircle2 size={14} /> },
@@ -142,8 +109,10 @@ const HrmContractDetailPage: React.FC = () => {
     return new Date(date).toLocaleDateString('zh-CN');
   };
 
-  const formatCurrency = (amount: number) =>
-    `${amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })} ${contract?.currency}`;
+  const formatCurrency = (amount: number | undefined) => {
+    const value = amount || 0;
+    return `${value.toLocaleString('zh-CN', { minimumFractionDigits: 2 })} ${contract?.currency || 'CNY'}`;
+  };
 
   const calculateDaysRemaining = () => {
     if (!contract?.end_date) return null;
@@ -205,9 +174,9 @@ const HrmContractDetailPage: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <User sx={{ width: 48, height: 48, color: 'primary.main' }} />
             <Box>
-              <Typography variant='h6'>{contract.employee_name}</Typography>
+              <Typography variant='h6'>{contract.employee_name || '-'}</Typography>
               <Typography variant='body2' color='text.secondary'>
-                {contract.employee_no} | {contract.department} | {contract.position}
+                {contract.employee_no || ''} | {contract.department || ''} | {contract.position || ''}
               </Typography>
             </Box>
           </Box>
@@ -230,15 +199,15 @@ const HrmContractDetailPage: React.FC = () => {
         >
           <Box>
             <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>合同编号</InputLabel>
-            <Typography sx={{ mt: 0.5, fontFamily: 'monospace' }}>{contract.contract_no}</Typography>
+            <Typography sx={{ mt: 0.5, fontFamily: 'monospace' }}>{contract.contract_no || '-'}</Typography>
           </Box>
           <Box>
             <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>合同类型</InputLabel>
-            <Typography sx={{ mt: 0.5 }}>{getContractTypeLabel(contract.contract_type)}</Typography>
+            <Typography sx={{ mt: 0.5 }}>{getContractTypeLabel(contract.contract_type || '')}</Typography>
           </Box>
           <Box>
             <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>合同名称</InputLabel>
-            <Typography sx={{ mt: 0.5 }}>{contract.contract_name}</Typography>
+            <Typography sx={{ mt: 0.5 }}>{contract.contract_name || '-'}</Typography>
           </Box>
         </Box>
       </Box>
@@ -265,7 +234,7 @@ const HrmContractDetailPage: React.FC = () => {
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>试用期</InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{contract.probation_period} 个月</Typography>
+          <Typography sx={{ mt: 0.5 }}>{contract.probation_period || 0} 个月</Typography>
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>试用期结束日期</InputLabel>
@@ -277,7 +246,7 @@ const HrmContractDetailPage: React.FC = () => {
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>薪资类型</InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{getSalaryTypeLabel(contract.salary_type)}</Typography>
+          <Typography sx={{ mt: 0.5 }}>{getSalaryTypeLabel(contract.salary_type || '')}</Typography>
         </Box>
       </Box>
     );
@@ -299,7 +268,7 @@ const HrmContractDetailPage: React.FC = () => {
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>货币类型</InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{contract.currency}</Typography>
+          <Typography sx={{ mt: 0.5 }}>{contract.currency || 'CNY'}</Typography>
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>备注</InputLabel>
@@ -340,7 +309,7 @@ const HrmContractDetailPage: React.FC = () => {
         backHref='/hrm/contracts'
         loading={loading}
         error={errorMessage}
-        onEdit={() => navigate(`/hrm/contracts/${id}/edit`)}
+        onEdit={() => navigate(`/hrm/contract/${id}`)}
         infoCard={infoCard}
         tabs={tabs}
         actions={[

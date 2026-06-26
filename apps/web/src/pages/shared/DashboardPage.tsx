@@ -63,9 +63,8 @@ import {
   Bell,
   Clock3,
 } from 'lucide-react';
-import { authApi } from '@/api/iam';
 import { docApi } from '@/api/doc';
-import { flowApi } from '@/api/flow';
+import { workflowApi } from '@/api/workflow';
 import { erpApi } from '@/api/erp';
 import { hrmApi } from '@/api/hrm';
 import { mobileApi } from '@/api/mobile';
@@ -76,9 +75,10 @@ import { srmApi } from '@/api/srm';
 import { limsApi } from '@/api/lims';
 import { rsApi } from '@/api/rs';
 import { biApi } from '@/api/bi';
+import { scmApi } from '@/api/scm';
 import { useInstalledPlugins } from '../../context/PluginContext';
-import MobileNav from '@/components/MobileNav';
 import MobileHeader from '@/components/layout/MobileHeader';
+import { MobileNav } from '@/components/layout/MobileNav';
 import { usePermission } from '@/hooks/usePermission';
 import { useAuth } from '@/hooks/useAuth';
 import { useServiceStatus } from '@/hooks/useServiceStatus';
@@ -93,7 +93,6 @@ import {
   ServiceStatusMonitor,
   RecentActivities,
   type ActivityItem,
-  MobileMenu,
   DashboardSection,
   QuickAccessSection,
   TodoListSection,
@@ -114,11 +113,21 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   const { installedPlugins, isPluginInstalled } = useInstalledPlugins();
   const shortcuts = useAppStore((state) => state.shortcuts);
   const [loading, setLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [moduleStatsLoading, setModuleStatsLoading] = useState(false);
+  const [chartDataLoading, setChartDataLoading] = useState(false);
+  const [todosLoading, setTodosLoading] = useState(false);
+  const [activitiesLoading, setActivitiesLoading] = useState(false);
+  const [statsError, setStatsError] = useState<string | null>(null);
+  const [moduleStatsError, setModuleStatsError] = useState<string | null>(null);
+  const [chartDataError, setChartDataError] = useState<string | null>(null);
+  const [todosError, setTodosError] = useState<string | null>(null);
+  const [activitiesError, setActivitiesError] = useState<string | null>(null);
   const [stats, setStats] = useState({
     fileCount: 0,
     workflowCount: 0,
     docCount: 0,
-    notificationCount: 5,
+    notificationCount: 0,
   });
   const [moduleStats, setModuleStats] = useState({
     qms: { total: 0, active: 0 },
@@ -131,7 +140,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     moduleDistribution: [] as { name: string; value: number; color: string }[],
     monthlyTrend: [] as { name: string; value: number }[],
   });
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [recentActivities, setRecentActivities] = useState<ActivityItem[]>([]);
   const [todoTab, setTodoTab] = useState(0);
   const [todos, setTodos] = useState<
@@ -172,27 +181,38 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   const initialized = useRef(false);
 
   const loadStats = useCallback(async () => {
+    setStatsLoading(true);
+    setStatsError(null);
     try {
-      const [docRes] = await Promise.allSettled([docApi.list()]);
+      const [docRes, flowStatsRes, notificationRes] = await Promise.allSettled([
+        docApi.list(),
+        workflowApi.getStatistics(),
+        user?.id ? workflowApi.getNotificationCount(user.id) : Promise.resolve({ success: false, data: { count: 0 } } as any),
+      ]);
+
+      const docData = docRes.status === 'fulfilled' && docRes.value.success ? docRes.value.data : null;
+      const flowData = flowStatsRes.status === 'fulfilled' && flowStatsRes.value.success ? flowStatsRes.value.data : null;
+      const notificationData = notificationRes.status === 'fulfilled' && notificationRes.value.success ? notificationRes.value.data : null;
 
       const newStats = {
-        fileCount:
-          (docRes.status === 'fulfilled' &&
-            docRes.value.success &&
-            docRes.value.data?.files?.length) ||
-          0,
-        workflowCount: 0,
-        docCount: 0,
-        notificationCount: 5,
+        fileCount: docData?.files?.length || 0,
+        docCount: docData?.total || 0,
+        workflowCount: flowData?.total_workflows || 0,
+        notificationCount: (notificationData as any)?.count ?? (notificationData as any)?.total ?? 0,
       };
 
       setStats(newStats);
     } catch (err: unknown) {
       apiLogger.error('加载统计失败:', err);
+      setStatsError(err instanceof Error ? err.message : '加载统计失败');
+    } finally {
+      setStatsLoading(false);
     }
-  }, []);
+  }, [user?.id]);
 
   const loadModuleStats = useCallback(async () => {
+    setModuleStatsLoading(true);
+    setModuleStatsError(null);
     try {
       const [qmsRes, srmRes, limsRes, rsRes, ehsRes] = await Promise.allSettled([
         qmsApi.getStatistics(),
@@ -240,66 +260,89 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
       setModuleStats(newModuleStats);
     } catch (err: unknown) {
       apiLogger.error('加载模块统计失败:', err);
+      setModuleStatsError(err instanceof Error ? err.message : '加载模块统计失败');
+    } finally {
+      setModuleStatsLoading(false);
     }
   }, []);
 
   const loadChartData = useCallback(async () => {
+    setChartDataLoading(true);
+    setChartDataError(null);
     try {
-      const [summaryRes] = await Promise.allSettled([biApi.fetchSummaryDashboard()]);
+      const [summaryRes, flowStatsRes] = await Promise.allSettled([
+        biApi.fetchSummaryDashboard(),
+        workflowApi.getStatistics(),
+      ]);
 
-      if (summaryRes.status === 'fulfilled' && summaryRes.value.success && summaryRes.value.data) {
-        const summary = summaryRes.value.data;
-        setChartData({
-          moduleDistribution: summary.key_metrics?.map((metric: any) => ({
-            name: metric.title,
-            value: metric.value,
-            color: metric.icon || '#3b82f6',
-          })) || [],
-          monthlyTrend: [],
-        });
-      }
+      const summary = summaryRes.status === 'fulfilled' && summaryRes.value.success ? summaryRes.value.data : null;
+      const flowStats = flowStatsRes.status === 'fulfilled' && flowStatsRes.value.success ? flowStatsRes.value.data : null;
+
+      setChartData({
+        moduleDistribution: summary?.key_metrics?.map((metric: any) => ({
+          name: metric.title,
+          value: metric.value,
+          color: metric.icon || '#3b82f6',
+        })) || [],
+        monthlyTrend: flowStats?.monthly_data?.map((item: any) => ({
+          name: item.month,
+          value: item.instances_started || item.approvals_processed || 0,
+        })) || [],
+      });
     } catch (err: unknown) {
       apiLogger.error('加载图表数据失败:', err);
+      setChartDataError(err instanceof Error ? err.message : '加载图表数据失败');
+    } finally {
+      setChartDataLoading(false);
     }
   }, []);
 
   const loadTodos = useCallback(async () => {
+    setTodosLoading(true);
+    setTodosError(null);
     try {
       const [tasksRes] = await Promise.allSettled([
-        flowApi.listApprovalTasks({ status: 'pending', page: 1, page_size: 10 }),
+        workflowApi.listApprovalTasks({ status: 'pending', page: 1, page_size: 10 }),
       ]);
 
       if (tasksRes.status === 'fulfilled' && tasksRes.value.success && tasksRes.value.data?.items) {
         const tasks = tasksRes.value.data.items.map((task: any, index: number) => ({
-          id: index + 1,
-          title: task.task_name || '待办任务',
-          type: 'workflow',
-          done: false,
+          id: task.id ? parseInt(task.id, 10) || index + 1 : index + 1,
+          title: task.task_name || task.name || '待办任务',
+          type: task.workflow_name || 'workflow',
+          done: task.status === 'completed' || task.status === 'approved',
         }));
         setTodos(tasks);
       }
     } catch (err: unknown) {
       apiLogger.error('加载待办任务失败:', err);
+      setTodosError(err instanceof Error ? err.message : '加载待办任务失败');
+    } finally {
+      setTodosLoading(false);
     }
   }, []);
 
   const loadRecentActivities = useCallback(async () => {
+    setActivitiesLoading(true);
+    setActivitiesError(null);
     try {
-      const [logsRes] = await Promise.allSettled([authApi.listAccessLogs(10, 0)]);
+      const [logsRes] = await Promise.allSettled([
+        scmApi.auditLogs.list({ page: 1, pageSize: 10 }),
+      ]);
 
-      if (logsRes.status === 'fulfilled' && logsRes.value.success && logsRes.value.data) {
-        const logs = logsRes.value.data;
+      if (logsRes.status === 'fulfilled' && logsRes.value.success && logsRes.value.data?.items) {
+        const logs = logsRes.value.data.items;
         const activities: ActivityItem[] = logs.map((log: any) => {
           let icon = <User size={16} />;
           let type = '系统';
 
-          if (log.resource.includes('document') || log.resource.includes('file')) {
+          if (log.module?.includes('doc') || log.module?.includes('file')) {
             icon = <FileText size={16} />;
             type = '文档';
-          } else if (log.resource.includes('workflow') || log.resource.includes('approval')) {
+          } else if (log.module?.includes('flow') || log.module?.includes('workflow') || log.module?.includes('approval')) {
             icon = <GitBranch size={16} />;
             type = '工作流';
-          } else if (log.resource.includes('folder')) {
+          } else if (log.module?.includes('folder')) {
             icon = <Folder size={16} />;
             type = '文档';
           }
@@ -331,6 +374,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
       }
     } catch (err: unknown) {
       apiLogger.error('加载最近活动失败:', err);
+      setActivitiesError(err instanceof Error ? err.message : '加载最近活动失败');
+    } finally {
+      setActivitiesLoading(false);
     }
   }, []);
 
@@ -485,7 +531,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           title: '系统管理',
           icon: Settings,
           description: '用户、角色、权限、系统设置管理',
-          path: '/system',
+          path: '/iam/system',
           color: 'bg-slate-600',
           status: 'online' as const,
           permission: 'iam:system_update',
@@ -507,7 +553,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           title: '报表中心',
           icon: BarChart3,
           description: 'RS/LIMS/QMS/EHS/SRM/PDM 各模块报表',
-          path: '/reports',
+          path: '/report/list',
           color: 'bg-emerald-500',
           status: 'online' as const,
           permission: 'iam:system_update',
@@ -611,7 +657,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           title: '合同管理',
           icon: FileCheck,
           description: '员工合同、续签流程、到期提醒',
-          path: '/contracts',
+          path: '/hrm/contracts',
           color: 'bg-violet-500',
           status: 'online' as const,
           permission: 'contract:read',
@@ -780,7 +826,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   }
 
   const onlineServices = Object.values(serviceStatuses).filter(Boolean).length;
-  const currentPage = location.pathname.replace('/', '') || 'dashboard';
 
   const getGreeting = (): string => {
     const hour = new Date().getHours();
@@ -822,15 +867,16 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     >
       <MobileHeader
         title='TOPEMS'
-        onMenuClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        onMenuClick={() => setMobileNavOpen(true)}
       />
 
-      <MobileMenu
-        isOpen={mobileMenuOpen}
-        onClose={() => setMobileMenuOpen(false)}
-        currentPage={currentPage}
-        onNavigate={navigate}
-      />
+      <Box sx={{ '& > .MuiIconButton-root': { display: 'none' } }}>
+        <MobileNav
+          open={mobileNavOpen}
+          onClose={() => setMobileNavOpen(false)}
+          onOpen={() => setMobileNavOpen(true)}
+        />
+      </Box>
 
       <Box className='desktop-only'>
         <Box
@@ -1133,11 +1179,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           </Box>
         </Box>
       </Box>
-
-      <MobileNav
-        currentPage={currentPage}
-        onNavigate={navigate}
-      />
     </Box>
   );
 };

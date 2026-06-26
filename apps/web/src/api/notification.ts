@@ -25,6 +25,17 @@ export interface Notification {
   link_url?: string;
   created_at: string;
   read_at?: string;
+  // 详情页使用的额外字段
+  level?: string;
+  type?: string;
+  source_module?: string;
+  source_id?: string;
+  actions?: Array<{ type?: string; label?: string; url?: string }>;
+  sender_name?: string;
+  recipient_name?: string;
+  is_top?: boolean;
+  is_deleted?: boolean;
+  updated_at?: string;
 }
 
 export interface ArchivedNotification extends Notification {
@@ -371,5 +382,17 @@ export const notificationServiceApi = {
       '/api/notifications/health/detailed'
     );
     return response;
+  },
+};
+
+export const notificationApi = {
+  get: async (id: string): Promise<ApiResponse<Notification>> => {
+    return await apiClient.notification.get<Notification>(`/api/notifications/${id}`);
+  },
+  markRead: async (id: string): Promise<ApiResponse<Notification>> => {
+    return await apiClient.notification.put<Notification>(`/api/notifications/${id}/read`);
+  },
+  markUnread: async (id: string): Promise<ApiResponse<Notification>> => {
+    return await apiClient.notification.put<Notification>(`/api/notifications/${id}/unread`);
   },
 };

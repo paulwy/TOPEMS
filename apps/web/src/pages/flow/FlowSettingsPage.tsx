@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { apiLogger } from '@/utils/logger';
-import { flowApi } from '@/api/flow';
+import { workflowApi } from '@/api/workflow';
 import { useAppStore } from '../../store';
 import { Bell, Clock, Shield, Database } from 'lucide-react';
 import {
@@ -39,7 +39,7 @@ const FlowSettingsPage: React.FC = () => {
     try {
       setLoading(true);
       setError('');
-      const res = await flowApi.listSettings();
+      const res = await workflowApi.listSettings();
       if (res.success && res.data) {
         setSettings(res.data.items || []);
       }
@@ -63,7 +63,7 @@ const FlowSettingsPage: React.FC = () => {
       setError('');
       setSuccess('');
       for (const setting of settings) {
-        await flowApi.updateSetting(setting.id, { value: String(data[setting.id]) });
+        await workflowApi.updateSetting(setting.id, { value: String(data[setting.id]) });
       }
       setSuccess('设置保存成功');
       addNotification({ title: '成功', message: '设置保存成功', type: 'success' });

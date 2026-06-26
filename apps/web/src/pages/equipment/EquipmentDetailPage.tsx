@@ -275,7 +275,7 @@ const EquipmentDetailPage: React.FC = () => {
         backHref='/equipment'
         loading={loading}
         error={errorMessage}
-        onEdit={() => navigate(`/equipment/${id}/edit`)}
+        onEdit={() => navigate(`/equipment/${id}`)}
         onDelete={() => setDeleteDialogOpen(true)}
         infoCard={infoCard}
         tabs={tabs}

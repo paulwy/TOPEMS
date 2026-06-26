@@ -11,6 +11,7 @@ const BIReportPage = lazy(() => import('../pages/bi/BIReportPage'));
 const BIDataSourcePage = lazy(() => import('../pages/bi/BIDataSourcePage'));
 const BIVisualizationPage = lazy(() => import('../pages/bi/BIVisualizationPage'));
 const BIModuleDetailPage = lazy(() => import('../pages/bi/BIModuleDetailPage'));
+const Gispage = lazy(() => import('../pages/bi/Gispage'));
 
 export const biRoutes: RouteConfig[] = [
   {
@@ -65,6 +66,13 @@ export const biRoutes: RouteConfig[] = [
   {
     path: '/bi/module/:moduleId',
     element: BIModuleDetailPage,
+    requiredPermissions: [],
+    module: 'bi',
+    action: 'read',
+  },
+  {
+    path: '/bi/gis',
+    element: Gispage,
     requiredPermissions: [],
     module: 'bi',
     action: 'read',

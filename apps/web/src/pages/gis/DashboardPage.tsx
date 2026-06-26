@@ -125,24 +125,6 @@ export const DashboardPage: React.FC = () => {
       icon: <ArrowRight size={18} />,
       onClick: () => navigate('/gis/map'),
     },
-    {
-      id: 'manage-layers',
-      label: '管理图层',
-      icon: <ArrowRight size={18} />,
-      onClick: () => navigate('/gis/layers'),
-    },
-    {
-      id: 'spatial-analysis',
-      label: '空间分析',
-      icon: <ArrowRight size={18} />,
-      onClick: () => navigate('/gis/analysis'),
-    },
-    {
-      id: 'import-data',
-      label: '数据导入',
-      icon: <ArrowRight size={18} />,
-      onClick: () => navigate('/gis/import'),
-    },
   ];
 
   return (

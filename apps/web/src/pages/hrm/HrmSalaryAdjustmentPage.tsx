@@ -8,23 +8,8 @@ import {
   type ColumnDef,
   type RowAction,
 } from '@/components/templates';
-import apiClient from '@/api/client';
-
-interface SalaryAdjustment {
-  id: string;
-  employee_id: string;
-  employee_name: string;
-  adjustment_type: 'promotion' | 'annual' | 'special' | 'correction';
-  before_amount: number;
-  after_amount: number;
-  change_amount: number;
-  change_percent: number;
-  effective_date: string;
-  status: 'pending' | 'approved' | 'rejected' | 'applied';
-  reason: string;
-  approver?: string;
-  created_at: string;
-}
+import { salaryAdjustmentApi } from '@/api/hrm';
+import type { SalaryAdjustment } from '@/api/hrm';
 
 const HrmSalaryAdjustmentPage: React.FC = () => {
   const navigate = useNavigate();
@@ -35,12 +20,9 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
   const loadAdjustments = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await apiClient.hrm.get('/api/hrm/salary-adjustments', {
-        params: { page: 1, page_size: 50 },
-      });
+      const res = await salaryAdjustmentApi.list({ page: 1, page_size: 50 });
       if (res.success && res.data) {
-        const data = res.data as any;
-        setAdjustments(data.items || data || []);
+        setAdjustments(res.data.items || []);
       }
     } catch (err) {
       setAdjustments([]);
@@ -56,6 +38,9 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
   const getTypeChip = (type: string) => {
     const map: Record<string, { label: string; color: 'primary' | 'success' | 'warning' | 'default' }> = {
       promotion: { label: '晋升调薪', color: 'primary' },
+      demotion: { label: '降职调薪', color: 'warning' },
+      bonus: { label: '奖金调薪', color: 'success' },
+      deduction: { label: '扣减调薪', color: 'warning' },
       annual: { label: '年度调薪', color: 'success' },
       special: { label: '特殊调薪', color: 'warning' },
       correction: { label: '纠正调薪', color: 'default' },
@@ -69,7 +54,6 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
       approved: { label: '已批准', color: 'success', icon: <CheckCircle size={14} /> },
       pending: { label: '待审批', color: 'warning', icon: <Clock size={14} /> },
       rejected: { label: '已拒绝', color: 'error', icon: <XCircle size={14} /> },
-      applied: { label: '已生效', color: 'success', icon: <CheckCircle size={14} /> },
     };
     const cfg = map[status] || { label: status, color: 'default' as const, icon: null };
     return <Chip label={cfg.label} color={cfg.color} size='small' icon={cfg.icon as any} />;
@@ -82,32 +66,45 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
       width: 120,
     },
     {
+      id: 'department',
+      label: '部门',
+      width: 120,
+      render: (row) => (
+        <Typography variant='body2' color='text.secondary' noWrap>
+          {row.department || '-'}
+        </Typography>
+      ),
+    },
+    {
       id: 'adjustment_type',
       label: '调薪类型',
       width: 120,
       render: (row) => getTypeChip(row.adjustment_type),
     },
     {
-      id: 'before_amount',
+      id: 'old_salary',
       label: '调前薪资',
       width: 110,
       align: 'right',
-      render: (row) => <Typography variant='body2'>¥{row.before_amount.toLocaleString()}</Typography>,
+      render: (row) => <Typography variant='body2'>¥{Number(row.old_salary || 0).toLocaleString()}</Typography>,
     },
     {
-      id: 'after_amount',
+      id: 'new_salary',
       label: '调后薪资',
       width: 110,
       align: 'right',
-      render: (row) => <Typography variant='body2' sx={{ fontWeight: 600 }}>¥{row.after_amount.toLocaleString()}</Typography>,
+      render: (row) => <Typography variant='body2' sx={{ fontWeight: 600 }}>¥{Number(row.new_salary || 0).toLocaleString()}</Typography>,
     },
     {
-      id: 'change_amount',
+      id: 'adjustment_amount',
       label: '变动',
-      width: 110,
+      width: 140,
       align: 'right',
       render: (row: SalaryAdjustment) => {
-        const isPositive = row.change_amount >= 0;
+        const amount = Number(row.adjustment_amount || 0);
+        const oldSalary = Number(row.old_salary || 0);
+        const percent = oldSalary > 0 ? (amount / oldSalary) * 100 : 0;
+        const isPositive = amount >= 0;
         return (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, justifyContent: 'flex-end' }}>
             {isPositive ? <TrendingUp size={14} color="#10b981" /> : <TrendingDown size={14} color="#ef4444" />}
@@ -116,7 +113,7 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
               color={isPositive ? 'success.main' : 'error.main'}
               sx={{ fontWeight: 600 }}
             >
-              {isPositive ? '+' : ''}¥{row.change_amount.toLocaleString()} ({row.change_percent.toFixed(1)}%)
+              {isPositive ? '+' : ''}¥{amount.toLocaleString()} ({percent.toFixed(1)}%)
             </Typography>
           </Box>
         );
@@ -126,6 +123,11 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
       id: 'effective_date',
       label: '生效日期',
       width: 110,
+      render: (row) => (
+        <Typography variant='body2'>
+          {row.effective_date ? new Date(row.effective_date).toLocaleDateString('zh-CN') : '-'}
+        </Typography>
+      ),
     },
     {
       id: 'status',
@@ -138,7 +140,7 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
       label: '原因',
       render: (row) => (
         <Typography variant='body2' color='text.secondary' noWrap>
-          {row.reason}
+          {row.reason || '-'}
         </Typography>
       ),
     },
@@ -157,7 +159,7 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
       icon: <CheckCircle size={16} />,
       onClick: async (row) => {
         try {
-          await apiClient.hrm.post(`/api/hrm/salary-adjustments/${row.id}/approve`, {});
+          await salaryAdjustmentApi.approve(row.id, 'current-user');
           addNotification({ title: '审批成功', type: 'success', message: '已审批通过' });
           loadAdjustments();
         } catch (err) {

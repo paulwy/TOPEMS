@@ -233,4 +233,5 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
   );
 };
 
+export { OrganizationFilter };
 export default OrganizationFilter;

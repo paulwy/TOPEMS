@@ -79,6 +79,7 @@ export interface PageHeaderProps {
     onClick?: () => void;
     tooltip?: string;
     visible?: boolean;
+    fallback?: string;
   };
   /**
    * 是否显示返回按钮（兼容旧 API，等价于 backButton）
@@ -401,7 +402,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
     >
       <Box
         sx={{
-          maxWidth: maxWidth || false,
+          maxWidth: maxWidth || undefined,
           mx: maxWidth ? 'auto' : undefined,
           px: maxWidth ? { xs: 2, sm: 3 } : undefined,
           py: compact ? 1.5 : 3,
@@ -429,6 +430,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                 onClick={backButton.onClick}
                 href={backButton.href}
                 tooltip={backButton.tooltip}
+                fallback={backButton.fallback}
               />
             )}
 

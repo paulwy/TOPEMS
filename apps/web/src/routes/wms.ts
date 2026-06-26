@@ -10,6 +10,7 @@ const InventoryPage = lazy(() => import('../pages/wms/InventoryPage'));
 const InboundOrderPage = lazy(() => import('../pages/wms/InboundOrderPage'));
 const OutboundOrderPage = lazy(() => import('../pages/wms/OutboundOrderPage'));
 const StockTakePage = lazy(() => import('../pages/wms/StockTakePage'));
+const SupplierManagementPage = lazy(() => import('../pages/wms/SupplierManagementPage'));
 const WmsDashboardPage = lazy(() => import('../pages/wms/DashboardPage'));
 
 export const wmsRoutes: RouteConfig[] = [
@@ -51,6 +52,13 @@ export const wmsRoutes: RouteConfig[] = [
   {
     path: '/wms/stock-takes',
     element: StockTakePage,
+    requiredPermissions: ['wms:read'],
+    module: 'wms',
+    action: 'read',
+  },
+  {
+    path: '/wms/suppliers',
+    element: SupplierManagementPage,
     requiredPermissions: ['wms:read'],
     module: 'wms',
     action: 'read',

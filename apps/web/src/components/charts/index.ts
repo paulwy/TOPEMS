@@ -1,6 +1,6 @@
-export { default as BarChart } from './BarChart';
-export { default as LineChart } from './LineChart';
-export { default as PieChart } from './PieChart';
+export { default as BarChart, BarChartComponent } from './BarChart';
+export { default as LineChart, LineChartComponent } from './LineChart';
+export { default as PieChart, PieChartComponent } from './PieChart';
 export { AreaChart } from './AreaChart';
 export { RadarChart } from './RadarChart';
 export { BIChartColors, getChartColor, getContrastingColor, createGradientId } from './chartTheme';

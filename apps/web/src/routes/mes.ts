@@ -12,11 +12,21 @@ const ProductionProcessPage = lazy(() => import('../pages/mes/ProductionProcessP
 const WorkStationPage = lazy(() => import('../pages/mes/WorkStationPage'));
 const ProductionRecordPage = lazy(() => import('../pages/mes/ProductionRecordPage'));
 const MesDashboardPage = lazy(() => import('../pages/mes/DashboardPage'));
+const ProductionDashboardPage = lazy(
+  () => import('../pages/mes/ProductionDashboardPage')
+);
 
 export const mesRoutes: RouteConfig[] = [
   {
     path: '/mes',
     element: MesDashboardPage,
+    requiredPermissions: ['mes:read'],
+    module: 'mes',
+    action: 'read',
+  },
+  {
+    path: '/mes/board',
+    element: ProductionDashboardPage,
     requiredPermissions: ['mes:read'],
     module: 'mes',
     action: 'read',

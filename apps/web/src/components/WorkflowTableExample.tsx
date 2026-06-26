@@ -5,7 +5,7 @@ import type { ColumnDef } from '@tanstack/react-table';
 import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
 
 import { DataTable } from '@/components/common/DataTable';
-import { flowApi, type Workflow } from '@/api/flow';
+import { workflowApi, type Workflow } from '@/api/workflow';
 import { logger } from '@/utils/logger';
 
 export function WorkflowTableExample() {
@@ -23,7 +23,7 @@ export function WorkflowTableExample() {
     try {
       setLoading(true);
       setError(null);
-      const response = await flowApi.workflows.list();
+      const response = await workflowApi.workflows.list();
       if (response.success && response.data) {
         setData(response.data.items || []);
       } else {

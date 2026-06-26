@@ -2,7 +2,7 @@
 
 #![allow(clippy::match_like_matches_macro)]
 #![allow(clippy::manual_ok_err)]
-#![allow(clippy::redundant_pattern_matching)]
+#![allow(clippy::redundant_pattern_macro)]
 #![allow(clippy::useless_format)]
 #![allow(clippy::useless_vec)]
 #![allow(clippy::clone_on_copy)]
@@ -13,13 +13,14 @@
 #![allow(dead_code)]
 
 mod shared;
-
-pub mod modules;
+mod api;
+mod models;
+mod services;
 
 use std::net::SocketAddr;
 
 use axum::{
-    routing::{get, post, put},
+    routing::get,
     Json, Router,
 };
 use axum_prometheus::PrometheusMetricLayer;
@@ -87,9 +88,8 @@ async fn main() {
         }
     };
 
-    // Initialize EHS database
-    if let Err(e) = modules::ehs::init_database(&pool).await {
-        tracing::warn!("EHS module database init warning: {}", e);
+    if let Err(e) = models::init_ehs_database(&pool).await {
+        tracing::warn!("EHS database init warning: {}", e);
     }
 
     let auth_state = AuthState::from_env();
@@ -105,35 +105,19 @@ async fn main() {
     let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
-        .route("/api/plugins/info", get(modules::ehs::ehs_plugin::get_plugin_info))
-        .route("/api/plugins/health", get(modules::ehs::ehs_plugin::plugin_health_check))
+        .route("/api/plugins/info", get(services::ehs_plugin::get_plugin_info))
+        .route("/api/plugins/health", get(services::ehs_plugin::plugin_health_check))
         .route("/api/info", get(|| get_api_info_handler("ehs-service")))
         .route("/metrics", get(move || async move { metric_handle.render() }));
 
     // Protected routes
     let protected_routes = Router::new()
-        // Risk Assessment
-        .route("/api/qa/ehs/risk", get(modules::ehs::risk::list_risks))
-        .route("/api/qa/ehs/risk", post(modules::ehs::risk::create_risk))
-        .route("/api/qa/ehs/risk/{id}", get(modules::ehs::risk::get_risk))
-        .route("/api/qa/ehs/risk/{id}", put(modules::ehs::risk::update_risk))
-        .route("/api/qa/ehs/risk/{id}/assess", post(modules::ehs::risk::assess_risk))
-        // Safety Inspection
-        .route("/api/qa/ehs/safety", get(modules::ehs::safety::list_inspections))
-        .route("/api/qa/ehs/safety", post(modules::ehs::safety::create_inspection))
-        .route("/api/qa/ehs/safety/{id}", get(modules::ehs::safety::get_inspection))
-        // Accident Report
-        .route("/api/qa/ehs/accident", get(modules::ehs::accident::list_accidents))
-        .route("/api/qa/ehs/accident", post(modules::ehs::accident::report_accident))
-        // Environment
-        .route("/api/qa/ehs/environment", get(modules::ehs::environment::list_records))
-        .route("/api/qa/ehs/environment", post(modules::ehs::environment::create_record))
-        // Health
-        .route("/api/qa/ehs/health", get(modules::ehs::health::list_records))
-        .route("/api/qa/ehs/health", post(modules::ehs::health::create_record))
-        // Training
-        .route("/api/qa/ehs/training", get(modules::ehs::training::list_trainings))
-        .route("/api/qa/ehs/training", post(modules::ehs::training::create_training))
+        .merge(api::ehs_risk::create_routes())
+        .merge(api::ehs_safety::create_routes())
+        .merge(api::ehs_accident::create_routes())
+        .merge(api::ehs_environment::create_routes())
+        .merge(api::ehs_training::create_routes())
+        .merge(api::ehs_health::create_routes())
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),
             auth_middleware,
@@ -156,7 +140,7 @@ async fn main() {
     // Auto-register to Core
     let core_url = std::env::var("CORE_URL").ok();
     tokio::spawn(async move {
-        modules::ehs::ehs_plugin::auto_register_to_core(core_url.as_deref()).await;
+        services::ehs_plugin::auto_register_to_core(core_url.as_deref()).await;
     });
 
     axum::serve(

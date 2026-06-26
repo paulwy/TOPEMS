@@ -1,6 +1,7 @@
 pub mod data_sync;
 pub mod openapi;
 pub mod scoring_dimension;
+pub mod statistics;
 pub mod supplier;
 pub mod supplier_category;
 pub mod supplier_contract;
@@ -10,6 +11,7 @@ pub mod supplier_product;
 
 pub use data_sync::create_routes as create_data_sync_routes;
 pub use scoring_dimension::create_routes as create_scoring_dimension_routes;
+pub use statistics::create_routes as create_statistics_routes;
 pub use supplier::create_routes as create_supplier_routes;
 pub use supplier_category::create_routes as create_category_routes;
 pub use supplier_contract::create_routes as create_contract_routes;

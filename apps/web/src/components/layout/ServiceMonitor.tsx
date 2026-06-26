@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Paper, Box, Typography, IconButton, Card, CardContent, Chip } from '@mui/material';
-import { Grid } from '@/components/Grid';
+import { Grid } from '@/components';
 import { CheckCircle, AlertTriangle, XCircle, RefreshCw } from 'lucide-react';
 
 interface ServiceStatus {

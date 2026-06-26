@@ -68,7 +68,7 @@ async fn list_customers(
     let result = sqlx::query_as::<_, Customer>(
         r#"
         SELECT id, name, code, industry, company_size, website, email, phone, fax,
-               address, city, province, country, postal_code, status, customer_type,
+               id_card_number, address, city, province, country, postal_code, status, customer_type,
                source, rating, revenue, employee_count, notes, created_at, updated_at
         FROM crm.customers
         WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
@@ -91,7 +91,7 @@ async fn list_customers(
     .await;
 
     match result {
-        Ok(customers) => {
+        Ok(mut customers) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM crm.customers
@@ -111,6 +111,11 @@ async fn list_customers(
             .await;
 
             let total = count_result.unwrap_or(0);
+
+            for customer in customers.iter_mut() {
+                let _ = customer.decrypt_fields(&state.encryption);
+                customer.mask_sensitive_fields();
+            }
 
             Json(ApiResponse::success(
                 serde_json::json!({
@@ -147,16 +152,36 @@ async fn create_customer(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
+    let mut encrypted_email = req.email.clone();
+    let mut encrypted_phone = req.phone.clone();
+    let mut encrypted_id_card = req.id_card_number.clone();
+
+    if let Some(email) = &req.email {
+        if let Ok(enc) = state.encryption.encrypt_to_string(email) {
+            encrypted_email = Some(enc);
+        }
+    }
+    if let Some(phone) = &req.phone {
+        if let Ok(enc) = state.encryption.encrypt_to_string(phone) {
+            encrypted_phone = Some(enc);
+        }
+    }
+    if let Some(id_card) = &req.id_card_number {
+        if let Ok(enc) = state.encryption.encrypt_to_string(id_card) {
+            encrypted_id_card = Some(enc);
+        }
+    }
+
     let result = sqlx::query_as::<_, Customer>(
         r#"
         INSERT INTO crm.customers (
             id, name, code, industry, company_size, website, email, phone, fax,
-            address, city, province, country, postal_code, customer_type, source,
+            id_card_number, address, city, province, country, postal_code, customer_type, source,
             rating, revenue, employee_count, notes, status, created_at, updated_at
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,
-                  $15, $16, $17, $18, $19, $20, 'active', $21, $22)
+                  $15, $16, $17, $18, $19, $20, $21, 'active', $22, $23)
         RETURNING id, name, code, industry, company_size, website, email, phone, fax,
-                  address, city, province, country, postal_code, status, customer_type,
+                  id_card_number, address, city, province, country, postal_code, status, customer_type,
                   source, rating, revenue, employee_count, notes, created_at, updated_at
         "#,
     )
@@ -166,9 +191,10 @@ async fn create_customer(
     .bind(&req.industry)
     .bind(&req.company_size)
     .bind(&req.website)
-    .bind(&req.email)
-    .bind(&req.phone)
+    .bind(&encrypted_email)
+    .bind(&encrypted_phone)
     .bind(&req.fax)
+    .bind(&encrypted_id_card)
     .bind(&req.address)
     .bind(&req.city)
     .bind(&req.province)
@@ -186,11 +212,15 @@ async fn create_customer(
     .await;
 
     let (response, status_str, error_msg) = match &result {
-        Ok(customer) => (
-            Json(ApiResponse::success(customer.clone(), "客户创建成功")),
-            "success".to_string(),
-            None,
-        ),
+        Ok(customer) => {
+            let mut customer = customer.clone();
+            let _ = customer.decrypt_fields(&state.encryption);
+            (
+                Json(ApiResponse::success(customer, "客户创建成功")),
+                "success".to_string(),
+                None,
+            )
+        }
         Err(e) => {
             tracing::error!("创建客户失败: {}", e);
             (
@@ -240,7 +270,7 @@ async fn get_customer(
     let result = sqlx::query_as::<_, Customer>(
         r#"
         SELECT id, name, code, industry, company_size, website, email, phone, fax,
-               address, city, province, country, postal_code, status, customer_type,
+               id_card_number, address, city, province, country, postal_code, status, customer_type,
                source, rating, revenue, employee_count, notes, created_at, updated_at
         FROM crm.customers WHERE id = $1
         "#,
@@ -250,7 +280,10 @@ async fn get_customer(
     .await;
 
     match result {
-        Ok(Some(customer)) => Json(ApiResponse::success(customer, "获取客户成功")),
+        Ok(Some(mut customer)) => {
+            let _ = customer.decrypt_fields(&state.encryption);
+            Json(ApiResponse::success(customer, "获取客户成功"))
+        }
         Ok(None) => Json(api_error(404, "客户不存在")),
         Err(e) => {
             tracing::error!("获取客户失败: {}", e);
@@ -274,7 +307,7 @@ async fn update_customer(
     let existing = sqlx::query_as::<_, Customer>(
         r#"
         SELECT id, name, code, industry, company_size, website, email, phone, fax,
-               address, city, province, country, postal_code, status, customer_type,
+               id_card_number, address, city, province, country, postal_code, status, customer_type,
                source, rating, revenue, employee_count, notes, created_at, updated_at
         FROM crm.customers WHERE id = $1
         "#,
@@ -283,11 +316,13 @@ async fn update_customer(
     .fetch_optional(&state.db)
     .await;
 
-    let existing = match existing {
+    let mut existing = match existing {
         Ok(Some(c)) => c,
         Ok(None) => return Json(api_error(404, "客户不存在")),
         Err(e) => return Json(api_error(500, &format!("查询客户失败: {}", e))),
     };
+
+    let _ = existing.decrypt_fields(&state.encryption);
 
     let request_data = serde_json::to_value(&req).ok();
 
@@ -299,6 +334,7 @@ async fn update_customer(
     let email = req.email.or(existing.email);
     let phone = req.phone.or(existing.phone);
     let fax = req.fax.or(existing.fax);
+    let id_card_number = req.id_card_number.or(existing.id_card_number);
     let address = req.address.or(existing.address);
     let city = req.city.or(existing.city);
     let province = req.province.or(existing.province);
@@ -313,17 +349,37 @@ async fn update_customer(
     let notes = req.notes.or(existing.notes);
     let now = Utc::now();
 
+    let mut encrypted_email = email.clone();
+    let mut encrypted_phone = phone.clone();
+    let mut encrypted_id_card = id_card_number.clone();
+
+    if let Some(email_val) = &email {
+        if let Ok(enc) = state.encryption.encrypt_to_string(email_val) {
+            encrypted_email = Some(enc);
+        }
+    }
+    if let Some(phone_val) = &phone {
+        if let Ok(enc) = state.encryption.encrypt_to_string(phone_val) {
+            encrypted_phone = Some(enc);
+        }
+    }
+    if let Some(id_card_val) = &id_card_number {
+        if let Ok(enc) = state.encryption.encrypt_to_string(id_card_val) {
+            encrypted_id_card = Some(enc);
+        }
+    }
+
     let result = sqlx::query_as::<_, Customer>(
         r#"
         UPDATE crm.customers SET
             name = $2, code = $3, industry = $4, company_size = $5, website = $6,
-            email = $7, phone = $8, fax = $9, address = $10, city = $11,
-            province = $12, country = $13, postal_code = $14, status = $15,
-            customer_type = $16, source = $17, rating = $18, revenue = $19,
-            employee_count = $20, notes = $21, updated_at = $22
+            email = $7, phone = $8, fax = $9, id_card_number = $10,
+            address = $11, city = $12, province = $13, country = $14, postal_code = $15,
+            status = $16, customer_type = $17, source = $18, rating = $19, revenue = $20,
+            employee_count = $21, notes = $22, updated_at = $23
         WHERE id = $1
         RETURNING id, name, code, industry, company_size, website, email, phone, fax,
-                  address, city, province, country, postal_code, status, customer_type,
+                  id_card_number, address, city, province, country, postal_code, status, customer_type,
                   source, rating, revenue, employee_count, notes, created_at, updated_at
         "#,
     )
@@ -333,9 +389,10 @@ async fn update_customer(
     .bind(&industry)
     .bind(&company_size)
     .bind(&website)
-    .bind(&email)
-    .bind(&phone)
+    .bind(&encrypted_email)
+    .bind(&encrypted_phone)
     .bind(&fax)
+    .bind(&encrypted_id_card)
     .bind(&address)
     .bind(&city)
     .bind(&province)
@@ -352,26 +409,27 @@ async fn update_customer(
     .fetch_one(&state.db)
     .await;
 
-    let (response, status_str, error_msg) = match &result {
-        Ok(customer) => (
-            Json(ApiResponse::success(customer.clone(), "客户更新成功")),
-            "success".to_string(),
-            None,
-        ),
+    let (response, status_str, error_msg, response_data) = match &result {
+        Ok(customer) => {
+            let mut customer = customer.clone();
+            let _ = customer.decrypt_fields(&state.encryption);
+            let response_data = serde_json::to_value(&customer).ok();
+            (
+                Json(ApiResponse::success(customer, "客户更新成功")),
+                "success".to_string(),
+                None,
+                response_data,
+            )
+        }
         Err(e) => {
             tracing::error!("更新客户失败: {}", e);
             (
                 Json(api_error(500, "客户更新失败")),
                 "error".to_string(),
                 Some(e.to_string()),
+                None,
             )
         }
-    };
-
-    let response_data = if let Ok(customer) = &result {
-        serde_json::to_value(customer).ok()
-    } else {
-        None
     };
 
     log_audit_event(

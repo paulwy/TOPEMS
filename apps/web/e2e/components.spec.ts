@@ -4,10 +4,10 @@ test.describe('首页组件测试', () => {
   test.beforeEach(async ({ page }) => {
     // 登录
     await page.goto('/login');
-    await page.fill('input[name="username"]', 'admin');
-    await page.fill('input[name="password"]', 'admin123');
-    await page.click('button[type="submit"]');
-    await page.waitForURL('/dashboard');
+    await page.getByPlaceholder('请输入用户名').fill('admin');
+    await page.getByPlaceholder('请输入密码').fill('admin123');
+    await page.getByRole('button', { name: '登录' }).click();
+    await page.waitForURL('**/dashboard', { timeout: 15000 });
   });
 
   test('首页应显示分区布局', async ({ page }) => {

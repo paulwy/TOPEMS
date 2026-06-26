@@ -127,32 +127,7 @@ export const DashboardPage: React.FC = () => {
     },
   ];
 
-  const quickActions: QuickAction[] = [
-    {
-      id: 'create-purchase-order',
-      label: '新建采购订单',
-      icon: <ArrowRight size={18} />,
-      onClick: () => navigate('/erp/purchasing/create'),
-    },
-    {
-      id: 'view-financial-reports',
-      label: '查看财务报表',
-      icon: <ArrowRight size={18} />,
-      onClick: () => navigate('/erp/finance/reports'),
-    },
-    {
-      id: 'inventory-stocktake',
-      label: '库存盘点',
-      icon: <ArrowRight size={18} />,
-      onClick: () => navigate('/erp/inventory/stocktake'),
-    },
-    {
-      id: 'sales-data-analysis',
-      label: '销售数据分析',
-      icon: <ArrowRight size={18} />,
-      onClick: () => navigate('/erp/sales/analysis'),
-    },
-  ];
+  const quickActions: QuickAction[] = [];
 
   return (
     <DashboardTemplate

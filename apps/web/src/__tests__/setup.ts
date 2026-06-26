@@ -1,39 +1,60 @@
-import "@testing-library/jest-dom";
-import { cleanup } from "@testing-library/react";
-import { vi } from "vitest";
-import React from "react";
+import { vi } from 'vitest';
 
-// Mock react-transition-group to fix ES module import issues
-vi.mock("react-transition-group", () => {
-  return {
-    Transition: React.forwardRef(({ children, in: inProp, timeout, onEnter, onExited }: any, ref: any) => {
-      if (typeof children === "function") {
-        return children({ ref, in: inProp }, {});
-      }
-      return inProp ? children : null;
-    }),
-    TransitionGroup: ({ children }: any) => React.createElement(React.Fragment, null, children),
-    CSSTransition: React.forwardRef(({ children, in: inProp }: any, ref: any) => {
-      if (typeof children === "function") {
-        return children({ ref, in: inProp }, {});
-      }
-      return inProp ? children : null;
-    }),
-    ReplaceTransition: ({ children, in: inProp }: any) => (inProp ? children : null),
-    SwitchTransition: ({ children }: any) => React.createElement(React.Fragment, null, children),
-    TransitionGroupContext: React.createContext(null),
-  };
+Object.defineProperty(window, 'matchMedia', {
+  writable: true,
+  value: vi.fn().mockImplementation((query) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  })),
 });
 
-afterEach(() => {
-  cleanup();
-});
+class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
 
-// Suppress unhandled promise rejection warnings in tests
-process.on("unhandledRejection", (reason) => {
-  if (reason instanceof Error && reason.message === "Network error") {
-    // Expected in some tests - suppress
-    return;
-  }
-  console.warn("Unhandled Rejection:", reason);
-});
+window.ResizeObserver = ResizeObserver;
+
+global.CSS = {
+  supports: vi.fn().mockReturnValue(true),
+  escape: vi.fn().mockImplementation((str) => str),
+  Hz: 'Hz',
+  Q: 'Q',
+  cap: 'cap',
+  ch: 'ch',
+  cm: 'cm',
+  deg: 'deg',
+  dpcm: 'dpcm',
+  dpi: 'dpi',
+  em: 'em',
+  ex: 'ex',
+  fr: 'fr',
+  grad: 'grad',
+  h: 'h',
+  H: 'H',
+  inch: 'in',
+  kHz: 'kHz',
+  mm: 'mm',
+  ms: 'ms',
+  pc: 'pc',
+  pt: 'pt',
+  px: 'px',
+  q: 'q',
+  rad: 'rad',
+  rem: 'rem',
+  s: 's',
+  turn: 'turn',
+  vh: 'vh',
+  vmax: 'vmax',
+  vmin: 'vmin',
+  vw: 'vw',
+  lh: 'lh',
+  rlh: 'rlh',
+};

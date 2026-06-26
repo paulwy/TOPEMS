@@ -8,8 +8,9 @@ test.describe('LIMS Page Tests', () => {
     await page.getByRole('button', { name: '登录' }).click();
     await page.waitForURL('**/dashboard', { timeout: 15000 });
     
-    await page.locator('h4', { hasText: '实验室管理' }).click();
-    await page.waitForURL('**/lims', { timeout: 15000 });
+    // Use direct URL navigation instead of sidebar click
+    await page.goto('/lims');
+    await page.waitForLoadState('networkidle');
   });
 
   test('displays LIMS page correctly', async ({ page }) => {

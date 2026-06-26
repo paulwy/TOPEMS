@@ -7,8 +7,6 @@ export { useHrmStore } from './store/hrmStore';
 // Pages
 export {
   DashboardPage,
-  EmployeeManagementPage,
-  DepartmentManagementPage,
   AttendancePage,
   PayrollPage,
   PerformancePage,

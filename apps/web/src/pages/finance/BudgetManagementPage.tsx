@@ -34,7 +34,7 @@ import {
   Stack,
 } from '@mui/material';
 import { Button } from '@mui/material';
-import { ModeToggle } from '@/components/ModeToggle';
+import { ModeToggle } from '@/components/theme/ModeToggle';
 import OrganizationFilter, {
   type OrganizationFilterValue,
 } from '@/components/ui/OrganizationFilter';

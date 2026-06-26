@@ -1,37 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Box,
-  Card,
-  CardHeader,
-  CardContent,
-  Typography,
-  Button,
-  Grid,
-  Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  TextField,
-  IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  CircularProgress,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Grid,
 } from '@mui/material';
+import { Button } from '@mui/material';
 import {
-  Package,
   Plus,
   Edit,
   Delete,
-  Search,
   Layers,
   ArrowDownRight,
 } from 'lucide-react';
@@ -39,6 +24,12 @@ import { pdmApi } from '@/api/pdm';
 import type { BomItem, Product } from '@/api/pdm';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
+import {
+  ListPageTemplate,
+  type ColumnDef,
+  type RowAction,
+  type FilterConfig,
+} from '@/components/templates';
 
 interface BomItemFormData {
   part_number: string;
@@ -186,234 +177,169 @@ export const PdmBomPage: React.FC = () => {
     }
   };
 
-  const filteredBomItems = bomItems.filter((item) => {
-    const matchesProduct = !selectedProduct || item.product_id === selectedProduct;
-    const matchesSearch =
-      item.part_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.part_number.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesProduct && matchesSearch;
-  });
+  const filteredBomItems = useMemo(() => {
+    return bomItems.filter((item) => {
+      const matchesProduct = !selectedProduct || item.product_id === selectedProduct;
+      const matchesSearch =
+        !searchTerm ||
+        item.part_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.part_number.toLowerCase().includes(searchTerm.toLowerCase());
+      return matchesProduct && matchesSearch;
+    });
+  }, [bomItems, selectedProduct, searchTerm]);
 
-  const totalCost = filteredBomItems.reduce((sum, item) => sum + (item.total_price || item.quantity * item.unit_price), 0);
+  const totalCost = filteredBomItems.reduce(
+    (sum, item) => sum + (item.total_price || item.quantity * item.unit_price),
+    0
+  );
+
+  const productFilterOptions = useMemo(
+    () => products.map((p) => ({ label: `${p.name} (${p.code})`, value: p.id })),
+    [products]
+  );
+
+  const filters: FilterConfig[] = useMemo(
+    () => [
+      {
+        id: 'product',
+        label: '选择产品',
+        type: 'select',
+        options: productFilterOptions,
+      },
+    ],
+    [productFilterOptions]
+  );
+
+  const handleFilterChange = useCallback((values: Record<string, any>) => {
+    setSelectedProduct(values.product || '');
+  }, []);
+
+  const handleSearch = useCallback((value: string) => {
+    setSearchTerm(value);
+  }, []);
+
+  const columns: ColumnDef<BomItem>[] = useMemo(
+    () => [
+      {
+        id: 'level',
+        label: '层级',
+        minWidth: 80,
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {row.level === 1 && <Layers size={14} />}
+            {row.level > 1 && <ArrowDownRight size={14} />}
+            <span>L{row.level}</span>
+          </Box>
+        ),
+      },
+      { id: 'part_number', label: '物料编号', minWidth: 120 },
+      { id: 'part_name', label: '物料名称', minWidth: 160 },
+      { id: 'quantity', label: '数量', minWidth: 80, align: 'right' },
+      { id: 'unit', label: '单位', minWidth: 80, align: 'center' },
+      {
+        id: 'unit_price',
+        label: '单价',
+        minWidth: 100,
+        align: 'right',
+        render: (row) => `¥ ${row.unit_price.toFixed(2)}`,
+      },
+      {
+        id: 'total_price',
+        label: '总价',
+        minWidth: 100,
+        align: 'right',
+        render: (row) => `¥ ${(row.total_price || row.quantity * row.unit_price).toFixed(2)}`,
+      },
+    ],
+    []
+  );
+
+  const rowActions: RowAction<BomItem>[] = useMemo(
+    () => [
+      {
+        label: '编辑',
+        icon: <Edit size={16} />,
+        color: 'primary',
+        onClick: (row) => handleEditItem(row),
+      },
+      {
+        label: '删除',
+        icon: <Delete size={16} />,
+        color: 'error',
+        onClick: (row) => handleDeleteItem(row.id),
+        confirm: true,
+        confirmMessage: '确定要删除这个物料吗？',
+      },
+    ],
+    []
+  );
+
+  const statsCards = (
+    <Grid container spacing={3} sx={{ mb: 2 }}>
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <Box
+          sx={{
+            p: 2,
+            borderRadius: 2,
+            bgcolor: 'background.paper',
+            border: 1,
+            borderColor: 'divider',
+          }}
+        >
+          <Box sx={{ color: 'text.secondary', fontSize: '0.875rem', mb: 1 }}>物料总数</Box>
+          <Box sx={{ fontWeight: 'bold', fontSize: '1.5rem' }}>
+            {loading ? '...' : `${filteredBomItems.length} 项`}
+          </Box>
+        </Box>
+      </Grid>
+      <Grid size={{ xs: 12, sm: 6 }}>
+        <Box
+          sx={{
+            p: 2,
+            borderRadius: 2,
+            bgcolor: 'background.paper',
+            border: 1,
+            borderColor: 'divider',
+          }}
+        >
+          <Box sx={{ color: 'text.secondary', fontSize: '0.875rem', mb: 1 }}>物料总成本</Box>
+          <Box sx={{ fontWeight: 'bold', fontSize: '1.5rem', color: 'primary.main' }}>
+            {loading ? '...' : `¥ ${totalCost.toLocaleString()}`}
+          </Box>
+        </Box>
+      </Grid>
+    </Grid>
+  );
 
   return (
-    <Box sx={{ flex: 1 }}>
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 4,
-        }}
-      >
-        <div>
-          <Typography
-            variant='h4'
-            sx={{ fontWeight: 'bold', mb: 1 }}
-          >
-            物料清单 (BOM)
-          </Typography>
-          <Typography
-            variant='body2'
-            color='text.secondary'
-          >
-            管理产品的物料组成和成本结构
-          </Typography>
-        </div>
-        <Button
-          variant='contained'
-          startIcon={<Plus />}
-          onClick={handleCreate}
-          sx={{ bgcolor: 'primary.main' }}
-        >
-          添加物料
-        </Button>
-      </Box>
+    <>
+      <ListPageTemplate
+        title='物料清单 (BOM)'
+        subtitle='管理产品的物料组成和成本结构'
+        columns={columns}
+        data={filteredBomItems}
+        loading={loading}
+        searchable
+        searchPlaceholder='搜索物料编号或名称...'
+        onSearch={handleSearch}
+        filters={filters}
+        filtersValue={{ product: selectedProduct }}
+        onFilterChange={handleFilterChange}
+        rowActions={rowActions}
+        actions={[
+          {
+            label: '添加物料',
+            icon: <Plus size={16} />,
+            onClick: handleCreate,
+            variant: 'contained',
+          },
+        ]}
+        onRefresh={loadBomItems}
+        headerContent={statsCards}
+        emptyMessage='暂无物料数据'
+      />
 
-      <Grid
-        container
-        spacing={3}
-        sx={{ mb: 4 }}
-      >
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <Card>
-            <CardContent>
-              <Typography
-                variant='body2'
-                color='text.secondary'
-                sx={{ mb: 2 }}
-              >
-                选择产品
-              </Typography>
-              <FormControl fullWidth>
-                <Select
-                  value={selectedProduct}
-                  onChange={(e) => setSelectedProduct(e.target.value)}
-                  sx={{ minHeight: 48 }}
-                  disabled={loading}
-                >
-                  {products.map((product) => (
-                    <MenuItem
-                      key={product.id}
-                      value={product.id}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Package size={16} />
-                        <div>
-                          <Typography
-                            variant='body1'
-                            sx={{ fontWeight: 500 }}
-                          >
-                            {product.name}
-                          </Typography>
-                          <Typography
-                            variant='caption'
-                            color='text.secondary'
-                          >
-                            {product.code} - {product.version}
-                          </Typography>
-                        </div>
-                      </Box>
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <Card>
-            <CardContent>
-              <Typography
-                variant='body2'
-                color='text.secondary'
-                sx={{ mb: 2 }}
-              >
-                物料总数
-              </Typography>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 'bold' }}
-              >
-                {loading ? <CircularProgress size={24} /> : `${filteredBomItems.length} 项`}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid size={{ xs: 12, sm: 4 }}>
-          <Card>
-            <CardContent>
-              <Typography
-                variant='body2'
-                color='text.secondary'
-                sx={{ mb: 2 }}
-              >
-                物料总成本
-              </Typography>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 'bold', color: 'primary.main' }}
-              >
-                {loading ? <CircularProgress size={24} /> : `¥ ${totalCost.toLocaleString()}`}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      <Card>
-        <CardHeader
-          title='BOM 明细'
-          action={
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <TextField
-                placeholder='搜索物料...'
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                size='small'
-                sx={{ width: 200 }}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <Search
-                        size={16}
-                        sx={{ mr: 1 }}
-                      />
-                    ),
-                  },
-                }}
-              />
-            </Box>
-          }
-        />
-        <CardContent>
-          {loading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-              <CircularProgress />
-            </Box>
-          ) : (
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>层级</TableCell>
-                    <TableCell>物料编号</TableCell>
-                    <TableCell>物料名称</TableCell>
-                    <TableCell>数量</TableCell>
-                    <TableCell>单位</TableCell>
-                    <TableCell>单价</TableCell>
-                    <TableCell>总价</TableCell>
-                    <TableCell>操作</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredBomItems.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          {item.level === 1 && <Layers size={14} />}
-                          {item.level > 1 && <ArrowDownRight size={14} />}
-                          <Typography variant='caption'>L{item.level}</Typography>
-                        </Box>
-                      </TableCell>
-                      <TableCell>{item.part_number}</TableCell>
-                      <TableCell>{item.part_name}</TableCell>
-                      <TableCell>{item.quantity}</TableCell>
-                      <TableCell>{item.unit}</TableCell>
-                      <TableCell>¥ {item.unit_price.toFixed(2)}</TableCell>
-                      <TableCell>¥ {(item.total_price || item.quantity * item.unit_price).toFixed(2)}</TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', gap: 1 }}>
-                          <IconButton
-                            size='small'
-                            onClick={() => handleEditItem(item)}
-                          >
-                            <Edit size={16} />
-                          </IconButton>
-                          <IconButton
-                            size='small'
-                            color='error'
-                            onClick={() => handleDeleteItem(item.id)}
-                          >
-                            <Delete size={16} />
-                          </IconButton>
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-        </CardContent>
-      </Card>
-
-      <Dialog
-        open={openDialog}
-        onClose={() => setOpenDialog(false)}
-        maxWidth='sm'
-        fullWidth
-      >
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth='sm' fullWidth>
         <DialogTitle>{editingItem ? '编辑物料' : '添加物料'}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
@@ -431,10 +357,7 @@ export const PdmBomPage: React.FC = () => {
               fullWidth
               required
             />
-            <Grid
-              container
-              spacing={3}
-            >
+            <Grid container spacing={3}>
               <Grid size={{ xs: 6 }}>
                 <TextField
                   label='数量 *'
@@ -497,16 +420,12 @@ export const PdmBomPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDialog(false)}>取消</Button>
-          <Button
-            variant='contained'
-            onClick={handleSaveItem}
-            sx={{ bgcolor: 'primary.main' }}
-          >
+          <Button variant='contained' onClick={handleSaveItem}>
             保存
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </>
   );
 };
 

@@ -36,9 +36,9 @@ use utoipa::OpenApi;
 use api::ApiState;
 use topems_shared::{
     check_http_health, config::CacheConfig, create_api_info_router,
-    create_cors_layer, create_database_pool, init_logging, verify_jwt_token, ApiResponse, AuthState,
-    CacheService, Claims, DatabaseConfig, DependencyHealth, HealthStatus, InMemoryCache,
-    RedisConfig, ServiceHealth, SystemMetrics,
+    create_cors_layer, create_database_pool, init_telemetry, verify_jwt_token, ApiResponse, AuthState,
+    CacheService, Claims, DatabaseConfig, DependencyHealth, FieldEncryptionService, HealthStatus,
+    InMemoryCache, KeyManager, RedisConfig, ServiceHealth, SystemMetrics, telemetry_middleware,
 };
 use topems_shared::redis::{RedisCacheService, RedisPool as RedisPoolTrait};
 
@@ -46,7 +46,7 @@ use topems_shared::redis::{RedisCacheService, RedisPool as RedisPoolTrait};
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
 
-    init_logging("topems-hrm");
+    let _telemetry_guard = init_telemetry("topems-hrm");
 
     env::set_var("SEARCH_PATH", "shared, hrm, public");
 
@@ -72,6 +72,9 @@ async fn main() -> Result<()> {
     let cache = init_cache().await;
     tracing::info!("🗄️ 缓存服务初始化完成");
 
+    let encryption = init_encryption_service();
+    tracing::info!("🔐 字段加密服务初始化完成");
+
     let start_time = Instant::now();
     let metrics = Arc::new(SystemMetrics::new());
 
@@ -81,6 +84,7 @@ async fn main() -> Result<()> {
         metrics: metrics.clone(),
         start_time,
         cache,
+        encryption: Arc::new(encryption),
     };
 
     let cors = create_cors_layer();
@@ -114,6 +118,7 @@ async fn main() -> Result<()> {
         .merge(health_router)
         .merge(protected_routes)
         .merge(create_api_info_router("topems-hrm"))
+        .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(prometheus_layer)
         .layer(cors);
 
@@ -271,6 +276,30 @@ async fn check_iam_health() -> DependencyHealth {
                 status: HealthStatus::Degraded,
                 message: format!("IAM 服务连接异常: {}", e),
             }
+        }
+    }
+}
+
+fn init_encryption_service() -> FieldEncryptionService {
+    let encryption_key = env::var("ENCRYPTION_KEY")
+        .unwrap_or_else(|_| "base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=".to_string());
+    
+    let key_b64 = if let Some(stripped) = encryption_key.strip_prefix("base64:") {
+        stripped.to_string()
+    } else {
+        use sha2::{Sha256, Digest};
+        let mut hasher = Sha256::new();
+        hasher.update(encryption_key.as_bytes());
+        let result = hasher.finalize();
+        base64::encode(result)
+    };
+
+    match KeyManager::from_base64_key(&key_b64) {
+        Ok(km) => FieldEncryptionService::new(km),
+        Err(e) => {
+            tracing::warn!("⚠️  加密密钥初始化失败，使用默认密钥: {}", e);
+            let default_key = [0u8; 32];
+            FieldEncryptionService::new(KeyManager::new(&default_key))
         }
     }
 }

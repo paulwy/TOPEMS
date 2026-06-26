@@ -47,7 +47,7 @@ import {
   type Dashboard,
   type DashboardTemplate,
 } from '@/api/bi';
-import { DashboardEditor } from '@/components/bi/DashboardEditor';
+import { DashboardEditor, type DashboardWidget } from '@/components/bi/DashboardEditor';
 import { useAppStore } from '@/store';
 import { DashboardTemplateManager } from '@/components/bi/DashboardTemplateManager';
 import { DashboardTemplate as DashboardLayout } from '@/components/templates';
@@ -234,7 +234,7 @@ const BIDashboardPage = () => {
                 id: selectedDashboard.id,
                 name: selectedDashboard.name,
                 description: selectedDashboard.description || '',
-                widgets: selectedDashboard.layout?.widgets || [],
+                widgets: (selectedDashboard.layout?.widgets as DashboardWidget[]) || [],
               }
             : undefined
         }

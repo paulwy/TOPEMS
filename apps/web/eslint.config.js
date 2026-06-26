@@ -1,79 +1,307 @@
-// For more info, see https://github.com/storybookjs/eslint-plugin-storybook#configuration-flat-config-format
-import storybook from "eslint-plugin-storybook";
-
+import storybook from 'eslint-plugin-storybook';
 import globals from 'globals';
 import tsParser from '@typescript-eslint/parser';
 import tsPlugin from '@typescript-eslint/eslint-plugin';
 import prettierPlugin from 'eslint-plugin-prettier';
 import reactPlugin from 'eslint-plugin-react';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
+import importX from 'eslint-plugin-import-x';
+import unicorn from 'eslint-plugin-unicorn';
+import checkFile from 'eslint-plugin-check-file';
 
-export default [{
-  files: ['**/*.{ts,tsx}'],
-  languageOptions: {
-    globals: {
-      ...globals.browser,
-      ...globals.node,
-      ...globals.jest,
-      ServiceWorkerGlobalScope: 'readonly',
-      NodeJS: 'readonly',
+export default [
+  {
+    files: ['**/*.{ts,tsx}'],
+    languageOptions: {
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+        ...globals.jest,
+        ServiceWorkerGlobalScope: 'readonly',
+        NodeJS: 'readonly',
+      },
+      parser: tsParser,
+      parserOptions: {
+        ecmaFeatures: { jsx: true },
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        project: './tsconfig.json',
+      },
     },
-    parser: tsParser,
-    parserOptions: {
-      ecmaFeatures: { jsx: true },
-      ecmaVersion: 'latest',
-      sourceType: 'module',
-      project: './tsconfig.json',
+    plugins: {
+      '@typescript-eslint': tsPlugin,
+      prettier: prettierPlugin,
+      react: reactPlugin,
+      'react-hooks': reactHooksPlugin,
+      'import-x': importX,
+      unicorn,
+      'check-file': checkFile,
+    },
+    settings: {
+      react: {
+        version: 'detect',
+      },
+      'import-x/resolver': {
+        typescript: {
+          project: './tsconfig.json',
+        },
+      },
+    },
+    rules: {
+      'prettier/prettier': 'error',
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
+
+      '@typescript-eslint/explicit-module-boundary-types': 'off',
+      '@typescript-eslint/no-empty-function': 'off',
+      '@typescript-eslint/no-namespace': 'off',
+      '@typescript-eslint/consistent-type-imports': 'warn',
+      '@typescript-eslint/no-misused-promises': 'off',
+      '@typescript-eslint/restrict-template-expressions': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+        },
+      ],
+      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/naming-convention': [
+        'warn',
+        {
+          selector: 'variable',
+          format: ['camelCase', 'UPPER_CASE', 'PascalCase'],
+          leadingUnderscore: 'allow',
+        },
+        {
+          selector: 'variable',
+          types: ['function'],
+          format: ['camelCase', 'PascalCase'],
+        },
+        {
+          selector: 'function',
+          format: ['camelCase', 'PascalCase'],
+        },
+        {
+          selector: 'parameter',
+          format: ['camelCase', 'snake_case'],
+          leadingUnderscore: 'allow',
+        },
+        {
+          selector: 'typeLike',
+          format: ['PascalCase'],
+        },
+        {
+          selector: 'interface',
+          format: ['PascalCase'],
+          custom: {
+            regex: '^I[A-Z]',
+            match: false,
+          },
+        },
+        {
+          selector: 'typeAlias',
+          format: ['PascalCase'],
+        },
+        {
+          selector: 'enum',
+          format: ['PascalCase'],
+        },
+        {
+          selector: 'enumMember',
+          format: ['UPPER_CASE'],
+        },
+        {
+          selector: 'class',
+          format: ['PascalCase'],
+        },
+        {
+          selector: 'method',
+          format: ['camelCase'],
+        },
+        {
+          selector: 'property',
+          format: null,
+        },
+        {
+          selector: 'objectLiteralProperty',
+          format: null,
+        },
+        {
+          selector: 'typeProperty',
+          format: ['camelCase', 'snake_case'],
+        },
+      ],
+
+      'no-console': [
+        'warn',
+        {
+          allow: ['warn', 'error', 'info'],
+        },
+      ],
+      'no-unused-vars': 'off',
+      'prefer-const': [
+        'warn',
+        {
+          destructuring: 'any',
+          ignoreReadBeforeAssign: true,
+        },
+      ],
+      'no-var': 'error',
+      'eqeqeq': ['warn', 'smart'],
+      'no-throw-literal': 'warn',
+      'prefer-template': 'warn',
+      'object-shorthand': 'warn',
+      'array-callback-return': 'warn',
+
+      'react/react-in-jsx-scope': 'off',
+      'react/no-unescaped-entities': 'off',
+      'react/prop-types': 'off',
+      'react/display-name': 'off',
+
+      'import-x/order': [
+        'warn',
+        {
+          groups: [
+            'builtin',
+            'external',
+            'internal',
+            'parent',
+            'sibling',
+            'index',
+            'object',
+            'type',
+          ],
+          pathGroups: [
+            {
+              pattern: 'react',
+              group: 'external',
+              position: 'before',
+            },
+            {
+              pattern: 'react-*',
+              group: 'external',
+              position: 'before',
+            },
+            {
+              pattern: '@mui/**',
+              group: 'external',
+            },
+            {
+              pattern: '@tanstack/**',
+              group: 'external',
+            },
+            {
+              pattern: '@topems/**',
+              group: 'internal',
+              position: 'before',
+            },
+            {
+              pattern: '@/**',
+              group: 'internal',
+              position: 'before',
+            },
+          ],
+          pathGroupsExcludedImportTypes: ['builtin', 'react'],
+          'newlines-between': 'always',
+          alphabetize: {
+            order: 'asc',
+            caseInsensitive: true,
+          },
+        },
+      ],
+      'import-x/no-unresolved': 'off',
+      'import-x/no-duplicates': 'warn',
+      'import-x/first': 'warn',
+      'import-x/newline-after-import': 'warn',
+      'import-x/no-cycle': ['warn', { maxDepth: 3 }],
+      'import-x/no-self-import': 'warn',
+      'import-x/no-useless-path-segments': 'warn',
+      'import-x/no-relative-packages': 'warn',
+      'import-x/no-relative-parent-imports': 'warn',
+
+      'unicorn/prefer-node-protocol': 'off',
+      'unicorn/filename-case': 'off',
+      'unicorn/no-abusive-eslint-disable': 'warn',
+      'unicorn/custom-error-definition': 'warn',
+      'unicorn/error-message': 'warn',
+      'unicorn/escape-case': 'warn',
+      'unicorn/no-array-for-each': 'off',
+      'unicorn/no-array-callback-reference': 'off',
+      'unicorn/no-for-loop': 'off',
+      'unicorn/no-lonely-if': 'warn',
+      'unicorn/no-null': 'off',
+      'unicorn/no-unreadable-array-destructuring': 'warn',
+      'unicorn/no-useless-undefined': 'warn',
+      'unicorn/prefer-array-find': 'warn',
+      'unicorn/prefer-array-flat-map': 'warn',
+      'unicorn/prefer-array-index-of': 'warn',
+      'unicorn/prefer-array-some': 'warn',
+      'unicorn/prefer-date-now': 'warn',
+      'unicorn/prefer-includes': 'warn',
+      'unicorn/prefer-string-starts-ends-with': 'warn',
+      'unicorn/prefer-ternary': 'off',
+      'unicorn/prefer-type-error': 'warn',
+
+      'check-file/filename-naming-convention': [
+        'warn',
+        {
+          'src/components/**/*.{tsx,jsx}': 'PASCAL_CASE',
+          'src/pages/**/*.{tsx,jsx}': 'PASCAL_CASE',
+          'src/hooks/**/*.{ts,js}': 'CAMEL_CASE',
+          'src/utils/**/*.{ts,js}': 'CAMEL_CASE',
+          'src/lib/**/*.{ts,js}': 'CAMEL_CASE',
+          'src/api/**/*.{ts,js}': 'CAMEL_CASE',
+          'src/constants/**/*.{ts,js}': 'CAMEL_CASE',
+          'src/store/**/*.{ts,js}': 'CAMEL_CASE',
+          'src/services/**/*.{ts,js}': 'PASCAL_CASE',
+        },
+        {
+          ignoreMiddleExtensions: true,
+        },
+      ],
+      'check-file/folder-naming-convention': 'off',
     },
   },
-  plugins: {
-    '@typescript-eslint': tsPlugin,
-    prettier: prettierPlugin,
-    react: reactPlugin,
-    'react-hooks': reactHooksPlugin,
-  },
-  rules: {
-    '@typescript-eslint/no-unused-vars': 'off',
-    '@typescript-eslint/explicit-module-boundary-types': 'off',
-    '@typescript-eslint/no-explicit-any': 'off',
-    '@typescript-eslint/no-empty-function': 'off',
-    '@typescript-eslint/no-namespace': 'off',
-    '@typescript-eslint/consistent-type-imports': 'error',
-    '@typescript-eslint/no-misused-promises': 'off',
-    '@typescript-eslint/restrict-template-expressions': 'off',
-    'prettier/prettier': 'error',
-    'no-console': 'off',
-    'no-unused-vars': 'off',
-    'react-hooks/rules-of-hooks': 'error',
-    'react-hooks/exhaustive-deps': 'warn',
-  },
-}, {
-  files: ['**/*.js'],
-  languageOptions: {
-    globals: {
-      ...globals.node,
+  {
+    files: ['**/*.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
+    rules: {
+      'no-console': 'off',
+      '@typescript-eslint/naming-convention': 'off',
     },
   },
-  rules: {
-    'no-console': 'off',
+  {
+    files: ['src/**/*.stories.{ts,tsx}'],
+    rules: {
+      'check-file/filename-naming-convention': 'off',
+    },
   },
-}, {
-  ignores: [
-    'node_modules/',
-    'dist/',
-    'build/',
-    'public/',
-    'temp.tsx',
-    'e2e/**/*',
-    'src/__tests__/**/*',
-    'vite.config.ts',
-    'vitest.config.ts',
-    'playwright.config.ts',
-    'tsconfig.json',
-    'tsconfig.node.json',
-    'scripts/**/*',
-    '.storybook/**/*',
-    'src/**/*.stories.ts',
-    'src/**/*.stories.tsx',
-  ],
-}, ...storybook.configs["flat/recommended"]];
+  {
+    ignores: [
+      'node_modules/',
+      'dist/',
+      'build/',
+      'public/',
+      'temp.tsx',
+      'e2e/**/*',
+      'src/__tests__/**/*',
+      'vite.config.ts',
+      'vitest.config.ts',
+      'playwright.config.ts',
+      'tsconfig.json',
+      'tsconfig.node.json',
+      'scripts/**/*',
+      '.storybook/**/*',
+      'src/**/*.stories.ts',
+      'src/**/*.stories.tsx',
+      'src/@types/**/*',
+    ],
+  },
+  ...storybook.configs['flat/recommended'],
+];

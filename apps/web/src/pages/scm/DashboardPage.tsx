@@ -280,36 +280,6 @@ export const DashboardPage: React.FC = () => {
         icon: <ArrowRight size={18} />,
         onClick: () => navigate('/scm/suppliers/create'),
       },
-      {
-        id: 'create-order',
-        label: '创建采购单',
-        icon: <ArrowRight size={18} />,
-        onClick: () => navigate('/scm/purchasing/create'),
-      },
-      {
-        id: 'mrp-plan',
-        label: 'MRP计划',
-        icon: <ArrowRight size={18} />,
-        onClick: () => navigate('/scm/mrp-plans'),
-      },
-      {
-        id: 'incoming-inspection',
-        label: '到货检验',
-        icon: <ArrowRight size={18} />,
-        onClick: () => navigate('/scm/incoming-inspections'),
-      },
-      {
-        id: 'inventory-turnover',
-        label: '库存周转',
-        icon: <ArrowRight size={18} />,
-        onClick: () => navigate('/scm/inventory-turnover'),
-      },
-      {
-        id: 'price-comparison',
-        label: '价格比价',
-        icon: <ArrowRight size={18} />,
-        onClick: () => navigate('/scm/price-comparisons'),
-      },
     ],
     [navigate]
   );

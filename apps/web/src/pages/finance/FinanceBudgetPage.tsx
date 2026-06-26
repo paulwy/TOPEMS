@@ -22,30 +22,19 @@ import { useAppStore } from '../../store';
 import {
   Typography,
   Box,
-  TextField,
-  Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   IconButton,
   LinearProgress,
   Card,
   CardContent,
   Stack,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { ListPageTemplate, StatCardGroup } from '@/components/mui';
 import OrganizationFilter, {
   type OrganizationFilterValue,
 } from '@/components/ui/OrganizationFilter';
 import { StatsChart } from '@/components/bi/StatsChart';
 import { apiLogger } from '@/utils/logger';
-import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { ActionButton, FormField, FormSelect, Dialog, ConfirmDialog, StatusBadge } from '@/components/common';
 
 const FinanceBudgetPage: React.FC = () => {
   const navigate = useNavigate();
@@ -387,10 +376,10 @@ const FinanceBudgetPage: React.FC = () => {
     };
     const config = variants[status as keyof typeof variants] || variants.active;
     return (
-      <Chip
-        size='small'
-        color={config.color}
+      <StatusBadge
+        status={status}
         label={config.label}
+        color={config.color}
       />
     );
   };
@@ -574,17 +563,16 @@ const FinanceBudgetPage: React.FC = () => {
             管理企业各项预算的分配与执行情况
           </Typography>
         </Box>
-        <Button
-          variant='contained'
-          startIcon={<Plus sx={{ width: 16, height: 16 }} />}
+        <ActionButton
+          label='新增预算'
+          icon={<Plus size={16} />}
+          variant='primary'
           onClick={() => {
             setEditingBudget(null);
             resetForm();
             setShowCreateDialog(true);
           }}
-        >
-          新增预算
-        </Button>
+        />
       </Box>
 
       <Box sx={{ bgcolor: 'grey.100', borderRadius: 1, p: 2, mb: 3 }}>
@@ -688,97 +676,130 @@ const FinanceBudgetPage: React.FC = () => {
       <Dialog
         open={showCreateDialog}
         onClose={() => setShowCreateDialog(false)}
-        maxWidth='sm'
-        fullWidth
+        title={editingBudget ? '编辑预算' : '新增预算'}
+        cancelButton={{
+          label: '取消',
+          onClick: () => {
+            setShowCreateDialog(false);
+            setEditingBudget(null);
+            resetForm();
+          },
+        }}
+        confirmButton={{
+          label: editingBudget ? '更新' : '创建',
+          onClick: editingBudget ? handleUpdate : handleCreate,
+        }}
       >
-        <DialogTitle>{editingBudget ? '编辑预算' : '新增预算'}</DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-            <FormControl
-              size='small'
-              fullWidth
-            >
-              <InputLabel>预算类型</InputLabel>
-              <Select
-                value={formData.budget_type}
-                label='预算类型'
-                onChange={(e) => setFormData({ ...formData, budget_type: e.target.value })}
-              >
-                <MenuItem value='operating'>运营预算</MenuItem>
-                <MenuItem value='capital'>资本预算</MenuItem>
-                <MenuItem value='project'>项目预算</MenuItem>
-                <MenuItem value='marketing'>市场预算</MenuItem>
-                <MenuItem value='personnel'>人事预算</MenuItem>
-              </Select>
-            </FormControl>
-            <TextField
-              size='small'
-              type='number'
-              label='预算年度'
-              value={formData.fiscal_year}
-              onChange={(e) => setFormData({ ...formData, fiscal_year: e.target.value })}
-              fullWidth
-            />
-            <TextField
-              size='small'
-              type='number'
-              label='预算金额'
-              value={formData.total_budget}
-              onChange={(e) => setFormData({ ...formData, total_budget: e.target.value })}
-              fullWidth
-            />
-            <FormControl
-              size='small'
-              fullWidth
-            >
-              <InputLabel>状态</InputLabel>
-              <Select
-                value={formData.status}
-                label='状态'
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-              >
-                <MenuItem value='active'>执行中</MenuItem>
-                <MenuItem value='completed'>已完成</MenuItem>
-                <MenuItem value='frozen'>已冻结</MenuItem>
-                <MenuItem value='expired'>已过期</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            variant='outlined'
-            onClick={() => {
-              setShowCreateDialog(false);
-              setEditingBudget(null);
-              resetForm();
-            }}
-          >
-            取消
-          </Button>
-          <Button
-            variant='contained'
-            onClick={editingBudget ? handleUpdate : handleCreate}
-          >
-            {editingBudget ? '更新' : '创建'}
-          </Button>
-        </DialogActions>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+          <FormSelect
+            name='budget_type'
+            label='预算类型'
+            value={formData.budget_type}
+            onChange={(value) => setFormData({ ...formData, budget_type: value as string })}
+            options={[
+              { value: 'operating', label: '运营预算' },
+              { value: 'capital', label: '资本预算' },
+              { value: 'project', label: '项目预算' },
+              { value: 'marketing', label: '市场预算' },
+              { value: 'personnel', label: '人事预算' },
+            ]}
+          />
+          <FormField
+            name='fiscal_year'
+            label='预算年度'
+            type='number'
+            value={formData.fiscal_year}
+            onChange={(e) => setFormData({ ...formData, fiscal_year: e.target.value })}
+          />
+          <FormField
+            name='total_budget'
+            label='预算金额'
+            type='number'
+            value={formData.total_budget}
+            onChange={(e) => setFormData({ ...formData, total_budget: e.target.value })}
+          />
+          <FormSelect
+            name='status'
+            label='状态'
+            value={formData.status}
+            onChange={(value) => setFormData({ ...formData, status: value as string })}
+            options={[
+              { value: 'active', label: '执行中' },
+              { value: 'completed', label: '已完成' },
+              { value: 'frozen', label: '已冻结' },
+              { value: 'expired', label: '已过期' },
+            ]}
+          />
+        </Box>
       </Dialog>
 
       {/* 详情对话框 */}
       <Dialog
         open={showDetailDialog}
         onClose={() => setShowDetailDialog(false)}
-        maxWidth='sm'
-        fullWidth
+        title='预算详情'
       >
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center' }}>
-          <PieChart sx={{ width: 20, height: 20, mr: 1, color: 'indigo.600' }} />
-          预算详情
-        </DialogTitle>
-        <DialogContent>
           {selectedBudget && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
+                gap: 2,
+              }}
+            >
+              <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  预算类型
+                </Typography>
+                <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
+                  {getTypeLabel(selectedBudget.budget_type || '')}
+                </Typography>
+              </Box>
+              <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  预算年度
+                </Typography>
+                <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
+                  {selectedBudget.fiscal_year}
+                </Typography>
+              </Box>
+            </Box>
+
+            <Box
+              sx={{
+                p: 2,
+                bgcolor: 'linear-gradient(to right, primary.light, #eef2ff)',
+                borderRadius: 1,
+              }}
+            >
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  mb: 2,
+                }}
+              >
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  预算金额
+                </Typography>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 'bold' }}
+                  color='primary'
+                >
+                  {formatCurrency(selectedBudget.total_budget)}
+                </Typography>
+              </Box>
               <Box
                 sx={{
                   display: 'grid',
@@ -786,155 +807,95 @@ const FinanceBudgetPage: React.FC = () => {
                   gap: 2,
                 }}
               >
-                <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                <Box>
                   <Typography
                     variant='body2'
                     color='text.secondary'
                   >
-                    预算类型
-                  </Typography>
-                  <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
-                    {getTypeLabel(selectedBudget.budget_type || '')}
-                  </Typography>
-                </Box>
-                <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    预算年度
-                  </Typography>
-                  <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
-                    {selectedBudget.fiscal_year}
-                  </Typography>
-                </Box>
-              </Box>
-
-              <Box
-                sx={{
-                  p: 2,
-                  bgcolor: 'linear-gradient(to right, primary.light, #eef2ff)',
-                  borderRadius: 1,
-                }}
-              >
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    mb: 2,
-                  }}
-                >
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                  >
-                    预算金额
+                    已使用
                   </Typography>
                   <Typography
-                    variant='h5'
+                    variant='h6'
                     sx={{ fontWeight: 'bold' }}
-                    color='primary'
+                    color='warning.main'
                   >
-                    {formatCurrency(selectedBudget.total_budget)}
+                    {formatCurrency(selectedBudget.used_amount || 0)}
                   </Typography>
                 </Box>
-                <Box
-                  sx={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(2, 1fr)',
-                    gap: 2,
-                  }}
-                >
-                  <Box>
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >
-                      已使用
-                    </Typography>
-                    <Typography
-                      variant='h6'
-                      sx={{ fontWeight: 'bold' }}
-                      color='warning.main'
-                    >
-                      {formatCurrency(selectedBudget.used_amount || 0)}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >
-                      剩余预算
-                    </Typography>
-                    <Typography
-                      variant='h6'
-                      sx={{ fontWeight: 'bold' }}
-                      color='success.main'
-                    >
-                      {formatCurrency(selectedBudget.remaining_amount || 0)}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Box>
-
-              <Box>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    mb: 1,
-                  }}
-                >
+                <Box>
                   <Typography
                     variant='body2'
                     color='text.secondary'
                   >
-                    使用进度
+                    剩余预算
                   </Typography>
-                  <Typography sx={{ fontWeight: 'medium' }}>
-                    {formatPercent(selectedBudget.usage_rate || 0)}
+                  <Typography
+                    variant='h6'
+                    sx={{ fontWeight: 'bold' }}
+                    color='success.main'
+                  >
+                    {formatCurrency(selectedBudget.remaining_amount || 0)}
                   </Typography>
                 </Box>
-                <LinearProgress
-                  variant='determinate'
-                  value={selectedBudget.usage_rate || 0}
-                  sx={{ height: 16, borderRadius: 1 }}
-                />
               </Box>
+            </Box>
 
+            <Box>
               <Box
                 sx={{
                   display: 'flex',
                   justifyContent: 'space-between',
-                  p: 2,
-                  bgcolor: 'grey.50',
-                  borderRadius: 1,
+                  mb: 1,
                 }}
               >
                 <Typography
                   variant='body2'
                   color='text.secondary'
                 >
-                  状态
+                  使用进度
                 </Typography>
-                {getStatusChip(selectedBudget.status)}
+                <Typography sx={{ fontWeight: 'medium' }}>
+                  {formatPercent(selectedBudget.usage_rate || 0)}
+                </Typography>
               </Box>
-
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  typography: 'body2',
-                  color: 'text.secondary',
-                }}
-              >
-                <span>创建时间: {new Date(selectedBudget.created_at).toLocaleDateString()}</span>
-                <span>更新时间: {new Date(selectedBudget.updated_at).toLocaleDateString()}</span>
-              </Box>
+              <LinearProgress
+                variant='determinate'
+                value={selectedBudget.usage_rate || 0}
+                sx={{ height: 16, borderRadius: 1 }}
+              />
             </Box>
-          )}
-        </DialogContent>
+
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                p: 2,
+                bgcolor: 'grey.50',
+                borderRadius: 1,
+              }}
+            >
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
+                状态
+              </Typography>
+              {getStatusChip(selectedBudget.status)}
+            </Box>
+
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                typography: 'body2',
+                color: 'text.secondary',
+              }}
+            >
+              <span>创建时间: {new Date(selectedBudget.created_at).toLocaleDateString()}</span>
+              <span>更新时间: {new Date(selectedBudget.updated_at).toLocaleDateString()}</span>
+            </Box>
+          </Box>
+        )}
       </Dialog>
     </Box>
   );

@@ -4,7 +4,7 @@ import { Button } from '@mui/material';
 import { Bell, ChevronDown } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { navigationRegistry, type NavItem } from '../../lib/NavigationRegistry';
-import { ModeToggle } from '../ModeToggle';
+import { ModeToggle } from '../theme/ModeToggle';
 import LanguageSelector from '../LanguageSelector';
 import { NavDropdown } from './NavDropdown';
 import { MobileNav } from './MobileNav';
@@ -106,7 +106,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onNavHover, onNavLeave }) => {
           endIcon={
             item.children ? (
               <ChevronDown
-                style={{
+                sx={{
                   width: 14,
                   height: 14,
                   transform: isMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
@@ -222,7 +222,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onNavHover, onNavLeave }) => {
                 badgeContent={3}
                 color='error'
               >
-                <Bell style={{ width: 20, height: 20 }} />
+                <Bell sx={{ width: 20, height: 20 }} />
               </Badge>
             </IconButton>
           </Tooltip>

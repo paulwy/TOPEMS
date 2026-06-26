@@ -2,7 +2,7 @@ import React from 'react';
 import type { BoxProps } from '@mui/material';
 import { Box } from '@mui/material';
 
-interface GridSizeProps {
+export interface GridSizeProps {
   xs?: number;
   sm?: number;
   md?: number;
@@ -10,7 +10,7 @@ interface GridSizeProps {
   xl?: number;
 }
 
-interface GridProps extends BoxProps {
+export interface GridProps extends BoxProps {
   xs?: number;
   sm?: number;
   md?: number;
@@ -18,8 +18,8 @@ interface GridProps extends BoxProps {
   xl?: number;
   item?: boolean;
   container?: boolean;
-  spacing?: number;
-  size?: GridSizeProps;
+  spacing?: number | GridSizeProps;
+  size?: number | GridSizeProps;
 }
 
 export const Grid: React.FC<React.PropsWithChildren<GridProps>> = ({
@@ -36,21 +36,43 @@ export const Grid: React.FC<React.PropsWithChildren<GridProps>> = ({
   sx,
   ...props
 }) => {
-  // 支持 size 属性（Grid2 风格）
-  const effectiveXs = size?.xs ?? xs;
-  const effectiveSm = size?.sm ?? sm;
-  const effectiveMd = size?.md ?? md;
-  const effectiveLg = size?.lg ?? lg;
-  const effectiveXl = size?.xl ?? xl;
+  let effectiveXs: number | undefined = xs;
+  let effectiveSm: number | undefined = sm;
+  let effectiveMd: number | undefined = md;
+  let effectiveLg: number | undefined = lg;
+  let effectiveXl: number | undefined = xl;
+
+  if (size !== undefined) {
+    if (typeof size === 'number') {
+      effectiveXs = size;
+    } else {
+      effectiveXs = size.xs ?? xs;
+      effectiveSm = size.sm ?? sm;
+      effectiveMd = size.md ?? md;
+      effectiveLg = size.lg ?? lg;
+      effectiveXl = size.xl ?? xl;
+    }
+  }
 
   if (container) {
+    const getSpacing = (s: number | GridSizeProps | undefined): number => {
+      if (typeof s === 'number') return s * 8;
+      if (s && typeof s === 'object') return (s.xs || s.sm || s.md || 2) * 8;
+      return 16;
+    };
+
+    const gapValue = getSpacing(spacing);
+
     return (
       <Box
         {...props}
         sx={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: spacing * 8,
+          display: 'grid',
+          gridAutoColumns: '1fr',
+          gap: gapValue,
+          '@media (min-width:600px)': { gap: getSpacing(spacing) },
+          '@media (min-width:900px)': { gap: getSpacing(spacing) },
+          '@media (min-width:1200px)': { gap: getSpacing(spacing) },
           ...sx,
         }}
       >
@@ -59,9 +81,34 @@ export const Grid: React.FC<React.PropsWithChildren<GridProps>> = ({
     );
   }
 
-  const getWidth = (breakpoint: number | undefined, defaultVal: number = effectiveXs) => {
-    if (breakpoint === undefined) return undefined;
-    return `${(breakpoint / 12) * 100}%`;
+  const getResponsiveColumnSpan = () => {
+    const styles: Record<string, unknown> = {};
+
+    if (effectiveXs !== undefined) {
+      styles.gridColumn = `span ${effectiveXs}`;
+    }
+    if (effectiveSm !== undefined) {
+      styles['@media (min-width:600px)'] = {
+        gridColumn: `span ${effectiveSm}`,
+      };
+    }
+    if (effectiveMd !== undefined) {
+      styles['@media (min-width:900px)'] = {
+        gridColumn: `span ${effectiveMd}`,
+      };
+    }
+    if (effectiveLg !== undefined) {
+      styles['@media (min-width:1200px)'] = {
+        gridColumn: `span ${effectiveLg}`,
+      };
+    }
+    if (effectiveXl !== undefined) {
+      styles['@media (min-width:1536px)'] = {
+        gridColumn: `span ${effectiveXl}`,
+      };
+    }
+
+    return Object.keys(styles).length > 0 ? styles : undefined;
   };
 
   return (
@@ -69,16 +116,7 @@ export const Grid: React.FC<React.PropsWithChildren<GridProps>> = ({
       {...props}
       sx={{
         boxSizing: 'border-box',
-        flex: item ? `0 0 auto` : undefined,
-        width: item ? getWidth(effectiveXs) : undefined,
-        '@media (min-width:600px)':
-          effectiveSm !== undefined ? { width: getWidth(effectiveSm) } : undefined,
-        '@media (min-width:900px)':
-          effectiveMd !== undefined ? { width: getWidth(effectiveMd) } : undefined,
-        '@media (min-width:1200px)':
-          effectiveLg !== undefined ? { width: getWidth(effectiveLg) } : undefined,
-        '@media (min-width:1536px)':
-          effectiveXl !== undefined ? { width: getWidth(effectiveXl) } : undefined,
+        ...(getResponsiveColumnSpan() || { gridColumn: 'span 12' }),
         ...sx,
       }}
     >

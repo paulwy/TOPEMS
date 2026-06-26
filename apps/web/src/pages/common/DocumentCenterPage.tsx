@@ -251,8 +251,8 @@ const DocumentCenterPage: React.FC = () => {
   ];
 
   const cardConfig: CardRenderConfig = {
-    title: (item: DocumentWithFavorite) => item.name,
-    description: (item: DocumentWithFavorite) => item.category || '',
+    title: (item: unknown) => (item as DocumentWithFavorite).name,
+    description: (item: unknown) => (item as DocumentWithFavorite).category || '',
     meta: [
       {
         field: 'size',
@@ -280,7 +280,7 @@ const DocumentCenterPage: React.FC = () => {
         },
       },
     ],
-    icon: (item: DocumentWithFavorite) => getFileIcon(item.content_type),
+    icon: (item: unknown) => getFileIcon((item as DocumentWithFavorite).content_type),
     iconBgColor: 'background.paper',
   };
 

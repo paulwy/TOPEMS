@@ -151,8 +151,8 @@ export default function ConsolidationReportsPage() {
         period: report.period,
         company_count: `${report.company_count}家${report.eliminated_company_count > 0 ? ` (抵消${report.eliminated_company_count}家)` : ''}`,
         total_assets: report.total_assets ? `¥${report.total_assets.toLocaleString('zh-CN')}` : '-',
-        net_profit: (report.归属于母公司净利润 || report.net_profit)
-          ? `¥${Math.abs(report.归属于母公司净利润 || report.net_profit).toLocaleString('zh-CN')}`
+        net_profit: ((report as any).归属于母公司净利润 || report.net_profit)
+          ? `¥${Math.abs((report as any).归属于母公司净利润 || report.net_profit).toLocaleString('zh-CN')}`
           : '-',
         status: STATUS_CONFIG[report.status]?.label || report.status,
         approval_status: APPROVAL_STATUS_CONFIG[report.approval_status]?.label || report.approval_status,
@@ -193,7 +193,7 @@ export default function ConsolidationReportsPage() {
         sx={{ minWidth: 140 }}
       />
 
-      <Button variant='contained' onClick={() => navigate('/finance/consolidation/reports/generate')}>
+      <Button variant='contained' onClick={() => navigate('#')}>
         <Plus sx={{ width: 16, height: 16, marginRight: 8 }} />
         生成合并报表
       </Button>
@@ -264,27 +264,29 @@ export default function ConsolidationReportsPage() {
               </Box>
             )}
 
-            {reportDetail?.data?.length > 0 && (
+            {reportDetail?.data && reportDetail.data.length > 0 && (
               <Box sx={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr>
-                      <th style={{ textAlign: 'left', padding: '12px', fontWeight: 600, bgcolor: 'grey.50' }}>项目</th>
-                      <th style={{ textAlign: 'right', padding: '12px', fontWeight: 600, bgcolor: 'grey.50' }}>本期金额</th>
-                      <th style={{ textAlign: 'right', padding: '12px', fontWeight: 600, bgcolor: 'grey.50' }}>上期金额</th>
-                      <th style={{ textAlign: 'right', padding: '12px', fontWeight: 600, bgcolor: 'grey.50' }}>变动</th>
-                      <th style={{ textAlign: 'right', padding: '12px', fontWeight: 600, bgcolor: 'grey.50' }}>变动率</th>
+                      <th style={{ textAlign: 'left', padding: '12px', fontWeight: 600, backgroundColor: '#f9fafb' }}>项目</th>
+                      <th style={{ textAlign: 'right', padding: '12px', fontWeight: 600, backgroundColor: '#f9fafb' }}>本期金额</th>
+                      <th style={{ textAlign: 'right', padding: '12px', fontWeight: 600, backgroundColor: '#f9fafb' }}>上期金额</th>
+                      <th style={{ textAlign: 'right', padding: '12px', fontWeight: 600, backgroundColor: '#f9fafb' }}>变动</th>
+                      <th style={{ textAlign: 'right', padding: '12px', fontWeight: 600, backgroundColor: '#f9fafb' }}>变动率</th>
                     </tr>
                   </thead>
                   <tbody>
                     {reportDetail.data.map((line) => {
-                      const change = line.current_period - (line.prior_period || 0);
-                      const changeRate = line.prior_period && line.prior_period !== 0 ? (change / line.prior_period) * 100 : 0;
+                      const currentPeriod = line.current_period ?? 0;
+                      const priorPeriod = line.prior_period ?? 0;
+                      const change = currentPeriod - priorPeriod;
+                      const changeRate = priorPeriod !== 0 ? (change / priorPeriod) * 100 : 0;
                       return (
                         <tr key={line.id}>
-                          <td style={{ padding: '12px', borderBottom: '1px solid', paddingLeft: `${line.item_level * 16 + 12}px` }}>{line.item_name}</td>
-                          <td style={{ textAlign: 'right', padding: '12px', borderBottom: '1px solid', fontFamily: 'monospace' }}>{line.current_period.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}</td>
-                          <td style={{ textAlign: 'right', padding: '12px', borderBottom: '1px solid', fontFamily: 'monospace', color: '#6B7280' }}>{line.prior_period?.toLocaleString('zh-CN', { minimumFractionDigits: 2 }) || '-'}</td>
+                          <td style={{ padding: '12px', borderBottom: '1px solid', paddingLeft: `${(line.item_level ?? 0) * 16 + 12}px` }}>{line.item_name || '-'}</td>
+                          <td style={{ textAlign: 'right', padding: '12px', borderBottom: '1px solid', fontFamily: 'monospace' }}>{currentPeriod.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}</td>
+                          <td style={{ textAlign: 'right', padding: '12px', borderBottom: '1px solid', fontFamily: 'monospace', color: '#6B7280' }}>{priorPeriod.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}</td>
                           <td style={{ textAlign: 'right', padding: '12px', borderBottom: '1px solid', fontFamily: 'monospace', color: change >= 0 ? '#10B981' : '#EF4444' }}>{change.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}</td>
                           <td style={{ textAlign: 'right', padding: '12px', borderBottom: '1px solid', fontFamily: 'monospace', color: changeRate >= 0 ? '#10B981' : '#EF4444' }}>{changeRate.toFixed(2)}%</td>
                         </tr>

@@ -32,6 +32,8 @@ mod event_bus;
 mod retry_handler;
 mod qms_lims_ehs;
 mod sync_retry;
+mod mes_erp_sync;
+mod mes_qms_integration;
 
 use conversion_rules::{
     ConversionExecution, ConversionRule, CreateConversionRuleRequest, ExecuteConversionRequest,
@@ -39,6 +41,8 @@ use conversion_rules::{
     init_conversion_rules_table, insert_conversion_rule, list_conversion_rules,
     get_rule_executions, RuleStatus, TriggerType,
 };
+
+use mes_erp_sync::MesErpSyncService;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct IntegrationEvent {
@@ -160,6 +164,7 @@ struct AppState {
     wms_url: String,
     scm_url: String,
     auth_state: AuthState,
+    mes_erp_sync_service: std::sync::Arc<MesErpSyncService>,
 }
 
 impl FromRef<AppState> for AuthState {
@@ -212,14 +217,15 @@ async fn main() {
     let scm_url = std::env::var("SCM_URL").unwrap_or_else(|_| "http://localhost:8040".to_string());
 
     let app_state = AppState {
-        pool,
+        pool: pool.clone(),
         lims_url,
         qms_url,
-        mes_url,
-        erp_url,
+        mes_url: mes_url.clone(),
+        erp_url: erp_url.clone(),
         wms_url,
         scm_url,
         auth_state: AuthState::from_env(),
+        mes_erp_sync_service: std::sync::Arc::new(MesErpSyncService::new(pool, mes_url, erp_url)),
     };
 
     let cors = create_cors_layer();
@@ -246,10 +252,24 @@ async fn main() {
         .route("/api/integration/mes-erp", post(create_mes_erp_sync))
         .route("/api/integration/mes-erp/{id}", get(get_mes_erp_sync))
         .route("/api/integration/mes-erp/{id}/sync", post(sync_mes_erp))
+        .route("/api/integration/mes-erp/sync/erp-to-mes", post(sync_erp_order_to_mes))
+        .route("/api/integration/mes-erp/sync/mes-to-erp", post(sync_mes_progress_to_erp))
+        .route("/api/integration/mes-erp/{id}/retry", post(retry_mes_erp_sync))
+        .route("/api/integration/mes-erp/{id}/logs", get(get_mes_erp_sync_logs))
+        .route("/api/integration/mes-erp/records", get(list_mes_erp_sync_records))
         .route("/api/integration/wms-scm", get(list_wms_scm_sync))
         .route("/api/integration/wms-scm", post(create_wms_scm_sync))
         .route("/api/integration/wms-scm/{id}", get(get_wms_scm_sync))
         .route("/api/integration/wms-scm/{id}/sync", post(sync_wms_scm))
+        // MES↔QMS 质检数据集成 API
+        .route("/api/integration/mes-qms", get(list_mes_qms_sync_api))
+        .route("/api/integration/mes-qms/{id}", get(get_mes_qms_sync_api))
+        .route("/api/integration/mes-qms/stats", get(get_mes_qms_stats_api))
+        .route("/api/integration/mes-qms/trigger-inspection", post(trigger_qms_inspection_api))
+        .route("/api/integration/mes-qms/sync-result", post(sync_quality_result_api))
+        .route("/api/integration/mes-qms/sync-trace", post(sync_trace_chain_api))
+        .route("/api/integration/mes-qms/defect-handling", post(defect_handling_api))
+        .route("/api/integration/mes-qms/{id}/retry", post(retry_mes_qms_sync_api))
         // 转换规则 API
         .route("/api/integration/rules", get(list_conversion_rules_api))
         .route("/api/integration/rules", post(create_conversion_rule_api))
@@ -295,7 +315,7 @@ async fn main() {
 }
 
 async fn home() -> &'static str {
-    "TOPEMS Integration Service API\n\nSystems: LIMS↔QMS, MES↔ERP, WMS↔SCM\n\nCheck /health for service status"
+    "TOPEMS Integration Service API\n\nSystems: LIMS↔QMS, MES↔ERP, WMS↔SCM, MES↔QMS\n\nCheck /health for service status"
 }
 
 async fn health() -> ServiceHealth {
@@ -317,6 +337,7 @@ async fn check_service_health(url: &str) -> bool {
 
 async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     init_conversion_rules_table(pool).await?;
+    mes_qms_integration::init_mes_qms_tables(pool).await?;
     Ok(())
 }
 
@@ -1180,6 +1201,244 @@ async fn disable_conversion_rule_api(
         Err(e) => {
             tracing::error!("Failed to disable conversion rule: {}", e);
             Json(ApiResponse::error(500, &format!("Failed to disable conversion rule: {}", e)))
+        }
+    }
+}
+
+// ==================== MES↔QMS Integration API ====================
+
+async fn list_mes_qms_sync_api(
+    State(state): State<AppState>,
+    axum::extract::Query(query): axum::extract::Query<std::collections::HashMap<String, String>>,
+) -> Json<ApiResponse<Vec<mes_qms_integration::MesQmsSync>>> {
+    let sync_type = query.get("sync_type").map(|s| s.as_str());
+    let direction = query.get("direction").map(|s| s.as_str());
+    let status = query.get("status").map(|s| s.as_str());
+    let limit = query.get("limit")
+        .and_then(|s| s.parse::<i64>().ok())
+        .unwrap_or(100);
+
+    match mes_qms_integration::list_mes_qms_sync(&state.pool, sync_type, direction, status, limit).await {
+        Ok(syncs) => Json(ApiResponse::success(syncs, "MES↔QMS sync records retrieved successfully")),
+        Err(e) => {
+            tracing::error!("Failed to fetch MES↔QMS syncs: {}", e);
+            Json(ApiResponse::error(500, &format!("Failed to fetch MES↔QMS syncs: {}", e)))
+        }
+    }
+}
+
+async fn get_mes_qms_sync_api(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<mes_qms_integration::MesQmsSync>> {
+    match mes_qms_integration::get_mes_qms_sync(&state.pool, id).await {
+        Ok(Some(sync)) => Json(ApiResponse::success(sync, "MES↔QMS sync found")),
+        Ok(None) => Json(ApiResponse::error(404, "MES↔QMS sync not found")),
+        Err(e) => {
+            tracing::error!("Failed to fetch MES↔QMS sync: {}", e);
+            Json(ApiResponse::error(500, &format!("Failed to fetch MES↔QMS sync: {}", e)))
+        }
+    }
+}
+
+async fn get_mes_qms_stats_api(
+    State(state): State<AppState>,
+) -> Json<ApiResponse<mes_qms_integration::SyncStats>> {
+    match mes_qms_integration::get_mes_qms_sync_stats(&state.pool).await {
+        Ok(stats) => Json(ApiResponse::success(stats, "MES↔QMS sync stats retrieved successfully")),
+        Err(e) => {
+            tracing::error!("Failed to fetch MES↔QMS stats: {}", e);
+            Json(ApiResponse::error(500, &format!("Failed to fetch MES↔QMS stats: {}", e)))
+        }
+    }
+}
+
+async fn trigger_qms_inspection_api(
+    State(state): State<AppState>,
+    Json(req): Json<mes_qms_integration::TriggerInspectionRequest>,
+) -> Json<ApiResponse<mes_qms_integration::MesQmsSync>> {
+    match mes_qms_integration::trigger_qms_inspection(
+        &state.pool,
+        &state.mes_url,
+        &state.qms_url,
+        &req,
+    ).await {
+        Ok(sync) => Json(ApiResponse::success(sync, "QMS inspection triggered successfully")),
+        Err(e) => {
+            tracing::error!("Failed to trigger QMS inspection: {}", e);
+            Json(ApiResponse::error(500, &format!("Failed to trigger QMS inspection: {}", e)))
+        }
+    }
+}
+
+async fn sync_quality_result_api(
+    State(state): State<AppState>,
+    Json(req): Json<mes_qms_integration::SyncQualityResultRequest>,
+) -> Json<ApiResponse<mes_qms_integration::MesQmsSync>> {
+    match mes_qms_integration::sync_quality_result_to_mes(
+        &state.pool,
+        &state.mes_url,
+        &state.qms_url,
+        &req,
+    ).await {
+        Ok(sync) => Json(ApiResponse::success(sync, "Quality result synced to MES successfully")),
+        Err(e) => {
+            tracing::error!("Failed to sync quality result to MES: {}", e);
+            Json(ApiResponse::error(500, &format!("Failed to sync quality result to MES: {}", e)))
+        }
+    }
+}
+
+async fn sync_trace_chain_api(
+    State(state): State<AppState>,
+    Json(req): Json<mes_qms_integration::TraceChainSyncRequest>,
+) -> Json<ApiResponse<mes_qms_integration::MesQmsSync>> {
+    match mes_qms_integration::sync_trace_chain_data(
+        &state.pool,
+        &state.mes_url,
+        &state.qms_url,
+        &req,
+    ).await {
+        Ok(sync) => Json(ApiResponse::success(sync, "Trace chain data synced successfully")),
+        Err(e) => {
+            tracing::error!("Failed to sync trace chain data: {}", e);
+            Json(ApiResponse::error(500, &format!("Failed to sync trace chain data: {}", e)))
+        }
+    }
+}
+
+async fn defect_handling_api(
+    State(state): State<AppState>,
+    Json(req): Json<mes_qms_integration::DefectHandlingRequest>,
+) -> Json<ApiResponse<mes_qms_integration::MesQmsSync>> {
+    match mes_qms_integration::handle_defect_handling(
+        &state.pool,
+        &state.mes_url,
+        &state.qms_url,
+        &req,
+    ).await {
+        Ok(sync) => Json(ApiResponse::success(sync, "Defect handling processed successfully")),
+        Err(e) => {
+            tracing::error!("Failed to process defect handling: {}", e);
+            Json(ApiResponse::error(500, &format!("Failed to process defect handling: {}", e)))
+        }
+    }
+}
+
+async fn retry_mes_qms_sync_api(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<mes_qms_integration::MesQmsSync>> {
+    match mes_qms_integration::retry_failed_sync(
+        &state.pool,
+        &state.mes_url,
+        &state.qms_url,
+        id,
+    ).await {
+        Ok(sync) => Json(ApiResponse::success(sync, "MES↔QMS sync retried successfully")),
+        Err(e) => {
+            tracing::error!("Failed to retry MES↔QMS sync: {}", e);
+            Json(ApiResponse::error(500, &format!("Failed to retry MES↔QMS sync: {}", e)))
+        }
+    }
+}
+
+// ==================== MES↔ERP Production Order Sync API ====================
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct SyncErpToMesRequest {
+    pub erp_order_id: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct SyncMesToErpRequest {
+    pub mes_order_id: String,
+}
+
+async fn sync_erp_order_to_mes(
+    State(state): State<AppState>,
+    Json(req): Json<SyncErpToMesRequest>,
+) -> Json<ApiResponse<mes_erp_sync::SyncResult>> {
+    let erp_order_id = match Uuid::parse_str(&req.erp_order_id) {
+        Ok(id) => id,
+        Err(e) => {
+            return Json(ApiResponse::error(400, &format!("Invalid ERP order ID: {}", e)));
+        }
+    };
+
+    match state.mes_erp_sync_service.sync_erp_to_mes(erp_order_id).await {
+        Ok(result) => Json(ApiResponse::success(result, "ERP→MES 同步成功")),
+        Err(e) => {
+            tracing::error!("ERP→MES sync failed: {}", e);
+            Json(ApiResponse::error(500, &format!("ERP→MES 同步失败: {}", e)))
+        }
+    }
+}
+
+async fn sync_mes_progress_to_erp(
+    State(state): State<AppState>,
+    Json(req): Json<SyncMesToErpRequest>,
+) -> Json<ApiResponse<mes_erp_sync::SyncResult>> {
+    let mes_order_id = match Uuid::parse_str(&req.mes_order_id) {
+        Ok(id) => id,
+        Err(e) => {
+            return Json(ApiResponse::error(400, &format!("Invalid MES order ID: {}", e)));
+        }
+    };
+
+    match state.mes_erp_sync_service.sync_mes_progress_to_erp(mes_order_id).await {
+        Ok(result) => Json(ApiResponse::success(result, "MES→ERP 进度同步成功")),
+        Err(e) => {
+            tracing::error!("MES→ERP progress sync failed: {}", e);
+            Json(ApiResponse::error(500, &format!("MES→ERP 进度同步失败: {}", e)))
+        }
+    }
+}
+
+async fn retry_mes_erp_sync(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<mes_erp_sync::SyncResult>> {
+    match state.mes_erp_sync_service.retry_failed_sync(id).await {
+        Ok(result) => Json(ApiResponse::success(result, "MES↔ERP 同步重试成功")),
+        Err(e) => {
+            tracing::error!("MES↔ERP sync retry failed: {}", e);
+            Json(ApiResponse::error(500, &format!("MES↔ERP 同步重试失败: {}", e)))
+        }
+    }
+}
+
+async fn get_mes_erp_sync_logs(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<Vec<mes_erp_sync::SyncLog>>> {
+    match state.mes_erp_sync_service.get_sync_logs(id).await {
+        Ok(logs) => Json(ApiResponse::success(logs, "同步日志获取成功")),
+        Err(e) => {
+            tracing::error!("Failed to fetch sync logs: {}", e);
+            Json(ApiResponse::error(500, &format!("获取同步日志失败: {}", e)))
+        }
+    }
+}
+
+async fn list_mes_erp_sync_records(
+    State(state): State<AppState>,
+    axum::extract::Query(query): axum::extract::Query<std::collections::HashMap<String, String>>,
+) -> Json<ApiResponse<Vec<mes_erp_sync::MesErpSyncRecord>>> {
+    let direction = query.get("direction").map(|s| s.as_str());
+    let status = query.get("status").map(|s| s.as_str());
+    let limit = query.get("limit")
+        .and_then(|s| s.parse::<i64>().ok())
+        .unwrap_or(100);
+    let offset = query.get("offset")
+        .and_then(|s| s.parse::<i64>().ok())
+        .unwrap_or(0);
+
+    match state.mes_erp_sync_service.list_sync_records(direction, status, limit, offset).await {
+        Ok(records) => Json(ApiResponse::success(records, "同步记录获取成功")),
+        Err(e) => {
+            tracing::error!("Failed to fetch sync records: {}", e);
+            Json(ApiResponse::error(500, &format!("获取同步记录失败: {}", e)))
         }
     }
 }

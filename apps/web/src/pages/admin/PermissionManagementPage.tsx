@@ -17,7 +17,7 @@ import { Key, Plus, Trash2, ChevronLeft, Shield, AlertCircle, RefreshCw, Edit } 
 import { useNavigate } from 'react-router-dom';
 import { authApi, type Permission } from '@/api/iam';
 import { useAppStore } from '../../store';
-import { ModeToggle } from '@/components/ModeToggle';
+import { ModeToggle } from '@/components/theme/ModeToggle';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
 

@@ -1,10 +1,10 @@
-import { Grid } from '@/components/Grid';
+import { Grid } from '@/components';
 import { useAppStore } from '@/store';
 import React, { useState, useEffect } from 'react';
 import { apiLogger } from '@/utils/logger';
 import { mobileApi } from '@/api/mobile';
 import MobileHeader from '@/components/layout/MobileHeader';
-import MobileNav from '@/components/MobileNav';
+import { MobileNav } from '@/components/layout/MobileNav';
 import {
   MapPin,
   QrCode,
@@ -22,6 +22,7 @@ import { Button } from '@mui/material';
 type TabKey = 'home' | 'patrol' | 'task' | 'scan' | 'media';
 
 const MobileWorkstationPage: React.FC = () => {
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>('home');
   const [stats, setStats] = useState({
     today_patrols: 0,
@@ -194,9 +195,20 @@ const MobileWorkstationPage: React.FC = () => {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
-      <MobileHeader title='移动工作台' />
+      <MobileHeader
+        title='移动工作台'
+        onMenuClick={() => setMobileNavOpen(true)}
+      />
 
-      <Box sx={{ pb: 10 }}>
+      <Box sx={{ '& > .MuiIconButton-root': { display: 'none' } }}>
+        <MobileNav
+          open={mobileNavOpen}
+          onClose={() => setMobileNavOpen(false)}
+          onOpen={() => setMobileNavOpen(true)}
+        />
+      </Box>
+
+      <Box sx={{ pb: 4 }}>
         {activeTab === 'home' && (
           <Box sx={{ p: 2 }}>
             <Paper
@@ -1050,11 +1062,6 @@ const MobileWorkstationPage: React.FC = () => {
           </Box>
         )}
       </Box>
-
-      <MobileNav
-        currentPage='mobile-workstation'
-        onNavigate={() => {}}
-      />
     </Box>
   );
 };

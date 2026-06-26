@@ -31,8 +31,9 @@ use utoipa::OpenApi;
 
 use topems_shared::{
     check_http_health, create_api_info_router, create_cors_layer,
-    create_database_pool, init_logging, verify_jwt_token, ApiResponse, AuthState, Claims,
-    DatabaseConfig, DependencyHealth, HealthStatus, ServiceHealth, SystemMetrics,
+    create_database_pool, init_telemetry, verify_jwt_token, ApiResponse, AuthState, Claims,
+    DatabaseConfig, DependencyHealth, FieldEncryptionService, HealthStatus, KeyManager,
+    ServiceHealth, SystemMetrics, telemetry_middleware,
 };
 
 mod api;
@@ -45,7 +46,7 @@ use api::ApiState;
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
 
-    init_logging("topems-crm");
+    let _telemetry_guard = init_telemetry("topems-crm");
 
     // 设置search_path环境变量（供lib使用）
     env::set_var("SEARCH_PATH", "crm, shared, public");
@@ -72,11 +73,15 @@ async fn main() -> Result<()> {
     let start_time = Instant::now();
     let metrics = Arc::new(SystemMetrics::new());
 
+    let encryption_service = init_encryption_service();
+    tracing::info!("🔐 字段加密服务初始化成功");
+
     let api_state = ApiState {
         db: pool.clone(),
         auth_state: AuthState::from_env(),
         metrics: metrics.clone(),
         start_time,
+        encryption: Arc::new(encryption_service),
     };
 
     let cors = create_cors_layer();
@@ -110,6 +115,7 @@ async fn main() -> Result<()> {
         .merge(health_router)
         .merge(protected_routes)
         .merge(create_api_info_router("topems-crm"))
+        .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(prometheus_layer)
         .layer(cors);
 
@@ -273,6 +279,19 @@ async fn check_iam_health() -> DependencyHealth {
 
 async fn init_db(_db: &sqlx::PgPool) -> Result<()> {
     Ok(())
+}
+
+fn init_encryption_service() -> FieldEncryptionService {
+    let master_key = env::var("ENCRYPTION_MASTER_KEY").unwrap_or_else(|_| {
+        "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef".to_string()
+    });
+    let key_bytes = hex::decode(&master_key).unwrap_or_else(|_| {
+        vec![0x42; 32]
+    });
+    let mut key_array = [0u8; 32];
+    key_array.copy_from_slice(&key_bytes[..32]);
+    let key_manager = KeyManager::new(&key_array);
+    FieldEncryptionService::new(key_manager)
 }
 
 async fn serve_openapi_json() -> axum::Json<utoipa::openapi::OpenApi> {

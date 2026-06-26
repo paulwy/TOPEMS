@@ -9,6 +9,7 @@ const SystemManagementPage = lazy(() => import('../pages/admin/SystemManagementP
 const DatabaseStructurePage = lazy(() => import('../pages/admin/DatabaseStructurePage'));
 const ConfigDebugPage = lazy(() => import('../pages/admin/ConfigDebugPage'));
 const CompanyStructurePage = lazy(() => import('../pages/admin/CompanyStructurePage'));
+const MonitorPage = lazy(() => import('../pages/system/MonitorPage'));
 
 export const commonRoutes: RouteConfig[] = [
   {
@@ -41,6 +42,11 @@ export const commonRoutes: RouteConfig[] = [
     path: '/system/company-structure',
     element: CompanyStructurePage,
     requiredPermissions: ['iam:system_update'],
+  },
+  {
+    path: '/system/monitor',
+    element: MonitorPage,
+    requiredPermissions: ['iam:system_read'],
   },
 
   {

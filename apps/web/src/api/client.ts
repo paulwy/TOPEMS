@@ -374,8 +374,8 @@ class ApiClient {
     return this.clients.ai;
   }
 
-  get flow() {
-    return this.clients.flow;
+  get workflow() {
+    return this.clients.workflow;
   }
 
   get rs() {

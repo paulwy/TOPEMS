@@ -1,4 +1,4 @@
-import { Grid } from '@/components/Grid';
+import { Grid } from '@/components';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { logger } from '@/utils/logger';
@@ -341,13 +341,13 @@ const RsProjectDetailPage: React.FC = () => {
               size='small'
             />
           </ListItemButton>
-          {teamMembers.map((member: string, index: number) => (
+          {teamMembers.map((member, index: number) => (
             <ListItemButton key={index}>
               <ListItemIcon>
-                <Avatar>{member?.[0] || '-'}</Avatar>
+                <Avatar>{member.name?.[0] || '-'}</Avatar>
               </ListItemIcon>
               <ListItemText
-                primary={member}
+                primary={member.name || '-'}
                 secondary='团队成员'
               />
               <Chip
@@ -401,7 +401,7 @@ const RsProjectDetailPage: React.FC = () => {
           },
         ],
       }
-    : null;
+    : undefined;
 
   const actions = [
     {

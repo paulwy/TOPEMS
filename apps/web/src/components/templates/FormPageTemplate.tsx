@@ -26,7 +26,7 @@ import {
   Tabs,
 } from '@mui/material';
 import { Button } from '@mui/material';
-import { Grid } from '@/components/Grid';
+import { Grid } from '@/components';
 import {
   Save,
   X,

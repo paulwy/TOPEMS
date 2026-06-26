@@ -20,6 +20,7 @@ pub mod report;
 pub mod risk;
 pub mod service_integration;
 pub mod settlement;
+pub mod statistics;
 
 use axum::Router;
 
@@ -44,4 +45,5 @@ pub fn create_routes(pool: sqlx::PgPool) -> Router {
         .merge(document::create_routes(pool.clone()))
         .merge(report::create_routes(pool.clone()))
         .merge(notification::create_routes(pool.clone()))
+        .merge(statistics::create_routes(pool))
 }

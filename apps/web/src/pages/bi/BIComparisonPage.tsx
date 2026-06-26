@@ -29,7 +29,7 @@ import {
   Alert,
 } from '@mui/material';
 import { Button } from '@mui/material';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { useAppStore } from '@/store';
 import ExportButton from '@/components/export/ExportButton';
 import { DashboardTemplate, type StatCard } from '@/components/templates';

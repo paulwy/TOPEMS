@@ -394,4 +394,5 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
   );
 };
 
+export { TemplateAIHelper };
 export default TemplateAIHelper;

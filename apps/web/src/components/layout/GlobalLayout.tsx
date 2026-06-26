@@ -121,7 +121,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { usePermission } from '../../hooks/usePermission';
 import { navigationRegistry, type NavItem } from '@/lib/NavigationRegistry';
 import type { TabItem } from '@/types/navigation';
-import { ModeToggle } from '../ModeToggle';
+import { ModeToggle } from '../theme/ModeToggle';
 import { FloatingAIHelper } from '../ai/FloatingAIHelper';
 import { ModuleTabs } from './ModuleTabs';
 import { MobileNav } from './MobileNav';

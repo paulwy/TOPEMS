@@ -14,15 +14,17 @@
 #![allow(clippy::redundant_closure)]
 #![allow(dead_code)]
 
+mod api;
+mod models;
+mod services;
+mod plugin;
 mod shared;
-
-pub mod modules;
 
 use std::net::SocketAddr;
 
 use axum::{
     extract::State,
-    routing::{delete, get, post, put},
+    routing::get,
     Json, Router,
 };
 use axum_prometheus::PrometheusMetricLayer;
@@ -78,9 +80,8 @@ async fn main() {
         }
     };
 
-    // Initialize database for Report module
-    if let Err(e) = modules::report::init_database(&pool).await {
-        tracing::warn!("Report module database init warning: {}", e);
+    if let Err(e) = models::init_database(&pool).await {
+        tracing::warn!("Report database init warning: {}", e);
     }
 
     let auth_state = AuthState::from_env();
@@ -92,7 +93,7 @@ async fn main() {
         health_config,
     };
 
-    let scheduler = modules::report::scheduler::ReportScheduler::new(pool);
+    let scheduler = services::ReportScheduler::new(pool);
     if let Err(e) = scheduler.start().await {
         tracing::warn!("Failed to start report scheduler: {}", e);
     }
@@ -105,47 +106,15 @@ async fn main() {
     let public_routes = Router::new()
         .route("/", get(home))
         .route("/health", get(health))
-        .route("/api/plugins/info", get(modules::report::report_plugin::get_plugin_info))
-        .route("/api/plugins/health", get(modules::report::report_plugin::plugin_health_check))
+        .route("/api/plugins/info", get(plugin::get_plugin_info))
+        .route("/api/plugins/health", get(plugin::plugin_health_check))
         .route("/api", get(|| get_api_info_handler("report-service")))
         .route("/api/info", get(|| get_api_info_handler("report-service")))
         .route("/metrics", get(move || async move { metric_handle.render() }));
 
     // Protected routes (auth required)
     let protected_routes = Router::new()
-        // ===== Report routes (prefix: /api/report) =====
-        // Report (matches frontend /api/report/reports)
-        .route("/api/report/reports", get(modules::report::report::list_reports))
-        .route("/api/report/reports", post(modules::report::report::create_report))
-        .route("/api/report/reports/from-template", post(modules::report::report::create_report_from_template))
-        .route("/api/report/reports/{id}", get(modules::report::report::get_report))
-        .route("/api/report/reports/{id}", put(modules::report::report::update_report))
-        .route("/api/report/reports/{id}", delete(modules::report::report::delete_report))
-        .route("/api/report/reports/{id}/export", post(modules::report::report::export_report))
-        .route("/api/report/reports/{id}/run", post(modules::report::report::run_report))
-        // Report Template
-        .route("/api/report/templates", get(modules::report::template::list_templates))
-        .route("/api/report/templates", post(modules::report::template::create_template))
-        .route("/api/report/templates/{id}", get(modules::report::template::get_template))
-        .route("/api/report/templates/{id}", put(modules::report::template::update_template))
-        .route("/api/report/templates/{id}", delete(modules::report::template::delete_template))
-        // Report Schedule
-        .route("/api/report/schedules", get(modules::report::schedule::list_schedules))
-        .route("/api/report/schedules", post(modules::report::schedule::create_schedule))
-        .route("/api/report/schedules/{id}", get(modules::report::schedule::get_schedule))
-        .route("/api/report/schedules/{id}", put(modules::report::schedule::update_schedule))
-        .route("/api/report/schedules/{id}", delete(modules::report::schedule::delete_schedule))
-        .route("/api/report/schedules/{id}/execute", post(modules::report::schedule::execute_schedule))
-        .route("/api/report/schedules/{id}/history", get(modules::report::schedule::get_execution_history))
-        // Report Subscription
-        .route("/api/report/subscriptions", get(modules::report::subscription::list_subscriptions))
-        .route("/api/report/subscriptions", post(modules::report::subscription::create_subscription))
-        .route("/api/report/subscriptions/{id}", get(modules::report::subscription::get_subscription))
-        .route("/api/report/subscriptions/{id}", put(modules::report::subscription::update_subscription))
-        .route("/api/report/subscriptions/{id}", delete(modules::report::subscription::delete_subscription))
-        .route("/api/report/subscriptions/{id}/toggle", post(modules::report::subscription::toggle_subscription))
-        .route("/api/report/subscriptions/user/{user_id}", get(modules::report::subscription::get_user_subscriptions))
-
+        .merge(api::create_api_routes())
         // Health & Metrics
         .route("/api/v1/health/detailed", get(detailed_health))
         .layer(axum::middleware::from_fn_with_state(
@@ -166,6 +135,11 @@ async fn main() {
         .unwrap_or(8061);
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     tracing::info!("✅ Report Service is running at http://{}", addr);
+
+    let core_url = std::env::var("CORE_URL").ok();
+    tokio::spawn(async move {
+        plugin::auto_register_to_core(core_url.as_deref()).await;
+    });
 
     axum::serve(
         tokio::net::TcpListener::bind(&addr).await.unwrap(),

@@ -109,7 +109,7 @@ const KnowledgeBasePage: React.FC = () => {
     loadDocuments();
   }, [loadDocuments]);
 
-  const metricStats = useCallback(() => [
+  const metricStats = useCallback((): MetricStatCard[] => [
     {
       id: 'total',
       title: '总文档数',
@@ -122,7 +122,7 @@ const KnowledgeBasePage: React.FC = () => {
       title: '分类数量',
       value: new Set(documents.map((d) => d.category || '未分类')).size,
       icon: <Tag size={24} />,
-      color: 'info',
+      color: 'primary',
     },
     {
       id: 'processed',
@@ -285,9 +285,9 @@ const KnowledgeBasePage: React.FC = () => {
     },
   ];
 
-  const cardConfig = {
-    title: (item: DocumentWithMeta) => item.title,
-    description: (item: DocumentWithMeta) => item.filename || '',
+  const cardConfig: CardRenderConfig = {
+    title: (item: unknown) => (item as DocumentWithMeta).title,
+    description: (item: unknown) => (item as DocumentWithMeta).filename || '',
     status: {
       field: 'status',
       options: {
@@ -332,7 +332,7 @@ const KnowledgeBasePage: React.FC = () => {
     iconBgColor: 'background.paper',
   };
 
-  const cardActions = [
+  const cardActions: CardAction[] = [
     {
       label: '查看',
       icon: <Eye size={16} />,
@@ -344,7 +344,7 @@ const KnowledgeBasePage: React.FC = () => {
       label: '编辑',
       icon: <Edit size={16} />,
       onClick: (item: unknown) => handleEdit(item as DocumentWithMeta),
-      color: 'info',
+      color: 'primary',
       variant: 'text',
     },
     {

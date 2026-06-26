@@ -5,6 +5,7 @@
 ```
 scripts/
 ├── topems.sh                 # 统一入口脚本（推荐使用）
+├── scan_todos.py            # TODO/FIXME 代码扫描脚本
 ├── install-deps.sh           # 本地依赖安装
 ├── ai-models.sh             # AI 模型管理
 ├── update_admin_password.sh  # 管理员密码重置
@@ -41,6 +42,7 @@ manufacturing   svc/manufacturing     topems-manufacturing   8023
 | `install-deps.sh` | 依赖安装（PostgreSQL/Redis/Rust/Node.js） |
 | `ai-models.sh` | AI 模型管理（Ollama 启动/模型下载） |
 | `update_admin_password.sh` | 管理员密码重置 |
+| `scan_todos.py` | TODO/FIXME 代码扫描脚本 |
 
 ### 部署脚本
 
@@ -129,6 +131,37 @@ manufacturing   svc/manufacturing     topems-manufacturing   8023
 ./scripts/ai-models.sh status         # 查看状态
 ./scripts/ai-models.sh stop           # 停止 Ollama
 ```
+
+### TODO/FIXME 代码扫描
+
+```bash
+# 基础扫描（使用默认配置）
+python3 scripts/scan_todos.py
+
+# 仅显示统计概览
+python3 scripts/scan_todos.py --summary
+
+# 生成 Markdown 报告并保存到文件
+python3 scripts/scan_todos.py --output docs/todo-scan-report.md
+
+# 扫描指定目录
+python3 scripts/scan_todos.py --dir apps/web/src --dir svc/hrm/src
+
+# 排除指定目录
+python3 scripts/scan_todos.py --exclude test --exclude vendor
+
+# 只扫描特定文件类型
+python3 scripts/scan_todos.py --ext .rs --ext .ts
+```
+
+**支持的标记类型（按优先级从高到低）：**
+- `FIXME` - 需要修复的问题
+- `HACK` - 临时解决方案，需要重构
+- `TODO` - 待办事项
+- `XXX` - 需要注意的代码
+- `NOTE` - 代码说明注释
+
+首次扫描报告：[docs/todo-scan-report.md](../docs/todo-scan-report.md)
 
 ## 支持的服务
 

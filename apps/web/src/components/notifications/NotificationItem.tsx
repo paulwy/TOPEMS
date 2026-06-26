@@ -244,7 +244,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
       await handleMarkAsRead({ stopPropagation: () => {} } as React.MouseEvent);
     }
 
-    const link = getLink(notification);
+    const link = getLink(notification) as string | undefined;
     if (link) {
       window.location.href = link;
     }
@@ -396,11 +396,11 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
           >
             <Trash2 style={{ width: 16, height: 16 }} />
           </button>
-          {getLink(notification) && (
+          {!!getLink(notification) && (
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                window.location.href = getLink(notification)!;
+                window.location.href = getLink(notification) as string;
               }}
               style={{
                 padding: 6,

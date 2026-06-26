@@ -2,17 +2,10 @@ import {
   Card,
   CardContent,
   CardHeader,
-  Chip,
   Typography,
   Box,
-  TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   LinearProgress,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import type {
   Opportunity,
@@ -20,11 +13,11 @@ import type {
   UpdateOpportunityRequest,
   FunnelStage,
   OpportunityStats,
-} from '@/api/modules/crm/crm';
-import { crmApi } from '@/api/modules/crm/crm';
+} from '@/api/crm';
+import { crmApi } from '@/api/crm';
 import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
-import { DataExport } from '@/components/common';
+import { DataExport, ActionButton, FormField, Dialog, StatusBadge } from '@/components/common';
 import {
   Plus,
   Edit,
@@ -223,10 +216,10 @@ const OpportunityManagementPage: React.FC = () => {
     };
     const s = stageMap[stage] || { label: stage, color: 'default' };
     return (
-      <Chip
-        size='small'
-        color={s.color}
+      <StatusBadge
+        status={stage}
         label={s.label}
+        color={s.color}
       />
     );
   };
@@ -610,172 +603,167 @@ const OpportunityManagementPage: React.FC = () => {
       <Dialog
         open={showDialog}
         onClose={() => setShowDialog(false)}
+        title={selectedOpportunity ? '编辑商机' : '新增商机'}
         maxWidth='md'
         fullWidth
+        cancelButton={{ label: '取消' }}
+        confirmButton={{ label: '保存', onClick: () => handleSubmit({ preventDefault: () => {} } as React.FormEvent) }}
       >
-        <DialogTitle>{selectedOpportunity ? '编辑商机' : '新增商机'}</DialogTitle>
         <form onSubmit={handleSubmit}>
-          <DialogContent>
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(2, 1fr)',
-                gap: 2,
-                pt: 1,
-              }}
-            >
-              <TextField
-                label='商机名称 *'
-                required
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                fullWidth
-                sx={{ gridColumn: 'span 2' }}
-              />
-              <TextField
-                label='金额'
-                type='number'
-                value={formData.value || ''}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    value: e.target.value ? Number(e.target.value) : undefined,
-                  })
-                }
-                fullWidth
-              />
-              <TextField
-                label='成交概率 (%)'
-                type='number'
-                value={formData.probability || ''}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    probability: e.target.value ? Number(e.target.value) : undefined,
-                  })
-                }
-                fullWidth
-              />
-              <TextField
-                label='预计成交日期'
-                type='date'
-                value={formData.close_date}
-                onChange={(e) => setFormData({ ...formData, close_date: e.target.value })}
-                fullWidth
-                sx={{ gridColumn: 'span 2' }}
-              />
-              <TextField
-                label='备注'
-                multiline
-                rows={3}
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                fullWidth
-                sx={{ gridColumn: 'span 2' }}
-              />
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setShowDialog(false)}>取消</Button>
-            <Button
-              type='submit'
-              variant='contained'
-            >
-              保存
-            </Button>
-          </DialogActions>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: 2,
+              pt: 1,
+            }}
+          >
+            <FormField
+              name='name'
+              label='商机名称 *'
+              required
+              value={formData.name}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, name: e.target.value })}
+              fullWidth
+              sx={{ gridColumn: 'span 2' }}
+            />
+            <FormField
+              name='value'
+              label='金额'
+              type='number'
+              value={formData.value || ''}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setFormData({
+                  ...formData,
+                  value: e.target.value ? Number(e.target.value) : undefined,
+                })
+              }
+              fullWidth
+            />
+            <FormField
+              name='probability'
+              label='成交概率 (%)'
+              type='number'
+              value={formData.probability || ''}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setFormData({
+                  ...formData,
+                  probability: e.target.value ? Number(e.target.value) : undefined,
+                })
+              }
+              fullWidth
+            />
+            <FormField
+              name='close_date'
+              label='预计成交日期'
+              type='date'
+              value={formData.close_date}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, close_date: e.target.value })}
+              fullWidth
+              sx={{ gridColumn: 'span 2' }}
+            />
+            <FormField
+              name='notes'
+              label='备注'
+              multiline
+              rows={3}
+              value={formData.notes}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, notes: e.target.value })}
+              fullWidth
+              sx={{ gridColumn: 'span 2' }}
+            />
+          </Box>
         </form>
       </Dialog>
 
       <Dialog
         open={showDetailDialog}
         onClose={() => setShowDetailDialog(false)}
+        title='商机详情'
         maxWidth='md'
         fullWidth
+        confirmButton={{ label: '关闭' }}
       >
-        <DialogTitle>商机详情</DialogTitle>
         {selectedOpportunity && (
-          <DialogContent>
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(2, 1fr)',
-                gap: 2,
-              }}
-            >
-              <Box>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  商机名称
-                </Typography>
-                <Typography sx={{ fontWeight: 'medium' }}>{selectedOpportunity.name}</Typography>
-              </Box>
-              <Box>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  金额
-                </Typography>
-                <Typography>¥{(selectedOpportunity.value || 0).toLocaleString()}</Typography>
-              </Box>
-              <Box>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  阶段
-                </Typography>
-                <Box sx={{ mt: 0.5 }}>{getStageBadge(selectedOpportunity.stage)}</Box>
-              </Box>
-              <Box>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  成交概率
-                </Typography>
-                <Typography>
-                  {selectedOpportunity.probability ? `${selectedOpportunity.probability}%` : '-'}
-                </Typography>
-              </Box>
-              <Box>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  预计成交日期
-                </Typography>
-                <Typography>
-                  {selectedOpportunity.close_date
-                    ? new Date(selectedOpportunity.close_date).toLocaleDateString('zh-CN')
-                    : '-'}
-                </Typography>
-              </Box>
-              <Box>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  创建时间
-                </Typography>
-                <Typography>
-                  {new Date(selectedOpportunity.created_at).toLocaleString('zh-CN')}
-                </Typography>
-              </Box>
-              <Box sx={{ gridColumn: 'span 2' }}>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  备注
-                </Typography>
-                <Typography>{selectedOpportunity.notes || '-'}</Typography>
-              </Box>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: 2,
+            }}
+          >
+            <Box>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                商机名称
+              </Typography>
+              <Typography sx={{ fontWeight: 'medium' }}>{selectedOpportunity.name}</Typography>
             </Box>
-          </DialogContent>
+            <Box>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                金额
+              </Typography>
+              <Typography>¥{(selectedOpportunity.value || 0).toLocaleString()}</Typography>
+            </Box>
+            <Box>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                阶段
+              </Typography>
+              <Box sx={{ mt: 0.5 }}>{getStageBadge(selectedOpportunity.stage)}</Box>
+            </Box>
+            <Box>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                成交概率
+              </Typography>
+              <Typography>
+                {selectedOpportunity.probability ? `${selectedOpportunity.probability}%` : '-'}
+              </Typography>
+            </Box>
+            <Box>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                预计成交日期
+              </Typography>
+              <Typography>
+                {selectedOpportunity.close_date
+                  ? new Date(selectedOpportunity.close_date).toLocaleDateString('zh-CN')
+                  : '-'}
+              </Typography>
+            </Box>
+            <Box>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                创建时间
+              </Typography>
+              <Typography>
+                {new Date(selectedOpportunity.created_at).toLocaleString('zh-CN')}
+              </Typography>
+            </Box>
+            <Box sx={{ gridColumn: 'span 2' }}>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                备注
+              </Typography>
+              <Typography>{selectedOpportunity.notes || '-'}</Typography>
+            </Box>
+          </Box>
         )}
       </Dialog>
     </>

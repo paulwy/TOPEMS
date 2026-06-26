@@ -43,10 +43,10 @@ import { vscDarkPlus, vs } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { aiApi } from '@/api/ai';
 import { apiLogger } from '@/utils/logger';
 import { useAppStore } from '../../store';
-import AISettingsModal from '@/components/AISettingsModal';
+import AISettingsModal from '@/components/ai/AISettingsModal';
 import { AIDocumentGenerator, DocumentManager, AIAnalyzer } from '@/components/ai';
 
-import { ModeToggle } from '@/components/ModeToggle';
+import { ModeToggle } from '@/components/theme/ModeToggle';
 
 interface Message {
   id: string;

@@ -1,4 +1,4 @@
-import { Grid } from '@/components/Grid';
+import { Grid } from '@/components';
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   FileText,
@@ -51,7 +51,7 @@ import {
   IconButton,
 } from '@mui/material';
 import { Button } from '@mui/material';
-import { ModeToggle } from '@/components/ModeToggle';
+import { ModeToggle } from '@/components/theme/ModeToggle';
 
 interface File {
   id: string;

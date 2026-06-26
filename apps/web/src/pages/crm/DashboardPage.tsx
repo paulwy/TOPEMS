@@ -21,9 +21,9 @@ import {
   type ChartCard,
   type QuickAction,
 } from '@/components/templates';
-import { crmApi } from '@/api/modules/crm/crm';
+import { crmApi } from '@/api/crm';
 import { logger } from '@/utils/logger';
-import type { FunnelStage, OpportunityStats } from '@/api/modules/crm/crm';
+import type { FunnelStage, OpportunityStats } from '@/api/crm';
 
 const iconMap: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
   TrendingUp,
@@ -191,14 +191,14 @@ export const DashboardPage: React.FC = () => {
       id: 'customer-scoring',
       label: '客户评分',
       icon: <ArrowRight size={20} />,
-      href: '/crm/customer-scoring',
+      href: '/crm/scoring',
       color: 'secondary.main',
     },
     {
       id: 'sales-report',
       label: '销售预测',
       icon: <ArrowRight size={20} />,
-      href: '/crm/sales-forecast',
+      href: '/crm/forecast',
       color: 'warning.main',
     },
   ];

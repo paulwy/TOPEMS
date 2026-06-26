@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 use super::ApiState;
 use crate::api::audit::{log_audit_event, AuditEventParams};
-use topems_shared::{api_error, ApiResponse, PaginatedResponse};
+use topems_shared::{api_error, ApiResponse, DataMasking, EncryptionResult, FieldEncryptionService, PaginatedResponse};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct BankAccount {
@@ -22,11 +22,41 @@ pub struct BankAccount {
     pub account_name: String,
     pub account_type: String,
     pub currency: String,
+    pub tax_registration_number: Option<String>,
     pub opening_date: DateTime<Utc>,
     pub balance: f64,
     pub status: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+}
+
+impl BankAccount {
+    pub fn encrypt_fields(&mut self, service: &FieldEncryptionService) -> EncryptionResult<()> {
+        self.account_number = service.encrypt_to_string(&self.account_number)?;
+        if let Some(tax) = &self.tax_registration_number {
+            self.tax_registration_number = Some(service.encrypt_to_string(tax)?);
+        }
+        Ok(())
+    }
+
+    pub fn decrypt_fields(&mut self, service: &FieldEncryptionService) -> EncryptionResult<()> {
+        if self.account_number.starts_with('{') {
+            self.account_number = service.decrypt_string(&self.account_number)?;
+        }
+        if let Some(tax) = &self.tax_registration_number {
+            if tax.starts_with('{') {
+                self.tax_registration_number = Some(service.decrypt_string(tax)?);
+            }
+        }
+        Ok(())
+    }
+
+    pub fn mask_sensitive_fields(&mut self) {
+        self.account_number = DataMasking::bank_card(&self.account_number);
+        if let Some(tax) = &self.tax_registration_number {
+            self.tax_registration_number = Some(DataMasking::id_card(tax));
+        }
+    }
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -38,6 +68,7 @@ pub struct CreateBankAccountRequest {
     pub account_name: String,
     pub account_type: String,
     pub currency: String,
+    pub tax_registration_number: Option<String>,
     pub opening_date: DateTime<Utc>,
     pub initial_balance: f64,
 }
@@ -48,6 +79,7 @@ pub struct UpdateBankAccountRequest {
     pub branch_name: Option<String>,
     pub account_name: Option<String>,
     pub account_type: Option<String>,
+    pub tax_registration_number: Option<String>,
     pub status: Option<String>,
 }
 
@@ -126,7 +158,7 @@ async fn list_bank_accounts(
     let result = sqlx::query_as::<_, BankAccount>(
         r#"
         SELECT id, company_id, bank_name, branch_name, account_number, account_name, 
-               account_type, currency, opening_date, balance, status, created_at, updated_at
+               account_type, currency, tax_registration_number, opening_date, balance, status, created_at, updated_at
         FROM bank_accounts
         WHERE ($1::text IS NULL OR bank_name ILIKE $1 OR account_number ILIKE $1 OR account_name ILIKE $1)
           AND ($2::text IS NULL OR status = $2)
@@ -144,7 +176,7 @@ async fn list_bank_accounts(
     .await;
 
     match result {
-        Ok(accounts) => {
+        Ok(mut accounts) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
                 SELECT COUNT(*) FROM bank_accounts
@@ -160,6 +192,11 @@ async fn list_bank_accounts(
             .await;
 
             let total = count_result.unwrap_or(0);
+
+            for account in accounts.iter_mut() {
+                let _ = account.decrypt_fields(&state.encryption);
+                account.mask_sensitive_fields();
+            }
 
             Json(ApiResponse::success(
                 PaginatedResponse::new(accounts, total, page, page_size),
@@ -182,23 +219,30 @@ async fn create_bank_account(
     let now = Utc::now();
     let status = "active".to_string();
 
+    let encrypted_account_number = state.encryption.encrypt_to_string(&req.account_number)
+        .unwrap_or_else(|_| req.account_number.clone());
+    let encrypted_tax_number = req.tax_registration_number.as_ref().and_then(|tax| {
+        state.encryption.encrypt_to_string(tax).ok()
+    });
+
     let result = sqlx::query_as::<_, BankAccount>(
         r#"
         INSERT INTO bank_accounts (id, company_id, bank_name, branch_name, account_number, 
-               account_name, account_type, currency, opening_date, balance, status, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+               account_name, account_type, currency, tax_registration_number, opening_date, balance, status, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
         RETURNING id, company_id, bank_name, branch_name, account_number, account_name, 
-                  account_type, currency, opening_date, balance, status, created_at, updated_at
+                  account_type, currency, tax_registration_number, opening_date, balance, status, created_at, updated_at
         "#,
     )
     .bind(id)
     .bind(req.company_id)
     .bind(&req.bank_name)
     .bind(&req.branch_name)
-    .bind(&req.account_number)
+    .bind(&encrypted_account_number)
     .bind(&req.account_name)
     .bind(&req.account_type)
     .bind(&req.currency)
+    .bind(&encrypted_tax_number)
     .bind(req.opening_date)
     .bind(req.initial_balance)
     .bind(&status)
@@ -207,28 +251,30 @@ async fn create_bank_account(
     .fetch_one(&state.db)
     .await;
 
-    let (response, status_str, error_msg) = match &result {
-        Ok(account) => (
-            Json(ApiResponse::success(account.clone(), "银行账户创建成功")),
-            "success".to_string(),
-            None,
-        ),
+    let (response, status_str, error_msg, response_data) = match &result {
+        Ok(account) => {
+            let mut account = account.clone();
+            let _ = account.decrypt_fields(&state.encryption);
+            let response_data = serde_json::to_value(&account).ok();
+            (
+                Json(ApiResponse::success(account, "银行账户创建成功")),
+                "success".to_string(),
+                None,
+                response_data,
+            )
+        }
         Err(e) => {
             tracing::error!("创建银行账户失败: {}", e);
             (
                 Json(api_error(500, "银行账户创建失败")),
                 "error".to_string(),
                 Some(e.to_string()),
+                None,
             )
         }
     };
 
     let request_data = serde_json::to_value(&req).ok();
-    let response_data = if let Ok(account) = &result {
-        serde_json::to_value(account).ok()
-    } else {
-        None
-    };
 
     log_audit_event(
         &state.db,
@@ -258,7 +304,7 @@ async fn get_bank_account(
     let result = sqlx::query_as::<_, BankAccount>(
         r#"
         SELECT id, company_id, bank_name, branch_name, account_number, account_name, 
-               account_type, currency, opening_date, balance, status, created_at, updated_at
+               account_type, currency, tax_registration_number, opening_date, balance, status, created_at, updated_at
         FROM bank_accounts WHERE id = $1
         "#,
     )
@@ -267,7 +313,10 @@ async fn get_bank_account(
     .await;
 
     match result {
-        Ok(Some(account)) => Json(ApiResponse::success(account, "获取银行账户成功")),
+        Ok(Some(mut account)) => {
+            let _ = account.decrypt_fields(&state.encryption);
+            Json(ApiResponse::success(account, "获取银行账户成功"))
+        }
         Ok(None) => Json(api_error(404, "银行账户不存在")),
         Err(e) => {
             tracing::error!("获取银行账户失败: {}", e);
@@ -284,34 +333,42 @@ async fn update_bank_account(
 ) -> Json<ApiResponse<BankAccount>> {
     let existing = sqlx::query_as::<_, BankAccount>(
         "SELECT id, company_id, bank_name, branch_name, account_number, account_name, 
-                account_type, currency, opening_date, balance, status, created_at, updated_at FROM bank_accounts WHERE id = $1",
+                account_type, currency, tax_registration_number, opening_date, balance, status, created_at, updated_at FROM bank_accounts WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
     .await;
 
-    let existing = match existing {
+    let mut existing = match existing {
         Ok(Some(a)) => a,
         Ok(None) => return Json(api_error(404, "银行账户不存在")),
         Err(e) => return Json(api_error(500, &format!("查询银行账户失败: {}", e))),
     };
 
+    let _ = existing.decrypt_fields(&state.encryption);
+
     let request_data = serde_json::to_value(&req).ok();
 
-    let bank_name = req.bank_name.or(Some(existing.bank_name));
+    let bank_name = req.bank_name.unwrap_or(existing.bank_name);
     let branch_name = req.branch_name.or(existing.branch_name);
-    let account_name = req.account_name.or(Some(existing.account_name));
-    let account_type = req.account_type.or(Some(existing.account_type));
+    let account_name = req.account_name.unwrap_or(existing.account_name);
+    let account_type = req.account_type.unwrap_or(existing.account_type);
+    let tax_registration_number = req.tax_registration_number.or(existing.tax_registration_number);
     let status = req.status.unwrap_or(existing.status);
     let now = Utc::now();
+
+    let encrypted_tax_number = tax_registration_number.as_ref().and_then(|tax| {
+        state.encryption.encrypt_to_string(tax).ok()
+    });
 
     let result = sqlx::query_as::<_, BankAccount>(
         r#"
         UPDATE bank_accounts SET
-            bank_name = $2, branch_name = $3, account_name = $4, account_type = $5, status = $6, updated_at = $7
+            bank_name = $2, branch_name = $3, account_name = $4, account_type = $5, 
+            tax_registration_number = $6, status = $7, updated_at = $8
         WHERE id = $1
         RETURNING id, company_id, bank_name, branch_name, account_number, account_name, 
-                  account_type, currency, opening_date, balance, status, created_at, updated_at
+                  account_type, currency, tax_registration_number, opening_date, balance, status, created_at, updated_at
         "#,
     )
     .bind(id)
@@ -319,31 +376,33 @@ async fn update_bank_account(
     .bind(&branch_name)
     .bind(&account_name)
     .bind(&account_type)
+    .bind(&encrypted_tax_number)
     .bind(&status)
     .bind(now)
     .fetch_one(&state.db)
     .await;
 
-    let (response, status_str, error_msg) = match &result {
-        Ok(account) => (
-            Json(ApiResponse::success(account.clone(), "银行账户更新成功")),
-            "success".to_string(),
-            None,
-        ),
+    let (response, status_str, error_msg, response_data) = match &result {
+        Ok(account) => {
+            let mut account = account.clone();
+            let _ = account.decrypt_fields(&state.encryption);
+            let response_data = serde_json::to_value(&account).ok();
+            (
+                Json(ApiResponse::success(account, "银行账户更新成功")),
+                "success".to_string(),
+                None,
+                response_data,
+            )
+        }
         Err(e) => {
             tracing::error!("更新银行账户失败: {}", e);
             (
                 Json(api_error(500, "银行账户更新失败")),
                 "error".to_string(),
                 Some(e.to_string()),
+                None,
             )
         }
-    };
-
-    let response_data = if let Ok(account) = &result {
-        serde_json::to_value(account).ok()
-    } else {
-        None
     };
 
     log_audit_event(

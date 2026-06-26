@@ -13,14 +13,14 @@ import {
   TrendingUp,
   Clock,
 } from 'lucide-react';
-import { crmApi } from '@/api/modules/crm/crm';
+import { crmApi } from '@/api/crm';
 import {
   useCustomerFinanceInfo,
   useSalesInvoices,
   useCollectionRecords,
 } from '@/hooks/useCrmFinance';
 import { useNotification } from '@/hooks/useNotification';
-import type { Customer } from '@/api/modules/crm/crm';
+import type { Customer } from '@/api/crm';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 

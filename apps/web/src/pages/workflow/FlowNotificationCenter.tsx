@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Bell, CheckCircle, XCircle, Clock, Check, Play, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import type { Notification } from '@/api/flow';
-import { flowApi } from '@/api/flow';
+import type { Notification } from '@/api/workflow';
+import { workflowApi } from '@/api/workflow';
 import { useAppStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
 import { Box, Typography, Tabs, Tab, CircularProgress } from '@mui/material';
@@ -33,7 +33,7 @@ const FlowNotificationCenter: React.FC = () => {
         // This would need backend support to filter by is_read
       }
 
-      const response = await flowApi.listNotifications(userId, params);
+      const response = await workflowApi.listNotifications(userId, params);
       if (response.success && response.data) {
         const data = response.data as any;
         const notificationList = Array.isArray(data) ? data : data.items || [];
@@ -60,7 +60,7 @@ const FlowNotificationCenter: React.FC = () => {
   const handleMarkAsRead = async () => {
     try {
       const userId = user?.id || 'current-user-id';
-      const response = await flowApi.markNotificationsAsRead(userId);
+      const response = await workflowApi.markNotificationsAsRead(userId);
       if (response.success) {
         addNotification({
           title: '成功',
@@ -84,9 +84,9 @@ const FlowNotificationCenter: React.FC = () => {
 
     // Navigate based on notification type
     if (notification.workflow_instance_id) {
-      navigate(`/flow/instances/${notification.workflow_instance_id}`);
+      navigate(`/flow/instances`);
     } else if (notification.approval_id) {
-      navigate(`/flow/approvals/${notification.approval_id}`);
+      navigate(`/flow/approvals`);
     }
   };
 

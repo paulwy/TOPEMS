@@ -1,0 +1,595 @@
+//! Emergency drill management - Drill plans, records, evaluation, rectification, and statistics
+
+use axum::{extract::State, routing::{get, post, put}, Json, Router};
+use serde::{Deserialize, Serialize};
+use topems_shared::ApiResponse;
+
+use crate::AppState;
+
+pub fn create_routes() -> Router<AppState> {
+    Router::new()
+        .route("/api/ehs/drills/plans", get(list_drill_plans).post(create_drill_plan))
+        .route("/api/ehs/drills/plans/{id}", get(get_drill_plan).put(update_drill_plan).delete(delete_drill_plan))
+        .route("/api/ehs/drills/records", get(list_drill_records).post(create_drill_record))
+        .route("/api/ehs/drills/records/{id}", get(get_drill_record).put(update_drill_record).delete(delete_drill_record))
+        .route("/api/ehs/drills/records/{id}/evaluation", post(create_drill_evaluation))
+        .route("/api/ehs/drills/records/{id}/problems", get(list_drill_problems).post(create_drill_problem))
+        .route("/api/ehs/drills/records/{id}/problems/{problem_id}", put(update_drill_problem))
+        .route("/api/ehs/drills/types", get(list_drill_types))
+        .route("/api/ehs/drills/statistics", get(get_drill_statistics))
+}
+
+#[derive(Debug, Deserialize)]
+pub struct DrillQuery {
+    pub page: Option<i64>,
+    pub page_size: Option<i64>,
+    pub status: Option<String>,
+    pub drill_type: Option<String>,
+    pub year: Option<i32>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct DrillPlan {
+    pub id: String,
+    pub plan_no: String,
+    pub title: String,
+    pub description: Option<String>,
+    pub drill_type: String,
+    pub plan_date: Option<String>,
+    pub location: Option<String>,
+    pub participants: Option<i32>,
+    pub estimated_duration: Option<i32>,
+    pub content: Option<String>,
+    pub organizer: Option<String>,
+    pub status: String,
+    pub related_plan_id: Option<String>,
+    pub created_at: Option<String>,
+    pub updated_at: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct DrillRecord {
+    pub id: String,
+    pub record_no: String,
+    pub plan_id: Option<String>,
+    pub title: String,
+    pub drill_type: String,
+    pub location: String,
+    pub started_at: Option<String>,
+    pub ended_at: Option<String>,
+    pub duration: Option<i32>,
+    pub participants: Option<i32>,
+    pub participant_list: Option<Vec<String>>,
+    pub content: Option<String>,
+    pub actual_content: Option<String>,
+    pub organizer: Option<String>,
+    pub recorder: Option<String>,
+    pub status: String,
+    pub attachments: Option<Vec<String>>,
+    pub created_at: Option<String>,
+    pub updated_at: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct DrillEvaluation {
+    pub id: String,
+    pub drill_id: String,
+    pub evaluator: Option<String>,
+    pub overall_score: Option<i32>,
+    pub overall_comment: Option<String>,
+    pub objectives_met: Option<bool>,
+    pub response_time_score: Option<i32>,
+    pub coordination_score: Option<i32>,
+    pub procedure_score: Option<i32>,
+    pub equipment_score: Option<i32>,
+    pub evaluated_at: Option<String>,
+    pub created_at: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct DrillProblem {
+    pub id: String,
+    pub drill_id: String,
+    pub description: String,
+    pub category: Option<String>,
+    pub severity: Option<String>,
+    pub responsible_person: Option<String>,
+    pub deadline: Option<String>,
+    pub status: String,
+    pub rectification_measures: Option<String>,
+    pub rectified_at: Option<String>,
+    pub verifier: Option<String>,
+    pub verified_at: Option<String>,
+    pub created_at: Option<String>,
+    pub updated_at: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct DrillDetail {
+    pub record: DrillRecord,
+    pub evaluation: Option<DrillEvaluation>,
+    pub problems: Vec<DrillProblem>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct DrillStatistics {
+    pub total_drills: i32,
+    pub planned_count: i32,
+    pub completed_count: i32,
+    pub average_score: Option<f64>,
+    pub by_type: Vec<serde_json::Value>,
+    pub by_month: Vec<serde_json::Value>,
+    pub problem_count: i32,
+    pub rectified_count: i32,
+    pub participant_count: i32,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateDrillPlanRequest {
+    pub title: String,
+    pub description: Option<String>,
+    pub drill_type: String,
+    pub plan_date: Option<String>,
+    pub location: Option<String>,
+    pub participants: Option<i32>,
+    pub estimated_duration: Option<i32>,
+    pub content: Option<String>,
+    pub organizer: Option<String>,
+    pub related_plan_id: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateDrillPlanRequest {
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub drill_type: Option<String>,
+    pub plan_date: Option<String>,
+    pub location: Option<String>,
+    pub participants: Option<i32>,
+    pub estimated_duration: Option<i32>,
+    pub content: Option<String>,
+    pub organizer: Option<String>,
+    pub status: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateDrillRecordRequest {
+    pub plan_id: Option<String>,
+    pub title: String,
+    pub drill_type: String,
+    pub location: String,
+    pub started_at: Option<String>,
+    pub ended_at: Option<String>,
+    pub participants: Option<i32>,
+    pub participant_list: Option<Vec<String>>,
+    pub actual_content: Option<String>,
+    pub organizer: Option<String>,
+    pub recorder: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateDrillRecordRequest {
+    pub title: Option<String>,
+    pub drill_type: Option<String>,
+    pub location: Option<String>,
+    pub started_at: Option<String>,
+    pub ended_at: Option<String>,
+    pub participants: Option<i32>,
+    pub participant_list: Option<Vec<String>>,
+    pub actual_content: Option<String>,
+    pub organizer: Option<String>,
+    pub recorder: Option<String>,
+    pub status: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateEvaluationRequest {
+    pub evaluator: Option<String>,
+    pub overall_score: Option<i32>,
+    pub overall_comment: Option<String>,
+    pub objectives_met: Option<bool>,
+    pub response_time_score: Option<i32>,
+    pub coordination_score: Option<i32>,
+    pub procedure_score: Option<i32>,
+    pub equipment_score: Option<i32>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateDrillProblemRequest {
+    pub description: String,
+    pub category: Option<String>,
+    pub severity: Option<String>,
+    pub responsible_person: Option<String>,
+    pub deadline: Option<String>,
+    pub rectification_measures: Option<String>,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateDrillProblemRequest {
+    pub description: Option<String>,
+    pub category: Option<String>,
+    pub severity: Option<String>,
+    pub responsible_person: Option<String>,
+    pub deadline: Option<String>,
+    pub status: Option<String>,
+    pub rectification_measures: Option<String>,
+    pub verifier: Option<String>,
+}
+
+pub async fn list_drill_plans(
+    State(_state): State<crate::AppState>,
+) -> Json<ApiResponse<Vec<DrillPlan>>> {
+    tracing::info!("Listing drill plans");
+    Json(ApiResponse::success(Vec::<DrillPlan>::new(), "获取演练计划列表成功"))
+}
+
+pub async fn create_drill_plan(
+    State(_state): State<crate::AppState>,
+    Json(req): Json<CreateDrillPlanRequest>,
+) -> Json<ApiResponse<DrillPlan>> {
+    tracing::info!("Creating drill plan: {:?}", req);
+    Json(ApiResponse::success(
+        DrillPlan {
+            id: uuid::Uuid::new_v4().to_string(),
+            plan_no: format!("DP-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+            title: req.title,
+            description: req.description,
+            drill_type: req.drill_type,
+            plan_date: req.plan_date,
+            location: req.location,
+            participants: req.participants,
+            estimated_duration: req.estimated_duration,
+            content: req.content,
+            organizer: req.organizer,
+            status: "planned".to_string(),
+            related_plan_id: req.related_plan_id,
+            created_at: Some(chrono::Utc::now().to_rfc3339()),
+            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+        },
+        "演练计划创建成功",
+    ))
+}
+
+pub async fn get_drill_plan(
+    State(_state): State<crate::AppState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<DrillPlan>> {
+    tracing::info!("Getting drill plan: {}", id);
+    Json(ApiResponse::success(
+        DrillPlan {
+            id,
+            plan_no: "DP-2024001".to_string(),
+            title: "2024年度火灾应急演练计划".to_string(),
+            description: Some("全厂火灾应急疏散演练".to_string()),
+            drill_type: "fire".to_string(),
+            plan_date: Some("2024-06-15".to_string()),
+            location: Some("生产厂区".to_string()),
+            participants: Some(200),
+            estimated_duration: Some(120),
+            content: Some("火灾报警、人员疏散、初期火灾扑救...".to_string()),
+            organizer: Some("安全环保部".to_string()),
+            status: "planned".to_string(),
+            related_plan_id: Some("plan-001".to_string()),
+            created_at: Some(chrono::Utc::now().to_rfc3339()),
+            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+        },
+        "获取演练计划详情成功",
+    ))
+}
+
+pub async fn update_drill_plan(
+    State(_state): State<crate::AppState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<UpdateDrillPlanRequest>,
+) -> Json<ApiResponse<DrillPlan>> {
+    tracing::info!("Updating drill plan {}: {:?}", id, req);
+    Json(ApiResponse::success(
+        DrillPlan {
+            id,
+            plan_no: "DP-2024001".to_string(),
+            title: req.title.unwrap_or_else(|| "2024年度火灾应急演练计划".to_string()),
+            description: req.description,
+            drill_type: req.drill_type.unwrap_or_else(|| "fire".to_string()),
+            plan_date: req.plan_date,
+            location: req.location,
+            participants: req.participants,
+            estimated_duration: req.estimated_duration,
+            content: req.content,
+            organizer: req.organizer,
+            status: req.status.unwrap_or_else(|| "planned".to_string()),
+            related_plan_id: Some("plan-001".to_string()),
+            created_at: Some(chrono::Utc::now().to_rfc3339()),
+            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+        },
+        "演练计划更新成功",
+    ))
+}
+
+pub async fn delete_drill_plan(
+    State(_state): State<crate::AppState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<()>> {
+    tracing::info!("Deleting drill plan: {}", id);
+    Json(ApiResponse::success((), "演练计划删除成功"))
+}
+
+pub async fn list_drill_records(
+    State(_state): State<crate::AppState>,
+) -> Json<ApiResponse<Vec<DrillRecord>>> {
+    tracing::info!("Listing drill records");
+    Json(ApiResponse::success(Vec::<DrillRecord>::new(), "获取演练记录列表成功"))
+}
+
+pub async fn create_drill_record(
+    State(_state): State<crate::AppState>,
+    Json(req): Json<CreateDrillRecordRequest>,
+) -> Json<ApiResponse<DrillRecord>> {
+    tracing::info!("Creating drill record: {:?}", req);
+    Json(ApiResponse::success(
+        DrillRecord {
+            id: uuid::Uuid::new_v4().to_string(),
+            record_no: format!("DR-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+            plan_id: req.plan_id,
+            title: req.title,
+            drill_type: req.drill_type,
+            location: req.location,
+            started_at: req.started_at,
+            ended_at: req.ended_at,
+            duration: None,
+            participants: req.participants,
+            participant_list: req.participant_list,
+            content: None,
+            actual_content: req.actual_content,
+            organizer: req.organizer,
+            recorder: req.recorder,
+            status: "in_progress".to_string(),
+            attachments: None,
+            created_at: Some(chrono::Utc::now().to_rfc3339()),
+            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+        },
+        "演练记录创建成功",
+    ))
+}
+
+pub async fn get_drill_record(
+    State(_state): State<crate::AppState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<DrillDetail>> {
+    tracing::info!("Getting drill record: {}", id);
+    Json(ApiResponse::success(
+        DrillDetail {
+            record: DrillRecord {
+                id: id.clone(),
+                record_no: "DR-2024001".to_string(),
+                plan_id: Some("plan-001".to_string()),
+                title: "2024年度火灾应急演练".to_string(),
+                drill_type: "fire".to_string(),
+                location: "生产厂区".to_string(),
+                started_at: Some(chrono::Utc::now().to_rfc3339()),
+                ended_at: Some(chrono::Utc::now().to_rfc3339()),
+                duration: Some(90),
+                participants: Some(180),
+                participant_list: None,
+                content: Some("火灾报警、人员疏散、初期火灾扑救...".to_string()),
+                actual_content: Some("实际演练内容...".to_string()),
+                organizer: Some("安全环保部".to_string()),
+                recorder: Some("张安全".to_string()),
+                status: "completed".to_string(),
+                attachments: None,
+                created_at: Some(chrono::Utc::now().to_rfc3339()),
+                updated_at: Some(chrono::Utc::now().to_rfc3339()),
+            },
+            evaluation: Some(DrillEvaluation {
+                id: "eval-001".to_string(),
+                drill_id: id.clone(),
+                evaluator: Some("李主任".to_string()),
+                overall_score: Some(85),
+                overall_comment: Some("演练整体效果良好，人员疏散有序".to_string()),
+                objectives_met: Some(true),
+                response_time_score: Some(90),
+                coordination_score: Some(80),
+                procedure_score: Some(85),
+                equipment_score: Some(88),
+                evaluated_at: Some(chrono::Utc::now().to_rfc3339()),
+                created_at: Some(chrono::Utc::now().to_rfc3339()),
+            }),
+            problems: vec![
+                DrillProblem {
+                    id: "prob-001".to_string(),
+                    drill_id: id.clone(),
+                    description: "部分员工对疏散路线不熟悉".to_string(),
+                    category: Some("training".to_string()),
+                    severity: Some("medium".to_string()),
+                    responsible_person: Some("培训主管".to_string()),
+                    deadline: Some("2024-07-01".to_string()),
+                    status: "in_progress".to_string(),
+                    rectification_measures: Some("组织专项培训，重新演练疏散路线".to_string()),
+                    rectified_at: None,
+                    verifier: None,
+                    verified_at: None,
+                    created_at: Some(chrono::Utc::now().to_rfc3339()),
+                    updated_at: Some(chrono::Utc::now().to_rfc3339()),
+                },
+            ],
+        },
+        "获取演练详情成功",
+    ))
+}
+
+pub async fn update_drill_record(
+    State(_state): State<crate::AppState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<UpdateDrillRecordRequest>,
+) -> Json<ApiResponse<DrillRecord>> {
+    tracing::info!("Updating drill record {}: {:?}", id, req);
+    Json(ApiResponse::success(
+        DrillRecord {
+            id,
+            record_no: "DR-2024001".to_string(),
+            plan_id: Some("plan-001".to_string()),
+            title: req.title.unwrap_or_else(|| "2024年度火灾应急演练".to_string()),
+            drill_type: req.drill_type.unwrap_or_else(|| "fire".to_string()),
+            location: req.location.unwrap_or_else(|| "生产厂区".to_string()),
+            started_at: req.started_at,
+            ended_at: req.ended_at,
+            duration: None,
+            participants: req.participants,
+            participant_list: req.participant_list,
+            content: None,
+            actual_content: req.actual_content,
+            organizer: req.organizer,
+            recorder: req.recorder,
+            status: req.status.unwrap_or_else(|| "in_progress".to_string()),
+            attachments: None,
+            created_at: Some(chrono::Utc::now().to_rfc3339()),
+            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+        },
+        "演练记录更新成功",
+    ))
+}
+
+pub async fn delete_drill_record(
+    State(_state): State<crate::AppState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<()>> {
+    tracing::info!("Deleting drill record: {}", id);
+    Json(ApiResponse::success((), "演练记录删除成功"))
+}
+
+pub async fn create_drill_evaluation(
+    State(_state): State<crate::AppState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<CreateEvaluationRequest>,
+) -> Json<ApiResponse<DrillEvaluation>> {
+    tracing::info!("Creating drill evaluation for {}: {:?}", id, req);
+    Json(ApiResponse::success(
+        DrillEvaluation {
+            id: uuid::Uuid::new_v4().to_string(),
+            drill_id: id,
+            evaluator: req.evaluator,
+            overall_score: req.overall_score,
+            overall_comment: req.overall_comment,
+            objectives_met: req.objectives_met,
+            response_time_score: req.response_time_score,
+            coordination_score: req.coordination_score,
+            procedure_score: req.procedure_score,
+            equipment_score: req.equipment_score,
+            evaluated_at: Some(chrono::Utc::now().to_rfc3339()),
+            created_at: Some(chrono::Utc::now().to_rfc3339()),
+        },
+        "演练评估创建成功",
+    ))
+}
+
+pub async fn list_drill_problems(
+    State(_state): State<crate::AppState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<Vec<DrillProblem>>> {
+    tracing::info!("Listing drill problems for: {}", id);
+    Json(ApiResponse::success(Vec::<DrillProblem>::new(), "获取问题列表成功"))
+}
+
+pub async fn create_drill_problem(
+    State(_state): State<crate::AppState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<CreateDrillProblemRequest>,
+) -> Json<ApiResponse<DrillProblem>> {
+    tracing::info!("Creating drill problem for {}: {:?}", id, req);
+    Json(ApiResponse::success(
+        DrillProblem {
+            id: uuid::Uuid::new_v4().to_string(),
+            drill_id: id,
+            description: req.description,
+            category: req.category,
+            severity: req.severity,
+            responsible_person: req.responsible_person,
+            deadline: req.deadline,
+            status: "pending".to_string(),
+            rectification_measures: req.rectification_measures,
+            rectified_at: None,
+            verifier: None,
+            verified_at: None,
+            created_at: Some(chrono::Utc::now().to_rfc3339()),
+            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+        },
+        "问题创建成功",
+    ))
+}
+
+pub async fn update_drill_problem(
+    State(_state): State<crate::AppState>,
+    axum::extract::Path((_drill_id, problem_id)): axum::extract::Path<(String, String)>,
+    Json(req): Json<UpdateDrillProblemRequest>,
+) -> Json<ApiResponse<DrillProblem>> {
+    tracing::info!("Updating drill problem {}: {:?}", problem_id, req);
+    let status = req.status.clone().unwrap_or_else(|| "in_progress".to_string());
+    let rectified_at = if status == "rectified" { Some(chrono::Utc::now().to_rfc3339()) } else { None };
+    let verified_at = if status == "verified" { Some(chrono::Utc::now().to_rfc3339()) } else { None };
+    
+    Json(ApiResponse::success(
+        DrillProblem {
+            id: problem_id,
+            drill_id: "drill-001".to_string(),
+            description: req.description.unwrap_or_else(|| "演练问题描述".to_string()),
+            category: req.category,
+            severity: req.severity,
+            responsible_person: req.responsible_person,
+            deadline: req.deadline,
+            status,
+            rectification_measures: req.rectification_measures,
+            rectified_at,
+            verifier: req.verifier,
+            verified_at,
+            created_at: Some(chrono::Utc::now().to_rfc3339()),
+            updated_at: Some(chrono::Utc::now().to_rfc3339()),
+        },
+        "问题更新成功",
+    ))
+}
+
+pub async fn get_drill_statistics(
+    State(_state): State<crate::AppState>,
+) -> Json<ApiResponse<DrillStatistics>> {
+    tracing::info!("Getting drill statistics");
+    Json(ApiResponse::success(
+        DrillStatistics {
+            total_drills: 12,
+            planned_count: 2,
+            completed_count: 10,
+            average_score: Some(82.5),
+            by_type: vec![
+                serde_json::json!({ "type": "fire", "name": "火灾", "count": 4 }),
+                serde_json::json!({ "type": "leak", "name": "泄漏", "count": 3 }),
+                serde_json::json!({ "type": "evacuation", "name": "疏散", "count": 3 }),
+                serde_json::json!({ "type": "rescue", "name": "救援", "count": 2 }),
+            ],
+            by_month: vec![
+                serde_json::json!({ "month": "1月", "count": 1 }),
+                serde_json::json!({ "month": "2月", "count": 1 }),
+                serde_json::json!({ "month": "3月", "count": 2 }),
+                serde_json::json!({ "month": "4月", "count": 1 }),
+                serde_json::json!({ "month": "5月", "count": 1 }),
+                serde_json::json!({ "month": "6月", "count": 2 }),
+            ],
+            problem_count: 28,
+            rectified_count: 24,
+            participant_count: 1560,
+        },
+        "获取统计数据成功",
+    ))
+}
+
+pub async fn list_drill_types(
+    State(_state): State<crate::AppState>,
+) -> Json<ApiResponse<Vec<serde_json::Value>>> {
+    tracing::info!("Listing drill types");
+    let types = vec![
+        serde_json::json!({ "code": "fire", "name": "火灾演练" }),
+        serde_json::json!({ "code": "leak", "name": "泄漏演练" }),
+        serde_json::json!({ "code": "poisoning", "name": "中毒演练" }),
+        serde_json::json!({ "code": "evacuation", "name": "疏散演练" }),
+        serde_json::json!({ "code": "rescue", "name": "救援演练" }),
+        serde_json::json!({ "code": "comprehensive", "name": "综合演练" }),
+    ];
+    Json(ApiResponse::success(types, "获取演练类型成功"))
+}

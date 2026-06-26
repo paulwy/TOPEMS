@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { CardListTemplate } from '@/components/templates/CardListTemplate';
+import { CardListTemplate, type CardRenderConfig } from '@/components/templates/CardListTemplate';
 import { addressbookApi } from '@/api/addressbook';
 import type { AddressbookEntry, AddressbookDetail, DepartmentNode } from '@/types/addressbook';
 import { logger } from '@/utils/logger';
@@ -217,9 +217,9 @@ const AddressbookPage: React.FC = () => {
     setCurrentPage(1);
   };
 
-  const cardConfig = {
-    title: (item: AddressbookEntry) => item.name,
-    description: (item: AddressbookEntry) => item.position || item.department_name || '',
+  const cardConfig: CardRenderConfig = {
+    title: (item: unknown) => (item as AddressbookEntry).name,
+    description: (item: unknown) => (item as AddressbookEntry).position || (item as AddressbookEntry).department_name || '',
     status: {
       field: 'status',
       options: {
@@ -257,8 +257,8 @@ const AddressbookPage: React.FC = () => {
         },
       },
     ],
-    icon: getTypeIcon,
-    iconBgColor: (item: AddressbookEntry) => `${getTypeColor(item)}.light`,
+    icon: (item: unknown) => getTypeIcon(item as AddressbookEntry),
+    iconBgColor: (item: unknown) => `${getTypeColor(item as AddressbookEntry)}.light`,
   };
 
   return (
@@ -291,7 +291,7 @@ const AddressbookPage: React.FC = () => {
           total: total,
           onPageChange: setCurrentPage,
         }}
-        onCardClick={handleContactClick}
+        onCardClick={(item: unknown) => handleContactClick(item as AddressbookEntry)}
         gridColumns={{ xs: 1, sm: 2, md: 3, lg: 4 }}
         showStatsOverview={false}
       />

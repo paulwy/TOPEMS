@@ -31,8 +31,8 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import type { WorkflowInstance, Workflow } from '@/api/flow';
-import { flowApi } from '@/api/flow';
+import type { WorkflowInstance, Workflow } from '@/api/workflow';
+import { workflowApi } from '@/api/workflow';
 import { useAppStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
@@ -74,7 +74,7 @@ const FlowInstanceListPage: React.FC = () => {
         params.workflow_id = workflowFilter;
       }
 
-      const instanceResponse = await flowApi.listInstances(params);
+      const instanceResponse = await workflowApi.listInstances(params);
       if (instanceResponse.success && instanceResponse.data) {
         const data = instanceResponse.data as any;
         const instanceList = Array.isArray(data) ? data : data.items || [];
@@ -83,7 +83,7 @@ const FlowInstanceListPage: React.FC = () => {
         setInstances([]);
       }
 
-      const workflowResponse = await flowApi.listWorkflows({ is_active: true });
+      const workflowResponse = await workflowApi.listWorkflows({ is_active: true });
       if (workflowResponse.success && workflowResponse.data) {
         const data = workflowResponse.data as any;
         const workflowList = Array.isArray(data) ? data : data.items || [];
@@ -110,7 +110,7 @@ const FlowInstanceListPage: React.FC = () => {
 
     try {
       setCreating(true);
-      const response = await flowApi.startInstance({
+      const response = await workflowApi.startInstance({
         workflow_id: createFormData.workflow_id,
         initiator_id: createFormData.initiator_id || undefined,
         data: createFormData.data,
@@ -274,7 +274,7 @@ const FlowInstanceListPage: React.FC = () => {
     {
       label: '查看详情',
       icon: <Eye size={16} />,
-      onClick: (row) => navigate(`/flow/instances/${row.id}`),
+      onClick: (row) => navigate(`/flow/instances`),
       color: 'primary',
     },
   ];
@@ -341,7 +341,7 @@ const FlowInstanceListPage: React.FC = () => {
       label: '启动实例',
       icon: <Plus size={20} />,
       onClick: () => setShowCreateModal(true),
-      variant: 'contained',
+      variant: 'contained' as const,
     },
   ];
 

@@ -25,8 +25,8 @@ import {
   Loader2,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import type { Approval } from '@/api/flow';
-import { flowApi } from '@/api/flow';
+import type { Approval } from '@/api/workflow';
+import { workflowApi } from '@/api/workflow';
 import { useAppStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
@@ -61,7 +61,7 @@ const FlowApprovalPage: React.FC = () => {
 
       const approvalParams = activeTab === 'pending' ? { status: 'pending' } : {};
 
-      const approvalResponse = await flowApi.listApprovals(approvalParams);
+      const approvalResponse = await workflowApi.listApprovals(approvalParams);
       if (approvalResponse.success && approvalResponse.data) {
         const data = approvalResponse.data as any;
         const approvalList = Array.isArray(data) ? data : data.items || [];
@@ -95,7 +95,7 @@ const FlowApprovalPage: React.FC = () => {
 
     try {
       setProcessing(true);
-      const response = await flowApi.processApproval(selectedApproval.id, {
+      const response = await workflowApi.processApproval(selectedApproval.id, {
         action: approvalAction,
         comment: comment || undefined,
         actor_id: user?.id || 'system-user-id',
@@ -286,7 +286,7 @@ const FlowApprovalPage: React.FC = () => {
     {
       label: '查看详情',
       icon: <Eye size={16} />,
-      onClick: (row) => navigate(`/flow/approvals/${row.id}`),
+      onClick: (row) => navigate(`'/flow/approvals'`),
       color: 'primary',
     },
     {

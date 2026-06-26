@@ -438,7 +438,7 @@ const FinanceAssetPage: React.FC = () => {
         label: '删除',
         icon: <Trash2 sx={{ width: 16, height: 16 }} />,
         color: 'error' as const,
-        onClick: (row: Account) => handleDelete(row.id),
+        onClick: (row: Account) => handleDeleteClick(row.id),
       },
     ],
     []

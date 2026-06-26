@@ -63,6 +63,7 @@ export interface DetailPageTemplateProps extends BoxProps {
   // 返回
   backHref?: string;
   onBack?: () => void;
+  onRefresh?: () => void;
 
   // 操作
   actions?: PageAction[];
@@ -87,9 +88,9 @@ export interface DetailPageTemplateProps extends BoxProps {
   infoCard?: {
     avatar?: React.ReactNode;
     title?: string;
-    subtitle?: string;
+    subtitle?: React.ReactNode;
     tags?: string[];
-    stats?: Array<{ label: string; value: string | number }>;
+    stats?: Array<{ label: string; value: React.ReactNode }>;
   };
 
   // 子组件

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Container, Paper, Divider } from '@mui/material';
-import { Grid } from '@/components/Grid';
+import { Grid } from '@/components';
 import {
   Users,
   FileText,

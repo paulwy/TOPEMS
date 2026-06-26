@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Box, Typography, InputLabel, Chip, Avatar, Button, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Box, Typography, InputLabel, Avatar, Chip, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
 import { User, Building2, Calendar, Phone, Mail, MapPin, GraduationCap, Briefcase, Clock, AlertCircle } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { hrmApi, type Employee } from '@/api/hrm';
 import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
+import { StatusBadge } from '@/components/common/StatusBadge';
+import { Dialog } from '@/components/common/Dialog';
 
 const HrmEmployeeDetailPage: React.FC = () => {
   const navigate = useNavigate();
@@ -29,7 +31,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
         throw new Error('员工ID为空');
       }
 
-      const res = await hrmApi.employee.get(id);
+      const res = await hrmApi.employees.get(id);
 
       if (!res.success || !res.data) {
         throw new Error('获取员工详情失败');
@@ -46,7 +48,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
   };
 
   const handleTransfer = () => {
-    navigate(`/hrm/employees/${id}/transfer`);
+    navigate(`/hrm/employee/${id}`);
   };
 
   const getStatusConfig = (status: string) => {
@@ -109,15 +111,15 @@ const HrmEmployeeDetailPage: React.FC = () => {
           <Avatar sx={{ width: 80, height: 80, fontSize: 32 }}>
             {employee.name?.charAt(0)}
           </Avatar>
-          <Box flex={1}>
+          <Box sx={{ flex: 1 }}>
             <Typography variant='h4' sx={{ fontWeight: 'bold' }}>{employee.name}</Typography>
             <Typography variant='body1' color='text.secondary'>
               {employee.position} | {employee.department_name}
             </Typography>
             <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-              <Chip label={statusConfig.label} color={statusConfig.color} />
-              <Chip label={getGenderLabel(employee.gender)} size='small' variant='outlined' />
-              <Chip label={`${calculateWorkYears()}年工龄`} size='small' variant='outlined' />
+              <StatusBadge status={employee.status} />
+              <StatusBadge status={getGenderLabel(employee.gender || '')} label={getGenderLabel(employee.gender || '')} color='default' variant='outlined' />
+              <StatusBadge status={`${calculateWorkYears()}年工龄`} label={`${calculateWorkYears()}年工龄`} color='default' variant='outlined' />
             </Box>
           </Box>
         </Box>
@@ -153,7 +155,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
           </Box>
           <Box>
             <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>学历</InputLabel>
-            <Typography sx={{ mt: 0.5 }}>{getEducationLabel(employee.education)}</Typography>
+            <Typography sx={{ mt: 0.5 }}>{getEducationLabel(employee.education || '')}</Typography>
           </Box>
         </Box>
       </Box>
@@ -279,7 +281,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
         backHref='/hrm/employees'
         loading={loading}
         error={errorMessage}
-        onEdit={() => navigate(`/hrm/employees/${id}/edit`)}
+        onEdit={() => navigate(`/hrm/employee/${id}`)}
         infoCard={infoCard}
         tabs={tabs}
         actions={[
@@ -294,27 +296,23 @@ const HrmEmployeeDetailPage: React.FC = () => {
       <Dialog
         open={showTransferDialog}
         onClose={() => setShowTransferDialog(false)}
+        title='确认调岗'
         maxWidth='sm'
         fullWidth
+        cancelButton={{ label: '取消' }}
+        confirmButton={{ label: '确认调岗', onClick: handleTransfer }}
       >
-        <DialogTitle>确认调岗</DialogTitle>
-        <DialogContent>
-          <Typography variant='body1'>
-            确定要为 <strong>{employee?.name}</strong> 办理调岗手续吗？
+        <Typography variant='body1'>
+          确定要为 <strong>{employee?.name}</strong> 办理调岗手续吗？
+        </Typography>
+        <Box sx={{ mt: 2 }}>
+          <Typography variant='body2' color='text.secondary'>
+            当前职位：{employee?.position}
           </Typography>
-          <Box sx={{ mt: 2 }}>
-            <Typography variant='body2' color='text.secondary'>
-              当前职位：{employee?.position}
-            </Typography>
-            <Typography variant='body2' color='text.secondary'>
-              当前部门：{employee?.department_name}
-            </Typography>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowTransferDialog(false)}>取消</Button>
-          <Button onClick={handleTransfer} color='primary'>确认调岗</Button>
-        </DialogActions>
+          <Typography variant='body2' color='text.secondary'>
+            当前部门：{employee?.department_name}
+          </Typography>
+        </Box>
       </Dialog>
     </>
   );

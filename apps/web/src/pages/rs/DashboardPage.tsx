@@ -148,12 +148,6 @@ export const DashboardPage: React.FC = () => {
       onClick: () => navigate('/rs/projects/create'),
     },
     {
-      id: 'upload-document',
-      label: '上传文档',
-      icon: <ArrowRight size={18} />,
-      onClick: () => navigate('/rs/documents/upload'),
-    },
-    {
       id: 'write-test-case',
       label: '编写测试用例',
       icon: <ArrowRight size={18} />,
@@ -163,7 +157,7 @@ export const DashboardPage: React.FC = () => {
       id: 'release-new-version',
       label: '发布新版本',
       icon: <ArrowRight size={18} />,
-      onClick: () => navigate('/rs/deploys'),
+      onClick: () => navigate('/rs/deploy'),
     },
   ];
 

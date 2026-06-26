@@ -9,12 +9,9 @@ import {
   Shield,
   Key,
   FileText,
-  X,
-  Activity,
-  Layout,
 } from 'lucide-react';
 import MobileHeader from '@/components/layout/MobileHeader';
-import MobileNav from '@/components/MobileNav';
+import { MobileNav } from '@/components/layout/MobileNav';
 import { Box, Typography } from '@mui/material';
 
 interface SystemManagementPageProps {
@@ -23,7 +20,7 @@ interface SystemManagementPageProps {
 
 const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate: _onNavigate }) => {
   const navigate = useNavigate();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
   const systemFeatures = [
     {
@@ -31,7 +28,7 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
       title: '用户管理',
       description: '管理系统用户账户',
       icon: Users,
-      path: '/users',
+      path: '/iam/users',
       color: 'bg-blue-500',
     },
     {
@@ -39,7 +36,7 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
       title: '角色管理',
       description: '管理用户角色和权限组',
       icon: Shield,
-      path: '/roles',
+      path: '/iam/roles',
       color: 'bg-purple-500',
     },
     {
@@ -47,7 +44,7 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
       title: '权限管理',
       description: '配置系统权限',
       icon: Key,
-      path: '/permissions',
+      path: '/iam/permissions',
       color: 'bg-green-500',
     },
     {
@@ -55,7 +52,7 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
       title: '字典管理',
       description: '管理系统字典和业务字典',
       icon: Book,
-      path: '/dictionaries',
+      path: '/iam/dictionaries',
       color: 'bg-amber-500',
     },
     {
@@ -63,7 +60,7 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
       title: '数据库结构',
       description: '管理数据库表结构和字段',
       icon: Database,
-      path: '/database',
+      path: '/iam/database',
       color: 'bg-emerald-500',
     },
     {
@@ -71,7 +68,7 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
       title: '审计日志',
       description: '查看系统操作审计记录',
       icon: FileText,
-      path: '/audit',
+      path: '/iam/audit',
       color: 'bg-slate-500',
     },
     {
@@ -79,7 +76,7 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
       title: '系统配置',
       description: '系统参数和运行时配置',
       icon: Settings,
-      path: '/debug',
+      path: '/iam/debug',
       color: 'bg-indigo-500',
     },
   ];
@@ -93,99 +90,16 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
     >
       <MobileHeader
         title='系统管理'
-        onMenuClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        onMenuClick={() => setMobileNavOpen(true)}
       />
 
-      {mobileMenuOpen && (
-        <Box
-          sx={{
-            position: 'fixed',
-            top: 0,
-            right: 0,
-            bottom: 0,
-            left: 0,
-            bgcolor: 'rgba(0,0,0,0.5)',
-            zIndex: 40,
-          }}
-          onClick={() => setMobileMenuOpen(false)}
-        >
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 56,
-              left: 0,
-              right: 0,
-              bgcolor: 'background.paper',
-              maxHeight: '70vh',
-              overflow: 'auto',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Box sx={{ p: 2 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  mb: 3,
-                }}
-              >
-                <Typography
-                  variant='h6'
-                  sx={{ fontWeight: 600 }}
-                >
-                  菜单
-                </Typography>
-                <Box
-                  component='button'
-                  onClick={() => setMobileMenuOpen(false)}
-                  sx={{
-                    p: 1,
-                    borderRadius: 1,
-                    '&:hover': { bgcolor: 'grey.100' },
-                    border: 'none',
-                    bgcolor: 'transparent',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <X size={20} />
-                </Box>
-              </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                {systemFeatures.map((feature) => {
-                  const Icon = feature.icon;
-                  return (
-                    <Box
-                      component='button'
-                      key={feature.id}
-                      onClick={() => {
-                        navigate(feature.path);
-                        setMobileMenuOpen(false);
-                      }}
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 1.5,
-                        p: 1.5,
-                        borderRadius: 1,
-                        '&:hover': { bgcolor: 'grey.100' },
-                        border: 'none',
-                        bgcolor: 'transparent',
-                        cursor: 'pointer',
-                        width: '100%',
-                        textAlign: 'left',
-                      }}
-                    >
-                      <Icon sx={{ width: 20, height: 20 }} />
-                      <Typography>{feature.title}</Typography>
-                    </Box>
-                  );
-                })}
-              </Box>
-            </Box>
-          </Box>
-        </Box>
-      )}
+      <Box sx={{ '& > .MuiIconButton-root': { display: 'none' } }}>
+        <MobileNav
+          open={mobileNavOpen}
+          onClose={() => setMobileNavOpen(false)}
+          onOpen={() => setMobileNavOpen(true)}
+        />
+      </Box>
 
       <Box
         sx={{
@@ -335,11 +249,6 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
           })}
         </Box>
       </Box>
-
-      <MobileNav
-        currentPage='system'
-        onNavigate={navigate}
-      />
     </Box>
   );
 };

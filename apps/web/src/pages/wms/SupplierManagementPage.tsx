@@ -15,10 +15,10 @@ import {
 } from '@mui/material';
 import { Button } from '@mui/material';
 import React, { useState, useEffect, useCallback } from 'react';
-import type { Supplier, CreateSupplierRequest, UpdateSupplierRequest } from '@/api/modules/scm/scm';
-import { scmApi } from '@/api/modules/scm/scm';
+import type { Supplier, CreateSupplierRequest, UpdateSupplierRequest } from '@/api/scm';
+import { scmApi } from '@/api/scm';
 import { useAppStore } from '@/store';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
 import { Search, Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { ImageUpload } from '@/components/common';

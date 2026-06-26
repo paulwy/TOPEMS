@@ -47,7 +47,7 @@ const config: RuntimeConfig = {
     iam: getEnv('VITE_IAM_SERVICE_URL', '/iam'),
     pm: getEnv('VITE_PM_SERVICE_URL', '/pm'),
     portal: getEnv('VITE_PORTAL_SERVICE_URL', '/portal'),
-    flow: getEnv('VITE_FLOW_SERVICE_URL', '/flow'),
+    workflow: getEnv('VITE_FLOW_SERVICE_URL', '/flow'),
     integration: getEnv('VITE_INTEGRATION_SERVICE_URL', '/integration'),
     erp: getEnv('VITE_ERP_SERVICE_URL', '/erp'),
     hrm: getEnv('VITE_HRM_SERVICE_URL', '/hrm'),

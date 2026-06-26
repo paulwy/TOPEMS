@@ -1,4 +1,4 @@
-import { Grid } from '@/components/Grid';
+import { Grid } from '@/components';
 import { useAppStore } from '@/store';
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import {

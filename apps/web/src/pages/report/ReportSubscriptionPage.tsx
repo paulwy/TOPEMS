@@ -1,11 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Box,
-  Container,
-  Typography,
-  Card,
-  CardContent,
-  Button,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -18,24 +13,24 @@ import {
   Switch,
   FormControlLabel,
   Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  IconButton,
   Tooltip,
-  Alert,
 } from '@mui/material';
+import { Button } from '@mui/material';
 import {
   Plus as PlusIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
-  Check as CheckIcon,
-  X as XIcon,
+  Mail,
+  Calendar,
+  User,
+  FileText,
 } from 'lucide-react';
+import {
+  ListPageTemplate,
+  type ColumnDef,
+  type RowAction,
+  type FilterConfig,
+} from '@/components/templates';
 import {
   reportApi,
   type ReportSubscription,
@@ -52,6 +47,11 @@ const FREQUENCY_OPTIONS: { value: SubscriptionFrequency; label: string }[] = [
   { value: 'quarterly', label: '每季度' },
 ];
 
+const STATUS_OPTIONS = [
+  { label: '已启用', value: 'enabled' },
+  { label: '已禁用', value: 'disabled' },
+];
+
 const ReportSubscriptionPage: React.FC = () => {
   const [subscriptions, setSubscriptions] = useState<ReportSubscription[]>([]);
   const [templates, setTemplates] = useState<ReportTemplate[]>([]);
@@ -60,6 +60,10 @@ const ReportSubscriptionPage: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editMode, setEditMode] = useState(false);
   const [currentSubscription, setCurrentSubscription] = useState<ReportSubscription | null>(null);
+
+  // 搜索和筛选状态
+  const [searchValue, setSearchValue] = useState('');
+  const [filtersValue, setFiltersValue] = useState<Record<string, any>>({});
 
   const [formData, setFormData] = useState<CreateSubscriptionRequest | UpdateSubscriptionRequest>({
     template_id: '',
@@ -101,6 +105,32 @@ const ReportSubscriptionPage: React.FC = () => {
       console.error('获取报表模板失败', err);
     }
   };
+
+  // 筛选和搜索后的数据
+  const filteredData = useMemo(() => {
+    let result = [...subscriptions];
+
+    if (searchValue) {
+      const query = searchValue.toLowerCase();
+      result = result.filter(
+        (item) =>
+          (item.template_name || item.template_id).toLowerCase().includes(query) ||
+          (item.email || '').toLowerCase().includes(query) ||
+          (item.user_id || '').toLowerCase().includes(query)
+      );
+    }
+
+    if (filtersValue.frequency) {
+      result = result.filter((item) => item.frequency === filtersValue.frequency);
+    }
+
+    if (filtersValue.status) {
+      const enabled = filtersValue.status === 'enabled';
+      result = result.filter((item) => item.enabled === enabled);
+    }
+
+    return result;
+  }, [subscriptions, searchValue, filtersValue]);
 
   const handleOpenCreateDialog = () => {
     setEditMode(false);
@@ -206,156 +236,161 @@ const ReportSubscriptionPage: React.FC = () => {
     return FREQUENCY_OPTIONS.find((f) => f.value === frequency)?.label || frequency;
   };
 
+  const columns: ColumnDef<ReportSubscription>[] = useMemo(
+    () => [
+      {
+        id: 'template_name',
+        label: '报表模板',
+        minWidth: 180,
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <FileText style={{ width: 16, height: 16, color: 'primary.main' }} />
+            <span>{row.template_name || row.template_id}</span>
+          </Box>
+        ),
+      },
+      {
+        id: 'user_id',
+        label: '用户ID',
+        minWidth: 120,
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <User style={{ width: 14, height: 14, color: 'text.secondary' }} />
+            <span>{row.user_id}</span>
+          </Box>
+        ),
+      },
+      {
+        id: 'email',
+        label: '邮箱',
+        minWidth: 200,
+        render: (row) =>
+          row.email ? (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Mail style={{ width: 14, height: 14, color: 'text.secondary' }} />
+              <span>{row.email}</span>
+            </Box>
+          ) : (
+            '-'
+          ),
+      },
+      {
+        id: 'frequency',
+        label: '订阅频率',
+        minWidth: 100,
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Calendar style={{ width: 14, height: 14, color: 'text.secondary' }} />
+            <span>{getFrequencyLabel(row.frequency)}</span>
+          </Box>
+        ),
+      },
+      {
+        id: 'enabled',
+        label: '状态',
+        minWidth: 120,
+        render: (row) => (
+          <Chip
+            label={row.enabled ? '已启用' : '已禁用'}
+            color={row.enabled ? 'success' : 'default'}
+            size='small'
+            onClick={(e) => {
+              e.stopPropagation();
+              handleToggle(row.id, row.enabled);
+            }}
+            sx={{ cursor: 'pointer' }}
+          />
+        ),
+      },
+      {
+        id: 'created_at',
+        label: '创建时间',
+        minWidth: 160,
+        render: (row) =>
+          row.created_at ? new Date(row.created_at).toLocaleString('zh-CN') : '-',
+      },
+    ],
+    []
+  );
+
+  const rowActions: RowAction<ReportSubscription>[] = useMemo(
+    () => [
+      {
+        label: '编辑',
+        icon: <EditIcon style={{ width: 16, height: 16 }} />,
+        color: 'primary',
+        onClick: (row) => handleOpenEditDialog(row),
+      },
+      {
+        label: '删除',
+        icon: <DeleteIcon style={{ width: 16, height: 16 }} />,
+        color: 'error',
+        onClick: (row) => handleDelete(row.id),
+        confirm: true,
+        confirmMessage: '确定要删除这个订阅吗？',
+      },
+    ],
+    []
+  );
+
+  const filters: FilterConfig[] = useMemo(
+    () => [
+      {
+        id: 'frequency',
+        label: '订阅频率',
+        type: 'select',
+        options: FREQUENCY_OPTIONS.map((o) => ({ label: o.label, value: o.value })),
+      },
+      {
+        id: 'status',
+        label: '状态',
+        type: 'select',
+        options: STATUS_OPTIONS,
+      },
+    ],
+    []
+  );
+
+  const handleSearch = useCallback((value: string) => {
+    setSearchValue(value);
+  }, []);
+
+  const handleFilterChange = useCallback((filters: Record<string, any>) => {
+    setFiltersValue(filters);
+  }, []);
+
   return (
-    <Container
-      maxWidth='xl'
-      sx={{ py: 3 }}
-    >
-      <Box
-        sx={{
-          mb: 3,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <div>
-          <Typography
-            variant='h4'
-            sx={{ fontWeight: 'bold' }}
-            gutterBottom
-          >
-            报表订阅管理
-          </Typography>
-          <Typography
-            variant='body2'
-            color='text.secondary'
-          >
-            管理报表订阅，设置订阅者、订阅方式和订阅频率
-          </Typography>
-        </div>
-        <Button
-          variant='contained'
-          startIcon={<PlusIcon />}
-          onClick={handleOpenCreateDialog}
-        >
-          新建订阅
-        </Button>
-      </Box>
+    <>
+      <ListPageTemplate
+        title='报表订阅管理'
+        subtitle='管理报表订阅，设置订阅者、订阅方式和订阅频率'
+        columns={columns}
+        data={filteredData}
+        loading={loading}
+        error={error}
+        searchable
+        searchPlaceholder='搜索模板名称、邮箱或用户ID...'
+        onSearch={handleSearch}
+        filters={filters}
+        onFilterChange={handleFilterChange}
+        rowActions={rowActions}
+        actions={[
+          {
+            label: '新建订阅',
+            icon: <PlusIcon style={{ width: 16, height: 16 }} />,
+            onClick: handleOpenCreateDialog,
+            variant: 'contained',
+          },
+        ]}
+        onRefresh={fetchSubscriptions}
+        emptyMessage='暂无订阅数据'
+      />
 
-      {error && (
-        <Alert
-          severity='error'
-          sx={{ mb: 3 }}
-        >
-          {error}
-        </Alert>
-      )}
-
-      <Card>
-        <CardContent>
-          <TableContainer component={Paper}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>报表模板</TableCell>
-                  <TableCell>用户ID</TableCell>
-                  <TableCell>邮箱</TableCell>
-                  <TableCell>订阅频率</TableCell>
-                  <TableCell>状态</TableCell>
-                  <TableCell>创建时间</TableCell>
-                  <TableCell>操作</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={7}
-                      align='center'
-                    >
-                      <Typography variant='body1'>加载中...</Typography>
-                    </TableCell>
-                  </TableRow>
-                ) : subscriptions.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={7}
-                      align='center'
-                    >
-                      <Typography variant='body1'>暂无订阅</Typography>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  subscriptions.map((subscription) => (
-                    <TableRow key={subscription.id}>
-                      <TableCell>
-                        {subscription.template_name || subscription.template_id}
-                      </TableCell>
-                      <TableCell>{subscription.user_id}</TableCell>
-                      <TableCell>{subscription.email || '-'}</TableCell>
-                      <TableCell>{getFrequencyLabel(subscription.frequency)}</TableCell>
-                      <TableCell>
-                        <FormControlLabel
-                          control={
-                            <Switch
-                              checked={subscription.enabled}
-                              onChange={() => handleToggle(subscription.id, subscription.enabled)}
-                              color={subscription.enabled ? 'success' : 'default'}
-                            />
-                          }
-                          label={subscription.enabled ? '已启用' : '已禁用'}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant='body2'>
-                          {new Date(subscription.created_at).toLocaleString()}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', gap: 1 }}>
-                          <Tooltip title='编辑'>
-                            <IconButton
-                              size='small'
-                              color='warning'
-                              onClick={() => handleOpenEditDialog(subscription)}
-                            >
-                              <EditIcon />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title='删除'>
-                            <IconButton
-                              size='small'
-                              color='error'
-                              onClick={() => handleDelete(subscription.id)}
-                            >
-                              <DeleteIcon />
-                            </IconButton>
-                          </Tooltip>
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </CardContent>
-      </Card>
-
-      <Dialog
-        open={dialogOpen}
-        onClose={handleCloseDialog}
-        maxWidth='md'
-        fullWidth
-      >
+      <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth='md' fullWidth>
         <DialogTitle>{editMode ? '编辑订阅' : '新建订阅'}</DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <FormControl
-              fullWidth
-              required
-            >
+            <FormControl fullWidth required>
               <InputLabel>报表模板</InputLabel>
               <Select
                 value={(formData as CreateSubscriptionRequest).template_id as string}
@@ -363,10 +398,7 @@ const ReportSubscriptionPage: React.FC = () => {
                 label='报表模板'
               >
                 {templates.map((template) => (
-                  <MenuItem
-                    key={template.id}
-                    value={template.id}
-                  >
+                  <MenuItem key={template.id} value={template.id}>
                     {template.name}
                   </MenuItem>
                 ))}
@@ -387,10 +419,7 @@ const ReportSubscriptionPage: React.FC = () => {
               type='email'
               placeholder='接收报表的邮箱地址'
             />
-            <FormControl
-              fullWidth
-              required
-            >
+            <FormControl fullWidth required>
               <InputLabel>订阅频率</InputLabel>
               <Select
                 value={formData.frequency as SubscriptionFrequency}
@@ -398,10 +427,7 @@ const ReportSubscriptionPage: React.FC = () => {
                 label='订阅频率'
               >
                 {FREQUENCY_OPTIONS.map((option) => (
-                  <MenuItem
-                    key={option.value}
-                    value={option.value}
-                  >
+                  <MenuItem key={option.value} value={option.value}>
                     {option.label}
                   </MenuItem>
                 ))}
@@ -420,15 +446,12 @@ const ReportSubscriptionPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>取消</Button>
-          <Button
-            onClick={handleSubmit}
-            variant='contained'
-          >
+          <Button onClick={handleSubmit} variant='contained'>
             {editMode ? '保存' : '创建'}
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </>
   );
 };
 

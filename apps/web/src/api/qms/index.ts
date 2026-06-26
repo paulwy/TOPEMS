@@ -1,0 +1,300 @@
+import apiClient from '../client';
+import type { ApiResponse } from '../client';
+import { apiLogger } from '@/utils/logger';
+
+export * from './types';
+export * from './adapters';
+
+export { standardApi } from './standard';
+export { inspectionApi } from './inspection';
+export { issueApi } from './issue';
+export { improvementApi } from './improvement';
+export { spcApi } from './spc';
+export { qualityCostApi } from './quality-cost';
+export { eightDApi } from './eight-d';
+export { fmeaApi } from './fmea';
+export { qualityDashboardApi } from './dashboard';
+export { syncApi } from './sync';
+export { correctiveActionApi } from './corrective-action';
+export { auditApi } from './audit';
+export { apqpApi } from './apqp';
+
+import { standardApi } from './standard';
+import { inspectionApi } from './inspection';
+import { issueApi } from './issue';
+import { improvementApi } from './improvement';
+import { spcApi } from './spc';
+import { qualityCostApi } from './quality-cost';
+import { eightDApi } from './eight-d';
+import { fmeaApi } from './fmea';
+import { qualityDashboardApi } from './dashboard';
+import { syncApi } from './sync';
+import { correctiveActionApi } from './corrective-action';
+import { auditApi } from './audit';
+import { apqpApi } from './apqp';
+import type { QmsStatistics } from './types';
+
+export const qmsApi = {
+  standards: standardApi,
+  inspections: inspectionApi,
+  issues: issueApi,
+  improvements: improvementApi,
+  spc: spcApi,
+  qualityCosts: qualityCostApi,
+  eightD: eightDApi,
+  fmea: fmeaApi,
+  dashboard: qualityDashboardApi,
+  sync: syncApi,
+  correctiveActions: correctiveActionApi,
+  audit: auditApi,
+  apqp: apqpApi,
+
+  // Quality Standards
+  listStandards: standardApi.listStandards,
+  getStandard: standardApi.getStandard,
+  createStandard: standardApi.createStandard,
+  updateStandard: standardApi.updateStandard,
+  deleteStandard: standardApi.deleteStandard,
+  listRevisions: standardApi.listRevisions,
+
+  // Quality Checks
+  listChecks: inspectionApi.listChecks,
+  getCheck: inspectionApi.getCheck,
+  createCheck: inspectionApi.createCheck,
+  updateCheck: inspectionApi.updateCheck,
+  deleteCheck: inspectionApi.deleteCheck,
+  assignCheck: inspectionApi.assignCheck,
+  submitCheckResult: inspectionApi.submitCheckResult,
+  auditCheck: inspectionApi.auditCheck,
+  reworkCheck: inspectionApi.reworkCheck,
+  getCheckResults: inspectionApi.getCheckResults,
+  getCheckAudits: inspectionApi.getCheckAudits,
+
+  // Quality Issues
+  listIssues: issueApi.listIssues,
+  getIssue: issueApi.getIssue,
+  createIssue: issueApi.createIssue,
+  updateIssue: issueApi.updateIssue,
+  deleteIssue: issueApi.deleteIssue,
+
+  // Quality Improvements
+  listImprovements: improvementApi.listImprovements,
+  getImprovement: improvementApi.getImprovement,
+  createImprovement: improvementApi.createImprovement,
+  updateImprovement: improvementApi.updateImprovement,
+  deleteImprovement: improvementApi.deleteImprovement,
+
+  // SPC
+  listSpcCharts: spcApi.listSpcCharts,
+  getSpcChart: spcApi.getSpcChart,
+  createSpcChart: spcApi.createSpcChart,
+  updateSpcChart: spcApi.updateSpcChart,
+  deleteSpcChart: spcApi.deleteSpcChart,
+  getSpcDataPoints: spcApi.getSpcDataPoints,
+  addSpcDataPoint: spcApi.addSpcDataPoint,
+  calculateControlLimits: spcApi.calculateControlLimits,
+
+  // Quality Cost
+  listQualityCosts: qualityCostApi.listQualityCosts,
+  getQualityCost: qualityCostApi.getQualityCost,
+  createQualityCost: qualityCostApi.createQualityCost,
+  updateQualityCost: qualityCostApi.updateQualityCost,
+  deleteQualityCost: qualityCostApi.deleteQualityCost,
+  getCostStatistics: qualityCostApi.getCostStatistics,
+  getCostTrend: qualityCostApi.getCostTrend,
+
+  // 8D
+  listEightDReports: eightDApi.listEightDReports,
+  getEightDReport: eightDApi.getEightDReport,
+  createEightDReport: eightDApi.createEightDReport,
+  updateEightDReport: eightDApi.updateEightDReport,
+  deleteEightDReport: eightDApi.deleteEightDReport,
+  updateD1Team: eightDApi.updateD1Team,
+  submitD3Containment: eightDApi.submitD3Containment,
+  submitD4RootCause: eightDApi.submitD4RootCause,
+  submitD5PermanentAction: eightDApi.submitD5PermanentAction,
+  verifyD6Effectiveness: eightDApi.verifyD6Effectiveness,
+  submitD7Preventive: eightDApi.submitD7Preventive,
+  closeEightDReport: eightDApi.closeEightDReport,
+  getEightDAuditLogs: eightDApi.getEightDAuditLogs,
+
+  // FMEA
+  listFmeaAnalyses: fmeaApi.listFmeaAnalyses,
+  getFmeaAnalysis: fmeaApi.getFmeaAnalysis,
+  createFmeaAnalysis: fmeaApi.createFmeaAnalysis,
+  updateFmeaAnalysis: fmeaApi.updateFmeaAnalysis,
+  deleteFmeaAnalysis: fmeaApi.deleteFmeaAnalysis,
+  getFmeaStatistics: fmeaApi.getFmeaStatistics,
+  listFmeaItems: fmeaApi.listFmeaItems,
+  getFmeaItem: fmeaApi.getFmeaItem,
+  createFmeaItem: fmeaApi.createFmeaItem,
+  updateFmeaItem: fmeaApi.updateFmeaItem,
+  deleteFmeaItem: fmeaApi.deleteFmeaItem,
+
+  // Quality Dashboard
+  getQualityOverview: qualityDashboardApi.getQualityOverview,
+
+  // Data Sync
+  listSyncRecords: syncApi.listSyncRecords,
+  getSyncRecord: syncApi.getSyncRecord,
+  deleteSyncRecord: syncApi.deleteSyncRecord,
+  retrySync: syncApi.retrySync,
+  syncInspectionToLims: syncApi.syncInspectionToLims,
+  syncIssueToEhs: syncApi.syncIssueToEhs,
+
+  // Corrective Actions
+  completeAction: correctiveActionApi.completeAction,
+  getActionItems: correctiveActionApi.getActionItems,
+
+  // Audit
+  startAuditPlan: auditApi.startAuditPlan,
+  completeAuditPlan: auditApi.completeAuditPlan,
+  createAuditTask: auditApi.createAuditTask,
+  createAuditFinding: auditApi.createAuditFinding,
+  verifyAuditFinding: auditApi.verifyAuditFinding,
+
+  // Audit Plans
+  listAuditPlans: auditApi.listAuditPlans,
+
+  // Audit Tasks
+  listAuditTasks: auditApi.listAuditTasks,
+
+  // Audit Findings
+  listAuditFindings: auditApi.listAuditFindings,
+
+  // Create Audit Plan
+  createAuditPlan: auditApi.createAuditPlan,
+
+  // Complete Audit Task
+  completeAuditTask: auditApi.completeAuditTask,
+
+  // APQP Projects
+  listApqpProjects: apqpApi.listApqpProjects,
+  getApqpProject: apqpApi.getApqpProject,
+  createApqpProject: apqpApi.createApqpProject,
+  updateApqpProject: apqpApi.updateApqpProject,
+  deleteApqpProject: apqpApi.deleteApqpProject,
+  transitionApqpStatus: apqpApi.transitionApqpStatus,
+  getApqpProgress: apqpApi.getApqpProgress,
+
+  // APQP Phases
+  listApqpPhases: apqpApi.listApqpPhases,
+  getApqpPhase: apqpApi.getApqpPhase,
+  createApqpPhase: apqpApi.createApqpPhase,
+  updateApqpPhase: apqpApi.updateApqpPhase,
+  deleteApqpPhase: apqpApi.deleteApqpPhase,
+
+  // APQP Tasks
+  listApqpTasks: apqpApi.listApqpTasks,
+  getApqpTask: apqpApi.getApqpTask,
+  createApqpTask: apqpApi.createApqpTask,
+  updateApqpTask: apqpApi.updateApqpTask,
+  deleteApqpTask: apqpApi.deleteApqpTask,
+
+  // APQP Risks
+  listApqpRisks: apqpApi.listApqpRisks,
+  getApqpRisk: apqpApi.getApqpRisk,
+  createApqpRisk: apqpApi.createApqpRisk,
+  updateApqpRisk: apqpApi.updateApqpRisk,
+  deleteApqpRisk: apqpApi.deleteApqpRisk,
+
+  // APQP Approvals
+  listApqpApprovals: apqpApi.listApqpApprovals,
+  createApqpApproval: apqpApi.createApqpApproval,
+  processApqpApproval: apqpApi.processApqpApproval,
+
+  // Statistics
+  getStatistics: async (): Promise<ApiResponse<QmsStatistics>> => {
+    try {
+      const [standardsRes, checksRes, issuesRes, improvementsRes] = await Promise.all([
+        qmsApi.listStandards(),
+        qmsApi.listChecks(),
+        qmsApi.listIssues(),
+        qmsApi.listImprovements(),
+      ]);
+
+      const standards = standardsRes.data || [];
+      const checks = checksRes.data || [];
+      const issues = issuesRes.data || [];
+      const improvements = improvementsRes.data || [];
+
+      const statistics: QmsStatistics = {
+        total_standards: standards.length,
+        active_standards: standards.filter((s) => s.status === 'active' || s.status === '启用')
+          .length,
+        inactive_standards: standards.filter((s) => s.status === 'inactive' || s.status === '禁用')
+          .length,
+
+        total_inspections: checks.length,
+        pending_inspections: checks.filter((c) => c.status === 'pending' || c.status === '待处理')
+          .length,
+        in_progress_inspections: checks.filter(
+          (c) => c.status === 'in_progress' || c.status === '进行中'
+        ).length,
+        completed_inspections: checks.filter(
+          (c) => c.status === 'completed' || c.status === '已完成'
+        ).length,
+
+        total_issues: issues.length,
+        open_issues: issues.filter(
+          (i) => i.status === 'open' || i.status === '待处理' || i.status === '处理中'
+        ).length,
+        resolved_issues: issues.filter(
+          (i) => i.status === 'closed' || i.status === 'resolved' || i.status === '已关闭'
+        ).length,
+        critical_issues: issues.filter((i) => i.severity === 'critical' || i.severity === '严重')
+          .length,
+
+        total_actions: improvements.length,
+        pending_actions: improvements.filter((a) => a.status === 'pending' || a.status === '提议')
+          .length,
+        in_progress_actions: improvements.filter(
+          (a) => a.status === 'in_progress' || a.status === '实施中'
+        ).length,
+        completed_actions: improvements.filter(
+          (a) => a.status === 'completed' || a.status === '已完成'
+        ).length,
+      };
+
+      return {
+        success: true,
+        data: statistics,
+        message: 'Statistics calculated',
+        code: 200,
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error: unknown) {
+      apiLogger.error('Failed to calculate QMS statistics:', error);
+      const fallbackStats: QmsStatistics = {
+        total_standards: 0,
+        active_standards: 0,
+        inactive_standards: 0,
+        total_inspections: 0,
+        pending_inspections: 0,
+        in_progress_inspections: 0,
+        completed_inspections: 0,
+        total_issues: 0,
+        open_issues: 0,
+        resolved_issues: 0,
+        critical_issues: 0,
+        total_actions: 0,
+        pending_actions: 0,
+        in_progress_actions: 0,
+        completed_actions: 0,
+      };
+      return {
+        success: true,
+        data: fallbackStats,
+        message: 'Using fallback statistics',
+        code: 200,
+        timestamp: new Date().toISOString(),
+      };
+    }
+  },
+
+  health: async (): Promise<ApiResponse<string>> => {
+    return apiClient.qms.get<string>('/health');
+  },
+};
+
+export default qmsApi;

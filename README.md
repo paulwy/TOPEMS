@@ -472,6 +472,7 @@ python -m topems_cli db migrate
 | 脚本 | 说明 | 使用方法 |
 |------|------|---------|
 | `scripts/topems.sh` | **统一服务管理脚本**（推荐） | `./scripts/topems.sh --help` |
+| `scripts/scan_todos.py` | TODO/FIXME 代码扫描 | `python3 scripts/scan_todos.py --help` |
 | `scripts/install-deps.sh` | 安装依赖 | `./scripts/install-deps.sh` |
 | `scripts/ai-models.sh` | AI 模型管理 | `./scripts/ai-models.sh --help` |
 | `scripts/update_admin_password.sh` | 重置管理员密码 | `./scripts/update_admin_password.sh [用户名] [密码]` |

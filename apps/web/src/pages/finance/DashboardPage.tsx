@@ -244,16 +244,10 @@ const FinanceDashboardPage: React.FC = () => {
         id: 'create-voucher',
         label: '新建凭证',
         icon: <Plus size={20} />,
-        href: '/finance/vouchers/create',
+        href: '/finance/voucher/create',
         color: '#1976d2',
       },
-      {
-        id: 'import-voucher',
-        label: '导入凭证',
-        icon: <Upload size={20} />,
-        href: '/finance/vouchers/import',
-        color: '#388e3c',
-      },
+      
       {
         id: 'voucher-list',
         label: '凭证列表',
@@ -449,7 +443,7 @@ const FinanceDashboardPage: React.FC = () => {
             )}
           </Avatar>
         ),
-        onClick: () => navigate(`/finance/vouchers/${item.id}`),
+        onClick: () => navigate(`/finance/voucher/${item.id}`),
       })),
     [recentVouchers, navigate]
   );

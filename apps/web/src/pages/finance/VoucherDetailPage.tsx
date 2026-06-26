@@ -88,7 +88,7 @@ const VoucherDetailPage: React.FC = () => {
   };
 
   const handleEdit = () => {
-    navigate(`/finance/vouchers/${id}/edit`);
+    navigate(`/finance/voucher/${id}`);
   };
 
   const handleDelete = async () => {

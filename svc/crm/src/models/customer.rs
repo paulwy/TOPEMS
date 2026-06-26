@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
+use topems_shared::{DataMasking, EncryptionResult, FieldEncryptionService};
+
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize)]
 pub struct Customer {
     pub id: Uuid,
@@ -14,6 +16,7 @@ pub struct Customer {
     pub email: Option<String>,
     pub phone: Option<String>,
     pub fax: Option<String>,
+    pub id_card_number: Option<String>,
     pub address: Option<String>,
     pub city: Option<String>,
     pub province: Option<String>,
@@ -30,6 +33,52 @@ pub struct Customer {
     pub updated_at: DateTime<Utc>,
 }
 
+impl Customer {
+    pub fn encrypt_fields(&mut self, service: &FieldEncryptionService) -> EncryptionResult<()> {
+        if let Some(phone) = &self.phone {
+            self.phone = Some(service.encrypt_to_string(phone)?);
+        }
+        if let Some(email) = &self.email {
+            self.email = Some(service.encrypt_to_string(email)?);
+        }
+        if let Some(id_card) = &self.id_card_number {
+            self.id_card_number = Some(service.encrypt_to_string(id_card)?);
+        }
+        Ok(())
+    }
+
+    pub fn decrypt_fields(&mut self, service: &FieldEncryptionService) -> EncryptionResult<()> {
+        if let Some(phone) = &self.phone {
+            if phone.starts_with('{') {
+                self.phone = Some(service.decrypt_string(phone)?);
+            }
+        }
+        if let Some(email) = &self.email {
+            if email.starts_with('{') {
+                self.email = Some(service.decrypt_string(email)?);
+            }
+        }
+        if let Some(id_card) = &self.id_card_number {
+            if id_card.starts_with('{') {
+                self.id_card_number = Some(service.decrypt_string(id_card)?);
+            }
+        }
+        Ok(())
+    }
+
+    pub fn mask_sensitive_fields(&mut self) {
+        if let Some(phone) = &self.phone {
+            self.phone = Some(DataMasking::phone(phone));
+        }
+        if let Some(email) = &self.email {
+            self.email = Some(DataMasking::email(email));
+        }
+        if let Some(id_card) = &self.id_card_number {
+            self.id_card_number = Some(DataMasking::id_card(id_card));
+        }
+    }
+}
+
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct CreateCustomerRequest {
     pub name: String,
@@ -40,6 +89,7 @@ pub struct CreateCustomerRequest {
     pub email: Option<String>,
     pub phone: Option<String>,
     pub fax: Option<String>,
+    pub id_card_number: Option<String>,
     pub address: Option<String>,
     pub city: Option<String>,
     pub province: Option<String>,
@@ -63,6 +113,7 @@ pub struct UpdateCustomerRequest {
     pub email: Option<String>,
     pub phone: Option<String>,
     pub fax: Option<String>,
+    pub id_card_number: Option<String>,
     pub address: Option<String>,
     pub city: Option<String>,
     pub province: Option<String>,
@@ -80,7 +131,13 @@ pub struct UpdateCustomerRequest {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::Utc;
+    use topems_shared::KeyManager;
+
+    fn test_encryption_service() -> FieldEncryptionService {
+        let key = [0x42u8; 32];
+        let key_manager = KeyManager::new(&key);
+        FieldEncryptionService::new(key_manager)
+    }
 
     #[test]
     fn test_customer_serialization() {
@@ -94,6 +151,7 @@ mod tests {
             email: Some("contact@example.com".to_string()),
             phone: Some("+1234567890".to_string()),
             fax: Some("+1234567891".to_string()),
+            id_card_number: Some("110101199001011234".to_string()),
             address: Some("123 Main St".to_string()),
             city: Some("Shanghai".to_string()),
             province: Some("Shanghai".to_string()),
@@ -130,6 +188,7 @@ mod tests {
             email: Some("new@example.com".to_string()),
             phone: None,
             fax: None,
+            id_card_number: None,
             address: None,
             city: None,
             province: None,
@@ -158,6 +217,7 @@ mod tests {
             email: None,
             phone: None,
             fax: None,
+            id_card_number: None,
             address: None,
             city: None,
             province: None,
@@ -174,5 +234,98 @@ mod tests {
 
         assert!(request.name.is_some());
         assert!(request.code.is_none());
+    }
+
+    #[test]
+    fn test_customer_encryption_roundtrip() {
+        let service = test_encryption_service();
+        let id = Uuid::new_v4();
+        let now = Utc::now();
+
+        let mut customer = Customer {
+            id,
+            name: "测试客户".to_string(),
+            code: None,
+            industry: None,
+            company_size: None,
+            website: None,
+            email: Some("customer@example.com".to_string()),
+            phone: Some("13800138000".to_string()),
+            fax: None,
+            id_card_number: Some("110101199001011234".to_string()),
+            address: None,
+            city: None,
+            province: None,
+            country: None,
+            postal_code: None,
+            status: "active".to_string(),
+            customer_type: None,
+            source: None,
+            rating: None,
+            revenue: None,
+            employee_count: None,
+            notes: None,
+            created_at: now,
+            updated_at: now,
+        };
+
+        let original_email = customer.email.clone();
+        let original_phone = customer.phone.clone();
+        let original_id_card = customer.id_card_number.clone();
+
+        customer.encrypt_fields(&service).unwrap();
+
+        assert_ne!(customer.email, original_email);
+        assert_ne!(customer.phone, original_phone);
+        assert_ne!(customer.id_card_number, original_id_card);
+
+        assert!(customer.email.as_ref().unwrap().starts_with('{'));
+        assert!(customer.phone.as_ref().unwrap().starts_with('{'));
+        assert!(customer.id_card_number.as_ref().unwrap().starts_with('{'));
+
+        customer.decrypt_fields(&service).unwrap();
+
+        assert_eq!(customer.email, original_email);
+        assert_eq!(customer.phone, original_phone);
+        assert_eq!(customer.id_card_number, original_id_card);
+    }
+
+    #[test]
+    fn test_customer_masking() {
+        let id = Uuid::new_v4();
+        let now = Utc::now();
+
+        let mut customer = Customer {
+            id,
+            name: "测试客户".to_string(),
+            code: None,
+            industry: None,
+            company_size: None,
+            website: None,
+            email: Some("customer@example.com".to_string()),
+            phone: Some("13800138000".to_string()),
+            fax: None,
+            id_card_number: Some("110101199001011234".to_string()),
+            address: None,
+            city: None,
+            province: None,
+            country: None,
+            postal_code: None,
+            status: "active".to_string(),
+            customer_type: None,
+            source: None,
+            rating: None,
+            revenue: None,
+            employee_count: None,
+            notes: None,
+            created_at: now,
+            updated_at: now,
+        };
+
+        customer.mask_sensitive_fields();
+
+        assert!(customer.phone.as_ref().unwrap().contains("****"));
+        assert!(customer.email.as_ref().unwrap().contains("***"));
+        assert!(customer.id_card_number.as_ref().unwrap().contains("********"));
     }
 }

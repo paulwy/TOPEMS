@@ -263,7 +263,7 @@ export const DashboardPage: React.FC = () => {
         id: 'new-employee',
         label: '新增员工',
         icon: <ArrowRight size={18} />,
-        onClick: () => navigate('/hrm/employees/create'),
+        onClick: () => navigate('/hrm/employee/create'),
       },
       {
         id: 'recruitment',

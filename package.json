@@ -8,6 +8,7 @@
     "packages/*"
   ],
   "scripts": {
+    "prepare": "husky",
     "dev": "./scripts/start-local.sh",
     "dev:web": "pnpm --filter topems-portal dev",
     "dev:core": "pnpm --filter topems-core dev",
@@ -38,5 +39,9 @@
   "dependencies": {
     "@react-leaflet/core": "^3.0.0",
     "react-leaflet": "^5.0.0"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.8"
   }
 }

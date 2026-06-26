@@ -1,19 +1,5 @@
-import {
-  Chip,
-  Typography,
-  TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Box,
-} from '@mui/material';
-import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
+import { Typography, Box, Button, DialogContent, DialogActions } from '@mui/material';
 import { Briefcase, Plus, Edit, Trash2, Eye, Users, CheckCircle, XCircle } from 'lucide-react';
 import {
   positionApi,
@@ -25,7 +11,7 @@ import {
 import { useAppStore } from '../../store';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { ModeToggle } from '@/components/theme/ModeToggle';
-import { DataExport } from '@/components/common';
+import { DataExport, ActionButton, FormField, FormSelect, StatusBadge, Dialog } from '@/components/common';
 
 interface PositionManagementPageProps {}
 
@@ -190,7 +176,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
     }
   };
 
-  const handleInputChange = (field: string, value: string | number) => {
+  const handleInputChange = (field: string, value: string | number | string[]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -207,10 +193,10 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
       inactive: '禁用',
     };
     return (
-      <Chip
-        size='small'
-        color={colors[status] || 'default'}
+      <StatusBadge
+        status={status}
         label={labels[status] || status}
+        color={colors[status] || 'default'}
       />
     );
   };
@@ -455,98 +441,56 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
       <Dialog
         open={showCreateModal}
         onClose={() => setShowCreateModal(false)}
+        title='新增岗位'
+        maxWidth='sm'
+        fullWidth
+        cancelButton={{ label: '取消' }}
+        confirmButton={{ label: '创建', onClick: () => handleCreate(new Event('submit') as any) }}
       >
-        <DialogTitle>新增岗位</DialogTitle>
-        <DialogContent sx={{ maxWidth: 500 }}>
-          <form onSubmit={handleCreate}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Typography
-                  variant='body2'
-                  sx={{ mb: 0.5 }}
-                >
-                  岗位名称 *
-                </Typography>
-                <TextField
-                  id='create-name'
-                  size='small'
-                  type='text'
-                  required
-                  fullWidth
-                  value={(formData as Position)?.name || ''}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    handleInputChange('name', e.target.value)
-                  }
-                  placeholder='请输入岗位名称'
-                />
-              </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Typography
-                  variant='body2'
-                  sx={{ mb: 0.5 }}
-                >
-                  岗位编码
-                </Typography>
-                <TextField
-                  id='create-code'
-                  size='small'
-                  type='text'
-                  fullWidth
-                  value={(formData as Position)?.code || ''}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    handleInputChange('code', e.target.value)
-                  }
-                  placeholder='请输入岗位编码'
-                />
-              </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Typography
-                  variant='body2'
-                  sx={{ mb: 0.5 }}
-                >
-                  所属部门
-                </Typography>
-                <FormControl
-                  size='small'
-                  fullWidth
-                >
-                  <InputLabel>请选择</InputLabel>
-                  <Select
-                    value={(formData as Position)?.department_id || ''}
-                    label='请选择'
-                    onChange={(e) => handleInputChange('department_id', e.target.value)}
-                  >
-                    <MenuItem value='none'>无</MenuItem>
-                    {departments.map((d) => (
-                      <MenuItem
-                        key={d.id}
-                        value={d.id}
-                      >
-                        {d.name}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Typography
-                  variant='body2'
-                  sx={{ mb: 0.5 }}
-                >
-                  岗位级别
-                </Typography>
-                <TextField
-                  id='create-level'
-                  size='small'
-                  type='text'
-                  fullWidth
-                  value={(formData as Position)?.level || ''}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    handleInputChange('level', e.target.value)
-                  }
-                  placeholder='请输入岗位级别'
-                />
-              </Box>
+        <DialogContent>
+        <form onSubmit={handleCreate}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <FormField
+              name='create-name'
+              label='岗位名称 *'
+              type='text'
+              required
+              fullWidth
+              value={(formData as Position)?.name || ''}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                handleInputChange('name', e.target.value)
+              }
+              placeholder='请输入岗位名称'
+            />
+            <FormField
+              name='create-code'
+              label='岗位编码'
+              type='text'
+              fullWidth
+              value={(formData as Position)?.code || ''}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                handleInputChange('code', e.target.value)
+              }
+              placeholder='请输入岗位编码'
+            />
+            <FormSelect
+              name='department_id'
+              label='所属部门'
+              value={(formData as Position)?.department_id || ''}
+              options={[{ value: 'none', label: '无' }, ...departments.map((d) => ({ value: d.id, label: d.name }))]}
+              onChange={(value) => handleInputChange('department_id', value)}
+            />
+            <FormField
+              name='create-level'
+              label='岗位级别'
+              type='text'
+              fullWidth
+              value={(formData as Position)?.level || ''}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                handleInputChange('level', e.target.value)
+              }
+              placeholder='请输入岗位级别'
+            />
               <Box
                 sx={{
                   display: 'grid',
@@ -554,122 +498,64 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
                   gap: 2,
                 }}
               >
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  <Typography
-                    variant='body2'
-                    sx={{ mb: 0.5 }}
-                  >
-                    最低薪资
-                  </Typography>
-                  <TextField
-                    id='create-min-salary'
-                    size='small'
-                    type='number'
-                    fullWidth
-                    value={(formData as Position)?.min_salary || ''}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      handleInputChange('min_salary', parseFloat(e.target.value) || 0)
-                    }
-                    placeholder='最低薪资'
-                  />
-                </Box>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  <Typography
-                    variant='body2'
-                    sx={{ mb: 0.5 }}
-                  >
-                    最高薪资
-                  </Typography>
-                  <TextField
-                    id='create-max-salary'
-                    size='small'
-                    type='number'
-                    fullWidth
-                    value={(formData as Position)?.max_salary || ''}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      handleInputChange('max_salary', parseFloat(e.target.value) || 0)
-                    }
-                    placeholder='最高薪资'
-                  />
-                </Box>
-              </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Typography
-                  variant='body2'
-                  sx={{ mb: 0.5 }}
-                >
-                  岗位描述
-                </Typography>
-                <TextField
-                  id='create-description'
-                  size='small'
-                  multiline
-                  rows={3}
+                <FormField
+                  name='create-min-salary'
+                  label='最低薪资'
+                  type='number'
                   fullWidth
-                  value={(formData as Position)?.description || ''}
+                  value={(formData as Position)?.min_salary || ''}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    handleInputChange('description', e.target.value)
+                    handleInputChange('min_salary', parseFloat(e.target.value) || 0)
                   }
-                  placeholder='请输入岗位描述'
+                  placeholder='最低薪资'
+                />
+                <FormField
+                  name='create-max-salary'
+                  label='最高薪资'
+                  type='number'
+                  fullWidth
+                  value={(formData as Position)?.max_salary || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    handleInputChange('max_salary', parseFloat(e.target.value) || 0)
+                  }
+                  placeholder='最高薪资'
                 />
               </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Typography
-                  variant='body2'
-                  sx={{ mb: 0.5 }}
-                >
-                  任职要求
-                </Typography>
-                <TextField
-                  id='create-requirements'
-                  size='small'
-                  multiline
-                  rows={3}
-                  fullWidth
-                  value={(formData as Position)?.requirements || ''}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    handleInputChange('requirements', e.target.value)
-                  }
-                  placeholder='请输入任职要求'
-                />
-              </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Typography
-                  variant='body2'
-                  sx={{ mb: 0.5 }}
-                >
-                  状态
-                </Typography>
-                <FormControl
-                  size='small'
-                  fullWidth
-                >
-                  <InputLabel>请选择</InputLabel>
-                  <Select
-                    value={(formData as Position)?.status || 'active'}
-                    label='请选择'
-                    onChange={(e) => handleInputChange('status', e.target.value)}
-                  >
-                    <MenuItem value='active'>启用</MenuItem>
-                    <MenuItem value='inactive'>禁用</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
+              <FormField
+                name='create-description'
+                label='岗位描述'
+                multiline
+                rows={3}
+                fullWidth
+                value={(formData as Position)?.description || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  handleInputChange('description', e.target.value)
+                }
+                placeholder='请输入岗位描述'
+              />
+              <FormField
+                name='create-requirements'
+                label='任职要求'
+                multiline
+                rows={3}
+                fullWidth
+                value={(formData as Position)?.requirements || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  handleInputChange('requirements', e.target.value)
+                }
+                placeholder='请输入任职要求'
+              />
+              <FormSelect
+                name='status'
+                label='状态'
+                value={(formData as Position)?.status || 'active'}
+                options={[{ value: 'active', label: '启用' }, { value: 'inactive', label: '禁用' }]}
+                onChange={(value) => handleInputChange('status', value)}
+              />
             </Box>
             <DialogActions sx={{ mt: 3 }}>
-              <Button
-                type='button'
-                variant='outlined'
-                onClick={() => setShowCreateModal(false)}
-              >
-                取消
-              </Button>
-              <Button
-                type='submit'
-                variant='contained'
-              >
-                创建
-              </Button>
+              <Button onClick={() => setShowCreateModal(false)}>取消</Button>
+              <Button type='submit' variant='contained'>创建</Button>
             </DialogActions>
           </form>
         </DialogContent>
@@ -679,96 +565,53 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
       <Dialog
         open={showEditModal}
         onClose={() => setShowEditModal(false)}
+        title='编辑岗位'
+        maxWidth='sm'
+        fullWidth
+        cancelButton={{ label: '取消', onClick: () => { setShowEditModal(false); setSelectedPosition(null); } }}
+        confirmButton={{ label: '保存', onClick: () => handleUpdate(new Event('submit') as any) }}
       >
-        <DialogTitle>编辑岗位</DialogTitle>
-        <DialogContent sx={{ maxWidth: 500 }}>
-          {selectedPosition && (
-            <form onSubmit={handleUpdate}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  <Typography
-                    variant='body2'
-                    sx={{ mb: 0.5 }}
-                  >
-                    岗位名称 *
-                  </Typography>
-                  <TextField
-                    id='edit-name'
-                    size='small'
-                    type='text'
-                    required
-                    fullWidth
-                    value={(formData as Position)?.name || ''}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      handleInputChange('name', e.target.value)
-                    }
-                  />
-                </Box>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  <Typography
-                    variant='body2'
-                    sx={{ mb: 0.5 }}
-                  >
-                    岗位编码
-                  </Typography>
-                  <TextField
-                    id='edit-code'
-                    size='small'
-                    type='text'
-                    fullWidth
-                    value={(formData as Position)?.code || ''}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      handleInputChange('code', e.target.value)
-                    }
-                  />
-                </Box>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  <Typography
-                    variant='body2'
-                    sx={{ mb: 0.5 }}
-                  >
-                    所属部门
-                  </Typography>
-                  <FormControl
-                    size='small'
-                    fullWidth
-                  >
-                    <InputLabel>请选择</InputLabel>
-                    <Select
-                      value={(formData as Position)?.department_id || ''}
-                      label='请选择'
-                      onChange={(e) => handleInputChange('department_id', e.target.value)}
-                    >
-                      <MenuItem value='none'>无</MenuItem>
-                      {departments.map((d) => (
-                        <MenuItem
-                          key={d.id}
-                          value={d.id}
-                        >
-                          {d.name}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Box>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  <Typography
-                    variant='body2'
-                    sx={{ mb: 0.5 }}
-                  >
-                    岗位级别
-                  </Typography>
-                  <TextField
-                    id='edit-level'
-                    size='small'
-                    type='text'
-                    fullWidth
-                    value={(formData as Position)?.level || ''}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      handleInputChange('level', e.target.value)
-                    }
-                  />
-                </Box>
+        {selectedPosition && (
+          <form onSubmit={handleUpdate}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <FormField
+                  name='edit-name'
+                  label='岗位名称 *'
+                  type='text'
+                  required
+                  fullWidth
+                  value={(formData as Position)?.name || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    handleInputChange('name', e.target.value)
+                  }
+                />
+                <FormField
+                  name='edit-code'
+                  label='岗位编码'
+                  type='text'
+                  fullWidth
+                  value={(formData as Position)?.code || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    handleInputChange('code', e.target.value)
+                  }
+                />
+                <FormSelect
+                  name='department_id'
+                  label='所属部门'
+                  value={(formData as Position)?.department_id || ''}
+                  options={[{ value: 'none', label: '无' }, ...departments.map((d) => ({ value: d.id, label: d.name }))]}
+                  onChange={(value) => handleInputChange('department_id', value)}
+                />
+                <FormField
+                  name='edit-level'
+                  label='岗位级别'
+                  type='text'
+                  fullWidth
+                  value={(formData as Position)?.level || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    handleInputChange('level', e.target.value)
+                  }
+                />
                 <Box
                   sx={{
                     display: 'grid',
@@ -776,136 +619,73 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
                     gap: 2,
                   }}
                 >
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    <Typography
-                      variant='body2'
-                      sx={{ mb: 0.5 }}
-                    >
-                      最低薪资
-                    </Typography>
-                    <TextField
-                      id='edit-min-salary'
-                      size='small'
-                      type='number'
-                      fullWidth
-                      value={(formData as Position)?.min_salary || ''}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        handleInputChange('min_salary', parseFloat(e.target.value) || 0)
-                      }
-                    />
-                  </Box>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    <Typography
-                      variant='body2'
-                      sx={{ mb: 0.5 }}
-                    >
-                      最高薪资
-                    </Typography>
-                    <TextField
-                      id='edit-max-salary'
-                      size='small'
-                      type='number'
-                      fullWidth
-                      value={(formData as Position)?.max_salary || ''}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        handleInputChange('max_salary', parseFloat(e.target.value) || 0)
-                      }
-                    />
-                  </Box>
-                </Box>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  <Typography
-                    variant='body2'
-                    sx={{ mb: 0.5 }}
-                  >
-                    岗位描述
-                  </Typography>
-                  <TextField
-                    id='edit-description'
-                    size='small'
-                    multiline
-                    rows={3}
+                  <FormField
+                    name='edit-min-salary'
+                    label='最低薪资'
+                    type='number'
                     fullWidth
-                    value={(formData as Position)?.description || ''}
+                    value={(formData as Position)?.min_salary || ''}
                     onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      handleInputChange('description', e.target.value)
+                      handleInputChange('min_salary', parseFloat(e.target.value) || 0)
+                    }
+                  />
+                  <FormField
+                    name='edit-max-salary'
+                    label='最高薪资'
+                    type='number'
+                    fullWidth
+                    value={(formData as Position)?.max_salary || ''}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      handleInputChange('max_salary', parseFloat(e.target.value) || 0)
                     }
                   />
                 </Box>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  <Typography
-                    variant='body2'
-                    sx={{ mb: 0.5 }}
-                  >
-                    任职要求
-                  </Typography>
-                  <TextField
-                    id='edit-requirements'
-                    size='small'
-                    multiline
-                    rows={3}
-                    fullWidth
-                    value={(formData as Position)?.requirements || ''}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                      handleInputChange('requirements', e.target.value)
-                    }
-                  />
-                </Box>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  <Typography
-                    variant='body2'
-                    sx={{ mb: 0.5 }}
-                  >
-                    状态
-                  </Typography>
-                  <FormControl
-                    size='small'
-                    fullWidth
-                  >
-                    <InputLabel>请选择</InputLabel>
-                    <Select
-                      value={(formData as Position)?.status || 'active'}
-                      label='请选择'
-                      onChange={(e) => handleInputChange('status', e.target.value)}
-                    >
-                      <MenuItem value='active'>启用</MenuItem>
-                      <MenuItem value='inactive'>禁用</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Box>
+                <FormField
+                  name='edit-description'
+                  label='岗位描述'
+                  multiline
+                  rows={3}
+                  fullWidth
+                  value={(formData as Position)?.description || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    handleInputChange('description', e.target.value)
+                  }
+                />
+                <FormField
+                  name='edit-requirements'
+                  label='任职要求'
+                  multiline
+                  rows={3}
+                  fullWidth
+                  value={(formData as Position)?.requirements || ''}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    handleInputChange('requirements', e.target.value)
+                  }
+                />
+                <FormSelect
+                  name='status'
+                  label='状态'
+                  value={(formData as Position)?.status || 'active'}
+                  options={[{ value: 'active', label: '启用' }, { value: 'inactive', label: '禁用' }]}
+                  onChange={(value) => handleInputChange('status', value)}
+                />
               </Box>
-              <DialogActions sx={{ mt: 3 }}>
-                <Button
-                  type='button'
-                  variant='outlined'
-                  onClick={() => {
-                    setShowEditModal(false);
-                    setSelectedPosition(null);
-                  }}
-                >
-                  取消
-                </Button>
-                <Button
-                  type='submit'
-                  variant='contained'
-                >
-                  保存
-                </Button>
-              </DialogActions>
             </form>
           )}
-        </DialogContent>
       </Dialog>
 
       {/* 查看对话框 */}
       <Dialog
         open={showViewModal}
         onClose={() => setShowViewModal(false)}
+        title='岗位详情'
+        maxWidth='sm'
+        fullWidth
+        confirmButton={{ label: '关闭' }}
       >
-        <DialogTitle>岗位详情</DialogTitle>
-        <DialogContent sx={{ maxWidth: 500 }}>
-          {selectedPosition && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <DialogContent>
+        {selectedPosition && (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Box
                 sx={{
                   display: 'grid',
@@ -1060,14 +840,6 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
               )}
             </Box>
           )}
-          <DialogActions sx={{ mt: 3 }}>
-            <Button
-              onClick={() => setShowViewModal(false)}
-              variant='contained'
-            >
-              关闭
-            </Button>
-          </DialogActions>
         </DialogContent>
       </Dialog>
     </Box>

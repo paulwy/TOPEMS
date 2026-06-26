@@ -15,13 +15,13 @@ import {
 import { Button } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import WorkflowDesigner from '@/components/WorkflowDesigner';
+import WorkflowDesigner from '@/components/workflow/WorkflowDesigner';
 import { useAppStore } from '../../store';
-import type { Workflow, CreateWorkflowRequest, UpdateWorkflowRequest } from '@/api/flow';
-import { flowApi } from '@/api/flow';
+import type { Workflow, CreateWorkflowRequest, UpdateWorkflowRequest } from '@/api/workflow';
+import { workflowApi } from '@/api/workflow';
 import { apiLogger } from '@/utils/logger';
 import { Save } from 'lucide-react';
-import BackButton from '@/components/common/BackButton';
+import { PageHeader } from '@/components';
 
 const WorkflowDesignerPage: React.FC = () => {
   const navigate = useNavigate();
@@ -50,7 +50,7 @@ const WorkflowDesignerPage: React.FC = () => {
   const loadWorkflow = async (id: string) => {
     try {
       setLoading(true);
-      const response = await flowApi.getWorkflow(id);
+      const response = await workflowApi.getWorkflow(id);
       if (response.success && response.data) {
         const wf = response.data;
         setWorkflow(wf);
@@ -115,7 +115,7 @@ const WorkflowDesignerPage: React.FC = () => {
         name: node.label,
         approvers:
           node.approvers && node.approvers.length > 0 ? node.approvers : ['system-user-id'],
-        approval_type: node.type === 'approval' ? 'single' : 'single',
+        approval_type: (node.type === 'approval' ? 'single' : 'single') as 'single',
         conditions: undefined,
         timeout_hours: 24,
         auto_action: undefined,
@@ -156,7 +156,7 @@ const WorkflowDesignerPage: React.FC = () => {
           description: formData.description,
           definition,
         };
-        const response = await flowApi.updateWorkflow(workflow.id, updateData);
+        const response = await workflowApi.updateWorkflow(workflow.id, updateData);
         if (response.success) {
           addNotification({
             title: '保存成功',
@@ -179,7 +179,7 @@ const WorkflowDesignerPage: React.FC = () => {
           definition,
           is_active: true,
         };
-        const response = await flowApi.createWorkflow(createData);
+        const response = await workflowApi.createWorkflow(createData);
         if (response.success && response.data) {
           addNotification({
             title: '保存成功',
@@ -188,7 +188,7 @@ const WorkflowDesignerPage: React.FC = () => {
           });
           setShowSaveDialog(false);
           // Navigate to edit mode
-          navigate(`/workflow-designer?id=${response.data.id}`);
+          navigate(`/flow/definitions`);
         } else {
           addNotification({
             title: '保存失败',
@@ -227,45 +227,12 @@ const WorkflowDesignerPage: React.FC = () => {
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
-      <Card
-        sx={{
-          borderRadius: 0,
-          borderBottom: '1px solid',
-          borderColor: 'divider',
-        }}
-      >
-        <CardContent sx={{ p: 2 }}>
-          <Stack
-            direction='row'
-            sx={{ alignItems: 'center', justifyContent: 'space-between' }}
-          >
-            <Stack
-              direction='row'
-              spacing={2}
-              sx={{ alignItems: 'center' }}
-            >
-              <BackButton
-                variant='text'
-                fallback='/flow/definitions'
-              />
-              <Box>
-                <Typography
-                  variant='h6'
-                  sx={{ fontWeight: 700 }}
-                >
-                  {workflow ? `编辑: ${workflow.name}` : '新建工作流'}
-                </Typography>
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
-                  设计工作流审批流程
-                </Typography>
-              </Box>
-            </Stack>
-          </Stack>
-        </CardContent>
-      </Card>
+      <PageHeader
+        title={workflow ? `编辑: ${workflow.name}` : '新建工作流'}
+        subtitle='设计工作流审批流程'
+        backButton={{ fallback: '/flow/definitions' }}
+        showDivider
+      />
 
       {/* Designer */}
       <Box sx={{ flex: 1 }}>

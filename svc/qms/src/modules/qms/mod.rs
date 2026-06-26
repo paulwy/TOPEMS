@@ -14,6 +14,7 @@ pub mod quality_cost;
 pub mod eight_d;
 pub mod fmea;
 pub mod quality_dashboard;
+pub mod apqp;
 
 use sqlx::PgPool;
 
@@ -645,6 +646,163 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         .execute(pool)
         .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_alert_messages_severity ON qa_alert_messages(severity)")
+        .execute(pool)
+        .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS qa_apqp_projects (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            project_no VARCHAR(64) NOT NULL UNIQUE,
+            project_name VARCHAR(256) NOT NULL,
+            product_id UUID,
+            product_name VARCHAR(256),
+            customer VARCHAR(256),
+            description TEXT,
+            status VARCHAR(32) DEFAULT 'planning',
+            current_phase VARCHAR(32),
+            leader VARCHAR(64),
+            team TEXT,
+            start_date TIMESTAMP,
+            target_date TIMESTAMP,
+            actual_end_date TIMESTAMP,
+            progress INT DEFAULT 0,
+            risk_level VARCHAR(32) DEFAULT 'low',
+            created_by VARCHAR(64),
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS qa_apqp_phases (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            project_id UUID NOT NULL REFERENCES qa_apqp_projects(id) ON DELETE CASCADE,
+            phase_code VARCHAR(32) NOT NULL,
+            phase_name VARCHAR(128) NOT NULL,
+            description TEXT,
+            status VARCHAR(32) DEFAULT 'pending',
+            start_date TIMESTAMP,
+            end_date TIMESTAMP,
+            actual_start_date TIMESTAMP,
+            actual_end_date TIMESTAMP,
+            progress INT DEFAULT 0,
+            sort_order INT DEFAULT 0,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS qa_apqp_tasks (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            project_id UUID NOT NULL REFERENCES qa_apqp_projects(id) ON DELETE CASCADE,
+            phase_id UUID NOT NULL REFERENCES qa_apqp_phases(id) ON DELETE CASCADE,
+            task_name VARCHAR(256) NOT NULL,
+            description TEXT,
+            task_type VARCHAR(64),
+            deliverable TEXT,
+            status VARCHAR(32) DEFAULT 'pending',
+            assignee VARCHAR(64),
+            due_date TIMESTAMP,
+            completed_at TIMESTAMP,
+            sort_order INT DEFAULT 0,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS qa_apqp_risks (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            project_id UUID NOT NULL REFERENCES qa_apqp_projects(id) ON DELETE CASCADE,
+            risk_name VARCHAR(256) NOT NULL,
+            description TEXT,
+            risk_category VARCHAR(64),
+            severity INT DEFAULT 1,
+            occurrence INT DEFAULT 1,
+            detection INT DEFAULT 1,
+            rpn INT,
+            status VARCHAR(32) DEFAULT 'open',
+            mitigation_plan TEXT,
+            responsible VARCHAR(64),
+            target_date TIMESTAMP,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS qa_apqp_approvals (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            project_id UUID NOT NULL REFERENCES qa_apqp_projects(id) ON DELETE CASCADE,
+            approval_type VARCHAR(64) NOT NULL,
+            status VARCHAR(32) DEFAULT 'pending',
+            applicant VARCHAR(64),
+            approver VARCHAR(64),
+            comment TEXT,
+            submitted_at TIMESTAMP DEFAULT NOW(),
+            approved_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_apqp_projects_no ON qa_apqp_projects(project_no)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_apqp_projects_status ON qa_apqp_projects(status)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_apqp_projects_created_at ON qa_apqp_projects(created_at)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_apqp_phases_project ON qa_apqp_phases(project_id)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_apqp_phases_status ON qa_apqp_phases(status)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_apqp_tasks_project ON qa_apqp_tasks(project_id)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_apqp_tasks_phase ON qa_apqp_tasks(phase_id)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_apqp_tasks_status ON qa_apqp_tasks(status)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_apqp_risks_project ON qa_apqp_risks(project_id)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_apqp_risks_rpn ON qa_apqp_risks(rpn)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_apqp_risks_status ON qa_apqp_risks(status)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_apqp_approvals_project ON qa_apqp_approvals(project_id)")
+        .execute(pool)
+        .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_apqp_approvals_status ON qa_apqp_approvals(status)")
         .execute(pool)
         .await?;
 

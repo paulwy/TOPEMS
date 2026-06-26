@@ -1,0 +1,9 @@
+{
+  "apps/web/src/**/*.{ts,tsx}": [
+    "cd apps/web && eslint --fix",
+    "cd apps/web && prettier --write"
+  ],
+  "svc/**/*.rs": [
+    "cargo fmt --"
+  ]
+}

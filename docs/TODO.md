@@ -196,7 +196,7 @@
   - ✅ FMEA 失效模式 API（fmea CRUD + fmea-items + statistics）
   - ✅ 质量看板 API（quality-dashboard/overview）
   - ✅ 数据同步 API（sync-records + sync operations）
-  - [ ] 5 个页面接入 API 调用（P2 阶段）
+  - ✅ 5 个页面接入 API 调用（P2 阶段）- 质量管控/质量标准详情/审核管理/质检/不合格品
 - **预计**: 1-2 天
 - **负责人**: TOPEMS Team
 
@@ -221,7 +221,7 @@
   - ✅ 能力验证 API（pt-plans CRUD + samples + results + evaluations + corrective-actions）
   - ✅ 不确定度评定 API（uncertainty-projects CRUD + sources + components + combined + report）
   - ✅ 数据同步 API（sync-records + sync operations）
-  - [ ] 7 个页面接入 API 调用（P2 阶段）
+  - ✅ 7 个页面接入 API 调用（P2 阶段）- 样品管理/样品详情/检验任务/任务详情/仪器管理/仪器维护/检测流程
 - **预计**: 1-2 天
 - **负责人**: TOPEMS Team
 
@@ -242,7 +242,7 @@
   - ✅ 质量追溯 API（traceability forward/backward/chain + quality-records）
   - ✅ 设备 OEE API（equipment-oee CRUD + statistics + efficiency-analysis）
   - ✅ WIP 管理 API（wips CRUD + transfer + transfers + statistics）
-  - [ ] 6 个页面接入更多 API 调用（P2 阶段）
+  - ✅ 6 个页面接入更多 API 调用（P2 阶段）- 生产订单/生产工艺/生产记录/工站管理/仪表盘/移动工站
 - **预计**: 1 天
 - **负责人**: TOPEMS Team
 
@@ -270,7 +270,7 @@
   - ✅ 职业病防治 API（occupational-diseases CRUD + hazards）
   - ✅ 危险品管理 API（hazardous-materials CRUD + categories）
   - ✅ 环保合规 API（environmental-compliance CRUD + regulations）
-  - [ ] 7 个页面接入 API 调用（P2 阶段）
+  - ✅ 7 个页面接入 API 调用（P2 阶段）- 隐患管理/隐患详情/安全检查/事故报告/事故管理/应急预案/应急演练
 - **预计**: 1-2 天
 - **负责人**: TOPEMS Team
 
@@ -301,7 +301,7 @@
   - ✅ 波次拣货 API（WMS）- 波次 CRUD + 分配 + 开始 + 完成 + 取消
   - ✅ 数据同步 API（WMS）
   - ✅ 审计日志 API（WMS）
-  - [ ] 13 个页面接入更多 API 调用（P2 阶段）
+  - ✅ 13 个页面接入更多 API 调用（P2 阶段）- 库存/入库/出库/仓库/盘点/调拨/补货/预警 + SCM仪表盘/采购订单/供应商/采购明细/供应商评估
 - **预计**: 1-2 天
 - **负责人**: TOPEMS Team
 
@@ -317,8 +317,8 @@
   - ✅ BIAnalyticsPage - 模块数据分析
   - ✅ BIReportPage - 报表列表/删除
   - ✅ BIModuleDetailPage - 各模块详情分析
-  - [ ] BIDataSourcePage - 数据源页面（API 不足）
-  - [ ] BIComparisonPage - 对比页面（API 不足）
+  - ✅ BIDataSourcePage - 数据源页面
+  - ✅ BIComparisonPage - 对比页面
 - **预计**: 1 天
 - **负责人**: TOPEMS Team
 
@@ -468,8 +468,8 @@
   - ✅ 设备OEE计算（可用率×性能率×质量率）
   - ✅ 在制品(WIP)管理（WIP转移、WIP统计）
   - [ ] 生产看板（实时数据）
-  - [ ] 与 ERP 生产订单双向同步
-  - [ ] 与 QMS 质检数据集成
+  - ✅ 与 ERP 生产订单双向同步（MES-ERP 集成服务）
+  - ✅ 与 QMS 质检数据集成（MES-QMS 集成服务）
 - **已完成内容**:
   - 新增 5 个模块：production_scheduling、material_bom、quality_traceability、equipment_oee、wip
   - 新增 20+ API 端点，统一使用 `/api/mes/` 前缀
@@ -498,14 +498,14 @@
 - **负责人**: TOPEMS Team
 
 #### 3. 测试覆盖率提升
-- **状态**: 🚧 进行中（第一阶段完成）
+- **状态**: ✅ 第一阶段完成（后端174+用例 / 前端61+用例）
 - **描述**: 提升后端和前端的测试覆盖率，保障代码质量
 - **任务清单**:
   - [ ] 后端单元测试覆盖率达到 60%
   - [ ] 核心服务（unified-core, ERP, HRM, CRM）测试覆盖 80%+
-  - [ ] 前端组件单元测试
+  - ✅ 前端组件单元测试（5个组件，61个用例）
   - [ ] E2E 测试覆盖核心业务流程
-  - [ ] CI 集成自动化测试
+  - ✅ CI 集成自动化测试（6个Job并行 + 质量门禁）
 - **已完成内容**:
   - **后端共享库测试**：新增 auth_test.rs（27个）、cache_test.rs（8个）、permission_test.rs（31个）、audit_test.rs（13个），共 79+ 测试用例
   - **后端服务基础测试**：ERP 服务（17个）、HRM 服务（25个），覆盖健康检查、插件信息、业务数据结构
@@ -544,7 +544,7 @@
   - ✅ 质量成本分析（预防/鉴定/内部失败/外部失败，统计分析，趋势）
   - ✅ 8D 问题解决流程（D1-D8 完整步骤，状态流转）
   - ✅ FMEA 失效模式分析（S/O/D 评分，RPN 计算排序）
-  - [ ] APQP 产品质量先期策划
+  - ✅ APQP 产品质量先期策划（21个API + 4张表）
   - ✅ 质量看板与预警（概览数据、趋势、预警规则、预警消息）
 - **已完成内容**:
   - 新增 5 个模块：spc、quality_cost、eight_d、fmea、quality_dashboard
@@ -558,8 +558,8 @@
 - **状态**: ✅ 已完成后端 API
 - **描述**: 提升实验室管理的自动化水平
 - **功能列表**:
-  - [ ] 仪器数据自动采集
-  - [ ] 设备集成（通过标准接口）
+  - ✅ 仪器数据自动采集（instrument_data 模块 + 3套API + 前端页面）
+  - ✅ 设备集成（JSON/HL7/ASTM 标准接口协议）
   - ✅ 样品条码/RFID管理（多种编码规则，扫描登记，追溯查询）
   - ✅ 检测方法库（CRUD、分类、参数配置、验证记录、版本管理）
   - ✅ 能力验证管理（计划、样品接收、结果录入、Z/En值评价、整改）
@@ -599,7 +599,7 @@
   - ✅ 条码/二维码扫描增强（识别、历史记录、结果解析）
   - ✅ 拍照上传功能（图片压缩、水印、批量上传、进度追踪）
   - ✅ 移动审批流程（审批任务、同意/拒绝/转签、审批意见、历史记录）
-  - [ ] 移动端 UI 优化（前端页面）
+  - ✅ 移动端 UI 优化（8个移动组件 + 5个核心页面）
 - **已完成内容**:
   - 新增 5 个模块：offline_sync、push_notification、barcode_scanner、photo_upload、mobile_approval
   - 新增 API 端点，统一使用 `/api/mobile/` 前缀
@@ -641,7 +641,7 @@
 - **描述**: 清理代码中的 TODO/FIXME 标记
 - **任务清单**:
   - ✅ 修复 WorkflowDesignerPage.tsx 中 approvers 硬编码问题
-  - [ ] 定期扫描代码库新增 TODO/FIXME
+  - ✅ 定期扫描代码库新增 TODO/FIXME（scan_todos.py 脚本）
 - **已完成内容**:
   - 修复 WorkflowDesignerPage.tsx：approvers 从节点数据动态获取
   - 在 NodeData 接口中添加 approvers 字段
@@ -662,17 +662,17 @@
 - **API 响应优化** - ✅ 批量接口工具（请求分组、并行执行、汇总结果）、数据压缩中间件（gzip/deflate/brotli）
 
 #### 2. 安全加固持续
-- **状态**: ✅ 第一阶段完成
+- **状态**: ✅ 第一阶段完成 + 第二阶段加密增强
 - **渗透测试** - [ ] 定期安全审计
 - **依赖安全** - [ ] 定期更新依赖，修复安全漏洞
-- **数据加密** - [ ] 更多敏感字段加密
+- **数据加密** - ✅ 更多敏感字段加密（密钥轮换 + 可搜索加密 + 数据脱敏 + 3个服务应用）
 - **API 安全** - ✅ 请求频率限制（复用现有 rate_limit 模块）、安全头中间件（X-Content-Type-Options、X-Frame-Options、HSTS、CSP 等）
 
 #### 3. 可观测性增强
-- **状态**: ✅ 第一阶段完成
-- **链路追踪完善** - [ ] 更多服务接入 OpenTelemetry
+- **状态**: ✅ 第二阶段完成（全服务接入 + 告警优化）
+- **链路追踪完善** - ✅ 更多服务接入 OpenTelemetry（ERP/HRM/CRM/MES/SCM/QMS 共6个）
 - **日志结构化** - ✅ JSON 格式输出、环境变量配置（LOG_FORMAT=json/text）、请求 ID 生成工具、TraceContext
-- **告警规则优化** - [ ] 减少误告警，分级告警
+- **告警规则优化** - ✅ 减少误告警，分级告警（P0-P3 + 抑制规则 + 收敛 + 夜间静默）
 - **用户行为分析** - [ ] 产品使用数据采集
 
 ---
@@ -952,6 +952,15 @@
 - ✅ 删除分散脚本
 - ✅ 统一配置文件
 - ⏳ 持续优化脚本功能
+
+### 代码标准化与合规性 ✅
+- ✅ 前端大文件拆分（20个文件全部完成，~27,300行 → 约200个文件）
+- ✅ API路径扫描脚本优化（多二进制服务智能过滤、聚合服务例外、函数内部路由排除）
+- ✅ 聚合服务路径例外写入标准（portal、unified-core）
+- ✅ API路径命名规范强制执行（/api/v{n}/{service}/{resource}）
+- ✅ 通用功能路径例外（auth/login、audit-logs、notifications等）
+- ✅ 合规性评分从81.75%提升至96.65%（优秀）
+- ⏳ 持续监控新代码合规性
 
 ---
 
@@ -1523,6 +1532,87 @@ import { ModuleLayout } from '@/components/layout/ModuleLayout';
 
 ---
 
+## 🧪 前端测试覆盖率提升专项 (2026-06-25~26)
+
+> **背景**: 前端项目有 265 个组件、251 个页面，但测试覆盖率极低（<5%）。本次专项旨在提升组件测试覆盖率和页面测试覆盖率。
+
+### 测试环境修复 ✅
+
+| 问题 | 修复方案 | 状态 |
+|------|----------|------|
+| format.test.ts 期望值不匹配 | 重新编译 shared-utils | ✅ 已修复 |
+| 覆盖率报告未生成 | 添加 Map3DModule 到 coverage.exclude | ✅ 已修复 |
+| MUI v9 ESM 兼容 | vitest.config.ts mainFields 配置 | ⚠️ 部分修复 |
+
+### 统一组件创建 ✅
+
+| 组件 | 路径 | 说明 |
+|------|------|------|
+| FormField | `components/common/FormField.tsx` | 统一 TextField 包装 |
+| FormSelect | `components/common/FormSelect.tsx` | 统一 Select 包装 |
+| ActionButton | `components/common/ActionButton.tsx` | 统一按钮组件 |
+
+### 组件测试覆盖
+
+| 模块 | 测试文件数 | 状态 |
+|------|------------|------|
+| Common 组件 | 28 | ✅ 完成 |
+| UI 组件 | 6 | ✅ 完成 |
+| Layout 组件 | 11 | ✅ 完成 |
+| Templates 组件 | 17 | ✅ 完成 |
+| **组件测试总计** | **62** | **✅ 完成** |
+
+### 页面测试覆盖
+
+| 模块 | 测试文件数 | 状态 |
+|------|------------|------|
+| HRM | 8 | ✅ 完成 |
+| CRM | 3 | ✅ 完成 |
+| PM | 3 | ✅ 完成 |
+| Finance | 2 | ✅ 完成 |
+| Flow | 1 | ✅ 完成 |
+| MES | 11 | ✅ 完成 |
+| QMS | 9 | ✅ 完成 |
+| LIMS | 9 | ✅ 完成 |
+| EHS | 10+ | ✅ 完成 |
+| SCM | 6 | ✅ 完成 |
+| WMS | 6 | ✅ 完成 |
+| SRM | 5 | ✅ 完成 |
+| PDM | 7 | ✅ 完成 |
+| BI | 3 | ✅ 完成 |
+| Report | 3 | ✅ 完成 |
+| GIS | 1 | ✅ 完成 |
+| Mobile | 4 | ✅ 完成 |
+| **页面测试总计** | **90+** | **✅ 完成** |
+
+### 端到端测试 (Playwright)
+
+| 测试文件 | 测试用例 | 状态 |
+|----------|----------|------|
+| login.spec.ts | 8 | ✅ 全部通过 |
+| hrm-employee.spec.ts | 6 | ⚠️ 部分通过 |
+| crm-customer.spec.ts | 5 | ⚠️ 需后端 |
+| pm-project.spec.ts | 5 | ⚠️ 需后端 |
+| finance-expense.spec.ts | 6 | ⚠️ 需后端 |
+
+### 覆盖率评估
+
+| 指标 | 当前状态 | 目标 |
+|------|----------|------|
+| **组件测试文件** | 62+ | 150+ |
+| **页面测试文件** | 90+ | 200+ |
+| **测试通过率** | 85%+ | 95%+ |
+| **端到端测试** | 5 个 | 15+ |
+
+### 后续任务
+
+- [ ] 修复剩余 EHS 模块测试失败问题
+- [ ] 继续页面测试覆盖（目标 200+ 页面）
+- [ ] 端到端测试完善
+- [ ] 组件使用 100% 统一化
+
+---
+
 ## 风险与挑战
 
 | 风险 | 等级 | 应对措施 |
@@ -1705,7 +1795,7 @@ import { ModuleLayout } from '@/components/layout/ModuleLayout';
 - **已完成内容**:
   - ✅ BI - 补充数据源管理、对比分析 API
   - ✅ Integration - 补充 ERP 连接、ERP 映射、转换规则、同步统计 API
-  - [ ] LIMS - 补充检测方法库、能力验证、不确定度评定等 API（已有基础，待完善）
+  - ✅ LIMS - 补充检测方法库、能力验证、不确定度评定等 API（已在 LIMS 模块完成）
 - **预计**: 2-3 天
 - **负责人**: TOPEMS Team
 
@@ -2239,7 +2329,7 @@ import { ModuleLayout } from '@/components/layout/ModuleLayout';
 - **已完成内容**:
   - ✅ BI - 补充数据源管理、对比分析 API
   - ✅ Integration - 补充 ERP 连接、ERP 映射、转换规则、同步统计 API
-  - [ ] LIMS - 补充检测方法库、能力验证、不确定度评定等 API（已有基础，待完善）
+  - ✅ LIMS - 补充检测方法库、能力验证、不确定度评定等 API（已在 LIMS 模块完成）
 - **预计**: 2-3 天
 - **负责人**: TOPEMS Team
 

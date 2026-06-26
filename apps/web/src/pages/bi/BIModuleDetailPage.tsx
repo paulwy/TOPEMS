@@ -29,9 +29,9 @@ import {
   Alert,
 } from '@mui/material';
 import { Button } from '@mui/material';
-import { Grid } from '@/components/Grid';
+import { Grid } from '@/components';
 import { useAppStore } from '@/store';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import ExportButton from '@/components/export/ExportButton';
 import { apiLogger, logger } from '@/utils/logger';
 import {

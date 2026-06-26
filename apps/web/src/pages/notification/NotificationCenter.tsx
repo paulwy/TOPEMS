@@ -30,6 +30,7 @@ import NotificationItem from '@/components/notifications/NotificationItem';
 import NotificationSettings from '@/components/notifications/NotificationSettings';
 import useNotificationSettings from '@/hooks/useNotificationSettings';
 import { apiLogger } from '@/utils/logger';
+import { PageHeader } from '@/components';
 
 type NotificationFilterType = 'all' | NotificationTypeEnum;
 
@@ -194,46 +195,12 @@ const NotificationCenter: React.FC = () => {
     <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100' }}>
       <Box sx={{ maxWidth: 1200, mx: 'auto', px: 2, py: 4 }}>
         <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
-          <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 48,
-                    height: 48,
-                    bgcolor: 'primary.100',
-                    borderRadius: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Bell
-                    size={24}
-                    color='#1976d2'
-                  />
-                </Box>
-                <Box>
-                  <Typography
-                    variant='h5'
-                    sx={{ fontWeight: 700, color: 'grey.900' }}
-                  >
-                    通知中心
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'grey.500', mt: 0.5 }}
-                  >
-                    共 {total} 条通知，{unreadCount} 条未读
-                  </Typography>
-                </Box>
-              </Box>
+          <PageHeader
+            title='通知中心'
+            subtitle={`共 ${total} 条通知，${unreadCount} 条未读`}
+            pageIcon={<Bell size={24} color='#1976d2' />}
+            pageColor='primary.100'
+            rightContent={
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Box
                   component='button'
@@ -332,8 +299,9 @@ const NotificationCenter: React.FC = () => {
                   <Settings size={20} />
                 </Box>
               </Box>
-            </Box>
-          </Box>
+            }
+            showDivider
+          />
 
           {showSettings && (
             <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>

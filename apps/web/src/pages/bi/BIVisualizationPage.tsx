@@ -46,7 +46,7 @@ import { Button } from '@mui/material';
 import { EmptyState } from '@/components/mui/EmptyState';
 import { useAppStore } from '@/store';
 import { DashboardTemplate, type StatCard } from '@/components/templates';
-import { Grid } from '@/components/Grid';
+import { Grid } from '@/components';
 import { fetchWidgets, createWidget, updateWidget, deleteWidget, type Widget } from '@/api/bi';
 import { logger } from '@/utils/logger';
 
@@ -132,8 +132,8 @@ const widgetToCanvasComponent = (widget: Widget): CanvasComponent => ({
   type: widget.widget_type,
   x: widget.position?.x || 50,
   y: widget.position?.y || 50,
-  width: widget.position?.width || 200,
-  height: widget.position?.height || 150,
+  width: widget.position?.w || 200,
+  height: widget.position?.h || 150,
   config: widget.config || {},
 });
 
@@ -144,8 +144,8 @@ const canvasComponentToWidgetData = (comp: CanvasComponent): Partial<Widget> => 
   position: {
     x: comp.x,
     y: comp.y,
-    width: comp.width,
-    height: comp.height,
+    w: comp.width,
+    h: comp.height,
   },
 });
 
@@ -215,8 +215,8 @@ const BIVisualizationPage = () => {
           position: {
             x: 50,
             y: 50,
-            width: 200,
-            height: 150,
+            w: 200,
+            h: 150,
           },
         };
         const res = await createWidget(newComponentData);

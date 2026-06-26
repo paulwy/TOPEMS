@@ -14,6 +14,9 @@ pub enum ModulePermission {
     PurchaseItemWrite,
     SupplierEvaluationRead,
     SupplierEvaluationWrite,
+    SupplierDeliveryAppointmentRead,
+    SupplierDeliveryAppointmentWrite,
+    SupplierDeliveryAppointmentApprove,
     PriceComparisonRead,
     PriceComparisonWrite,
     All,
@@ -31,6 +34,11 @@ impl std::fmt::Display for ModulePermission {
             ModulePermission::PurchaseItemWrite => write!(f, "scm:write"),
             ModulePermission::SupplierEvaluationRead => write!(f, "scm:read"),
             ModulePermission::SupplierEvaluationWrite => write!(f, "scm:write"),
+            ModulePermission::SupplierDeliveryAppointmentRead => write!(f, "scm:read"),
+            ModulePermission::SupplierDeliveryAppointmentWrite => write!(f, "scm:write"),
+            ModulePermission::SupplierDeliveryAppointmentApprove => {
+                write!(f, "scm:delivery_appointment:approve")
+            }
             ModulePermission::PriceComparisonRead => write!(f, "scm:read"),
             ModulePermission::PriceComparisonWrite => write!(f, "scm:write"),
             ModulePermission::All => write!(f, "scm:admin"),

@@ -14,6 +14,7 @@ pub mod price_comparison;
 pub mod purchase_item;
 pub mod purchase_order;
 pub mod supplier;
+pub mod supplier_delivery_appointment;
 pub mod supplier_evaluation;
 pub mod supply_chain_dashboard;
 
@@ -48,6 +49,7 @@ pub fn create_routes() -> Router<ApiState> {
         .merge(purchase_order::create_routes())
         .merge(purchase_item::create_routes())
         .merge(supplier_evaluation::create_routes())
+        .merge(supplier_delivery_appointment::create_routes())
         .merge(price_comparison::create_routes())
         .merge(mrp::create_routes())
         .merge(incoming_inspection::create_routes())

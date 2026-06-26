@@ -1113,9 +1113,9 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
   const renderPreviewChart = () => {
     const chartType = state.layout.chart?.type || 'bar';
     const xField = state.selectedFields.find(f => f.fieldId === state.layout.chart?.xAxisField);
-    const yFields = state.layout.chart?.yAxisFields
+    const yFields = (state.layout.chart?.yAxisFields || [])
       .map(id => state.selectedFields.find(f => f.fieldId === id))
-      .filter(Boolean);
+      .filter(Boolean) as SelectedField[];
 
     if (!xField || yFields.length === 0) {
       return (
@@ -1136,8 +1136,8 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
               <Typography variant='caption' sx={{ mb: 1, color: 'grey.600' }}>{row[xField.fieldName]}</Typography>
               <Box sx={{ flex: 1, display: 'flex', alignItems: 'flex-end', gap: 2, width: '100%', justifyContent: 'center' }}>
                 {yFields.map((yField, yIdx) => {
-                  const value = row[yField?.fieldName] || 0;
-                  const maxValue = Math.max(...previewData.map(r => r[yField?.fieldName] || 0), 1);
+                  const value = row[yField.fieldName] || 0;
+                  const maxValue = Math.max(...previewData.map(r => r[yField.fieldName] || 0), 1);
                   const height = (value / maxValue) * 100;
                   return (
                     <Box
@@ -1162,7 +1162,7 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
             {yFields.map((yField, idx) => (
               <Box key={idx} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Box sx={{ width: 12, height: 12, bgcolor: chartColors[idx % chartColors.length], borderRadius: 2 }} />
-                <Typography variant='caption'>{yField?.label}</Typography>
+                <Typography variant='caption'>{yField.label}</Typography>
               </Box>
             ))}
           </Box>

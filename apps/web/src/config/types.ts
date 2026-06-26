@@ -13,7 +13,7 @@ export interface ServicesConfig {
   iam: string;
   doc: string;
   ai: string;
-  flow: string;
+  workflow: string;
   rs: string;
   srm: string;
   erp: string;

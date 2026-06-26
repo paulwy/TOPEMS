@@ -43,7 +43,7 @@ import { useAppStore } from '../../store';
 import {
   TreePageTemplate,
   type TreeNode,
-  type StatCard,
+  type TreeStatCard as StatCard,
   type TreeAction,
 } from '@/components/templates';
 import { EmptyState } from '@/components/mui';
@@ -496,7 +496,7 @@ const HrmOrganizationPage: React.FC = () => {
               <Chip size='small' variant='outlined' label={`${departments.filter(d => d.company_id === (selectedNode.data as NodeData).data.id).length} 个部门`} />
             ) : (
               (selectedNode.data as NodeData).data && (selectedNode.data as NodeData).data.code && (
-                <Chip size='small' variant='outlined' label={`编码: ${(selectedNode.data as NodeData).data.code}`} />
+                <Chip size='small' variant='outlined' label={`编码: ${(selectedNode.data as NodeData).data.code as string}`} />
               )
             )}
           </Box>

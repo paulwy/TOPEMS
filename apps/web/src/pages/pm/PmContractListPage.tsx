@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Plus, Search, Eye, Edit, Trash2, FileText, CheckCircle, AlertCircle, DollarSign } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Chip, LinearProgress, IconButton, Tooltip } from '@mui/material';
+import { Box, LinearProgress, IconButton, Tooltip } from '@mui/material';
 import type { Contract } from '@/api/pm';
 import { pmApi } from '@/api/pm';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+import { StatusBadge } from '@/components/common';
 
 const CONTRACT_TYPES = [
   { value: '', label: '全部类型' },
@@ -163,10 +164,10 @@ const PmContractListPage: React.FC = () => {
         label: '状态',
         width: 100,
         render: (row) => (
-          <Chip
-            size='small'
-            label={STATUS_LABELS[row.status] || row.status}
-            color={STATUS_COLORS[row.status]}
+          <StatusBadge
+            status={row.status || ''}
+            label={STATUS_LABELS[row.status || ''] || row.status}
+            color={STATUS_COLORS[row.status || ''] || 'default'}
           />
         ),
       },
@@ -200,7 +201,7 @@ const PmContractListPage: React.FC = () => {
             <Tooltip title='编辑'>
               <IconButton
                 size='small'
-                onClick={() => navigate(`/pm/contracts/${row.id}/edit`)}
+                onClick={() => navigate(`'/pm/contracts'`)}
               >
                 <Edit size={16} />
               </IconButton>

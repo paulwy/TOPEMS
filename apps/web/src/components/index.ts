@@ -21,6 +21,9 @@ export { default as MobileHeader } from './layout/MobileHeader';
 export { Sidebar } from './layout/Sidebar';
 
 // Common components
+export { Grid } from './common/Grid';
+export type { GridProps, GridSizeProps } from './common/Grid';
+
 export { default as BackButton } from './common/BackButton';
 export type { BackButtonProps } from './common/BackButton';
 
@@ -47,6 +50,19 @@ export type { DrawerProps, DrawerAnchor, DrawerVariant } from './common/Drawer';
 
 export { default as ConfirmDialog } from './common/ConfirmDialog';
 export type { ConfirmDialogConfig, DialogType, DialogButtonType } from './common/ConfirmDialog';
+
+// ===== 统一表单组件 =====
+// FormField - 统一 TextField 包装
+export { default as FormField } from './common/FormField';
+export type { FormFieldProps } from './common/FormField';
+
+// FormSelect - 统一 Select 包装
+export { default as FormSelect } from './common/FormSelect';
+export type { FormSelectProps, FormSelectOption } from './common/FormSelect';
+
+// ActionButton - 统一按钮组件
+export { default as ActionButton } from './common/ActionButton';
+export type { ActionButtonProps, ActionButtonVariant, ActionButtonSize } from './common/ActionButton';
 
 // ===== 统一状态组件 =====
 // StatusBadge - 统一状态徽章组件 (common 版本最完整)
@@ -93,6 +109,59 @@ export type { FilterOption, FilterConfig, FilterBarProps } from './mui/FilterBar
 
 export { ActionBar, QuickActionBar } from './mui/ActionBar';
 export type { Action, ActionBarProps, QuickActionBarProps } from './mui/ActionBar';
+
+// ===== 页面模板组件 (统一使用 templates/ 目录) =====
+export { ListPageTemplate } from './templates/ListPageTemplate';
+export type {
+  ColumnDef,
+  RowAction,
+  BatchAction,
+  ListPageTemplateProps,
+  ExpandedRowRenderProps,
+  ColumnConfig,
+} from './templates/ListPageTemplate';
+
+export { DetailPageTemplate } from './templates/DetailPageTemplate';
+export type {
+  TabConfig,
+  SectionConfig,
+  DetailField,
+  DetailPageTemplateProps,
+} from './templates/DetailPageTemplate';
+
+export { FormPageTemplate } from './templates/FormPageTemplate';
+export type {
+  FormSection,
+  FormPageTemplateProps,
+  FieldDependency,
+  ValidationToast,
+} from './templates/FormPageTemplate';
+
+export { DashboardTemplate } from './templates/DashboardTemplate';
+export type {
+  StatCard,
+  RecentItem,
+  QuickAction,
+  DashboardTemplateProps,
+} from './templates/DashboardTemplate';
+
+export type { EmptyStateAction, EmptyStateType } from './templates/EmptyState';
+export {
+  NoDataEmptyState,
+  FilterEmptyState,
+  FolderEmptyState,
+} from './templates/EmptyState';
+
+export { TreePageTemplate } from './templates/TreePageTemplate';
+export { CardListTemplate } from './templates/CardListTemplate';
+export { StatsPageTemplate } from './templates/StatsPageTemplate';
+export { WizardPageTemplate } from './templates/WizardPageTemplate';
+export { KanbanPageTemplate } from './templates/KanbanPageTemplate';
+export { TimelinePageTemplate } from './templates/TimelinePageTemplate';
+export { SettingsPageTemplate } from './templates/SettingsPageTemplate';
+export { MarkdownEditorTemplate } from './templates/MarkdownEditorTemplate';
+export { ReportDesignerTemplate } from './templates/ReportDesignerTemplate';
+export { GisMapTemplate } from './templates/GisMapTemplate';
 
 // Icon 组件
 export { Icon } from './icons/Icon';

@@ -143,18 +143,6 @@ export const DashboardPage: React.FC = () => {
   const quickActions: QuickAction[] = useMemo(
     () => [
       {
-        id: 'inbound',
-        label: '入库登记',
-        icon: <ArrowRight size={16} />,
-        onClick: () => navigate('/wms/inbound-orders/create'),
-      },
-      {
-        id: 'outbound',
-        label: '出库登记',
-        icon: <ArrowRight size={16} />,
-        onClick: () => navigate('/wms/outbound-orders/create'),
-      },
-      {
         id: 'inventory',
         label: '库存查询',
         icon: <ArrowRight size={16} />,

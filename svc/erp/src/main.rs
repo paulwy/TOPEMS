@@ -26,9 +26,9 @@ use utoipa::OpenApi;
 use api::ApiState;
 use topems_shared::{
     check_http_health, create_api_info_router, create_cors_layer, create_database_pool,
-    create_hrm_client, init_logging, ApiResponse, AuthState, Claims, DatabaseConfig,
-    DependencyHealth, HealthStatus, NotificationServiceClient, ServiceHealth, SystemMetrics,
-    verify_jwt_token,
+    create_hrm_client, init_telemetry, ApiResponse, AuthState, Claims, DatabaseConfig,
+    DependencyHealth, FieldEncryptionService, HealthStatus, KeyManager, NotificationServiceClient, ServiceHealth, SystemMetrics,
+    telemetry_middleware, verify_jwt_token,
 };
 
 lazy_static::lazy_static! {
@@ -68,7 +68,7 @@ struct ApiDoc;
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
 
-    init_logging("topems-erp");
+    let _telemetry_guard = init_telemetry("topems-erp");
 
     let db_config = DatabaseConfig {
         url: env::var("DATABASE_URL")
@@ -102,6 +102,10 @@ async fn main() -> Result<()> {
     let start_time = Instant::now();
     let metrics = Arc::new(SystemMetrics::new());
 
+    // 初始化加密服务
+    let encryption_service = init_encryption_service();
+    tracing::info!("🔐 字段加密服务初始化成功");
+
     // 初始化通知服务客户端
     let notification_service_url = env::var("NOTIFICATION_SERVICE_URL")
         .unwrap_or_else(|_| "http://localhost:8003".to_string());
@@ -112,10 +116,6 @@ async fn main() -> Result<()> {
     // 初始化 HRM 服务客户端
     let hrm_client = create_hrm_client().map(Arc::new).unwrap_or_else(|e| {
         tracing::warn!("HRM服务客户端初始化失败: {}, 将使用mock模式", e);
-        // 在实际生产中应该处理这个错误，但这里继续启动
-        // 但实际上 create_hrm_client 默认会返回错误，但系统会在访问时才真正调用
-        // 这里的 mock 逻辑放在后面添加了，我们可以直接创建：
-        // 实际上如果失败，我们可以创建一个默认的 URL 客户端
         use topems_shared::service_client::HrmServiceClient;
         let default_url = "http://localhost:8011".to_string();
         Arc::new(HrmServiceClient::new(default_url).expect("默认HRM客户端创建失败"))
@@ -129,6 +129,7 @@ async fn main() -> Result<()> {
         dict_cache: Arc::new(utils::InMemoryCache::new(Duration::from_secs(600))),
         notification_client,
         hrm_client,
+        encryption: Arc::new(encryption_service),
         // 初始化财务数据缓存 (5分钟 TTL)
         expense_cache: Arc::new(utils::InMemoryCache::new(Duration::from_secs(300))),
         budget_cache: Arc::new(utils::InMemoryCache::new(Duration::from_secs(300))),
@@ -170,6 +171,7 @@ async fn main() -> Result<()> {
             "/api-docs/openapi.json",
             get(|| async { serde_json::to_string_pretty(&ApiDoc::openapi()).unwrap() }),
         )
+        .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(prometheus_layer)
         .layer(cors);
 
@@ -374,6 +376,19 @@ async fn check_iam_health() -> DependencyHealth {
 
 async fn init_db(_pool: &sqlx::PgPool) -> Result<()> {
     Ok(())
+}
+
+fn init_encryption_service() -> FieldEncryptionService {
+    let master_key = env::var("ENCRYPTION_MASTER_KEY").unwrap_or_else(|_| {
+        "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef".to_string()
+    });
+    let key_bytes = hex::decode(&master_key).unwrap_or_else(|_| {
+        vec![0x42; 32]
+    });
+    let mut key_array = [0u8; 32];
+    key_array.copy_from_slice(&key_bytes[..32]);
+    let key_manager = KeyManager::new(&key_array);
+    FieldEncryptionService::new(key_manager)
 }
 
 // ==================== ERP 认证中间件 ====================

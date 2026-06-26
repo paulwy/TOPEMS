@@ -283,7 +283,7 @@ export default function ConsolidationScopePage() {
           <Button
             variant='text'
             size='small'
-            onClick={() => navigate(`/finance/consolidation/${row.original.id}/rules`)}
+            onClick={() => navigate(`#`)}
             startIcon={<Settings sx={{ width: 16, height: 16 }} />}
           >
             规则
@@ -430,7 +430,7 @@ export default function ConsolidationScopePage() {
         </Box>
         <Button
           variant='contained'
-          onClick={() => navigate('/finance/consolidation/scopes/create')}
+          onClick={() => navigate('#')}
           startIcon={<Plus sx={{ width: 16, height: 16 }} />}
         >
           新建合并范围
@@ -548,7 +548,7 @@ export default function ConsolidationScopePage() {
                     variant='outlined'
                     size='small'
                     onClick={() =>
-                      navigate(`/finance/consolidation/scopes/${selectedScope.id}/edit`)
+                      navigate(`#`)
                     }
                     startIcon={<Edit2 sx={{ width: 16, height: 16 }} />}
                   >
@@ -595,7 +595,7 @@ export default function ConsolidationScopePage() {
                         size='small'
                         variant='contained'
                         onClick={() =>
-                          navigate(`/finance/consolidation/scopes/${selectedScope.id}/add-company`)
+                          navigate(`#`)
                         }
                         startIcon={<Plus sx={{ width: 16, height: 16 }} />}
                       >
@@ -646,7 +646,7 @@ export default function ConsolidationScopePage() {
                         size='small'
                         variant='contained'
                         onClick={() =>
-                          navigate(`/finance/consolidation/scopes/${selectedScope.id}/rules/create`)
+                          navigate(`#`)
                         }
                         startIcon={<Plus sx={{ width: 16, height: 16 }} />}
                       >

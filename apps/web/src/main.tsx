@@ -4,7 +4,7 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import App from './App';
 import './index.css';
 import './i18n';
-import { createPermissionInterceptor } from './api/permissionInterceptor';
+import { createPermissionInterceptor } from './api/permission-interceptor';
 import { queryClient } from './lib/react-query';
 import { logger } from '@/utils/logger';
 import { applySecurityHeaders } from '@/config/security';
