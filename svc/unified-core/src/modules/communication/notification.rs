@@ -1295,8 +1295,9 @@ pub async fn list_templates(
 
     let result = sqlx::query(
         r#"
-        SELECT id, name, title, content, notification_type, priority, data, created_at, updated_at
+        SELECT id, name, title_template, content_template, notification_type, description, is_deleted, created_by, created_at, updated_at
         FROM core_notification_templates
+        WHERE is_deleted = FALSE
         ORDER BY created_at DESC
         "#,
     )
@@ -1311,11 +1312,10 @@ pub async fn list_templates(
                     serde_json::json!({
                         "id": row.get::<Uuid, _>("id"),
                         "name": row.get::<String, _>("name"),
-                        "title": row.get::<String, _>("title"),
-                        "content": row.get::<Option<String>, _>("content"),
+                        "title_template": row.get::<String, _>("title_template"),
+                        "content_template": row.get::<String, _>("content_template"),
                         "notification_type": row.get::<Option<String>, _>("notification_type"),
-                        "priority": row.get::<Option<i32>, _>("priority"),
-                        "data": row.get::<Option<serde_json::Value>, _>("data"),
+                        "description": row.get::<Option<String>, _>("description"),
                         "created_at": row.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
                         "updated_at": row.get::<Option<chrono::DateTime<chrono::Utc>>, _>("updated_at"),
                     })

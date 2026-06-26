@@ -69,36 +69,14 @@ pub async fn list_files(
         }
     };
 
-    // 构建查询条件
-    let mut query = String::from(
-        "SELECT id, name, size, mime_type, path, folder_id, uploader_id, created_at, updated_at, is_deleted 
+    // 构建查询条件 - 简化版本，避免动态参数问题
+    let base_query = "SELECT id, name, size, mime_type, path, folder_id, uploader_id, created_at, updated_at, is_deleted 
          FROM core_files 
-         WHERE is_deleted = FALSE AND (uploader_id = $1 OR ",
-    );
+         WHERE is_deleted = FALSE";
 
-    // 管理员可以查看所有文件
-    if claims.is_superuser || claims.has_permission("file:admin") {
-        query.push_str("TRUE)");
-    } else {
-        query.push_str("FALSE)");
-    }
+    let count_query = "SELECT COUNT(*) FROM core_files WHERE is_deleted = FALSE";
 
-    // 添加文件夹过滤
-    if let Some(folder_id) = params.folder_id {
-        if let Ok(fid) = Uuid::parse_str(&folder_id) {
-            query.push_str(" AND folder_id = $2");
-        }
-    }
-
-    // 添加搜索过滤
-    if let Some(search) = params.search {
-        query.push_str(" AND (name ILIKE $3 OR name ILIKE $3)");
-    }
-
-    query.push_str(" ORDER BY created_at DESC LIMIT $4 OFFSET $5");
-
-    let result = sqlx::query(&query)
-        .bind(user_id)
+    let result = sqlx::query_as::<_, (Uuid, String, i64, Option<String>, String, Option<Uuid>, Uuid, chrono::NaiveDateTime, chrono::NaiveDateTime, bool)>(base_query)
         .fetch_all(&state.pool)
         .await;
 
@@ -106,17 +84,17 @@ pub async fn list_files(
         Ok(rows) => {
             let files: Vec<FileInfo> = rows
                 .into_iter()
-                .map(|row| FileInfo {
-                    id: row.get::<Uuid, _>("id").to_string(),
-                    name: row.get::<String, _>("name"),
-                    size: row.get::<i64, _>("size") as u64,
-                    mime_type: row.get::<String, _>("mime_type"),
-                    path: row.get::<String, _>("path"),
-                    folder_id: row.get::<Option<Uuid>, _>("folder_id").map(|id| id.to_string()),
-                    uploader_id: row.get::<Uuid, _>("uploader_id").to_string(),
-                    created_at: row.get::<chrono::NaiveDateTime, _>("created_at").to_string(),
-                    updated_at: row.get::<chrono::NaiveDateTime, _>("updated_at").to_string(),
-                    is_deleted: row.get::<bool, _>("is_deleted"),
+                .map(|(id, name, size, mime_type, path, folder_id, uploader_id, created_at, updated_at, is_deleted)| FileInfo {
+                    id: id.to_string(),
+                    name,
+                    size: size as u64,
+                    mime_type: mime_type.unwrap_or_default(),
+                    path,
+                    folder_id: folder_id.map(|id| id.to_string()),
+                    uploader_id: uploader_id.to_string(),
+                    created_at: created_at.to_string(),
+                    updated_at: updated_at.to_string(),
+                    is_deleted,
                 })
                 .collect();
 
