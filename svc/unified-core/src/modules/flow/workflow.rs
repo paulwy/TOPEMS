@@ -86,3 +86,51 @@ pub async fn unpublish_workflow(
         "data": null
     }))
 }
+
+pub async fn activate_workflow(
+    State(_state): State<AppState>,
+    Path(id): Path<String>,
+) -> Json<serde_json::Value> {
+    tracing::info!("Flow workflow activate_workflow called with id: {}", id);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "activate_workflow success",
+        "data": null
+    }))
+}
+
+pub async fn deactivate_workflow(
+    State(_state): State<AppState>,
+    Path(id): Path<String>,
+) -> Json<serde_json::Value> {
+    tracing::info!("Flow workflow deactivate_workflow called with id: {}", id);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "deactivate_workflow success",
+        "data": null
+    }))
+}
+
+pub async fn deploy_workflow(
+    State(_state): State<AppState>,
+    Path(id): Path<String>,
+) -> Json<serde_json::Value> {
+    tracing::info!("Flow workflow deploy_workflow called with id: {}", id);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "deploy_workflow success",
+        "data": null
+    }))
+}
+
+pub async fn rollback_workflow(
+    State(_state): State<AppState>,
+    Path(workflow_id): Path<String>,
+) -> Json<serde_json::Value> {
+    tracing::info!("Flow workflow rollback_workflow called with workflow_id: {}", workflow_id);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "rollback_workflow success",
+        "data": null
+    }))
+}

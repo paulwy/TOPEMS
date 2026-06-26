@@ -5,6 +5,12 @@ pub mod instance;
 pub mod approval;
 pub mod statistics;
 pub mod plugin;
+pub mod template;
+pub mod version;
+pub mod history;
+pub mod performance;
+pub mod setting;
+pub mod record;
 
 use sqlx::PgPool;
 

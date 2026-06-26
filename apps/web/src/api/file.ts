@@ -101,7 +101,7 @@ export const fileApi = {
     // 获取当前用户的认证令牌
     const token = localStorage.getItem('token');
 
-    return apiClient.file.post<FileMetadata>('/api/files/upload', formData, {
+    return apiClient.file.post<FileMetadata>('/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
         ...(token && { Authorization: `Bearer ${token}` }),
@@ -119,29 +119,29 @@ export const fileApi = {
 
     const queryString = searchParams.toString();
     return apiClient.file.get<PagedResponse<FileMetadata>>(
-      `/api/files${queryString ? '?' + queryString : ''}`
+      `/files${queryString ? '?' + queryString : ''}`
     );
   },
 
   async get(id: string): Promise<ApiResponse<FileMetadata>> {
-    return apiClient.file.get<FileMetadata>(`/api/files/${id}`);
+    return apiClient.file.get<FileMetadata>(`/files/${id}`);
   },
 
   async download(id: string): Promise<Blob> {
     const baseURL = (apiClient.file as any).defaults?.baseURL || config.services.file;
-    return downloadBlob(baseURL, `/api/files/${id}/download`);
+    return downloadBlob(baseURL, `/download/${id}`);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.file.delete<string>(`/api/files/${id}`);
+    return apiClient.file.delete<string>(`/files/${id}`);
   },
 
   async share(id: string, request: ShareFileRequest): Promise<ApiResponse<FilePermission>> {
-    return apiClient.file.post<FilePermission>(`/api/files/${id}/share`, request);
+    return apiClient.file.post<FilePermission>(`/files/${id}/share`, request);
   },
 
   async getPermissions(id: string): Promise<ApiResponse<FilePermission[]>> {
-    return apiClient.file.get<FilePermission[]>(`/api/files/${id}/permissions`);
+    return apiClient.file.get<FilePermission[]>(`/files/${id}/permissions`);
   },
 
   async revokePermission(
@@ -151,20 +151,20 @@ export const fileApi = {
     permission: string
   ): Promise<ApiResponse<string>> {
     return apiClient.file.delete<string>(
-      `/api/files/${id}/permissions/revoke/${principal_type}/${principal_id}/${permission}`
+      `/files/${id}/permissions/revoke/${principal_type}/${principal_id}/${permission}`
     );
   },
 
   async getSharedFiles(): Promise<ApiResponse<ShareInfo[]>> {
-    return apiClient.file.get<ShareInfo[]>('/api/files/shared');
+    return apiClient.file.get<ShareInfo[]>('/files/shared');
   },
 
   async getStats(): Promise<ApiResponse<FileStats>> {
-    return apiClient.file.get<FileStats>('/api/files/stats');
+    return apiClient.file.get<FileStats>('/files/stats');
   },
 
   async export(request: ExportRequest): Promise<ApiResponse<any>> {
-    return apiClient.file.post('/api/files/export', request);
+    return apiClient.file.post('/files/export', request);
   },
 
   async health(): Promise<ApiResponse<string>> {

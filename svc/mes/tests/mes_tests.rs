@@ -609,7 +609,7 @@ mod business_logic_tests {
         let quality = 0.95;
         let oee = availability * performance * quality;
 
-        assert!((oee - 0.72675).abs() < 0.001);
+        assert!((oee - 0.72675_f64).abs() < 0.001);
         assert!(oee >= 0.0 && oee <= 1.0);
     }
 
@@ -632,7 +632,7 @@ mod business_logic_tests {
 
         assert!(utilization > 0.0);
         assert!(utilization <= 1.0);
-        assert!((utilization - 0.8125).abs() < 0.001);
+        assert!((utilization - 0.8125_f64).abs() < 0.001);
     }
 
     #[test]

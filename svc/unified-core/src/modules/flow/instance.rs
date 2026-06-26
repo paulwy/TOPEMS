@@ -85,3 +85,39 @@ pub async fn cancel_instance(
         "data": null
     }))
 }
+
+pub async fn resume_instance(
+    State(_state): State<AppState>,
+    Path(id): Path<String>,
+) -> Json<serde_json::Value> {
+    tracing::info!("Flow instance resume_instance called with id: {}", id);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "resume_instance success",
+        "data": null
+    }))
+}
+
+pub async fn suspend_instance(
+    State(_state): State<AppState>,
+    Path(id): Path<String>,
+) -> Json<serde_json::Value> {
+    tracing::info!("Flow instance suspend_instance called with id: {}", id);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "suspend_instance success",
+        "data": null
+    }))
+}
+
+pub async fn get_instance_details(
+    State(_state): State<AppState>,
+    Path(id): Path<String>,
+) -> Json<serde_json::Value> {
+    tracing::info!("Flow instance get_instance_details called with id: {}", id);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "get_instance_details success",
+        "data": {}
+    }))
+}

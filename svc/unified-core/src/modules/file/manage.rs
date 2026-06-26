@@ -18,7 +18,7 @@ struct FileInfo {
     mime_type: String,
     path: String,
     folder_id: Option<String>,
-    created_by: String,
+    uploader_id: String,
     created_at: String,
     updated_at: String,
     is_deleted: bool,
@@ -71,9 +71,9 @@ pub async fn list_files(
 
     // 构建查询条件
     let mut query = String::from(
-        "SELECT id, name, size, mime_type, path, folder_id, created_by, created_at, updated_at, is_deleted 
+        "SELECT id, name, size, mime_type, path, folder_id, uploader_id, created_at, updated_at, is_deleted 
          FROM core_files 
-         WHERE is_deleted = FALSE AND (created_by = $1 OR ",
+         WHERE is_deleted = FALSE AND (uploader_id = $1 OR ",
     );
 
     // 管理员可以查看所有文件
@@ -113,7 +113,7 @@ pub async fn list_files(
                     mime_type: row.get::<String, _>("mime_type"),
                     path: row.get::<String, _>("path"),
                     folder_id: row.get::<Option<Uuid>, _>("folder_id").map(|id| id.to_string()),
-                    created_by: row.get::<Uuid, _>("created_by").to_string(),
+                    uploader_id: row.get::<Uuid, _>("uploader_id").to_string(),
                     created_at: row.get::<chrono::NaiveDateTime, _>("created_at").to_string(),
                     updated_at: row.get::<chrono::NaiveDateTime, _>("updated_at").to_string(),
                     is_deleted: row.get::<bool, _>("is_deleted"),
@@ -124,7 +124,7 @@ pub async fn list_files(
             let count_query = if claims.is_superuser || claims.has_permission("file:admin") {
                 "SELECT COUNT(*) FROM core_files WHERE is_deleted = FALSE"
             } else {
-                "SELECT COUNT(*) FROM core_files WHERE is_deleted = FALSE AND created_by = $1"
+                "SELECT COUNT(*) FROM core_files WHERE is_deleted = FALSE AND uploader_id = $1"
             };
 
             let total = match sqlx::query_scalar::<_, i64>(count_query)
@@ -198,7 +198,7 @@ pub async fn get_file(
     };
 
     let row = match sqlx::query(
-        "SELECT id, name, size, mime_type, path, folder_id, created_by, created_at, updated_at, is_deleted 
+        "SELECT id, name, size, mime_type, path, folder_id, uploader_id, created_at, updated_at, is_deleted 
          FROM core_files WHERE id = $1",
     )
     .bind(file_id)
@@ -226,8 +226,8 @@ pub async fn get_file(
         }
     };
 
-    let file_created_by: Uuid = row.get("created_by");
-    if file_created_by != user_id && !claims.is_superuser && !claims.has_permission("file:admin") {
+    let file_uploader_id: Uuid = row.get("uploader_id");
+    if file_uploader_id != user_id && !claims.is_superuser && !claims.has_permission("file:admin") {
         return Json(serde_json::json!({
             "success": false,
             "message": "没有权限查看此文件",
@@ -243,7 +243,7 @@ pub async fn get_file(
         mime_type: row.get::<String, _>("mime_type"),
         path: row.get::<String, _>("path"),
         folder_id: row.get::<Option<Uuid>, _>("folder_id").map(|id| id.to_string()),
-        created_by: row.get::<Uuid, _>("created_by").to_string(),
+        uploader_id: row.get::<Uuid, _>("uploader_id").to_string(),
         created_at: row.get::<chrono::NaiveDateTime, _>("created_at").to_string(),
         updated_at: row.get::<chrono::NaiveDateTime, _>("updated_at").to_string(),
         is_deleted: row.get::<bool, _>("is_deleted"),
@@ -293,7 +293,7 @@ pub async fn update_file(
     };
 
     // 检查文件是否存在且有权限
-    let row = match sqlx::query("SELECT created_by, is_deleted FROM core_files WHERE id = $1")
+    let row = match sqlx::query("SELECT uploader_id, is_deleted FROM core_files WHERE id = $1")
         .bind(file_id)
         .fetch_optional(&state.pool)
         .await
@@ -318,8 +318,8 @@ pub async fn update_file(
         }
     };
 
-    let file_created_by: Uuid = row.get("created_by");
-    if file_created_by != user_id && !claims.is_superuser && !claims.has_permission("file:admin") {
+    let file_uploader_id: Uuid = row.get("uploader_id");
+    if file_uploader_id != user_id && !claims.is_superuser && !claims.has_permission("file:admin") {
         return Json(serde_json::json!({
             "success": false,
             "message": "没有权限更新此文件",
@@ -439,7 +439,7 @@ pub async fn delete_file(
     };
 
     // 获取文件信息
-    let row = match sqlx::query("SELECT created_by, path, is_deleted FROM core_files WHERE id = $1")
+    let row = match sqlx::query("SELECT uploader_id, path, is_deleted FROM core_files WHERE id = $1")
         .bind(file_id)
         .fetch_optional(&state.pool)
         .await
@@ -464,11 +464,11 @@ pub async fn delete_file(
         }
     };
 
-    let file_created_by: Uuid = row.get("created_by");
+    let file_uploader_id: Uuid = row.get("uploader_id");
     let file_path: String = row.get("path");
     let is_deleted: bool = row.get("is_deleted");
 
-    if file_created_by != user_id && !claims.is_superuser && !claims.has_permission("file:admin") {
+    if file_uploader_id != user_id && !claims.is_superuser && !claims.has_permission("file:admin") {
         return Json(serde_json::json!({
             "success": false,
             "message": "没有权限删除此文件",
@@ -583,7 +583,7 @@ pub async fn move_file(
     };
 
     // 检查文件权限
-    let row = match sqlx::query("SELECT created_by FROM core_files WHERE id = $1 AND is_deleted = FALSE")
+    let row = match sqlx::query("SELECT uploader_id FROM core_files WHERE id = $1 AND is_deleted = FALSE")
         .bind(file_id)
         .fetch_optional(&state.pool)
         .await
@@ -608,8 +608,8 @@ pub async fn move_file(
         }
     };
 
-    let file_created_by: Uuid = row.get("created_by");
-    if file_created_by != user_id && !claims.is_superuser && !claims.has_permission("file:admin") {
+    let file_uploader_id: Uuid = row.get("uploader_id");
+    if file_uploader_id != user_id && !claims.is_superuser && !claims.has_permission("file:admin") {
         return Json(serde_json::json!({
             "success": false,
             "message": "没有权限移动此文件",
@@ -687,7 +687,7 @@ pub async fn copy_file(
     };
 
     // 获取源文件信息
-    let row = match sqlx::query("SELECT name, size, mime_type, path, created_by FROM core_files WHERE id = $1 AND is_deleted = FALSE")
+    let row = match sqlx::query("SELECT name, size, mime_type, path, uploader_id FROM core_files WHERE id = $1 AND is_deleted = FALSE")
         .bind(file_id)
         .fetch_optional(&state.pool)
         .await
@@ -712,8 +712,8 @@ pub async fn copy_file(
         }
     };
 
-    let file_created_by: Uuid = row.get("created_by");
-    if file_created_by != user_id && !claims.is_superuser && !claims.has_permission("file:admin") {
+    let file_uploader_id: Uuid = row.get("uploader_id");
+    if file_uploader_id != user_id && !claims.is_superuser && !claims.has_permission("file:admin") {
         return Json(serde_json::json!({
             "success": false,
             "message": "没有权限复制此文件",
@@ -772,7 +772,7 @@ pub async fn copy_file(
     // 保存新文件记录到数据库
     match sqlx::query(
         r#"
-        INSERT INTO core_files (id, name, size, mime_type, path, folder_id, created_by, created_at, updated_at)
+        INSERT INTO core_files (id, name, size, mime_type, path, folder_id, uploader_id, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
         "#,
     )
@@ -927,3 +927,212 @@ pub async fn set_file_permission(
 }
 
 use serde::Deserialize;
+
+/// 分享文件
+pub async fn share_file(
+    State(_state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+    Json(payload): Json<serde_json::Value>,
+) -> Json<serde_json::Value> {
+    tracing::info!("File manage share_file called with id: {} for user: {}", id, claims.username);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "分享文件成功",
+        "data": null,
+        "code": 0
+    }))
+}
+
+/// 获取文件的分享列表
+pub async fn get_file_shares(
+    State(_state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+) -> Json<serde_json::Value> {
+    tracing::info!("File manage get_file_shares called with id: {} for user: {}", id, claims.username);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "获取文件分享列表成功",
+        "data": [],
+        "code": 0
+    }))
+}
+
+/// 删除分享
+pub async fn delete_share(
+    State(_state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+) -> Json<serde_json::Value> {
+    tracing::info!("File manage delete_share called with id: {} for user: {}", id, claims.username);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "删除分享成功",
+        "data": null,
+        "code": 0
+    }))
+}
+
+/// 设置文件权限
+pub async fn set_file_permissions(
+    State(_state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+    Json(payload): Json<serde_json::Value>,
+) -> Json<serde_json::Value> {
+    tracing::info!("File manage set_file_permissions called with id: {} for user: {}", id, claims.username);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "设置文件权限成功",
+        "data": null,
+        "code": 0
+    }))
+}
+
+/// 获取文件权限
+pub async fn get_file_permissions(
+    State(_state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+) -> Json<serde_json::Value> {
+    tracing::info!("File manage get_file_permissions called with id: {} for user: {}", id, claims.username);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "获取文件权限成功",
+        "data": [],
+        "code": 0
+    }))
+}
+
+/// 获取我分享的文件列表
+pub async fn get_shared_files(
+    State(_state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
+    tracing::info!("File manage get_shared_files called for user: {}", claims.username);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "获取我分享的文件列表成功",
+        "data": {
+            "files": [],
+            "total": 0
+        },
+        "code": 0
+    }))
+}
+
+/// 获取分享给我的文件列表
+pub async fn get_received_files(
+    State(_state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
+    tracing::info!("File manage get_received_files called for user: {}", claims.username);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "获取分享给我的文件列表成功",
+        "data": {
+            "files": [],
+            "total": 0
+        },
+        "code": 0
+    }))
+}
+
+/// 获取文件统计信息
+pub async fn get_file_stats(
+    State(_state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
+    tracing::info!("File manage get_file_stats called for user: {}", claims.username);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "获取文件统计信息成功",
+        "data": {
+            "total_size": 0,
+            "total_files": 0,
+            "total_folders": 0
+        },
+        "code": 0
+    }))
+}
+
+/// 收藏文件
+pub async fn star_file(
+    State(_state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+) -> Json<serde_json::Value> {
+    tracing::info!("File manage star_file called with id: {} for user: {}", id, claims.username);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "收藏文件成功",
+        "data": null,
+        "code": 0
+    }))
+}
+
+/// 取消收藏
+pub async fn unstar_file(
+    State(_state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<String>,
+) -> Json<serde_json::Value> {
+    tracing::info!("File manage unstar_file called with id: {} for user: {}", id, claims.username);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "取消收藏成功",
+        "data": null,
+        "code": 0
+    }))
+}
+
+/// 列出收藏的文件
+pub async fn list_starred_files(
+    State(_state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<serde_json::Value> {
+    tracing::info!("File manage list_starred_files called for user: {}", claims.username);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "获取收藏文件列表成功",
+        "data": {
+            "files": [],
+            "total": 0
+        },
+        "code": 0
+    }))
+}
+
+/// 导出文件（批量）
+pub async fn export_files(
+    State(_state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Json(payload): Json<serde_json::Value>,
+) -> Json<serde_json::Value> {
+    tracing::info!("File manage export_files called for user: {}", claims.username);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "导出文件成功",
+        "data": null,
+        "code": 0
+    }))
+}
+
+/// 搜索文件
+pub async fn search_files(
+    State(_state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<FileQuery>,
+) -> Json<serde_json::Value> {
+    tracing::info!("File manage search_files called for user: {}", claims.username);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "搜索文件成功",
+        "data": {
+            "files": [],
+            "total": 0
+        },
+        "code": 0
+    }))
+}

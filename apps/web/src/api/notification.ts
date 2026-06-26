@@ -136,7 +136,7 @@ export const getNotifications = async (
     }
 
     const response = await apiClient.notification.get<NotificationListResponse>(
-      '/api/notifications',
+      '/api/v1/notifications',
       { params }
     );
 
@@ -165,14 +165,14 @@ export const getNotifications = async (
 };
 
 export const getUnreadNotifications = async (): Promise<ApiResponse<Notification[]>> => {
-  const response = await apiClient.notification.get<Notification[]>('/api/notifications/unread');
+  const response = await apiClient.notification.get<Notification[]>('/api/v1/notifications/unread');
 
   return response;
 };
 
 export const getUnreadCount = async (): Promise<ApiResponse<number>> => {
   try {
-    const response = await apiClient.notification.get<number>('/api/notifications/unread-count');
+    const response = await apiClient.notification.get<number>('/api/v1/notifications/unread-count');
     return response;
   } catch (error: unknown) {
     const err = error as { code?: string; name?: string; response?: { status?: number } };
@@ -203,11 +203,11 @@ export const getUnreadCount = async (): Promise<ApiResponse<number>> => {
 };
 
 export const markAsRead = async (id: string): Promise<ApiResponse<Notification>> => {
-  return await apiClient.notification.put<Notification>(`/api/notifications/${id}`);
+  return await apiClient.notification.put<Notification>(`/api/v1/notifications/${id}`);
 };
 
 export const markAllAsRead = async (): Promise<ApiResponse<number>> => {
-  return await apiClient.notification.put<number>('/api/notifications/read-all');
+  return await apiClient.notification.put<number>('/api/v1/notifications/read-all');
 };
 
 export const deleteNotification = async (id: string): Promise<ApiResponse<boolean>> => {
@@ -217,7 +217,7 @@ export const deleteNotification = async (id: string): Promise<ApiResponse<boolea
 export const createNotification = async (
   notification: CreateNotificationRequest
 ): Promise<ApiResponse<Notification>> => {
-  return await apiClient.notification.post<Notification>('/api/notifications', notification);
+  return await apiClient.notification.post<Notification>('/api/v1/notifications', notification);
 };
 
 export const getArchivedNotifications = async (

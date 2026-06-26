@@ -1,0 +1,101 @@
+{
+  "data": [
+    {
+      "id": "page-home",
+      "title": "平台首页",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1750908800000,
+      "canvasData": {
+        "x": 0,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/home.html",
+        "interactions": [
+          {
+            "domId": "cta-dashboard",
+            "targetPageId": "page-dashboard",
+            "transitionLabel": "进入工作台"
+          },
+          {
+            "domId": "cta-modules",
+            "targetPageId": "page-modules",
+            "transitionLabel": "查看模块"
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-modules",
+      "title": "模块概览",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1750908800000,
+      "canvasData": {
+        "x": 620,
+        "y": 579,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/modules.html",
+        "interactions": [
+          {
+            "domId": "breadcrumb-home",
+            "targetPageId": "page-home",
+            "hideEdge": true,
+            "transitionLabel": "返回首页"
+          }
+        ]
+      }
+    },
+    {
+      "id": "page-dashboard",
+      "title": "数据仪表盘",
+      "type": "page",
+      "version": 1,
+      "createdAt": 1750908800000,
+      "canvasData": {
+        "x": 620,
+        "y": 0,
+        "group": 0
+      },
+      "devMetadata": {
+        "htmlSrc": "pages/dashboard.html",
+        "interactions": [
+          {
+            "domId": "breadcrumb-home",
+            "targetPageId": "page-home",
+            "hideEdge": true,
+            "transitionLabel": "返回首页"
+          }
+        ]
+      }
+    },
+    {
+      "id": "image-001",
+      "title": "平台主视觉",
+      "type": "image",
+      "version": 1,
+      "createdAt": 1750908800000,
+      "canvasData": {
+        "x": 0,
+        "y": 1117
+      },
+      "devMetadata": {
+        "imageSrc": "assets/hero-platform.jpg"
+      }
+    }
+  ],
+  "config": {
+    "autoLayout": true,
+    "deviceType": "desktop",
+    "projectName": "TOPEMS 企业数字化平台",
+    "designLibrary": null,
+    "windowSize": {
+      "width": 800,
+      "height": 600
+    }
+  }
+}

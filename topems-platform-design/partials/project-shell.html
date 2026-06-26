@@ -1,0 +1,404 @@
+<!-- TOPEMS Platform Shell - Shared Partial -->
+<!-- Included by all pages: home, modules, dashboard -->
+<!-- Expects <link> to colors_and_type.css in parent <head> -->
+
+<!-- ============================== -->
+<!-- HEADER NAVIGATION BAR          -->
+<!-- ============================== -->
+<header
+  id="topems-header"
+  class="sticky top-0 z-50 w-full"
+  style="height:56px; background:var(--color-surface); border-bottom:1px solid var(--color-border); box-shadow:var(--shadow-sm);"
+>
+  <div class="flex items-center justify-between h-full px-4 lg:px-6 max-w-[1800px] mx-auto">
+    <!-- Left: Logo + Brand Name -->
+    <div class="flex items-center gap-3">
+      <div
+        class="flex items-center justify-center text-white font-bold"
+        style="width:36px; height:36px; border-radius:var(--radius-md); background:linear-gradient(135deg, #3b82f6, #8b5cf6); font-size:var(--font-size-xl); font-family:var(--font-sans);"
+        aria-label="TOPEMS Logo"
+      >T</div>
+      <span
+        class="text-lg font-bold select-none"
+        style="font-family:var(--font-sans); font-weight:var(--font-weight-bold); background:linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;"
+      >TOPEMS</span>
+    </div>
+
+    <!-- Center: Navigation Links -->
+    <nav class="hidden md:flex items-center gap-1" id="header-nav">
+      <a
+        href="#"
+        class="relative flex items-center px-4 py-2 text-sm font-medium transition-colors duration-150 rounded-md header-nav-link"
+        style="color:var(--color-primary); font-family:var(--font-sans); font-weight:var(--font-weight-medium);"
+        data-nav="home"
+      >
+        首页
+        <span class="absolute bottom-0 left-2 right-2 h-0.5 rounded-full" style="background:var(--color-primary);"></span>
+      </a>
+      <a
+        href="#"
+        class="relative flex items-center px-4 py-2 text-sm font-medium transition-colors duration-150 rounded-md header-nav-link"
+        style="color:var(--color-text-secondary); font-family:var(--font-sans); font-weight:var(--font-weight-medium);"
+        data-nav="modules"
+      >
+        模块概览
+      </a>
+      <a
+        href="#"
+        class="relative flex items-center px-4 py-2 text-sm font-medium transition-colors duration-150 rounded-md header-nav-link"
+        style="color:var(--color-text-secondary); font-family:var(--font-sans); font-weight:var(--font-weight-medium);"
+        data-nav="dashboard"
+      >
+        数据仪表盘
+      </a>
+    </nav>
+
+    <!-- Right: Actions -->
+    <div class="flex items-center gap-2">
+      <!-- Notification Bell -->
+      <button
+        class="relative flex items-center justify-center transition-colors duration-150 rounded-md"
+        style="width:36px; height:36px; color:var(--color-text-secondary);"
+        aria-label="通知"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span class="absolute top-1 right-1 w-2 h-2 rounded-full" style="background:var(--state-error);"></span>
+      </button>
+
+      <!-- Theme Toggle -->
+      <button
+        class="flex items-center justify-center transition-colors duration-150 rounded-md"
+        style="width:36px; height:36px; color:var(--color-text-secondary);"
+        aria-label="切换主题"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+      </button>
+
+      <!-- User Avatar -->
+      <button
+        class="flex items-center justify-center text-sm font-semibold text-white rounded-full"
+        style="width:34px; height:34px; background:linear-gradient(135deg, #3b82f6, #8b5cf6); font-family:var(--font-sans);"
+        aria-label="用户菜单"
+      >张</button>
+    </div>
+  </div>
+</header>
+
+<!-- ============================== -->
+<!-- BODY WRAPPER (Header + Sidebar + Content + Footer) -->
+<!-- ============================== -->
+<div class="flex" style="min-height:calc(100vh - 56px);">
+
+  <!-- ============================== -->
+  <!-- LEFT SIDEBAR                   -->
+  <!-- ============================== -->
+  <aside
+    id="topems-sidebar"
+    class="hidden lg:flex flex-col flex-shrink-0 transition-all duration-300"
+    style="width:240px; background:var(--color-surface); border-right:1px solid var(--color-border);"
+  >
+    <!-- User Info Card -->
+    <div class="px-4 py-4" style="border-bottom:1px solid var(--color-border);">
+      <div class="flex items-center gap-3">
+        <div
+          class="flex items-center justify-center text-sm font-semibold text-white rounded-full flex-shrink-0"
+          style="width:40px; height:40px; background:linear-gradient(135deg, #3b82f6, #8b5cf6); font-family:var(--font-sans);"
+        >张</div>
+        <div class="min-w-0">
+          <p class="text-sm font-semibold truncate" style="color:var(--color-text-primary); font-family:var(--font-sans);">张三</p>
+          <p class="text-xs truncate" style="color:var(--color-text-muted); font-family:var(--font-sans);">系统管理员</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="flex-1 overflow-y-auto py-2 px-2" id="sidebar-nav">
+      <ul class="space-y-0.5">
+        <!-- Dashboard -->
+        <li>
+          <a href="#" class="sidebar-nav-item active flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors duration-150" data-module="dashboard" style="background:var(--color-primary-50); border-left:3px solid var(--color-primary); color:var(--color-primary); font-family:var(--font-sans);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <span>Dashboard</span>
+          </a>
+        </li>
+        <!-- HRM -->
+        <li>
+          <a href="#" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors duration-150" data-module="hrm" style="color:var(--color-text-secondary); border-left:3px solid transparent; font-family:var(--font-sans);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span>人力资源</span>
+          </a>
+        </li>
+        <!-- CRM -->
+        <li>
+          <a href="#" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors duration-150" data-module="crm" style="color:var(--color-text-secondary); border-left:3px solid transparent; font-family:var(--font-sans);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+            <span>客户关系</span>
+          </a>
+        </li>
+        <!-- MES -->
+        <li>
+          <a href="#" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors duration-150" data-module="mes" style="color:var(--color-text-secondary); border-left:3px solid transparent; font-family:var(--font-sans);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+            <span>制造执行</span>
+          </a>
+        </li>
+        <!-- SCM -->
+        <li>
+          <a href="#" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors duration-150" data-module="scm" style="color:var(--color-text-secondary); border-left:3px solid transparent; font-family:var(--font-sans);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="16" y1="5" x2="22" y2="5"/><line x1="18" y1="3" x2="18" y2="7"/><polyline points="12 14 15 11 18 14 22 10"/><polyline points="2 18 5 15 8 18 12 14"/><line x1="2" y1="22" x2="12" y2="22"/><polyline points="2 16 6 12 10 16"/><line x1="6" y1="22" x2="6" y2="16"/></svg>
+            <span>供应链</span>
+          </a>
+        </li>
+        <!-- WMS -->
+        <li>
+          <a href="#" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors duration-150" data-module="wms" style="color:var(--color-text-secondary); border-left:3px solid transparent; font-family:var(--font-sans);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+            <span>仓储管理</span>
+          </a>
+        </li>
+        <!-- PM -->
+        <li>
+          <a href="#" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors duration-150" data-module="pm" style="color:var(--color-text-secondary); border-left:3px solid transparent; font-family:var(--font-sans);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            <span>项目管理</span>
+          </a>
+        </li>
+        <!-- Finance -->
+        <li>
+          <a href="#" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors duration-150" data-module="finance" style="color:var(--color-text-secondary); border-left:3px solid transparent; font-family:var(--font-sans);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <span>财务管理</span>
+          </a>
+        </li>
+        <!-- BI -->
+        <li>
+          <a href="#" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors duration-150" data-module="bi" style="color:var(--color-text-secondary); border-left:3px solid transparent; font-family:var(--font-sans);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            <span>商业智能</span>
+          </a>
+        </li>
+        <!-- IM -->
+        <li>
+          <a href="#" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors duration-150" data-module="im" style="color:var(--color-text-secondary); border-left:3px solid transparent; font-family:var(--font-sans);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span>即时通讯</span>
+          </a>
+        </li>
+        <!-- AI -->
+        <li>
+          <a href="#" class="sidebar-nav-item flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-colors duration-150" data-module="ai" style="color:var(--color-text-secondary); border-left:3px solid transparent; font-family:var(--font-sans);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a4 4 0 0 1 4 4c0 1.95-1.4 3.58-3.25 3.93"/><path d="M8.24 9.93A4 4 0 0 1 8 6a4 4 0 0 1 4-4"/><path d="M12 18a4 4 0 0 1-4-4c0-1.95 1.4-3.58 3.25-3.93"/><path d="M15.76 10.07A4 4 0 0 1 16 14a4 4 0 0 1-4 4"/><circle cx="12" cy="12" r="1"/><path d="M4 12h2"/><path d="M18 12h2"/></svg>
+            <span>智能助手</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Sidebar Collapse Toggle -->
+    <div class="px-3 py-3" style="border-top:1px solid var(--color-border);">
+      <button
+        id="sidebar-collapse-btn"
+        class="flex items-center gap-2 w-full px-3 py-2 rounded-md text-xs font-medium transition-colors duration-150"
+        style="color:var(--color-text-muted); font-family:var(--font-sans);"
+        aria-label="折叠侧栏"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        <span>收起菜单</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ============================== -->
+  <!-- MAIN CONTENT AREA              -->
+  <!-- ============================== -->
+  <main
+    id="topems-main"
+    class="flex-1 overflow-y-auto"
+    style="background:var(--color-background);"
+  >
+    <div class="mx-auto" style="max-width:1600px; padding:16px;">
+      <!-- Responsive padding overrides -->
+      <style>
+        @media (min-width: 640px) {
+          #topems-main > div { padding-left: 24px !important; padding-right: 24px !important; }
+        }
+        @media (min-width: 1024px) {
+          #topems-main > div { padding-left: 32px !important; padding-right: 32px !important; }
+        }
+      </style>
+
+      <!-- SLOT: activeNavItem -->
+      <!-- Pages should set the active nav item by adding "active" class to the corresponding header-nav-link and sidebar-nav-item -->
+
+      <!-- SLOT: pageTitle -->
+      <!-- Pages should inject their page title and breadcrumb here -->
+
+      <!-- SLOT: pageContent -->
+      <!-- Pages should inject their main content here -->
+
+    </div>
+
+    <!-- ============================== -->
+    <!-- FOOTER                         -->
+    <!-- ============================== -->
+    <footer
+      id="topems-footer"
+      class="mt-8"
+      style="border-top:1px solid var(--color-border); background:var(--color-surface);"
+    >
+      <div class="flex flex-col sm:flex-row items-center justify-between px-4 py-4 lg:px-6" style="max-width:1600px; margin:0 auto;">
+        <p class="text-xs" style="color:var(--color-text-muted); font-family:var(--font-sans);">
+          &copy; 2024 TOPEMS 化工新材料数字化平台
+        </p>
+        <div class="flex items-center gap-4 mt-2 sm:mt-0">
+          <a href="#" class="text-xs transition-colors duration-150" style="color:var(--color-text-muted); font-family:var(--font-sans);">帮助中心</a>
+          <a href="#" class="text-xs transition-colors duration-150" style="color:var(--color-text-muted); font-family:var(--font-sans);">使用文档</a>
+          <a href="#" class="text-xs transition-colors duration-150" style="color:var(--color-text-muted); font-family:var(--font-sans);">联系支持</a>
+        </div>
+      </div>
+    </footer>
+  </main>
+</div>
+
+<!-- ============================== -->
+<!-- SHELL-LEVEL INLINE STYLES      -->
+<!-- ============================== -->
+<style>
+  /* Header nav link hover */
+  .header-nav-link:hover {
+    background: var(--color-surface-light);
+  }
+
+  /* Sidebar nav item hover */
+  .sidebar-nav-item:hover {
+    background: var(--color-surface-light);
+    color: var(--color-text-primary) !important;
+  }
+
+  /* Sidebar nav item active */
+  .sidebar-nav-item.active,
+  .sidebar-nav-item[data-active="true"] {
+    background: var(--color-primary-50);
+    border-left-color: var(--color-primary);
+    color: var(--color-primary) !important;
+  }
+
+  /* Header nav active indicator */
+  .header-nav-link.active::after,
+  .header-nav-link[data-active="true"]::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 8px;
+    right: 8px;
+    height: 2px;
+    border-radius: 9999px;
+    background: var(--color-primary);
+  }
+
+  /* Active nav link text color */
+  .header-nav-link.active,
+  .header-nav-link[data-active="true"] {
+    color: var(--color-primary) !important;
+  }
+
+  /* Footer links hover */
+  #topems-footer a:hover {
+    color: var(--color-primary) !important;
+  }
+
+  /* Sidebar collapsed state */
+  #topems-sidebar.collapsed {
+    width: 64px;
+  }
+  #topems-sidebar.collapsed .sidebar-nav-item span,
+  #topems-sidebar.collapsed .sidebar-nav-item svg + span,
+  #topems-sidebar.collapsed [data-user-info] {
+    display: none;
+  }
+  #topems-sidebar.collapsed .sidebar-nav-item {
+    justify-content: center;
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  /* Custom scrollbar for sidebar */
+  #sidebar-nav::-webkit-scrollbar {
+    width: 4px;
+  }
+  #sidebar-nav::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 9999px;
+  }
+  #sidebar-nav::-webkit-scrollbar-track {
+    background: transparent;
+  }
+</style>
+
+<!-- ============================== -->
+<!-- SHELL-LEVEL INLINE SCRIPTS     -->
+<!-- ============================== -->
+<script>
+(function() {
+  'use strict';
+
+  // Sidebar collapse toggle
+  var collapseBtn = document.getElementById('sidebar-collapse-btn');
+  var sidebar = document.getElementById('topems-sidebar');
+  if (collapseBtn && sidebar) {
+    collapseBtn.addEventListener('click', function() {
+      sidebar.classList.toggle('collapsed');
+      var isCollapsed = sidebar.classList.contains('collapsed');
+      collapseBtn.querySelector('span').textContent = isCollapsed ? '展开菜单' : '收起菜单';
+      collapseBtn.querySelector('svg').style.transform = isCollapsed ? 'rotate(180deg)' : '';
+    });
+  }
+
+  // Header nav active state management
+  var headerLinks = document.querySelectorAll('.header-nav-link');
+  headerLinks.forEach(function(link) {
+    link.addEventListener('click', function(e) {
+      headerLinks.forEach(function(l) {
+        l.classList.remove('active');
+        l.removeAttribute('data-active');
+        l.style.color = 'var(--color-text-secondary)';
+        var indicator = l.querySelector('span');
+        if (indicator && indicator.classList.contains('h-0\\.5')) {
+          indicator.style.display = 'none';
+        }
+      });
+      this.classList.add('active');
+      this.setAttribute('data-active', 'true');
+      this.style.color = 'var(--color-primary)';
+    });
+  });
+
+  // Sidebar nav active state management
+  var sidebarLinks = document.querySelectorAll('.sidebar-nav-item');
+  sidebarLinks.forEach(function(link) {
+    link.addEventListener('click', function(e) {
+      sidebarLinks.forEach(function(l) {
+        l.classList.remove('active');
+        l.removeAttribute('data-active');
+        l.style.color = 'var(--color-text-secondary)';
+        l.style.borderLeftColor = 'transparent';
+        l.style.background = 'transparent';
+      });
+      this.classList.add('active');
+      this.setAttribute('data-active', 'true');
+      this.style.color = 'var(--color-primary)';
+      this.style.borderLeftColor = 'var(--color-primary)';
+      this.style.background = 'var(--color-primary-50)';
+    });
+  });
+})();
+</script>

@@ -104,3 +104,101 @@ pub async fn reject_task(
         "data": null
     }))
 }
+
+pub async fn claim_task(
+    State(_state): State<AppState>,
+    Path(id): Path<String>,
+) -> Json<serde_json::Value> {
+    tracing::info!("Flow approval claim_task called with id: {}", id);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "claim_task success",
+        "data": null
+    }))
+}
+
+pub async fn unclaim_task(
+    State(_state): State<AppState>,
+    Path(id): Path<String>,
+) -> Json<serde_json::Value> {
+    tracing::info!("Flow approval unclaim_task called with id: {}", id);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "unclaim_task success",
+        "data": null
+    }))
+}
+
+pub async fn delegate_task(
+    State(_state): State<AppState>,
+    Path(id): Path<String>,
+    Json(payload): Json<serde_json::Value>,
+) -> Json<serde_json::Value> {
+    tracing::info!("Flow approval delegate_task called with id: {} and payload: {:?}", id, payload);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "delegate_task success",
+        "data": null
+    }))
+}
+
+pub async fn reassign_task(
+    State(_state): State<AppState>,
+    Path(id): Path<String>,
+    Json(payload): Json<serde_json::Value>,
+) -> Json<serde_json::Value> {
+    tracing::info!("Flow approval reassign_task called with id: {} and payload: {:?}", id, payload);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "reassign_task success",
+        "data": null
+    }))
+}
+
+pub async fn list_approvals(
+    State(_state): State<AppState>,
+) -> Json<serde_json::Value> {
+    tracing::info!("Flow approval list_approvals called");
+    Json(serde_json::json!({
+        "success": true,
+        "message": "list_approvals success",
+        "data": []
+    }))
+}
+
+pub async fn get_approval(
+    State(_state): State<AppState>,
+    Path(id): Path<String>,
+) -> Json<serde_json::Value> {
+    tracing::info!("Flow approval get_approval called with id: {}", id);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "get_approval success",
+        "data": null
+    }))
+}
+
+pub async fn create_approval(
+    State(_state): State<AppState>,
+    Json(payload): Json<serde_json::Value>,
+) -> Json<serde_json::Value> {
+    tracing::info!("Flow approval create_approval called with: {:?}", payload);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "create_approval success",
+        "data": null
+    }))
+}
+
+pub async fn process_approval(
+    State(_state): State<AppState>,
+    Path(id): Path<String>,
+    Json(payload): Json<serde_json::Value>,
+) -> Json<serde_json::Value> {
+    tracing::info!("Flow approval process_approval called with id: {} and payload: {:?}", id, payload);
+    Json(serde_json::json!({
+        "success": true,
+        "message": "process_approval success",
+        "data": null
+    }))
+}
