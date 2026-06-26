@@ -25,6 +25,11 @@ const ConsolidationReportsPage = lazy(() => import('../pages/finance/Consolidati
 const CompanyStructurePage = lazy(() => import('../pages/admin/CompanyStructurePage'));
 const OpeningBalancePage = lazy(() => import('../pages/finance/OpeningBalancePage'));
 const ERPHomePage = lazy(() => import('../pages/erp/DashboardPage'));
+const FinancialReportPage = lazy(() => import('../pages/erp/FinancialReportPage'));
+const VoucherManagementPage = lazy(() => import('../pages/erp/VoucherManagementPage'));
+const AuditLogPage = lazy(() => import('../pages/erp/AuditLogPage'));
+const DictManagementPage = lazy(() => import('../pages/erp/DictManagementPage'));
+const DatabaseManagementPage = lazy(() => import('../pages/erp/DatabaseManagementPage'));
 
 const SrmOrderPage = lazy(() => import('../pages/srm/SrmOrderPage'));
 const CrmOpportunityPage = lazy(() => import('../pages/crm/OpportunityManagementPage'));
@@ -155,5 +160,40 @@ export const erpRoutes: RouteConfig[] = [
     requiredPermissions: ['crm:read'],
     module: 'crm',
     action: 'read',
+  },
+  {
+    path: '/erp/financial-reports',
+    element: FinancialReportPage,
+    requiredPermissions: ['erp:read'],
+    module: 'erp',
+    action: 'read',
+  },
+  {
+    path: '/erp/vouchers',
+    element: VoucherManagementPage,
+    requiredPermissions: ['erp:read'],
+    module: 'erp',
+    action: 'read',
+  },
+  {
+    path: '/erp/audit-logs',
+    element: AuditLogPage,
+    requiredPermissions: ['erp:admin'],
+    module: 'erp',
+    action: 'admin',
+  },
+  {
+    path: '/erp/dict',
+    element: DictManagementPage,
+    requiredPermissions: ['erp:admin'],
+    module: 'erp',
+    action: 'admin',
+  },
+  {
+    path: '/erp/database',
+    element: DatabaseManagementPage,
+    requiredPermissions: ['erp:admin'],
+    module: 'erp',
+    action: 'admin',
   },
 ];

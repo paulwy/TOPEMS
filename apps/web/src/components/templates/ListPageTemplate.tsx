@@ -310,6 +310,15 @@ export interface ListPageTemplateProps<T = any> extends BoxProps {
 
   /** 是否显示行号 */
   showRowNumber?: boolean;
+  /** 是否启用斑马纹（默认 false） */
+  striped?: boolean;
+  /** 主要操作按钮（渐变样式，渲染在其他操作按钮之前） */
+  primaryActionButton?: {
+    label: string;
+    icon?: React.ReactNode;
+    onClick?: () => void;
+    gradient?: string;
+  };
 }
 
 // ============ 工具函数 ============
@@ -416,6 +425,8 @@ export function ListPageTemplate<T>({
   persistColumnConfig = false,
   columnConfigStorageKey = 'default',
   showRowNumber = false,
+  striped = false,
+  primaryActionButton,
   // 排除自定义属性的剩余props
   ...props
 }: ListPageTemplateProps<T>) {
@@ -809,10 +820,11 @@ export function ListPageTemplate<T>({
             selected={isSelected}
             onClick={() => onRowClick?.(row)}
             sx={{
+              '&:nth-child(even)': striped ? { bgcolor: 'action.hover' } : {},
+              '&:hover': { bgcolor: 'primary.50' },
+              '&.Mui-selected': { bgcolor: 'primary.50' },
               cursor: onRowClick ? 'pointer' : 'default',
-              '&:hover': {
-                backgroundColor: 'action.hover',
-              },
+              transition: 'background-color 150ms ease',
             }}
           >
             {selectable && (
@@ -1418,8 +1430,18 @@ export function ListPageTemplate<T>({
             </Box>
 
             {/* 操作按钮 */}
-            {actions && actions.length > 0 && (
+            {(primaryActionButton || (actions && actions.length > 0)) && (
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                {primaryActionButton && (
+                  <Button
+                    variant="contained"
+                    startIcon={primaryActionButton.icon}
+                    onClick={primaryActionButton.onClick}
+                    sx={primaryActionButton.gradient ? { background: primaryActionButton.gradient, color: '#fff', '&:hover': { opacity: 0.9 } } : {}}
+                  >
+                    {primaryActionButton.label}
+                  </Button>
+                )}
                 {/* 刷新按钮 */}
                 {onRefresh && (
                   <Tooltip title='刷新'>
@@ -1432,7 +1454,7 @@ export function ListPageTemplate<T>({
                   </Tooltip>
                 )}
                 {/* 自定义操作按钮 */}
-                {actions.map((action, index) => (
+                {(actions || []).map((action, index) => (
                   <Button
                     key={index}
                     variant={action.variant || 'contained'}

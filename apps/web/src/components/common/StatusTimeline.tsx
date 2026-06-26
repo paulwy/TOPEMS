@@ -1,15 +1,19 @@
 import React from 'react';
 import { Box, Typography, Chip, useTheme } from '@mui/material';
-import { CheckCircle2, Circle, Clock, AlertCircle, ArrowRight } from 'lucide-react';
+import { CheckCircle2, Circle, Clock, AlertCircle, AlertTriangle, ArrowRight } from 'lucide-react';
 
 export interface TimelineItem {
   id: string;
   title: string;
   description?: string;
-  status: 'completed' | 'current' | 'pending' | 'failed';
+  status: 'completed' | 'current' | 'pending' | 'failed' | 'warning';
   time?: string;
   user?: string;
   icon?: React.ReactNode;
+  /** 自定义圆点颜色（hex），覆盖基于状态的颜色 */
+  color?: string;
+  /** color 的别名 */
+  dotColor?: string;
 }
 
 export interface StatusTimelineProps {
@@ -17,6 +21,8 @@ export interface StatusTimelineProps {
   orientation?: 'vertical' | 'horizontal';
   showLabels?: boolean;
   showIcons?: boolean;
+  /** 自定义圆点大小（默认 20） */
+  dotSize?: number;
 }
 
 const statusConfig = {
@@ -44,6 +50,12 @@ const statusConfig = {
     bgColor: 'error.light',
     label: '失败',
   },
+  warning: {
+    icon: <AlertTriangle size={18} />,
+    color: 'warning.main',
+    bgColor: 'warning.light',
+    label: '警告',
+  },
 };
 
 export const StatusTimeline: React.FC<StatusTimelineProps> = ({
@@ -51,6 +63,7 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
   orientation = 'vertical',
   showLabels = true,
   showIcons = true,
+  dotSize,
 }) => {
   const theme = useTheme();
 
@@ -121,6 +134,8 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
     <Box sx={{ p: 2 }}>
       {items.map((item, index) => {
         const config = statusConfig[item.status];
+        const customColor = item.color || item.dotColor;
+        const size = dotSize || 20;
         return (
           <Box
             key={item.id}
@@ -141,18 +156,18 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
             >
               <Box
                 sx={{
-                  width: 20,
-                  height: 20,
+                  width: size,
+                  height: size,
                   borderRadius: item.status === 'current' ? '50%' : '4px',
-                  bgcolor: config.bgColor,
+                  bgcolor: customColor || config.bgColor,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  border: item.status === 'current' ? `2px solid ${config.color}` : 'none',
-                  boxShadow: item.status === 'current' ? `0 0 0 4px ${config.bgColor}` : 'none',
+                  border: item.status === 'current' ? `2px solid ${customColor || config.color}` : 'none',
+                  boxShadow: item.status === 'current' ? `0 0 0 4px ${customColor || config.bgColor}` : 'none',
                 }}
               >
-                <Box sx={{ color: config.color }}>{item.icon || (showIcons && config.icon)}</Box>
+                <Box sx={{ color: customColor || config.color }}>{item.icon || (showIcons && config.icon)}</Box>
               </Box>
               {index < items.length - 1 && (
                 <Box
@@ -160,10 +175,11 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                     width: 2,
                     flex: 1,
                     minHeight: 40,
-                    bgColor:
+                    bgcolor: customColor || (
                       items[index + 1].status === 'completed' || item.status === 'completed'
                         ? config.color
-                        : 'divider',
+                        : 'divider'
+                    ),
                     mt: 1,
                   }}
                 />

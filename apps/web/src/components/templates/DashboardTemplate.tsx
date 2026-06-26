@@ -110,6 +110,8 @@ export interface StatCard {
   variant?: 'elevation' | 'outlined';
   // 新增：尺寸
   size?: 'small' | 'medium' | 'large';
+  // 新增：自定义渐变 CSS，用于图标背景和进度条填充
+  customGradient?: string;
 }
 
 export interface ChartCard {
@@ -287,6 +289,7 @@ const StatCardComponent: React.FC<StatCard & { loading?: boolean }> = ({
   tags,
   variant = 'elevation',
   size = 'medium',
+  customGradient,
 }) => {
   const colorMap: Record<string, string> = {
     primary: 'primary.main',
@@ -482,6 +485,7 @@ const StatCardComponent: React.FC<StatCard & { loading?: boolean }> = ({
                           width: `${progress}%`,
                           height: '100%',
                           bgcolor: bgColor,
+                          ...(customGradient ? { background: customGradient, bgcolor: 'unset' } : {}),
                           transition: 'width 0.3s ease',
                         }}
                       />
@@ -497,11 +501,12 @@ const StatCardComponent: React.FC<StatCard & { loading?: boolean }> = ({
                 width: currentSize.iconSize,
                 height: currentSize.iconSize,
                 borderRadius: 2,
+                ...(customGradient
+                  ? { background: customGradient, color: '#fff' }
+                  : { bgcolor: `${bgColor}15`, color: bgColor }),
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                bgcolor: `${bgColor}15`,
-                color: bgColor,
               }}
             >
               {icon}
@@ -1420,8 +1425,9 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        bgcolor: 'primary.light',
-                        color: 'primary.main',
+                        ...(action.color?.startsWith('linear-gradient')
+                          ? { background: action.color, color: '#fff' }
+                          : { bgcolor: action.color || 'primary.light', color: action.color || 'primary.main' }),
                         position: 'relative',
                       }}
                     >

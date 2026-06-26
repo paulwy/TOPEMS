@@ -164,14 +164,26 @@ export const designTokens = {
 
   shadows: {
     none: 'none',
-    xs: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
-    sm: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
-    md: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
-    lg: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
-    xl: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
-    '2xl': '0 25px 50px -12px rgb(0 0 0 / 0.25)',
-    '3xl': '0 35px 60px -15px rgb(0 0 0 / 0.3)',
+    xs: '0 1px 2px 0 rgb(0 0 0 / 0.03)',
+    sm: '0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.02)',
+    md: '0 4px 6px -1px rgb(0 0 0 / 0.04), 0 2px 4px -1px rgb(0 0 0 / 0.02)',
+    lg: '0 10px 15px -3px rgb(0 0 0 / 0.05)',
+    xl: '0 20px 25px -5px rgb(0 0 0 / 0.08)',
+    '2xl': '0 25px 50px -12px rgb(0 0 0 / 0.15)',
+    float: '0 25px 50px -12px rgb(0 0 0 / 0.15)',
+    '3xl': '0 35px 60px -15px rgb(0 0 0 / 0.2)',
     inner: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.05)',
+  },
+
+  // 暗色模式专用阴影（alpha 更高以在深色背景上可见）
+  darkShadows: {
+    none: 'none',
+    xs: '0 1px 2px 0 rgb(0 0 0 / 0.2)',
+    sm: '0 4px 6px -1px rgb(0 0 0 / 0.25)',
+    md: '0 4px 6px -1px rgb(0 0 0 / 0.25)',
+    lg: '0 10px 15px -3px rgb(0 0 0 / 0.3)',
+    xl: '0 20px 25px -5px rgb(0 0 0 / 0.35)',
+    float: '0 25px 50px -12px rgb(0 0 0 / 0.3)',
   },
 
   typography: {

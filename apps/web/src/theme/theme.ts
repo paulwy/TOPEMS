@@ -69,6 +69,61 @@ const createBaseTheme = (mode: PaletteMode): ThemeOptions => {
     },
     spacing: (factor: number) => `${factor * 8}px`,
     zIndex: designTokens.zIndex,
+    shadows: isDark
+      ? [
+          designTokens.darkShadows.none,
+          designTokens.darkShadows.xs,
+          designTokens.darkShadows.sm,
+          designTokens.darkShadows.md,
+          designTokens.darkShadows.lg,
+          designTokens.darkShadows.xl,
+          designTokens.darkShadows.float,
+          designTokens.darkShadows.xl,
+          designTokens.darkShadows.sm,
+          designTokens.darkShadows.md,
+          designTokens.darkShadows.lg,
+          designTokens.darkShadows.xl,
+          designTokens.darkShadows.float,
+          designTokens.darkShadows.float,
+          designTokens.darkShadows.xl,
+          designTokens.darkShadows.float,
+          designTokens.darkShadows.float,
+          designTokens.darkShadows.xl,
+          designTokens.darkShadows.float,
+          designTokens.darkShadows.xl,
+          designTokens.darkShadows.float,
+          designTokens.darkShadows.xl,
+          designTokens.darkShadows.float,
+          designTokens.darkShadows.xl,
+          designTokens.darkShadows.float,
+        ] as unknown as ThemeOptions['shadows']
+      : [
+          designTokens.shadows.none,
+          designTokens.shadows.xs,
+          designTokens.shadows.sm,
+          designTokens.shadows.md,
+          designTokens.shadows.lg,
+          designTokens.shadows.xl,
+          designTokens.shadows['2xl'],
+          designTokens.shadows['3xl'],
+          designTokens.shadows.inner,
+          designTokens.shadows.sm,
+          designTokens.shadows.md,
+          designTokens.shadows.lg,
+          designTokens.shadows.xl,
+          designTokens.shadows['2xl'],
+          designTokens.shadows['3xl'],
+          designTokens.shadows.inner,
+          designTokens.shadows.sm,
+          designTokens.shadows.md,
+          designTokens.shadows.lg,
+          designTokens.shadows.xl,
+          designTokens.shadows['2xl'],
+          designTokens.shadows['3xl'],
+          designTokens.shadows.inner,
+          designTokens.shadows.sm,
+          designTokens.shadows.md,
+        ] as unknown as ThemeOptions['shadows'],
     transitions: {
       duration: designTokens.transitions.duration,
       easing: designTokens.transitions.easing,
@@ -81,6 +136,7 @@ const createBaseTheme = (mode: PaletteMode): ThemeOptions => {
 
 export const createCustomTheme = (mode: PaletteMode): Theme => {
   const baseTheme = createBaseTheme(mode);
+  const isDark = mode === 'dark';
 
   return createTheme({
     ...baseTheme,
@@ -262,6 +318,46 @@ export const createCustomTheme = (mode: PaletteMode): Theme => {
           root: {
             '&.Mui-checked': {
               color: designTokens.colors.primary.main,
+            },
+          },
+        },
+      },
+      MuiAppBar: {
+        styleOverrides: {
+          root: {
+            height: 56,
+            boxShadow: designTokens.shadows.sm,
+            backgroundColor: isDark
+              ? designTokens.colors.grey[800]
+              : designTokens.colors.background.paper,
+          },
+        },
+      },
+      MuiListItemButton: {
+        styleOverrides: {
+          root: {
+            borderRadius: designTokens.borderRadius.md,
+            transition: 'all 150ms ease',
+            '&.Mui-selected': {
+              backgroundColor: isDark
+                ? 'rgba(59, 130, 246, 0.15)'
+                : designTokens.colors.primary[50],
+              borderLeft: `3px solid ${designTokens.colors.primary.main}`,
+              color: designTokens.colors.primary.main,
+              '&:hover': {
+                backgroundColor: isDark
+                  ? 'rgba(59, 130, 246, 0.15)'
+                  : designTokens.colors.primary[50],
+              },
+            },
+          },
+        },
+      },
+      MuiBreadcrumbs: {
+        styleOverrides: {
+          li: {
+            '& .MuiTypography-root': {
+              fontSize: designTokens.typography.fontSize.sm,
             },
           },
         },

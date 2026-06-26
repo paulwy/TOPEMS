@@ -35,6 +35,9 @@ import {
   Eye,
   Building2,
   Users,
+  TrendingUp,
+  TrendingDown,
+  Minus,
 } from 'lucide-react';
 import { EmptyState } from '@/components/mui';
 
@@ -49,6 +52,7 @@ export interface TreeNode<T = any> {
   data?: T;
   icon?: React.ReactNode;
   disabled?: boolean;
+  accentColor?: string;  // custom accent color for the node (hex or CSS color)
 }
 
 /**
@@ -176,6 +180,8 @@ export interface TreePageTemplateProps {
   treePanelClassName?: string;
   /** 详情区域类名 */
   detailPanelClassName?: string;
+  /** 是否显示连接线 - shows vertical/horizontal connector lines between tree nodes */
+  showConnectors?: boolean;
 }
 
 /**
@@ -215,6 +221,7 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
   customToolbar,
   treePanelClassName,
   detailPanelClassName,
+  showConnectors = false,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -324,11 +331,22 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
         );
       }
 
+      // 计算 accentColor 相关样式
+      const nodeAccentColor = node.accentColor;
+      const selectedBg = nodeAccentColor
+        ? `${nodeAccentColor}15`
+        : 'primary.light';
+      const selectedColor = nodeAccentColor || 'primary.main';
+      const accentBorderLeft = nodeAccentColor
+        ? `3px solid ${nodeAccentColor}`
+        : 'none';
+
       // 默认渲染器
       return (
         <Box key={node.id}>
           <Box
             sx={{
+              position: showConnectors ? 'relative' : 'static',
               display: 'flex',
               alignItems: 'center',
               gap: 1,
@@ -337,11 +355,12 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
               borderRadius: 1,
               cursor: node.disabled ? 'not-allowed' : 'pointer',
               pl: `${level * 16 + 12}px`,
-              bgcolor: isSelected ? 'primary.light' : 'transparent',
-              color: isSelected ? 'primary.main' : node.disabled ? 'text.disabled' : 'text.primary',
+              bgcolor: isSelected ? selectedBg : 'transparent',
+              color: isSelected ? selectedColor : node.disabled ? 'text.disabled' : 'text.primary',
+              borderLeft: isSelected ? accentBorderLeft : 'none',
               opacity: node.disabled ? 0.5 : 1,
               '&:hover': {
-                bgcolor: isSelected ? 'primary.light' : 'action.hover',
+                bgcolor: isSelected ? selectedBg : 'action.hover',
               },
               transition: 'all 0.15s ease',
             }}
@@ -379,7 +398,7 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  bgcolor: isSelected ? 'primary.light' : 'grey.100',
+                  bgcolor: isSelected ? selectedBg : 'grey.100',
                 }}
               >
                 {node.type === 'folder' ? (
@@ -387,7 +406,7 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
                     sx={{
                       width: 16,
                       height: 16,
-                      color: isSelected ? 'primary.main' : 'success.main',
+                      color: isSelected ? selectedColor : 'success.main',
                     }}
                   />
                 ) : (
@@ -395,7 +414,7 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
                     sx={{
                       width: 16,
                       height: 16,
-                      color: isSelected ? 'primary.main' : 'primary.main',
+                      color: isSelected ? selectedColor : 'primary.main',
                     }}
                   />
                 )}
@@ -424,7 +443,7 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
                 sx={{
                   height: 20,
                   fontSize: '0.75rem',
-                  bgcolor: isSelected ? 'primary.main' : 'grey.200',
+                  bgcolor: isSelected ? (nodeAccentColor || 'primary.main') : 'grey.200',
                   color: isSelected ? 'white' : 'text.secondary',
                 }}
               />
@@ -433,14 +452,19 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
 
           {/* 子节点 */}
           {hasChildren && isExpanded && (
-            <Box sx={{ ml: 1 }}>
+            <Box sx={{
+              ml: 1.5,
+              borderLeft: showConnectors ? '2px solid' : 'none',
+              borderColor: 'divider',
+              pl: 2,
+            }}>
               {node.children?.map((child) => renderTreeItem(child, level + 1))}
             </Box>
           )}
         </Box>
       );
     },
-    [expandedIds, activeSelectedId, handleSelect, toggleExpand, customRenderNode]
+    [expandedIds, activeSelectedId, handleSelect, toggleExpand, customRenderNode, showConnectors]
   );
 
   // 渲染统计卡片
@@ -490,12 +514,32 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
                 >
                   {stat.title}
                 </Typography>
-                <Typography
-                  variant='h5'
-                  sx={{ fontWeight: 700 }}
-                >
-                  {stat.value}
-                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Typography
+                    variant='h5'
+                    sx={{ fontWeight: 700 }}
+                  >
+                    {stat.value}
+                  </Typography>
+                  {stat.trend && (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, ml: 1 }}>
+                      {stat.trend.direction === 'down' ? (
+                        <TrendingDown sx={{ fontSize: 14, color: 'error.main' }} />
+                      ) : stat.trend.direction === 'neutral' ? (
+                        <Minus sx={{ fontSize: 14, color: 'text.secondary' }} />
+                      ) : (
+                        <TrendingUp sx={{ fontSize: 14, color: 'success.main' }} />
+                      )}
+                      <Typography variant="caption" sx={{
+                        color: stat.trend.direction === 'up' ? 'success.main'
+                          : stat.trend.direction === 'down' ? 'error.main'
+                          : 'text.secondary',
+                      }}>
+                        {Math.abs(stat.trend.value)}%
+                      </Typography>
+                    </Box>
+                  )}
+                </Box>
               </Box>
             </Box>
           ))}

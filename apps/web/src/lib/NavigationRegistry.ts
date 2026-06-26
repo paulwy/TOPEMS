@@ -58,6 +58,7 @@ export interface NavItem {
   badge?: number | string;
   badgeColor?: 'primary' | 'success' | 'warning' | 'error';
   description?: string;
+  group?: 'core' | 'business';
 }
 
 export interface ModuleCardConfig {
@@ -68,6 +69,8 @@ export interface ModuleCardConfig {
   path: string;
   permission?: string;
   status?: 'online' | 'beta' | 'plan' | 'new';
+  /** 模块来源：core=核心功能（平台自带，不可卸载），plugin=业务插件（来自插件市场，可安装/卸载） */
+  source?: 'core' | 'plugin';
 }
 
 export interface PluginNavConfig {
@@ -132,6 +135,14 @@ class NavigationRegistry {
     return items.sort((a, b) => (a.order || 0) - (b.order || 0));
   }
 
+  getCoreNavItems(): NavItem[] {
+    return this.getTopNavItems().filter((item) => item.group === 'core');
+  }
+
+  getBusinessNavItems(): NavItem[] {
+    return this.getTopNavItems().filter((item) => item.group === 'business');
+  }
+
   getSidebarNavItems(pluginCode: string): NavItem[] {
     const items = this.navItems.get(`${pluginCode}:sidebar`) || [];
     return items.sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -194,6 +205,33 @@ class NavigationRegistry {
     }
     this.emitter.emit('navigationUpdated', pluginCode);
   }
+
+  /**
+   * 获取按 source 分组的 topNav 项（带权限过滤）
+   * 返回 { core: NavItem[], plugin: NavItem[] }
+   */
+  getNavItemsGroupedBySource(hasPermission: (permission: string) => boolean): { core: NavItem[]; plugin: NavItem[] } {
+    const core: NavItem[] = [];
+    const plugin: NavItem[] = [];
+    this.navItems.forEach((navItems, key) => {
+      if (key.endsWith(':top')) {
+        navItems.forEach((item) => {
+          if (!item.permission || hasPermission(item.permission)) {
+            const card = this.moduleCards.get(key.replace(':top', ''));
+            const source = card?.source || 'plugin';
+            if (source === 'core') {
+              core.push(item);
+            } else {
+              plugin.push(item);
+            }
+          }
+        });
+      }
+    });
+    core.sort((a, b) => (a.order || 0) - (b.order || 0));
+    plugin.sort((a, b) => (a.order || 0) - (b.order || 0));
+    return { core, plugin };
+  }
 }
 
 export const navigationRegistry = NavigationRegistry.getInstance();
@@ -206,6 +244,7 @@ const registerDefaultModules = () => {
         label: '企业资源',
         icon: 'Building',
         path: '/erp',
+        group: 'core',
         order: 1,
         permission: 'erp:read',
       },
@@ -220,19 +259,35 @@ const registerDefaultModules = () => {
         permission: 'erp:read',
       },
       {
+        code: 'erp-financial-reports',
+        label: '财务报表',
+        icon: 'BarChart3',
+        path: '/erp/financial-reports',
+        order: 1,
+        permission: 'erp:read',
+      },
+      {
+        code: 'erp-vouchers',
+        label: '凭证管理',
+        icon: 'FileText',
+        path: '/erp/vouchers',
+        order: 2,
+        permission: 'erp:read',
+      },
+      {
         code: 'erp-finance',
         label: '财务管理',
         icon: 'DollarSign',
-        path: '/erp/finance',
-        order: 1,
+        path: '/finance',
+        order: 3,
         permission: 'erp:read',
       },
       {
         code: 'erp-inventory',
         label: '库存管理',
         icon: 'Package',
-        path: '/erp/inventory',
-        order: 2,
+        path: '/wms/inventory',
+        order: 4,
         permission: 'erp:read',
       },
       {
@@ -240,8 +295,32 @@ const registerDefaultModules = () => {
         label: '销售管理',
         icon: 'ShoppingCart',
         path: '/erp/sales',
-        order: 3,
+        order: 5,
         permission: 'erp:read',
+      },
+      {
+        code: 'erp-audit-logs',
+        label: '审计日志',
+        icon: 'ScrollText',
+        path: '/erp/audit-logs',
+        order: 6,
+        permission: 'erp:admin',
+      },
+      {
+        code: 'erp-dict',
+        label: '数据字典',
+        icon: 'Book',
+        path: '/erp/dict',
+        order: 7,
+        permission: 'erp:admin',
+      },
+      {
+        code: 'erp-database',
+        label: '数据库管理',
+        icon: 'Database',
+        path: '/erp/database',
+        order: 8,
+        permission: 'erp:admin',
       },
     ],
     module_tabs: [
@@ -252,15 +331,27 @@ const registerDefaultModules = () => {
         permission: 'erp:read',
       },
       {
+        code: 'erp-financial-reports',
+        label: '财务报表',
+        path: '/erp/financial-reports',
+        permission: 'erp:read',
+      },
+      {
+        code: 'erp-vouchers',
+        label: '凭证管理',
+        path: '/erp/vouchers',
+        permission: 'erp:read',
+      },
+      {
         code: 'erp-finance',
         label: '财务管理',
-        path: '/erp/finance',
+        path: '/finance',
         permission: 'erp:read',
       },
       {
         code: 'erp-inventory',
         label: '库存管理',
-        path: '/erp/inventory',
+        path: '/wms/inventory',
         permission: 'erp:read',
       },
       {
@@ -268,6 +359,24 @@ const registerDefaultModules = () => {
         label: '销售管理',
         path: '/erp/sales',
         permission: 'erp:read',
+      },
+      {
+        code: 'erp-audit-logs',
+        label: '审计日志',
+        path: '/erp/audit-logs',
+        permission: 'erp:admin',
+      },
+      {
+        code: 'erp-dict',
+        label: '数据字典',
+        path: '/erp/dict',
+        permission: 'erp:admin',
+      },
+      {
+        code: 'erp-database',
+        label: '数据库管理',
+        path: '/erp/database',
+        permission: 'erp:admin',
       },
     ],
     module_card: {
@@ -278,6 +387,7 @@ const registerDefaultModules = () => {
       status: 'online',
       order: 1,
       permission: 'erp:read',
+      source: 'core',
     },
   });
 
@@ -288,6 +398,7 @@ const registerDefaultModules = () => {
         label: '项目管理',
         icon: 'FolderKanban',
         path: '/pm',
+        group: 'core',
         order: 2,
         permission: 'pm:read',
       },
@@ -302,43 +413,11 @@ const registerDefaultModules = () => {
         permission: 'pm:read',
       },
       {
-        code: 'pm-tasks',
-        label: '任务管理',
-        icon: 'ListTodo',
-        path: '/pm/tasks',
-        order: 1,
-        permission: 'pm:read',
-      },
-      {
-        code: 'pm-gantt',
-        label: '甘特图',
-        icon: 'GanttChart',
-        path: '/pm/gantt',
-        order: 2,
-        permission: 'pm:read',
-      },
-      {
-        code: 'pm-risk',
-        label: '风险管理',
-        icon: 'ShieldAlert',
-        path: '/pm/risk',
-        order: 3,
-        permission: 'pm:read',
-      },
-      {
         code: 'pm-contract',
         label: '合同管理',
         icon: 'FileSignature',
-        path: '/pm/contract',
+        path: '/pm/contracts',
         order: 4,
-        permission: 'pm:read',
-      },
-      {
-        code: 'pm-timeline',
-        label: '时间线',
-        icon: 'Calendar',
-        path: '/pm/timeline',
-        order: 5,
         permission: 'pm:read',
       },
       {
@@ -366,33 +445,9 @@ const registerDefaultModules = () => {
         permission: 'pm:read',
       },
       {
-        code: 'pm-tasks',
-        label: '任务管理',
-        path: '/pm/tasks',
-        permission: 'pm:read',
-      },
-      {
-        code: 'pm-gantt',
-        label: '甘特图',
-        path: '/pm/gantt',
-        permission: 'pm:read',
-      },
-      {
-        code: 'pm-risk',
-        label: '风险管理',
-        path: '/pm/risk',
-        permission: 'pm:read',
-      },
-      {
         code: 'pm-contract',
         label: '合同管理',
-        path: '/pm/contract',
-        permission: 'pm:read',
-      },
-      {
-        code: 'pm-timeline',
-        label: '时间线',
-        path: '/pm/timeline',
+        path: '/pm/contracts',
         permission: 'pm:read',
       },
       {
@@ -416,6 +471,7 @@ const registerDefaultModules = () => {
       status: 'online',
       order: 2,
       permission: 'pm:read',
+      source: 'core',
     },
   });
 
@@ -426,6 +482,7 @@ const registerDefaultModules = () => {
         label: '研发管理',
         icon: 'FlaskConical',
         path: '/rs',
+        group: 'core',
         order: 3,
         permission: 'rs:read',
       },
@@ -578,6 +635,7 @@ const registerDefaultModules = () => {
       status: 'online',
       order: 3,
       permission: 'rs:read',
+      source: 'core',
     },
   });
 
@@ -588,6 +646,7 @@ const registerDefaultModules = () => {
         label: '供应链',
         icon: 'Truck',
         path: '/scm',
+        group: 'business',
         order: 4,
         permission: 'scm:read',
       },
@@ -602,10 +661,10 @@ const registerDefaultModules = () => {
         permission: 'scm:read',
       },
       {
-        code: 'scm-purchase-order',
+        code: 'scm-purchase-orders',
         label: '采购订单',
         icon: 'ShoppingCart',
-        path: '/scm/purchase-order',
+        path: '/scm/purchase-orders',
         order: 1,
         permission: 'scm:read',
       },
@@ -617,30 +676,6 @@ const registerDefaultModules = () => {
         order: 2,
         permission: 'scm:read',
       },
-      {
-        code: 'scm-inventory',
-        label: '库存管理',
-        icon: 'Package',
-        path: '/scm/inventory',
-        order: 3,
-        permission: 'scm:read',
-      },
-      {
-        code: 'scm-warehouse',
-        label: '仓储管理',
-        icon: 'Warehouse',
-        path: '/scm/warehouse',
-        order: 4,
-        permission: 'scm:read',
-      },
-      {
-        code: 'scm-logistics',
-        label: '物流追踪',
-        icon: 'Truck',
-        path: '/scm/logistics',
-        order: 5,
-        permission: 'scm:read',
-      },
     ],
     module_tabs: [
       {
@@ -650,33 +685,15 @@ const registerDefaultModules = () => {
         permission: 'scm:read',
       },
       {
-        code: 'scm-purchase-order',
+        code: 'scm-purchase-orders',
         label: '采购订单',
-        path: '/scm/purchase-order',
+        path: '/scm/purchase-orders',
         permission: 'scm:read',
       },
       {
         code: 'scm-delivery-appointment',
         label: '送货预约',
         path: '/scm/delivery-appointments',
-        permission: 'scm:read',
-      },
-      {
-        code: 'scm-inventory',
-        label: '库存管理',
-        path: '/scm/inventory',
-        permission: 'scm:read',
-      },
-      {
-        code: 'scm-warehouse',
-        label: '仓储管理',
-        path: '/scm/warehouse',
-        permission: 'scm:read',
-      },
-      {
-        code: 'scm-logistics',
-        label: '物流追踪',
-        path: '/scm/logistics',
         permission: 'scm:read',
       },
     ],
@@ -688,6 +705,7 @@ const registerDefaultModules = () => {
       status: 'online',
       order: 4,
       permission: 'scm:read',
+      source: 'plugin',
     },
   });
 
@@ -698,41 +716,82 @@ const registerDefaultModules = () => {
         label: '财务管理',
         icon: 'Wallet',
         path: '/finance',
+        group: 'business',
         order: 10,
         permission: 'finance:read',
       },
     ],
     sidebar_nav: [
       {
-        code: 'finance-account',
-        label: '科目管理',
-        icon: 'Book',
-        path: '/finance/account',
-        order: 0,
-        permission: 'finance:read',
-      },
-      {
-        code: 'finance-voucher',
+        code: 'finance-vouchers',
         label: '凭证管理',
         icon: 'FileText',
-        path: '/finance/voucher',
+        path: '/finance/vouchers',
         order: 1,
         permission: 'finance:read',
       },
       {
-        code: 'finance-arap',
-        label: '应收应付',
-        icon: 'CreditCard',
-        path: '/finance/arap',
+        code: 'finance-ledger',
+        label: '总账管理',
+        icon: 'Book',
+        path: '/finance/ledger',
         order: 2,
         permission: 'finance:read',
       },
       {
-        code: 'finance-report',
+        code: 'finance-receivable',
+        label: '应收管理',
+        icon: 'CreditCard',
+        path: '/finance/receivable',
+        order: 3,
+        permission: 'finance:read',
+      },
+      {
+        code: 'finance-payable',
+        label: '应付管理',
+        icon: 'CreditCard',
+        path: '/finance/payable',
+        order: 4,
+        permission: 'finance:read',
+      },
+      {
+        code: 'finance-invoices',
+        label: '发票管理',
+        icon: 'Receipt',
+        path: '/finance/invoices',
+        order: 5,
+        permission: 'finance:read',
+      },
+      {
+        code: 'finance-tax',
+        label: '税务管理',
+        icon: 'Percent',
+        path: '/finance/tax',
+        order: 6,
+        permission: 'finance:read',
+      },
+      {
+        code: 'finance-expense',
+        label: '费用管理',
+        icon: 'Receipt',
+        path: '/finance/expense',
+        order: 7,
+        permission: 'finance:read',
+      },
+      {
+        code: 'finance-cost',
+        label: '成本管理',
+        icon: 'Calculator',
+        path: '/finance/cost',
+        order: 8,
+        permission: 'finance:read',
+      },
+      {
+        code: 'finance-reports',
         label: '财务报表',
         icon: 'BarChart3',
-        path: '/finance/report',
-        order: 3,
+        path: '/finance/reports',
+        order: 9,
         permission: 'finance:read',
       },
       {
@@ -740,41 +799,79 @@ const registerDefaultModules = () => {
         label: '预算管理',
         icon: 'Calculator',
         path: '/finance/budget',
-        order: 4,
+        order: 10,
         permission: 'finance:read',
       },
       {
-        code: 'finance-asset',
+        code: 'finance-assets',
         label: '资产管理',
         icon: 'Building',
-        path: '/finance/asset',
-        order: 5,
+        path: '/finance/assets',
+        order: 11,
+        permission: 'finance:read',
+      },
+      {
+        code: 'finance-consolidation',
+        label: '合并报表',
+        icon: 'GitMerge',
+        path: '/finance/consolidation',
+        order: 12,
         permission: 'finance:read',
       },
     ],
     module_tabs: [
       {
-        code: 'finance-account',
-        label: '科目管理',
-        path: '/finance/account',
-        permission: 'finance:read',
-      },
-      {
-        code: 'finance-voucher',
+        code: 'finance-vouchers',
         label: '凭证管理',
-        path: '/finance/voucher',
+        path: '/finance/vouchers',
         permission: 'finance:read',
       },
       {
-        code: 'finance-arap',
-        label: '应收应付',
-        path: '/finance/arap',
+        code: 'finance-ledger',
+        label: '总账管理',
+        path: '/finance/ledger',
         permission: 'finance:read',
       },
       {
-        code: 'finance-report',
+        code: 'finance-receivable',
+        label: '应收管理',
+        path: '/finance/receivable',
+        permission: 'finance:read',
+      },
+      {
+        code: 'finance-payable',
+        label: '应付管理',
+        path: '/finance/payable',
+        permission: 'finance:read',
+      },
+      {
+        code: 'finance-invoices',
+        label: '发票管理',
+        path: '/finance/invoices',
+        permission: 'finance:read',
+      },
+      {
+        code: 'finance-tax',
+        label: '税务管理',
+        path: '/finance/tax',
+        permission: 'finance:read',
+      },
+      {
+        code: 'finance-expense',
+        label: '费用管理',
+        path: '/finance/expense',
+        permission: 'finance:read',
+      },
+      {
+        code: 'finance-cost',
+        label: '成本管理',
+        path: '/finance/cost',
+        permission: 'finance:read',
+      },
+      {
+        code: 'finance-reports',
         label: '财务报表',
-        path: '/finance/report',
+        path: '/finance/reports',
         permission: 'finance:read',
       },
       {
@@ -784,9 +881,15 @@ const registerDefaultModules = () => {
         permission: 'finance:read',
       },
       {
-        code: 'finance-asset',
+        code: 'finance-assets',
         label: '资产管理',
-        path: '/finance/asset',
+        path: '/finance/assets',
+        permission: 'finance:read',
+      },
+      {
+        code: 'finance-consolidation',
+        label: '合并报表',
+        path: '/finance/consolidation',
         permission: 'finance:read',
       },
     ],
@@ -798,6 +901,7 @@ const registerDefaultModules = () => {
       status: 'online',
       order: 10,
       permission: 'finance:read',
+      source: 'plugin',
     },
   });
 
@@ -808,6 +912,7 @@ const registerDefaultModules = () => {
         label: '生产执行',
         icon: 'Factory',
         path: '/mes',
+        group: 'business',
         order: 11,
         permission: 'mes:read',
       },
@@ -822,27 +927,35 @@ const registerDefaultModules = () => {
         permission: 'mes:read',
       },
       {
-        code: 'mes-order',
+        code: 'mes-orders',
         label: '生产订单',
         icon: 'ClipboardList',
-        path: '/mes/order',
+        path: '/mes/orders',
         order: 0,
         permission: 'mes:read',
       },
       {
-        code: 'mes-process',
-        label: '生产过程',
-        icon: 'GitBranch',
-        path: '/mes/process',
+        code: 'mes-schedules',
+        label: '生产排程',
+        icon: 'CalendarClock',
+        path: '/mes/schedules',
         order: 1,
         permission: 'mes:read',
       },
       {
-        code: 'mes-workstation',
+        code: 'mes-processes',
+        label: '生产过程',
+        icon: 'GitBranch',
+        path: '/mes/processes',
+        order: 2,
+        permission: 'mes:read',
+      },
+      {
+        code: 'mes-workstations',
         label: '工作站',
         icon: 'Monitor',
-        path: '/mes/workstation',
-        order: 2,
+        path: '/mes/workstations',
+        order: 3,
         permission: 'mes:read',
       },
       {
@@ -850,15 +963,63 @@ const registerDefaultModules = () => {
         label: '设备管理',
         icon: 'Wrench',
         path: '/mes/equipment',
-        order: 3,
+        order: 4,
         permission: 'mes:read',
       },
       {
-        code: 'mes-quality',
-        label: '质量管理',
-        icon: 'CheckCircle',
-        path: '/mes/quality',
-        order: 4,
+        code: 'mes-equipment-oee',
+        label: 'OEE分析',
+        icon: 'BarChart3',
+        path: '/mes/equipment-oee',
+        order: 5,
+        permission: 'mes:read',
+      },
+      {
+        code: 'mes-boms',
+        label: '物料BOM',
+        icon: 'Layers',
+        path: '/mes/boms',
+        order: 6,
+        permission: 'mes:read',
+      },
+      {
+        code: 'mes-wip',
+        label: '在制品',
+        icon: 'Package',
+        path: '/mes/wip',
+        order: 7,
+        permission: 'mes:read',
+      },
+      {
+        code: 'mes-material-issues',
+        label: '物料领用',
+        icon: 'ArrowRightFromLine',
+        path: '/mes/material-issues',
+        order: 8,
+        permission: 'mes:read',
+      },
+      {
+        code: 'mes-material-returns',
+        label: '物料退库',
+        icon: 'ArrowLeftFromLine',
+        path: '/mes/material-returns',
+        order: 9,
+        permission: 'mes:read',
+      },
+      {
+        code: 'mes-records',
+        label: '生产记录',
+        icon: 'FileText',
+        path: '/mes/records',
+        order: 10,
+        permission: 'mes:read',
+      },
+      {
+        code: 'mes-quality-traceability',
+        label: '质量追溯',
+        icon: 'Search',
+        path: '/mes/quality-traceability',
+        order: 11,
         permission: 'mes:read',
       },
     ],
@@ -870,21 +1031,27 @@ const registerDefaultModules = () => {
         permission: 'mes:read',
       },
       {
-        code: 'mes-order',
+        code: 'mes-orders',
         label: '生产订单',
-        path: '/mes/order',
+        path: '/mes/orders',
         permission: 'mes:read',
       },
       {
-        code: 'mes-process',
+        code: 'mes-schedules',
+        label: '生产排程',
+        path: '/mes/schedules',
+        permission: 'mes:read',
+      },
+      {
+        code: 'mes-processes',
         label: '生产过程',
-        path: '/mes/process',
+        path: '/mes/processes',
         permission: 'mes:read',
       },
       {
-        code: 'mes-workstation',
+        code: 'mes-workstations',
         label: '工作站',
-        path: '/mes/workstation',
+        path: '/mes/workstations',
         permission: 'mes:read',
       },
       {
@@ -894,9 +1061,45 @@ const registerDefaultModules = () => {
         permission: 'mes:read',
       },
       {
-        code: 'mes-quality',
-        label: '质量管理',
-        path: '/mes/quality',
+        code: 'mes-equipment-oee',
+        label: 'OEE分析',
+        path: '/mes/equipment-oee',
+        permission: 'mes:read',
+      },
+      {
+        code: 'mes-boms',
+        label: '物料BOM',
+        path: '/mes/boms',
+        permission: 'mes:read',
+      },
+      {
+        code: 'mes-wip',
+        label: '在制品',
+        path: '/mes/wip',
+        permission: 'mes:read',
+      },
+      {
+        code: 'mes-material-issues',
+        label: '物料领用',
+        path: '/mes/material-issues',
+        permission: 'mes:read',
+      },
+      {
+        code: 'mes-material-returns',
+        label: '物料退库',
+        path: '/mes/material-returns',
+        permission: 'mes:read',
+      },
+      {
+        code: 'mes-records',
+        label: '生产记录',
+        path: '/mes/records',
+        permission: 'mes:read',
+      },
+      {
+        code: 'mes-quality-traceability',
+        label: '质量追溯',
+        path: '/mes/quality-traceability',
         permission: 'mes:read',
       },
     ],
@@ -908,6 +1111,7 @@ const registerDefaultModules = () => {
       status: 'online',
       order: 11,
       permission: 'mes:read',
+      source: 'plugin',
     },
   });
 
@@ -918,6 +1122,7 @@ const registerDefaultModules = () => {
         label: '客户关系',
         icon: 'Users',
         path: '/crm',
+        group: 'business',
         order: 5,
         permission: 'crm:read',
       },
@@ -937,22 +1142,6 @@ const registerDefaultModules = () => {
         icon: 'Target',
         path: '/crm/opportunities',
         order: 1,
-        permission: 'crm:read',
-      },
-      {
-        code: 'crm-activities',
-        label: '活动管理',
-        icon: 'Calendar',
-        path: '/crm/activities',
-        order: 2,
-        permission: 'crm:read',
-      },
-      {
-        code: 'crm-reports',
-        label: '销售报表',
-        icon: 'BarChart3',
-        path: '/crm/reports',
-        order: 3,
         permission: 'crm:read',
       },
       {
@@ -994,18 +1183,6 @@ const registerDefaultModules = () => {
         permission: 'crm:read',
       },
       {
-        code: 'crm-activities',
-        label: '活动管理',
-        path: '/crm/activities',
-        permission: 'crm:read',
-      },
-      {
-        code: 'crm-reports',
-        label: '销售报表',
-        path: '/crm/reports',
-        permission: 'crm:read',
-      },
-      {
         code: 'crm-segments',
         label: '客户分群',
         path: '/crm/segments',
@@ -1032,6 +1209,7 @@ const registerDefaultModules = () => {
       status: 'beta',
       order: 5,
       permission: 'crm:read',
+      source: 'plugin',
     },
   });
 
@@ -1042,6 +1220,7 @@ const registerDefaultModules = () => {
         label: 'AI助手',
         icon: 'Bot',
         path: '/ai',
+        group: 'core',
         order: 6,
         permission: 'ai:read',
       },
@@ -1053,22 +1232,6 @@ const registerDefaultModules = () => {
         icon: 'MessageSquare',
         path: '/ai/chat',
         order: 0,
-        permission: 'ai:read',
-      },
-      {
-        code: 'ai-analytics',
-        label: '数据分析',
-        icon: 'BarChart3',
-        path: '/ai/analytics',
-        order: 1,
-        permission: 'ai:read',
-      },
-      {
-        code: 'ai-workflows',
-        label: '自动化工作流',
-        icon: 'GitBranch',
-        path: '/ai/workflows',
-        order: 2,
         permission: 'ai:read',
       },
       {
@@ -1085,18 +1248,6 @@ const registerDefaultModules = () => {
         code: 'ai-chat',
         label: '智能对话',
         path: '/ai/chat',
-        permission: 'ai:read',
-      },
-      {
-        code: 'ai-analytics',
-        label: '数据分析',
-        path: '/ai/analytics',
-        permission: 'ai:read',
-      },
-      {
-        code: 'ai-workflows',
-        label: '自动化工作流',
-        path: '/ai/workflows',
         permission: 'ai:read',
       },
       {
@@ -1114,6 +1265,7 @@ const registerDefaultModules = () => {
       status: 'online',
       order: 6,
       permission: 'ai:read',
+      source: 'core',
     },
   });
 
@@ -1124,6 +1276,7 @@ const registerDefaultModules = () => {
         label: '地理信息',
         icon: 'Map',
         path: '/gis',
+        group: 'business',
         order: 7,
         permission: 'gis:read',
       },
@@ -1137,40 +1290,12 @@ const registerDefaultModules = () => {
         order: 0,
         permission: 'gis:read',
       },
-      {
-        code: 'gis-layers',
-        label: '图层管理',
-        icon: 'Layers',
-        path: '/gis/layers',
-        order: 1,
-        permission: 'gis:read',
-      },
-      {
-        code: 'gis-analysis',
-        label: '空间分析',
-        icon: 'TrendingUp',
-        path: '/gis/analysis',
-        order: 2,
-        permission: 'gis:read',
-      },
     ],
     module_tabs: [
       {
         code: 'gis-map',
         label: '地图视图',
         path: '/gis/map',
-        permission: 'gis:read',
-      },
-      {
-        code: 'gis-layers',
-        label: '图层管理',
-        path: '/gis/layers',
-        permission: 'gis:read',
-      },
-      {
-        code: 'gis-analysis',
-        label: '空间分析',
-        path: '/gis/analysis',
         permission: 'gis:read',
       },
     ],
@@ -1182,6 +1307,7 @@ const registerDefaultModules = () => {
       status: 'plan',
       order: 7,
       permission: 'gis:read',
+      source: 'plugin',
     },
   });
 
@@ -1192,6 +1318,7 @@ const registerDefaultModules = () => {
         label: '人力资源',
         icon: 'Users',
         path: '/hrm',
+        group: 'business',
         order: 8,
         permission: 'hrm:read',
       },
@@ -1206,11 +1333,75 @@ const registerDefaultModules = () => {
         permission: 'hrm:read',
       },
       {
+        code: 'hrm-companies',
+        label: '公司管理',
+        icon: 'Building',
+        path: '/hrm/companies',
+        order: 1,
+        permission: 'hrm:read',
+      },
+      {
+        code: 'hrm-departments',
+        label: '部门管理',
+        icon: 'Building2',
+        path: '/hrm/departments',
+        order: 2,
+        permission: 'hrm:read',
+      },
+      {
+        code: 'hrm-organization',
+        label: '组织架构',
+        icon: 'Network',
+        path: '/hrm/organization',
+        order: 3,
+        permission: 'hrm:read',
+      },
+      {
+        code: 'hrm-positions',
+        label: '职位管理',
+        icon: 'Briefcase',
+        path: '/hrm/positions',
+        order: 4,
+        permission: 'hrm:read',
+      },
+      {
+        code: 'hrm-attendance',
+        label: '考勤管理',
+        icon: 'Clock',
+        path: '/hrm/attendance',
+        order: 5,
+        permission: 'hrm:read',
+      },
+      {
+        code: 'hrm-leave',
+        label: '请假管理',
+        icon: 'Calendar',
+        path: '/hrm/leave',
+        order: 6,
+        permission: 'hrm:read',
+      },
+      {
+        code: 'hrm-contracts',
+        label: '合同管理',
+        icon: 'FileSignature',
+        path: '/hrm/contracts',
+        order: 7,
+        permission: 'hrm:read',
+      },
+      {
         code: 'hrm-recruitment',
         label: '招聘管理',
         icon: 'UserPlus',
         path: '/hrm/recruitment',
-        order: 1,
+        order: 8,
+        permission: 'hrm:read',
+      },
+      {
+        code: 'hrm-payroll',
+        label: '薪酬管理',
+        icon: 'DollarSign',
+        path: '/hrm/payroll',
+        order: 9,
         permission: 'hrm:read',
       },
       {
@@ -1218,7 +1409,7 @@ const registerDefaultModules = () => {
         label: '培训管理',
         icon: 'GraduationCap',
         path: '/hrm/training',
-        order: 2,
+        order: 10,
         permission: 'hrm:read',
       },
       {
@@ -1226,7 +1417,15 @@ const registerDefaultModules = () => {
         label: '绩效考核',
         icon: 'Award',
         path: '/hrm/performance',
-        order: 3,
+        order: 11,
+        permission: 'hrm:read',
+      },
+      {
+        code: 'hrm-reports',
+        label: '人事报表',
+        icon: 'BarChart3',
+        path: '/hrm/reports',
+        order: 12,
         permission: 'hrm:read',
       },
       {
@@ -1234,7 +1433,7 @@ const registerDefaultModules = () => {
         label: '薪资调整',
         icon: 'TrendingUp',
         path: '/hrm/salary-adjustments',
-        order: 4,
+        order: 13,
         permission: 'hrm:read',
       },
     ],
@@ -1246,9 +1445,51 @@ const registerDefaultModules = () => {
         permission: 'hrm:read',
       },
       {
+        code: 'hrm-companies',
+        label: '公司管理',
+        path: '/hrm/companies',
+        permission: 'hrm:read',
+      },
+      {
+        code: 'hrm-departments',
+        label: '部门管理',
+        path: '/hrm/departments',
+        permission: 'hrm:read',
+      },
+      {
+        code: 'hrm-positions',
+        label: '职位管理',
+        path: '/hrm/positions',
+        permission: 'hrm:read',
+      },
+      {
+        code: 'hrm-attendance',
+        label: '考勤管理',
+        path: '/hrm/attendance',
+        permission: 'hrm:read',
+      },
+      {
+        code: 'hrm-leave',
+        label: '请假管理',
+        path: '/hrm/leave',
+        permission: 'hrm:read',
+      },
+      {
+        code: 'hrm-contracts',
+        label: '合同管理',
+        path: '/hrm/contracts',
+        permission: 'hrm:read',
+      },
+      {
         code: 'hrm-recruitment',
         label: '招聘管理',
         path: '/hrm/recruitment',
+        permission: 'hrm:read',
+      },
+      {
+        code: 'hrm-payroll',
+        label: '薪酬管理',
+        path: '/hrm/payroll',
         permission: 'hrm:read',
       },
       {
@@ -1264,9 +1505,9 @@ const registerDefaultModules = () => {
         permission: 'hrm:read',
       },
       {
-        code: 'hrm-salary-adjustments',
-        label: '薪资调整',
-        path: '/hrm/salary-adjustments',
+        code: 'hrm-reports',
+        label: '人事报表',
+        path: '/hrm/reports',
         permission: 'hrm:read',
       },
     ],
@@ -1278,6 +1519,7 @@ const registerDefaultModules = () => {
       status: 'online',
       order: 8,
       permission: 'hrm:read',
+      source: 'plugin',
     },
   });
 
@@ -1288,53 +1530,26 @@ const registerDefaultModules = () => {
         label: '即时通讯',
         icon: 'MessageCircle',
         path: '/im',
+        group: 'business',
         order: 9,
         permission: 'im:read',
       },
     ],
     sidebar_nav: [
       {
-        code: 'im-chats',
-        label: '消息',
-        icon: 'MessageCircle',
-        path: '/im/chats',
+        code: 'im-mail',
+        label: '邮件',
+        icon: 'Mail',
+        path: '/im/mail',
         order: 0,
-        permission: 'im:read',
-      },
-      {
-        code: 'im-contacts',
-        label: '联系人',
-        icon: 'Users',
-        path: '/im/contacts',
-        order: 1,
-        permission: 'im:read',
-      },
-      {
-        code: 'im-groups',
-        label: '群组',
-        icon: 'Users',
-        path: '/im/groups',
-        order: 2,
         permission: 'im:read',
       },
     ],
     module_tabs: [
       {
-        code: 'im-chats',
-        label: '消息',
-        path: '/im/chats',
-        permission: 'im:read',
-      },
-      {
-        code: 'im-contacts',
-        label: '联系人',
-        path: '/im/contacts',
-        permission: 'im:read',
-      },
-      {
-        code: 'im-groups',
-        label: '群组',
-        path: '/im/groups',
+        code: 'im-mail',
+        label: '邮件',
+        path: '/im/mail',
         permission: 'im:read',
       },
     ],
@@ -1346,6 +1561,7 @@ const registerDefaultModules = () => {
       status: 'online',
       order: 9,
       permission: 'im:read',
+      source: 'plugin',
     },
   });
 
@@ -1356,6 +1572,7 @@ const registerDefaultModules = () => {
         label: '商业智能',
         icon: 'BarChart3',
         path: '/bi',
+        group: 'business',
         order: 12,
         permission: 'bi:read',
       },
@@ -1470,6 +1687,7 @@ const registerDefaultModules = () => {
       status: 'online',
       order: 12,
       permission: 'bi:read',
+      source: 'plugin',
     },
   });
 
@@ -1480,6 +1698,7 @@ const registerDefaultModules = () => {
         label: '权限管理',
         icon: 'Shield',
         path: '/iam',
+        group: 'core',
         order: 20,
         permission: 'iam:users_read',
       },
@@ -1604,6 +1823,7 @@ const registerDefaultModules = () => {
       status: 'online',
       order: 20,
       permission: 'iam:users_read',
+      source: 'plugin',
     },
   });
 
@@ -1614,6 +1834,7 @@ const registerDefaultModules = () => {
         label: '工作流',
         icon: 'GitBranch',
         path: '/flow',
+        group: 'core',
         order: 13,
         permission: 'workflow:read',
       },
@@ -1774,6 +1995,7 @@ const registerDefaultModules = () => {
       status: 'online',
       order: 13,
       permission: 'workflow:read',
+      source: 'core',
     },
   });
 
@@ -1784,6 +2006,7 @@ const registerDefaultModules = () => {
         label: '仓储管理',
         icon: 'Warehouse',
         path: '/wms',
+        group: 'business',
         order: 14,
         permission: 'wms:read',
       },
@@ -1898,6 +2121,7 @@ const registerDefaultModules = () => {
       status: 'online',
       order: 14,
       permission: 'wms:read',
+      source: 'plugin',
     },
   });
 
@@ -1908,6 +2132,7 @@ const registerDefaultModules = () => {
         label: '产品数据',
         icon: 'Box',
         path: '/pdm',
+        group: 'business',
         order: 15,
         permission: 'pdm:read',
       },
@@ -2018,6 +2243,7 @@ const registerDefaultModules = () => {
       status: 'beta',
       order: 15,
       permission: 'pdm:read',
+      source: 'plugin',
     },
   });
 
@@ -2028,6 +2254,7 @@ const registerDefaultModules = () => {
         label: '系统监控',
         icon: 'Activity',
         path: '/monitor',
+        group: 'core',
         order: 19,
         permission: 'monitor:read',
       },
@@ -2086,6 +2313,7 @@ const registerDefaultModules = () => {
       status: 'online',
       order: 19,
       permission: 'monitor:read',
+      source: 'core',
     },
   });
 
@@ -2096,6 +2324,7 @@ const registerDefaultModules = () => {
         label: '文档中心',
         icon: 'FileText',
         path: '/documents',
+        group: 'core',
         order: 16,
         permission: 'doc:read',
       },
@@ -2176,6 +2405,7 @@ const registerDefaultModules = () => {
       status: 'online',
       order: 16,
       permission: 'doc:read',
+      source: 'core',
     },
   });
 
@@ -2186,6 +2416,7 @@ const registerDefaultModules = () => {
         label: '通知中心',
         icon: 'Bell',
         path: '/notifications',
+        group: 'core',
         order: 17,
         permission: '',
       },
@@ -2258,6 +2489,7 @@ const registerDefaultModules = () => {
       status: 'online',
       order: 17,
       permission: '',
+      source: 'core',
     },
   });
 
@@ -2268,6 +2500,7 @@ const registerDefaultModules = () => {
         label: '报表中心',
         icon: 'BarChart2',
         path: '/report/list',
+        group: 'core',
         order: 18,
         permission: 'report:read',
       },
@@ -2376,6 +2609,7 @@ const registerDefaultModules = () => {
       status: 'online',
       order: 18,
       permission: 'report:read',
+      source: 'core',
     },
   });
 
@@ -2386,6 +2620,7 @@ const registerDefaultModules = () => {
         label: '移动配置',
         icon: 'Smartphone',
         path: '/mobile',
+        group: 'core',
         order: 21,
         permission: 'mobile:read',
       },
@@ -2458,6 +2693,7 @@ const registerDefaultModules = () => {
       status: 'beta',
       order: 21,
       permission: 'mobile:read',
+      source: 'plugin',
     },
   });
 
@@ -2468,6 +2704,7 @@ const registerDefaultModules = () => {
         label: '系统集成',
         icon: 'Plug',
         path: '/integration',
+        group: 'core',
         order: 22,
         permission: 'integration:read',
       },
@@ -2564,6 +2801,7 @@ const registerDefaultModules = () => {
       status: 'beta',
       order: 22,
       permission: 'integration:read',
+      source: 'plugin',
     },
   });
 
@@ -2574,6 +2812,7 @@ const registerDefaultModules = () => {
         label: '供应商管理',
         icon: 'Handshake',
         path: '/srm',
+        group: 'business',
         order: 23,
         permission: 'srm:read',
       },
@@ -2705,6 +2944,108 @@ const registerDefaultModules = () => {
       status: 'online',
       order: 23,
       permission: 'srm:read',
+      source: 'plugin',
+    },
+  });
+
+  // ============================================================
+  // OA 行政综合
+  // ============================================================
+  navigationRegistry.register('oa', {
+    top_nav: [
+      {
+        code: 'oa',
+        label: '行政综合',
+        icon: 'Building',
+        path: '/oa',
+        group: 'core',
+        order: 4,
+        permission: 'erp:admin',
+      },
+    ],
+    sidebar_nav: [
+      {
+        code: 'oa-dashboard',
+        label: '行政概览',
+        icon: 'LayoutDashboard',
+        path: '/oa/dashboard',
+        order: 0,
+        permission: 'erp:admin',
+      },
+      {
+        code: 'oa-announcements',
+        label: '公告管理',
+        icon: 'Megaphone',
+        path: '/announcements',
+        order: 1,
+        permission: 'erp:admin',
+      },
+      {
+        code: 'oa-meeting-rooms',
+        label: '会议室管理',
+        icon: 'Video',
+        path: '/meeting-rooms',
+        order: 2,
+        permission: 'erp:admin',
+      },
+      {
+        code: 'oa-vehicles',
+        label: '车辆管理',
+        icon: 'Car',
+        path: '/vehicles',
+        order: 3,
+        permission: 'erp:admin',
+      },
+      {
+        code: 'oa-office-supplies',
+        label: '办公用品',
+        icon: 'Package',
+        path: '/office-supplies',
+        order: 4,
+        permission: 'erp:admin',
+      },
+    ],
+    module_tabs: [
+      {
+        code: 'oa-dashboard',
+        label: '行政概览',
+        path: '/oa/dashboard',
+        permission: 'erp:admin',
+      },
+      {
+        code: 'oa-announcements',
+        label: '公告管理',
+        path: '/announcements',
+        permission: 'erp:admin',
+      },
+      {
+        code: 'oa-meeting-rooms',
+        label: '会议室管理',
+        path: '/meeting-rooms',
+        permission: 'erp:admin',
+      },
+      {
+        code: 'oa-vehicles',
+        label: '车辆管理',
+        path: '/vehicles',
+        permission: 'erp:admin',
+      },
+      {
+        code: 'oa-office-supplies',
+        label: '办公用品',
+        path: '/office-supplies',
+        permission: 'erp:admin',
+      },
+    ],
+    module_card: {
+      code: 'oa',
+      name: '行政综合',
+      icon: 'Building',
+      path: '/oa',
+      status: 'online',
+      order: 4,
+      permission: 'erp:admin',
+      source: 'core',
     },
   });
 
@@ -2715,6 +3056,7 @@ const registerDefaultModules = () => {
         label: '实验室管理',
         icon: 'FlaskRound',
         path: '/lims',
+        group: 'business',
         order: 24,
         permission: 'lims:read',
       },
@@ -2814,6 +3156,7 @@ const registerDefaultModules = () => {
       status: 'beta',
       order: 24,
       permission: 'lims:read',
+      source: 'plugin',
     },
   });
 
@@ -2824,6 +3167,7 @@ const registerDefaultModules = () => {
         label: '质量管理',
         icon: 'CheckCircle',
         path: '/qms',
+        group: 'business',
         order: 25,
         permission: 'qms:read',
       },
@@ -2933,6 +3277,7 @@ const registerDefaultModules = () => {
       status: 'beta',
       order: 25,
       permission: 'qms:read',
+      source: 'plugin',
     },
   });
 
@@ -2943,6 +3288,7 @@ const registerDefaultModules = () => {
         label: '环境健康',
         icon: 'Leaf',
         path: '/ehs',
+        group: 'business',
         order: 26,
         permission: 'ehs:read',
       },
@@ -3046,6 +3392,7 @@ const registerDefaultModules = () => {
       status: 'beta',
       order: 26,
       permission: 'ehs:read',
+      source: 'plugin',
     },
   });
 };
