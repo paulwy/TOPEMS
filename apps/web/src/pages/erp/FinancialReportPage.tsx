@@ -13,6 +13,7 @@ import {
   Wallet,
   Building2,
 } from 'lucide-react';
+import { PageContainer } from '@/components/common';
 import {
   Box,
   Typography,
@@ -623,63 +624,27 @@ const FinancialReportPage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'slate.50' }}>
-      <Box
-        sx={{
-          bgcolor: 'background.paper',
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: 'divider',
-        }}
-      >
-        <Box sx={{ maxWidth: 1400, mx: 'auto', px: 2, py: 3 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Box>
-              <Typography
-                variant='h5'
-                sx={{
-                  fontWeight: 'bold',
-                  color: 'text.primary',
-                  display: 'flex',
-                  alignItems: 'center',
-                }}
-              >
-                <FileText sx={{ width: 28, height: 28, mr: 1.5, color: 'indigo.600' }} />
-                财务报表中心
-              </Typography>
-              <Typography variant='body2' sx={{ mt: 0.5, color: 'text.secondary' }}>
-                资产负债表、利润表、现金流量表、所有者权益变动表
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Button
-                variant='outlined'
-                size='small'
-                startIcon={<RefreshCw size={16} />}
-                onClick={loadReportData}
-              >
-                刷新
-              </Button>
-              <Button
-                variant='contained'
-                size='small'
-                startIcon={<Download size={16} />}
-                onClick={handleExport}
-              >
-                导出报表
-              </Button>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-
-      <Box sx={{ maxWidth: 1400, mx: 'auto', px: 2, py: 3 }}>
+    <PageContainer
+      title='财务报表中心'
+      subtitle='资产负债表、利润表、现金流量表、所有者权益变动表'
+      maxWidth='xl'
+      headerProps={{
+        actions: [
+          {
+            label: '刷新',
+            icon: <RefreshCw size={16} />,
+            onClick: loadReportData,
+            variant: 'outlined',
+          },
+          {
+            label: '导出报表',
+            icon: <Download size={16} />,
+            onClick: handleExport,
+            variant: 'contained',
+          },
+        ],
+      }}
+    >
         {error && (
           <Alert severity='error' sx={{ mb: 2 }}>
             {error}
@@ -738,8 +703,7 @@ const FinancialReportPage: React.FC = () => {
         {renderSummaryCards()}
 
         {renderReportTable()}
-      </Box>
-    </Box>
+    </PageContainer>
   );
 };
 

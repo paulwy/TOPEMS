@@ -34,8 +34,7 @@ import {
   Calendar,
   X,
 } from 'lucide-react';
-import { BackButton } from '@/components/common';
-import { PageHeader } from '@/components';
+import { BackButton, PageContainer } from '@/components/common';
 import type { AuditLog as LimsAuditLog } from '@/api/lims';
 import { auditLimsApi } from '@/api/lims';
 import type { AuditLog as RsAuditLog } from '@/api/rs';
@@ -406,105 +405,74 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
     setCurrentPage(1);
   };
 
-  return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100' }}>
-      {/* 顶部导航 */}
+  const customToolbar = (
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      <ModeToggle />
       <Box
         sx={{
-          bgcolor: 'background.paper',
-          borderBottom: 1,
-          borderColor: 'divider',
+          display: 'flex',
+          bgcolor: 'grey.100',
+          borderRadius: 2,
+          p: 0.5,
         }}
       >
-        <Box sx={{ maxWidth: 1200, mx: 'auto', px: 3, py: 3 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <BackButton href='/dashboard' />
-              <Box>
-                <Typography
-                  variant='h5'
-                  sx={{
-                    fontWeight: 'bold',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                  }}
-                >
-                  <Shield
-                    size={28}
-                    color='#1976d2'
-                  />
-                  安全审计
-                </Typography>
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
-                  访问日志、操作审计
-                </Typography>
-              </Box>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <ModeToggle />
-              <Box
-                sx={{
-                  display: 'flex',
-                  bgcolor: 'grey.100',
-                  borderRadius: 2,
-                  p: 0.5,
-                }}
-              >
-                <Button
-                  size='small'
-                  variant={source === 'lims' ? 'contained' : 'text'}
-                  onClick={() => {
-                    setSource('lims');
-                    setCurrentPage(1);
-                  }}
-                  startIcon={<FileText size={16} />}
-                >
-                  LIMS
-                </Button>
-                <Button
-                  size='small'
-                  variant={source === 'rs' ? 'contained' : 'text'}
-                  onClick={() => {
-                    setSource('rs');
-                    setCurrentPage(1);
-                  }}
-                  startIcon={<FlaskConical size={16} />}
-                >
-                  RS
-                </Button>
-              </Box>
-              <Button
-                variant='contained'
-                onClick={handleExport}
-                disabled={exporting}
-                startIcon={<Download size={16} />}
-              >
-                {exporting ? '导出中...' : '导出'}
-              </Button>
-              <Button
-                variant='contained'
-                onClick={loadLogs}
-                startIcon={<RefreshCw size={16} />}
-              >
-                刷新
-              </Button>
-            </Box>
-          </Box>
-        </Box>
+        <Button
+          size='small'
+          variant={source === 'lims' ? 'contained' : 'text'}
+          onClick={() => {
+            setSource('lims');
+            setCurrentPage(1);
+          }}
+          startIcon={<FileText size={16} />}
+        >
+          LIMS
+        </Button>
+        <Button
+          size='small'
+          variant={source === 'rs' ? 'contained' : 'text'}
+          onClick={() => {
+            setSource('rs');
+            setCurrentPage(1);
+          }}
+          startIcon={<FlaskConical size={16} />}
+        >
+          RS
+        </Button>
       </Box>
+    </Box>
+  );
 
+  const headerActions = [
+    {
+      label: exporting ? '导出中...' : '导出',
+      icon: <Download size={16} />,
+      onClick: handleExport,
+      variant: 'contained' as const,
+      disabled: exporting,
+    },
+    {
+      label: '刷新',
+      icon: <RefreshCw size={16} />,
+      onClick: loadLogs,
+      variant: 'contained' as const,
+    },
+  ];
+
+  return (
+    <PageContainer
+      title='安全审计'
+      subtitle='访问日志、操作审计'
+      headerProps={{
+        backButton: { href: '/dashboard' },
+        customToolbar,
+        actions: headerActions,
+        pageIcon: <Shield size={20} />,
+        pageColor: '#1976d2',
+      }}
+      maxWidth='xl'
+    >
       {/* 时间范围筛选 */}
-      <Box sx={{ maxWidth: 1200, mx: 'auto', px: 3, py: 2 }}>
+      <Box sx={{ mb: 3 }}>
         <Card>
           <CardContent sx={{ display: 'flex', gap: 3, alignItems: 'center', flexWrap: 'wrap' }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -561,42 +529,40 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
         </Card>
       </Box>
 
-      <Box sx={{ maxWidth: 1200, mx: 'auto', px: 3, py: 2 }}>
-        <Card>
-          <CardContent sx={{ p: 0 }}>
-            <ListPageTemplate
-              title='审计日志'
-              subtitle={`共 ${total} 条记录`}
-              data={filteredLogs}
-              columns={columns}
-              loading={loading}
-              searchPlaceholder='搜索用户名、操作、实体类型、IP...'
-              searchValue={searchQuery}
-              onSearch={setSearchQuery}
-              filters={filters}
-              filtersValue={{
-                status: filterStatus,
-                action: filterAction,
-                entity_type: filterEntityType,
-              }}
-              onFilterChange={handleFilterChange}
-              pagination={{
-                page: currentPage,
-                pageSize: pageSize,
-                total: total,
-                onPageChange: setCurrentPage,
-              }}
-              emptyIcon={
-                <Clock
-                  size={48}
-                  color='#9e9e9e'
-                />
-              }
-              emptyMessage='暂无审计日志'
-            />
-          </CardContent>
-        </Card>
-      </Box>
+      <Card>
+        <CardContent sx={{ p: 0 }}>
+          <ListPageTemplate
+            title='审计日志'
+            subtitle={`共 ${total} 条记录`}
+            data={filteredLogs}
+            columns={columns}
+            loading={loading}
+            searchPlaceholder='搜索用户名、操作、实体类型、IP...'
+            searchValue={searchQuery}
+            onSearch={setSearchQuery}
+            filters={filters}
+            filtersValue={{
+              status: filterStatus,
+              action: filterAction,
+              entity_type: filterEntityType,
+            }}
+            onFilterChange={handleFilterChange}
+            pagination={{
+              page: currentPage,
+              pageSize: pageSize,
+              total: total,
+              onPageChange: setCurrentPage,
+            }}
+            emptyIcon={
+              <Clock
+                size={48}
+                color='#9e9e9e'
+              />
+            }
+            emptyMessage='暂无审计日志'
+          />
+        </CardContent>
+      </Card>
 
       {/* 详情弹窗 */}
       <Dialog
@@ -872,7 +838,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
           <Button onClick={() => setSelectedLog(null)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };
 

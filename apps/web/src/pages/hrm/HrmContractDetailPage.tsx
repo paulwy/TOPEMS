@@ -6,6 +6,7 @@ import { hrmApi, type Contract } from '@/api/hrm';
 import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 
 const HrmContractDetailPage: React.FC = () => {
   const navigate = useNavigate();
@@ -302,10 +303,10 @@ const HrmContractDetailPage: React.FC = () => {
   );
 
   return (
-    <>
+    <PageContainer title='合同详情' subtitle='查看和管理员工合同信息'>
       <DetailPageTemplate
-        title='合同详情'
-        subtitle='查看和管理员工合同信息'
+        title=''
+        subtitle=''
         backHref='/hrm/contracts'
         loading={loading}
         error={errorMessage}
@@ -346,7 +347,7 @@ const HrmContractDetailPage: React.FC = () => {
           <Button onClick={handleRenew} color='primary'>确认续签</Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

@@ -31,7 +31,7 @@ import {
   StatsPageTemplate,
   type StatsStatCard,
 } from '@/components/templates';
-import { ConfirmDialog } from '@/components/common';
+import { ConfirmDialog, PageContainer } from '@/components/common';
 import { Button, TextField, FormControl, InputLabel, Select, MenuItem, Box, Typography, Chip, Avatar, FormLabel, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import { ImageUpload } from '@/components/common';
 
@@ -489,7 +489,7 @@ const HrmTrainingPage: React.FC = () => {
   ];
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100', p: 3 }}>
+    <PageContainer padding={false} maxWidth={false}>
       <StatsPageTemplate
         title='培训管理'
         subtitle='管理培训计划、课程和培训记录'
@@ -900,7 +900,7 @@ const HrmTrainingPage: React.FC = () => {
           </DialogActions>
         </Dialog>
       )}
-    </Box>
+    </PageContainer>
   );
 };
 

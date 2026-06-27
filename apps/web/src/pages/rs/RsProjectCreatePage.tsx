@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { FormPageTemplate, type FormSection, type FormField } from '@/components/templates/FormPageTemplate';
+import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
 import { useAppStore } from '@/store';
 import type { Project, TeamMember } from '@/api/rs';
@@ -236,24 +237,29 @@ const RsProjectCreatePage: React.FC = () => {
   };
 
   return (
-    <FormPageTemplate
+    <PageContainer
       title={isEdit ? '编辑研发项目' : '新建研发项目'}
       subtitle={isEdit ? '修改项目基本信息和配置' : '创建新的研发项目，设置基本信息和团队'}
-      sections={sections}
-      defaultValues={defaultValues}
-      loading={loading}
-      submitting={submitting}
-      error={error}
-      onSubmit={handleSubmit}
-      onCancel={handleCancel}
-      submitText={isEdit ? '保存修改' : '创建项目'}
-      columns={2}
-      showValidationHints
-      validationToasts={[
-        { message: '提交成功', type: 'success' },
-        { message: '提交失败，请检查表单', type: 'error' },
-      ]}
-    />
+    >
+      <FormPageTemplate
+        title=''
+        subtitle=''
+        sections={sections}
+        defaultValues={defaultValues}
+        loading={loading}
+        submitting={submitting}
+        error={error}
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+        submitText={isEdit ? '保存修改' : '创建项目'}
+        columns={2}
+        showValidationHints
+        validationToasts={[
+          { message: '提交成功', type: 'success' },
+          { message: '提交失败，请检查表单', type: 'error' },
+        ]}
+      />
+    </PageContainer>
   );
 };
 

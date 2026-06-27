@@ -10,6 +10,7 @@ import {
 } from '@/components/templates';
 import { salaryAdjustmentApi } from '@/api/hrm';
 import type { SalaryAdjustment } from '@/api/hrm';
+import { PageContainer } from '@/components/common';
 
 const HrmSalaryAdjustmentPage: React.FC = () => {
   const navigate = useNavigate();
@@ -171,16 +172,18 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
   ];
 
   return (
-    <ListPageTemplate<SalaryAdjustment>
-      title='薪资调整'
-      subtitle='员工薪资调整记录管理'
-      columns={columns}
-      data={adjustments}
-      loading={loading}
-      rowActions={rowActions}
-      searchable
-      onRefresh={loadAdjustments}
-    />
+    <PageContainer title='薪资调整' subtitle='员工薪资调整记录管理'>
+      <ListPageTemplate<SalaryAdjustment>
+        title=''
+        subtitle=''
+        columns={columns}
+        data={adjustments}
+        loading={loading}
+        rowActions={rowActions}
+        searchable
+        onRefresh={loadAdjustments}
+      />
+    </PageContainer>
   );
 };
 

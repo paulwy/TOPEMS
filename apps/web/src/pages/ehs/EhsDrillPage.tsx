@@ -15,6 +15,7 @@ import { Button } from '@mui/material';
 import { Plus, Eye, Clock, Users, Calendar } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { ehsApi } from '@/api/ehs';
+import { PageContainer } from '@/components/common';
 import type { DrillRecord } from '@/api/ehs';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
@@ -315,10 +316,10 @@ const EhsDrillPage: React.FC = () => {
   ), [stats]);
 
   return (
-    <>
+    <PageContainer title='演练记录' subtitle='管理应急演练和安全培训记录'>
       <ListPageTemplate
-        title='演练记录'
-        subtitle='管理应急演练和安全培训记录'
+        title=''
+        subtitle=''
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
           { label: 'EHS安全管理', href: '/ehs' },
@@ -568,7 +569,7 @@ const EhsDrillPage: React.FC = () => {
           <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

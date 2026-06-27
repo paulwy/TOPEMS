@@ -7,6 +7,7 @@ import BarChartComponent from '../../components/charts/BarChart';
 import LineChartComponent from '../../components/charts/LineChart';
 import PieChartComponent from '../../components/charts/PieChart';
 import { DashboardTemplate, type StatCard, type ChartCard } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { pmApi, type Project } from '@/api/pm';
 
 export const DashboardPage: React.FC = () => {
@@ -280,20 +281,27 @@ export const DashboardPage: React.FC = () => {
   );
 
   return (
-    <DashboardTemplate
+    <PageContainer
       title='项目管理'
       subtitle='项目进度与任务追踪'
-      breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '项目' }]}
-      stats={stats}
-      charts={charts}
-      quickActions={quickActions}
-      quickActionsTitle='快捷操作'
-      loading={loading}
-      onRefresh={() => {
-        setLoading(true);
-        Promise.all([loadStats(), loadChartData()]).finally(() => setLoading(false));
-      }}
-    />
+      padding={false}
+      maxWidth={false}
+    >
+      <DashboardTemplate
+        title=''
+        subtitle=''
+        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '项目' }]}
+        stats={stats}
+        charts={charts}
+        quickActions={quickActions}
+        quickActionsTitle='快捷操作'
+        loading={loading}
+        onRefresh={() => {
+          setLoading(true);
+          Promise.all([loadStats(), loadChartData()]).finally(() => setLoading(false));
+        }}
+      />
+    </PageContainer>
   );
 };
 

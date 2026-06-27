@@ -100,6 +100,7 @@ import {
   ServiceMonitorSection,
   RecentActivitySection,
 } from '@/components/dashboard';
+import { PageContainer } from '@/components/common';
 
 interface DashboardPageProps {
   onLogout?: () => void;
@@ -643,9 +644,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           adminOnly: true,
         },
         {
-          title: '行政综合管理',
+          title: '行政办公',
           icon: Briefcase,
-          description: '资产、会议室、车辆统一管理',
+          description: '办公用品、会议室、车辆、公告管理',
           path: '/administration',
           color: 'bg-sky-500',
           status: 'online' as const,
@@ -859,7 +860,9 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   };
 
   return (
-    <Box
+    <PageContainer
+      padding={false}
+      maxWidth={false}
       sx={{
         minHeight: '100vh',
         background: 'linear-gradient(to bottom right, #f8fafc, grey.100)',
@@ -1179,7 +1182,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           </Box>
         </Box>
       </Box>
-    </Box>
+    </PageContainer>
   );
 };
 

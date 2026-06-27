@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { reportApi } from '@/api/report';
 import type { ReportData } from '@/api/report';
 import { useAppStore } from '@/store';
@@ -273,10 +274,10 @@ const ReportListPage: React.FC = () => {
   );
 
   return (
-    <>
+    <PageContainer title='报表中心' subtitle='统一报表管理平台，支持多种报表类型和导出格式'>
       <ListPageTemplate
-        title='报表中心'
-        subtitle='统一报表管理平台，支持多种报表类型和导出格式'
+        title=''
+        subtitle=''
         breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '报表中心' }]}
         columns={columns}
         data={paginatedReports}
@@ -322,7 +323,7 @@ const ReportListPage: React.FC = () => {
         message={`确定要删除报表 "${selectedReport?.config.title}" 吗？此操作不可恢复。`}
         danger
       />
-    </>
+    </PageContainer>
   );
 };
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Box, Card, CardContent, Typography, Chip } from '@mui/material';
 import { Plus, Trash2, Upload, Download, Edit, Package } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type RowAction, type BatchAction } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { materialApi } from '@/api/rs';
 import type { Material } from '@/api/rs';
 import { useAppStore } from '@/store';
@@ -466,7 +467,7 @@ const RsMaterialListPage: React.FC = () => {
   );
 
   return (
-    <>
+    <PageContainer title='物料管理' subtitle='管理研发物料、库存监控、物料申请'>
       <input
         accept='.csv'
         style={{ display: 'none' }}
@@ -476,8 +477,8 @@ const RsMaterialListPage: React.FC = () => {
       />
 
       <ListPageTemplate
-        title='物料管理'
-        subtitle='管理研发物料、库存监控、物料申请'
+        title=''
+        subtitle=''
         breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '研发', href: '/rs' }, { label: '物料管理' }]}
         columns={columns}
         data={materials}
@@ -574,7 +575,7 @@ const RsMaterialListPage: React.FC = () => {
         message={`确定要删除选中的 ${selectedIds.length} 条物料吗？`}
         danger
       />
-    </>
+    </PageContainer>
   );
 };
 

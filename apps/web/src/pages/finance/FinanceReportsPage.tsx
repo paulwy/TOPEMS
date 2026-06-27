@@ -6,6 +6,7 @@ import { Box, Button, FormControl, InputLabel, Select, MenuItem, Chip, Alert } f
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import type { StatCard, ChartConfig, DataTable, TableColumn } from '@/components/templates/StatsPageTemplate';
 import { apiLogger } from '@/utils/logger';
+import { PageContainer } from '@/components/common';
 
 const FinanceReportsPage: React.FC = () => {
   const addNotification = useAppStore((state) => state.addNotification);
@@ -204,7 +205,7 @@ const FinanceReportsPage: React.FC = () => {
   );
 
   return (
-    <>
+    <PageContainer maxWidth='xl'>
       <StatsPageTemplate
         title='财务报表分析'
         subtitle='企业经营状况与项目财务汇总分析'
@@ -231,7 +232,7 @@ const FinanceReportsPage: React.FC = () => {
           <Alert severity='error'>{error}</Alert>
         </Box>
       )}
-    </>
+    </PageContainer>
   );
 };
 

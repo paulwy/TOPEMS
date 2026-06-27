@@ -16,6 +16,7 @@ import {
   Typography,
   LinearProgress,
 } from '@mui/material';
+import { PageContainer } from '@/components/common';
 import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type {
@@ -392,10 +393,10 @@ const EquipmentOEEPage: React.FC = () => {
   );
 
   return (
-    <>
+    <PageContainer title="设备OEE分析" subtitle="分析设备综合效率(OEE),包括可用率、性能率、质量率等指标">
       <ListPageTemplate
-        title='设备OEE分析'
-        subtitle='分析设备综合效率(OEE),包括可用率、性能率、质量率等指标'
+        title=""
+        subtitle=""
         columns={columns}
         data={records}
         loading={loading}
@@ -579,7 +580,7 @@ const EquipmentOEEPage: React.FC = () => {
           <Button onClick={() => setShowDetailDialog(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

@@ -31,6 +31,7 @@ import {
   type RowAction,
   type FilterConfig,
 } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import {
   reportApi,
   type ReportSubscription,
@@ -360,10 +361,10 @@ const ReportSubscriptionPage: React.FC = () => {
   }, []);
 
   return (
-    <>
+    <PageContainer title='报表订阅管理' subtitle='管理报表订阅，设置订阅者、订阅方式和订阅频率'>
       <ListPageTemplate
-        title='报表订阅管理'
-        subtitle='管理报表订阅，设置订阅者、订阅方式和订阅频率'
+        title=''
+        subtitle=''
         columns={columns}
         data={filteredData}
         loading={loading}
@@ -451,7 +452,7 @@ const ReportSubscriptionPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

@@ -41,6 +41,7 @@ import {
   type TrackPoint,
 } from '@/components/templates';
 import { useAppStore } from '../../store';
+import { PageContainer } from '@/components/common';
 import { gisApi } from '@/api/gis';
 import type { DevicePoint, DeviceLocationRecord } from '@/api/gis';
 
@@ -206,7 +207,8 @@ export const GisTrackingPage: React.FC = () => {
   }
 
   return (
-    <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <PageContainer title="轨迹追踪" subtitle="查看设备历史轨迹，支持回放和时间筛选" maxWidth="xl">
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box
         sx={{
           display: 'flex',
@@ -563,7 +565,8 @@ export const GisTrackingPage: React.FC = () => {
           </Card>
         </Grid>
       </Grid>
-    </Box>
+      </Box>
+    </PageContainer>
   );
 };
 

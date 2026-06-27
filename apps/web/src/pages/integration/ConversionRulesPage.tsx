@@ -4,6 +4,7 @@
  */
 
 import React, { useEffect, useState, useCallback } from 'react';
+import { PageContainer } from '@/components/common';
 import {
   Plus,
   RefreshCw,
@@ -528,10 +529,10 @@ const ConversionRulesPage: React.FC = () => {
   };
 
   return (
-    <>
+    <PageContainer title="转换规则配置" subtitle="管理数据转换规则和字段映射">
       <ListPageTemplate
-        title='转换规则配置'
-        subtitle='管理数据转换规则和字段映射'
+        title=""
+        subtitle=""
         columns={columns}
         data={filteredData}
         loading={loading}
@@ -581,7 +582,7 @@ const ConversionRulesPage: React.FC = () => {
           />
         </DialogContent>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

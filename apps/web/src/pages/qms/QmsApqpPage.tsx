@@ -38,6 +38,7 @@ import {
 import { Button } from '@mui/material';
 
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
 import type {
   ApqpProject,
@@ -455,10 +456,10 @@ const QmsApqpPage: React.FC = () => {
   ];
 
   return (
-    <>
+    <PageContainer title='APQP 产品质量先期策划' subtitle='Advanced Product Quality Planning'>
       <ListPageTemplate
-        title='APQP 产品质量先期策划'
-        subtitle='Advanced Product Quality Planning'
+        title=''
+        subtitle=''
         backButton={{
           href: '/qms',
           onClick: () => navigate('/qms'),
@@ -1140,7 +1141,7 @@ const QmsApqpPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

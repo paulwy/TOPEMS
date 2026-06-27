@@ -9,6 +9,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
+import { PageContainer } from '@/components/common';
 import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type {
@@ -372,10 +373,10 @@ const ProductionRecordPage: React.FC = () => {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <>
+    <PageContainer title="生产记录管理" subtitle="管理生产记录,包括订单ID、工序、操作员、完成数量等">
       <ListPageTemplate
-        title='生产记录管理'
-        subtitle='管理生产记录,包括订单ID、工序、操作员、完成数量等'
+        title=""
+        subtitle=""
         columns={columns}
         data={records}
         loading={loading}
@@ -667,7 +668,7 @@ const ProductionRecordPage: React.FC = () => {
           <Button onClick={() => setShowDetailDialog(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

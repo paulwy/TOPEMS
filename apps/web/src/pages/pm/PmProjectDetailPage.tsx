@@ -31,7 +31,7 @@ import GanttChart from '@/components/pm/GanttChart';
 import { pmApi } from '@/api/pm';
 import type { Project, ProjectPhase, ProjectMilestone, GanttPhase, GanttMilestone } from '@/api/pm';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
-import { ActionButton, StatusBadge } from '@/components/common';
+import { ActionButton, StatusBadge, PageContainer } from '@/components/common';
 
 const STATUS_LABELS: Record<string, string> = {
   active: '进行中',
@@ -816,19 +816,21 @@ const PmProjectDetailPage: React.FC = () => {
   }, [project, phases, milestones, completedPhases, completedMilestones]);
 
   return (
-    <DetailPageTemplate
-      title={project?.name || '项目详情'}
-      subtitle={project?.code}
-      breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '项目管理', href: '/pm/projects' }, { label: '项目详情' }]}
-      loading={loading}
-      error={error}
-      backHref='/pm/projects'
-      onEdit={() => id && navigate(`/pm/projects/${id}/edit`)}
-      tabs={tabs}
-      defaultTab='overview'
-      infoCard={infoCard}
-      onRefresh={() => id && loadProjectData(id)}
-    />
+    <PageContainer title={project?.name || '项目详情'} subtitle={project?.code}>
+      <DetailPageTemplate
+        title=''
+        subtitle=''
+        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '项目管理', href: '/pm/projects' }, { label: '项目详情' }]}
+        loading={loading}
+        error={error}
+        backHref='/pm/projects'
+        onEdit={() => id && navigate(`/pm/projects/${id}/edit`)}
+        tabs={tabs}
+        defaultTab='overview'
+        infoCard={infoCard}
+        onRefresh={() => id && loadProjectData(id)}
+      />
+    </PageContainer>
   );
 };
 

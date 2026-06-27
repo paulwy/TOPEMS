@@ -8,6 +8,7 @@ import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { PageContainer } from '@/components/common';
 
 const ContactDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -228,10 +229,10 @@ const ContactDetailPage: React.FC = () => {
   };
 
   return (
-    <>
+    <PageContainer title='联系人详情' subtitle='查看和编辑联系人信息'>
       <DetailPageTemplate
-        title='联系人详情'
-        subtitle='查看和编辑联系人信息'
+        title=''
+        subtitle=''
         backHref='/crm/contacts'
         loading={loading}
         error={errorMessage}
@@ -249,7 +250,7 @@ const ContactDetailPage: React.FC = () => {
         message='确定要删除此联系人吗？'
         danger
       />
-    </>
+    </PageContainer>
   );
 };
 

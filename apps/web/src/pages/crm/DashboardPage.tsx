@@ -21,6 +21,7 @@ import {
   type ChartCard,
   type QuickAction,
 } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { crmApi } from '@/api/crm';
 import { logger } from '@/utils/logger';
 import type { FunnelStage, OpportunityStats } from '@/api/crm';
@@ -219,7 +220,12 @@ export const DashboardPage: React.FC = () => {
   }
 
   return (
-    <>
+    <PageContainer
+      title='客户关系管理'
+      subtitle={`${getGreeting()}，客户管理与销售分析`}
+      padding={false}
+      maxWidth={false}
+    >
       <Card sx={{ mb: 3 }}>
         <CardHeader>
           <Typography
@@ -321,15 +327,15 @@ export const DashboardPage: React.FC = () => {
       </Card>
 
       <DashboardTemplate
-        title='客户关系管理'
-        subtitle={`${getGreeting()}，客户管理与销售分析`}
+        title=''
+        subtitle=''
         breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '客户关系' }]}
         stats={statsCards}
         charts={charts}
         quickActions={quickActions}
         quickActionsTitle='快捷操作'
       />
-    </>
+    </PageContainer>
   );
 };
 

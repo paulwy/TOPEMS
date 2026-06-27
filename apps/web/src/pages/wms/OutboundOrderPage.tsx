@@ -24,7 +24,7 @@ import {
 } from '@/components/templates';
 import { Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
-import { ConfirmDialog } from '@/components/common';
+import { ConfirmDialog, PageContainer } from '@/components/common';
 
 const statusConfig: Record<
   string,
@@ -322,10 +322,13 @@ const OutboundOrderPage: React.FC = () => {
   };
 
   return (
-    <>
+    <PageContainer
+      title='出库订单管理'
+      subtitle='管理出库订单,包括订单号、仓库、客户、订单日期等'
+    >
       <ListPageTemplate
-        title='出库订单管理'
-        subtitle='管理出库订单,包括订单号、仓库、客户、订单日期等'
+        title=''
+        subtitle=''
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
           { label: '仓储', href: '/wms' },
@@ -675,7 +678,7 @@ const OutboundOrderPage: React.FC = () => {
         message='确定要删除这个出库订单吗？此操作不可撤销。'
         danger
       />
-    </>
+    </PageContainer>
   );
 };
 

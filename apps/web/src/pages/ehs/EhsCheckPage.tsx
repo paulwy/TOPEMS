@@ -33,6 +33,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { ehsApi } from '@/api/ehs';
 import type { InspectionPlan, InspectionItem, InspectionRecord, RecordItem } from '@/api/ehs';
 import { useAppStore } from '@/store';
@@ -493,7 +494,11 @@ const EhsCheckPage: React.FC = () => {
   ];
 
   return (
-    <>
+    <PageContainer
+      title='安全检查'
+      subtitle='Safety Inspection'
+      maxWidth='xl'
+    >
       <Box sx={{ mb: 3 }}>
         <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
           <Button
@@ -1328,7 +1333,7 @@ const EhsCheckPage: React.FC = () => {
           <Button onClick={() => setShowItemsModal(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

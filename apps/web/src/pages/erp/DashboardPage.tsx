@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import BarChartComponent from '../../components/charts/BarChart';
 import LineChartComponent from '../../components/charts/LineChart';
 import PieChartComponent from '../../components/charts/PieChart';
@@ -130,15 +131,22 @@ export const DashboardPage: React.FC = () => {
   const quickActions: QuickAction[] = [];
 
   return (
-    <DashboardTemplate
+    <PageContainer
       title='企业资源管理'
       subtitle={`${getGreeting()}，财务管理与库存概览`}
-      stats={stats}
-      charts={charts}
-      quickActions={quickActions}
-      quickActionsTitle='快捷操作'
-      loading={loading}
-    />
+      padding={false}
+      maxWidth={false}
+    >
+      <DashboardTemplate
+        title=''
+        subtitle=''
+        stats={stats}
+        charts={charts}
+        quickActions={quickActions}
+        quickActionsTitle='快捷操作'
+        loading={loading}
+      />
+    </PageContainer>
   );
 };
 

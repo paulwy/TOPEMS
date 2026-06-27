@@ -31,6 +31,7 @@ import { wmsApi } from '@/api/wms';
 import { useAppStore } from '@/store';
 import { Plus, Edit, Trash2, Play, CheckCircle2, Eye, Package } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
+import { PageContainer } from '@/components/common';
 
 const statusConfig: Record<
   string,
@@ -429,10 +430,13 @@ const StockTakePage: React.FC = () => {
   };
 
   return (
-    <>
+    <PageContainer
+      title='盘点管理'
+      subtitle='管理库存盘点，记录盘点结果并进行库存调整'
+    >
       <ListPageTemplate
-        title='盘点管理'
-        subtitle='管理库存盘点，记录盘点结果并进行库存调整'
+        title=''
+        subtitle=''
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
           { label: '仓储', href: '/wms' },
@@ -938,7 +942,7 @@ const StockTakePage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

@@ -27,6 +27,7 @@ import {
 import { Button } from '@mui/material';
 import { ListPageTemplate } from '@/components/mui';
 import type { ColumnDef, RowAction, FilterConfig } from '@/components/mui';
+import { PageContainer } from '@/components/common';
 
 /** 账户类型配置 */
 const ACCOUNT_TYPE_CONFIG: Record<
@@ -320,7 +321,7 @@ export default function BankAccountManagementPage() {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50', p: 3 }}>
+    <PageContainer title='银行账户管理' subtitle='管理企业银行账户信息'>
       <Box
         sx={{
           maxWidth: 1400,
@@ -411,8 +412,8 @@ export default function BankAccountManagementPage() {
 
         {/* 账户列表 */}
         <ListPageTemplate
-          title='银行账户管理'
-          subtitle='管理企业银行账户信息'
+          title=''
+          subtitle=''
           data={filteredAccounts}
           columns={columns}
           rowActions={rowActions}
@@ -517,7 +518,7 @@ export default function BankAccountManagementPage() {
           确定要删除该银行账户吗？此操作不可恢复。
         </Alert>
       )}
-    </Box>
+    </PageContainer>
   );
 }
 

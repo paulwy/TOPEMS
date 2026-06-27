@@ -12,6 +12,7 @@ import {
 import { Button } from '@mui/material';
 import { apiLogger } from '@/utils/logger';
 import { Plus, Eye, Clock } from 'lucide-react';
+import { PageContainer } from '@/components/common';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import type { RowAction, FilterConfig } from '@/components/templates';
 import { pdmApi } from '@/api/pdm';
@@ -261,10 +262,13 @@ const PdmBatchPage: React.FC = () => {
   );
 
   return (
-    <>
+    <PageContainer
+      title='生产批次'
+      subtitle='Production Batch'
+    >
       <ListPageTemplate<ProductionBatch>
-        title='生产批次'
-        subtitle='Production Batch'
+        title=''
+        subtitle=''
         backButton={{ href: '/dashboard' }}
         columns={columns}
         data={filteredBatches}
@@ -437,7 +441,7 @@ const PdmBatchPage: React.FC = () => {
           <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

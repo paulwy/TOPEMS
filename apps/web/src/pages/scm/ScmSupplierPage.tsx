@@ -15,6 +15,7 @@ import { Button } from '@mui/material';
 import { Plus, Eye, TrendingUp, Award, Target } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { scmApi } from '@/api/scm';
 import type { Supplier, SupplierPerformance } from '@/api/scm';
 import { useAppStore } from '@/store';
@@ -248,9 +249,9 @@ const ScmSupplierPage: React.FC = () => {
   ];
 
   return (
-    <>
+    <PageContainer title='供应商管理'>
       <ListPageTemplate
-        title='供应商管理'
+        title=''
         columns={columns}
         data={suppliers}
         loading={loading}
@@ -538,7 +539,7 @@ const ScmSupplierPage: React.FC = () => {
           <Button onClick={() => setShowPerformanceModal(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

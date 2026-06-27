@@ -3,6 +3,7 @@ import { Box, Chip, Tabs, Tab, Paper, useTheme, useMediaQuery } from '@mui/mater
 import { Plus, Eye, Edit, Trash2, FlaskConical as Flask } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { rsApi, type Experiment } from '@/api/rs';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
@@ -226,10 +227,10 @@ const RsExperimentListPage: React.FC = () => {
   ];
 
   return (
-    <>
+    <PageContainer title='试验管理' subtitle='管理研发试验、记录数据、追踪批次'>
       <ListPageTemplate
-        title='试验管理'
-        subtitle='管理研发试验、记录数据、追踪批次'
+        title=''
+        subtitle=''
         columns={columns}
         data={experiments}
         loading={loading}
@@ -277,7 +278,7 @@ const RsExperimentListPage: React.FC = () => {
         message={`确定要删除试验 "${selectedExperiment?.name}" 吗？此操作不可恢复。`}
         danger
       />
-    </>
+    </PageContainer>
   );
 };
 

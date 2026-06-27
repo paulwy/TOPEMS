@@ -21,6 +21,7 @@ import { useAppStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate } from '@/components/templates/DetailPageTemplate';
 import type { TabConfig } from '@/components/templates/DetailPageTemplate';
+import { PageContainer } from '@/components/common';
 
 interface InstanceDetails {
   instance: WorkflowInstance;
@@ -324,19 +325,21 @@ const FlowInstanceDetailPage: React.FC = () => {
   }, [details]);
 
   return (
-    <DetailPageTemplate
-      title='实例详情'
-      subtitle={details?.instance.id}
-      loading={loading}
-      error={error}
-      backHref='/flow/instances'
-      tabs={tabs}
-      infoCard={details?.instance ? {
-        title: `实例 ${details.instance.id.substring(0, 8)}...`,
-        subtitle: getStatusText(details.instance.status),
-        tags: [getStatusText(details.instance.status)],
-      } : undefined}
-    />
+    <PageContainer padding={false} maxWidth={false}>
+      <DetailPageTemplate
+        title='实例详情'
+        subtitle={details?.instance.id}
+        loading={loading}
+        error={error}
+        backHref='/flow/instances'
+        tabs={tabs}
+        infoCard={details?.instance ? {
+          title: `实例 ${details.instance.id.substring(0, 8)}...`,
+          subtitle: getStatusText(details.instance.status),
+          tags: [getStatusText(details.instance.status)],
+        } : undefined}
+      />
+    </PageContainer>
   );
 };
 

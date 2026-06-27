@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Box, Typography } from '@mui/material';
 import { TrendingUp, Factory, ClipboardList, Package, Activity, CheckCircle } from 'lucide-react';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
+import { PageContainer } from '@/components/common';
 import { useAppStore } from '@/store';
 import { pdmApi } from '@/api/pdm';
 import type {
@@ -226,23 +227,25 @@ const PdmStatsPage: React.FC = () => {
   ];
 
   return (
-    <StatsPageTemplate
-      title='生产统计'
-      subtitle='Production Statistics'
-      statCards={statCards}
-      statColumns={6}
-      charts={charts}
-      chartColumns={{ xs: 1, lg: 2 }}
-      tables={tables}
-      loading={loading}
-      showTimeRange={false}
-      showSearch={false}
-      showExport={false}
-      showRefresh={true}
-      onRefresh={loadData}
-      chartSectionTitle=''
-      showStatCards={true}
-    />
+    <PageContainer padding={false}>
+      <StatsPageTemplate
+        title='生产统计'
+        subtitle='Production Statistics'
+        statCards={statCards}
+        statColumns={6}
+        charts={charts}
+        chartColumns={{ xs: 1, lg: 2 }}
+        tables={tables}
+        loading={loading}
+        showTimeRange={false}
+        showSearch={false}
+        showExport={false}
+        showRefresh={true}
+        onRefresh={loadData}
+        chartSectionTitle=''
+        showStatCards={true}
+      />
+    </PageContainer>
   );
 };
 

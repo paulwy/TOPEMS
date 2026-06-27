@@ -12,6 +12,7 @@ import {
   type ChartCard,
   type QuickAction,
 } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import {
   employeeApi,
   attendanceApi,
@@ -288,20 +289,27 @@ export const DashboardPage: React.FC = () => {
   );
 
   return (
-    <DashboardTemplate
+    <PageContainer
       title='人力资源管理'
       subtitle={`${getGreeting()}，员工管理与绩效考核`}
-      breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '人力资源' }]}
-      stats={stats}
-      charts={charts}
-      quickActions={quickActions}
-      quickActionsTitle='快捷操作'
-      loading={loading}
-      onRefresh={() => {
-        setLoading(true);
-        Promise.all([loadStats(), loadChartData()]).finally(() => setLoading(false));
-      }}
-    />
+      padding={false}
+      maxWidth={false}
+    >
+      <DashboardTemplate
+        title=''
+        subtitle=''
+        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '人力资源' }]}
+        stats={stats}
+        charts={charts}
+        quickActions={quickActions}
+        quickActionsTitle='快捷操作'
+        loading={loading}
+        onRefresh={() => {
+          setLoading(true);
+          Promise.all([loadStats(), loadChartData()]).finally(() => setLoading(false));
+        }}
+      />
+    </PageContainer>
   );
 };
 

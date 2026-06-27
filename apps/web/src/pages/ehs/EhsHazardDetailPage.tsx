@@ -36,6 +36,7 @@ import { EHSStatusBadge, EHSMeasureTypeBadge, calculateRiskLevel } from '@/compo
 import { useNotification } from '@/hooks/useNotification';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { PageContainer } from '@/components/common';
 
 interface ControlFormData {
   measure_type: 'engineering' | 'administrative' | 'ppe';
@@ -497,10 +498,10 @@ const EhsHazardDetailPage: React.FC = () => {
   }, [hazard]);
 
   return (
-    <>
+    <PageContainer title='危险源详情' subtitle='查看和管理危险源信息'>
       <DetailPageTemplate
-        title='危险源详情'
-        subtitle='查看和管理危险源信息'
+        title=''
+        subtitle=''
         backHref='/ehs'
         loading={loading}
         error={errorMessage}
@@ -741,7 +742,7 @@ const EhsHazardDetailPage: React.FC = () => {
         message='确定要删除此控制措施吗？'
         danger
       />
-    </>
+    </PageContainer>
   );
 };
 

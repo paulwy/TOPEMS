@@ -7,7 +7,7 @@ import type { Contact, CreateContactRequest, UpdateContactRequest } from '@/api/
 import { crmApi } from '@/api/crm';
 import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
-import { DataExport, ActionButton, FormField, Dialog, StatusBadge } from '@/components/common';
+import {DataExport, ActionButton, FormField, Dialog, StatusBadge, PageContainer} from '@/components/common';
 import { Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { ListPageTemplate } from '@/components/templates';
 import type { ColumnDef, RowAction, FilterConfig } from '@/components/templates';
@@ -270,10 +270,11 @@ const ContactManagementPage: React.FC = () => {
   );
 
   return (
+    <PageContainer title='联系人管理' subtitle='管理联系人信息，包括姓名、联系方式、职位等'>
     <>
       <ListPageTemplate<Contact>
-        title='联系人管理'
-        subtitle='管理联系人信息，包括姓名、联系方式、职位等'
+        title=''
+        subtitle=''
         backButton={{
           href: '/dashboard',
         }}
@@ -501,6 +502,7 @@ const ContactManagementPage: React.FC = () => {
         )}
       </Dialog>
     </>
+    </PageContainer>
   );
 };
 

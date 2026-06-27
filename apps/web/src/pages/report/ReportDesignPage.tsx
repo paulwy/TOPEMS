@@ -1,5 +1,6 @@
 import React from 'react';
-import { Box, Container, Typography, Card, CardContent, Button } from '@mui/material';
+import { Box, Typography, Card, CardContent, Button } from '@mui/material';
+import { PageContainer } from '@/components/common';
 import {
   PenTool as PenToolIcon,
   Table as TableIcon,
@@ -9,26 +10,10 @@ import {
 
 const ReportDesignPage: React.FC = () => {
   return (
-    <Container
-      maxWidth='xl'
-      sx={{ py: 3 }}
+    <PageContainer
+      title='报表设计'
+      subtitle='可视化报表设计器，支持拖拽式布局和多种组件'
     >
-      <div style={{ marginBottom: 12 }}>
-        <Typography
-          variant='h4'
-          sx={{ fontWeight: 'bold' }}
-          gutterBottom
-        >
-          报表设计
-        </Typography>
-        <Typography
-          variant='body2'
-          color='text.secondary'
-        >
-          可视化报表设计器，支持拖拽式布局和多种组件
-        </Typography>
-      </div>
-
       <Card>
         <CardContent>
           <Box
@@ -83,7 +68,7 @@ const ReportDesignPage: React.FC = () => {
           </Box>
         </CardContent>
       </Card>
-    </Container>
+    </PageContainer>
   );
 };
 

@@ -11,7 +11,7 @@ import {
 import { useAppStore } from '../../store';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { ModeToggle } from '@/components/theme/ModeToggle';
-import { DataExport, ActionButton, FormField, FormSelect, StatusBadge, Dialog } from '@/components/common';
+import { DataExport, ActionButton, FormField, FormSelect, StatusBadge, Dialog, PageContainer} from '@/components/common';
 
 interface PositionManagementPageProps {}
 
@@ -358,12 +358,12 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
   );
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
+    <PageContainer title="岗位管理" subtitle="管理企业岗位信息、薪资范围">
       {/* 列表页模板 */}
       <Box sx={{ maxWidth: 1280, mx: 'auto', px: 3, py: 3 }}>
         <ListPageTemplate
-          title='岗位管理'
-          subtitle='管理企业岗位信息、薪资范围'
+          title=""
+          subtitle=""
           breadcrumbs={[{ label: '人力资源', href: '/hrm' }, { label: '岗位管理' }]}
           columns={columns}
           data={data.items}
@@ -842,7 +842,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
           )}
         </DialogContent>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };
 

@@ -22,6 +22,7 @@ import {
   TableRow,
   Paper,
 } from '@mui/material';
+import { PageContainer } from '@/components/common';
 import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type {
@@ -343,10 +344,10 @@ const MaterialReturnPage: React.FC = () => {
   );
 
   return (
-    <>
+    <PageContainer title="物料退库管理" subtitle="管理物料退库记录,包括退库单号、工单、退库人、退库原因等">
       <ListPageTemplate
-        title='物料退库管理'
-        subtitle='管理物料退库记录,包括退库单号、工单、退库人、退库原因等'
+        title=""
+        subtitle=""
         columns={columns}
         data={returns}
         loading={loading}
@@ -684,7 +685,7 @@ const MaterialReturnPage: React.FC = () => {
           <Button onClick={() => setShowDetailDialog(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

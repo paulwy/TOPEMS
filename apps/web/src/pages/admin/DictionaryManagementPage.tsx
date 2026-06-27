@@ -12,7 +12,7 @@ import {
   Upload,
   RefreshCw,
 } from 'lucide-react';
-import { BackButton } from '@/components/common';
+import { BackButton, PageContainer } from '@/components/common';
 import { dictTypeApi, dictItemApi, type DictType, type DictItem } from '@/api/system';
 import { useAppStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
@@ -692,7 +692,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
   );
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
+    <PageContainer>
       <Box
         sx={{
           bgcolor: 'background.paper',
@@ -1414,7 +1414,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
         message={confirmDialogConfig?.message || ''}
         danger={confirmDialogConfig?.danger}
       />
-    </Box>
+    </PageContainer>
   );
 };
 

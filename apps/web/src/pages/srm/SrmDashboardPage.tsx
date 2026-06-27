@@ -6,6 +6,7 @@ import { srmApi } from '@/api/srm';
 import type { SrmDetailedStatistics } from '@/api/srm';
 import { apiLogger } from '@/utils/logger';
 import { DashboardTemplate, type StatCard, type ChartCard } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { useAppStore } from '@/store';
 
 const SrmDashboardPage: React.FC = () => {
@@ -207,15 +208,22 @@ const SrmDashboardPage: React.FC = () => {
   }, [statistics]);
 
   return (
-    <DashboardTemplate
+    <PageContainer
       title='供应商关系管理'
       subtitle='Supplier Relationship Management'
-      breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: 'SRM' }]}
-      stats={stats}
-      charts={charts}
-      loading={loading}
-      onRefresh={loadStatistics}
-    />
+      padding={false}
+      maxWidth={false}
+    >
+      <DashboardTemplate
+        title=''
+        subtitle=''
+        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: 'SRM' }]}
+        stats={stats}
+        charts={charts}
+        loading={loading}
+        onRefresh={loadStatistics}
+      />
+    </PageContainer>
   );
 };
 

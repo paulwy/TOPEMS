@@ -68,6 +68,7 @@ import {
   CircularProgress,
 } from '@mui/material';
 import { Button } from '@mui/material';
+import { PageContainer } from '@/components/common';
 
 type TabType =
   | 'map'
@@ -893,12 +894,13 @@ const GisContent: React.FC = () => {
   );
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #f8fafc 0%, #ecfeff 100%)',
-      }}
-    >
+    <PageContainer padding={false} maxWidth={false}>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #f8fafc 0%, #ecfeff 100%)',
+        }}
+      >
       <Box sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3 }, py: 4 }}>
         <Stack
           direction='row'
@@ -1950,7 +1952,8 @@ const GisContent: React.FC = () => {
           </DialogActions>
         </Dialog>
       </Box>
-    </Box>
+      </Box>
+    </PageContainer>
   );
 };
 

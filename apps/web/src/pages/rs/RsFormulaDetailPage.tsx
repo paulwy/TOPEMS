@@ -20,6 +20,7 @@ import { Button } from '@mui/material';
 import { Edit, History, CheckCircle } from 'lucide-react';
 import { DetailPageTemplate, type SectionConfig } from '@/components/templates';
 import { formulaApi } from '@/api/rs';
+import { PageContainer } from '@/components/common';
 import type { Formula, FormulaVersion } from '@/api/rs';
 import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
@@ -310,14 +311,16 @@ const RsFormulaDetailPage: React.FC = () => {
   ].filter(Boolean) as any[];
 
   return (
-    <DetailPageTemplate
-      title={formula.name}
-      subtitle={`编码: ${formula.code}`}
-      infoCard={infoCard}
-      sections={sections}
-      sidebar={sidebar}
-      actions={actions}
-    />
+    <PageContainer title={formula.name} subtitle={`编码: ${formula.code}`}>
+      <DetailPageTemplate
+        title=''
+        subtitle=''
+        infoCard={infoCard}
+        sections={sections}
+        sidebar={sidebar}
+        actions={actions}
+      />
+    </PageContainer>
   );
 };
 

@@ -25,6 +25,7 @@ import {
 } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import type { RowAction, FilterConfig } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
 import { useAppStore } from '@/store';
 import type { Project } from '@/api/rs';
@@ -289,10 +290,10 @@ const RsCodePage: React.FC = () => {
   );
 
   return (
-    <>
+    <PageContainer title='代码库管理' subtitle='管理代码仓库和版本控制'>
       <ListPageTemplate<CodeRepo>
-        title='代码库管理'
-        subtitle='管理代码仓库和版本控制'
+        title=''
+        subtitle=''
         backButton={{
           href: '/dashboard',
         }}
@@ -395,7 +396,7 @@ const RsCodePage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

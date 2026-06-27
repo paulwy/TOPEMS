@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { PageContainer } from '@/components/common';
 import {
   Chip,
   Typography,
@@ -647,7 +648,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+    <PageContainer padding={false} maxWidth={false}>
       <Box
         sx={{
           display: 'flex',
@@ -1209,7 +1210,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };
 

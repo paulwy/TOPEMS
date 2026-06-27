@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { FileText, Calendar, Users } from 'lucide-react';
 import FormPageTemplate from '@/components/templates/FormPageTemplate';
 import type { FormSection, FormField } from '@/components/templates/FormPageTemplate';
+import { PageContainer } from '@/components/common';
 import { pmApi, type Project } from '@/api/pm';
 import { useNotification } from '@/hooks/useNotification';
 import { logger } from '@/utils/logger';
@@ -272,26 +273,31 @@ const PmContractCreatePage: React.FC = () => {
   ];
 
   return (
-    <FormPageTemplate
+    <PageContainer
       title='创建合同'
       subtitle='填写合同基本信息'
-      breadcrumbs={[
-        { label: '首页', href: '/dashboard' },
-        { label: '项目管理', href: '/pm' },
-        { label: '合同管理', href: '/pm/contracts' },
-        { label: '创建合同' },
-      ]}
-      sections={sections}
-      schema={contractSchema}
-      loading={loading}
-      submitting={submitting}
-      onSubmit={handleSubmit}
-      onCancel={handleCancel}
-      submitText='创建合同'
-      cancelText='取消'
-      columns={2}
-      stickyFooter={true}
-    />
+    >
+      <FormPageTemplate
+        title=''
+        subtitle=''
+        breadcrumbs={[
+          { label: '首页', href: '/dashboard' },
+          { label: '项目管理', href: '/pm' },
+          { label: '合同管理', href: '/pm/contracts' },
+          { label: '创建合同' },
+        ]}
+        sections={sections}
+        schema={contractSchema}
+        loading={loading}
+        submitting={submitting}
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+        submitText='创建合同'
+        cancelText='取消'
+        columns={2}
+        stickyFooter={true}
+      />
+    </PageContainer>
   );
 };
 

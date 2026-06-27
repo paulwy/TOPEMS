@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Card, CardContent, Stack, Chip, Button } from '@mui/material';
 import { Settings, Database, Cloud, Zap, CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import { useErpConnections } from '@/hooks/useExternalErp';
+import { PageContainer } from '@/components/common';
 
 interface ErpConnection {
   id: string;
@@ -86,8 +87,8 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
   }, [connections]);
 
   return (
-    <Box sx={{ minHeight: '100vh', backgroundColor: 'grey.50', p: 3 }}>
-      <Box sx={{ maxWidth: 1280, mx: 'auto' }}>
+    <PageContainer maxWidth='xl'>
+      <Box>
         <Stack
           direction='row'
           sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 3 }}
@@ -576,7 +577,7 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
           </CardContent>
         </Card>
       </Box>
-    </Box>
+    </PageContainer>
   );
 };
 

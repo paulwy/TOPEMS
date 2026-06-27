@@ -26,6 +26,7 @@ import {
 import type { Contract, ContractMilestone, ContractPaymentSchedule } from '@/api/pm';
 import { pmApi } from '@/api/pm';
 import { DetailPageTemplate, type TabConfig } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 
 const STATUS_LABELS: Record<string, string> = {
   draft: '草稿',
@@ -436,19 +437,21 @@ const PmContractDetailPage: React.FC = () => {
   }, [contract]);
 
   return (
-    <DetailPageTemplate
-      title={contract?.contract_name || '合同详情'}
-      subtitle={contract?.contract_code}
-      breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '项目管理', href: '/pm/projects' }, { label: '合同', href: '/pm/contracts' }, { label: '合同详情' }]}
-      loading={loading}
-      error={error}
-      backHref='/pm/contracts'
-      onEdit={() => id && navigate(`/pm/contracts/${id}`)}
-      tabs={tabs}
-      defaultTab='overview'
-      infoCard={infoCard}
-      onRefresh={() => id && loadContractData(id)}
-    />
+    <PageContainer title={contract?.contract_name || '合同详情'} subtitle={contract?.contract_code}>
+      <DetailPageTemplate
+        title=''
+        subtitle=''
+        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '项目管理', href: '/pm/projects' }, { label: '合同', href: '/pm/contracts' }, { label: '合同详情' }]}
+        loading={loading}
+        error={error}
+        backHref='/pm/contracts'
+        onEdit={() => id && navigate(`/pm/contracts/${id}`)}
+        tabs={tabs}
+        defaultTab='overview'
+        infoCard={infoCard}
+        onRefresh={() => id && loadContractData(id)}
+      />
+    </PageContainer>
   );
 };
 

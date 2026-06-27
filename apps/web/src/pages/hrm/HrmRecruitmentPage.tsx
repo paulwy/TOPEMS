@@ -23,6 +23,7 @@ import { Box, Typography, Chip } from '@mui/material';
 import { apiLogger } from '@/utils/logger';
 import { useNotification } from '@/hooks/useNotification';
 import { StatCardGroup } from '@/components/mui';
+import { PageContainer } from '@/components/common';
 import {
   jobOpeningApi,
   candidateApi,
@@ -355,8 +356,9 @@ const HrmRecruitmentPage: React.FC = () => {
   );
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
-      {/* Header */}
+    <PageContainer maxWidth={false} padding={false}>
+      <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
+        {/* Header */}
       <Box
         sx={{
           bgcolor: 'background.paper',
@@ -1490,7 +1492,8 @@ const HrmRecruitmentPage: React.FC = () => {
           </>
         )}
       </Box>
-    </Box>
+      </Box>
+    </PageContainer>
   );
 };
 

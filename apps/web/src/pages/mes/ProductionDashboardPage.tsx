@@ -58,6 +58,7 @@ import {
 } from '@/api/mes';
 import { apiLogger } from '@/utils/logger';
 import { PageHeader } from '@/components/layout/PageHeader';
+import { PageContainer } from '@/components/common';
 
 // ============== 类型定义 ==============
 interface RealtimeAlarm {
@@ -1365,7 +1366,8 @@ export const ProductionDashboardPage: React.FC = () => {
   );
 
   return (
-    <Box sx={{ p: { xs: 2, md: 3 }, backgroundColor: 'grey.50', minHeight: '100vh' }}>
+    <PageContainer padding={false} maxWidth={false}>
+      <Box sx={{ p: { xs: 2, md: 3 }, backgroundColor: 'grey.50', minHeight: '100vh' }}>
       <PageHeader
         title='MES 生产看板'
         subtitle='实时生产数据监控 · 设备状态 · 排产进度'
@@ -1784,7 +1786,8 @@ export const ProductionDashboardPage: React.FC = () => {
           </Typography>
         </Stack>
       </Box>
-    </Box>
+      </Box>
+    </PageContainer>
   );
 };
 

@@ -38,6 +38,7 @@ import { useNavigate } from 'react-router-dom';
 import { aiApi, type QAHistoryItem } from '../../api/ai';
 import { logger } from '@/utils/logger';
 import { useAppStore } from '@/store';
+import { PageContainer } from '@/components/common';
 
 interface ChatMessage {
   id: string;
@@ -322,13 +323,14 @@ export const AiChatPage: React.FC = () => {
   };
 
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        height: '100vh',
-        backgroundColor: '#f5f7fa',
-      }}
-    >
+    <PageContainer padding={false} maxWidth={false}>
+      <Box
+        sx={{
+          display: 'flex',
+          height: '100vh',
+          backgroundColor: '#f5f7fa',
+        }}
+      >
       <Box
         sx={{
           width: 360,
@@ -1022,7 +1024,8 @@ export const AiChatPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+      </Box>
+    </PageContainer>
   );
 };
 

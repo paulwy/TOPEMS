@@ -19,6 +19,7 @@ import { useAppStore } from '@/store';
 import { Plus, Edit, Trash2 } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 
 const ScmEvaluationPage: React.FC = () => {
   const [evaluations, setEvaluations] = useState<SupplierEvaluation[]>([]);
@@ -260,10 +261,10 @@ const ScmEvaluationPage: React.FC = () => {
   ];
 
   return (
-    <>
+    <PageContainer title='供应商评估管理' subtitle='供应商评估记录,包括质量、交期、服务、价格评分'>
       <ListPageTemplate
-        title='供应商评估管理'
-        subtitle='供应商评估记录,包括质量、交期、服务、价格评分'
+        title=''
+        subtitle=''
         columns={columns}
         data={evaluations}
         loading={loading}
@@ -422,7 +423,7 @@ const ScmEvaluationPage: React.FC = () => {
           </form>
         </DialogContent>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

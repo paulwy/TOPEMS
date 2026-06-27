@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { PageContainer } from '@/components/common';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -507,15 +508,10 @@ const LimsSamplePage: React.FC = () => {
   }
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #f0fdfa 0%, #f8fafc 100%)',
-      }}
-    >
+    <PageContainer title="样品管理" subtitle="Sample Management">
       <ListPageTemplate
-        title='样品管理'
-        subtitle='Sample Management'
+        title=""
+        subtitle=""
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
           { label: 'LIMS' },
@@ -848,7 +844,7 @@ const LimsSamplePage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };
 

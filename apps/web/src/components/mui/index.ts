@@ -24,18 +24,12 @@ export type { SearchSuggestion, SearchInputProps } from './SearchInput';
 export { FilterBar } from './FilterBar';
 export type { FilterOption, FilterConfig, FilterBarProps } from './FilterBar';
 
-// 状态展示 - 已整合到 common/StatCard
+// 状态展示 - StatCard 和 StatCardGroup
 export { StatCard, StatCardGroup } from './StatCard';
 export type { StatCardProps, StatCardGroupProps } from './StatCard';
 
-// 状态展示 - 已整合到 templates/EmptyState
-export {
-  EmptyState,
-  ListEmptyState,
-  SearchEmptyState,
-  PermissionEmptyState,
-  ErrorEmptyState,
-} from './EmptyState';
+// 状态展示 - EmptyState
+export { EmptyState } from './EmptyState';
 export type { EmptyStateProps } from './EmptyState';
 
 // 状态展示 - 已整合到 common/LoadingSpinner

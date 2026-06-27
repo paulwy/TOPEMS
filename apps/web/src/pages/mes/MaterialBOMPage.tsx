@@ -22,6 +22,7 @@ import {
   TableRow,
   Paper,
 } from '@mui/material';
+import { PageContainer } from '@/components/common';
 import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type {
@@ -404,10 +405,10 @@ const MaterialBOMPage: React.FC = () => {
   );
 
   return (
-    <>
+    <PageContainer title="物料BOM管理" subtitle="管理物料清单(BOM),包括产品结构、子项物料、版本等信息">
       <ListPageTemplate
-        title='物料BOM管理'
-        subtitle='管理物料清单(BOM),包括产品结构、子项物料、版本等信息'
+        title=""
+        subtitle=""
         columns={columns}
         data={boms}
         loading={loading}
@@ -764,7 +765,7 @@ const MaterialBOMPage: React.FC = () => {
           <Button onClick={() => setShowDetailDialog(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

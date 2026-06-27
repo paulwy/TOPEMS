@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useCallback } from 'react';
+import { PageContainer } from '@/components/common';
 import { useNavigate } from 'react-router-dom';
 import {
   Plus,
@@ -280,10 +281,10 @@ const IntegrationLimsQmsPage: React.FC = () => {
   };
 
   return (
-    <>
+    <PageContainer title="LIMS ↔ QMS 同步" subtitle="管理 LIMS 样本与 QMS 检验的同步">
       <ListPageTemplate
-        title='LIMS ↔ QMS 同步'
-        subtitle='管理 LIMS 样本与 QMS 检验的同步'
+        title=""
+        subtitle=""
         columns={columns}
         data={filteredData}
         loading={loading}
@@ -343,7 +344,7 @@ const IntegrationLimsQmsPage: React.FC = () => {
           </DialogActions>
         )}
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

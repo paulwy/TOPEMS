@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import type { RowAction, FilterConfig } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
 import { useAppStore } from '@/store';
 import type { Build, CreateBuildRequest } from '@/api/rs';
@@ -339,10 +340,10 @@ const RsBuildPage: React.FC = () => {
   );
 
   return (
-    <>
+    <PageContainer title='构建管理' subtitle='管理代码构建和构建流水线'>
       <ListPageTemplate<Build>
-        title='构建管理'
-        subtitle='管理代码构建和构建流水线'
+        title=''
+        subtitle=''
         backButton={{
           href: '/dashboard',
         }}
@@ -531,7 +532,7 @@ const RsBuildPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

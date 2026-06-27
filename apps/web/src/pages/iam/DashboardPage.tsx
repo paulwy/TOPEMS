@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Users, Shield, Activity, AlertTriangle, ArrowRight } from 'lucide-react';
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction, RecentItem } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import PieChartComponent from '../../components/charts/PieChart';
 
 const iconMap: Record<string, React.ReactNode> = {
@@ -138,17 +139,24 @@ export const DashboardPage: React.FC = () => {
   ];
 
   return (
-    <DashboardTemplate
+    <PageContainer
       title='系统管理'
       subtitle={`${getGreeting()}，身份认证与访问控制`}
-      stats={stats}
-      charts={charts}
-      recentItems={recentItems}
-      recentTitle='最近活跃用户'
-      quickActions={quickActions}
-      quickActionsTitle='快速操作'
-      loading={loading}
-    />
+      padding={false}
+      maxWidth={false}
+    >
+      <DashboardTemplate
+        title=''
+        subtitle=''
+        stats={stats}
+        charts={charts}
+        recentItems={recentItems}
+        recentTitle='最近活跃用户'
+        quickActions={quickActions}
+        quickActionsTitle='快速操作'
+        loading={loading}
+      />
+    </PageContainer>
   );
 };
 

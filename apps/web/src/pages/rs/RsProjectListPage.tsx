@@ -11,6 +11,7 @@ import {
 import { Button } from '@mui/material';
 import { Plus, Download, Eye, Edit, Trash2 } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
 import { useAppStore } from '@/store';
 import type { Project } from '@/api/rs';
@@ -240,10 +241,10 @@ const RsProjectListPage: React.FC = () => {
   );
 
   return (
-    <Box sx={{ bgcolor: 'white', minHeight: '100vh', py: 3 }}>
+    <PageContainer title='研发项目管理' subtitle='管理研发项目、跟踪进度、分配资源'>
       <ListPageTemplate
-        title='研发项目管理'
-        subtitle='管理研发项目、跟踪进度、分配资源'
+        title=''
+        subtitle=''
         columns={columns}
         data={projects}
         loading={loading}
@@ -295,7 +296,7 @@ const RsProjectListPage: React.FC = () => {
         message={`确定要删除项目 "${selectedProject?.name}" 吗？此操作不可恢复。`}
         danger
       />
-    </Box>
+    </PageContainer>
   );
 };
 

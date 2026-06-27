@@ -4,6 +4,7 @@ import { FileText, ArrowRight, FlaskConical, CheckCircle, Rocket } from 'lucide-
 import { DashboardTemplate } from '@/components/templates';
 import { useAppStore } from '@/store';
 import type { StatCard, ChartCard, QuickAction } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import BarChartComponent from '../../components/charts/BarChart';
 import LineChartComponent from '../../components/charts/LineChart';
 import { rsApi } from '@/api/rs';
@@ -162,15 +163,22 @@ export const DashboardPage: React.FC = () => {
   ];
 
   return (
-    <DashboardTemplate
+    <PageContainer
       title='研发管理'
       subtitle={`${getGreeting()}，研发项目与文档管理`}
-      stats={statsCards}
-      charts={charts}
-      quickActions={quickActions}
-      quickActionsTitle='快捷操作'
-      loading={loading}
-    />
+      padding={false}
+      maxWidth={false}
+    >
+      <DashboardTemplate
+        title=''
+        subtitle=''
+        stats={statsCards}
+        charts={charts}
+        quickActions={quickActions}
+        quickActionsTitle='快捷操作'
+        loading={loading}
+      />
+    </PageContainer>
   );
 };
 

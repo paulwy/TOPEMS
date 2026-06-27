@@ -3,6 +3,7 @@ import { Box, Chip } from '@mui/material';
 import { Plus, Eye, Edit, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { formulaApi } from '@/api/rs';
 import type { Formula } from '@/api/rs';
 import { useAppStore } from '@/store';
@@ -229,10 +230,10 @@ const RsFormulaListPage: React.FC = () => {
   );
 
   return (
-    <>
+    <PageContainer title='配方管理' subtitle='管理研发配方、版本控制、配方发布'>
       <ListPageTemplate
-        title='配方管理'
-        subtitle='管理研发配方、版本控制、配方发布'
+        title=''
+        subtitle=''
         breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '研发', href: '/rs' }, { label: '配方管理' }]}
         columns={columns}
         data={paginatedFormulas}
@@ -292,7 +293,7 @@ const RsFormulaListPage: React.FC = () => {
         message={`确定要删除配方 "${selectedFormula?.name}" 吗？此操作不可恢复。`}
         danger
       />
-    </>
+    </PageContainer>
   );
 };
 

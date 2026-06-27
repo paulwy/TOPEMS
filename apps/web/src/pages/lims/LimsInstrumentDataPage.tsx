@@ -54,6 +54,7 @@ import {
 } from '@mui/material';
 import { Grid } from '@/components';
 import { PageHeader } from '@/components/templates/PageHeader';
+import { PageContainer } from '@/components/common';
 import { apiLogger } from '@/utils/logger';
 import type {
   InstrumentData,
@@ -616,8 +617,7 @@ const LimsInstrumentDataPage: React.FC = () => {
   );
 
   return (
-    <Container maxWidth="xl">
-      <PageHeader title="仪器数据采集" subtitle="LIMS 仪器数据自动采集与解析管理" />
+    <PageContainer title="仪器数据采集" subtitle="LIMS 仪器数据自动采集与解析管理" maxWidth="xl">
 
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={6} md={3}>
@@ -1510,7 +1510,7 @@ const LimsInstrumentDataPage: React.FC = () => {
           {notification.message}
         </Alert>
       </Snackbar>
-    </Container>
+    </PageContainer>
   );
 };
 

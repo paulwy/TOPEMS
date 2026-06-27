@@ -12,6 +12,7 @@ import {
 import { Button } from '@mui/material';
 import { apiLogger } from '@/utils/logger';
 import { Plus, Eye, Clock } from 'lucide-react';
+import { PageContainer } from '@/components/common';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import type { RowAction, FilterConfig } from '@/components/templates';
 import { pdmApi } from '@/api/pdm';
@@ -224,10 +225,13 @@ const PdmProcessPage: React.FC = () => {
   );
 
   return (
-    <>
+    <PageContainer
+      title='生产工艺'
+      subtitle='Production Process'
+    >
       <ListPageTemplate<ProductionProcess>
-        title='生产工艺'
-        subtitle='Production Process'
+        title=''
+        subtitle=''
         backButton={{ href: '/dashboard' }}
         columns={columns}
         data={filteredProcesses}
@@ -401,7 +405,7 @@ const PdmProcessPage: React.FC = () => {
           <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

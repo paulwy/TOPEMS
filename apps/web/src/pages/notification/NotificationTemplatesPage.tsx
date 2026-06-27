@@ -30,6 +30,7 @@ import {
   type RowAction,
   type FilterConfig,
 } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 
 const NotificationTemplatesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -438,10 +439,10 @@ const NotificationTemplatesPage: React.FC = () => {
   }, []);
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100' }}>
+    <PageContainer title='通知模板管理' subtitle='管理系统通知模板'>
       <ListPageTemplate
-        title='通知模板管理'
-        subtitle='管理和配置通知消息模板'
+        title=''
+        subtitle=''
         backButton={{
           onClick: () => navigate('/notifications'),
         }}
@@ -507,7 +508,7 @@ const NotificationTemplatesPage: React.FC = () => {
           }}
         />
       )}
-    </Box>
+    </PageContainer>
   );
 };
 

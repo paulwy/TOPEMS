@@ -14,6 +14,7 @@ import {
   type QuickAction,
   type ChartCard,
 } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { PieChartComponent } from '@/components/charts/PieChart';
 import { BarChartComponent } from '@/components/charts/BarChart';
 
@@ -292,20 +293,27 @@ const IntegrationDashboardPage: React.FC = () => {
   ];
 
   return (
-    <DashboardTemplate
+    <PageContainer
       title='集成管理仪表板'
-      stats={statCards}
-      charts={charts}
-      quickActions={quickActions}
-      recentItems={recentItems}
-      recentTitle='最近事件'
-      loading={loading}
-      onRefresh={loadData}
-      layout={{
-        statsBreakpoints: { xs: 12, sm: 6, md: 4, lg: 3 },
-        chartsBreakpoints: { xs: 12, md: 6 },
-      }}
-    />
+      padding={false}
+      maxWidth={false}
+    >
+      <DashboardTemplate
+        title=''
+        subtitle=''
+        stats={statCards}
+        charts={charts}
+        quickActions={quickActions}
+        recentItems={recentItems}
+        recentTitle='最近事件'
+        loading={loading}
+        onRefresh={loadData}
+        layout={{
+          statsBreakpoints: { xs: 12, sm: 6, md: 4, lg: 3 },
+          chartsBreakpoints: { xs: 12, md: 6 },
+        }}
+      />
+    </PageContainer>
   );
 };
 

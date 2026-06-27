@@ -14,7 +14,7 @@ import {
   IconButton,
 } from '@mui/material';
 import { Button } from '@mui/material';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   GitBranch,
@@ -27,7 +27,7 @@ import {
   Calendar,
 } from 'lucide-react';
 import { useParams } from 'react-router-dom';
-import { BackButton } from '@/components/common';
+import { PageContainer } from '@/components/common';
 import type { Workflow, WorkflowVersion } from '@/api/workflow';
 import { workflowApi } from '@/api/workflow';
 import { useAppStore } from '../../store';
@@ -258,84 +258,30 @@ const FlowVersionHistoryPage: React.FC = () => {
     navigate(`/flow/definitions`);
   };
 
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          minHeight: '100vh',
-          bgcolor: 'grey.50',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-      >
-        <Loader2
-          size={32}
-          className='animate-spin'
-          style={{ color: 'secondary.dark' }}
-        />
-      </Box>
-    );
-  }
+  const headerActions = useMemo(() => [
+    {
+      label: '创建版本',
+      icon: <Plus size={18} />,
+      onClick: () => setShowCreateModal(true),
+      variant: 'contained' as const,
+      color: 'secondary' as const,
+    },
+  ], []);
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50', p: 3 }}>
-      {/* Header */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent sx={{ p: 3 }}>
-          <Stack
-            direction='row'
-            sx={{ alignItems: 'center', justifyContent: 'space-between' }}
-          >
-            <Stack
-              direction='row'
-              spacing={1.5}
-              sx={{ alignItems: 'center' }}
-            >
-              <BackButton href='/flow/definitions' />
-              <Box
-                sx={{
-                  width: 48,
-                  height: 48,
-                  bgcolor: 'secondary.light',
-                  borderRadius: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <GitBranch
-                  size={24}
-                  style={{ color: 'secondary.dark' }}
-                />
-              </Box>
-              <Box>
-                <Typography
-                  variant='h5'
-                  sx={{ fontWeight: 700 }}
-                >
-                  版本历史
-                </Typography>
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
-                  {workflow?.name}
-                </Typography>
-              </Box>
-            </Stack>
-            <Button
-              variant='contained'
-              onClick={() => setShowCreateModal(true)}
-              sx={{ bgcolor: 'secondary.main' }}
-              startIcon={<Plus size={20} />}
-            >
-              创建版本
-            </Button>
-          </Stack>
-        </CardContent>
-      </Card>
-
+    <PageContainer
+      title='版本历史'
+      subtitle={workflow?.name}
+      loading={loading}
+      headerProps={{
+        pageIcon: <GitBranch size={24} />,
+        pageColor: 'secondary.main',
+        backButton: {
+          href: '/flow/definitions',
+        },
+        actions: headerActions,
+      }}
+    >
       {/* Version Timeline */}
       <Card>
         <CardContent sx={{ p: 3 }}>
@@ -647,7 +593,7 @@ const FlowVersionHistoryPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };
 

@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useCallback, useMemo } from 'react';
+import { PageContainer } from '@/components/common';
 import { RefreshCw, Eye, ArrowRight } from 'lucide-react';
 import { Box, Chip, Dialog, DialogTitle, DialogContent, Typography } from '@mui/material';
 
@@ -188,10 +189,10 @@ const IntegrationEventsPage: React.FC = () => {
   ];
 
   return (
-    <>
+    <PageContainer title="集成事件日志" subtitle="查看所有集成事件的历史记录">
       <ListPageTemplate
-        title='集成事件日志'
-        subtitle='查看所有集成事件的历史记录'
+        title=""
+        subtitle=""
         columns={columns}
         data={filteredData}
         loading={loading}
@@ -403,7 +404,7 @@ const IntegrationEventsPage: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

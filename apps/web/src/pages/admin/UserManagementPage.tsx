@@ -19,6 +19,7 @@ import { useAppStore } from '../../store';
 import { RoleBadge } from '@/components/PermissionGate';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
+import { PageContainer } from '@/components/common';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 
 interface UserManagementPageProps {
@@ -525,10 +526,10 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100' }}>
+    <PageContainer title='用户管理' subtitle='管理平台用户账户、角色和权限'>
       <ListPageTemplate
-        title='用户管理'
-        subtitle='管理平台用户账户、角色和权限'
+        title=''
+        subtitle=''
         columns={columns}
         data={users}
         loading={loading}
@@ -865,7 +866,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
         message={confirmDialogConfig?.message || ''}
         danger={confirmDialogConfig?.danger}
       />
-    </Box>
+    </PageContainer>
   );
 };
 

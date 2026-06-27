@@ -46,6 +46,7 @@ import {
   type MapMarker,
   type GeoFence,
 } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { useAppStore } from '../../store';
 import { gisApi } from '@/api/gis';
 import type { MapMarker as GisMapMarker } from '@/api/gis';
@@ -249,7 +250,8 @@ export const GisFencePage: React.FC = () => {
   }
 
   return (
-    <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
+    <PageContainer title="地理围栏管理" subtitle="定义和管理地理围栏区域，设置进出告警规则" maxWidth="xl">
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Box
         sx={{
           display: 'flex',
@@ -590,7 +592,8 @@ export const GisFencePage: React.FC = () => {
           <Button variant='contained' onClick={handleSaveFence}>创建围栏</Button>
         </DialogActions>
       </Dialog>
-    </Box>
+      </Box>
+    </PageContainer>
   );
 };
 

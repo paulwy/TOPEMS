@@ -43,6 +43,7 @@ import { useNotification } from '@/hooks/useNotification';
 import { EnhancedDataTable } from '@/components/EnhancedDataTable';
 import { StatCardGroup } from '@/components/mui';
 import type { ConsolidationScope, ConsolidationCompany } from '@/types/consolidation';
+import { PageContainer } from '@/components/common';
 
 // Helper to convert tailwind color class to sx
 const getChipSx = (colorClass: string): object => {
@@ -398,45 +399,21 @@ export default function ConsolidationScopePage() {
   ];
 
   return (
-    <Box sx={{ p: 3 }}>
-      {/* 页面标题 */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          mb: 3,
-        }}
-      >
-        <Box>
-          <Typography
-            variant='h5'
-            sx={{
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-            }}
-          >
-            <GitMerge sx={{ width: 24, height: 24, color: 'primary.dark' }} />
-            合并范围管理
-          </Typography>
-          <Typography
-            variant='body2'
-            sx={{ color: 'text.secondary', mt: 0.5 }}
-          >
-            配置多公司合并报表的合并范围和抵消规则
-          </Typography>
-        </Box>
-        <Button
-          variant='contained'
-          onClick={() => navigate('#')}
-          startIcon={<Plus sx={{ width: 16, height: 16 }} />}
-        >
-          新建合并范围
-        </Button>
-      </Box>
-
+    <PageContainer
+      title='合并范围管理'
+      subtitle='配置多公司合并报表的合并范围和抵消规则'
+      maxWidth='xl'
+      headerProps={{
+        actions: [
+          {
+            label: '新建合并范围',
+            icon: <Plus sx={{ width: 16, height: 16 }} />,
+            onClick: () => navigate('#'),
+            variant: 'contained',
+          },
+        ],
+      }}
+    >
       {/* 搜索栏 */}
       <Card sx={{ mb: 3 }}>
         <CardContent sx={{ pt: 3 }}>
@@ -697,6 +674,6 @@ export default function ConsolidationScopePage() {
           )}
         </Box>
       </Box>
-    </Box>
+    </PageContainer>
   );
 }

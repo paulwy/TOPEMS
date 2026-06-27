@@ -148,3 +148,7 @@ export { default as LoadingSpinner } from './LoadingSpinner';
 // AdvancedFilterPanel - 高级筛选面板组件
 export { default as AdvancedFilterPanel } from './AdvancedFilter';
 export type { AdvancedFilterProps, FilterCondition } from './AdvancedFilter';
+
+// PageContainer - 统一页面容器组件
+export { default as PageContainer } from './PageContainer';
+export type { PageContainerProps } from './PageContainer';

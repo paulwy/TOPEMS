@@ -8,6 +8,7 @@ import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { Dialog } from '@/components/common/Dialog';
+import { PageContainer } from '@/components/common';
 
 const HrmEmployeeDetailPage: React.FC = () => {
   const navigate = useNavigate();
@@ -274,10 +275,10 @@ const HrmEmployeeDetailPage: React.FC = () => {
   );
 
   return (
-    <>
+    <PageContainer title='员工详情' subtitle='查看和管理员工信息'>
       <DetailPageTemplate
-        title='员工详情'
-        subtitle='查看和管理员工信息'
+        title=''
+        subtitle=''
         backHref='/hrm/employees'
         loading={loading}
         error={errorMessage}
@@ -314,7 +315,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
           </Typography>
         </Box>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

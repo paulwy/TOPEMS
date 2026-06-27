@@ -11,6 +11,7 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material';
+import { PageContainer } from '@/components/common';
 import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import type {
@@ -308,10 +309,10 @@ const WorkStationPage: React.FC = () => {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <>
+    <PageContainer title="工作站管理" subtitle="管理生产工作站,包括工作站名称、编码、位置、容量等">
       <ListPageTemplate
-        title='工作站管理'
-        subtitle='管理生产工作站,包括工作站名称、编码、位置、容量等'
+        title=""
+        subtitle=""
         columns={columns}
         data={workstations}
         loading={loading}
@@ -535,7 +536,7 @@ const WorkStationPage: React.FC = () => {
           <Button onClick={() => setShowDetailDialog(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

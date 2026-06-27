@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useMemo, useCallback } from 'react';
+import { PageContainer } from '@/components/common';
 import { apiLogger } from '@/utils/logger';
 import { useAppStore } from '@/store';
 import { useNavigate } from 'react-router-dom';
@@ -437,10 +438,10 @@ export default function ExternalErpConnectionsPage() {
   };
 
   return (
-    <>
+    <PageContainer title="外部ERP连接管理" subtitle="管理金蝶、用友、SAP等外部ERP系统的连接配置">
       <ListPageTemplate
-        title='外部ERP连接管理'
-        subtitle='管理金蝶、用友、SAP等外部ERP系统的连接配置'
+        title=""
+        subtitle=""
         columns={columns}
         data={filteredData}
         loading={isLoading}
@@ -514,6 +515,6 @@ export default function ExternalErpConnectionsPage() {
           />
         </DialogContent>
       </Dialog>
-    </>
+    </PageContainer>
   );
 }

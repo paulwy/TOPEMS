@@ -21,6 +21,7 @@ import {
   type FilterConfig,
   type RowAction,
 } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
 import { useAppStore } from '@/store';
 import type { Build, CreateBuildRequest } from '@/api/rs';
@@ -352,9 +353,9 @@ const RsReviewPage: React.FC = () => {
   ];
 
   return (
-    <Box sx={{ bgcolor: 'grey.100', minHeight: '100vh', py: 3 }}>
+    <PageContainer title='代码评审'>
       <ListPageTemplate
-        title='代码评审'
+        title=''
         columns={columns}
         data={filteredReviews}
         loading={loading}
@@ -468,7 +469,7 @@ const RsReviewPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };
 

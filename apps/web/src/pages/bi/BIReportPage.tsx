@@ -10,6 +10,7 @@ import {
   type RowAction,
   type FilterConfig,
 } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import {
   fetchReports,
   createReport,
@@ -303,15 +304,15 @@ const BIReportPage = () => {
   );
 
   return (
-    <Box sx={{ p: 3 }}>
+    <PageContainer title='报表管理' subtitle='创建、管理和生成业务报表'>
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
           {error}
         </Alert>
       )}
       <ListPageTemplate<Report>
-        title='报表管理'
-        subtitle='创建、管理和生成业务报表'
+        title=''
+        subtitle=''
         columns={columns}
         data={filteredReports}
         loading={loading}
@@ -336,7 +337,7 @@ const BIReportPage = () => {
           },
         ]}
       />
-    </Box>
+    </PageContainer>
   );
 };
 

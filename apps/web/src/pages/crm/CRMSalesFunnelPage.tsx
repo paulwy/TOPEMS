@@ -7,6 +7,7 @@ import {
   type StatsStatCard,
 } from '@/components/templates';
 import apiClient from '@/api/client';
+import { PageContainer } from '@/components/common';
 
 interface FunnelStage {
   stage: string;
@@ -114,19 +115,7 @@ const CRMSalesFunnelPage: React.FC = () => {
   ];
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography
-          variant='h4'
-          sx={{ fontWeight: 700 }}
-        >
-          销售漏斗
-        </Typography>
-        <Typography color='text.secondary'>
-          可视化销售机会的阶段性转化
-        </Typography>
-      </Box>
-
+    <PageContainer title='销售漏斗' subtitle='可视化销售机会的阶段性转化' maxWidth='xl'>
       <StatsPageTemplate
         title='漏斗分析'
         statCards={stats}
@@ -207,7 +196,7 @@ const CRMSalesFunnelPage: React.FC = () => {
           })}
         </Box>
       </Box>
-    </Box>
+    </PageContainer>
   );
 };
 

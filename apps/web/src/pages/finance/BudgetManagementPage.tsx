@@ -9,7 +9,7 @@ import {
   Settings,
 } from 'lucide-react';
 import { budgetApi, type Budget } from '@/api/erp';
-import { BackButton } from '@/components/common';
+import { BackButton, PageContainer } from '@/components/common';
 import { departmentApi, type Department } from '@/api/hrm';
 import { financeApi } from '@/api/finance';
 import { apiLogger } from '@/utils/logger';
@@ -533,7 +533,7 @@ const BudgetManagementPage: React.FC = () => {
   );
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100' }}>
+    <PageContainer padding={false} maxWidth={false}>
       <Box
         sx={{
           bgcolor: 'background.paper',
@@ -988,7 +988,7 @@ const BudgetManagementPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };
 

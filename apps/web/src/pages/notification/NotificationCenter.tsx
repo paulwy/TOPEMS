@@ -30,7 +30,7 @@ import NotificationItem from '@/components/notifications/NotificationItem';
 import NotificationSettings from '@/components/notifications/NotificationSettings';
 import useNotificationSettings from '@/hooks/useNotificationSettings';
 import { apiLogger } from '@/utils/logger';
-import { PageHeader } from '@/components';
+import { PageHeader, PageContainer } from '@/components';
 
 type NotificationFilterType = 'all' | NotificationTypeEnum;
 
@@ -192,6 +192,10 @@ const NotificationCenter: React.FC = () => {
   const totalPages = Math.max(1, Math.ceil(total / 20));
 
   return (
+    <PageContainer
+      maxWidth={false}
+      padding={false}
+    >
     <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100' }}>
       <Box sx={{ maxWidth: 1200, mx: 'auto', px: 2, py: 4 }}>
         <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
@@ -724,6 +728,7 @@ const NotificationCenter: React.FC = () => {
         </Box>
       </Box>
     </Box>
+    </PageContainer>
   );
 };
 

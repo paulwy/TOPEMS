@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FileText, ArrowRight, MessageCircle, BarChart3, Repeat, ThumbsUp } from 'lucide-react';
 import { DashboardTemplate } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import type { StatCard, ChartCard, QuickAction } from '@/components/templates';
 import BarChartComponent from '../../components/charts/BarChart';
 import LineChartComponent from '../../components/charts/LineChart';
@@ -147,15 +148,22 @@ export const DashboardPage: React.FC = () => {
   ];
 
   return (
-    <DashboardTemplate
+    <PageContainer
       title='AI智能助手'
       subtitle={`${getGreeting()}，智能对话与数据分析`}
-      stats={stats}
-      charts={charts}
-      quickActions={quickActions}
-      quickActionsTitle='快捷操作'
-      loading={loading}
-    />
+      padding={false}
+      maxWidth={false}
+    >
+      <DashboardTemplate
+        title=''
+        subtitle=''
+        stats={stats}
+        charts={charts}
+        quickActions={quickActions}
+        quickActionsTitle='快捷操作'
+        loading={loading}
+      />
+    </PageContainer>
   );
 };
 

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -30,6 +29,7 @@ import {
   Tooltip,
   Alert,
 } from '@mui/material';
+import { PageContainer } from '@/components/common';
 import {
   Plus as PlusIcon,
   Edit as EditIcon,
@@ -266,42 +266,20 @@ const ReportSchedulePage: React.FC = () => {
   };
 
   return (
-    <Container
-      maxWidth='xl'
-      sx={{ py: 3 }}
+    <PageContainer
+      title='定时任务管理'
+      subtitle='管理报表定时任务，支持 Cron 表达式、时间间隔和一次性任务'
+      headerProps={{
+        actions: [
+          {
+            label: '新建任务',
+            icon: <PlusIcon />,
+            onClick: handleOpenCreateDialog,
+            variant: 'contained',
+          },
+        ],
+      }}
     >
-      <Box
-        sx={{
-          mb: 3,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <div>
-          <Typography
-            variant='h4'
-            sx={{ fontWeight: 'bold' }}
-            gutterBottom
-          >
-            定时任务管理
-          </Typography>
-          <Typography
-            variant='body2'
-            color='text.secondary'
-          >
-            管理报表定时任务，支持 Cron 表达式、时间间隔和一次性任务
-          </Typography>
-        </div>
-        <Button
-          variant='contained'
-          startIcon={<PlusIcon />}
-          onClick={handleOpenCreateDialog}
-        >
-          新建任务
-        </Button>
-      </Box>
-
       {error && (
         <Alert
           severity='error'
@@ -626,7 +604,7 @@ const ReportSchedulePage: React.FC = () => {
           <Button onClick={() => setHistoryDialogOpen(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </PageContainer>
   );
 };
 

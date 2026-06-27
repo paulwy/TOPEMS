@@ -6,6 +6,7 @@ import { notificationApi, type Notification } from '@/api/notification';
 import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 
 const NotificationDetailPage: React.FC = () => {
   const navigate = useNavigate();
@@ -258,22 +259,24 @@ const NotificationDetailPage: React.FC = () => {
   );
 
   return (
-    <DetailPageTemplate
-      title='通知详情'
-      subtitle='查看通知详情'
-      backHref='/notification'
-      loading={loading}
-      error={errorMessage}
-      infoCard={infoCard}
-      tabs={tabs}
-      actions={[
-        {
-          label: '标记未读',
-          icon: <Clock style={{ width: 18, height: 18 }} />,
-          onClick: handleMarkUnread,
-        },
-      ]}
-    />
+    <PageContainer title='通知详情' subtitle='查看通知详情'>
+      <DetailPageTemplate
+        title=''
+        subtitle=''
+        backHref='/notification'
+        loading={loading}
+        error={errorMessage}
+        infoCard={infoCard}
+        tabs={tabs}
+        actions={[
+          {
+            label: '标记未读',
+            icon: <Clock style={{ width: 18, height: 18 }} />,
+            onClick: handleMarkUnread,
+          },
+        ]}
+      />
+    </PageContainer>
   );
 };
 

@@ -8,6 +8,7 @@ import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { PageContainer } from '@/components/common';
 
 const OpportunityDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -245,10 +246,10 @@ const OpportunityDetailPage: React.FC = () => {
   };
 
   return (
-    <>
+    <PageContainer title='商机详情' subtitle='查看和编辑商机信息'>
       <DetailPageTemplate
-        title='商机详情'
-        subtitle='查看和编辑商机信息'
+        title=''
+        subtitle=''
         backHref='/crm/opportunities'
         loading={loading}
         error={errorMessage}
@@ -266,7 +267,7 @@ const OpportunityDetailPage: React.FC = () => {
         message='确定要删除此商机吗？'
         danger
       />
-    </>
+    </PageContainer>
   );
 };
 

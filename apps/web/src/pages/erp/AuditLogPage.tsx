@@ -16,6 +16,7 @@ import {
   ChevronLeft,
   Eye,
 } from 'lucide-react';
+import { PageContainer } from '@/components/common';
 import {
   Box,
   Typography,
@@ -290,71 +291,30 @@ const AuditLogPage: React.FC = () => {
   );
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'slate.50' }}>
-      <Box
-        sx={{
-          bgcolor: 'background.paper',
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: 'divider',
-        }}
-      >
-        <Box sx={{ maxWidth: 1400, mx: 'auto', px: 2, py: 3 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <ActionButton
-                label='返回'
-                icon={<ChevronLeft size={20} />}
-                variant='text'
-                onClick={() => navigate('/erp/dashboard')}
-              />
-              <Box>
-                <Typography
-                  variant='h5'
-                  sx={{
-                    fontWeight: 'bold',
-                    color: 'text.primary',
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
-                >
-                  <FileText sx={{ width: 28, height: 28, mr: 1.5, color: 'indigo.600' }} />
-                  审计日志
-                </Typography>
-                <Typography variant='body2' sx={{ mt: 0.5, color: 'text.secondary' }}>
-                  操作日志列表、按用户/时间/模块筛选
-                </Typography>
-              </Box>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Button
-                variant='outlined'
-                size='small'
-                startIcon={<Download size={16} />}
-                onClick={handleExport}
-              >
-                导出日志
-              </Button>
-              <Button
-                variant='outlined'
-                size='small'
-                startIcon={<RefreshCw size={16} />}
-                onClick={loadLogs}
-              >
-                刷新
-              </Button>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-
-      <Box sx={{ maxWidth: 1400, mx: 'auto', px: 2, py: 3 }}>
+    <PageContainer
+      title='审计日志'
+      subtitle='操作日志列表、按用户/时间/模块筛选'
+      maxWidth='xl'
+      headerProps={{
+        backButton: {
+          onClick: () => navigate('/erp/dashboard'),
+        },
+        actions: [
+          {
+            label: '导出日志',
+            icon: <Download size={16} />,
+            onClick: handleExport,
+            variant: 'outlined',
+          },
+          {
+            label: '刷新',
+            icon: <RefreshCw size={16} />,
+            onClick: loadLogs,
+            variant: 'outlined',
+          },
+        ],
+      }}
+    >
         <Box
           sx={{
             display: 'grid',
@@ -661,7 +621,6 @@ const AuditLogPage: React.FC = () => {
             </>
           )}
         </Box>
-      </Box>
 
       <Dialog
         open={showDetailModal}
@@ -757,7 +716,7 @@ const AuditLogPage: React.FC = () => {
           <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };
 

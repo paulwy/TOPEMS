@@ -5,7 +5,6 @@ import {
   Mail,
   Shield,
   Settings,
-  ChevronLeft,
   Save,
   RefreshCw,
   CheckCircle2,
@@ -25,6 +24,7 @@ import { useForm } from 'react-hook-form';
 import { authApi, type User as UserType, type AccessLog } from '@/api/iam';
 import { useAppStore } from '../../store';
 import { useAuth } from '../../hooks/useAuth';
+import { PageContainer } from '@/components/common';
 
 import {
   Box,
@@ -457,62 +457,21 @@ const ProfilePage: React.FC = () => {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
+    <PageContainer
+      title='个人中心'
+      subtitle='管理您的个人信息和账户安全'
+      maxWidth='lg'
+      headerProps={{
+        backButton: { href: '/dashboard', visible: true },
+      }}
+    >
       <Box
         sx={{
-          bgcolor: 'background.paper',
-          borderBottom: 1,
-          borderColor: 'divider',
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', lg: '1fr 2fr' },
+          gap: 3,
         }}
       >
-        <Box sx={{ maxWidth: 1152, mx: 'auto', px: 3, py: 3 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <IconButton onClick={() => navigate('/dashboard')}>
-                <ChevronLeft size={20} />
-              </IconButton>
-              <Box>
-                <Typography
-                  variant='h5'
-                  sx={{
-                    fontWeight: 'bold',
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
-                >
-                  <User
-                    size={28}
-                    style={{ marginRight: 12, color: 'primary.dark' }}
-                  />
-                  个人中心
-                </Typography>
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                  sx={{ mt: 0.5 }}
-                >
-                  管理您的个人信息和账户安全
-                </Typography>
-              </Box>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-
-      <Box sx={{ maxWidth: 1152, mx: 'auto', px: 3, py: 3 }}>
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', lg: '1fr 2fr' },
-            gap: 3,
-          }}
-        >
           <Box>
             <Card sx={{ position: 'sticky', top: 64 }}>
               <CardContent sx={{ p: 3 }}>
@@ -1227,7 +1186,6 @@ const ProfilePage: React.FC = () => {
               </CardContent>
             </Card>
           </Box>
-        </Box>
       </Box>
 
       <Dialog
@@ -1306,7 +1264,7 @@ const ProfilePage: React.FC = () => {
           </DialogActions>
         </Box>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };
 

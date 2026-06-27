@@ -20,6 +20,7 @@ import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import type { RowAction, FilterConfig } from '@/components/mui';
 
 const InteractionManagementPage: React.FC = () => {
@@ -304,10 +305,11 @@ const InteractionManagementPage: React.FC = () => {
   );
 
   return (
+    <PageContainer title='交互记录管理' subtitle='管理客户交互记录，包括电话、邮件、会议、拜访等'>
     <>
       <ListPageTemplate<Interaction>
-        title='交互记录管理'
-        subtitle='管理客户交互记录，包括电话、邮件、会议、拜访等'
+        title=''
+        subtitle=''
         backButton={{
           href: '/dashboard',
         }}
@@ -490,6 +492,7 @@ const InteractionManagementPage: React.FC = () => {
         )}
       </Dialog>
     </>
+    </PageContainer>
   );
 };
 

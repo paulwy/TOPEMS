@@ -20,6 +20,7 @@ import {
   DollarSign,
   BookOpen,
 } from 'lucide-react';
+import { PageContainer } from '@/components/common';
 import {
   Box,
   Typography,
@@ -406,89 +407,44 @@ const VoucherManagementPage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'slate.50' }}>
-      <Box
-        sx={{
-          bgcolor: 'background.paper',
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: 'divider',
-        }}
-      >
-        <Box sx={{ maxWidth: 1400, mx: 'auto', px: 2, py: 3 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <ActionButton
-                label='返回'
-                icon={<ChevronLeft size={20} />}
-                variant='text'
-                onClick={() => navigate('/erp/dashboard')}
-              />
-              <Box>
-                <Typography
-                  variant='h5'
-                  sx={{
-                    fontWeight: 'bold',
-                    color: 'text.primary',
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
-                >
-                  <BookOpen sx={{ width: 28, height: 28, mr: 1.5, color: 'indigo.600' }} />
-                  会计凭证管理
-                </Typography>
-                <Typography variant='body2' sx={{ mt: 0.5, color: 'text.secondary' }}>
-                  凭证列表、创建凭证、审核凭证、记账、结账
-                </Typography>
-              </Box>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Button
-                variant='outlined'
-                size='small'
-                startIcon={<Upload size={16} />}
-              >
-                导入凭证
-              </Button>
-              <Button
-                variant='outlined'
-                size='small'
-                startIcon={<Download size={16} />}
-                onClick={handleExport}
-              >
-                导出
-              </Button>
-              <Button
-                variant='outlined'
-                size='small'
-                startIcon={<FileCheck size={16} />}
-                onClick={handleClosePeriod}
-              >
-                期末结账
-              </Button>
-              <Button
-                variant='contained'
-                size='small'
-                startIcon={<Plus size={16} />}
-                onClick={() => {
-                  resetForm();
-                  setShowCreateModal(true);
-                }}
-              >
-                新增凭证
-              </Button>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-
-      <Box sx={{ maxWidth: 1400, mx: 'auto', px: 2, py: 3 }}>
+    <PageContainer
+      title='会计凭证管理'
+      subtitle='凭证列表、创建凭证、审核凭证、记账、结账'
+      maxWidth='xl'
+      headerProps={{
+        backButton: {
+          onClick: () => navigate('/erp/dashboard'),
+        },
+        actions: [
+          {
+            label: '导入凭证',
+            icon: <Upload size={16} />,
+            variant: 'outlined',
+          },
+          {
+            label: '导出',
+            icon: <Download size={16} />,
+            onClick: handleExport,
+            variant: 'outlined',
+          },
+          {
+            label: '期末结账',
+            icon: <FileCheck size={16} />,
+            onClick: handleClosePeriod,
+            variant: 'outlined',
+          },
+          {
+            label: '新增凭证',
+            icon: <Plus size={16} />,
+            onClick: () => {
+              resetForm();
+              setShowCreateModal(true);
+            },
+            variant: 'contained',
+          },
+        ],
+      }}
+    >
         <Box
           sx={{
             display: 'grid',
@@ -813,7 +769,6 @@ const VoucherManagementPage: React.FC = () => {
             </>
           )}
         </Box>
-      </Box>
 
       <Dialog
         open={showCreateModal}
@@ -1267,7 +1222,7 @@ const VoucherManagementPage: React.FC = () => {
         message='确定要删除该凭证吗？此操作不可撤销。'
         danger
       />
-    </Box>
+    </PageContainer>
   );
 };
 

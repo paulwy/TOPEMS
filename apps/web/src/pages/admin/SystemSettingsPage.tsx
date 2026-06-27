@@ -14,6 +14,7 @@ import type {
   FormField,
   FieldDependency,
 } from '@/components/templates/FormPageTemplate';
+import { PageContainer } from '@/components/common';
 
 // ============ Mock 数据 ============
 const mockSettings = {
@@ -336,89 +337,61 @@ export default function SystemSettingsPage() {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
-      <Box sx={{ maxWidth: 1280, mx: 'auto', p: 3 }}>
-        {/* 页面头部 */}
-        <Box
+    <PageContainer
+      title='系统设置'
+      subtitle='管理系统基础配置、邮件设置、短信设置、日志设置'
+    >
+      {/* Tab 导航 */}
+      <Paper sx={{ borderRadius: 2, mb: 3 }}>
+        <Tabs
+          value={activeTab}
+          onChange={handleTabChange}
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 2,
-            mb: 3,
+            borderBottom: 1,
+            borderColor: 'divider',
+            '& .MuiTab-root': {
+              minHeight: 56,
+            },
           }}
         >
-          <Box
-            onClick={() => navigate('/dashboard')}
-            sx={{ cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-          >
-            <Typography
-              variant='h4'
-              sx={{ fontWeight: 'bold' }}
-            >
-              系统设置
-            </Typography>
-          </Box>
+          {tabsConfig.map((tab) => {
+            const Icon = tab.icon as React.ComponentType<{
+              style?: React.CSSProperties;
+            }>;
+            return (
+              <Tab
+                key={tab.id}
+                value={tab.id}
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Icon style={{ width: 18, height: 18 }} />
+                    <span>{tab.label}</span>
+                  </Box>
+                }
+              />
+            );
+          })}
+        </Tabs>
+
+        {/* 表单内容 */}
+        <Box sx={{ p: 3 }}>
+          <FormPageTemplate
+            title=''
+            subtitle=''
+            sections={sections}
+            defaultValues={defaultValues}
+            dependencies={dependencies}
+            onSubmit={handleSubmit}
+            onReset={handleReset}
+            submitText='保存'
+            resetText='重置'
+            columns={2}
+            stickyFooter={true}
+            showGroupTabs={false}
+            showProgress={false}
+          />
         </Box>
-        <Typography
-          variant='body2'
-          color='text.secondary'
-          sx={{ mb: 3 }}
-        >
-          管理系统基础配置、邮件设置、短信设置、日志设置
-        </Typography>
-
-        {/* Tab 导航 */}
-        <Paper sx={{ borderRadius: 2, mb: 3 }}>
-          <Tabs
-            value={activeTab}
-            onChange={handleTabChange}
-            sx={{
-              borderBottom: 1,
-              borderColor: 'divider',
-              '& .MuiTab-root': {
-                minHeight: 56,
-              },
-            }}
-          >
-            {tabsConfig.map((tab) => {
-              const Icon = tab.icon as React.ComponentType<{
-                style?: React.CSSProperties;
-              }>;
-              return (
-                <Tab
-                  key={tab.id}
-                  value={tab.id}
-                  label={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Icon style={{ width: 18, height: 18 }} />
-                      <span>{tab.label}</span>
-                    </Box>
-                  }
-                />
-              );
-            })}
-          </Tabs>
-
-          {/* 表单内容 */}
-          <Box sx={{ p: 3 }}>
-            <FormPageTemplate
-              title=''
-              subtitle=''
-              sections={sections}
-              defaultValues={defaultValues}
-              dependencies={dependencies}
-              onSubmit={handleSubmit}
-              onReset={handleReset}
-              submitText='保存'
-              resetText='重置'
-              columns={2}
-              stickyFooter={true}
-              showGroupTabs={false}
-              showProgress={false}
-            />
-          </Box>
-        </Paper>
-      </Box>
-    </Box>
+      </Paper>
+    </PageContainer>
   );
 }

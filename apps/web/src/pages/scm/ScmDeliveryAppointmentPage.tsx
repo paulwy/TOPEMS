@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 
 const STATUS_OPTIONS: { value: DeliveryAppointmentStatus | ''; label: string }[] = [
@@ -697,13 +698,13 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
   ];
 
   return (
-    <>
+    <PageContainer title='供应商送货预约管理' subtitle='管理供应商送货预约，包括预约、审批、到货确认及完成全流程'>
       {renderStats()}
       {filterBar}
 
       <ListPageTemplate
-        title='供应商送货预约管理'
-        subtitle='管理供应商送货预约，包括预约、审批、到货确认及完成全流程'
+        title=''
+        subtitle=''
         columns={columns}
         data={appointments}
         loading={loading}
@@ -938,7 +939,7 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
         message={confirmDialogConfig?.message || ''}
         danger={confirmDialogConfig?.danger}
       />
-    </>
+    </PageContainer>
   );
 };
 

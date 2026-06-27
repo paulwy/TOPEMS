@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { PageContainer } from '@/components/common';
 import {
   DollarSign,
   FileText,
@@ -614,7 +615,7 @@ const HrmPayrollPage: React.FC = () => {
   }
 
   return (
-    <Box>
+    <PageContainer padding={false} maxWidth={false}>
       {/* StatCards */}
       <Box
         sx={{
@@ -947,7 +948,7 @@ const HrmPayrollPage: React.FC = () => {
           </Box>
         </Box>
       )}
-    </Box>
+    </PageContainer>
   );
 };
 

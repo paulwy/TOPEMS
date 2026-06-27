@@ -1,5 +1,4 @@
 // Layout components
-export { TopNav } from './layout/TopNav';
 export { ModuleTabs } from './layout/ModuleTabs';
 export { default as PageHeader } from './layout/PageHeader';
 export type { PageHeaderProps, PageHeaderAction } from './layout/PageHeader';
@@ -14,15 +13,15 @@ export { GlobalLayout } from './layout/GlobalLayout';
 // MobileNav - 移动端完整导航实现
 export { MobileNav } from './layout/MobileNav';
 
-// MobileHeader - 移动端顶部导航栏
-export { default as MobileHeader } from './layout/MobileHeader';
-
 // Sidebar - 侧边栏组件
 export { Sidebar } from './layout/Sidebar';
 
 // Common components
 export { Grid } from './common/Grid';
 export type { GridProps, GridSizeProps } from './common/Grid';
+
+export { default as PageContainer } from './common/PageContainer';
+export type { PageContainerProps } from './common/PageContainer';
 
 export { default as BackButton } from './common/BackButton';
 export type { BackButtonProps } from './common/BackButton';
@@ -92,13 +91,7 @@ export type {
 export { NotificationProvider } from './notification/NotificationProvider';
 
 // MUI enhanced components
-export {
-  EmptyState,
-  ListEmptyState,
-  SearchEmptyState,
-  PermissionEmptyState,
-  ErrorEmptyState,
-} from './mui/EmptyState';
+export { EmptyState } from './mui/EmptyState';
 export type { EmptyStateProps } from './mui/EmptyState';
 
 export { LoadingState, InlineLoading, ButtonLoading } from './mui/LoadingState';
@@ -145,13 +138,6 @@ export type {
   DashboardTemplateProps,
 } from './templates/DashboardTemplate';
 
-export type { EmptyStateAction, EmptyStateType } from './templates/EmptyState';
-export {
-  NoDataEmptyState,
-  FilterEmptyState,
-  FolderEmptyState,
-} from './templates/EmptyState';
-
 export { TreePageTemplate } from './templates/TreePageTemplate';
 export { CardListTemplate } from './templates/CardListTemplate';
 export { StatsPageTemplate } from './templates/StatsPageTemplate';
@@ -162,18 +148,6 @@ export { SettingsPageTemplate } from './templates/SettingsPageTemplate';
 export { MarkdownEditorTemplate } from './templates/MarkdownEditorTemplate';
 export { ReportDesignerTemplate } from './templates/ReportDesignerTemplate';
 export { GisMapTemplate } from './templates/GisMapTemplate';
-
-// Icon 组件
-export { Icon } from './icons/Icon';
-export type { IconProps } from './icons/Icon';
-export { IconBox } from './icons/IconBox';
-export type { IconBoxProps } from './icons/IconBox';
-export { IconWrapper } from './icons/IconWrapper';
-export type { IconWrapperProps } from './icons/IconWrapper';
-export { MuiIcon } from './icons/MuiIcon';
-export type { MuiIconProps } from './icons/MuiIcon';
-export { StyledIcon } from './icons/StyledIcon';
-export type { StyledIconProps } from './icons/StyledIcon';
 
 // BI 组件
 export { ChartCard } from './bi/ChartCard';

@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import { DetailPageTemplate } from '@/components/templates';
 import { voucherApi, type FinancialVoucher, type VoucherItem } from '@/api/erp';
+import { PageContainer } from '@/components/common';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
@@ -746,21 +747,23 @@ const VoucherDetailPage: React.FC = () => {
   ];
 
   return (
-    <DetailPageTemplate
-      title={voucher.voucher_number}
-      subtitle={`期间: ${voucher.period}`}
-      breadcrumbs={[
-        { label: '首页', href: '/dashboard' },
-        { label: '财务', href: '/finance' },
-        { label: '凭证管理', href: '/finance/vouchers' },
-        { label: voucher.voucher_number },
-      ]}
-      backHref='/finance/vouchers'
-      tabs={tabs}
-      infoCard={infoCard}
-      onEdit={handleEdit}
-      onDelete={handleDelete}
-    />
+    <PageContainer title={voucher.voucher_number} subtitle={`期间: ${voucher.period}`}>
+      <DetailPageTemplate
+        title=''
+        subtitle=''
+        breadcrumbs={[
+          { label: '首页', href: '/dashboard' },
+          { label: '财务', href: '/finance' },
+          { label: '凭证管理', href: '/finance/vouchers' },
+          { label: voucher.voucher_number },
+        ]}
+        backHref='/finance/vouchers'
+        tabs={tabs}
+        infoCard={infoCard}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+      />
+    </PageContainer>
   );
 };
 

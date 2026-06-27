@@ -5,6 +5,7 @@ import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction, RecentItem } from '@/components/templates';
 import PieChartComponent from '../../components/charts/PieChart';
 import BarChartComponent from '../../components/charts/BarChart';
+import { PageContainer } from '@/components/common';
 
 const iconMap: Record<string, React.ReactNode> = {
   CheckCircle: <CheckCircle size={24} />,
@@ -160,17 +161,19 @@ export const DashboardPage: React.FC = () => {
   ];
 
   return (
-    <DashboardTemplate
-      title='工作流程'
-      subtitle={`${getGreeting()}，流程审批与进度追踪`}
-      stats={stats}
-      charts={charts}
-      recentItems={recentItems}
-      recentTitle='待我审批'
-      quickActions={quickActions}
-      quickActionsTitle='快速操作'
-      loading={loading}
-    />
+    <PageContainer padding={false} maxWidth={false}>
+      <DashboardTemplate
+        title='工作流程'
+        subtitle={`${getGreeting()}，流程审批与进度追踪`}
+        stats={stats}
+        charts={charts}
+        recentItems={recentItems}
+        recentTitle='待我审批'
+        quickActions={quickActions}
+        quickActionsTitle='快速操作'
+        loading={loading}
+      />
+    </PageContainer>
   );
 };
 

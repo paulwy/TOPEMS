@@ -14,6 +14,7 @@ import {
 import { Button } from '@mui/material';
 import { Plus, Flag, Calendar, Link2, Eye, Edit } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
 import { useAppStore } from '@/store';
 import type { Build, CreateBuildRequest } from '@/api/rs';
@@ -294,9 +295,9 @@ const RsMilestonePage: React.FC = () => {
   ];
 
   return (
-    <Box sx={{ bgcolor: 'grey.100', minHeight: '100vh', py: 3 }}>
+    <PageContainer title='里程碑'>
       <ListPageTemplate
-        title='里程碑'
+        title=''
         columns={columns}
         data={paginatedMilestones}
         loading={loading}
@@ -524,7 +525,7 @@ const RsMilestonePage: React.FC = () => {
           <Button onClick={() => setDetailDialogOpen(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };
 

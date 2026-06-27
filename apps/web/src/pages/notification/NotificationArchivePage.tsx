@@ -27,6 +27,7 @@ import {
   type RowAction,
   type FilterConfig,
 } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 
 const NotificationArchivePage: React.FC = () => {
   const navigate = useNavigate();
@@ -239,10 +240,10 @@ const NotificationArchivePage: React.FC = () => {
   const totalPages = Math.max(1, Math.ceil(total / 20));
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100' }}>
+    <PageContainer title='通知归档管理' subtitle='查看和管理已归档的通知'>
       <ListPageTemplate
-        title='通知归档管理'
-        subtitle='查看和管理已归档的通知'
+        title=''
+        subtitle=''
         backButton={{
           onClick: () => navigate('/notifications'),
         }}
@@ -348,7 +349,7 @@ const NotificationArchivePage: React.FC = () => {
           onClose={() => setSelectedNotification(null)}
         />
       )}
-    </Box>
+    </PageContainer>
   );
 };
 

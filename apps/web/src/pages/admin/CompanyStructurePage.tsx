@@ -33,6 +33,7 @@ import {
   Tab,
 } from '@mui/material';
 import { Button } from '@mui/material';
+import { PageContainer } from '@/components/common';
 import {
   useCompanyRelations,
   useCompanyTree,
@@ -320,38 +321,11 @@ export default function CompanyStructurePage() {
   ];
 
   return (
-    <Box sx={{ p: 3, maxWidth: 1200, mx: 'auto' }}>
-      {/* 页面标题 */}
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          mb: 3,
-        }}
-      >
-        <Box>
-          <Typography
-            variant='h4'
-            sx={{
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-            }}
-          >
-            <Network sx={{ width: 24, height: 24, color: 'primary.main' }} />
-            公司架构管理
-          </Typography>
-          <Typography
-            color='text.secondary'
-            sx={{ mt: 0.5 }}
-          >
-            管理母子公司关系，用于多公司合并报表
-          </Typography>
-        </Box>
-
-      </Box>
+    <PageContainer
+      title='公司架构管理'
+      subtitle='管理母子公司关系，用于多公司合并报表'
+      maxWidth='xl'
+    >
 
       {/* 搜索栏 */}
       <Card sx={{ mb: 3 }}>
@@ -515,6 +489,6 @@ export default function CompanyStructurePage() {
           </Box>
         </CardContent>
       </Card>
-    </Box>
+    </PageContainer>
   );
 }

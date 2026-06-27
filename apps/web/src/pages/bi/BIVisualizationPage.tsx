@@ -46,6 +46,7 @@ import { Button } from '@mui/material';
 import { EmptyState } from '@/components/mui/EmptyState';
 import { useAppStore } from '@/store';
 import { DashboardTemplate, type StatCard } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { Grid } from '@/components';
 import { fetchWidgets, createWidget, updateWidget, deleteWidget, type Widget } from '@/api/bi';
 import { logger } from '@/utils/logger';
@@ -288,64 +289,77 @@ const BIVisualizationPage = () => {
 
   if (loading) {
     return (
-      <DashboardTemplate
+      <PageContainer
         title='可视化编辑器'
         subtitle='拖拽组件创建可视化报表'
+        padding={false}
+        maxWidth={false}
+      >
+        <DashboardTemplate
+          title=''
+          subtitle=''
+          breadcrumbs={[
+            { label: '首页', href: '/dashboard' },
+            { label: 'BI' },
+            { label: '可视化编辑' },
+          ]}
+          loading={true}
+        >
+          <Box
+            sx={{
+              minHeight: '100vh',
+              bgcolor: 'grey.50',
+              p: 3,
+              display: 'flex',
+              gap: 3,
+            }}
+          >
+            <Box sx={{ width: 280 }}>
+              <Skeleton
+                variant='rounded'
+                width='100%'
+                height={400}
+              />
+            </Box>
+            <Box sx={{ flex: 1 }}>
+              <Skeleton
+                variant='rounded'
+                width='100%'
+                height={600}
+              />
+            </Box>
+            <Box sx={{ width: 300 }}>
+              <Skeleton
+                variant='rounded'
+                width='100%'
+                height={400}
+              />
+            </Box>
+          </Box>
+        </DashboardTemplate>
+      </PageContainer>
+    );
+  }
+
+  return (
+    <PageContainer
+      title='可视化编辑器'
+      subtitle='拖拽组件创建可视化报表'
+      padding={false}
+      maxWidth={false}
+    >
+      <DashboardTemplate
+        title=''
+        subtitle=''
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
           { label: 'BI' },
           { label: '可视化编辑' },
         ]}
-        loading={true}
+        stats={statsCards}
+        loading={loading}
+        onRefresh={handleRefresh}
       >
-        <Box
-          sx={{
-            minHeight: '100vh',
-            bgcolor: 'grey.50',
-            p: 3,
-            display: 'flex',
-            gap: 3,
-          }}
-        >
-          <Box sx={{ width: 280 }}>
-            <Skeleton
-              variant='rounded'
-              width='100%'
-              height={400}
-            />
-          </Box>
-          <Box sx={{ flex: 1 }}>
-            <Skeleton
-              variant='rounded'
-              width='100%'
-              height={600}
-            />
-          </Box>
-          <Box sx={{ width: 300 }}>
-            <Skeleton
-              variant='rounded'
-              width='100%'
-              height={400}
-            />
-          </Box>
-        </Box>
-      </DashboardTemplate>
-    );
-  }
-
-  return (
-    <DashboardTemplate
-      title='可视化编辑器'
-      subtitle='拖拽组件创建可视化报表'
-      breadcrumbs={[
-        { label: '首页', href: '/dashboard' },
-        { label: 'BI' },
-        { label: '可视化编辑' },
-      ]}
-      stats={statsCards}
-      loading={loading}
-      onRefresh={handleRefresh}
-    >
       <Box sx={{ display: 'flex', gap: 3, height: 'calc(100vh - 280px)' }}>
         <Card sx={{ width: 280, display: 'flex', flexDirection: 'column' }}>
           <CardHeader
@@ -773,7 +787,8 @@ const BIVisualizationPage = () => {
           </CardContent>
         </Card>
       </Box>
-    </DashboardTemplate>
+      </DashboardTemplate>
+    </PageContainer>
   );
 };
 

@@ -51,6 +51,7 @@ import { DashboardEditor, type DashboardWidget } from '@/components/bi/Dashboard
 import { useAppStore } from '@/store';
 import { DashboardTemplateManager } from '@/components/bi/DashboardTemplateManager';
 import { DashboardTemplate as DashboardLayout } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { logger } from '@/utils/logger';
 
 type ViewMode = 'list' | 'editor';
@@ -248,15 +249,21 @@ const BIDashboardPage = () => {
   }
 
   return (
-    <DashboardLayout
+    <PageContainer
       title='自定义仪表盘'
       subtitle='管理和创建您的个性化数据仪表盘'
-      breadcrumbs={[
-        { label: '首页', href: '/dashboard' },
-        { label: 'BI' },
-        { label: '自定义仪表盘' },
-      ]}
+      padding={false}
+      maxWidth={false}
     >
+      <DashboardLayout
+        title=''
+        subtitle=''
+        breadcrumbs={[
+          { label: '首页', href: '/dashboard' },
+          { label: 'BI' },
+          { label: '自定义仪表盘' },
+        ]}
+      >
       <Box sx={{ p: 3 }}>
         <Box
           sx={{
@@ -722,7 +729,8 @@ const BIDashboardPage = () => {
           </>
         )}
       </Box>
-    </DashboardLayout>
+      </DashboardLayout>
+    </PageContainer>
   );
 };
 

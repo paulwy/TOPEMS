@@ -8,6 +8,7 @@ import {
   Mail,
   Smartphone,
 } from 'lucide-react';
+import { PageContainer } from '@/components/common';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import type { StatCard, ChartConfig, DataTable, TableColumn } from '@/components/templates/StatsPageTemplate';
 import { monitorApi } from '@/api/monitor';
@@ -255,30 +256,32 @@ export const MonitorAlertsPage: React.FC = () => {
   ];
 
   return (
-    <StatsPageTemplate
-      title='告警通知管理'
-      subtitle='管理告警规则和查看告警历史记录'
-      statCards={statCards}
-      statColumns={4}
-      charts={charts}
-      chartColumns={{ xs: 1, md: 2 }}
-      tables={tables}
-      loading={loading}
-      timeRangeOptions={timeRangeOptions}
-      timeRange={timeRange}
-      onTimeRangeChange={setTimeRange}
-      search={{ value: searchTerm, onChange: setSearchTerm, placeholder: '搜索告警...' }}
-      showTimeRange={true}
-      showSearch={true}
-      showExport={true}
-      showRefresh={true}
-      onRefresh={loadAlerts}
-      exportText='导出告警'
-      showStatCards={true}
-      showCharts={true}
-      showTables={true}
-      statCardDirection='row'
-    />
+    <PageContainer padding={false}>
+      <StatsPageTemplate
+        title='告警通知管理'
+        subtitle='管理告警规则和查看告警历史记录'
+        statCards={statCards}
+        statColumns={4}
+        charts={charts}
+        chartColumns={{ xs: 1, md: 2 }}
+        tables={tables}
+        loading={loading}
+        timeRangeOptions={timeRangeOptions}
+        timeRange={timeRange}
+        onTimeRangeChange={setTimeRange}
+        search={{ value: searchTerm, onChange: setSearchTerm, placeholder: '搜索告警...' }}
+        showTimeRange={true}
+        showSearch={true}
+        showExport={true}
+        showRefresh={true}
+        onRefresh={loadAlerts}
+        exportText='导出告警'
+        showStatCards={true}
+        showCharts={true}
+        showTables={true}
+        statCardDirection='row'
+      />
+    </PageContainer>
   );
 };
 

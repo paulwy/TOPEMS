@@ -16,7 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../../store';
 import type { ColumnDef } from '@/components/mui';
 import { ListPageTemplate, StatCard } from '@/components/mui';
-import { DataExport } from '@/components/common';
+import { DataExport, PageContainer} from '@/components/common';
 import { financeApi } from '@/api/finance';
 import { apiLogger } from '@/utils/logger';
 import type { PaymentRecord } from '@/types/finance';
@@ -484,10 +484,10 @@ const FinancePaymentPage: React.FC = () => {
   );
 
   return (
-    <>
+    <PageContainer title="付款管理" subtitle="管理供应商付款申请，审批和确认付款">
       <ListPageTemplate
-        title='付款管理'
-        subtitle='管理供应商付款申请，审批和确认付款'
+        title=""
+        subtitle=""
         backButton={{
           onClick: () => navigate('/dashboard'),
         }}
@@ -772,7 +772,7 @@ const FinancePaymentPage: React.FC = () => {
         message='确定要删除该付款记录吗？'
         danger
       />
-    </>
+    </PageContainer>
   );
 };
 

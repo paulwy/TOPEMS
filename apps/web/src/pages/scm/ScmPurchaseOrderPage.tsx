@@ -19,6 +19,7 @@ import { useAppStore } from '@/store';
 import { Plus, Edit, Trash2, Check, XCircle, AlertCircle, Lock } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 
 const ScmPurchaseOrderPage: React.FC = () => {
@@ -406,10 +407,14 @@ const ScmPurchaseOrderPage: React.FC = () => {
   ];
 
   return (
-    <>
+    <PageContainer
+      title='采购订单管理'
+      subtitle='管理采购订单,包括订单号、供应商、订单日期、交付日期等'
+      maxWidth='xl'
+    >
       <ListPageTemplate
-        title='采购订单管理'
-        subtitle='管理采购订单,包括订单号、供应商、订单日期、交付日期等'
+        title=''
+        subtitle=''
         columns={columns}
         data={orders}
         loading={loading}
@@ -540,7 +545,7 @@ const ScmPurchaseOrderPage: React.FC = () => {
         message={confirmDialogConfig?.message || ''}
         danger={confirmDialogConfig?.danger}
       />
-    </>
+    </PageContainer>
   );
 };
 

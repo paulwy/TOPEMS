@@ -7,6 +7,7 @@ import { srmApi, type SupplierEvaluation, type Supplier } from '@/api/srm';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { PageContainer } from '@/components/common';
 
 interface EvaluationWithSupplier extends SupplierEvaluation {
   supplier_name?: string;
@@ -283,10 +284,13 @@ const SrmEvaluationPage: React.FC = () => {
   );
 
   return (
-    <>
+    <PageContainer
+      title='供应商评估'
+      subtitle='管理供应商评估、跟踪评估进度、分析评分数据'
+    >
       <ListPageTemplate
-        title='供应商评估'
-        subtitle='管理供应商评估、跟踪评估进度、分析评分数据'
+        title=''
+        subtitle=''
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
           { label: '供应商管理', href: '/srm' },
@@ -343,7 +347,7 @@ const SrmEvaluationPage: React.FC = () => {
         message={`确定要删除评估 "${selectedEvaluation?.evaluation_no}" 吗？此操作不可恢复。`}
         danger
       />
-    </>
+    </PageContainer>
   );
 };
 

@@ -49,6 +49,7 @@ import {
 import { EmptyState } from '@/components/mui';
 import { AIHelperButton, AICodeGenerator } from '@/components/ai';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { PageContainer } from '@/components/common';
 
 interface NodeData {
   type: 'company' | 'department';
@@ -546,7 +547,7 @@ const HrmOrganizationPage: React.FC = () => {
   ) : null;
 
   return (
-    <>
+    <PageContainer maxWidth='xl'>
       <TreePageTemplate
         title='组织架构'
         subtitle='管理企业组织架构和部门信息'
@@ -781,7 +782,7 @@ const HrmOrganizationPage: React.FC = () => {
         message={confirmDialogConfig?.message || ''}
         danger={confirmDialogConfig?.danger}
       />
-    </>
+    </PageContainer>
   );
 };
 

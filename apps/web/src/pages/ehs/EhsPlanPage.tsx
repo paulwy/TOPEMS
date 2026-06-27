@@ -16,6 +16,7 @@ import { Button } from '@mui/material';
 import { Plus, Eye, FileText, Users } from 'lucide-react';
 import { ListPageTemplate } from '@/components/mui';
 import type { ColumnDef, RowAction, FilterConfig } from '@/components/mui';
+import { PageContainer } from '@/components/common';
 import { ehsApi } from '@/api/ehs';
 import type { EmergencyPlan } from '@/api/ehs';
 import { useAppStore } from '@/store';
@@ -280,206 +281,149 @@ const EhsPlanPage: React.FC = () => {
     [plans]
   );
 
+  const headerActions = [
+    {
+      label: '新增预案',
+      icon: <Plus style={{ width: 18, height: 18 }} />,
+      onClick: handleCreate,
+      variant: 'contained' as const,
+      color: 'success' as const,
+    },
+  ];
+
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, success.light 0%, #f8fafc 100%)',
+    <PageContainer
+      title='应急预案'
+      subtitle='Emergency Plan'
+      headerProps={{
+        actions: headerActions,
+        pageIcon: <FileText sx={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
       }}
+      maxWidth='xl'
     >
       <Box
-        component='header'
         sx={{
-          bgcolor: 'background.paper',
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: 'divider',
-          position: 'sticky',
-          top: 0,
-          zIndex: 10,
+          display: 'grid',
+          gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(3, 1fr)' },
+          gap: 2,
+          mb: 4,
         }}
       >
-        <Box sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 } }}>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              height: 64,
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Card sx={{ bgcolor: 'success.light' }}>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <Box
                 sx={{
                   width: 40,
                   height: 40,
-                  background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                  bgcolor: 'success.lighter',
                   borderRadius: 2,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <FileText sx={{ width: 24, height: 24, color: 'white' }} />
+                <FileText sx={{ width: 20, height: 20, color: 'success.dark' }} />
               </Box>
               <Box>
                 <Typography
-                  variant='h6'
-                  sx={{
-                    fontWeight: 700,
-                    color: 'slate.900',
-                    fontSize: '1.25rem',
-                  }}
+                  variant='body2'
+                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
                 >
-                  应急预案
+                  预案总数
                 </Typography>
                 <Typography
-                  variant='caption'
-                  sx={{ color: 'slate.500', fontSize: '0.75rem' }}
+                  variant='h5'
+                  sx={{ fontWeight: 700, color: 'slate.900' }}
                 >
-                  Emergency Plan
+                  {stats.total}
                 </Typography>
               </Box>
             </Box>
-            <Button
-              variant='contained'
-              startIcon={<Plus style={{ width: 18, height: 18 }} />}
-              onClick={handleCreate}
-              sx={{ bgcolor: 'success.dark', '&:hover': { bgcolor: 'success.dark' } }}
-            >
-              新增预案
-            </Button>
-          </Box>
-        </Box>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: 'success.lighter',
+                  borderRadius: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <FileText sx={{ width: 20, height: 20, color: 'success.dark' }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                >
+                  有效预案
+                </Typography>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 700, color: 'slate.900' }}
+                >
+                  {stats.active}
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: 'error.lighter',
+                  borderRadius: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <FileText sx={{ width: 20, height: 20, color: 'error.dark' }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                >
+                  无效预案
+                </Typography>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 700, color: 'slate.900' }}
+                >
+                  {stats.inactive}
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
       </Box>
 
-      <Box
-        component='main'
-        sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}
-      >
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(3, 1fr)' },
-            gap: 2,
-            mb: 4,
-          }}
-        >
-          <Card sx={{ bgcolor: 'success.light' }}>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: 'success.lighter',
-                    borderRadius: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <FileText sx={{ width: 20, height: 20, color: 'success.dark' }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'slate.600', fontSize: '0.875rem' }}
-                  >
-                    预案总数
-                  </Typography>
-                  <Typography
-                    variant='h5'
-                    sx={{ fontWeight: 700, color: 'slate.900' }}
-                  >
-                    {stats.total}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: 'success.lighter',
-                    borderRadius: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <FileText sx={{ width: 20, height: 20, color: 'success.dark' }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'slate.600', fontSize: '0.875rem' }}
-                  >
-                    有效预案
-                  </Typography>
-                  <Typography
-                    variant='h5'
-                    sx={{ fontWeight: 700, color: 'slate.900' }}
-                  >
-                    {stats.active}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: 'error.lighter',
-                    borderRadius: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <FileText sx={{ width: 20, height: 20, color: 'error.dark' }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'slate.600', fontSize: '0.875rem' }}
-                  >
-                    无效预案
-                  </Typography>
-                  <Typography
-                    variant='h5'
-                    sx={{ fontWeight: 700, color: 'slate.900' }}
-                  >
-                    {stats.inactive}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
-
-        <ListPageTemplate<EmergencyPlan>
-          title='应急预案列表'
-          columns={columns}
-          data={filteredPlans}
-          loading={loading}
-          searchable
-          searchPlaceholder='搜索预案名称或编号...'
-          searchValue={searchTerm}
-          onSearch={(value) => setSearchTerm(value)}
-          filters={filters}
-          rowActions={rowActions}
-          onRefresh={loadPlans}
-        />
-      </Box>
+      <ListPageTemplate<EmergencyPlan>
+        title='应急预案列表'
+        columns={columns}
+        data={filteredPlans}
+        loading={loading}
+        searchable
+        searchPlaceholder='搜索预案名称或编号...'
+        searchValue={searchTerm}
+        onSearch={(value) => setSearchTerm(value)}
+        filters={filters}
+        rowActions={rowActions}
+        onRefresh={loadPlans}
+      />
 
       <Dialog
         open={showCreateModal}
@@ -708,7 +652,7 @@ const EhsPlanPage: React.FC = () => {
           <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };
 

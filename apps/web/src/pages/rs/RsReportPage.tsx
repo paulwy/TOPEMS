@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import { apiClient } from '@/api/client';
+import { PageContainer } from '@/components/common';
 
 interface RsReportData {
   projects: {
@@ -200,7 +201,8 @@ const RsReportPage: React.FC = () => {
   const [timeRange, setTimeRange] = useState('month');
 
   return (
-    <StatsPageTemplate
+    <PageContainer padding={false} maxWidth={false}>
+      <StatsPageTemplate
       title='研发报表分析'
       subtitle='研发项目统计分析、试验数据汇总、成果评估'
       statCards={statCards}
@@ -219,6 +221,7 @@ const RsReportPage: React.FC = () => {
       chartSectionTitle='数据分析'
       tableSectionTitle='详细数据'
     />
+    </PageContainer>
   );
 };
 

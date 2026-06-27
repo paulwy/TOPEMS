@@ -3,7 +3,6 @@ export { ModuleLayout } from './ModuleLayout';
 export { ModuleTabs } from './ModuleTabs';
 export { MobileNav } from './MobileNav';
 export { Sidebar } from './Sidebar';
-export { NavDropdown, DropdownProvider, useDropdown } from './NavDropdown';
 export type { TabItem } from './ModuleTabs';
 
 export { default as PageHeader } from './PageHeader';

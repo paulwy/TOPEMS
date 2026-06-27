@@ -20,6 +20,7 @@ import { useAppStore } from '../../store';
 import { ModeToggle } from '@/components/theme/ModeToggle';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
+import { PageContainer } from '@/components/common';
 
 interface PermissionManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -438,10 +439,10 @@ const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({
   );
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
+    <PageContainer title='权限管理' subtitle='查看和管理系统权限配置'>
       <ListPageTemplate
-        title='权限管理'
-        subtitle='查看和管理系统权限配置'
+        title=''
+        subtitle=''
         breadcrumbs={[{ label: '首页', href: '/' }, { label: '系统管理' }, { label: '权限管理' }]}
         backButton={{
           href: '/dashboard',
@@ -741,7 +742,7 @@ const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({
           </form>
         )}
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };
 

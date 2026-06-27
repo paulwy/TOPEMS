@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { Building2, Mail, Phone, MapPin, Globe } from 'lucide-react';
 import FormPageTemplate from '@/components/templates/FormPageTemplate';
 import type { FormSection, FormField } from '@/components/templates/FormPageTemplate';
+import { PageContainer } from '@/components/common';
 import { customerApi, type Customer } from '@/api/crm';
 import { useNotification } from '@/hooks/useNotification';
 import { logger } from '@/utils/logger';
@@ -246,27 +247,32 @@ const CustomerEditPage: React.FC = () => {
   ];
 
   return (
-    <FormPageTemplate
+    <PageContainer
       title='编辑客户'
       subtitle='修改客户档案信息'
-      breadcrumbs={[
-        { label: '首页', href: '/dashboard' },
-        { label: '客户管理', href: '/crm' },
-        { label: '客户列表', href: '/crm/customers' },
-        { label: '编辑客户' },
-      ]}
-      sections={sections}
-      schema={customerSchema}
-      defaultValues={defaultValues}
-      loading={loading}
-      submitting={submitting}
-      onSubmit={handleSubmit}
-      onCancel={handleCancel}
-      submitText='保存修改'
-      cancelText='取消'
-      columns={3}
-      stickyFooter={true}
-    />
+    >
+      <FormPageTemplate
+        title=''
+        subtitle=''
+        breadcrumbs={[
+          { label: '首页', href: '/dashboard' },
+          { label: '客户管理', href: '/crm' },
+          { label: '客户列表', href: '/crm/customers' },
+          { label: '编辑客户' },
+        ]}
+        sections={sections}
+        schema={customerSchema}
+        defaultValues={defaultValues}
+        loading={loading}
+        submitting={submitting}
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+        submitText='保存修改'
+        cancelText='取消'
+        columns={3}
+        stickyFooter={true}
+      />
+    </PageContainer>
   );
 };
 

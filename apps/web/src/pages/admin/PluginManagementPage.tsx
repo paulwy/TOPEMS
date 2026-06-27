@@ -39,6 +39,7 @@ import {
   AlertCircle,
 } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { useAppStore } from '@/store';
 import {
   type Plugin,
@@ -490,7 +491,7 @@ const PluginManagementPage: React.FC = () => {
   );
 
   return (
-    <Box>
+    <PageContainer title='插件管理' subtitle='管理系统插件，启用、禁用或卸载插件'>
       {error && (
         <Alert
           severity='error'
@@ -502,8 +503,8 @@ const PluginManagementPage: React.FC = () => {
       )}
 
       <ListPageTemplate
-        title='插件管理'
-        subtitle='管理系统插件，启用、禁用或卸载插件'
+        title=''
+        subtitle=''
         breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '系统管理' }, { label: '插件管理' }]}
         columns={columns}
         data={filteredPlugins}
@@ -841,7 +842,7 @@ const PluginManagementPage: React.FC = () => {
           <Button onClick={handleCloseMarketplace}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };
 

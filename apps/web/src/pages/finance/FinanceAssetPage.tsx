@@ -14,7 +14,7 @@ import {
   DollarSign,
 } from 'lucide-react';
 import { useAppStore } from '../../store';
-import { DataExport, BackButton } from '@/components/common';
+import { DataExport, BackButton, PageContainer} from '@/components/common';
 import { ListPageTemplate, StatCardGroup } from '@/components/mui';
 import { financeApi, accountApi } from '@/api/finance';
 import type { Account } from '@/types/finance';
@@ -485,7 +485,7 @@ const FinanceAssetPage: React.FC = () => {
   );
 
   return (
-    <MuiBox sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+    <PageContainer padding={false} maxWidth={false}>
       <MuiBox
         sx={{
           bgcolor: 'background.paper',
@@ -900,7 +900,7 @@ const FinanceAssetPage: React.FC = () => {
         confirmLabel='停用'
         cancelLabel='取消'
       />
-    </MuiBox>
+    </PageContainer>
   );
 };
 

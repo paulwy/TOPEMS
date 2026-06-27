@@ -39,6 +39,7 @@ import {
   type StatCard,
   type ChartCard as ChartCardType,
 } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import {
   fetchModuleData,
   fetchRsSummary,
@@ -516,60 +517,73 @@ const BIModuleDetailPage = () => {
 
   if (loading) {
     return (
-      <DashboardTemplate
+      <PageContainer
         title='模块详情'
         subtitle='模块详细数据分析'
+        padding={false}
+        maxWidth={false}
+      >
+        <DashboardTemplate
+          title=''
+          subtitle=''
+          breadcrumbs={[
+            { label: '首页', href: '/dashboard' },
+            { label: 'BI', href: '/bi/analytics' },
+            { label: config.name },
+          ]}
+          loading={true}
+        />
+      </PageContainer>
+    );
+  }
+
+  return (
+    <PageContainer
+      title={`${config.name} - 模块详情`}
+      subtitle='模块详细数据分析'
+      padding={false}
+      maxWidth={false}
+    >
+      <DashboardTemplate
+        title=''
+        subtitle=''
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
           { label: 'BI', href: '/bi/analytics' },
           { label: config.name },
         ]}
-        loading={true}
-      />
-    );
-  }
-
-  return (
-    <DashboardTemplate
-      title={`${config.name} - 模块详情`}
-      subtitle='模块详细数据分析'
-      breadcrumbs={[
-        { label: '首页', href: '/dashboard' },
-        { label: 'BI', href: '/bi/analytics' },
-        { label: config.name },
-      ]}
-      stats={statsCards}
-      charts={chartCards}
-      loading={loading}
-      onRefresh={handleRefresh}
-      headerContent={
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Typography
-            variant='body2'
-            color='text.secondary'
-          >
-            <Clock size={14} /> 最后更新: {new Date().toLocaleString('zh-CN')}
-          </Typography>
-          <ExportButton
-            data={exportData}
-            columns={
-              moduleId === 'rs'
-                ? ['id', 'project', 'status', 'progress', 'owner']
-                : moduleId === 'lims'
-                  ? ['id', 'sample', 'type', 'status', 'result']
-                  : moduleId === 'qms'
-                    ? ['id', 'inspection', 'batch', 'status', 'quality']
-                    : moduleId === 'ehs'
-                      ? ['id', 'risk', 'level', 'status', 'date']
-                      : moduleId === 'srm'
-                        ? ['id', 'supplier', 'type', 'rating', 'status']
-                        : ['id', 'batch', 'product', 'status', 'output']
-            }
-            filename={`bi-${moduleId}-detail`}
-          />
-        </Box>
-      }
-    >
+        stats={statsCards}
+        charts={chartCards}
+        loading={loading}
+        onRefresh={handleRefresh}
+        headerContent={
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
+              <Clock size={14} /> 最后更新: {new Date().toLocaleString('zh-CN')}
+            </Typography>
+            <ExportButton
+              data={exportData}
+              columns={
+                moduleId === 'rs'
+                  ? ['id', 'project', 'status', 'progress', 'owner']
+                  : moduleId === 'lims'
+                    ? ['id', 'sample', 'type', 'status', 'result']
+                    : moduleId === 'qms'
+                      ? ['id', 'inspection', 'batch', 'status', 'quality']
+                      : moduleId === 'ehs'
+                        ? ['id', 'risk', 'level', 'status', 'date']
+                        : moduleId === 'srm'
+                          ? ['id', 'supplier', 'type', 'rating', 'status']
+                          : ['id', 'batch', 'product', 'status', 'output']
+              }
+              filename={`bi-${moduleId}-detail`}
+            />
+          </Box>
+        }
+      >
       {error && (
         <Alert severity="warning" sx={{ mb: 3 }}>
           {error}
@@ -661,7 +675,8 @@ const BIModuleDetailPage = () => {
           </Box>
         </CardContent>
       </Card>
-    </DashboardTemplate>
+      </DashboardTemplate>
+    </PageContainer>
   );
 };
 

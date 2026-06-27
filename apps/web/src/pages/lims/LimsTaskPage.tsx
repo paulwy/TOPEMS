@@ -47,6 +47,7 @@ import type {
 import { limsApi } from '@/api/lims';
 import { useAppStore } from '@/store';
 import { GRADIENTS } from '@/constants/colors';
+import { PageContainer } from '@/components/common';
 import { PageHeader } from '@/components/templates/PageHeader';
 import { CardListTemplate } from '@/components/templates/CardListTemplate';
 import { apiLogger } from '@/utils/logger';
@@ -590,7 +591,9 @@ const LimsTaskPage: React.FC = () => {
   }
 
   return (
-    <Box
+    <PageContainer
+      title='检验任务'
+      subtitle='Inspection Tasks'
       sx={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #f8fafc 0%, border.default 100%)',
@@ -613,8 +616,8 @@ const LimsTaskPage: React.FC = () => {
       </Snackbar>
 
       <CardListTemplate
-        title='检验任务'
-        subtitle='Inspection Tasks'
+        title=''
+        subtitle=''
         data={filteredTasks}
         cardConfig={cardConfig}
         cardActions={cardActions}
@@ -1065,7 +1068,7 @@ const LimsTaskPage: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };
 

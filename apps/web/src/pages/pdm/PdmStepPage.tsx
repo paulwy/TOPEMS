@@ -17,6 +17,7 @@ import { Button } from '@mui/material';
 import { apiLogger } from '@/utils/logger';
 import { Plus, Eye, ClipboardList, Clock, ListOrdered } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { pdmApi } from '@/api/pdm';
 import type { ProductionStep } from '@/api/pdm';
 import { useAppStore } from '@/store';
@@ -201,232 +202,175 @@ const PdmStepPage: React.FC = () => {
     inactive: steps.filter((s) => s.status === '禁用').length,
   };
 
+  const headerActions = [
+    {
+      label: '新增步骤',
+      icon: <Plus style={{ width: 18, height: 18 }} />,
+      onClick: handleCreate,
+      variant: 'contained' as const,
+      color: 'success' as const,
+    },
+  ];
+
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, success.light 0%, #f8fafc 100%)',
+    <PageContainer
+      title='工序步骤'
+      subtitle='Production Steps'
+      headerProps={{
+        actions: headerActions,
+        pageIcon: <ClipboardList sx={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
       }}
+      maxWidth='xl'
     >
       <Box
-        component='header'
         sx={{
-          bgcolor: 'background.paper',
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: 'divider',
-          position: 'sticky',
-          top: 0,
-          zIndex: 10,
+          display: 'grid',
+          gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(3, 1fr)' },
+          gap: 2,
+          mb: 4,
         }}
       >
-        <Box sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 } }}>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              height: 64,
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Card sx={{ bgcolor: 'success.light' }}>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
               <Box
                 sx={{
                   width: 40,
                   height: 40,
-                  background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                  bgcolor: 'success.lighter',
                   borderRadius: 2,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}
               >
-                <ClipboardList sx={{ width: 24, height: 24, color: 'white' }} />
+                <ClipboardList sx={{ width: 20, height: 20, color: 'success.dark' }} />
               </Box>
               <Box>
                 <Typography
-                  variant='h6'
-                  sx={{
-                    fontWeight: 700,
-                    color: 'slate.900',
-                    fontSize: '1.25rem',
-                  }}
+                  variant='body2'
+                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
                 >
-                  工序步骤
+                  步骤总数
                 </Typography>
                 <Typography
-                  variant='caption'
-                  sx={{ color: 'slate.500', fontSize: '0.75rem' }}
+                  variant='h5'
+                  sx={{ fontWeight: 700, color: 'slate.900' }}
                 >
-                  Production Steps
+                  {stats.total}
                 </Typography>
               </Box>
             </Box>
-            <Button
-              variant='contained'
-              startIcon={<Plus style={{ width: 18, height: 18 }} />}
-              onClick={handleCreate}
-              sx={{ bgcolor: 'success.dark', '&:hover': { bgcolor: 'success.dark' } }}
-            >
-              新增步骤
-            </Button>
-          </Box>
-        </Box>
-      </Box>
-
-      <Box
-        component='main'
-        sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}
-      >
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(3, 1fr)' },
-            gap: 2,
-            mb: 4,
-          }}
-        >
-          <Card sx={{ bgcolor: 'success.light' }}>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: 'success.lighter',
-                    borderRadius: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <ClipboardList sx={{ width: 20, height: 20, color: 'success.dark' }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'slate.600', fontSize: '0.875rem' }}
-                  >
-                    步骤总数
-                  </Typography>
-                  <Typography
-                    variant='h5'
-                    sx={{ fontWeight: 700, color: 'slate.900' }}
-                  >
-                    {stats.total}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: 'success.lighter',
-                    borderRadius: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <ClipboardList sx={{ width: 20, height: 20, color: 'success.dark' }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'slate.600', fontSize: '0.875rem' }}
-                  >
-                    正常使用
-                  </Typography>
-                  <Typography
-                    variant='h5'
-                    sx={{ fontWeight: 700, color: 'slate.900' }}
-                  >
-                    {stats.active}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent sx={{ p: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    bgcolor: 'error.lighter',
-                    borderRadius: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <ClipboardList sx={{ width: 20, height: 20, color: 'error.dark' }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'slate.600', fontSize: '0.875rem' }}
-                  >
-                    已禁用
-                  </Typography>
-                  <Typography
-                    variant='h5'
-                    sx={{ fontWeight: 700, color: 'slate.900' }}
-                  >
-                    {stats.inactive}
-                  </Typography>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
-
+          </CardContent>
+        </Card>
         <Card>
-          <CardHeader
-            sx={{
-              display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              pb: 0,
-            }}
-          >
-            <Typography
-              variant='h6'
-              sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-            >
-              <ClipboardList style={{ width: 20, height: 20, color: 'success.dark' }} />
-              工序步骤列表
-            </Typography>
-          </CardHeader>
-          <CardContent>
-            <ListPageTemplate
-              columns={columns}
-              data={paginatedSteps}
-              loading={loading}
-              searchable
-              searchPlaceholder='搜索步骤名称或编号...'
-              searchValue={searchTerm}
-              onSearch={setSearchTerm}
-              pagination={{
-                page,
-                pageSize,
-                total: filteredSteps.length,
-                onPageChange: setPage,
-                onPageSizeChange: setPageSize,
-              }}
-              showRowNumber
-              onRowClick={handleView}
-            />
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: 'success.lighter',
+                  borderRadius: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <ClipboardList sx={{ width: 20, height: 20, color: 'success.dark' }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                >
+                  正常使用
+                </Typography>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 700, color: 'slate.900' }}
+                >
+                  {stats.active}
+                </Typography>
+              </Box>
+            </Box>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent sx={{ p: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  bgcolor: 'error.lighter',
+                  borderRadius: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <ClipboardList sx={{ width: 20, height: 20, color: 'error.dark' }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'slate.600', fontSize: '0.875rem' }}
+                >
+                  已禁用
+                </Typography>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 700, color: 'slate.900' }}
+                >
+                  {stats.inactive}
+                </Typography>
+              </Box>
+            </Box>
           </CardContent>
         </Card>
       </Box>
+
+      <Card>
+        <CardHeader
+          sx={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            pb: 0,
+          }}
+        >
+          <Typography
+            variant='h6'
+            sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+          >
+            <ClipboardList style={{ width: 20, height: 20, color: 'success.dark' }} />
+            工序步骤列表
+          </Typography>
+        </CardHeader>
+        <CardContent>
+          <ListPageTemplate
+            columns={columns}
+            data={paginatedSteps}
+            loading={loading}
+            searchable
+            searchPlaceholder='搜索步骤名称或编号...'
+            searchValue={searchTerm}
+            onSearch={setSearchTerm}
+            pagination={{
+              page,
+              pageSize,
+              total: filteredSteps.length,
+              onPageChange: setPage,
+              onPageSizeChange: setPageSize,
+            }}
+            showRowNumber
+            onRowClick={handleView}
+          />
+        </CardContent>
+      </Card>
 
       <Dialog
         open={showCreateModal}
@@ -606,7 +550,7 @@ const PdmStepPage: React.FC = () => {
           <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };
 

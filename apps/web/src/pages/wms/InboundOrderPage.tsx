@@ -28,7 +28,7 @@ import {
 } from '@/components/templates';
 import { Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
-import { ConfirmDialog } from '@/components/common';
+import { ConfirmDialog, PageContainer } from '@/components/common';
 
 const orderTypeConfig: Record<string, string> = {
   purchase_in: '采购入库',
@@ -324,10 +324,13 @@ const InboundOrderPage: React.FC = () => {
   };
 
   return (
-    <>
+    <PageContainer
+      title='入库订单管理'
+      subtitle='管理入库订单,包括订单号、仓库、供应商、订单日期等'
+    >
       <ListPageTemplate
-        title='入库订单管理'
-        subtitle='管理入库订单,包括订单号、仓库、供应商、订单日期等'
+        title=''
+        subtitle=''
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
           { label: '仓储', href: '/wms' },
@@ -644,7 +647,7 @@ const InboundOrderPage: React.FC = () => {
         message='确定要删除这个入库订单吗？此操作不可撤销。'
         danger
       />
-    </>
+    </PageContainer>
   );
 };
 

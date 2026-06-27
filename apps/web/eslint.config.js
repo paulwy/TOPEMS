@@ -5,7 +5,7 @@ import tsPlugin from '@typescript-eslint/eslint-plugin';
 import prettierPlugin from 'eslint-plugin-prettier';
 import reactPlugin from 'eslint-plugin-react';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
-import importX from 'eslint-plugin-import-x';
+import importPlugin from 'eslint-plugin-import';
 import unicorn from 'eslint-plugin-unicorn';
 import checkFile from 'eslint-plugin-check-file';
 
@@ -33,7 +33,7 @@ export default [
       prettier: prettierPlugin,
       react: reactPlugin,
       'react-hooks': reactHooksPlugin,
-      'import-x': importX,
+      import: importPlugin,
       unicorn,
       'check-file': checkFile,
     },
@@ -41,7 +41,7 @@ export default [
       react: {
         version: 'detect',
       },
-      'import-x/resolver': {
+      'import/resolver': {
         typescript: {
           project: './tsconfig.json',
         },
@@ -160,7 +160,7 @@ export default [
       'react/prop-types': 'off',
       'react/display-name': 'off',
 
-      'import-x/order': [
+      'import/order': [
         'warn',
         {
           groups: [
@@ -211,15 +211,15 @@ export default [
           },
         },
       ],
-      'import-x/no-unresolved': 'off',
-      'import-x/no-duplicates': 'warn',
-      'import-x/first': 'warn',
-      'import-x/newline-after-import': 'warn',
-      'import-x/no-cycle': ['warn', { maxDepth: 3 }],
-      'import-x/no-self-import': 'warn',
-      'import-x/no-useless-path-segments': 'warn',
-      'import-x/no-relative-packages': 'warn',
-      'import-x/no-relative-parent-imports': 'warn',
+      'import/no-unresolved': 'off',
+      'import/no-duplicates': 'warn',
+      'import/first': 'warn',
+      'import/newline-after-import': 'warn',
+      'import/no-cycle': ['warn', { maxDepth: 3 }],
+      'import/no-self-import': 'warn',
+      'import/no-useless-path-segments': 'warn',
+      'import/no-relative-packages': 'warn',
+      'import/no-relative-parent-imports': 'warn',
 
       'unicorn/prefer-node-protocol': 'off',
       'unicorn/filename-case': 'off',

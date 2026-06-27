@@ -3,6 +3,7 @@ import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { extractErrorMessage } from '@/utils/errors';
 import React, { useState, useEffect } from 'react';
+import { PageContainer } from '@/components/common';
 import { useNavigate } from 'react-router-dom';
 import {
   Database,
@@ -250,68 +251,16 @@ const DatabaseStructurePage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50', pb: 6 }}>
-      {/* 顶部 Header */}
-      <Paper
-        elevation={0}
-        sx={{
-          borderRadius: 0,
-          borderBottom: '1px solid',
-          borderColor: 'divider',
-          bgcolor: 'background.paper',
-        }}
-      >
-        <Container
-          maxWidth='xl'
-          sx={{ py: 3 }}
-        >
-          <Stack
-            direction='row'
-            spacing={2}
-            sx={{ alignItems: 'center' }}
-          >
-            <IconButton
-              onClick={() => navigate('/dashboard')}
-              sx={{
-                '&:hover': { bgcolor: 'action.hover' },
-              }}
-            >
-              <ChevronLeft size={20} />
-            </IconButton>
-            <Box>
-              <Typography
-                variant='h5'
-                sx={{
-                  ...{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1.5,
-                  },
-                  fontWeight: 700,
-                }}
-              >
-                <Database
-                  size={28}
-                  color='primary.dark'
-                />
-                数据库结构管理
-              </Typography>
-              <Typography
-                variant='body2'
-                color='text.secondary'
-                sx={{ mt: 0.5 }}
-              >
-                查看和管理数据库表结构，支持添加、修改、删除字段
-              </Typography>
-            </Box>
-          </Stack>
-        </Container>
-      </Paper>
-
-      <Container
-        maxWidth='xl'
-        sx={{ py: 3 }}
-      >
+    <PageContainer
+      title='数据库结构管理'
+      subtitle='查看和管理数据库表结构，支持添加、修改、删除字段'
+      maxWidth='xl'
+      headerProps={{
+        backButton: {
+          onClick: () => navigate('/dashboard'),
+        },
+      }}
+    >
         <Grid
           container
           spacing={3}
@@ -864,7 +813,6 @@ const DatabaseStructurePage: React.FC = () => {
             )}
           </Grid>
         </Grid>
-      </Container>
 
       {/* 添加字段对话框 */}
       <Dialog
@@ -1098,7 +1046,7 @@ const DatabaseStructurePage: React.FC = () => {
           {notification?.message}
         </Alert>
       </Snackbar>
-    </Box>
+    </PageContainer>
   );
 };
 

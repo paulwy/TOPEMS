@@ -33,6 +33,7 @@ import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { useAppStore } from '@/store';
 import ExportButton from '@/components/export/ExportButton';
 import { DashboardTemplate, type StatCard } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import {
   BarChart,
   Bar,
@@ -188,14 +189,20 @@ const BIComparisonPage = () => {
   }
 
   return (
-    <DashboardTemplate
+    <PageContainer
       title='数据对比分析'
       subtitle='对比不同时间或维度的业务指标'
-      breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: 'BI' }, { label: '数据对比' }]}
-      stats={statsCards}
-      loading={loading}
-      onRefresh={handleRefresh}
+      padding={false}
+      maxWidth={false}
     >
+      <DashboardTemplate
+        title=''
+        subtitle=''
+        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: 'BI' }, { label: '数据对比' }]}
+        stats={statsCards}
+        loading={loading}
+        onRefresh={handleRefresh}
+      >
       {error && (
         <Alert severity='error' sx={{ mb: 3 }}>
           {error}
@@ -407,7 +414,8 @@ const BIComparisonPage = () => {
           </Paper>
         </CardContent>
       </Card>
-    </DashboardTemplate>
+      </DashboardTemplate>
+    </PageContainer>
   );
 };
 
