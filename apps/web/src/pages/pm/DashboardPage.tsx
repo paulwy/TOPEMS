@@ -54,7 +54,9 @@ export const DashboardPage: React.FC = () => {
       }
 
       const projects: Project[] =
-        projectRes.status === 'fulfilled' && projectRes.value.success && projectRes.value.data?.items
+        projectRes.status === 'fulfilled' &&
+        projectRes.value.success &&
+        projectRes.value.data?.items
           ? (projectRes.value.data.items as Project[])
           : [];
 
@@ -87,12 +89,10 @@ export const DashboardPage: React.FC = () => {
     try {
       const projectRes = await pmApi.projects.list();
       const projects: Project[] =
-        projectRes.success && projectRes.data?.items
-          ? (projectRes.data.items as Project[])
-          : [];
+        projectRes.success && projectRes.data?.items ? (projectRes.data.items as Project[]) : [];
 
       const projectProgress = projects.slice(0, 5).map((p) => ({
-        name: p.name.length > 8 ? p.name.slice(0, 8) + '...' : p.name,
+        name: p.name.length > 8 ? `${p.name.slice(0, 8)}...` : p.name,
         value: p.progress || 0,
       }));
 
@@ -124,20 +124,26 @@ export const DashboardPage: React.FC = () => {
       }));
 
       setChartData({
-        projectProgress: projectProgress.length > 0 ? projectProgress : [
-          { name: '项目A', value: 85 },
-          { name: '项目B', value: 60 },
-          { name: '项目C', value: 90 },
-          { name: '项目D', value: 45 },
-          { name: '项目E', value: 70 },
-        ],
+        projectProgress:
+          projectProgress.length > 0
+            ? projectProgress
+            : [
+                { name: '项目A', value: 85 },
+                { name: '项目B', value: 60 },
+                { name: '项目C', value: 90 },
+                { name: '项目D', value: 45 },
+                { name: '项目E', value: 70 },
+              ],
         taskTrend,
-        projectStatus: projectStatus.length > 0 ? projectStatus : [
-          { name: '开发中', value: 40 },
-          { name: '测试中', value: 25 },
-          { name: '待评审', value: 20 },
-          { name: '已完成', value: 15 },
-        ],
+        projectStatus:
+          projectStatus.length > 0
+            ? projectStatus
+            : [
+                { name: '开发中', value: 40 },
+                { name: '测试中', value: 25 },
+                { name: '待评审', value: 20 },
+                { name: '已完成', value: 15 },
+              ],
       });
     } catch (err: unknown) {
       apiLogger.error('加载 PM 图表数据失败:', err);

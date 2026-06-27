@@ -22,8 +22,8 @@ import {
   useMediaQuery,
   Skeleton,
   Tooltip,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import {
   Search,
   RefreshCw,
@@ -39,7 +39,7 @@ import {
   TrendingDown,
   Minus,
 } from 'lucide-react';
-import { EmptyState } from '@/components/mui';
+import { EmptyState } from '@/components/common';
 
 /**
  * 树形节点类型
@@ -52,7 +52,7 @@ export interface TreeNode<T = any> {
   data?: T;
   icon?: React.ReactNode;
   disabled?: boolean;
-  accentColor?: string;  // custom accent color for the node (hex or CSS color)
+  accentColor?: string; // custom accent color for the node (hex or CSS color)
 }
 
 /**
@@ -333,13 +333,9 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
 
       // 计算 accentColor 相关样式
       const nodeAccentColor = node.accentColor;
-      const selectedBg = nodeAccentColor
-        ? `${nodeAccentColor}15`
-        : 'primary.light';
+      const selectedBg = nodeAccentColor ? `${nodeAccentColor}15` : 'primary.light';
       const selectedColor = nodeAccentColor || 'primary.main';
-      const accentBorderLeft = nodeAccentColor
-        ? `3px solid ${nodeAccentColor}`
-        : 'none';
+      const accentBorderLeft = nodeAccentColor ? `3px solid ${nodeAccentColor}` : 'none';
 
       // 默认渲染器
       return (
@@ -443,7 +439,7 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
                 sx={{
                   height: 20,
                   fontSize: '0.75rem',
-                  bgcolor: isSelected ? (nodeAccentColor || 'primary.main') : 'grey.200',
+                  bgcolor: isSelected ? nodeAccentColor || 'primary.main' : 'grey.200',
                   color: isSelected ? 'white' : 'text.secondary',
                 }}
               />
@@ -452,12 +448,14 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
 
           {/* 子节点 */}
           {hasChildren && isExpanded && (
-            <Box sx={{
-              ml: 1.5,
-              borderLeft: showConnectors ? '2px solid' : 'none',
-              borderColor: 'divider',
-              pl: 2,
-            }}>
+            <Box
+              sx={{
+                ml: 1.5,
+                borderLeft: showConnectors ? '2px solid' : 'none',
+                borderColor: 'divider',
+                pl: 2,
+              }}
+            >
               {node.children?.map((child) => renderTreeItem(child, level + 1))}
             </Box>
           )}
@@ -530,11 +528,17 @@ export const TreePageTemplate: React.FC<TreePageTemplateProps> = ({
                       ) : (
                         <TrendingUp sx={{ fontSize: 14, color: 'success.main' }} />
                       )}
-                      <Typography variant="caption" sx={{
-                        color: stat.trend.direction === 'up' ? 'success.main'
-                          : stat.trend.direction === 'down' ? 'error.main'
-                          : 'text.secondary',
-                      }}>
+                      <Typography
+                        variant='caption'
+                        sx={{
+                          color:
+                            stat.trend.direction === 'up'
+                              ? 'success.main'
+                              : stat.trend.direction === 'down'
+                                ? 'error.main'
+                                : 'text.secondary',
+                        }}
+                      >
                         {Math.abs(stat.trend.value)}%
                       </Typography>
                     </Box>

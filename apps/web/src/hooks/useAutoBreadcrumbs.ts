@@ -20,9 +20,7 @@ export interface UseAutoBreadcrumbsOptions {
   dynamicTitleResolver?: (paramName: string, paramValue: string) => string | undefined;
 }
 
-export function useAutoBreadcrumbs(
-  options: UseAutoBreadcrumbsOptions = {}
-): AutoBreadcrumbItem[] {
+export function useAutoBreadcrumbs(options: UseAutoBreadcrumbsOptions = {}): AutoBreadcrumbItem[] {
   const {
     includeHome = true,
     homePath = '/dashboard',
@@ -51,12 +49,24 @@ export function useAutoBreadcrumbs(
     if (matchedItems.length > 0) {
       result.push(...matchedItems);
     } else if (fallbackToPath) {
-      const pathItems = generatePathBreadcrumbs(currentPath, includeHome);
+      const pathItems = generateSmartFallbackBreadcrumbs(
+        currentPath,
+        includeHome,
+        dynamicTitleResolver
+      );
       result.push(...pathItems);
     }
 
     return mergeWithCustomItems(result, customItems);
-  }, [currentPath, includeHome, homePath, homeLabel, fallbackToPath, customItems, dynamicTitleResolver]);
+  }, [
+    currentPath,
+    includeHome,
+    homePath,
+    homeLabel,
+    fallbackToPath,
+    customItems,
+    dynamicTitleResolver,
+  ]);
 
   return breadcrumbs;
 }
@@ -104,75 +114,230 @@ function findMatchingNavItems(
   dynamicTitleResolver?: (paramName: string, paramValue: string) => string | undefined
 ): AutoBreadcrumbItem[] {
   const allNavItems = getAllNavItemsWithHierarchy();
-  const pathSegments = path.split('/').filter(Boolean);
-  const matchedItems: AutoBreadcrumbItem[] = [];
-  let currentItems = allNavItems;
-  let matchedPath = '';
 
-  for (let i = 0; i < pathSegments.length; i++) {
-    const segment = pathSegments[i];
-    const currentPathSegment = `/${segment}`;
-    const testPath = matchedPath + currentPathSegment;
+  const result = findBestPathMatch(path, allNavItems, dynamicTitleResolver);
 
-    let matchedItem: NavItem | null = null;
-    let isDynamic = false;
-    let paramName = '';
-    let paramValue = '';
+  if (result.length > 0) {
+    return result;
+  }
 
-    for (const item of currentItems) {
-      if (item.path === testPath) {
-        matchedItem = item;
-        break;
-      }
+  return findDetailPageWithParent(path, allNavItems, dynamicTitleResolver);
+}
 
-      if (item.path.includes(':')) {
-        const dynamicMatch = matchDynamicRoute(item.path, testPath);
+interface PathMatchResult {
+  items: AutoBreadcrumbItem[];
+  matchedLength: number;
+}
+
+function findBestPathMatch(
+  path: string,
+  allNavItems: NavItem[],
+  dynamicTitleResolver?: (paramName: string, paramValue: string) => string | undefined
+): AutoBreadcrumbItem[] {
+  const allResults: PathMatchResult[] = [];
+
+  function traverse(
+    items: NavItem[],
+    currentPath: string,
+    breadcrumbs: AutoBreadcrumbItem[]
+  ): void {
+    for (const item of items) {
+      const itemPath = item.path;
+
+      let exactMatch = false;
+      let isDynamic = false;
+      let paramName = '';
+      let paramValue = '';
+
+      if (itemPath === path) {
+        exactMatch = true;
+      } else if (itemPath.includes(':')) {
+        const dynamicMatch = matchDynamicRoute(itemPath, path);
         if (dynamicMatch.matched) {
-          matchedItem = item;
+          exactMatch = true;
           isDynamic = true;
           paramName = dynamicMatch.paramName || '';
           paramValue = dynamicMatch.paramValue || '';
-          break;
         }
       }
-    }
 
-    if (matchedItem) {
-      const label = isDynamic && dynamicTitleResolver
-        ? dynamicTitleResolver(paramName, paramValue) || matchedItem.label
-        : matchedItem.label;
+      if (exactMatch) {
+        const label =
+          isDynamic && dynamicTitleResolver
+            ? dynamicTitleResolver(paramName, paramValue) || item.label
+            : item.label;
 
-      const existingIndex = matchedItems.findIndex(
-        (item) => item.href === matchedItem!.path
-      );
+        const newBreadcrumbs = [
+          ...breadcrumbs,
+          {
+            label,
+            href: isDynamic ? undefined : itemPath,
+            isDynamic,
+            paramName,
+            paramValue,
+          },
+        ];
 
-      if (existingIndex === -1) {
-        const breadcrumbItem: AutoBreadcrumbItem = {
-          label,
-          href: isDynamic ? undefined : matchedItem.path,
-          isDynamic,
-          paramName,
-          paramValue,
-        };
-        matchedItems.push(breadcrumbItem);
+        allResults.push({
+          items: newBreadcrumbs,
+          matchedLength: path.split('/').filter(Boolean).length,
+        });
+        continue;
       }
 
-      matchedPath = testPath;
-      currentItems = matchedItem.children || [];
-    } else {
-      const parentMatch = findInAllItems(testPath, allNavItems);
-      if (parentMatch && !matchedItems.find(m => m.href === parentMatch.path)) {
-        matchedItems.push({
-          label: parentMatch.label,
-          href: parentMatch.path,
-        });
-        matchedPath = testPath;
-        currentItems = parentMatch.children || [];
+      if (path.startsWith(`${itemPath}/`) || isParentPath(itemPath, path)) {
+        const childBreadcrumbs = [
+          ...breadcrumbs,
+          {
+            label: item.label,
+            href: itemPath,
+          },
+        ];
+
+        if (item.children && item.children.length > 0) {
+          traverse(item.children, currentPath, childBreadcrumbs);
+        }
       }
     }
   }
 
-  return matchedItems;
+  traverse(allNavItems, '', []);
+
+  if (allResults.length === 0) {
+    return [];
+  }
+
+  allResults.sort((a, b) => b.matchedLength - a.matchedLength);
+  return allResults[0].items;
+}
+
+function isParentPath(parentPath: string, childPath: string): boolean {
+  const parentSegments = parentPath.split('/').filter(Boolean);
+  const childSegments = childPath.split('/').filter(Boolean);
+
+  if (parentSegments.length >= childSegments.length) {
+    return false;
+  }
+
+  for (let i = 0; i < parentSegments.length; i++) {
+    const parentSeg = parentSegments[i];
+    const childSeg = childSegments[i];
+
+    if (parentSeg.startsWith(':')) {
+      continue;
+    }
+
+    if (parentSeg !== childSeg) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+function findDetailPageWithParent(
+  path: string,
+  allNavItems: NavItem[],
+  dynamicTitleResolver?: (paramName: string, paramValue: string) => string | undefined
+): AutoBreadcrumbItem[] {
+  const pathSegments = path.split('/').filter(Boolean);
+
+  if (pathSegments.length < 2) {
+    return [];
+  }
+
+  const lastSegment = pathSegments[pathSegments.length - 1];
+  const isDetailId = /^[a-f0-9-]{36}$/i.test(lastSegment) || /^\d+$/.test(lastSegment);
+
+  if (!isDetailId && !isDetailPageSegment(lastSegment)) {
+    return [];
+  }
+
+  for (let i = pathSegments.length - 2; i >= 0; i--) {
+    const parentPath = `/${pathSegments.slice(0, i + 1).join('/')}`;
+    const parentItem = findNavItemByPath(parentPath, allNavItems);
+
+    if (parentItem) {
+      const result: AutoBreadcrumbItem[] = [];
+
+      const parentHierarchy = findItemHierarchy(parentPath, allNavItems);
+      result.push(...parentHierarchy);
+
+      const detailLabel = isDetailId
+        ? dynamicTitleResolver
+          ? dynamicTitleResolver('id', lastSegment) || '详情'
+          : '详情'
+        : formatSegmentLabel(lastSegment);
+
+      result.push({
+        label: detailLabel,
+        isDynamic: isDetailId,
+        paramName: 'id',
+        paramValue: isDetailId ? lastSegment : undefined,
+      });
+
+      return result;
+    }
+
+    const pluralParent = findPluralParentPath(parentPath, allNavItems);
+    if (pluralParent) {
+      const result: AutoBreadcrumbItem[] = [];
+
+      const parentHierarchy = findItemHierarchy(pluralParent.path, allNavItems);
+      result.push(...parentHierarchy);
+
+      const detailLabel = isDetailId
+        ? dynamicTitleResolver
+          ? dynamicTitleResolver('id', lastSegment) || '详情'
+          : '详情'
+        : formatSegmentLabel(lastSegment);
+
+      result.push({
+        label: detailLabel,
+        isDynamic: isDetailId,
+        paramName: 'id',
+        paramValue: isDetailId ? lastSegment : undefined,
+      });
+
+      return result;
+    }
+  }
+
+  return [];
+}
+
+function isDetailPageSegment(segment: string): boolean {
+  const detailKeywords = ['detail', 'view', 'edit', 'create', 'show'];
+  return detailKeywords.includes(segment.toLowerCase());
+}
+
+function findPluralParentPath(singularPath: string, allNavItems: NavItem[]): NavItem | undefined {
+  const pathSegments = singularPath.split('/').filter(Boolean);
+  if (pathSegments.length === 0) return undefined;
+
+  const lastSegment = pathSegments[pathSegments.length - 1];
+
+  const pluralVariants = [`${lastSegment}s`, `${lastSegment}es`, lastSegment.replace(/y$/, 'ies')];
+
+  for (const variant of pluralVariants) {
+    const testPath = `/${[...pathSegments.slice(0, -1), variant].join('/')}`;
+    const item = findNavItemByPath(testPath, allNavItems);
+    if (item) return item;
+  }
+
+  return undefined;
+}
+
+function findNavItemByPath(path: string, items: NavItem[]): NavItem | undefined {
+  return navigationRegistry.findNavItemByPath(path);
+}
+
+function findItemHierarchy(path: string, allNavItems: NavItem[]): AutoBreadcrumbItem[] {
+  const navHierarchy = navigationRegistry.getNavHierarchy(path);
+  return navHierarchy.map((item) => ({
+    label: item.label,
+    href: item.path,
+  }));
 }
 
 interface DynamicMatchResult {
@@ -208,70 +373,84 @@ function matchDynamicRoute(routePath: string, currentPath: string): DynamicMatch
 }
 
 function getAllNavItemsWithHierarchy(): NavItem[] {
-  const items: NavItem[] = [];
-  const pluginCodes = navigationRegistry.getAllPluginCodes();
-  const topNavItems = navigationRegistry.getTopNavItems();
-
-  pluginCodes.forEach((code) => {
-    const sidebarNav = navigationRegistry.getSidebarNavItems(code);
-    const topNav = topNavItems.find((item) => item.code === code);
-
-    if (topNav) {
-      const itemWithChildren: NavItem = {
-        ...topNav,
-        children: sidebarNav.length > 0 ? sidebarNav : topNav.children,
-      };
-      items.push(itemWithChildren);
-    } else if (sidebarNav.length > 0) {
-      items.push(...sidebarNav);
-    }
-  });
-
-  return items;
+  return navigationRegistry.getAllNavItemsWithHierarchy();
 }
 
-function findInAllItems(path: string, items: NavItem[]): NavItem | undefined {
-  for (const item of items) {
-    if (item.path === path) {
-      return item;
-    }
-
-    if (item.path.includes(':') && matchDynamicRoute(item.path, path).matched) {
-      return item;
-    }
-
-    if (item.children) {
-      const childMatch = findInAllItems(path, item.children);
-      if (childMatch) {
-        return childMatch;
-      }
-    }
-  }
-  return undefined;
-}
-
-function generatePathBreadcrumbs(path: string, skipHome: boolean): AutoBreadcrumbItem[] {
+function generateSmartFallbackBreadcrumbs(
+  path: string,
+  skipHome: boolean,
+  dynamicTitleResolver?: (paramName: string, paramValue: string) => string | undefined
+): AutoBreadcrumbItem[] {
   const segments = path.split('/').filter(Boolean);
   const result: AutoBreadcrumbItem[] = [];
   let currentPath = '';
 
-  segments.forEach((segment, index) => {
+  const allNavItems = getAllNavItemsWithHierarchy();
+
+  for (let i = 0; i < segments.length; i++) {
+    const segment = segments[i];
     currentPath += `/${segment}`;
 
-    if (skipHome && index === 0 && segment === 'dashboard') {
-      return;
+    if (skipHome && i === 0 && segment === 'dashboard') {
+      continue;
     }
 
-    const isLast = index === segments.length - 1;
+    const isLast = i === segments.length - 1;
     const isDynamic = Boolean(segment.match(/^[a-f0-9-]{36}$/i) || segment.match(/^\d+$/));
 
+    const navItem = findNavItemByPath(currentPath, allNavItems);
+
+    let label: string;
+    let href: string | undefined;
+
+    if (navItem) {
+      label = navItem.label;
+      href = isLast ? undefined : currentPath;
+    } else if (isDynamic) {
+      label = dynamicTitleResolver ? dynamicTitleResolver('id', segment) || '详情' : '详情';
+      href = undefined;
+    } else {
+      const pluralMatch = findPluralParentPath(currentPath, allNavItems);
+      if (pluralMatch) {
+        label = pluralMatch.label;
+        href = isLast ? undefined : pluralMatch.path;
+      } else {
+        label = formatSegmentLabel(segment);
+        href = isLast ? undefined : currentPath;
+      }
+    }
+
     result.push({
-      label: isDynamic ? '详情' : formatSegmentLabel(segment),
-      href: isLast ? undefined : currentPath,
+      label,
+      href,
       isDynamic,
       paramValue: isDynamic ? segment : undefined,
     });
-  });
+  }
+
+  return optimizeBreadcrumbHierarchy(result, allNavItems);
+}
+
+function optimizeBreadcrumbHierarchy(
+  items: AutoBreadcrumbItem[],
+  allNavItems: NavItem[]
+): AutoBreadcrumbItem[] {
+  if (items.length <= 1) return items;
+
+  const result: AutoBreadcrumbItem[] = [];
+  const seenHrefs = new Set<string>();
+
+  for (const item of items) {
+    if (item.href && seenHrefs.has(item.href)) {
+      continue;
+    }
+
+    if (item.href) {
+      seenHrefs.add(item.href);
+    }
+
+    result.push(item);
+  }
 
   return result;
 }

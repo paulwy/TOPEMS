@@ -3,7 +3,8 @@
  * 封装 MUI TextField，提供统一的样式和交互体验
  */
 import React from 'react';
-import { TextField, TextFieldProps } from '@mui/material';
+import type { TextFieldProps } from '@mui/material';
+import { TextField } from '@mui/material';
 
 export interface FormFieldProps extends Omit<TextFieldProps, 'size'> {
   /** 字段名称 */

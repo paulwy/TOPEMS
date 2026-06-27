@@ -11,15 +11,9 @@ import {
   Select,
   MenuItem,
   Grid,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
-import {
-  Plus,
-  Edit,
-  Delete,
-  Layers,
-  ArrowDownRight,
-} from 'lucide-react';
+import { Plus, Edit, Delete, Layers, ArrowDownRight, Database } from 'lucide-react';
 import { pdmApi } from '@/api/pdm';
 import type { BomItem, Product } from '@/api/pdm';
 import { useAppStore } from '@/store';
@@ -173,7 +167,11 @@ export const PdmBomPage: React.FC = () => {
       setEditingItem(null);
       loadBomItems();
     } catch (err: unknown) {
-      addNotification({ title: '错误', message: editingItem ? '更新失败' : '创建失败', type: 'error' });
+      addNotification({
+        title: '错误',
+        message: editingItem ? '更新失败' : '创建失败',
+        type: 'error',
+      });
       apiLogger.error('保存BOM物料失败:', err);
     }
   };
@@ -276,7 +274,11 @@ export const PdmBomPage: React.FC = () => {
   );
 
   const statsCards = (
-    <Grid container spacing={3} sx={{ mb: 2 }}>
+    <Grid
+      container
+      spacing={3}
+      sx={{ mb: 2 }}
+    >
       <Grid size={{ xs: 12, sm: 6 }}>
         <Box
           sx={{
@@ -316,6 +318,10 @@ export const PdmBomPage: React.FC = () => {
     <PageContainer
       title='物料清单 (BOM)'
       subtitle='管理产品的物料组成和成本结构'
+      headerProps={{
+        pageIcon: <Database style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #06B6D4 0%, #0891B2 100%)',
+      }}
     >
       <ListPageTemplate
         title=''
@@ -343,7 +349,12 @@ export const PdmBomPage: React.FC = () => {
         emptyMessage='暂无物料数据'
       />
 
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth='sm' fullWidth>
+      <Dialog
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        maxWidth='sm'
+        fullWidth
+      >
         <DialogTitle>{editingItem ? '编辑物料' : '添加物料'}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
@@ -361,7 +372,10 @@ export const PdmBomPage: React.FC = () => {
               fullWidth
               required
             />
-            <Grid container spacing={3}>
+            <Grid
+              container
+              spacing={3}
+            >
               <Grid size={{ xs: 6 }}>
                 <TextField
                   label='数量 *'
@@ -383,9 +397,7 @@ export const PdmBomPage: React.FC = () => {
                   <Select
                     value={formData.unit}
                     label='单位'
-                    onChange={(e) =>
-                      setFormData({ ...formData, unit: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
                   >
                     <MenuItem value='kg'>kg</MenuItem>
                     <MenuItem value='个'>个</MenuItem>
@@ -424,7 +436,10 @@ export const PdmBomPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDialog(false)}>取消</Button>
-          <Button variant='contained' onClick={handleSaveItem}>
+          <Button
+            variant='contained'
+            onClick={handleSaveItem}
+          >
             保存
           </Button>
         </DialogActions>

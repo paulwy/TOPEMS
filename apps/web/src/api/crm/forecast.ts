@@ -1,10 +1,6 @@
 import { apiClient } from '../client';
 import type { ApiResponse, PaginatedResponse } from '../client';
-import type {
-  SalesForecast,
-  CreateSalesForecastRequest,
-  SalesForecastQueryParams,
-} from './types';
+import type { SalesForecast, CreateSalesForecastRequest, SalesForecastQueryParams } from './types';
 
 export const salesForecastApi = {
   list: async (

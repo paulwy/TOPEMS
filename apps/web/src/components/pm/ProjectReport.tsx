@@ -7,8 +7,8 @@ import {
   AlertTriangle,
   CheckCircle,
 } from 'lucide-react';
-import { Button } from '@mui/material';
 import {
+  Button,
   Card,
   CardContent,
   CardHeader,
@@ -72,7 +72,7 @@ const ProjectReport: React.FC<ProjectReportProps> = ({ stats, benefits }) => {
     const reportData = {
       generatedAt: new Date().toISOString(),
       statistics: stats,
-      benefits: benefits,
+      benefits,
     };
     const blob = new Blob([JSON.stringify(reportData, null, 2)], {
       type: 'application/json',

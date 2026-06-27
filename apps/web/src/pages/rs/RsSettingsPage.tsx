@@ -22,8 +22,8 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import {
   GitBranch,
   Layers,
@@ -366,7 +366,10 @@ const RsSettingsPage: React.FC = () => {
           >
             系统统计
           </Typography>
-          <Stack direction='row' spacing={3}>
+          <Stack
+            direction='row'
+            spacing={3}
+          >
             <Card sx={{ flex: 1 }}>
               <CardContent>
                 <Typography

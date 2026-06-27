@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Typography, TextField, Checkbox, LinearProgress } from '@mui/material';
-import { Button } from '@mui/material';
+import { Box, Typography, TextField, Checkbox, LinearProgress, Button } from '@mui/material';
 import {
   X,
   FileSpreadsheet,
@@ -61,7 +60,7 @@ const ExportModal: React.FC<ExportModalProps> = ({ report, onClose }) => {
   const generateFilename = () => {
     if (customFilename) return customFilename;
     const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const reportName = report.config.title.replace(/[^a-zA-Z0-9\u4e00-\u9fa5]/g, '_');
+    const reportName = report.config.title.replace(/[^a-zA-Z0-9\u4E00-\u9FA5]/g, '_');
     return `${reportName}_${timestamp}`;
   };
 

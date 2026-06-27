@@ -66,19 +66,47 @@ const Template = (args: unknown) => {
 import React from 'react';
 
 export const Default: Story = {
-  render: (args) => <Template {...args} page={1} total={10} totalItems={100} />,
+  render: (args) => (
+    <Template
+      {...args}
+      page={1}
+      total={10}
+      totalItems={100}
+    />
+  ),
 };
 
 export const ManyPages: Story = {
-  render: (args) => <Template {...args} page={5} total={50} totalItems={500} />,
+  render: (args) => (
+    <Template
+      {...args}
+      page={5}
+      total={50}
+      totalItems={500}
+    />
+  ),
 };
 
 export const FirstPage: Story = {
-  render: (args) => <Template {...args} page={1} total={10} totalItems={100} />,
+  render: (args) => (
+    <Template
+      {...args}
+      page={1}
+      total={10}
+      totalItems={100}
+    />
+  ),
 };
 
 export const LastPage: Story = {
-  render: (args) => <Template {...args} page={10} total={10} totalItems={100} />,
+  render: (args) => (
+    <Template
+      {...args}
+      page={10}
+      total={10}
+      totalItems={100}
+    />
+  ),
 };
 
 export const WithoutPageSizeSelector: Story = {
@@ -95,10 +123,22 @@ export const WithoutPageSizeSelector: Story = {
 
 export const WithoutTotal: Story = {
   render: (args) => (
-    <Template {...args} page={3} total={10} showTotal={false} />
+    <Template
+      {...args}
+      page={3}
+      total={10}
+      showTotal={false}
+    />
   ),
 };
 
 export const SmallDataSet: Story = {
-  render: (args) => <Template {...args} page={1} total={3} totalItems={25} />,
+  render: (args) => (
+    <Template
+      {...args}
+      page={1}
+      total={3}
+      totalItems={25}
+    />
+  ),
 };

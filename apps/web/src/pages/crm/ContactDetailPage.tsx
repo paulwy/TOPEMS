@@ -58,7 +58,13 @@ const ContactDetailPage: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { label: string; color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' }> = {
+    const statusMap: Record<
+      string,
+      {
+        label: string;
+        color: 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning';
+      }
+    > = {
       active: { label: '活跃', color: 'success' },
       inactive: { label: '非活跃', color: 'default' },
     };
@@ -129,10 +135,25 @@ const ContactDetailPage: React.FC = () => {
         }}
       >
         <Box sx={{ p: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
-          <Typography variant='subtitle1' sx={{ fontWeight: 600, mb: 2 }}>
-            <Phone size={16} style={{ marginRight: 8 }} />联系方式
+          <Typography
+            variant='subtitle1'
+            sx={{ fontWeight: 600, mb: 2 }}
+          >
+            <Phone
+              size={16}
+              style={{ marginRight: 8 }}
+            />
+            联系方式
           </Typography>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: 1, borderColor: 'divider' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              py: 1,
+              borderBottom: 1,
+              borderColor: 'divider',
+            }}
+          >
             <Typography color='text.secondary'>电话</Typography>
             <Typography sx={{ fontWeight: 'medium' }}>{contact.phone || '-'}</Typography>
           </Box>
@@ -142,10 +163,25 @@ const ContactDetailPage: React.FC = () => {
           </Box>
         </Box>
         <Box sx={{ p: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
-          <Typography variant='subtitle1' sx={{ fontWeight: 600, mb: 2 }}>
-            <Building2 size={16} style={{ marginRight: 8 }} />关联信息
+          <Typography
+            variant='subtitle1'
+            sx={{ fontWeight: 600, mb: 2 }}
+          >
+            <Building2
+              size={16}
+              style={{ marginRight: 8 }}
+            />
+            关联信息
           </Typography>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', py: 1, borderBottom: 1, borderColor: 'divider' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              py: 1,
+              borderBottom: 1,
+              borderColor: 'divider',
+            }}
+          >
             <Typography color='text.secondary'>所属客户</Typography>
             <Typography sx={{ fontWeight: 'medium' }}>{customerName || '-'}</Typography>
           </Box>
@@ -172,16 +208,37 @@ const ContactDetailPage: React.FC = () => {
           }}
         >
           <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
-            <Typography variant='body2' color='text.secondary'>创建时间</Typography>
-            <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>{formatDate(contact.created_at)}</Typography>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
+              创建时间
+            </Typography>
+            <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
+              {formatDate(contact.created_at)}
+            </Typography>
           </Box>
           <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
-            <Typography variant='body2' color='text.secondary'>更新时间</Typography>
-            <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>{formatDate(contact.updated_at)}</Typography>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
+              更新时间
+            </Typography>
+            <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
+              {formatDate(contact.updated_at)}
+            </Typography>
           </Box>
           <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
-            <Typography variant='body2' color='text.secondary'>联系人ID</Typography>
-            <Typography sx={{ fontWeight: 'medium', mt: 0.5, fontFamily: 'monospace', fontSize: '0.875rem' }}>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
+              联系人ID
+            </Typography>
+            <Typography
+              sx={{ fontWeight: 'medium', mt: 0.5, fontFamily: 'monospace', fontSize: '0.875rem' }}
+            >
               {contact.id.substring(0, 8)}...
             </Typography>
           </Box>
@@ -206,7 +263,11 @@ const ContactDetailPage: React.FC = () => {
           color='#1976d2'
         />
       ),
-      title: contact ? (contact.last_name ? `${contact.last_name}${contact.first_name}` : contact.first_name) : undefined,
+      title: contact
+        ? contact.last_name
+          ? `${contact.last_name}${contact.first_name}`
+          : contact.first_name
+        : undefined,
       subtitle: contact?.position || undefined,
       tags: customerName ? [customerName] : [],
     }),
@@ -229,7 +290,10 @@ const ContactDetailPage: React.FC = () => {
   };
 
   return (
-    <PageContainer title='联系人详情' subtitle='查看和编辑联系人信息'>
+    <PageContainer
+      title='联系人详情'
+      subtitle='查看和编辑联系人信息'
+    >
       <DetailPageTemplate
         title=''
         subtitle=''

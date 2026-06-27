@@ -8,6 +8,7 @@ import {
   Eye,
   Trash2,
   Download,
+  FileBarChart,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
@@ -73,9 +74,7 @@ const ReportListPage: React.FC = () => {
   }, [loadReports]);
 
   const filteredReports = useMemo(() => {
-    return reports.filter((r) =>
-      r.config.title?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    return reports.filter((r) => r.config.title?.toLowerCase().includes(searchTerm.toLowerCase()));
   }, [reports, searchTerm]);
 
   const paginatedReports = useMemo(() => {
@@ -159,7 +158,11 @@ const ReportListPage: React.FC = () => {
         label: '报表类型',
         width: 150,
         render: (row) => (
-          <Chip label={row.config.report_type} size='small' variant='outlined' />
+          <Chip
+            label={row.config.report_type}
+            size='small'
+            variant='outlined'
+          />
         ),
       },
       {
@@ -213,14 +216,23 @@ const ReportListPage: React.FC = () => {
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <Typography color='text.secondary' variant='body2'>
+                <Typography
+                  color='text.secondary'
+                  variant='body2'
+                >
                   报表总数
                 </Typography>
-                <Typography variant='h4' sx={{ fontWeight: 'bold' }}>
+                <Typography
+                  variant='h4'
+                  sx={{ fontWeight: 'bold' }}
+                >
                   {stats.total}
                 </Typography>
               </div>
-              <FileTextIcon color='primary' size={32} />
+              <FileTextIcon
+                color='primary'
+                size={32}
+              />
             </Box>
           </CardContent>
         </Card>
@@ -228,14 +240,23 @@ const ReportListPage: React.FC = () => {
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <Typography color='text.secondary' variant='body2'>
+                <Typography
+                  color='text.secondary'
+                  variant='body2'
+                >
                   今日生成
                 </Typography>
-                <Typography variant='h4' sx={{ fontWeight: 'bold' }}>
+                <Typography
+                  variant='h4'
+                  sx={{ fontWeight: 'bold' }}
+                >
                   {stats.today}
                 </Typography>
               </div>
-              <AnalyticsIcon color='success' size={32} />
+              <AnalyticsIcon
+                color='success'
+                size={32}
+              />
             </Box>
           </CardContent>
         </Card>
@@ -243,14 +264,23 @@ const ReportListPage: React.FC = () => {
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <Typography color='text.secondary' variant='body2'>
+                <Typography
+                  color='text.secondary'
+                  variant='body2'
+                >
                   定时任务
                 </Typography>
-                <Typography variant='h4' sx={{ fontWeight: 'bold' }}>
+                <Typography
+                  variant='h4'
+                  sx={{ fontWeight: 'bold' }}
+                >
                   {stats.scheduled}
                 </Typography>
               </div>
-              <ClockIcon color='warning' size={32} />
+              <ClockIcon
+                color='warning'
+                size={32}
+              />
             </Box>
           </CardContent>
         </Card>
@@ -258,14 +288,23 @@ const ReportListPage: React.FC = () => {
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <Typography color='text.secondary' variant='body2'>
+                <Typography
+                  color='text.secondary'
+                  variant='body2'
+                >
                   订阅用户
                 </Typography>
-                <Typography variant='h4' sx={{ fontWeight: 'bold' }}>
+                <Typography
+                  variant='h4'
+                  sx={{ fontWeight: 'bold' }}
+                >
                   {stats.subscribed}
                 </Typography>
               </div>
-              <UsersIcon color='info' size={32} />
+              <UsersIcon
+                color='info'
+                size={32}
+              />
             </Box>
           </CardContent>
         </Card>
@@ -274,7 +313,14 @@ const ReportListPage: React.FC = () => {
   );
 
   return (
-    <PageContainer title='报表中心' subtitle='统一报表管理平台，支持多种报表类型和导出格式'>
+    <PageContainer
+      title='报表中心'
+      subtitle='统一报表管理平台，支持多种报表类型和导出格式'
+      headerProps={{
+        pageIcon: <FileBarChart style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+      }}
+    >
       <ListPageTemplate
         title=''
         subtitle=''

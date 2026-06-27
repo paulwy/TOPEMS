@@ -10,21 +10,22 @@ import {
   Grid,
   OutlinedInput,
 } from '@mui/material';
-import {FormField, FormSelect, ActionButton, PageContainer} from '@/components/common';
-import type {
-  Customer,
-  CreateCustomerRequest,
-  UpdateCustomerRequest,
-  Tag,
-} from '@/api/crm';
+import {
+  FormField,
+  FormSelect,
+  ActionButton,
+  PageContainer,
+  DataExport,
+} from '@/components/common';
+import type { Customer, CreateCustomerRequest, UpdateCustomerRequest, Tag } from '@/api/crm';
 import { crmApi } from '@/api/crm';
 import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
-import { DataExport } from '@/components/common';
-import { Plus, Edit, Trash2, Eye, Download, Upload, Tag as TagIcon } from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Download, Upload, Tag as TagIcon, Users } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { ListPageTemplate, type ColumnDef } from '@/components/templates';
-import type { RowAction, FilterConfig } from '@/components/templates';
+import { ListPageTemplate } from '@/components/templates';
+
+import type { RowAction, FilterConfig, ColumnDef } from '@/components/templates';
 
 const customerColumns = [
   { key: 'name', title: '客户名称' },
@@ -564,425 +565,432 @@ const CustomerManagementPage: React.FC = () => {
   const availableTags = allTags.filter((tag) => !customerTags.some((ct) => ct.id === tag.id));
 
   return (
-    <PageContainer title='客户管理' subtitle='管理客户信息，包括客户基本信息、联系方式、分类和标签等'>
-    <>
-      <ListPageTemplate<Customer>
-        title=''
-        subtitle=''
-        backButton={{
-          href: '/dashboard',
-        }}
-        columns={columns}
-        data={customers}
-        loading={loading}
-        searchable
-        searchPlaceholder='搜索客户名称或代码...'
-        searchValue={searchTerm}
-        onSearch={(value) => {
-          setSearchTerm(value);
-        }}
-        filters={filters}
-        rowActions={rowActions}
-        pagination={{
-          page: pagination.page,
-          pageSize: pagination.pageSize,
-          total: pagination.total,
-          onPageChange: (page) => {
-            setPagination((prev) => ({ ...prev, page }));
-          },
-          onPageSizeChange: (pageSize) => {
-            setPagination((prev) => ({ ...prev, pageSize, page: 0 }));
-          },
-        }}
-        actions={[
-          {
-            label: '导入',
-            icon: <Upload size={18} />,
-            onClick: () => {},
-            variant: 'outlined',
-          },
-          {
-            label: '导出',
-            icon: <Download size={18} />,
-            onClick: () => {},
-            variant: 'outlined',
-          },
-          {
-            label: '新建客户',
-            icon: <Plus size={18} />,
-            onClick: () => {
-              resetForm();
-              setShowDialog(true);
+    <PageContainer
+      title='客户管理'
+      subtitle='管理客户信息，包括客户基本信息、联系方式、分类和标签等'
+      headerProps={{
+        pageIcon: <Users style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #3B82F6, #1D4ED8)',
+      }}
+    >
+      <>
+        <ListPageTemplate<Customer>
+          title=''
+          subtitle=''
+          backButton={{
+            href: '/dashboard',
+          }}
+          columns={columns}
+          data={customers}
+          loading={loading}
+          searchable
+          searchPlaceholder='搜索客户名称或代码...'
+          searchValue={searchTerm}
+          onSearch={(value) => {
+            setSearchTerm(value);
+          }}
+          filters={filters}
+          rowActions={rowActions}
+          pagination={{
+            page: pagination.page,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
+            onPageChange: (page) => {
+              setPagination((prev) => ({ ...prev, page }));
             },
-            variant: 'contained',
-          },
-        ]}
-        headerContent={
-          <DataExport
-            data={customers as unknown as Record<string, unknown>[]}
-            fields={customerColumns}
-            defaultFileName='客户数据'
-            buttonText=''
-          />
-        }
-      />
+            onPageSizeChange: (pageSize) => {
+              setPagination((prev) => ({ ...prev, pageSize, page: 0 }));
+            },
+          }}
+          actions={[
+            {
+              label: '导入',
+              icon: <Upload size={18} />,
+              onClick: () => {},
+              variant: 'outlined',
+            },
+            {
+              label: '导出',
+              icon: <Download size={18} />,
+              onClick: () => {},
+              variant: 'outlined',
+            },
+            {
+              label: '新建客户',
+              icon: <Plus size={18} />,
+              onClick: () => {
+                resetForm();
+                setShowDialog(true);
+              },
+              variant: 'contained',
+            },
+          ]}
+          headerContent={
+            <DataExport
+              data={customers as unknown as Record<string, unknown>[]}
+              fields={customerColumns}
+              defaultFileName='客户数据'
+              buttonText=''
+            />
+          }
+        />
 
-      <Dialog
-        open={showDialog}
-        onClose={() => setShowDialog(false)}
-        maxWidth='lg'
-      >
-        <DialogTitle>{selectedCustomer ? '编辑客户' : '新建客户'}</DialogTitle>
-        <DialogContent>
-          <Box
-            component='form'
-            onSubmit={handleSubmit}
-            sx={{ mt: 2 }}
-          >
-            <Grid
-              container
-              spacing={3}
+        <Dialog
+          open={showDialog}
+          onClose={() => setShowDialog(false)}
+          maxWidth='lg'
+        >
+          <DialogTitle>{selectedCustomer ? '编辑客户' : '新建客户'}</DialogTitle>
+          <DialogContent>
+            <Box
+              component='form'
+              onSubmit={handleSubmit}
+              sx={{ mt: 2 }}
             >
-              <Grid size={{ xs: 12, md: 6 }}>
-                <FormField
-                  name='name'
-                  label='客户名称'
-                  value={formData.name}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-                  fullWidth
-                  required
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <FormField
-                  name='code'
-                  label='客户代码'
-                  value={formData.code}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, code: e.target.value }))}
-                  fullWidth
-                />
-              </Grid>
+              <Grid
+                container
+                spacing={3}
+              >
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <FormField
+                    name='name'
+                    label='客户名称'
+                    value={formData.name}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                    fullWidth
+                    required
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <FormField
+                    name='code'
+                    label='客户代码'
+                    value={formData.code}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, code: e.target.value }))}
+                    fullWidth
+                  />
+                </Grid>
 
-              <Grid size={{ xs: 12, md: 6 }}>
-                <FormSelect
-                  name='customer_type'
-                  label='客户类型'
-                  value={formData.customer_type}
-                  options={customerTypes.filter(c => c.value !== undefined)}
-                  onChange={(value) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      customer_type: value as string,
-                    }))
-                  }
-                  placeholder='请选择客户类型'
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <FormSelect
-                  name='rating'
-                  label='评级'
-                  value={formData.rating}
-                  options={ratingOptions.filter(r => r.value !== undefined)}
-                  onChange={(value) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      rating: value as string,
-                    }))
-                  }
-                  placeholder='请选择评级'
-                />
-              </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <FormSelect
+                    name='customer_type'
+                    label='客户类型'
+                    value={formData.customer_type}
+                    options={customerTypes.filter((c) => c.value !== undefined)}
+                    onChange={(value) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        customer_type: value as string,
+                      }))
+                    }
+                    placeholder='请选择客户类型'
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <FormSelect
+                    name='rating'
+                    label='评级'
+                    value={formData.rating}
+                    options={ratingOptions.filter((r) => r.value !== undefined)}
+                    onChange={(value) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        rating: value as string,
+                      }))
+                    }
+                    placeholder='请选择评级'
+                  />
+                </Grid>
 
-              <Grid size={{ xs: 12, md: 6 }}>
-                <FormField
-                  name='industry'
-                  label='行业'
-                  value={formData.industry}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      industry: e.target.value,
-                    }))
-                  }
-                  fullWidth
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <FormSelect
-                  name='company_size'
-                  label='公司规模'
-                  value={formData.company_size}
-                  options={companySizes.filter(c => c.value !== undefined)}
-                  onChange={(value) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      company_size: value as string,
-                    }))
-                  }
-                  placeholder='请选择公司规模'
-                />
-              </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <FormField
+                    name='industry'
+                    label='行业'
+                    value={formData.industry}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        industry: e.target.value,
+                      }))
+                    }
+                    fullWidth
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <FormSelect
+                    name='company_size'
+                    label='公司规模'
+                    value={formData.company_size}
+                    options={companySizes.filter((c) => c.value !== undefined)}
+                    onChange={(value) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        company_size: value as string,
+                      }))
+                    }
+                    placeholder='请选择公司规模'
+                  />
+                </Grid>
 
-              <Grid size={{ xs: 12, md: 6 }}>
-                <FormField
-                  name='source'
-                  label='客户来源'
-                  value={formData.source}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, source: e.target.value }))}
-                  fullWidth
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <FormField
-                  name='employee_count'
-                  label='员工数量'
-                  type='number'
-                  value={formData.employee_count || ''}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      employee_count: e.target.value ? parseInt(e.target.value, 10) : undefined,
-                    }))
-                  }
-                  fullWidth
-                />
-              </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <FormField
+                    name='source'
+                    label='客户来源'
+                    value={formData.source}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, source: e.target.value }))}
+                    fullWidth
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <FormField
+                    name='employee_count'
+                    label='员工数量'
+                    type='number'
+                    value={formData.employee_count || ''}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        employee_count: e.target.value ? parseInt(e.target.value, 10) : undefined,
+                      }))
+                    }
+                    fullWidth
+                  />
+                </Grid>
 
-              <Grid size={{ xs: 12, md: 6 }}>
-                <FormField
-                  name='revenue'
-                  label='年营收(元)'
-                  type='number'
-                  value={formData.revenue || ''}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      revenue: e.target.value ? parseFloat(e.target.value) : undefined,
-                    }))
-                  }
-                  fullWidth
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <FormField
-                  name='website'
-                  label='网站'
-                  value={formData.website}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      website: e.target.value,
-                    }))
-                  }
-                  fullWidth
-                />
-              </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <FormField
+                    name='revenue'
+                    label='年营收(元)'
+                    type='number'
+                    value={formData.revenue || ''}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        revenue: e.target.value ? parseFloat(e.target.value) : undefined,
+                      }))
+                    }
+                    fullWidth
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <FormField
+                    name='website'
+                    label='网站'
+                    value={formData.website}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        website: e.target.value,
+                      }))
+                    }
+                    fullWidth
+                  />
+                </Grid>
 
-              <Grid size={{ xs: 12, md: 6 }}>
-                <FormField
-                  name='email'
-                  label='邮箱'
-                  type='email'
-                  value={formData.email}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
-                  fullWidth
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <FormField
-                  name='phone'
-                  label='电话'
-                  value={formData.phone}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
-                  fullWidth
-                />
-              </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <FormField
+                    name='email'
+                    label='邮箱'
+                    type='email'
+                    value={formData.email}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
+                    fullWidth
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <FormField
+                    name='phone'
+                    label='电话'
+                    value={formData.phone}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, phone: e.target.value }))}
+                    fullWidth
+                  />
+                </Grid>
 
-              <Grid size={{ xs: 12, md: 6 }}>
-                <FormField
-                  name='fax'
-                  label='传真'
-                  value={formData.fax}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, fax: e.target.value }))}
-                  fullWidth
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <FormField
-                  name='postal_code'
-                  label='邮编'
-                  value={formData.postal_code}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      postal_code: e.target.value,
-                    }))
-                  }
-                  fullWidth
-                />
-              </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <FormField
+                    name='fax'
+                    label='传真'
+                    value={formData.fax}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, fax: e.target.value }))}
+                    fullWidth
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <FormField
+                    name='postal_code'
+                    label='邮编'
+                    value={formData.postal_code}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        postal_code: e.target.value,
+                      }))
+                    }
+                    fullWidth
+                  />
+                </Grid>
 
-              <Grid size={{ xs: 12, md: 4 }}>
-                <FormField
-                  name='country'
-                  label='国家'
-                  value={formData.country}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      country: e.target.value,
-                    }))
-                  }
-                  fullWidth
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <FormField
-                  name='province'
-                  label='省份'
-                  value={formData.province}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      province: e.target.value,
-                    }))
-                  }
-                  fullWidth
-                />
-              </Grid>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <FormField
-                  name='city'
-                  label='城市'
-                  value={formData.city}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, city: e.target.value }))}
-                  fullWidth
-                />
-              </Grid>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <FormField
+                    name='country'
+                    label='国家'
+                    value={formData.country}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        country: e.target.value,
+                      }))
+                    }
+                    fullWidth
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <FormField
+                    name='province'
+                    label='省份'
+                    value={formData.province}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        province: e.target.value,
+                      }))
+                    }
+                    fullWidth
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <FormField
+                    name='city'
+                    label='城市'
+                    value={formData.city}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, city: e.target.value }))}
+                    fullWidth
+                  />
+                </Grid>
 
-              <Grid size={{ xs: 12 }}>
-                <FormField
-                  name='address'
-                  label='详细地址'
-                  value={formData.address}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      address: e.target.value,
-                    }))
-                  }
-                  fullWidth
-                />
-              </Grid>
+                <Grid size={{ xs: 12 }}>
+                  <FormField
+                    name='address'
+                    label='详细地址'
+                    value={formData.address}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        address: e.target.value,
+                      }))
+                    }
+                    fullWidth
+                  />
+                </Grid>
 
-              <Grid size={{ xs: 12 }}>
-                <FormField
-                  name='notes'
-                  label='备注'
-                  value={formData.notes}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
-                  fullWidth
-                  multiline
-                  rows={3}
-                />
+                <Grid size={{ xs: 12 }}>
+                  <FormField
+                    name='notes'
+                    label='备注'
+                    value={formData.notes}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
+                    fullWidth
+                    multiline
+                    rows={3}
+                  />
+                </Grid>
               </Grid>
-            </Grid>
+              <DialogActions>
+                <ActionButton
+                  label='取消'
+                  variant='secondary'
+                  onClick={() => setShowDialog(false)}
+                />
+                <ActionButton
+                  label={selectedCustomer ? '保存修改' : '创建客户'}
+                  variant='primary'
+                  type='submit'
+                />
+              </DialogActions>
+            </Box>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog
+          open={showTagDialog}
+          onClose={() => setShowTagDialog(false)}
+          maxWidth='md'
+        >
+          <DialogTitle>管理客户标签 - {selectedCustomer?.name}</DialogTitle>
+          <DialogContent>
+            <Box sx={{ mt: 2 }}>
+              <Typography
+                variant='subtitle2'
+                sx={{ mb: 2 }}
+              >
+                已添加的标签
+              </Typography>
+              {customerTags.length > 0 ? (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 4 }}>
+                  {customerTags.map((tag) => (
+                    <Chip
+                      key={tag.id}
+                      label={tag.name}
+                      style={{
+                        backgroundColor: `${tag.color}20`,
+                        color: tag.color,
+                      }}
+                      onDelete={() => handleRemoveTag(tag.id)}
+                      sx={{ cursor: 'pointer' }}
+                    />
+                  ))}
+                </Box>
+              ) : (
+                <Typography
+                  variant='body2'
+                  color='textSecondary'
+                  sx={{ mb: 4 }}
+                >
+                  暂无标签，点击下方标签添加
+                </Typography>
+              )}
+
+              <Typography
+                variant='subtitle2'
+                sx={{ mb: 2 }}
+              >
+                可用标签
+              </Typography>
+              {availableTags.length > 0 ? (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {availableTags.map((tag) => (
+                    <Chip
+                      key={tag.id}
+                      label={tag.name}
+                      style={{
+                        backgroundColor: `${tag.color}20`,
+                        color: tag.color,
+                      }}
+                      onClick={() => handleAddTag(tag.id)}
+                      sx={{ cursor: 'pointer' }}
+                    />
+                  ))}
+                </Box>
+              ) : (
+                <Typography
+                  variant='body2'
+                  color='textSecondary'
+                >
+                  暂无可用标签
+                </Typography>
+              )}
+            </Box>
             <DialogActions>
               <ActionButton
-                label='取消'
+                label='关闭'
                 variant='secondary'
-                onClick={() => setShowDialog(false)}
-              />
-              <ActionButton
-                label={selectedCustomer ? '保存修改' : '创建客户'}
-                variant='primary'
-                type='submit'
+                onClick={() => setShowTagDialog(false)}
               />
             </DialogActions>
-          </Box>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={showTagDialog}
-        onClose={() => setShowTagDialog(false)}
-        maxWidth='md'
-      >
-        <DialogTitle>管理客户标签 - {selectedCustomer?.name}</DialogTitle>
-        <DialogContent>
-          <Box sx={{ mt: 2 }}>
-            <Typography
-              variant='subtitle2'
-              sx={{ mb: 2 }}
-            >
-              已添加的标签
-            </Typography>
-            {customerTags.length > 0 ? (
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 4 }}>
-                {customerTags.map((tag) => (
-                  <Chip
-                    key={tag.id}
-                    label={tag.name}
-                    style={{
-                      backgroundColor: tag.color + '20',
-                      color: tag.color,
-                    }}
-                    onDelete={() => handleRemoveTag(tag.id)}
-                    sx={{ cursor: 'pointer' }}
-                  />
-                ))}
-              </Box>
-            ) : (
-              <Typography
-                variant='body2'
-                color='textSecondary'
-                sx={{ mb: 4 }}
-              >
-                暂无标签，点击下方标签添加
-              </Typography>
-            )}
-
-            <Typography
-              variant='subtitle2'
-              sx={{ mb: 2 }}
-            >
-              可用标签
-            </Typography>
-            {availableTags.length > 0 ? (
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {availableTags.map((tag) => (
-                  <Chip
-                    key={tag.id}
-                    label={tag.name}
-                    style={{
-                      backgroundColor: tag.color + '20',
-                      color: tag.color,
-                    }}
-                    onClick={() => handleAddTag(tag.id)}
-                    sx={{ cursor: 'pointer' }}
-                  />
-                ))}
-              </Box>
-            ) : (
-              <Typography
-                variant='body2'
-                color='textSecondary'
-              >
-                暂无可用标签
-              </Typography>
-            )}
-          </Box>
-          <DialogActions>
-            <ActionButton
-              label='关闭'
-              variant='secondary'
-              onClick={() => setShowTagDialog(false)}
-            />
-          </DialogActions>
-        </DialogContent>
-      </Dialog>
-    </>
+          </DialogContent>
+        </Dialog>
+      </>
     </PageContainer>
   );
 };

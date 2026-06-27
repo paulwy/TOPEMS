@@ -28,8 +28,8 @@ import {
   MenuItem,
   IconButton,
   Tooltip,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 
 import {
   ListPageTemplate,
@@ -281,10 +281,13 @@ const IntegrationLimsQmsPage: React.FC = () => {
   };
 
   return (
-    <PageContainer title="LIMS ↔ QMS 同步" subtitle="管理 LIMS 样本与 QMS 检验的同步">
+    <PageContainer
+      title='LIMS ↔ QMS 同步'
+      subtitle='管理 LIMS 样本与 QMS 检验的同步'
+    >
       <ListPageTemplate
-        title=""
-        subtitle=""
+        title=''
+        subtitle=''
         columns={columns}
         data={filteredData}
         loading={loading}

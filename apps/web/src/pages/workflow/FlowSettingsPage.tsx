@@ -114,7 +114,10 @@ const FlowSettingsPage: React.FC = () => {
   }, [settings]);
 
   return (
-    <PageContainer padding={false} maxWidth={false}>
+    <PageContainer
+      padding={false}
+      maxWidth={false}
+    >
       <SettingsPageTemplate
         title='流程设置'
         subtitle='管理工作流系统的全局设置'

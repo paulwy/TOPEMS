@@ -1,15 +1,6 @@
 import React from 'react';
-import {
-  Box,
-  Paper,
-  Typography,
-  useTheme,
-  type SxProps,
-  type Theme,
-} from '@mui/material';
-import {
-  ChevronRight,
-} from 'lucide-react';
+import { Box, Paper, Typography, useTheme, type SxProps, type Theme } from '@mui/material';
+import { ChevronRight } from 'lucide-react';
 
 export interface MobileCardProps {
   title?: string;

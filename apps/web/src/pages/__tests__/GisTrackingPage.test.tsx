@@ -14,11 +14,7 @@ vi.mock('@/store', () => ({
 const mockAddNotification = vi.fn();
 
 const renderWithProviders = (ui: React.ReactElement) => {
-  return render(
-    <BrowserRouter>
-      {ui}
-    </BrowserRouter>
-  );
+  return render(<BrowserRouter>{ui}</BrowserRouter>);
 };
 
 const mockDevices = [
@@ -83,9 +79,7 @@ describe('GisTrackingPage', () => {
     renderWithProviders(<GisTrackingPage />);
 
     await waitFor(() => {
-      expect(mockAddNotification).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'error' })
-      );
+      expect(mockAddNotification).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }));
     });
   });
 });

@@ -14,107 +14,25 @@ import {
   useMediaQuery,
   Menu,
   MenuItem,
+  Drawer,
 } from '@mui/material';
 import {
-  Home,
-  Users,
-  Building2,
-  Briefcase,
-  BarChart3,
-  Settings,
-  Bell,
-  ChevronRight,
   Menu as MenuIcon,
-  X,
-  Sparkles,
-  User,
-  LogOut,
-  FileText,
-  Calendar,
-  DollarSign,
-  Box as BoxIcon,
-  LayoutDashboard,
-  FolderKanban,
-  FlaskConical,
-  Truck,
-  Wallet,
-  Factory,
-  Bot,
-  Map,
-  MessageCircle,
-  Shield,
-  GitBranch,
-  Warehouse,
-  Activity,
-  Package,
-  FileSearch,
-  BookOpen,
-  Layers,
-  Tag,
-  ListTodo,
-  CheckCircle,
-  Leaf,
-  FlaskRound,
-  Microscope,
-  TestTube,
-  ClipboardCheck,
-  AlertCircle,
-  AlertTriangle,
-  TrendingUp,
-  Handshake,
-  Award,
-  Target,
-  ShoppingCart,
-  FileSignature,
-  Download,
-  Upload,
-  ClipboardList,
-  Hash,
-  ListOrdered,
-  PieChart,
-  Database,
-  FolderOpen,
-  LayoutTemplate,
-  HelpCircle,
-  Archive,
-  BarChart2,
-  Clock,
-  Mail,
-  Smartphone,
-  CloudOff,
-  ScanLine,
-  Network,
-  Link,
-  SlidersHorizontal,
-  Globe,
-  Plug,
-  Zap,
-  Star,
-  Wrench,
-  Monitor,
-  AlertOctagon,
-  FileCheck,
-  Rocket,
-  Pencil,
-  History,
-  Key,
-  UserCheck,
-  Building,
-  DollarSign as DollarSignIcon,
-  Calculator,
-  Book,
-  CreditCard,
-  GraduationCap,
-  Target as TargetIcon,
-  MessageSquare,
-  Layers as LayersIcon,
+  Home,
   Grid3X3,
-  GanttChart,
-  ShieldAlert,
-  Plus,
+  BarChart3,
+  ShoppingCart,
+  Bell,
+  User,
+  X,
   Sun,
   Moon,
+  Sparkles,
+  LogOut,
+  ChevronRight,
 } from 'lucide-react';
+import { lucideIcons, renderIcon } from '@/lib/iconMapping';
+
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { usePermission } from '../../hooks/usePermission';
@@ -127,116 +45,36 @@ import { MobileNav } from './MobileNav';
 import { Sidebar as AIPluginSidebar } from './Sidebar';
 import { AppSidebar } from './AppSidebar';
 
+const SkipToContent = () => (
+  <Box
+    component="a"
+    href="#main-content"
+    sx={{
+      position: 'absolute',
+      left: '-9999px',
+      top: 0,
+      zIndex: 10000,
+      p: 2,
+      bgcolor: 'primary.main',
+      color: 'white',
+      textDecoration: 'none',
+      borderRadius: '0 0 8px 0',
+      fontWeight: 600,
+      '&:focus': {
+        left: 0,
+      },
+    }}
+  >
+    跳转到主要内容
+  </Box>
+);
+
 // 从路径解析模块名的辅助函数
 function getModuleFromPath(pathname: string): string | null {
   const segments = pathname.split('/').filter(Boolean);
   if (segments.length === 0) return null;
   return segments[0];
 }
-
-// Lucide 图标名称映射
-const lucideIcons: Record<string, React.ComponentType<{ style?: React.CSSProperties }> | null> = {
-  Home,
-  Users,
-  Building2,
-  Briefcase,
-  BarChart3,
-  Settings,
-  Bell,
-  User,
-  BoxIcon,
-  FileText,
-  Calendar,
-  DollarSign,
-  ChevronRight,
-  LayoutDashboard,
-  FolderKanban,
-  FlaskConical,
-  Truck,
-  Wallet,
-  Factory,
-  Bot,
-  Map,
-  MessageCircle,
-  Shield,
-  GitBranch,
-  Warehouse,
-  Activity,
-  Package,
-  FileSearch,
-  BookOpen,
-  Layers,
-  Tag,
-  ListTodo,
-  CheckCircle,
-  Leaf,
-  FlaskRound,
-  Microscope,
-  TestTube,
-  ClipboardCheck,
-  AlertCircle,
-  AlertTriangle,
-  TrendingUp,
-  Handshake,
-  Award,
-  Target,
-  ShoppingCart,
-  FileSignature,
-  Download,
-  Upload,
-  ClipboardList,
-  Hash,
-  ListOrdered,
-  PieChart,
-  Database,
-  FolderOpen,
-  LayoutTemplate,
-  HelpCircle,
-  Archive,
-  BarChart2,
-  Clock,
-  Mail,
-  Smartphone,
-  CloudOff,
-  ScanLine,
-  Network,
-  Link,
-  SlidersHorizontal,
-  Globe,
-  Plug,
-  Zap,
-  Star,
-  Wrench,
-  Monitor,
-  AlertOctagon,
-  FileCheck,
-  Rocket,
-  Pencil,
-  History,
-  Key,
-  UserCheck,
-  Building,
-  DollarSignIcon,
-  Calculator,
-  Book,
-  CreditCard,
-  GraduationCap,
-  TargetIcon,
-  MessageSquare,
-  LayersIcon,
-  Grid3X3,
-  GanttChart,
-  ShieldAlert,
-  Plus,
-};
-
-// 渲染图标
-const renderIcon = (iconName?: string, size = 16) => {
-  if (!iconName) return null;
-  const IconComponent = lucideIcons[iconName];
-  if (!IconComponent) return null;
-  return <IconComponent style={{ width: size, height: size, color: 'primary.main' }} />;
-};
 
 interface GlobalLayoutProps {
   children: React.ReactNode;
@@ -253,6 +91,17 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   const appTheme = useAppStore((state) => state.theme);
   const toggleTheme = useAppStore((state) => state.toggleTheme);
   const isDark = appTheme === 'dark';
+
+  // 平板专用判断（sm 到 <lg，即 600px-1200px）
+  const isTabletOnly = useMediaQuery(theme.breakpoints.between('sm', 'lg'));
+
+  // 平板抽屉状态
+  const [tabletDrawerOpen, setTabletDrawerOpen] = useState(false);
+
+  // 路由变化时关闭平板抽屉
+  useEffect(() => {
+    setTabletDrawerOpen(false);
+  }, [location.pathname]);
 
   // 从 NavigationRegistry 动态获取导航项（带权限过滤）
   const [topNavItems, setTopNavItems] = useState<NavItem[]>(() => {
@@ -295,6 +144,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      <SkipToContent />
       {/* 顶部导航栏 */}
       <Box
         component='header'
@@ -358,6 +208,21 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
             </Typography>
           </Box>
 
+          {/* 平板端导航菜单按钮 */}
+          {isTabletOnly && (
+            <IconButton
+              onClick={() => setTabletDrawerOpen(true)}
+              aria-label="打开导航菜单"
+              sx={{
+                width: 36,
+                height: 36,
+                '&:hover': { bgcolor: 'action.hover' },
+              }}
+            >
+              <MenuIcon style={{ width: 20, height: 20 }} />
+            </IconButton>
+          )}
+
           {/* 中央导航 Tab */}
           <Box
             sx={{
@@ -369,9 +234,21 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
             }}
           >
             {[
-              { label: '首页', path: '/', icon: <LayoutDashboard style={{ width: 16, height: 16 }} /> },
-              { label: '模块概览', path: '/modules', icon: <Grid3X3 style={{ width: 16, height: 16 }} /> },
-              { label: '数据仪表盘', path: '/dashboard', icon: <BarChart3 style={{ width: 16, height: 16 }} /> },
+              {
+                label: '首页',
+                path: '/',
+                icon: <Home style={{ width: 16, height: 16 }} />,
+              },
+              {
+                label: '模块概览',
+                path: '/modules',
+                icon: <Grid3X3 style={{ width: 16, height: 16 }} />,
+              },
+              {
+                label: '数据仪表盘',
+                path: '/dashboard',
+                icon: <BarChart3 style={{ width: 16, height: 16 }} />,
+              },
             ].map((tab) => {
               const isActive = location.pathname === tab.path;
               return (
@@ -431,6 +308,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
             <Tooltip title='AI 助手'>
               <IconButton
                 size='small'
+                aria-label="AI 助手"
                 onClick={() => navigate('/ai')}
                 sx={{
                   width: 36,
@@ -445,6 +323,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
             <Tooltip title='插件市场'>
               <IconButton
                 size='small'
+                aria-label="插件市场"
                 onClick={() => navigate('/plugin/marketplace')}
                 sx={{
                   width: 36,
@@ -457,29 +336,45 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
               </IconButton>
             </Tooltip>
             <Tooltip title='通知'>
-              <IconButton size='small' sx={{ width: 36, height: 36 }}>
+              <IconButton
+                size='small'
+                aria-label="通知"
+                sx={{ width: 36, height: 36 }}
+              >
                 <Box sx={{ position: 'relative', display: 'inline-flex' }}>
                   <Bell style={{ width: 18, height: 18 }} />
-                  <Box sx={{
-                    position: 'absolute', top: 3, right: 3,
-                    width: 8, height: 8, borderRadius: '50%',
-                    bgcolor: 'error.main',
-                  }} />
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: 3,
+                      right: 3,
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      bgcolor: 'error.main',
+                    }}
+                  />
                 </Box>
               </IconButton>
             </Tooltip>
             <Tooltip title={isDark ? '切换浅色模式' : '切换深色模式'}>
               <IconButton
+                aria-label="切换主题"
                 onClick={toggleTheme}
                 sx={{ width: 36, height: 36, '&:hover': { bgcolor: 'action.hover' } }}
-                size="small"
+                size='small'
               >
-                {isDark ? <Sun style={{ width: 18, height: 18 }} /> : <Moon style={{ width: 18, height: 18 }} />}
+                {isDark ? (
+                  <Sun style={{ width: 18, height: 18 }} />
+                ) : (
+                  <Moon style={{ width: 18, height: 18 }} />
+                )}
               </IconButton>
             </Tooltip>
             <Tooltip title='用户菜单'>
               <IconButton
                 size='small'
+                aria-label="用户菜单"
                 onClick={handleUserMenuOpen}
               >
                 <Avatar
@@ -524,18 +419,45 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
             />
           </Box>
         </Box>
-
       </Box>
 
       {/* 侧边栏 + 主内容区 */}
       <Box sx={{ display: 'flex', flexDirection: 'row', flex: 1 }}>
-        <AppSidebar collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(prev => !prev)} />
+        {/* 桌面端侧边栏 - lg+（AppSidebar 内部已有 display: { xs: 'none', lg: 'flex' }） */}
+        <AppSidebar
+          collapsed={sidebarCollapsed}
+          onToggleCollapse={() => setSidebarCollapsed((prev) => !prev)}
+        />
+
+        {/* 平板端抽屉侧边栏 - sm 到 <lg */}
+        <Drawer
+          anchor="left"
+          open={tabletDrawerOpen}
+          onClose={() => setTabletDrawerOpen(false)}
+          sx={{
+            display: { xs: 'none', sm: 'block', lg: 'none' },
+            '& .MuiDrawer-paper': {
+              width: 240,
+              borderRight: '1px solid',
+              borderColor: 'divider',
+              bgcolor: 'background.paper',
+            },
+          }}
+        >
+          <AppSidebar
+            collapsed={false}
+            onToggleCollapse={() => {}}
+            forceVisible
+          />
+        </Drawer>
+
         {/* 主内容区 */}
         <Box
           component='main'
+          id='main-content'
           sx={{
             flex: 1,
-            backgroundColor: 'grey.50',
+            backgroundColor: 'background.default',
             p: { xs: 2, sm: 3, lg: 4 },
             maxWidth: 1800,
             width: '100%',
@@ -570,23 +492,41 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
             </Typography>
             <Box sx={{ display: 'flex', gap: 2 }}>
               <Typography
-                component="a"
-                href="#"
-                sx={{ fontSize: 12, color: 'text.secondary', textDecoration: 'none', cursor: 'pointer', '&:hover': { color: 'primary.main' } }}
+                component='a'
+                href='#'
+                sx={{
+                  fontSize: 12,
+                  color: 'text.secondary',
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  '&:hover': { color: 'primary.main' },
+                }}
               >
                 帮助中心
               </Typography>
               <Typography
-                component="a"
-                href="#"
-                sx={{ fontSize: 12, color: 'text.secondary', textDecoration: 'none', cursor: 'pointer', '&:hover': { color: 'primary.main' } }}
+                component='a'
+                href='#'
+                sx={{
+                  fontSize: 12,
+                  color: 'text.secondary',
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  '&:hover': { color: 'primary.main' },
+                }}
               >
                 使用文档
               </Typography>
               <Typography
-                component="a"
-                href="#"
-                sx={{ fontSize: 12, color: 'text.secondary', textDecoration: 'none', cursor: 'pointer', '&:hover': { color: 'primary.main' } }}
+                component='a'
+                href='#'
+                sx={{
+                  fontSize: 12,
+                  color: 'text.secondary',
+                  textDecoration: 'none',
+                  cursor: 'pointer',
+                  '&:hover': { color: 'primary.main' },
+                }}
               >
                 联系支持
               </Typography>

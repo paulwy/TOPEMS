@@ -97,7 +97,7 @@ export const emailApi = {
     if (params?.priority) searchParams.set('priority', params.priority);
 
     const queryString = searchParams.toString();
-    return apiClient.mail.get(`/emails${queryString ? '?' + queryString : ''}`);
+    return apiClient.mail.get(`/emails${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<Email>> {
@@ -137,7 +137,7 @@ export const templateApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.mail.get(`/templates${queryString ? '?' + queryString : ''}`);
+    return apiClient.mail.get(`/templates${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<EmailTemplate>> {

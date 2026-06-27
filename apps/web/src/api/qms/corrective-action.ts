@@ -6,10 +6,7 @@ import type {
   ActionItem,
   ActionItemBackend,
 } from './types';
-import {
-  adaptActionToFrontend,
-  adaptActionItemToFrontend,
-} from './adapters';
+import { adaptActionToFrontend, adaptActionItemToFrontend } from './adapters';
 
 export const correctiveActionApi = {
   completeAction: async (

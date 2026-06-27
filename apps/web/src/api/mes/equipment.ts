@@ -36,7 +36,7 @@ export const equipmentApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(`/api/mes/equipment${queryString ? '?' + queryString : ''}`);
+    return apiClient.mes.get(`/api/mes/equipment${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<Equipment>> {
@@ -81,7 +81,7 @@ export const mesEquipmentApi = {
     if (params?.equipment_id) searchParams.set('equipment_id', params.equipment_id);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(`/api/mes/inspections${queryString ? '?' + queryString : ''}`);
+    return apiClient.mes.get(`/api/mes/inspections${queryString ? `?${queryString}` : ''}`);
   },
 
   async createInspection(data: CreateInspectionRecord): Promise<ApiResponse<InspectionRecord>> {
@@ -97,7 +97,7 @@ export const mesEquipmentApi = {
     if (params?.equipment_id) searchParams.set('equipment_id', params.equipment_id);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(`/api/mes/maintenances${queryString ? '?' + queryString : ''}`);
+    return apiClient.mes.get(`/api/mes/maintenances${queryString ? `?${queryString}` : ''}`);
   },
 
   async createMaintenance(data: CreateMaintenanceRecord): Promise<ApiResponse<MaintenanceRecord>> {
@@ -113,7 +113,9 @@ export const mesEquipmentApi = {
 };
 
 export const equipmentOeeApi = {
-  async list(params?: PaginationParams & { equipment_id?: string; start_date?: string; end_date?: string }): Promise<
+  async list(
+    params?: PaginationParams & { equipment_id?: string; start_date?: string; end_date?: string }
+  ): Promise<
     ApiResponse<{
       records: OeeRecord[];
       total: number;
@@ -129,7 +131,7 @@ export const equipmentOeeApi = {
     if (params?.end_date) searchParams.set('end_date', params.end_date);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(`/api/mes/equipment-oee${queryString ? '?' + queryString : ''}`);
+    return apiClient.mes.get(`/api/mes/equipment-oee${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<OeeRecord>> {
@@ -159,7 +161,9 @@ export const equipmentOeeApi = {
     if (params?.equipment_id) searchParams.set('equipment_id', params.equipment_id);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(`/api/mes/equipment-oee/statistics${queryString ? '?' + queryString : ''}`);
+    return apiClient.mes.get(
+      `/api/mes/equipment-oee/statistics${queryString ? `?${queryString}` : ''}`
+    );
   },
 
   async getEquipmentEfficiencyAnalysis(
@@ -173,7 +177,7 @@ export const equipmentOeeApi = {
 
     const queryString = searchParams.toString();
     return apiClient.mes.get(
-      `/api/mes/equipment-oee/${equipmentId}/efficiency${queryString ? '?' + queryString : ''}`
+      `/api/mes/equipment-oee/${equipmentId}/efficiency${queryString ? `?${queryString}` : ''}`
     );
   },
 };

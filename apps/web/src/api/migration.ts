@@ -39,7 +39,12 @@ export interface RollbackResult {
 const extractMessage = (err: unknown): string => {
   if (!err) return '未知错误';
   if (typeof err === 'string') return err;
-  if (err && typeof err === 'object' && 'message' in err && typeof (err as { message?: unknown }).message === 'string') {
+  if (
+    err &&
+    typeof err === 'object' &&
+    'message' in err &&
+    typeof (err as { message?: unknown }).message === 'string'
+  ) {
     return (err as { message: string }).message;
   }
   if (

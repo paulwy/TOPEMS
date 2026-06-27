@@ -1,16 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { apiLogger } from '@/utils/logger';
 import { useParams, useNavigate } from 'react-router-dom';
-import {
-  FileText,
-  Calendar,
-  User,
-  FileCheck,
-  Edit3,
-  Plus,
-  Download,
-  Upload,
-} from 'lucide-react';
+import { FileText, Calendar, User, FileCheck, Edit3, Plus, Download, Upload } from 'lucide-react';
 import {
   Dialog,
   DialogTitle,
@@ -20,8 +11,8 @@ import {
   Chip,
   Box,
   Typography,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 
 import { DetailPageTemplate, ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
@@ -317,7 +308,10 @@ const QmsStandardDetailPage: React.FC = () => {
   }
 
   return (
-    <PageContainer title='质量标准详情' subtitle='Quality Standard Detail'>
+    <PageContainer
+      title='质量标准详情'
+      subtitle='Quality Standard Detail'
+    >
       <DetailPageTemplate
         title=''
         subtitle=''

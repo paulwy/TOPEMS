@@ -10,8 +10,8 @@ import {
   TextField,
   FormLabel,
   Chip,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import {
   CheckCircle,
   XCircle,
@@ -135,13 +135,33 @@ const FlowApprovalPage: React.FC = () => {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'approved':
-        return <CheckCircle size={16} style={{ color: '#16a34a' }} />;
+        return (
+          <CheckCircle
+            size={16}
+            style={{ color: '#16a34a' }}
+          />
+        );
       case 'rejected':
-        return <XCircle size={16} style={{ color: '#dc2626' }} />;
+        return (
+          <XCircle
+            size={16}
+            style={{ color: '#dc2626' }}
+          />
+        );
       case 'pending':
-        return <Clock size={16} style={{ color: '#ca8a04' }} />;
+        return (
+          <Clock
+            size={16}
+            style={{ color: '#ca8a04' }}
+          />
+        );
       default:
-        return <AlertCircle size={16} style={{ color: '#6b7280' }} />;
+        return (
+          <AlertCircle
+            size={16}
+            style={{ color: '#6b7280' }}
+          />
+        );
     }
   };
 
@@ -175,7 +195,10 @@ const FlowApprovalPage: React.FC = () => {
     });
   }, [approvals, searchTerm, statusFilter]);
 
-  const pendingCount = useMemo(() => approvals.filter((a) => a.status === 'pending').length, [approvals]);
+  const pendingCount = useMemo(
+    () => approvals.filter((a) => a.status === 'pending').length,
+    [approvals]
+  );
 
   const columns = useMemo<ColumnDef<Approval>[]>(
     () => [
@@ -183,7 +206,10 @@ const FlowApprovalPage: React.FC = () => {
         id: 'task_name',
         label: '任务名称',
         render: (row) => (
-          <Typography variant='subtitle1' sx={{ fontWeight: 600 }}>
+          <Typography
+            variant='subtitle1'
+            sx={{ fontWeight: 600 }}
+          >
             {row.task_name}
           </Typography>
         ),
@@ -193,7 +219,11 @@ const FlowApprovalPage: React.FC = () => {
         label: '状态',
         width: 100,
         render: (row) => (
-          <Stack direction='row' spacing={0.5} sx={{ alignItems: 'center' }}>
+          <Stack
+            direction='row'
+            spacing={0.5}
+            sx={{ alignItems: 'center' }}
+          >
             {getStatusIcon(row.status)}
             <Chip
               size='small'
@@ -210,9 +240,19 @@ const FlowApprovalPage: React.FC = () => {
         width: 120,
         render: (row) =>
           row.node_id ? (
-            <Stack direction='row' spacing={0.5} sx={{ alignItems: 'center' }}>
-              <FileText size={14} style={{ color: 'text.secondary' }} />
-              <Typography variant='body2' sx={{ color: 'grey.600' }}>
+            <Stack
+              direction='row'
+              spacing={0.5}
+              sx={{ alignItems: 'center' }}
+            >
+              <FileText
+                size={14}
+                style={{ color: 'text.secondary' }}
+              />
+              <Typography
+                variant='body2'
+                sx={{ color: 'grey.600' }}
+              >
                 {row.node_id}
               </Typography>
             </Stack>
@@ -226,9 +266,19 @@ const FlowApprovalPage: React.FC = () => {
         width: 100,
         render: (row) =>
           row.approval_type ? (
-            <Stack direction='row' spacing={0.5} sx={{ alignItems: 'center' }}>
-              <Users size={14} style={{ color: 'text.secondary' }} />
-              <Typography variant='body2' sx={{ color: 'grey.600' }}>
+            <Stack
+              direction='row'
+              spacing={0.5}
+              sx={{ alignItems: 'center' }}
+            >
+              <Users
+                size={14}
+                style={{ color: 'text.secondary' }}
+              />
+              <Typography
+                variant='body2'
+                sx={{ color: 'grey.600' }}
+              >
                 {row.approval_type === 'single'
                   ? '单人审批'
                   : row.approval_type === 'counter'
@@ -245,9 +295,25 @@ const FlowApprovalPage: React.FC = () => {
         label: '审批意见',
         render: (row) =>
           row.comment ? (
-            <Stack direction='row' spacing={0.5} sx={{ alignItems: 'flex-start' }}>
-              <MessageSquare size={14} style={{ color: 'text.disabled', marginTop: 2 }} />
-              <Typography variant='body2' sx={{ color: 'grey.500', maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <Stack
+              direction='row'
+              spacing={0.5}
+              sx={{ alignItems: 'flex-start' }}
+            >
+              <MessageSquare
+                size={14}
+                style={{ color: 'text.disabled', marginTop: 2 }}
+              />
+              <Typography
+                variant='body2'
+                sx={{
+                  color: 'grey.500',
+                  maxWidth: 200,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
                 {row.comment}
               </Typography>
             </Stack>
@@ -261,7 +327,10 @@ const FlowApprovalPage: React.FC = () => {
         width: 170,
         sortable: true,
         render: (row) => (
-          <Typography variant='body2' sx={{ color: 'grey.500' }}>
+          <Typography
+            variant='body2'
+            sx={{ color: 'grey.500' }}
+          >
             {new Date(row.created_at).toLocaleString()}
           </Typography>
         ),
@@ -272,7 +341,10 @@ const FlowApprovalPage: React.FC = () => {
         width: 170,
         render: (row) =>
           row.approved_at ? (
-            <Typography variant='body2' sx={{ color: 'grey.500' }}>
+            <Typography
+              variant='body2'
+              sx={{ color: 'grey.500' }}
+            >
               {new Date(row.approved_at).toLocaleString()}
             </Typography>
           ) : (
@@ -383,16 +455,25 @@ const FlowApprovalPage: React.FC = () => {
       >
         <DialogTitle>{approvalAction === 'approve' ? '通过审批' : '拒绝审批'}</DialogTitle>
         <DialogContent>
-          <Typography variant='body2' sx={{ mb: 2 }}>
+          <Typography
+            variant='body2'
+            sx={{ mb: 2 }}
+          >
             {approvalAction === 'approve' ? '确认通过该审批任务' : '确认拒绝该审批任务'}
           </Typography>
           {selectedApproval && (
             <>
-              <Typography variant='body2' sx={{ color: 'grey.600', mb: 1 }}>
+              <Typography
+                variant='body2'
+                sx={{ color: 'grey.600', mb: 1 }}
+              >
                 任务: {selectedApproval.task_name}
               </Typography>
               {selectedApproval.node_id && (
-                <Typography variant='body2' sx={{ color: 'grey.600', mb: 1 }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.600', mb: 1 }}
+                >
                   节点: {selectedApproval.node_id}
                 </Typography>
               )}
@@ -429,7 +510,10 @@ const FlowApprovalPage: React.FC = () => {
             color={approvalAction === 'approve' ? 'success' : 'error'}
             startIcon={
               processing ? (
-                <Loader2 size={16} className='animate-spin' />
+                <Loader2
+                  size={16}
+                  className='animate-spin'
+                />
               ) : undefined
             }
           >

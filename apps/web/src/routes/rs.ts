@@ -1,4 +1,5 @@
 import React from 'react';
+import { Navigate } from 'react-router-dom';
 import type { RouteConfig } from './utils';
 import { lazyWithRetry } from './utils';
 
@@ -32,8 +33,11 @@ export const rsRoutes: RouteConfig[] = [
   // RS 仪表盘
   {
     path: '/rs',
-    element: RsDashboardPage,
-    requiredPermissions: [],
+    element: React.createElement(Navigate, {
+      to: '/rs/projects',
+      replace: true,
+    }),
+    requiredPermissions: ['rs:read'],
     module: 'rs',
     action: 'read',
   },
@@ -41,28 +45,28 @@ export const rsRoutes: RouteConfig[] = [
   {
     path: '/rs/projects',
     element: RsProjectListPage,
-    requiredPermissions: [],
+    requiredPermissions: ['rs:read'],
     module: 'rs',
     action: 'read',
   },
   {
     path: '/rs/projects/create',
     element: RsProjectCreatePage,
-    requiredPermissions: [],
+    requiredPermissions: ['rs:write'],
     module: 'rs',
     action: 'write',
   },
   {
     path: '/rs/projects/:id',
     element: RsProjectDetailPage,
-    requiredPermissions: [],
+    requiredPermissions: ['rs:read'],
     module: 'rs',
     action: 'read',
   },
   {
     path: '/rs/projects/:id/edit',
     element: RsProjectCreatePage,
-    requiredPermissions: [],
+    requiredPermissions: ['rs:write'],
     module: 'rs',
     action: 'write',
   },
@@ -70,28 +74,28 @@ export const rsRoutes: RouteConfig[] = [
   {
     path: '/rs/experiments',
     element: RsExperimentListPage,
-    requiredPermissions: [],
+    requiredPermissions: ['rs:read'],
     module: 'rs',
     action: 'read',
   },
   {
     path: '/rs/experiments/create',
     element: RsExperimentCreatePage,
-    requiredPermissions: [],
+    requiredPermissions: ['rs:write'],
     module: 'rs',
     action: 'write',
   },
   {
     path: '/rs/experiments/:id',
     element: RsExperimentDetailPage,
-    requiredPermissions: [],
+    requiredPermissions: ['rs:read'],
     module: 'rs',
     action: 'read',
   },
   {
     path: '/rs/experiments/:id/edit',
     element: RsExperimentCreatePage,
-    requiredPermissions: [],
+    requiredPermissions: ['rs:write'],
     module: 'rs',
     action: 'write',
   },
@@ -99,28 +103,28 @@ export const rsRoutes: RouteConfig[] = [
   {
     path: '/rs/formulas',
     element: RsFormulaListPage,
-    requiredPermissions: [],
+    requiredPermissions: ['rs:read'],
     module: 'rs',
     action: 'read',
   },
   {
     path: '/rs/formulas/create',
     element: RsFormulaCreatePage,
-    requiredPermissions: [],
+    requiredPermissions: ['rs:write'],
     module: 'rs',
     action: 'write',
   },
   {
     path: '/rs/formulas/:id',
     element: RsFormulaDetailPage,
-    requiredPermissions: [],
+    requiredPermissions: ['rs:read'],
     module: 'rs',
     action: 'read',
   },
   {
     path: '/rs/formulas/:id/edit',
     element: RsFormulaCreatePage,
-    requiredPermissions: [],
+    requiredPermissions: ['rs:write'],
     module: 'rs',
     action: 'write',
   },
@@ -128,7 +132,7 @@ export const rsRoutes: RouteConfig[] = [
   {
     path: '/rs/materials',
     element: RsMaterialListPage,
-    requiredPermissions: [],
+    requiredPermissions: ['rs:read'],
     module: 'rs',
     action: 'read',
   },
@@ -136,7 +140,7 @@ export const rsRoutes: RouteConfig[] = [
   {
     path: '/rs/reports',
     element: RsReportPage,
-    requiredPermissions: [],
+    requiredPermissions: ['rs:read'],
     module: 'rs',
     action: 'read',
   },
@@ -144,7 +148,7 @@ export const rsRoutes: RouteConfig[] = [
   {
     path: '/rs/bugs',
     element: RsBugPage,
-    requiredPermissions: [],
+    requiredPermissions: ['rs:read'],
     module: 'rs',
     action: 'read',
   },
@@ -152,7 +156,7 @@ export const rsRoutes: RouteConfig[] = [
   {
     path: '/rs/builds',
     element: RsBuildPage,
-    requiredPermissions: [],
+    requiredPermissions: ['rs:read'],
     module: 'rs',
     action: 'read',
   },
@@ -160,7 +164,7 @@ export const rsRoutes: RouteConfig[] = [
   {
     path: '/rs/code',
     element: RsCodePage,
-    requiredPermissions: [],
+    requiredPermissions: ['rs:read'],
     module: 'rs',
     action: 'read',
   },
@@ -168,7 +172,7 @@ export const rsRoutes: RouteConfig[] = [
   {
     path: '/rs/deploy',
     element: RsDeployPage,
-    requiredPermissions: [],
+    requiredPermissions: ['rs:read'],
     module: 'rs',
     action: 'read',
   },
@@ -176,7 +180,7 @@ export const rsRoutes: RouteConfig[] = [
   {
     path: '/rs/docs',
     element: RsDocPage,
-    requiredPermissions: [],
+    requiredPermissions: ['rs:read'],
     module: 'rs',
     action: 'read',
   },
@@ -184,7 +188,7 @@ export const rsRoutes: RouteConfig[] = [
   {
     path: '/rs/milestones',
     element: RsMilestonePage,
-    requiredPermissions: [],
+    requiredPermissions: ['rs:read'],
     module: 'rs',
     action: 'read',
   },
@@ -192,7 +196,7 @@ export const rsRoutes: RouteConfig[] = [
   {
     path: '/rs/releases',
     element: RsReleasePage,
-    requiredPermissions: [],
+    requiredPermissions: ['rs:read'],
     module: 'rs',
     action: 'read',
   },
@@ -200,7 +204,7 @@ export const rsRoutes: RouteConfig[] = [
   {
     path: '/rs/reviews',
     element: RsReviewPage,
-    requiredPermissions: [],
+    requiredPermissions: ['rs:read'],
     module: 'rs',
     action: 'read',
   },
@@ -208,15 +212,15 @@ export const rsRoutes: RouteConfig[] = [
   {
     path: '/rs/settings',
     element: RsSettingsPage,
-    requiredPermissions: [],
+    requiredPermissions: ['rs:admin'],
     module: 'rs',
-    action: 'read',
+    action: 'admin',
   },
   // 测试管理
   {
     path: '/rs/tests',
     element: RsTestPage,
-    requiredPermissions: [],
+    requiredPermissions: ['rs:read'],
     module: 'rs',
     action: 'read',
   },

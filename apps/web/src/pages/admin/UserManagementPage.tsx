@@ -10,8 +10,8 @@ import {
   TextField,
   Typography,
   FormControlLabel,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, Edit, Trash2, Shield, UserPlus, UserMinus } from 'lucide-react';
 import { authApi, type User, type Role } from '@/api/iam';
@@ -526,7 +526,10 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
   };
 
   return (
-    <PageContainer title='用户管理' subtitle='管理平台用户账户、角色和权限'>
+    <PageContainer
+      title='用户管理'
+      subtitle='管理平台用户账户、角色和权限'
+    >
       <ListPageTemplate
         title=''
         subtitle=''
@@ -564,7 +567,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
         onSearch={setSearchQuery}
         pagination={{
           page: currentPage,
-          pageSize: pageSize,
+          pageSize,
           total: totalUsers,
           onPageChange: setCurrentPage,
         }}

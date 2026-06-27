@@ -17,7 +17,7 @@ import {
   Settings,
   AlertCircle,
 } from 'lucide-react';
-import { PageContainer } from '@/components/common';
+import { PageContainer, StatusBadge, ActionButton, ConfirmDialog } from '@/components/common';
 import {
   Box,
   Typography,
@@ -46,8 +46,8 @@ import {
   Switch,
   FormControlLabel,
   TablePagination,
+  InputAdornment,
 } from '@mui/material';
-import { StatusBadge, ActionButton, ConfirmDialog } from '@/components/common';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { useNavigate } from 'react-router-dom';
@@ -131,25 +131,175 @@ const mockDictTypes: DictType[] = [
 
 const mockDictItems: Record<string, DictItem[]> = {
   voucher_type: [
-    { id: '1', dict_code: 'voucher_type', item_code: 'receipt', item_name: '收款凭证', item_value: '收', sort_order: 1, status: 'active', created_at: '2024-01-01T00:00:00', updated_at: '2024-01-01T00:00:00' },
-    { id: '2', dict_code: 'voucher_type', item_code: 'payment', item_name: '付款凭证', item_value: '付', sort_order: 2, status: 'active', created_at: '2024-01-01T00:00:00', updated_at: '2024-01-01T00:00:00' },
-    { id: '3', dict_code: 'voucher_type', item_code: 'transfer', item_name: '转账凭证', item_value: '转', sort_order: 3, status: 'active', created_at: '2024-01-01T00:00:00', updated_at: '2024-01-01T00:00:00' },
-    { id: '4', dict_code: 'voucher_type', item_code: 'general', item_name: '记账凭证', item_value: '记', sort_order: 4, status: 'active', created_at: '2024-01-01T00:00:00', updated_at: '2024-01-01T00:00:00' },
+    {
+      id: '1',
+      dict_code: 'voucher_type',
+      item_code: 'receipt',
+      item_name: '收款凭证',
+      item_value: '收',
+      sort_order: 1,
+      status: 'active',
+      created_at: '2024-01-01T00:00:00',
+      updated_at: '2024-01-01T00:00:00',
+    },
+    {
+      id: '2',
+      dict_code: 'voucher_type',
+      item_code: 'payment',
+      item_name: '付款凭证',
+      item_value: '付',
+      sort_order: 2,
+      status: 'active',
+      created_at: '2024-01-01T00:00:00',
+      updated_at: '2024-01-01T00:00:00',
+    },
+    {
+      id: '3',
+      dict_code: 'voucher_type',
+      item_code: 'transfer',
+      item_name: '转账凭证',
+      item_value: '转',
+      sort_order: 3,
+      status: 'active',
+      created_at: '2024-01-01T00:00:00',
+      updated_at: '2024-01-01T00:00:00',
+    },
+    {
+      id: '4',
+      dict_code: 'voucher_type',
+      item_code: 'general',
+      item_name: '记账凭证',
+      item_value: '记',
+      sort_order: 4,
+      status: 'active',
+      created_at: '2024-01-01T00:00:00',
+      updated_at: '2024-01-01T00:00:00',
+    },
   ],
   voucher_status: [
-    { id: '5', dict_code: 'voucher_status', item_code: 'draft', item_name: '草稿', item_value: 'draft', sort_order: 1, status: 'active', created_at: '2024-01-01T00:00:00', updated_at: '2024-01-01T00:00:00' },
-    { id: '6', dict_code: 'voucher_status', item_code: 'pending', item_name: '待审核', item_value: 'pending', sort_order: 2, status: 'active', created_at: '2024-01-01T00:00:00', updated_at: '2024-01-01T00:00:00' },
-    { id: '7', dict_code: 'voucher_status', item_code: 'approved', item_name: '已审核', item_value: 'approved', sort_order: 3, status: 'active', created_at: '2024-01-01T00:00:00', updated_at: '2024-01-01T00:00:00' },
-    { id: '8', dict_code: 'voucher_status', item_code: 'posted', item_name: '已记账', item_value: 'posted', sort_order: 4, status: 'active', created_at: '2024-01-01T00:00:00', updated_at: '2024-01-01T00:00:00' },
-    { id: '9', dict_code: 'voucher_status', item_code: 'closed', item_name: '已结账', item_value: 'closed', sort_order: 5, status: 'active', created_at: '2024-01-01T00:00:00', updated_at: '2024-01-01T00:00:00' },
+    {
+      id: '5',
+      dict_code: 'voucher_status',
+      item_code: 'draft',
+      item_name: '草稿',
+      item_value: 'draft',
+      sort_order: 1,
+      status: 'active',
+      created_at: '2024-01-01T00:00:00',
+      updated_at: '2024-01-01T00:00:00',
+    },
+    {
+      id: '6',
+      dict_code: 'voucher_status',
+      item_code: 'pending',
+      item_name: '待审核',
+      item_value: 'pending',
+      sort_order: 2,
+      status: 'active',
+      created_at: '2024-01-01T00:00:00',
+      updated_at: '2024-01-01T00:00:00',
+    },
+    {
+      id: '7',
+      dict_code: 'voucher_status',
+      item_code: 'approved',
+      item_name: '已审核',
+      item_value: 'approved',
+      sort_order: 3,
+      status: 'active',
+      created_at: '2024-01-01T00:00:00',
+      updated_at: '2024-01-01T00:00:00',
+    },
+    {
+      id: '8',
+      dict_code: 'voucher_status',
+      item_code: 'posted',
+      item_name: '已记账',
+      item_value: 'posted',
+      sort_order: 4,
+      status: 'active',
+      created_at: '2024-01-01T00:00:00',
+      updated_at: '2024-01-01T00:00:00',
+    },
+    {
+      id: '9',
+      dict_code: 'voucher_status',
+      item_code: 'closed',
+      item_name: '已结账',
+      item_value: 'closed',
+      sort_order: 5,
+      status: 'active',
+      created_at: '2024-01-01T00:00:00',
+      updated_at: '2024-01-01T00:00:00',
+    },
   ],
   asset_category: [
-    { id: '10', dict_code: 'asset_category', item_code: 'house', item_name: '房屋建筑物', item_value: '1', sort_order: 1, status: 'active', created_at: '2024-01-01T00:00:00', updated_at: '2024-01-01T00:00:00' },
-    { id: '11', dict_code: 'asset_category', item_code: 'equipment', item_name: '机器设备', item_value: '2', sort_order: 2, status: 'active', created_at: '2024-01-01T00:00:00', updated_at: '2024-01-01T00:00:00' },
-    { id: '12', dict_code: 'asset_category', item_code: 'transport', item_name: '运输设备', item_value: '3', sort_order: 3, status: 'active', created_at: '2024-01-01T00:00:00', updated_at: '2024-01-01T00:00:00' },
-    { id: '13', dict_code: 'asset_category', item_code: 'electronic', item_name: '电子设备', item_value: '4', sort_order: 4, status: 'active', created_at: '2024-01-01T00:00:00', updated_at: '2024-01-01T00:00:00' },
-    { id: '14', dict_code: 'asset_category', item_code: 'furniture', item_name: '家具器具', item_value: '5', sort_order: 5, status: 'active', created_at: '2024-01-01T00:00:00', updated_at: '2024-01-01T00:00:00' },
-    { id: '15', dict_code: 'asset_category', item_code: 'other', item_name: '其他', item_value: '9', sort_order: 6, status: 'active', created_at: '2024-01-01T00:00:00', updated_at: '2024-01-01T00:00:00' },
+    {
+      id: '10',
+      dict_code: 'asset_category',
+      item_code: 'house',
+      item_name: '房屋建筑物',
+      item_value: '1',
+      sort_order: 1,
+      status: 'active',
+      created_at: '2024-01-01T00:00:00',
+      updated_at: '2024-01-01T00:00:00',
+    },
+    {
+      id: '11',
+      dict_code: 'asset_category',
+      item_code: 'equipment',
+      item_name: '机器设备',
+      item_value: '2',
+      sort_order: 2,
+      status: 'active',
+      created_at: '2024-01-01T00:00:00',
+      updated_at: '2024-01-01T00:00:00',
+    },
+    {
+      id: '12',
+      dict_code: 'asset_category',
+      item_code: 'transport',
+      item_name: '运输设备',
+      item_value: '3',
+      sort_order: 3,
+      status: 'active',
+      created_at: '2024-01-01T00:00:00',
+      updated_at: '2024-01-01T00:00:00',
+    },
+    {
+      id: '13',
+      dict_code: 'asset_category',
+      item_code: 'electronic',
+      item_name: '电子设备',
+      item_value: '4',
+      sort_order: 4,
+      status: 'active',
+      created_at: '2024-01-01T00:00:00',
+      updated_at: '2024-01-01T00:00:00',
+    },
+    {
+      id: '14',
+      dict_code: 'asset_category',
+      item_code: 'furniture',
+      item_name: '家具器具',
+      item_value: '5',
+      sort_order: 5,
+      status: 'active',
+      created_at: '2024-01-01T00:00:00',
+      updated_at: '2024-01-01T00:00:00',
+    },
+    {
+      id: '15',
+      dict_code: 'asset_category',
+      item_code: 'other',
+      item_name: '其他',
+      item_value: '9',
+      sort_order: 6,
+      status: 'active',
+      created_at: '2024-01-01T00:00:00',
+      updated_at: '2024-01-01T00:00:00',
+    },
   ],
   expense_type: [],
   payment_method: [],
@@ -316,9 +466,7 @@ const DictManagementPage: React.FC = () => {
     try {
       setDictTypes((prev) =>
         prev.map((d) =>
-          d.id === editingType.id
-            ? { ...d, ...newType, updated_at: new Date().toISOString() }
-            : d
+          d.id === editingType.id ? { ...d, ...newType, updated_at: new Date().toISOString() } : d
         )
       );
       if (selectedDict?.id === editingType.id) {
@@ -415,14 +563,10 @@ const DictManagementPage: React.FC = () => {
         item,
       ].sort((a, b) => a.sort_order - b.sort_order);
       setDictTypes((prev) =>
-        prev.map((d) =>
-          d.id === selectedDict.id ? { ...d, item_count: d.item_count + 1 } : d
-        )
+        prev.map((d) => (d.id === selectedDict.id ? { ...d, item_count: d.item_count + 1 } : d))
       );
       if (selectedDict) {
-        setSelectedDict((prev) =>
-          prev ? { ...prev, item_count: prev.item_count + 1 } : null
-        );
+        setSelectedDict((prev) => (prev ? { ...prev, item_count: prev.item_count + 1 } : null));
       }
       addNotification({
         title: '成功',
@@ -448,11 +592,11 @@ const DictManagementPage: React.FC = () => {
 
     try {
       setDictItems((prev) =>
-        prev.map((i) =>
-          i.id === editingItem.id
-            ? { ...i, ...newItem, updated_at: new Date().toISOString() }
-            : i
-        ).sort((a, b) => a.sort_order - b.sort_order)
+        prev
+          .map((i) =>
+            i.id === editingItem.id ? { ...i, ...newItem, updated_at: new Date().toISOString() } : i
+          )
+          .sort((a, b) => a.sort_order - b.sort_order)
       );
       addNotification({
         title: '成功',
@@ -528,9 +672,7 @@ const DictManagementPage: React.FC = () => {
       const newStatus = dict.status === 'active' ? 'inactive' : 'active';
       setDictTypes((prev) =>
         prev.map((d) =>
-          d.id === dict.id
-            ? { ...d, status: newStatus, updated_at: new Date().toISOString() }
-            : d
+          d.id === dict.id ? { ...d, status: newStatus, updated_at: new Date().toISOString() } : d
         )
       );
       if (selectedDict?.id === dict.id) {
@@ -553,9 +695,7 @@ const DictManagementPage: React.FC = () => {
       const newStatus = item.status === 'active' ? 'inactive' : 'active';
       setDictItems((prev) =>
         prev.map((i) =>
-          i.id === item.id
-            ? { ...i, status: newStatus, updated_at: new Date().toISOString() }
-            : i
+          i.id === item.id ? { ...i, status: newStatus, updated_at: new Date().toISOString() } : i
         )
       );
       addNotification({
@@ -596,361 +736,422 @@ const DictManagementPage: React.FC = () => {
         ],
       }}
     >
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', lg: '320px 1fr' },
+          gap: 3,
+        }}
+      >
         <Box
           sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', lg: '320px 1fr' },
-            gap: 3,
+            bgcolor: 'background.paper',
+            borderRadius: 2,
+            boxShadow: 1,
+            overflow: 'hidden',
           }}
         >
           <Box
             sx={{
-              bgcolor: 'background.paper',
-              borderRadius: 2,
-              boxShadow: 1,
-              overflow: 'hidden',
+              p: 2,
+              borderBottom: 1,
+              borderColor: 'divider',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
             }}
           >
-            <Box
-              sx={{
-                p: 2,
-                borderBottom: 1,
-                borderColor: 'divider',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-              }}
+            <List
+              size={18}
+              style={{ opacity: 0.6 }}
+            />
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600 }}
             >
-              <List size={18} style={{ opacity: 0.6 }} />
-              <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
-                字典类型
-              </Typography>
-              <Box sx={{ flexGrow: 1 }} />
-              <Chip
-                label={dictTypes.length}
-                size='small'
-                color='primary'
-                variant='outlined'
-              />
-            </Box>
+              字典类型
+            </Typography>
+            <Box sx={{ flexGrow: 1 }} />
+            <Chip
+              label={dictTypes.length}
+              size='small'
+              color='primary'
+              variant='outlined'
+            />
+          </Box>
 
-            <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-              <TextField
-                size='small'
-                fullWidth
-                placeholder='搜索字典...'
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                InputProps={{
-                  startAdornment: <Search size={16} style={{ marginRight: 8, opacity: 0.5 }} />,
-                }}
-              />
-              <FormControl size='small' fullWidth sx={{ mt: 1.5 }}>
-                <InputLabel>状态筛选</InputLabel>
-                <Select
-                  value={statusFilter}
-                  label='状态筛选'
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                >
-                  <MenuItem value=''>全部状态</MenuItem>
-                  <MenuItem value='active'>启用</MenuItem>
-                  <MenuItem value='inactive'>禁用</MenuItem>
-                </Select>
-              </FormControl>
-            </Box>
+          <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+            <TextField
+              size='small'
+              fullWidth
+              placeholder='搜索字典...'
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position='start'>
+                      <Search
+                        size={16}
+                        style={{ opacity: 0.5 }}
+                      />
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+            <FormControl
+              size='small'
+              fullWidth
+              sx={{ mt: 1.5 }}
+            >
+              <InputLabel>状态筛选</InputLabel>
+              <Select
+                value={statusFilter}
+                label='状态筛选'
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <MenuItem value=''>全部状态</MenuItem>
+                <MenuItem value='active'>启用</MenuItem>
+                <MenuItem value='inactive'>禁用</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
 
-            {loading ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-                <CircularProgress size={32} />
-              </Box>
-            ) : (
-              <Box sx={{ maxHeight: 600, overflowY: 'auto' }}>
-                {filteredDictTypes.length === 0 ? (
-                  <Box sx={{ py: 8, textAlign: 'center' }}>
-                    <Book sx={{ width: 36, height: 36, color: 'text.disabled', mx: 'auto', mb: 1.5 }} />
-                    <Typography variant='body2' sx={{ color: 'text.secondary' }}>
-                      暂无字典类型
-                    </Typography>
-                  </Box>
-                ) : (
-                  filteredDictTypes.map((dict) => (
+          {loading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+              <CircularProgress size={32} />
+            </Box>
+          ) : (
+            <Box sx={{ maxHeight: 600, overflowY: 'auto' }}>
+              {filteredDictTypes.length === 0 ? (
+                <Box sx={{ py: 8, textAlign: 'center' }}>
+                  <Book
+                    sx={{ width: 36, height: 36, color: 'text.disabled', mx: 'auto', mb: 1.5 }}
+                  />
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'text.secondary' }}
+                  >
+                    暂无字典类型
+                  </Typography>
+                </Box>
+              ) : (
+                filteredDictTypes.map((dict) => (
+                  <Box
+                    key={dict.id}
+                    onClick={() => setSelectedDict(dict)}
+                    sx={{
+                      p: 2,
+                      cursor: 'pointer',
+                      borderBottom: 1,
+                      borderColor: 'divider',
+                      bgcolor: selectedDict?.id === dict.id ? 'primary.50' : 'transparent',
+                      '&:hover': {
+                        bgcolor: selectedDict?.id === dict.id ? 'primary.100' : 'grey.50',
+                      },
+                      transition: 'background-color 0.2s',
+                    }}
+                  >
                     <Box
-                      key={dict.id}
-                      onClick={() => setSelectedDict(dict)}
                       sx={{
-                        p: 2,
-                        cursor: 'pointer',
-                        borderBottom: 1,
-                        borderColor: 'divider',
-                        bgcolor: selectedDict?.id === dict.id ? 'primary.50' : 'transparent',
-                        '&:hover': {
-                          bgcolor: selectedDict?.id === dict.id ? 'primary.100' : 'grey.50',
-                        },
-                        transition: 'background-color 0.2s',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        mb: 0.5,
                       }}
                     >
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'flex-start',
-                          mb: 0.5,
-                        }}
-                      >
-                        <Typography sx={{ fontWeight: 600, fontSize: '0.9375rem' }}>
-                          {dict.dict_name}
-                        </Typography>
-                        <StatusBadge
-                          status={dict.status}
-                          label={dict.status === 'active' ? '启用' : '禁用'}
-                          color={dict.status === 'active' ? 'success' : 'default'}
-                        />
-                      </Box>
-                      <Typography
-                        variant='body2'
-                        sx={{ color: 'text.secondary', fontFamily: 'monospace' }}
-                      >
-                        {dict.dict_code}
+                      <Typography sx={{ fontWeight: 600, fontSize: '0.9375rem' }}>
+                        {dict.dict_name}
                       </Typography>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
-                        <Typography variant='caption' sx={{ color: 'text.disabled' }}>
-                          {dict.item_count} 个字典项
-                        </Typography>
-                        <Box sx={{ display: 'flex', gap: 0.5 }}>
-                          <Tooltip title='编辑'>
-                            <IconButton
-                              size='small'
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleEditType(dict);
-                              }}
-                            >
-                              <Edit size={14} />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title='删除'>
-                            <IconButton
-                              size='small'
-                              color='error'
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteType(dict.id);
-                              }}
-                            >
-                              <Trash2 size={14} />
-                            </IconButton>
-                          </Tooltip>
-                        </Box>
+                      <StatusBadge
+                        status={dict.status}
+                        label={dict.status === 'active' ? '启用' : '禁用'}
+                        color={dict.status === 'active' ? 'success' : 'default'}
+                      />
+                    </Box>
+                    <Typography
+                      variant='body2'
+                      sx={{ color: 'text.secondary', fontFamily: 'monospace' }}
+                    >
+                      {dict.dict_code}
+                    </Typography>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+                      <Typography
+                        variant='caption'
+                        sx={{ color: 'text.disabled' }}
+                      >
+                        {dict.item_count} 个字典项
+                      </Typography>
+                      <Box sx={{ display: 'flex', gap: 0.5 }}>
+                        <Tooltip title='编辑'>
+                          <IconButton
+                            size='small'
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditType(dict);
+                            }}
+                          >
+                            <Edit size={14} />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title='删除'>
+                          <IconButton
+                            size='small'
+                            color='error'
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteType(dict.id);
+                            }}
+                          >
+                            <Trash2 size={14} />
+                          </IconButton>
+                        </Tooltip>
                       </Box>
                     </Box>
-                  ))
-                )}
-              </Box>
-            )}
-          </Box>
-
-          <Box
-            sx={{
-              bgcolor: 'background.paper',
-              borderRadius: 2,
-              boxShadow: 1,
-              overflow: 'hidden',
-            }}
-          >
-            {selectedDict ? (
-              <>
-                <Box
-                  sx={{
-                    p: 2,
-                    borderBottom: 1,
-                    borderColor: 'divider',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                  }}
-                >
-                  <Box>
-                    <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
-                      {selectedDict.dict_name}
-                      <Chip
-                        label={selectedDict.dict_code}
-                        size='small'
-                        sx={{ ml: 1, height: 20 }}
-                        variant='outlined'
-                      />
-                    </Typography>
-                    {selectedDict.description && (
-                      <Typography variant='body2' sx={{ color: 'text.secondary', mt: 0.5 }}>
-                        {selectedDict.description}
-                      </Typography>
-                    )}
                   </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={selectedDict.status === 'active'}
-                          onChange={() => handleToggleTypeStatus(selectedDict)}
-                          size='small'
-                        />
-                      }
-                      label={
-                        <Typography variant='body2'>
-                          {selectedDict.status === 'active' ? '启用' : '禁用'}
-                        </Typography>
-                      }
-                    />
-                    <Button
+                ))
+              )}
+            </Box>
+          )}
+        </Box>
+
+        <Box
+          sx={{
+            bgcolor: 'background.paper',
+            borderRadius: 2,
+            boxShadow: 1,
+            overflow: 'hidden',
+          }}
+        >
+          {selectedDict ? (
+            <>
+              <Box
+                sx={{
+                  p: 2,
+                  borderBottom: 1,
+                  borderColor: 'divider',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
+                <Box>
+                  <Typography
+                    variant='subtitle2'
+                    sx={{ fontWeight: 600 }}
+                  >
+                    {selectedDict.dict_name}
+                    <Chip
+                      label={selectedDict.dict_code}
                       size='small'
-                      startIcon={<Plus size={16} />}
-                      variant='contained'
-                      onClick={() => {
-                        resetItemForm();
-                        setShowItemModal(true);
-                      }}
+                      sx={{ ml: 1, height: 20 }}
+                      variant='outlined'
+                    />
+                  </Typography>
+                  {selectedDict.description && (
+                    <Typography
+                      variant='body2'
+                      sx={{ color: 'text.secondary', mt: 0.5 }}
                     >
-                      新增字典项
-                    </Button>
-                  </Box>
+                      {selectedDict.description}
+                    </Typography>
+                  )}
                 </Box>
-
-                <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-                  <TextField
-                    size='small'
-                    placeholder='搜索字典项...'
-                    value={itemSearchQuery}
-                    onChange={(e) => setItemSearchQuery(e.target.value)}
-                    InputProps={{
-                      startAdornment: (
-                        <Search size={16} style={{ marginRight: 8, opacity: 0.5 }} />
-                      ),
-                    }}
-                    sx={{ width: 300 }}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={selectedDict.status === 'active'}
+                        onChange={() => handleToggleTypeStatus(selectedDict)}
+                        size='small'
+                      />
+                    }
+                    label={
+                      <Typography variant='body2'>
+                        {selectedDict.status === 'active' ? '启用' : '禁用'}
+                      </Typography>
+                    }
                   />
+                  <Button
+                    size='small'
+                    startIcon={<Plus size={16} />}
+                    variant='contained'
+                    onClick={() => {
+                      resetItemForm();
+                      setShowItemModal(true);
+                    }}
+                  >
+                    新增字典项
+                  </Button>
                 </Box>
+              </Box>
 
-                {itemLoading ? (
-                  <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-                    <CircularProgress size={32} />
-                  </Box>
-                ) : (
-                  <TableContainer>
-                    <Table>
-                      <TableHead>
-                        <TableRow sx={{ bgcolor: 'grey.50' }}>
-                          <TableCell sx={{ fontWeight: 'bold', width: 80 }}>排序</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold' }}>项目编码</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold' }}>项目名称</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold' }}>项目值</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold' }}>状态</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold' }}>备注</TableCell>
-                          <TableCell align='center' sx={{ fontWeight: 'bold', width: 160 }}>
-                            操作
+              <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+                <TextField
+                  size='small'
+                  placeholder='搜索字典项...'
+                  value={itemSearchQuery}
+                  onChange={(e) => setItemSearchQuery(e.target.value)}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position='start'>
+                          <Search
+                            size={16}
+                            style={{ opacity: 0.5 }}
+                          />
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
+                  sx={{ width: 300 }}
+                />
+              </Box>
+
+              {itemLoading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+                  <CircularProgress size={32} />
+                </Box>
+              ) : (
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow sx={{ bgcolor: 'grey.50' }}>
+                        <TableCell sx={{ fontWeight: 'bold', width: 80 }}>排序</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>项目编码</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>项目名称</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>项目值</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>状态</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>备注</TableCell>
+                        <TableCell
+                          align='center'
+                          sx={{ fontWeight: 'bold', width: 160 }}
+                        >
+                          操作
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {filteredDictItems.length === 0 ? (
+                        <TableRow>
+                          <TableCell
+                            colSpan={7}
+                            sx={{ py: 8, textAlign: 'center' }}
+                          >
+                            <List
+                              sx={{
+                                width: 40,
+                                height: 40,
+                                color: 'text.disabled',
+                                mx: 'auto',
+                                mb: 2,
+                              }}
+                            />
+                            <Typography
+                              variant='body1'
+                              sx={{ color: 'text.secondary' }}
+                            >
+                              暂无字典项
+                            </Typography>
                           </TableCell>
                         </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {filteredDictItems.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={7} sx={{ py: 8, textAlign: 'center' }}>
-                              <List
-                                sx={{
-                                  width: 40,
-                                  height: 40,
-                                  color: 'text.disabled',
-                                  mx: 'auto',
-                                  mb: 2,
-                                }}
-                              />
-                              <Typography variant='body1' sx={{ color: 'text.secondary' }}>
-                                暂无字典项
+                      ) : (
+                        filteredDictItems.map((item) => (
+                          <TableRow
+                            key={item.id}
+                            hover
+                          >
+                            <TableCell>{item.sort_order}</TableCell>
+                            <TableCell>
+                              <Typography sx={{ fontFamily: 'monospace' }}>
+                                {item.item_code}
                               </Typography>
                             </TableCell>
-                          </TableRow>
-                        ) : (
-                          filteredDictItems.map((item) => (
-                            <TableRow key={item.id} hover>
-                              <TableCell>{item.sort_order}</TableCell>
-                              <TableCell>
-                                <Typography sx={{ fontFamily: 'monospace' }}>
-                                  {item.item_code}
-                                </Typography>
-                              </TableCell>
-                              <TableCell sx={{ fontWeight: 500 }}>{item.item_name}</TableCell>
-                              <TableCell>
-                                <Chip label={item.item_value} size='small' variant='outlined' />
-                              </TableCell>
-                              <TableCell>
-                                <StatusBadge
-                                  status={item.status}
-                                  label={item.status === 'active' ? '启用' : '禁用'}
-                                  color={item.status === 'active' ? 'success' : 'default'}
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Typography
-                                  sx={{
-                                    color: 'text.secondary',
-                                    maxWidth: 200,
-                                    overflow: 'hidden',
-                                    textOverflow: 'ellipsis',
-                                    whiteSpace: 'nowrap',
-                                  }}
-                                >
-                                  {item.remark || '-'}
-                                </Typography>
-                              </TableCell>
-                              <TableCell align='center'>
-                                <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
-                                  <Tooltip title='编辑'>
-                                    <IconButton
-                                      size='small'
-                                      color='primary'
-                                      onClick={() => handleEditItem(item)}
-                                    >
-                                      <Edit size={16} />
-                                    </IconButton>
-                                  </Tooltip>
-                                  <Tooltip
-                                    title={item.status === 'active' ? '禁用' : '启用'}
+                            <TableCell sx={{ fontWeight: 500 }}>{item.item_name}</TableCell>
+                            <TableCell>
+                              <Chip
+                                label={item.item_value}
+                                size='small'
+                                variant='outlined'
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <StatusBadge
+                                status={item.status}
+                                label={item.status === 'active' ? '启用' : '禁用'}
+                                color={item.status === 'active' ? 'success' : 'default'}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Typography
+                                sx={{
+                                  color: 'text.secondary',
+                                  maxWidth: 200,
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                {item.remark || '-'}
+                              </Typography>
+                            </TableCell>
+                            <TableCell align='center'>
+                              <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
+                                <Tooltip title='编辑'>
+                                  <IconButton
+                                    size='small'
+                                    color='primary'
+                                    onClick={() => handleEditItem(item)}
                                   >
-                                    <IconButton
-                                      size='small'
-                                      color={item.status === 'active' ? 'warning' : 'success'}
-                                      onClick={() => handleToggleItemStatus(item)}
-                                    >
-                                      {item.status === 'active' ? <X size={16} /> : <Check size={16} />}
-                                    </IconButton>
-                                  </Tooltip>
-                                  <Tooltip title='删除'>
-                                    <IconButton
-                                      size='small'
-                                      color='error'
-                                      onClick={() => handleDeleteItem(item.id)}
-                                    >
-                                      <Trash2 size={16} />
-                                    </IconButton>
-                                  </Tooltip>
-                                </Box>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                )}
-              </>
-            ) : (
-              <Box sx={{ py: 12, textAlign: 'center' }}>
-                <Settings sx={{ width: 48, height: 48, color: 'text.disabled', mx: 'auto', mb: 2 }} />
-                <Typography variant='body1' sx={{ color: 'text.secondary' }}>
-                  请从左侧选择一个字典类型
-                </Typography>
-              </Box>
-            )}
-          </Box>
+                                    <Edit size={16} />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title={item.status === 'active' ? '禁用' : '启用'}>
+                                  <IconButton
+                                    size='small'
+                                    color={item.status === 'active' ? 'warning' : 'success'}
+                                    onClick={() => handleToggleItemStatus(item)}
+                                  >
+                                    {item.status === 'active' ? (
+                                      <X size={16} />
+                                    ) : (
+                                      <Check size={16} />
+                                    )}
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title='删除'>
+                                  <IconButton
+                                    size='small'
+                                    color='error'
+                                    onClick={() => handleDeleteItem(item.id)}
+                                  >
+                                    <Trash2 size={16} />
+                                  </IconButton>
+                                </Tooltip>
+                              </Box>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+            </>
+          ) : (
+            <Box sx={{ py: 12, textAlign: 'center' }}>
+              <Settings sx={{ width: 48, height: 48, color: 'text.disabled', mx: 'auto', mb: 2 }} />
+              <Typography
+                variant='body1'
+                sx={{ color: 'text.secondary' }}
+              >
+                请从左侧选择一个字典类型
+              </Typography>
+            </Box>
+          )}
         </Box>
+      </Box>
 
       <Dialog
         open={showTypeModal}
@@ -1018,7 +1219,10 @@ const DictManagementPage: React.FC = () => {
           >
             取消
           </Button>
-          <Button variant='contained' onClick={editingType ? handleUpdateType : handleCreateType}>
+          <Button
+            variant='contained'
+            onClick={editingType ? handleUpdateType : handleCreateType}
+          >
             {editingType ? '保存' : '创建'}
           </Button>
         </DialogActions>
@@ -1113,7 +1317,10 @@ const DictManagementPage: React.FC = () => {
           >
             取消
           </Button>
-          <Button variant='contained' onClick={editingItem ? handleUpdateItem : handleCreateItem}>
+          <Button
+            variant='contained'
+            onClick={editingItem ? handleUpdateItem : handleCreateItem}
+          >
             {editingItem ? '保存' : '创建'}
           </Button>
         </DialogActions>

@@ -1,10 +1,6 @@
 import apiClient from '../client';
 import type { ApiResponse, PaginatedResponse, PaginationParams } from '../client';
-import type {
-  Supplier,
-  CreateSupplierRequest,
-  UpdateSupplierRequest,
-} from './types';
+import type { Supplier, CreateSupplierRequest, UpdateSupplierRequest } from './types';
 
 export const supplierApi = {
   list: async (params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Supplier>>> => {

@@ -14,8 +14,7 @@ import {
   Database,
   Server,
 } from 'lucide-react';
-import { Chip, Box, Typography, Tooltip, IconButton, Alert } from '@mui/material';
-import { Button } from '@mui/material';
+import { Chip, Box, Typography, Tooltip, IconButton, Alert, Button } from '@mui/material';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -339,33 +338,36 @@ const BIDataSourcePage = () => {
   );
 
   return (
-    <PageContainer title='数据源管理' subtitle='配置和管理BI数据源连接'>
+    <PageContainer
+      title='数据源管理'
+      subtitle='配置和管理BI数据源连接'
+    >
       <ListPageTemplate<DataSource>
         title=''
         subtitle=''
-      columns={columns}
-      data={datasources}
-      loading={loading}
-      searchable
-      searchPlaceholder='搜索数据源名称...'
-      searchValue={searchTerm}
-      onSearch={(value) => setSearchTerm(value)}
-      filters={filters}
-      pagination={pagination}
-      rowActions={rowActions}
-      actions={[
-        {
-          label: '返回数据大屏',
-          variant: 'outlined',
-          onClick: () => logger.info('Back to dashboard'),
-        },
-        {
-          label: '新增数据源',
-          icon: <Plus size={16} />,
-          variant: 'contained',
-          onClick: () => logger.info('Add datasource'),
-        },
-      ]}
+        columns={columns}
+        data={datasources}
+        loading={loading}
+        searchable
+        searchPlaceholder='搜索数据源名称...'
+        searchValue={searchTerm}
+        onSearch={(value) => setSearchTerm(value)}
+        filters={filters}
+        pagination={pagination}
+        rowActions={rowActions}
+        actions={[
+          {
+            label: '返回数据大屏',
+            variant: 'outlined',
+            onClick: () => logger.info('Back to dashboard'),
+          },
+          {
+            label: '新增数据源',
+            icon: <Plus size={16} />,
+            variant: 'contained',
+            onClick: () => logger.info('Add datasource'),
+          },
+        ]}
       />
     </PageContainer>
   );

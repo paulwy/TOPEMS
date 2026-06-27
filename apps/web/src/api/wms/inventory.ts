@@ -29,9 +29,7 @@ export const inventoryApi = {
     return apiClient.wms.get(`/inventory/${id}`);
   },
 
-  create: async (
-    data: CreateInventoryItemRequest
-  ): Promise<ApiResponse<InventoryItem>> => {
+  create: async (data: CreateInventoryItemRequest): Promise<ApiResponse<InventoryItem>> => {
     return apiClient.wms.post('/inventory', data);
   },
 
@@ -46,13 +44,13 @@ export const inventoryApi = {
     return apiClient.wms.delete(`/inventory/${id}`);
   },
 
-  listLowStock: async (): Promise<
-    ApiResponse<{ items: InventoryItem[]; total: number }>
-  > => {
+  listLowStock: async (): Promise<ApiResponse<{ items: InventoryItem[]; total: number }>> => {
     return apiClient.wms.get('/inventory/low-stock');
   },
 
-  listByWarehouse: async (warehouse_id: string): Promise<
+  listByWarehouse: async (
+    warehouse_id: string
+  ): Promise<
     ApiResponse<{
       items: InventoryItem[];
       total: number;
@@ -109,9 +107,9 @@ export const inventoryAlertsApi = {
     return apiClient.wms.post(`/inventory-alerts/records/${id}/confirm`, data);
   },
 
-  getStatistics: async (
-    params?: { warehouse_id?: string }
-  ): Promise<ApiResponse<InventoryAlertStatistics>> => {
+  getStatistics: async (params?: {
+    warehouse_id?: string;
+  }): Promise<ApiResponse<InventoryAlertStatistics>> => {
     return apiClient.wms.get('/inventory-alerts/statistics', { params });
   },
 };
@@ -135,9 +133,9 @@ export const inventoryStatsApi = {
     return apiClient.wms.get('/inventory/turnover', { params });
   },
 
-  getValueByWarehouse: async (
-    params?: { category_id?: string }
-  ): Promise<ApiResponse<{ items: InventoryValueByWarehouse[]; total_value: number }>> => {
+  getValueByWarehouse: async (params?: {
+    category_id?: string;
+  }): Promise<ApiResponse<{ items: InventoryValueByWarehouse[]; total_value: number }>> => {
     return apiClient.wms.get('/inventory/value-by-warehouse', { params });
   },
 };
@@ -219,7 +217,9 @@ export async function listInventoryAlertRecords(
   return inventoryAlertsApi.listRecords(params);
 }
 
-export async function getInventoryAlertRecord(id: string): Promise<ApiResponse<InventoryAlertRecord>> {
+export async function getInventoryAlertRecord(
+  id: string
+): Promise<ApiResponse<InventoryAlertRecord>> {
   return inventoryAlertsApi.getRecord(id);
 }
 
@@ -230,9 +230,9 @@ export async function confirmInventoryAlert(
   return inventoryAlertsApi.confirm(id, data);
 }
 
-export async function getInventoryAlertStatistics(
-  params?: { warehouse_id?: string }
-): Promise<ApiResponse<InventoryAlertStatistics>> {
+export async function getInventoryAlertStatistics(params?: {
+  warehouse_id?: string;
+}): Promise<ApiResponse<InventoryAlertStatistics>> {
   return inventoryAlertsApi.getStatistics(params);
 }
 
@@ -254,9 +254,9 @@ export async function getInventoryTurnover(
   return inventoryStatsApi.getTurnover(params);
 }
 
-export async function getInventoryValueByWarehouse(
-  params?: { category_id?: string }
-): Promise<ApiResponse<{ items: InventoryValueByWarehouse[]; total_value: number }>> {
+export async function getInventoryValueByWarehouse(params?: {
+  category_id?: string;
+}): Promise<ApiResponse<{ items: InventoryValueByWarehouse[]; total_value: number }>> {
   return inventoryStatsApi.getValueByWarehouse(params);
 }
 

@@ -6,8 +6,15 @@
 import React, { useState, useCallback } from 'react';
 import { PageContainer } from '@/components/common';
 import { Plus, RefreshCw, Eye, Trash2 } from 'lucide-react';
-import { Box, Chip, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
-import { Button } from '@mui/material';
+import {
+  Box,
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+} from '@mui/material';
 
 import {
   ListPageTemplate,
@@ -250,10 +257,13 @@ const IntegrationMesErpPage: React.FC = () => {
   };
 
   return (
-    <PageContainer title="MES ↔ ERP 同步" subtitle="管理 MES 生产订单与 ERP 销售订单的同步">
+    <PageContainer
+      title='MES ↔ ERP 同步'
+      subtitle='管理 MES 生产订单与 ERP 销售订单的同步'
+    >
       <ListPageTemplate
-        title=""
-        subtitle=""
+        title=''
+        subtitle=''
         columns={columns}
         data={filteredData}
         loading={loading}

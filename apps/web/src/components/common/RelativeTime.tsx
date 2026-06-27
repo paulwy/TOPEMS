@@ -46,8 +46,13 @@ export const RelativeTime: React.FC<RelativeTimeProps> = ({
     >
       {relativeTime}
       {showAbsolute && (
-        <Typography component='span' sx={{ ml: 1, opacity: 0.6, fontSize: 'inherit' }}>
-          ({date instanceof Date ? formatRelativeTime(date.toISOString()) : formatRelativeTime(date)})
+        <Typography
+          component='span'
+          sx={{ ml: 1, opacity: 0.6, fontSize: 'inherit' }}
+        >
+          (
+          {date instanceof Date ? formatRelativeTime(date.toISOString()) : formatRelativeTime(date)}
+          )
         </Typography>
       )}
     </Typography>

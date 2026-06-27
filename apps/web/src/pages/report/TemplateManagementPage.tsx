@@ -40,8 +40,8 @@ import {
   DialogContent,
   DialogActions,
   Chip,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { PageContainer } from '@/components/common/PageContainer';
 
 const TemplateManagementPage: React.FC = () => {
@@ -187,286 +187,138 @@ const TemplateManagementPage: React.FC = () => {
     >
       {/* Filters */}
       <Card sx={{ p: 2, mb: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Box sx={{ position: 'relative', flex: 1 }}>
-              <Search
-                sx={{
-                  position: 'absolute',
-                  left: 12,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  width: 20,
-                  height: 20,
-                  color: 'grey.400',
-                }}
-              />
-              <TextField
-                placeholder='搜索模板名称、编码...'
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                sx={{ pl: 5, width: '100%' }}
-                size='small'
-              />
-            </Box>
-
-            <FormControl
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Box sx={{ position: 'relative', flex: 1 }}>
+            <Search
+              sx={{
+                position: 'absolute',
+                left: 12,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: 20,
+                height: 20,
+                color: 'grey.400',
+              }}
+            />
+            <TextField
+              placeholder='搜索模板名称、编码...'
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              sx={{ pl: 5, width: '100%' }}
               size='small'
-              sx={{ minWidth: 150 }}
+            />
+          </Box>
+
+          <FormControl
+            size='small'
+            sx={{ minWidth: 150 }}
+          >
+            <InputLabel>全部分类</InputLabel>
+            <Select
+              value={selectedCategory}
+              label='全部分类'
+              onChange={(e) => setSelectedCategory(e.target.value)}
             >
-              <InputLabel>全部分类</InputLabel>
-              <Select
-                value={selectedCategory}
-                label='全部分类'
-                onChange={(e) => setSelectedCategory(e.target.value)}
-              >
-                <MenuItem value=''>全部分类</MenuItem>
-                {categories.map((cat) => (
-                  <MenuItem
-                    key={cat.id}
-                    value={cat.code}
-                  >
-                    {cat.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+              <MenuItem value=''>全部分类</MenuItem>
+              {categories.map((cat) => (
+                <MenuItem
+                  key={cat.id}
+                  value={cat.code}
+                >
+                  {cat.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
 
-            <Box sx={{ display: 'flex', border: 1, borderColor: 'divider' }}>
-              <Button
-                variant={viewMode === 'grid' ? 'contained' : 'text'}
-                onClick={() => setViewMode('grid')}
-                sx={{ borderRadius: 0 }}
-              >
-                <Grid sx={{ width: 20, height: 20 }} />
-              </Button>
-              <Button
-                variant={viewMode === 'list' ? 'contained' : 'text'}
-                onClick={() => setViewMode('list')}
-                sx={{ borderRadius: 0 }}
-              >
-                <List sx={{ width: 20, height: 20 }} />
-              </Button>
-            </Box>
-
+          <Box sx={{ display: 'flex', border: 1, borderColor: 'divider' }}>
             <Button
-              variant='outlined'
-              onClick={loadData}
+              variant={viewMode === 'grid' ? 'contained' : 'text'}
+              onClick={() => setViewMode('grid')}
+              sx={{ borderRadius: 0 }}
             >
-              刷新
+              <Grid sx={{ width: 20, height: 20 }} />
+            </Button>
+            <Button
+              variant={viewMode === 'list' ? 'contained' : 'text'}
+              onClick={() => setViewMode('list')}
+              sx={{ borderRadius: 0 }}
+            >
+              <List sx={{ width: 20, height: 20 }} />
             </Button>
           </Box>
-        </Card>
 
-        {/* Content */}
-        <Card>
-          {loading ? (
-            <Box sx={{ p: 4, textAlign: 'center' }}>
-              <Loader2
-                sx={{
-                  width: 48,
-                  height: 48,
-                  color: 'primary.main',
-                  animation: 'spin 1s linear infinite',
-                  '@keyframes spin': {
-                    '0%': { transform: 'rotate(0deg)' },
-                    '100%': { transform: 'rotate(360deg)' },
-                  },
-                }}
-              />
-              <Typography
-                color='text.secondary'
-                sx={{ mt: 2 }}
-              >
-                加载中...
-              </Typography>
-            </Box>
-          ) : filteredTemplates.length === 0 ? (
-            <Box sx={{ p: 4, textAlign: 'center' }}>
-              <FileText sx={{ width: 48, height: 48, color: 'grey.400', mb: 1.5 }} />
-              <Typography color='text.secondary'>暂无模板数据</Typography>
-            </Box>
-          ) : viewMode === 'grid' ? (
-            <Box
+          <Button
+            variant='outlined'
+            onClick={loadData}
+          >
+            刷新
+          </Button>
+        </Box>
+      </Card>
+
+      {/* Content */}
+      <Card>
+        {loading ? (
+          <Box sx={{ p: 4, textAlign: 'center' }}>
+            <Loader2
               sx={{
-                display: 'grid',
-                gridTemplateColumns: {
-                  xs: '1fr',
-                  md: 'repeat(2, 1fr)',
-                  lg: 'repeat(3, 1fr)',
+                width: 48,
+                height: 48,
+                color: 'primary.main',
+                animation: 'spin 1s linear infinite',
+                '@keyframes spin': {
+                  '0%': { transform: 'rotate(0deg)' },
+                  '100%': { transform: 'rotate(360deg)' },
                 },
-                gap: 3,
-                p: 3,
               }}
+            />
+            <Typography
+              color='text.secondary'
+              sx={{ mt: 2 }}
             >
-              {filteredTemplates.map((template) => (
-                <Card
-                  key={template.id}
-                  sx={{
-                    bgcolor: 'grey.50',
-                    '&:hover': { boxShadow: 3 },
-                  }}
-                >
-                  <CardContent>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        justifyContent: 'space-between',
-                        mb: 2,
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          width: 48,
-                          height: 48,
-                          bgcolor: 'primary.100',
-                          borderRadius: 1,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}
-                      >
-                        <FileText sx={{ width: 24, height: 24, color: 'primary.main' }} />
-                      </Box>
-                      <IconButton
-                        onClick={() => handleToggleStatus(template.id)}
-                        sx={{
-                          color: template.is_active ? 'success.main' : 'grey.400',
-                          '&:hover': {
-                            bgcolor: template.is_active ? 'success.light' : 'grey.200',
-                          },
-                        }}
-                        title={template.is_active ? '已启用' : '已禁用'}
-                      >
-                        {template.is_active ? (
-                          <ToggleRight sx={{ width: 20, height: 20 }} />
-                        ) : (
-                          <ToggleLeft sx={{ width: 20, height: 20 }} />
-                        )}
-                      </IconButton>
-                    </Box>
-
-                    <Typography
-                      variant='h6'
-                      sx={{ fontWeight: 600, mb: 0.5 }}
-                    >
-                      {template.name}
-                    </Typography>
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                      sx={{ mb: 2 }}
-                    >
-                      {template.code}
-                    </Typography>
-
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 0.5,
-                        mb: 2,
-                      }}
-                    >
-                      <Typography
-                        variant='body2'
-                        color='text.secondary'
-                      >
-                        分类：
-                        {categories.find((c) => c.id === template.category_id)?.name ||
-                          template.category_name ||
-                          '未分类'}
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        color='text.secondary'
-                      >
-                        模块：{template.module}
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        color='text.secondary'
-                      >
-                        变量数：{template.variables?.length || 0}
-                      </Typography>
-                    </Box>
-
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        justifyContent: 'flex-end',
-                        gap: 0.5,
-                        pt: 2,
-                        borderTop: 1,
-                        borderColor: 'divider',
-                      }}
-                    >
-                      <IconButton
-                        onClick={() => {
-                          setSelectedTemplate(template);
-                          setShowPreviewModal(true);
-                        }}
-                        sx={{ color: 'primary.main' }}
-                        title='预览'
-                      >
-                        <Eye sx={{ width: 16, height: 16 }} />
-                      </IconButton>
-                      <IconButton
-                        onClick={() => handleDuplicateTemplate(template.id)}
-                        sx={{ color: 'success.main' }}
-                        title='复制'
-                      >
-                        <Copy sx={{ width: 16, height: 16 }} />
-                      </IconButton>
-                      <IconButton
-                        onClick={() => {
-                          setSelectedTemplate(template);
-                          setShowEditModal(true);
-                        }}
-                        sx={{ color: 'primary.main' }}
-                        title='编辑'
-                      >
-                        <Edit sx={{ width: 16, height: 16 }} />
-                      </IconButton>
-                      <IconButton
-                        onClick={() => handleDeleteTemplate(template.id)}
-                        sx={{ color: 'error.main' }}
-                        title='删除'
-                      >
-                        <Trash2 sx={{ width: 16, height: 16 }} />
-                      </IconButton>
-                    </Box>
-                  </CardContent>
-                </Card>
-              ))}
-            </Box>
-          ) : (
-            <Box>
-              {filteredTemplates.map((template, index) => (
-                <Box
-                  key={template.id}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    p: 2,
-                    borderBottom: index < filteredTemplates.length - 1 ? 1 : 0,
-                    borderColor: 'divider',
-                    '&:hover': { bgcolor: 'grey.50' },
-                  }}
-                >
+              加载中...
+            </Typography>
+          </Box>
+        ) : filteredTemplates.length === 0 ? (
+          <Box sx={{ p: 4, textAlign: 'center' }}>
+            <FileText sx={{ width: 48, height: 48, color: 'grey.400', mb: 1.5 }} />
+            <Typography color='text.secondary'>暂无模板数据</Typography>
+          </Box>
+        ) : viewMode === 'grid' ? (
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: '1fr',
+                md: 'repeat(2, 1fr)',
+                lg: 'repeat(3, 1fr)',
+              },
+              gap: 3,
+              p: 3,
+            }}
+          >
+            {filteredTemplates.map((template) => (
+              <Card
+                key={template.id}
+                sx={{
+                  bgcolor: 'grey.50',
+                  '&:hover': { boxShadow: 3 },
+                }}
+              >
+                <CardContent>
                   <Box
                     sx={{
                       display: 'flex',
-                      alignItems: 'center',
-                      gap: 2,
-                      flex: 1,
+                      alignItems: 'flex-start',
+                      justifyContent: 'space-between',
+                      mb: 2,
                     }}
                   >
                     <Box
                       sx={{
-                        width: 40,
-                        height: 40,
+                        width: 48,
+                        height: 48,
                         bgcolor: 'primary.100',
                         borderRadius: 1,
                         display: 'flex',
@@ -474,37 +326,17 @@ const TemplateManagementPage: React.FC = () => {
                         justifyContent: 'center',
                       }}
                     >
-                      <FileText sx={{ width: 20, height: 20, color: 'primary.main' }} />
+                      <FileText sx={{ width: 24, height: 24, color: 'primary.main' }} />
                     </Box>
-                    <Box sx={{ flex: 1 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Typography sx={{ fontWeight: 500 }}>{template.name}</Typography>
-                        <Chip
-                          label={template.is_active ? '已启用' : '已禁用'}
-                          size='small'
-                          sx={{
-                            bgcolor: template.is_active ? 'success.100' : 'grey.100',
-                            color: template.is_active ? 'success.700' : 'grey.700',
-                          }}
-                        />
-                      </Box>
-                      <Typography
-                        variant='body2'
-                        color='text.secondary'
-                      >
-                        {template.code} ·{' '}
-                        {categories.find((c) => c.id === template.category_id)?.name ||
-                          template.category_name ||
-                          '未分类'}
-                      </Typography>
-                    </Box>
-                  </Box>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                     <IconButton
                       onClick={() => handleToggleStatus(template.id)}
                       sx={{
                         color: template.is_active ? 'success.main' : 'grey.400',
+                        '&:hover': {
+                          bgcolor: template.is_active ? 'success.light' : 'grey.200',
+                        },
                       }}
+                      title={template.is_active ? '已启用' : '已禁用'}
                     >
                       {template.is_active ? (
                         <ToggleRight sx={{ width: 20, height: 20 }} />
@@ -512,18 +344,77 @@ const TemplateManagementPage: React.FC = () => {
                         <ToggleLeft sx={{ width: 20, height: 20 }} />
                       )}
                     </IconButton>
+                  </Box>
+
+                  <Typography
+                    variant='h6'
+                    sx={{ fontWeight: 600, mb: 0.5 }}
+                  >
+                    {template.name}
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                    sx={{ mb: 2 }}
+                  >
+                    {template.code}
+                  </Typography>
+
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 0.5,
+                      mb: 2,
+                    }}
+                  >
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      分类：
+                      {categories.find((c) => c.id === template.category_id)?.name ||
+                        template.category_name ||
+                        '未分类'}
+                    </Typography>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      模块：{template.module}
+                    </Typography>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      变量数：{template.variables?.length || 0}
+                    </Typography>
+                  </Box>
+
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      gap: 0.5,
+                      pt: 2,
+                      borderTop: 1,
+                      borderColor: 'divider',
+                    }}
+                  >
                     <IconButton
                       onClick={() => {
                         setSelectedTemplate(template);
                         setShowPreviewModal(true);
                       }}
                       sx={{ color: 'primary.main' }}
+                      title='预览'
                     >
                       <Eye sx={{ width: 16, height: 16 }} />
                     </IconButton>
                     <IconButton
                       onClick={() => handleDuplicateTemplate(template.id)}
                       sx={{ color: 'success.main' }}
+                      title='复制'
                     >
                       <Copy sx={{ width: 16, height: 16 }} />
                     </IconButton>
@@ -533,21 +424,130 @@ const TemplateManagementPage: React.FC = () => {
                         setShowEditModal(true);
                       }}
                       sx={{ color: 'primary.main' }}
+                      title='编辑'
                     >
                       <Edit sx={{ width: 16, height: 16 }} />
                     </IconButton>
                     <IconButton
                       onClick={() => handleDeleteTemplate(template.id)}
                       sx={{ color: 'error.main' }}
+                      title='删除'
                     >
                       <Trash2 sx={{ width: 16, height: 16 }} />
                     </IconButton>
                   </Box>
+                </CardContent>
+              </Card>
+            ))}
+          </Box>
+        ) : (
+          <Box>
+            {filteredTemplates.map((template, index) => (
+              <Box
+                key={template.id}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  p: 2,
+                  borderBottom: index < filteredTemplates.length - 1 ? 1 : 0,
+                  borderColor: 'divider',
+                  '&:hover': { bgcolor: 'grey.50' },
+                }}
+              >
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 2,
+                    flex: 1,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      bgcolor: 'primary.100',
+                      borderRadius: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <FileText sx={{ width: 20, height: 20, color: 'primary.main' }} />
+                  </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography sx={{ fontWeight: 500 }}>{template.name}</Typography>
+                      <Chip
+                        label={template.is_active ? '已启用' : '已禁用'}
+                        size='small'
+                        sx={{
+                          bgcolor: template.is_active ? 'success.100' : 'grey.100',
+                          color: template.is_active ? 'success.700' : 'grey.700',
+                        }}
+                      />
+                    </Box>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      {template.code} ·{' '}
+                      {categories.find((c) => c.id === template.category_id)?.name ||
+                        template.category_name ||
+                        '未分类'}
+                    </Typography>
+                  </Box>
                 </Box>
-              ))}
-            </Box>
-          )}
-        </Card>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  <IconButton
+                    onClick={() => handleToggleStatus(template.id)}
+                    sx={{
+                      color: template.is_active ? 'success.main' : 'grey.400',
+                    }}
+                  >
+                    {template.is_active ? (
+                      <ToggleRight sx={{ width: 20, height: 20 }} />
+                    ) : (
+                      <ToggleLeft sx={{ width: 20, height: 20 }} />
+                    )}
+                  </IconButton>
+                  <IconButton
+                    onClick={() => {
+                      setSelectedTemplate(template);
+                      setShowPreviewModal(true);
+                    }}
+                    sx={{ color: 'primary.main' }}
+                  >
+                    <Eye sx={{ width: 16, height: 16 }} />
+                  </IconButton>
+                  <IconButton
+                    onClick={() => handleDuplicateTemplate(template.id)}
+                    sx={{ color: 'success.main' }}
+                  >
+                    <Copy sx={{ width: 16, height: 16 }} />
+                  </IconButton>
+                  <IconButton
+                    onClick={() => {
+                      setSelectedTemplate(template);
+                      setShowEditModal(true);
+                    }}
+                    sx={{ color: 'primary.main' }}
+                  >
+                    <Edit sx={{ width: 16, height: 16 }} />
+                  </IconButton>
+                  <IconButton
+                    onClick={() => handleDeleteTemplate(template.id)}
+                    sx={{ color: 'error.main' }}
+                  >
+                    <Trash2 sx={{ width: 16, height: 16 }} />
+                  </IconButton>
+                </Box>
+              </Box>
+            ))}
+          </Box>
+        )}
+      </Card>
 
       {/* Create/Edit Modal */}
       {showCreateModal && (

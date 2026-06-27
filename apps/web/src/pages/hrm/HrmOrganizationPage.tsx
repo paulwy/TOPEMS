@@ -18,18 +18,9 @@ import {
   Chip,
   Divider,
   Grid,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
-import {
-  Building,
-  Building2,
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
-  Users,
-  RefreshCw,
-} from 'lucide-react';
+import { Building, Building2, Plus, Edit, Trash2, Eye, Users, RefreshCw } from 'lucide-react';
 import {
   companyApi,
   departmentApi,
@@ -46,7 +37,7 @@ import {
   type TreeStatCard as StatCard,
   type TreeAction,
 } from '@/components/templates';
-import { EmptyState } from '@/components/mui';
+import { EmptyState } from '@/components';
 import { AIHelperButton, AICodeGenerator } from '@/components/ai';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 import { PageContainer } from '@/components/common';
@@ -129,13 +120,11 @@ const HrmOrganizationPage: React.FC = () => {
   const buildTree = useCallback((): TreeNode[] => {
     const result: TreeNode[] = [];
 
-    const filteredCompanies = statusFilter === 'all'
-      ? companies
-      : companies.filter((c) => c.status === statusFilter);
+    const filteredCompanies =
+      statusFilter === 'all' ? companies : companies.filter((c) => c.status === statusFilter);
 
-    const filteredDepts = statusFilter === 'all'
-      ? departments
-      : departments.filter((d) => d.status === statusFilter);
+    const filteredDepts =
+      statusFilter === 'all' ? departments : departments.filter((d) => d.status === statusFilter);
 
     filteredCompanies.forEach((company) => {
       const companyNode: TreeNode = {
@@ -395,14 +384,12 @@ const HrmOrganizationPage: React.FC = () => {
           setShowCompanyModal(false);
           fetchData();
         }
-      } else if (modalMode === 'edit') {
-        if (companyFormData.id) {
-          const response = await companyApi.update(companyFormData.id, companyFormData as Company);
-          if (response.code === 200) {
-            addNotification({ title: '成功', message: '更新成功', type: 'success' });
-            setShowCompanyModal(false);
-            fetchData();
-          }
+      } else if (modalMode === 'edit' && companyFormData.id) {
+        const response = await companyApi.update(companyFormData.id, companyFormData as Company);
+        if (response.code === 200) {
+          addNotification({ title: '成功', message: '更新成功', type: 'success' });
+          setShowCompanyModal(false);
+          fetchData();
         }
       }
     } catch (error: unknown) {
@@ -417,9 +404,10 @@ const HrmOrganizationPage: React.FC = () => {
   const handleCreateDepartment = useCallback(() => {
     if (!selectedNode) return;
     const nodeData = selectedNode.data as NodeData;
-    const companyId = nodeData.type === 'company'
-      ? (nodeData.data as Company).id
-      : (nodeData.data as Department).company_id;
+    const companyId =
+      nodeData.type === 'company'
+        ? (nodeData.data as Company).id
+        : (nodeData.data as Department).company_id;
     setModalMode('create');
     setDeptFormData({ company_id: companyId });
     setShowDeptModal(true);
@@ -434,14 +422,12 @@ const HrmOrganizationPage: React.FC = () => {
           setShowDeptModal(false);
           fetchData();
         }
-      } else if (modalMode === 'edit') {
-        if (deptFormData.id) {
-          const response = await departmentApi.update(deptFormData.id, deptFormData as Department);
-          if (response.code === 200) {
-            addNotification({ title: '成功', message: '更新成功', type: 'success' });
-            setShowDeptModal(false);
-            fetchData();
-          }
+      } else if (modalMode === 'edit' && deptFormData.id) {
+        const response = await departmentApi.update(deptFormData.id, deptFormData as Department);
+        if (response.code === 200) {
+          addNotification({ title: '成功', message: '更新成功', type: 'success' });
+          setShowDeptModal(false);
+          fetchData();
         }
       }
     } catch (error: unknown) {
@@ -456,9 +442,10 @@ const HrmOrganizationPage: React.FC = () => {
   const availableParentDepts = useMemo(() => {
     if (!selectedNode) return [];
     const nodeData = selectedNode.data as NodeData;
-    const companyId = nodeData.type === 'company'
-      ? (nodeData.data as Company).id
-      : (nodeData.data as Department).company_id;
+    const companyId =
+      nodeData.type === 'company'
+        ? (nodeData.data as Company).id
+        : (nodeData.data as Department).company_id;
     if (!companyId) return [];
     return departments.filter(
       (d) => d.company_id === companyId && d.id !== (deptFormData.id as string)
@@ -472,7 +459,7 @@ const HrmOrganizationPage: React.FC = () => {
           sx={{ pb: 2 }}
           title={
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              {((selectedNode.data as NodeData).type === 'company') ? (
+              {(selectedNode.data as NodeData).type === 'company' ? (
                 <Avatar sx={{ width: 48, height: 48, bgcolor: 'primary.main' }}>
                   <Building sx={{ width: 24, height: 24 }} />
                 </Avatar>
@@ -482,8 +469,16 @@ const HrmOrganizationPage: React.FC = () => {
                 </Avatar>
               )}
               <Box>
-                <Typography variant='h6' sx={{ fontWeight: 600 }}>{selectedNode.name}</Typography>
-                <Typography variant='body2' color='text.secondary'>
+                <Typography
+                  variant='h6'
+                  sx={{ fontWeight: 600 }}
+                >
+                  {selectedNode.name}
+                </Typography>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
                   {(selectedNode.data as NodeData).type === 'company' ? '公司' : '部门'}
                 </Typography>
               </Box>
@@ -492,12 +487,25 @@ const HrmOrganizationPage: React.FC = () => {
         />
         <CardContent>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-            <Chip size='small' variant='outlined' label={`${employees.length} 人`} />
-            {((selectedNode.data as NodeData).type === 'company') ? (
-              <Chip size='small' variant='outlined' label={`${departments.filter(d => d.company_id === (selectedNode.data as NodeData).data.id).length} 个部门`} />
+            <Chip
+              size='small'
+              variant='outlined'
+              label={`${employees.length} 人`}
+            />
+            {(selectedNode.data as NodeData).type === 'company' ? (
+              <Chip
+                size='small'
+                variant='outlined'
+                label={`${departments.filter((d) => d.company_id === (selectedNode.data as NodeData).data.id).length} 个部门`}
+              />
             ) : (
-              (selectedNode.data as NodeData).data && (selectedNode.data as NodeData).data.code && (
-                <Chip size='small' variant='outlined' label={`编码: ${(selectedNode.data as NodeData).data.code as string}`} />
+              (selectedNode.data as NodeData).data &&
+              (selectedNode.data as NodeData).data.code && (
+                <Chip
+                  size='small'
+                  variant='outlined'
+                  label={`编码: ${(selectedNode.data as NodeData).data.code as string}`}
+                />
               )
             )}
           </Box>
@@ -507,12 +515,26 @@ const HrmOrganizationPage: React.FC = () => {
           <Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <Users sx={{ width: 20, height: 20, color: 'warning.main' }} />
-              <Typography variant='subtitle1' sx={{ fontWeight: 600 }}>员工列表</Typography>
-              <Chip size='small' variant='outlined' label={`${employees.length} 人`} sx={{ ml: 'auto' }} />
+              <Typography
+                variant='subtitle1'
+                sx={{ fontWeight: 600 }}
+              >
+                员工列表
+              </Typography>
+              <Chip
+                size='small'
+                variant='outlined'
+                label={`${employees.length} 人`}
+                sx={{ ml: 'auto' }}
+              />
             </Box>
 
             {employees.length === 0 ? (
-              <EmptyState emoji='👥' title='暂无员工数据' compact />
+              <EmptyState
+                emoji='👥'
+                title='暂无员工数据'
+                compact
+              />
             ) : (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                 {employees.map((emp) => (
@@ -528,14 +550,33 @@ const HrmOrganizationPage: React.FC = () => {
                       '&:hover': { bgcolor: 'grey.100' },
                     }}
                   >
-                    <Box sx={{ width: 40, height: 40, borderRadius: '50%', bgcolor: 'primary.100', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Box
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        borderRadius: '50%',
+                        bgcolor: 'primary.100',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
                       <Users sx={{ width: 20, height: 20, color: 'primary.main' }} />
                     </Box>
                     <Box sx={{ flex: 1 }}>
                       <Typography sx={{ fontWeight: 500 }}>{emp.name}</Typography>
-                      <Typography variant='body2' color='text.secondary'>{emp.position || '无职位'}</Typography>
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
+                        {emp.position || '无职位'}
+                      </Typography>
                     </Box>
-                    <Chip size='small' variant='outlined' label={emp.status === 'active' ? '在职' : '离职'} />
+                    <Chip
+                      size='small'
+                      variant='outlined'
+                      label={emp.status === 'active' ? '在职' : '离职'}
+                    />
                   </Box>
                 ))}
               </Box>
@@ -610,7 +651,9 @@ const HrmOrganizationPage: React.FC = () => {
                 fullWidth
                 size='small'
                 value={companyFormData.short_name || ''}
-                onChange={(e) => setCompanyFormData({ ...companyFormData, short_name: e.target.value })}
+                onChange={(e) =>
+                  setCompanyFormData({ ...companyFormData, short_name: e.target.value })
+                }
                 disabled={modalMode === 'view'}
                 placeholder='请输入公司简称'
               />
@@ -621,7 +664,9 @@ const HrmOrganizationPage: React.FC = () => {
                 fullWidth
                 size='small'
                 value={companyFormData.address || ''}
-                onChange={(e) => setCompanyFormData({ ...companyFormData, address: e.target.value })}
+                onChange={(e) =>
+                  setCompanyFormData({ ...companyFormData, address: e.target.value })
+                }
                 disabled={modalMode === 'view'}
                 placeholder='请输入公司地址'
               />
@@ -634,17 +679,27 @@ const HrmOrganizationPage: React.FC = () => {
                 multiline
                 rows={3}
                 value={companyFormData.description || ''}
-                onChange={(e) => setCompanyFormData({ ...companyFormData, description: e.target.value })}
+                onChange={(e) =>
+                  setCompanyFormData({ ...companyFormData, description: e.target.value })
+                }
                 disabled={modalMode === 'view'}
                 placeholder='请输入公司描述'
               />
             </Box>
             <Box>
               <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>状态</InputLabel>
-              <FormControl fullWidth size='small'>
+              <FormControl
+                fullWidth
+                size='small'
+              >
                 <Select
                   value={companyFormData.status || ''}
-                  onChange={(e) => setCompanyFormData({ ...companyFormData, status: e.target.value as 'active' | 'inactive' })}
+                  onChange={(e) =>
+                    setCompanyFormData({
+                      ...companyFormData,
+                      status: e.target.value as 'active' | 'inactive',
+                    })
+                  }
                   disabled={modalMode === 'view'}
                 >
                   <MenuItem value='active'>启用</MenuItem>
@@ -656,7 +711,10 @@ const HrmOrganizationPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           {modalMode !== 'view' && (
-            <Button onClick={handleSaveCompany} variant='contained'>
+            <Button
+              onClick={handleSaveCompany}
+              variant='contained'
+            >
               {modalMode === 'create' ? '创建' : '保存'}
             </Button>
           )}
@@ -710,15 +768,28 @@ const HrmOrganizationPage: React.FC = () => {
             </Box>
             <Box>
               <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>上级部门</InputLabel>
-              <FormControl fullWidth size='small'>
+              <FormControl
+                fullWidth
+                size='small'
+              >
                 <Select
                   value={deptFormData.parent_id || 'none'}
-                  onChange={(e) => setDeptFormData({ ...deptFormData, parent_id: e.target.value === 'none' ? undefined : (e.target.value as string) })}
+                  onChange={(e) =>
+                    setDeptFormData({
+                      ...deptFormData,
+                      parent_id: e.target.value === 'none' ? undefined : (e.target.value as string),
+                    })
+                  }
                   disabled={modalMode === 'view'}
                 >
                   <MenuItem value='none'>无上级部门</MenuItem>
                   {availableParentDepts.map((dept) => (
-                    <MenuItem key={dept.id} value={dept.id}>{dept.name}</MenuItem>
+                    <MenuItem
+                      key={dept.id}
+                      value={dept.id}
+                    >
+                      {dept.name}
+                    </MenuItem>
                   ))}
                 </Select>
               </FormControl>
@@ -738,10 +809,18 @@ const HrmOrganizationPage: React.FC = () => {
             </Box>
             <Box>
               <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>状态</InputLabel>
-              <FormControl fullWidth size='small'>
+              <FormControl
+                fullWidth
+                size='small'
+              >
                 <Select
                   value={deptFormData.status || ''}
-                  onChange={(e) => setDeptFormData({ ...deptFormData, status: e.target.value as 'active' | 'inactive' })}
+                  onChange={(e) =>
+                    setDeptFormData({
+                      ...deptFormData,
+                      status: e.target.value as 'active' | 'inactive',
+                    })
+                  }
                   disabled={modalMode === 'view'}
                 >
                   <MenuItem value='active'>启用</MenuItem>
@@ -753,7 +832,10 @@ const HrmOrganizationPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           {modalMode !== 'view' && (
-            <Button onClick={handleSaveDepartment} variant='contained'>
+            <Button
+              onClick={handleSaveDepartment}
+              variant='contained'
+            >
               {modalMode === 'create' ? '创建' : '保存'}
             </Button>
           )}

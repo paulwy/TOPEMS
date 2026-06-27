@@ -109,16 +109,13 @@ const HeatmapLayer: React.FC<HeatmapLayerProps> = ({
 
     // Create overlay layer
     const HeatmapOverlay = L.Layer.extend({
-      initialize: function (this: L.Layer & { _canvas: HTMLCanvasElement }) {
+      initialize(this: L.Layer & { _canvas: HTMLCanvasElement }) {
         this._canvas = canvas;
       },
-      onAdd: function (this: L.Layer & { _canvas: HTMLCanvasElement }) {
+      onAdd(this: L.Layer & { _canvas: HTMLCanvasElement }) {
         L.DomUtil.get(this._canvas.id) || L.DomUtil.get(this._canvas.id);
       },
-      setCanvas: function (
-        this: L.Layer & { _canvas: HTMLCanvasElement },
-        newCanvas: HTMLCanvasElement
-      ) {
+      setCanvas(this: L.Layer & { _canvas: HTMLCanvasElement }, newCanvas: HTMLCanvasElement) {
         this._canvas = newCanvas;
       },
     });

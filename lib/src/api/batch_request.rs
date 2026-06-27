@@ -9,9 +9,9 @@ use tracing::info;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum RequestPriority {
-    High,
-    Normal,
     Low,
+    Normal,
+    High,
 }
 
 impl Default for RequestPriority {

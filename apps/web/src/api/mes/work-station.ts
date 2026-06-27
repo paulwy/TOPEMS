@@ -23,7 +23,7 @@ export const workStationApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(`/api/mes/workstations${queryString ? '?' + queryString : ''}`);
+    return apiClient.mes.get(`/api/mes/workstations${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<WorkStation>> {

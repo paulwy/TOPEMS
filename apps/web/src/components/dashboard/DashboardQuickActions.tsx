@@ -1,6 +1,5 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
-import { Button } from '@mui/material';
+import { Box, Typography, Button } from '@mui/material';
 import { FileText, Brain, GitBranch, Clock, Bell, User, ShoppingCart } from 'lucide-react';
 
 type IconComponent = React.ComponentType<{

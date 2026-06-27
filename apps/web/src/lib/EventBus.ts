@@ -33,7 +33,7 @@ export const EventTypes = {
 } as const;
 
 // 事件名称联合类型
-export type PresetEventName = typeof EventTypes[keyof typeof EventTypes];
+export type PresetEventName = (typeof EventTypes)[keyof typeof EventTypes];
 
 // 事件数据类型定义
 export interface ModuleEventData {
@@ -49,7 +49,11 @@ export interface ModuleEventData {
   'navigation:refresh': { path: string };
   'cross-module:data': { source: string; target: string; data: unknown };
   'cross-module:action': { source: string; target: string; action: string; payload?: unknown };
-  'notification:show': { id: string; type: 'info' | 'success' | 'warning' | 'error'; message: string };
+  'notification:show': {
+    id: string;
+    type: 'info' | 'success' | 'warning' | 'error';
+    message: string;
+  };
   'notification:hide': { id: string };
 }
 
@@ -95,7 +99,7 @@ class EventBusClass {
   private matchWildcard(event: string, pattern: string): boolean {
     if (pattern.endsWith(':*')) {
       const prefix = pattern.slice(0, -2);
-      return event.startsWith(prefix + ':') && event !== pattern;
+      return event.startsWith(`${prefix}:`) && event !== pattern;
     }
     return false;
   }
@@ -176,7 +180,10 @@ class EventBusClass {
    * @param event 事件名称
    * @param data 事件数据
    */
-  emit<N extends EventName>(event: N, data: N extends keyof ModuleEventData ? ModuleEventData[N] : unknown): void {
+  emit<N extends EventName>(
+    event: N,
+    data: N extends keyof ModuleEventData ? ModuleEventData[N] : unknown
+  ): void {
     // 直接订阅者
     const directSubscribers = this.subscribers.get(event) || [];
     const toRemove: string[] = [];
@@ -306,8 +313,10 @@ export const eventBus = new EventBusClass();
 // 命名空间辅助函数
 export const createNamespaceEventBus = (namespace: string) => {
   return {
-    emit: <N extends EventName>(event: N, data: N extends keyof ModuleEventData ? ModuleEventData[N] : unknown) =>
-      eventBus.emit(`${namespace}:${event}` as N, data),
+    emit: <N extends EventName>(
+      event: N,
+      data: N extends keyof ModuleEventData ? ModuleEventData[N] : unknown
+    ) => eventBus.emit(`${namespace}:${event}` as N, data),
     subscribe: <N extends EventName>(
       event: N,
       callback: (data: N extends keyof ModuleEventData ? ModuleEventData[N] : unknown) => void

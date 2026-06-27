@@ -43,7 +43,9 @@ export function lazyLoadWithRetry<T extends ComponentType<any>>(
         }
       }
     }
-    logger.error(`[Lazy Load] Component ${moduleName || 'unknown'} failed after ${maxRetries} retries`);
+    logger.error(
+      `[Lazy Load] Component ${moduleName || 'unknown'} failed after ${maxRetries} retries`
+    );
     throw lastError || new Error('Failed to load component');
   });
 }
@@ -108,7 +110,12 @@ export async function dynamicImport<T>(
     cache?: boolean;
   } = {}
 ): Promise<T> {
-  const { maxRetries = MAX_RETRIES, retryDelay = RETRY_DELAY_MS, moduleName, cache = true } = options;
+  const {
+    maxRetries = MAX_RETRIES,
+    retryDelay = RETRY_DELAY_MS,
+    moduleName,
+    cache = true,
+  } = options;
 
   const cacheKey = moduleName || importFn.toString();
 
@@ -183,7 +190,15 @@ export function PreloadLink<T extends ComponentType<any>>({
     preloadModule(importFn, moduleName);
   }, [importFn, moduleName]);
 
-  return <a href={to} onMouseEnter={handleMouseEnter} {...rest}>{children}</a>;
+  return (
+    <a
+      href={to}
+      onMouseEnter={handleMouseEnter}
+      {...rest}
+    >
+      {children}
+    </a>
+  );
 }
 
 export function PrefetchOnIdle<T extends ComponentType<any>>({

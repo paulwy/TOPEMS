@@ -18,8 +18,8 @@ import {
   MenuItem,
   Checkbox,
   FormControlLabel,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import {
   Plus,
   Eye,
@@ -55,7 +55,6 @@ const EhsCheckPage: React.FC = () => {
   const [recordItems, setRecordItems] = useState<RecordItem[]>([]);
   const [planItems, setPlanItems] = useState<InspectionItem[]>([]);
   const [formData, setFormData] = useState({
-
     title: '',
     description: '',
     inspection_type: 'daily',

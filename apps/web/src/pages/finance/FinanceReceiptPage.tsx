@@ -1,16 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import {
-  Plus,
-  Trash2,
-  Banknote,
-  CheckCircle,
-  Clock,
-  Eye,
-  Check,
-  RefreshCw,
-} from 'lucide-react';
-import { DataExport, BackButton, PageContainer} from '@/components/common';
-import { ListPageTemplate, StatCardGroup } from '@/components/mui';
+import { Plus, Trash2, Banknote, CheckCircle, Clock, Eye, Check, RefreshCw } from 'lucide-react';
+import { DataExport, BackButton, PageContainer } from '@/components/common';
+import { ListPageTemplate, StatCardGroup } from '@/components';
 import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
 import { financeApi } from '@/api/finance';
@@ -31,8 +22,8 @@ import {
   Typography,
   Stack,
   IconButton,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 
 interface Receipt {
@@ -73,7 +64,7 @@ const FinanceReceiptPage: React.FC = () => {
     const bankAccount = record.bank_name
       ? `${record.bank_name} ${record.bank_account_no}`
       : record.bank_account_no;
-    
+
     let statusText = '';
     switch (record.status) {
       case 'recorded':
@@ -271,8 +262,7 @@ const FinanceReceiptPage: React.FC = () => {
     success('收款记录已删除');
   };
 
-  const handleSearch = () => {
-  };
+  const handleSearch = () => {};
 
   const handleReset = () => {
     setSearchQuery('');
@@ -434,7 +424,10 @@ const FinanceReceiptPage: React.FC = () => {
   );
 
   return (
-    <PageContainer padding={false} maxWidth={false}>
+    <PageContainer
+      padding={false}
+      maxWidth={false}
+    >
       <MuiBox
         sx={{
           bgcolor: 'background.paper',

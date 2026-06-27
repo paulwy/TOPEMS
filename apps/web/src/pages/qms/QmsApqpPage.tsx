@@ -34,19 +34,13 @@ import {
   LinearProgress,
   Tabs,
   Tab,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
-import type {
-  ApqpProject,
-  ApqpPhase,
-  ApqpTask,
-  ApqpRisk,
-  ApqpProgressStatistics,
-} from '@/api/qms';
+import type { ApqpProject, ApqpPhase, ApqpTask, ApqpRisk, ApqpProgressStatistics } from '@/api/qms';
 import { useAppStore } from '@/store';
 
 const QmsApqpPage: React.FC = () => {
@@ -84,9 +78,7 @@ const QmsApqpPage: React.FC = () => {
       const response = await qmsApi.listApqpProjects();
       if (response.success && response.data) {
         const data = response.data as any;
-        const projectsArray = Array.isArray(data)
-          ? data
-          : data.projects || [];
+        const projectsArray = Array.isArray(data) ? data : data.projects || [];
         setProjects(projectsArray);
       } else if (!response.success) {
         addNotification({
@@ -258,7 +250,11 @@ const QmsApqpPage: React.FC = () => {
   const getRiskSeverityBadge = (rpn?: number) => {
     if (!rpn)
       return (
-        <Chip label='-' size='small' sx={{ backgroundColor: 'grey.100', color: 'text.secondary' }} />
+        <Chip
+          label='-'
+          size='small'
+          sx={{ backgroundColor: 'grey.100', color: 'text.secondary' }}
+        />
       );
     if (rpn >= 100) {
       return (
@@ -323,7 +319,10 @@ const QmsApqpPage: React.FC = () => {
       render: (row) => (
         <Box sx={{ width: 100 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-            <Typography variant='caption' color='text.secondary'>
+            <Typography
+              variant='caption'
+              color='text.secondary'
+            >
               {row.progress || 0}%
             </Typography>
           </Box>
@@ -340,7 +339,10 @@ const QmsApqpPage: React.FC = () => {
       label: '负责人',
       render: (row) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Box component={Users} sx={{ fontSize: 16 }} />
+          <Box
+            component={Users}
+            sx={{ fontSize: 16 }}
+          />
           <Typography>{row.leader || '-'}</Typography>
         </Box>
       ),
@@ -349,9 +351,7 @@ const QmsApqpPage: React.FC = () => {
       id: 'target_date',
       label: '目标日期',
       render: (row) => (
-        <span>
-          {row.target_date ? new Date(row.target_date).toLocaleDateString('zh-CN') : '-'}
-        </span>
+        <span>{row.target_date ? new Date(row.target_date).toLocaleDateString('zh-CN') : '-'}</span>
       ),
     },
     {
@@ -401,7 +401,10 @@ const QmsApqpPage: React.FC = () => {
       render: (row) => (
         <Box sx={{ width: 100 }}>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
-            <Typography variant='caption' color='text.secondary'>
+            <Typography
+              variant='caption'
+              color='text.secondary'
+            >
               {row.progress || 0}%
             </Typography>
           </Box>
@@ -413,8 +416,17 @@ const QmsApqpPage: React.FC = () => {
         </Box>
       ),
     },
-    { id: 'start_date', label: '开始日期', render: (row) => row.start_date ? new Date(row.start_date).toLocaleDateString('zh-CN') : '-' },
-    { id: 'end_date', label: '结束日期', render: (row) => row.end_date ? new Date(row.end_date).toLocaleDateString('zh-CN') : '-' },
+    {
+      id: 'start_date',
+      label: '开始日期',
+      render: (row) =>
+        row.start_date ? new Date(row.start_date).toLocaleDateString('zh-CN') : '-',
+    },
+    {
+      id: 'end_date',
+      label: '结束日期',
+      render: (row) => (row.end_date ? new Date(row.end_date).toLocaleDateString('zh-CN') : '-'),
+    },
   ];
 
   const taskColumns: ColumnDef<ApqpTask>[] = [
@@ -430,7 +442,11 @@ const QmsApqpPage: React.FC = () => {
       render: (row) => getStatusBadge(row.status),
     },
     { id: 'assignee', label: '负责人', render: (row) => row.assignee || '-' },
-    { id: 'due_date', label: '截止日期', render: (row) => row.due_date ? new Date(row.due_date).toLocaleDateString('zh-CN') : '-' },
+    {
+      id: 'due_date',
+      label: '截止日期',
+      render: (row) => (row.due_date ? new Date(row.due_date).toLocaleDateString('zh-CN') : '-'),
+    },
     { id: 'deliverable', label: '交付物', render: (row) => row.deliverable || '-' },
   ];
 
@@ -452,11 +468,19 @@ const QmsApqpPage: React.FC = () => {
       render: (row) => getStatusBadge(row.status),
     },
     { id: 'responsible', label: '负责人', render: (row) => row.responsible || '-' },
-    { id: 'target_date', label: '目标日期', render: (row) => row.target_date ? new Date(row.target_date).toLocaleDateString('zh-CN') : '-' },
+    {
+      id: 'target_date',
+      label: '目标日期',
+      render: (row) =>
+        row.target_date ? new Date(row.target_date).toLocaleDateString('zh-CN') : '-',
+    },
   ];
 
   return (
-    <PageContainer title='APQP 产品质量先期策划' subtitle='Advanced Product Quality Planning'>
+    <PageContainer
+      title='APQP 产品质量先期策划'
+      subtitle='Advanced Product Quality Planning'
+    >
       <ListPageTemplate
         title=''
         subtitle=''
@@ -533,9 +557,7 @@ const QmsApqpPage: React.FC = () => {
                   }}
                 >
                   <Box>
-                    <Typography sx={{ color: '#bfdbfe', fontSize: '0.875rem' }}>
-                      策划中
-                    </Typography>
+                    <Typography sx={{ color: '#bfdbfe', fontSize: '0.875rem' }}>策划中</Typography>
                     <Typography
                       variant='h4'
                       sx={{ fontWeight: 700, mt: 0.5 }}
@@ -593,9 +615,7 @@ const QmsApqpPage: React.FC = () => {
                   }}
                 >
                   <Box>
-                    <Typography sx={{ color: '#ddd6fe', fontSize: '0.875rem' }}>
-                      验证中
-                    </Typography>
+                    <Typography sx={{ color: '#ddd6fe', fontSize: '0.875rem' }}>验证中</Typography>
                     <Typography
                       variant='h4'
                       sx={{ fontWeight: 700, mt: 0.5 }}
@@ -882,9 +902,7 @@ const QmsApqpPage: React.FC = () => {
                   >
                     风险等级
                   </Typography>
-                  <Box sx={{ mt: 0.5 }}>
-                    {getRiskLevelBadge(selectedProject.risk_level)}
-                  </Box>
+                  <Box sx={{ mt: 0.5 }}>{getRiskLevelBadge(selectedProject.risk_level)}</Box>
                 </Box>
               </Box>
 
@@ -1070,7 +1088,10 @@ const QmsApqpPage: React.FC = () => {
               {detailTab === 0 && (
                 <Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                    <Typography variant='body1' sx={{ fontWeight: 500 }}>
+                    <Typography
+                      variant='body1'
+                      sx={{ fontWeight: 500 }}
+                    >
                       项目阶段
                     </Typography>
                   </Box>
@@ -1091,7 +1112,10 @@ const QmsApqpPage: React.FC = () => {
               {detailTab === 1 && (
                 <Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                    <Typography variant='body1' sx={{ fontWeight: 500 }}>
+                    <Typography
+                      variant='body1'
+                      sx={{ fontWeight: 500 }}
+                    >
                       任务清单 ({completedTasks}/{totalTasks} 完成)
                     </Typography>
                   </Box>
@@ -1112,7 +1136,10 @@ const QmsApqpPage: React.FC = () => {
               {detailTab === 2 && (
                 <Box>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                    <Typography variant='body1' sx={{ fontWeight: 500 }}>
+                    <Typography
+                      variant='body1'
+                      sx={{ fontWeight: 500 }}
+                    >
                       风险评估 ({openRisks} 项开放, {highRisks} 项高风险)
                     </Typography>
                   </Box>

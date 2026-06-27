@@ -105,7 +105,18 @@ export const fmeaApi = {
   },
 
   createFmeaItem: async (
-    data: Omit<FmeaItem, 'id' | 'rpn' | 'rpnRevised' | 'createdAt' | 'updatedAt' | 'actionsTaken' | 'severityRevised' | 'occurrenceRevised' | 'detectionRevised'>
+    data: Omit<
+      FmeaItem,
+      | 'id'
+      | 'rpn'
+      | 'rpnRevised'
+      | 'createdAt'
+      | 'updatedAt'
+      | 'actionsTaken'
+      | 'severityRevised'
+      | 'occurrenceRevised'
+      | 'detectionRevised'
+    >
   ): Promise<ApiResponse<FmeaItem>> => {
     const backendData = adaptFmeaItemToBackend(data);
     const response = await apiClient.qms.post<FmeaItemBackend>('/api/qms/fmea-items', backendData);
@@ -117,7 +128,9 @@ export const fmeaApi = {
 
   updateFmeaItem: async (
     id: string,
-    data: Partial<Omit<FmeaItem, 'id' | 'fmeaId' | 'createdAt' | 'updatedAt' | 'rpn' | 'rpnRevised'>>
+    data: Partial<
+      Omit<FmeaItem, 'id' | 'fmeaId' | 'createdAt' | 'updatedAt' | 'rpn' | 'rpnRevised'>
+    >
   ): Promise<ApiResponse<FmeaItem>> => {
     const backendData: UpdateFmeaItemRequestBackend = {
       function_description: data.functionDescription,

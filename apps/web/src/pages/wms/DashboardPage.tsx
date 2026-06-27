@@ -1,8 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box } from '@mui/material';
-import { Button } from '@mui/material';
-import { QuickSearch } from '@/components/common';
+import { Box, Button } from '@mui/material';
+import { QuickSearch, PageContainer } from '@/components/common';
 import { Warehouse, Package, AlertCircle, ArrowRight, Truck } from 'lucide-react';
 import BarChartComponent from '../../components/charts/BarChart';
 import PieChartComponent from '../../components/charts/PieChart';
@@ -13,7 +12,6 @@ import {
   type ChartCard,
   type QuickAction,
 } from '@/components/templates';
-import { PageContainer } from '@/components/common';
 
 const barData = [
   { name: 'A区', value: 1200 },

@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAppStore } from '../../store';
 import { Bell, MessageCircle, Mail, Smartphone, Clock, Shield } from 'lucide-react';
-import { SettingsPageTemplate, type SettingSection, type SettingValueType } from '@/components/templates';
+import {
+  SettingsPageTemplate,
+  type SettingSection,
+  type SettingValueType,
+} from '@/components/templates';
 
 interface NotificationSetting {
   key: string;
@@ -16,12 +20,48 @@ const NotificationSettingsPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [notificationSettings, setNotificationSettings] = useState<NotificationSetting[]>([
-    { key: 'enabled', label: '启用推送', value: true, description: '允许向移动设备发送推送通知', type: 'switch' },
-    { key: 'sound', label: '通知声音', value: true, description: '通知到达时播放声音', type: 'switch' },
-    { key: 'vibration', label: '振动提醒', value: true, description: '通知到达时触发振动', type: 'switch' },
-    { key: 'badge', label: '角标显示', value: true, description: '在应用图标上显示未读数量', type: 'switch' },
-    { key: 'delay', label: '延迟推送', value: 0, description: '通知延迟发送时间（分钟）', type: 'number' },
-    { key: 'ttl', label: '存活时间', value: 86400, description: '通知在设备上的存活时间（秒）', type: 'number' },
+    {
+      key: 'enabled',
+      label: '启用推送',
+      value: true,
+      description: '允许向移动设备发送推送通知',
+      type: 'switch',
+    },
+    {
+      key: 'sound',
+      label: '通知声音',
+      value: true,
+      description: '通知到达时播放声音',
+      type: 'switch',
+    },
+    {
+      key: 'vibration',
+      label: '振动提醒',
+      value: true,
+      description: '通知到达时触发振动',
+      type: 'switch',
+    },
+    {
+      key: 'badge',
+      label: '角标显示',
+      value: true,
+      description: '在应用图标上显示未读数量',
+      type: 'switch',
+    },
+    {
+      key: 'delay',
+      label: '延迟推送',
+      value: 0,
+      description: '通知延迟发送时间（分钟）',
+      type: 'number',
+    },
+    {
+      key: 'ttl',
+      label: '存活时间',
+      value: 86400,
+      description: '通知在设备上的存活时间（秒）',
+      type: 'number',
+    },
   ]);
 
   const loadSettings = useCallback(async () => {
@@ -64,12 +104,48 @@ const NotificationSettingsPage: React.FC = () => {
 
   const handleReset = useCallback(() => {
     setNotificationSettings([
-      { key: 'enabled', label: '启用推送', value: true, description: '允许向移动设备发送推送通知', type: 'switch' },
-      { key: 'sound', label: '通知声音', value: true, description: '通知到达时播放声音', type: 'switch' },
-      { key: 'vibration', label: '振动提醒', value: true, description: '通知到达时触发振动', type: 'switch' },
-      { key: 'badge', label: '角标显示', value: true, description: '在应用图标上显示未读数量', type: 'switch' },
-      { key: 'delay', label: '延迟推送', value: 0, description: '通知延迟发送时间（分钟）', type: 'number' },
-      { key: 'ttl', label: '存活时间', value: 86400, description: '通知在设备上的存活时间（秒）', type: 'number' },
+      {
+        key: 'enabled',
+        label: '启用推送',
+        value: true,
+        description: '允许向移动设备发送推送通知',
+        type: 'switch',
+      },
+      {
+        key: 'sound',
+        label: '通知声音',
+        value: true,
+        description: '通知到达时播放声音',
+        type: 'switch',
+      },
+      {
+        key: 'vibration',
+        label: '振动提醒',
+        value: true,
+        description: '通知到达时触发振动',
+        type: 'switch',
+      },
+      {
+        key: 'badge',
+        label: '角标显示',
+        value: true,
+        description: '在应用图标上显示未读数量',
+        type: 'switch',
+      },
+      {
+        key: 'delay',
+        label: '延迟推送',
+        value: 0,
+        description: '通知延迟发送时间（分钟）',
+        type: 'number',
+      },
+      {
+        key: 'ttl',
+        label: '存活时间',
+        value: 86400,
+        description: '通知在设备上的存活时间（秒）',
+        type: 'number',
+      },
     ]);
     addNotification({ title: '已重置', message: '通知设置已恢复默认值', type: 'info' });
   }, [addNotification]);

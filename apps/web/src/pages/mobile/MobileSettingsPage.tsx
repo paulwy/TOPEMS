@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAppStore } from '../../store';
 import { Smartphone, Shield, Bell, Battery, RefreshCw } from 'lucide-react';
-import { SettingsPageTemplate, type SettingSection, type SettingValueType } from '@/components/templates';
+import {
+  SettingsPageTemplate,
+  type SettingSection,
+  type SettingValueType,
+} from '@/components/templates';
 
 interface MobileSetting {
   key: string;
@@ -16,10 +20,34 @@ const MobileSettingsPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [mobileSettings, setMobileSettings] = useState<MobileSetting[]>([
-    { key: 'force_update', label: '强制更新', value: false, description: '用户打开应用时强制更新到最新版本', type: 'switch' },
-    { key: 'auto_update', label: '自动更新', value: true, description: '在后台自动下载更新包', type: 'switch' },
-    { key: 'version_min', label: '最低版本要求', value: '2.0.0', description: '低于此版本的用户将无法使用', type: 'text' },
-    { key: 'app_key', label: '应用Key', value: '', description: '用于推送通知的应用标识', type: 'text' },
+    {
+      key: 'force_update',
+      label: '强制更新',
+      value: false,
+      description: '用户打开应用时强制更新到最新版本',
+      type: 'switch',
+    },
+    {
+      key: 'auto_update',
+      label: '自动更新',
+      value: true,
+      description: '在后台自动下载更新包',
+      type: 'switch',
+    },
+    {
+      key: 'version_min',
+      label: '最低版本要求',
+      value: '2.0.0',
+      description: '低于此版本的用户将无法使用',
+      type: 'text',
+    },
+    {
+      key: 'app_key',
+      label: '应用Key',
+      value: '',
+      description: '用于推送通知的应用标识',
+      type: 'text',
+    },
   ]);
 
   const loadSettings = useCallback(async () => {
@@ -62,10 +90,34 @@ const MobileSettingsPage: React.FC = () => {
 
   const handleReset = useCallback(() => {
     setMobileSettings([
-      { key: 'force_update', label: '强制更新', value: false, description: '用户打开应用时强制更新到最新版本', type: 'switch' },
-      { key: 'auto_update', label: '自动更新', value: true, description: '在后台自动下载更新包', type: 'switch' },
-      { key: 'version_min', label: '最低版本要求', value: '2.0.0', description: '低于此版本的用户将无法使用', type: 'text' },
-      { key: 'app_key', label: '应用Key', value: '', description: '用于推送通知的应用标识', type: 'text' },
+      {
+        key: 'force_update',
+        label: '强制更新',
+        value: false,
+        description: '用户打开应用时强制更新到最新版本',
+        type: 'switch',
+      },
+      {
+        key: 'auto_update',
+        label: '自动更新',
+        value: true,
+        description: '在后台自动下载更新包',
+        type: 'switch',
+      },
+      {
+        key: 'version_min',
+        label: '最低版本要求',
+        value: '2.0.0',
+        description: '低于此版本的用户将无法使用',
+        type: 'text',
+      },
+      {
+        key: 'app_key',
+        label: '应用Key',
+        value: '',
+        description: '用于推送通知的应用标识',
+        type: 'text',
+      },
     ]);
     addNotification({ title: '已重置', message: '设置已恢复默认值', type: 'info' });
   }, [addNotification]);

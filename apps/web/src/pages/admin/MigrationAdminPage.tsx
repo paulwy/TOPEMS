@@ -15,13 +15,10 @@ import {
   TableHead,
   TableRow,
   Paper,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { useAppStore } from '@/store';
-import {
-  ListPageTemplate,
-  type ColumnDef,
-} from '@/components/templates';
+import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { migrationApi, type MigrationService, type MigrationStatus } from '@/api/migration';
 
@@ -47,7 +44,11 @@ const MigrationAdminPage: React.FC = () => {
     try {
       const data = await migrationApi.listServices();
       setServices(data);
-      addNotification({ title: '成功', message: `加载成功，共 ${data.length} 个服务`, type: 'success' });
+      addNotification({
+        title: '成功',
+        message: `加载成功，共 ${data.length} 个服务`,
+        type: 'success',
+      });
 
       if (data.length > 0) {
         const results = await Promise.all(
@@ -60,7 +61,11 @@ const MigrationAdminPage: React.FC = () => {
         setStatusMap((prev) => ({ ...prev, ...nextStatusMap }));
       }
     } catch (err: unknown) {
-      addNotification({ title: '错误', message: (err as { message?: string }).message || '加载服务列表失败', type: 'error' });
+      addNotification({
+        title: '错误',
+        message: (err as { message?: string }).message || '加载服务列表失败',
+        type: 'error',
+      });
     } finally {
       setLoading(false);
     }
@@ -74,10 +79,18 @@ const MigrationAdminPage: React.FC = () => {
     setApplyingService(service.name);
     try {
       const result = await migrationApi.applyMigration(service.name, 'schema');
-      addNotification({ title: '成功', message: `${service.name} 迁移执行成功，共 ${result.files.length} 个文件`, type: 'success' });
+      addNotification({
+        title: '成功',
+        message: `${service.name} 迁移执行成功，共 ${result.files.length} 个文件`,
+        type: 'success',
+      });
       await fetchStatusFor(service.name, true);
     } catch (err: unknown) {
-      addNotification({ title: '错误', message: (err as { message?: string }).message || `${service.name} 迁移执行失败`, type: 'error' });
+      addNotification({
+        title: '错误',
+        message: (err as { message?: string }).message || `${service.name} 迁移执行失败`,
+        type: 'error',
+      });
     } finally {
       setApplyingService(null);
     }
@@ -90,10 +103,18 @@ const MigrationAdminPage: React.FC = () => {
     setRollingBackService(service.name);
     try {
       const result = await migrationApi.rollbackMigration(service.name);
-      addNotification({ title: '成功', message: `${service.name} 回滚完成：${result.record ? '已移除记录' : '无记录可回滚'}`, type: 'success' });
+      addNotification({
+        title: '成功',
+        message: `${service.name} 回滚完成：${result.record ? '已移除记录' : '无记录可回滚'}`,
+        type: 'success',
+      });
       await fetchStatusFor(service.name, true);
     } catch (err: unknown) {
-      addNotification({ title: '错误', message: (err as { message?: string }).message || `${service.name} 回滚失败`, type: 'error' });
+      addNotification({
+        title: '错误',
+        message: (err as { message?: string }).message || `${service.name} 回滚失败`,
+        type: 'error',
+      });
     } finally {
       setRollingBackService(null);
     }
@@ -106,7 +127,12 @@ const MigrationAdminPage: React.FC = () => {
       setStatusMap((prev) => ({ ...prev, [serviceName]: status }));
       return status;
     } catch (err: unknown) {
-      if (!silent) addNotification({ title: '错误', message: (err as { message?: string }).message || '获取迁移状态失败', type: 'error' });
+      if (!silent)
+        addNotification({
+          title: '错误',
+          message: (err as { message?: string }).message || '获取迁移状态失败',
+          type: 'error',
+        });
       return null;
     } finally {
       if (!silent) setStatusLoading(null);
@@ -135,7 +161,11 @@ const MigrationAdminPage: React.FC = () => {
         succeeded += 1;
       } catch (err: unknown) {
         failed += 1;
-        addNotification({ title: '错误', message: `${svc.name} 迁移失败：${(err as { message?: string }).message || '未知错误'}`, type: 'error' });
+        addNotification({
+          title: '错误',
+          message: `${svc.name} 迁移失败：${(err as { message?: string }).message || '未知错误'}`,
+          type: 'error',
+        });
       }
     }
     try {
@@ -150,7 +180,11 @@ const MigrationAdminPage: React.FC = () => {
     } catch (err: unknown) {
       // ignore
     }
-    addNotification({ title: failed === 0 ? '成功' : '警告', message: `批量迁移完成：成功 ${succeeded} 个，失败 ${failed} 个`, type: failed === 0 ? 'success' : 'warning' });
+    addNotification({
+      title: failed === 0 ? '成功' : '警告',
+      message: `批量迁移完成：成功 ${succeeded} 个，失败 ${failed} 个`,
+      type: failed === 0 ? 'success' : 'warning',
+    });
     setBatchApplying(false);
   };
 
@@ -221,7 +255,15 @@ const MigrationAdminPage: React.FC = () => {
           const applied = getAppliedCount(row.name);
           if (isLoadingStatus) {
             return (
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, color: 'text.secondary' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 1,
+                  color: 'text.secondary',
+                }}
+              >
                 <CircularProgress size={14} />
                 <Typography variant='caption'>加载中</Typography>
               </Box>
@@ -298,7 +340,10 @@ const MigrationAdminPage: React.FC = () => {
   );
 
   return (
-    <PageContainer title='数据库迁移管理' subtitle='查看各服务迁移状态，生成并执行 schema / index / audit 迁移'>
+    <PageContainer
+      title='数据库迁移管理'
+      subtitle='查看各服务迁移状态，生成并执行 schema / index / audit 迁移'
+    >
       <ListPageTemplate
         title=''
         subtitle=''
@@ -322,12 +367,20 @@ const MigrationAdminPage: React.FC = () => {
         emptyIcon={<FileSearch style={{ width: 48, height: 48, color: 'text.disabled' }} />}
       />
 
-      <Dialog open={statusDialogOpen} onClose={() => setStatusDialogOpen(false)} maxWidth='lg' fullWidth>
+      <Dialog
+        open={statusDialogOpen}
+        onClose={() => setStatusDialogOpen(false)}
+        maxWidth='lg'
+        fullWidth
+      >
         <DialogContent>
           <DialogTitle>
             {activeService ? `${activeService.name} · 迁移状态` : '迁移状态'}
           </DialogTitle>
-          <Typography variant='body2' sx={{ color: 'text.secondary', mb: 4 }}>
+          <Typography
+            variant='body2'
+            sx={{ color: 'text.secondary', mb: 4 }}
+          >
             {activeService ? `Schema: ${activeService.schema} ｜ 端口: ${activeService.port}` : ''}
           </Typography>
 
@@ -343,7 +396,10 @@ const MigrationAdminPage: React.FC = () => {
               }}
             >
               <CircularProgress size={40} />
-              <Typography variant='body2' sx={{ mt: 3 }}>
+              <Typography
+                variant='body2'
+                sx={{ mt: 3 }}
+              >
                 加载迁移状态中...
               </Typography>
             </Box>
@@ -372,7 +428,10 @@ const MigrationAdminPage: React.FC = () => {
                 </Typography>
                 {statusMap[activeService.name].pending.length === 0 ? (
                   <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'grey.50' }}>
-                    <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                    <Typography
+                      variant='body2'
+                      sx={{ color: 'text.secondary' }}
+                    >
                       暂无待执行的迁移文件
                     </Typography>
                   </Paper>
@@ -386,7 +445,10 @@ const MigrationAdminPage: React.FC = () => {
                     }}
                   >
                     {statusMap[activeService.name].pending.map((file) => (
-                      <Typography key={file} variant='body2'>
+                      <Typography
+                        key={file}
+                        variant='body2'
+                      >
                         {file}
                       </Typography>
                     ))}
@@ -417,7 +479,10 @@ const MigrationAdminPage: React.FC = () => {
                 </Typography>
                 {statusMap[activeService.name].applied.length === 0 ? (
                   <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'grey.50' }}>
-                    <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                    <Typography
+                      variant='body2'
+                      sx={{ color: 'text.secondary' }}
+                    >
                       暂无已执行记录
                     </Typography>
                   </Paper>

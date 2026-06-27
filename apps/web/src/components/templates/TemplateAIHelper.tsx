@@ -6,8 +6,8 @@ import {
   CardHeader,
   Typography,
   CircularProgress,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import React, { useState } from 'react';
 
 import { Sparkles, Wand2, Lightbulb, TrendingUp, Send } from 'lucide-react';
@@ -87,14 +87,15 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
 
     while ((match = varRegex.exec(content)) !== null) {
       const key = match[1];
-      if (!['now', 'today', 'now_date', 'now_time', 'now_timestamp'].includes(key)) {
-        if (!detectedVars.some((v) => v.key === key)) {
-          detectedVars.push({
-            key,
-            label: generateLabel(key),
-            type: inferType(key),
-          });
-        }
+      if (
+        !['now', 'today', 'now_date', 'now_time', 'now_timestamp'].includes(key) &&
+        !detectedVars.some((v) => v.key === key)
+      ) {
+        detectedVars.push({
+          key,
+          label: generateLabel(key),
+          type: inferType(key),
+        });
       }
     }
 

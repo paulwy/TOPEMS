@@ -1,10 +1,35 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { TrendingUp, TrendingDown, DollarSign, PieChart, BarChart3, Calendar, Building2, Clock, FileText, Wallet, Activity, Download, RefreshCw } from 'lucide-react';
-import { financeReportApi, type BusinessOverview, type MonthlyTrend, type ProjectFinancialSummary, type DepartmentFinancialSummary } from '@/api/erp';
+import {
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  PieChart,
+  BarChart3,
+  Calendar,
+  Building2,
+  Clock,
+  FileText,
+  Wallet,
+  Activity,
+  Download,
+  RefreshCw,
+} from 'lucide-react';
+import {
+  financeReportApi,
+  type BusinessOverview,
+  type MonthlyTrend,
+  type ProjectFinancialSummary,
+  type DepartmentFinancialSummary,
+} from '@/api/erp';
 import { useAppStore } from '@/store';
 import { Box, Button, FormControl, InputLabel, Select, MenuItem, Chip, Alert } from '@mui/material';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
-import type { StatCard, ChartConfig, DataTable, TableColumn } from '@/components/templates/StatsPageTemplate';
+import type {
+  StatCard,
+  ChartConfig,
+  DataTable,
+  TableColumn,
+} from '@/components/templates/StatsPageTemplate';
 import { apiLogger } from '@/utils/logger';
 import { PageContainer } from '@/components/common';
 
@@ -51,7 +76,8 @@ const FinanceReportsPage: React.FC = () => {
     }
   };
 
-  const formatCurrency = (amount: number) => `¥${amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`;
+  const formatCurrency = (amount: number) =>
+    `¥${amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`;
 
   const statCards = useMemo<StatCard[]>(() => {
     if (!businessOverview) return [];
@@ -83,9 +109,10 @@ const FinanceReportsPage: React.FC = () => {
         title: '净利润',
         value: formatCurrency(businessOverview.net_profit),
         icon: <Wallet sx={{ width: 24, height: 24 }} />,
-        gradient: businessOverview.net_profit >= 0
-          ? ['#00C897', '#00A878'] as [string, string]
-          : ['#EF4444', '#DC2626'] as [string, string],
+        gradient:
+          businessOverview.net_profit >= 0
+            ? (['#00C897', '#00A878'] as [string, string])
+            : (['#EF4444', '#DC2626'] as [string, string]),
       },
     ];
   }, [businessOverview]);
@@ -127,22 +154,24 @@ const FinanceReportsPage: React.FC = () => {
         { id: 'status', label: '状态', field: 'status', align: 'center' },
       ];
 
-      return [{
-        id: 'project-table',
-        title: '项目财务汇总',
-        columns,
-        data: projectSummaries.map((p) => ({
-          project_name: p.project_name,
-          contract_amount: formatCurrency(p.contract_amount),
-          received_amount: formatCurrency(p.received_amount),
-          payable_amount: formatCurrency(p.payable_amount),
-          paid_amount: formatCurrency(p.paid_amount),
-          profit: formatCurrency(p.profit),
-          margin: p.margin.toFixed(2),
-          status: p.status,
-        })),
-        loading,
-      }];
+      return [
+        {
+          id: 'project-table',
+          title: '项目财务汇总',
+          columns,
+          data: projectSummaries.map((p) => ({
+            project_name: p.project_name,
+            contract_amount: formatCurrency(p.contract_amount),
+            received_amount: formatCurrency(p.received_amount),
+            payable_amount: formatCurrency(p.payable_amount),
+            paid_amount: formatCurrency(p.paid_amount),
+            profit: formatCurrency(p.profit),
+            margin: p.margin.toFixed(2),
+            status: p.status,
+          })),
+          loading,
+        },
+      ];
     }
 
     if (activeTab === 'departments') {
@@ -154,19 +183,21 @@ const FinanceReportsPage: React.FC = () => {
         { id: 'budget_usage', label: '预算使用率(%)', field: 'budget_usage', align: 'center' },
       ];
 
-      return [{
-        id: 'department-table',
-        title: '部门财务汇总',
-        columns,
-        data: departmentSummaries.map((d) => ({
-          department_name: d.department_name,
-          total_expenses: formatCurrency(d.total_expenses),
-          budget_amount: formatCurrency(d.budget_amount),
-          expense_count: d.expense_count,
-          budget_usage: d.budget_usage.toFixed(2),
-        })),
-        loading,
-      }];
+      return [
+        {
+          id: 'department-table',
+          title: '部门财务汇总',
+          columns,
+          data: departmentSummaries.map((d) => ({
+            department_name: d.department_name,
+            total_expenses: formatCurrency(d.total_expenses),
+            budget_amount: formatCurrency(d.budget_amount),
+            expense_count: d.expense_count,
+            budget_usage: d.budget_usage.toFixed(2),
+          })),
+          loading,
+        },
+      ];
     }
 
     return [];
@@ -186,10 +217,20 @@ const FinanceReportsPage: React.FC = () => {
   const customToolbar = (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <Calendar size={16} style={{ color: 'text.disabled' }} />
-        <FormControl size='small' sx={{ minWidth: 144 }}>
+        <Calendar
+          size={16}
+          style={{ color: 'text.disabled' }}
+        />
+        <FormControl
+          size='small'
+          sx={{ minWidth: 144 }}
+        >
           <InputLabel>选择期间</InputLabel>
-          <Select value={period} label='选择期间' onChange={(e) => setPeriod(e.target.value)}>
+          <Select
+            value={period}
+            label='选择期间'
+            onChange={(e) => setPeriod(e.target.value)}
+          >
             <MenuItem value=''>全部期间</MenuItem>
             <MenuItem value='2024-01'>2024年01月</MenuItem>
             <MenuItem value='2024-02'>2024年02月</MenuItem>
@@ -200,7 +241,13 @@ const FinanceReportsPage: React.FC = () => {
           </Select>
         </FormControl>
       </Box>
-      <Button variant='outlined' size='small' startIcon={<Download size={16} />}>导出</Button>
+      <Button
+        variant='outlined'
+        size='small'
+        startIcon={<Download size={16} />}
+      >
+        导出
+      </Button>
     </Box>
   );
 

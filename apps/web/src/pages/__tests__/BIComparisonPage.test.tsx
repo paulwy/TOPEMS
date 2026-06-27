@@ -14,11 +14,7 @@ vi.mock('@/store', () => ({
 const mockAddNotification = vi.fn();
 
 const renderWithProviders = (ui: React.ReactElement) => {
-  return render(
-    <BrowserRouter>
-      {ui}
-    </BrowserRouter>
-  );
+  return render(<BrowserRouter>{ui}</BrowserRouter>);
 };
 
 const mockComparisons = [
@@ -61,9 +57,7 @@ describe('BIComparisonPage', () => {
     renderWithProviders(<BIComparisonPage />);
 
     await waitFor(() => {
-      expect(mockAddNotification).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'error' })
-      );
+      expect(mockAddNotification).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }));
     });
   });
 });

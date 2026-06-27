@@ -26,8 +26,8 @@ import {
   Box,
   Typography,
   MenuItem,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 
 import { DataTable } from '@/components/common/DataTable';
 import { PageContainer } from '@/components/common';
@@ -545,149 +545,152 @@ const LimsSampleDetailPage: React.FC = () => {
   }
 
   return (
-    <PageContainer padding={false} maxWidth={false}>
+    <PageContainer
+      padding={false}
+      maxWidth={false}
+    >
       <DetailPageTemplate
         title='样品详情'
         subtitle='Sample Detail'
-      breadcrumbs={[
-        { label: '首页', href: '/dashboard' },
-        { label: 'LIMS', href: '/lims' },
-        { label: '样品详情' },
-      ]}
-      backHref='/lims'
-      loading={loading}
-      onEdit={() => setShowEditModal(true)}
-      onDelete={handleDelete}
-      infoCard={{
-        avatar: <Package sx={{ fontSize: 40, color: '#9333ea' }} />,
-        title: sample.name,
-        subtitle: sample.sample_no || sample.id,
-        tags: [sample.status],
-        stats: [
-          { label: '关联任务', value: tasks.length },
-          { label: '检验记录', value: records.length },
-        ],
-      }}
-      sidebar={sidebarContent}
-      sections={sections}
-    >
-      <Dialog
-        open={showEditModal}
-        onClose={() => setShowEditModal(false)}
-        maxWidth='sm'
-        fullWidth
+        breadcrumbs={[
+          { label: '首页', href: '/dashboard' },
+          { label: 'LIMS', href: '/lims' },
+          { label: '样品详情' },
+        ]}
+        backHref='/lims'
+        loading={loading}
+        onEdit={() => setShowEditModal(true)}
+        onDelete={handleDelete}
+        infoCard={{
+          avatar: <Package sx={{ fontSize: 40, color: '#9333ea' }} />,
+          title: sample.name,
+          subtitle: sample.sample_no || sample.id,
+          tags: [sample.status],
+          stats: [
+            { label: '关联任务', value: tasks.length },
+            { label: '检验记录', value: records.length },
+          ],
+        }}
+        sidebar={sidebarContent}
+        sections={sections}
       >
-        <DialogTitle>编辑样品信息</DialogTitle>
-        <DialogContent>
-          <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField
-              label='样品名称 *'
-              value={formData.name}
-              onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
-              fullWidth
-              size='small'
-              placeholder='请输入样品名称'
-            />
-            <TextField
-              label='描述'
-              value={formData.description}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  description: e.target.value,
-                }))
-              }
-              fullWidth
-              multiline
-              rows={3}
-              placeholder='请输入样品描述'
-            />
-            <TextField
-              select
-              label='状态'
-              value={formData.status}
-              onChange={(e) => setFormData((prev) => ({ ...prev, status: e.target.value }))}
-              fullWidth
-              size='small'
+        <Dialog
+          open={showEditModal}
+          onClose={() => setShowEditModal(false)}
+          maxWidth='sm'
+          fullWidth
+        >
+          <DialogTitle>编辑样品信息</DialogTitle>
+          <DialogContent>
+            <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <TextField
+                label='样品名称 *'
+                value={formData.name}
+                onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                fullWidth
+                size='small'
+                placeholder='请输入样品名称'
+              />
+              <TextField
+                label='描述'
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }))
+                }
+                fullWidth
+                multiline
+                rows={3}
+                placeholder='请输入样品描述'
+              />
+              <TextField
+                select
+                label='状态'
+                value={formData.status}
+                onChange={(e) => setFormData((prev) => ({ ...prev, status: e.target.value }))}
+                fullWidth
+                size='small'
+              >
+                <MenuItem value='待测试'>待测试</MenuItem>
+                <MenuItem value='测试中'>测试中</MenuItem>
+                <MenuItem value='已完成'>已完成</MenuItem>
+                <MenuItem value='已终止'>已终止</MenuItem>
+              </TextField>
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              variant='outlined'
+              onClick={() => setShowEditModal(false)}
             >
-              <MenuItem value='待测试'>待测试</MenuItem>
-              <MenuItem value='测试中'>测试中</MenuItem>
-              <MenuItem value='已完成'>已完成</MenuItem>
-              <MenuItem value='已终止'>已终止</MenuItem>
-            </TextField>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            variant='outlined'
-            onClick={() => setShowEditModal(false)}
-          >
-            取消
-          </Button>
-          <Button
-            variant='contained'
-            onClick={handleEdit}
-          >
-            保存
-          </Button>
-        </DialogActions>
-      </Dialog>
+              取消
+            </Button>
+            <Button
+              variant='contained'
+              onClick={handleEdit}
+            >
+              保存
+            </Button>
+          </DialogActions>
+        </Dialog>
 
-      <Dialog
-        open={showRecordModal}
-        onClose={() => setShowRecordModal(false)}
-        maxWidth='sm'
-        fullWidth
-      >
-        <DialogTitle>添加检验记录</DialogTitle>
-        <DialogContent>
-          <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField
-              label='检验步骤'
-              fullWidth
-              size='small'
-              placeholder='请输入检验步骤名称'
-            />
-            <TextField
-              label='检验员'
-              fullWidth
-              size='small'
-              placeholder='请输入检验员姓名'
-            />
-            <TextField
-              label='检验结果'
-              fullWidth
-              multiline
-              rows={3}
-              placeholder='请输入检验结果'
-            />
-            <TextField
-              select
-              label='结论'
-              fullWidth
-              size='small'
+        <Dialog
+          open={showRecordModal}
+          onClose={() => setShowRecordModal(false)}
+          maxWidth='sm'
+          fullWidth
+        >
+          <DialogTitle>添加检验记录</DialogTitle>
+          <DialogContent>
+            <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <TextField
+                label='检验步骤'
+                fullWidth
+                size='small'
+                placeholder='请输入检验步骤名称'
+              />
+              <TextField
+                label='检验员'
+                fullWidth
+                size='small'
+                placeholder='请输入检验员姓名'
+              />
+              <TextField
+                label='检验结果'
+                fullWidth
+                multiline
+                rows={3}
+                placeholder='请输入检验结果'
+              />
+              <TextField
+                select
+                label='结论'
+                fullWidth
+                size='small'
+              >
+                <MenuItem value='合格'>合格</MenuItem>
+                <MenuItem value='不合格'>不合格</MenuItem>
+                <MenuItem value='待定'>待定</MenuItem>
+              </TextField>
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              variant='outlined'
+              onClick={() => setShowRecordModal(false)}
             >
-              <MenuItem value='合格'>合格</MenuItem>
-              <MenuItem value='不合格'>不合格</MenuItem>
-              <MenuItem value='待定'>待定</MenuItem>
-            </TextField>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            variant='outlined'
-            onClick={() => setShowRecordModal(false)}
-          >
-            取消
-          </Button>
-          <Button
-            variant='contained'
-            onClick={() => setShowRecordModal(false)}
-          >
-            保存
-          </Button>
-        </DialogActions>
-      </Dialog>
+              取消
+            </Button>
+            <Button
+              variant='contained'
+              onClick={() => setShowRecordModal(false)}
+            >
+              保存
+            </Button>
+          </DialogActions>
+        </Dialog>
       </DetailPageTemplate>
     </PageContainer>
   );

@@ -25,8 +25,8 @@ import {
   Box,
   Typography,
   MenuItem,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 
 import { limsApi } from '@/api/lims';
 import type { Instrument, MaintenanceRecord } from '@/api/lims';
@@ -446,266 +446,266 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
       }}
       maxWidth='xl'
     >
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', lg: 'repeat(3, 1fr)' },
+          gap: 3,
+        }}
+      >
         <Box
           sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', lg: 'repeat(3, 1fr)' },
+            display: 'flex',
+            flexDirection: 'column',
             gap: 3,
+            gridColumn: { lg: 'span 1' },
           }}
         >
-          <Box
-            sx={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 3,
-              gridColumn: { lg: 'span 1' },
-            }}
-          >
-            <Card>
-              <CardHeader sx={{ pb: 1 }}>
-                <Typography
-                  variant='h6'
-                  sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                >
-                  <Box
-                    component={Wrench}
-                    sx={{ fontSize: 20, color: '#14b8a6' }}
-                  />
-                  仪器信息
-                </Typography>
-              </CardHeader>
-              <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                  }}
-                >
-                  <div>
-                    <p style={{ fontSize: '0.875rem', color: 'grey.600' }}>仪器编号</p>
-                    <p
-                      style={{
-                        fontSize: '1.125rem',
-                        fontWeight: 600,
-                        color: 'grey.900',
-                        marginTop: 4,
-                      }}
-                    >
-                      {instrument.code || instrument.id}
-                    </p>
-                  </div>
-                  {getStatusBadge(instrument.status)}
-                </div>
+          <Card>
+            <CardHeader sx={{ pb: 1 }}>
+              <Typography
+                variant='h6'
+                sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+              >
+                <Box
+                  component={Wrench}
+                  sx={{ fontSize: 20, color: '#14b8a6' }}
+                />
+                仪器信息
+              </Typography>
+            </CardHeader>
+            <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                }}
+              >
                 <div>
-                  <p style={{ fontSize: '0.875rem', color: 'grey.600' }}>仪器名称</p>
+                  <p style={{ fontSize: '0.875rem', color: 'grey.600' }}>仪器编号</p>
                   <p
                     style={{
                       fontSize: '1.125rem',
-                      fontWeight: 500,
+                      fontWeight: 600,
                       color: 'grey.900',
                       marginTop: 4,
                     }}
                   >
-                    {instrument.name}
+                    {instrument.code || instrument.id}
+                  </p>
+                </div>
+                {getStatusBadge(instrument.status)}
+              </div>
+              <div>
+                <p style={{ fontSize: '0.875rem', color: 'grey.600' }}>仪器名称</p>
+                <p
+                  style={{
+                    fontSize: '1.125rem',
+                    fontWeight: 500,
+                    color: 'grey.900',
+                    marginTop: 4,
+                  }}
+                >
+                  {instrument.name}
+                </p>
+              </div>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: 16,
+                }}
+              >
+                <div>
+                  <p style={{ fontSize: '0.875rem', color: 'grey.600' }}>型号</p>
+                  <p style={{ color: 'grey.900', marginTop: 4 }}>{instrument.model || '-'}</p>
+                </div>
+                <div>
+                  <p style={{ fontSize: '0.875rem', color: 'grey.600' }}>分类</p>
+                  <p style={{ color: 'grey.900', marginTop: 4 }}>{instrument.category || '-'}</p>
+                </div>
+              </div>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: 16,
+                }}
+              >
+                <div>
+                  <p style={{ fontSize: '0.875rem', color: 'grey.600' }}>位置</p>
+                  <p style={{ color: 'grey.900', marginTop: 4 }}>{instrument.location || '-'}</p>
+                </div>
+                <div>
+                  <p style={{ fontSize: '0.875rem', color: 'grey.600' }}>负责人</p>
+                  <p style={{ color: 'grey.900', marginTop: 4 }}>
+                    {instrument.responsible_person || '-'}
+                  </p>
+                </div>
+              </div>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: 16,
+                }}
+              >
+                <div>
+                  <p
+                    style={{
+                      fontSize: '0.875rem',
+                      color: 'grey.600',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}
+                  >
+                    <Calendar sx={{ width: 12, height: 12 }} />
+                    采购日期
+                  </p>
+                  <p style={{ color: 'grey.900', marginTop: 4 }}>
+                    {instrument.purchase_date
+                      ? new Date(instrument.purchase_date).toLocaleDateString('zh-CN')
+                      : '-'}
+                  </p>
+                </div>
+                <div>
+                  <p
+                    style={{
+                      fontSize: '0.875rem',
+                      color: 'grey.600',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 4,
+                    }}
+                  >
+                    <Clock sx={{ width: 12, height: 12 }} />
+                    下次校准
+                  </p>
+                  <p style={{ color: 'grey.900', marginTop: 4 }}>
+                    {instrument.next_calibration_date
+                      ? new Date(instrument.next_calibration_date).toLocaleDateString('zh-CN')
+                      : '-'}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader sx={{ pb: 1 }}>
+              <Typography
+                variant='h6'
+                sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+              >
+                <Box
+                  component={DollarSign}
+                  sx={{ fontSize: 20, color: 'success.dark' }}
+                />
+                维护统计
+              </Typography>
+            </CardHeader>
+            <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: 16,
+                }}
+              >
+                <div
+                  style={{
+                    textAlign: 'center',
+                    padding: 12,
+                    backgroundColor: 'success.light',
+                    borderRadius: 8,
+                  }}
+                >
+                  <p style={{ fontSize: '0.875rem', color: 'success.dark' }}>维护次数</p>
+                  <p
+                    style={{
+                      fontSize: '1.5rem',
+                      fontWeight: 700,
+                      color: '#15803d',
+                    }}
+                  >
+                    {maintenanceRecords.length}
                   </p>
                 </div>
                 <div
                   style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: 16,
+                    textAlign: 'center',
+                    padding: 12,
+                    backgroundColor: '#dbeafe',
+                    borderRadius: 8,
                   }}
                 >
-                  <div>
-                    <p style={{ fontSize: '0.875rem', color: 'grey.600' }}>型号</p>
-                    <p style={{ color: 'grey.900', marginTop: 4 }}>{instrument.model || '-'}</p>
-                  </div>
-                  <div>
-                    <p style={{ fontSize: '0.875rem', color: 'grey.600' }}>分类</p>
-                    <p style={{ color: 'grey.900', marginTop: 4 }}>{instrument.category || '-'}</p>
-                  </div>
-                </div>
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: 16,
-                  }}
-                >
-                  <div>
-                    <p style={{ fontSize: '0.875rem', color: 'grey.600' }}>位置</p>
-                    <p style={{ color: 'grey.900', marginTop: 4 }}>{instrument.location || '-'}</p>
-                  </div>
-                  <div>
-                    <p style={{ fontSize: '0.875rem', color: 'grey.600' }}>负责人</p>
-                    <p style={{ color: 'grey.900', marginTop: 4 }}>
-                      {instrument.responsible_person || '-'}
-                    </p>
-                  </div>
-                </div>
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: 16,
-                  }}
-                >
-                  <div>
-                    <p
-                      style={{
-                        fontSize: '0.875rem',
-                        color: 'grey.600',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 4,
-                      }}
-                    >
-                      <Calendar sx={{ width: 12, height: 12 }} />
-                      采购日期
-                    </p>
-                    <p style={{ color: 'grey.900', marginTop: 4 }}>
-                      {instrument.purchase_date
-                        ? new Date(instrument.purchase_date).toLocaleDateString('zh-CN')
-                        : '-'}
-                    </p>
-                  </div>
-                  <div>
-                    <p
-                      style={{
-                        fontSize: '0.875rem',
-                        color: 'grey.600',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 4,
-                      }}
-                    >
-                      <Clock sx={{ width: 12, height: 12 }} />
-                      下次校准
-                    </p>
-                    <p style={{ color: 'grey.900', marginTop: 4 }}>
-                      {instrument.next_calibration_date
-                        ? new Date(instrument.next_calibration_date).toLocaleDateString('zh-CN')
-                        : '-'}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader sx={{ pb: 1 }}>
-                <Typography
-                  variant='h6'
-                  sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                >
-                  <Box
-                    component={DollarSign}
-                    sx={{ fontSize: 20, color: 'success.dark' }}
-                  />
-                  维护统计
-                </Typography>
-              </CardHeader>
-              <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: 16,
-                  }}
-                >
-                  <div
+                  <p style={{ fontSize: '0.875rem', color: 'primary.dark' }}>累计费用</p>
+                  <p
                     style={{
-                      textAlign: 'center',
-                      padding: 12,
-                      backgroundColor: 'success.light',
-                      borderRadius: 8,
+                      fontSize: '1.5rem',
+                      fontWeight: 700,
+                      color: 'primary.dark',
                     }}
                   >
-                    <p style={{ fontSize: '0.875rem', color: 'success.dark' }}>维护次数</p>
-                    <p
-                      style={{
-                        fontSize: '1.5rem',
-                        fontWeight: 700,
-                        color: '#15803d',
-                      }}
-                    >
-                      {maintenanceRecords.length}
-                    </p>
-                  </div>
-                  <div
-                    style={{
-                      textAlign: 'center',
-                      padding: 12,
-                      backgroundColor: '#dbeafe',
-                      borderRadius: 8,
-                    }}
-                  >
-                    <p style={{ fontSize: '0.875rem', color: 'primary.dark' }}>累计费用</p>
-                    <p
-                      style={{
-                        fontSize: '1.5rem',
-                        fontWeight: 700,
-                        color: 'primary.dark',
-                      }}
-                    >
-                      ¥{totalMaintenanceCost.toFixed(2)}
-                    </p>
-                  </div>
+                    ¥{totalMaintenanceCost.toFixed(2)}
+                  </p>
                 </div>
-                {maintenanceRecords.length > 0 && (
-                  <div style={{ paddingTop: 16, borderTop: '1px solid border.default' }}>
-                    <p style={{ fontSize: '0.875rem', color: 'grey.600' }}>最近维护</p>
-                    <p style={{ color: 'grey.900', marginTop: 4 }}>
-                      {new Date(
-                        maintenanceRecords[0].performed_at || Date.now()
-                      ).toLocaleDateString('zh-CN')}
-                    </p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </Box>
-
-          <Box sx={{ gridColumn: { lg: 'span 2' } }}>
-            <Card>
-              <CardHeader
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  pb: 1,
-                }}
-              >
-                <Typography
-                  variant='h6'
-                  sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                >
-                  <Box
-                    component={FileText}
-                    sx={{ fontSize: 20, color: 'primary.dark' }}
-                  />
-                  维护记录列表
-                </Typography>
-              </CardHeader>
-              <CardContent>
-                <ListPageTemplate
-                  columns={maintenanceColumns}
-                  data={maintenanceRecords}
-                  getRowId={(row) => row.id}
-                  emptyMessage='暂无维护记录'
-                  emptyIcon={
-                    <FileText
-                      size={64}
-                      color='grey.400'
-                    />
-                  }
-                />
-              </CardContent>
-            </Card>
-          </Box>
+              </div>
+              {maintenanceRecords.length > 0 && (
+                <div style={{ paddingTop: 16, borderTop: '1px solid border.default' }}>
+                  <p style={{ fontSize: '0.875rem', color: 'grey.600' }}>最近维护</p>
+                  <p style={{ color: 'grey.900', marginTop: 4 }}>
+                    {new Date(maintenanceRecords[0].performed_at || Date.now()).toLocaleDateString(
+                      'zh-CN'
+                    )}
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </Box>
+
+        <Box sx={{ gridColumn: { lg: 'span 2' } }}>
+          <Card>
+            <CardHeader
+              sx={{
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                pb: 1,
+              }}
+            >
+              <Typography
+                variant='h6'
+                sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+              >
+                <Box
+                  component={FileText}
+                  sx={{ fontSize: 20, color: 'primary.dark' }}
+                />
+                维护记录列表
+              </Typography>
+            </CardHeader>
+            <CardContent>
+              <ListPageTemplate
+                columns={maintenanceColumns}
+                data={maintenanceRecords}
+                getRowId={(row) => row.id}
+                emptyMessage='暂无维护记录'
+                emptyIcon={
+                  <FileText
+                    size={64}
+                    color='grey.400'
+                  />
+                }
+              />
+            </CardContent>
+          </Card>
+        </Box>
+      </Box>
 
       <Dialog
         open={showAddModal}

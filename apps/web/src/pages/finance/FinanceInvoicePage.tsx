@@ -10,10 +10,10 @@ import {
   Eye,
   RefreshCw,
 } from 'lucide-react';
-import { DataExport, BackButton, PageContainer} from '@/components/common';
+import { DataExport, BackButton, PageContainer } from '@/components/common';
 import { ListPageTemplate } from '@/components/templates';
 import type { ColumnDef, RowAction, FilterConfig } from '@/components/templates';
-import { StatCard, StatCardGroup } from '@/components/mui';
+import { MuiStatCard as StatCard, StatCardGroup } from '@/components';
 import { useNotification } from '@/hooks/useNotification';
 import { receivablePayableApi } from '@/api/finance';
 import type { SalesInvoice, InvoiceStatus, PaginatedResult } from '@/types/finance';
@@ -35,8 +35,8 @@ import {
   Stack,
   CircularProgress,
   IconButton,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 
 interface InvoiceListItem extends SalesInvoice {
   tax_rate: number;
@@ -452,7 +452,10 @@ const FinanceInvoicePage: React.FC = () => {
   );
 
   return (
-    <PageContainer padding={false} maxWidth={false}>
+    <PageContainer
+      padding={false}
+      maxWidth={false}
+    >
       <MuiBox
         sx={{
           bgcolor: 'background.paper',

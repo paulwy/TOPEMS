@@ -6,8 +6,8 @@ import {
   DialogActions,
   Box,
   Chip,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import type { PurchaseItem, CreatePurchaseItemRequest } from '@/api/scm';
 import { scmApi } from '@/api/scm';
@@ -49,7 +49,7 @@ const ScmPurchaseItemPage: React.FC = () => {
       setLoading(true);
       const response = await scmApi.purchaseItems.list({
         page: currentPage,
-        pageSize: pageSize,
+        pageSize,
       });
       if (response.success && response.data) {
         setItems(response.data.items || []);
@@ -217,7 +217,10 @@ const ScmPurchaseItemPage: React.FC = () => {
   ];
 
   return (
-    <PageContainer title='采购明细管理' subtitle='管理采购订单明细,包括产品编码、名称、规格、数量等'>
+    <PageContainer
+      title='采购明细管理'
+      subtitle='管理采购订单明细,包括产品编码、名称、规格、数量等'
+    >
       <ListPageTemplate
         title=''
         subtitle=''

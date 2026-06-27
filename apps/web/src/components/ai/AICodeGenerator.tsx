@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Check, RefreshCw } from 'lucide-react';
-import { Card, CardContent, Box, Typography, TextField } from '@mui/material';
-import { Button } from '@mui/material';
+import { Card, CardContent, Box, Typography, TextField, Button } from '@mui/material';
 import { AIGenerateModal } from './AIGenerateModal';
 import type { CodeGenerateContext } from '@/types/ai';
 
@@ -152,7 +151,7 @@ const pinyinInitials: Record<string, string> = {
 
 function translateToEnglish(name: string): string {
   if (!name) return 'Department';
-  const cleanName = name.replace(/\s+/g, '').replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, '');
+  const cleanName = name.replace(/\s+/g, '').replace(/[^\u4E00-\u9FA5a-zA-Z0-9]/g, '');
   let result = '';
   let i = 0;
 
@@ -173,10 +172,8 @@ function translateToEnglish(name: string): string {
       const char = cleanName[i];
       if (/[a-zA-Z0-9]/.test(char)) {
         result += char;
-      } else if (/[\u4e00-\u9fa5]/.test(char)) {
-        if (chineseToEnglish[char]) {
-          result += (result ? '-' : '') + chineseToEnglish[char];
-        }
+      } else if (/[\u4E00-\u9FA5]/.test(char) && chineseToEnglish[char]) {
+        result += (result ? '-' : '') + chineseToEnglish[char];
       }
       i++;
     }
@@ -187,7 +184,7 @@ function translateToEnglish(name: string): string {
 
 function generateInitialsFromName(name: string, maxLength: number = 4): string {
   if (!name) return 'DEF';
-  const cleanName = name.replace(/\s+/g, '').replace(/[^\u4e00-\u9fa5a-zA-Z0-9]/g, '');
+  const cleanName = name.replace(/\s+/g, '').replace(/[^\u4E00-\u9FA5a-zA-Z0-9]/g, '');
   let initials = '';
   let i = 0;
 
@@ -208,7 +205,7 @@ function generateInitialsFromName(name: string, maxLength: number = 4): string {
       const char = cleanName[i];
       if (/[a-zA-Z]/.test(char)) {
         initials += char.toUpperCase();
-      } else if (/[\u4e00-\u9fa5]/.test(char)) {
+      } else if (/[\u4E00-\u9FA5]/.test(char)) {
         if (chineseToEnglish[char]) {
           initials += chineseToEnglish[char].toUpperCase().substring(0, 1);
         } else if (pinyinInitials[char]) {

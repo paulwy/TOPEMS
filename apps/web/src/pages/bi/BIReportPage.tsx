@@ -2,8 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { logger } from '@/utils/logger';
 import { useAppStore } from '@/store';
 import { Plus, Edit, Trash2, Eye, Download, FileText, Calendar, User } from 'lucide-react';
-import { Chip, Box, Typography, Tooltip, IconButton, Alert } from '@mui/material';
-import { Button } from '@mui/material';
+import { Chip, Box, Typography, Tooltip, IconButton, Alert, Button } from '@mui/material';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -105,16 +104,19 @@ const BIReportPage = () => {
     loadReports();
   }, [loadReports]);
 
-  const handleDeleteReport = useCallback(async (id: string) => {
-    try {
-      const res = await deleteReport(id);
-      if (res.success) {
-        setReports(reports.filter((r) => r.id !== id));
+  const handleDeleteReport = useCallback(
+    async (id: string) => {
+      try {
+        const res = await deleteReport(id);
+        if (res.success) {
+          setReports(reports.filter((r) => r.id !== id));
+        }
+      } catch (e: unknown) {
+        logger.error('Failed to delete report:', e);
       }
-    } catch (e: unknown) {
-      logger.error('Failed to delete report:', e);
-    }
-  }, [reports]);
+    },
+    [reports]
+  );
 
   const filteredReports = useMemo(() => {
     return reports.filter((report) => {
@@ -304,9 +306,15 @@ const BIReportPage = () => {
   );
 
   return (
-    <PageContainer title='报表管理' subtitle='创建、管理和生成业务报表'>
+    <PageContainer
+      title='报表管理'
+      subtitle='创建、管理和生成业务报表'
+    >
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
+        <Alert
+          severity='error'
+          sx={{ mb: 3 }}
+        >
           {error}
         </Alert>
       )}

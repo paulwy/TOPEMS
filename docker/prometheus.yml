@@ -54,74 +54,33 @@ scrape_configs:
         target_label: __meta_consul_service_port
         replacement: '${1}:${2}'
 
+  # ================================================
+  # TOPEMS 服务静态配置（备用 - 推荐使用上方的 Consul 服务发现）
+  # 端口规范: 与 config/services.yaml 和 .env.example 保持一致
+  # ================================================
   - job_name: 'topems-iam'
     static_configs:
       - targets: ['host.docker.internal:8000']
     metrics_path: /metrics
 
-  - job_name: 'topems-doc'
-    static_configs:
-      - targets: ['host.docker.internal:8001']
-    metrics_path: /metrics
-
-  - job_name: 'topems-pm'
-    static_configs:
-      - targets: ['host.docker.internal:8002']
-    metrics_path: /metrics
-
-  - job_name: 'topems-notification'
-    static_configs:
-      - targets: ['host.docker.internal:8003']
-    metrics_path: /metrics
-
-  - job_name: 'topems-integration'
-    static_configs:
-      - targets: ['host.docker.internal:8004']
-    metrics_path: /metrics
-
-  - job_name: 'topems-portal'
-    static_configs:
-      - targets: ['host.docker.internal:8005']
-    metrics_path: /metrics
-
-  - job_name: 'topems-flow'
-    static_configs:
-      - targets: ['host.docker.internal:8006']
-    metrics_path: /metrics
-
   - job_name: 'topems-erp'
     static_configs:
-      - targets: ['host.docker.internal:8009']
+      - targets: ['host.docker.internal:8010']
     metrics_path: /metrics
 
   - job_name: 'topems-hrm'
     static_configs:
-      - targets: ['host.docker.internal:8011']
+      - targets: ['host.docker.internal:8020']
+    metrics_path: /metrics
+
+  - job_name: 'topems-pm'
+    static_configs:
+      - targets: ['host.docker.internal:8023']
     metrics_path: /metrics
 
   - job_name: 'topems-crm'
     static_configs:
-      - targets: ['host.docker.internal:8012']
-    metrics_path: /metrics
-
-  - job_name: 'topems-ai'
-    static_configs:
-      - targets: ['host.docker.internal:8013']
-    metrics_path: /metrics
-
-  - job_name: 'topems-rs'
-    static_configs:
-      - targets: ['host.docker.internal:8020']
-    metrics_path: /metrics
-
-  - job_name: 'topems-lims'
-    static_configs:
-      - targets: ['host.docker.internal:8022']
-    metrics_path: /metrics
-
-  - job_name: 'topems-pdm'
-    static_configs:
-      - targets: ['host.docker.internal:8023']
+      - targets: ['host.docker.internal:8029']
     metrics_path: /metrics
 
   - job_name: 'topems-mes'
@@ -129,14 +88,9 @@ scrape_configs:
       - targets: ['host.docker.internal:8030']
     metrics_path: /metrics
 
-  - job_name: 'topems-qms'
+  - job_name: 'topems-pdm'
     static_configs:
       - targets: ['host.docker.internal:8031']
-    metrics_path: /metrics
-
-  - job_name: 'topems-ehs'
-    static_configs:
-      - targets: ['host.docker.internal:8032']
     metrics_path: /metrics
 
   - job_name: 'topems-scm'
@@ -144,44 +98,74 @@ scrape_configs:
       - targets: ['host.docker.internal:8040']
     metrics_path: /metrics
 
-  - job_name: 'topems-srm'
+  - job_name: 'topems-wms'
     static_configs:
       - targets: ['host.docker.internal:8041']
     metrics_path: /metrics
 
-  - job_name: 'topems-wms'
+  - job_name: 'topems-srm'
     static_configs:
       - targets: ['host.docker.internal:8042']
     metrics_path: /metrics
 
-  - job_name: 'topems-gis'
+  - job_name: 'topems-qms'
     static_configs:
-      - targets: ['host.docker.internal:8053']
+      - targets: ['host.docker.internal:8050']
     metrics_path: /metrics
 
-  - job_name: 'topems-im'
+  - job_name: 'topems-lims'
     static_configs:
       - targets: ['host.docker.internal:8051']
     metrics_path: /metrics
 
-  - job_name: 'topems-bi'
+  - job_name: 'topems-ehs'
     static_configs:
       - targets: ['host.docker.internal:8052']
     metrics_path: /metrics
 
-  - job_name: 'topems-report'
+  - job_name: 'topems-rs'
     static_configs:
       - targets: ['host.docker.internal:8053']
     metrics_path: /metrics
 
-  - job_name: 'topems-mail'
+  - job_name: 'topems-bi'
     static_configs:
-      - targets: ['host.docker.internal:8054']
+      - targets: ['host.docker.internal:8060']
+    metrics_path: /metrics
+
+  - job_name: 'topems-report'
+    static_configs:
+      - targets: ['host.docker.internal:8061']
+    metrics_path: /metrics
+
+  - job_name: 'topems-monitor'
+    static_configs:
+      - targets: ['host.docker.internal:8062']
+    metrics_path: /metrics
+
+  - job_name: 'topems-portal'
+    static_configs:
+      - targets: ['host.docker.internal:8063']
+    metrics_path: /metrics
+
+  - job_name: 'topems-ai'
+    static_configs:
+      - targets: ['host.docker.internal:8064']
     metrics_path: /metrics
 
   - job_name: 'topems-mobile'
     static_configs:
-      - targets: ['host.docker.internal:8055']
+      - targets: ['host.docker.internal:8070']
+    metrics_path: /metrics
+
+  - job_name: 'topems-gis'
+    static_configs:
+      - targets: ['host.docker.internal:8071']
+    metrics_path: /metrics
+
+  - job_name: 'topems-integration'
+    static_configs:
+      - targets: ['host.docker.internal:8072']
     metrics_path: /metrics
 
   - job_name: 'postgres'

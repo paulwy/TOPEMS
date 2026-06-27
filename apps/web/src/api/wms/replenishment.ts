@@ -20,15 +20,15 @@ export const smartReplenishmentApi = {
     return apiClient.wms.get('/smart-replenishment/suggestions', { params });
   },
 
-  getSuggestion: async (
-    id: string
-  ): Promise<ApiResponse<ReplenishmentSuggestion>> => {
+  getSuggestion: async (id: string): Promise<ApiResponse<ReplenishmentSuggestion>> => {
     return apiClient.wms.get(`/smart-replenishment/suggestions/${id}`);
   },
 
-  generateSuggestions: async (
-    data?: { warehouse_id?: string; sku?: string; category_id?: string }
-  ): Promise<ApiResponse<{ count: number; suggestions: ReplenishmentSuggestion[] }>> => {
+  generateSuggestions: async (data?: {
+    warehouse_id?: string;
+    sku?: string;
+    category_id?: string;
+  }): Promise<ApiResponse<{ count: number; suggestions: ReplenishmentSuggestion[] }>> => {
     return apiClient.wms.post('/smart-replenishment/suggestions/generate', data);
   },
 
@@ -38,9 +38,7 @@ export const smartReplenishmentApi = {
     return apiClient.wms.get('/smart-replenishment/orders', { params });
   },
 
-  getOrder: async (
-    id: string
-  ): Promise<ApiResponse<ReplenishmentOrder>> => {
+  getOrder: async (id: string): Promise<ApiResponse<ReplenishmentOrder>> => {
     return apiClient.wms.get(`/smart-replenishment/orders/${id}`);
   },
 
@@ -67,15 +65,11 @@ export const smartReplenishmentApi = {
     return apiClient.wms.get(`/smart-replenishment/orders/${order_id}/items`);
   },
 
-  confirmOrder: async (
-    id: string
-  ): Promise<ApiResponse<ReplenishmentOrder>> => {
+  confirmOrder: async (id: string): Promise<ApiResponse<ReplenishmentOrder>> => {
     return apiClient.wms.post(`/smart-replenishment/orders/${id}/confirm`);
   },
 
-  completeOrder: async (
-    id: string
-  ): Promise<ApiResponse<ReplenishmentOrder>> => {
+  completeOrder: async (id: string): Promise<ApiResponse<ReplenishmentOrder>> => {
     return apiClient.wms.post(`/smart-replenishment/orders/${id}/complete`);
   },
 
@@ -85,9 +79,7 @@ export const smartReplenishmentApi = {
     return apiClient.wms.get('/smart-replenishment/safety-stock', { params });
   },
 
-  getSafetyStock: async (
-    id: string
-  ): Promise<ApiResponse<SafetyStockSetting>> => {
+  getSafetyStock: async (id: string): Promise<ApiResponse<SafetyStockSetting>> => {
     return apiClient.wms.get(`/smart-replenishment/safety-stock/${id}`);
   },
 
@@ -104,15 +96,17 @@ export const smartReplenishmentApi = {
     return apiClient.wms.post('/smart-replenishment/safety-stock/batch-update', data);
   },
 
-  calculateSafetyStock: async (
-    data?: { warehouse_id?: string; sku?: string; category_id?: string }
-  ): Promise<ApiResponse<{ updated_count: number }>> => {
+  calculateSafetyStock: async (data?: {
+    warehouse_id?: string;
+    sku?: string;
+    category_id?: string;
+  }): Promise<ApiResponse<{ updated_count: number }>> => {
     return apiClient.wms.post('/smart-replenishment/safety-stock/calculate', data);
   },
 
-  getStatistics: async (
-    params?: { warehouse_id?: string }
-  ): Promise<ApiResponse<ReplenishmentStatistics>> => {
+  getStatistics: async (params?: {
+    warehouse_id?: string;
+  }): Promise<ApiResponse<ReplenishmentStatistics>> => {
     return apiClient.wms.get('/smart-replenishment/statistics', { params });
   },
 };
@@ -129,9 +123,11 @@ export async function getReplenishmentSuggestion(
   return smartReplenishmentApi.getSuggestion(id);
 }
 
-export async function generateReplenishmentSuggestions(
-  data?: { warehouse_id?: string; sku?: string; category_id?: string }
-): Promise<ApiResponse<{ count: number; suggestions: ReplenishmentSuggestion[] }>> {
+export async function generateReplenishmentSuggestions(data?: {
+  warehouse_id?: string;
+  sku?: string;
+  category_id?: string;
+}): Promise<ApiResponse<{ count: number; suggestions: ReplenishmentSuggestion[] }>> {
   return smartReplenishmentApi.generateSuggestions(data);
 }
 
@@ -141,9 +137,7 @@ export async function listReplenishmentOrders(
   return smartReplenishmentApi.listOrders(params);
 }
 
-export async function getReplenishmentOrder(
-  id: string
-): Promise<ApiResponse<ReplenishmentOrder>> {
+export async function getReplenishmentOrder(id: string): Promise<ApiResponse<ReplenishmentOrder>> {
   return smartReplenishmentApi.getOrder(id);
 }
 
@@ -188,9 +182,7 @@ export async function listSafetyStockSettings(
   return smartReplenishmentApi.listSafetyStock(params);
 }
 
-export async function getSafetyStockSetting(
-  id: string
-): Promise<ApiResponse<SafetyStockSetting>> {
+export async function getSafetyStockSetting(id: string): Promise<ApiResponse<SafetyStockSetting>> {
   return smartReplenishmentApi.getSafetyStock(id);
 }
 
@@ -207,15 +199,17 @@ export async function batchUpdateSafetyStock(
   return smartReplenishmentApi.batchUpdateSafetyStock(data);
 }
 
-export async function calculateSafetyStock(
-  data?: { warehouse_id?: string; sku?: string; category_id?: string }
-): Promise<ApiResponse<{ updated_count: number }>> {
+export async function calculateSafetyStock(data?: {
+  warehouse_id?: string;
+  sku?: string;
+  category_id?: string;
+}): Promise<ApiResponse<{ updated_count: number }>> {
   return smartReplenishmentApi.calculateSafetyStock(data);
 }
 
-export async function getReplenishmentStatistics(
-  params?: { warehouse_id?: string }
-): Promise<ApiResponse<ReplenishmentStatistics>> {
+export async function getReplenishmentStatistics(params?: {
+  warehouse_id?: string;
+}): Promise<ApiResponse<ReplenishmentStatistics>> {
   return smartReplenishmentApi.getStatistics(params);
 }
 

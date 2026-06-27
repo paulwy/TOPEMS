@@ -11,7 +11,8 @@ import {
   Target,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { StatsPageTemplate, StatCard, ChartConfig } from '@/components/templates/StatsPageTemplate';
+import type { StatCard, ChartConfig } from '@/components/templates/StatsPageTemplate';
+import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import { apiClient } from '@/api/client';
 import { PageContainer } from '@/components/common';
 

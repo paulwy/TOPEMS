@@ -10,8 +10,8 @@ import {
   Typography,
   Card,
   CardContent,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { Plus, Eye, Clock, Users, Calendar } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { ehsApi } from '@/api/ehs';
@@ -138,12 +138,15 @@ const EhsDrillPage: React.FC = () => {
     return filteredDrills.slice(start, start + pageSize);
   }, [filteredDrills, currentPage]);
 
-  const stats = useMemo(() => ({
-    total: drills.length,
-    completed: drills.filter((d) => d.status === '已完成').length,
-    scheduled: drills.filter((d) => d.status === '已计划').length,
-    inProgress: drills.filter((d) => d.status === '进行中').length,
-  }), [drills]);
+  const stats = useMemo(
+    () => ({
+      total: drills.length,
+      completed: drills.filter((d) => d.status === '已完成').length,
+      scheduled: drills.filter((d) => d.status === '已计划').length,
+      inProgress: drills.filter((d) => d.status === '进行中').length,
+    }),
+    [drills]
+  );
 
   const handleView = async (drill: DrillRecord) => {
     setSelectedDrill(drill);
@@ -202,11 +205,7 @@ const EhsDrillPage: React.FC = () => {
       label: '演练名称',
       width: 200,
       sortable: true,
-      render: (row) => (
-        <Typography sx={{ fontWeight: 500 }}>
-          {row.drill_name}
-        </Typography>
-      ),
+      render: (row) => <Typography sx={{ fontWeight: 500 }}>{row.drill_name}</Typography>,
     },
     {
       id: 'drill_date',
@@ -275,48 +274,54 @@ const EhsDrillPage: React.FC = () => {
     },
   ];
 
-  const headerContent = useMemo(() => (
-    <Box
-      sx={{
-        display: 'grid',
-        gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
-        gap: 2,
-        mb: 3,
-      }}
-    >
-      <StatCard
-        label='演练总数'
-        value={stats.total}
-        icon={<Clock sx={{ width: 20, height: 20, color: 'warning.main' }} />}
-        bgColor='warning.light'
-        iconBgColor='warning.lighter'
-      />
-      <StatCard
-        label='已完成'
-        value={stats.completed}
-        icon={<Clock sx={{ width: 20, height: 20, color: 'success.dark' }} />}
-        bgColor='white'
-        iconBgColor='success.lighter'
-      />
-      <StatCard
-        label='已计划'
-        value={stats.scheduled}
-        icon={<Clock sx={{ width: 20, height: 20, color: 'primary.main' }} />}
-        bgColor='white'
-        iconBgColor='#dbeafe'
-      />
-      <StatCard
-        label='进行中'
-        value={stats.inProgress}
-        icon={<Clock sx={{ width: 20, height: 20, color: '#ca8a04' }} />}
-        bgColor='white'
-        iconBgColor='#fef9c3'
-      />
-    </Box>
-  ), [stats]);
+  const headerContent = useMemo(
+    () => (
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <StatCard
+          label='演练总数'
+          value={stats.total}
+          icon={<Clock sx={{ width: 20, height: 20, color: 'warning.main' }} />}
+          bgColor='warning.light'
+          iconBgColor='warning.lighter'
+        />
+        <StatCard
+          label='已完成'
+          value={stats.completed}
+          icon={<Clock sx={{ width: 20, height: 20, color: 'success.dark' }} />}
+          bgColor='white'
+          iconBgColor='success.lighter'
+        />
+        <StatCard
+          label='已计划'
+          value={stats.scheduled}
+          icon={<Clock sx={{ width: 20, height: 20, color: 'primary.main' }} />}
+          bgColor='white'
+          iconBgColor='#dbeafe'
+        />
+        <StatCard
+          label='进行中'
+          value={stats.inProgress}
+          icon={<Clock sx={{ width: 20, height: 20, color: '#ca8a04' }} />}
+          bgColor='white'
+          iconBgColor='#fef9c3'
+        />
+      </Box>
+    ),
+    [stats]
+  );
 
   return (
-    <PageContainer title='演练记录' subtitle='管理应急演练和安全培训记录'>
+    <PageContainer
+      title='演练记录'
+      subtitle='管理应急演练和安全培训记录'
+    >
       <ListPageTemplate
         title=''
         subtitle=''
@@ -488,81 +493,83 @@ const EhsDrillPage: React.FC = () => {
               />
               <Typography sx={{ color: 'slate.600' }}>加载中...</Typography>
             </Box>
-          ) : selectedDrill && (
-            <Box
-              sx={{
-                pt: 2,
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: 2,
-              }}
-            >
-              <Box>
-                <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-                  演练编号
-                </Typography>
-                <Typography sx={{ fontWeight: 500 }}>{selectedDrill.drill_no}</Typography>
+          ) : (
+            selectedDrill && (
+              <Box
+                sx={{
+                  pt: 2,
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: 2,
+                }}
+              >
+                <Box>
+                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                    演练编号
+                  </Typography>
+                  <Typography sx={{ fontWeight: 500 }}>{selectedDrill.drill_no}</Typography>
+                </Box>
+                <Box>
+                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                    演练名称
+                  </Typography>
+                  <Typography>{selectedDrill.drill_name}</Typography>
+                </Box>
+                <Box>
+                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                    状态
+                  </Typography>
+                  <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedDrill.status)}</Box>
+                </Box>
+                <Box>
+                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                    演练日期
+                  </Typography>
+                  <Typography sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <Calendar style={{ width: 16, height: 16 }} />
+                    {selectedDrill.drill_date || '-'}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                    参与人员
+                  </Typography>
+                  <Typography sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <Users style={{ width: 16, height: 16 }} />
+                    {Array.isArray(selectedDrill.participants)
+                      ? selectedDrill.participants.join(', ')
+                      : selectedDrill.participants || '-'}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                    演练地点
+                  </Typography>
+                  <Typography>{selectedDrill.location || '-'}</Typography>
+                </Box>
+                <Box>
+                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                    演练时长
+                  </Typography>
+                  <Typography sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <Clock style={{ width: 16, height: 16 }} />
+                    {selectedDrill.duration_hours || '-'}小时
+                  </Typography>
+                </Box>
+                <Box sx={{ gridColumn: '1 / -1' }}>
+                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                    演练评估
+                  </Typography>
+                  <Typography>{selectedDrill.summary || '-'}</Typography>
+                </Box>
+                <Box sx={{ gridColumn: '1 / -1' }}>
+                  <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                    发现问题
+                  </Typography>
+                  <Typography>{selectedDrill.issues_found || '-'}</Typography>
+                </Box>
               </Box>
-              <Box>
-                <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-                  演练名称
-                </Typography>
-                <Typography>{selectedDrill.drill_name}</Typography>
-              </Box>
-              <Box>
-                <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-                  状态
-                </Typography>
-                <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedDrill.status)}</Box>
-              </Box>
-              <Box>
-                <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-                  演练日期
-                </Typography>
-                <Typography sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Calendar style={{ width: 16, height: 16 }} />
-                  {selectedDrill.drill_date || '-'}
-                </Typography>
-              </Box>
-              <Box>
-                <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-                  参与人员
-                </Typography>
-                <Typography sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Users style={{ width: 16, height: 16 }} />
-                  {Array.isArray(selectedDrill.participants)
-                    ? selectedDrill.participants.join(', ')
-                    : selectedDrill.participants || '-'}
-                </Typography>
-              </Box>
-              <Box>
-                <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-                  演练地点
-                </Typography>
-                <Typography>{selectedDrill.location || '-'}</Typography>
-              </Box>
-              <Box>
-                <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-                  演练时长
-                </Typography>
-                <Typography sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Clock style={{ width: 16, height: 16 }} />
-                  {selectedDrill.duration_hours || '-'}小时
-                </Typography>
-              </Box>
-              <Box sx={{ gridColumn: '1 / -1' }}>
-                <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-                  演练评估
-                </Typography>
-                <Typography>{selectedDrill.summary || '-'}</Typography>
-              </Box>
-              <Box sx={{ gridColumn: '1 / -1' }}>
-                <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-                  发现问题
-                </Typography>
-                <Typography>{selectedDrill.issues_found || '-'}</Typography>
-              </Box>
-            </Box>
+            )
           )}
         </DialogContent>
         <DialogActions>

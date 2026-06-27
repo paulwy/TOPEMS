@@ -12,19 +12,14 @@ import {
   CheckCircle,
   XCircle,
 } from 'lucide-react';
-import {
-  Card,
-  CardContent,
-  Typography,
-  Box,
-} from '@mui/material';
+import { Card, CardContent, Typography, Box } from '@mui/material';
 import {
   ListPageTemplate,
   StatCard,
   StatCardGroup,
   type ColumnDef,
   type RowAction,
-} from '@/components/mui';
+} from '@/components';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { ActionButton } from '@/components/common/ActionButton';
 import { FormField } from '@/components/common/FormField';
@@ -342,7 +337,10 @@ const LeaveManagementPage: React.FC = () => {
   );
 
   return (
-    <PageContainer padding={false} maxWidth={false}>
+    <PageContainer
+      padding={false}
+      maxWidth={false}
+    >
       <Box sx={{ p: 3 }}>
         {/* 面包屑导航 */}
         <Box sx={{ mb: 2 }}>
@@ -492,7 +490,10 @@ const LeaveManagementPage: React.FC = () => {
               name='employee_id'
               label='员工 *'
               value={(formData as LeaveRequest)?.employee_id || ''}
-              options={[{ value: '', label: '请选择员工' }, ...employees.map((e) => ({ value: e.id, label: e.name }))]}
+              options={[
+                { value: '', label: '请选择员工' },
+                ...employees.map((e) => ({ value: e.id, label: e.name })),
+              ]}
               onChange={(value) => handleInputChange('employee_id', value as string | number)}
             />
             <FormSelect
@@ -508,7 +509,9 @@ const LeaveManagementPage: React.FC = () => {
                 label='开始日期 *'
                 type='date'
                 value={(formData as LeaveRequest)?.start_date || ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('start_date', e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  handleInputChange('start_date', e.target.value)
+                }
                 fullWidth
                 slotProps={{ inputLabel: { shrink: true } }}
               />
@@ -517,7 +520,9 @@ const LeaveManagementPage: React.FC = () => {
                 label='结束日期 *'
                 type='date'
                 value={(formData as LeaveRequest)?.end_date || ''}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('end_date', e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  handleInputChange('end_date', e.target.value)
+                }
                 fullWidth
                 slotProps={{ inputLabel: { shrink: true } }}
               />
@@ -527,7 +532,9 @@ const LeaveManagementPage: React.FC = () => {
               label='休假天数 *'
               type='number'
               value={(formData as LeaveRequest)?.days || ''}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('days', parseFloat(e.target.value) || 0)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                handleInputChange('days', parseFloat(e.target.value) || 0)
+              }
               placeholder='请输入休假天数'
               fullWidth
             />
@@ -535,7 +542,9 @@ const LeaveManagementPage: React.FC = () => {
               name='reason'
               label='备注'
               value={(formData as LeaveRequest)?.reason || ''}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleInputChange('reason', e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                handleInputChange('reason', e.target.value)
+              }
               multiline
               rows={3}
               placeholder='请输入备注信息'
@@ -573,9 +582,7 @@ const LeaveManagementPage: React.FC = () => {
                 >
                   休假类型:
                 </Typography>
-                <Typography variant='body2'>
-                  {getLeaveTypeText(editingLeave.leave_type)}
-                </Typography>
+                <Typography variant='body2'>{getLeaveTypeText(editingLeave.leave_type)}</Typography>
               </Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <Typography

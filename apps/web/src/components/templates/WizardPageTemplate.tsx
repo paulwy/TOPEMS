@@ -232,7 +232,10 @@ export const WizardPageTemplate: React.FC<WizardPageTemplateProps> = ({
             mb: 1,
           }}
         >
-          <Typography variant='body2' color='text.secondary'>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             进度
           </Typography>
           <Typography
@@ -277,7 +280,10 @@ export const WizardPageTemplate: React.FC<WizardPageTemplateProps> = ({
             >
               {step.label}
               {step.description && (
-                <Typography variant='caption' color='text.secondary'>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   {step.description}
                 </Typography>
               )}
@@ -299,11 +305,18 @@ export const WizardPageTemplate: React.FC<WizardPageTemplateProps> = ({
     return (
       <Paper sx={{ borderRadius: 2, p: 4 }}>
         <Box sx={{ mb: 3 }}>
-          <Typography variant='h6' sx={{ fontWeight: 600 }}>
+          <Typography
+            variant='h6'
+            sx={{ fontWeight: 600 }}
+          >
             {currentStepData?.label}
           </Typography>
           {currentStepData?.description && (
-            <Typography variant='body2' color='text.secondary' sx={{ mt: 0.5 }}>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{ mt: 0.5 }}
+            >
               {currentStepData.description}
             </Typography>
           )}

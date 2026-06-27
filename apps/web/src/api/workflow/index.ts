@@ -1,6 +1,15 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
+import { workflowDefinitionApi } from './definition';
+import { instanceApi } from './instance';
+import { approvalApi, approvalTaskApi } from './approval';
+import { templateApi } from './template';
+import { notificationApi } from './notification';
+import { settingApi } from './setting';
+import { historyApi } from './history';
+import type { StatisticsResponse, PerformanceStats } from './types';
+
 export * from './types';
 
 export { workflowDefinitionApi } from './definition';
@@ -10,15 +19,6 @@ export { templateApi } from './template';
 export { notificationApi } from './notification';
 export { settingApi } from './setting';
 export { historyApi } from './history';
-
-import { workflowDefinitionApi } from './definition';
-import { instanceApi } from './instance';
-import { approvalApi, approvalTaskApi } from './approval';
-import { templateApi } from './template';
-import { notificationApi } from './notification';
-import { settingApi } from './setting';
-import { historyApi } from './history';
-import type { StatisticsResponse, PerformanceStats } from './types';
 
 export const workflowApi = {
   workflows: workflowDefinitionApi,

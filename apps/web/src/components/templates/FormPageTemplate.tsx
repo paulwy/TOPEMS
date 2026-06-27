@@ -24,8 +24,10 @@ import {
   LinearProgress,
   Tab,
   Tabs,
+  Button,
+  Switch,
+  Checkbox,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { Grid } from '@/components';
 import {
   Save,
@@ -1550,8 +1552,5 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
     </FormProvider>
   );
 };
-
-// 导入 Switch 和 Checkbox（从 MUI 导入）
-import { Switch, Checkbox } from '@mui/material';
 
 export default FormPageTemplate;

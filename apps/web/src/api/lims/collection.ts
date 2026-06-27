@@ -12,9 +12,7 @@ import type {
 } from './types';
 
 export const collectionTaskApi = {
-  listCollectionTasks: async (
-    params?: ListParams
-  ): Promise<ApiResponse<CollectionTask[]>> => {
+  listCollectionTasks: async (params?: ListParams): Promise<ApiResponse<CollectionTask[]>> => {
     return apiClient.lims.get('/api/lims/collection-tasks', { params });
   },
 
@@ -45,9 +43,7 @@ export const collectionTaskApi = {
 };
 
 export const parseRuleApi = {
-  listParseRules: async (
-    params?: ListParams
-  ): Promise<ApiResponse<ParseRule[]>> => {
+  listParseRules: async (params?: ListParams): Promise<ApiResponse<ParseRule[]>> => {
     return apiClient.lims.get('/api/lims/parse-rules', { params });
   },
 
@@ -55,9 +51,7 @@ export const parseRuleApi = {
     return apiClient.lims.get(`/api/lims/parse-rules/${id}`);
   },
 
-  createParseRule: async (
-    data: CreateParseRuleRequest
-  ): Promise<ApiResponse<ParseRule>> => {
+  createParseRule: async (data: CreateParseRuleRequest): Promise<ApiResponse<ParseRule>> => {
     return apiClient.lims.post('/api/lims/parse-rules', data);
   },
 

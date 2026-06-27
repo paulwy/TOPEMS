@@ -21,9 +21,9 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
-import { StatCardGroup } from '@/components/mui';
+import { StatCardGroup } from '@/components';
 
 import React, { useState, useMemo, useEffect } from 'react';
 import {
@@ -88,8 +88,11 @@ export default function OpeningBalancePage() {
   const [allAccounts, setAllAccounts] = useState<Account[]>([]);
 
   // 查询科目树
-  const { data: accountTreeData, isLoading: accountLoading, error: accountError } =
-    useAccountTree({});
+  const {
+    data: accountTreeData,
+    isLoading: accountLoading,
+    error: accountError,
+  } = useAccountTree({});
 
   // 查询期初余额
   const {
@@ -374,158 +377,174 @@ export default function OpeningBalancePage() {
             <TableBody>
               {isLoading ? (
                 <TableRow>
-                  <TableCell colSpan={4} sx={{ textAlign: 'center', py: 4 }}>
-                    <Typography variant='body2' color='text.secondary'>
+                  <TableCell
+                    colSpan={4}
+                    sx={{ textAlign: 'center', py: 4 }}
+                  >
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
                       加载中...
                     </Typography>
                   </TableCell>
                 </TableRow>
               ) : filteredAccounts.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} sx={{ textAlign: 'center', py: 4 }}>
-                    <Typography variant='body2' color='text.secondary'>
+                  <TableCell
+                    colSpan={4}
+                    sx={{ textAlign: 'center', py: 4 }}
+                  >
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
                       暂无科目数据
                     </Typography>
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredAccounts.map((account) => {
-                const ob = openingBalanceMap.get(account.id);
-                return (
-                  <TableRow key={account.id}>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <BookOpen sx={{ width: 16, height: 16, color: 'text.disabled' }} />
-                        <Typography sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
-                          {account.code}
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ fontWeight: 'medium' }}>{account.name}</Box>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 1,
-                          mt: 0.5,
-                        }}
-                      >
-                        <Chip
-                          size='small'
-                          label={CATEGORY_CONFIG[account.category]?.label || account.category}
-                          color={CATEGORY_CONFIG[account.category]?.color || 'default'}
-                        />
-                        <Typography
-                          variant='body2'
+                  const ob = openingBalanceMap.get(account.id);
+                  return (
+                    <TableRow key={account.id}>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <BookOpen sx={{ width: 16, height: 16, color: 'text.disabled' }} />
+                          <Typography sx={{ fontFamily: 'monospace', fontSize: '0.875rem' }}>
+                            {account.code}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ fontWeight: 'medium' }}>{account.name}</Box>
+                        <Box
                           sx={{
-                            color:
-                              account.balance_direction === 'debit' ? 'primary.main' : 'error.main',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                            mt: 0.5,
                           }}
                         >
-                          {BALANCE_DIRECTION_CONFIG[account.balance_direction]?.label}
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Typography
-                        variant='body2'
-                        color='text.secondary'
-                      >
-                        {account.has_children ? '明细科目' : '明细'}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align='right'>
-                      {account.has_children ? (
+                          <Chip
+                            size='small'
+                            label={CATEGORY_CONFIG[account.category]?.label || account.category}
+                            color={CATEGORY_CONFIG[account.category]?.color || 'default'}
+                          />
+                          <Typography
+                            variant='body2'
+                            sx={{
+                              color:
+                                account.balance_direction === 'debit'
+                                  ? 'primary.main'
+                                  : 'error.main',
+                            }}
+                          >
+                            {BALANCE_DIRECTION_CONFIG[account.balance_direction]?.label}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
                         <Typography
                           variant='body2'
                           color='text.secondary'
                         >
-                          -
+                          {account.has_children ? '明细科目' : '明细'}
                         </Typography>
-                      ) : editingAccountId === account.id ? (
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'flex-end',
-                            gap: 1,
-                          }}
-                        >
-                          <TextField
-                            type='number'
-                            size='small'
-                            sx={{ width: 100 }}
-                            value={editDebitBalance}
-                            onChange={(e) => setEditDebitBalance(parseFloat(e.target.value) || 0)}
-                            placeholder='借方'
-                          />
+                      </TableCell>
+                      <TableCell align='right'>
+                        {account.has_children ? (
                           <Typography
                             variant='body2'
                             color='text.secondary'
                           >
-                            /
+                            -
                           </Typography>
-                          <TextField
-                            type='number'
-                            size='small'
-                            sx={{ width: 100 }}
-                            value={editCreditBalance}
-                            onChange={(e) => setEditCreditBalance(parseFloat(e.target.value) || 0)}
-                            placeholder='贷方'
-                          />
-                          <Button
-                            size='small'
-                            onClick={handleSaveBalance}
+                        ) : editingAccountId === account.id ? (
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'flex-end',
+                              gap: 1,
+                            }}
                           >
-                            <CheckCircle sx={{ width: 16, height: 16 }} />
-                          </Button>
-                          <Button
-                            size='small'
-                            variant='text'
-                            onClick={handleCancelEdit}
+                            <TextField
+                              type='number'
+                              size='small'
+                              sx={{ width: 100 }}
+                              value={editDebitBalance}
+                              onChange={(e) => setEditDebitBalance(parseFloat(e.target.value) || 0)}
+                              placeholder='借方'
+                            />
+                            <Typography
+                              variant='body2'
+                              color='text.secondary'
+                            >
+                              /
+                            </Typography>
+                            <TextField
+                              type='number'
+                              size='small'
+                              sx={{ width: 100 }}
+                              value={editCreditBalance}
+                              onChange={(e) =>
+                                setEditCreditBalance(parseFloat(e.target.value) || 0)
+                              }
+                              placeholder='贷方'
+                            />
+                            <Button
+                              size='small'
+                              onClick={handleSaveBalance}
+                            >
+                              <CheckCircle sx={{ width: 16, height: 16 }} />
+                            </Button>
+                            <Button
+                              size='small'
+                              variant='text'
+                              onClick={handleCancelEdit}
+                            >
+                              取消
+                            </Button>
+                          </Box>
+                        ) : (
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'flex-end',
+                              gap: 2,
+                              fontFamily: 'monospace',
+                            }}
                           >
-                            取消
-                          </Button>
-                        </Box>
-                      ) : (
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'flex-end',
-                            gap: 2,
-                            fontFamily: 'monospace',
-                          }}
-                        >
-                          <Typography sx={{ color: 'primary.main' }}>
-                            {ob?.debit_balance?.toLocaleString('zh-CN', {
-                              minimumFractionDigits: 2,
-                            }) || '0.00'}
-                          </Typography>
-                          <Typography
-                            variant='body2'
-                            color='text.secondary'
-                          >
-                            /
-                          </Typography>
-                          <Typography sx={{ color: 'error.main' }}>
-                            {ob?.credit_balance?.toLocaleString('zh-CN', {
-                              minimumFractionDigits: 2,
-                            }) || '0.00'}
-                          </Typography>
-                          <Button
-                            size='small'
-                            variant='text'
-                            onClick={() => handleEditBalance(account)}
-                          >
-                            <Calculator sx={{ width: 16, height: 16 }} />
-                          </Button>
-                        </Box>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                );
+                            <Typography sx={{ color: 'primary.main' }}>
+                              {ob?.debit_balance?.toLocaleString('zh-CN', {
+                                minimumFractionDigits: 2,
+                              }) || '0.00'}
+                            </Typography>
+                            <Typography
+                              variant='body2'
+                              color='text.secondary'
+                            >
+                              /
+                            </Typography>
+                            <Typography sx={{ color: 'error.main' }}>
+                              {ob?.credit_balance?.toLocaleString('zh-CN', {
+                                minimumFractionDigits: 2,
+                              }) || '0.00'}
+                            </Typography>
+                            <Button
+                              size='small'
+                              variant='text'
+                              onClick={() => handleEditBalance(account)}
+                            >
+                              <Calculator sx={{ width: 16, height: 16 }} />
+                            </Button>
+                          </Box>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
                 })
               )}
             </TableBody>

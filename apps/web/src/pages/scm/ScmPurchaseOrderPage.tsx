@@ -6,8 +6,8 @@ import {
   DialogActions,
   Box,
   Chip,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import React, { useState, useEffect, useCallback } from 'react';
 import type {
   PurchaseOrder,
@@ -59,7 +59,7 @@ const ScmPurchaseOrderPage: React.FC = () => {
       setLoading(true);
       const response = await scmApi.purchaseOrders.list({
         page: currentPage,
-        pageSize: pageSize,
+        pageSize,
       });
       if (response.success && response.data) {
         setOrders(response.data.items || []);
@@ -155,106 +155,118 @@ const ScmPurchaseOrderPage: React.FC = () => {
     });
   };
 
-  const handleApprove = useCallback((order: PurchaseOrder) => {
-    openConfirmDialog({
-      title: '确认审批',
-      message: `确定要审批采购订单 "${order.order_number}" 吗？`,
-      onConfirm: async () => {
-        try {
-          await scmApi.purchaseOrders.approve(order.id);
-          addNotification({
-            type: 'success',
-            title: '审批成功',
-            message: '采购订单已审批通过',
-          });
-          loadOrders();
-        } catch (error: unknown) {
-          apiLogger.error('审批失败:', error);
-          addNotification({
-            type: 'error',
-            title: '审批失败',
-            message: '审批采购订单失败',
-          });
-        }
-      },
-    });
-  }, [addNotification]);
+  const handleApprove = useCallback(
+    (order: PurchaseOrder) => {
+      openConfirmDialog({
+        title: '确认审批',
+        message: `确定要审批采购订单 "${order.order_number}" 吗？`,
+        onConfirm: async () => {
+          try {
+            await scmApi.purchaseOrders.approve(order.id);
+            addNotification({
+              type: 'success',
+              title: '审批成功',
+              message: '采购订单已审批通过',
+            });
+            loadOrders();
+          } catch (error: unknown) {
+            apiLogger.error('审批失败:', error);
+            addNotification({
+              type: 'error',
+              title: '审批失败',
+              message: '审批采购订单失败',
+            });
+          }
+        },
+      });
+    },
+    [addNotification]
+  );
 
-  const handleConfirm = useCallback((order: PurchaseOrder) => {
-    openConfirmDialog({
-      title: '确认订单',
-      message: `确定要确认采购订单 "${order.order_number}" 吗？`,
-      onConfirm: async () => {
-        try {
-          await scmApi.purchaseOrders.confirm(order.id);
-          addNotification({
-            type: 'success',
-            title: '确认成功',
-            message: '采购订单已确认',
-          });
-          loadOrders();
-        } catch (error: unknown) {
-          apiLogger.error('确认失败:', error);
-          addNotification({
-            type: 'error',
-            title: '确认失败',
-            message: '确认采购订单失败',
-          });
-        }
-      },
-    });
-  }, [addNotification]);
+  const handleConfirm = useCallback(
+    (order: PurchaseOrder) => {
+      openConfirmDialog({
+        title: '确认订单',
+        message: `确定要确认采购订单 "${order.order_number}" 吗？`,
+        onConfirm: async () => {
+          try {
+            await scmApi.purchaseOrders.confirm(order.id);
+            addNotification({
+              type: 'success',
+              title: '确认成功',
+              message: '采购订单已确认',
+            });
+            loadOrders();
+          } catch (error: unknown) {
+            apiLogger.error('确认失败:', error);
+            addNotification({
+              type: 'error',
+              title: '确认失败',
+              message: '确认采购订单失败',
+            });
+          }
+        },
+      });
+    },
+    [addNotification]
+  );
 
-  const handleCancel = useCallback((order: PurchaseOrder) => {
-    openConfirmDialog({
-      title: '确认取消',
-      message: `确定要取消采购订单 "${order.order_number}" 吗？`,
-      onConfirm: async () => {
-        try {
-          await scmApi.purchaseOrders.cancel(order.id);
-          addNotification({
-            type: 'success',
-            title: '取消成功',
-            message: '采购订单已取消',
-          });
-          loadOrders();
-        } catch (error: unknown) {
-          apiLogger.error('取消失败:', error);
-          addNotification({
-            type: 'error',
-            title: '取消失败',
-            message: '取消采购订单失败',
-          });
-        }
-      },
-      danger: true,
-    });
-  }, [addNotification]);
+  const handleCancel = useCallback(
+    (order: PurchaseOrder) => {
+      openConfirmDialog({
+        title: '确认取消',
+        message: `确定要取消采购订单 "${order.order_number}" 吗？`,
+        onConfirm: async () => {
+          try {
+            await scmApi.purchaseOrders.cancel(order.id);
+            addNotification({
+              type: 'success',
+              title: '取消成功',
+              message: '采购订单已取消',
+            });
+            loadOrders();
+          } catch (error: unknown) {
+            apiLogger.error('取消失败:', error);
+            addNotification({
+              type: 'error',
+              title: '取消失败',
+              message: '取消采购订单失败',
+            });
+          }
+        },
+        danger: true,
+      });
+    },
+    [addNotification]
+  );
 
-  const handleClose = useCallback((order: PurchaseOrder) => {
-    openConfirmDialog({
-      title: '确认关闭',
-      message: `确定要关闭采购订单 "${order.order_number}" 吗？`,
-      onConfirm: async () => {
-        try {
-          await scmApi.purchaseOrders.close(order.id);
-          addNotification({
-            type: 'success',
-            title: '关闭成功',
-            message: '采购订单已关闭',
-          });
-          loadOrders();
-        } catch (error: unknown) {
-          apiLogger.error('关闭失败:', error);
-          addNotification({
-            type: 'error',
-            title: '关闭失败',
-            message: '关闭采购订单失败',
-          });
-        }
-      },
-    });
-  }, [addNotification]);
+  const handleClose = useCallback(
+    (order: PurchaseOrder) => {
+      openConfirmDialog({
+        title: '确认关闭',
+        message: `确定要关闭采购订单 "${order.order_number}" 吗？`,
+        onConfirm: async () => {
+          try {
+            await scmApi.purchaseOrders.close(order.id);
+            addNotification({
+              type: 'success',
+              title: '关闭成功',
+              message: '采购订单已关闭',
+            });
+            loadOrders();
+          } catch (error: unknown) {
+            apiLogger.error('关闭失败:', error);
+            addNotification({
+              type: 'error',
+              title: '关闭失败',
+              message: '关闭采购订单失败',
+            });
+          }
+        },
+      });
+    },
+    [addNotification]
+  );
 
   const resetForm = () => {
     setFormData({

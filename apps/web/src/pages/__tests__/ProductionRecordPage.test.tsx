@@ -24,11 +24,7 @@ vi.mock('@/store', () => ({
 const mockAddNotification = vi.fn();
 
 const renderWithProviders = (ui: React.ReactElement) => {
-  return render(
-    <BrowserRouter>
-      {ui}
-    </BrowserRouter>
-  );
+  return render(<BrowserRouter>{ui}</BrowserRouter>);
 };
 
 const mockRecords = [
@@ -93,9 +89,7 @@ describe('ProductionRecordPage', () => {
       fireEvent.change(searchInput, { target: { value: '张三' } });
     });
     await waitFor(() => {
-      expect(mesApi.records.list).toHaveBeenCalledWith(
-        expect.objectContaining({ search: '张三' })
-      );
+      expect(mesApi.records.list).toHaveBeenCalledWith(expect.objectContaining({ search: '张三' }));
     });
   });
 
@@ -129,18 +123,14 @@ describe('ProductionRecordPage', () => {
     await waitFor(() => {
       expect(mesApi.records.create).toHaveBeenCalled();
     });
-    expect(mockAddNotification).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'success' })
-    );
+    expect(mockAddNotification).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
   });
 
   it('should handle API error', async () => {
     (mesApi.records.list as vi.Mock).mockRejectedValue(new Error('Network error'));
     renderWithProviders(<ProductionRecordPage />);
     await waitFor(() => {
-      expect(mockAddNotification).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'error' })
-      );
+      expect(mockAddNotification).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }));
     });
   });
 });

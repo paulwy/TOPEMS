@@ -16,8 +16,8 @@ import {
   Grid,
   Paper,
   IconButton,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Clock,
@@ -549,8 +549,8 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
             onFilterChange={handleFilterChange}
             pagination={{
               page: currentPage,
-              pageSize: pageSize,
-              total: total,
+              pageSize,
+              total,
               onPageChange: setCurrentPage,
             }}
             emptyIcon={

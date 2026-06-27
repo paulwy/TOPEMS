@@ -22,6 +22,7 @@ import {
   Bell,
   FileText,
   Briefcase,
+  CalendarCheck,
 } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 
@@ -98,7 +99,8 @@ const mockAnnouncements: Announcement[] = [
   {
     id: '1',
     title: '关于2026年端午节放假安排的通知',
-    content: '根据国务院办公厅通知精神，结合公司实际情况，现将2026年端午节放假安排通知如下：6月19日至6月21日放假调休，共3天。6月22日（星期日）上班。',
+    content:
+      '根据国务院办公厅通知精神，结合公司实际情况，现将2026年端午节放假安排通知如下：6月19日至6月21日放假调休，共3天。6月22日（星期日）上班。',
     author: '人力资源部',
     status: 'published',
     created_at: '2026-06-15',
@@ -106,7 +108,8 @@ const mockAnnouncements: Announcement[] = [
   {
     id: '2',
     title: '办公区域消防安全检查通知',
-    content: '为进一步加强办公区域消防安全管理，消除火灾隐患，公司定于本周五（6月20日）下午14:00-17:00进行消防安全专项检查，请各部门提前做好准备。',
+    content:
+      '为进一步加强办公区域消防安全管理，消除火灾隐患，公司定于本周五（6月20日）下午14:00-17:00进行消防安全专项检查，请各部门提前做好准备。',
     author: '行政部',
     status: 'published',
     created_at: '2026-06-16',
@@ -114,7 +117,8 @@ const mockAnnouncements: Announcement[] = [
   {
     id: '3',
     title: '新版OA系统上线试运行通知',
-    content: '为提升办公效率，新版OA系统将于7月1日正式上线试运行。试运行期间新旧系统并行，请各部门员工积极使用并反馈问题。',
+    content:
+      '为提升办公效率，新版OA系统将于7月1日正式上线试运行。试运行期间新旧系统并行，请各部门员工积极使用并反馈问题。',
     author: '信息技术部',
     status: 'published',
     created_at: '2026-06-17',
@@ -154,7 +158,13 @@ const mockMeetingBookings: MeetingBooking[] = [
 
 const quickActions: QuickAction[] = [
   { label: '请假申请', icon: <CalendarDays />, color: 'orange', bg: '#ffedd5', path: '/oa/leave' },
-  { label: '报销申请', icon: <DollarSign />, color: 'indigo', bg: 'secondary.light', path: '/oa/expense' },
+  {
+    label: '报销申请',
+    icon: <DollarSign />,
+    color: 'indigo',
+    bg: 'secondary.light',
+    path: '/oa/expense',
+  },
   { label: '会议室预订', icon: <Calendar />, color: 'blue', bg: '#dbeafe', path: '/oa/meeting' },
   { label: '办公用品', icon: <Package />, color: 'teal', bg: '#ccfbf1', path: '/oa/supplies' },
   { label: '车辆预约', icon: <Car />, color: 'red', bg: 'error.lighter', path: '/oa/vehicle' },
@@ -210,11 +220,23 @@ const statCards: StatCardData[] = [
 
 export const AdministrationDashboardPage: React.FC = () => {
   return (
-    <PageContainer title='行政概览'>
+    <PageContainer
+      title='行政概览'
+      headerProps={{
+        pageIcon: <CalendarCheck style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #06B6D4 0%, #0891B2 100%)',
+      }}
+    >
       <Stack spacing={3}>
-        <Grid container spacing={2}>
+        <Grid
+          container
+          spacing={2}
+        >
           {statCards.map((stat) => (
-            <Grid key={stat.label} size={{ xs: 6, sm: 4, md: 2 }}>
+            <Grid
+              key={stat.label}
+              size={{ xs: 6, sm: 4, md: 2 }}
+            >
               <Card
                 sx={{
                   boxShadow: 1,
@@ -281,9 +303,15 @@ export const AdministrationDashboardPage: React.FC = () => {
                 快捷入口
               </Typography>
             </Box>
-            <Grid container spacing={2}>
+            <Grid
+              container
+              spacing={2}
+            >
               {quickActions.map((action) => (
-                <Grid key={action.label} size={{ xs: 3, sm: 3, md: 3 }}>
+                <Grid
+                  key={action.label}
+                  size={{ xs: 3, sm: 3, md: 3 }}
+                >
                   <Box
                     sx={{
                       display: 'flex',
@@ -307,7 +335,10 @@ export const AdministrationDashboardPage: React.FC = () => {
                     >
                       {action.icon}
                     </Avatar>
-                    <Typography variant='body2' color='text.primary'>
+                    <Typography
+                      variant='body2'
+                      color='text.primary'
+                    >
                       {action.label}
                     </Typography>
                   </Box>
@@ -317,7 +348,10 @@ export const AdministrationDashboardPage: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Grid container spacing={3}>
+        <Grid
+          container
+          spacing={3}
+        >
           <Grid size={{ xs: 12, lg: 6 }}>
             <Card sx={{ boxShadow: 1, borderRadius: 2 }}>
               <CardContent>

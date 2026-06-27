@@ -1,6 +1,24 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Box, Typography, InputLabel, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
-import { FileText, Calendar, User, Building2, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
+import {
+  Box,
+  Typography,
+  InputLabel,
+  Chip,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from '@mui/material';
+import {
+  FileText,
+  Calendar,
+  User,
+  Building2,
+  AlertCircle,
+  CheckCircle2,
+  Clock,
+} from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { hrmApi, type Contract } from '@/api/hrm';
 import { useNotification } from '@/hooks/useNotification';
@@ -43,7 +61,9 @@ const HrmContractDetailPage: React.FC = () => {
         ...contractData.contract,
         employee_name: employeeRes.data?.name || contractData.contract.employee_name || '',
         employee_no: employeeRes.data?.employee_no || contractData.contract.employee_no || '',
-        contract_name: contractData.contract.contract_name || `${employeeRes.data?.name || contractData.contract.employee_name || ''}劳动合同`,
+        contract_name:
+          contractData.contract.contract_name ||
+          `${employeeRes.data?.name || contractData.contract.employee_name || ''}劳动合同`,
         department: employeeRes.data?.department_name || contractData.contract.department || '',
         position: employeeRes.data?.position || contractData.contract.position || '',
         probation_period: contractData.contract.probation_period || 0,
@@ -69,7 +89,14 @@ const HrmContractDetailPage: React.FC = () => {
   };
 
   const getStatusConfig = (status: string) => {
-    const config: Record<string, { color: 'success' | 'error' | 'default' | 'warning'; label: string; icon: React.ReactElement }> = {
+    const config: Record<
+      string,
+      {
+        color: 'success' | 'error' | 'default' | 'warning';
+        label: string;
+        icon: React.ReactElement;
+      }
+    > = {
       draft: { color: 'default', label: '草稿', icon: <FileText size={14} /> },
       pending: { color: 'warning', label: '待审批', icon: <Clock size={14} /> },
       approved: { color: 'success', label: '已审批', icon: <CheckCircle2 size={14} /> },
@@ -137,7 +164,12 @@ const HrmContractDetailPage: React.FC = () => {
               mb: 3,
               p: 2,
               borderRadius: 1,
-              bgcolor: daysRemaining < 30 ? 'error.light' : daysRemaining < 90 ? 'warning.light' : 'success.light',
+              bgcolor:
+                daysRemaining < 30
+                  ? 'error.light'
+                  : daysRemaining < 90
+                    ? 'warning.light'
+                    : 'success.light',
               display: 'flex',
               alignItems: 'center',
               gap: 1,
@@ -150,16 +182,19 @@ const HrmContractDetailPage: React.FC = () => {
             ) : (
               <CheckCircle2 sx={{ width: 20, height: 20, color: 'success.main' }} />
             )}
-            <Typography variant='body1' sx={{ fontWeight: 'medium' }}>
+            <Typography
+              variant='body1'
+              sx={{ fontWeight: 'medium' }}
+            >
               {daysRemaining < 0
                 ? `合同已过期 ${Math.abs(daysRemaining)} 天`
                 : daysRemaining === 0
-                ? '合同今日到期'
-                : daysRemaining < 30
-                ? `合同将在 ${daysRemaining} 天后到期，请及时处理续签`
-                : daysRemaining < 90
-                ? `合同将在 ${daysRemaining} 天后到期`
-                : `合同有效期剩余 ${daysRemaining} 天`}
+                  ? '合同今日到期'
+                  : daysRemaining < 30
+                    ? `合同将在 ${daysRemaining} 天后到期，请及时处理续签`
+                    : daysRemaining < 90
+                      ? `合同将在 ${daysRemaining} 天后到期`
+                      : `合同有效期剩余 ${daysRemaining} 天`}
             </Typography>
           </Box>
         )}
@@ -176,8 +211,12 @@ const HrmContractDetailPage: React.FC = () => {
             <User sx={{ width: 48, height: 48, color: 'primary.main' }} />
             <Box>
               <Typography variant='h6'>{contract.employee_name || '-'}</Typography>
-              <Typography variant='body2' color='text.secondary'>
-                {contract.employee_no || ''} | {contract.department || ''} | {contract.position || ''}
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
+                {contract.employee_no || ''} | {contract.department || ''} |{' '}
+                {contract.position || ''}
               </Typography>
             </Box>
           </Box>
@@ -200,11 +239,15 @@ const HrmContractDetailPage: React.FC = () => {
         >
           <Box>
             <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>合同编号</InputLabel>
-            <Typography sx={{ mt: 0.5, fontFamily: 'monospace' }}>{contract.contract_no || '-'}</Typography>
+            <Typography sx={{ mt: 0.5, fontFamily: 'monospace' }}>
+              {contract.contract_no || '-'}
+            </Typography>
           </Box>
           <Box>
             <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>合同类型</InputLabel>
-            <Typography sx={{ mt: 0.5 }}>{getContractTypeLabel(contract.contract_type || '')}</Typography>
+            <Typography sx={{ mt: 0.5 }}>
+              {getContractTypeLabel(contract.contract_type || '')}
+            </Typography>
           </Box>
           <Box>
             <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>合同名称</InputLabel>
@@ -265,7 +308,12 @@ const HrmContractDetailPage: React.FC = () => {
       >
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>基本工资</InputLabel>
-          <Typography variant='h6' sx={{ mt: 0.5, color: 'primary.main' }}>{formatCurrency(contract.base_salary)}</Typography>
+          <Typography
+            variant='h6'
+            sx={{ mt: 0.5, color: 'primary.main' }}
+          >
+            {formatCurrency(contract.base_salary)}
+          </Typography>
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>货币类型</InputLabel>
@@ -290,7 +338,12 @@ const HrmContractDetailPage: React.FC = () => {
 
   const infoCard = useMemo(
     () => ({
-      avatar: <FileText size={32} color='#1976d2' />,
+      avatar: (
+        <FileText
+          size={32}
+          color='#1976d2'
+        />
+      ),
       title: contract?.contract_name,
       subtitle: contract?.contract_no || undefined,
       tags: [getContractTypeLabel(contract?.contract_type || '')],
@@ -303,7 +356,10 @@ const HrmContractDetailPage: React.FC = () => {
   );
 
   return (
-    <PageContainer title='合同详情' subtitle='查看和管理员工合同信息'>
+    <PageContainer
+      title='合同详情'
+      subtitle='查看和管理员工合同信息'
+    >
       <DetailPageTemplate
         title=''
         subtitle=''
@@ -334,17 +390,28 @@ const HrmContractDetailPage: React.FC = () => {
             确定要为 <strong>{contract?.employee_name}</strong> 的合同进行续签吗？
           </Typography>
           <Box sx={{ mt: 2 }}>
-            <Typography variant='body2' color='text.secondary'>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               当前合同：{contract?.contract_no}
             </Typography>
-            <Typography variant='body2' color='text.secondary'>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               到期日期：{formatDate(contract?.end_date)}
             </Typography>
           </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowRenewDialog(false)}>取消</Button>
-          <Button onClick={handleRenew} color='primary'>确认续签</Button>
+          <Button
+            onClick={handleRenew}
+            color='primary'
+          >
+            确认续签
+          </Button>
         </DialogActions>
       </Dialog>
     </PageContainer>

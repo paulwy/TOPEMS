@@ -9,7 +9,7 @@ plugin_type: business
 
 # Runtime configuration
 runtime:
-  port: 8032
+  port: 8050
   health_endpoint: /health
   base_path: /api/qa
 

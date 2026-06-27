@@ -7,7 +7,7 @@ interface SafeHtmlProps {
 
 export const SafeHtml = ({ html, className }: SafeHtmlProps) => {
   const sanitized = sanitizeHtml(html);
-  
+
   return (
     <div
       className={className}

@@ -29,7 +29,7 @@ export const syncApi = {
     if (params?.status) queryParams.append('status', params.status);
     if (params?.start_date) queryParams.append('start_date', params.start_date);
     if (params?.end_date) queryParams.append('end_date', params.end_date);
-  
+
     return apiClient.ehs.get<PaginatedResponse<SyncRecord>>(
       `/api/ehs/sync-records?${queryParams.toString()}`
     );
@@ -47,10 +47,7 @@ export const syncApi = {
     return apiClient.ehs.post<SyncRecord>('/api/ehs/sync/retry', data);
   },
 
-  syncToQMS: async (
-    entityType: string,
-    entityIds?: string[]
-  ): Promise<ApiResponse<SyncRecord>> => {
+  syncToQMS: async (entityType: string, entityIds?: string[]): Promise<ApiResponse<SyncRecord>> => {
     return apiClient.ehs.post<SyncRecord>('/api/ehs/sync/to-qms', {
       entity_type: entityType,
       entity_ids: entityIds,
@@ -75,7 +72,7 @@ export const syncApi = {
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.status) queryParams.append('status', params.status);
-  
+
     return apiClient.ehs.get<PaginatedResponse<SyncRecordDetail>>(
       `/api/ehs/sync-records/${syncId}/details?${queryParams.toString()}`
     );

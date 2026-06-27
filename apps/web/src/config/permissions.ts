@@ -261,10 +261,7 @@ export const ROLE_PERMISSIONS: Record<string, string[]> = {
     PERMISSIONS.workflow.read,
     PERMISSIONS.workflow.approve,
   ],
-  GUEST: [
-    PERMISSIONS.doc.read,
-    PERMISSIONS.notification.read,
-  ],
+  GUEST: [PERMISSIONS.doc.read, PERMISSIONS.notification.read],
 };
 
 export const MODULE_INFO: Record<ModuleCode, { name: string; description: string }> = {
@@ -491,7 +488,10 @@ export const getInheritedPermissions = (userPermissions: string[]): string[] => 
   return inherited;
 };
 
-export const hasPermissionWithInheritance = (userPermissions: string[], requiredPermission: string): boolean => {
+export const hasPermissionWithInheritance = (
+  userPermissions: string[],
+  requiredPermission: string
+): boolean => {
   const allPermissions = getInheritedPermissions(userPermissions);
   return hasPermission(allPermissions, requiredPermission);
 };

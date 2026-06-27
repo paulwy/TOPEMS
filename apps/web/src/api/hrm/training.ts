@@ -1,6 +1,12 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
-import type { TrainingPlan, TrainingCourse, TrainingRecord, ListParams, PaginatedResult } from './types';
+import type {
+  TrainingPlan,
+  TrainingCourse,
+  TrainingRecord,
+  ListParams,
+  PaginatedResult,
+} from './types';
 import { buildQueryString } from './types';
 
 export const trainingPlanApi = {

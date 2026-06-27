@@ -1,10 +1,6 @@
 import { apiClient } from '../client';
 import type { ApiResponse, PaginatedResponse } from '../client';
-import type {
-  BillingRecord,
-  CreateBillingRequest,
-  BillingQueryParams,
-} from './types';
+import type { BillingRecord, CreateBillingRequest, BillingQueryParams } from './types';
 
 export const billingApi = {
   list: async (

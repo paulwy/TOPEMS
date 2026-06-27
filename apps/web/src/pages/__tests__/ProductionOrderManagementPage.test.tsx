@@ -24,11 +24,7 @@ vi.mock('@/store', () => ({
 const mockAddNotification = vi.fn();
 
 const renderWithProviders = (ui: React.ReactElement) => {
-  return render(
-    <BrowserRouter>
-      {ui}
-    </BrowserRouter>
-  );
+  return render(<BrowserRouter>{ui}</BrowserRouter>);
 };
 
 const mockOrders = [
@@ -99,9 +95,7 @@ describe('ProductionOrderManagementPage', () => {
       fireEvent.change(searchInput, { target: { value: '产品A' } });
     });
     await waitFor(() => {
-      expect(mesApi.orders.list).toHaveBeenCalledWith(
-        expect.objectContaining({ search: '产品A' })
-      );
+      expect(mesApi.orders.list).toHaveBeenCalledWith(expect.objectContaining({ search: '产品A' }));
     });
   });
 
@@ -123,7 +117,7 @@ describe('ProductionOrderManagementPage', () => {
       const quantityInput = screen.getByLabelText(/数量/i);
       const startDateInput = screen.getByLabelText(/计划开始时间/i);
       const endDateInput = screen.getByLabelText(/计划结束时间/i);
-      
+
       fireEvent.change(orderNumberInput, { target: { value: 'PO-TEST-001' } });
       fireEvent.change(productNameInput, { target: { value: '测试产品' } });
       fireEvent.change(quantityInput, { target: { value: '100' } });
@@ -137,18 +131,14 @@ describe('ProductionOrderManagementPage', () => {
     await waitFor(() => {
       expect(mesApi.orders.create).toHaveBeenCalled();
     });
-    expect(mockAddNotification).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'success' })
-    );
+    expect(mockAddNotification).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
   });
 
   it('should handle API error', async () => {
     (mesApi.orders.list as vi.Mock).mockRejectedValue(new Error('Network error'));
     renderWithProviders(<ProductionOrderManagementPage />);
     await waitFor(() => {
-      expect(mockAddNotification).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'error' })
-      );
+      expect(mockAddNotification).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }));
     });
   });
 });

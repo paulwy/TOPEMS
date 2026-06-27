@@ -21,15 +21,11 @@ import {
   TableHead,
   TableRow,
   Paper,
+  Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import type {
-  MaterialReturn,
-  CreateMaterialReturnRequest,
-  MaterialReturnItem,
-} from '@/api/mes';
+import type { MaterialReturn, CreateMaterialReturnRequest, MaterialReturnItem } from '@/api/mes';
 import { mesApi } from '@/api/mes';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -210,9 +206,7 @@ const MaterialReturnPage: React.FC = () => {
         id: 'return_time',
         label: '退库时间',
         render: (row) =>
-          row.return_time
-            ? new Date(row.return_time).toLocaleString('zh-CN')
-            : '-',
+          row.return_time ? new Date(row.return_time).toLocaleString('zh-CN') : '-',
       },
       {
         id: 'items_count',
@@ -301,42 +295,75 @@ const MaterialReturnPage: React.FC = () => {
     >
       <Box sx={{ p: 2, bgcolor: '#fef3c7', borderRadius: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          <FileText size={18} sx={{ color: '#b45309' }} />
-          <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+          <FileText
+            size={18}
+            sx={{ color: '#b45309' }}
+          />
+          <Typography
+            variant='body2'
+            sx={{ color: 'text.secondary' }}
+          >
             待审核
           </Typography>
         </Box>
-        <Typography variant='h5' sx={{ fontWeight: 700, color: '#b45309' }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700, color: '#b45309' }}
+        >
           {returns.filter((r) => r.status === 'pending').length}
         </Typography>
       </Box>
       <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 2 }}>
-        <Typography variant='body2' sx={{ color: 'text.secondary', mb: 1 }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary', mb: 1 }}
+        >
           已审核
         </Typography>
-        <Typography variant='h5' sx={{ fontWeight: 700, color: '#4338ca' }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700, color: '#4338ca' }}
+        >
           {returns.filter((r) => r.status === 'approved').length}
         </Typography>
       </Box>
       <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          <Undo2 size={18} sx={{ color: '#15803d' }} />
-          <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+          <Undo2
+            size={18}
+            sx={{ color: '#15803d' }}
+          />
+          <Typography
+            variant='body2'
+            sx={{ color: 'text.secondary' }}
+          >
             已退库
           </Typography>
         </Box>
-        <Typography variant='h5' sx={{ fontWeight: 700, color: '#15803d' }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700, color: '#15803d' }}
+        >
           {returns.filter((r) => r.status === 'returned').length}
         </Typography>
       </Box>
       <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          <Package size={18} sx={{ color: 'text.secondary' }} />
-          <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+          <Package
+            size={18}
+            sx={{ color: 'text.secondary' }}
+          />
+          <Typography
+            variant='body2'
+            sx={{ color: 'text.secondary' }}
+          >
             总数
           </Typography>
         </Box>
-        <Typography variant='h5' sx={{ fontWeight: 700 }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700 }}
+        >
           {returns.length}
         </Typography>
       </Box>
@@ -344,10 +371,13 @@ const MaterialReturnPage: React.FC = () => {
   );
 
   return (
-    <PageContainer title="物料退库管理" subtitle="管理物料退库记录,包括退库单号、工单、退库人、退库原因等">
+    <PageContainer
+      title='物料退库管理'
+      subtitle='管理物料退库记录,包括退库单号、工单、退库人、退库原因等'
+    >
       <ListPageTemplate
-        title=""
-        subtitle=""
+        title=''
+        subtitle=''
         columns={columns}
         data={returns}
         loading={loading}
@@ -379,7 +409,11 @@ const MaterialReturnPage: React.FC = () => {
       />
 
       {/* 新增对话框 */}
-      <Dialog open={showDialog} onClose={() => setShowDialog(false)} maxWidth='lg'>
+      <Dialog
+        open={showDialog}
+        onClose={() => setShowDialog(false)}
+        maxWidth='lg'
+      >
         <DialogTitle>新增物料退库</DialogTitle>
         <DialogContent>
           <Box
@@ -428,9 +462,7 @@ const MaterialReturnPage: React.FC = () => {
                   id='work_station_id'
                   size='small'
                   value={formData.work_station_id || ''}
-                  onChange={(e) =>
-                    setFormData({ ...formData, work_station_id: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, work_station_id: e.target.value })}
                 />
               </Box>
               <Box sx={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -455,7 +487,10 @@ const MaterialReturnPage: React.FC = () => {
                   mb: 1,
                 }}
               >
-                <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
+                <Typography
+                  variant='subtitle2'
+                  sx={{ fontWeight: 600 }}
+                >
                   物料明细
                 </Typography>
                 <Button
@@ -466,7 +501,10 @@ const MaterialReturnPage: React.FC = () => {
                   添加物料
                 </Button>
               </Box>
-              <TableContainer component={Paper} variant='outlined'>
+              <TableContainer
+                component={Paper}
+                variant='outlined'
+              >
                 <Table size='small'>
                   <TableHead>
                     <TableRow>
@@ -498,9 +536,7 @@ const MaterialReturnPage: React.FC = () => {
                             <TextField
                               size='small'
                               value={item.material_code}
-                              onChange={(e) =>
-                                updateItem(index, 'material_code', e.target.value)
-                              }
+                              onChange={(e) => updateItem(index, 'material_code', e.target.value)}
                               placeholder='物料编码'
                             />
                           </TableCell>
@@ -508,9 +544,7 @@ const MaterialReturnPage: React.FC = () => {
                             <TextField
                               size='small'
                               value={item.material_name}
-                              onChange={(e) =>
-                                updateItem(index, 'material_name', e.target.value)
-                              }
+                              onChange={(e) => updateItem(index, 'material_name', e.target.value)}
                               placeholder='物料名称'
                             />
                           </TableCell>
@@ -520,11 +554,7 @@ const MaterialReturnPage: React.FC = () => {
                               type='number'
                               value={item.quantity}
                               onChange={(e) =>
-                                updateItem(
-                                  index,
-                                  'quantity',
-                                  parseFloat(e.target.value) || 0
-                                )
+                                updateItem(index, 'quantity', parseFloat(e.target.value) || 0)
                               }
                               sx={{ width: 100 }}
                             />
@@ -541,9 +571,7 @@ const MaterialReturnPage: React.FC = () => {
                             <TextField
                               size='small'
                               value={item.batch_no || ''}
-                              onChange={(e) =>
-                                updateItem(index, 'batch_no', e.target.value)
-                              }
+                              onChange={(e) => updateItem(index, 'batch_no', e.target.value)}
                             />
                           </TableCell>
                           <TableCell align='center'>
@@ -564,10 +592,18 @@ const MaterialReturnPage: React.FC = () => {
             </Box>
 
             <DialogActions sx={{ mt: 2 }}>
-              <Button type='button' variant='outlined' onClick={() => setShowDialog(false)}>
+              <Button
+                type='button'
+                variant='outlined'
+                onClick={() => setShowDialog(false)}
+              >
                 取消
               </Button>
-              <Button type='submit' variant='contained' startIcon={<Save size={16} />}>
+              <Button
+                type='submit'
+                variant='contained'
+                startIcon={<Save size={16} />}
+              >
                 创建退库单
               </Button>
             </DialogActions>
@@ -576,7 +612,11 @@ const MaterialReturnPage: React.FC = () => {
       </Dialog>
 
       {/* 详情对话框 */}
-      <Dialog open={showDetailDialog} onClose={() => setShowDetailDialog(false)} maxWidth='lg'>
+      <Dialog
+        open={showDetailDialog}
+        onClose={() => setShowDetailDialog(false)}
+        maxWidth='lg'
+      >
         <DialogTitle>物料退库详情</DialogTitle>
         <DialogContent>
           {selectedReturn && (
@@ -590,7 +630,10 @@ const MaterialReturnPage: React.FC = () => {
               >
                 <Box>
                   <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>退库单号</InputLabel>
-                  <Box component='span' sx={{ fontWeight: 500 }}>
+                  <Box
+                    component='span'
+                    sx={{ fontWeight: 500 }}
+                  >
                     {selectedReturn.return_no}
                   </Box>
                 </Box>
@@ -621,10 +664,16 @@ const MaterialReturnPage: React.FC = () => {
               </Box>
 
               <Box>
-                <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 1 }}>
+                <Typography
+                  variant='subtitle2'
+                  sx={{ fontWeight: 600, mb: 1 }}
+                >
                   物料明细 ({selectedReturn.items?.length || 0})
                 </Typography>
-                <TableContainer component={Paper} variant='outlined'>
+                <TableContainer
+                  component={Paper}
+                  variant='outlined'
+                >
                   <Table size='small'>
                     <TableHead>
                       <TableRow>

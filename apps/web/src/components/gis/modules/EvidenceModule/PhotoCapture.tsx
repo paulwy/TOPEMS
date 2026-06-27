@@ -1,8 +1,7 @@
 // modules/EvidenceModule/PhotoCapture.tsx
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Camera, SwitchCamera, Sun, X, Check } from 'lucide-react';
-import { Box, IconButton, Typography } from '@mui/material';
-import { Button } from '@mui/material';
+import { Box, IconButton, Typography, Button } from '@mui/material';
 import { logger } from '@/utils/logger';
 
 interface PhotoCaptureProps {

@@ -106,6 +106,13 @@ CREATE INDEX IF NOT EXISTS idx_core_permissions_resource ON core_permissions(res
 -- 第四部分：插入所有模块权限
 -- ============================================================
 
+-- Dashboard 模块权限
+INSERT INTO core_permissions (code, name, description, resource, action, level) VALUES
+('dashboard:read', '仪表盘-只读', '查看仪表盘和首页数据', 'dashboard', 'read', 1),
+('dashboard:write', '仪表盘-写入', '自定义仪表盘配置', 'dashboard', 'write', 2),
+('dashboard:admin', '仪表盘-管理', '管理所有仪表盘配置', 'dashboard', 'admin', 4)
+ON CONFLICT (code) DO NOTHING;
+
 -- IAM 模块权限
 INSERT INTO core_permissions (code, name, description, resource, action, level) VALUES
 ('iam:read', '身份管理-只读', '查看用户、角色和权限', 'iam', 'read', 1),
@@ -322,7 +329,7 @@ AND (
     OR p.code LIKE 'im:%'
     OR p.code LIKE 'integration:%'
     OR p.code LIKE 'system:%'
-    OR p.resource IN ('hrm', 'erp', 'pm', 'rs', 'scm', 'crm', 'ai', 'gis', 'qms', 'ehs', 'mes', 'wms', 'workflow')
+    OR p.resource IN ('dashboard', 'hrm', 'erp', 'pm', 'rs', 'scm', 'crm', 'ai', 'gis', 'qms', 'ehs', 'mes', 'wms', 'workflow')
 )
 ON CONFLICT DO NOTHING;
 

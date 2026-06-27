@@ -1,5 +1,13 @@
-import { TextField, InputLabel, Box, Card, CardContent, Select, MenuItem } from '@mui/material';
-import { Button } from '@mui/material';
+import {
+  TextField,
+  InputLabel,
+  Box,
+  Card,
+  CardContent,
+  Select,
+  MenuItem,
+  Button,
+} from '@mui/material';
 import { useState, useEffect } from 'react';
 import { RefreshCw, Copy, Check, Wand2, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 

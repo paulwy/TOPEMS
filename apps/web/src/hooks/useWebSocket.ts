@@ -48,19 +48,18 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     let wsUrl = imServiceUrl;
 
     if (wsUrl.startsWith('/')) {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const hostname = window.location.hostname;
-      const port = window.location.port ? `:${window.location.port}` : '';
-      const host = hostname === 'localhost' ? '127.0.0.1' + port : window.location.host;
-      wsUrl = `${protocol}//${host}${wsUrl}`;
+      // Vite proxy expects /ws/<service> for WebSocket (e.g., /ws/im)
+      // config.services.im = '/im', so WebSocket path should be '/ws/im'
+      const servicePath = wsUrl.replace(/\/$/, ''); // Remove trailing slash
+      const wsPath = `/ws${servicePath}`;
+      wsUrl = `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}${wsPath}`;
     } else {
       wsUrl = wsUrl.replace('http://', 'ws://').replace('https://', 'wss://');
     }
 
-    const fullWsUrl = `${wsUrl}/ws`;
-    logger.info('[useWebSocket] Attempting to connect to:', fullWsUrl);
+    logger.info('[useWebSocket] Attempting to connect to:', wsUrl);
 
-    const ws = new WebSocket(fullWsUrl);
+    const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
       setIsConnected(true);

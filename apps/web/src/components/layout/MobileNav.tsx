@@ -141,7 +141,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
     const isExpanded = expandedItems.has(item.code);
     const isActive =
       item.path === location.pathname ||
-      (item.path && location.pathname.startsWith(item.path + '/'));
+      (item.path && location.pathname.startsWith(`${item.path}/`));
     const icon = iconMap[item.icon || 'Home'] || <Home style={{ width: 20, height: 20 }} />;
 
     return (
@@ -302,8 +302,10 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
                 sx={{
                   pl: 2,
                   py: 1.75,
-                  backgroundColor: location.pathname === '/dashboard' ? 'primary.50' : 'transparent',
-                  borderLeft: location.pathname === '/dashboard' ? '3px solid' : '3px solid transparent',
+                  backgroundColor:
+                    location.pathname === '/dashboard' ? 'primary.50' : 'transparent',
+                  borderLeft:
+                    location.pathname === '/dashboard' ? '3px solid' : '3px solid transparent',
                   borderColor: 'primary.main',
                   transition: 'all 0.2s ease-in-out',
                   '&:hover': {
@@ -318,7 +320,8 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
                       width: 32,
                       height: 32,
                       borderRadius: 1.5,
-                      backgroundColor: location.pathname === '/dashboard' ? 'primary.main' : 'grey.100',
+                      backgroundColor:
+                        location.pathname === '/dashboard' ? 'primary.main' : 'grey.100',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',

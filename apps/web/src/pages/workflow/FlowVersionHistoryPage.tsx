@@ -12,10 +12,10 @@ import {
   Chip,
   Tooltip,
   IconButton,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   GitBranch,
   Plus,
@@ -26,7 +26,6 @@ import {
   Loader2,
   Calendar,
 } from 'lucide-react';
-import { useParams } from 'react-router-dom';
 import { PageContainer } from '@/components/common';
 import type { Workflow, WorkflowVersion } from '@/api/workflow';
 import { workflowApi } from '@/api/workflow';
@@ -258,15 +257,18 @@ const FlowVersionHistoryPage: React.FC = () => {
     navigate(`/flow/definitions`);
   };
 
-  const headerActions = useMemo(() => [
-    {
-      label: '创建版本',
-      icon: <Plus size={18} />,
-      onClick: () => setShowCreateModal(true),
-      variant: 'contained' as const,
-      color: 'secondary' as const,
-    },
-  ], []);
+  const headerActions = useMemo(
+    () => [
+      {
+        label: '创建版本',
+        icon: <Plus size={18} />,
+        onClick: () => setShowCreateModal(true),
+        variant: 'contained' as const,
+        color: 'secondary' as const,
+      },
+    ],
+    []
+  );
 
   return (
     <PageContainer
@@ -296,7 +298,12 @@ const FlowVersionHistoryPage: React.FC = () => {
             <Box sx={{ textAlign: 'center', py: 6 }}>
               <GitBranch
                 size={64}
-                style={{ color: 'grey.300', margin: '0 auto', marginBottom: 16 }}
+                style={{
+                  color: 'grey.300',
+                  marginLeft: 'auto',
+                  marginRight: 'auto',
+                  marginBottom: 16,
+                }}
               />
               <Typography sx={{ color: 'grey.500' }}>暂无版本历史</Typography>
               <Button

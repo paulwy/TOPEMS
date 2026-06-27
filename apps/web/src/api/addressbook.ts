@@ -45,6 +45,8 @@ export const addressbookApi = {
 
   exportContacts: async (params: ExportParams): Promise<Blob> => {
     const baseURL = (apiClient.erp as any).defaults?.baseURL || config.services.erp;
-    return downloadBlob(baseURL, '/api/erp/addressbook/export', { params: params as unknown as Record<string, unknown> });
+    return downloadBlob(baseURL, '/api/erp/addressbook/export', {
+      params: params as unknown as Record<string, unknown>,
+    });
   },
 };

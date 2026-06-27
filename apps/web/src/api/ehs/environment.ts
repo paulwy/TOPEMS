@@ -23,7 +23,7 @@ export const environmentApi = {
     if (params?.search) queryParams.append('search', params.search);
     if (params?.status) queryParams.append('status', params.status);
     if (params?.monitor_type) queryParams.append('monitor_type', params.monitor_type);
-  
+
     return apiClient.ehs.get<PaginatedResponse<EnvironmentMonitor>>(
       `/api/ehs/environment/monitors?${queryParams.toString()}`
     );
@@ -43,10 +43,7 @@ export const environmentApi = {
     id: string,
     data: Partial<UpdateEnvironmentMonitorRequest>
   ): Promise<ApiResponse<EnvironmentMonitor>> => {
-    return apiClient.ehs.put<EnvironmentMonitor>(
-      `/api/ehs/environment/monitors/${id}`,
-      data
-    );
+    return apiClient.ehs.put<EnvironmentMonitor>(`/api/ehs/environment/monitors/${id}`, data);
   },
 
   deleteEnvironmentMonitor: async (id: string): Promise<ApiResponse<void>> => {
@@ -61,7 +58,7 @@ export const environmentApi = {
     if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.status) queryParams.append('status', params.status);
-  
+
     return apiClient.ehs.get<PaginatedResponse<EnvironmentIndicator>>(
       `/api/ehs/environment/indicators?${queryParams.toString()}`
     );
@@ -79,7 +76,7 @@ export const environmentApi = {
     if (params?.status) queryParams.append('status', params.status);
     if (params?.start_date) queryParams.append('start_date', params.start_date);
     if (params?.end_date) queryParams.append('end_date', params.end_date);
-  
+
     return apiClient.ehs.get<PaginatedResponse<EnvironmentMonitorRecord>>(
       `/api/ehs/environment/records?${queryParams.toString()}`
     );
@@ -94,10 +91,7 @@ export const environmentApi = {
   createEnvironmentMonitorRecord: async (
     data: CreateEnvironmentMonitorRecordRequest
   ): Promise<ApiResponse<EnvironmentMonitorRecord>> => {
-    return apiClient.ehs.post<EnvironmentMonitorRecord>(
-      '/api/ehs/environment/records',
-      data
-    );
+    return apiClient.ehs.post<EnvironmentMonitorRecord>('/api/ehs/environment/records', data);
   },
 };
 

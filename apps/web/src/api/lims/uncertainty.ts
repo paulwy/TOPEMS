@@ -38,9 +38,7 @@ export const uncertaintyProjectApi = {
 };
 
 export const uncertaintySourceApi = {
-  listUncertaintySources: async (
-    projectId: string
-  ): Promise<ApiResponse<UncertaintySource[]>> => {
+  listUncertaintySources: async (projectId: string): Promise<ApiResponse<UncertaintySource[]>> => {
     return apiClient.lims.get(`/api/lims/uncertainty-projects/${projectId}/sources`);
   },
 
@@ -101,14 +99,10 @@ export const uncertaintyComponentApi = {
   calculateCombinedUncertainty: async (
     projectId: string
   ): Promise<ApiResponse<UncertaintyCalculationResult>> => {
-    return apiClient.lims.post(
-      `/api/lims/uncertainty-projects/${projectId}/combined`
-    );
+    return apiClient.lims.post(`/api/lims/uncertainty-projects/${projectId}/combined`);
   },
 
-  generateUncertaintyReport: async (
-    projectId: string
-  ): Promise<ApiResponse<UncertaintyReport>> => {
+  generateUncertaintyReport: async (projectId: string): Promise<ApiResponse<UncertaintyReport>> => {
     return apiClient.lims.get(`/api/lims/uncertainty-projects/${projectId}/report`);
   },
 };

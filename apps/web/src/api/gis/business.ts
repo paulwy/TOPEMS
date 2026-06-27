@@ -22,20 +22,13 @@ export const businessApi = {
       `/api/gis/business-locations?${queryParams.toString()}`
     );
     if (response.success && response.data) {
-      response.data = adaptResponse<BusinessLocation>(
-        response.data,
-        'business_locations'
-      );
+      response.data = adaptResponse<BusinessLocation>(response.data, 'business_locations');
     }
     return response as ApiResponse<PaginatedResponse<BusinessLocation>>;
   },
 
-  getBusinessLocation: async (
-    id: string
-  ): Promise<ApiResponse<BusinessLocation>> => {
-    return apiClient.gis.get<BusinessLocation>(
-      `/api/gis/business-locations/${id}`
-    );
+  getBusinessLocation: async (id: string): Promise<ApiResponse<BusinessLocation>> => {
+    return apiClient.gis.get<BusinessLocation>(`/api/gis/business-locations/${id}`);
   },
 
   listBusinessLocationsByType: async (
@@ -50,10 +43,7 @@ export const businessApi = {
       `/api/gis/business-locations/type/${type}?${queryParams.toString()}`
     );
     if (response.success && response.data) {
-      response.data = adaptResponse<BusinessLocation>(
-        response.data,
-        'business_locations'
-      );
+      response.data = adaptResponse<BusinessLocation>(response.data, 'business_locations');
     }
     return response as ApiResponse<PaginatedResponse<BusinessLocation>>;
   },
@@ -61,20 +51,14 @@ export const businessApi = {
   createBusinessLocation: async (
     data: CreateBusinessLocationRequest
   ): Promise<ApiResponse<BusinessLocation>> => {
-    return apiClient.gis.post<BusinessLocation>(
-      '/api/gis/business-locations',
-      data
-    );
+    return apiClient.gis.post<BusinessLocation>('/api/gis/business-locations', data);
   },
 
   updateBusinessLocation: async (
     id: string,
     data: Partial<CreateBusinessLocationRequest>
   ): Promise<ApiResponse<BusinessLocation>> => {
-    return apiClient.gis.put<BusinessLocation>(
-      `/api/gis/business-locations/${id}`,
-      data
-    );
+    return apiClient.gis.put<BusinessLocation>(`/api/gis/business-locations/${id}`, data);
   },
 
   deleteBusinessLocation: async (id: string): Promise<ApiResponse<void>> => {

@@ -1,7 +1,15 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
-import { ArrowRightLeft, Database, Box as BoxIcon, Bell, Settings, Layers } from 'lucide-react';
+import {
+  ArrowRightLeft,
+  Database,
+  Box as BoxIcon,
+  Bell,
+  Settings,
+  Layers,
+  Plug,
+} from 'lucide-react';
 import { integrationApi } from '@/api/integration';
 import { useAppStore } from '@/store';
 import type { SyncStats, IntegrationEvent } from '@/api/integration';
@@ -295,6 +303,10 @@ const IntegrationDashboardPage: React.FC = () => {
   return (
     <PageContainer
       title='集成管理仪表板'
+      headerProps={{
+        pageIcon: <Plug style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+      }}
       padding={false}
       maxWidth={false}
     >

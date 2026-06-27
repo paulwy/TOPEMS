@@ -15,8 +15,8 @@ import {
   DialogActions,
   TextField,
   Chip,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import {
   Play,
   CheckCircle,
@@ -175,25 +175,53 @@ const FlowInstanceListPage: React.FC = () => {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'completed':
-        return <CheckCircle size={16} style={{ color: '#16a34a' }} />;
+        return (
+          <CheckCircle
+            size={16}
+            style={{ color: '#16a34a' }}
+          />
+        );
       case 'rejected':
-        return <XCircle size={16} style={{ color: '#dc2626' }} />;
+        return (
+          <XCircle
+            size={16}
+            style={{ color: '#dc2626' }}
+          />
+        );
       case 'running':
-        return <Play size={16} style={{ color: '#1e40af' }} />;
+        return (
+          <Play
+            size={16}
+            style={{ color: '#1e40af' }}
+          />
+        );
       case 'pending':
-        return <Clock size={16} style={{ color: '#ca8a04' }} />;
+        return (
+          <Clock
+            size={16}
+            style={{ color: '#ca8a04' }}
+          />
+        );
       default:
-        return <AlertCircle size={16} style={{ color: '#6b7280' }} />;
+        return (
+          <AlertCircle
+            size={16}
+            style={{ color: '#6b7280' }}
+          />
+        );
     }
   };
 
-  const statusCounts = useMemo(() => ({
-    all: instances.length,
-    running: instances.filter((i) => i.status === 'running').length,
-    pending: instances.filter((i) => i.status === 'pending').length,
-    completed: instances.filter((i) => i.status === 'completed').length,
-    rejected: instances.filter((i) => i.status === 'rejected').length,
-  }), [instances]);
+  const statusCounts = useMemo(
+    () => ({
+      all: instances.length,
+      running: instances.filter((i) => i.status === 'running').length,
+      pending: instances.filter((i) => i.status === 'pending').length,
+      completed: instances.filter((i) => i.status === 'completed').length,
+      rejected: instances.filter((i) => i.status === 'rejected').length,
+    }),
+    [instances]
+  );
 
   const columns = useMemo<ColumnDef<WorkflowInstance>[]>(
     () => [
@@ -213,7 +241,11 @@ const FlowInstanceListPage: React.FC = () => {
         render: (row) => {
           const workflow = workflows.find((w) => w.id === row.workflow_id);
           return (
-            <Stack direction='row' spacing={0.5} sx={{ alignItems: 'center' }}>
+            <Stack
+              direction='row'
+              spacing={0.5}
+              sx={{ alignItems: 'center' }}
+            >
               <FileText size={14} />
               <Typography variant='body2'>{workflow?.name || '未知'}</Typography>
             </Stack>
@@ -227,7 +259,11 @@ const FlowInstanceListPage: React.FC = () => {
         render: (row) => {
           const status = row.status;
           return (
-            <Stack direction='row' spacing={0.5} sx={{ alignItems: 'center' }}>
+            <Stack
+              direction='row'
+              spacing={0.5}
+              sx={{ alignItems: 'center' }}
+            >
               {getStatusIcon(status)}
               <Chip
                 size='small'
@@ -245,9 +281,16 @@ const FlowInstanceListPage: React.FC = () => {
         width: 120,
         render: (row) =>
           row.current_node ? (
-            <Stack direction='row' spacing={0.5} sx={{ alignItems: 'center' }}>
+            <Stack
+              direction='row'
+              spacing={0.5}
+              sx={{ alignItems: 'center' }}
+            >
               <Users size={14} />
-              <Typography variant='body2' color='text.secondary'>
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
                 {row.current_node}
               </Typography>
             </Stack>
@@ -261,13 +304,16 @@ const FlowInstanceListPage: React.FC = () => {
         width: 180,
         sortable: true,
         render: (row) => (
-          <Typography variant='body2' color='text.secondary'>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             {new Date(row.created_at).toLocaleString()}
           </Typography>
         ),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [workflows]
   );
 
@@ -305,37 +351,46 @@ const FlowInstanceListPage: React.FC = () => {
     },
   ];
 
-  const headerContent = useMemo(() => (
-    <Box
-      sx={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(5, 1fr)',
-        gap: 2,
-        mb: 3,
-      }}
-    >
-      {Object.entries(statusCounts).map(([status, count]) => (
-        <Card
-          key={status}
-          sx={{
-            cursor: 'pointer',
-            border: statusFilter === status ? 2 : 0,
-            borderColor: 'primary.main',
-          }}
-          onClick={() => setStatusFilter(status)}
-        >
-          <CardContent sx={{ p: 2 }}>
-            <Typography variant='h4' sx={{ fontWeight: 700 }}>
-              {count}
-            </Typography>
-            <Typography variant='body2' color='text.secondary'>
-              {status === 'all' ? '全部' : getStatusText(status)}
-            </Typography>
-          </CardContent>
-        </Card>
-      ))}
-    </Box>
-  ), [statusCounts, statusFilter]);
+  const headerContent = useMemo(
+    () => (
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(5, 1fr)',
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        {Object.entries(statusCounts).map(([status, count]) => (
+          <Card
+            key={status}
+            sx={{
+              cursor: 'pointer',
+              border: statusFilter === status ? 2 : 0,
+              borderColor: 'primary.main',
+            }}
+            onClick={() => setStatusFilter(status)}
+          >
+            <CardContent sx={{ p: 2 }}>
+              <Typography
+                variant='h4'
+                sx={{ fontWeight: 700 }}
+              >
+                {count}
+              </Typography>
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
+                {status === 'all' ? '全部' : getStatusText(status)}
+              </Typography>
+            </CardContent>
+          </Card>
+        ))}
+      </Box>
+    ),
+    [statusCounts, statusFilter]
+  );
 
   const actions = [
     {
@@ -375,8 +430,14 @@ const FlowInstanceListPage: React.FC = () => {
       >
         <DialogTitle>启动工作流实例</DialogTitle>
         <DialogContent>
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            <FormControl fullWidth size='small'>
+          <Stack
+            spacing={2}
+            sx={{ pt: 1 }}
+          >
+            <FormControl
+              fullWidth
+              size='small'
+            >
               <InputLabel>选择工作流 *</InputLabel>
               <Select
                 value={createFormData.workflow_id}
@@ -389,7 +450,10 @@ const FlowInstanceListPage: React.FC = () => {
                 }
               >
                 {workflows.map((w) => (
-                  <MenuItem key={w.id} value={w.id}>
+                  <MenuItem
+                    key={w.id}
+                    value={w.id}
+                  >
                     {w.name}
                   </MenuItem>
                 ))}
@@ -411,7 +475,10 @@ const FlowInstanceListPage: React.FC = () => {
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button variant='contained' onClick={() => setShowCreateModal(false)}>
+          <Button
+            variant='contained'
+            onClick={() => setShowCreateModal(false)}
+          >
             取消
           </Button>
           <Button
@@ -420,7 +487,10 @@ const FlowInstanceListPage: React.FC = () => {
             disabled={creating || !createFormData.workflow_id}
             startIcon={
               creating ? (
-                <Loader2 size={16} className='animate-spin' />
+                <Loader2
+                  size={16}
+                  className='animate-spin'
+                />
               ) : undefined
             }
           >

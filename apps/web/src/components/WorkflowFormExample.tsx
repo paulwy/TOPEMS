@@ -8,8 +8,8 @@ import {
   Box,
   Switch,
   FormControlLabel,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useAppStore } from '@/store';

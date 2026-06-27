@@ -32,11 +32,10 @@ import {
   User as UserIcon,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { MobileLayout } from '@/components/mobile';
-import { PullToRefresh } from '@/components/mobile';
-import { MobileSkeleton } from '@/components/mobile';
+import { MobileLayout, PullToRefresh, MobileSkeleton, MobileCard } from '@/components/mobile';
 import { SwipeAction, type SwipeActionItem } from '@/components/mobile';
-import { MobileCard } from '@/components/mobile';
+import { mobileApi } from '@/api/mobile';
+import { apiLogger } from '@/utils/logger';
 
 interface Task {
   id: string;
@@ -49,28 +48,35 @@ interface Task {
   tag: string;
 }
 
-const generateMockTasks = (count: number, offset: number = 0): Task[] => {
-  const statuses: Task['status'][] = ['pending', 'in_progress', 'completed', 'paused'];
-  const priorities: Task['priority'][] = ['high', 'medium', 'low'];
-  const tags = ['生产', '质量', '设备', '仓储', '人事', '采购'];
-
-  return Array.from({ length: count }).map((_, index) => {
-    const id = offset + index + 1;
-    const status = statuses[Math.floor(Math.random() * statuses.length)];
-    const priority = priorities[Math.floor(Math.random() * priorities.length)];
-    const tag = tags[Math.floor(Math.random() * tags.length)];
-
-    return {
-      id: `TASK-${id.toString().padStart(4, '0')}`,
-      title: `${tag}任务 ${id} - ${['设备巡检', '质量检测', '物料盘点', '订单处理', '人员培训'][index % 5]}`,
-      description: `这是一个${tag}相关的任务描述，需要在指定时间内完成。任务包含多个步骤和检查点。`,
-      status,
-      priority,
-      assignee: ['张三', '李四', '王五', '赵六'][index % 4],
-      dueDate: `2024-06-${(15 + (index % 15)).toString().padStart(2, '0')}`,
-      tag,
-    };
-  });
+const mapApiTaskToTask = (apiTask: any): Task => {
+  const statusMap: Record<string, Task['status']> = {
+    pending: 'pending',
+    待办: 'pending',
+    in_progress: 'in_progress',
+    进行中: 'in_progress',
+    completed: 'completed',
+    已完成: 'completed',
+    paused: 'paused',
+    已暂停: 'paused',
+  };
+  const priorityMap: Record<string, Task['priority']> = {
+    high: 'high',
+    高: 'high',
+    medium: 'medium',
+    中: 'medium',
+    low: 'low',
+    低: 'low',
+  };
+  return {
+    id: apiTask.id || String(apiTask.task_no || apiTask.id),
+    title: apiTask.title || apiTask.task_name || `任务 ${apiTask.id}`,
+    description: apiTask.description || '',
+    status: statusMap[apiTask.status] || 'pending',
+    priority: priorityMap[apiTask.priority] || 'medium',
+    assignee: apiTask.assignee || apiTask.assigned_to_name || '未知',
+    dueDate: apiTask.due_date ? new Date(apiTask.due_date).toLocaleDateString('zh-CN') : '',
+    tag: apiTask.task_type || apiTask.tag || '任务',
+  };
 };
 
 const MobileTaskListPage: React.FC = () => {
@@ -88,33 +94,57 @@ const MobileTaskListPage: React.FC = () => {
 
   const tabs = ['全部', '待办', '进行中', '已完成'];
 
-  const loadTasks = useCallback(async (reset: boolean = false) => {
-    if (reset) {
-      setLoading(true);
-      currentPage.current = 1;
-      setHasMore(true);
-    } else {
-      setLoadingMore(true);
-    }
+  const loadTasks = useCallback(
+    async (reset: boolean = false) => {
+      if (reset) {
+        setLoading(true);
+        currentPage.current = 1;
+        setHasMore(true);
+      } else {
+        setLoadingMore(true);
+      }
 
-    await new Promise((resolve) => setTimeout(resolve, 800));
+      try {
+        const response = await mobileApi.listMobileTasks({
+          page: currentPage.current,
+          page_size: pageSize,
+        });
+        if (response.success && response.data) {
+          const data = response.data as any;
+          const apiTasks = Array.isArray(data) ? data : data.items || [];
+          const newTasks = apiTasks.map(mapApiTaskToTask);
 
-    const newTasks = generateMockTasks(pageSize, reset ? 0 : (currentPage.current - 1) * pageSize);
+          if (reset) {
+            setTasks(newTasks);
+          } else {
+            setTasks((prev) => [...prev, ...newTasks]);
+          }
 
-    if (reset) {
-      setTasks(newTasks);
-    } else {
-      setTasks((prev) => [...prev, ...newTasks]);
-    }
-
-    if (currentPage.current >= 5) {
-      setHasMore(false);
-    }
-
-    currentPage.current += 1;
-    setLoading(false);
-    setLoadingMore(false);
-  }, []);
+          const total = data.total || apiTasks.length;
+          const currentTotal = reset ? newTasks.length : tasks.length + newTasks.length;
+          if (currentTotal >= total) {
+            setHasMore(false);
+          }
+          currentPage.current += 1;
+        } else {
+          if (reset) {
+            setTasks([]);
+          }
+          setHasMore(false);
+        }
+      } catch (err) {
+        apiLogger.error('加载任务列表失败:', err);
+        if (reset) {
+          setTasks([]);
+        }
+        setHasMore(false);
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
+      }
+    },
+    [tasks.length]
+  );
 
   useEffect(() => {
     loadTasks(true);
@@ -144,13 +174,29 @@ const MobileTaskListPage: React.FC = () => {
   const getStatusConfig = (status: Task['status']) => {
     switch (status) {
       case 'pending':
-        return { label: '待办', color: 'warning' as const, icon: <Clock style={{ width: 14, height: 14 }} /> };
+        return {
+          label: '待办',
+          color: 'warning' as const,
+          icon: <Clock style={{ width: 14, height: 14 }} />,
+        };
       case 'in_progress':
-        return { label: '进行中', color: 'primary' as const, icon: <ListTodo style={{ width: 14, height: 14 }} /> };
+        return {
+          label: '进行中',
+          color: 'primary' as const,
+          icon: <ListTodo style={{ width: 14, height: 14 }} />,
+        };
       case 'completed':
-        return { label: '已完成', color: 'success' as const, icon: <CheckCircle2 style={{ width: 14, height: 14 }} /> };
+        return {
+          label: '已完成',
+          color: 'success' as const,
+          icon: <CheckCircle2 style={{ width: 14, height: 14 }} />,
+        };
       case 'paused':
-        return { label: '已暂停', color: 'default' as const, icon: <PauseCircle style={{ width: 14, height: 14 }} /> };
+        return {
+          label: '已暂停',
+          color: 'default' as const,
+          icon: <PauseCircle style={{ width: 14, height: 14 }} />,
+        };
     }
   };
 
@@ -214,25 +260,32 @@ const MobileTaskListPage: React.FC = () => {
     }
   };
 
-  const filteredTasks = tasks.filter((task) => {
-    if (activeTab === 0) return true;
-    if (activeTab === 1) return task.status === 'pending';
-    if (activeTab === 2) return task.status === 'in_progress';
-    if (activeTab === 3) return task.status === 'completed';
-    return true;
-  }).filter((task) => {
-    if (!searchQuery) return true;
-    return (
-      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      task.id.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  });
+  const filteredTasks = tasks
+    .filter((task) => {
+      if (activeTab === 0) return true;
+      if (activeTab === 1) return task.status === 'pending';
+      if (activeTab === 2) return task.status === 'in_progress';
+      if (activeTab === 3) return task.status === 'completed';
+      return true;
+    })
+    .filter((task) => {
+      if (!searchQuery) return true;
+      return (
+        task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        task.id.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    });
 
   const bottomTabs = [
     { id: 'home', label: '首页', icon: <Home style={{ width: 22, height: 22 }} /> },
     { id: 'tasks', label: '任务', icon: <ListTodo style={{ width: 22, height: 22 }} /> },
     { id: 'scan', label: '扫码', icon: <ScanLine style={{ width: 22, height: 22 }} /> },
-    { id: 'approval', label: '审批', icon: <CheckSquare style={{ width: 22, height: 22 }} />, badge: 3 },
+    {
+      id: 'approval',
+      label: '审批',
+      icon: <CheckSquare style={{ width: 22, height: 22 }} />,
+      badge: 3,
+    },
     { id: 'profile', label: '我的', icon: <User style={{ width: 22, height: 22 }} /> },
   ];
 
@@ -300,13 +353,19 @@ const MobileTaskListPage: React.FC = () => {
         }}
       >
         {tabs.map((tab, index) => (
-          <Tab key={index} label={tab} />
+          <Tab
+            key={index}
+            label={tab}
+          />
         ))}
       </Tabs>
 
       <PullToRefresh onRefresh={handleRefresh}>
         {loading ? (
-          <MobileSkeleton type='list' count={8} />
+          <MobileSkeleton
+            type='list'
+            count={8}
+          />
         ) : filteredTasks.length === 0 ? (
           <Box
             sx={{
@@ -332,10 +391,17 @@ const MobileTaskListPage: React.FC = () => {
             >
               <ListTodo style={{ width: 32, height: 32, color: 'text.secondary' }} />
             </Box>
-            <Typography variant='subtitle1' sx={{ mb: 1, fontWeight: 500 }}>
+            <Typography
+              variant='subtitle1'
+              sx={{ mb: 1, fontWeight: 500 }}
+            >
               暂无任务
             </Typography>
-            <Typography variant='body2' color='text.secondary' sx={{ textAlign: 'center' }}>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{ textAlign: 'center' }}
+            >
               {searchQuery ? '没有找到匹配的任务' : '当前分类下暂无任务'}
             </Typography>
           </Box>
@@ -374,7 +440,14 @@ const MobileTaskListPage: React.FC = () => {
                             >
                               {task.title}
                             </Typography>
-                            <ChevronRight style={{ width: 18, height: 18, color: 'text.secondary', flexShrink: 0 }} />
+                            <ChevronRight
+                              style={{
+                                width: 18,
+                                height: 18,
+                                color: 'text.secondary',
+                                flexShrink: 0,
+                              }}
+                            />
                           </Box>
                         }
                         secondary={
@@ -416,14 +489,24 @@ const MobileTaskListPage: React.FC = () => {
                             </Box>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                <UserIcon style={{ width: 14, height: 14, color: 'text.secondary' }} />
-                                <Typography variant='caption' color='text.secondary'>
+                                <UserIcon
+                                  style={{ width: 14, height: 14, color: 'text.secondary' }}
+                                />
+                                <Typography
+                                  variant='caption'
+                                  color='text.secondary'
+                                >
                                   {task.assignee}
                                 </Typography>
                               </Box>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                <Calendar style={{ width: 14, height: 14, color: 'text.secondary' }} />
-                                <Typography variant='caption' color='text.secondary'>
+                                <Calendar
+                                  style={{ width: 14, height: 14, color: 'text.secondary' }}
+                                />
+                                <Typography
+                                  variant='caption'
+                                  color='text.secondary'
+                                >
                                   {task.dueDate}
                                 </Typography>
                               </Box>
@@ -441,17 +524,29 @@ const MobileTaskListPage: React.FC = () => {
           </List>
         )}
 
-        <Box ref={loadMoreRef} sx={{ py: 3, display: 'flex', justifyContent: 'center' }}>
+        <Box
+          ref={loadMoreRef}
+          sx={{ py: 3, display: 'flex', justifyContent: 'center' }}
+        >
           {loadingMore && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <CircularProgress size={20} thickness={3} />
-              <Typography variant='body2' color='text.secondary'>
+              <CircularProgress
+                size={20}
+                thickness={3}
+              />
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
                 加载更多...
               </Typography>
             </Box>
           )}
           {!hasMore && !loading && filteredTasks.length > 0 && (
-            <Typography variant='caption' color='text.secondary'>
+            <Typography
+              variant='caption'
+              color='text.secondary'
+            >
               没有更多了
             </Typography>
           )}

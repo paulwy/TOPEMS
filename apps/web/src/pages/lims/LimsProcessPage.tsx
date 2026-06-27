@@ -10,9 +10,9 @@ import {
   DialogActions,
   Avatar,
   Stack,
+  Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import { Button } from '@mui/material';
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { ClipboardList, ChevronRight, FileText, Play, Clock, CheckCircle, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -411,10 +411,13 @@ const LimsProcessPage: React.FC = () => {
   }
 
   return (
-    <PageContainer title="检验流程" subtitle="Inspection Processes">
+    <PageContainer
+      title='检验流程'
+      subtitle='Inspection Processes'
+    >
       <ListPageTemplate
-        title=""
-        subtitle=""
+        title=''
+        subtitle=''
         backButton={{
           onClick: () => navigate('/dashboard'),
         }}

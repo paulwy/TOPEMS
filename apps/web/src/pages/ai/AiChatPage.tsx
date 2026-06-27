@@ -33,6 +33,7 @@ import {
   ChevronRight,
   X,
   AlertCircle,
+  Zap,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { aiApi, type QAHistoryItem } from '../../api/ai';
@@ -323,7 +324,15 @@ export const AiChatPage: React.FC = () => {
   };
 
   return (
-    <PageContainer padding={false} maxWidth={false}>
+    <PageContainer
+      title='AI 助手'
+      padding={false}
+      maxWidth={false}
+      headerProps={{
+        pageIcon: <Zap style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+      }}
+    >
       <Box
         sx={{
           display: 'flex',
@@ -331,699 +340,704 @@ export const AiChatPage: React.FC = () => {
           backgroundColor: '#f5f7fa',
         }}
       >
-      <Box
-        sx={{
-          width: 360,
-          backgroundColor: 'white',
-          borderRight: '1px solid grey.200',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
         <Box
           sx={{
-            p: 3,
-            background: 'linear-gradient(135deg, primary.main 0%, secondary.main 100%)',
-            color: 'white',
+            width: 360,
+            backgroundColor: 'white',
+            borderRight: '1px solid grey.200',
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                borderRadius: 1,
-                backgroundColor: 'rgba(255,255,255,0.2)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Bot sx={{ width: 24, height: 24 }} />
-            </Box>
-            <Box>
-              <Typography
-                variant='h6'
-                sx={{ fontWeight: 600 }}
-              >
-                TOPEMS AI 助手
-              </Typography>
-              <Typography
-                variant='caption'
-                sx={{ opacity: 0.9 }}
-              >
-                智能问答与数据分析
-              </Typography>
-            </Box>
-          </Box>
-        </Box>
-
-        <Box sx={{ display: 'flex', borderBottom: '1px solid grey.200' }}>
-          <Button
-            onClick={() => setActiveTab('chat')}
+          <Box
             sx={{
-              flex: 1,
-              py: 2,
-              borderBottom: `2px solid ${activeTab === 'chat' ? 'primary.main' : 'transparent'}`,
-              color: activeTab === 'chat' ? 'primary.main' : 'text.secondary',
-              fontWeight: activeTab === 'chat' ? 600 : 400,
+              p: 3,
+              background: 'linear-gradient(135deg, primary.main 0%, secondary.main 100%)',
+              color: 'white',
             }}
           >
-            <MessageSquare sx={{ width: 16, height: 16, mr: 1 }} />
-            对话
-          </Button>
-          <Button
-            onClick={() => setActiveTab('history')}
-            sx={{
-              flex: 1,
-              py: 2,
-              borderBottom: `2px solid ${activeTab === 'history' ? 'primary.main' : 'transparent'}`,
-              color: activeTab === 'history' ? 'primary.main' : 'text.secondary',
-              fontWeight: activeTab === 'history' ? 600 : 400,
-            }}
-          >
-            <History sx={{ width: 16, height: 16, mr: 1 }} />
-            历史记录
-          </Button>
-        </Box>
-
-        {activeTab === 'history' && (
-          <Box sx={{ p: 2, borderBottom: '1px solid grey.200' }}>
-            <TextField
-              fullWidth
-              size='small'
-              placeholder='搜索历史记录...'
-              value={searchQuery}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
-              }}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <Search sx={{ width: 16, height: 16, mr: 1, color: 'text.disabled' }} />
-                  ),
-                },
-              }}
-            />
-          </Box>
-        )}
-
-        <Box sx={{ flex: 1, overflowY: 'auto', p: 2 }}>
-          {activeTab === 'chat' ? (
-            <Box>
-              <Typography
-                variant='caption'
-                color='text.secondary'
-                sx={{ mb: 2, display: 'block' }}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box
+                sx={{
+                  width: 40,
+                  height: 40,
+                  borderRadius: 1,
+                  backgroundColor: 'rgba(255,255,255,0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
               >
-                💡 试试问这些问题
-              </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                <Chip
-                  label='如何创建入库订单？'
-                  size='small'
-                  onClick={() => handleFollowUp('如何创建入库订单？')}
-                  sx={{ cursor: 'pointer' }}
-                />
-                <Chip
-                  label='库存预警如何设置？'
-                  size='small'
-                  onClick={() => handleFollowUp('库存预警如何设置？')}
-                  sx={{ cursor: 'pointer' }}
-                />
-                <Chip
-                  label='什么是安全库存？'
-                  size='small'
-                  onClick={() => handleFollowUp('什么是安全库存？')}
-                  sx={{ cursor: 'pointer' }}
-                />
-                <Chip
-                  label='库存盘点流程'
-                  size='small'
-                  onClick={() => handleFollowUp('库存盘点流程是什么？')}
-                  sx={{ cursor: 'pointer' }}
-                />
+                <Bot sx={{ width: 24, height: 24 }} />
+              </Box>
+              <Box>
+                <Typography
+                  variant='h6'
+                  sx={{ fontWeight: 600 }}
+                >
+                  TOPEMS AI 助手
+                </Typography>
+                <Typography
+                  variant='caption'
+                  sx={{ opacity: 0.9 }}
+                >
+                  智能问答与数据分析
+                </Typography>
               </Box>
             </Box>
-          ) : historyLoading ? (
-            <Box
+          </Box>
+
+          <Box sx={{ display: 'flex', borderBottom: '1px solid grey.200' }}>
+            <Button
+              onClick={() => setActiveTab('chat')}
               sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                py: 8,
+                flex: 1,
+                py: 2,
+                borderBottom: `2px solid ${activeTab === 'chat' ? 'primary.main' : 'transparent'}`,
+                color: activeTab === 'chat' ? 'primary.main' : 'text.secondary',
+                fontWeight: activeTab === 'chat' ? 600 : 400,
               }}
             >
-              <CircularProgress size={24} />
-            </Box>
-          ) : history.length === 0 ? (
-            <Box sx={{ textAlign: 'center', py: 8 }}>
-              <History
-                sx={{
-                  width: 48,
-                  height: 48,
-                  color: 'grey.300',
-                  mx: 'auto',
-                  mb: 2,
+              <MessageSquare sx={{ width: 16, height: 16, mr: 1 }} />
+              对话
+            </Button>
+            <Button
+              onClick={() => setActiveTab('history')}
+              sx={{
+                flex: 1,
+                py: 2,
+                borderBottom: `2px solid ${activeTab === 'history' ? 'primary.main' : 'transparent'}`,
+                color: activeTab === 'history' ? 'primary.main' : 'text.secondary',
+                fontWeight: activeTab === 'history' ? 600 : 400,
+              }}
+            >
+              <History sx={{ width: 16, height: 16, mr: 1 }} />
+              历史记录
+            </Button>
+          </Box>
+
+          {activeTab === 'history' && (
+            <Box sx={{ p: 2, borderBottom: '1px solid grey.200' }}>
+              <TextField
+                fullWidth
+                size='small'
+                placeholder='搜索历史记录...'
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setCurrentPage(1);
+                }}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <Search sx={{ width: 16, height: 16, mr: 1, color: 'text.disabled' }} />
+                    ),
+                  },
                 }}
               />
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
-                暂无历史记录
-              </Typography>
             </Box>
-          ) : (
-            <List>
-              {history.map((item) => (
-                <ListItem
-                  key={item.id}
-                  sx={{
-                    p: 2,
-                    mb: 1,
-                    borderRadius: 1,
-                    border: '1px solid grey.200',
-                    cursor: 'pointer',
-                    '&:hover': {
-                      backgroundColor: 'grey.100',
-                      borderColor: 'primary.main',
-                    },
-                  }}
-                  onClick={() => handleHistoryItemClick(item)}
+          )}
+
+          <Box sx={{ flex: 1, overflowY: 'auto', p: 2 }}>
+            {activeTab === 'chat' ? (
+              <Box>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                  sx={{ mb: 2, display: 'block' }}
                 >
-                  <ListItemText
-                    primary={
-                      <Typography
-                        variant='body2'
-                        sx={{ fontWeight: 500, mb: 1 }}
-                        noWrap
-                      >
-                        {item.question}
-                      </Typography>
-                    }
-                    secondary={
-                      <Typography
-                        variant='caption'
-                        color='text.secondary'
-                        noWrap
-                      >
-                        {item.answer.slice(0, 50)}...
-                      </Typography>
-                    }
-                  />
-                  <IconButton
+                  💡 试试问这些问题
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  <Chip
+                    label='如何创建入库订单？'
                     size='small'
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteHistory(item.id);
+                    onClick={() => handleFollowUp('如何创建入库订单？')}
+                    sx={{ cursor: 'pointer' }}
+                  />
+                  <Chip
+                    label='库存预警如何设置？'
+                    size='small'
+                    onClick={() => handleFollowUp('库存预警如何设置？')}
+                    sx={{ cursor: 'pointer' }}
+                  />
+                  <Chip
+                    label='什么是安全库存？'
+                    size='small'
+                    onClick={() => handleFollowUp('什么是安全库存？')}
+                    sx={{ cursor: 'pointer' }}
+                  />
+                  <Chip
+                    label='库存盘点流程'
+                    size='small'
+                    onClick={() => handleFollowUp('库存盘点流程是什么？')}
+                    sx={{ cursor: 'pointer' }}
+                  />
+                </Box>
+              </Box>
+            ) : historyLoading ? (
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  py: 8,
+                }}
+              >
+                <CircularProgress size={24} />
+              </Box>
+            ) : history.length === 0 ? (
+              <Box sx={{ textAlign: 'center', py: 8 }}>
+                <History
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    color: 'grey.300',
+                    mx: 'auto',
+                    mb: 2,
+                  }}
+                />
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  暂无历史记录
+                </Typography>
+              </Box>
+            ) : (
+              <List>
+                {history.map((item) => (
+                  <ListItem
+                    key={item.id}
+                    sx={{
+                      p: 2,
+                      mb: 1,
+                      borderRadius: 1,
+                      border: '1px solid grey.200',
+                      cursor: 'pointer',
+                      '&:hover': {
+                        backgroundColor: 'grey.100',
+                        borderColor: 'primary.main',
+                      },
                     }}
-                    sx={{ color: 'error.main' }}
+                    onClick={() => handleHistoryItemClick(item)}
                   >
-                    <Trash2 sx={{ width: 16, height: 16 }} />
-                  </IconButton>
-                </ListItem>
-              ))}
-            </List>
+                    <ListItemText
+                      primary={
+                        <Typography
+                          variant='body2'
+                          sx={{ fontWeight: 500, mb: 1 }}
+                          noWrap
+                        >
+                          {item.question}
+                        </Typography>
+                      }
+                      secondary={
+                        <Typography
+                          variant='caption'
+                          color='text.secondary'
+                          noWrap
+                        >
+                          {item.answer.slice(0, 50)}...
+                        </Typography>
+                      }
+                    />
+                    <IconButton
+                      size='small'
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteHistory(item.id);
+                      }}
+                      sx={{ color: 'error.main' }}
+                    >
+                      <Trash2 sx={{ width: 16, height: 16 }} />
+                    </IconButton>
+                  </ListItem>
+                ))}
+              </List>
+            )}
+          </Box>
+
+          {activeTab === 'history' && history.length > 0 && (
+            <Box
+              sx={{
+                p: 2,
+                borderTop: '1px solid grey.200',
+                display: 'flex',
+                justifyContent: 'center',
+              }}
+            >
+              <Pagination
+                count={totalPages}
+                page={currentPage}
+                onChange={(_, page) => setCurrentPage(page)}
+                size='small'
+              />
+            </Box>
           )}
         </Box>
 
-        {activeTab === 'history' && history.length > 0 && (
-          <Box
-            sx={{
-              p: 2,
-              borderTop: '1px solid grey.200',
-              display: 'flex',
-              justifyContent: 'center',
-            }}
-          >
-            <Pagination
-              count={totalPages}
-              page={currentPage}
-              onChange={(_, page) => setCurrentPage(page)}
-              size='small'
-            />
-          </Box>
-        )}
-      </Box>
-
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        {activeTab === 'chat' ? (
-          <>
-            <Box
-              sx={{
-                p: 3,
-                backgroundColor: 'white',
-                borderBottom: '1px solid grey.200',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <Typography
-                variant='h6'
-                sx={{ fontWeight: 600 }}
+        <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+          {activeTab === 'chat' ? (
+            <>
+              <Box
+                sx={{
+                  p: 3,
+                  backgroundColor: 'white',
+                  borderBottom: '1px solid grey.200',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
               >
-                智能对话
-              </Typography>
-              <Button
-                size='small'
-                variant='text'
-                onClick={() => setMessages([])}
-              >
-                清空对话
-              </Button>
-            </Box>
-
-            <Box
-              sx={{
-                flex: 1,
-                overflowY: 'auto',
-                p: 4,
-                backgroundColor: '#f5f7fa',
-              }}
-            >
-              {messages.length === 0 ? (
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    height: '100%',
-                  }}
+                <Typography
+                  variant='h6'
+                  sx={{ fontWeight: 600 }}
                 >
-                  <Paper
+                  智能对话
+                </Typography>
+                <Button
+                  size='small'
+                  variant='text'
+                  onClick={() => setMessages([])}
+                >
+                  清空对话
+                </Button>
+              </Box>
+
+              <Box
+                sx={{
+                  flex: 1,
+                  overflowY: 'auto',
+                  p: 4,
+                  backgroundColor: '#f5f7fa',
+                }}
+              >
+                {messages.length === 0 ? (
+                  <Box
                     sx={{
-                      p: 8,
-                      textAlign: 'center',
-                      backgroundColor: 'white',
-                      borderRadius: 2,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      height: '100%',
                     }}
                   >
-                    <Box
+                    <Paper
                       sx={{
-                        width: 80,
-                        height: 80,
-                        borderRadius: '50%',
-                        background: 'linear-gradient(135deg, primary.main 0%, secondary.main 100%)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        mx: 'auto',
-                        mb: 4,
-                      }}
-                    >
-                      <Bot sx={{ width: 40, height: 40, color: 'white' }} />
-                    </Box>
-                    <Typography
-                      variant='h5'
-                      sx={{ fontWeight: 600, mb: 2 }}
-                    >
-                      欢迎使用 TOPEMS AI 助手
-                    </Typography>
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >
-                      我可以帮助您解答关于库存管理、订单处理、业务流程等方面的问题。
-                      您可以直接提问，我会基于知识库为您提供准确的答案。
-                    </Typography>
-                  </Paper>
-                </Box>
-              ) : (
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                  {messages.map((message) => (
-                    <Box
-                      key={message.id}
-                      sx={{
-                        display: 'flex',
-                        gap: 2,
-                        justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start',
+                        p: 8,
+                        textAlign: 'center',
+                        backgroundColor: 'white',
+                        borderRadius: 2,
                       }}
                     >
                       <Box
                         sx={{
-                          width: 36,
-                          height: 36,
+                          width: 80,
+                          height: 80,
                           borderRadius: '50%',
+                          background:
+                            'linear-gradient(135deg, primary.main 0%, secondary.main 100%)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          flexShrink: 0,
-                          backgroundColor: message.role === 'user' ? 'primary.main' : 'grey.200',
+                          mx: 'auto',
+                          mb: 4,
                         }}
                       >
-                        {message.role === 'user' ? (
-                          <User sx={{ width: 18, height: 18, color: 'white' }} />
-                        ) : (
-                          <Bot sx={{ width: 18, height: 18, color: 'text.secondary' }} />
-                        )}
+                        <Bot sx={{ width: 40, height: 40, color: 'white' }} />
                       </Box>
-                      <Paper
+                      <Typography
+                        variant='h5'
+                        sx={{ fontWeight: 600, mb: 2 }}
+                      >
+                        欢迎使用 TOPEMS AI 助手
+                      </Typography>
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
+                        我可以帮助您解答关于库存管理、订单处理、业务流程等方面的问题。
+                        您可以直接提问，我会基于知识库为您提供准确的答案。
+                      </Typography>
+                    </Paper>
+                  </Box>
+                ) : (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                    {messages.map((message) => (
+                      <Box
+                        key={message.id}
                         sx={{
-                          maxWidth: '70%',
-                          p: 3,
-                          borderRadius:
-                            message.role === 'user' ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
-                          backgroundColor: message.role === 'user' ? 'primary.main' : 'white',
-                          color: message.role === 'user' ? 'white' : 'inherit',
+                          display: 'flex',
+                          gap: 2,
+                          justifyContent: message.role === 'user' ? 'flex-end' : 'flex-start',
                         }}
                       >
-                        <Typography variant='body1'>{message.content}</Typography>
+                        <Box
+                          sx={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                            backgroundColor: message.role === 'user' ? 'primary.main' : 'grey.200',
+                          }}
+                        >
+                          {message.role === 'user' ? (
+                            <User sx={{ width: 18, height: 18, color: 'white' }} />
+                          ) : (
+                            <Bot sx={{ width: 18, height: 18, color: 'text.secondary' }} />
+                          )}
+                        </Box>
+                        <Paper
+                          sx={{
+                            maxWidth: '70%',
+                            p: 3,
+                            borderRadius:
+                              message.role === 'user' ? '20px 20px 4px 20px' : '20px 20px 20px 4px',
+                            backgroundColor: message.role === 'user' ? 'primary.main' : 'white',
+                            color: message.role === 'user' ? 'white' : 'inherit',
+                          }}
+                        >
+                          <Typography variant='body1'>{message.content}</Typography>
 
-                        {message.role === 'assistant' && (
-                          <Box
-                            sx={{
-                              mt: 2,
-                              pt: 2,
-                              borderTop: '1px solid grey.200',
-                            }}
-                          >
+                          {message.role === 'assistant' && (
                             <Box
                               sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 2,
-                                flexWrap: 'wrap',
+                                mt: 2,
+                                pt: 2,
+                                borderTop: '1px solid grey.200',
                               }}
                             >
-                              {message.question_type && (
-                                <Chip
-                                  label={
-                                    QUESTION_TYPE_LABELS[message.question_type] ||
-                                    message.question_type
-                                  }
-                                  size='small'
-                                  sx={{
-                                    backgroundColor: 'grey.100',
-                                    color: 'grey.700',
-                                    fontSize: 11,
-                                  }}
-                                />
-                              )}
-                              {message.confidence !== undefined && (
-                                <Chip
-                                  label={`置信度: ${getConfidenceLabel(message.confidence)}`}
-                                  size='small'
-                                  sx={{
-                                    backgroundColor: 'grey.100',
-                                    color:
-                                      CONFIDENCE_COLORS[getConfidenceLevel(message.confidence)],
-                                    fontSize: 11,
-                                  }}
-                                />
-                              )}
-                            </Box>
-
-                            {message.sources && message.sources.length > 0 && (
-                              <Box sx={{ mt: 2 }}>
-                                <Typography
-                                  variant='caption'
-                                  color='text.secondary'
-                                  sx={{ display: 'block', mb: 1 }}
-                                >
-                                  参考来源:
-                                </Typography>
-                                <Box
-                                  sx={{
-                                    display: 'flex',
-                                    flexWrap: 'wrap',
-                                    gap: 1,
-                                  }}
-                                >
-                                  {message.sources.map((source, index) => (
-                                    <Chip
-                                      key={index}
-                                      label={source}
-                                      size='small'
-                                      sx={{
-                                        backgroundColor: 'warning.light',
-                                        color: '#92400e',
-                                        fontSize: 10,
-                                      }}
-                                    />
-                                  ))}
-                                </Box>
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 2,
+                                  flexWrap: 'wrap',
+                                }}
+                              >
+                                {message.question_type && (
+                                  <Chip
+                                    label={
+                                      QUESTION_TYPE_LABELS[message.question_type] ||
+                                      message.question_type
+                                    }
+                                    size='small'
+                                    sx={{
+                                      backgroundColor: 'grey.100',
+                                      color: 'grey.700',
+                                      fontSize: 11,
+                                    }}
+                                  />
+                                )}
+                                {message.confidence !== undefined && (
+                                  <Chip
+                                    label={`置信度: ${getConfidenceLabel(message.confidence)}`}
+                                    size='small'
+                                    sx={{
+                                      backgroundColor: 'grey.100',
+                                      color:
+                                        CONFIDENCE_COLORS[getConfidenceLevel(message.confidence)],
+                                      fontSize: 11,
+                                    }}
+                                  />
+                                )}
                               </Box>
-                            )}
 
-                            {message.follow_up_questions &&
-                              message.follow_up_questions.length > 0 && (
+                              {message.sources && message.sources.length > 0 && (
                                 <Box sx={{ mt: 2 }}>
                                   <Typography
                                     variant='caption'
                                     color='text.secondary'
                                     sx={{ display: 'block', mb: 1 }}
                                   >
-                                    您可能还想了解:
+                                    参考来源:
                                   </Typography>
                                   <Box
                                     sx={{
                                       display: 'flex',
-                                      flexDirection: 'column',
+                                      flexWrap: 'wrap',
                                       gap: 1,
                                     }}
                                   >
-                                    {message.follow_up_questions.map((question, index) => (
-                                      <Button
+                                    {message.sources.map((source, index) => (
+                                      <Chip
                                         key={index}
+                                        label={source}
                                         size='small'
-                                        variant='text'
-                                        onClick={() => handleFollowUp(question)}
                                         sx={{
-                                          justifyContent: 'flex-start',
-                                          color: 'primary.main',
-                                          textTransform: 'none',
-                                          paddingLeft: 0,
+                                          backgroundColor: 'warning.light',
+                                          color: '#92400e',
+                                          fontSize: 10,
                                         }}
-                                      >
-                                        <ChevronRight
-                                          sx={{
-                                            width: 14,
-                                            height: 14,
-                                            mr: 1,
-                                          }}
-                                        />
-                                        {question}
-                                      </Button>
+                                      />
                                     ))}
                                   </Box>
                                 </Box>
                               )}
 
-                            {message.qa_id && (
-                              <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
-                                <Tooltip title='有用'>
-                                  <IconButton
-                                    size='small'
-                                    onClick={() => handleFeedback(message.qa_id!, message.content)}
-                                    sx={{
-                                      color: 'success.dark',
-                                      '&:hover': { backgroundColor: 'success.lighter' },
-                                    }}
-                                  >
-                                    <ThumbsUp sx={{ width: 16, height: 16 }} />
-                                  </IconButton>
-                                </Tooltip>
-                                <Tooltip title='反馈'>
-                                  <Button
-                                    size='small'
-                                    variant='text'
-                                    onClick={() => handleFeedback(message.qa_id!, message.content)}
-                                    sx={{
-                                      textTransform: 'none',
-                                      color: 'text.secondary',
-                                    }}
-                                  >
-                                    反馈
-                                  </Button>
-                                </Tooltip>
-                              </Box>
-                            )}
-                          </Box>
-                        )}
-                      </Paper>
-                    </Box>
-                  ))}
-                  {loading && (
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        gap: 2,
-                        justifyContent: 'flex-start',
-                      }}
-                    >
+                              {message.follow_up_questions &&
+                                message.follow_up_questions.length > 0 && (
+                                  <Box sx={{ mt: 2 }}>
+                                    <Typography
+                                      variant='caption'
+                                      color='text.secondary'
+                                      sx={{ display: 'block', mb: 1 }}
+                                    >
+                                      您可能还想了解:
+                                    </Typography>
+                                    <Box
+                                      sx={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        gap: 1,
+                                      }}
+                                    >
+                                      {message.follow_up_questions.map((question, index) => (
+                                        <Button
+                                          key={index}
+                                          size='small'
+                                          variant='text'
+                                          onClick={() => handleFollowUp(question)}
+                                          sx={{
+                                            justifyContent: 'flex-start',
+                                            color: 'primary.main',
+                                            textTransform: 'none',
+                                            paddingLeft: 0,
+                                          }}
+                                        >
+                                          <ChevronRight
+                                            sx={{
+                                              width: 14,
+                                              height: 14,
+                                              mr: 1,
+                                            }}
+                                          />
+                                          {question}
+                                        </Button>
+                                      ))}
+                                    </Box>
+                                  </Box>
+                                )}
+
+                              {message.qa_id && (
+                                <Box sx={{ mt: 2, display: 'flex', gap: 2 }}>
+                                  <Tooltip title='有用'>
+                                    <IconButton
+                                      size='small'
+                                      onClick={() =>
+                                        handleFeedback(message.qa_id!, message.content)
+                                      }
+                                      sx={{
+                                        color: 'success.dark',
+                                        '&:hover': { backgroundColor: 'success.lighter' },
+                                      }}
+                                    >
+                                      <ThumbsUp sx={{ width: 16, height: 16 }} />
+                                    </IconButton>
+                                  </Tooltip>
+                                  <Tooltip title='反馈'>
+                                    <Button
+                                      size='small'
+                                      variant='text'
+                                      onClick={() =>
+                                        handleFeedback(message.qa_id!, message.content)
+                                      }
+                                      sx={{
+                                        textTransform: 'none',
+                                        color: 'text.secondary',
+                                      }}
+                                    >
+                                      反馈
+                                    </Button>
+                                  </Tooltip>
+                                </Box>
+                              )}
+                            </Box>
+                          )}
+                        </Paper>
+                      </Box>
+                    ))}
+                    {loading && (
                       <Box
                         sx={{
-                          width: 36,
-                          height: 36,
-                          borderRadius: '50%',
-                          backgroundColor: 'grey.200',
                           display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          flexShrink: 0,
-                        }}
-                      >
-                        <Bot sx={{ width: 18, height: 18, color: 'text.secondary' }} />
-                      </Box>
-                      <Paper
-                        sx={{
-                          p: 3,
-                          borderRadius: '20px 20px 20px 4px',
-                          backgroundColor: 'white',
+                          gap: 2,
+                          justifyContent: 'flex-start',
                         }}
                       >
                         <Box
                           sx={{
+                            width: 36,
+                            height: 36,
+                            borderRadius: '50%',
+                            backgroundColor: 'grey.200',
                             display: 'flex',
-                            gap: 1,
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
                           }}
                         >
-                          <CircularProgress size={16} />
-                          <Typography
-                            variant='body2'
-                            color='text.secondary'
-                          >
-                            思考中...
-                          </Typography>
+                          <Bot sx={{ width: 18, height: 18, color: 'text.secondary' }} />
                         </Box>
-                      </Paper>
-                    </Box>
-                  )}
-                  <div ref={messagesEndRef} />
-                </Box>
-              )}
-            </Box>
+                        <Paper
+                          sx={{
+                            p: 3,
+                            borderRadius: '20px 20px 20px 4px',
+                            backgroundColor: 'white',
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              gap: 1,
+                            }}
+                          >
+                            <CircularProgress size={16} />
+                            <Typography
+                              variant='body2'
+                              color='text.secondary'
+                            >
+                              思考中...
+                            </Typography>
+                          </Box>
+                        </Paper>
+                      </Box>
+                    )}
+                    <div ref={messagesEndRef} />
+                  </Box>
+                )}
+              </Box>
 
+              <Box
+                sx={{
+                  p: 3,
+                  backgroundColor: 'white',
+                  borderTop: '1px solid grey.200',
+                }}
+              >
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                  <TextField
+                    fullWidth
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && !loading && handleSend()}
+                    placeholder='输入问题，按回车发送...'
+                    ref={inputRef}
+                    disabled={loading}
+                    slotProps={{
+                      input: {
+                        endAdornment: (
+                          <IconButton
+                            onClick={handleSend}
+                            disabled={loading || !inputValue.trim()}
+                            sx={{ color: 'primary.main' }}
+                          >
+                            <Send sx={{ width: 20, height: 20 }} />
+                          </IconButton>
+                        ),
+                      },
+                    }}
+                  />
+                </Box>
+              </Box>
+            </>
+          ) : (
             <Box
               sx={{
-                p: 3,
-                backgroundColor: 'white',
-                borderTop: '1px solid grey.200',
+                flex: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backgroundColor: '#f5f7fa',
               }}
             >
-              <Box sx={{ display: 'flex', gap: 2 }}>
-                <TextField
-                  fullWidth
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && !loading && handleSend()}
-                  placeholder='输入问题，按回车发送...'
-                  ref={inputRef}
-                  disabled={loading}
-                  slotProps={{
-                    input: {
-                      endAdornment: (
-                        <IconButton
-                          onClick={handleSend}
-                          disabled={loading || !inputValue.trim()}
-                          sx={{ color: 'primary.main' }}
-                        >
-                          <Send sx={{ width: 20, height: 20 }} />
-                        </IconButton>
-                      ),
-                    },
+              <Box sx={{ textAlign: 'center' }}>
+                <MessageSquare
+                  sx={{
+                    width: 64,
+                    height: 64,
+                    color: 'grey.300',
+                    mx: 'auto',
+                    mb: 4,
                   }}
                 />
+                <Typography
+                  variant='h6'
+                  sx={{ fontWeight: 600, mb: 2 }}
+                >
+                  选择历史记录查看详情
+                </Typography>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  从左侧列表选择一条历史记录，在对话界面查看完整内容
+                </Typography>
               </Box>
             </Box>
-          </>
-        ) : (
-          <Box
-            sx={{
-              flex: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backgroundColor: '#f5f7fa',
-            }}
-          >
-            <Box sx={{ textAlign: 'center' }}>
-              <MessageSquare
-                sx={{
-                  width: 64,
-                  height: 64,
-                  color: 'grey.300',
-                  mx: 'auto',
-                  mb: 4,
-                }}
-              />
-              <Typography
-                variant='h6'
-                sx={{ fontWeight: 600, mb: 2 }}
-              >
-                选择历史记录查看详情
-              </Typography>
+          )}
+        </Box>
+
+        <Dialog
+          open={feedbackDialog.open}
+          onClose={() => setFeedbackDialog({ open: false, qaId: '', answer: '' })}
+        >
+          <DialogTitle>评价答案</DialogTitle>
+          <DialogContent>
+            <Box sx={{ mb: 2 }}>
               <Typography
                 variant='body2'
                 color='text.secondary'
+                sx={{ mb: 1 }}
               >
-                从左侧列表选择一条历史记录，在对话界面查看完整内容
+                答案内容:
+              </Typography>
+              <Typography
+                variant='body1'
+                sx={{ fontSize: 14, color: 'grey.700' }}
+              >
+                {feedbackDialog.answer.slice(0, 200)}...
               </Typography>
             </Box>
-          </Box>
-        )}
-      </Box>
-
-      <Dialog
-        open={feedbackDialog.open}
-        onClose={() => setFeedbackDialog({ open: false, qaId: '', answer: '' })}
-      >
-        <DialogTitle>评价答案</DialogTitle>
-        <DialogContent>
-          <Box sx={{ mb: 2 }}>
-            <Typography
-              variant='body2'
-              color='text.secondary'
-              sx={{ mb: 1 }}
-            >
-              答案内容:
-            </Typography>
-            <Typography
-              variant='body1'
-              sx={{ fontSize: 14, color: 'grey.700' }}
-            >
-              {feedbackDialog.answer.slice(0, 200)}...
-            </Typography>
-          </Box>
-          <Box sx={{ mb: 2 }}>
-            <Typography
-              variant='body2'
-              color='text.secondary'
-              sx={{ mb: 2 }}
-            >
-              请评分:
-            </Typography>
-            <Rating
-              value={feedbackRating}
-              onChange={(_, value) => setFeedbackRating(value || 0)}
-              size='large'
+            <Box sx={{ mb: 2 }}>
+              <Typography
+                variant='body2'
+                color='text.secondary'
+                sx={{ mb: 2 }}
+              >
+                请评分:
+              </Typography>
+              <Rating
+                value={feedbackRating}
+                onChange={(_, value) => setFeedbackRating(value || 0)}
+                size='large'
+              />
+            </Box>
+            <TextField
+              fullWidth
+              multiline
+              rows={3}
+              label='反馈意见（可选）'
+              value={feedbackText}
+              onChange={(e) => setFeedbackText(e.target.value)}
+              placeholder='请描述您对答案的评价或建议...'
             />
-          </Box>
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
-            label='反馈意见（可选）'
-            value={feedbackText}
-            onChange={(e) => setFeedbackText(e.target.value)}
-            placeholder='请描述您对答案的评价或建议...'
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setFeedbackDialog({ open: false, qaId: '', answer: '' })}>
-            取消
-          </Button>
-          <Button
-            onClick={submitFeedback}
-            variant='contained'
-          >
-            提交反馈
-          </Button>
-        </DialogActions>
-      </Dialog>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setFeedbackDialog({ open: false, qaId: '', answer: '' })}>
+              取消
+            </Button>
+            <Button
+              onClick={submitFeedback}
+              variant='contained'
+            >
+              提交反馈
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </PageContainer>
   );

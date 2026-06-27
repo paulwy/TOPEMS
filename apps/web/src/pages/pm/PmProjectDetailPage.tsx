@@ -82,12 +82,11 @@ const PmProjectDetailPage: React.FC = () => {
     setLoading(true);
     setError('');
     try {
-      const [projectResponse, phasesResponse, milestonesResponse] =
-        await Promise.all([
-          pmApi.projects.get(projectId),
-          pmApi.phases.list(projectId),
-          pmApi.milestones.list(projectId),
-        ]);
+      const [projectResponse, phasesResponse, milestonesResponse] = await Promise.all([
+        pmApi.projects.get(projectId),
+        pmApi.phases.list(projectId),
+        pmApi.milestones.list(projectId),
+      ]);
 
       if (projectResponse.success && projectResponse.data) {
         setProject(projectResponse.data);
@@ -175,7 +174,9 @@ const PmProjectDetailPage: React.FC = () => {
               }}
             >
               <Typography sx={{ color: 'grey.500' }}>项目类型</Typography>
-              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>{project.project_type}</Typography>
+              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
+                {project.project_type}
+              </Typography>
             </Box>
             <Box
               sx={{
@@ -188,7 +189,9 @@ const PmProjectDetailPage: React.FC = () => {
               }}
             >
               <Typography sx={{ color: 'grey.500' }}>项目负责人</Typography>
-              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>{project.leader || '-'}</Typography>
+              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
+                {project.leader || '-'}
+              </Typography>
             </Box>
             <Box
               sx={{
@@ -201,7 +204,9 @@ const PmProjectDetailPage: React.FC = () => {
               }}
             >
               <Typography sx={{ color: 'grey.500' }}>开始日期</Typography>
-              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>{formatDate(project.start_date)}</Typography>
+              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
+                {formatDate(project.start_date)}
+              </Typography>
             </Box>
             <Box
               sx={{
@@ -214,7 +219,9 @@ const PmProjectDetailPage: React.FC = () => {
               }}
             >
               <Typography sx={{ color: 'grey.500' }}>结束日期</Typography>
-              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>{formatDate(project.end_date)}</Typography>
+              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
+                {formatDate(project.end_date)}
+              </Typography>
             </Box>
             <Box
               sx={{
@@ -228,7 +235,13 @@ const PmProjectDetailPage: React.FC = () => {
               <StatusBadge
                 status={project.risk_level || 'low'}
                 label={RISK_LABELS[project.risk_level || ''] || '未评估'}
-                color={project.risk_level === 'high' ? 'error' : project.risk_level === 'medium' ? 'warning' : 'success'}
+                color={
+                  project.risk_level === 'high'
+                    ? 'error'
+                    : project.risk_level === 'medium'
+                      ? 'warning'
+                      : 'success'
+                }
               />
             </Box>
           </CardContent>
@@ -248,10 +261,23 @@ const PmProjectDetailPage: React.FC = () => {
                   mb: 1,
                 }}
               >
-                <Typography variant='body2' sx={{ color: 'grey.600' }}>整体进度</Typography>
-                <Typography variant='body2' sx={{ fontWeight: 500, color: 'grey.900' }}>{project.progress}%</Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.600' }}
+                >
+                  整体进度
+                </Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ fontWeight: 500, color: 'grey.900' }}
+                >
+                  {project.progress}%
+                </Typography>
               </Box>
-              <LinearProgress value={project.progress} sx={{ height: 12 }} />
+              <LinearProgress
+                value={project.progress}
+                sx={{ height: 12 }}
+              />
             </Box>
             <Box>
               <Box
@@ -262,8 +288,16 @@ const PmProjectDetailPage: React.FC = () => {
                   mb: 1,
                 }}
               >
-                <Typography variant='body2' sx={{ color: 'grey.600' }}>阶段进度</Typography>
-                <Typography variant='body2' sx={{ fontWeight: 500, color: 'grey.900' }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.600' }}
+                >
+                  阶段进度
+                </Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ fontWeight: 500, color: 'grey.900' }}
+                >
                   {phases.length > 0 ? Math.round((completedPhases / phases.length) * 100) : 0}%
                 </Typography>
               </Box>
@@ -281,13 +315,28 @@ const PmProjectDetailPage: React.FC = () => {
                   mb: 1,
                 }}
               >
-                <Typography variant='body2' sx={{ color: 'grey.600' }}>里程碑完成</Typography>
-                <Typography variant='body2' sx={{ fontWeight: 500, color: 'grey.900' }}>
-                  {milestones.length > 0 ? Math.round((completedMilestones / milestones.length) * 100) : 0}%
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.600' }}
+                >
+                  里程碑完成
+                </Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ fontWeight: 500, color: 'grey.900' }}
+                >
+                  {milestones.length > 0
+                    ? Math.round((completedMilestones / milestones.length) * 100)
+                    : 0}
+                  %
                 </Typography>
               </Box>
               <LinearProgress
-                value={milestones.length > 0 ? Math.round((completedMilestones / milestones.length) * 100) : 0}
+                value={
+                  milestones.length > 0
+                    ? Math.round((completedMilestones / milestones.length) * 100)
+                    : 0
+                }
                 sx={{ height: 12 }}
               />
             </Box>
@@ -297,155 +346,262 @@ const PmProjectDetailPage: React.FC = () => {
     ];
   }, [project, phases, milestones, completedPhases, completedMilestones]);
 
-  const phasesContent = useMemo(() => (
-    <Card>
-      <CardHeader
-        sx={{
-          pb: 2,
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <Typography variant='h6' sx={{ fontSize: '1.125rem' }}>阶段列表</Typography>
-        <ActionButton label='添加阶段' variant='secondary' size='small' />
-      </CardHeader>
-      <CardContent sx={{ p: 0 }}>
-        <Box sx={{ overflowX: 'auto' }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ width: 200 }}>阶段名称</TableCell>
-                <TableCell>状态</TableCell>
-                <TableCell sx={{ width: 180 }}>进度</TableCell>
-                <TableCell sx={{ width: 150 }}>时间</TableCell>
-                <TableCell sx={{ width: 120 }}>操作</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {phases.length === 0 ? (
+  const phasesContent = useMemo(
+    () => (
+      <Card>
+        <CardHeader
+          sx={{
+            pb: 2,
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Typography
+            variant='h6'
+            sx={{ fontSize: '1.125rem' }}
+          >
+            阶段列表
+          </Typography>
+          <ActionButton
+            label='添加阶段'
+            variant='secondary'
+            size='small'
+          />
+        </CardHeader>
+        <CardContent sx={{ p: 0 }}>
+          <Box sx={{ overflowX: 'auto' }}>
+            <Table>
+              <TableHead>
                 <TableRow>
-                  <TableCell colSpan={5} sx={{ textAlign: 'center', py: 6, color: 'grey.500' }}>暂无阶段数据</TableCell>
+                  <TableCell sx={{ width: 200 }}>阶段名称</TableCell>
+                  <TableCell>状态</TableCell>
+                  <TableCell sx={{ width: 180 }}>进度</TableCell>
+                  <TableCell sx={{ width: 150 }}>时间</TableCell>
+                  <TableCell sx={{ width: 120 }}>操作</TableCell>
                 </TableRow>
-              ) : (
-                phases.map((phase) => (
-                  <TableRow key={phase.id} sx={{ '&:hover': { bgcolor: 'grey.50' } }}>
-                    <TableCell>
-                      <Box>
-                        <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>{phase.name}</Typography>
-                        {phase.description && (
-                          <Typography variant='body2' sx={{ color: 'grey.500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {phase.description}
+              </TableHead>
+              <TableBody>
+                {phases.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      sx={{ textAlign: 'center', py: 6, color: 'grey.500' }}
+                    >
+                      暂无阶段数据
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  phases.map((phase) => (
+                    <TableRow
+                      key={phase.id}
+                      sx={{ '&:hover': { bgcolor: 'grey.50' } }}
+                    >
+                      <TableCell>
+                        <Box>
+                          <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
+                            {phase.name}
                           </Typography>
-                        )}
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge
-                        status={phase.status}
-                        label={phase.status === 'completed' ? '已完成' : phase.status === 'active' ? '进行中' : '未开始'}
-                        color={phase.status === 'completed' ? 'success' : phase.status === 'active' ? 'primary' : 'default'}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <Box sx={{ width: 96 }}>
-                          <LinearProgress value={phase.progress} sx={{ height: 8 }} />
+                          {phase.description && (
+                            <Typography
+                              variant='body2'
+                              sx={{
+                                color: 'grey.500',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {phase.description}
+                            </Typography>
+                          )}
                         </Box>
-                        <Typography variant='body2' sx={{ color: 'grey.600' }}>{phase.progress}%</Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
-                      <Box>
-                        <Typography variant='body2'>{formatDate(phase.start_date)}</Typography>
-                        <Typography variant='body2' sx={{ color: 'grey.400', fontSize: '0.75rem' }}>
-                          至 {formatDate(phase.end_date)}
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <ActionButton label='编辑' icon={<Edit size={16} />} variant='text' size='small' />
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </Box>
-      </CardContent>
-    </Card>
-  ), [phases]);
-
-  const milestonesContent = useMemo(() => (
-    <Card>
-      <CardHeader
-        sx={{
-          pb: 2,
-          display: 'flex',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <Typography variant='h6' sx={{ fontSize: '1.125rem' }}>里程碑列表</Typography>
-        <ActionButton label='添加里程碑' variant='secondary' size='small' />
-      </CardHeader>
-      <CardContent sx={{ p: 0 }}>
-        <Box sx={{ overflowX: 'auto' }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ width: 200 }}>里程碑名称</TableCell>
-                <TableCell sx={{ width: 150 }}>目标日期</TableCell>
-                <TableCell>状态</TableCell>
-                <TableCell>所属阶段</TableCell>
-                <TableCell sx={{ width: 120 }}>操作</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {milestones.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={5} sx={{ textAlign: 'center', py: 6, color: 'grey.500' }}>暂无里程碑数据</TableCell>
-                </TableRow>
-              ) : (
-                milestones.map((milestone) => (
-                  <TableRow key={milestone.id} sx={{ '&:hover': { bgcolor: 'grey.50' } }}>
-                    <TableCell>
-                      <Box>
-                        <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>{milestone.name}</Typography>
-                        {milestone.description && (
-                          <Typography variant='body2' sx={{ color: 'grey.500', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {milestone.description}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge
+                          status={phase.status}
+                          label={
+                            phase.status === 'completed'
+                              ? '已完成'
+                              : phase.status === 'active'
+                                ? '进行中'
+                                : '未开始'
+                          }
+                          color={
+                            phase.status === 'completed'
+                              ? 'success'
+                              : phase.status === 'active'
+                                ? 'primary'
+                                : 'default'
+                          }
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <Box sx={{ width: 96 }}>
+                            <LinearProgress
+                              value={phase.progress}
+                              sx={{ height: 8 }}
+                            />
+                          </Box>
+                          <Typography
+                            variant='body2'
+                            sx={{ color: 'grey.600' }}
+                          >
+                            {phase.progress}%
                           </Typography>
-                        )}
-                      </Box>
-                    </TableCell>
-                    <TableCell sx={{ fontSize: '0.875rem', color: 'grey.600' }}>{formatDate(milestone.date)}</TableCell>
-                    <TableCell>
-                      <StatusBadge
-                        status={milestone.status}
-                        label={milestone.status === 'completed' ? '已完成' : milestone.status === 'active' ? '进行中' : '未开始'}
-                        color={milestone.status === 'completed' ? 'success' : milestone.status === 'active' ? 'primary' : 'default'}
-                      />
-                    </TableCell>
-                    <TableCell sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
-                      {milestone.phase_id
-                        ? phases.find((p) => p.id === milestone.phase_id)?.name || '-'
-                        : '-'}
-                    </TableCell>
-                    <TableCell>
-                      <ActionButton label='编辑' icon={<Edit size={16} />} variant='text' size='small' />
+                        </Box>
+                      </TableCell>
+                      <TableCell sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
+                        <Box>
+                          <Typography variant='body2'>{formatDate(phase.start_date)}</Typography>
+                          <Typography
+                            variant='body2'
+                            sx={{ color: 'grey.400', fontSize: '0.75rem' }}
+                          >
+                            至 {formatDate(phase.end_date)}
+                          </Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <ActionButton
+                          label='编辑'
+                          icon={<Edit size={16} />}
+                          variant='text'
+                          size='small'
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </Box>
+        </CardContent>
+      </Card>
+    ),
+    [phases]
+  );
+
+  const milestonesContent = useMemo(
+    () => (
+      <Card>
+        <CardHeader
+          sx={{
+            pb: 2,
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <Typography
+            variant='h6'
+            sx={{ fontSize: '1.125rem' }}
+          >
+            里程碑列表
+          </Typography>
+          <ActionButton
+            label='添加里程碑'
+            variant='secondary'
+            size='small'
+          />
+        </CardHeader>
+        <CardContent sx={{ p: 0 }}>
+          <Box sx={{ overflowX: 'auto' }}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ width: 200 }}>里程碑名称</TableCell>
+                  <TableCell sx={{ width: 150 }}>目标日期</TableCell>
+                  <TableCell>状态</TableCell>
+                  <TableCell>所属阶段</TableCell>
+                  <TableCell sx={{ width: 120 }}>操作</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {milestones.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      sx={{ textAlign: 'center', py: 6, color: 'grey.500' }}
+                    >
+                      暂无里程碑数据
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </Box>
-      </CardContent>
-    </Card>
-  ), [milestones, phases]);
+                ) : (
+                  milestones.map((milestone) => (
+                    <TableRow
+                      key={milestone.id}
+                      sx={{ '&:hover': { bgcolor: 'grey.50' } }}
+                    >
+                      <TableCell>
+                        <Box>
+                          <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
+                            {milestone.name}
+                          </Typography>
+                          {milestone.description && (
+                            <Typography
+                              variant='body2'
+                              sx={{
+                                color: 'grey.500',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {milestone.description}
+                            </Typography>
+                          )}
+                        </Box>
+                      </TableCell>
+                      <TableCell sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
+                        {formatDate(milestone.date)}
+                      </TableCell>
+                      <TableCell>
+                        <StatusBadge
+                          status={milestone.status}
+                          label={
+                            milestone.status === 'completed'
+                              ? '已完成'
+                              : milestone.status === 'active'
+                                ? '进行中'
+                                : '未开始'
+                          }
+                          color={
+                            milestone.status === 'completed'
+                              ? 'success'
+                              : milestone.status === 'active'
+                                ? 'primary'
+                                : 'default'
+                          }
+                        />
+                      </TableCell>
+                      <TableCell sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
+                        {milestone.phase_id
+                          ? phases.find((p) => p.id === milestone.phase_id)?.name || '-'
+                          : '-'}
+                      </TableCell>
+                      <TableCell>
+                        <ActionButton
+                          label='编辑'
+                          icon={<Edit size={16} />}
+                          variant='text'
+                          size='small'
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </Box>
+        </CardContent>
+      </Card>
+    ),
+    [milestones, phases]
+  );
 
   const financeContent = useMemo(() => {
     if (!project) return null;
@@ -460,7 +616,12 @@ const PmProjectDetailPage: React.FC = () => {
       >
         <Card>
           <CardHeader sx={{ pb: 2 }}>
-            <Typography variant='h6' sx={{ fontSize: '1.125rem' }}>预算执行概览</Typography>
+            <Typography
+              variant='h6'
+              sx={{ fontSize: '1.125rem' }}
+            >
+              预算执行概览
+            </Typography>
           </CardHeader>
           <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             <Box
@@ -474,7 +635,9 @@ const PmProjectDetailPage: React.FC = () => {
               }}
             >
               <Typography sx={{ color: 'grey.500' }}>项目预算</Typography>
-              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>{formatCurrency(project.budget)}</Typography>
+              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
+                {formatCurrency(project.budget)}
+              </Typography>
             </Box>
             <Box
               sx={{
@@ -487,7 +650,9 @@ const PmProjectDetailPage: React.FC = () => {
               }}
             >
               <Typography sx={{ color: 'grey.500' }}>实际成本</Typography>
-              <Typography sx={{ fontWeight: 500, color: 'warning.dark' }}>{formatCurrency(project.actual_cost)}</Typography>
+              <Typography sx={{ fontWeight: 500, color: 'warning.dark' }}>
+                {formatCurrency(project.actual_cost)}
+              </Typography>
             </Box>
             <Box
               sx={{
@@ -500,7 +665,9 @@ const PmProjectDetailPage: React.FC = () => {
               }}
             >
               <Typography sx={{ color: 'grey.500' }}>已承诺成本</Typography>
-              <Typography sx={{ fontWeight: 500, color: 'primary.dark' }}>{formatCurrency(project.committed_cost)}</Typography>
+              <Typography sx={{ fontWeight: 500, color: 'primary.dark' }}>
+                {formatCurrency(project.committed_cost)}
+              </Typography>
             </Box>
             <Box
               sx={{
@@ -513,7 +680,9 @@ const PmProjectDetailPage: React.FC = () => {
               }}
             >
               <Typography sx={{ color: 'grey.500' }}>剩余预算</Typography>
-              <Typography sx={{ fontWeight: 500, color: 'success.dark' }}>{formatCurrency(project.remaining_budget)}</Typography>
+              <Typography sx={{ fontWeight: 500, color: 'success.dark' }}>
+                {formatCurrency(project.remaining_budget)}
+              </Typography>
             </Box>
             <Box
               sx={{
@@ -553,7 +722,12 @@ const PmProjectDetailPage: React.FC = () => {
 
         <Card>
           <CardHeader sx={{ pb: 2 }}>
-            <Typography variant='h6' sx={{ fontSize: '1.125rem' }}>收入与利润</Typography>
+            <Typography
+              variant='h6'
+              sx={{ fontSize: '1.125rem' }}
+            >
+              收入与利润
+            </Typography>
           </CardHeader>
           <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             <Box
@@ -567,7 +741,9 @@ const PmProjectDetailPage: React.FC = () => {
               }}
             >
               <Typography sx={{ color: 'grey.500' }}>已确认收入</Typography>
-              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>{formatCurrency(project.revenue_recognized)}</Typography>
+              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
+                {formatCurrency(project.revenue_recognized)}
+              </Typography>
             </Box>
             <Box
               sx={{
@@ -580,7 +756,9 @@ const PmProjectDetailPage: React.FC = () => {
               }}
             >
               <Typography sx={{ color: 'grey.500' }}>应收账款</Typography>
-              <Typography sx={{ fontWeight: 500, color: 'warning.dark' }}>{formatCurrency(project.accounts_receivable)}</Typography>
+              <Typography sx={{ fontWeight: 500, color: 'warning.dark' }}>
+                {formatCurrency(project.accounts_receivable)}
+              </Typography>
             </Box>
             <Box
               sx={{
@@ -594,7 +772,9 @@ const PmProjectDetailPage: React.FC = () => {
             >
               <Typography sx={{ color: 'grey.500' }}>已开票金额</Typography>
               <Typography sx={{ fontWeight: 500, color: 'primary.dark' }}>
-                {formatCurrency((project.revenue_recognized || 0) - (project.accounts_receivable || 0))}
+                {formatCurrency(
+                  (project.revenue_recognized || 0) - (project.accounts_receivable || 0)
+                )}
               </Typography>
             </Box>
             <Box
@@ -608,7 +788,9 @@ const PmProjectDetailPage: React.FC = () => {
               }}
             >
               <Typography sx={{ color: 'grey.500' }}>毛利润</Typography>
-              <Typography sx={{ fontWeight: 500, color: 'success.dark' }}>{formatCurrency(project.gross_profit)}</Typography>
+              <Typography sx={{ fontWeight: 500, color: 'success.dark' }}>
+                {formatCurrency(project.gross_profit)}
+              </Typography>
             </Box>
             <Box
               sx={{
@@ -619,7 +801,9 @@ const PmProjectDetailPage: React.FC = () => {
               }}
             >
               <Typography sx={{ color: 'grey.500' }}>毛利率</Typography>
-              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>{project.gross_margin?.toFixed(1) || '0'}%</Typography>
+              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
+                {project.gross_margin?.toFixed(1) || '0'}%
+              </Typography>
             </Box>
           </CardContent>
         </Card>
@@ -634,8 +818,17 @@ const PmProjectDetailPage: React.FC = () => {
               justifyContent: 'space-between',
             }}
           >
-            <Typography variant='h6' sx={{ fontSize: '1.125rem' }}>成本构成分析</Typography>
-            <ActionButton label='查看详情' variant='secondary' size='small' />
+            <Typography
+              variant='h6'
+              sx={{ fontSize: '1.125rem' }}
+            >
+              成本构成分析
+            </Typography>
+            <ActionButton
+              label='查看详情'
+              variant='secondary'
+              size='small'
+            />
           </CardHeader>
           <CardContent>
             <Box
@@ -646,24 +839,74 @@ const PmProjectDetailPage: React.FC = () => {
               }}
             >
               <Box sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 2 }}>
-                <Typography variant='body2' sx={{ color: 'grey.500', mb: 0.5 }}>人工成本</Typography>
-                <Typography variant='h6' sx={{ fontWeight: 600, color: 'primary.dark' }}>-</Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.500', mb: 0.5 }}
+                >
+                  人工成本
+                </Typography>
+                <Typography
+                  variant='h6'
+                  sx={{ fontWeight: 600, color: 'primary.dark' }}
+                >
+                  -
+                </Typography>
               </Box>
               <Box sx={{ p: 2, bgcolor: 'success.light', borderRadius: 2 }}>
-                <Typography variant='body2' sx={{ color: 'grey.500', mb: 0.5 }}>材料成本</Typography>
-                <Typography variant='h6' sx={{ fontWeight: 600, color: 'success.dark' }}>-</Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.500', mb: 0.5 }}
+                >
+                  材料成本
+                </Typography>
+                <Typography
+                  variant='h6'
+                  sx={{ fontWeight: 600, color: 'success.dark' }}
+                >
+                  -
+                </Typography>
               </Box>
               <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 2 }}>
-                <Typography variant='body2' sx={{ color: 'grey.500', mb: 0.5 }}>费用支出</Typography>
-                <Typography variant='h6' sx={{ fontWeight: 600, color: 'warning.dark' }}>-</Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.500', mb: 0.5 }}
+                >
+                  费用支出
+                </Typography>
+                <Typography
+                  variant='h6'
+                  sx={{ fontWeight: 600, color: 'warning.dark' }}
+                >
+                  -
+                </Typography>
               </Box>
               <Box sx={{ p: 2, bgcolor: 'secondary.light', borderRadius: 2 }}>
-                <Typography variant='body2' sx={{ color: 'grey.500', mb: 0.5 }}>分包成本</Typography>
-                <Typography variant='h6' sx={{ fontWeight: 600, color: 'secondary.dark' }}>-</Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.500', mb: 0.5 }}
+                >
+                  分包成本
+                </Typography>
+                <Typography
+                  variant='h6'
+                  sx={{ fontWeight: 600, color: 'secondary.dark' }}
+                >
+                  -
+                </Typography>
               </Box>
               <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 2 }}>
-                <Typography variant='body2' sx={{ color: 'grey.500', mb: 0.5 }}>其他成本</Typography>
-                <Typography variant='h6' sx={{ fontWeight: 600, color: 'text.secondary' }}>-</Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.500', mb: 0.5 }}
+                >
+                  其他成本
+                </Typography>
+                <Typography
+                  variant='h6'
+                  sx={{ fontWeight: 600, color: 'text.secondary' }}
+                >
+                  -
+                </Typography>
               </Box>
             </Box>
           </CardContent>
@@ -671,7 +914,12 @@ const PmProjectDetailPage: React.FC = () => {
 
         <Card>
           <CardHeader sx={{ pb: 2 }}>
-            <Typography variant='h6' sx={{ fontSize: '1.125rem' }}>成本中心信息</Typography>
+            <Typography
+              variant='h6'
+              sx={{ fontSize: '1.125rem' }}
+            >
+              成本中心信息
+            </Typography>
           </CardHeader>
           <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             <Box
@@ -685,7 +933,9 @@ const PmProjectDetailPage: React.FC = () => {
               }}
             >
               <Typography sx={{ color: 'grey.500' }}>成本中心ID</Typography>
-              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>{project.cost_center_id || '-'}</Typography>
+              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
+                {project.cost_center_id || '-'}
+              </Typography>
             </Box>
             <Box
               sx={{
@@ -698,7 +948,9 @@ const PmProjectDetailPage: React.FC = () => {
               }}
             >
               <Typography sx={{ color: 'grey.500' }}>成本中心名称</Typography>
-              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>{project.cost_center_name || '-'}</Typography>
+              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
+                {project.cost_center_name || '-'}
+              </Typography>
             </Box>
             <Box
               sx={{
@@ -710,9 +962,27 @@ const PmProjectDetailPage: React.FC = () => {
             >
               <Typography sx={{ color: 'grey.500' }}>执行状态</Typography>
               <StatusBadge
-                status={project.budget_utilization_rate && project.budget_utilization_rate > 100 ? 'overbudget' : project.budget_utilization_rate && project.budget_utilization_rate > 80 ? 'warning' : 'normal'}
-                label={project.budget_utilization_rate && project.budget_utilization_rate > 100 ? '超预算' : project.budget_utilization_rate && project.budget_utilization_rate > 80 ? '预警' : '正常'}
-                color={project.budget_utilization_rate && project.budget_utilization_rate > 100 ? 'error' : project.budget_utilization_rate && project.budget_utilization_rate > 80 ? 'warning' : 'success'}
+                status={
+                  project.budget_utilization_rate && project.budget_utilization_rate > 100
+                    ? 'overbudget'
+                    : project.budget_utilization_rate && project.budget_utilization_rate > 80
+                      ? 'warning'
+                      : 'normal'
+                }
+                label={
+                  project.budget_utilization_rate && project.budget_utilization_rate > 100
+                    ? '超预算'
+                    : project.budget_utilization_rate && project.budget_utilization_rate > 80
+                      ? '预警'
+                      : '正常'
+                }
+                color={
+                  project.budget_utilization_rate && project.budget_utilization_rate > 100
+                    ? 'error'
+                    : project.budget_utilization_rate && project.budget_utilization_rate > 80
+                      ? 'warning'
+                      : 'success'
+                }
               />
             </Box>
           </CardContent>
@@ -720,92 +990,135 @@ const PmProjectDetailPage: React.FC = () => {
 
         <Card>
           <CardHeader sx={{ pb: 2 }}>
-            <Typography variant='h6' sx={{ fontSize: '1.125rem' }}>快速操作</Typography>
+            <Typography
+              variant='h6'
+              sx={{ fontSize: '1.125rem' }}
+            >
+              快速操作
+            </Typography>
           </CardHeader>
           <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            <ActionButton label='查看成本明细' icon={<DollarSign size={16} />} variant='secondary' sx={{ justifyContent: 'flex-start' }} />
-            <ActionButton label='查看项目发票' icon={<FileText size={16} />} variant='secondary' sx={{ justifyContent: 'flex-start' }} />
-            <ActionButton label='预算执行分析' icon={<TrendingUp size={16} />} variant='secondary' sx={{ justifyContent: 'flex-start' }} />
-            <ActionButton label='生成项目凭证' icon={<FileText size={16} />} variant='secondary' sx={{ justifyContent: 'flex-start' }} />
+            <ActionButton
+              label='查看成本明细'
+              icon={<DollarSign size={16} />}
+              variant='secondary'
+              sx={{ justifyContent: 'flex-start' }}
+            />
+            <ActionButton
+              label='查看项目发票'
+              icon={<FileText size={16} />}
+              variant='secondary'
+              sx={{ justifyContent: 'flex-start' }}
+            />
+            <ActionButton
+              label='预算执行分析'
+              icon={<TrendingUp size={16} />}
+              variant='secondary'
+              sx={{ justifyContent: 'flex-start' }}
+            />
+            <ActionButton
+              label='生成项目凭证'
+              icon={<FileText size={16} />}
+              variant='secondary'
+              sx={{ justifyContent: 'flex-start' }}
+            />
           </CardContent>
         </Card>
       </Box>
     );
   }, [project]);
 
-  const tabs: TabConfig[] = useMemo(() => [
-    {
-      id: 'overview',
-      label: '项目概览',
-      content: (
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
-            gap: 3,
-          }}
-        >
-          {overviewSections.map((section) => (
-            <Card key={section.id}>
-              <CardHeader sx={{ pb: 2 }}>
-                <Typography variant='h6' sx={{ fontSize: '1.125rem' }}>{section.title}</Typography>
-              </CardHeader>
-              {section.content}
-            </Card>
-          ))}
-        </Box>
-      ),
-    },
-    {
-      id: 'gantt',
-      label: '甘特图',
-      content: (
-        <Card>
-          <CardHeader sx={{ pb: 2 }}>
-            <Typography variant='h6' sx={{ fontSize: '1.125rem' }}>项目甘特图</Typography>
-          </CardHeader>
-          <CardContent>
-            {project ? (
-              <GanttChart
-                phases={ganttPhases}
-                milestones={ganttMilestones}
-                projectStartDate={project.start_date}
-                projectEndDate={project.end_date}
-              />
-            ) : null}
-          </CardContent>
-        </Card>
-      ),
-    },
-    {
-      id: 'phases',
-      label: '阶段管理',
-      content: phasesContent,
-    },
-    {
-      id: 'milestones',
-      label: '里程碑',
-      content: milestonesContent,
-    },
-    {
-      id: 'finance',
-      label: '财务',
-      content: financeContent,
-    },
-  ], [overviewSections, phasesContent, milestonesContent, financeContent, project, ganttPhases, ganttMilestones]);
+  const tabs: TabConfig[] = useMemo(
+    () => [
+      {
+        id: 'overview',
+        label: '项目概览',
+        content: (
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' },
+              gap: 3,
+            }}
+          >
+            {overviewSections.map((section) => (
+              <Card key={section.id}>
+                <CardHeader sx={{ pb: 2 }}>
+                  <Typography
+                    variant='h6'
+                    sx={{ fontSize: '1.125rem' }}
+                  >
+                    {section.title}
+                  </Typography>
+                </CardHeader>
+                {section.content}
+              </Card>
+            ))}
+          </Box>
+        ),
+      },
+      {
+        id: 'gantt',
+        label: '甘特图',
+        content: (
+          <Card>
+            <CardHeader sx={{ pb: 2 }}>
+              <Typography
+                variant='h6'
+                sx={{ fontSize: '1.125rem' }}
+              >
+                项目甘特图
+              </Typography>
+            </CardHeader>
+            <CardContent>
+              {project ? (
+                <GanttChart
+                  phases={ganttPhases}
+                  milestones={ganttMilestones}
+                  projectStartDate={project.start_date}
+                  projectEndDate={project.end_date}
+                />
+              ) : null}
+            </CardContent>
+          </Card>
+        ),
+      },
+      {
+        id: 'phases',
+        label: '阶段管理',
+        content: phasesContent,
+      },
+      {
+        id: 'milestones',
+        label: '里程碑',
+        content: milestonesContent,
+      },
+      {
+        id: 'finance',
+        label: '财务',
+        content: financeContent,
+      },
+    ],
+    [
+      overviewSections,
+      phasesContent,
+      milestonesContent,
+      financeContent,
+      project,
+      ganttPhases,
+      ganttMilestones,
+    ]
+  );
 
   const infoCard = useMemo(() => {
-    if (!project) return undefined;
+    if (!project) return;
 
     const statusKey = project.status || 'draft';
 
     return {
       title: project.name,
       subtitle: project.code,
-      tags: [
-        STATUS_LABELS[statusKey],
-        RISK_LABELS[project.risk_level || ''] || '未评估',
-      ],
+      tags: [STATUS_LABELS[statusKey], RISK_LABELS[project.risk_level || ''] || '未评估'],
       stats: [
         { label: '项目进度', value: `${project.progress}%` },
         { label: '阶段完成', value: `${completedPhases}/${phases.length}` },
@@ -816,11 +1129,18 @@ const PmProjectDetailPage: React.FC = () => {
   }, [project, phases, milestones, completedPhases, completedMilestones]);
 
   return (
-    <PageContainer title={project?.name || '项目详情'} subtitle={project?.code}>
+    <PageContainer
+      title={project?.name || '项目详情'}
+      subtitle={project?.code}
+    >
       <DetailPageTemplate
         title=''
         subtitle=''
-        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '项目管理', href: '/pm/projects' }, { label: '项目详情' }]}
+        breadcrumbs={[
+          { label: '首页', href: '/dashboard' },
+          { label: '项目管理', href: '/pm/projects' },
+          { label: '项目详情' },
+        ]}
         loading={loading}
         error={error}
         backHref='/pm/projects'

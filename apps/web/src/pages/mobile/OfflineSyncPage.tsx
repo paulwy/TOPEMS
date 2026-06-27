@@ -109,7 +109,7 @@ export const OfflineSyncPage: React.FC = () => {
       }, 500);
       return () => clearInterval(interval);
     }
-    return undefined;
+    return;
   }, [isSyncing]);
 
   const handleStartSync = () => {

@@ -8,10 +8,7 @@ import type {
   StandardRevision,
   PaginatedResponse,
 } from './types';
-import {
-  adaptStandardToFrontend,
-  adaptStandardToBackend,
-} from './adapters';
+import { adaptStandardToFrontend, adaptStandardToBackend } from './adapters';
 
 export const standardApi = {
   listStandards: async (): Promise<ApiResponse<QualityStandard[]>> => {

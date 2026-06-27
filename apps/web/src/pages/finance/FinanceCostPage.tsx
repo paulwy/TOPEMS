@@ -8,9 +8,9 @@ import {
   Wallet,
   Download,
 } from 'lucide-react';
-import { DataExport, BackButton, PageContainer} from '@/components/common';
+import { DataExport, BackButton, PageContainer } from '@/components/common';
 import { useAppStore } from '@/store';
-import { ListPageTemplate, StatCardGroup } from '@/components/mui';
+import { ListPageTemplate, StatCardGroup } from '@/components';
 import { financeApi, accountApi } from '@/api/finance';
 import type { Account, AccountBalance } from '@/types/finance';
 import { apiLogger } from '@/utils/logger';
@@ -24,8 +24,8 @@ import {
   Box as MuiBox,
   Typography,
   Stack,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 
 const FinanceCostPage: React.FC = () => {
   const addNotification = useAppStore((state) => state.addNotification);
@@ -85,10 +85,7 @@ const FinanceCostPage: React.FC = () => {
     return costData.filter((cost) => {
       if (searchQuery) {
         const query = searchQuery.toLowerCase();
-        if (
-          !cost.code.toLowerCase().includes(query) &&
-          !cost.name.toLowerCase().includes(query)
-        ) {
+        if (!cost.code.toLowerCase().includes(query) && !cost.name.toLowerCase().includes(query)) {
           return false;
         }
       }
@@ -263,7 +260,10 @@ const FinanceCostPage: React.FC = () => {
   );
 
   return (
-    <PageContainer padding={false} maxWidth={false}>
+    <PageContainer
+      padding={false}
+      maxWidth={false}
+    >
       <MuiBox
         sx={{
           bgcolor: 'background.paper',
@@ -285,11 +285,11 @@ const FinanceCostPage: React.FC = () => {
             sx={{ justifyContent: 'space-between', alignItems: 'center' }}
           >
             <Stack
-            direction='row'
-            sx={{ alignItems: 'center' }}
-            spacing={2}
-          >
-            <BackButton href='/dashboard' />
+              direction='row'
+              sx={{ alignItems: 'center' }}
+              spacing={2}
+            >
+              <BackButton href='/dashboard' />
               <MuiBox>
                 <Typography
                   variant='h5'

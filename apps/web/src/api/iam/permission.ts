@@ -7,9 +7,7 @@ export const permissionApi = {
     return apiClient.iam.get<Permission[]>('/api/iam/permissions');
   },
 
-  createPermission: async (
-    data: CreatePermissionRequest
-  ): Promise<ApiResponse<Permission>> => {
+  createPermission: async (data: CreatePermissionRequest): Promise<ApiResponse<Permission>> => {
     return apiClient.iam.post<Permission>('/api/iam/permissions', data);
   },
 

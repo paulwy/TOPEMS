@@ -126,7 +126,7 @@ export const templateApi = {
     if (params?.is_public !== undefined) searchParams.set('is_public', String(params.is_public));
 
     const queryString = searchParams.toString();
-    return await apiClient.doc.get(`/api/templates${queryString ? '?' + queryString : ''}`);
+    return await apiClient.doc.get(`/api/templates${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<Template>> {
@@ -154,7 +154,7 @@ export const templateApi = {
 
     const queryString = searchParams.toString();
     return await apiClient.doc.get(
-      `/api/templates/categories${queryString ? '?' + queryString : ''}`
+      `/api/templates/categories${queryString ? `?${queryString}` : ''}`
     );
   },
 

@@ -12,9 +12,9 @@ import {
   FormControl,
   Stack,
   Typography,
+  Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import type {
   ProductionProcess,
@@ -303,10 +303,13 @@ const ProductionProcessPage: React.FC = () => {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <PageContainer title="生产工序管理" subtitle="管理生产工序,包括工序名称、编码、顺序、标准工时等">
+    <PageContainer
+      title='生产工序管理'
+      subtitle='管理生产工序,包括工序名称、编码、顺序、标准工时等'
+    >
       <ListPageTemplate
-        title=""
-        subtitle=""
+        title=''
+        subtitle=''
         columns={columns}
         data={processes}
         loading={loading}

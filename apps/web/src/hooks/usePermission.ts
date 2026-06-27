@@ -1,6 +1,11 @@
 import { useAuth } from './useAuth';
 import { useCallback, useMemo, useEffect, useState, useRef } from 'react';
-import { getInheritedPermissions, hasPermissionWithInheritance, getPermissionsByGroup, type ModuleCode } from '@/config/permissions';
+import {
+  getInheritedPermissions,
+  hasPermissionWithInheritance,
+  getPermissionsByGroup,
+  type ModuleCode,
+} from '@/config/permissions';
 
 const PERMISSION_CACHE_KEY = 'permission_cache';
 const CACHE_TTL = 5 * 60 * 1000;
@@ -126,7 +131,11 @@ export const usePermission = () => {
   const canWriteModule = useCallback(
     (module: string): boolean => {
       if (user?.is_superuser) return true;
-      return checkPermission(`${module}:write`) || checkPermission(`${module}:create`) || checkPermission(`${module}:update`);
+      return (
+        checkPermission(`${module}:write`) ||
+        checkPermission(`${module}:create`) ||
+        checkPermission(`${module}:update`)
+      );
     },
     [checkPermission, user?.is_superuser]
   );

@@ -598,7 +598,11 @@ const BIAnalyticsPage = () => {
       <DashboardTemplate
         title=''
         subtitle=''
-        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: 'BI' }, { label: '概览分析' }]}
+        breadcrumbs={[
+          { label: '首页', href: '/dashboard' },
+          { label: 'BI' },
+          { label: '概览分析' },
+        ]}
         stats={statsCards}
         charts={chartCards}
         loading={loading}
@@ -613,149 +617,152 @@ const BIAnalyticsPage = () => {
           />
         }
       >
-      {error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
+        {error && (
+          <Alert
+            severity='error'
+            sx={{ mb: 3 }}
+          >
+            {error}
+          </Alert>
+        )}
 
-      {/* 模块卡片列表 */}
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: {
-            xs: 'repeat(1, 1fr)',
-            md: 'repeat(2, 1fr)',
-            lg: 'repeat(3, 1fr)',
-          },
-          gap: 2,
-          mb: 3,
-        }}
-      >
-        {modules.map((module) => (
-          <ModuleCard
-            key={module.id}
-            id={module.id}
-            name={module.name}
-            icon={module.icon}
-            stats={module.stats}
-            trend={module.trend}
-            onSelect={handleModuleSelect}
-            color={module.color}
-          />
-        ))}
-      </Box>
-
-      {/* 系统状态 */}
-      <Box
-        sx={{
-          bgcolor: 'background.paper',
-          borderRadius: 2,
-          boxShadow: 1,
-          border: '1px solid',
-          borderColor: 'divider',
-          p: 3,
-        }}
-      >
-        <Typography
-          variant='h6'
-          sx={{ fontWeight: 600, color: 'grey.800', mb: 2 }}
-        >
-          系统状态
-        </Typography>
+        {/* 模块卡片列表 */}
         <Box
           sx={{
             display: 'grid',
             gridTemplateColumns: {
               xs: 'repeat(1, 1fr)',
-              md: 'repeat(3, 1fr)',
+              md: 'repeat(2, 1fr)',
+              lg: 'repeat(3, 1fr)',
             },
-            gap: 3,
+            gap: 2,
+            mb: 3,
           }}
         >
+          {modules.map((module) => (
+            <ModuleCard
+              key={module.id}
+              id={module.id}
+              name={module.name}
+              icon={module.icon}
+              stats={module.stats}
+              trend={module.trend}
+              onSelect={handleModuleSelect}
+              color={module.color}
+            />
+          ))}
+        </Box>
+
+        {/* 系统状态 */}
+        <Box
+          sx={{
+            bgcolor: 'background.paper',
+            borderRadius: 2,
+            boxShadow: 1,
+            border: '1px solid',
+            borderColor: 'divider',
+            p: 3,
+          }}
+        >
+          <Typography
+            variant='h6'
+            sx={{ fontWeight: 600, color: 'grey.800', mb: 2 }}
+          >
+            系统状态
+          </Typography>
           <Box
             sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              py: 1.5,
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: 'repeat(1, 1fr)',
+                md: 'repeat(3, 1fr)',
+              },
+              gap: 3,
             }}
           >
-            <Typography
-              variant='body2'
-              sx={{ color: 'grey.600' }}
-            >
-              数据更新时间
-            </Typography>
-            <Typography
-              variant='body2'
-              sx={{ fontWeight: 500, color: 'grey.900' }}
-            >
-              {new Date().toLocaleString('zh-CN')}
-            </Typography>
-          </Box>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              py: 1.5,
-              borderTop: '1px solid',
-              borderColor: 'divider',
-            }}
-          >
-            <Typography
-              variant='body2'
-              sx={{ color: 'grey.600' }}
-            >
-              系统状态
-            </Typography>
-            <Typography
-              variant='caption'
+            <Box
               sx={{
-                px: 1.25,
-                py: 0.5,
-                bgcolor: 'success.50',
-                color: 'success.main',
-                fontWeight: 600,
-                borderRadius: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                py: 1.5,
               }}
             >
-              正常运行
-            </Typography>
-          </Box>
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              py: 1.5,
-              borderTop: '1px solid',
-              borderColor: 'divider',
-            }}
-          >
-            <Typography
-              variant='body2'
-              sx={{ color: 'grey.600' }}
-            >
-              数据源连接
-            </Typography>
-            <Typography
-              variant='caption'
+              <Typography
+                variant='body2'
+                sx={{ color: 'grey.600' }}
+              >
+                数据更新时间
+              </Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500, color: 'grey.900' }}
+              >
+                {new Date().toLocaleString('zh-CN')}
+              </Typography>
+            </Box>
+            <Box
               sx={{
-                px: 1.25,
-                py: 0.5,
-                bgcolor: 'success.50',
-                color: 'success.main',
-                fontWeight: 600,
-                borderRadius: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                py: 1.5,
+                borderTop: '1px solid',
+                borderColor: 'divider',
               }}
             >
-              已连接
-            </Typography>
+              <Typography
+                variant='body2'
+                sx={{ color: 'grey.600' }}
+              >
+                系统状态
+              </Typography>
+              <Typography
+                variant='caption'
+                sx={{
+                  px: 1.25,
+                  py: 0.5,
+                  bgcolor: 'success.50',
+                  color: 'success.main',
+                  fontWeight: 600,
+                  borderRadius: 1,
+                }}
+              >
+                正常运行
+              </Typography>
+            </Box>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                py: 1.5,
+                borderTop: '1px solid',
+                borderColor: 'divider',
+              }}
+            >
+              <Typography
+                variant='body2'
+                sx={{ color: 'grey.600' }}
+              >
+                数据源连接
+              </Typography>
+              <Typography
+                variant='caption'
+                sx={{
+                  px: 1.25,
+                  py: 0.5,
+                  bgcolor: 'success.50',
+                  color: 'success.main',
+                  fontWeight: 600,
+                  borderRadius: 1,
+                }}
+              >
+                已连接
+              </Typography>
+            </Box>
           </Box>
         </Box>
-      </Box>
       </DashboardTemplate>
     </PageContainer>
   );

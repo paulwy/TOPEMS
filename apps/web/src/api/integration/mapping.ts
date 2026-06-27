@@ -21,9 +21,7 @@ export const mappingApi = {
     return apiClient.integration.get(`/api/integration/erp/mappings/${id}`);
   },
 
-  createMapping: async (
-    data: CreateErpMappingRequest
-  ): Promise<ApiResponse<ErpMapping>> => {
+  createMapping: async (data: CreateErpMappingRequest): Promise<ApiResponse<ErpMapping>> => {
     return apiClient.integration.post('/api/integration/erp/mappings', data);
   },
 

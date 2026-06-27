@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AlertCircle, CheckCircle, AlertTriangle, Info, Sparkles, RefreshCw } from 'lucide-react';
-import { Card, CardContent, Box, Typography } from '@mui/material';
-import { Button } from '@mui/material';
+import { Card, CardContent, Box, Typography, Button } from '@mui/material';
 import { AIGenerateModal } from './AIGenerateModal';
 import { useAIHelper } from '../../hooks/useAIHelper';
 import type { ValidateRequest, ValidationIssue, Suggestion } from '@/types/ai';

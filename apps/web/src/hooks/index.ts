@@ -31,10 +31,7 @@ export type { Breakpoint } from './useResponsive';
 
 export { useDebounce, useDebouncedValue, useDebouncedCallback } from './useDebounce';
 export { useThrottle, useThrottledValue, useThrottledCallback } from './useThrottle';
-export {
-  useIntersectionObserver,
-  useInView,
-} from './useIntersectionObserver';
+export { useIntersectionObserver, useInView } from './useIntersectionObserver';
 export type {
   UseIntersectionObserverOptions,
   UseIntersectionObserverResult,

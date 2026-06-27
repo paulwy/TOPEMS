@@ -1,3 +1,10 @@
+import { connectionApi } from './connection';
+import { mappingApi } from './mapping';
+import { syncApi } from './sync';
+import { syncLogsApi } from './sync-logs';
+import { previewApi } from './preview';
+import { exportApi } from './export';
+
 export * from './types';
 
 export { connectionApi } from './connection';
@@ -6,13 +13,6 @@ export { syncApi } from './sync';
 export { syncLogsApi } from './sync-logs';
 export { previewApi } from './preview';
 export { exportApi } from './export';
-
-import { connectionApi } from './connection';
-import { mappingApi } from './mapping';
-import { syncApi } from './sync';
-import { syncLogsApi } from './sync-logs';
-import { previewApi } from './preview';
-import { exportApi } from './export';
 
 export const externalErpApi = {
   connection: connectionApi,

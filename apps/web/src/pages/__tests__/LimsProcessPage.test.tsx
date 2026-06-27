@@ -14,11 +14,7 @@ vi.mock('@/store', () => ({
 const mockAddNotification = vi.fn();
 
 const renderWithProviders = (ui: React.ReactElement) => {
-  return render(
-    <BrowserRouter>
-      {ui}
-    </BrowserRouter>
-  );
+  return render(<BrowserRouter>{ui}</BrowserRouter>);
 };
 
 const mockProcesses = [
@@ -87,18 +83,14 @@ describe('LimsProcessPage', () => {
     await waitFor(() => {
       expect(limsApi.createProcess).toHaveBeenCalled();
     });
-    expect(mockAddNotification).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'success' })
-    );
+    expect(mockAddNotification).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
   });
 
   it('should handle API error', async () => {
     (limsApi.listProcesses as vi.Mock).mockRejectedValue(new Error('Network error'));
     renderWithProviders(<LimsProcessPage />);
     await waitFor(() => {
-      expect(mockAddNotification).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'error' })
-      );
+      expect(mockAddNotification).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }));
     });
   });
 });

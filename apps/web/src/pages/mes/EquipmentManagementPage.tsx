@@ -14,9 +14,9 @@ import {
   Tooltip,
   Stack,
   Typography,
+  Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type {
   Equipment,
@@ -383,45 +383,81 @@ const EquipmentManagementPage: React.FC = () => {
     >
       <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          <Power size={18} sx={{ color: '#15803d' }} />
-          <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+          <Power
+            size={18}
+            sx={{ color: '#15803d' }}
+          />
+          <Typography
+            variant='body2'
+            sx={{ color: 'text.secondary' }}
+          >
             运行中
           </Typography>
         </Box>
-        <Typography variant='h5' sx={{ fontWeight: 700, color: '#15803d' }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700, color: '#15803d' }}
+        >
           {statistics?.in_use || equipment.filter((e) => e.status === 'running').length}
         </Typography>
       </Box>
       <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          <Monitor size={18} sx={{ color: 'text.secondary' }} />
-          <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+          <Monitor
+            size={18}
+            sx={{ color: 'text.secondary' }}
+          />
+          <Typography
+            variant='body2'
+            sx={{ color: 'text.secondary' }}
+          >
             空闲
           </Typography>
         </Box>
-        <Typography variant='h5' sx={{ fontWeight: 700 }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700 }}
+        >
           {statistics?.idle || equipment.filter((e) => e.status === 'idle').length}
         </Typography>
       </Box>
       <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          <Wrench size={18} sx={{ color: '#b45309' }} />
-          <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+          <Wrench
+            size={18}
+            sx={{ color: '#b45309' }}
+          />
+          <Typography
+            variant='body2'
+            sx={{ color: 'text.secondary' }}
+          >
             维护中
           </Typography>
         </Box>
-        <Typography variant='h5' sx={{ fontWeight: 700, color: '#b45309' }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700, color: '#b45309' }}
+        >
           {statistics?.maintenance || equipment.filter((e) => e.status === 'maintenance').length}
         </Typography>
       </Box>
       <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          <AlertTriangle size={18} sx={{ color: 'error.dark' }} />
-          <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+          <AlertTriangle
+            size={18}
+            sx={{ color: 'error.dark' }}
+          />
+          <Typography
+            variant='body2'
+            sx={{ color: 'text.secondary' }}
+          >
             故障
           </Typography>
         </Box>
-        <Typography variant='h5' sx={{ fontWeight: 700, color: 'error.dark' }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700, color: 'error.dark' }}
+        >
           {equipment.filter((e) => e.status === 'fault').length}
         </Typography>
       </Box>
@@ -429,10 +465,13 @@ const EquipmentManagementPage: React.FC = () => {
   );
 
   return (
-    <PageContainer title="设备管理" subtitle="管理设备信息,包括设备编号、名称、型号、状态等">
+    <PageContainer
+      title='设备管理'
+      subtitle='管理设备信息,包括设备编号、名称、型号、状态等'
+    >
       <ListPageTemplate
-        title=""
-        subtitle=""
+        title=''
+        subtitle=''
         columns={columns}
         data={equipment}
         loading={loading}
@@ -464,7 +503,11 @@ const EquipmentManagementPage: React.FC = () => {
       />
 
       {/* 新增/编辑对话框 */}
-      <Dialog open={showDialog} onClose={() => setShowDialog(false)} maxWidth='md'>
+      <Dialog
+        open={showDialog}
+        onClose={() => setShowDialog(false)}
+        maxWidth='md'
+      >
         <DialogTitle>{selectedEquipment ? '编辑设备' : '新增设备'}</DialogTitle>
         <DialogContent>
           <Box
@@ -541,9 +584,7 @@ const EquipmentManagementPage: React.FC = () => {
                   type='date'
                   size='small'
                   value={formData.purchase_date || ''}
-                  onChange={(e) =>
-                    setFormData({ ...formData, purchase_date: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, purchase_date: e.target.value })}
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -572,7 +613,10 @@ const EquipmentManagementPage: React.FC = () => {
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <InputLabel htmlFor='status'>状态</InputLabel>
-                <FormControl fullWidth size='small'>
+                <FormControl
+                  fullWidth
+                  size='small'
+                >
                   <Select
                     id='status'
                     value={formData.status || 'idle'}
@@ -598,10 +642,17 @@ const EquipmentManagementPage: React.FC = () => {
               </Box>
             </Box>
             <DialogActions>
-              <Button type='button' variant='outlined' onClick={() => setShowDialog(false)}>
+              <Button
+                type='button'
+                variant='outlined'
+                onClick={() => setShowDialog(false)}
+              >
                 取消
               </Button>
-              <Button type='submit' variant='contained'>
+              <Button
+                type='submit'
+                variant='contained'
+              >
                 保存
               </Button>
             </DialogActions>
@@ -610,7 +661,11 @@ const EquipmentManagementPage: React.FC = () => {
       </Dialog>
 
       {/* 设备维护对话框 */}
-      <Dialog open={showMaintenanceDialog} onClose={() => setShowMaintenanceDialog(false)} maxWidth='sm'>
+      <Dialog
+        open={showMaintenanceDialog}
+        onClose={() => setShowMaintenanceDialog(false)}
+        maxWidth='sm'
+      >
         <DialogTitle>设备维护</DialogTitle>
         <DialogContent>
           <Box
@@ -628,7 +683,10 @@ const EquipmentManagementPage: React.FC = () => {
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 2 }}>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <InputLabel htmlFor='maintenance_type'>维护类型 *</InputLabel>
-                <FormControl fullWidth size='small'>
+                <FormControl
+                  fullWidth
+                  size='small'
+                >
                   <Select
                     id='maintenance_type'
                     value={maintenanceData.maintenance_type}
@@ -745,7 +803,10 @@ const EquipmentManagementPage: React.FC = () => {
               >
                 取消
               </Button>
-              <Button type='submit' variant='contained'>
+              <Button
+                type='submit'
+                variant='contained'
+              >
                 创建维护
               </Button>
             </DialogActions>
@@ -754,7 +815,11 @@ const EquipmentManagementPage: React.FC = () => {
       </Dialog>
 
       {/* 详情对话框 */}
-      <Dialog open={showDetailDialog} onClose={() => setShowDetailDialog(false)} maxWidth='md'>
+      <Dialog
+        open={showDetailDialog}
+        onClose={() => setShowDetailDialog(false)}
+        maxWidth='md'
+      >
         <DialogTitle>设备详情</DialogTitle>
         <DialogContent>
           {selectedEquipment && (
@@ -768,7 +833,10 @@ const EquipmentManagementPage: React.FC = () => {
               >
                 <Box>
                   <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>设备编号</InputLabel>
-                  <Box component='span' sx={{ fontWeight: 500 }}>
+                  <Box
+                    component='span'
+                    sx={{ fontWeight: 500 }}
+                  >
                     {selectedEquipment.code}
                   </Box>
                 </Box>

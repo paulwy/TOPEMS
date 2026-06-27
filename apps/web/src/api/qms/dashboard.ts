@@ -1,12 +1,7 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
-import type {
-  QualityOverview,
-  QualityOverviewBackend,
-} from './types';
-import {
-  adaptQualityOverviewToFrontend,
-} from './adapters';
+import type { QualityOverview, QualityOverviewBackend } from './types';
+import { adaptQualityOverviewToFrontend } from './adapters';
 
 export const qualityDashboardApi = {
   getQualityOverview: async (params?: {

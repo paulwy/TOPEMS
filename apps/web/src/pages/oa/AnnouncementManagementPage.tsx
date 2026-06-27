@@ -232,7 +232,10 @@ const AnnouncementManagementPage: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    const colors: Record<string, 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'> = {
+    const colors: Record<
+      string,
+      'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'
+    > = {
       draft: 'default',
       published: 'success',
       archived: 'default',
@@ -252,7 +255,10 @@ const AnnouncementManagementPage: React.FC = () => {
   };
 
   const getPriorityBadge = (priority?: string) => {
-    const colors: Record<string, 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'> = {
+    const colors: Record<
+      string,
+      'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'
+    > = {
       low: 'default',
       normal: 'info',
       high: 'warning',
@@ -286,7 +292,10 @@ const AnnouncementManagementPage: React.FC = () => {
       width: 120,
       render: (row: Announcement) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <User size={14} style={{ color: '#1976d2' }} />
+          <User
+            size={14}
+            style={{ color: '#1976d2' }}
+          />
           {row.author}
         </Box>
       ),
@@ -359,7 +368,10 @@ const AnnouncementManagementPage: React.FC = () => {
   ];
 
   return (
-    <PageContainer title='公告管理' subtitle='管理企业公告和通知'>
+    <PageContainer
+      title='公告管理'
+      subtitle='管理企业公告和通知'
+    >
       <ListPageTemplate
         title=''
         subtitle=''
@@ -373,8 +385,8 @@ const AnnouncementManagementPage: React.FC = () => {
         onSearch={setSearchQuery}
         pagination={{
           page: currentPage,
-          pageSize: pageSize,
-          total: total,
+          pageSize,
+          total,
           onPageChange: setCurrentPage,
           onPageSizeChange: setPageSize,
         }}
@@ -508,7 +520,10 @@ const AnnouncementManagementPage: React.FC = () => {
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setShowCreateModal(false)}>取消</Button>
-            <Button type='submit' variant='contained'>
+            <Button
+              type='submit'
+              variant='contained'
+            >
               创建
             </Button>
           </DialogActions>
@@ -641,7 +656,10 @@ const AnnouncementManagementPage: React.FC = () => {
               >
                 取消
               </Button>
-              <Button type='submit' variant='contained'>
+              <Button
+                type='submit'
+                variant='contained'
+              >
                 保存
               </Button>
             </DialogActions>

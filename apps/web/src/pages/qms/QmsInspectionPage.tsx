@@ -20,8 +20,8 @@ import {
   Step,
   StepLabel,
   Button as MuiButton,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import {
   Plus,
   Eye,
@@ -761,7 +761,10 @@ const QmsInspectionPage: React.FC = () => {
   }
 
   return (
-    <PageContainer title='质量检验' subtitle='Quality Inspection'>
+    <PageContainer
+      title='质量检验'
+      subtitle='Quality Inspection'
+    >
       <ListPageTemplate
         title=''
         subtitle=''

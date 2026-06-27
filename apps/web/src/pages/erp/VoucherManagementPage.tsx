@@ -19,8 +19,9 @@ import {
   Clock,
   DollarSign,
   BookOpen,
+  Building2,
 } from 'lucide-react';
-import { PageContainer } from '@/components/common';
+import { PageContainer, StatusBadge, ActionButton, ConfirmDialog } from '@/components/common';
 import {
   Box,
   Typography,
@@ -49,8 +50,8 @@ import {
   IconButton,
   Tooltip,
   TablePagination,
+  InputAdornment,
 } from '@mui/material';
-import { StatusBadge, ActionButton, ConfirmDialog } from '@/components/common';
 import { voucherApi, accountingSubjectApi } from '@/api/erp';
 import type {
   FinancialVoucher,
@@ -163,7 +164,13 @@ const VoucherManagementPage: React.FC = () => {
       imported: { color: 'info', label: '已导入' },
     };
     const config = badges[status] || { color: 'default' as const, label: status };
-    return <StatusBadge status={status} label={config.label} color={config.color} />;
+    return (
+      <StatusBadge
+        status={status}
+        label={config.label}
+        color={config.color}
+      />
+    );
   };
 
   const getVoucherTypeBadge = (type: string) => {
@@ -174,7 +181,14 @@ const VoucherManagementPage: React.FC = () => {
       记: { color: 'default', label: '记账凭证' },
     };
     const config = typeMap[type] || { color: 'default', label: type };
-    return <Chip label={config.label} size='small' color={config.color as any} variant='outlined' />;
+    return (
+      <Chip
+        label={config.label}
+        size='small'
+        color={config.color as any}
+        variant='outlined'
+      />
+    );
   };
 
   const stats = useMemo(() => {
@@ -412,6 +426,8 @@ const VoucherManagementPage: React.FC = () => {
       subtitle='凭证列表、创建凭证、审核凭证、记账、结账'
       maxWidth='xl'
       headerProps={{
+        pageIcon: <Building2 style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
         backButton: {
           onClick: () => navigate('/erp/dashboard'),
         },
@@ -445,330 +461,379 @@ const VoucherManagementPage: React.FC = () => {
         ],
       }}
     >
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: 2, md: 5 },
-            gap: 2,
-            mb: 3,
-          }}
-        >
-          {[
-            {
-              label: '凭证总数',
-              value: stats.total,
-              icon: <FileText size={20} />,
-              color: 'primary',
-              bg: 'primary.100',
-            },
-            {
-              label: '草稿',
-              value: stats.draft,
-              icon: <Clock size={20} />,
-              color: 'default',
-              bg: 'grey.100',
-            },
-            {
-              label: '待审核',
-              value: stats.pending,
-              icon: <AlertCircle size={20} />,
-              color: 'warning',
-              bg: 'warning.100',
-            },
-            {
-              label: '已审核',
-              value: stats.approved,
-              icon: <Check size={20} />,
-              color: 'info',
-              bg: 'info.100',
-            },
-            {
-              label: '已记账',
-              value: stats.posted,
-              icon: <FileCheck size={20} />,
-              color: 'success',
-              bg: 'success.100',
-            },
-          ].map((stat) => (
-            <Box
-              key={stat.label}
-              sx={{
-                p: 2.5,
-                bgcolor: 'background.paper',
-                borderRadius: 2,
-                boxShadow: 1,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 2,
-              }}
-            >
-              <Box
-                sx={{
-                  p: 1.5,
-                  borderRadius: 1.5,
-                  bgcolor: stat.bg,
-                  color: `${stat.color}.main`,
-                }}
-              >
-                {stat.icon}
-              </Box>
-              <Box>
-                <Typography variant='body2' sx={{ color: 'text.secondary' }}>
-                  {stat.label}
-                </Typography>
-                <Typography variant='h6' sx={{ fontWeight: 'bold' }}>
-                  {stat.value}
-                </Typography>
-              </Box>
-            </Box>
-          ))}
-        </Box>
-
-        <Box
-          sx={{
-            bgcolor: 'background.paper',
-            borderRadius: 2,
-            boxShadow: 1,
-            overflow: 'hidden',
-          }}
-        >
-          <Tabs
-            value={activeTab}
-            onChange={handleTabChange}
-            sx={{ px: 2, borderBottom: 1, borderColor: 'divider' }}
-          >
-            {tabs.map((tab) => (
-              <Tab
-                key={tab.value}
-                value={tab.value}
-                label={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    {tab.label}
-                    <Chip label={tab.count} size='small' sx={{ height: 20, minWidth: 24 }} />
-                  </Box>
-                }
-              />
-            ))}
-          </Tabs>
-
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: 2, md: 5 },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        {[
+          {
+            label: '凭证总数',
+            value: stats.total,
+            icon: <FileText size={20} />,
+            color: 'primary',
+            bg: 'primary.100',
+          },
+          {
+            label: '草稿',
+            value: stats.draft,
+            icon: <Clock size={20} />,
+            color: 'default',
+            bg: 'grey.100',
+          },
+          {
+            label: '待审核',
+            value: stats.pending,
+            icon: <AlertCircle size={20} />,
+            color: 'warning',
+            bg: 'warning.100',
+          },
+          {
+            label: '已审核',
+            value: stats.approved,
+            icon: <Check size={20} />,
+            color: 'info',
+            bg: 'info.100',
+          },
+          {
+            label: '已记账',
+            value: stats.posted,
+            icon: <FileCheck size={20} />,
+            color: 'success',
+            bg: 'success.100',
+          },
+        ].map((stat) => (
           <Box
+            key={stat.label}
             sx={{
-              p: 2,
+              p: 2.5,
+              bgcolor: 'background.paper',
+              borderRadius: 2,
+              boxShadow: 1,
               display: 'flex',
-              flexWrap: 'wrap',
-              gap: 2,
               alignItems: 'center',
-              borderBottom: 1,
-              borderColor: 'divider',
+              gap: 2,
             }}
           >
-            <TextField
-              size='small'
-              placeholder='搜索凭证编号或摘要...'
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              InputProps={{
-                startAdornment: <Search size={16} style={{ marginRight: 8, opacity: 0.5 }} />,
+            <Box
+              sx={{
+                p: 1.5,
+                borderRadius: 1.5,
+                bgcolor: stat.bg,
+                color: `${stat.color}.main`,
               }}
-              sx={{ minWidth: 280 }}
-            />
-            <FormControl size='small' sx={{ minWidth: 140 }}>
-              <InputLabel>凭证类型</InputLabel>
-              <Select
-                value={voucherTypeFilter}
-                label='凭证类型'
-                onChange={(e) => {
-                  setVoucherTypeFilter(e.target.value);
-                  setPage(0);
-                }}
-              >
-                <MenuItem value=''>全部类型</MenuItem>
-                <MenuItem value='收'>收款凭证</MenuItem>
-                <MenuItem value='付'>付款凭证</MenuItem>
-                <MenuItem value='转'>转账凭证</MenuItem>
-                <MenuItem value='记'>记账凭证</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl size='small' sx={{ minWidth: 160 }}>
-              <InputLabel>期间</InputLabel>
-              <Select
-                value={periodFilter}
-                label='期间'
-                onChange={(e) => {
-                  setPeriodFilter(e.target.value);
-                  setPage(0);
-                }}
-              >
-                <MenuItem value=''>全部期间</MenuItem>
-                <MenuItem value='2024-01'>2024年01月</MenuItem>
-                <MenuItem value='2024-02'>2024年02月</MenuItem>
-                <MenuItem value='2024-03'>2024年03月</MenuItem>
-                <MenuItem value='2024-04'>2024年04月</MenuItem>
-                <MenuItem value='2024-05'>2024年05月</MenuItem>
-                <MenuItem value='2024-06'>2024年06月</MenuItem>
-              </Select>
-            </FormControl>
-            <Box sx={{ flexGrow: 1 }} />
-            <Button
-              variant='outlined'
-              size='small'
-              startIcon={<RefreshCw size={16} />}
-              onClick={loadData}
             >
-              刷新
-            </Button>
-          </Box>
-
-          {loading ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-              <CircularProgress />
+              {stat.icon}
             </Box>
-          ) : (
-            <>
-              <TableContainer>
-                <Table>
-                  <TableHead>
-                    <TableRow sx={{ bgcolor: 'grey.50' }}>
-                      <TableCell sx={{ fontWeight: 'bold' }}>凭证编号</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>类型</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>日期</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>期间</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>摘要</TableCell>
-                      <TableCell align='right' sx={{ fontWeight: 'bold' }}>
-                        借方金额
-                      </TableCell>
-                      <TableCell align='right' sx={{ fontWeight: 'bold' }}>
-                        贷方金额
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>制单人</TableCell>
-                      <TableCell sx={{ fontWeight: 'bold' }}>状态</TableCell>
-                      <TableCell align='center' sx={{ fontWeight: 'bold', width: 200 }}>
-                        操作
+            <Box>
+              <Typography
+                variant='body2'
+                sx={{ color: 'text.secondary' }}
+              >
+                {stat.label}
+              </Typography>
+              <Typography
+                variant='h6'
+                sx={{ fontWeight: 'bold' }}
+              >
+                {stat.value}
+              </Typography>
+            </Box>
+          </Box>
+        ))}
+      </Box>
+
+      <Box
+        sx={{
+          bgcolor: 'background.paper',
+          borderRadius: 2,
+          boxShadow: 1,
+          overflow: 'hidden',
+        }}
+      >
+        <Tabs
+          value={activeTab}
+          onChange={handleTabChange}
+          sx={{ px: 2, borderBottom: 1, borderColor: 'divider' }}
+        >
+          {tabs.map((tab) => (
+            <Tab
+              key={tab.value}
+              value={tab.value}
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  {tab.label}
+                  <Chip
+                    label={tab.count}
+                    size='small'
+                    sx={{ height: 20, minWidth: 24 }}
+                  />
+                </Box>
+              }
+            />
+          ))}
+        </Tabs>
+
+        <Box
+          sx={{
+            p: 2,
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: 2,
+            alignItems: 'center',
+            borderBottom: 1,
+            borderColor: 'divider',
+          }}
+        >
+          <TextField
+            size='small'
+            placeholder='搜索凭证编号或摘要...'
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position='start'>
+                    <Search
+                      size={16}
+                      style={{ opacity: 0.5 }}
+                    />
+                  </InputAdornment>
+                ),
+              },
+            }}
+            sx={{ minWidth: 280 }}
+          />
+          <FormControl
+            size='small'
+            sx={{ minWidth: 140 }}
+          >
+            <InputLabel>凭证类型</InputLabel>
+            <Select
+              value={voucherTypeFilter}
+              label='凭证类型'
+              onChange={(e) => {
+                setVoucherTypeFilter(e.target.value);
+                setPage(0);
+              }}
+            >
+              <MenuItem value=''>全部类型</MenuItem>
+              <MenuItem value='收'>收款凭证</MenuItem>
+              <MenuItem value='付'>付款凭证</MenuItem>
+              <MenuItem value='转'>转账凭证</MenuItem>
+              <MenuItem value='记'>记账凭证</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl
+            size='small'
+            sx={{ minWidth: 160 }}
+          >
+            <InputLabel>期间</InputLabel>
+            <Select
+              value={periodFilter}
+              label='期间'
+              onChange={(e) => {
+                setPeriodFilter(e.target.value);
+                setPage(0);
+              }}
+            >
+              <MenuItem value=''>全部期间</MenuItem>
+              <MenuItem value='2024-01'>2024年01月</MenuItem>
+              <MenuItem value='2024-02'>2024年02月</MenuItem>
+              <MenuItem value='2024-03'>2024年03月</MenuItem>
+              <MenuItem value='2024-04'>2024年04月</MenuItem>
+              <MenuItem value='2024-05'>2024年05月</MenuItem>
+              <MenuItem value='2024-06'>2024年06月</MenuItem>
+            </Select>
+          </FormControl>
+          <Box sx={{ flexGrow: 1 }} />
+          <Button
+            variant='outlined'
+            size='small'
+            startIcon={<RefreshCw size={16} />}
+            onClick={loadData}
+          >
+            刷新
+          </Button>
+        </Box>
+
+        {loading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <>
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow sx={{ bgcolor: 'grey.50' }}>
+                    <TableCell sx={{ fontWeight: 'bold' }}>凭证编号</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>类型</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>日期</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>期间</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>摘要</TableCell>
+                    <TableCell
+                      align='right'
+                      sx={{ fontWeight: 'bold' }}
+                    >
+                      借方金额
+                    </TableCell>
+                    <TableCell
+                      align='right'
+                      sx={{ fontWeight: 'bold' }}
+                    >
+                      贷方金额
+                    </TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>制单人</TableCell>
+                    <TableCell sx={{ fontWeight: 'bold' }}>状态</TableCell>
+                    <TableCell
+                      align='center'
+                      sx={{ fontWeight: 'bold', width: 200 }}
+                    >
+                      操作
+                    </TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {vouchers.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={10}
+                        sx={{ py: 8, textAlign: 'center' }}
+                      >
+                        <FileText
+                          sx={{ width: 48, height: 48, color: 'text.disabled', mx: 'auto', mb: 2 }}
+                        />
+                        <Typography
+                          variant='body1'
+                          sx={{ color: 'text.secondary' }}
+                        >
+                          暂无凭证数据
+                        </Typography>
                       </TableCell>
                     </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {vouchers.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={10} sx={{ py: 8, textAlign: 'center' }}>
-                          <FileText
-                            sx={{ width: 48, height: 48, color: 'text.disabled', mx: 'auto', mb: 2 }}
-                          />
-                          <Typography variant='body1' sx={{ color: 'text.secondary' }}>
-                            暂无凭证数据
+                  ) : (
+                    vouchers.map((voucher) => (
+                      <TableRow
+                        key={voucher.id}
+                        hover
+                      >
+                        <TableCell>
+                          <Typography sx={{ fontWeight: 500, color: 'primary.main' }}>
+                            {voucher.voucher_number}
                           </Typography>
                         </TableCell>
-                      </TableRow>
-                    ) : (
-                      vouchers.map((voucher) => (
-                        <TableRow key={voucher.id} hover>
-                          <TableCell>
-                            <Typography
-                              sx={{ fontWeight: 500, color: 'primary.main' }}
-                            >
-                              {voucher.voucher_number}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
-                            {getVoucherTypeBadge(
-                              voucher.voucher_number?.split('-')[0] || '记'
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {voucher.voucher_date?.split('T')[0] || '-'}
-                          </TableCell>
-                          <TableCell>{voucher.period}</TableCell>
-                          <TableCell>
-                            <Typography
-                              sx={{
-                                maxWidth: 200,
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap',
-                              }}
-                            >
-                              {voucher.summary || '-'}
-                            </Typography>
-                          </TableCell>
-                          <TableCell align='right' sx={{ color: 'error.main', fontWeight: 500 }}>
-                            {formatCurrency(voucher.total_debit)}
-                          </TableCell>
-                          <TableCell align='right' sx={{ color: 'success.main', fontWeight: 500 }}>
-                            {formatCurrency(voucher.total_credit)}
-                          </TableCell>
-                          <TableCell>{voucher.maker_name || '-'}</TableCell>
-                          <TableCell>{getStatusBadge(voucher.status)}</TableCell>
-                          <TableCell align='center'>
-                            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
-                              <Tooltip title='查看详情'>
-                                <IconButton size='small' onClick={() => handleViewDetail(voucher)}>
-                                  <Eye size={16} />
+                        <TableCell>
+                          {getVoucherTypeBadge(voucher.voucher_number?.split('-')[0] || '记')}
+                        </TableCell>
+                        <TableCell>{voucher.voucher_date?.split('T')[0] || '-'}</TableCell>
+                        <TableCell>{voucher.period}</TableCell>
+                        <TableCell>
+                          <Typography
+                            sx={{
+                              maxWidth: 200,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {voucher.summary || '-'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell
+                          align='right'
+                          sx={{ color: 'error.main', fontWeight: 500 }}
+                        >
+                          {formatCurrency(voucher.total_debit)}
+                        </TableCell>
+                        <TableCell
+                          align='right'
+                          sx={{ color: 'success.main', fontWeight: 500 }}
+                        >
+                          {formatCurrency(voucher.total_credit)}
+                        </TableCell>
+                        <TableCell>{voucher.maker_name || '-'}</TableCell>
+                        <TableCell>{getStatusBadge(voucher.status)}</TableCell>
+                        <TableCell align='center'>
+                          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
+                            <Tooltip title='查看详情'>
+                              <IconButton
+                                size='small'
+                                onClick={() => handleViewDetail(voucher)}
+                              >
+                                <Eye size={16} />
+                              </IconButton>
+                            </Tooltip>
+                            {voucher.status === 'draft' && (
+                              <Tooltip title='编辑'>
+                                <IconButton
+                                  size='small'
+                                  color='primary'
+                                >
+                                  <Edit size={16} />
                                 </IconButton>
                               </Tooltip>
-                              {voucher.status === 'draft' && (
-                                <Tooltip title='编辑'>
-                                  <IconButton size='small' color='primary'>
-                                    <Edit size={16} />
-                                  </IconButton>
-                                </Tooltip>
-                              )}
-                              {voucher.status === 'draft' || voucher.status === 'pending' ? (
-                                <Tooltip title='审核'>
-                                  <IconButton
-                                    size='small'
-                                    color='success'
-                                    onClick={() => handleAudit(voucher)}
-                                  >
-                                    <Check size={16} />
-                                  </IconButton>
-                                </Tooltip>
-                              ) : null}
-                              {voucher.status === 'approved' && (
-                                <Tooltip title='记账'>
-                                  <IconButton
-                                    size='small'
-                                    color='primary'
-                                    onClick={() => handlePost(voucher)}
-                                  >
-                                    <BookOpen size={16} />
-                                  </IconButton>
-                                </Tooltip>
-                              )}
-                              {(voucher.status === 'draft' || voucher.status === 'pending') && (
-                                <Tooltip title='删除'>
-                                  <IconButton
-                                    size='small'
-                                    color='error'
-                                    onClick={() => handleDelete(voucher.id)}
-                                  >
-                                    <Trash2 size={16} />
-                                  </IconButton>
-                                </Tooltip>
-                              )}
-                            </Box>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-              <TablePagination
-                component='div'
-                count={totalCount}
-                page={page}
-                onPageChange={(_, newPage) => setPage(newPage)}
-                rowsPerPage={rowsPerPage}
-                onRowsPerPageChange={(e) => {
-                  setRowsPerPage(parseInt(e.target.value, 10));
-                  setPage(0);
-                }}
-                rowsPerPageOptions={[10, 25, 50, 100]}
-                labelRowsPerPage='每页行数'
-              />
-            </>
-          )}
-        </Box>
+                            )}
+                            {voucher.status === 'draft' || voucher.status === 'pending' ? (
+                              <Tooltip title='审核'>
+                                <IconButton
+                                  size='small'
+                                  color='success'
+                                  onClick={() => handleAudit(voucher)}
+                                >
+                                  <Check size={16} />
+                                </IconButton>
+                              </Tooltip>
+                            ) : null}
+                            {voucher.status === 'approved' && (
+                              <Tooltip title='记账'>
+                                <IconButton
+                                  size='small'
+                                  color='primary'
+                                  onClick={() => handlePost(voucher)}
+                                >
+                                  <BookOpen size={16} />
+                                </IconButton>
+                              </Tooltip>
+                            )}
+                            {(voucher.status === 'draft' || voucher.status === 'pending') && (
+                              <Tooltip title='删除'>
+                                <IconButton
+                                  size='small'
+                                  color='error'
+                                  onClick={() => handleDelete(voucher.id)}
+                                >
+                                  <Trash2 size={16} />
+                                </IconButton>
+                              </Tooltip>
+                            )}
+                          </Box>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <TablePagination
+              component='div'
+              count={totalCount}
+              page={page}
+              onPageChange={(_, newPage) => setPage(newPage)}
+              rowsPerPage={rowsPerPage}
+              onRowsPerPageChange={(e) => {
+                setRowsPerPage(parseInt(e.target.value, 10));
+                setPage(0);
+              }}
+              rowsPerPageOptions={[10, 25, 50, 100]}
+              labelRowsPerPage='每页行数'
+            />
+          </>
+        )}
+      </Box>
 
       <Dialog
         open={showCreateModal}
@@ -826,15 +891,13 @@ const VoucherManagementPage: React.FC = () => {
                 onChange={(e) =>
                   setNewVoucher((prev) => ({ ...prev, voucher_date: e.target.value }))
                 }
-                InputLabelProps={{ shrink: true }}
+                slotProps={{ inputLabel: { shrink: true } }}
               />
               <TextField
                 size='small'
                 label='期间 *'
                 value={newVoucher.period}
-                onChange={(e) =>
-                  setNewVoucher((prev) => ({ ...prev, period: e.target.value }))
-                }
+                onChange={(e) => setNewVoucher((prev) => ({ ...prev, period: e.target.value }))}
                 placeholder='如: 2024-06'
               />
             </Box>
@@ -864,9 +927,7 @@ const VoucherManagementPage: React.FC = () => {
               multiline
               rows={2}
               value={newVoucher.summary}
-              onChange={(e) =>
-                setNewVoucher((prev) => ({ ...prev, summary: e.target.value }))
-              }
+              onChange={(e) => setNewVoucher((prev) => ({ ...prev, summary: e.target.value }))}
               placeholder='凭证摘要'
             />
 
@@ -879,7 +940,10 @@ const VoucherManagementPage: React.FC = () => {
                   mb: 2,
                 }}
               >
-                <Typography variant='subtitle1' sx={{ fontWeight: 600 }}>
+                <Typography
+                  variant='subtitle1'
+                  sx={{ fontWeight: 600 }}
+                >
                   凭证明细
                 </Typography>
                 <Button
@@ -891,17 +955,26 @@ const VoucherManagementPage: React.FC = () => {
                 </Button>
               </Box>
 
-              <TableContainer component={Paper} variant='outlined'>
+              <TableContainer
+                component={Paper}
+                variant='outlined'
+              >
                 <Table size='small'>
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'grey.50' }}>
                       <TableCell sx={{ width: 60, fontWeight: 'bold' }}>行号</TableCell>
                       <TableCell sx={{ fontWeight: 'bold' }}>科目</TableCell>
                       <TableCell sx={{ fontWeight: 'bold' }}>摘要</TableCell>
-                      <TableCell align='right' sx={{ width: 140, fontWeight: 'bold' }}>
+                      <TableCell
+                        align='right'
+                        sx={{ width: 140, fontWeight: 'bold' }}
+                      >
                         借方金额
                       </TableCell>
-                      <TableCell align='right' sx={{ width: 140, fontWeight: 'bold' }}>
+                      <TableCell
+                        align='right'
+                        sx={{ width: 140, fontWeight: 'bold' }}
+                      >
                         贷方金额
                       </TableCell>
                       <TableCell sx={{ width: 60 }} />
@@ -910,7 +983,10 @@ const VoucherManagementPage: React.FC = () => {
                   <TableBody>
                     {newVoucher.items.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={6} sx={{ py: 4, textAlign: 'center', color: 'text.disabled' }}>
+                        <TableCell
+                          colSpan={6}
+                          sx={{ py: 4, textAlign: 'center', color: 'text.disabled' }}
+                        >
                           点击「添加分录」添加凭证明细
                         </TableCell>
                       </TableRow>
@@ -919,7 +995,10 @@ const VoucherManagementPage: React.FC = () => {
                         <TableRow key={index}>
                           <TableCell>{item.line_number}</TableCell>
                           <TableCell>
-                            <FormControl fullWidth size='small'>
+                            <FormControl
+                              fullWidth
+                              size='small'
+                            >
                               <Select
                                 value={item.subject_code}
                                 onChange={(e) =>
@@ -927,11 +1006,17 @@ const VoucherManagementPage: React.FC = () => {
                                 }
                                 displayEmpty
                               >
-                                <MenuItem value='' disabled>
+                                <MenuItem
+                                  value=''
+                                  disabled
+                                >
                                   选择科目
                                 </MenuItem>
                                 {subjects.map((s) => (
-                                  <MenuItem key={s.id} value={s.code}>
+                                  <MenuItem
+                                    key={s.id}
+                                    value={s.code}
+                                  >
                                     {s.code} - {s.name}
                                   </MenuItem>
                                 ))}
@@ -943,9 +1028,7 @@ const VoucherManagementPage: React.FC = () => {
                               size='small'
                               fullWidth
                               value={item.summary}
-                              onChange={(e) =>
-                                updateVoucherItem(index, 'summary', e.target.value)
-                              }
+                              onChange={(e) => updateVoucherItem(index, 'summary', e.target.value)}
                               placeholder='摘要'
                             />
                           </TableCell>
@@ -1009,23 +1092,38 @@ const VoucherManagementPage: React.FC = () => {
                 }}
               >
                 <Box sx={{ textAlign: 'right' }}>
-                  <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'text.secondary' }}
+                  >
                     借方合计
                   </Typography>
-                  <Typography variant='h6' sx={{ fontWeight: 'bold', color: 'error.main' }}>
+                  <Typography
+                    variant='h6'
+                    sx={{ fontWeight: 'bold', color: 'error.main' }}
+                  >
                     {formatCurrency(totalDebit)}
                   </Typography>
                 </Box>
                 <Box sx={{ textAlign: 'right' }}>
-                  <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'text.secondary' }}
+                  >
                     贷方合计
                   </Typography>
-                  <Typography variant='h6' sx={{ fontWeight: 'bold', color: 'success.main' }}>
+                  <Typography
+                    variant='h6'
+                    sx={{ fontWeight: 'bold', color: 'success.main' }}
+                  >
                     {formatCurrency(totalCredit)}
                   </Typography>
                 </Box>
                 <Box sx={{ textAlign: 'right' }}>
-                  <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'text.secondary' }}
+                  >
                     平衡状态
                   </Typography>
                   <Chip
@@ -1048,7 +1146,11 @@ const VoucherManagementPage: React.FC = () => {
           >
             取消
           </Button>
-          <Button variant='contained' onClick={handleCreate} disabled={!isBalanced}>
+          <Button
+            variant='contained'
+            onClick={handleCreate}
+            disabled={!isBalanced}
+          >
             保存凭证
           </Button>
         </DialogActions>
@@ -1077,30 +1179,48 @@ const VoucherManagementPage: React.FC = () => {
                 }}
               >
                 <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                  <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'text.secondary' }}
+                  >
                     凭证编号
                   </Typography>
-                  <Typography variant='h6' sx={{ color: 'primary.main', fontWeight: 'bold' }}>
+                  <Typography
+                    variant='h6'
+                    sx={{ color: 'primary.main', fontWeight: 'bold' }}
+                  >
                     {currentVoucher.voucher_number}
                   </Typography>
                 </Box>
                 <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                  <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'text.secondary' }}
+                  >
                     凭证日期
                   </Typography>
-                  <Typography variant='h6' sx={{ fontWeight: 'bold' }}>
+                  <Typography
+                    variant='h6'
+                    sx={{ fontWeight: 'bold' }}
+                  >
                     {currentVoucher.voucher_date?.split('T')[0]}
                   </Typography>
                 </Box>
                 <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                  <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'text.secondary' }}
+                  >
                     状态
                   </Typography>
                   <Box sx={{ mt: 0.5 }}>{getStatusBadge(currentVoucher.status)}</Box>
                 </Box>
               </Box>
               <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                <Typography variant='body2' sx={{ color: 'text.secondary', mb: 0.5 }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'text.secondary', mb: 0.5 }}
+                >
                   摘要
                 </Typography>
                 <Typography>{currentVoucher.summary || '-'}</Typography>
@@ -1113,7 +1233,10 @@ const VoucherManagementPage: React.FC = () => {
                 }}
               >
                 <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                  <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'text.secondary' }}
+                  >
                     制单人
                   </Typography>
                   <Typography sx={{ fontWeight: 500 }}>
@@ -1121,7 +1244,10 @@ const VoucherManagementPage: React.FC = () => {
                   </Typography>
                 </Box>
                 <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                  <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'text.secondary' }}
+                  >
                     审核人
                   </Typography>
                   <Typography sx={{ fontWeight: 500 }}>
@@ -1129,7 +1255,10 @@ const VoucherManagementPage: React.FC = () => {
                   </Typography>
                 </Box>
                 <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                  <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'text.secondary' }}
+                  >
                     期间
                   </Typography>
                   <Typography sx={{ fontWeight: 500 }}>{currentVoucher.period}</Typography>
@@ -1137,10 +1266,16 @@ const VoucherManagementPage: React.FC = () => {
               </Box>
 
               <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 2 }}>
-                <Typography variant='subtitle1' sx={{ fontWeight: 600, mb: 2 }}>
+                <Typography
+                  variant='subtitle1'
+                  sx={{ fontWeight: 600, mb: 2 }}
+                >
                   凭证明细
                 </Typography>
-                <TableContainer component={Paper} variant='outlined'>
+                <TableContainer
+                  component={Paper}
+                  variant='outlined'
+                >
                   <Table size='small'>
                     <TableHead>
                       <TableRow sx={{ bgcolor: 'grey.50' }}>
@@ -1148,10 +1283,16 @@ const VoucherManagementPage: React.FC = () => {
                         <TableCell sx={{ fontWeight: 'bold' }}>科目代码</TableCell>
                         <TableCell sx={{ fontWeight: 'bold' }}>科目名称</TableCell>
                         <TableCell sx={{ fontWeight: 'bold' }}>摘要</TableCell>
-                        <TableCell align='right' sx={{ fontWeight: 'bold' }}>
+                        <TableCell
+                          align='right'
+                          sx={{ fontWeight: 'bold' }}
+                        >
                           借方
                         </TableCell>
-                        <TableCell align='right' sx={{ fontWeight: 'bold' }}>
+                        <TableCell
+                          align='right'
+                          sx={{ fontWeight: 'bold' }}
+                        >
                           贷方
                         </TableCell>
                       </TableRow>
@@ -1163,10 +1304,16 @@ const VoucherManagementPage: React.FC = () => {
                           <TableCell>{item.subject_code}</TableCell>
                           <TableCell>{item.subject_name}</TableCell>
                           <TableCell>{item.summary || '-'}</TableCell>
-                          <TableCell align='right' sx={{ color: 'error.main' }}>
+                          <TableCell
+                            align='right'
+                            sx={{ color: 'error.main' }}
+                          >
                             {item.debit_amount > 0 ? formatCurrency(item.debit_amount) : ''}
                           </TableCell>
-                          <TableCell align='right' sx={{ color: 'success.main' }}>
+                          <TableCell
+                            align='right'
+                            sx={{ color: 'success.main' }}
+                          >
                             {item.credit_amount > 0 ? formatCurrency(item.credit_amount) : ''}
                           </TableCell>
                         </TableRow>
@@ -1186,18 +1333,30 @@ const VoucherManagementPage: React.FC = () => {
                   }}
                 >
                   <Box sx={{ textAlign: 'right' }}>
-                    <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                    <Typography
+                      variant='body2'
+                      sx={{ color: 'text.secondary' }}
+                    >
                       借方合计
                     </Typography>
-                    <Typography variant='h6' sx={{ fontWeight: 'bold', color: 'error.main' }}>
+                    <Typography
+                      variant='h6'
+                      sx={{ fontWeight: 'bold', color: 'error.main' }}
+                    >
                       {formatCurrency(currentVoucher.total_debit)}
                     </Typography>
                   </Box>
                   <Box sx={{ textAlign: 'right' }}>
-                    <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                    <Typography
+                      variant='body2'
+                      sx={{ color: 'text.secondary' }}
+                    >
                       贷方合计
                     </Typography>
-                    <Typography variant='h6' sx={{ fontWeight: 'bold', color: 'success.main' }}>
+                    <Typography
+                      variant='h6'
+                      sx={{ fontWeight: 'bold', color: 'success.main' }}
+                    >
                       {formatCurrency(currentVoucher.total_credit)}
                     </Typography>
                   </Box>

@@ -1,11 +1,6 @@
 import apiClient from '../../client';
 import type { ApiResponse } from '../../client';
-import type {
-  Vehicle,
-  VehicleRequest,
-  PaginationParams,
-  PaginatedResult,
-} from '../types';
+import type { Vehicle, VehicleRequest, PaginationParams, PaginatedResult } from '../types';
 
 export const vehicleApi = {
   async list(
@@ -19,7 +14,7 @@ export const vehicleApi = {
     if (params?.vehicle_type) searchParams.set('vehicle_type', params.vehicle_type);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/erp/vehicles${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(`/api/erp/vehicles${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<Vehicle>> {
@@ -52,7 +47,7 @@ export const vehicleRequestApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/erp/vehicle-requests${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(`/api/erp/vehicle-requests${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<VehicleRequest>> {

@@ -10,8 +10,8 @@ import {
   ListItemIcon,
   ListItemText,
   Chip,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
   File as FileIcon,
@@ -121,7 +121,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
   };
 
   /**
@@ -129,7 +129,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
    */
   const validateFileType = (file: File): boolean => {
     if (accept.length === 0) return true;
-    const ext = '.' + file.name.split('.').pop()?.toLowerCase();
+    const ext = `.${file.name.split('.').pop()?.toLowerCase()}`;
     const mimeType = file.type;
     return accept.some((type) => type.toLowerCase() === ext || type.toLowerCase() === mimeType);
   };
@@ -478,7 +478,7 @@ const UploadArea = styled(Box, {
   }`,
   borderRadius: theme.shape.borderRadius,
   backgroundColor: isDragging
-    ? theme.palette.primary.light + '20'
+    ? `${theme.palette.primary.light}20`
     : isDisabled
       ? theme.palette.grey[50]
       : 'transparent',
@@ -487,7 +487,7 @@ const UploadArea = styled(Box, {
   color: isDisabled ? theme.palette.grey[400] : theme.palette.text.secondary,
   '&:hover': {
     borderColor: isDisabled ? theme.palette.grey[300] : theme.palette.primary.main,
-    backgroundColor: isDisabled ? 'transparent' : theme.palette.primary.light + '10',
+    backgroundColor: isDisabled ? 'transparent' : `${theme.palette.primary.light}10`,
   },
 }));
 

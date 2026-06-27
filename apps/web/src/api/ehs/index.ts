@@ -1,6 +1,22 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
+import { accidentApi } from './accident';
+import { complianceApi } from './compliance';
+import { emergencyApi } from './emergency';
+import { environmentApi } from './environment';
+import { hazardApi } from './hazard';
+import { hazardousMaterialApi } from './hazardous-material';
+import { incidentApi } from './incident';
+import { inspectionApi } from './inspection';
+import { occupationalDiseaseApi } from './occupational-disease';
+import { occupationalHealthApi } from './occupational-health';
+import { riskApi } from './risk';
+import { safetyCheckApi } from './safety-check';
+import { safetyIssueApi } from './safety-issue';
+import { syncApi } from './sync';
+import { trainingApi } from './training';
+
 export * from './types';
 
 export { accidentApi } from './accident';
@@ -18,22 +34,6 @@ export { safetyCheckApi } from './safety-check';
 export { safetyIssueApi } from './safety-issue';
 export { syncApi } from './sync';
 export { trainingApi } from './training';
-
-import { accidentApi } from './accident';
-import { complianceApi } from './compliance';
-import { emergencyApi } from './emergency';
-import { environmentApi } from './environment';
-import { hazardApi } from './hazard';
-import { hazardousMaterialApi } from './hazardous-material';
-import { incidentApi } from './incident';
-import { inspectionApi } from './inspection';
-import { occupationalDiseaseApi } from './occupational-disease';
-import { occupationalHealthApi } from './occupational-health';
-import { riskApi } from './risk';
-import { safetyCheckApi } from './safety-check';
-import { safetyIssueApi } from './safety-issue';
-import { syncApi } from './sync';
-import { trainingApi } from './training';
 
 export const ehsApi = {
   hazards: hazardApi,
@@ -254,8 +254,8 @@ export const ehsApi = {
   getSyncConfig: syncApi.getSyncConfig,
 
   health: async (): Promise<ApiResponse<string>> => {
-      return apiClient.ehs.get<string>('/health');
-    },
+    return apiClient.ehs.get<string>('/health');
+  },
 };
 
 export default ehsApi;

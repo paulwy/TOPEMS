@@ -13,10 +13,7 @@ interface ModuleLoadingProgressProps {
   strokeWidth?: number;
 }
 
-const calculateEstimatedTime = (
-  progress: number,
-  startTime: number | undefined
-): string | null => {
+const calculateEstimatedTime = (progress: number, startTime: number | undefined): string | null => {
   if (!startTime || progress <= 0 || progress >= 100) return null;
 
   const elapsed = Date.now() - startTime;
@@ -171,8 +168,7 @@ export const ModuleLoadingOverlay: React.FC<{ moduleId?: string }> = ({ moduleId
       alignItems: 'center',
       justifyContent: 'center',
       backgroundColor: 'background.paper',
-      zIndex: theme =>
-        (theme.zIndex as { modal: number }).modal + 1,
+      zIndex: (theme) => (theme.zIndex as { modal: number }).modal + 1,
     }}
   >
     <ModuleLoadingProgress moduleId={moduleId} />

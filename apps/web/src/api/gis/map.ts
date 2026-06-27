@@ -38,9 +38,7 @@ export const mapApi = {
     return apiClient.gis.get<FactoryMap>(`/api/gis/factory-maps/${id}`);
   },
 
-  createFactoryMap: async (
-    data: CreateFactoryMapRequest
-  ): Promise<ApiResponse<FactoryMap>> => {
+  createFactoryMap: async (data: CreateFactoryMapRequest): Promise<ApiResponse<FactoryMap>> => {
     return apiClient.gis.post<FactoryMap>('/api/gis/factory-maps', data);
   },
 
@@ -63,18 +61,14 @@ export const mapApi = {
     if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.search) queryParams.append('search', params.search);
 
-    const response = await apiClient.gis.get<any>(
-      `/api/gis/map-markers?${queryParams.toString()}`
-    );
+    const response = await apiClient.gis.get<any>(`/api/gis/map-markers?${queryParams.toString()}`);
     if (response.success && response.data) {
       response.data = adaptResponse<MapMarker>(response.data, 'map_markers');
     }
     return response as ApiResponse<PaginatedResponse<MapMarker>>;
   },
 
-  createMapMarker: async (
-    data: CreateMapMarkerRequest
-  ): Promise<ApiResponse<MapMarker>> => {
+  createMapMarker: async (data: CreateMapMarkerRequest): Promise<ApiResponse<MapMarker>> => {
     return apiClient.gis.post<MapMarker>('/api/gis/map-markers', data);
   },
 
@@ -103,10 +97,7 @@ export const mapApi = {
     return apiClient.gis.get<string>('/health');
   },
 
-  importData: async (
-    type: string,
-    file: File
-  ): Promise<ApiResponse<any>> => {
+  importData: async (type: string, file: File): Promise<ApiResponse<any>> => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('type', type);

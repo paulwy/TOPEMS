@@ -1,7 +1,12 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Box, Card, CardContent, Typography, Chip } from '@mui/material';
 import { Plus, Trash2, Upload, Download, Edit, Package } from 'lucide-react';
-import { ListPageTemplate, type ColumnDef, type RowAction, type BatchAction } from '@/components/templates';
+import {
+  ListPageTemplate,
+  type ColumnDef,
+  type RowAction,
+  type BatchAction,
+} from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { materialApi } from '@/api/rs';
 import type { Material } from '@/api/rs';
@@ -284,7 +289,10 @@ const RsMaterialListPage: React.FC = () => {
         width: 140,
         sortable: true,
         render: (row) => (
-          <Typography variant='body2' sx={{ fontWeight: 'medium' }}>
+          <Typography
+            variant='body2'
+            sx={{ fontWeight: 'medium' }}
+          >
             {row.code}
           </Typography>
         ),
@@ -299,7 +307,13 @@ const RsMaterialListPage: React.FC = () => {
         id: 'category',
         label: '类别',
         width: 120,
-        render: (row) => <Chip label={row.category} size='small' variant='outlined' />,
+        render: (row) => (
+          <Chip
+            label={row.category}
+            size='small'
+            variant='outlined'
+          />
+        ),
       },
       {
         id: 'stock_quantity',
@@ -421,14 +435,23 @@ const RsMaterialListPage: React.FC = () => {
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <Typography color='text.secondary' variant='body2'>
+                <Typography
+                  color='text.secondary'
+                  variant='body2'
+                >
                   物料总数
                 </Typography>
-                <Typography variant='h4' sx={{ fontWeight: 'bold' }}>
+                <Typography
+                  variant='h4'
+                  sx={{ fontWeight: 'bold' }}
+                >
                   {total}
                 </Typography>
               </div>
-              <Package color='primary' size={32} />
+              <Package
+                color='primary'
+                size={32}
+              />
             </Box>
           </CardContent>
         </Card>
@@ -436,14 +459,23 @@ const RsMaterialListPage: React.FC = () => {
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <Typography color='text.secondary' variant='body2'>
+                <Typography
+                  color='text.secondary'
+                  variant='body2'
+                >
                   库存充足
                 </Typography>
-                <Typography variant='h4' sx={{ fontWeight: 'bold', color: 'success.main' }}>
+                <Typography
+                  variant='h4'
+                  sx={{ fontWeight: 'bold', color: 'success.main' }}
+                >
                   {stats.sufficient}
                 </Typography>
               </div>
-              <Package color='success' size={32} />
+              <Package
+                color='success'
+                size={32}
+              />
             </Box>
           </CardContent>
         </Card>
@@ -451,14 +483,23 @@ const RsMaterialListPage: React.FC = () => {
           <CardContent>
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <Typography color='text.secondary' variant='body2'>
+                <Typography
+                  color='text.secondary'
+                  variant='body2'
+                >
                   库存不足
                 </Typography>
-                <Typography variant='h4' sx={{ fontWeight: 'bold', color: 'error.main' }}>
+                <Typography
+                  variant='h4'
+                  sx={{ fontWeight: 'bold', color: 'error.main' }}
+                >
                   {stats.low}
                 </Typography>
               </div>
-              <Package color='error' size={32} />
+              <Package
+                color='error'
+                size={32}
+              />
             </Box>
           </CardContent>
         </Card>
@@ -467,7 +508,10 @@ const RsMaterialListPage: React.FC = () => {
   );
 
   return (
-    <PageContainer title='物料管理' subtitle='管理研发物料、库存监控、物料申请'>
+    <PageContainer
+      title='物料管理'
+      subtitle='管理研发物料、库存监控、物料申请'
+    >
       <input
         accept='.csv'
         style={{ display: 'none' }}
@@ -479,7 +523,11 @@ const RsMaterialListPage: React.FC = () => {
       <ListPageTemplate
         title=''
         subtitle=''
-        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '研发', href: '/rs' }, { label: '物料管理' }]}
+        breadcrumbs={[
+          { label: '首页', href: '/dashboard' },
+          { label: '研发', href: '/rs' },
+          { label: '物料管理' },
+        ]}
         columns={columns}
         data={materials}
         loading={loading}

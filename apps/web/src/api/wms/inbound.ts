@@ -21,16 +21,11 @@ export const inboundOrderApi = {
     return apiClient.wms.get(`/inbound-orders/${id}`);
   },
 
-  create: async (
-    data: CreateInboundOrderRequest
-  ): Promise<ApiResponse<InboundOrder>> => {
+  create: async (data: CreateInboundOrderRequest): Promise<ApiResponse<InboundOrder>> => {
     return apiClient.wms.post('/inbound-orders', data);
   },
 
-  update: async (
-    id: string,
-    data: Partial<InboundOrder>
-  ): Promise<ApiResponse<InboundOrder>> => {
+  update: async (id: string, data: Partial<InboundOrder>): Promise<ApiResponse<InboundOrder>> => {
     return apiClient.wms.put(`/inbound-orders/${id}`, data);
   },
 
@@ -59,10 +54,7 @@ export const inboundOrderApi = {
     return apiClient.wms.put(`/inbound-orders/${order_id}/items/${item_id}`, data);
   },
 
-  deleteItem: async (
-    order_id: string,
-    item_id: string
-  ): Promise<ApiResponse<string>> => {
+  deleteItem: async (order_id: string, item_id: string): Promise<ApiResponse<string>> => {
     return apiClient.wms.delete(`/inbound-orders/${order_id}/items/${item_id}`);
   },
 
@@ -70,10 +62,7 @@ export const inboundOrderApi = {
     return apiClient.wms.post(`/inbound-orders/${id}/confirm`);
   },
 
-  receive: async (
-    id: string,
-    items: ReceiveItemRequest[]
-  ): Promise<ApiResponse<InboundOrder>> => {
+  receive: async (id: string, items: ReceiveItemRequest[]): Promise<ApiResponse<InboundOrder>> => {
     return apiClient.wms.post(`/inbound-orders/${id}/receive`, items);
   },
 

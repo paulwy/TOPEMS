@@ -9,8 +9,8 @@ import {
   Box,
   Tabs,
   Tab,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
@@ -41,7 +41,7 @@ import {
 } from '@/hooks/useConsolidation';
 import { useNotification } from '@/hooks/useNotification';
 import { EnhancedDataTable } from '@/components/EnhancedDataTable';
-import { StatCardGroup } from '@/components/mui';
+import { StatCardGroup } from '@/components';
 import type { ConsolidationScope, ConsolidationCompany } from '@/types/consolidation';
 import { PageContainer } from '@/components/common';
 
@@ -123,7 +123,11 @@ export default function ConsolidationScopePage() {
   const [activeTab, setActiveTab] = useState('companies');
 
   // 查询合并范围列表
-  const { data: scopesData, isLoading: scopesLoading, error: scopesError } = useConsolidationScopes({
+  const {
+    data: scopesData,
+    isLoading: scopesLoading,
+    error: scopesError,
+  } = useConsolidationScopes({
     keyword: searchKeyword,
   });
 
@@ -131,8 +135,11 @@ export default function ConsolidationScopePage() {
   const deleteScope = useDeleteConsolidationScope();
 
   // 查询选中合并范围的公司列表
-  const { data: companiesData, isLoading: companiesLoading, error: companiesError } =
-    useScopeCompanies(selectedScope?.id || '');
+  const {
+    data: companiesData,
+    isLoading: companiesLoading,
+    error: companiesError,
+  } = useScopeCompanies(selectedScope?.id || '');
 
   // 添加公司到合并范围
   const addCompany = useAddCompanyToScope();
@@ -524,9 +531,7 @@ export default function ConsolidationScopePage() {
                   <Button
                     variant='outlined'
                     size='small'
-                    onClick={() =>
-                      navigate(`#`)
-                    }
+                    onClick={() => navigate(`#`)}
                     startIcon={<Edit2 sx={{ width: 16, height: 16 }} />}
                   >
                     编辑
@@ -571,9 +576,7 @@ export default function ConsolidationScopePage() {
                       <Button
                         size='small'
                         variant='contained'
-                        onClick={() =>
-                          navigate(`#`)
-                        }
+                        onClick={() => navigate(`#`)}
                         startIcon={<Plus sx={{ width: 16, height: 16 }} />}
                       >
                         添加公司
@@ -622,9 +625,7 @@ export default function ConsolidationScopePage() {
                       <Button
                         size='small'
                         variant='contained'
-                        onClick={() =>
-                          navigate(`#`)
-                        }
+                        onClick={() => navigate(`#`)}
                         startIcon={<Plus sx={{ width: 16, height: 16 }} />}
                       >
                         新建规则

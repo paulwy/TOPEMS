@@ -12,8 +12,8 @@ import {
   Tooltip,
   Stack,
   TextField,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { Plus, Eye, Check, X, GitPullRequest, Clock, User } from 'lucide-react';
 import {
   ListPageTemplate,
@@ -82,7 +82,14 @@ const RsReviewPage: React.FC = () => {
           title: `${b.build_no} - ${b.project_name}`,
           reviewer: '系统自动',
           author: b.project_name,
-          status: b.status === 'success' ? 'approved' : b.status === 'failed' ? 'rejected' : b.status === 'running' ? 'in_progress' : 'pending',
+          status:
+            b.status === 'success'
+              ? 'approved'
+              : b.status === 'failed'
+                ? 'rejected'
+                : b.status === 'running'
+                  ? 'in_progress'
+                  : 'pending',
           create_time: b.created_at || '',
           comment_count: 0,
         }));

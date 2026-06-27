@@ -1,6 +1,24 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Box, Typography, InputLabel, Chip, Button, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
-import { Bell, Clock, User, MessageSquare, AlertCircle, CheckCircle2, FileText } from 'lucide-react';
+import {
+  Box,
+  Typography,
+  InputLabel,
+  Chip,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from '@mui/material';
+import {
+  Bell,
+  Clock,
+  User,
+  MessageSquare,
+  AlertCircle,
+  CheckCircle2,
+  FileText,
+} from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { notificationApi, type Notification } from '@/api/notification';
 import { useNotification } from '@/hooks/useNotification';
@@ -53,7 +71,7 @@ const NotificationDetailPage: React.FC = () => {
     if (!id) return;
     try {
       await notificationApi.markUnread(id);
-      setNotification((prev) => prev ? { ...prev, is_read: false } : null);
+      setNotification((prev) => (prev ? { ...prev, is_read: false } : null));
       success('已标记为未读');
     } catch (err: unknown) {
       apiLogger.error('标记未读失败:', err);
@@ -62,7 +80,10 @@ const NotificationDetailPage: React.FC = () => {
   };
 
   const getStatusConfig = (status: string) => {
-    const config: Record<string, { color: 'success' | 'error' | 'default' | 'warning'; label: string }> = {
+    const config: Record<
+      string,
+      { color: 'success' | 'error' | 'default' | 'warning'; label: string }
+    > = {
       unread: { color: 'error', label: '未读' },
       read: { color: 'success', label: '已读' },
     };
@@ -83,7 +104,14 @@ const NotificationDetailPage: React.FC = () => {
   };
 
   const getLevelConfig = (level: string) => {
-    const config: Record<string, { color: 'success' | 'error' | 'default' | 'warning'; label: string; icon: React.ReactElement }> = {
+    const config: Record<
+      string,
+      {
+        color: 'success' | 'error' | 'default' | 'warning';
+        label: string;
+        icon: React.ReactElement;
+      }
+    > = {
       info: { color: 'default', label: '信息', icon: <MessageSquare size={16} /> },
       warning: { color: 'warning', label: '警告', icon: <AlertCircle size={16} /> },
       error: { color: 'error', label: '错误', icon: <AlertCircle size={16} /> },
@@ -112,10 +140,16 @@ const NotificationDetailPage: React.FC = () => {
     return (
       <Box>
         <Box sx={{ mb: 4 }}>
-          <Typography variant='h5' sx={{ fontWeight: 'bold', mb: 2 }}>
+          <Typography
+            variant='h5'
+            sx={{ fontWeight: 'bold', mb: 2 }}
+          >
             {notification.title}
           </Typography>
-          <Typography variant='body1' sx={{ lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
+          <Typography
+            variant='body1'
+            sx={{ lineHeight: 1.8, whiteSpace: 'pre-wrap' }}
+          >
             {notification.content}
           </Typography>
         </Box>
@@ -130,19 +164,32 @@ const NotificationDetailPage: React.FC = () => {
           <Box>
             <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>通知类型</InputLabel>
             <Box sx={{ mt: 0.5 }}>
-              <Chip label={getTypeLabel(notification.type || 'other')} size='small' variant='outlined' />
+              <Chip
+                label={getTypeLabel(notification.type || 'other')}
+                size='small'
+                variant='outlined'
+              />
             </Box>
           </Box>
           <Box>
             <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>通知级别</InputLabel>
             <Box sx={{ mt: 0.5 }}>
-              <Chip label={levelConfig.label} color={levelConfig.color} icon={levelConfig.icon} size='small' />
+              <Chip
+                label={levelConfig.label}
+                color={levelConfig.color}
+                icon={levelConfig.icon}
+                size='small'
+              />
             </Box>
           </Box>
           <Box>
             <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>阅读状态</InputLabel>
             <Box sx={{ mt: 0.5 }}>
-              <Chip label={statusConfig.label} color={statusConfig.color} size='small' />
+              <Chip
+                label={statusConfig.label}
+                color={statusConfig.color}
+                size='small'
+              />
             </Box>
           </Box>
           <Box>
@@ -188,7 +235,12 @@ const NotificationDetailPage: React.FC = () => {
             ))}
           </Box>
         ) : (
-          <Typography variant='body2' color='text.secondary'>暂无操作按钮</Typography>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
+            暂无操作按钮
+          </Typography>
         )}
       </Box>
     );
@@ -246,20 +298,31 @@ const NotificationDetailPage: React.FC = () => {
 
   const infoCard = useMemo(
     () => ({
-      avatar: <Bell size={32} color='#1976d2' />,
+      avatar: (
+        <Bell
+          size={32}
+          color='#1976d2'
+        />
+      ),
       title: notification?.title,
       subtitle: notification?.type ? getTypeLabel(notification.type) : undefined,
       tags: [getLevelConfig(notification?.level || '').label],
       stats: [
         { label: '状态', value: getStatusConfig(notification?.is_read ? 'read' : 'unread').label },
-        { label: '时间', value: notification?.created_at ? formatDate(notification.created_at).split(' ')[0] : '-' },
+        {
+          label: '时间',
+          value: notification?.created_at ? formatDate(notification.created_at).split(' ')[0] : '-',
+        },
       ],
     }),
     [notification]
   );
 
   return (
-    <PageContainer title='通知详情' subtitle='查看通知详情'>
+    <PageContainer
+      title='通知详情'
+      subtitle='查看通知详情'
+    >
       <DetailPageTemplate
         title=''
         subtitle=''

@@ -16,7 +16,7 @@ export const pluginRoutes: RouteConfig[] = [
   {
     path: '/plugin/marketplace',
     element: PluginMarketplacePage,
-    requiredPermissions: [],
+    requiredPermissions: ['plugin:read'],
     module: 'plugin',
     action: 'read',
   },

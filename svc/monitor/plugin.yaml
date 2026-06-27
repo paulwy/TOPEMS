@@ -5,7 +5,7 @@ description: "Monitor 监控系统 - 告警管理、指标采集"
 category: "System"
 plugin_type: "system"
 deployment:
-  port: 8064
+  port: 8062
   base_path: "/api/monitor"
 permissions:
   - code: "alerts"

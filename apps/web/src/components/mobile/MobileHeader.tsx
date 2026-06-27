@@ -1,20 +1,6 @@
 import React from 'react';
-import {
-  AppBar,
-  Toolbar,
-  Typography,
-  IconButton,
-  Box,
-  Badge,
-  useTheme,
-} from '@mui/material';
-import {
-  Menu,
-  ArrowLeft,
-  Bell,
-  Search,
-  MoreVertical,
-} from 'lucide-react';
+import { AppBar, Toolbar, Typography, IconButton, Box, Badge, useTheme } from '@mui/material';
+import { Menu, ArrowLeft, Bell, Search, MoreVertical } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export interface MobileHeaderProps {

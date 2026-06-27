@@ -3,9 +3,16 @@
  * 封装 MUI Button，提供统一的样式和交互体验
  */
 import React from 'react';
-import { Button, ButtonProps, CircularProgress, Tooltip } from '@mui/material';
+import type { ButtonProps } from '@mui/material';
+import { Button, CircularProgress, Tooltip } from '@mui/material';
 
-export type ActionButtonVariant = 'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'text';
+export type ActionButtonVariant =
+  | 'primary'
+  | 'secondary'
+  | 'success'
+  | 'warning'
+  | 'danger'
+  | 'text';
 export type ActionButtonSize = 'small' | 'medium' | 'large';
 
 export interface ActionButtonProps {
@@ -102,11 +109,7 @@ export const ActionButton: React.FC<ActionButtonProps> = ({
   );
 
   if (tooltip) {
-    return (
-      <Tooltip title={tooltip}>
-        {button}
-      </Tooltip>
-    );
+    return <Tooltip title={tooltip}>{button}</Tooltip>;
   }
 
   return button;

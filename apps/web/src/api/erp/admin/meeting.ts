@@ -1,11 +1,6 @@
 import apiClient from '../../client';
 import type { ApiResponse } from '../../client';
-import type {
-  MeetingRoom,
-  MeetingBooking,
-  PaginationParams,
-  PaginatedResult,
-} from '../types';
+import type { MeetingRoom, MeetingBooking, PaginationParams, PaginatedResult } from '../types';
 
 export const meetingRoomApi = {
   async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<MeetingRoom>>> {
@@ -16,7 +11,7 @@ export const meetingRoomApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/erp/meeting-rooms${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(`/api/erp/meeting-rooms${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<MeetingRoom>> {
@@ -49,7 +44,7 @@ export const meetingBookingApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/erp/meeting-bookings${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(`/api/erp/meeting-bookings${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<MeetingBooking>> {

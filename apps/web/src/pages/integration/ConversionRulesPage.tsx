@@ -38,8 +38,8 @@ import {
   TableHead,
   TableRow,
   Button as MuiButton,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 
 import {
   ListPageTemplate,
@@ -529,10 +529,13 @@ const ConversionRulesPage: React.FC = () => {
   };
 
   return (
-    <PageContainer title="转换规则配置" subtitle="管理数据转换规则和字段映射">
+    <PageContainer
+      title='转换规则配置'
+      subtitle='管理数据转换规则和字段映射'
+    >
       <ListPageTemplate
-        title=""
-        subtitle=""
+        title=''
+        subtitle=''
         columns={columns}
         data={filteredData}
         loading={loading}

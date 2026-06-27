@@ -87,12 +87,12 @@ const sharedDependencies = {
   },
   '@mui/material': {
     singleton: true,
-    requiredVersion: '^6.0.0',
+    requiredVersion: '^9.0.0',
     strictVersion: true,
   },
   '@mui/icons-material': {
     singleton: true,
-    requiredVersion: '^6.0.0',
+    requiredVersion: '^9.0.0',
     strictVersion: true,
   },
   '@emotion/react': {
@@ -296,7 +296,6 @@ export default defineConfig({
     host: '0.0.0.0',
     strictPort: true,
     hmr: {
-      path: '/vite-hmr',
       host: 'localhost',
       port: 3000,
       protocol: 'ws',
@@ -347,6 +346,7 @@ export default defineConfig({
         target: 'http://localhost:8000',
         changeOrigin: true,
         ws: true,
+        rewrite: (path: string) => path.replace(/^\/ws\/im/, '/api/core/comm/ws/connect'),
       },
       
       '/iam/api/iam/auth/': {

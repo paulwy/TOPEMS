@@ -13,18 +13,12 @@ import {
   Select,
   MenuItem,
   Typography,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
-import {
-  Plus,
-  FileText,
-  GitBranch,
-  GitCommit,
-  Users,
-  ExternalLink,
-} from 'lucide-react';
-import { ListPageTemplate, type ColumnDef } from '@/components/templates';
-import type { RowAction, FilterConfig } from '@/components/templates';
+import { Plus, FileText, GitBranch, GitCommit, Users, ExternalLink } from 'lucide-react';
+import { ListPageTemplate } from '@/components/templates';
+
+import type { RowAction, FilterConfig, ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
 import { useAppStore } from '@/store';
@@ -114,10 +108,7 @@ const RsCodePage: React.FC = () => {
     }
   };
 
-  const uniqueLanguages = useMemo(
-    () => [...new Set(repos.map((r) => r.language))],
-    [repos]
-  );
+  const uniqueLanguages = useMemo(() => [...new Set(repos.map((r) => r.language))], [repos]);
 
   const handleViewDetail = (repo: CodeRepo) => {
     addNotification({
@@ -226,9 +217,7 @@ const RsCodePage: React.FC = () => {
       {
         id: 'last_commit',
         label: '最后提交',
-        render: (row) => (
-          <Typography variant='body2'>{row.last_commit}</Typography>
-        ),
+        render: (row) => <Typography variant='body2'>{row.last_commit}</Typography>,
       },
       {
         id: 'repo_url',
@@ -290,7 +279,10 @@ const RsCodePage: React.FC = () => {
   );
 
   return (
-    <PageContainer title='代码库管理' subtitle='管理代码仓库和版本控制'>
+    <PageContainer
+      title='代码库管理'
+      subtitle='管理代码仓库和版本控制'
+    >
       <ListPageTemplate<CodeRepo>
         title=''
         subtitle=''
@@ -343,7 +335,10 @@ const RsCodePage: React.FC = () => {
                 onChange={(e) => setNewRepoForm({ ...newRepoForm, project_id: e.target.value })}
               >
                 {projects.map((p) => (
-                  <MenuItem key={p.id} value={p.id}>
+                  <MenuItem
+                    key={p.id}
+                    value={p.id}
+                  >
                     {p.project_name}
                   </MenuItem>
                 ))}
@@ -353,26 +348,20 @@ const RsCodePage: React.FC = () => {
               label='仓库名称'
               fullWidth
               value={newRepoForm.repo_name}
-              onChange={(e) =>
-                setNewRepoForm({ ...newRepoForm, repo_name: e.target.value })
-              }
+              onChange={(e) => setNewRepoForm({ ...newRepoForm, repo_name: e.target.value })}
             />
             <TextField
               label='仓库URL'
               fullWidth
               value={newRepoForm.repo_url}
-              onChange={(e) =>
-                setNewRepoForm({ ...newRepoForm, repo_url: e.target.value })
-              }
+              onChange={(e) => setNewRepoForm({ ...newRepoForm, repo_url: e.target.value })}
             />
             <FormControl fullWidth>
               <InputLabel>语言</InputLabel>
               <Select
                 value={newRepoForm.language}
                 label='语言'
-                onChange={(e) =>
-                  setNewRepoForm({ ...newRepoForm, language: e.target.value })
-                }
+                onChange={(e) => setNewRepoForm({ ...newRepoForm, language: e.target.value })}
               >
                 <MenuItem value='JavaScript'>JavaScript</MenuItem>
                 <MenuItem value='TypeScript'>TypeScript</MenuItem>

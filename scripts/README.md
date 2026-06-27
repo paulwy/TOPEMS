@@ -4,16 +4,45 @@
 
 ```
 scripts/
-├── topems.sh                 # 统一入口脚本（推荐使用）
-├── scan_todos.py            # TODO/FIXME 代码扫描脚本
-├── install-deps.sh           # 本地依赖安装
-├── ai-models.sh             # AI 模型管理
-├── update_admin_password.sh  # 管理员密码重置
-├── deploy.sh                # 部署脚本（默认本地，--docker 使用 Docker）
-├── services.conf             # 统一服务配置文件
-├── docker/                   # Docker 方案配置
-│   └── docker-compose.yml
-└── windows/                 # Windows 部署脚本
+├── topems.sh                  # 【主入口】统一服务管理脚本（推荐使用）
+├── services.conf              # 统一服务配置
+├── README.md                  # 本文档
+│
+├── dev/                       # 【开发工具】本地开发相关脚本
+│   ├── install-deps.sh        # 依赖安装（PostgreSQL/Redis/Rust/Node.js）
+│   ├── start-local.sh         # 本地一键启动
+│   ├── health-check.sh        # 健康检查 / 环境诊断
+│   ├── ai-models.sh           # AI 模型管理（Ollama）
+│   └── update-admin-password.sh  # 管理员密码重置
+│
+├── test/                      # 【测试脚本】
+│   ├── run-core-tests.sh      # 核心模块权限测试
+│   └── run-iam-tests.sh       # IAM 模块测试
+│
+├── deploy/                    # 【部署脚本】
+│   ├── deploy.sh              # 部署脚本（本地 / Docker）
+│   ├── rollback.sh            # 回滚脚本
+│   └── docker/
+│       └── topems-docker.sh   # Docker Compose 部署
+│
+├── tools/                     # 【工具脚本】Python 辅助工具
+│   ├── scan_todos.py          # TODO/FIXME 代码扫描
+│   ├── scan_api_paths.py      # 后端 API 路径扫描
+│   ├── check_api_correspondence.py  # 前后端 API 对应检查
+│   ├── check_api_duplicates_ci.py   # API 重复路径检查
+│   └── check_component_naming.py    # 组件命名规范检查
+│
+├── data/                      # 【数据文件】工具脚本的输入输出
+│   ├── api_path_registry.json
+│   └── api_correspondence_report.json
+│
+├── performance/               # 【性能测试】
+│   ├── run-all-tests.sh
+│   ├── scm-performance-test.js
+│   └── database-performance-test.js
+│
+└── windows/                   # 【Windows 脚本】
+    └── ...
 ```
 
 ## 统一服务配置
@@ -29,28 +58,52 @@ manufacturing   svc/manufacturing     topems-manufacturing   8023
 
 ## 快速参考
 
-### 主脚本（推荐）
+### 主入口（推荐）
+
+| 命令 | 说明 |
+|------|------|
+| `./scripts/topems.sh` | 查看帮助 |
+| `./scripts/topems.sh status [服务]` | 查看服务状态 |
+| `./scripts/topems.sh start <服务>` | 启动服务 |
+| `./scripts/topems.sh stop <服务>` | 停止服务 |
+| `./scripts/topems.sh restart <服务>` | 重启服务 |
+| `./scripts/topems.sh logs <服务> [行数]` | 查看服务日志 |
+| `./scripts/topems.sh build <服务>` | 编译服务 |
+| `./scripts/topems.sh start-all` | 启动所有服务（含前端） |
+| `./scripts/topems.sh stop-all` | 停止所有服务（含前端） |
+| `./scripts/topems.sh dev` | 启动 macOS 开发环境 |
+| `./scripts/topems.sh install-deps` | 安装所有依赖 |
+| `./scripts/topems.sh ai start/stop/status/pull` | AI 模型管理 |
+| `./scripts/topems.sh reset-password` | 重置管理员密码 |
+| `./scripts/topems.sh deploy` | 部署服务 |
+
+### 开发工具
 
 | 脚本 | 说明 |
 |------|------|
-| `topems.sh` | 统一入口脚本（服务启停、日志、重置密码等） |
+| `./scripts/dev/start-local.sh` | 本地一键启动（前端 + 后端 + 数据库） |
+| `./scripts/dev/install-deps.sh` | 依赖安装 |
+| `./scripts/dev/health-check.sh` | 健康检查 / 环境诊断 |
+| `./scripts/dev/ai-models.sh` | AI 模型管理 |
+| `./scripts/dev/update-admin-password.sh` | 管理员密码重置 |
 
-### 工具脚本
-
-| 脚本 | 说明 |
-|------|------|
-| `install-deps.sh` | 依赖安装（PostgreSQL/Redis/Rust/Node.js） |
-| `ai-models.sh` | AI 模型管理（Ollama 启动/模型下载） |
-| `update_admin_password.sh` | 管理员密码重置 |
-| `scan_todos.py` | TODO/FIXME 代码扫描脚本 |
-
-### 部署脚本
+### 测试
 
 | 脚本 | 说明 |
 |------|------|
-| `deploy.sh` | 部署脚本（默认本地，--docker 使用 Docker） |
+| `./scripts/test/run-core-tests.sh` | 核心模块权限测试 |
+| `./scripts/test/run-iam-tests.sh` | IAM 模块测试 |
+| `./scripts/performance/run-all-tests.sh` | 性能测试套件 |
 
-### 生产部署脚本
+### 部署
+
+| 脚本 | 说明 |
+|------|------|
+| `./scripts/deploy/deploy.sh` | 部署脚本（默认本地，--docker 使用 Docker） |
+| `./scripts/deploy/rollback.sh` | 回滚脚本 |
+| `./scripts/deploy/docker/topems-docker.sh` | Docker Compose 部署 |
+
+### 生产部署
 
 生产环境部署请使用 `deploy/scripts/` 目录下的脚本：
 
@@ -93,23 +146,48 @@ manufacturing   svc/manufacturing     topems-manufacturing   8023
 ./scripts/topems.sh logs hrm 100             # 查看 HRM 最近 100 行日志
 ```
 
+### 本地快速启动
+
+```bash
+# 一键启动全部（前端 + 后端 + 数据库）
+./scripts/dev/start-local.sh
+
+# 仅启动前端
+./scripts/dev/start-local.sh frontend
+
+# 仅启动后端
+./scripts/dev/start-local.sh backend
+
+# 启动本地数据库（macOS Homebrew）
+./scripts/dev/start-local.sh db
+
+# 安装依赖
+./scripts/dev/start-local.sh install
+
+# 查看状态
+./scripts/dev/start-local.sh status
+
+# 停止所有
+./scripts/dev/start-local.sh stop
+```
+
 ### 部署
 
 ```bash
 # 本地部署（默认）
-./scripts/deploy.sh
+./scripts/deploy/deploy.sh
 
 # Docker 部署
-./scripts/deploy.sh --docker
+./scripts/deploy/deploy.sh --docker
 
 # Docker 部署启动
-./scripts/deploy.sh --docker start
+./scripts/deploy/deploy.sh --docker start
 
 # 查看本地状态
-./scripts/deploy.sh status
+./scripts/deploy/deploy.sh status
 
 # 查看 Docker 状态
-./scripts/deploy.sh --docker status
+./scripts/deploy/deploy.sh --docker status
 ```
 
 ### 数据库
@@ -126,32 +204,32 @@ manufacturing   svc/manufacturing     topems-manufacturing   8023
 ### AI 模型
 
 ```bash
-./scripts/ai-models.sh start           # 启动 Ollama
-./scripts/ai-models.sh pull qwen2.5:7b-instruct  # 下载模型
-./scripts/ai-models.sh status         # 查看状态
-./scripts/ai-models.sh stop           # 停止 Ollama
+./scripts/dev/ai-models.sh start           # 启动 Ollama
+./scripts/dev/ai-models.sh pull qwen2.5:7b-instruct  # 下载模型
+./scripts/dev/ai-models.sh status         # 查看状态
+./scripts/dev/ai-models.sh stop           # 停止 Ollama
 ```
 
 ### TODO/FIXME 代码扫描
 
 ```bash
 # 基础扫描（使用默认配置）
-python3 scripts/scan_todos.py
+python3 scripts/tools/scan_todos.py
 
 # 仅显示统计概览
-python3 scripts/scan_todos.py --summary
+python3 scripts/tools/scan_todos.py --summary
 
 # 生成 Markdown 报告并保存到文件
-python3 scripts/scan_todos.py --output docs/todo-scan-report.md
+python3 scripts/tools/scan_todos.py --output docs/todo-scan-report.md
 
 # 扫描指定目录
-python3 scripts/scan_todos.py --dir apps/web/src --dir svc/hrm/src
+python3 scripts/tools/scan_todos.py --dir apps/web/src --dir svc/hrm/src
 
 # 排除指定目录
-python3 scripts/scan_todos.py --exclude test --exclude vendor
+python3 scripts/tools/scan_todos.py --exclude test --exclude vendor
 
 # 只扫描特定文件类型
-python3 scripts/scan_todos.py --ext .rs --ext .ts
+python3 scripts/tools/scan_todos.py --ext .rs --ext .ts
 ```
 
 **支持的标记类型（按优先级从高到低）：**
@@ -161,31 +239,41 @@ python3 scripts/scan_todos.py --ext .rs --ext .ts
 - `XXX` - 需要注意的代码
 - `NOTE` - 代码说明注释
 
-首次扫描报告：[docs/todo-scan-report.md](../docs/todo-scan-report.md)
-
 ## 支持的服务
 
-| 服务名 | 说明 | 端口 |
-|--------|------|------|
-| iam | 统一身份认证 | 8000 |
-| pm | 项目管理 | 8001 |
-| erp | 企业资源计划 | 8010 |
-| hrm | 人力资源管理 | 8011 |
-| crm | 客户关系管理 | 8012 |
-| integration | 系统集成 | 8005 |
-| manufacturing | 制造执行 | 8023 |
-| quality-assurance | 质量管控 | 8032 |
-| rs | 研发管理 | 8020 |
-| scm | 供应链管理 | 8040 |
-| srm | 供应商管理 | 8041 |
-| wms | 仓库管理 | 8042 |
-| ai | AI 服务 | 8064 |
-| analytics | 数据分析 | 8060 |
-| gis | 地理信息 | 8053 |
-| mobile | 移动端 | 8070 |
-| monitor | 系统监控 | 8062 |
-| portal | 企业门户 | 8063 |
-| web | 前端应用 | 3000 |
+| 服务名 | 说明 | 端口 | 端口区间 |
+|--------|------|------|---------|
+| **平台核心服务** | | | **8000-8009** |
+| iam | 统一身份认证（unified-core） | 8000 | |
+| **经营管理服务** | | | **8010-8019** |
+| erp | 企业资源计划 | 8010 | |
+| **协同办公服务** | | | **8020-8029** |
+| hrm | 人力资源管理 | 8020 | |
+| pm | 项目管理 | 8023 | |
+| crm | 客户关系管理 | 8029 | |
+| **生产制造服务** | | | **8030-8039** |
+| mes | 生产执行系统 | 8030 | |
+| pdm | 产品数据管理 | 8031 | |
+| **供应链服务** | | | **8040-8049** |
+| scm | 供应链管理 | 8040 | |
+| wms | 仓库管理 | 8041 | |
+| srm | 供应商管理 | 8042 | |
+| **质量/研发服务** | | | **8050-8059** |
+| qms | 质量管理 | 8050 | |
+| lims | 实验室信息管理 | 8051 | |
+| ehs | 环境安全 | 8052 | |
+| rs | 研发管理 | 8053 | |
+| **数据/门户服务** | | | **8060-8069** |
+| bi | 商业智能 | 8060 | |
+| report | 报表服务 | 8061 | |
+| monitor | 系统监控 | 8062 | |
+| portal | 企业门户 | 8063 | |
+| ai | AI 服务 | 8064 | |
+| **基础设施服务** | | | **8070-8079** |
+| mobile | 移动端 | 8070 | |
+| gis | 地理信息 | 8071 | |
+| integration | 系统集成 | 8072 | |
+| web | 前端应用 | 3000 | |
 
 ## 文档
 

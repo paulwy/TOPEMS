@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Box, Button } from '@mui/material';
-import { Plus } from 'lucide-react';
+import { Plus, TrendingUp, Target, Calendar, Calculator, BarChart3 } from 'lucide-react';
 import type { SalesForecast, ForecastFactor } from '@/api/crm';
 import { crmApi } from '@/api/crm';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
-import { TrendingUp, Target, Calendar, Calculator, BarChart3 } from 'lucide-react';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
-import type { StatCard, ChartConfig, DataTable, TableColumn } from '@/components/templates/StatsPageTemplate';
+import type {
+  StatCard,
+  ChartConfig,
+  DataTable,
+  TableColumn,
+} from '@/components/templates/StatsPageTemplate';
 import { PageContainer } from '@/components/common';
 
 const CRMSalesForecastPage: React.FC = () => {
@@ -51,7 +55,10 @@ const CRMSalesForecastPage: React.FC = () => {
             : `${now.getFullYear()}`;
 
       setLoading(true);
-      await crmApi.salesForecast.generate({ period_type: timeRange as 'monthly' | 'quarterly' | 'yearly', period });
+      await crmApi.salesForecast.generate({
+        period_type: timeRange as 'monthly' | 'quarterly' | 'yearly',
+        period,
+      });
       addNotification({
         type: 'success',
         title: '成功',
@@ -70,75 +77,84 @@ const CRMSalesForecastPage: React.FC = () => {
     }
   };
 
-  const summary = useMemo(() => ({
-    totalPredicted: forecasts.reduce((sum, f) => sum + f.predicted_amount, 0),
-    totalActual: forecasts.reduce((sum, f) => sum + (f.actual_amount || 0), 0),
-    averageConfidence:
-      forecasts.length > 0
-        ? Math.round(
-            (forecasts.reduce((sum, f) => sum + f.confidence_level, 0) / forecasts.length) * 100
-          )
-        : 0,
-    completedCount: forecasts.filter((f) => f.status === 'completed').length,
-  }), [forecasts]);
+  const summary = useMemo(
+    () => ({
+      totalPredicted: forecasts.reduce((sum, f) => sum + f.predicted_amount, 0),
+      totalActual: forecasts.reduce((sum, f) => sum + (f.actual_amount || 0), 0),
+      averageConfidence:
+        forecasts.length > 0
+          ? Math.round(
+              (forecasts.reduce((sum, f) => sum + f.confidence_level, 0) / forecasts.length) * 100
+            )
+          : 0,
+      completedCount: forecasts.filter((f) => f.status === 'completed').length,
+    }),
+    [forecasts]
+  );
 
-  const statCards = useMemo<StatCard[]>(() => [
-    {
-      id: 'total-predicted',
-      title: '预测总收入',
-      value: `¥${summary.totalPredicted.toLocaleString()}`,
-      icon: <Target sx={{ width: 24, height: 24 }} />,
-      gradient: ['#1976D2', '#1565C0'] as [string, string],
-    },
-    {
-      id: 'total-actual',
-      title: '实际总收入',
-      value: `¥${summary.totalActual.toLocaleString()}`,
-      icon: <Calculator sx={{ width: 24, height: 24 }} />,
-      gradient: ['#00C897', '#00A878'] as [string, string],
-    },
-    {
-      id: 'average-confidence',
-      title: '平均置信度',
-      value: `${summary.averageConfidence}%`,
-      icon: <BarChart3 sx={{ width: 24, height: 24 }} />,
-      gradient: ['#8B5CF6', '#7C3AED'] as [string, string],
-    },
-    {
-      id: 'completed-count',
-      title: '已完成预测',
-      value: `${summary.completedCount} / ${forecasts.length}`,
-      icon: <Calendar sx={{ width: 24, height: 24 }} />,
-      gradient: ['#F59E0B', '#D97706'] as [string, string],
-    },
-  ], [summary, forecasts.length]);
+  const statCards = useMemo<StatCard[]>(
+    () => [
+      {
+        id: 'total-predicted',
+        title: '预测总收入',
+        value: `¥${summary.totalPredicted.toLocaleString()}`,
+        icon: <Target sx={{ width: 24, height: 24 }} />,
+        gradient: ['#1976D2', '#1565C0'] as [string, string],
+      },
+      {
+        id: 'total-actual',
+        title: '实际总收入',
+        value: `¥${summary.totalActual.toLocaleString()}`,
+        icon: <Calculator sx={{ width: 24, height: 24 }} />,
+        gradient: ['#00C897', '#00A878'] as [string, string],
+      },
+      {
+        id: 'average-confidence',
+        title: '平均置信度',
+        value: `${summary.averageConfidence}%`,
+        icon: <BarChart3 sx={{ width: 24, height: 24 }} />,
+        gradient: ['#8B5CF6', '#7C3AED'] as [string, string],
+      },
+      {
+        id: 'completed-count',
+        title: '已完成预测',
+        value: `${summary.completedCount} / ${forecasts.length}`,
+        icon: <Calendar sx={{ width: 24, height: 24 }} />,
+        gradient: ['#F59E0B', '#D97706'] as [string, string],
+      },
+    ],
+    [summary, forecasts.length]
+  );
 
-  const charts = useMemo<ChartConfig[]>(() => [
-    {
-      id: 'forecast-comparison',
-      title: '预测对比',
-      type: 'bar',
-      dataKey: 'value',
-      nameKey: 'name',
-      data: forecasts.flatMap((f) => [
-        { name: f.period, value: f.predicted_amount, type: 'predicted' },
-        { name: f.period, value: f.actual_amount || 0, type: 'actual' },
-      ]),
-      height: 288,
-    },
-    {
-      id: 'confidence-trend',
-      title: '置信度趋势',
-      type: 'line',
-      dataKey: 'value',
-      nameKey: 'name',
-      data: forecasts.map((f) => ({
-        name: f.period,
-        value: Math.round(f.confidence_level * 100),
-      })),
-      height: 288,
-    },
-  ], [forecasts]);
+  const charts = useMemo<ChartConfig[]>(
+    () => [
+      {
+        id: 'forecast-comparison',
+        title: '预测对比',
+        type: 'bar',
+        dataKey: 'value',
+        nameKey: 'name',
+        data: forecasts.flatMap((f) => [
+          { name: f.period, value: f.predicted_amount, type: 'predicted' },
+          { name: f.period, value: f.actual_amount || 0, type: 'actual' },
+        ]),
+        height: 288,
+      },
+      {
+        id: 'confidence-trend',
+        title: '置信度趋势',
+        type: 'line',
+        dataKey: 'value',
+        nameKey: 'name',
+        data: forecasts.map((f) => ({
+          name: f.period,
+          value: Math.round(f.confidence_level * 100),
+        })),
+        height: 288,
+      },
+    ],
+    [forecasts]
+  );
 
   const tableColumns: TableColumn[] = [
     { id: 'period', label: '周期', field: 'period' },
@@ -149,22 +165,30 @@ const CRMSalesForecastPage: React.FC = () => {
     { id: 'status', label: '状态', field: 'status', align: 'center' },
   ];
 
-  const tables = useMemo<DataTable[]>(() => [
-    {
-      id: 'forecast-list',
-      title: '预测列表',
-      columns: tableColumns,
-      data: forecasts.map((forecast) => ({
-        period: forecast.period,
-        predicted: `¥${forecast.predicted_amount.toLocaleString()}`,
-        actual: forecast.actual_amount ? `¥${forecast.actual_amount.toLocaleString()}` : '-',
-        confidence: `${Math.round(forecast.confidence_level * 100)}%`,
-        trend: forecast.trend,
-        status: forecast.status === 'completed' ? '已完成' : forecast.status === 'generated' ? '已生成' : forecast.status,
-      })),
-      loading,
-    },
-  ], [forecasts, loading]);
+  const tables = useMemo<DataTable[]>(
+    () => [
+      {
+        id: 'forecast-list',
+        title: '预测列表',
+        columns: tableColumns,
+        data: forecasts.map((forecast) => ({
+          period: forecast.period,
+          predicted: `¥${forecast.predicted_amount.toLocaleString()}`,
+          actual: forecast.actual_amount ? `¥${forecast.actual_amount.toLocaleString()}` : '-',
+          confidence: `${Math.round(forecast.confidence_level * 100)}%`,
+          trend: forecast.trend,
+          status:
+            forecast.status === 'completed'
+              ? '已完成'
+              : forecast.status === 'generated'
+                ? '已生成'
+                : forecast.status,
+        })),
+        loading,
+      },
+    ],
+    [forecasts, loading]
+  );
 
   const timeRangeOptions = [
     { label: '月度', value: 'monthly' },

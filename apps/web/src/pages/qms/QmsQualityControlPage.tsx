@@ -16,8 +16,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { useAppStore } from '@/store';
 import * as z from 'zod';
 import {
@@ -331,13 +331,15 @@ const QmsQualityControlPage: React.FC = () => {
         });
         if (response.success) {
           setIssues((prev) =>
-            prev.map((item) =>
-              item.id === selectedItem.id ? { ...item, ...response.data } : item
-            )
+            prev.map((item) => (item.id === selectedItem.id ? { ...item, ...response.data } : item))
           );
           addNotification({ title: '成功', message: '记录更新成功', type: 'success' });
         } else {
-          addNotification({ title: '失败', message: response.message || '更新失败', type: 'error' });
+          addNotification({
+            title: '失败',
+            message: response.message || '更新失败',
+            type: 'error',
+          });
         }
       } else {
         const response = await qmsApi.createIssue({
@@ -353,7 +355,11 @@ const QmsQualityControlPage: React.FC = () => {
           setIssues((prev) => [response.data!, ...prev]);
           addNotification({ title: '成功', message: '记录创建成功', type: 'success' });
         } else {
-          addNotification({ title: '失败', message: response.message || '创建失败', type: 'error' });
+          addNotification({
+            title: '失败',
+            message: response.message || '创建失败',
+            type: 'error',
+          });
         }
       }
       setShowModal(false);
@@ -396,10 +402,10 @@ const QmsQualityControlPage: React.FC = () => {
       (n) => n.status === 'closed' || n.status === 'resolved' || n.status === '已关闭'
     ).length,
     totalAudits: auditPlans.length,
-    completedAudits: auditPlans.filter((a) => a.status === 'completed' || a.status === '已完成').length,
-    inProgressAudits: auditPlans.filter(
-      (a) => a.status === 'in_progress' || a.status === '进行中'
-    ).length,
+    completedAudits: auditPlans.filter((a) => a.status === 'completed' || a.status === '已完成')
+      .length,
+    inProgressAudits: auditPlans.filter((a) => a.status === 'in_progress' || a.status === '进行中')
+      .length,
   };
 
   const statsCards = (
@@ -617,8 +623,7 @@ const QmsQualityControlPage: React.FC = () => {
   );
 
   const currentData = activeTab === 'nonconformance' ? filteredIssues : filteredAudits;
-  const currentColumns =
-    activeTab === 'nonconformance' ? nonconformanceColumns : auditColumns;
+  const currentColumns = activeTab === 'nonconformance' ? nonconformanceColumns : auditColumns;
   const currentRowActions =
     activeTab === 'nonconformance' ? nonconformanceRowActions : auditRowActions;
 
@@ -631,27 +636,28 @@ const QmsQualityControlPage: React.FC = () => {
     { label: '审核管理', value: 'audit', active: activeTab === 'audit' },
   ];
 
-  const headerActions = activeTab === 'nonconformance'
-    ? [
-        {
-          label: '新增不合格品',
-          icon: <Plus style={{ width: 18, height: 18 }} />,
-          variant: 'contained' as const,
-          color: 'primary' as const,
-          onClick: () => {
-            setIsEditing(false);
-            setFormData({
-              code: '',
-              title: '',
-              description: '',
-              severity: 'medium',
-              category: '',
-            });
-            setShowModal(true);
+  const headerActions =
+    activeTab === 'nonconformance'
+      ? [
+          {
+            label: '新增不合格品',
+            icon: <Plus style={{ width: 18, height: 18 }} />,
+            variant: 'contained' as const,
+            color: 'primary' as const,
+            onClick: () => {
+              setIsEditing(false);
+              setFormData({
+                code: '',
+                title: '',
+                description: '',
+                severity: 'medium',
+                category: '',
+              });
+              setShowModal(true);
+            },
           },
-        },
-      ]
-    : [];
+        ]
+      : [];
 
   return (
     <PageContainer
@@ -671,22 +677,22 @@ const QmsQualityControlPage: React.FC = () => {
       }}
       maxWidth='xl'
     >
-        {statsCards}
+      {statsCards}
 
-        <Card>
-          <CardContent sx={{ p: 0 }}>
-            <ListPageTemplate
-              columns={currentColumns}
-              data={currentData as any[]}
-              loading={loading}
-              getRowId={(row: any) => row.id}
-              rowActions={currentRowActions as any}
-              searchable={false}
-              filters={[]}
-              actions={[]}
-            />
-          </CardContent>
-        </Card>
+      <Card>
+        <CardContent sx={{ p: 0 }}>
+          <ListPageTemplate
+            columns={currentColumns}
+            data={currentData as any[]}
+            loading={loading}
+            getRowId={(row: any) => row.id}
+            rowActions={currentRowActions as any}
+            searchable={false}
+            filters={[]}
+            actions={[]}
+          />
+        </CardContent>
+      </Card>
 
       <Dialog
         open={showModal}

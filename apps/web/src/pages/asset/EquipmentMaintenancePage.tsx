@@ -10,8 +10,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Plus, Edit, Wrench } from 'lucide-react';
@@ -230,7 +230,9 @@ const EquipmentMaintenancePage: React.FC = () => {
         label: '维护类型',
         width: 120,
         render: (row) => (
-          <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>{row.maintenance_type}</Typography>
+          <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
+            {row.maintenance_type}
+          </Typography>
         ),
       },
       {
@@ -238,7 +240,9 @@ const EquipmentMaintenancePage: React.FC = () => {
         label: '维护描述',
         minWidth: 200,
         render: (row) => (
-          <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>{row.description}</Typography>
+          <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
+            {row.description}
+          </Typography>
         ),
       },
       {
@@ -246,7 +250,9 @@ const EquipmentMaintenancePage: React.FC = () => {
         label: '维护人员',
         width: 100,
         render: (row) => (
-          <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>{row.maintainer || '-'}</Typography>
+          <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
+            {row.maintainer || '-'}
+          </Typography>
         ),
       },
       {
@@ -288,7 +294,11 @@ const EquipmentMaintenancePage: React.FC = () => {
   );
 
   return (
-    <PageContainer sx={{ minHeight: '100vh', backgroundColor: 'grey.50' }} title='设备维护维修' subtitle='设备维护和维修记录管理'>
+    <PageContainer
+      sx={{ minHeight: '100vh', backgroundColor: 'background.default' }}
+      title='设备维护维修'
+      subtitle='设备维护和维修记录管理'
+    >
       <ListPageTemplate
         title=''
         subtitle=''
@@ -351,7 +361,7 @@ const EquipmentMaintenancePage: React.FC = () => {
                   sx={{
                     fontSize: '0.875rem',
                     fontWeight: 500,
-                    color: '#475569',
+                    color: 'text.secondary',
                   }}
                 >
                   设备: {selectedForMaintenance?.name} ({selectedForMaintenance?.asset_number})

@@ -1,4 +1,5 @@
 import React from 'react';
+import { Navigate } from 'react-router-dom';
 import type { RouteConfig } from './utils';
 import { lazyWithRetry } from './utils';
 
@@ -16,64 +17,67 @@ const Gispage = lazy(() => import('../pages/bi/Gispage'));
 export const biRoutes: RouteConfig[] = [
   {
     path: '/bi',
-    element: BIDashboardPage,
-    requiredPermissions: [],
+    element: React.createElement(Navigate, {
+      to: '/bi/dashboard',
+      replace: true,
+    }),
+    requiredPermissions: ['bi:read'],
     module: 'bi',
     action: 'read',
   },
   {
     path: '/bi/dashboard',
     element: BIDashboardPage,
-    requiredPermissions: [],
+    requiredPermissions: ['bi:read'],
     module: 'bi',
     action: 'read',
   },
   {
     path: '/bi/analytics',
     element: BIAnalyticsPage,
-    requiredPermissions: [],
+    requiredPermissions: ['bi:read'],
     module: 'bi',
     action: 'read',
   },
   {
     path: '/bi/comparison',
     element: BIComparisonPage,
-    requiredPermissions: [],
+    requiredPermissions: ['bi:read'],
     module: 'bi',
     action: 'read',
   },
   {
     path: '/bi/reports',
     element: BIReportPage,
-    requiredPermissions: [],
+    requiredPermissions: ['bi:read'],
     module: 'bi',
     action: 'read',
   },
   {
     path: '/bi/datasources',
     element: BIDataSourcePage,
-    requiredPermissions: [],
+    requiredPermissions: ['bi:admin'],
     module: 'bi',
-    action: 'read',
+    action: 'admin',
   },
   {
     path: '/bi/visualizations',
     element: BIVisualizationPage,
-    requiredPermissions: [],
+    requiredPermissions: ['bi:read'],
     module: 'bi',
     action: 'read',
   },
   {
     path: '/bi/module/:moduleId',
     element: BIModuleDetailPage,
-    requiredPermissions: [],
+    requiredPermissions: ['bi:read'],
     module: 'bi',
     action: 'read',
   },
   {
     path: '/bi/gis',
     element: Gispage,
-    requiredPermissions: [],
+    requiredPermissions: ['bi:read'],
     module: 'bi',
     action: 'read',
   },

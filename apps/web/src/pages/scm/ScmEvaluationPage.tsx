@@ -6,8 +6,8 @@ import {
   DialogActions,
   Box,
   Chip,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import type {
   SupplierEvaluation,
@@ -54,7 +54,7 @@ const ScmEvaluationPage: React.FC = () => {
       setLoading(true);
       const response = await scmApi.evaluations.list({
         page: currentPage,
-        pageSize: pageSize,
+        pageSize,
       });
       if (response.success && response.data) {
         setEvaluations(response.data.items || []);
@@ -261,7 +261,10 @@ const ScmEvaluationPage: React.FC = () => {
   ];
 
   return (
-    <PageContainer title='供应商评估管理' subtitle='供应商评估记录,包括质量、交期、服务、价格评分'>
+    <PageContainer
+      title='供应商评估管理'
+      subtitle='供应商评估记录,包括质量、交期、服务、价格评分'
+    >
       <ListPageTemplate
         title=''
         subtitle=''

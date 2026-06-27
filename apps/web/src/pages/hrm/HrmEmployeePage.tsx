@@ -22,8 +22,8 @@ import {
   DialogContent,
   DialogActions,
   Chip,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 import { apiLogger } from '@/utils/logger';
@@ -54,21 +54,22 @@ import {
 } from '@/api/hrm';
 import { useAppStore } from '../../store';
 import {
-  ListPageTemplate,
-  DashboardTemplate,
-  StatCard,
-  StatCardGroup,
-  EmptyState,
-  type ColumnDef,
-  type RowAction,
-} from '@/components/mui';
-import {
   CardListTemplate,
   type CardAction,
   type CardRenderConfig,
   type MetricStatCard,
+  ListPageTemplate,
+  DashboardTemplate,
+  StatCard,
 } from '@/components/templates';
-import { FilterBar, type FilterConfig } from '@/components/mui/FilterBar';
+import {
+  StatCardGroup,
+  EmptyState,
+  FilterBar,
+  type ColumnDef,
+  type RowAction,
+  type FilterConfig,
+} from '@/components';
 import { AIHelperButton, AICodeGenerator, AIDataCompleter, AIFormValidator } from '@/components/ai';
 import { ImageUpload, DataExport, PageContainer } from '@/components/common';
 import type { CompletionItem as AICompletionItem } from '@/types/ai';
@@ -339,16 +340,21 @@ const HrmEmployeePage: React.FC = () => {
       setConfirmDeleteOpen(false);
       setDeleteId(null);
     }
-  }, [deleteId, addNotification, viewMode, fetchEmployees, filteredEmployees, departments, buildTree]);
+  }, [
+    deleteId,
+    addNotification,
+    viewMode,
+    fetchEmployees,
+    filteredEmployees,
+    departments,
+    buildTree,
+  ]);
 
   // 删除
-  const handleDelete = useCallback(
-    (id: string) => {
-      setDeleteId(id);
-      setConfirmDeleteOpen(true);
-    },
-    []
-  );
+  const handleDelete = useCallback((id: string) => {
+    setDeleteId(id);
+    setConfirmDeleteOpen(true);
+  }, []);
 
   // 创建
   const handleCreate = useCallback(
@@ -452,7 +458,12 @@ const HrmEmployeePage: React.FC = () => {
 
   // 状态徽章
   const getStatusBadge = useCallback((status: string) => {
-    return <StatusBadge status={`employee_${status}`} showIcon />;
+    return (
+      <StatusBadge
+        status={`employee_${status}`}
+        showIcon
+      />
+    );
   }, []);
 
   // 统计卡片数据
@@ -807,7 +818,16 @@ const HrmEmployeePage: React.FC = () => {
   );
 
   return (
-    <PageContainer padding={false} maxWidth={false}>
+    <PageContainer
+      padding={false}
+      maxWidth={false}
+      title='员工管理'
+      subtitle='管理企业员工信息'
+      headerProps={{
+        pageIcon: <Users style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #22C55E, #15803D)',
+      }}
+    >
       {/* 面包屑导航 */}
       <Box sx={{ mb: 2 }}>
         <Typography

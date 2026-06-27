@@ -26,10 +26,8 @@ export const riskApi = {
     if (params?.status) queryParams.append('status', params.status);
     if (params?.risk_level) queryParams.append('risk_level', params.risk_level);
     if (params?.category) queryParams.append('category', params.category);
-  
-    return apiClient.ehs.get<PaginatedResponse<Risk>>(
-      `/api/ehs/risks?${queryParams.toString()}`
-    );
+
+    return apiClient.ehs.get<PaginatedResponse<Risk>>(`/api/ehs/risks?${queryParams.toString()}`);
   },
 
   getRisk: async (id: string): Promise<ApiResponse<Risk>> => {
@@ -40,10 +38,7 @@ export const riskApi = {
     return apiClient.ehs.post<Risk>('/api/ehs/risks', data);
   },
 
-  updateRisk: async (
-    id: string,
-    data: Partial<UpdateRiskRequest>
-  ): Promise<ApiResponse<Risk>> => {
+  updateRisk: async (id: string, data: Partial<UpdateRiskRequest>): Promise<ApiResponse<Risk>> => {
     return apiClient.ehs.put<Risk>(`/api/ehs/risks/${id}`, data);
   },
 
@@ -63,10 +58,7 @@ export const riskApi = {
     riskId: string,
     data: CreateRiskMgmtAssessmentRequest
   ): Promise<ApiResponse<RiskMgmtAssessment>> => {
-    return apiClient.ehs.post<RiskMgmtAssessment>(
-      `/api/ehs/risks/${riskId}/assessments`,
-      data
-    );
+    return apiClient.ehs.post<RiskMgmtAssessment>(`/api/ehs/risks/${riskId}/assessments`, data);
   },
 
   listRiskControlMeasures: async (
@@ -81,10 +73,7 @@ export const riskApi = {
     riskId: string,
     data: CreateRiskControlMeasureRequest
   ): Promise<ApiResponse<RiskControlMeasure>> => {
-    return apiClient.ehs.post<RiskControlMeasure>(
-      `/api/ehs/risks/${riskId}/controls`,
-      data
-    );
+    return apiClient.ehs.post<RiskControlMeasure>(`/api/ehs/risks/${riskId}/controls`, data);
   },
 
   updateRiskControlMeasure: async (

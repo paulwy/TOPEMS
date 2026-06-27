@@ -3,11 +3,7 @@ import { Box, Chip, Typography } from '@mui/material';
 import { TrendingUp, Plus, TrendingDown, CheckCircle, XCircle, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../../store';
-import {
-  ListPageTemplate,
-  type ColumnDef,
-  type RowAction,
-} from '@/components/templates';
+import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { salaryAdjustmentApi } from '@/api/hrm';
 import type { SalaryAdjustment } from '@/api/hrm';
 import { PageContainer } from '@/components/common';
@@ -37,7 +33,10 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
   }, [loadAdjustments]);
 
   const getTypeChip = (type: string) => {
-    const map: Record<string, { label: string; color: 'primary' | 'success' | 'warning' | 'default' }> = {
+    const map: Record<
+      string,
+      { label: string; color: 'primary' | 'success' | 'warning' | 'default' }
+    > = {
       promotion: { label: '晋升调薪', color: 'primary' },
       demotion: { label: '降职调薪', color: 'warning' },
       bonus: { label: '奖金调薪', color: 'success' },
@@ -47,17 +46,33 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
       correction: { label: '纠正调薪', color: 'default' },
     };
     const cfg = map[type] || { label: type, color: 'default' as const };
-    return <Chip label={cfg.label} color={cfg.color} size='small' />;
+    return (
+      <Chip
+        label={cfg.label}
+        color={cfg.color}
+        size='small'
+      />
+    );
   };
 
   const getStatusChip = (status: string) => {
-    const map: Record<string, { label: string; color: 'success' | 'warning' | 'error' | 'default'; icon: React.ReactNode }> = {
+    const map: Record<
+      string,
+      { label: string; color: 'success' | 'warning' | 'error' | 'default'; icon: React.ReactNode }
+    > = {
       approved: { label: '已批准', color: 'success', icon: <CheckCircle size={14} /> },
       pending: { label: '待审批', color: 'warning', icon: <Clock size={14} /> },
       rejected: { label: '已拒绝', color: 'error', icon: <XCircle size={14} /> },
     };
     const cfg = map[status] || { label: status, color: 'default' as const, icon: null };
-    return <Chip label={cfg.label} color={cfg.color} size='small' icon={cfg.icon as any} />;
+    return (
+      <Chip
+        label={cfg.label}
+        color={cfg.color}
+        size='small'
+        icon={cfg.icon as any}
+      />
+    );
   };
 
   const columns: ColumnDef<SalaryAdjustment>[] = [
@@ -71,7 +86,11 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
       label: '部门',
       width: 120,
       render: (row) => (
-        <Typography variant='body2' color='text.secondary' noWrap>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+          noWrap
+        >
           {row.department || '-'}
         </Typography>
       ),
@@ -87,14 +106,23 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
       label: '调前薪资',
       width: 110,
       align: 'right',
-      render: (row) => <Typography variant='body2'>¥{Number(row.old_salary || 0).toLocaleString()}</Typography>,
+      render: (row) => (
+        <Typography variant='body2'>¥{Number(row.old_salary || 0).toLocaleString()}</Typography>
+      ),
     },
     {
       id: 'new_salary',
       label: '调后薪资',
       width: 110,
       align: 'right',
-      render: (row) => <Typography variant='body2' sx={{ fontWeight: 600 }}>¥{Number(row.new_salary || 0).toLocaleString()}</Typography>,
+      render: (row) => (
+        <Typography
+          variant='body2'
+          sx={{ fontWeight: 600 }}
+        >
+          ¥{Number(row.new_salary || 0).toLocaleString()}
+        </Typography>
+      ),
     },
     {
       id: 'adjustment_amount',
@@ -108,7 +136,17 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
         const isPositive = amount >= 0;
         return (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, justifyContent: 'flex-end' }}>
-            {isPositive ? <TrendingUp size={14} color="#10b981" /> : <TrendingDown size={14} color="#ef4444" />}
+            {isPositive ? (
+              <TrendingUp
+                size={14}
+                color='#10b981'
+              />
+            ) : (
+              <TrendingDown
+                size={14}
+                color='#ef4444'
+              />
+            )}
             <Typography
               variant='body2'
               color={isPositive ? 'success.main' : 'error.main'}
@@ -140,7 +178,11 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
       id: 'reason',
       label: '原因',
       render: (row) => (
-        <Typography variant='body2' color='text.secondary' noWrap>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+          noWrap
+        >
           {row.reason || '-'}
         </Typography>
       ),
@@ -152,7 +194,11 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
       label: '查看详情',
       icon: <TrendingUp size={16} />,
       onClick: (row) => {
-        addNotification({ title: '调薪详情', type: 'info', message: `查看 ${row.employee_name} 的调薪详情` });
+        addNotification({
+          title: '调薪详情',
+          type: 'info',
+          message: `查看 ${row.employee_name} 的调薪详情`,
+        });
       },
     },
     {
@@ -172,7 +218,10 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
   ];
 
   return (
-    <PageContainer title='薪资调整' subtitle='员工薪资调整记录管理'>
+    <PageContainer
+      title='薪资调整'
+      subtitle='员工薪资调整记录管理'
+    >
       <ListPageTemplate<SalaryAdjustment>
         title=''
         subtitle=''

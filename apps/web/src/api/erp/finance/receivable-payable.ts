@@ -1,12 +1,7 @@
 import apiClient from '../../client';
 import type { ApiResponse } from '../../client';
 import { cleanEmptyUuids } from '../utils';
-import type {
-  Receivable,
-  Payable,
-  PaginationParams,
-  PaginatedResult,
-} from '../types';
+import type { Receivable, Payable, PaginationParams, PaginatedResult } from '../types';
 
 export const receivableApi = {
   async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<Receivable>>> {
@@ -17,7 +12,7 @@ export const receivableApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/erp/receivables${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(`/api/erp/receivables${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<Receivable>> {
@@ -46,7 +41,7 @@ export const payableApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/erp/payables${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(`/api/erp/payables${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<Payable>> {

@@ -223,13 +223,20 @@ const PmResourcePage: React.FC = () => {
             )}
             {row.status === 'in_use' && (
               <Tooltip title='释放资源'>
-                <IconButton size='small' onClick={() => handleRelease(row)}>
+                <IconButton
+                  size='small'
+                  onClick={() => handleRelease(row)}
+                >
                   <CheckCircle2 size={16} />
                 </IconButton>
               </Tooltip>
             )}
             <Tooltip title='删除'>
-              <IconButton size='small' onClick={() => handleDelete(row)} sx={{ color: 'error.main' }}>
+              <IconButton
+                size='small'
+                onClick={() => handleDelete(row)}
+                sx={{ color: 'error.main' }}
+              >
                 <Trash2 size={16} />
               </IconButton>
             </Tooltip>
@@ -311,133 +318,153 @@ const PmResourcePage: React.FC = () => {
       <ListPageTemplate
         title=''
         subtitle=''
-      breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '项目管理' }, { label: '资源管理' }]}
-      columns={columns}
-      data={filteredData}
-      loading={loading}
-      selectable
-      pagination={{
-        page: currentPage,
-        pageSize,
-        total: totalCount,
-        onPageChange: handlePageChange,
-      }}
-      searchable
-      searchPlaceholder='搜索资源标识或服务名称...'
-      searchValue={searchTerm}
-      onSearch={setSearchTerm}
-      filters={filters}
-      filtersValue={{ project: selectedProject, resource_type: selectedType, status: selectedStatus }}
-      onFilterChange={(f) => {
-        if (f.project !== undefined) setSelectedProject(f.project);
-        if (f.resource_type !== undefined) setSelectedType(f.resource_type);
-        if (f.status !== undefined) setSelectedStatus(f.status);
-      }}
-      actions={[
-        {
-          label: '新增资源',
-          icon: <Plus size={16} />,
-          onClick: () => navigate('#'),
-          variant: 'contained',
-        },
-      ]}
-      showRowNumber
-      columnConfigurable
-      persistColumnConfig
-      columnConfigStorageKey='pm-resources-columns'
-      onRefresh={() => loadResources(currentPage)}
-      headerContent={
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' },
-            gap: 2,
-            mb: 3,
-          }}
-        >
+        breadcrumbs={[
+          { label: '首页', href: '/dashboard' },
+          { label: '项目管理' },
+          { label: '资源管理' },
+        ]}
+        columns={columns}
+        data={filteredData}
+        loading={loading}
+        selectable
+        pagination={{
+          page: currentPage,
+          pageSize,
+          total: totalCount,
+          onPageChange: handlePageChange,
+        }}
+        searchable
+        searchPlaceholder='搜索资源标识或服务名称...'
+        searchValue={searchTerm}
+        onSearch={setSearchTerm}
+        filters={filters}
+        filtersValue={{
+          project: selectedProject,
+          resource_type: selectedType,
+          status: selectedStatus,
+        }}
+        onFilterChange={(f) => {
+          if (f.project !== undefined) setSelectedProject(f.project);
+          if (f.resource_type !== undefined) setSelectedType(f.resource_type);
+          if (f.status !== undefined) setSelectedStatus(f.status);
+        }}
+        actions={[
+          {
+            label: '新增资源',
+            icon: <Plus size={16} />,
+            onClick: () => navigate('#'),
+            variant: 'contained',
+          },
+        ]}
+        showRowNumber
+        columnConfigurable
+        persistColumnConfig
+        columnConfigStorageKey='pm-resources-columns'
+        onRefresh={() => loadResources(currentPage)}
+        headerContent={
           <Box
             sx={{
-              bgcolor: 'background.paper',
-              borderRadius: 2,
-              boxShadow: 1,
-              p: 3,
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' },
+              gap: 2,
+              mb: 3,
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Box sx={{ p: 1.5, bgcolor: '#dbeafe', borderRadius: '50%' }}>
-                <Package size={24} color='primary.dark' />
+            <Box
+              sx={{
+                bgcolor: 'background.paper',
+                borderRadius: 2,
+                boxShadow: 1,
+                p: 3,
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Box sx={{ p: 1.5, bgcolor: '#dbeafe', borderRadius: '50%' }}>
+                  <Package
+                    size={24}
+                    color='primary.dark'
+                  />
+                </Box>
+                <Box>
+                  <Box sx={{ fontSize: '0.875rem', color: 'grey.500' }}>资源总数</Box>
+                  <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'grey.900' }}>
+                    {resources.length}
+                  </Box>
+                </Box>
               </Box>
-              <Box>
-                <Box sx={{ fontSize: '0.875rem', color: 'grey.500' }}>资源总数</Box>
-                <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'grey.900' }}>
-                  {resources.length}
+            </Box>
+            <Box
+              sx={{
+                bgcolor: 'background.paper',
+                borderRadius: 2,
+                boxShadow: 1,
+                p: 3,
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Box sx={{ p: 1.5, bgcolor: 'success.light', borderRadius: '50%' }}>
+                  <CheckCircle2
+                    size={24}
+                    color='success.dark'
+                  />
+                </Box>
+                <Box>
+                  <Box sx={{ fontSize: '0.875rem', color: 'grey.500' }}>可用资源</Box>
+                  <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'success.dark' }}>
+                    {availableCount}
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+            <Box
+              sx={{
+                bgcolor: 'background.paper',
+                borderRadius: 2,
+                boxShadow: 1,
+                p: 3,
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Box sx={{ p: 1.5, bgcolor: 'warning.light', borderRadius: '50%' }}>
+                  <Users
+                    size={24}
+                    color='#ca8a04'
+                  />
+                </Box>
+                <Box>
+                  <Box sx={{ fontSize: '0.875rem', color: 'grey.500' }}>使用中</Box>
+                  <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'warning.dark' }}>
+                    {inUseCount}
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+            <Box
+              sx={{
+                bgcolor: 'background.paper',
+                borderRadius: 2,
+                boxShadow: 1,
+                p: 3,
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Box sx={{ p: 1.5, bgcolor: '#e9d5ff', borderRadius: '50%' }}>
+                  <Clock
+                    size={24}
+                    color='#7e22ce'
+                  />
+                </Box>
+                <Box>
+                  <Box sx={{ fontSize: '0.875rem', color: 'grey.500' }}>累计工时</Box>
+                  <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: '#7e22ce' }}>
+                    {totalHours.toFixed(0)}h
+                  </Box>
                 </Box>
               </Box>
             </Box>
           </Box>
-          <Box
-            sx={{
-              bgcolor: 'background.paper',
-              borderRadius: 2,
-              boxShadow: 1,
-              p: 3,
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Box sx={{ p: 1.5, bgcolor: 'success.light', borderRadius: '50%' }}>
-                <CheckCircle2 size={24} color='success.dark' />
-              </Box>
-              <Box>
-                <Box sx={{ fontSize: '0.875rem', color: 'grey.500' }}>可用资源</Box>
-                <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'success.dark' }}>
-                  {availableCount}
-                </Box>
-              </Box>
-            </Box>
-          </Box>
-          <Box
-            sx={{
-              bgcolor: 'background.paper',
-              borderRadius: 2,
-              boxShadow: 1,
-              p: 3,
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Box sx={{ p: 1.5, bgcolor: 'warning.light', borderRadius: '50%' }}>
-                <Users size={24} color='#ca8a04' />
-              </Box>
-              <Box>
-                <Box sx={{ fontSize: '0.875rem', color: 'grey.500' }}>使用中</Box>
-                <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'warning.dark' }}>
-                  {inUseCount}
-                </Box>
-              </Box>
-            </Box>
-          </Box>
-          <Box
-            sx={{
-              bgcolor: 'background.paper',
-              borderRadius: 2,
-              boxShadow: 1,
-              p: 3,
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Box sx={{ p: 1.5, bgcolor: '#e9d5ff', borderRadius: '50%' }}>
-                <Clock size={24} color='#7e22ce' />
-              </Box>
-              <Box>
-                <Box sx={{ fontSize: '0.875rem', color: 'grey.500' }}>累计工时</Box>
-                <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: '#7e22ce' }}>
-                  {totalHours.toFixed(0)}h
-                </Box>
-              </Box>
-            </Box>
-          </Box>
-        </Box>
-      }
-    />
+        }
+      />
     </PageContainer>
   );
 };

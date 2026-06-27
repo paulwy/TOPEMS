@@ -17,9 +17,7 @@ export const priceComparisonApi = {
     return apiClient.scm.get('/api/scm/price-comparisons', { params });
   },
 
-  create: async (
-    data: CreatePriceComparisonRequest
-  ): Promise<ApiResponse<PriceComparison>> => {
+  create: async (data: CreatePriceComparisonRequest): Promise<ApiResponse<PriceComparison>> => {
     return apiClient.scm.post('/api/scm/price-comparisons', data);
   },
 

@@ -103,7 +103,7 @@ export const dictTypeApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/system/dict-types${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(`/api/system/dict-types${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<DictType>> {
@@ -148,7 +148,7 @@ export const dictItemApi = {
 
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/system/dict-types/${dictTypeId}/items${queryString ? '?' + queryString : ''}`
+      `/api/system/dict-types/${dictTypeId}/items${queryString ? `?${queryString}` : ''}`
     );
   },
 
@@ -190,7 +190,7 @@ export const dbStructureApi = {
     if (params?.search) searchParams.set('search', params.search);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/system/db/tables${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(`/api/system/db/tables${queryString ? `?${queryString}` : ''}`);
   },
 
   async getTableDetail(tableName: string): Promise<ApiResponse<TableDetail>> {
@@ -236,6 +236,6 @@ export const dbStructureApi = {
     if (params?.table_name) searchParams.set('table_name', params.table_name);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/system/db/changes${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(`/api/system/db/changes${queryString ? `?${queryString}` : ''}`);
   },
 };

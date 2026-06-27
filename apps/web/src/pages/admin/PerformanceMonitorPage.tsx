@@ -12,7 +12,11 @@ import {
   Trash2,
 } from 'lucide-react';
 import { usePerformanceMonitor } from '@/hooks/usePerformanceMonitor';
-import { StatsPageTemplate, type ChartConfig, type StatCard } from '@/components/templates/StatsPageTemplate';
+import {
+  StatsPageTemplate,
+  type ChartConfig,
+  type StatCard,
+} from '@/components/templates/StatsPageTemplate';
 import { PageContainer } from '@/components/common';
 
 const PerformanceMonitorPage: React.FC = () => {
@@ -220,7 +224,13 @@ const PerformanceMonitorPage: React.FC = () => {
               type='number'
               value={slowCallThreshold}
               onChange={(e) => setSlowCallThreshold(Number(e.target.value))}
-              style={{ width: 80, padding: 4, fontSize: '0.875rem', borderRadius: 4, border: '1px solid #d1d5db' }}
+              style={{
+                width: 80,
+                padding: 4,
+                fontSize: '0.875rem',
+                borderRadius: 4,
+                border: '1px solid #d1d5db',
+              }}
             />
             <span style={{ color: '#6b7280', fontSize: '0.875rem' }}>ms</span>
           </div>
@@ -231,7 +241,16 @@ const PerformanceMonitorPage: React.FC = () => {
             <p style={{ color: '#6b7280' }}>没有慢 API 调用</p>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: 256, overflow: 'auto', marginTop: 16 }}>
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+              maxHeight: 256,
+              overflow: 'auto',
+              marginTop: 16,
+            }}
+          >
             {slowCalls.map((call, idx) => (
               <div
                 key={idx}
@@ -290,7 +309,15 @@ const PerformanceMonitorPage: React.FC = () => {
         tableSectionTitle='API 调用历史'
         customToolbar={
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 12 }}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: '0.875rem', color: '#6b7280' }}>
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8,
+                fontSize: '0.875rem',
+                color: '#6b7280',
+              }}
+            >
               <input
                 type='checkbox'
                 checked={autoRefresh}

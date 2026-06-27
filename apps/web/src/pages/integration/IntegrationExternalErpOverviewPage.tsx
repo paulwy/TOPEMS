@@ -156,7 +156,10 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                     justifyContent: 'center',
                   }}
                 >
-                  <Database size={24} color='primary.main' />
+                  <Database
+                    size={24}
+                    color='primary.main'
+                  />
                 </Box>
               </Stack>
             </CardContent>
@@ -193,7 +196,10 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                     justifyContent: 'center',
                   }}
                 >
-                  <CheckCircle size={24} color='success.main' />
+                  <CheckCircle
+                    size={24}
+                    color='success.main'
+                  />
                 </Box>
               </Stack>
             </CardContent>
@@ -230,7 +236,10 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                     justifyContent: 'center',
                   }}
                 >
-                  <Zap size={24} color='secondary.main' />
+                  <Zap
+                    size={24}
+                    color='secondary.main'
+                  />
                 </Box>
               </Stack>
             </CardContent>
@@ -267,7 +276,10 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                     justifyContent: 'center',
                   }}
                 >
-                  <AlertCircle size={24} color='error.main' />
+                  <AlertCircle
+                    size={24}
+                    color='error.main'
+                  />
                 </Box>
               </Stack>
             </CardContent>
@@ -283,7 +295,11 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
           }}
         >
           {Object.entries(groupedByType).map(([type, conns]) => {
-            const config = ERP_TYPE_CONFIG[type] || { name: type, logo: '?', color: 'text.disabled' };
+            const config = ERP_TYPE_CONFIG[type] || {
+              name: type,
+              logo: '?',
+              color: 'text.disabled',
+            };
             return (
               <Card
                 key={type}
@@ -300,7 +316,13 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                   >
                     <Typography
                       variant='h6'
-                      sx={{ fontWeight: 600, color: 'text.primary', display: 'flex', alignItems: 'center', gap: 1 }}
+                      sx={{
+                        fontWeight: 600,
+                        color: 'text.primary',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                      }}
                     >
                       <Cloud size={20} /> {config.name}
                     </Typography>
@@ -336,9 +358,17 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                               variant='caption'
                               color='text.secondary'
                             >
-                              {conn.sync_direction === 'bidirectional' ? '双向同步' : conn.sync_direction === 'import' ? '导入' : '导出'}
+                              {conn.sync_direction === 'bidirectional'
+                                ? '双向同步'
+                                : conn.sync_direction === 'import'
+                                  ? '导入'
+                                  : '导出'}
                               {' / '}
-                              {conn.sync_mode === 'realtime' ? '实时' : conn.sync_mode === 'scheduled' ? '定时' : '手动'}
+                              {conn.sync_mode === 'realtime'
+                                ? '实时'
+                                : conn.sync_mode === 'scheduled'
+                                  ? '定时'
+                                  : '手动'}
                             </Typography>
                           </Box>
                           <Chip
@@ -384,7 +414,13 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                   >
                     <Typography
                       variant='h6'
-                      sx={{ fontWeight: 600, color: 'text.primary', display: 'flex', alignItems: 'center', gap: 1 }}
+                      sx={{
+                        fontWeight: 600,
+                        color: 'text.primary',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                      }}
                     >
                       <Cloud size={20} /> 金蝶K/3
                     </Typography>
@@ -423,7 +459,13 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                   >
                     <Typography
                       variant='h6'
-                      sx={{ fontWeight: 600, color: 'text.primary', display: 'flex', alignItems: 'center', gap: 1 }}
+                      sx={{
+                        fontWeight: 600,
+                        color: 'text.primary',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                      }}
                     >
                       <Cloud size={20} /> 用友U8/NC
                     </Typography>
@@ -462,7 +504,13 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                   >
                     <Typography
                       variant='h6'
-                      sx={{ fontWeight: 600, color: 'text.primary', display: 'flex', alignItems: 'center', gap: 1 }}
+                      sx={{
+                        fontWeight: 600,
+                        color: 'text.primary',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                      }}
                     >
                       <Cloud size={20} /> SAP S/4HANA
                     </Typography>
@@ -514,7 +562,10 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                 >
                   支持的ERP系统
                 </Typography>
-                <Stack direction='row' spacing={1}>
+                <Stack
+                  direction='row'
+                  spacing={1}
+                >
                   <Chip
                     label='金蝶K/3'
                     size='small'
@@ -536,7 +587,10 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                 >
                   同步方式
                 </Typography>
-                <Stack direction='row' spacing={1}>
+                <Stack
+                  direction='row'
+                  spacing={1}
+                >
                   <Chip
                     label='实时同步'
                     size='small'
@@ -558,7 +612,10 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                 >
                   同步方向
                 </Typography>
-                <Stack direction='row' spacing={1}>
+                <Stack
+                  direction='row'
+                  spacing={1}
+                >
                   <Chip
                     label='双向同步'
                     size='small'

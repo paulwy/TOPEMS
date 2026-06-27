@@ -3,7 +3,7 @@ import { useAppStore } from '@/store';
 import React, { useState, useEffect } from 'react';
 import { apiLogger } from '@/utils/logger';
 import { mobileApi } from '@/api/mobile';
-import MobileHeader from '@/components/layout/MobileHeader';
+import { MobileHeader } from '@/components/mobile';
 import { MobileNav } from '@/components/layout/MobileNav';
 import {
   MapPin,
@@ -16,8 +16,7 @@ import {
   Clock,
   AlertCircle,
 } from 'lucide-react';
-import { Box, Paper, Stack, Chip, Typography, CircularProgress } from '@mui/material';
-import { Button } from '@mui/material';
+import { Box, Paper, Stack, Chip, Typography, CircularProgress, Button } from '@mui/material';
 
 type TabKey = 'home' | 'patrol' | 'task' | 'scan' | 'media';
 
@@ -137,13 +136,13 @@ const MobileWorkstationPage: React.FC = () => {
   const getStatusStyle = (status: string) => {
     switch (status) {
       case 'completed':
-        return { bgcolor: 'success.lighter', color: '#15803d' };
+        return { bgcolor: 'success.lighter', color: 'success.dark' };
       case 'in_progress':
-        return { bgcolor: '#dbeafe', color: 'primary.dark' };
+        return { bgcolor: 'primary.light', color: 'primary.dark' };
       case 'pending':
-        return { bgcolor: 'warning.light', color: '#b45309' };
+        return { bgcolor: 'warning.light', color: 'warning.dark' };
       default:
-        return { bgcolor: 'grey.100', color: '#475569' };
+        return { bgcolor: 'grey.100', color: 'text.secondary' };
     }
   };
 
@@ -194,7 +193,7 @@ const MobileWorkstationPage: React.FC = () => {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       <MobileHeader
         title='移动工作台'
         onMenuClick={() => setMobileNavOpen(true)}
@@ -352,7 +351,7 @@ const MobileWorkstationPage: React.FC = () => {
                     onClick={handleCreatePatrol}
                     sx={{
                       bgcolor: 'primary.light',
-                      '&:hover': { bgcolor: '#dbeafe' },
+                      '&:hover': { bgcolor: 'primary.light' },
                       borderRadius: 1.5,
                       p: 2,
                       flexDirection: 'column',
@@ -391,7 +390,7 @@ const MobileWorkstationPage: React.FC = () => {
                     onClick={handleScan}
                     sx={{
                       bgcolor: 'secondary.light',
-                      '&:hover': { bgcolor: '#f3e8ff' },
+                      '&:hover': { bgcolor: 'secondary.light' },
                       borderRadius: 1.5,
                       p: 2,
                       flexDirection: 'column',
@@ -403,7 +402,7 @@ const MobileWorkstationPage: React.FC = () => {
                       sx={{
                         width: 48,
                         height: 48,
-                        bgcolor: '#a855f7',
+                        bgcolor: 'secondary.main',
                         borderRadius: '50%',
                         display: 'flex',
                         alignItems: 'center',
@@ -469,7 +468,7 @@ const MobileWorkstationPage: React.FC = () => {
                     onClick={() => setActiveTab('task')}
                     sx={{
                       bgcolor: 'white7ed',
-                      '&:hover': { bgcolor: '#ffedd5' },
+                      '&:hover': { bgcolor: 'warning.light' },
                       borderRadius: 1.5,
                       p: 2,
                       flexDirection: 'column',
@@ -481,7 +480,7 @@ const MobileWorkstationPage: React.FC = () => {
                       sx={{
                         width: 48,
                         height: 48,
-                        bgcolor: '#f97316',
+                        bgcolor: 'warning.main',
                         borderRadius: '50%',
                         display: 'flex',
                         alignItems: 'center',
@@ -546,7 +545,7 @@ const MobileWorkstationPage: React.FC = () => {
                       >
                         <MapPin
                           size={16}
-                          color='#94a3b8'
+                          color='grey.500'
                         />
                         <Typography
                           variant='body2'
@@ -666,7 +665,7 @@ const MobileWorkstationPage: React.FC = () => {
                       >
                         <MapPin
                           size={16}
-                          color='#94a3b8'
+                          color='grey.500'
                         />
                         <Typography
                           variant='body2'
@@ -682,7 +681,7 @@ const MobileWorkstationPage: React.FC = () => {
                       >
                         <Clock
                           size={16}
-                          color='#94a3b8'
+                          color='grey.500'
                         />
                         <Typography
                           variant='body2'
@@ -786,7 +785,7 @@ const MobileWorkstationPage: React.FC = () => {
                       >
                         <AlertCircle
                           size={16}
-                          color='#94a3b8'
+                          color='grey.500'
                         />
                         <Typography
                           variant='body2'
@@ -829,8 +828,8 @@ const MobileWorkstationPage: React.FC = () => {
               <Button
                 variant='contained'
                 sx={{
-                  bgcolor: '#a855f7',
-                  '&:hover': { bgcolor: '#9333ea' },
+                  bgcolor: 'secondary.main',
+                  '&:hover': { bgcolor: 'secondary.dark' },
                 }}
                 startIcon={<QrCode size={16} />}
                 onClick={handleScan}
@@ -855,8 +854,8 @@ const MobileWorkstationPage: React.FC = () => {
                 <Button
                   variant='contained'
                   sx={{
-                    bgcolor: '#a855f7',
-                    '&:hover': { bgcolor: '#9333ea' },
+                    bgcolor: 'secondary.main',
+                    '&:hover': { bgcolor: 'secondary.dark' },
                   }}
                   onClick={handleScan}
                 >
@@ -879,7 +878,7 @@ const MobileWorkstationPage: React.FC = () => {
                         sx={{
                           width: 40,
                           height: 40,
-                          bgcolor: '#f3e8ff',
+                          bgcolor: 'secondary.light',
                           borderRadius: 1,
                           display: 'flex',
                           alignItems: 'center',
@@ -888,7 +887,7 @@ const MobileWorkstationPage: React.FC = () => {
                       >
                         <QrCode
                           size={20}
-                          color='#a855f7'
+                          color='secondary.main'
                         />
                       </Box>
                       <Box sx={{ flex: 1 }}>

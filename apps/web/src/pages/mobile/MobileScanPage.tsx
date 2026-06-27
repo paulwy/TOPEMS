@@ -37,9 +37,7 @@ import {
   Settings,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { MobileLayout } from '@/components/mobile';
-import { MobileCard } from '@/components/mobile';
-import { MobileButton } from '@/components/mobile';
+import { MobileLayout, MobileCard, MobileButton } from '@/components/mobile';
 import { useAppStore } from '@/store';
 
 interface ScanHistoryItem {
@@ -182,7 +180,7 @@ const MobileScanPage: React.FC = () => {
       }, 2000);
       return () => clearTimeout(timer);
     }
-    return undefined;
+    return;
   }, [activeTab, scanning, scanResult, simulateScan]);
 
   const handleRescan = () => {
@@ -265,7 +263,12 @@ const MobileScanPage: React.FC = () => {
     { id: 'home', label: '首页', icon: <Home style={{ width: 22, height: 22 }} /> },
     { id: 'tasks', label: '任务', icon: <ListTodo style={{ width: 22, height: 22 }} /> },
     { id: 'scan', label: '扫码', icon: <ScanLine style={{ width: 22, height: 22 }} /> },
-    { id: 'approval', label: '审批', icon: <CheckSquare style={{ width: 22, height: 22 }} />, badge: 3 },
+    {
+      id: 'approval',
+      label: '审批',
+      icon: <CheckSquare style={{ width: 22, height: 22 }} />,
+      badge: 3,
+    },
     { id: 'profile', label: '我的', icon: <User style={{ width: 22, height: 22 }} /> },
   ];
 
@@ -300,7 +303,10 @@ const MobileScanPage: React.FC = () => {
         }}
       >
         {tabs.map((tab, index) => (
-          <Tab key={index} label={tab} />
+          <Tab
+            key={index}
+            label={tab}
+          />
         ))}
       </Tabs>
 
@@ -441,7 +447,10 @@ const MobileScanPage: React.FC = () => {
                 >
                   <CheckSquare style={{ width: 32, height: 32, color: 'white' }} />
                 </Box>
-                <Typography variant='h6' sx={{ color: 'white', mb: 1, fontWeight: 600 }}>
+                <Typography
+                  variant='h6'
+                  sx={{ color: 'white', mb: 1, fontWeight: 600 }}
+                >
                   扫描成功
                 </Typography>
                 <Typography
@@ -465,7 +474,11 @@ const MobileScanPage: React.FC = () => {
                   >
                     重新扫描
                   </MobileButton>
-                  <MobileButton variant='contained' size='small' onClick={handleCopyResult}>
+                  <MobileButton
+                    variant='contained'
+                    size='small'
+                    onClick={handleCopyResult}
+                  >
                     复制结果
                   </MobileButton>
                 </Box>
@@ -489,7 +502,10 @@ const MobileScanPage: React.FC = () => {
               >
                 <Flashlight style={{ width: 24, height: 24 }} />
               </IconButton>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 闪光灯
               </Typography>
             </Box>
@@ -508,7 +524,10 @@ const MobileScanPage: React.FC = () => {
               >
                 <Image style={{ width: 24, height: 24 }} />
               </IconButton>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 相册
               </Typography>
             </Box>
@@ -528,7 +547,10 @@ const MobileScanPage: React.FC = () => {
               >
                 <Barcode style={{ width: 24, height: 24 }} />
               </IconButton>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 手动输入
               </Typography>
             </Box>
@@ -544,7 +566,10 @@ const MobileScanPage: React.FC = () => {
                 borderColor: 'divider',
               }}
             >
-              <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2 }}>
+              <Typography
+                variant='subtitle2'
+                sx={{ fontWeight: 600, mb: 2 }}
+              >
                 关联信息
               </Typography>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -563,16 +588,20 @@ const MobileScanPage: React.FC = () => {
                   <Package style={{ width: 24, height: 24 }} />
                 </Box>
                 <Box sx={{ flex: 1 }}>
-                  <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ fontWeight: 500 }}
+                  >
                     电阻 10kΩ
                   </Typography>
-                  <Typography variant='caption' color='text.secondary'>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
                     物料编码: {scanResult}
                   </Typography>
                 </Box>
-                <Button endIcon={<ArrowRight style={{ width: 16, height: 16 }} />}>
-                  查看
-                </Button>
+                <Button endIcon={<ArrowRight style={{ width: 16, height: 16 }} />}>查看</Button>
               </Box>
             </Paper>
           )}
@@ -602,13 +631,17 @@ const MobileScanPage: React.FC = () => {
                       <Search style={{ width: 20, height: 20 }} />
                     </InputAdornment>
                   ),
-                  endAdornment: scanHistory.length > 0 ? (
-                    <InputAdornment position='end'>
-                      <IconButton size='small' onClick={handleClearHistory}>
-                        <Trash2 style={{ width: 18, height: 18 }} />
-                      </IconButton>
-                    </InputAdornment>
-                  ) : undefined,
+                  endAdornment:
+                    scanHistory.length > 0 ? (
+                      <InputAdornment position='end'>
+                        <IconButton
+                          size='small'
+                          onClick={handleClearHistory}
+                        >
+                          <Trash2 style={{ width: 18, height: 18 }} />
+                        </IconButton>
+                      </InputAdornment>
+                    ) : undefined,
                 },
               }}
             />
@@ -638,10 +671,16 @@ const MobileScanPage: React.FC = () => {
               >
                 <History style={{ width: 32, height: 32, color: 'text.secondary' }} />
               </Box>
-              <Typography variant='subtitle1' sx={{ mb: 1, fontWeight: 500 }}>
+              <Typography
+                variant='subtitle1'
+                sx={{ mb: 1, fontWeight: 500 }}
+              >
                 暂无历史记录
               </Typography>
-              <Typography variant='body2' color='text.secondary'>
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
                 扫描的条码将自动保存在这里
               </Typography>
             </Box>
@@ -678,7 +717,10 @@ const MobileScanPage: React.FC = () => {
                     badge={
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                         <Clock style={{ width: 12, height: 12, color: 'text.secondary' }} />
-                        <Typography variant='caption' color='text.secondary'>
+                        <Typography
+                          variant='caption'
+                          color='text.secondary'
+                        >
                           {item.time}
                         </Typography>
                       </Box>
@@ -706,10 +748,17 @@ const MobileScanPage: React.FC = () => {
               borderColor: 'divider',
             }}
           >
-            <Typography variant='subtitle1' sx={{ fontWeight: 600, mb: 2 }}>
+            <Typography
+              variant='subtitle1'
+              sx={{ fontWeight: 600, mb: 2 }}
+            >
               手动输入条码
             </Typography>
-            <Typography variant='body2' color='text.secondary' sx={{ mb: 3 }}>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{ mb: 3 }}
+            >
               如果无法扫描，可以手动输入条码或二维码内容
             </Typography>
 
@@ -743,7 +792,10 @@ const MobileScanPage: React.FC = () => {
           </Paper>
 
           <Box sx={{ mt: 3 }}>
-            <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, mb: 2 }}
+            >
               支持的格式
             </Typography>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>

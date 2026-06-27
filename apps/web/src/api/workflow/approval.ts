@@ -48,17 +48,11 @@ export const approvalTaskApi = {
     return apiClient.workflow.post(`/api/flow/approval-tasks/${id}/reject`, data);
   },
 
-  delegateTask: (
-    id: string,
-    data: { delegate_to: string; delegate_to_name?: string }
-  ) => {
+  delegateTask: (id: string, data: { delegate_to: string; delegate_to_name?: string }) => {
     return apiClient.workflow.post(`/api/flow/approval-tasks/${id}/delegate`, data);
   },
 
-  reassignTask: (
-    id: string,
-    data: { assignee_id: string; assignee_name?: string }
-  ) => {
+  reassignTask: (id: string, data: { assignee_id: string; assignee_name?: string }) => {
     return apiClient.workflow.post(`/api/flow/approval-tasks/${id}/reassign`, data);
   },
 

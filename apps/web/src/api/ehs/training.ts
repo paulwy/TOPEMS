@@ -28,7 +28,7 @@ export const trainingApi = {
     if (params?.status) queryParams.append('status', params.status);
     if (params?.training_type) queryParams.append('training_type', params.training_type);
     if (params?.category) queryParams.append('category', params.category);
-  
+
     return apiClient.ehs.get<PaginatedResponse<TrainingPlan>>(
       `/api/ehs/training/plans?${queryParams.toString()}`
     );
@@ -66,7 +66,7 @@ export const trainingApi = {
     if (params?.training_type) queryParams.append('training_type', params.training_type);
     if (params?.category) queryParams.append('category', params.category);
     if (params?.employee_id) queryParams.append('employee_id', params.employee_id);
-  
+
     return apiClient.ehs.get<PaginatedResponse<TrainingRecord>>(
       `/api/ehs/training/records?${queryParams.toString()}`
     );
@@ -103,35 +103,27 @@ export const trainingApi = {
     if (params?.employee_id) queryParams.append('employee_id', params.employee_id);
     if (params?.status) queryParams.append('status', params.status);
     if (params?.training_type) queryParams.append('training_type', params.training_type);
-  
+
     return apiClient.ehs.get<PaginatedResponse<TrainingCertificate>>(
       `/api/ehs/training/certificates?${queryParams.toString()}`
     );
   },
 
-  getTrainingCertificate: async (
-    id: string
-  ): Promise<ApiResponse<TrainingCertificate>> => {
+  getTrainingCertificate: async (id: string): Promise<ApiResponse<TrainingCertificate>> => {
     return apiClient.ehs.get<TrainingCertificate>(`/api/ehs/training/certificates/${id}`);
   },
 
   createTrainingCertificate: async (
     data: CreateTrainingCertificateRequest
   ): Promise<ApiResponse<TrainingCertificate>> => {
-    return apiClient.ehs.post<TrainingCertificate>(
-      '/api/ehs/training/certificates',
-      data
-    );
+    return apiClient.ehs.post<TrainingCertificate>('/api/ehs/training/certificates', data);
   },
 
   updateTrainingCertificate: async (
     id: string,
     data: Partial<UpdateTrainingCertificateRequest>
   ): Promise<ApiResponse<TrainingCertificate>> => {
-    return apiClient.ehs.put<TrainingCertificate>(
-      `/api/ehs/training/certificates/${id}`,
-      data
-    );
+    return apiClient.ehs.put<TrainingCertificate>(`/api/ehs/training/certificates/${id}`, data);
   },
 
   deleteTrainingCertificate: async (id: string): Promise<ApiResponse<void>> => {

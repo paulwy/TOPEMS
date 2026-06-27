@@ -69,9 +69,7 @@ export const maintenanceApi = {
 };
 
 export const instrumentDataApi = {
-  listInstrumentData: async (
-    params?: ListParams
-  ): Promise<ApiResponse<InstrumentData[]>> => {
+  listInstrumentData: async (params?: ListParams): Promise<ApiResponse<InstrumentData[]>> => {
     return apiClient.lims.get('/api/lims/instrument-data', { params });
   },
 

@@ -8,8 +8,8 @@ import {
   LinearProgress,
   Paper,
   Typography,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import type { CustomerScore, ScoreFactor } from '@/api/crm';
 import { crmApi } from '@/api/crm';
@@ -138,18 +138,20 @@ const CRMCustomerScoringPage: React.FC = () => {
     }
   };
 
-  const gradeDistribution = useMemo(() => ({
-    A: scores.filter((s) => s.score_level === 'A').length,
-    B: scores.filter((s) => s.score_level === 'B').length,
-    C: scores.filter((s) => s.score_level === 'C').length,
-    D: scores.filter((s) => s.score_level === 'D').length,
-  }), [scores]);
+  const gradeDistribution = useMemo(
+    () => ({
+      A: scores.filter((s) => s.score_level === 'A').length,
+      B: scores.filter((s) => s.score_level === 'B').length,
+      C: scores.filter((s) => s.score_level === 'C').length,
+      D: scores.filter((s) => s.score_level === 'D').length,
+    }),
+    [scores]
+  );
 
   const filteredScores = useMemo(() => {
     if (!searchQuery) return scores;
-    return scores.filter(
-      (score) =>
-        score.customer_name.toLowerCase().includes(searchQuery.toLowerCase())
+    return scores.filter((score) =>
+      score.customer_name.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [scores, searchQuery]);
 
@@ -177,7 +179,10 @@ const CRMCustomerScoringPage: React.FC = () => {
               justifyContent: 'center',
             }}
           >
-            <Typography variant='body1' sx={{ fontWeight: 'bold' }}>
+            <Typography
+              variant='body1'
+              sx={{ fontWeight: 'bold' }}
+            >
               {row.customer_name.charAt(0)}
             </Typography>
           </Box>
@@ -279,7 +284,7 @@ const CRMCustomerScoringPage: React.FC = () => {
           <Typography
             variant='body2'
             sx={{
-              color: color,
+              color,
               fontWeight: 500,
               fontSize: '0.875rem',
             }}
@@ -288,7 +293,7 @@ const CRMCustomerScoringPage: React.FC = () => {
           </Typography>
           <Typography
             variant='h5'
-            sx={{ fontWeight: 'bold', color: color, mt: 0.5 }}
+            sx={{ fontWeight: 'bold', color, mt: 0.5 }}
           >
             {value}
           </Typography>
@@ -310,210 +315,216 @@ const CRMCustomerScoringPage: React.FC = () => {
     </Box>
   );
 
-  const headerContent = useMemo(() => (
-    <Box
-      sx={{
-        display: 'grid',
-        gridTemplateColumns: {
-          xs: 'repeat(2, 1fr)',
-          md: 'repeat(4, 1fr)',
-        },
-        gap: 2,
-        mb: 3,
-      }}
-    >
-      <StatCard
-        label='A级客户'
-        value={gradeDistribution.A}
-        color='success.main'
-        bgColor='success.light'
-      />
-      <StatCard
-        label='B级客户'
-        value={gradeDistribution.B}
-        color='primary.main'
-        bgColor='primary.light'
-      />
-      <StatCard
-        label='C级客户'
-        value={gradeDistribution.C}
-        color='warning.main'
-        bgColor='warning.light'
-      />
-      <StatCard
-        label='D级客户'
-        value={gradeDistribution.D}
-        color='error.main'
-        bgColor='error.light'
-      />
-    </Box>
-  ), [gradeDistribution]);
+  const headerContent = useMemo(
+    () => (
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: 'repeat(2, 1fr)',
+            md: 'repeat(4, 1fr)',
+          },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        <StatCard
+          label='A级客户'
+          value={gradeDistribution.A}
+          color='success.main'
+          bgColor='success.light'
+        />
+        <StatCard
+          label='B级客户'
+          value={gradeDistribution.B}
+          color='primary.main'
+          bgColor='primary.light'
+        />
+        <StatCard
+          label='C级客户'
+          value={gradeDistribution.C}
+          color='warning.main'
+          bgColor='warning.light'
+        />
+        <StatCard
+          label='D级客户'
+          value={gradeDistribution.D}
+          color='error.main'
+          bgColor='error.light'
+        />
+      </Box>
+    ),
+    [gradeDistribution]
+  );
 
   return (
-    <PageContainer title='客户价值评分' subtitle='根据客户数据自动计算客户价值评分和等级'>
-    <>
-      <ListPageTemplate
-        title=''
-        subtitle=''
-        breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: '客户关系管理', href: '/crm' },
-          { label: '客户评分' },
-        ]}
-        columns={columns}
-        data={paginatedScores}
-        loading={loading}
-        pagination={{
-          page: currentPage,
-          pageSize,
-          total: filteredScores.length,
-          onPageChange: setCurrentPage,
-        }}
-        searchable
-        searchPlaceholder='搜索客户名称...'
-        searchValue={searchQuery}
-        onSearch={(value) => {
-          setSearchQuery(value);
-          setCurrentPage(0);
-        }}
-        actions={[
-          {
-            label: '批量计算评分',
-            icon: <Calculator sx={{ width: 16, height: 16 }} />,
-            onClick: handleBatchCalculate,
-            variant: 'contained',
-          },
-        ]}
-        rowActions={rowActions}
-        onRefresh={loadCustomerScores}
-        showRowNumber
-        headerContent={headerContent}
-      />
+    <PageContainer
+      title='客户价值评分'
+      subtitle='根据客户数据自动计算客户价值评分和等级'
+    >
+      <>
+        <ListPageTemplate
+          title=''
+          subtitle=''
+          breadcrumbs={[
+            { label: '首页', href: '/dashboard' },
+            { label: '客户关系管理', href: '/crm' },
+            { label: '客户评分' },
+          ]}
+          columns={columns}
+          data={paginatedScores}
+          loading={loading}
+          pagination={{
+            page: currentPage,
+            pageSize,
+            total: filteredScores.length,
+            onPageChange: setCurrentPage,
+          }}
+          searchable
+          searchPlaceholder='搜索客户名称...'
+          searchValue={searchQuery}
+          onSearch={(value) => {
+            setSearchQuery(value);
+            setCurrentPage(0);
+          }}
+          actions={[
+            {
+              label: '批量计算评分',
+              icon: <Calculator sx={{ width: 16, height: 16 }} />,
+              onClick: handleBatchCalculate,
+              variant: 'contained',
+            },
+          ]}
+          rowActions={rowActions}
+          onRefresh={loadCustomerScores}
+          showRowNumber
+          headerContent={headerContent}
+        />
 
-      <Dialog
-        open={showDetailDialog}
-        onClose={() => setShowDetailDialog(false)}
-      >
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Award sx={{ width: 20, height: 20 }} />
-          {selectedScore?.customer_name} - 评分详情
-        </DialogTitle>
-        <DialogContent sx={{ maxWidth: 550 }}>
-          {selectedScore && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  gap: 4,
-                  py: 2,
-                }}
-              >
-                <Box sx={{ textAlign: 'center' }}>
-                  <Typography
-                    variant='h3'
-                    sx={{
-                      fontWeight: 'bold',
-                      color: getScoreColor(selectedScore.score),
-                    }}
-                  >
-                    {selectedScore.score}
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'text.secondary', mt: 0.5 }}
-                  >
-                    综合评分
-                  </Typography>
-                  {selectedScore.last_score !== undefined && (
+        <Dialog
+          open={showDetailDialog}
+          onClose={() => setShowDetailDialog(false)}
+        >
+          <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Award sx={{ width: 20, height: 20 }} />
+            {selectedScore?.customer_name} - 评分详情
+          </DialogTitle>
+          <DialogContent sx={{ maxWidth: 550 }}>
+            {selectedScore && (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    gap: 4,
+                    py: 2,
+                  }}
+                >
+                  <Box sx={{ textAlign: 'center' }}>
                     <Typography
-                      variant='caption'
+                      variant='h3'
                       sx={{
-                        color:
-                          selectedScore.score > selectedScore.last_score
-                            ? 'success.main'
-                            : selectedScore.score < selectedScore.last_score
-                              ? 'error.main'
-                              : 'text.secondary',
-                        mt: 0.5,
-                        display: 'block',
+                        fontWeight: 'bold',
+                        color: getScoreColor(selectedScore.score),
                       }}
                     >
-                      上次评分: {selectedScore.last_score}
+                      {selectedScore.score}
                     </Typography>
-                  )}
-                </Box>
-                <Box sx={{ textAlign: 'center' }}>
-                  {getGradeBadge(selectedScore.score_level)}
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'text.secondary', mt: 0.5 }}
-                  >
-                    客户等级
-                  </Typography>
-                </Box>
-              </Box>
-
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                {(selectedScore.factors as ScoreFactor[]).map((factor, index) => (
-                  <Paper
-                    key={index}
-                    sx={{ p: 2, bgcolor: 'grey.100' }}
-                  >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        mb: 1,
-                      }}
+                    <Typography
+                      variant='body2'
+                      sx={{ color: 'text.secondary', mt: 0.5 }}
                     >
+                      综合评分
+                    </Typography>
+                    {selectedScore.last_score !== undefined && (
                       <Typography
-                        variant='body1'
-                        sx={{ fontWeight: 500 }}
-                      >
-                        {factor.name}
-                      </Typography>
-                      <Typography
-                        variant='body2'
-                        sx={{ color: 'text.secondary' }}
-                      >
-                        权重: {factor.weight}%
-                      </Typography>
-                    </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                      <Box sx={{ flex: 1 }}>
-                        <LinearProgress
-                          variant='determinate'
-                          value={(factor.score / factor.max_score) * 100}
-                          sx={{
-                            height: 8,
-                            borderRadius: 1,
-                            bgcolor: 'grey.300',
-                          }}
-                        />
-                      </Box>
-                      <Typography
-                        variant='body2'
+                        variant='caption'
                         sx={{
-                          fontWeight: 500,
-                          width: 60,
-                          textAlign: 'right',
+                          color:
+                            selectedScore.score > selectedScore.last_score
+                              ? 'success.main'
+                              : selectedScore.score < selectedScore.last_score
+                                ? 'error.main'
+                                : 'text.secondary',
+                          mt: 0.5,
+                          display: 'block',
                         }}
                       >
-                        {factor.score}/{factor.max_score}
+                        上次评分: {selectedScore.last_score}
                       </Typography>
-                    </Box>
-                  </Paper>
-                ))}
+                    )}
+                  </Box>
+                  <Box sx={{ textAlign: 'center' }}>
+                    {getGradeBadge(selectedScore.score_level)}
+                    <Typography
+                      variant='body2'
+                      sx={{ color: 'text.secondary', mt: 0.5 }}
+                    >
+                      客户等级
+                    </Typography>
+                  </Box>
+                </Box>
+
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  {(selectedScore.factors as ScoreFactor[]).map((factor, index) => (
+                    <Paper
+                      key={index}
+                      sx={{ p: 2, bgcolor: 'grey.100' }}
+                    >
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          mb: 1,
+                        }}
+                      >
+                        <Typography
+                          variant='body1'
+                          sx={{ fontWeight: 500 }}
+                        >
+                          {factor.name}
+                        </Typography>
+                        <Typography
+                          variant='body2'
+                          sx={{ color: 'text.secondary' }}
+                        >
+                          权重: {factor.weight}%
+                        </Typography>
+                      </Box>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Box sx={{ flex: 1 }}>
+                          <LinearProgress
+                            variant='determinate'
+                            value={(factor.score / factor.max_score) * 100}
+                            sx={{
+                              height: 8,
+                              borderRadius: 1,
+                              bgcolor: 'grey.300',
+                            }}
+                          />
+                        </Box>
+                        <Typography
+                          variant='body2'
+                          sx={{
+                            fontWeight: 500,
+                            width: 60,
+                            textAlign: 'right',
+                          }}
+                        >
+                          {factor.score}/{factor.max_score}
+                        </Typography>
+                      </Box>
+                    </Paper>
+                  ))}
+                </Box>
               </Box>
-            </Box>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setShowDetailDialog(false)}>关闭</Button>
-        </DialogActions>
-      </Dialog>
-    </>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setShowDetailDialog(false)}>关闭</Button>
+          </DialogActions>
+        </Dialog>
+      </>
     </PageContainer>
   );
 };

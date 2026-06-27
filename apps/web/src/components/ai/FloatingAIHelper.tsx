@@ -14,8 +14,8 @@ import {
   useMediaQuery,
   Fade,
   Zoom,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import {
   Sparkles,
   MessageSquare,

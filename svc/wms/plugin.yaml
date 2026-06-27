@@ -6,7 +6,7 @@ plugin_type: business
 
 deployment:
   type: standalone
-  port: 8042
+  port: 8041
   base_path: /api/wms
 
 permissions:

@@ -14,9 +14,9 @@ import {
   Tooltip,
   Stack,
   Typography,
+  Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type {
   ProductionOrder,
@@ -530,10 +530,13 @@ const ProductionOrderManagementPage: React.FC = () => {
   );
 
   return (
-    <PageContainer title="生产订单管理" subtitle="管理生产订单信息,包括订单号、产品名称、数量、计划时间等">
+    <PageContainer
+      title='生产订单管理'
+      subtitle='管理生产订单信息,包括订单号、产品名称、数量、计划时间等'
+    >
       <ListPageTemplate
-        title=""
-        subtitle=""
+        title=''
+        subtitle=''
         columns={columns}
         data={orders}
         loading={loading}

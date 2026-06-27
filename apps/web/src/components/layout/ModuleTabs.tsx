@@ -165,11 +165,7 @@ const SimpleTabBar: React.FC<{
 
 // ─── Legacy Mode: Draggable Chrome-like Tabs ────────────────────────────────
 
-const LegacyModuleTabs: React.FC<LegacyModuleTabsProps> = ({
-  tabs,
-  pluginCode,
-  onTabsChange,
-}) => {
+const LegacyModuleTabs: React.FC<LegacyModuleTabsProps> = ({ tabs, pluginCode, onTabsChange }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
@@ -538,18 +534,8 @@ export const ModuleTabs: React.FC<ModuleTabsProps> = ({
   // 自动检测向后兼容模式：如果传入了旧版 tabs prop，则启用 legacy 模式
   const isLegacy = legacyMode || !!legacyTabs;
 
-  // ── Legacy 模式 ──
-  if (isLegacy) {
-    return (
-      <LegacyModuleTabs
-        tabs={legacyTabs || []}
-        pluginCode={pluginCode}
-        onTabsChange={onTabsChange}
-      />
-    );
-  }
-
   // ── 新模式：从 items 或 pluginCode 获取数据 ──
+  // 注意：useMemo 必须在所有条件 return 之前调用
   const resolvedItems = useMemo<ModuleTabItem[]>(() => {
     // 优先级 1：直接使用 items prop
     if (items && items.length > 0) {
@@ -592,6 +578,17 @@ export const ModuleTabs: React.FC<ModuleTabsProps> = ({
     // 优先级 3：无数据源，不渲染
     return [];
   }, [items, pluginCode]);
+
+  // ── Legacy 模式 ──
+  if (isLegacy) {
+    return (
+      <LegacyModuleTabs
+        tabs={legacyTabs || []}
+        pluginCode={pluginCode}
+        onTabsChange={onTabsChange}
+      />
+    );
+  }
 
   return (
     <SimpleTabBar

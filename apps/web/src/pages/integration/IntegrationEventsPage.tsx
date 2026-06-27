@@ -189,10 +189,13 @@ const IntegrationEventsPage: React.FC = () => {
   ];
 
   return (
-    <PageContainer title="集成事件日志" subtitle="查看所有集成事件的历史记录">
+    <PageContainer
+      title='集成事件日志'
+      subtitle='查看所有集成事件的历史记录'
+    >
       <ListPageTemplate
-        title=""
-        subtitle=""
+        title=''
+        subtitle=''
         columns={columns}
         data={filteredData}
         loading={loading}

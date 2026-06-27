@@ -12,6 +12,7 @@ import {
   Search,
   Filter,
   SortDesc,
+  BarChart3,
 } from 'lucide-react';
 import {
   Box,
@@ -252,6 +253,10 @@ const BIDashboardPage = () => {
     <PageContainer
       title='自定义仪表盘'
       subtitle='管理和创建您的个性化数据仪表盘'
+      headerProps={{
+        pageIcon: <BarChart3 style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',
+      }}
       padding={false}
       maxWidth={false}
     >
@@ -264,471 +269,471 @@ const BIDashboardPage = () => {
           { label: '自定义仪表盘' },
         ]}
       >
-      <Box sx={{ p: 3 }}>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            mb: 4,
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-            <Tabs
-              value={activeTab}
-              onChange={(_, newValue) => setActiveTab(newValue)}
-              sx={{ minWidth: 200 }}
-            >
-              <Tab
-                value='dashboards'
-                label='仪表盘'
-                icon={<LayoutDashboard size={18} />}
-                iconPosition='start'
-              />
-              <Tab
-                value='templates'
-                label='模板'
-                icon={<FolderOpen size={18} />}
-                iconPosition='start'
-              />
-            </Tabs>
-          </Box>
-          {activeTab === 'dashboards' && (
-            <Button
-              variant='contained'
-              startIcon={<Plus />}
-              onClick={() => setCreateDialog({ ...createDialog, open: true })}
-            >
-              创建仪表盘
-            </Button>
-          )}
-        </Box>
-
-        {activeTab === 'templates' ? (
-          <DashboardTemplateManager
-            onDashboardCreated={() => {
-              setActiveTab('dashboards');
-              loadDashboards();
+        <Box sx={{ p: 3 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              mb: 4,
             }}
-          />
-        ) : (
-          <>
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                mb: 4,
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <TextField
-                  placeholder='搜索仪表盘...'
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  size='small'
-                  sx={{ width: 300 }}
-                />
-                <Button
-                  variant='outlined'
-                  size='small'
-                  startIcon={<Filter />}
-                >
-                  筛选
-                </Button>
-                <Button
-                  variant='outlined'
-                  size='small'
-                  startIcon={<SortDesc />}
-                >
-                  排序
-                </Button>
-              </Box>
-            </Box>
-
-            {loading ? (
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(3, 1fr)',
-                  gap: 3,
-                }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+              <Tabs
+                value={activeTab}
+                onChange={(_, newValue) => setActiveTab(newValue)}
+                sx={{ minWidth: 200 }}
               >
-                {[1, 2, 3].map((i) => (
-                  <Card key={i}>
-                    <CardContent>
-                      <Skeleton sx={{ width: '60%', mb: 2 }} />
-                      <Skeleton sx={{ width: '100%', height: 120 }} />
-                    </CardContent>
-                  </Card>
-                ))}
-              </Box>
-            ) : filteredDashboards.length === 0 ? (
+                <Tab
+                  value='dashboards'
+                  label='仪表盘'
+                  icon={<LayoutDashboard size={18} />}
+                  iconPosition='start'
+                />
+                <Tab
+                  value='templates'
+                  label='模板'
+                  icon={<FolderOpen size={18} />}
+                  iconPosition='start'
+                />
+              </Tabs>
+            </Box>
+            {activeTab === 'dashboards' && (
+              <Button
+                variant='contained'
+                startIcon={<Plus />}
+                onClick={() => setCreateDialog({ ...createDialog, open: true })}
+              >
+                创建仪表盘
+              </Button>
+            )}
+          </Box>
+
+          {activeTab === 'templates' ? (
+            <DashboardTemplateManager
+              onDashboardCreated={() => {
+                setActiveTab('dashboards');
+                loadDashboards();
+              }}
+            />
+          ) : (
+            <>
               <Box
                 sx={{
                   display: 'flex',
-                  flexDirection: 'column',
+                  justifyContent: 'space-between',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  py: 12,
-                  color: 'text.secondary',
+                  mb: 4,
                 }}
               >
-                <Grid3X3 sx={{ width: 64, height: 64, mb: 3, opacity: 0.5 }} />
-                <Typography variant='h6'>暂无仪表盘</Typography>
-                <Typography variant='body2'>点击上方按钮创建您的第一个仪表盘</Typography>
-                <Button
-                  variant='contained'
-                  startIcon={<Plus />}
-                  sx={{ mt: 3 }}
-                  onClick={() => setCreateDialog({ ...createDialog, open: true })}
-                >
-                  创建仪表盘
-                </Button>
-              </Box>
-            ) : (
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(3, 1fr)',
-                  gap: 3,
-                }}
-              >
-                {filteredDashboards.map((dashboard) => (
-                  <Card
-                    key={dashboard.id}
-                    sx={{
-                      position: 'relative',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s',
-                      '&:hover': {
-                        boxShadow: 3,
-                        transform: 'translateY(-2px)',
-                      },
-                    }}
-                    onClick={() => handleOpenEditor(dashboard)}
-                    onContextMenu={(e) => handleContextMenu(e, dashboard)}
-                  >
-                    {dashboard.is_public && (
-                      <Chip
-                        label='公开'
-                        size='small'
-                        color='primary'
-                        sx={{ position: 'absolute', top: 8, right: 8 }}
-                      />
-                    )}
-                    <CardContent sx={{ pb: 2 }}>
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 2,
-                          mb: 2,
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            width: 40,
-                            height: 40,
-                            borderRadius: 1,
-                            backgroundColor: '#EEF2FF',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          <LayoutDashboard sx={{ color: '#6366F1' }} />
-                        </Box>
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography
-                            variant='h6'
-                            sx={{
-                              fontWeight: 600,
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            {dashboard.name}
-                          </Typography>
-                          <Typography
-                            variant='caption'
-                            sx={{ color: 'text.secondary' }}
-                          >
-                            {new Date(dashboard.created_at).toLocaleDateString()}
-                          </Typography>
-                        </Box>
-                      </Box>
-                      {dashboard.description && (
-                        <Typography
-                          variant='body2'
-                          sx={{
-                            color: 'text.secondary',
-                            mb: 2,
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden',
-                          }}
-                        >
-                          {dashboard.description}
-                        </Typography>
-                      )}
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Chip
-                          label='图表'
-                          size='small'
-                          variant='outlined'
-                        />
-                        <Chip
-                          label='指标'
-                          size='small'
-                          variant='outlined'
-                        />
-                      </Box>
-                    </CardContent>
-                    <CardActions sx={{ justifyContent: 'flex-end', gap: 1 }}>
-                      <Tooltip title='编辑'>
-                        <IconButton
-                          size='small'
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleOpenEditor(dashboard);
-                          }}
-                        >
-                          <Edit2 sx={{ width: 18, height: 18 }} />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title='克隆'>
-                        <IconButton
-                          size='small'
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCloneDashboard(dashboard.id);
-                          }}
-                        >
-                          <Copy sx={{ width: 18, height: 18 }} />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title={dashboard.is_public ? '设为私有' : '设为公开'}>
-                        <IconButton
-                          size='small'
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleTogglePublic(dashboard);
-                          }}
-                        >
-                          {dashboard.is_public ? (
-                            <Eye sx={{ width: 18, height: 18 }} />
-                          ) : (
-                            <EyeOff sx={{ width: 18, height: 18 }} />
-                          )}
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title='删除'>
-                        <IconButton
-                          size='small'
-                          color='error'
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteDashboard(dashboard.id);
-                          }}
-                        >
-                          <Trash2 sx={{ width: 18, height: 18 }} />
-                        </IconButton>
-                      </Tooltip>
-                    </CardActions>
-                  </Card>
-                ))}
-              </Box>
-            )}
-
-            <Dialog
-              open={createDialog.open}
-              onClose={() => setCreateDialog({ ...createDialog, open: false })}
-              maxWidth='sm'
-              fullWidth
-            >
-              <DialogTitle>创建仪表盘</DialogTitle>
-              <DialogContent sx={{ mt: 2 }}>
-                <TextField
-                  label='仪表盘名称'
-                  fullWidth
-                  value={createDialog.name}
-                  onChange={(e) => setCreateDialog({ ...createDialog, name: e.target.value })}
-                  sx={{ mb: 3 }}
-                />
-                <TextField
-                  label='描述'
-                  multiline
-                  rows={2}
-                  fullWidth
-                  value={createDialog.description}
-                  onChange={(e) =>
-                    setCreateDialog({
-                      ...createDialog,
-                      description: e.target.value,
-                    })
-                  }
-                  sx={{ mb: 3 }}
-                />
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-                  <input
-                    type='checkbox'
-                    checked={createDialog.useTemplate}
-                    onChange={(e) =>
-                      setCreateDialog({
-                        ...createDialog,
-                        useTemplate: e.target.checked,
-                        selectedTemplateId: null,
-                      })
-                    }
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <TextField
+                    placeholder='搜索仪表盘...'
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    size='small'
+                    sx={{ width: 300 }}
                   />
-                  <Typography variant='body1'>从模板创建</Typography>
-                </Box>
-                {createDialog.useTemplate && templates.length > 0 && (
-                  <Box
-                    sx={{
-                      border: '1px solid rgba(0,0,0,0.1)',
-                      borderRadius: 1,
-                      p: 2,
-                    }}
+                  <Button
+                    variant='outlined'
+                    size='small'
+                    startIcon={<Filter />}
                   >
-                    <Typography
-                      variant='body2'
-                      sx={{ mb: 2, fontWeight: 500 }}
+                    筛选
+                  </Button>
+                  <Button
+                    variant='outlined'
+                    size='small'
+                    startIcon={<SortDesc />}
+                  >
+                    排序
+                  </Button>
+                </Box>
+              </Box>
+
+              {loading ? (
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gap: 3,
+                  }}
+                >
+                  {[1, 2, 3].map((i) => (
+                    <Card key={i}>
+                      <CardContent>
+                        <Skeleton sx={{ width: '60%', mb: 2 }} />
+                        <Skeleton sx={{ width: '100%', height: 120 }} />
+                      </CardContent>
+                    </Card>
+                  ))}
+                </Box>
+              ) : filteredDashboards.length === 0 ? (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    py: 12,
+                    color: 'text.secondary',
+                  }}
+                >
+                  <Grid3X3 sx={{ width: 64, height: 64, mb: 3, opacity: 0.5 }} />
+                  <Typography variant='h6'>暂无仪表盘</Typography>
+                  <Typography variant='body2'>点击上方按钮创建您的第一个仪表盘</Typography>
+                  <Button
+                    variant='contained'
+                    startIcon={<Plus />}
+                    sx={{ mt: 3 }}
+                    onClick={() => setCreateDialog({ ...createDialog, open: true })}
+                  >
+                    创建仪表盘
+                  </Button>
+                </Box>
+              ) : (
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gap: 3,
+                  }}
+                >
+                  {filteredDashboards.map((dashboard) => (
+                    <Card
+                      key={dashboard.id}
+                      sx={{
+                        position: 'relative',
+                        cursor: 'pointer',
+                        transition: 'all 0.3s',
+                        '&:hover': {
+                          boxShadow: 3,
+                          transform: 'translateY(-2px)',
+                        },
+                      }}
+                      onClick={() => handleOpenEditor(dashboard)}
+                      onContextMenu={(e) => handleContextMenu(e, dashboard)}
                     >
-                      选择模板
-                    </Typography>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      {templates.map((template) => (
+                      {dashboard.is_public && (
+                        <Chip
+                          label='公开'
+                          size='small'
+                          color='primary'
+                          sx={{ position: 'absolute', top: 8, right: 8 }}
+                        />
+                      )}
+                      <CardContent sx={{ pb: 2 }}>
                         <Box
-                          key={template.id}
                           sx={{
                             display: 'flex',
                             alignItems: 'center',
                             gap: 2,
-                            p: 2,
-                            borderRadius: 1,
-                            cursor: 'pointer',
-                            backgroundColor:
-                              createDialog.selectedTemplateId === template.id
-                                ? '#EEF2FF'
-                                : 'transparent',
-                            '&:hover': { backgroundColor: '#F5F5F5' },
+                            mb: 2,
                           }}
-                          onClick={() =>
-                            setCreateDialog({
-                              ...createDialog,
-                              selectedTemplateId: template.id,
-                            })
-                          }
                         >
-                          <input
-                            type='radio'
-                            checked={createDialog.selectedTemplateId === template.id}
-                            onChange={() =>
+                          <Box
+                            sx={{
+                              width: 40,
+                              height: 40,
+                              borderRadius: 1,
+                              backgroundColor: '#EEF2FF',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            <LayoutDashboard sx={{ color: '#6366F1' }} />
+                          </Box>
+                          <Box sx={{ flex: 1, minWidth: 0 }}>
+                            <Typography
+                              variant='h6'
+                              sx={{
+                                fontWeight: 600,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {dashboard.name}
+                            </Typography>
+                            <Typography
+                              variant='caption'
+                              sx={{ color: 'text.secondary' }}
+                            >
+                              {new Date(dashboard.created_at).toLocaleDateString()}
+                            </Typography>
+                          </Box>
+                        </Box>
+                        {dashboard.description && (
+                          <Typography
+                            variant='body2'
+                            sx={{
+                              color: 'text.secondary',
+                              mb: 2,
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                              overflow: 'hidden',
+                            }}
+                          >
+                            {dashboard.description}
+                          </Typography>
+                        )}
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Chip
+                            label='图表'
+                            size='small'
+                            variant='outlined'
+                          />
+                          <Chip
+                            label='指标'
+                            size='small'
+                            variant='outlined'
+                          />
+                        </Box>
+                      </CardContent>
+                      <CardActions sx={{ justifyContent: 'flex-end', gap: 1 }}>
+                        <Tooltip title='编辑'>
+                          <IconButton
+                            size='small'
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenEditor(dashboard);
+                            }}
+                          >
+                            <Edit2 sx={{ width: 18, height: 18 }} />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title='克隆'>
+                          <IconButton
+                            size='small'
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCloneDashboard(dashboard.id);
+                            }}
+                          >
+                            <Copy sx={{ width: 18, height: 18 }} />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title={dashboard.is_public ? '设为私有' : '设为公开'}>
+                          <IconButton
+                            size='small'
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleTogglePublic(dashboard);
+                            }}
+                          >
+                            {dashboard.is_public ? (
+                              <Eye sx={{ width: 18, height: 18 }} />
+                            ) : (
+                              <EyeOff sx={{ width: 18, height: 18 }} />
+                            )}
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title='删除'>
+                          <IconButton
+                            size='small'
+                            color='error'
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteDashboard(dashboard.id);
+                            }}
+                          >
+                            <Trash2 sx={{ width: 18, height: 18 }} />
+                          </IconButton>
+                        </Tooltip>
+                      </CardActions>
+                    </Card>
+                  ))}
+                </Box>
+              )}
+
+              <Dialog
+                open={createDialog.open}
+                onClose={() => setCreateDialog({ ...createDialog, open: false })}
+                maxWidth='sm'
+                fullWidth
+              >
+                <DialogTitle>创建仪表盘</DialogTitle>
+                <DialogContent sx={{ mt: 2 }}>
+                  <TextField
+                    label='仪表盘名称'
+                    fullWidth
+                    value={createDialog.name}
+                    onChange={(e) => setCreateDialog({ ...createDialog, name: e.target.value })}
+                    sx={{ mb: 3 }}
+                  />
+                  <TextField
+                    label='描述'
+                    multiline
+                    rows={2}
+                    fullWidth
+                    value={createDialog.description}
+                    onChange={(e) =>
+                      setCreateDialog({
+                        ...createDialog,
+                        description: e.target.value,
+                      })
+                    }
+                    sx={{ mb: 3 }}
+                  />
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+                    <input
+                      type='checkbox'
+                      checked={createDialog.useTemplate}
+                      onChange={(e) =>
+                        setCreateDialog({
+                          ...createDialog,
+                          useTemplate: e.target.checked,
+                          selectedTemplateId: null,
+                        })
+                      }
+                    />
+                    <Typography variant='body1'>从模板创建</Typography>
+                  </Box>
+                  {createDialog.useTemplate && templates.length > 0 && (
+                    <Box
+                      sx={{
+                        border: '1px solid rgba(0,0,0,0.1)',
+                        borderRadius: 1,
+                        p: 2,
+                      }}
+                    >
+                      <Typography
+                        variant='body2'
+                        sx={{ mb: 2, fontWeight: 500 }}
+                      >
+                        选择模板
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                        {templates.map((template) => (
+                          <Box
+                            key={template.id}
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 2,
+                              p: 2,
+                              borderRadius: 1,
+                              cursor: 'pointer',
+                              backgroundColor:
+                                createDialog.selectedTemplateId === template.id
+                                  ? '#EEF2FF'
+                                  : 'transparent',
+                              '&:hover': { backgroundColor: '#F5F5F5' },
+                            }}
+                            onClick={() =>
                               setCreateDialog({
                                 ...createDialog,
                                 selectedTemplateId: template.id,
                               })
                             }
-                          />
-                          <FolderOpen sx={{ color: '#6366F1' }} />
-                          <div>
-                            <Typography
-                              variant='body1'
-                              sx={{ fontWeight: 500 }}
-                            >
-                              {template.name}
-                            </Typography>
-                            {template.description && (
+                          >
+                            <input
+                              type='radio'
+                              checked={createDialog.selectedTemplateId === template.id}
+                              onChange={() =>
+                                setCreateDialog({
+                                  ...createDialog,
+                                  selectedTemplateId: template.id,
+                                })
+                              }
+                            />
+                            <FolderOpen sx={{ color: '#6366F1' }} />
+                            <div>
                               <Typography
-                                variant='caption'
-                                sx={{ color: 'text.secondary' }}
+                                variant='body1'
+                                sx={{ fontWeight: 500 }}
                               >
-                                {template.description}
+                                {template.name}
                               </Typography>
-                            )}
-                          </div>
-                        </Box>
-                      ))}
+                              {template.description && (
+                                <Typography
+                                  variant='caption'
+                                  sx={{ color: 'text.secondary' }}
+                                >
+                                  {template.description}
+                                </Typography>
+                              )}
+                            </div>
+                          </Box>
+                        ))}
+                      </Box>
                     </Box>
-                  </Box>
-                )}
-              </DialogContent>
-              <DialogActions>
-                <Button onClick={() => setCreateDialog({ ...createDialog, open: false })}>
-                  取消
-                </Button>
-                <Button
-                  variant='contained'
-                  onClick={handleCreateDashboard}
-                  disabled={
-                    !createDialog.name ||
-                    (createDialog.useTemplate && !createDialog.selectedTemplateId)
-                  }
-                >
-                  创建
-                </Button>
-              </DialogActions>
-            </Dialog>
+                  )}
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={() => setCreateDialog({ ...createDialog, open: false })}>
+                    取消
+                  </Button>
+                  <Button
+                    variant='contained'
+                    onClick={handleCreateDashboard}
+                    disabled={
+                      !createDialog.name ||
+                      (createDialog.useTemplate && !createDialog.selectedTemplateId)
+                    }
+                  >
+                    创建
+                  </Button>
+                </DialogActions>
+              </Dialog>
 
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleCloseMenu}
-            >
-              {contextDashboard && (
-                <>
-                  <MenuItem
-                    onClick={() => {
-                      handleOpenEditor(contextDashboard);
-                      handleCloseMenu();
-                    }}
-                  >
-                    <Edit2 sx={{ mr: 2 }} />
-                    编辑
-                  </MenuItem>
-                  <MenuItem
-                    onClick={() => {
-                      handleCloneDashboard(contextDashboard.id);
-                      handleCloseMenu();
-                    }}
-                  >
-                    <Copy sx={{ mr: 2 }} />
-                    克隆
-                  </MenuItem>
-                  <MenuItem
-                    onClick={() => {
-                      handleTogglePublic(contextDashboard);
-                      handleCloseMenu();
-                    }}
-                  >
-                    {contextDashboard.is_public ? (
-                      <EyeOff sx={{ mr: 2 }} />
-                    ) : (
-                      <Eye sx={{ mr: 2 }} />
-                    )}
-                    {contextDashboard.is_public ? '设为私有' : '设为公开'}
-                  </MenuItem>
-                  <Divider />
-                  <MenuItem
-                    onClick={() => {
-                      handleDeleteDashboard(contextDashboard.id);
-                      handleCloseMenu();
-                    }}
-                    sx={{ color: 'error.main' }}
-                  >
-                    <Trash2 sx={{ mr: 2 }} />
-                    删除
-                  </MenuItem>
-                </>
-              )}
-            </Menu>
-          </>
-        )}
-      </Box>
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleCloseMenu}
+              >
+                {contextDashboard && (
+                  <>
+                    <MenuItem
+                      onClick={() => {
+                        handleOpenEditor(contextDashboard);
+                        handleCloseMenu();
+                      }}
+                    >
+                      <Edit2 sx={{ mr: 2 }} />
+                      编辑
+                    </MenuItem>
+                    <MenuItem
+                      onClick={() => {
+                        handleCloneDashboard(contextDashboard.id);
+                        handleCloseMenu();
+                      }}
+                    >
+                      <Copy sx={{ mr: 2 }} />
+                      克隆
+                    </MenuItem>
+                    <MenuItem
+                      onClick={() => {
+                        handleTogglePublic(contextDashboard);
+                        handleCloseMenu();
+                      }}
+                    >
+                      {contextDashboard.is_public ? (
+                        <EyeOff sx={{ mr: 2 }} />
+                      ) : (
+                        <Eye sx={{ mr: 2 }} />
+                      )}
+                      {contextDashboard.is_public ? '设为私有' : '设为公开'}
+                    </MenuItem>
+                    <Divider />
+                    <MenuItem
+                      onClick={() => {
+                        handleDeleteDashboard(contextDashboard.id);
+                        handleCloseMenu();
+                      }}
+                      sx={{ color: 'error.main' }}
+                    >
+                      <Trash2 sx={{ mr: 2 }} />
+                      删除
+                    </MenuItem>
+                  </>
+                )}
+              </Menu>
+            </>
+          )}
+        </Box>
       </DashboardLayout>
     </PageContainer>
   );

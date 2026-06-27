@@ -14,11 +14,7 @@ vi.mock('@/store', () => ({
 const mockAddNotification = vi.fn();
 
 const renderWithProviders = (ui: React.ReactElement) => {
-  return render(
-    <BrowserRouter>
-      {ui}
-    </BrowserRouter>
-  );
+  return render(<BrowserRouter>{ui}</BrowserRouter>);
 };
 
 const mockIssues = [
@@ -106,9 +102,7 @@ describe('EhsHazardPage', () => {
     await waitFor(() => {
       expect(ehsApi.createSafetyIssue).toHaveBeenCalled();
     });
-    expect(mockAddNotification).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'success' })
-    );
+    expect(mockAddNotification).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
   });
 
   it('should handle API error', async () => {

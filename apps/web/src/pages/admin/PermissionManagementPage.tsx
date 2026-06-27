@@ -10,8 +10,8 @@ import {
   Chip,
   Tooltip,
   IconButton,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Key, Plus, Trash2, ChevronLeft, Shield, AlertCircle, RefreshCw, Edit } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -439,7 +439,10 @@ const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({
   );
 
   return (
-    <PageContainer title='权限管理' subtitle='查看和管理系统权限配置'>
+    <PageContainer
+      title='权限管理'
+      subtitle='查看和管理系统权限配置'
+    >
       <ListPageTemplate
         title=''
         subtitle=''

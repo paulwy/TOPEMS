@@ -1,6 +1,17 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
+import { companyApi } from './company';
+import { departmentApi } from './department';
+import { employeeApi, roleApi, positionApi, employeePerformanceApi } from './employee';
+import { attendanceApi } from './attendance';
+import { leaveApi } from './leave';
+import { jobOpeningApi, candidateApi, interviewApi } from './recruitment';
+import { payrollApi, payrollItemApi, salaryAdjustmentApi } from './payroll';
+import { performanceReviewApi, performanceGoalApi } from './performance';
+import { contractApi, contractRenewalApi } from './contract';
+import { trainingPlanApi, trainingCourseApi, trainingRecordApi } from './training';
+
 export * from './types';
 
 export { companyApi } from './company';
@@ -13,17 +24,6 @@ export { payrollApi, payrollItemApi, salaryAdjustmentApi } from './payroll';
 export { performanceReviewApi, performanceGoalApi } from './performance';
 export { contractApi, contractRenewalApi } from './contract';
 export { trainingPlanApi, trainingCourseApi, trainingRecordApi } from './training';
-
-import { companyApi } from './company';
-import { departmentApi } from './department';
-import { employeeApi, roleApi, positionApi, employeePerformanceApi } from './employee';
-import { attendanceApi } from './attendance';
-import { leaveApi } from './leave';
-import { jobOpeningApi, candidateApi, interviewApi } from './recruitment';
-import { payrollApi, payrollItemApi, salaryAdjustmentApi } from './payroll';
-import { performanceReviewApi, performanceGoalApi } from './performance';
-import { contractApi, contractRenewalApi } from './contract';
-import { trainingPlanApi, trainingCourseApi, trainingRecordApi } from './training';
 
 export const hrmApi = {
   companies: companyApi,

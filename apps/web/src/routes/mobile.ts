@@ -1,4 +1,5 @@
 import React from 'react';
+import { Navigate } from 'react-router-dom';
 import type { RouteConfig } from './utils';
 import { lazyWithRetry } from './utils';
 
@@ -17,72 +18,75 @@ const NotificationSettingsPage = lazy(() => import('../pages/mobile/Notification
 export const mobileRoutes: RouteConfig[] = [
   {
     path: '/mobile',
-    element: MobileHomePage,
-    requiredPermissions: [],
+    element: React.createElement(Navigate, {
+      to: '/mobile/home',
+      replace: true,
+    }),
+    requiredPermissions: ['mobile:read'],
     module: 'mobile',
     action: 'read',
   },
   {
     path: '/mobile/home',
     element: MobileHomePage,
-    requiredPermissions: [],
+    requiredPermissions: ['mobile:read'],
     module: 'mobile',
     action: 'read',
   },
   {
     path: '/mobile/tasks',
     element: MobileTaskListPage,
-    requiredPermissions: [],
+    requiredPermissions: ['mobile:read'],
     module: 'mobile',
     action: 'read',
   },
   {
     path: '/mobile/scan-page',
     element: MobileScanPage,
-    requiredPermissions: [],
+    requiredPermissions: ['mobile:read'],
     module: 'mobile',
     action: 'read',
   },
   {
     path: '/mobile/approvals',
     element: MobileApprovalPage,
-    requiredPermissions: [],
+    requiredPermissions: ['mobile:read'],
     module: 'mobile',
     action: 'read',
   },
   {
     path: '/mobile/settings',
     element: MobileProfilePage,
-    requiredPermissions: [],
+    requiredPermissions: ['mobile:read'],
     module: 'mobile',
     action: 'read',
   },
   {
     path: '/mobile/settings-app',
     element: MobileSettingsPage,
-    requiredPermissions: [],
+    requiredPermissions: ['mobile:admin'],
     module: 'mobile',
-    action: 'read',
+    action: 'admin',
   },
   {
     path: '/mobile/offline-sync',
     element: OfflineSyncPage,
-    requiredPermissions: [],
+    requiredPermissions: ['mobile:read'],
     module: 'mobile',
     action: 'read',
   },
   {
     path: '/mobile/scan',
     element: ScanSettingsPage,
-    requiredPermissions: [],
+    requiredPermissions: ['mobile:admin'],
     module: 'mobile',
-    action: 'read',
+    action: 'admin',
   },
   {
     path: '/mobile/notifications',
     element: NotificationSettingsPage,
-    requiredPermissions: [],
+    requiredPermissions: ['mobile:admin'],
     module: 'mobile',
-    action: 'read',
+    action: 'admin',
   },
 ];

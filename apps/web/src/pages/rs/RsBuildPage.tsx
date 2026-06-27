@@ -13,19 +13,12 @@ import {
   Select,
   MenuItem,
   Typography,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
-import {
-  Play,
-  FileText,
-  RotateCcw,
-  GitBranch,
-  CheckCircle,
-  XCircle,
-  Clock,
-} from 'lucide-react';
-import { ListPageTemplate, type ColumnDef } from '@/components/templates';
-import type { RowAction, FilterConfig } from '@/components/templates';
+import { Play, FileText, RotateCcw, GitBranch, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { ListPageTemplate } from '@/components/templates';
+
+import type { RowAction, FilterConfig, ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
 import { useAppStore } from '@/store';
@@ -84,10 +77,7 @@ const RsBuildPage: React.FC = () => {
     }
   };
 
-  const uniqueProjects = useMemo(
-    () => [...new Set(builds.map((b) => b.project_name))],
-    [builds]
-  );
+  const uniqueProjects = useMemo(() => [...new Set(builds.map((b) => b.project_name))], [builds]);
 
   const getStatusLabel = (status: string): string => {
     switch (status) {
@@ -234,7 +224,10 @@ const RsBuildPage: React.FC = () => {
         id: 'commit_hash',
         label: '提交',
         render: (row) => (
-          <Typography variant='body2' sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+          <Typography
+            variant='body2'
+            sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
+          >
             {row.commit_hash?.slice(0, 8)}...
           </Typography>
         ),
@@ -340,7 +333,10 @@ const RsBuildPage: React.FC = () => {
   );
 
   return (
-    <PageContainer title='构建管理' subtitle='管理代码构建和构建流水线'>
+    <PageContainer
+      title='构建管理'
+      subtitle='管理代码构建和构建流水线'
+    >
       <ListPageTemplate<Build>
         title=''
         subtitle=''
@@ -389,9 +385,7 @@ const RsBuildPage: React.FC = () => {
               label='项目ID'
               fullWidth
               value={newBuildForm.project_id}
-              onChange={(e) =>
-                setNewBuildForm({ ...newBuildForm, project_id: e.target.value })
-              }
+              onChange={(e) => setNewBuildForm({ ...newBuildForm, project_id: e.target.value })}
             />
             <TextField
               label='分支'
@@ -403,18 +397,14 @@ const RsBuildPage: React.FC = () => {
               label='提交哈希'
               fullWidth
               value={newBuildForm.commit_hash}
-              onChange={(e) =>
-                setNewBuildForm({ ...newBuildForm, commit_hash: e.target.value })
-              }
+              onChange={(e) => setNewBuildForm({ ...newBuildForm, commit_hash: e.target.value })}
             />
             <FormControl fullWidth>
               <InputLabel>构建类型</InputLabel>
               <Select
                 value={newBuildForm.build_type}
                 label='构建类型'
-                onChange={(e) =>
-                  setNewBuildForm({ ...newBuildForm, build_type: e.target.value })
-                }
+                onChange={(e) => setNewBuildForm({ ...newBuildForm, build_type: e.target.value })}
               >
                 <MenuItem value='manual'>手动</MenuItem>
                 <MenuItem value='auto'>自动</MenuItem>

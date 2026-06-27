@@ -30,7 +30,12 @@ export type ReportStatus = 'draft' | 'calculating' | 'completed' | 'published';
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected';
 
 // 公司关系类型
-export type CompanyRelationType = 'parent' | 'subsidiary' | 'associate' | 'joint_venture' | 'branch';
+export type CompanyRelationType =
+  | 'parent'
+  | 'subsidiary'
+  | 'associate'
+  | 'joint_venture'
+  | 'branch';
 
 // 公司关系状态
 export type CompanyRelationStatus = 'active' | 'inactive';

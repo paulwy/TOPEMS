@@ -1,6 +1,17 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
+import { projectApi } from './project';
+import { experimentApi } from './experiment';
+import { formulaApi } from './formula';
+import { materialApi } from './material';
+import { auditRsApi } from './audit';
+import { rsStatisticsApi } from './statistics';
+import { bugApi } from './bug';
+import { testApi } from './test';
+import { buildApi } from './build';
+import { deployApi } from './deploy';
+
 export * from './types';
 
 export { projectApi } from './project';
@@ -13,17 +24,6 @@ export { bugApi } from './bug';
 export { testApi } from './test';
 export { buildApi } from './build';
 export { deployApi } from './deploy';
-
-import { projectApi } from './project';
-import { experimentApi } from './experiment';
-import { formulaApi } from './formula';
-import { materialApi } from './material';
-import { auditRsApi } from './audit';
-import { rsStatisticsApi } from './statistics';
-import { bugApi } from './bug';
-import { testApi } from './test';
-import { buildApi } from './build';
-import { deployApi } from './deploy';
 
 export const rsApi = {
   listProjects: projectApi.listProjects,

@@ -1,6 +1,30 @@
 import type { ReactNode, CSSProperties } from 'react';
-import React, { createContext, useContext, useState, useCallback, useMemo, useEffect, useRef, memo } from 'react';
-import { Box, CircularProgress, LinearProgress, Typography, Paper, Skeleton, Card, CardContent, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useMemo,
+  useEffect,
+  useRef,
+  memo,
+} from 'react';
+import {
+  Box,
+  CircularProgress,
+  LinearProgress,
+  Typography,
+  Paper,
+  Skeleton,
+  Card,
+  CardContent,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+} from '@mui/material';
 
 // ============================================================================
 // Types
@@ -61,78 +85,125 @@ export const useLoading = () => {
 // Skeleton Components
 // ============================================================================
 
-const SkeletonText: React.FC<{ lines?: number; lastLineWidth?: string }> = memo(({ lines = 5, lastLineWidth = '60%' }) => {
-  return (
-    <Box sx={{ width: '100%', px: 2 }}>
-      {Array.from({ length: lines }).map((_, index) => (
-        <Skeleton
-          key={index}
-          variant="text"
-          sx={{ fontSize: '1rem', mb: 0.5 }}
-          width={index === lines - 1 ? lastLineWidth : '100%'}
-          animation="wave"
-        />
-      ))}
-    </Box>
-  );
-});
+const SkeletonText: React.FC<{ lines?: number; lastLineWidth?: string }> = memo(
+  ({ lines = 5, lastLineWidth = '60%' }) => {
+    return (
+      <Box sx={{ width: '100%', px: 2 }}>
+        {Array.from({ length: lines }).map((_, index) => (
+          <Skeleton
+            key={index}
+            variant='text'
+            sx={{ fontSize: '1rem', mb: 0.5 }}
+            width={index === lines - 1 ? lastLineWidth : '100%'}
+            animation='wave'
+          />
+        ))}
+      </Box>
+    );
+  }
+);
 SkeletonText.displayName = 'SkeletonText';
 
-const SkeletonCard: React.FC<{ avatar?: boolean; actions?: number }> = memo(({ avatar = true, actions = 2 }) => {
-  return (
-    <Card sx={{ maxWidth: 345, m: 1 }}>
-      <CardContent>
-        {avatar && (
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <Skeleton variant="circular" width={40} height={40} animation="wave" />
-            <Box sx={{ ml: 1.5, flex: 1 }}>
-              <Skeleton variant="text" width="60%" animation="wave" />
-              <Skeleton variant="text" width="40%" height={12} animation="wave" />
+const SkeletonCard: React.FC<{ avatar?: boolean; actions?: number }> = memo(
+  ({ avatar = true, actions = 2 }) => {
+    return (
+      <Card sx={{ maxWidth: 345, m: 1 }}>
+        <CardContent>
+          {avatar && (
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+              <Skeleton
+                variant='circular'
+                width={40}
+                height={40}
+                animation='wave'
+              />
+              <Box sx={{ ml: 1.5, flex: 1 }}>
+                <Skeleton
+                  variant='text'
+                  width='60%'
+                  animation='wave'
+                />
+                <Skeleton
+                  variant='text'
+                  width='40%'
+                  height={12}
+                  animation='wave'
+                />
+              </Box>
             </Box>
+          )}
+          <Skeleton
+            variant='text'
+            width='100%'
+            animation='wave'
+          />
+          <Skeleton
+            variant='text'
+            width='90%'
+            animation='wave'
+          />
+          <Skeleton
+            variant='text'
+            width='75%'
+            animation='wave'
+          />
+          <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+            {Array.from({ length: actions }).map((_, index) => (
+              <Skeleton
+                key={index}
+                variant='rectangular'
+                width={60}
+                height={32}
+                sx={{ borderRadius: 1 }}
+                animation='wave'
+              />
+            ))}
           </Box>
-        )}
-        <Skeleton variant="text" width="100%" animation="wave" />
-        <Skeleton variant="text" width="90%" animation="wave" />
-        <Skeleton variant="text" width="75%" animation="wave" />
-        <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
-          {Array.from({ length: actions }).map((_, index) => (
-            <Skeleton key={index} variant="rectangular" width={60} height={32} sx={{ borderRadius: 1 }} animation="wave" />
-          ))}
-        </Box>
-      </CardContent>
-    </Card>
-  );
-});
+        </CardContent>
+      </Card>
+    );
+  }
+);
 SkeletonCard.displayName = 'SkeletonCard';
 
-const SkeletonTable: React.FC<{ rows?: number; columns?: number }> = memo(({ rows = 5, columns = 4 }) => {
-  return (
-    <TableContainer component={Paper}>
-      <Table>
-        <TableHead>
-          <TableRow>
-            {Array.from({ length: columns }).map((_, index) => (
-              <TableCell key={index}>
-                <Skeleton variant="text" width="80%" animation="wave" />
-              </TableCell>
-            ))}
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {Array.from({ length: rows }).map((_, rowIndex) => (
-            <TableRow key={rowIndex}>
-              {Array.from({ length: columns }).map((_, colIndex) => (
-                <TableCell key={colIndex}>
-                  <Skeleton variant="text" width="70%" animation="wave" />
+const SkeletonTable: React.FC<{ rows?: number; columns?: number }> = memo(
+  ({ rows = 5, columns = 4 }) => {
+    return (
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              {Array.from({ length: columns }).map((_, index) => (
+                <TableCell key={index}>
+                  <Skeleton
+                    variant='text'
+                    width='80%'
+                    animation='wave'
+                  />
                 </TableCell>
               ))}
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
-  );
-});
+          </TableHead>
+          <TableBody>
+            {Array.from({ length: rows }).map((_, rowIndex) => (
+              <TableRow key={rowIndex}>
+                {Array.from({ length: columns }).map((_, colIndex) => (
+                  <TableCell key={colIndex}>
+                    <Skeleton
+                      variant='text'
+                      width='70%'
+                      animation='wave'
+                    />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+    );
+  }
+);
 SkeletonTable.displayName = 'SkeletonTable';
 
 export { SkeletonText, SkeletonCard, SkeletonTable };
@@ -144,7 +215,7 @@ export { SkeletonText, SkeletonCard, SkeletonTable };
 const LinearProgressBar: React.FC<{ progress: number }> = memo(({ progress }) => (
   <Box sx={{ width: '100%', mb: 1 }}>
     <LinearProgress
-      variant="determinate"
+      variant='determinate'
       value={progress}
       sx={{
         height: 6,
@@ -162,7 +233,7 @@ LinearProgressBar.displayName = 'LinearProgressBar';
 const CircularProgressBar: React.FC<{ progress: number }> = memo(({ progress }) => (
   <Box sx={{ position: 'relative', display: 'inline-flex' }}>
     <CircularProgress
-      variant="determinate"
+      variant='determinate'
       value={progress}
       size={80}
       thickness={4}
@@ -181,7 +252,7 @@ const CircularProgressBar: React.FC<{ progress: number }> = memo(({ progress }) 
       }}
     >
       <Typography
-        variant="caption"
+        variant='caption'
         sx={{ component: 'div', color: 'text.secondary', fontWeight: 'bold' }}
       >
         {`${Math.round(progress)}%`}
@@ -195,161 +266,198 @@ CircularProgressBar.displayName = 'CircularProgressBar';
 // Loading Spinner
 // ============================================================================
 
-const LoadingSpinner: React.FC<{ size?: number; customIcon?: ReactNode }> = memo(({ size = 48, customIcon }) => {
-  if (customIcon) {
-    return <Box sx={{ fontSize: size }}>{customIcon}</Box>;
+const LoadingSpinner: React.FC<{ size?: number; customIcon?: ReactNode }> = memo(
+  ({ size = 48, customIcon }) => {
+    if (customIcon) {
+      return <Box sx={{ fontSize: size }}>{customIcon}</Box>;
+    }
+    return (
+      <CircularProgress
+        size={size}
+        thickness={4}
+        sx={{
+          color: 'primary.main',
+          animation: 'spin 1s linear infinite',
+          '@keyframes spin': {
+            '0%': { transform: 'rotate(0deg)' },
+            '100%': { transform: 'rotate(360deg)' },
+          },
+        }}
+      />
+    );
   }
-  return (
-    <CircularProgress
-      size={size}
-      thickness={4}
-      sx={{
-        color: 'primary.main',
-        animation: 'spin 1s linear infinite',
-        '@keyframes spin': {
-          '0%': { transform: 'rotate(0deg)' },
-          '100%': { transform: 'rotate(360deg)' },
-        },
-      }}
-    />
-  );
-});
+);
 LoadingSpinner.displayName = 'LoadingSpinner';
 
 // ============================================================================
 // Fullscreen Loader
 // ============================================================================
 
-const FullscreenLoader: React.FC<{ message: string; progress: number; progressType: ProgressType; customIcon?: ReactNode; timeoutWarning?: boolean }> = memo(
-  ({ message, progress, progressType, customIcon, timeoutWarning }) => {
-    return (
-      <Box
+const FullscreenLoader: React.FC<{
+  message: string;
+  progress: number;
+  progressType: ProgressType;
+  customIcon?: ReactNode;
+  timeoutWarning?: boolean;
+}> = memo(({ message, progress, progressType, customIcon, timeoutWarning }) => {
+  return (
+    <Box
+      sx={{
+        position: 'fixed',
+        inset: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 9999,
+        backdropFilter: 'blur(4px)',
+      }}
+    >
+      <Paper
+        elevation={8}
         sx={{
-          position: 'fixed',
-          inset: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.7)',
+          p: 4,
+          borderRadius: 3,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 9999,
-          backdropFilter: 'blur(4px)',
+          minWidth: 280,
+          maxWidth: 400,
         }}
       >
-        <Paper
-          elevation={8}
-          sx={{
-            p: 4,
-            borderRadius: 3,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            minWidth: 280,
-            maxWidth: 400,
-          }}
+        <Box sx={{ mb: 2 }}>
+          <LoadingSpinner
+            size={56}
+            customIcon={customIcon}
+          />
+        </Box>
+
+        <Typography
+          variant='h6'
+          color='text.primary'
+          sx={{ mb: 1, textAlign: 'center' }}
         >
-          <Box sx={{ mb: 2 }}>
-            <LoadingSpinner size={56} customIcon={customIcon} />
+          {message}
+        </Typography>
+
+        {progressType !== 'none' && progress > 0 && (
+          <Box sx={{ width: '100%', mt: 2 }}>
+            {progressType === 'linear' ? (
+              <LinearProgressBar progress={progress} />
+            ) : (
+              <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+                <CircularProgressBar progress={progress} />
+              </Box>
+            )}
           </Box>
+        )}
 
-          <Typography variant="h6" color="text.primary" sx={{ mb: 1, textAlign: 'center' }}>
-            {message}
+        {timeoutWarning && (
+          <Typography
+            variant='caption'
+            color='warning.main'
+            sx={{ mt: 1 }}
+          >
+            加载时间过长，请稍候...
           </Typography>
-
-          {progressType !== 'none' && progress > 0 && (
-            <Box sx={{ width: '100%', mt: 2 }}>
-              {progressType === 'linear' ? (
-                <LinearProgressBar progress={progress} />
-              ) : (
-                <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                  <CircularProgressBar progress={progress} />
-                </Box>
-              )}
-            </Box>
-          )}
-
-          {timeoutWarning && (
-            <Typography variant="caption" color="warning.main" sx={{ mt: 1 }}>
-              加载时间过长，请稍候...
-            </Typography>
-          )}
-        </Paper>
-      </Box>
-    );
-  }
-);
+        )}
+      </Paper>
+    </Box>
+  );
+});
 FullscreenLoader.displayName = 'FullscreenLoader';
 
 // ============================================================================
 // Overlay Loader
 // ============================================================================
 
-const OverlayLoader: React.FC<{ message: string; progress: number; progressType: ProgressType; customIcon?: ReactNode }> = memo(
-  ({ message, progress, progressType, customIcon }) => {
-    return (
-      <Box
-        sx={{
-          position: 'absolute',
-          inset: 0,
-          backgroundColor: 'rgba(255, 255, 255, 0.9)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 10,
-          borderRadius: 'inherit',
-        }}
+const OverlayLoader: React.FC<{
+  message: string;
+  progress: number;
+  progressType: ProgressType;
+  customIcon?: ReactNode;
+}> = memo(({ message, progress, progressType, customIcon }) => {
+  return (
+    <Box
+      sx={{
+        position: 'absolute',
+        inset: 0,
+        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 10,
+        borderRadius: 'inherit',
+      }}
+    >
+      <LoadingSpinner
+        size={40}
+        customIcon={customIcon}
+      />
+      <Typography
+        variant='body2'
+        color='text.secondary'
+        sx={{ mt: 1 }}
       >
-        <LoadingSpinner size={40} customIcon={customIcon} />
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-          {message}
-        </Typography>
+        {message}
+      </Typography>
 
-        {progressType !== 'none' && progress > 0 && (
-          <Box sx={{ width: '80%', mt: 1 }}>
-            {progressType === 'linear' ? (
-              <LinearProgressBar progress={progress} />
-            ) : (
-              <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                <CircularProgressBar progress={progress} />
-              </Box>
-            )}
-          </Box>
-        )}
-      </Box>
-    );
-  }
-);
+      {progressType !== 'none' && progress > 0 && (
+        <Box sx={{ width: '80%', mt: 1 }}>
+          {progressType === 'linear' ? (
+            <LinearProgressBar progress={progress} />
+          ) : (
+            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+              <CircularProgressBar progress={progress} />
+            </Box>
+          )}
+        </Box>
+      )}
+    </Box>
+  );
+});
 OverlayLoader.displayName = 'OverlayLoader';
 
 // ============================================================================
 // Inline Loader
 // ============================================================================
 
-const InlineLoader: React.FC<{ message: string; progress: number; progressType: ProgressType; customIcon?: ReactNode }> = memo(
-  ({ message, progress, progressType, customIcon }) => {
-    return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 2 }}>
-        <LoadingSpinner size={32} customIcon={customIcon} />
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-          {message}
-        </Typography>
+const InlineLoader: React.FC<{
+  message: string;
+  progress: number;
+  progressType: ProgressType;
+  customIcon?: ReactNode;
+}> = memo(({ message, progress, progressType, customIcon }) => {
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 2 }}>
+      <LoadingSpinner
+        size={32}
+        customIcon={customIcon}
+      />
+      <Typography
+        variant='body2'
+        color='text.secondary'
+        sx={{ mt: 1 }}
+      >
+        {message}
+      </Typography>
 
-        {progressType !== 'none' && progress > 0 && (
-          <Box sx={{ width: '100%', mt: 1 }}>
-            {progressType === 'linear' ? (
-              <LinearProgressBar progress={progress} />
-            ) : (
-              <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                <CircularProgressBar progress={progress} />
-              </Box>
-            )}
-          </Box>
-        )}
-      </Box>
-    );
-  }
-);
+      {progressType !== 'none' && progress > 0 && (
+        <Box sx={{ width: '100%', mt: 1 }}>
+          {progressType === 'linear' ? (
+            <LinearProgressBar progress={progress} />
+          ) : (
+            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+              <CircularProgressBar progress={progress} />
+            </Box>
+          )}
+        </Box>
+      )}
+    </Box>
+  );
+});
 InlineLoader.displayName = 'InlineLoader';
 
 // ============================================================================
@@ -363,9 +471,19 @@ const SkeletonLoader: React.FC<{ options: SkeletonOptions }> = memo(({ options }
 
   switch (variant) {
     case 'card':
-      return <SkeletonCard avatar={avatar} actions={actions} />;
+      return (
+        <SkeletonCard
+          avatar={avatar}
+          actions={actions}
+        />
+      );
     case 'table':
-      return <SkeletonTable rows={rows} columns={4} />;
+      return (
+        <SkeletonTable
+          rows={rows}
+          columns={4}
+        />
+      );
     case 'text':
     default:
       return (
@@ -490,11 +608,23 @@ export const LoadingProvider: React.FC<LoadingProviderProps> = memo(({ children 
 
     switch (mode) {
       case 'inline':
-        return <InlineLoader message={message} progress={progress} progressType={progressType} customIcon={customIcon} />;
+        return (
+          <InlineLoader
+            message={message}
+            progress={progress}
+            progressType={progressType}
+            customIcon={customIcon}
+          />
+        );
       case 'overlay':
         return (
           <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
-            <OverlayLoader message={message} progress={progress} progressType={progressType} customIcon={customIcon} />
+            <OverlayLoader
+              message={message}
+              progress={progress}
+              progressType={progressType}
+              customIcon={customIcon}
+            />
           </Box>
         );
       case 'skeleton':
@@ -521,7 +651,12 @@ export const LoadingProvider: React.FC<LoadingProviderProps> = memo(({ children 
       ) : (
         <>
           {isLoading && mode === 'inline' && (
-            <InlineLoader message={message} progress={progress} progressType={progressType} customIcon={customIcon} />
+            <InlineLoader
+              message={message}
+              progress={progress}
+              progressType={progressType}
+              customIcon={customIcon}
+            />
           )}
           {isLoading && mode === 'skeleton' && <SkeletonLoader options={skeletonOptions} />}
         </>

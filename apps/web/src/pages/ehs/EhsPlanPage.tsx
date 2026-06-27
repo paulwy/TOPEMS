@@ -11,11 +11,11 @@ import {
   Card,
   CardContent,
   Typography,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
-import { Plus, Eye, FileText, Users } from 'lucide-react';
-import { ListPageTemplate } from '@/components/mui';
-import type { ColumnDef, RowAction, FilterConfig } from '@/components/mui';
+import { Plus, Eye, Activity, FileText, Users } from 'lucide-react';
+import { ListPageTemplate } from '@/components';
+import type { ColumnDef, RowAction, FilterConfig } from '@/components';
 import { PageContainer } from '@/components/common';
 import { ehsApi } from '@/api/ehs';
 import type { EmergencyPlan } from '@/api/ehs';
@@ -34,7 +34,6 @@ const EhsPlanPage: React.FC = () => {
   const [selectedPlan, setSelectedPlan] = useState<EmergencyPlan | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [formData, setFormData] = useState({
-
     plan_no: '',
     name: '',
     plan_type: '',
@@ -84,7 +83,11 @@ const EhsPlanPage: React.FC = () => {
         const adapted = {
           ...planData,
           status:
-            planData.status === 'active' ? '有效' : planData.status === 'inactive' ? '无效' : planData.status,
+            planData.status === 'active'
+              ? '有效'
+              : planData.status === 'inactive'
+                ? '无效'
+                : planData.status,
         };
         setSelectedPlan(adapted);
       }
@@ -297,8 +300,8 @@ const EhsPlanPage: React.FC = () => {
       subtitle='Emergency Plan'
       headerProps={{
         actions: headerActions,
-        pageIcon: <FileText sx={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+        pageIcon: <Activity sx={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #22C55E 0%, #16A34A 100%)',
       }}
       maxWidth='xl'
     >
@@ -550,102 +553,104 @@ const EhsPlanPage: React.FC = () => {
               />
               <Typography sx={{ color: 'slate.600' }}>加载中...</Typography>
             </Box>
-          ) : selectedPlan && (
-            <Box
-              sx={{
-                pt: 2,
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: 2,
-              }}
-            >
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  预案编号
+          ) : (
+            selectedPlan && (
+              <Box
+                sx={{
+                  pt: 2,
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: 2,
+                }}
+              >
+                <Box>
+                  <Box
+                    component='span'
+                    sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+                  >
+                    预案编号
+                  </Box>
+                  <Box sx={{ fontWeight: 500 }}>{selectedPlan.plan_no}</Box>
                 </Box>
-                <Box sx={{ fontWeight: 500 }}>{selectedPlan.plan_no}</Box>
+                <Box>
+                  <Box
+                    component='span'
+                    sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+                  >
+                    预案名称
+                  </Box>
+                  <Box>{selectedPlan.name}</Box>
+                </Box>
+                <Box>
+                  <Box
+                    component='span'
+                    sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+                  >
+                    预案类型
+                  </Box>
+                  <Box>{selectedPlan.plan_type}</Box>
+                </Box>
+                <Box>
+                  <Box
+                    component='span'
+                    sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+                  >
+                    状态
+                  </Box>
+                  <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedPlan.status)}</Box>
+                </Box>
+                <Box>
+                  <Box
+                    component='span'
+                    sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+                  >
+                    适用范围
+                  </Box>
+                  <Box>{selectedPlan.scope || '-'}</Box>
+                </Box>
+                <Box>
+                  <Box
+                    component='span'
+                    sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+                  >
+                    负责人
+                  </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <Users style={{ width: 16, height: 16 }} />
+                    {Array.isArray(selectedPlan.responsible_persons)
+                      ? selectedPlan.responsible_persons.join(', ')
+                      : selectedPlan.responsible_persons || '-'}
+                  </Box>
+                </Box>
+                <Box sx={{ gridColumn: '1 / -1' }}>
+                  <Box
+                    component='span'
+                    sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+                  >
+                    触发条件
+                  </Box>
+                  <Box>{selectedPlan.trigger_conditions || '-'}</Box>
+                </Box>
+                <Box sx={{ gridColumn: '1 / -1' }}>
+                  <Box
+                    component='span'
+                    sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+                  >
+                    响应程序
+                  </Box>
+                  <Box>{selectedPlan.response_procedures || '-'}</Box>
+                </Box>
+                <Box sx={{ gridColumn: '1 / -1' }}>
+                  <Box
+                    component='span'
+                    sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+                  >
+                    联系方式
+                  </Box>
+                  <Box>{selectedPlan.contact_info || '-'}</Box>
+                </Box>
               </Box>
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  预案名称
-                </Box>
-                <Box>{selectedPlan.name}</Box>
-              </Box>
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  预案类型
-                </Box>
-                <Box>{selectedPlan.plan_type}</Box>
-              </Box>
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  状态
-                </Box>
-                <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedPlan.status)}</Box>
-              </Box>
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  适用范围
-                </Box>
-                <Box>{selectedPlan.scope || '-'}</Box>
-              </Box>
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  负责人
-                </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Users style={{ width: 16, height: 16 }} />
-                  {Array.isArray(selectedPlan.responsible_persons)
-                    ? selectedPlan.responsible_persons.join(', ')
-                    : selectedPlan.responsible_persons || '-'}
-                </Box>
-              </Box>
-              <Box sx={{ gridColumn: '1 / -1' }}>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  触发条件
-                </Box>
-                <Box>{selectedPlan.trigger_conditions || '-'}</Box>
-              </Box>
-              <Box sx={{ gridColumn: '1 / -1' }}>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  响应程序
-                </Box>
-                <Box>{selectedPlan.response_procedures || '-'}</Box>
-              </Box>
-              <Box sx={{ gridColumn: '1 / -1' }}>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  联系方式
-                </Box>
-                <Box>{selectedPlan.contact_info || '-'}</Box>
-              </Box>
-            </Box>
+            )
           )}
         </DialogContent>
         <DialogActions>

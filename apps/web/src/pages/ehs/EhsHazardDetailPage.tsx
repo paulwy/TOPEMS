@@ -26,8 +26,8 @@ import {
   Select,
   MenuItem,
   LinearProgress,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { DataTable } from '@/components/common/DataTable';
 import type { ColumnDef } from '@tanstack/react-table';
 import { ehsApi } from '@/api/ehs';
@@ -160,7 +160,12 @@ const EhsHazardDetailPage: React.FC = () => {
   };
 
   const getStatusBadge = (status: string) => {
-    return <EHSStatusBadge status={status} type='hazard' />;
+    return (
+      <EHSStatusBadge
+        status={status}
+        type='hazard'
+      />
+    );
   };
 
   const handleUpdateHazard = async () => {
@@ -265,7 +270,10 @@ const EhsHazardDetailPage: React.FC = () => {
       header: '评估人',
       cell: ({ row }) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Box component={Users} sx={{ fontSize: 16 }} />
+          <Box
+            component={Users}
+            sx={{ fontSize: 16 }}
+          />
           <span>{row.original.assessor || '-'}</span>
         </Box>
       ),
@@ -279,9 +287,9 @@ const EhsHazardDetailPage: React.FC = () => {
           row.original.likelihood || 'medium'
         );
         const colorMap: Record<string, { bg: string; color: string }> = {
-          '高风险': { bg: 'error.lighter', color: 'error.dark' },
-          '中风险': { bg: '#fef9c3', color: '#ca8a04' },
-          '低风险': { bg: 'success.lighter', color: 'success.dark' },
+          高风险: { bg: 'error.lighter', color: 'error.dark' },
+          中风险: { bg: '#fef9c3', color: '#ca8a04' },
+          低风险: { bg: 'success.lighter', color: 'success.dark' },
         };
         const colors = colorMap[`${riskResult.level}风险`] || {
           bg: 'grey.100',
@@ -311,7 +319,10 @@ const EhsHazardDetailPage: React.FC = () => {
       header: '负责人',
       cell: ({ row }) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Box component={Users} sx={{ fontSize: 16 }} />
+          <Box
+            component={Users}
+            sx={{ fontSize: 16 }}
+          />
           <span>{row.original.responsible || '-'}</span>
         </Box>
       ),
@@ -321,7 +332,10 @@ const EhsHazardDetailPage: React.FC = () => {
       header: '完成期限',
       cell: ({ row }) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          <Box component={Clock} sx={{ fontSize: 16 }} />
+          <Box
+            component={Clock}
+            sx={{ fontSize: 16 }}
+          />
           {row.original.deadline
             ? new Date(row.original.deadline).toLocaleDateString('zh-CN')
             : '-'}
@@ -331,7 +345,12 @@ const EhsHazardDetailPage: React.FC = () => {
     {
       accessorKey: 'status',
       header: '状态',
-      cell: ({ row }) => <EHSStatusBadge status={row.original.status} type='control' />,
+      cell: ({ row }) => (
+        <EHSStatusBadge
+          status={row.original.status}
+          type='control'
+        />
+      ),
     },
     {
       id: 'actions',
@@ -342,7 +361,12 @@ const EhsHazardDetailPage: React.FC = () => {
           size='small'
           onClick={() => handleDeleteControl(row.original.id)}
           sx={{ color: 'error.dark', '&:hover': { backgroundColor: 'error.light' } }}
-          startIcon={<Box component={Trash2} sx={{ fontSize: 16 }} />}
+          startIcon={
+            <Box
+              component={Trash2}
+              sx={{ fontSize: 16 }}
+            />
+          }
         />
       ),
     },
@@ -354,7 +378,12 @@ const EhsHazardDetailPage: React.FC = () => {
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
         <Box sx={{ p: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
-          <Typography variant='subtitle1' sx={{ fontWeight: 600, mb: 2 }}>风险等级</Typography>
+          <Typography
+            variant='subtitle1'
+            sx={{ fontWeight: 600, mb: 2 }}
+          >
+            风险等级
+          </Typography>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Box
               component={Shield}
@@ -384,12 +413,17 @@ const EhsHazardDetailPage: React.FC = () => {
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
           <Box>
             <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>分类</Typography>
-            <Typography sx={{ color: 'text.primary', mt: 0.5 }}>{hazard.category || '-'}</Typography>
+            <Typography sx={{ color: 'text.primary', mt: 0.5 }}>
+              {hazard.category || '-'}
+            </Typography>
           </Box>
           <Box>
             <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>位置</Typography>
             <Typography sx={{ color: 'text.primary', mt: 0.5 }}>
-              <Box component={MapPin} sx={{ fontSize: 16, mr: 0.5, display: 'inline' }} />
+              <Box
+                component={MapPin}
+                sx={{ fontSize: 16, mr: 0.5, display: 'inline' }}
+              />
               {hazard.location || '-'}
             </Typography>
           </Box>
@@ -430,14 +464,31 @@ const EhsHazardDetailPage: React.FC = () => {
     return (
       <Box>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-          <Typography variant='subtitle1' sx={{ fontWeight: 600 }}>风险评估记录</Typography>
-          <Typography variant='body2' color='text.secondary'>共 {assessments.length} 条记录</Typography>
+          <Typography
+            variant='subtitle1'
+            sx={{ fontWeight: 600 }}
+          >
+            风险评估记录
+          </Typography>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
+            共 {assessments.length} 条记录
+          </Typography>
         </Box>
         {assessments.length > 0 ? (
-          <DataTable columns={assessmentColumns} data={assessments} enablePagination={false} />
+          <DataTable
+            columns={assessmentColumns}
+            data={assessments}
+            enablePagination={false}
+          />
         ) : (
           <Box sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}>
-            <Box component={AlertTriangle} sx={{ fontSize: 64, color: 'grey.400', mx: 'auto', mb: 2 }} />
+            <Box
+              component={AlertTriangle}
+              sx={{ fontSize: 64, color: 'grey.400', mx: 'auto', mb: 2 }}
+            />
             <Typography>暂无风险评估记录</Typography>
           </Box>
         )}
@@ -449,21 +500,43 @@ const EhsHazardDetailPage: React.FC = () => {
     return (
       <Box>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-          <Typography variant='subtitle1' sx={{ fontWeight: 600 }}>控制措施</Typography>
-          <Typography variant='body2' color='text.secondary'>共 {controls.length} 条措施</Typography>
+          <Typography
+            variant='subtitle1'
+            sx={{ fontWeight: 600 }}
+          >
+            控制措施
+          </Typography>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
+            共 {controls.length} 条措施
+          </Typography>
         </Box>
         {controls.length > 0 ? (
-          <DataTable columns={controlColumns} data={controls} enablePagination={false} />
+          <DataTable
+            columns={controlColumns}
+            data={controls}
+            enablePagination={false}
+          />
         ) : (
           <Box sx={{ textAlign: 'center', py: 6, color: 'text.secondary' }}>
-            <Box component={Shield} sx={{ fontSize: 64, color: 'grey.400', mx: 'auto', mb: 2 }} />
+            <Box
+              component={Shield}
+              sx={{ fontSize: 64, color: 'grey.400', mx: 'auto', mb: 2 }}
+            />
             <Typography>暂无控制措施</Typography>
             <Button
               variant='outlined'
               size='small'
               sx={{ mt: 2 }}
               onClick={() => setShowControlModal(true)}
-              startIcon={<Box component={Plus} sx={{ fontSize: 12 }} />}
+              startIcon={
+                <Box
+                  component={Plus}
+                  sx={{ fontSize: 12 }}
+                />
+              }
             >
               添加控制措施
             </Button>
@@ -483,22 +556,33 @@ const EhsHazardDetailPage: React.FC = () => {
   );
 
   const infoCard = useMemo(() => {
-    if (!hazard) return undefined;
+    if (!hazard) return;
     const riskInfo = calculateRiskLevel(hazard.severity || 'medium', hazard.likelihood || 'medium');
     return {
-      avatar: <AlertTriangle size={32} color='#ea580c' />,
+      avatar: (
+        <AlertTriangle
+          size={32}
+          color='#ea580c'
+        />
+      ),
       title: hazard.name,
       subtitle: getStatusBadge(hazard.status),
       tags: [hazard.category || ''],
       stats: [
-        { label: '严重程度', value: hazard.severity === 'high' ? '高' : hazard.severity === 'medium' ? '中' : '低' },
+        {
+          label: '严重程度',
+          value: hazard.severity === 'high' ? '高' : hazard.severity === 'medium' ? '中' : '低',
+        },
         { label: '风险等级', value: `${riskInfo.level}风险` },
       ],
     };
   }, [hazard]);
 
   return (
-    <PageContainer title='危险源详情' subtitle='查看和管理危险源信息'>
+    <PageContainer
+      title='危险源详情'
+      subtitle='查看和管理危险源信息'
+    >
       <DetailPageTemplate
         title=''
         subtitle=''
@@ -528,7 +612,12 @@ const EhsHazardDetailPage: React.FC = () => {
         <DialogContent>
           <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Box>
-              <Typography variant='body2' sx={{ mb: 0.5, display: 'block' }}>危险源名称 *</Typography>
+              <Typography
+                variant='body2'
+                sx={{ mb: 0.5, display: 'block' }}
+              >
+                危险源名称 *
+              </Typography>
               <TextField
                 size='small'
                 fullWidth
@@ -541,7 +630,12 @@ const EhsHazardDetailPage: React.FC = () => {
             </Box>
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               <Box>
-                <Typography variant='body2' sx={{ mb: 0.5, display: 'block' }}>分类</Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ mb: 0.5, display: 'block' }}
+                >
+                  分类
+                </Typography>
                 <TextField
                   size='small'
                   fullWidth
@@ -553,7 +647,12 @@ const EhsHazardDetailPage: React.FC = () => {
                 />
               </Box>
               <Box>
-                <Typography variant='body2' sx={{ mb: 0.5, display: 'block' }}>位置</Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ mb: 0.5, display: 'block' }}
+                >
+                  位置
+                </Typography>
                 <TextField
                   size='small'
                   fullWidth
@@ -567,14 +666,25 @@ const EhsHazardDetailPage: React.FC = () => {
             </Box>
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 2 }}>
               <Box>
-                <Typography variant='body2' sx={{ mb: 0.5, display: 'block' }}>严重程度</Typography>
-                <FormControl fullWidth size='small'>
+                <Typography
+                  variant='body2'
+                  sx={{ mb: 0.5, display: 'block' }}
+                >
+                  严重程度
+                </Typography>
+                <FormControl
+                  fullWidth
+                  size='small'
+                >
                   <InputLabel>严重程度</InputLabel>
                   <Select
                     value={formData.severity}
                     label='严重程度'
                     onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, severity: e.target.value as 'high' | 'medium' | 'low' }))
+                      setFormData((prev) => ({
+                        ...prev,
+                        severity: e.target.value as 'high' | 'medium' | 'low',
+                      }))
                     }
                   >
                     <MenuItem value='high'>高</MenuItem>
@@ -584,14 +694,25 @@ const EhsHazardDetailPage: React.FC = () => {
                 </FormControl>
               </Box>
               <Box>
-                <Typography variant='body2' sx={{ mb: 0.5, display: 'block' }}>暴露频率</Typography>
-                <FormControl fullWidth size='small'>
+                <Typography
+                  variant='body2'
+                  sx={{ mb: 0.5, display: 'block' }}
+                >
+                  暴露频率
+                </Typography>
+                <FormControl
+                  fullWidth
+                  size='small'
+                >
                   <InputLabel>暴露频率</InputLabel>
                   <Select
                     value={formData.exposure}
                     label='暴露频率'
                     onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, exposure: e.target.value as 'high' | 'medium' | 'low' }))
+                      setFormData((prev) => ({
+                        ...prev,
+                        exposure: e.target.value as 'high' | 'medium' | 'low',
+                      }))
                     }
                   >
                     <MenuItem value='high'>高</MenuItem>
@@ -601,14 +722,25 @@ const EhsHazardDetailPage: React.FC = () => {
                 </FormControl>
               </Box>
               <Box>
-                <Typography variant='body2' sx={{ mb: 0.5, display: 'block' }}>发生概率</Typography>
-                <FormControl fullWidth size='small'>
+                <Typography
+                  variant='body2'
+                  sx={{ mb: 0.5, display: 'block' }}
+                >
+                  发生概率
+                </Typography>
+                <FormControl
+                  fullWidth
+                  size='small'
+                >
                   <InputLabel>发生概率</InputLabel>
                   <Select
                     value={formData.likelihood}
                     label='发生概率'
                     onChange={(e) =>
-                      setFormData((prev) => ({ ...prev, likelihood: e.target.value as 'high' | 'medium' | 'low' }))
+                      setFormData((prev) => ({
+                        ...prev,
+                        likelihood: e.target.value as 'high' | 'medium' | 'low',
+                      }))
                     }
                   >
                     <MenuItem value='high'>高</MenuItem>
@@ -619,14 +751,25 @@ const EhsHazardDetailPage: React.FC = () => {
               </Box>
             </Box>
             <Box>
-              <Typography variant='body2' sx={{ mb: 0.5, display: 'block' }}>状态</Typography>
-              <FormControl fullWidth size='small'>
+              <Typography
+                variant='body2'
+                sx={{ mb: 0.5, display: 'block' }}
+              >
+                状态
+              </Typography>
+              <FormControl
+                fullWidth
+                size='small'
+              >
                 <InputLabel>状态</InputLabel>
                 <Select
                   value={formData.status}
                   label='状态'
                   onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, status: e.target.value as 'active' | 'controlled' | 'eliminated' | 'archived' }))
+                    setFormData((prev) => ({
+                      ...prev,
+                      status: e.target.value as 'active' | 'controlled' | 'eliminated' | 'archived',
+                    }))
                   }
                 >
                   <MenuItem value='active'>活动中</MenuItem>
@@ -637,7 +780,12 @@ const EhsHazardDetailPage: React.FC = () => {
               </FormControl>
             </Box>
             <Box>
-              <Typography variant='body2' sx={{ mb: 0.5, display: 'block' }}>描述</Typography>
+              <Typography
+                variant='body2'
+                sx={{ mb: 0.5, display: 'block' }}
+              >
+                描述
+              </Typography>
               <TextField
                 multiline
                 rows={3}
@@ -652,8 +800,17 @@ const EhsHazardDetailPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant='outlined' onClick={() => setShowEditModal(false)}>取消</Button>
-          <Button variant='contained' onClick={handleUpdateHazard} sx={{ backgroundColor: '#ea580c', '&:hover': { backgroundColor: '#c2410c' } }}>
+          <Button
+            variant='outlined'
+            onClick={() => setShowEditModal(false)}
+          >
+            取消
+          </Button>
+          <Button
+            variant='contained'
+            onClick={handleUpdateHazard}
+            sx={{ backgroundColor: '#ea580c', '&:hover': { backgroundColor: '#c2410c' } }}
+          >
             保存更改
           </Button>
         </DialogActions>
@@ -669,14 +826,25 @@ const EhsHazardDetailPage: React.FC = () => {
         <DialogContent>
           <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
             <Box>
-              <Typography variant='body2' sx={{ mb: 0.5, display: 'block' }}>措施类型 *</Typography>
-              <FormControl fullWidth size='small'>
+              <Typography
+                variant='body2'
+                sx={{ mb: 0.5, display: 'block' }}
+              >
+                措施类型 *
+              </Typography>
+              <FormControl
+                fullWidth
+                size='small'
+              >
                 <InputLabel>措施类型</InputLabel>
                 <Select
                   value={controlFormData.measure_type}
                   label='措施类型'
                   onChange={(e) =>
-                    setControlFormData((prev) => ({ ...prev, measure_type: e.target.value as 'engineering' | 'administrative' | 'ppe' }))
+                    setControlFormData((prev) => ({
+                      ...prev,
+                      measure_type: e.target.value as 'engineering' | 'administrative' | 'ppe',
+                    }))
                   }
                 >
                   <MenuItem value='engineering'>工程控制</MenuItem>
@@ -686,7 +854,12 @@ const EhsHazardDetailPage: React.FC = () => {
               </FormControl>
             </Box>
             <Box>
-              <Typography variant='body2' sx={{ mb: 0.5, display: 'block' }}>措施描述 *</Typography>
+              <Typography
+                variant='body2'
+                sx={{ mb: 0.5, display: 'block' }}
+              >
+                措施描述 *
+              </Typography>
               <TextField
                 multiline
                 rows={3}
@@ -700,7 +873,12 @@ const EhsHazardDetailPage: React.FC = () => {
             </Box>
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               <Box>
-                <Typography variant='body2' sx={{ mb: 0.5, display: 'block' }}>负责人</Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ mb: 0.5, display: 'block' }}
+                >
+                  负责人
+                </Typography>
                 <TextField
                   size='small'
                   fullWidth
@@ -712,7 +890,12 @@ const EhsHazardDetailPage: React.FC = () => {
                 />
               </Box>
               <Box>
-                <Typography variant='body2' sx={{ mb: 0.5, display: 'block' }}>完成期限</Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ mb: 0.5, display: 'block' }}
+                >
+                  完成期限
+                </Typography>
                 <TextField
                   type='date'
                   size='small'
@@ -727,8 +910,17 @@ const EhsHazardDetailPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant='outlined' onClick={() => setShowControlModal(false)}>取消</Button>
-          <Button variant='contained' onClick={handleAddControl} sx={{ backgroundColor: '#ea580c', '&:hover': { backgroundColor: '#c2410c' } }}>
+          <Button
+            variant='outlined'
+            onClick={() => setShowControlModal(false)}
+          >
+            取消
+          </Button>
+          <Button
+            variant='contained'
+            onClick={handleAddControl}
+            sx={{ backgroundColor: '#ea580c', '&:hover': { backgroundColor: '#c2410c' } }}
+          >
             添加措施
           </Button>
         </DialogActions>
@@ -736,7 +928,10 @@ const EhsHazardDetailPage: React.FC = () => {
 
       <ConfirmDialog
         isOpen={deleteDialogOpen}
-        onClose={() => { setDeleteDialogOpen(false); setDeletingMeasureId(null); }}
+        onClose={() => {
+          setDeleteDialogOpen(false);
+          setDeletingMeasureId(null);
+        }}
         onConfirm={confirmDeleteControl}
         title='确认删除'
         message='确定要删除此控制措施吗？'

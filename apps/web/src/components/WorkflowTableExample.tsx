@@ -1,6 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Box, Typography, Chip, Menu, MenuItem, Divider } from '@mui/material';
-import { Button } from '@mui/material';
+import { Box, Typography, Chip, Menu, MenuItem, Divider, Button } from '@mui/material';
 import type { ColumnDef } from '@tanstack/react-table';
 import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
 
@@ -32,7 +31,7 @@ export function WorkflowTableExample() {
     } catch (err: unknown) {
       logger.error('加载工作流失败:', err);
       const error = err as { message?: string };
-      setError('加载工作流失败: ' + (error.message || '未知错误'));
+      setError(`加载工作流失败: ${error.message || '未知错误'}`);
     } finally {
       setLoading(false);
     }

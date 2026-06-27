@@ -33,7 +33,7 @@ interface FormatCacheEntry {
   timestamp: number;
 }
 
-let formatCache: FormatCacheEntry[] = [];
+const formatCache: FormatCacheEntry[] = [];
 
 const getCacheKey = (dateString: string, format: string): string => {
   return `${dateString}_${format}`;

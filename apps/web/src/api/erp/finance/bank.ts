@@ -20,7 +20,7 @@ export const bankAccountApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/erp/bank-accounts${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(`/api/erp/bank-accounts${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<BankAccount>> {
@@ -55,7 +55,7 @@ export const bankTransactionApi = {
     if (params?.transaction_date) searchParams.set('transaction_date', params.transaction_date);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/erp/bank-transactions${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(`/api/erp/bank-transactions${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<BankTransaction>> {

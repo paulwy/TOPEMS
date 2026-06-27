@@ -13,11 +13,7 @@ const mockGoBack = vi.fn();
 const mockUseBackNavigation = useBackNavigation as vi.Mock;
 
 const renderWithRouter = (ui: React.ReactElement) => {
-  return render(
-    <BrowserRouter>
-      {ui}
-    </BrowserRouter>
-  );
+  return render(<BrowserRouter>{ui}</BrowserRouter>);
 };
 
 describe('BackButton', () => {
@@ -45,34 +41,59 @@ describe('BackButton', () => {
   });
 
   it('should render text variant', () => {
-    renderWithRouter(<BackButton variant='text' label='返回列表' />);
+    renderWithRouter(
+      <BackButton
+        variant='text'
+        label='返回列表'
+      />
+    );
     const button = screen.getByRole('button', { name: /返回列表/i });
     expect(button).toBeInTheDocument();
   });
 
   it('should render outlined variant', () => {
-    renderWithRouter(<BackButton variant='outlined' label='返回' />);
+    renderWithRouter(
+      <BackButton
+        variant='outlined'
+        label='返回'
+      />
+    );
     const button = screen.getByRole('button', { name: /返回/i });
     expect(button).toBeInTheDocument();
   });
 
   it('should call onClick when provided', () => {
     const handleClick = vi.fn();
-    renderWithRouter(<BackButton onClick={handleClick} variant='text' />);
+    renderWithRouter(
+      <BackButton
+        onClick={handleClick}
+        variant='text'
+      />
+    );
     const button = screen.getByRole('button', { name: /返回/i });
     fireEvent.click(button);
     expect(handleClick).toHaveBeenCalledTimes(1);
   });
 
   it('should navigate to href when provided', () => {
-    renderWithRouter(<BackButton href='/test-page' variant='text' />);
+    renderWithRouter(
+      <BackButton
+        href='/test-page'
+        variant='text'
+      />
+    );
     const button = screen.getByRole('button', { name: /返回/i });
     fireEvent.click(button);
     expect(window.location.pathname).toBe('/test-page');
   });
 
   it('should call goBack with fallback when no onClick or href', () => {
-    renderWithRouter(<BackButton fallback='/fallback-page' variant='text' />);
+    renderWithRouter(
+      <BackButton
+        fallback='/fallback-page'
+        variant='text'
+      />
+    );
     const button = screen.getByRole('button', { name: /返回/i });
     fireEvent.click(button);
     expect(mockGoBack).toHaveBeenCalledWith('/fallback-page');
@@ -112,7 +133,12 @@ describe('BackButton', () => {
   });
 
   it('should render with custom label in text variant', () => {
-    renderWithRouter(<BackButton variant='text' label='上一页' />);
+    renderWithRouter(
+      <BackButton
+        variant='text'
+        label='上一页'
+      />
+    );
     const button = screen.getByRole('button', { name: /上一页/i });
     expect(button).toBeInTheDocument();
   });

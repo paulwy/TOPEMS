@@ -7,21 +7,17 @@ import {
   DialogContent,
   DialogActions,
   Box,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
-import type {
-  Interaction,
-  CreateInteractionRequest,
-  UpdateInteractionRequest,
-} from '@/api/crm';
+import type { Interaction, CreateInteractionRequest, UpdateInteractionRequest } from '@/api/crm';
 import { crmApi } from '@/api/crm';
 import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
 import { Plus, Edit, Trash2, Eye } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import type { RowAction, FilterConfig } from '@/components/mui';
+import type { RowAction, FilterConfig } from '@/components';
 
 const InteractionManagementPage: React.FC = () => {
   const [interactions, setInteractions] = useState<Interaction[]>([]);
@@ -305,193 +301,196 @@ const InteractionManagementPage: React.FC = () => {
   );
 
   return (
-    <PageContainer title='交互记录管理' subtitle='管理客户交互记录，包括电话、邮件、会议、拜访等'>
-    <>
-      <ListPageTemplate<Interaction>
-        title=''
-        subtitle=''
-        backButton={{
-          href: '/dashboard',
-        }}
-        columns={columns}
-        data={interactions}
-        loading={loading}
-        searchable
-        searchPlaceholder='搜索交互主题...'
-        searchValue={searchTerm}
-        onSearch={(value) => {
-          setSearchTerm(value);
-        }}
-        filters={filters}
-        rowActions={rowActions}
-        actions={[
-          {
-            label: '新增交互',
-            icon: <Plus size={18} />,
-            onClick: () => {
-              resetForm();
-              setShowDialog(true);
+    <PageContainer
+      title='交互记录管理'
+      subtitle='管理客户交互记录，包括电话、邮件、会议、拜访等'
+    >
+      <>
+        <ListPageTemplate<Interaction>
+          title=''
+          subtitle=''
+          backButton={{
+            href: '/dashboard',
+          }}
+          columns={columns}
+          data={interactions}
+          loading={loading}
+          searchable
+          searchPlaceholder='搜索交互主题...'
+          searchValue={searchTerm}
+          onSearch={(value) => {
+            setSearchTerm(value);
+          }}
+          filters={filters}
+          rowActions={rowActions}
+          actions={[
+            {
+              label: '新增交互',
+              icon: <Plus size={18} />,
+              onClick: () => {
+                resetForm();
+                setShowDialog(true);
+              },
+              variant: 'contained',
             },
-            variant: 'contained',
-          },
-        ]}
-      />
+          ]}
+        />
 
-      <Dialog
-        open={showDialog}
-        onClose={() => setShowDialog(false)}
-        maxWidth='md'
-        fullWidth
-      >
-        <DialogTitle>{selectedInteraction ? '编辑交互记录' : '新增交互记录'}</DialogTitle>
-        <form onSubmit={handleSubmit}>
-          <DialogContent>
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 2,
-              }}
-            >
-              <TextField
-                label='主题'
-                value={formData.subject}
-                onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                fullWidth
-              />
-              <TextField
-                label='内容'
-                multiline
-                rows={3}
-                value={formData.content}
-                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                fullWidth
-              />
-              <TextField
-                label='计划时间'
-                type='datetime-local'
-                value={formData.scheduled_at}
-                onChange={(e) => setFormData({ ...formData, scheduled_at: e.target.value })}
-                fullWidth
-              />
-              <TextField
-                label='备注'
-                multiline
-                rows={2}
-                value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                fullWidth
-              />
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setShowDialog(false)}>取消</Button>
-            <Button
-              type='submit'
-              variant='contained'
-            >
-              保存
-            </Button>
-          </DialogActions>
-        </form>
-      </Dialog>
+        <Dialog
+          open={showDialog}
+          onClose={() => setShowDialog(false)}
+          maxWidth='md'
+          fullWidth
+        >
+          <DialogTitle>{selectedInteraction ? '编辑交互记录' : '新增交互记录'}</DialogTitle>
+          <form onSubmit={handleSubmit}>
+            <DialogContent>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 2,
+                }}
+              >
+                <TextField
+                  label='主题'
+                  value={formData.subject}
+                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                  fullWidth
+                />
+                <TextField
+                  label='内容'
+                  multiline
+                  rows={3}
+                  value={formData.content}
+                  onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                  fullWidth
+                />
+                <TextField
+                  label='计划时间'
+                  type='datetime-local'
+                  value={formData.scheduled_at}
+                  onChange={(e) => setFormData({ ...formData, scheduled_at: e.target.value })}
+                  fullWidth
+                />
+                <TextField
+                  label='备注'
+                  multiline
+                  rows={2}
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  fullWidth
+                />
+              </Box>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setShowDialog(false)}>取消</Button>
+              <Button
+                type='submit'
+                variant='contained'
+              >
+                保存
+              </Button>
+            </DialogActions>
+          </form>
+        </Dialog>
 
-      <Dialog
-        open={showDetailDialog}
-        onClose={() => setShowDetailDialog(false)}
-        maxWidth='md'
-        fullWidth
-      >
-        <DialogTitle>交互记录详情</DialogTitle>
-        {selectedInteraction && (
-          <DialogContent>
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 2,
-              }}
-            >
-              <Box>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  主题
-                </Typography>
-                <Typography sx={{ fontWeight: 'medium' }}>
-                  {selectedInteraction.subject || '-'}
-                </Typography>
+        <Dialog
+          open={showDetailDialog}
+          onClose={() => setShowDetailDialog(false)}
+          maxWidth='md'
+          fullWidth
+        >
+          <DialogTitle>交互记录详情</DialogTitle>
+          {selectedInteraction && (
+            <DialogContent>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 2,
+                }}
+              >
+                <Box>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    主题
+                  </Typography>
+                  <Typography sx={{ fontWeight: 'medium' }}>
+                    {selectedInteraction.subject || '-'}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    类型
+                  </Typography>
+                  <Box sx={{ mt: 0.5 }}>{getTypeBadge(selectedInteraction.type)}</Box>
+                </Box>
+                <Box>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    内容
+                  </Typography>
+                  <Typography>{selectedInteraction.content || '-'}</Typography>
+                </Box>
+                <Box>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    计划时间
+                  </Typography>
+                  <Typography>
+                    {selectedInteraction.scheduled_at
+                      ? new Date(selectedInteraction.scheduled_at).toLocaleString('zh-CN')
+                      : '-'}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    完成时间
+                  </Typography>
+                  <Typography>
+                    {selectedInteraction.completed_at
+                      ? new Date(selectedInteraction.completed_at).toLocaleString('zh-CN')
+                      : '-'}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    状态
+                  </Typography>
+                  <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedInteraction.status)}</Box>
+                </Box>
+                <Box>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    创建时间
+                  </Typography>
+                  <Typography>
+                    {new Date(selectedInteraction.created_at).toLocaleString('zh-CN')}
+                  </Typography>
+                </Box>
               </Box>
-              <Box>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  类型
-                </Typography>
-                <Box sx={{ mt: 0.5 }}>{getTypeBadge(selectedInteraction.type)}</Box>
-              </Box>
-              <Box>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  内容
-                </Typography>
-                <Typography>{selectedInteraction.content || '-'}</Typography>
-              </Box>
-              <Box>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  计划时间
-                </Typography>
-                <Typography>
-                  {selectedInteraction.scheduled_at
-                    ? new Date(selectedInteraction.scheduled_at).toLocaleString('zh-CN')
-                    : '-'}
-                </Typography>
-              </Box>
-              <Box>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  完成时间
-                </Typography>
-                <Typography>
-                  {selectedInteraction.completed_at
-                    ? new Date(selectedInteraction.completed_at).toLocaleString('zh-CN')
-                    : '-'}
-                </Typography>
-              </Box>
-              <Box>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  状态
-                </Typography>
-                <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedInteraction.status)}</Box>
-              </Box>
-              <Box>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                >
-                  创建时间
-                </Typography>
-                <Typography>
-                  {new Date(selectedInteraction.created_at).toLocaleString('zh-CN')}
-                </Typography>
-              </Box>
-            </Box>
-          </DialogContent>
-        )}
-      </Dialog>
-    </>
+            </DialogContent>
+          )}
+        </Dialog>
+      </>
     </PageContainer>
   );
 };

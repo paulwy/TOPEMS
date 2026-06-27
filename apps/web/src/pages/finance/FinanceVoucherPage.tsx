@@ -1,9 +1,4 @@
-import {
-  Typography,
-  Tabs,
-  Tab,
-  Box,
-} from '@mui/material';
+import { Typography, Tabs, Tab, Box } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   FileText,
@@ -18,12 +13,21 @@ import {
   Check,
   AlertCircle,
   RefreshCw,
+  Wallet,
   DollarSign,
   FileCheck,
   Clock,
   Building2,
 } from 'lucide-react';
-import { ActionButton, FormField, FormSelect, Dialog, ConfirmDialog, StatusBadge, PageContainer} from '@/components/common';
+import {
+  ActionButton,
+  FormField,
+  FormSelect,
+  Dialog,
+  ConfirmDialog,
+  StatusBadge,
+  PageContainer,
+} from '@/components/common';
 import { useNavigate } from 'react-router-dom';
 import {
   voucherApi,
@@ -36,7 +40,7 @@ import {
 import { useAppStore } from '../../store';
 import { ListPageTemplate } from '@/components/templates';
 import type { ColumnDef, RowAction, FilterConfig } from '@/components/templates';
-import { StatCardGroup } from '@/components/mui';
+import { StatCardGroup } from '@/components';
 import { apiLogger } from '@/utils/logger';
 
 const FinanceVoucherPage: React.FC = () => {
@@ -554,7 +558,7 @@ const FinanceVoucherPage: React.FC = () => {
         onClick: (row: FinancialVoucher) => handleDelete(row.id),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     []
   );
 
@@ -620,7 +624,16 @@ const FinanceVoucherPage: React.FC = () => {
   };
 
   return (
-    <PageContainer padding={false} maxWidth={false}>
+    <PageContainer
+      padding={false}
+      maxWidth={false}
+      title='财务凭证管理'
+      subtitle='管理财务凭证、会计科目，支持用友凭证导入'
+      headerProps={{
+        pageIcon: <Wallet style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+      }}
+    >
       <Box
         sx={{
           bgcolor: 'background.paper',
@@ -940,238 +953,238 @@ const FinanceVoucherPage: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: 2,
-              }}
-            >
-              <FormField
-                name='voucher_number'
-                label='凭证编号 *'
-                value={newVoucher.voucher_number}
-                onChange={(e) =>
-                  setNewVoucher((prev) => ({
-                    ...prev,
-                    voucher_number: e.target.value,
-                  }))
-                }
-                placeholder='请输入凭证编号'
-              />
-              <FormField
-                name='voucher_date'
-                label='凭证日期 *'
-                type='date'
-                value={newVoucher.voucher_date}
-                onChange={(e) =>
-                  setNewVoucher((prev) => ({
-                    ...prev,
-                    voucher_date: e.target.value,
-                  }))
-                }
-              />
-              <FormField
-                name='period'
-                label='期间 *'
-                value={newVoucher.period}
-                onChange={(e) =>
-                  setNewVoucher((prev) => ({
-                    ...prev,
-                    period: e.target.value,
-                  }))
-                }
-                placeholder='如: 2024-06'
-              />
-            </Box>
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(2, 1fr)',
-                gap: 2,
-              }}
-            >
-              <FormField
-                name='attachment_count'
-                label='附件数量'
-                type='number'
-                value={newVoucher.attachment_count}
-                onChange={(e) =>
-                  setNewVoucher((prev) => ({
-                    ...prev,
-                    attachment_count: parseInt(e.target.value) || 0,
-                  }))
-                }
-              />
-              <FormField
-                name='maker_name'
-                label='制单人'
-                value={newVoucher.maker_name}
-                onChange={(e) =>
-                  setNewVoucher((prev) => ({
-                    ...prev,
-                    maker_name: e.target.value,
-                  }))
-                }
-                placeholder='制单人姓名'
-              />
-            </Box>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: 2,
+            }}
+          >
             <FormField
-              name='summary'
-              label='摘要'
-              multiline
-              rows={2}
-              value={newVoucher.summary}
+              name='voucher_number'
+              label='凭证编号 *'
+              value={newVoucher.voucher_number}
               onChange={(e) =>
                 setNewVoucher((prev) => ({
                   ...prev,
-                  summary: e.target.value,
+                  voucher_number: e.target.value,
                 }))
               }
-              placeholder='凭证摘要'
+              placeholder='请输入凭证编号'
             />
+            <FormField
+              name='voucher_date'
+              label='凭证日期 *'
+              type='date'
+              value={newVoucher.voucher_date}
+              onChange={(e) =>
+                setNewVoucher((prev) => ({
+                  ...prev,
+                  voucher_date: e.target.value,
+                }))
+              }
+            />
+            <FormField
+              name='period'
+              label='期间 *'
+              value={newVoucher.period}
+              onChange={(e) =>
+                setNewVoucher((prev) => ({
+                  ...prev,
+                  period: e.target.value,
+                }))
+              }
+              placeholder='如: 2024-06'
+            />
+          </Box>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(2, 1fr)',
+              gap: 2,
+            }}
+          >
+            <FormField
+              name='attachment_count'
+              label='附件数量'
+              type='number'
+              value={newVoucher.attachment_count}
+              onChange={(e) =>
+                setNewVoucher((prev) => ({
+                  ...prev,
+                  attachment_count: parseInt(e.target.value) || 0,
+                }))
+              }
+            />
+            <FormField
+              name='maker_name'
+              label='制单人'
+              value={newVoucher.maker_name}
+              onChange={(e) =>
+                setNewVoucher((prev) => ({
+                  ...prev,
+                  maker_name: e.target.value,
+                }))
+              }
+              placeholder='制单人姓名'
+            />
+          </Box>
+          <FormField
+            name='summary'
+            label='摘要'
+            multiline
+            rows={2}
+            value={newVoucher.summary}
+            onChange={(e) =>
+              setNewVoucher((prev) => ({
+                ...prev,
+                summary: e.target.value,
+              }))
+            }
+            placeholder='凭证摘要'
+          />
 
-            <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 2 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  mb: 2,
-                }}
+          <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 2 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                mb: 2,
+              }}
+            >
+              <Typography
+                variant='subtitle1'
+                sx={{ fontWeight: 600 }}
               >
-                <Typography
-                  variant='subtitle1'
-                  sx={{ fontWeight: 600 }}
+                凭证明细
+              </Typography>
+              <ActionButton
+                label='添加分录'
+                icon={<Plus size={16} />}
+                variant='secondary'
+                size='small'
+                onClick={addVoucherItem}
+              />
+            </Box>
+            <Box
+              sx={{
+                maxHeight: 256,
+                overflowY: 'auto',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 1,
+              }}
+            >
+              {newVoucher.items.map((item, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    p: 1.5,
+                    bgcolor: 'grey.50',
+                    borderRadius: 1,
+                  }}
                 >
-                  凭证明细
-                </Typography>
-                <ActionButton
-                  label='添加分录'
-                  icon={<Plus size={16} />}
-                  variant='secondary'
-                  size='small'
-                  onClick={addVoucherItem}
-                />
-              </Box>
-              <Box
-                sx={{
-                  maxHeight: 256,
-                  overflowY: 'auto',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 1,
-                }}
-              >
-                {newVoucher.items.map((item, index) => (
-                  <Box
-                    key={index}
+                  <Typography
                     sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1,
-                      p: 1.5,
-                      bgcolor: 'grey.50',
-                      borderRadius: 1,
+                      width: 24,
+                      textAlign: 'center',
+                      color: 'text.secondary',
+                      fontSize: '0.875rem',
                     }}
                   >
-                    <Typography
-                      sx={{
-                        width: 24,
-                        textAlign: 'center',
-                        color: 'text.secondary',
-                        fontSize: '0.875rem',
-                      }}
-                    >
-                      {item.line_number}
-                    </Typography>
-                    <FormSelect
-                      name={`subject_code_${index}`}
-                      label='选择科目'
-                      value={item.subject_code}
-                      onChange={(value) => updateVoucherItem(index, 'subject_code', value)}
-                      options={subjects.map((s) => ({
-                        value: s.code,
-                        label: `${s.code} - ${s.name}`,
-                      }))}
-                    />
-                    <FormField
-                      name={`subject_name_${index}`}
-                      label=''
-                      sx={{ width: 100 }}
-                      value={item.subject_name}
-                      slotProps={{ input: { readOnly: true } }}
-                      placeholder='科目名称'
-                    />
-                    <FormField
-                      name={`debit_amount_${index}`}
-                      label=''
-                      sx={{ width: 100 }}
-                      type='number'
-                      value={item.debit_amount || ''}
-                      onChange={(e) =>
-                        updateVoucherItem(index, 'debit_amount', parseFloat(e.target.value) || 0)
-                      }
-                      placeholder='借方'
-                    />
-                    <FormField
-                      name={`credit_amount_${index}`}
-                      label=''
-                      sx={{ width: 100 }}
-                      type='number'
-                      value={item.credit_amount || ''}
-                      onChange={(e) =>
-                        updateVoucherItem(index, 'credit_amount', parseFloat(e.target.value) || 0)
-                      }
-                      placeholder='贷方'
-                    />
-                    <ActionButton
-                      label='删除'
-                      icon={<X size={16} />}
-                      variant='text'
-                      size='small'
-                      onClick={() => removeVoucherItem(index)}
-                    />
-                  </Box>
-                ))}
+                    {item.line_number}
+                  </Typography>
+                  <FormSelect
+                    name={`subject_code_${index}`}
+                    label='选择科目'
+                    value={item.subject_code}
+                    onChange={(value) => updateVoucherItem(index, 'subject_code', value)}
+                    options={subjects.map((s) => ({
+                      value: s.code,
+                      label: `${s.code} - ${s.name}`,
+                    }))}
+                  />
+                  <FormField
+                    name={`subject_name_${index}`}
+                    label=''
+                    sx={{ width: 100 }}
+                    value={item.subject_name}
+                    slotProps={{ input: { readOnly: true } }}
+                    placeholder='科目名称'
+                  />
+                  <FormField
+                    name={`debit_amount_${index}`}
+                    label=''
+                    sx={{ width: 100 }}
+                    type='number'
+                    value={item.debit_amount || ''}
+                    onChange={(e) =>
+                      updateVoucherItem(index, 'debit_amount', parseFloat(e.target.value) || 0)
+                    }
+                    placeholder='借方'
+                  />
+                  <FormField
+                    name={`credit_amount_${index}`}
+                    label=''
+                    sx={{ width: 100 }}
+                    type='number'
+                    value={item.credit_amount || ''}
+                    onChange={(e) =>
+                      updateVoucherItem(index, 'credit_amount', parseFloat(e.target.value) || 0)
+                    }
+                    placeholder='贷方'
+                  />
+                  <ActionButton
+                    label='删除'
+                    icon={<X size={16} />}
+                    variant='text'
+                    size='small'
+                    onClick={() => removeVoucherItem(index)}
+                  />
+                </Box>
+              ))}
+            </Box>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 4,
+                mt: 2,
+              }}
+            >
+              <Box sx={{ textAlign: 'right' }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'text.secondary' }}
+                >
+                  借方合计
+                </Typography>
+                <Typography sx={{ fontWeight: 'bold', color: 'error.main' }}>
+                  {formatCurrency(
+                    newVoucher.items.reduce((sum, item) => sum + item.debit_amount, 0)
+                  )}
+                </Typography>
               </Box>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'flex-end',
-                  gap: 4,
-                  mt: 2,
-                }}
-              >
-                <Box sx={{ textAlign: 'right' }}>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'text.secondary' }}
-                  >
-                    借方合计
-                  </Typography>
-                  <Typography sx={{ fontWeight: 'bold', color: 'error.main' }}>
-                    {formatCurrency(
-                      newVoucher.items.reduce((sum, item) => sum + item.debit_amount, 0)
-                    )}
-                  </Typography>
-                </Box>
-                <Box sx={{ textAlign: 'right' }}>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'text.secondary' }}
-                  >
-                    贷方合计
-                  </Typography>
-                  <Typography sx={{ fontWeight: 'bold', color: 'success.main' }}>
-                    {formatCurrency(
-                      newVoucher.items.reduce((sum, item) => sum + item.credit_amount, 0)
-                    )}
-                  </Typography>
-                </Box>
+              <Box sx={{ textAlign: 'right' }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'text.secondary' }}
+                >
+                  贷方合计
+                </Typography>
+                <Typography sx={{ fontWeight: 'bold', color: 'success.main' }}>
+                  {formatCurrency(
+                    newVoucher.items.reduce((sum, item) => sum + item.credit_amount, 0)
+                  )}
+                </Typography>
               </Box>
             </Box>
           </Box>
+        </Box>
       </Dialog>
 
       {/* 导入凭证对话框 */}
@@ -1186,8 +1199,7 @@ const FinanceVoucherPage: React.FC = () => {
         confirmButton={{
           label: '开始导入',
           onClick: () => {
-            const content = (document.getElementById('importData') as HTMLTextAreaElement)
-              .value;
+            const content = (document.getElementById('importData') as HTMLTextAreaElement).value;
             if (!content.trim()) {
               addNotification({
                 title: '提示',
@@ -1200,75 +1212,75 @@ const FinanceVoucherPage: React.FC = () => {
           },
         }}
       >
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-            <Box sx={{ p: 2, bgcolor: 'blue.50', borderRadius: 1 }}>
-              <AlertCircle sx={{ width: 20, height: 20, color: 'blue.600', mb: 1 }} />
-              <Typography
-                variant='body2'
-                sx={{ color: 'blue.800' }}
-              >
-                请将用友U8系统导出的凭证数据粘贴到下方文本框中。支持JSON格式数据导入。
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <Typography
-                variant='body2'
-                sx={{ fontWeight: 500 }}
-              >
-                用友凭证数据 (JSON格式)
-              </Typography>
-              <FormField
-                name='importData'
-                id='importData'
-                label=''
-                multiline
-                rows={12}
-                placeholder='[{"voucher_number": "记-001", "voucher_date": "2024-01-15", "period": "2024-01", "summary": "支付办公费用", "maker": "张三", "items": [{"line_number": 1, "subject_code": "6602", "subject_name": "管理费用", "summary": "办公用品", "debit_amount": 500.00, "credit_amount": 0}]}]'
-                sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
-              />
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <ActionButton
-                label='加载示例数据'
-                icon={<Download size={16} />}
-                variant='secondary'
-                onClick={() => {
-                  const sampleData = JSON.stringify(
-                    [
-                      {
-                        voucher_number: '记-001',
-                        voucher_date: '2024-01-15',
-                        period: '2024-01',
-                        summary: '支付办公费用',
-                        maker: '张三',
-                        items: [
-                          {
-                            line_number: 1,
-                            subject_code: '6602',
-                            subject_name: '管理费用',
-                            summary: '办公用品',
-                            debit_amount: 500.0,
-                            credit_amount: 0,
-                          },
-                          {
-                            line_number: 2,
-                            subject_code: '1002',
-                            subject_name: '银行存款',
-                            summary: '',
-                            debit_amount: 0,
-                            credit_amount: 500.0,
-                          },
-                        ],
-                      },
-                    ],
-                    null,
-                    2
-                  );
-                  (document.getElementById('importData') as HTMLTextAreaElement).value = sampleData;
-                }}
-              />
-            </Box>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+          <Box sx={{ p: 2, bgcolor: 'blue.50', borderRadius: 1 }}>
+            <AlertCircle sx={{ width: 20, height: 20, color: 'blue.600', mb: 1 }} />
+            <Typography
+              variant='body2'
+              sx={{ color: 'blue.800' }}
+            >
+              请将用友U8系统导出的凭证数据粘贴到下方文本框中。支持JSON格式数据导入。
+            </Typography>
           </Box>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Typography
+              variant='body2'
+              sx={{ fontWeight: 500 }}
+            >
+              用友凭证数据 (JSON格式)
+            </Typography>
+            <FormField
+              name='importData'
+              id='importData'
+              label=''
+              multiline
+              rows={12}
+              placeholder='[{"voucher_number": "记-001", "voucher_date": "2024-01-15", "period": "2024-01", "summary": "支付办公费用", "maker": "张三", "items": [{"line_number": 1, "subject_code": "6602", "subject_name": "管理费用", "summary": "办公用品", "debit_amount": 500.00, "credit_amount": 0}]}]'
+              sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
+            />
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <ActionButton
+              label='加载示例数据'
+              icon={<Download size={16} />}
+              variant='secondary'
+              onClick={() => {
+                const sampleData = JSON.stringify(
+                  [
+                    {
+                      voucher_number: '记-001',
+                      voucher_date: '2024-01-15',
+                      period: '2024-01',
+                      summary: '支付办公费用',
+                      maker: '张三',
+                      items: [
+                        {
+                          line_number: 1,
+                          subject_code: '6602',
+                          subject_name: '管理费用',
+                          summary: '办公用品',
+                          debit_amount: 500.0,
+                          credit_amount: 0,
+                        },
+                        {
+                          line_number: 2,
+                          subject_code: '1002',
+                          subject_name: '银行存款',
+                          summary: '',
+                          debit_amount: 0,
+                          credit_amount: 500.0,
+                        },
+                      ],
+                    },
+                  ],
+                  null,
+                  2
+                );
+                (document.getElementById('importData') as HTMLTextAreaElement).value = sampleData;
+              }}
+            />
+          </Box>
+        </Box>
       </Dialog>
 
       {/* 凭证详情对话框 */}
@@ -1277,217 +1289,220 @@ const FinanceVoucherPage: React.FC = () => {
         onClose={() => setShowDetailModal(false)}
         title='凭证详情'
       >
-          {currentVoucher && (
+        {currentVoucher && (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(2, 1fr)',
-                  gap: 2,
-                }}
-              >
-                <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'grey.500' }}
-                  >
-                    凭证编号
-                  </Typography>
-                  <Typography
-                    variant='h6'
-                    sx={{ color: 'indigo.600', fontWeight: 'bold' }}
-                  >
-                    {currentVoucher.voucher_number}
-                  </Typography>
-                </Box>
-                <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'grey.500' }}
-                  >
-                    凭证日期
-                  </Typography>
-                  <Typography
-                    variant='h6'
-                    sx={{ fontWeight: 'bold' }}
-                  >
-                    {currentVoucher.voucher_date?.split('T')[0]}
-                  </Typography>
-                </Box>
-                <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'grey.500' }}
-                  >
-                    期间
-                  </Typography>
-                  <Typography
-                    variant='h6'
-                    sx={{ fontWeight: 'bold' }}
-                  >
-                    {currentVoucher.period}
-                  </Typography>
-                </Box>
-                <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'grey.500' }}
-                  >
-                    状态
-                  </Typography>
-                  {getStatusBadge(currentVoucher.status)}
-                </Box>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
+                gap: 2,
+              }}
+            >
+              <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.500' }}
+                >
+                  凭证编号
+                </Typography>
+                <Typography
+                  variant='h6'
+                  sx={{ color: 'indigo.600', fontWeight: 'bold' }}
+                >
+                  {currentVoucher.voucher_number}
+                </Typography>
               </Box>
               <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
                 <Typography
                   variant='body2'
                   sx={{ color: 'grey.500' }}
                 >
-                  摘要
+                  凭证日期
+                </Typography>
+                <Typography
+                  variant='h6'
+                  sx={{ fontWeight: 'bold' }}
+                >
+                  {currentVoucher.voucher_date?.split('T')[0]}
+                </Typography>
+              </Box>
+              <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.500' }}
+                >
+                  期间
+                </Typography>
+                <Typography
+                  variant='h6'
+                  sx={{ fontWeight: 'bold' }}
+                >
+                  {currentVoucher.period}
+                </Typography>
+              </Box>
+              <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.500' }}
+                >
+                  状态
+                </Typography>
+                {getStatusBadge(currentVoucher.status)}
+              </Box>
+            </Box>
+            <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+              <Typography
+                variant='body2'
+                sx={{ color: 'grey.500' }}
+              >
+                摘要
+              </Typography>
+              <Typography
+                variant='body1'
+                sx={{ fontWeight: 500 }}
+              >
+                {currentVoucher.summary || '-'}
+              </Typography>
+            </Box>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
+                gap: 2,
+              }}
+            >
+              <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.500' }}
+                >
+                  制单人
                 </Typography>
                 <Typography
                   variant='body1'
                   sx={{ fontWeight: 500 }}
                 >
-                  {currentVoucher.summary || '-'}
+                  {currentVoucher.maker_name || '-'}
                 </Typography>
+              </Box>
+              <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.500' }}
+                >
+                  审核人
+                </Typography>
+                <Typography
+                  variant='body1'
+                  sx={{ fontWeight: 500 }}
+                >
+                  {currentVoucher.checker_name || '-'}
+                </Typography>
+              </Box>
+            </Box>
+            <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 2 }}>
+              <Typography
+                variant='subtitle1'
+                sx={{ fontWeight: 600 }}
+              >
+                凭证明细
+              </Typography>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                {voucherItems.map((item) => (
+                  <Box
+                    key={item.id}
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      p: 1.5,
+                      bgcolor: 'grey.50',
+                      borderRadius: 1,
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Typography
+                        sx={{
+                          width: 24,
+                          textAlign: 'center',
+                          color: 'text.secondary',
+                          fontSize: '0.875rem',
+                        }}
+                      >
+                        {item.line_number}
+                      </Typography>
+                      <Typography sx={{ fontWeight: 500 }}>{item.subject_code}</Typography>
+                      <Typography>{item.subject_name}</Typography>
+                      <Typography
+                        variant='body2'
+                        sx={{ color: 'text.secondary' }}
+                      >
+                        {item.summary}
+                      </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <Typography sx={{ color: 'error.main', fontWeight: 'bold' }}>
+                        {item.debit_amount > 0 ? formatCurrency(item.debit_amount) : ''}
+                      </Typography>
+                      <Typography sx={{ color: 'success.main', fontWeight: 'bold' }}>
+                        {item.credit_amount > 0 ? formatCurrency(item.credit_amount) : ''}
+                      </Typography>
+                    </Box>
+                  </Box>
+                ))}
               </Box>
               <Box
                 sx={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(2, 1fr)',
-                  gap: 2,
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: 8,
+                  mt: 3,
+                  borderTop: 1,
+                  borderColor: 'divider',
+                  pt: 2,
                 }}
               >
-                <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                <Box sx={{ textAlign: 'right' }}>
                   <Typography
                     variant='body2'
                     sx={{ color: 'grey.500' }}
                   >
-                    制单人
+                    借方合计
                   </Typography>
                   <Typography
-                    variant='body1'
-                    sx={{ fontWeight: 500 }}
+                    variant='h6'
+                    sx={{ color: 'error.main', fontWeight: 'bold' }}
                   >
-                    {currentVoucher.maker_name || '-'}
+                    {formatCurrency(currentVoucher.total_debit)}
                   </Typography>
                 </Box>
-                <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                <Box sx={{ textAlign: 'right' }}>
                   <Typography
                     variant='body2'
                     sx={{ color: 'grey.500' }}
                   >
-                    审核人
+                    贷方合计
                   </Typography>
                   <Typography
-                    variant='body1'
-                    sx={{ fontWeight: 500 }}
+                    variant='h6'
+                    sx={{ color: 'success.main', fontWeight: 'bold' }}
                   >
-                    {currentVoucher.checker_name || '-'}
+                    {formatCurrency(currentVoucher.total_credit)}
                   </Typography>
-                </Box>
-              </Box>
-              <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 2 }}>
-                <Typography
-                  variant='subtitle1'
-                  sx={{ fontWeight: 600 }}
-                >
-                  凭证明细
-                </Typography>
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  {voucherItems.map((item) => (
-                    <Box
-                      key={item.id}
-                      sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        p: 1.5,
-                        bgcolor: 'grey.50',
-                        borderRadius: 1,
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        <Typography
-                          sx={{
-                            width: 24,
-                            textAlign: 'center',
-                            color: 'text.secondary',
-                            fontSize: '0.875rem',
-                          }}
-                        >
-                          {item.line_number}
-                        </Typography>
-                        <Typography sx={{ fontWeight: 500 }}>{item.subject_code}</Typography>
-                        <Typography>{item.subject_name}</Typography>
-                        <Typography
-                          variant='body2'
-                          sx={{ color: 'text.secondary' }}
-                        >
-                          {item.summary}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <Typography sx={{ color: 'error.main', fontWeight: 'bold' }}>
-                          {item.debit_amount > 0 ? formatCurrency(item.debit_amount) : ''}
-                        </Typography>
-                        <Typography sx={{ color: 'success.main', fontWeight: 'bold' }}>
-                          {item.credit_amount > 0 ? formatCurrency(item.credit_amount) : ''}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  ))}
-                </Box>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'flex-end',
-                    gap: 8,
-                    mt: 3,
-                    borderTop: 1,
-                    borderColor: 'divider',
-                    pt: 2,
-                  }}
-                >
-                  <Box sx={{ textAlign: 'right' }}>
-                    <Typography
-                      variant='body2'
-                      sx={{ color: 'grey.500' }}
-                    >
-                      借方合计
-                    </Typography>
-                    <Typography
-                      variant='h6'
-                      sx={{ color: 'error.main', fontWeight: 'bold' }}
-                    >
-                      {formatCurrency(currentVoucher.total_debit)}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ textAlign: 'right' }}>
-                    <Typography
-                      variant='body2'
-                      sx={{ color: 'grey.500' }}
-                    >
-                      贷方合计
-                    </Typography>
-                    <Typography
-                      variant='h6'
-                      sx={{ color: 'success.main', fontWeight: 'bold' }}
-                    >
-                      {formatCurrency(currentVoucher.total_credit)}
-                    </Typography>
-                  </Box>
                 </Box>
               </Box>
             </Box>
-          )}
+          </Box>
+        )}
       </Dialog>
 
       {/* 删除确认对话框 */}
       <ConfirmDialog
         isOpen={deleteDialogOpen}
-        onClose={() => { setDeleteDialogOpen(false); setDeletingId(null); }}
+        onClose={() => {
+          setDeleteDialogOpen(false);
+          setDeletingId(null);
+        }}
         onConfirm={confirmDelete}
         title='确认删除'
         message='确定要删除该凭证吗？'

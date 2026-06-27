@@ -257,77 +257,83 @@ const HrmPerformancePage: React.FC = () => {
     { label: '绩效排名', value: 'rankings', icon: <BarChart3 size={18} /> },
   ];
 
-  const statCards = activeTab === 'rankings' ? [
-    {
-      id: 'total-reviews',
-      title: '绩效评估总数',
-      value: performanceStats.totalReviews,
-      icon: <Award size={24} />,
-      color: 'primary' as const,
-    },
-    {
-      id: 'completed-reviews',
-      title: '已完成评估',
-      value: performanceStats.completedReviews,
-      icon: <CheckCircle size={24} />,
-      color: 'success' as const,
-    },
-    {
-      id: 'pending-reviews',
-      title: '待完成评估',
-      value: performanceStats.pendingReviews,
-      icon: <Clock size={24} />,
-      color: 'warning' as const,
-    },
-    {
-      id: 'avg-score',
-      title: '平均绩效得分',
-      value: performanceStats.avgScore,
-      icon: <TrendingUp size={24} />,
-      color: 'info' as const,
-    },
-    {
-      id: 'total-goals',
-      title: '绩效目标总数',
-      value: performanceStats.totalGoals,
-      icon: <Target size={24} />,
-      color: 'primary' as const,
-    },
-    {
-      id: 'in-progress-goals',
-      title: '进行中目标',
-      value: performanceStats.inProgressGoals,
-      icon: <Clock size={24} />,
-      color: 'warning' as const,
-    },
-  ] : [];
+  const statCards =
+    activeTab === 'rankings'
+      ? [
+          {
+            id: 'total-reviews',
+            title: '绩效评估总数',
+            value: performanceStats.totalReviews,
+            icon: <Award size={24} />,
+            color: 'primary' as const,
+          },
+          {
+            id: 'completed-reviews',
+            title: '已完成评估',
+            value: performanceStats.completedReviews,
+            icon: <CheckCircle size={24} />,
+            color: 'success' as const,
+          },
+          {
+            id: 'pending-reviews',
+            title: '待完成评估',
+            value: performanceStats.pendingReviews,
+            icon: <Clock size={24} />,
+            color: 'warning' as const,
+          },
+          {
+            id: 'avg-score',
+            title: '平均绩效得分',
+            value: performanceStats.avgScore,
+            icon: <TrendingUp size={24} />,
+            color: 'info' as const,
+          },
+          {
+            id: 'total-goals',
+            title: '绩效目标总数',
+            value: performanceStats.totalGoals,
+            icon: <Target size={24} />,
+            color: 'primary' as const,
+          },
+          {
+            id: 'in-progress-goals',
+            title: '进行中目标',
+            value: performanceStats.inProgressGoals,
+            icon: <Clock size={24} />,
+            color: 'warning' as const,
+          },
+        ]
+      : [];
 
-  const charts = activeTab === 'rankings' ? [
-    {
-      id: 'review-status-distribution',
-      title: '绩效评估状态分布',
-      type: 'pie' as const,
-      dataKey: 'value',
-      nameKey: 'name',
-      data: reviewStatusData.filter((d) => d.value > 0),
-    },
-    {
-      id: 'goal-status-distribution',
-      title: '绩效目标状态分布',
-      type: 'pie' as const,
-      dataKey: 'value',
-      nameKey: 'name',
-      data: goalStatusData.filter((d) => d.value > 0),
-    },
-    {
-      id: 'department-scores',
-      title: '部门平均绩效得分',
-      type: 'bar' as const,
-      dataKey: 'value',
-      nameKey: 'name',
-      data: departmentScoreData,
-    },
-  ] : [];
+  const charts =
+    activeTab === 'rankings'
+      ? [
+          {
+            id: 'review-status-distribution',
+            title: '绩效评估状态分布',
+            type: 'pie' as const,
+            dataKey: 'value',
+            nameKey: 'name',
+            data: reviewStatusData.filter((d) => d.value > 0),
+          },
+          {
+            id: 'goal-status-distribution',
+            title: '绩效目标状态分布',
+            type: 'pie' as const,
+            dataKey: 'value',
+            nameKey: 'name',
+            data: goalStatusData.filter((d) => d.value > 0),
+          },
+          {
+            id: 'department-scores',
+            title: '部门平均绩效得分',
+            type: 'bar' as const,
+            dataKey: 'value',
+            nameKey: 'name',
+            data: departmentScoreData,
+          },
+        ]
+      : [];
 
   const tables = (() => {
     switch (activeTab) {
@@ -344,7 +350,12 @@ const HrmPerformancePage: React.FC = () => {
               { id: 'self_score', label: '自评分', field: 'self_score' },
               { id: 'manager_score', label: '上级评分', field: 'manager_score' },
               { id: 'final_score', label: '最终得分', field: 'final_score' },
-              { id: 'status', label: '状态', field: 'status', render: (value: string) => getStatusLabel(value) },
+              {
+                id: 'status',
+                label: '状态',
+                field: 'status',
+                render: (value: string) => getStatusLabel(value),
+              },
             ],
             data: filteredReviews.map((r) => ({
               ...r,
@@ -368,7 +379,12 @@ const HrmPerformancePage: React.FC = () => {
               { id: 'target_value', label: '目标值', field: 'target_value' },
               { id: 'current_value', label: '当前值', field: 'current_value' },
               { id: 'due_date', label: '截止日期', field: 'due_date' },
-              { id: 'status', label: '状态', field: 'status', render: (value: string) => getStatusLabel(value) },
+              {
+                id: 'status',
+                label: '状态',
+                field: 'status',
+                render: (value: string) => getStatusLabel(value),
+              },
             ],
             data: goals.map((g) => ({
               ...g,
@@ -402,33 +418,33 @@ const HrmPerformancePage: React.FC = () => {
   return (
     <PageContainer maxWidth='xl'>
       <StatsPageTemplate
-      title='绩效管理'
-      subtitle='管理员工绩效评估、目标设定和绩效考核'
-      statCards={statCards}
-      statColumns={4}
-      charts={charts}
-      chartColumns={{ xs: 1, md: 2, lg: 3 }}
-      tables={tables}
-      loading={loading}
-      timeRangeOptions={[
-        { label: '本周', value: 'week' },
-        { label: '本月', value: 'month' },
-        { label: '本季度', value: 'quarter' },
-        { label: '本年', value: 'year' },
-      ]}
-      timeRange='month'
-      search={{ value: searchQuery, onChange: setSearchQuery, placeholder: '搜索员工/部门...' }}
-      tabs={tabs}
-      tabValue={activeTab}
-      onTabChange={(value) => setActiveTab(value as typeof activeTab)}
-      showTimeRange={true}
-      showSearch={true}
-      showExport={true}
-      showRefresh={true}
-      onRefresh={loadData}
-      showStatCards={activeTab === 'rankings'}
-      showCharts={activeTab === 'rankings'}
-      showTables={true}
+        title='绩效管理'
+        subtitle='管理员工绩效评估、目标设定和绩效考核'
+        statCards={statCards}
+        statColumns={4}
+        charts={charts}
+        chartColumns={{ xs: 1, md: 2, lg: 3 }}
+        tables={tables}
+        loading={loading}
+        timeRangeOptions={[
+          { label: '本周', value: 'week' },
+          { label: '本月', value: 'month' },
+          { label: '本季度', value: 'quarter' },
+          { label: '本年', value: 'year' },
+        ]}
+        timeRange='month'
+        search={{ value: searchQuery, onChange: setSearchQuery, placeholder: '搜索员工/部门...' }}
+        tabs={tabs}
+        tabValue={activeTab}
+        onTabChange={(value) => setActiveTab(value as typeof activeTab)}
+        showTimeRange={true}
+        showSearch={true}
+        showExport={true}
+        showRefresh={true}
+        onRefresh={loadData}
+        showStatCards={activeTab === 'rankings'}
+        showCharts={activeTab === 'rankings'}
+        showTables={true}
       />
     </PageContainer>
   );

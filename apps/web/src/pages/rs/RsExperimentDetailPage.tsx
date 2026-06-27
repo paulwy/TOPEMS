@@ -29,8 +29,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import {
   Timeline,
@@ -213,7 +213,14 @@ const RsExperimentDetailPage: React.FC = () => {
         maxWidth='xl'
         sx={{ py: 3 }}
       >
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '50vh' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '50vh',
+          }}
+        >
           <CircularProgress />
         </div>
       </Container>
@@ -226,7 +233,10 @@ const RsExperimentDetailPage: React.FC = () => {
         maxWidth='xl'
         sx={{ py: 3 }}
       >
-        <Typography variant='h4' sx={{ fontWeight: 'bold' }}>
+        <Typography
+          variant='h4'
+          sx={{ fontWeight: 'bold' }}
+        >
           试验不存在或已删除
         </Typography>
       </Container>
@@ -268,8 +278,8 @@ const RsExperimentDetailPage: React.FC = () => {
               color='text.secondary'
               sx={{ mt: 1 }}
             >
-              编码: {experiment.code} | 项目: {experiment.project_name || experiment.project_id} | 实验员:{' '}
-              {experiment.experimenter}
+              编码: {experiment.code} | 项目: {experiment.project_name || experiment.project_id} |
+              实验员: {experiment.experimenter}
             </Typography>
           </div>
           <Stack
@@ -377,7 +387,10 @@ const RsExperimentDetailPage: React.FC = () => {
 
       {/* 详细信息标签页 */}
       <Paper>
-        <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
+        <Tabs
+          value={activeTab}
+          onChange={(_, v) => setActiveTab(v)}
+        >
           <Tab
             label='实验记录'
             icon={<ScienceIcon />}
@@ -397,7 +410,10 @@ const RsExperimentDetailPage: React.FC = () => {
 
         <div style={{ padding: 12 }}>
           {activeTab === 0 && (
-            <Stack direction='row' sx={{ justifyContent: 'flex-end', mb: 2 }}>
+            <Stack
+              direction='row'
+              sx={{ justifyContent: 'flex-end', mb: 2 }}
+            >
               <Button
                 variant='outlined'
                 startIcon={<PlusIcon />}
@@ -467,7 +483,10 @@ const RsExperimentDetailPage: React.FC = () => {
           {activeTab === 1 && (
             <Card>
               <CardContent>
-                <Typography variant='h6' gutterBottom>
+                <Typography
+                  variant='h6'
+                  gutterBottom
+                >
                   试验结果数据
                 </Typography>
                 {experiment.results && typeof experiment.results === 'object' ? (
@@ -475,7 +494,10 @@ const RsExperimentDetailPage: React.FC = () => {
                     {JSON.stringify(experiment.results, null, 2)}
                   </pre>
                 ) : (
-                  <Typography variant='body2' color='text.secondary'>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     暂无结果数据
                   </Typography>
                 )}
@@ -487,15 +509,19 @@ const RsExperimentDetailPage: React.FC = () => {
           {activeTab === 2 && (
             <Card>
               <CardContent>
-                <Typography variant='h6' gutterBottom>
+                <Typography
+                  variant='h6'
+                  gutterBottom
+                >
                   批次追溯信息
                 </Typography>
                 {experiment.batch_number ? (
-                  <Typography variant='body2'>
-                    批次号: {experiment.batch_number}
-                  </Typography>
+                  <Typography variant='body2'>批次号: {experiment.batch_number}</Typography>
                 ) : (
-                  <Typography variant='body2' color='text.secondary'>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     暂无批次信息
                   </Typography>
                 )}
@@ -512,16 +538,24 @@ const RsExperimentDetailPage: React.FC = () => {
       >
         <DialogTitle>添加实验记录</DialogTitle>
         <DialogContent>
-          <Stack spacing={2} sx={{ mt: 2 }}>
+          <Stack
+            spacing={2}
+            sx={{ mt: 2 }}
+          >
             <FormControl fullWidth>
               <InputLabel>记录类型</InputLabel>
               <Select
                 value={recordForm.record_type}
                 label='记录类型'
-                onChange={(e) => setRecordForm((prev) => ({ ...prev, record_type: e.target.value }))}
+                onChange={(e) =>
+                  setRecordForm((prev) => ({ ...prev, record_type: e.target.value }))
+                }
               >
                 {recordTypes.map((type) => (
-                  <MenuItem key={type} value={type}>
+                  <MenuItem
+                    key={type}
+                    value={type}
+                  >
                     {type}
                   </MenuItem>
                 ))}

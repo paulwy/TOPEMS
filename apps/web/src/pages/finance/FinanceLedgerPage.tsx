@@ -1,15 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import {
-  FileText,
-  Eye,
-  Calculator,
-  TrendingUp,
-  TrendingDown,
-  Wallet,
-} from 'lucide-react';
-import { ListPageTemplate, StatCardGroup } from '@/components/mui';
+import { FileText, Eye, Calculator, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
+import { ListPageTemplate, StatCardGroup } from '@/components';
 import { useAppStore } from '@/store';
-import { DataExport, BackButton, PageContainer} from '@/components/common';
+import { DataExport, BackButton, PageContainer } from '@/components/common';
 import { financeApi } from '@/api/finance';
 import type { Account, AccountBalance } from '@/types/finance';
 import type { AccountingSubject } from '@/api/erp';
@@ -24,11 +17,10 @@ import {
   Box,
   Typography,
   Stack,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 
 const FinanceLedgerPage: React.FC = () => {
-
   const [ledgerData, setLedgerData] = useState<Account[]>([]);
   const [accountBalances, setAccountBalances] = useState<AccountBalance[]>([]);
   const [loading, setLoading] = useState(true);
@@ -189,9 +181,7 @@ const FinanceLedgerPage: React.FC = () => {
         id: 'parent_code',
         label: '上级科目',
         render: (row: Account) => (
-          <Box sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-            {row.parent_code || '-'}
-          </Box>
+          <Box sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>{row.parent_code || '-'}</Box>
         ),
       },
       {
@@ -279,7 +269,10 @@ const FinanceLedgerPage: React.FC = () => {
   );
 
   return (
-    <PageContainer padding={false} maxWidth={false}>
+    <PageContainer
+      padding={false}
+      maxWidth={false}
+    >
       <Box
         sx={{
           bgcolor: 'background.paper',
@@ -488,7 +481,10 @@ const FinanceLedgerPage: React.FC = () => {
                   </Typography>
                   <Typography
                     variant='h6'
-                    sx={{ fontWeight: 700, color: selectedEntry.is_cash_flow ? 'success.main' : 'text.secondary' }}
+                    sx={{
+                      fontWeight: 700,
+                      color: selectedEntry.is_cash_flow ? 'success.main' : 'text.secondary',
+                    }}
                   >
                     {selectedEntry.is_cash_flow ? '是' : '否'}
                   </Typography>

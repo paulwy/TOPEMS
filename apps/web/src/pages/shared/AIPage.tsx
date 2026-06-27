@@ -10,8 +10,8 @@ import {
   Tab,
   Box,
   Typography,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import {
   Bot,
   Send,
@@ -671,7 +671,7 @@ const AIPage: React.FC = () => {
     <PageContainer
       padding={false}
       maxWidth={false}
-      bgcolor='grey.50'
+      bgcolor='background.default'
       sx={{ height: '100vh' }}
       contentSx={{ display: 'flex', height: '100%' }}
     >
@@ -865,7 +865,7 @@ const AIPage: React.FC = () => {
                             <MessageSquare
                               size={20}
                               color={
-                                currentConversationId === conv.id ? '#a855f7' : 'text.disabled'
+                                currentConversationId === conv.id ? 'secondary.main' : 'text.disabled'
                               }
                             />
                           )}
@@ -957,10 +957,10 @@ const AIPage: React.FC = () => {
               >
                 <CardContent sx={{ p: 2 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <Box sx={{ p: 1, bgcolor: 'purple.100', borderRadius: 2 }}>
+                    <Box sx={{ p: 1, bgcolor: 'secondary.light', borderRadius: 2 }}>
                       <Wand2
                         size={20}
-                        color='#9333ea'
+                        color='secondary.main'
                       />
                     </Box>
                     <Box>
@@ -1261,7 +1261,7 @@ const AIPage: React.FC = () => {
                       >
                         <Loader2
                           size={16}
-                          color='#a855f7'
+                          color='secondary.main'
                         />
                       </Box>
                       <Typography
@@ -1379,10 +1379,10 @@ const AIPage: React.FC = () => {
                   }}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <Box sx={{ p: 1, bgcolor: 'purple.100', borderRadius: 2 }}>
+                    <Box sx={{ p: 1, bgcolor: 'secondary.light', borderRadius: 2 }}>
                       <Wand2
                         size={24}
-                        color='#9333ea'
+                        color='secondary.main'
                       />
                     </Box>
                     <Box>

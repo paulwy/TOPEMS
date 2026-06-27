@@ -10,8 +10,8 @@ import {
   Select,
   MenuItem,
   Box,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 /**
  * 凭证模板管理页面
  * 管理凭证自动生成规则和模板
@@ -21,17 +21,7 @@ import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { logger } from '@/utils/logger';
 import { useAppStore } from '@/store';
-import {
-  Plus,
-  RefreshCw,
-  Trash2,
-  Edit,
-  Copy,
-  FileText,
-  Check,
-  X,
-  Play,
-} from 'lucide-react';
+import { Plus, RefreshCw, Trash2, Edit, Copy, FileText, Check, X, Play } from 'lucide-react';
 import {
   useVoucherTemplates,
   useCreateVoucherTemplate,
@@ -463,7 +453,6 @@ export default function VoucherTemplatePage() {
           >
             配置业务单据自动生成凭证的规则，例如：项目结算自动生成收入凭证、工资计算自动生成工资凭证等。
           </Typography>
-
         </CardContent>
       </Card>
     </PageContainer>

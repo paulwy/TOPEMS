@@ -290,34 +290,58 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
         }}
       >
         <Paper sx={{ p: 2, borderRadius: 1, minWidth: 120 }}>
-          <Typography variant='caption' color='text.secondary'>
+          <Typography
+            variant='caption'
+            color='text.secondary'
+          >
             总任务
           </Typography>
-          <Typography variant='h5' sx={{ fontWeight: 600 }}>
+          <Typography
+            variant='h5'
+            sx={{ fontWeight: 600 }}
+          >
             {computedStats.totalCards}
           </Typography>
         </Paper>
         <Paper sx={{ p: 2, borderRadius: 1, minWidth: 120 }}>
-          <Typography variant='caption' color='text.secondary'>
+          <Typography
+            variant='caption'
+            color='text.secondary'
+          >
             列数
           </Typography>
-          <Typography variant='h5' sx={{ fontWeight: 600 }}>
+          <Typography
+            variant='h5'
+            sx={{ fontWeight: 600 }}
+          >
             {computedStats.totalColumns}
           </Typography>
         </Paper>
         <Paper sx={{ p: 2, borderRadius: 1, minWidth: 120 }}>
-          <Typography variant='caption' color='error'>
+          <Typography
+            variant='caption'
+            color='error'
+          >
             逾期任务
           </Typography>
-          <Typography variant='h5' sx={{ fontWeight: 600, color: 'error.main' }}>
+          <Typography
+            variant='h5'
+            sx={{ fontWeight: 600, color: 'error.main' }}
+          >
             {computedStats.overdueCards}
           </Typography>
         </Paper>
         <Paper sx={{ p: 2, borderRadius: 1, minWidth: 120 }}>
-          <Typography variant='caption' color='success'>
+          <Typography
+            variant='caption'
+            color='success'
+          >
             已完成
           </Typography>
-          <Typography variant='h5' sx={{ fontWeight: 600, color: 'success.main' }}>
+          <Typography
+            variant='h5'
+            sx={{ fontWeight: 600, color: 'success.main' }}
+          >
             {computedStats.completedCards}
           </Typography>
         </Paper>
@@ -340,21 +364,33 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
       >
         {showSearch && (
           <Box sx={{ position: 'relative', minWidth: 250 }}>
-            <Search style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', width: 18, height: 18, color: 'text.secondary' }} />
+            <Search
+              style={{
+                position: 'absolute',
+                left: 12,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: 18,
+                height: 18,
+                color: 'text.secondary',
+              }}
+            />
             <input
               type='text'
               value={searchInput}
               onChange={handleSearch}
               placeholder='搜索任务...'
-              style={{
-                width: '100%',
-                padding: '8px 12px 8px 40px',
-                borderRadius: 8,
-                border: '1px solid',
-                borderColor: theme.palette.divider,
-                fontSize: '0.875rem',
-                outline: 'none',
-              } as React.CSSProperties}
+              style={
+                {
+                  width: '100%',
+                  padding: '8px 12px 8px 40px',
+                  borderRadius: 8,
+                  border: '1px solid',
+                  borderColor: theme.palette.divider,
+                  fontSize: '0.875rem',
+                  outline: 'none',
+                } as React.CSSProperties
+              }
             />
           </Box>
         )}
@@ -402,11 +438,18 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
         <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, mb: 1 }}>
           <GripVertical style={{ width: 16, height: 16, color: 'text.secondary', flexShrink: 0 }} />
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant='body2' sx={{ fontWeight: 500 }}>
+            <Typography
+              variant='body2'
+              sx={{ fontWeight: 500 }}
+            >
               {card.title}
             </Typography>
             {card.description && (
-              <Typography variant='caption' color='text.secondary' sx={{ mt: 0.5, display: 'block' }}>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+                sx={{ mt: 0.5, display: 'block' }}
+              >
                 {card.description}
               </Typography>
             )}
@@ -449,7 +492,10 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
                 mb: 0.5,
               }}
             >
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 子任务
               </Typography>
               <Typography variant='caption'>
@@ -480,15 +526,27 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {card.comments && (
-              <Badge badgeContent={card.comments} color='primary'>
-                <IconButton size='small' sx={{ p: 0 }}>
+              <Badge
+                badgeContent={card.comments}
+                color='primary'
+              >
+                <IconButton
+                  size='small'
+                  sx={{ p: 0 }}
+                >
                   <Edit style={{ width: 14, height: 14 }} />
                 </IconButton>
               </Badge>
             )}
             {card.attachments && (
-              <Badge badgeContent={card.attachments} color='secondary'>
-                <IconButton size='small' sx={{ p: 0 }}>
+              <Badge
+                badgeContent={card.attachments}
+                color='secondary'
+              >
+                <IconButton
+                  size='small'
+                  sx={{ p: 0 }}
+                >
                   <Archive style={{ width: 14, height: 14 }} />
                 </IconButton>
               </Badge>
@@ -500,8 +558,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
               <Typography
                 variant='caption'
                 sx={{
-                  color:
-                    new Date(card.dueDate) < new Date() ? 'error.main' : 'text.secondary',
+                  color: new Date(card.dueDate) < new Date() ? 'error.main' : 'text.secondary',
                 }}
               >
                 {new Date(card.dueDate).toLocaleDateString()}
@@ -567,7 +624,10 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
                   }}
                 />
               )}
-              <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
+              <Typography
+                variant='subtitle2'
+                sx={{ fontWeight: 600 }}
+              >
                 {column.title}
               </Typography>
               <Chip
@@ -589,7 +649,10 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               {column.onAddCard && (
                 <Tooltip title='添加任务'>
-                  <IconButton size='small' onClick={column.onAddCard}>
+                  <IconButton
+                    size='small'
+                    onClick={column.onAddCard}
+                  >
                     <Plus style={{ width: 16, height: 16 }} />
                   </IconButton>
                 </Tooltip>
@@ -626,13 +689,19 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
               ))
             ) : isCollapsed ? (
               <Box sx={{ p: 4, textAlign: 'center' }}>
-                <Typography variant='caption' color='text.secondary'>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   已折叠
                 </Typography>
               </Box>
             ) : column.cards.length === 0 ? (
               <Box sx={{ p: 4, textAlign: 'center' }}>
-                <Typography variant='caption' color='text.secondary'>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   暂无任务
                 </Typography>
               </Box>
@@ -664,7 +733,10 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
       return (
         <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
           <Paper sx={{ p: 4, borderRadius: 2 }}>
-            <Typography variant='body1' color='error'>
+            <Typography
+              variant='body1'
+              color='error'
+            >
               {error}
             </Typography>
           </Paper>
@@ -706,7 +778,10 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
                 },
               }}
             >
-              <Typography variant='caption' sx={{ color: 'text.secondary' }}>
+              <Typography
+                variant='caption'
+                sx={{ color: 'text.secondary' }}
+              >
                 添加新列
               </Typography>
             </Paper>
@@ -743,9 +818,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
 
       {renderSearchAndFilter()}
 
-      <Box sx={{ display: 'flex', minHeight: 'calc(100vh - 280px)' }}>
-        {renderColumns()}
-      </Box>
+      <Box sx={{ display: 'flex', minHeight: 'calc(100vh - 280px)' }}>{renderColumns()}</Box>
 
       {footerContent}
     </Box>

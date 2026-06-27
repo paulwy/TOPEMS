@@ -19,7 +19,7 @@ export const assetApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/erp/assets${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(`/api/erp/assets${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<Asset>> {
@@ -51,7 +51,7 @@ export const fixedAssetApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/erp/fixed-assets${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(`/api/erp/fixed-assets${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<FixedAsset>> {

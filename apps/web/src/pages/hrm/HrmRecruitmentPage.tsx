@@ -22,7 +22,7 @@ import { useNavigate } from 'react-router-dom';
 import { Box, Typography, Chip } from '@mui/material';
 import { apiLogger } from '@/utils/logger';
 import { useNotification } from '@/hooks/useNotification';
-import { StatCardGroup } from '@/components/mui';
+import { StatCardGroup } from '@/components';
 import { PageContainer } from '@/components/common';
 import {
   jobOpeningApi,
@@ -356,17 +356,149 @@ const HrmRecruitmentPage: React.FC = () => {
   );
 
   return (
-    <PageContainer maxWidth={false} padding={false}>
-      <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
+    <PageContainer
+      maxWidth={false}
+      padding={false}
+    >
+      <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
         {/* Header */}
-      <Box
-        sx={{
-          bgcolor: 'background.paper',
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: 'grey.200',
-        }}
-      >
+        <Box
+          sx={{
+            bgcolor: 'background.paper',
+            boxShadow: 1,
+            borderBottom: 1,
+            borderColor: 'grey.200',
+          }}
+        >
+          <Box
+            sx={{
+              maxWidth: 1280,
+              mx: 'auto',
+              px: { xs: 2, sm: 3, lg: 4 },
+              py: 3,
+            }}
+          >
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box
+                  component='button'
+                  onClick={() => navigate('/dashboard')}
+                  sx={{
+                    p: 1,
+                    borderRadius: 2,
+                    border: 'none',
+                    bgcolor: 'transparent',
+                    cursor: 'pointer',
+                    '&:hover': { bgcolor: 'grey.100' },
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <ChevronLeft sx={{ width: 20, height: 20, color: 'grey.600' }} />
+                </Box>
+                <Box>
+                  {/* 面包屑导航 */}
+                  <Box sx={{ mb: 1 }}>
+                    <Typography
+                      component='a'
+                      href='/hrm'
+                      sx={{
+                        color: 'text.secondary',
+                        textDecoration: 'none',
+                        fontSize: '0.875rem',
+                        '&:hover': {
+                          color: 'primary.main',
+                          textDecoration: 'underline',
+                        },
+                      }}
+                    >
+                      人力资源
+                    </Typography>
+                    <Typography
+                      component='span'
+                      sx={{ mx: 1, color: 'text.disabled' }}
+                    >
+                      /
+                    </Typography>
+                    <Typography
+                      component='span'
+                      sx={{ color: 'text.primary', fontSize: '0.875rem' }}
+                    >
+                      招聘管理
+                    </Typography>
+                  </Box>
+                  <Typography
+                    variant='h5'
+                    sx={{
+                      fontWeight: 700,
+                      color: 'grey.900',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1.5,
+                    }}
+                  >
+                    <UserPlus sx={{ width: 28, height: 28, color: 'primary.main' }} />
+                    招聘管理
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    sx={{ mt: 0.5, color: 'grey.500' }}
+                  >
+                    管理招聘流程、职位发布和候选人信息
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+
+        {/* 统计卡片 */}
+        <Box
+          sx={{
+            maxWidth: 1280,
+            mx: 'auto',
+            px: { xs: 2, sm: 3, lg: 4 },
+            py: 3,
+          }}
+        >
+          <StatCardGroup
+            stats={[
+              {
+                title: '招聘岗位数',
+                value: positions.length,
+                icon: <Briefcase style={{ width: 24, height: 24 }} />,
+                color: 'primary',
+              },
+              {
+                title: '候选人总数',
+                value: candidates.length,
+                icon: <Users style={{ width: 24, height: 24 }} />,
+                color: 'secondary',
+              },
+              {
+                title: '面试安排数',
+                value: interviews.length,
+                icon: <Calendar style={{ width: 24, height: 24 }} />,
+                color: 'warning',
+              },
+              {
+                title: '已录用数',
+                value: candidates.filter((c) => c.status === 'hired').length,
+                icon: <CheckCircle style={{ width: 24, height: 24 }} />,
+                color: 'success',
+              },
+            ]}
+            columns={4}
+            loading={loading}
+          />
+        </Box>
+
+        {/* Tabs */}
         <Box
           sx={{
             maxWidth: 1280,
@@ -378,1120 +510,991 @@ const HrmRecruitmentPage: React.FC = () => {
           <Box
             sx={{
               display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
+              gap: 2,
+              mb: 3,
+              borderBottom: 1,
+              borderColor: 'grey.200',
+            }}
+          >
+            <Box
+              component='button'
+              onClick={() => setActiveTab('positions')}
+              sx={{
+                pb: 2,
+                px: 1,
+                fontWeight: 500,
+                border: 'none',
+                bgcolor: 'transparent',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                color: activeTab === 'positions' ? 'primary.main' : 'text.secondary',
+                borderBottom: activeTab === 'positions' ? 2 : 0,
+                borderColor: activeTab === 'positions' ? 'primary.main' : 'transparent',
+                '&:hover': {
+                  color: activeTab === 'positions' ? 'primary.main' : 'text.primary',
+                },
+                transition: 'all 0.2s',
+              }}
+            >
+              <Briefcase sx={{ width: 20, height: 20 }} />
+              <span>招聘职位</span>
+            </Box>
+            <Box
+              component='button'
+              onClick={() => setActiveTab('candidates')}
+              sx={{
+                pb: 2,
+                px: 1,
+                fontWeight: 500,
+                border: 'none',
+                bgcolor: 'transparent',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                color: activeTab === 'candidates' ? 'primary.main' : 'text.secondary',
+                borderBottom: activeTab === 'candidates' ? 2 : 0,
+                borderColor: activeTab === 'candidates' ? 'primary.main' : 'transparent',
+                '&:hover': {
+                  color: activeTab === 'candidates' ? 'primary.main' : 'text.primary',
+                },
+                transition: 'all 0.2s',
+              }}
+            >
+              <Users sx={{ width: 20, height: 20 }} />
+              <span>候选人</span>
+            </Box>
+            <Box
+              component='button'
+              onClick={() => setActiveTab('interviews')}
+              sx={{
+                pb: 2,
+                px: 1,
+                fontWeight: 500,
+                border: 'none',
+                bgcolor: 'transparent',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                color: activeTab === 'interviews' ? 'primary.main' : 'text.secondary',
+                borderBottom: activeTab === 'interviews' ? 2 : 0,
+                borderColor: activeTab === 'interviews' ? 'primary.main' : 'transparent',
+                '&:hover': {
+                  color: activeTab === 'interviews' ? 'primary.main' : 'text.primary',
+                },
+                transition: 'all 0.2s',
+              }}
+            >
+              <Calendar sx={{ width: 20, height: 20 }} />
+              <span>面试安排</span>
+            </Box>
+          </Box>
+
+          {/* Search Bar */}
+          <Box
+            sx={{
+              bgcolor: 'background.paper',
+              borderRadius: 2,
+              boxShadow: 1,
+              p: 2,
+              mb: 3,
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box sx={{ flex: 1, position: 'relative' }}>
+                <Search
+                  sx={{
+                    position: 'absolute',
+                    left: 1.5,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    width: 20,
+                    height: 20,
+                    color: 'grey.400',
+                  }}
+                />
+                <Box
+                  component='input'
+                  type='text'
+                  placeholder='搜索职位/候选人...'
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  sx={{
+                    width: '100%',
+                    pl: 4,
+                    pr: 2,
+                    py: 1,
+                    border: 1,
+                    borderColor: 'grey.300',
+                    borderRadius: 2,
+                    outline: 'none',
+                    '&:focus': {
+                      borderColor: 'primary.main',
+                      boxShadow: (theme: any) => `0 0 0 2px ${theme.palette.primary.main}20`,
+                    },
+                  }}
+                />
+              </Box>
               <Box
                 component='button'
-                onClick={() => navigate('/dashboard')}
+                onClick={loadData}
                 sx={{
-                  p: 1,
-                  borderRadius: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  px: 2,
+                  py: 1,
+                  bgcolor: 'primary.main',
+                  color: 'white',
                   border: 'none',
-                  bgcolor: 'transparent',
+                  borderRadius: 2,
                   cursor: 'pointer',
-                  '&:hover': { bgcolor: 'grey.100' },
+                  '&:hover': { bgcolor: 'primary.dark' },
                   transition: 'all 0.2s',
                 }}
               >
-                <ChevronLeft sx={{ width: 20, height: 20, color: 'grey.600' }} />
-              </Box>
-              <Box>
-                {/* 面包屑导航 */}
-                <Box sx={{ mb: 1 }}>
-                  <Typography
-                    component='a'
-                    href='/hrm'
-                    sx={{
-                      color: 'text.secondary',
-                      textDecoration: 'none',
-                      fontSize: '0.875rem',
-                      '&:hover': {
-                        color: 'primary.main',
-                        textDecoration: 'underline',
-                      },
-                    }}
-                  >
-                    人力资源
-                  </Typography>
-                  <Typography
-                    component='span'
-                    sx={{ mx: 1, color: 'text.disabled' }}
-                  >
-                    /
-                  </Typography>
-                  <Typography
-                    component='span'
-                    sx={{ color: 'text.primary', fontSize: '0.875rem' }}
-                  >
-                    招聘管理
-                  </Typography>
-                </Box>
-                <Typography
-                  variant='h5'
-                  sx={{
-                    fontWeight: 700,
-                    color: 'grey.900',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1.5,
-                  }}
-                >
-                  <UserPlus sx={{ width: 28, height: 28, color: 'primary.main' }} />
-                  招聘管理
-                </Typography>
-                <Typography
-                  variant='body2'
-                  sx={{ mt: 0.5, color: 'grey.500' }}
-                >
-                  管理招聘流程、职位发布和候选人信息
-                </Typography>
+                <Plus sx={{ width: 20, height: 20, mr: 1 }} />
+                刷新数据
               </Box>
             </Box>
           </Box>
-        </Box>
-      </Box>
 
-      {/* 统计卡片 */}
-      <Box
-        sx={{
-          maxWidth: 1280,
-          mx: 'auto',
-          px: { xs: 2, sm: 3, lg: 4 },
-          py: 3,
-        }}
-      >
-        <StatCardGroup
-          stats={[
-            {
-              title: '招聘岗位数',
-              value: positions.length,
-              icon: <Briefcase style={{ width: 24, height: 24 }} />,
-              color: 'primary',
-            },
-            {
-              title: '候选人总数',
-              value: candidates.length,
-              icon: <Users style={{ width: 24, height: 24 }} />,
-              color: 'secondary',
-            },
-            {
-              title: '面试安排数',
-              value: interviews.length,
-              icon: <Calendar style={{ width: 24, height: 24 }} />,
-              color: 'warning',
-            },
-            {
-              title: '已录用数',
-              value: candidates.filter((c) => c.status === 'hired').length,
-              icon: <CheckCircle style={{ width: 24, height: 24 }} />,
-              color: 'success',
-            },
-          ]}
-          columns={4}
-          loading={loading}
-        />
-      </Box>
-
-      {/* Tabs */}
-      <Box
-        sx={{
-          maxWidth: 1280,
-          mx: 'auto',
-          px: { xs: 2, sm: 3, lg: 4 },
-          py: 3,
-        }}
-      >
-        <Box
-          sx={{
-            display: 'flex',
-            gap: 2,
-            mb: 3,
-            borderBottom: 1,
-            borderColor: 'grey.200',
-          }}
-        >
-          <Box
-            component='button'
-            onClick={() => setActiveTab('positions')}
-            sx={{
-              pb: 2,
-              px: 1,
-              fontWeight: 500,
-              border: 'none',
-              bgcolor: 'transparent',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              color: activeTab === 'positions' ? 'primary.main' : 'text.secondary',
-              borderBottom: activeTab === 'positions' ? 2 : 0,
-              borderColor: activeTab === 'positions' ? 'primary.main' : 'transparent',
-              '&:hover': {
-                color: activeTab === 'positions' ? 'primary.main' : 'text.primary',
-              },
-              transition: 'all 0.2s',
-            }}
-          >
-            <Briefcase sx={{ width: 20, height: 20 }} />
-            <span>招聘职位</span>
-          </Box>
-          <Box
-            component='button'
-            onClick={() => setActiveTab('candidates')}
-            sx={{
-              pb: 2,
-              px: 1,
-              fontWeight: 500,
-              border: 'none',
-              bgcolor: 'transparent',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              color: activeTab === 'candidates' ? 'primary.main' : 'text.secondary',
-              borderBottom: activeTab === 'candidates' ? 2 : 0,
-              borderColor: activeTab === 'candidates' ? 'primary.main' : 'transparent',
-              '&:hover': {
-                color: activeTab === 'candidates' ? 'primary.main' : 'text.primary',
-              },
-              transition: 'all 0.2s',
-            }}
-          >
-            <Users sx={{ width: 20, height: 20 }} />
-            <span>候选人</span>
-          </Box>
-          <Box
-            component='button'
-            onClick={() => setActiveTab('interviews')}
-            sx={{
-              pb: 2,
-              px: 1,
-              fontWeight: 500,
-              border: 'none',
-              bgcolor: 'transparent',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-              color: activeTab === 'interviews' ? 'primary.main' : 'text.secondary',
-              borderBottom: activeTab === 'interviews' ? 2 : 0,
-              borderColor: activeTab === 'interviews' ? 'primary.main' : 'transparent',
-              '&:hover': {
-                color: activeTab === 'interviews' ? 'primary.main' : 'text.primary',
-              },
-              transition: 'all 0.2s',
-            }}
-          >
-            <Calendar sx={{ width: 20, height: 20 }} />
-            <span>面试安排</span>
-          </Box>
-        </Box>
-
-        {/* Search Bar */}
-        <Box
-          sx={{
-            bgcolor: 'background.paper',
-            borderRadius: 2,
-            boxShadow: 1,
-            p: 2,
-            mb: 3,
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Box sx={{ flex: 1, position: 'relative' }}>
-              <Search
-                sx={{
-                  position: 'absolute',
-                  left: 1.5,
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  width: 20,
-                  height: 20,
-                  color: 'grey.400',
-                }}
-              />
+          {loading ? (
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                py: 10,
+              }}
+            >
               <Box
-                component='input'
-                type='text'
-                placeholder='搜索职位/候选人...'
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
                 sx={{
-                  width: '100%',
-                  pl: 4,
-                  pr: 2,
-                  py: 1,
-                  border: 1,
-                  borderColor: 'grey.300',
-                  borderRadius: 2,
-                  outline: 'none',
-                  '&:focus': {
-                    borderColor: 'primary.main',
-                    boxShadow: (theme: any) => `0 0 0 2px ${theme.palette.primary.main}20`,
+                  width: 48,
+                  height: 48,
+                  borderRadius: '50%',
+                  border: 3,
+                  borderColor: 'primary.main',
+                  borderTopColor: 'transparent',
+                  animation: 'spin 1s linear infinite',
+                  '@keyframes spin': {
+                    '0%': { transform: 'rotate(0deg)' },
+                    '100%': { transform: 'rotate(360deg)' },
                   },
                 }}
               />
             </Box>
-            <Box
-              component='button'
-              onClick={loadData}
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                px: 2,
-                py: 1,
-                bgcolor: 'primary.main',
-                color: 'white',
-                border: 'none',
-                borderRadius: 2,
-                cursor: 'pointer',
-                '&:hover': { bgcolor: 'primary.dark' },
-                transition: 'all 0.2s',
-              }}
-            >
-              <Plus sx={{ width: 20, height: 20, mr: 1 }} />
-              刷新数据
-            </Box>
-          </Box>
-        </Box>
-
-        {loading ? (
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              py: 10,
-            }}
-          >
-            <Box
-              sx={{
-                width: 48,
-                height: 48,
-                borderRadius: '50%',
-                border: 3,
-                borderColor: 'primary.main',
-                borderTopColor: 'transparent',
-                animation: 'spin 1s linear infinite',
-                '@keyframes spin': {
-                  '0%': { transform: 'rotate(0deg)' },
-                  '100%': { transform: 'rotate(360deg)' },
-                },
-              }}
-            />
-          </Box>
-        ) : (
-          <>
-            {/* Content */}
-            {activeTab === 'positions' && (
-              <Box
-                sx={{
-                  bgcolor: 'background.paper',
-                  borderRadius: 2,
-                  boxShadow: 1,
-                  overflow: 'hidden',
-                }}
-              >
-                <Box sx={{ overflowX: 'auto' }}>
-                  <Box
-                    component='table'
-                    sx={{ minWidth: '100%', borderCollapse: 'collapse' }}
-                  >
+          ) : (
+            <>
+              {/* Content */}
+              {activeTab === 'positions' && (
+                <Box
+                  sx={{
+                    bgcolor: 'background.paper',
+                    borderRadius: 2,
+                    boxShadow: 1,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <Box sx={{ overflowX: 'auto' }}>
                     <Box
-                      component='thead'
-                      sx={{ bgcolor: 'grey.50' }}
+                      component='table'
+                      sx={{ minWidth: '100%', borderCollapse: 'collapse' }}
                     >
-                      <Box component='tr'>
-                        <Box
-                          component='th'
-                          sx={{
-                            px: 3,
-                            py: 2,
-                            textAlign: 'left',
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
-                            color: 'grey.500',
-                            textTransform: 'uppercase',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          职位名称
-                        </Box>
-                        <Box
-                          component='th'
-                          sx={{
-                            px: 3,
-                            py: 2,
-                            textAlign: 'left',
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
-                            color: 'grey.500',
-                            textTransform: 'uppercase',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          部门
-                        </Box>
-                        <Box
-                          component='th'
-                          sx={{
-                            px: 3,
-                            py: 2,
-                            textAlign: 'left',
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
-                            color: 'grey.500',
-                            textTransform: 'uppercase',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          薪资范围
-                        </Box>
-                        <Box
-                          component='th'
-                          sx={{
-                            px: 3,
-                            py: 2,
-                            textAlign: 'left',
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
-                            color: 'grey.500',
-                            textTransform: 'uppercase',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          招聘人数
-                        </Box>
-                        <Box
-                          component='th'
-                          sx={{
-                            px: 3,
-                            py: 2,
-                            textAlign: 'left',
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
-                            color: 'grey.500',
-                            textTransform: 'uppercase',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          状态
-                        </Box>
-                        <Box
-                          component='th'
-                          sx={{
-                            px: 3,
-                            py: 2,
-                            textAlign: 'left',
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
-                            color: 'grey.500',
-                            textTransform: 'uppercase',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          发布时间
-                        </Box>
-                        <Box
-                          component='th'
-                          sx={{
-                            px: 3,
-                            py: 2,
-                            textAlign: 'left',
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
-                            color: 'grey.500',
-                            textTransform: 'uppercase',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          操作
-                        </Box>
-                      </Box>
-                    </Box>
-                    <Box component='tbody'>
-                      {filteredPositions.map((position) => (
-                        <Box
-                          component='tr'
-                          key={position.id}
-                          sx={{
-                            '&:hover': { bgcolor: 'grey.50' },
-                            borderTop: 1,
-                            borderColor: 'divider',
-                          }}
-                        >
+                      <Box
+                        component='thead'
+                        sx={{ bgcolor: 'grey.50' }}
+                      >
+                        <Box component='tr'>
                           <Box
-                            component='td'
+                            component='th'
                             sx={{
                               px: 3,
                               py: 2,
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            <Typography
-                              variant='body2'
-                              sx={{ fontWeight: 500, color: 'grey.900' }}
-                            >
-                              {position.title}
-                            </Typography>
-                            <Typography
-                              variant='body2'
-                              sx={{ color: 'grey.500' }}
-                            >
-                              {position.location}
-                            </Typography>
-                          </Box>
-                          <Box
-                            component='td'
-                            sx={{
-                              px: 3,
-                              py: 2,
-                              whiteSpace: 'nowrap',
-                              color: 'grey.900',
-                              fontSize: '0.875rem',
-                            }}
-                          >
-                            {position.department}
-                          </Box>
-                          <Box
-                            component='td'
-                            sx={{
-                              px: 3,
-                              py: 2,
-                              whiteSpace: 'nowrap',
-                              color: 'grey.900',
-                              fontSize: '0.875rem',
-                            }}
-                          >
-                            {position.salary_range}
-                          </Box>
-                          <Box
-                            component='td'
-                            sx={{
-                              px: 3,
-                              py: 2,
-                              whiteSpace: 'nowrap',
-                              color: 'grey.900',
-                              fontSize: '0.875rem',
-                            }}
-                          >
-                            {position.filled_count}/{position.headcount}
-                          </Box>
-                          <Box
-                            component='td'
-                            sx={{ px: 3, py: 2, whiteSpace: 'nowrap' }}
-                          >
-                            {getStatusBadge(position.status)}
-                          </Box>
-                          <Box
-                            component='td'
-                            sx={{
-                              px: 3,
-                              py: 2,
-                              whiteSpace: 'nowrap',
-                              color: 'grey.500',
-                              fontSize: '0.875rem',
-                            }}
-                          >
-                            {position.published_at}
-                          </Box>
-                          <Box
-                            component='td'
-                            sx={{ px: 3, py: 2, whiteSpace: 'nowrap' }}
-                          >
-                            <Box sx={{ display: 'flex', gap: 1 }}>
-                              <Box
-                                component='button'
-                                sx={{
-                                  color: 'primary.main',
-                                  border: 'none',
-                                  bgcolor: 'transparent',
-                                  cursor: 'pointer',
-                                  p: 0,
-                                  '&:hover': { color: 'primary.dark' },
-                                }}
-                              >
-                                查看
-                              </Box>
-                              <Box
-                                component='button'
-                                sx={{
-                                  color: 'primary.main',
-                                  border: 'none',
-                                  bgcolor: 'transparent',
-                                  cursor: 'pointer',
-                                  p: 0,
-                                  '&:hover': { color: 'primary.dark' },
-                                }}
-                              >
-                                编辑
-                              </Box>
-                            </Box>
-                          </Box>
-                        </Box>
-                      ))}
-                    </Box>
-                  </Box>
-                </Box>
-              </Box>
-            )}
-
-            {activeTab === 'candidates' && (
-              <Box
-                sx={{
-                  bgcolor: 'background.paper',
-                  borderRadius: 2,
-                  boxShadow: 1,
-                  overflow: 'hidden',
-                }}
-              >
-                <Box sx={{ overflowX: 'auto' }}>
-                  <Box
-                    component='table'
-                    sx={{ minWidth: '100%', borderCollapse: 'collapse' }}
-                  >
-                    <Box
-                      component='thead'
-                      sx={{ bgcolor: 'grey.50' }}
-                    >
-                      <Box component='tr'>
-                        <Box
-                          component='th'
-                          sx={{
-                            px: 3,
-                            py: 2,
-                            textAlign: 'left',
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
-                            color: 'grey.500',
-                            textTransform: 'uppercase',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          姓名
-                        </Box>
-                        <Box
-                          component='th'
-                          sx={{
-                            px: 3,
-                            py: 2,
-                            textAlign: 'left',
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
-                            color: 'grey.500',
-                            textTransform: 'uppercase',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          应聘职位
-                        </Box>
-                        <Box
-                          component='th'
-                          sx={{
-                            px: 3,
-                            py: 2,
-                            textAlign: 'left',
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
-                            color: 'grey.500',
-                            textTransform: 'uppercase',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          学历
-                        </Box>
-                        <Box
-                          component='th'
-                          sx={{
-                            px: 3,
-                            py: 2,
-                            textAlign: 'left',
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
-                            color: 'grey.500',
-                            textTransform: 'uppercase',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          工作经验
-                        </Box>
-                        <Box
-                          component='th'
-                          sx={{
-                            px: 3,
-                            py: 2,
-                            textAlign: 'left',
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
-                            color: 'grey.500',
-                            textTransform: 'uppercase',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          期望薪资
-                        </Box>
-                        <Box
-                          component='th'
-                          sx={{
-                            px: 3,
-                            py: 2,
-                            textAlign: 'left',
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
-                            color: 'grey.500',
-                            textTransform: 'uppercase',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          状态
-                        </Box>
-                        <Box
-                          component='th'
-                          sx={{
-                            px: 3,
-                            py: 2,
-                            textAlign: 'left',
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
-                            color: 'grey.500',
-                            textTransform: 'uppercase',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          申请时间
-                        </Box>
-                        <Box
-                          component='th'
-                          sx={{
-                            px: 3,
-                            py: 2,
-                            textAlign: 'left',
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
-                            color: 'grey.500',
-                            textTransform: 'uppercase',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          操作
-                        </Box>
-                      </Box>
-                    </Box>
-                    <Box component='tbody'>
-                      {filteredCandidates.map((candidate) => (
-                        <Box
-                          component='tr'
-                          key={candidate.id}
-                          sx={{
-                            '&:hover': { bgcolor: 'grey.50' },
-                            borderTop: 1,
-                            borderColor: 'divider',
-                          }}
-                        >
-                          <Box
-                            component='td'
-                            sx={{
-                              px: 3,
-                              py: 2,
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            <Typography
-                              variant='body2'
-                              sx={{ fontWeight: 500, color: 'grey.900' }}
-                            >
-                              {candidate.name}
-                            </Typography>
-                            <Typography
-                              variant='body2'
-                              sx={{ color: 'grey.500' }}
-                            >
-                              {candidate.phone}
-                            </Typography>
-                          </Box>
-                          <Box
-                            component='td'
-                            sx={{
-                              px: 3,
-                              py: 2,
-                              whiteSpace: 'nowrap',
-                              color: 'grey.900',
-                              fontSize: '0.875rem',
-                            }}
-                          >
-                            {candidate.position}
-                          </Box>
-                          <Box
-                            component='td'
-                            sx={{
-                              px: 3,
-                              py: 2,
-                              whiteSpace: 'nowrap',
-                              color: 'grey.900',
-                              fontSize: '0.875rem',
-                            }}
-                          >
-                            {candidate.education}
-                          </Box>
-                          <Box
-                            component='td'
-                            sx={{
-                              px: 3,
-                              py: 2,
-                              whiteSpace: 'nowrap',
-                              color: 'grey.900',
-                              fontSize: '0.875rem',
-                            }}
-                          >
-                            {candidate.experience}
-                          </Box>
-                          <Box
-                            component='td'
-                            sx={{
-                              px: 3,
-                              py: 2,
-                              whiteSpace: 'nowrap',
-                              color: 'grey.900',
-                              fontSize: '0.875rem',
-                            }}
-                          >
-                            {candidate.salary_expectation
-                              ? `¥${candidate.salary_expectation.toLocaleString()}`
-                              : '-'}
-                          </Box>
-                          <Box
-                            component='td'
-                            sx={{ px: 3, py: 2, whiteSpace: 'nowrap' }}
-                          >
-                            {getStatusBadge(candidate.status)}
-                          </Box>
-                          <Box
-                            component='td'
-                            sx={{
-                              px: 3,
-                              py: 2,
-                              whiteSpace: 'nowrap',
-                              color: 'grey.500',
-                              fontSize: '0.875rem',
-                            }}
-                          >
-                            {candidate.applied_at}
-                          </Box>
-                          <Box
-                            component='td'
-                            sx={{ px: 3, py: 2, whiteSpace: 'nowrap' }}
-                          >
-                            <Box sx={{ display: 'flex', gap: 1 }}>
-                              <Box
-                                component='button'
-                                sx={{
-                                  color: 'primary.main',
-                                  border: 'none',
-                                  bgcolor: 'transparent',
-                                  cursor: 'pointer',
-                                  p: 0,
-                                  '&:hover': { color: 'primary.dark' },
-                                }}
-                              >
-                                查看
-                              </Box>
-                              <Box
-                                component='button'
-                                sx={{
-                                  color: 'primary.main',
-                                  border: 'none',
-                                  bgcolor: 'transparent',
-                                  cursor: 'pointer',
-                                  p: 0,
-                                  '&:hover': { color: 'primary.dark' },
-                                }}
-                              >
-                                面试
-                              </Box>
-                            </Box>
-                          </Box>
-                        </Box>
-                      ))}
-                    </Box>
-                  </Box>
-                </Box>
-              </Box>
-            )}
-
-            {activeTab === 'interviews' && (
-              <Box
-                sx={{
-                  bgcolor: 'background.paper',
-                  borderRadius: 2,
-                  boxShadow: 1,
-                  overflow: 'hidden',
-                }}
-              >
-                <Box sx={{ overflowX: 'auto' }}>
-                  <Box
-                    component='table'
-                    sx={{ minWidth: '100%', borderCollapse: 'collapse' }}
-                  >
-                    <Box
-                      component='thead'
-                      sx={{ bgcolor: 'grey.50' }}
-                    >
-                      <Box component='tr'>
-                        <Box
-                          component='th'
-                          sx={{
-                            px: 3,
-                            py: 2,
-                            textAlign: 'left',
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
-                            color: 'grey.500',
-                            textTransform: 'uppercase',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          候选人
-                        </Box>
-                        <Box
-                          component='th'
-                          sx={{
-                            px: 3,
-                            py: 2,
-                            textAlign: 'left',
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
-                            color: 'grey.500',
-                            textTransform: 'uppercase',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          应聘职位
-                        </Box>
-                        <Box
-                          component='th'
-                          sx={{
-                            px: 3,
-                            py: 2,
-                            textAlign: 'left',
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
-                            color: 'grey.500',
-                            textTransform: 'uppercase',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          面试官
-                        </Box>
-                        <Box
-                          component='th'
-                          sx={{
-                            px: 3,
-                            py: 2,
-                            textAlign: 'left',
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
-                            color: 'grey.500',
-                            textTransform: 'uppercase',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          面试时间
-                        </Box>
-                        <Box
-                          component='th'
-                          sx={{
-                            px: 3,
-                            py: 2,
-                            textAlign: 'left',
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
-                            color: 'grey.500',
-                            textTransform: 'uppercase',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          面试类型
-                        </Box>
-                        <Box
-                          component='th'
-                          sx={{
-                            px: 3,
-                            py: 2,
-                            textAlign: 'left',
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
-                            color: 'grey.500',
-                            textTransform: 'uppercase',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          结果
-                        </Box>
-                        <Box
-                          component='th'
-                          sx={{
-                            px: 3,
-                            py: 2,
-                            textAlign: 'left',
-                            fontSize: '0.75rem',
-                            fontWeight: 500,
-                            color: 'grey.500',
-                            textTransform: 'uppercase',
-                            whiteSpace: 'nowrap',
-                          }}
-                        >
-                          操作
-                        </Box>
-                      </Box>
-                    </Box>
-                    <Box component='tbody'>
-                      {interviews.map((interview) => (
-                        <Box
-                          component='tr'
-                          key={interview.id}
-                          sx={{
-                            '&:hover': { bgcolor: 'grey.50' },
-                            borderTop: 1,
-                            borderColor: 'divider',
-                          }}
-                        >
-                          <Box
-                            component='td'
-                            sx={{
-                              px: 3,
-                              py: 2,
-                              whiteSpace: 'nowrap',
+                              textAlign: 'left',
+                              fontSize: '0.75rem',
                               fontWeight: 500,
-                              color: 'grey.900',
-                              fontSize: '0.875rem',
+                              color: 'grey.500',
+                              textTransform: 'uppercase',
+                              whiteSpace: 'nowrap',
                             }}
                           >
-                            {interview.candidate_name}
+                            职位名称
                           </Box>
                           <Box
-                            component='td'
+                            component='th'
                             sx={{
                               px: 3,
                               py: 2,
+                              textAlign: 'left',
+                              fontSize: '0.75rem',
+                              fontWeight: 500,
+                              color: 'grey.500',
+                              textTransform: 'uppercase',
                               whiteSpace: 'nowrap',
-                              color: 'grey.900',
-                              fontSize: '0.875rem',
                             }}
                           >
-                            {interview.position}
+                            部门
                           </Box>
                           <Box
-                            component='td'
+                            component='th'
                             sx={{
                               px: 3,
                               py: 2,
+                              textAlign: 'left',
+                              fontSize: '0.75rem',
+                              fontWeight: 500,
+                              color: 'grey.500',
+                              textTransform: 'uppercase',
                               whiteSpace: 'nowrap',
-                              color: 'grey.900',
-                              fontSize: '0.875rem',
                             }}
                           >
-                            {interview.interviewer}
+                            薪资范围
                           </Box>
                           <Box
-                            component='td'
+                            component='th'
                             sx={{
                               px: 3,
                               py: 2,
+                              textAlign: 'left',
+                              fontSize: '0.75rem',
+                              fontWeight: 500,
+                              color: 'grey.500',
+                              textTransform: 'uppercase',
                               whiteSpace: 'nowrap',
-                              color: 'grey.900',
-                              fontSize: '0.875rem',
                             }}
                           >
-                            {interview.interview_time}
+                            招聘人数
                           </Box>
                           <Box
-                            component='td'
+                            component='th'
                             sx={{
                               px: 3,
                               py: 2,
+                              textAlign: 'left',
+                              fontSize: '0.75rem',
+                              fontWeight: 500,
+                              color: 'grey.500',
+                              textTransform: 'uppercase',
                               whiteSpace: 'nowrap',
-                              color: 'grey.900',
-                              fontSize: '0.875rem',
                             }}
                           >
-                            {interview.interview_type === 'first'
-                              ? '初试'
-                              : interview.interview_type === 'second'
-                                ? '复试'
-                                : '终面'}
+                            状态
                           </Box>
                           <Box
-                            component='td'
-                            sx={{ px: 3, py: 2, whiteSpace: 'nowrap' }}
+                            component='th'
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              textAlign: 'left',
+                              fontSize: '0.75rem',
+                              fontWeight: 500,
+                              color: 'grey.500',
+                              textTransform: 'uppercase',
+                              whiteSpace: 'nowrap',
+                            }}
                           >
-                            {getStatusBadge(interview.result)}
+                            发布时间
                           </Box>
                           <Box
-                            component='td'
-                            sx={{ px: 3, py: 2, whiteSpace: 'nowrap' }}
+                            component='th'
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              textAlign: 'left',
+                              fontSize: '0.75rem',
+                              fontWeight: 500,
+                              color: 'grey.500',
+                              textTransform: 'uppercase',
+                              whiteSpace: 'nowrap',
+                            }}
                           >
-                            <Box sx={{ display: 'flex', gap: 1 }}>
-                              <Box
-                                component='button'
-                                sx={{
-                                  color: 'primary.main',
-                                  border: 'none',
-                                  bgcolor: 'transparent',
-                                  cursor: 'pointer',
-                                  p: 0,
-                                  fontSize: '0.875rem',
-                                  '&:hover': { color: 'primary.dark' },
-                                }}
-                              >
-                                查看详情
-                              </Box>
-                              {interview.result === 'pending' && (
-                                <>
-                                  <Box
-                                    component='button'
-                                    sx={{
-                                      color: 'success.main',
-                                      border: 'none',
-                                      bgcolor: 'transparent',
-                                      cursor: 'pointer',
-                                      p: 0,
-                                      fontSize: '0.875rem',
-                                      '&:hover': { color: 'success.dark' },
-                                    }}
-                                  >
-                                    通过
-                                  </Box>
-                                  <Box
-                                    component='button'
-                                    sx={{
-                                      color: 'error.main',
-                                      border: 'none',
-                                      bgcolor: 'transparent',
-                                      cursor: 'pointer',
-                                      p: 0,
-                                      fontSize: '0.875rem',
-                                      '&:hover': { color: 'error.dark' },
-                                    }}
-                                  >
-                                    拒绝
-                                  </Box>
-                                </>
-                              )}
-                            </Box>
+                            操作
                           </Box>
                         </Box>
-                      ))}
+                      </Box>
+                      <Box component='tbody'>
+                        {filteredPositions.map((position) => (
+                          <Box
+                            component='tr'
+                            key={position.id}
+                            sx={{
+                              '&:hover': { bgcolor: 'grey.50' },
+                              borderTop: 1,
+                              borderColor: 'divider',
+                            }}
+                          >
+                            <Box
+                              component='td'
+                              sx={{
+                                px: 3,
+                                py: 2,
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              <Typography
+                                variant='body2'
+                                sx={{ fontWeight: 500, color: 'grey.900' }}
+                              >
+                                {position.title}
+                              </Typography>
+                              <Typography
+                                variant='body2'
+                                sx={{ color: 'grey.500' }}
+                              >
+                                {position.location}
+                              </Typography>
+                            </Box>
+                            <Box
+                              component='td'
+                              sx={{
+                                px: 3,
+                                py: 2,
+                                whiteSpace: 'nowrap',
+                                color: 'grey.900',
+                                fontSize: '0.875rem',
+                              }}
+                            >
+                              {position.department}
+                            </Box>
+                            <Box
+                              component='td'
+                              sx={{
+                                px: 3,
+                                py: 2,
+                                whiteSpace: 'nowrap',
+                                color: 'grey.900',
+                                fontSize: '0.875rem',
+                              }}
+                            >
+                              {position.salary_range}
+                            </Box>
+                            <Box
+                              component='td'
+                              sx={{
+                                px: 3,
+                                py: 2,
+                                whiteSpace: 'nowrap',
+                                color: 'grey.900',
+                                fontSize: '0.875rem',
+                              }}
+                            >
+                              {position.filled_count}/{position.headcount}
+                            </Box>
+                            <Box
+                              component='td'
+                              sx={{ px: 3, py: 2, whiteSpace: 'nowrap' }}
+                            >
+                              {getStatusBadge(position.status)}
+                            </Box>
+                            <Box
+                              component='td'
+                              sx={{
+                                px: 3,
+                                py: 2,
+                                whiteSpace: 'nowrap',
+                                color: 'grey.500',
+                                fontSize: '0.875rem',
+                              }}
+                            >
+                              {position.published_at}
+                            </Box>
+                            <Box
+                              component='td'
+                              sx={{ px: 3, py: 2, whiteSpace: 'nowrap' }}
+                            >
+                              <Box sx={{ display: 'flex', gap: 1 }}>
+                                <Box
+                                  component='button'
+                                  sx={{
+                                    color: 'primary.main',
+                                    border: 'none',
+                                    bgcolor: 'transparent',
+                                    cursor: 'pointer',
+                                    p: 0,
+                                    '&:hover': { color: 'primary.dark' },
+                                  }}
+                                >
+                                  查看
+                                </Box>
+                                <Box
+                                  component='button'
+                                  sx={{
+                                    color: 'primary.main',
+                                    border: 'none',
+                                    bgcolor: 'transparent',
+                                    cursor: 'pointer',
+                                    p: 0,
+                                    '&:hover': { color: 'primary.dark' },
+                                  }}
+                                >
+                                  编辑
+                                </Box>
+                              </Box>
+                            </Box>
+                          </Box>
+                        ))}
+                      </Box>
                     </Box>
                   </Box>
                 </Box>
-              </Box>
-            )}
-          </>
-        )}
-      </Box>
+              )}
+
+              {activeTab === 'candidates' && (
+                <Box
+                  sx={{
+                    bgcolor: 'background.paper',
+                    borderRadius: 2,
+                    boxShadow: 1,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <Box sx={{ overflowX: 'auto' }}>
+                    <Box
+                      component='table'
+                      sx={{ minWidth: '100%', borderCollapse: 'collapse' }}
+                    >
+                      <Box
+                        component='thead'
+                        sx={{ bgcolor: 'grey.50' }}
+                      >
+                        <Box component='tr'>
+                          <Box
+                            component='th'
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              textAlign: 'left',
+                              fontSize: '0.75rem',
+                              fontWeight: 500,
+                              color: 'grey.500',
+                              textTransform: 'uppercase',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            姓名
+                          </Box>
+                          <Box
+                            component='th'
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              textAlign: 'left',
+                              fontSize: '0.75rem',
+                              fontWeight: 500,
+                              color: 'grey.500',
+                              textTransform: 'uppercase',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            应聘职位
+                          </Box>
+                          <Box
+                            component='th'
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              textAlign: 'left',
+                              fontSize: '0.75rem',
+                              fontWeight: 500,
+                              color: 'grey.500',
+                              textTransform: 'uppercase',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            学历
+                          </Box>
+                          <Box
+                            component='th'
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              textAlign: 'left',
+                              fontSize: '0.75rem',
+                              fontWeight: 500,
+                              color: 'grey.500',
+                              textTransform: 'uppercase',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            工作经验
+                          </Box>
+                          <Box
+                            component='th'
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              textAlign: 'left',
+                              fontSize: '0.75rem',
+                              fontWeight: 500,
+                              color: 'grey.500',
+                              textTransform: 'uppercase',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            期望薪资
+                          </Box>
+                          <Box
+                            component='th'
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              textAlign: 'left',
+                              fontSize: '0.75rem',
+                              fontWeight: 500,
+                              color: 'grey.500',
+                              textTransform: 'uppercase',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            状态
+                          </Box>
+                          <Box
+                            component='th'
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              textAlign: 'left',
+                              fontSize: '0.75rem',
+                              fontWeight: 500,
+                              color: 'grey.500',
+                              textTransform: 'uppercase',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            申请时间
+                          </Box>
+                          <Box
+                            component='th'
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              textAlign: 'left',
+                              fontSize: '0.75rem',
+                              fontWeight: 500,
+                              color: 'grey.500',
+                              textTransform: 'uppercase',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            操作
+                          </Box>
+                        </Box>
+                      </Box>
+                      <Box component='tbody'>
+                        {filteredCandidates.map((candidate) => (
+                          <Box
+                            component='tr'
+                            key={candidate.id}
+                            sx={{
+                              '&:hover': { bgcolor: 'grey.50' },
+                              borderTop: 1,
+                              borderColor: 'divider',
+                            }}
+                          >
+                            <Box
+                              component='td'
+                              sx={{
+                                px: 3,
+                                py: 2,
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              <Typography
+                                variant='body2'
+                                sx={{ fontWeight: 500, color: 'grey.900' }}
+                              >
+                                {candidate.name}
+                              </Typography>
+                              <Typography
+                                variant='body2'
+                                sx={{ color: 'grey.500' }}
+                              >
+                                {candidate.phone}
+                              </Typography>
+                            </Box>
+                            <Box
+                              component='td'
+                              sx={{
+                                px: 3,
+                                py: 2,
+                                whiteSpace: 'nowrap',
+                                color: 'grey.900',
+                                fontSize: '0.875rem',
+                              }}
+                            >
+                              {candidate.position}
+                            </Box>
+                            <Box
+                              component='td'
+                              sx={{
+                                px: 3,
+                                py: 2,
+                                whiteSpace: 'nowrap',
+                                color: 'grey.900',
+                                fontSize: '0.875rem',
+                              }}
+                            >
+                              {candidate.education}
+                            </Box>
+                            <Box
+                              component='td'
+                              sx={{
+                                px: 3,
+                                py: 2,
+                                whiteSpace: 'nowrap',
+                                color: 'grey.900',
+                                fontSize: '0.875rem',
+                              }}
+                            >
+                              {candidate.experience}
+                            </Box>
+                            <Box
+                              component='td'
+                              sx={{
+                                px: 3,
+                                py: 2,
+                                whiteSpace: 'nowrap',
+                                color: 'grey.900',
+                                fontSize: '0.875rem',
+                              }}
+                            >
+                              {candidate.salary_expectation
+                                ? `¥${candidate.salary_expectation.toLocaleString()}`
+                                : '-'}
+                            </Box>
+                            <Box
+                              component='td'
+                              sx={{ px: 3, py: 2, whiteSpace: 'nowrap' }}
+                            >
+                              {getStatusBadge(candidate.status)}
+                            </Box>
+                            <Box
+                              component='td'
+                              sx={{
+                                px: 3,
+                                py: 2,
+                                whiteSpace: 'nowrap',
+                                color: 'grey.500',
+                                fontSize: '0.875rem',
+                              }}
+                            >
+                              {candidate.applied_at}
+                            </Box>
+                            <Box
+                              component='td'
+                              sx={{ px: 3, py: 2, whiteSpace: 'nowrap' }}
+                            >
+                              <Box sx={{ display: 'flex', gap: 1 }}>
+                                <Box
+                                  component='button'
+                                  sx={{
+                                    color: 'primary.main',
+                                    border: 'none',
+                                    bgcolor: 'transparent',
+                                    cursor: 'pointer',
+                                    p: 0,
+                                    '&:hover': { color: 'primary.dark' },
+                                  }}
+                                >
+                                  查看
+                                </Box>
+                                <Box
+                                  component='button'
+                                  sx={{
+                                    color: 'primary.main',
+                                    border: 'none',
+                                    bgcolor: 'transparent',
+                                    cursor: 'pointer',
+                                    p: 0,
+                                    '&:hover': { color: 'primary.dark' },
+                                  }}
+                                >
+                                  面试
+                                </Box>
+                              </Box>
+                            </Box>
+                          </Box>
+                        ))}
+                      </Box>
+                    </Box>
+                  </Box>
+                </Box>
+              )}
+
+              {activeTab === 'interviews' && (
+                <Box
+                  sx={{
+                    bgcolor: 'background.paper',
+                    borderRadius: 2,
+                    boxShadow: 1,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <Box sx={{ overflowX: 'auto' }}>
+                    <Box
+                      component='table'
+                      sx={{ minWidth: '100%', borderCollapse: 'collapse' }}
+                    >
+                      <Box
+                        component='thead'
+                        sx={{ bgcolor: 'grey.50' }}
+                      >
+                        <Box component='tr'>
+                          <Box
+                            component='th'
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              textAlign: 'left',
+                              fontSize: '0.75rem',
+                              fontWeight: 500,
+                              color: 'grey.500',
+                              textTransform: 'uppercase',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            候选人
+                          </Box>
+                          <Box
+                            component='th'
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              textAlign: 'left',
+                              fontSize: '0.75rem',
+                              fontWeight: 500,
+                              color: 'grey.500',
+                              textTransform: 'uppercase',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            应聘职位
+                          </Box>
+                          <Box
+                            component='th'
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              textAlign: 'left',
+                              fontSize: '0.75rem',
+                              fontWeight: 500,
+                              color: 'grey.500',
+                              textTransform: 'uppercase',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            面试官
+                          </Box>
+                          <Box
+                            component='th'
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              textAlign: 'left',
+                              fontSize: '0.75rem',
+                              fontWeight: 500,
+                              color: 'grey.500',
+                              textTransform: 'uppercase',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            面试时间
+                          </Box>
+                          <Box
+                            component='th'
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              textAlign: 'left',
+                              fontSize: '0.75rem',
+                              fontWeight: 500,
+                              color: 'grey.500',
+                              textTransform: 'uppercase',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            面试类型
+                          </Box>
+                          <Box
+                            component='th'
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              textAlign: 'left',
+                              fontSize: '0.75rem',
+                              fontWeight: 500,
+                              color: 'grey.500',
+                              textTransform: 'uppercase',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            结果
+                          </Box>
+                          <Box
+                            component='th'
+                            sx={{
+                              px: 3,
+                              py: 2,
+                              textAlign: 'left',
+                              fontSize: '0.75rem',
+                              fontWeight: 500,
+                              color: 'grey.500',
+                              textTransform: 'uppercase',
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            操作
+                          </Box>
+                        </Box>
+                      </Box>
+                      <Box component='tbody'>
+                        {interviews.map((interview) => (
+                          <Box
+                            component='tr'
+                            key={interview.id}
+                            sx={{
+                              '&:hover': { bgcolor: 'grey.50' },
+                              borderTop: 1,
+                              borderColor: 'divider',
+                            }}
+                          >
+                            <Box
+                              component='td'
+                              sx={{
+                                px: 3,
+                                py: 2,
+                                whiteSpace: 'nowrap',
+                                fontWeight: 500,
+                                color: 'grey.900',
+                                fontSize: '0.875rem',
+                              }}
+                            >
+                              {interview.candidate_name}
+                            </Box>
+                            <Box
+                              component='td'
+                              sx={{
+                                px: 3,
+                                py: 2,
+                                whiteSpace: 'nowrap',
+                                color: 'grey.900',
+                                fontSize: '0.875rem',
+                              }}
+                            >
+                              {interview.position}
+                            </Box>
+                            <Box
+                              component='td'
+                              sx={{
+                                px: 3,
+                                py: 2,
+                                whiteSpace: 'nowrap',
+                                color: 'grey.900',
+                                fontSize: '0.875rem',
+                              }}
+                            >
+                              {interview.interviewer}
+                            </Box>
+                            <Box
+                              component='td'
+                              sx={{
+                                px: 3,
+                                py: 2,
+                                whiteSpace: 'nowrap',
+                                color: 'grey.900',
+                                fontSize: '0.875rem',
+                              }}
+                            >
+                              {interview.interview_time}
+                            </Box>
+                            <Box
+                              component='td'
+                              sx={{
+                                px: 3,
+                                py: 2,
+                                whiteSpace: 'nowrap',
+                                color: 'grey.900',
+                                fontSize: '0.875rem',
+                              }}
+                            >
+                              {interview.interview_type === 'first'
+                                ? '初试'
+                                : interview.interview_type === 'second'
+                                  ? '复试'
+                                  : '终面'}
+                            </Box>
+                            <Box
+                              component='td'
+                              sx={{ px: 3, py: 2, whiteSpace: 'nowrap' }}
+                            >
+                              {getStatusBadge(interview.result)}
+                            </Box>
+                            <Box
+                              component='td'
+                              sx={{ px: 3, py: 2, whiteSpace: 'nowrap' }}
+                            >
+                              <Box sx={{ display: 'flex', gap: 1 }}>
+                                <Box
+                                  component='button'
+                                  sx={{
+                                    color: 'primary.main',
+                                    border: 'none',
+                                    bgcolor: 'transparent',
+                                    cursor: 'pointer',
+                                    p: 0,
+                                    fontSize: '0.875rem',
+                                    '&:hover': { color: 'primary.dark' },
+                                  }}
+                                >
+                                  查看详情
+                                </Box>
+                                {interview.result === 'pending' && (
+                                  <>
+                                    <Box
+                                      component='button'
+                                      sx={{
+                                        color: 'success.main',
+                                        border: 'none',
+                                        bgcolor: 'transparent',
+                                        cursor: 'pointer',
+                                        p: 0,
+                                        fontSize: '0.875rem',
+                                        '&:hover': { color: 'success.dark' },
+                                      }}
+                                    >
+                                      通过
+                                    </Box>
+                                    <Box
+                                      component='button'
+                                      sx={{
+                                        color: 'error.main',
+                                        border: 'none',
+                                        bgcolor: 'transparent',
+                                        cursor: 'pointer',
+                                        p: 0,
+                                        fontSize: '0.875rem',
+                                        '&:hover': { color: 'error.dark' },
+                                      }}
+                                    >
+                                      拒绝
+                                    </Box>
+                                  </>
+                                )}
+                              </Box>
+                            </Box>
+                          </Box>
+                        ))}
+                      </Box>
+                    </Box>
+                  </Box>
+                </Box>
+              )}
+            </>
+          )}
+        </Box>
       </Box>
     </PageContainer>
   );

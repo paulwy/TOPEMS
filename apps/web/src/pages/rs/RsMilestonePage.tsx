@@ -10,8 +10,8 @@ import {
   DialogContent,
   DialogActions,
   Stack,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { Plus, Flag, Calendar, Link2, Eye, Edit } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
@@ -75,9 +75,17 @@ const RsMilestonePage: React.FC = () => {
           name: `${b.build_no} - ${b.project_name}`,
           start_date: b.created_at?.split('T')[0] || '',
           end_date: b.created_at?.split('T')[0] || '',
-          progress: b.status === 'success' ? 100 : b.status === 'failed' ? 0 : b.status === 'running' ? 50 : 0,
+          progress:
+            b.status === 'success'
+              ? 100
+              : b.status === 'failed'
+                ? 0
+                : b.status === 'running'
+                  ? 50
+                  : 0,
           related_project: b.project_name,
-          status: b.status === 'success' ? 'completed' : b.status === 'running' ? 'active' : 'planning',
+          status:
+            b.status === 'success' ? 'completed' : b.status === 'running' ? 'active' : 'planning',
         }));
         setMilestones(transformed);
         setTotal(response.data.total || 0);

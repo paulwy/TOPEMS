@@ -33,8 +33,8 @@ import {
   LinearProgress,
   Avatar,
   Stack,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import type {
   Sample,
   InspectionProcess,
@@ -48,7 +48,6 @@ import { limsApi } from '@/api/lims';
 import { useAppStore } from '@/store';
 import { GRADIENTS } from '@/constants/colors';
 import { PageContainer } from '@/components/common';
-import { PageHeader } from '@/components/templates/PageHeader';
 import { CardListTemplate } from '@/components/templates/CardListTemplate';
 import { apiLogger } from '@/utils/logger';
 
@@ -183,7 +182,7 @@ const LimsTaskPage: React.FC = () => {
     try {
       const response = await limsApi.listSamples();
       if (response.success && response.data) {
-        let sampleData = response.data as any;
+        const sampleData = response.data as any;
         let rawSamples: any[] = [];
 
         if (Array.isArray(sampleData)) {
@@ -207,7 +206,7 @@ const LimsTaskPage: React.FC = () => {
     try {
       const response = await limsApi.listProcesses();
       if (response.success && response.data) {
-        let processData = response.data as any;
+        const processData = response.data as any;
         let rawProcesses: any[] = [];
 
         if (Array.isArray(processData)) {
@@ -248,7 +247,7 @@ const LimsTaskPage: React.FC = () => {
     try {
       const response = await limsApi.listTasks();
       if (response.success && response.data) {
-        let taskData = response.data as any;
+        const taskData = response.data as any;
         let rawTasks: any[] = [];
 
         if (Array.isArray(taskData)) {
@@ -272,7 +271,7 @@ const LimsTaskPage: React.FC = () => {
     try {
       const response = await limsApi.listRecordsByTask(taskId);
       if (response.success && response.data) {
-        let recordData = response.data as any;
+        const recordData = response.data as any;
         let rawRecords: any[] = [];
 
         if (Array.isArray(recordData)) {

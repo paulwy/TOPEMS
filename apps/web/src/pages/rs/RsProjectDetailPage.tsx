@@ -25,8 +25,8 @@ import {
   ListItemText,
   Avatar,
   Stack,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import {
   Timeline,
   TimelineItem,
@@ -420,7 +420,14 @@ const RsProjectDetailPage: React.FC = () => {
   ];
 
   return (
-    <PageContainer title={project?.name || '项目详情'} subtitle={project ? `编码: ${project.code} | 类型: ${project.project_type} | 负责人: ${project.leader}` : ''}>
+    <PageContainer
+      title={project?.name || '项目详情'}
+      subtitle={
+        project
+          ? `编码: ${project.code} | 类型: ${project.project_type} | 负责人: ${project.leader}`
+          : ''
+      }
+    >
       <DetailPageTemplate
         title=''
         subtitle=''

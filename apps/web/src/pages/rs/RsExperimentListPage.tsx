@@ -80,7 +80,9 @@ const RsExperimentListPage: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: string): 'primary' | 'success' | 'warning' | 'error' | 'default' => {
+  const getStatusColor = (
+    status: string
+  ): 'primary' | 'success' | 'warning' | 'error' | 'default' => {
     switch (status) {
       case '进行中':
         return 'primary';
@@ -133,9 +135,7 @@ const RsExperimentListPage: React.FC = () => {
     {
       id: 'code',
       label: '试验编码',
-      render: (row) => (
-        <Box sx={{ fontWeight: 'medium' }}>{row.code}</Box>
-      ),
+      render: (row) => <Box sx={{ fontWeight: 'medium' }}>{row.code}</Box>,
     },
     { id: 'name', label: '试验名称' },
     {
@@ -147,14 +147,22 @@ const RsExperimentListPage: React.FC = () => {
       id: 'phase',
       label: '阶段',
       render: (row) => (
-        <Chip label={row.phase} size='small' color={getPhaseColor(row.phase)} />
+        <Chip
+          label={row.phase}
+          size='small'
+          color={getPhaseColor(row.phase)}
+        />
       ),
     },
     {
       id: 'status',
       label: '状态',
       render: (row) => (
-        <Chip label={row.status} size='small' color={getStatusColor(row.status)} />
+        <Chip
+          label={row.status}
+          size='small'
+          color={getStatusColor(row.status)}
+        />
       ),
     },
     { id: 'experimenter', label: '实验员' },
@@ -198,9 +206,21 @@ const RsExperimentListPage: React.FC = () => {
           scrollButtons={isMobile}
         >
           <Tab label='全部试验' />
-          <Tab label='小试阶段' icon={<Flask size={16} />} iconPosition='start' />
-          <Tab label='中试阶段' icon={<Flask size={16} />} iconPosition='start' />
-          <Tab label='放大试验' icon={<Flask size={16} />} iconPosition='start' />
+          <Tab
+            label='小试阶段'
+            icon={<Flask size={16} />}
+            iconPosition='start'
+          />
+          <Tab
+            label='中试阶段'
+            icon={<Flask size={16} />}
+            iconPosition='start'
+          />
+          <Tab
+            label='放大试验'
+            icon={<Flask size={16} />}
+            iconPosition='start'
+          />
         </Tabs>
       </Paper>
     </Box>
@@ -227,7 +247,10 @@ const RsExperimentListPage: React.FC = () => {
   ];
 
   return (
-    <PageContainer title='试验管理' subtitle='管理研发试验、记录数据、追踪批次'>
+    <PageContainer
+      title='试验管理'
+      subtitle='管理研发试验、记录数据、追踪批次'
+    >
       <ListPageTemplate
         title=''
         subtitle=''

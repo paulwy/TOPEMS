@@ -1,6 +1,12 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
+import { deviceApi } from './device';
+import { pipelineApi } from './pipeline';
+import { storageApi } from './storage';
+import { mapApi } from './map';
+import { businessApi } from './business';
+
 export * from './types';
 
 export { deviceApi } from './device';
@@ -8,12 +14,6 @@ export { pipelineApi } from './pipeline';
 export { storageApi } from './storage';
 export { mapApi } from './map';
 export { businessApi } from './business';
-
-import { deviceApi } from './device';
-import { pipelineApi } from './pipeline';
-import { storageApi } from './storage';
-import { mapApi } from './map';
-import { businessApi } from './business';
 
 export const gisApi = {
   devices: deviceApi,

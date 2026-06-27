@@ -1102,7 +1102,11 @@ export interface InstrumentDataStatistics {
   running_tasks: number;
   total_rules: number;
   protocol_distribution?: Array<{ protocol: string; count: number }>;
-  instrument_distribution?: Array<{ instrument_id: string; instrument_name: string; count: number }>;
+  instrument_distribution?: Array<{
+    instrument_id: string;
+    instrument_name: string;
+    count: number;
+  }>;
 }
 
 export interface AuditLog {

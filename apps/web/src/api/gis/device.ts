@@ -58,9 +58,7 @@ export const deviceApi = {
     );
   },
 
-  createDevicePoint: async (
-    data: CreateDevicePointRequest
-  ): Promise<ApiResponse<DevicePoint>> => {
+  createDevicePoint: async (data: CreateDevicePointRequest): Promise<ApiResponse<DevicePoint>> => {
     return apiClient.gis.post<DevicePoint>('/api/gis/device-locations', data);
   },
 

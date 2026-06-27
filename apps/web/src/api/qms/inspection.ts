@@ -12,10 +12,7 @@ import type {
   InspectionAudit,
   PaginatedResponse,
 } from './types';
-import {
-  adaptInspectionToFrontend,
-  adaptInspectionToBackend,
-} from './adapters';
+import { adaptInspectionToFrontend, adaptInspectionToBackend } from './adapters';
 
 export const inspectionApi = {
   listChecks: async (): Promise<ApiResponse<QualityCheck[]>> => {

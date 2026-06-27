@@ -10,14 +10,10 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import type {
-  InboundOrder,
-  CreateInboundOrderRequest,
-  UpdateInboundOrderRequest,
-} from '@/api/wms';
+import type { InboundOrder, CreateInboundOrderRequest, UpdateInboundOrderRequest } from '@/api/wms';
 import { wmsApi } from '@/api/wms';
 import { useAppStore } from '@/store';
 import {

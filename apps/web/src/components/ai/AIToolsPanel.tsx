@@ -12,8 +12,8 @@ import {
   Tab,
   Chip,
   Tooltip,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { FileJson, Calendar, Calculator, Shield, Copy, Check, ArrowRightLeft } from 'lucide-react';
 
 const JsonFormatter: React.FC = () => {
@@ -540,7 +540,7 @@ const maskTypes = [
   {
     id: 'name',
     label: '姓名',
-    pattern: /([\u4e00-\u9fa5]{1})[\u4e00-\u9fa5]+/,
+    pattern: /([\u4E00-\u9FA5]{1})[\u4E00-\u9FA5]+/,
     replacement: '$1**',
     example: '张三 → 张**',
   },

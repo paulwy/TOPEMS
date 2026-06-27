@@ -13,8 +13,8 @@ import {
   Chip,
   useTheme,
   useMediaQuery,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { ArrowLeft, Edit, Delete, Share2, MoreHorizontal, Printer, Download } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useBackNavigation } from '@/hooks';
@@ -187,7 +187,9 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
   const renderInfoCard = () => {
     if (!infoCard) return null;
 
-    const gradientBg = moduleGradient || `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`;
+    const gradientBg =
+      moduleGradient ||
+      `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`;
 
     return (
       <Paper
@@ -238,7 +240,16 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
                 >
                   {infoCard.title || title}
                   {moduleChip && (
-                    <Chip label={moduleChip} sx={{ bgcolor: 'rgba(255,255,255,0.2)', color: '#fff', fontWeight: 600, ml: 1 }} size="small" />
+                    <Chip
+                      label={moduleChip}
+                      sx={{
+                        bgcolor: 'rgba(255,255,255,0.2)',
+                        color: '#fff',
+                        fontWeight: 600,
+                        ml: 1,
+                      }}
+                      size='small'
+                    />
                   )}
                 </Typography>
                 {infoCard.subtitle && (

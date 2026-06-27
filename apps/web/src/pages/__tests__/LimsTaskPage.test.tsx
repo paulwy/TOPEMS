@@ -14,11 +14,7 @@ vi.mock('@/store', () => ({
 const mockAddNotification = vi.fn();
 
 const renderWithProviders = (ui: React.ReactElement) => {
-  return render(
-    <BrowserRouter>
-      {ui}
-    </BrowserRouter>
-  );
+  return render(<BrowserRouter>{ui}</BrowserRouter>);
 };
 
 const mockTasks = [
@@ -99,9 +95,7 @@ describe('LimsTaskPage', () => {
     await waitFor(() => {
       expect(limsApi.createTask).toHaveBeenCalled();
     });
-    expect(mockAddNotification).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'success' })
-    );
+    expect(mockAddNotification).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
   });
 
   it('should handle API error', async () => {

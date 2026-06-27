@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { ModuleStatusBadge } from '@/components/common/StatusBadge';
-import type { StatusBadgeProps } from '@/components/common/StatusBadge';
-type ModuleStatus = 'online' | 'beta' | 'plan' | 'new';
+import type { StatusBadgeProps, ModuleStatusValue } from '@/components/common/StatusBadge';
 
 type IconComponent = React.ComponentType<{
   className?: string;
@@ -14,7 +13,7 @@ export interface ModuleItem {
   description: string;
   path: string;
   color: string;
-  status: ModuleStatus;
+  status: ModuleStatusValue;
   permission?: string | null;
   module?: string | null;
   adminOnly?: boolean;
@@ -42,7 +41,7 @@ const colorToGradient: Record<string, string> = {
   'bg-orange-500': 'linear-gradient(135deg, #f97316, #ea580c)',
   'bg-red-500': 'linear-gradient(135deg, error.main, error.dark)',
   'bg-sky-500': 'linear-gradient(135deg, #0ea5e9, #0284c7)',
-  'bg-pink-500': 'linear-gradient(135deg, #ec4899, #db2777)',
+  'bg-pink-500': 'linear-gradient(135deg, #ec4899, #db2727)',
 };
 
 const colorToBgLight: Record<string, string> = {
@@ -173,7 +172,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ item, onClick, size = 'm
           <p
             style={{
               fontSize: currentSize.descSize,
-              color: isHovered ? '#475569' : 'grey.600',
+              color: isHovered ? 'text.secondary' : 'text.secondary',
               margin: 0,
               whiteSpace: 'nowrap',
               overflow: 'hidden',

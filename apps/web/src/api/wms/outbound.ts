@@ -25,16 +25,11 @@ export const outboundOrderApi = {
     return apiClient.wms.get(`/outbound-orders/${id}`);
   },
 
-  create: async (
-    data: CreateOutboundOrderRequest
-  ): Promise<ApiResponse<OutboundOrder>> => {
+  create: async (data: CreateOutboundOrderRequest): Promise<ApiResponse<OutboundOrder>> => {
     return apiClient.wms.post('/outbound-orders', data);
   },
 
-  update: async (
-    id: string,
-    data: Partial<OutboundOrder>
-  ): Promise<ApiResponse<OutboundOrder>> => {
+  update: async (id: string, data: Partial<OutboundOrder>): Promise<ApiResponse<OutboundOrder>> => {
     return apiClient.wms.put(`/outbound-orders/${id}`, data);
   },
 
@@ -63,10 +58,7 @@ export const outboundOrderApi = {
     return apiClient.wms.put(`/outbound-orders/${order_id}/items/${item_id}`, data);
   },
 
-  deleteItem: async (
-    order_id: string,
-    item_id: string
-  ): Promise<ApiResponse<string>> => {
+  deleteItem: async (order_id: string, item_id: string): Promise<ApiResponse<string>> => {
     return apiClient.wms.delete(`/outbound-orders/${order_id}/items/${item_id}`);
   },
 
@@ -82,10 +74,7 @@ export const outboundOrderApi = {
     return apiClient.wms.post(`/outbound-orders/${id}/pack`);
   },
 
-  ship: async (
-    id: string,
-    items: ShipItemRequest[]
-  ): Promise<ApiResponse<OutboundOrder>> => {
+  ship: async (id: string, items: ShipItemRequest[]): Promise<ApiResponse<OutboundOrder>> => {
     return apiClient.wms.post(`/outbound-orders/${id}/ship`, items);
   },
 
@@ -95,9 +84,7 @@ export const outboundOrderApi = {
 };
 
 export const wavePickApi = {
-  list: async (
-    params?: PaginationParams
-  ): Promise<ApiResponse<PaginatedResponse<WavePick>>> => {
+  list: async (params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<WavePick>>> => {
     return apiClient.wms.get('/wave-picks', { params });
   },
 
@@ -105,16 +92,11 @@ export const wavePickApi = {
     return apiClient.wms.get(`/wave-picks/${id}`);
   },
 
-  create: async (
-    data: CreateWavePickRequest
-  ): Promise<ApiResponse<WavePick>> => {
+  create: async (data: CreateWavePickRequest): Promise<ApiResponse<WavePick>> => {
     return apiClient.wms.post('/wave-picks', data);
   },
 
-  update: async (
-    id: string,
-    data: Partial<WavePick>
-  ): Promise<ApiResponse<WavePick>> => {
+  update: async (id: string, data: Partial<WavePick>): Promise<ApiResponse<WavePick>> => {
     return apiClient.wms.put(`/wave-picks/${id}`, data);
   },
 
@@ -128,10 +110,7 @@ export const wavePickApi = {
     return apiClient.wms.get(`/wave-picks/${wave_id}/items`);
   },
 
-  assign: async (
-    id: string,
-    data: AssignWavePickRequest
-  ): Promise<ApiResponse<WavePick>> => {
+  assign: async (id: string, data: AssignWavePickRequest): Promise<ApiResponse<WavePick>> => {
     return apiClient.wms.post(`/wave-picks/${id}/assign`, data);
   },
 
@@ -236,9 +215,7 @@ export async function getWavePick(id: string): Promise<ApiResponse<WavePick>> {
   return wavePickApi.get(id);
 }
 
-export async function createWavePick(
-  data: CreateWavePickRequest
-): Promise<ApiResponse<WavePick>> {
+export async function createWavePick(data: CreateWavePickRequest): Promise<ApiResponse<WavePick>> {
   return wavePickApi.create(data);
 }
 

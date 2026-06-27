@@ -114,15 +114,16 @@ export const PullToRefresh: React.FC<PullToRefreshProps> = ({
             }}
           >
             {isRefreshing ? (
-              <CircularProgress size={24} thickness={3} />
+              <CircularProgress
+                size={24}
+                thickness={3}
+              />
             ) : (
               <RefreshCw
                 style={{
                   width: 24,
                   height: 24,
-                  color: canRefresh
-                    ? theme.palette.primary.main
-                    : theme.palette.text.secondary,
+                  color: canRefresh ? theme.palette.primary.main : theme.palette.text.secondary,
                   transform: `rotate(${pullDistance * 3}deg)`,
                   transition: 'color 0.2s',
                 }}

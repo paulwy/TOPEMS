@@ -1,6 +1,17 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, FileText, ArrowRight, ShoppingCart, RefreshCw, Truck, ClipboardCheck, TrendingUp, DollarSign, Package } from 'lucide-react';
+import {
+  Users,
+  FileText,
+  ArrowRight,
+  ShoppingCart,
+  RefreshCw,
+  Truck,
+  ClipboardCheck,
+  TrendingUp,
+  DollarSign,
+  Package,
+} from 'lucide-react';
 import BarChartComponent from '../../components/charts/BarChart';
 import LineChartComponent from '../../components/charts/LineChart';
 import PieChartComponent from '../../components/charts/PieChart';
@@ -12,7 +23,14 @@ import {
 } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { scmApi } from '@/api/scm';
-import type { SupplyChainOverview, SupplyChainFullLinkStat, MrpPlan, IncomingInspection, InventoryTurnoverStat, PriceComparison } from '@/api/scm';
+import type {
+  SupplyChainOverview,
+  SupplyChainFullLinkStat,
+  MrpPlan,
+  IncomingInspection,
+  InventoryTurnoverStat,
+  PriceComparison,
+} from '@/api/scm';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 
@@ -39,7 +57,7 @@ const lineData = [
 export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const { addNotification } = useAppStore();
-  
+
   const [loading, setLoading] = useState(true);
   const [overviewLoading, setOverviewLoading] = useState(true);
   const [mrpLoading, setMrpLoading] = useState(true);
@@ -147,7 +165,13 @@ export const DashboardPage: React.FC = () => {
       setLoading(false);
     };
     loadAllData();
-  }, [loadOverview, loadMrpPlans, loadIncomingInspections, loadInventoryTurnover, loadPriceComparisons]);
+  }, [
+    loadOverview,
+    loadMrpPlans,
+    loadIncomingInspections,
+    loadInventoryTurnover,
+    loadPriceComparisons,
+  ]);
 
   const getGreeting = (): string => {
     const hour = new Date().getHours();
@@ -163,7 +187,9 @@ export const DashboardPage: React.FC = () => {
         title: '供应商',
         value: overview?.active_suppliers?.toString() || '128',
         icon: <Users size={24} />,
-        change: overview?.total_suppliers ? Math.round((overview.active_suppliers / overview.total_suppliers) * 100) : 5,
+        change: overview?.total_suppliers
+          ? Math.round((overview.active_suppliers / overview.total_suppliers) * 100)
+          : 5,
         changeLabel: '活跃占比',
         color: 'primary',
       },
@@ -172,7 +198,9 @@ export const DashboardPage: React.FC = () => {
         title: '采购订单',
         value: overview?.pending_orders?.toString() || '45',
         icon: <ShoppingCart size={24} />,
-        change: overview?.total_purchase_orders ? Math.round((overview.pending_orders / overview.total_purchase_orders) * 100) : 8,
+        change: overview?.total_purchase_orders
+          ? Math.round((overview.pending_orders / overview.total_purchase_orders) * 100)
+          : 8,
         changeLabel: '待处理',
         color: 'success',
       },

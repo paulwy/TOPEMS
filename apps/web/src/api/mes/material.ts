@@ -27,7 +27,7 @@ export const materialBomApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(`/api/mes/boms${queryString ? '?' + queryString : ''}`);
+    return apiClient.mes.get(`/api/mes/boms${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<MaterialBom>> {
@@ -63,7 +63,7 @@ export const materialIssueApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(`/api/mes/material-issues${queryString ? '?' + queryString : ''}`);
+    return apiClient.mes.get(`/api/mes/material-issues${queryString ? `?${queryString}` : ''}`);
   },
 
   async create(data: CreateMaterialIssueRequest): Promise<ApiResponse<MaterialIssue>> {
@@ -87,7 +87,7 @@ export const materialReturnApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(`/api/mes/material-returns${queryString ? '?' + queryString : ''}`);
+    return apiClient.mes.get(`/api/mes/material-returns${queryString ? `?${queryString}` : ''}`);
   },
 
   async create(data: CreateMaterialReturnRequest): Promise<ApiResponse<MaterialReturn>> {

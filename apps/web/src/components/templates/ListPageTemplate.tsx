@@ -1,5 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import type { BoxProps } from '@mui/material';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import {
   Box,
   Paper,
@@ -16,8 +15,6 @@ import {
   Tooltip,
   Checkbox,
   Skeleton,
-  TextField,
-  InputAdornment,
   Chip,
   Menu,
   MenuItem,
@@ -27,327 +24,22 @@ import {
   Collapse,
   useTheme,
   useMediaQuery,
-  Popover,
-  Switch,
-  List,
-  ListItem,
-  OutlinedInput,
-  Select,
-  FormControl,
-  InputLabel,
-  FormControlLabel,
   Breadcrumbs,
   Link,
-  ButtonGroup,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
-import { EmptyState, ErrorEmptyState } from '../mui/EmptyState';
-import {
-  Search,
-  Filter,
-  MoreHorizontal,
-  ChevronDown,
-  ArrowUpDown,
-  Eye,
-  Edit,
-  Trash2,
-  Download,
-  RefreshCw,
-  ChevronRight,
-  Settings2,
-  Columns3,
-  Trash,
-  Copy,
-  DownloadCloud,
-  Check,
-  X,
-  RotateCcw,
-} from 'lucide-react';
+import { EmptyState, ErrorEmptyState } from '../common/EmptyState';
+import { MoreHorizontal, ChevronDown, ChevronRight, Columns3, RefreshCw } from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
 import { useAutoBreadcrumbs } from '@/hooks';
 import { BackButton } from '../common';
 
-// 从 FilterBar 导入 FilterConfig 类型以确保类型一致
-import type { FilterConfig } from '../mui/FilterBar';
-
-// ============ 类型定义 ============
-
-/**
- * 列定义接口
- * @template T - 数据行类型
- */
-export interface ColumnDef<T = any> {
-  /** 列唯一标识 */
-  id: string;
-  /** 列标题 */
-  label?: string;
-  /** @deprecated 请使用 label 字段 */
-  header?: string;
-  /** @deprecated 字段已通过 id 标识，无需额外配置 */
-  accessor?: string;
-  /** 列宽度 */
-  width?: number | string;
-  /** 最小宽度 */
-  minWidth?: number;
-  /** 文本对齐方式 */
-  align?: 'left' | 'center' | 'right';
-  /** 是否可排序 */
-  sortable?: boolean;
-  /** 自定义单元格渲染 */
-  render?: (row: T, index: number) => React.ReactNode;
-  /** 自定义表头渲染 */
-  renderHeader?: (column: ColumnDef<T>) => React.ReactNode;
-  /** 是否可配置显示/隐藏 */
-  configurable?: boolean;
-  /** 列顺序（用于列配置中的排序） */
-  order?: number;
-}
-
-/**
- * 筛选选项接口
- */
-export interface FilterOption {
-  /** 显示标签 */
-  label: string;
-  /** 选项值 */
-  value: string | number;
-}
-
-// 使用从 FilterBar 导入的 FilterConfig
-export type { FilterConfig } from '../mui/FilterBar';
-
-/**
- * 行操作接口
- * @template T - 数据行类型
- */
-export interface RowAction<T = any> {
-  /** 操作标签 */
-  label: string;
-  /** 操作图标 */
-  icon?: React.ReactNode;
-  /** 点击回调 */
-  onClick?: (row: T) => void;
-  /** 跳转链接 */
-  href?: string;
-  /** 按钮颜色 */
-  color?: 'primary' | 'secondary' | 'error' | 'warning' | 'success' | 'info';
-  /** 条件显示 */
-  show?: (row: T) => boolean;
-  /** 是否显示分隔线 */
-  divider?: boolean;
-  /** 是否需要确认 */
-  confirm?: boolean;
-  /** 确认提示信息 */
-  confirmMessage?: string;
-}
-
-/**
- * 展开行渲染属性
- * @template T - 数据行类型
- */
-export interface ExpandedRowRenderProps<T = any> {
-  /** 当前行数据 */
-  row: T;
-  /** 行索引 */
-  index: number;
-}
-
-/**
- * 列配置接口（用于列显示/隐藏配置）
- */
-export interface ColumnConfig {
-  /** 列ID */
-  id: string;
-  /** 是否显示 */
-  visible: boolean;
-  /** 列顺序 */
-  order?: number;
-}
-
-/**
- * 批量操作接口
- */
-export interface BatchAction {
-  /** 操作标签 */
-  label: string;
-  /** 操作图标 */
-  icon?: React.ReactNode;
-  /** 按钮颜色 */
-  color?: 'primary' | 'secondary' | 'error' | 'warning' | 'success' | 'info';
-  /** 点击回调 */
-  onClick?: () => void;
-  /** 是否需要确认 */
-  confirm?: boolean;
-  /** 确认提示信息 */
-  confirmMessage?: string;
-  /** 是否在有选择时显示 */
-  showWhenSelected?: boolean;
-  /** 最小选择数量 */
-  minSelected?: number;
-}
-
-export interface ListPageTemplateProps<T = any> extends BoxProps {
-  // 页面信息
-  title?: string;
-  subtitle?: string;
-  breadcrumbs?: Array<{ label: string; href?: string }>;
-  /** 是否启用自动面包屑（默认启用） */
-  autoBreadcrumbs?: boolean;
-  /** 返回按钮配置 */
-  backButton?: {
-    href?: string;
-    onClick?: () => void;
-  };
-
-  // 数据
-  columns: ColumnDef<T>[];
-  data: T[];
-  loading?: boolean;
-  error?: string;
-
-  // 行标识
-  getRowId?: (row: T) => string | number;
-  onRowClick?: (row: T) => void;
-
-  // 选择
-  selectable?: boolean;
-  selectedIds?: (string | number)[];
-  onSelectionChange?: (ids: (string | number)[]) => void;
-  /** 批量选择配置 */
-  selection?: {
-    selected?: (string | number)[];
-    onChange?: (ids: (string | number)[]) => void;
-  };
-
-  // 排序
-  sortable?: boolean;
-  defaultSortBy?: string;
-  defaultSortOrder?: 'asc' | 'desc';
-  onSort?: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
-
-  // 分页
-  pagination?: {
-    page: number;
-    pageSize: number;
-    total: number;
-    onPageChange: (page: number) => void;
-    onPageSizeChange?: (pageSize: number) => void;
-  };
-
-  // 搜索
-  searchable?: boolean;
-  searchPlaceholder?: string;
-  searchValue?: string;
-  onSearch?: (value: string) => void;
-  /** 全局搜索配置 - 支持搜索多个字段 */
-  globalSearch?: {
-    fields: string[];
-    placeholder?: string;
-  };
-
-  // 筛选
-  filters?: FilterConfig[];
-  /** 受控的筛选值（与 onFilterChange 配合使用） */
-  filtersValue?: Record<string, any>;
-  onFilterChange?: (filters: Record<string, any>) => void;
-
-  // 操作
-  actions?: Array<{
-    label: string;
-    icon?: React.ReactNode;
-    onClick?: () => void;
-    variant?: 'contained' | 'outlined' | 'text';
-  }>;
-  rowActions?: RowAction<T>[];
-  /**
-   * 自定义行操作渲染函数（与 rowActions 二选一，优先级更高）
-   */
-  renderRowActions?: (row: T, index: number) => React.ReactNode;
-  /**
-   * 自定义操作按钮区域（渲染在筛选栏下方、表格上方）
-   * @deprecated 推荐使用 headerContent
-   */
-  customActions?: React.ReactNode;
-  onRefresh?: () => void;
-  /** 批量操作按钮 */
-  batchActions?: BatchAction[];
-  /** 是否在顶部显示批量操作栏 */
-  showBatchActionBar?: boolean;
-
-  // 空状态
-  emptyMessage?: string;
-  emptyIcon?: React.ReactNode;
-
-  // 自定义
-  headerContent?: React.ReactNode;
-  footerContent?: React.ReactNode;
-
-  // ============ 新增功能 ============
-
-  /**
-   * 行展开配置
-   * 设置为 true 启用行展开功能，或传入自定义渲染函数
-   */
-  expandable?: boolean | ((row: T, index: number) => React.ReactNode);
-  /** 默认展开的行ID数组 */
-  defaultExpandedIds?: (string | number)[];
-  /** 展开状态变化回调 */
-  onExpandedChange?: (expandedIds: (string | number)[]) => void;
-
-  /**
-   * 列配置功能
-   * 设置为 true 显示列配置按钮，允许用户显示/隐藏列
-   */
-  columnConfigurable?: boolean;
-  /** 默认列配置 */
-  defaultColumnConfig?: ColumnConfig[];
-  /** 列配置变化回调 */
-  onColumnConfigChange?: (config: ColumnConfig[]) => void;
-  /** 是否持久化列配置到localStorage */
-  persistColumnConfig?: boolean;
-  /** 列配置存储的key */
-  columnConfigStorageKey?: string;
-
-  /** 是否显示行号 */
-  showRowNumber?: boolean;
-  /** 是否启用斑马纹（默认 false） */
-  striped?: boolean;
-  /** 主要操作按钮（渐变样式，渲染在其他操作按钮之前） */
-  primaryActionButton?: {
-    label: string;
-    icon?: React.ReactNode;
-    onClick?: () => void;
-    gradient?: string;
-  };
-}
-
-// ============ 工具函数 ============
-
-/**
- * 从localStorage读取列配置
- */
-const loadColumnConfig = (key: string): ColumnConfig[] => {
-  try {
-    const stored = localStorage.getItem(`listpage:${key}`);
-    if (stored) {
-      return JSON.parse(stored);
-    }
-  } catch {
-    // ignore
-  }
-  return [];
-};
-
-/**
- * 保存列配置到localStorage
- */
-const saveColumnConfig = (key: string, config: ColumnConfig[]): void => {
-  try {
-    localStorage.setItem(`listpage:${key}`, JSON.stringify(config));
-  } catch {
-    // ignore
-  }
-};
+// 从子组件导入类型和组件
+import type { ListPageTemplateProps, ColumnConfig, RowAction } from './list';
+import { loadColumnConfig, saveColumnConfig } from './list/types';
+import { ListSearchBar } from './list/ListSearchBar';
+import { ListBatchActions } from './list/ListBatchActions';
+import { ListColumnConfig } from './list/ListColumnConfig';
 
 // ============ 列表页模板组件 ============
 
@@ -437,11 +129,12 @@ export function ListPageTemplate<T>({
     includeHome: true,
   });
 
-  const breadcrumbs = manualBreadcrumbs && manualBreadcrumbs.length > 0
-    ? manualBreadcrumbs
-    : autoBreadcrumbs
-    ? autoItems
-    : undefined;
+  const breadcrumbs =
+    manualBreadcrumbs && manualBreadcrumbs.length > 0
+      ? manualBreadcrumbs
+      : autoBreadcrumbs
+        ? autoItems
+        : undefined;
 
   const [sortBy, setSortBy] = useState(defaultSortBy || '');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>(defaultSortOrder);
@@ -589,6 +282,15 @@ export function ListPageTemplate<T>({
       onColumnConfigChange?.(newConfig);
     },
     [columnConfig, onColumnConfigChange]
+  );
+
+  // 处理列配置批量变更（全选/全不选）
+  const handleColumnConfigChange = useCallback(
+    (config: ColumnConfig[]) => {
+      setColumnConfig(config);
+      onColumnConfigChange?.(config);
+    },
+    [onColumnConfigChange]
   );
 
   // 重置列配置
@@ -986,362 +688,6 @@ export function ListPageTemplate<T>({
     );
   };
 
-  // 渲染筛选器
-  const renderFilter = (filter: FilterConfig) => {
-    const commonProps = {
-      size: 'small' as const,
-      label: filter.label,
-      value: filter.value || (filter.type === 'multiselect' ? [] : ''),
-      onChange: (e: { target: { value: unknown } }) => {
-        filter.onChange?.(e.target.value, filter);
-        onFilterChange?.({ [filter.id]: e.target.value });
-      },
-      sx: { minWidth: 150 },
-    };
-
-    switch (filter.type) {
-      case 'multiselect':
-        return (
-          <FormControl
-            key={filter.id}
-            size='small'
-            sx={{ minWidth: 180 }}
-          >
-            <InputLabel>{filter.label}</InputLabel>
-            <Select
-              {...commonProps}
-              multiple
-              input={<OutlinedInput label={filter.label} />}
-              renderValue={(selected) => (
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {selected.map((value: unknown) => {
-                    const option = filter.options?.find((opt) => opt.value === value);
-                    return (
-                      <Chip
-                        key={String(value)}
-                        label={option?.label || String(value)}
-                        size='small'
-                      />
-                    );
-                  })}
-                </Box>
-              )}
-            >
-              {filter.searchable && (
-                <TextField
-                  size='small'
-                  placeholder='搜索...'
-                  sx={{ px: 1, my: 1, minWidth: 150 }}
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <InputAdornment position='start'>
-                          <Search style={{ width: 16, height: 16 }} />
-                        </InputAdornment>
-                      ),
-                    },
-                  }}
-                />
-              )}
-              {filter.options?.map((option) => (
-                <MenuItem
-                  key={option.value}
-                  value={option.value}
-                >
-                  <Checkbox checked={commonProps.value.includes(option.value)} />
-                  <ListItemText primary={option.label} />
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        );
-
-      case 'text':
-        return (
-          <TextField
-            key={filter.id}
-            {...commonProps}
-            placeholder='搜索...'
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position='start'>
-                    <Search style={{ width: 18, height: 18 }} />
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
-        );
-
-      case 'date':
-        return (
-          <TextField
-            key={filter.id}
-            {...commonProps}
-            type='date'
-            slotProps={{
-              inputLabel: { shrink: true },
-            }}
-          />
-        );
-
-      default:
-        return (
-          <TextField
-            key={filter.id}
-            {...commonProps}
-            select
-          >
-            <MenuItem value=''>全部</MenuItem>
-            {filter.options?.map((option) => (
-              <MenuItem
-                key={option.value}
-                value={option.value}
-              >
-                {option.label}
-              </MenuItem>
-            ))}
-          </TextField>
-        );
-    }
-  };
-
-  // 渲染搜索和筛选
-  const renderSearchAndFilters = () => {
-    if (!searchable && !globalSearch && !filters) return null;
-
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 2,
-          mb: 2,
-          flexWrap: 'wrap',
-        }}
-      >
-        {(searchable || globalSearch) && (
-          <TextField
-            size='small'
-            placeholder={globalSearch?.placeholder || searchPlaceholder}
-            value={searchInput}
-            onChange={handleSearch}
-            sx={{ minWidth: 250 }}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position='start'>
-                    <Search style={{ width: 18, height: 18 }} />
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
-        )}
-
-        {filters?.map((filter) => renderFilter(filter))}
-
-        {onRefresh && (
-          <Tooltip title='刷新'>
-            <IconButton
-              size='small'
-              onClick={onRefresh}
-            >
-              <RefreshCw style={{ width: 18, height: 18 }} />
-            </IconButton>
-          </Tooltip>
-        )}
-      </Box>
-    );
-  };
-
-  // 渲染批量操作栏
-  const renderBatchActionBar = () => {
-    if (!showBatchActionBar || !selectable || effectiveSelectedIds.length === 0) {
-      return null;
-    }
-
-    const availableActions = batchActions.filter((action) => {
-      if (action.minSelected && effectiveSelectedIds.length < action.minSelected) {
-        return false;
-      }
-      if (action.showWhenSelected === false) {
-        return false;
-      }
-      return true;
-    });
-
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 2,
-          mb: 2,
-          p: 2,
-          bgcolor: 'primary.50',
-          borderRadius: 1,
-          border: '1px solid',
-          borderColor: 'primary.200',
-        }}
-      >
-        <Typography
-          variant='body2'
-          sx={{ fontWeight: 500, color: 'primary.main' }}
-        >
-          已选择 {effectiveSelectedIds.length} 条记录
-        </Typography>
-
-        <Button
-          size='small'
-          variant='outlined'
-          onClick={() => effectiveOnSelectionChange?.([])}
-          startIcon={<X size={16} />}
-        >
-          取消选择
-        </Button>
-
-        {availableActions.length > 0 && (
-          <ButtonGroup
-            size='small'
-            variant='outlined'
-          >
-            {availableActions.map((action, index) => (
-              <Button
-                key={index}
-                color={action.color || 'primary'}
-                startIcon={action.icon}
-                onClick={action.onClick}
-              >
-                {action.label}
-              </Button>
-            ))}
-          </ButtonGroup>
-        )}
-      </Box>
-    );
-  };
-
-  // 渲染列配置 Popover
-  const renderColumnConfig = () => {
-    if (!columnConfigurable) return null;
-
-    return (
-      <Popover
-        open={Boolean(columnConfigAnchor)}
-        anchorEl={columnConfigAnchor}
-        onClose={() => setColumnConfigAnchor(null)}
-        anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'right',
-        }}
-        transformOrigin={{
-          vertical: 'top',
-          horizontal: 'right',
-        }}
-        sx={{ minWidth: 280 }}
-      >
-        <Box sx={{ p: 2, minWidth: 280, maxWidth: 350 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              mb: 2,
-            }}
-          >
-            <Typography
-              variant='subtitle2'
-              sx={{ fontWeight: 600 }}
-            >
-              配置列显示
-            </Typography>
-            <Button
-              size='small'
-              onClick={handleResetColumnConfig}
-              startIcon={<RotateCcw size={14} />}
-            >
-              重置
-            </Button>
-          </Box>
-
-          <Typography
-            variant='body2'
-            color='text.secondary'
-            sx={{ mb: 2, fontSize: 12 }}
-          >
-            选择要显示的列
-          </Typography>
-
-          <List
-            dense
-            sx={{ maxHeight: 300, overflow: 'auto' }}
-          >
-            {columns.map((column) => {
-              const config = columnConfig.find((c) => c.id === column.id);
-              const isVisible = config ? config.visible : true;
-
-              return (
-                <ListItem
-                  key={column.id}
-                  sx={{ paddingY: 0.5 }}
-                >
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={isVisible}
-                        onChange={(e) => handleColumnVisibilityChange(column.id, e.target.checked)}
-                        size='small'
-                      />
-                    }
-                    label={column.label || column.header || column.id}
-                    sx={{ margin: 0 }}
-                  />
-                </ListItem>
-              );
-            })}
-          </List>
-
-          <Divider sx={{ my: 2 }} />
-
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            <Button
-              size='small'
-              fullWidth
-              onClick={() => {
-                const allVisible = columns.map((col) => ({
-                  id: col.id,
-                  visible: true,
-                }));
-                setColumnConfig(allVisible);
-                onColumnConfigChange?.(allVisible);
-              }}
-              startIcon={<Check size={14} />}
-            >
-              全选
-            </Button>
-            <Button
-              size='small'
-              fullWidth
-              onClick={() => {
-                const allHidden = columns.map((col) => ({
-                  id: col.id,
-                  visible: false,
-                }));
-                setColumnConfig(allHidden);
-                onColumnConfigChange?.(allHidden);
-              }}
-              startIcon={<X size={14} />}
-            >
-              全不选
-            </Button>
-          </Box>
-        </Box>
-      </Popover>
-    );
-  };
-
   return (
     <Box {...props}>
       {/* 页面头部：面包屑、标题、操作按钮 */}
@@ -1434,10 +780,18 @@ export function ListPageTemplate<T>({
               <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                 {primaryActionButton && (
                   <Button
-                    variant="contained"
+                    variant='contained'
                     startIcon={primaryActionButton.icon}
                     onClick={primaryActionButton.onClick}
-                    sx={primaryActionButton.gradient ? { background: primaryActionButton.gradient, color: '#fff', '&:hover': { opacity: 0.9 } } : {}}
+                    sx={
+                      primaryActionButton.gradient
+                        ? {
+                            background: primaryActionButton.gradient,
+                            color: '#fff',
+                            '&:hover': { opacity: 0.9 },
+                          }
+                        : {}
+                    }
                   >
                     {primaryActionButton.label}
                   </Button>
@@ -1473,10 +827,24 @@ export function ListPageTemplate<T>({
       )}
 
       {/* 批量操作栏 */}
-      {renderBatchActionBar()}
+      <ListBatchActions
+        show={showBatchActionBar && !!selectable}
+        selectedCount={effectiveSelectedIds.length}
+        onClearSelection={() => effectiveOnSelectionChange?.([])}
+        batchActions={batchActions}
+      />
 
       {/* 搜索和筛选 */}
-      {renderSearchAndFilters()}
+      <ListSearchBar
+        searchable={searchable}
+        searchPlaceholder={searchPlaceholder}
+        searchInput={searchInput}
+        onSearchChange={handleSearch}
+        globalSearch={globalSearch}
+        filters={filters}
+        filtersValue={filtersValue}
+        onFilterChange={onFilterChange}
+      />
 
       {/* 自定义头部内容 */}
       {headerContent}
@@ -1497,7 +865,16 @@ export function ListPageTemplate<T>({
       {footerContent}
 
       {/* 列配置 */}
-      {renderColumnConfig()}
+      <ListColumnConfig
+        open={columnConfigurable ? Boolean(columnConfigAnchor) : false}
+        anchorEl={columnConfigAnchor}
+        onClose={() => setColumnConfigAnchor(null)}
+        columns={columns}
+        columnConfig={columnConfig}
+        onVisibilityChange={handleColumnVisibilityChange}
+        onReset={handleResetColumnConfig}
+        onConfigChange={handleColumnConfigChange}
+      />
 
       {/* 行操作菜单 */}
       <Menu
@@ -1524,6 +901,19 @@ export function ListPageTemplate<T>({
     </Box>
   );
 }
+
+// 重新导出类型以保持向后兼容
+export type {
+  ColumnDef,
+  FilterOption,
+  RowAction,
+  ExpandedRowRenderProps,
+  ColumnConfig,
+  BatchAction,
+  ListPageTemplateProps,
+} from './list/types';
+
+export type { FilterConfig } from '../common/FilterBar';
 
 const MemoizedListPageTemplate = React.memo(ListPageTemplate) as typeof ListPageTemplate;
 export default MemoizedListPageTemplate;

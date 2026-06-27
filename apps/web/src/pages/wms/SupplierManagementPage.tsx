@@ -12,8 +12,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import React, { useState, useEffect, useCallback } from 'react';
 import type { Supplier, CreateSupplierRequest, UpdateSupplierRequest } from '@/api/scm';
 import { scmApi } from '@/api/scm';

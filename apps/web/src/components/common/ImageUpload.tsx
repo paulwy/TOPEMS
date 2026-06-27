@@ -13,8 +13,8 @@ import {
   DialogActions,
   Slider,
   TextField,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { Image, X, Upload, Crop, Trash2, ZoomIn, ZoomOut, RotateCw, Check } from 'lucide-react';
 import { logger } from '@/utils/logger';
@@ -232,7 +232,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
 
     // 模拟裁剪后的结果（实际项目中需要使用 canvas 或专业裁剪库）
     const updatedImages = images.map((img) =>
-      img.preview === cropImage ? { ...img, preview: cropImage + `?crop=${Date.now()}` } : img
+      img.preview === cropImage ? { ...img, preview: `${cropImage}?crop=${Date.now()}` } : img
     );
 
     setImages(updatedImages);
@@ -487,7 +487,7 @@ const UploadArea = styled(Box, {
   }`,
   borderRadius: theme.shape.borderRadius,
   backgroundColor: isDragging
-    ? theme.palette.primary.light + '20'
+    ? `${theme.palette.primary.light}20`
     : isDisabled
       ? theme.palette.grey[50]
       : 'transparent',
@@ -496,7 +496,7 @@ const UploadArea = styled(Box, {
   color: isDisabled ? theme.palette.grey[400] : theme.palette.text.secondary,
   '&:hover': {
     borderColor: isDisabled ? theme.palette.grey[300] : theme.palette.primary.main,
-    backgroundColor: isDisabled || isFull ? 'transparent' : theme.palette.primary.light + '10',
+    backgroundColor: isDisabled || isFull ? 'transparent' : `${theme.palette.primary.light}10`,
   },
 }));
 

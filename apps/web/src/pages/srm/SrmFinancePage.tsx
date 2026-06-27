@@ -11,8 +11,8 @@ import {
   CardContent,
   CardHeader,
   Typography,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { Plus, DollarSign, Search, CreditCard, Receipt, TrendingUp, RefreshCw } from 'lucide-react';
 import { DataTable } from '@/components/common/DataTable';
 import { MetricCard } from '@/components/bi/MetricCard';
@@ -362,319 +362,322 @@ const SrmFinancePage: React.FC = () => {
   }
 
   return (
-    <PageContainer maxWidth={false} padding={false}>
+    <PageContainer
+      maxWidth={false}
+      padding={false}
+    >
       <Box
         sx={{
           minHeight: '100vh',
           background: 'linear-gradient(135deg, success.light 0%, #f8fafc 100%)',
         }}
       >
-      <Box
-        component='header'
-        sx={{
-          bgcolor: 'background.paper',
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: 'divider',
-          position: 'sticky',
-          top: 0,
-          zIndex: 10,
-        }}
-      >
-        <Box sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 } }}>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              height: 64,
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box
-                sx={{
-                  width: 40,
-                  height: 40,
-                  background: 'linear-gradient(135deg, success.main 0%, success.dark 100%)',
-                  borderRadius: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <DollarSign sx={{ width: 24, height: 24, color: 'white' }} />
-              </Box>
-              <Box>
-                <Typography
-                  variant='h6'
+        <Box
+          component='header'
+          sx={{
+            bgcolor: 'background.paper',
+            boxShadow: 1,
+            borderBottom: 1,
+            borderColor: 'divider',
+            position: 'sticky',
+            top: 0,
+            zIndex: 10,
+          }}
+        >
+          <Box sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 } }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                height: 64,
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box
                   sx={{
-                    fontWeight: 700,
-                    color: 'slate.900',
-                    fontSize: '1.25rem',
+                    width: 40,
+                    height: 40,
+                    background: 'linear-gradient(135deg, success.main 0%, success.dark 100%)',
+                    borderRadius: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                   }}
                 >
-                  财务管理
-                </Typography>
-                <Typography
-                  variant='caption'
-                  sx={{ color: 'slate.500', fontSize: '0.75rem' }}
-                >
-                  Financial Management
-                </Typography>
+                  <DollarSign sx={{ width: 24, height: 24, color: 'white' }} />
+                </Box>
+                <Box>
+                  <Typography
+                    variant='h6'
+                    sx={{
+                      fontWeight: 700,
+                      color: 'slate.900',
+                      fontSize: '1.25rem',
+                    }}
+                  >
+                    财务管理
+                  </Typography>
+                  <Typography
+                    variant='caption'
+                    sx={{ color: 'slate.500', fontSize: '0.75rem' }}
+                  >
+                    Financial Management
+                  </Typography>
+                </Box>
               </Box>
+              <Button
+                variant='contained'
+                startIcon={<Plus style={{ width: 18, height: 18 }} />}
+                onClick={handleCreate}
+                sx={{ bgcolor: 'success.main', '&:hover': { bgcolor: 'success.dark' } }}
+              >
+                新增单据
+              </Button>
             </Box>
-            <Button
-              variant='contained'
-              startIcon={<Plus style={{ width: 18, height: 18 }} />}
-              onClick={handleCreate}
-              sx={{ bgcolor: 'success.main', '&:hover': { bgcolor: 'success.dark' } }}
-            >
-              新增单据
-            </Button>
           </Box>
         </Box>
-      </Box>
-
-      <Box
-        component='main'
-        sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}
-      >
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: {
-              xs: 'repeat(1, 1fr)',
-              md: 'repeat(2, 1fr)',
-              lg: 'repeat(3, 1fr)',
-              xl: 'repeat(6, 1fr)',
-            },
-            gap: 2,
-            mb: 4,
-          }}
-        >
-          <MetricCard
-            title='单据总数'
-            value={stats.totalRecords}
-            icon={<Receipt sx={{ width: 24, height: 24 }} />}
-            gradient={['success.main', 'success.dark']}
-            subtitle={`${stats.orders}个订单, ${stats.contracts}份合同`}
-            trend='neutral'
-          />
-          <MetricCard
-            title='订单数量'
-            value={stats.orders}
-            icon={<CreditCard sx={{ width: 24, height: 24 }} />}
-            gradient={['primary.main', '#1D4ED8']}
-            subtitle='已记录订单'
-            trend='neutral'
-          />
-          <MetricCard
-            title='合同数量'
-            value={stats.contracts}
-            icon={<Receipt sx={{ width: 24, height: 24 }} />}
-            gradient={['#14B8A6', '#0D9488']}
-            subtitle='已记录合同'
-            trend='neutral'
-          />
-          <MetricCard
-            title='总金额'
-            value={`¥${stats.totalAmount.toLocaleString()}`}
-            icon={<DollarSign sx={{ width: 24, height: 24 }} />}
-            gradient={['#8B5CF6', '#7C3AED']}
-            subtitle='所有单据合计'
-            trend='neutral'
-          />
-          <MetricCard
-            title='待结算'
-            value={`¥${stats.pendingAmount.toLocaleString()}`}
-            icon={<TrendingUp sx={{ width: 24, height: 24 }} />}
-            gradient={['warning.main', '#D97706']}
-            subtitle='待处理/处理中/有效'
-            trend='neutral'
-          />
-          <MetricCard
-            title='已完成'
-            value={`¥${stats.completedAmount.toLocaleString()}`}
-            icon={<DollarSign sx={{ width: 24, height: 24 }} />}
-            gradient={['success.main', 'success.dark']}
-            subtitle='已完成/已交付'
-            trend='neutral'
-          />
-        </Box>
 
         <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: 'repeat(1, 1fr)', lg: 'repeat(2, 1fr)' },
-            gap: 4,
-            mb: 4,
-          }}
+          component='main'
+          sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}
         >
-          <Card>
-            <CardContent>
-              <StatsChart
-                title='单据类型分布'
-                type='pie'
-                data={typeDistribution}
-                yKey='value'
-                xKey='name'
-              />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent>
-              <StatsChart
-                title='状态分布'
-                type='pie'
-                data={statusDistribution}
-                yKey='value'
-                xKey='name'
-              />
-            </CardContent>
-          </Card>
-        </Box>
-
-        <Card>
-          <CardHeader
+          <Box
             sx={{
-              display: 'flex',
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              pb: 0,
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: 'repeat(1, 1fr)',
+                md: 'repeat(2, 1fr)',
+                lg: 'repeat(3, 1fr)',
+                xl: 'repeat(6, 1fr)',
+              },
+              gap: 2,
+              mb: 4,
             }}
           >
-            <Typography
-              variant='h6'
-              sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-            >
-              <DollarSign style={{ width: 20, height: 20, color: 'success.main' }} />
-              财务记录
-            </Typography>
-          </CardHeader>
-          <CardContent>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
-              <TextField
-                size='small'
-                placeholder='搜索单据编号、供应商或备注...'
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                sx={{ minWidth: 250 }}
-                slotProps={{
-                  input: {
-                    startAdornment: <Search style={{ width: 18, height: 18, marginRight: 8 }} />,
-                  },
-                }}
-              />
-            </Box>
-            <DataTable
-              columns={columns}
-              data={filteredRecords}
-              enablePagination
+            <MetricCard
+              title='单据总数'
+              value={stats.totalRecords}
+              icon={<Receipt sx={{ width: 24, height: 24 }} />}
+              gradient={['success.main', 'success.dark']}
+              subtitle={`${stats.orders}个订单, ${stats.contracts}份合同`}
+              trend='neutral'
             />
-          </CardContent>
-        </Card>
-      </Box>
+            <MetricCard
+              title='订单数量'
+              value={stats.orders}
+              icon={<CreditCard sx={{ width: 24, height: 24 }} />}
+              gradient={['primary.main', '#1D4ED8']}
+              subtitle='已记录订单'
+              trend='neutral'
+            />
+            <MetricCard
+              title='合同数量'
+              value={stats.contracts}
+              icon={<Receipt sx={{ width: 24, height: 24 }} />}
+              gradient={['#14B8A6', '#0D9488']}
+              subtitle='已记录合同'
+              trend='neutral'
+            />
+            <MetricCard
+              title='总金额'
+              value={`¥${stats.totalAmount.toLocaleString()}`}
+              icon={<DollarSign sx={{ width: 24, height: 24 }} />}
+              gradient={['#8B5CF6', '#7C3AED']}
+              subtitle='所有单据合计'
+              trend='neutral'
+            />
+            <MetricCard
+              title='待结算'
+              value={`¥${stats.pendingAmount.toLocaleString()}`}
+              icon={<TrendingUp sx={{ width: 24, height: 24 }} />}
+              gradient={['warning.main', '#D97706']}
+              subtitle='待处理/处理中/有效'
+              trend='neutral'
+            />
+            <MetricCard
+              title='已完成'
+              value={`¥${stats.completedAmount.toLocaleString()}`}
+              icon={<DollarSign sx={{ width: 24, height: 24 }} />}
+              gradient={['success.main', 'success.dark']}
+              subtitle='已完成/已交付'
+              trend='neutral'
+            />
+          </Box>
 
-      <Dialog
-        open={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        maxWidth='md'
-        fullWidth
-      >
-        <DialogTitle>新增财务单据</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: 'repeat(1, 1fr)', lg: 'repeat(2, 1fr)' },
+              gap: 4,
+              mb: 4,
+            }}
+          >
+            <Card>
+              <CardContent>
+                <StatsChart
+                  title='单据类型分布'
+                  type='pie'
+                  data={typeDistribution}
+                  yKey='value'
+                  xKey='name'
+                />
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent>
+                <StatsChart
+                  title='状态分布'
+                  type='pie'
+                  data={statusDistribution}
+                  yKey='value'
+                  xKey='name'
+                />
+              </CardContent>
+            </Card>
+          </Box>
+
+          <Card>
+            <CardHeader
+              sx={{
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                pb: 0,
+              }}
+            >
+              <Typography
+                variant='h6'
+                sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+              >
+                <DollarSign style={{ width: 20, height: 20, color: 'success.main' }} />
+                财务记录
+              </Typography>
+            </CardHeader>
+            <CardContent>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+                <TextField
+                  size='small'
+                  placeholder='搜索单据编号、供应商或备注...'
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  sx={{ minWidth: 250 }}
+                  slotProps={{
+                    input: {
+                      startAdornment: <Search style={{ width: 18, height: 18, marginRight: 8 }} />,
+                    },
+                  }}
+                />
+              </Box>
+              <DataTable
+                columns={columns}
+                data={filteredRecords}
+                enablePagination
+              />
+            </CardContent>
+          </Card>
+        </Box>
+
+        <Dialog
+          open={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          maxWidth='md'
+          fullWidth
+        >
+          <DialogTitle>新增财务单据</DialogTitle>
+          <DialogContent>
+            <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                <TextField
+                  fullWidth
+                  select
+                  label='单据类型'
+                  value={formData.type}
+                  onChange={(e) =>
+                    setFormData({ ...formData, type: e.target.value as 'order' | 'contract' })
+                  }
+                >
+                  <option value='order'>订单</option>
+                  <option value='contract'>合同</option>
+                </TextField>
+                <TextField
+                  fullWidth
+                  label='单据编号 *'
+                  value={formData.record_no}
+                  onChange={(e) => setFormData({ ...formData, record_no: e.target.value })}
+                  placeholder='请输入单据编号'
+                />
+                <TextField
+                  fullWidth
+                  label='供应商名称'
+                  value={formData.supplier_name}
+                  onChange={(e) => setFormData({ ...formData, supplier_name: e.target.value })}
+                  placeholder='请输入供应商名称'
+                />
+                <TextField
+                  fullWidth
+                  label='供应商ID'
+                  value={formData.supplier_id}
+                  onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
+                  placeholder='请输入供应商ID'
+                />
+                <TextField
+                  fullWidth
+                  label='金额'
+                  type='number'
+                  value={formData.amount}
+                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                  placeholder='请输入金额'
+                />
+                <TextField
+                  fullWidth
+                  label='日期'
+                  type='date'
+                  value={formData.date}
+                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                />
+              </Box>
               <TextField
                 fullWidth
                 select
-                label='单据类型'
-                value={formData.type}
-                onChange={(e) =>
-                  setFormData({ ...formData, type: e.target.value as 'order' | 'contract' })
-                }
+                label='状态'
+                value={formData.status}
+                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
               >
-                <option value='order'>订单</option>
-                <option value='contract'>合同</option>
+                <option value='pending'>待处理</option>
+                <option value='processing'>处理中</option>
+                <option value='completed'>已完成</option>
+                <option value='active'>有效</option>
+                <option value='cancelled'>已取消</option>
               </TextField>
               <TextField
                 fullWidth
-                label='单据编号 *'
-                value={formData.record_no}
-                onChange={(e) => setFormData({ ...formData, record_no: e.target.value })}
-                placeholder='请输入单据编号'
-              />
-              <TextField
-                fullWidth
-                label='供应商名称'
-                value={formData.supplier_name}
-                onChange={(e) => setFormData({ ...formData, supplier_name: e.target.value })}
-                placeholder='请输入供应商名称'
-              />
-              <TextField
-                fullWidth
-                label='供应商ID'
-                value={formData.supplier_id}
-                onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
-                placeholder='请输入供应商ID'
-              />
-              <TextField
-                fullWidth
-                label='金额'
-                type='number'
-                value={formData.amount}
-                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                placeholder='请输入金额'
-              />
-              <TextField
-                fullWidth
-                label='日期'
-                type='date'
-                value={formData.date}
-                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                label='备注'
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder='请输入备注'
+                multiline
+                rows={2}
               />
             </Box>
-            <TextField
-              fullWidth
-              select
-              label='状态'
-              value={formData.status}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+          </DialogContent>
+          <DialogActions>
+            <Button
+              variant='outlined'
+              onClick={() => setShowCreateModal(false)}
             >
-              <option value='pending'>待处理</option>
-              <option value='processing'>处理中</option>
-              <option value='completed'>已完成</option>
-              <option value='active'>有效</option>
-              <option value='cancelled'>已取消</option>
-            </TextField>
-            <TextField
-              fullWidth
-              label='备注'
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder='请输入备注'
-              multiline
-              rows={2}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            variant='outlined'
-            onClick={() => setShowCreateModal(false)}
-          >
-            取消
-          </Button>
-          <Button
-            variant='contained'
-            onClick={handleSave}
-            sx={{ bgcolor: 'success.main' }}
-          >
-            保存
-          </Button>
-        </DialogActions>
-      </Dialog>
+              取消
+            </Button>
+            <Button
+              variant='contained'
+              onClick={handleSave}
+              sx={{ bgcolor: 'success.main' }}
+            >
+              保存
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </PageContainer>
   );

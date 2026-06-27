@@ -1,4 +1,5 @@
 import React from 'react';
+import { Navigate } from 'react-router-dom';
 import type { RouteConfig } from './utils';
 import { lazyWithRetry } from './utils';
 
@@ -32,13 +33,13 @@ const AuditLogPage = lazy(() => import('../pages/erp/AuditLogPage'));
 const DictManagementPage = lazy(() => import('../pages/erp/DictManagementPage'));
 const DatabaseManagementPage = lazy(() => import('../pages/erp/DatabaseManagementPage'));
 
-const SrmOrderPage = lazy(() => import('../pages/srm/SrmOrderPage'));
-const CrmOpportunityPage = lazy(() => import('../pages/crm/OpportunityManagementPage'));
-const CrmCustomerPage = lazy(() => import('../pages/crm/CustomerManagementPage'));
 export const erpRoutes: RouteConfig[] = [
   {
     path: '/erp',
-    element: ERPHomePage,
+    element: React.createElement(Navigate, {
+      to: '/erp/dashboard',
+      replace: true,
+    }),
     requiredPermissions: ['erp:read'],
     module: 'erp',
     action: 'read',
@@ -133,41 +134,6 @@ export const erpRoutes: RouteConfig[] = [
     requiredPermissions: ['erp:admin'],
     module: 'erp',
     action: 'admin',
-  },
-  {
-    path: '/erp/purchase/order',
-    element: SrmOrderPage,
-    requiredPermissions: ['srm:read'],
-    module: 'srm',
-    action: 'read',
-  },
-  {
-    path: '/erp/purchase/receipt',
-    element: SrmOrderPage,
-    requiredPermissions: ['srm:read'],
-    module: 'srm',
-    action: 'read',
-  },
-  {
-    path: '/erp/sales/order',
-    element: CrmOpportunityPage,
-    requiredPermissions: ['crm:read'],
-    module: 'crm',
-    action: 'read',
-  },
-  {
-    path: '/erp/sales/delivery',
-    element: CrmOpportunityPage,
-    requiredPermissions: ['crm:read'],
-    module: 'crm',
-    action: 'read',
-  },
-  {
-    path: '/erp/customer',
-    element: CrmCustomerPage,
-    requiredPermissions: ['crm:read'],
-    module: 'crm',
-    action: 'read',
   },
   {
     path: '/erp/financial-reports',

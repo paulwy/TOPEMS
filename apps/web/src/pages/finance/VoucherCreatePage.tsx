@@ -17,20 +17,11 @@ import {
   Autocomplete,
   Chip,
   Alert,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Plus,
-  Trash2,
-  Save,
-  X,
-  Calculator,
-  AlertCircle,
-  FileText,
-  Info,
-} from 'lucide-react';
+import { Plus, Trash2, Save, X, Calculator, AlertCircle, FileText, Info } from 'lucide-react';
 import { FormPageTemplate } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import {
@@ -602,9 +593,7 @@ const VoucherCreatePage: React.FC = () => {
   ];
 
   return (
-    <PageContainer
-      title='新建凭证'
-    >
+    <PageContainer title='新建凭证'>
       <FormPageTemplate
         title=''
         subtitle=''

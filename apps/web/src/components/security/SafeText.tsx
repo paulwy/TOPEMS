@@ -7,9 +7,12 @@ interface SafeTextProps {
 
 export const SafeText = ({ text, className }: SafeTextProps) => {
   const escaped = escapeHtml(text);
-  
+
   return (
-    <span className={className} dangerouslySetInnerHTML={{ __html: escaped }} />
+    <span
+      className={className}
+      dangerouslySetInnerHTML={{ __html: escaped }}
+    />
   );
 };
 

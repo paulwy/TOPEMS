@@ -107,7 +107,7 @@ const collectErrorInfo = (
     error,
     errorInfo,
     timestamp: Date.now(),
-    userAgent: typeof navigator !== 'undefined' ? (navigator.userAgent || 'unknown') : 'unknown',
+    userAgent: typeof navigator !== 'undefined' ? navigator.userAgent || 'unknown' : 'unknown',
     url: typeof window !== 'undefined' ? window.location.href : 'unknown',
     componentStack: errorInfo.componentStack || undefined,
     reactVersion: typeof React !== 'undefined' ? React.version : 'unknown',
@@ -116,10 +116,7 @@ const collectErrorInfo = (
 };
 
 // 上报错误到服务器
-const reportToServer = async (
-  report: ErrorReport,
-  serverUrl?: string
-): Promise<boolean> => {
+const reportToServer = async (report: ErrorReport, serverUrl?: string): Promise<boolean> => {
   const url = serverUrl || (window as any).__ERROR_REPORT_URL__;
   if (!url) return false;
 
@@ -149,11 +146,7 @@ const getErrorType = (error: Error): 'network' | 'not_found' | 'generic' => {
   ) {
     return 'network';
   }
-  if (
-    message.includes('404') ||
-    message.includes('not found') ||
-    message.includes('not_found')
-  ) {
+  if (message.includes('404') || message.includes('not found') || message.includes('not_found')) {
     return 'not_found';
   }
   return 'generic';
@@ -359,7 +352,9 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       const { error, errorInfo, errorReport, showDetails } = this.state;
       const level = this.props.level || 'page';
       const enableRetry = this.props.enableRetry ?? true;
-      const friendlyMessage = error ? getErrorFriendlyMessage(error, level) : { title: '发生错误', description: '请重试' };
+      const friendlyMessage = error
+        ? getErrorFriendlyMessage(error, level)
+        : { title: '发生错误', description: '请重试' };
 
       return (
         <div
@@ -512,9 +507,7 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
                       >
                         错误级别
                       </div>
-                      <div style={{ fontSize: '13px', fontFamily: 'monospace' }}>
-                        {level}
-                      </div>
+                      <div style={{ fontSize: '13px', fontFamily: 'monospace' }}>{level}</div>
                     </div>
 
                     {/* 错误时间 */}
@@ -757,7 +750,14 @@ export const withErrorBoundary = <P extends object>(
   Component: React.ComponentType<P>,
   options?: ErrorBoundaryOptions
 ): React.ComponentType<P> => {
-  const { level = 'component', fallback, onError, onReport, showDetails, enableRetry } = options || {};
+  const {
+    level = 'component',
+    fallback,
+    onError,
+    onReport,
+    showDetails,
+    enableRetry,
+  } = options || {};
 
   return (props: P) => (
     <ErrorBoundary
@@ -795,7 +795,10 @@ export const PageErrorBoundary: React.FC<ErrorBoundaryOptions & { children: Reac
   ...options
 }) => {
   return (
-    <ErrorBoundary level="page" {...options}>
+    <ErrorBoundary
+      level='page'
+      {...options}
+    >
       {children}
     </ErrorBoundary>
   );
@@ -807,7 +810,10 @@ export const ModuleErrorBoundary: React.FC<ErrorBoundaryOptions & { children: Re
   ...options
 }) => {
   return (
-    <ErrorBoundary level="module" {...options}>
+    <ErrorBoundary
+      level='module'
+      {...options}
+    >
       {children}
     </ErrorBoundary>
   );
@@ -828,7 +834,10 @@ export const SuspenseWithErrorBoundary: React.FC<{
   options?: ErrorBoundaryOptions;
 }> = ({ children, fallback, options }) => {
   return (
-    <ErrorBoundary level={options?.level || 'module'} {...options}>
+    <ErrorBoundary
+      level={options?.level || 'module'}
+      {...options}
+    >
       <Suspense fallback={fallback || <DefaultLoading />}>{children}</Suspense>
     </ErrorBoundary>
   );
@@ -845,7 +854,9 @@ const DefaultLoading: React.FC = () => (
       color: 'text.secondary',
     }}
   >
-    <RefreshCw style={{ width: 24, height: 24, marginRight: 8, animation: 'spin 1s linear infinite' }} />
+    <RefreshCw
+      style={{ width: 24, height: 24, marginRight: 8, animation: 'spin 1s linear infinite' }}
+    />
     加载中...
   </div>
 );

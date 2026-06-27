@@ -1,12 +1,7 @@
 import apiClient from '../../client';
 import type { ApiResponse } from '../../client';
 import { cleanEmptyUuids } from '../utils';
-import type {
-  Budget,
-  Expense,
-  PaginationParams,
-  PaginatedResult,
-} from '../types';
+import type { Budget, Expense, PaginationParams, PaginatedResult } from '../types';
 
 export const budgetApi = {
   async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<Budget>>> {
@@ -17,7 +12,7 @@ export const budgetApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/erp/budgets${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(`/api/erp/budgets${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<Budget>> {
@@ -46,7 +41,7 @@ export const expenseApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/erp/expenses${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(`/api/erp/expenses${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<Expense>> {

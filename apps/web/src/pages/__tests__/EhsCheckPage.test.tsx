@@ -21,11 +21,7 @@ vi.mock('@/store', () => ({
 const mockAddNotification = mockAddNotificationFn;
 
 const renderWithProviders = (ui: React.ReactElement) => {
-  return render(
-    <BrowserRouter>
-      {ui}
-    </BrowserRouter>
-  );
+  return render(<BrowserRouter>{ui}</BrowserRouter>);
 };
 
 const mockPlans = [
@@ -113,9 +109,12 @@ describe('EhsCheckPage', () => {
       fireEvent.click(recordsTab);
     });
     // Tab is clicked, verify tab content changes (list loads for records)
-    await waitFor(() => {
-      expect(screen.getByText('检查记录')).toBeInTheDocument();
-    }, { timeout: 3000 });
+    await waitFor(
+      () => {
+        expect(screen.getByText('检查记录')).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
   });
 
   it('should handle create plan', async () => {

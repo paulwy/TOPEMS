@@ -87,7 +87,17 @@ export const spcApi = {
 
   addSpcDataPoint: async (
     chartId: string,
-    data: Omit<SpcDataPoint, 'id' | 'chartId' | 'createdAt' | 'mean' | 'range' | 'stdDev' | 'isOutOfControl' | 'violationRules'>
+    data: Omit<
+      SpcDataPoint,
+      | 'id'
+      | 'chartId'
+      | 'createdAt'
+      | 'mean'
+      | 'range'
+      | 'stdDev'
+      | 'isOutOfControl'
+      | 'violationRules'
+    >
   ): Promise<ApiResponse<SpcDataPoint>> => {
     const backendData: CreateSpcDataPointRequestBackend = {
       chart_id: chartId,

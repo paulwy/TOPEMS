@@ -117,7 +117,9 @@ const EquipmentDetailPage: React.FC = () => {
       >
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>设备编号</InputLabel>
-          <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>{equipment.asset_number || '-'}</Typography>
+          <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
+            {equipment.asset_number || '-'}
+          </Typography>
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>设备名称</InputLabel>
@@ -169,11 +171,15 @@ const EquipmentDetailPage: React.FC = () => {
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>额定功率</InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{equipment.rated_power ? `${equipment.rated_power} kW` : '-'}</Typography>
+          <Typography sx={{ mt: 0.5 }}>
+            {equipment.rated_power ? `${equipment.rated_power} kW` : '-'}
+          </Typography>
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>额定电压</InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{equipment.rated_voltage ? `${equipment.rated_voltage} V` : '-'}</Typography>
+          <Typography sx={{ mt: 0.5 }}>
+            {equipment.rated_voltage ? `${equipment.rated_voltage} V` : '-'}
+          </Typography>
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>采购金额</InputLabel>
@@ -227,16 +233,37 @@ const EquipmentDetailPage: React.FC = () => {
           }}
         >
           <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
-            <Typography variant='body2' color='text.secondary'>创建时间</Typography>
-            <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>{formatDate(equipment.created_at)}</Typography>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
+              创建时间
+            </Typography>
+            <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
+              {formatDate(equipment.created_at)}
+            </Typography>
           </Box>
           <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
-            <Typography variant='body2' color='text.secondary'>更新时间</Typography>
-            <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>{formatDate(equipment.updated_at)}</Typography>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
+              更新时间
+            </Typography>
+            <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
+              {formatDate(equipment.updated_at)}
+            </Typography>
           </Box>
           <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
-            <Typography variant='body2' color='text.secondary'>设备ID</Typography>
-            <Typography sx={{ fontWeight: 'medium', mt: 0.5, fontFamily: 'monospace', fontSize: '0.875rem' }}>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
+              设备ID
+            </Typography>
+            <Typography
+              sx={{ fontWeight: 'medium', mt: 0.5, fontFamily: 'monospace', fontSize: '0.875rem' }}
+            >
               {equipment.id.substring(0, 8)}...
             </Typography>
           </Box>
@@ -256,7 +283,12 @@ const EquipmentDetailPage: React.FC = () => {
 
   const infoCard = useMemo(
     () => ({
-      avatar: <Wrench size={32} color='#1976d2' />,
+      avatar: (
+        <Wrench
+          size={32}
+          color='#1976d2'
+        />
+      ),
       title: equipment?.name,
       subtitle: equipment?.asset_number || undefined,
       tags: [equipment?.category || ''],
@@ -269,7 +301,10 @@ const EquipmentDetailPage: React.FC = () => {
   );
 
   return (
-    <PageContainer title='设备详情' subtitle='查看和管理设备信息'>
+    <PageContainer
+      title='设备详情'
+      subtitle='查看和管理设备信息'
+    >
       <DetailPageTemplate
         title=''
         subtitle=''

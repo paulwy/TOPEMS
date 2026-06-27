@@ -467,7 +467,7 @@ const MapView: React.FC<MapViewProps> = ({
   // Export functions
   const exportGeoJSON = useCallback(
     (drawOnly: boolean = false) => {
-      let features: GeoJSONFeature[] = [];
+      const features: GeoJSONFeature[] = [];
 
       if (!drawOnly) {
         if (visibleLayers.devices) {

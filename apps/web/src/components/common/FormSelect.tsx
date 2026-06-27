@@ -3,9 +3,9 @@
  * 封装 MUI Select，提供统一的样式和交互体验
  */
 import React from 'react';
+import type { FormControlProps } from '@mui/material';
 import {
   FormControl,
-  FormControlProps,
   InputLabel,
   Select,
   SelectProps,

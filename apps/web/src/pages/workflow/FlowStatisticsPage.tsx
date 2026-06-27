@@ -1,10 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import {
-  Box,
-  Typography,
-  Chip,
-  Stack,
-} from '@mui/material';
+import { Box, Typography, Chip, Stack } from '@mui/material';
 import {
   BarChart3,
   TrendingUp,
@@ -16,11 +11,17 @@ import {
   GitBranch,
   AlertCircle,
 } from 'lucide-react';
-import { workflowApi, StatisticsResponse, WorkflowStat, MonthlyData } from '@/api/workflow';
+import type { StatisticsResponse } from '@/api/workflow';
+import { workflowApi, WorkflowStat, MonthlyData } from '@/api/workflow';
 import { useAppStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
-import type { StatCard, ChartConfig, DataTable, TableColumn } from '@/components/templates/StatsPageTemplate';
+import type {
+  StatCard,
+  ChartConfig,
+  DataTable,
+  TableColumn,
+} from '@/components/templates/StatsPageTemplate';
 import { PageContainer } from '@/components/common';
 
 const FlowStatisticsPage: React.FC = () => {
@@ -164,13 +165,10 @@ const FlowStatisticsPage: React.FC = () => {
           count: stat.instance_count,
           rate: stat.completion_rate,
           duration: `${stat.avg_duration}h`,
-          status: stat.completion_rate >= 90
-            ? '优秀'
-            : stat.completion_rate >= 70
-              ? '良好'
-              : '需优化',
+          status:
+            stat.completion_rate >= 90 ? '优秀' : stat.completion_rate >= 70 ? '良好' : '需优化',
         })),
-        loading: loading,
+        loading,
       },
     ];
   }, [stats, filteredWorkflowStats, loading]);
@@ -183,30 +181,33 @@ const FlowStatisticsPage: React.FC = () => {
   ];
 
   return (
-    <PageContainer padding={false} maxWidth={false}>
+    <PageContainer
+      padding={false}
+      maxWidth={false}
+    >
       <StatsPageTemplate
-      title='统计分析报表'
-      subtitle='工作流数据统计和分析'
-      statCards={statCards}
-      statColumns={4}
-      charts={charts}
-      chartColumns={{ xs: 1, md: 2 }}
-      tables={tables}
-      loading={loading}
-      timeRangeOptions={timeRangeOptions}
-      timeRange={timeRange}
-      onTimeRangeChange={setTimeRange}
-      search={{
-        value: searchTerm,
-        onChange: setSearchTerm,
-        placeholder: '搜索工作流...',
-      }}
-      onRefresh={loadStatistics}
-      showExport
-      showRefresh
-      showTimeRange
-      showSearch
-    />
+        title='统计分析报表'
+        subtitle='工作流数据统计和分析'
+        statCards={statCards}
+        statColumns={4}
+        charts={charts}
+        chartColumns={{ xs: 1, md: 2 }}
+        tables={tables}
+        loading={loading}
+        timeRangeOptions={timeRangeOptions}
+        timeRange={timeRange}
+        onTimeRangeChange={setTimeRange}
+        search={{
+          value: searchTerm,
+          onChange: setSearchTerm,
+          placeholder: '搜索工作流...',
+        }}
+        onRefresh={loadStatistics}
+        showExport
+        showRefresh
+        showTimeRange
+        showSearch
+      />
     </PageContainer>
   );
 };

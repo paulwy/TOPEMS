@@ -9,7 +9,10 @@ const LimsSamplePage = lazy(() => import('../pages/lims/LimsSamplePage'));
 const LimsProcessPage = lazy(() => import('../pages/lims/LimsProcessPage'));
 const LimsTaskPage = lazy(() => import('../pages/lims/LimsTaskPage'));
 const LimsInstrumentPage = lazy(() => import('../pages/lims/LimsInstrumentPage'));
-const QmsStandardPage = lazy(() => import('../pages/qms/QmsQualityControlPage'));
+const LimsReagentPage = lazy(() => import('../pages/lims/ReagentPage'));
+const LimsBarcodePage = lazy(() => import('../pages/lims/BarcodePage'));
+const LimsInstrumentManagePage = lazy(() => import('../pages/lims/InstrumentPage'));
+const QmsStandardPage = lazy(() => import('../pages/qms/QmsStandardListPage'));
 const QmsCheckPage = lazy(() => import('../pages/qms/QmsInspectionPage'));
 const QmsIssuePage = lazy(() => import('../pages/qms/QmsNonconformancePage'));
 const QmsAuditPage = lazy(() => import('../pages/qms/QmsAuditManagementPage'));
@@ -41,13 +44,25 @@ const LimsInstrumentMaintenancePage = lazy(
   () => import('../pages/lims/LimsInstrumentMaintenancePage')
 );
 const LimsInstrumentDataPage = lazy(() => import('../pages/lims/LimsInstrumentDataPage'));
+const SampleReceivePage = lazy(() => import('../pages/lims/SampleReceivePage'));
+const InspectionTaskPage = lazy(() => import('../pages/lims/InspectionTaskPage'));
 
 const QmsStandardDetailPage = lazy(() => import('../pages/qms/QmsStandardDetailPage'));
 const QmsAuditManagementPage = lazy(() => import('../pages/qms/QmsAuditManagementPage'));
 const QmsApqpPage = lazy(() => import('../pages/qms/QmsApqpPage'));
+const QmsQualityCostPage = lazy(() => import('../pages/qms/QmsQualityCostPage'));
+const QmsSpcPage = lazy(() => import('../pages/qms/QmsSpcPage'));
+const QmsEightDPage = lazy(() => import('../pages/qms/QmsEightDPage'));
+const QmsFmeaPage = lazy(() => import('../pages/qms/QmsFmeaPage'));
 
 const EhsHazardDetailPage = lazy(() => import('../pages/ehs/EhsHazardDetailPage'));
 const EhsIncidentReportPage = lazy(() => import('../pages/ehs/EhsIncidentReportPage'));
+const EnvironmentPage = lazy(() => import('../pages/ehs/EnvironmentPage'));
+const HealthManagementPage = lazy(() => import('../pages/ehs/HealthManagementPage'));
+const EmergencyPage = lazy(() => import('../pages/ehs/EmergencyPage'));
+const TrainingPage = lazy(() => import('../pages/ehs/TrainingPage'));
+const CompliancePage = lazy(() => import('../pages/ehs/CompliancePage'));
+const HazardPage = lazy(() => import('../pages/ehs/HazardPage'));
 
 export const professionalRoutes: RouteConfig[] = [
   {
@@ -56,63 +71,98 @@ export const professionalRoutes: RouteConfig[] = [
       to: '/lims/samples',
       replace: true,
     }),
-    requiredPermissions: [],
+    requiredPermissions: ['lims:read'],
     module: 'lims',
     action: 'read',
   },
   {
     path: '/lims/samples',
     element: LimsSamplePage,
-    requiredPermissions: [],
+    requiredPermissions: ['lims:read'],
     module: 'lims',
     action: 'read',
   },
   {
     path: '/lims/processes',
     element: LimsProcessPage,
-    requiredPermissions: [],
+    requiredPermissions: ['lims:read'],
     module: 'lims',
     action: 'read',
   },
   {
     path: '/lims/tasks',
     element: LimsTaskPage,
-    requiredPermissions: [],
+    requiredPermissions: ['lims:read'],
     module: 'lims',
     action: 'read',
   },
   {
     path: '/lims/instruments',
     element: LimsInstrumentPage,
-    requiredPermissions: [],
+    requiredPermissions: ['lims:read'],
+    module: 'lims',
+    action: 'read',
+  },
+  {
+    path: '/lims/instruments-manage',
+    element: LimsInstrumentManagePage,
+    requiredPermissions: ['lims:read'],
+    module: 'lims',
+    action: 'read',
+  },
+  {
+    path: '/lims/reagents',
+    element: LimsReagentPage,
+    requiredPermissions: ['lims:read'],
+    module: 'lims',
+    action: 'read',
+  },
+  {
+    path: '/lims/barcodes',
+    element: LimsBarcodePage,
+    requiredPermissions: ['lims:read'],
+    module: 'lims',
+    action: 'read',
+  },
+  {
+    path: '/lims/sample-receive',
+    element: SampleReceivePage,
+    requiredPermissions: ['lims:read'],
+    module: 'lims',
+    action: 'read',
+  },
+  {
+    path: '/lims/inspection-tasks',
+    element: InspectionTaskPage,
+    requiredPermissions: ['lims:read'],
     module: 'lims',
     action: 'read',
   },
   {
     path: '/lims/sample/:id',
     element: LimsSampleDetailPage,
-    requiredPermissions: [],
+    requiredPermissions: ['lims:read'],
     module: 'lims',
     action: 'read',
   },
   {
     path: '/lims/task/:id',
     element: LimsTaskDetailPage,
-    requiredPermissions: [],
+    requiredPermissions: ['lims:read'],
     module: 'lims',
     action: 'read',
   },
   {
     path: '/lims/instrument/:id',
     element: LimsInstrumentMaintenancePage,
-    requiredPermissions: [],
+    requiredPermissions: ['lims:read'],
     module: 'lims',
     action: 'read',
   },
   {
     path: '/lims/instrument-data',
     element: LimsInstrumentDataPage,
-    requiredPermissions: [],
+    requiredPermissions: ['lims:read'],
     module: 'lims',
     action: 'read',
   },
@@ -176,6 +226,34 @@ export const professionalRoutes: RouteConfig[] = [
     action: 'read',
   },
   {
+    path: '/qms/quality-cost',
+    element: QmsQualityCostPage,
+    requiredPermissions: ['qms:read'],
+    module: 'qms',
+    action: 'read',
+  },
+  {
+    path: '/qms/spc',
+    element: QmsSpcPage,
+    requiredPermissions: ['qms:read'],
+    module: 'qms',
+    action: 'read',
+  },
+  {
+    path: '/qms/eight-d',
+    element: QmsEightDPage,
+    requiredPermissions: ['qms:read'],
+    module: 'qms',
+    action: 'read',
+  },
+  {
+    path: '/qms/fmea',
+    element: QmsFmeaPage,
+    requiredPermissions: ['qms:read'],
+    module: 'qms',
+    action: 'read',
+  },
+  {
     path: '/ehs',
     element: React.createElement(Navigate, {
       to: '/ehs/hazards',
@@ -228,16 +306,58 @@ export const professionalRoutes: RouteConfig[] = [
     action: 'read',
   },
   {
+    path: '/ehs/environment',
+    element: EnvironmentPage,
+    requiredPermissions: ['ehs:read'],
+    module: 'ehs',
+    action: 'read',
+  },
+  {
+    path: '/ehs/health',
+    element: HealthManagementPage,
+    requiredPermissions: ['ehs:read'],
+    module: 'ehs',
+    action: 'read',
+  },
+  {
+    path: '/ehs/emergency',
+    element: EmergencyPage,
+    requiredPermissions: ['ehs:read'],
+    module: 'ehs',
+    action: 'read',
+  },
+  {
+    path: '/ehs/training',
+    element: TrainingPage,
+    requiredPermissions: ['ehs:read'],
+    module: 'ehs',
+    action: 'read',
+  },
+  {
+    path: '/ehs/compliance',
+    element: CompliancePage,
+    requiredPermissions: ['ehs:read'],
+    module: 'ehs',
+    action: 'read',
+  },
+  {
+    path: '/ehs/hazard-management',
+    element: HazardPage,
+    requiredPermissions: ['ehs:read'],
+    module: 'ehs',
+    action: 'read',
+  },
+  {
     path: '/integration/external-erp',
     element: ExternalErpConnectionsPage,
-    requiredPermissions: [],
+    requiredPermissions: ['integration:read'],
     module: 'integration',
     action: 'read',
   },
   {
     path: '/integration/external-erp/:connectionId/mappings',
     element: ExternalErpMappingPage,
-    requiredPermissions: [],
+    requiredPermissions: ['integration:read'],
     module: 'integration',
     action: 'read',
   },
@@ -247,71 +367,71 @@ export const professionalRoutes: RouteConfig[] = [
       to: '/integration/dashboard',
       replace: true,
     }),
-    requiredPermissions: [],
+    requiredPermissions: ['integration:read'],
     module: 'integration',
     action: 'read',
   },
   {
     path: '/integration/dashboard',
     element: IntegrationDashboardPage,
-    requiredPermissions: [],
+    requiredPermissions: ['integration:read'],
     module: 'integration',
     action: 'read',
   },
   {
     path: '/integration/lims-qms',
     element: IntegrationLimsQmsPage,
-    requiredPermissions: [],
+    requiredPermissions: ['integration:read'],
     module: 'integration',
     action: 'read',
   },
   {
     path: '/integration/mes-erp',
     element: IntegrationMesErpPage,
-    requiredPermissions: [],
+    requiredPermissions: ['integration:read'],
     module: 'integration',
     action: 'read',
   },
   {
     path: '/integration/wms-scm',
     element: IntegrationWmsScmPage,
-    requiredPermissions: [],
+    requiredPermissions: ['integration:read'],
     module: 'integration',
     action: 'read',
   },
   {
     path: '/integration/events',
     element: IntegrationEventsPage,
-    requiredPermissions: [],
+    requiredPermissions: ['integration:read'],
     module: 'integration',
     action: 'read',
   },
   {
     path: '/integration/rules',
     element: ConversionRulesPage,
-    requiredPermissions: [],
+    requiredPermissions: ['integration:read'],
     module: 'integration',
     action: 'read',
   },
   {
     path: '/integration/external-erp-overview',
     element: IntegrationExternalErpOverviewPage,
-    requiredPermissions: [],
+    requiredPermissions: ['integration:read'],
     module: 'integration',
     action: 'read',
   },
   {
     path: '/mobile-workstation',
     element: MobileWorkstationPage,
-    requiredPermissions: [],
+    requiredPermissions: ['mobile:read'],
     module: 'mobile',
     action: 'read',
   },
   {
     path: '/performance',
     element: PerformanceMonitorPage,
-    requiredPermissions: [],
-    module: 'performance',
-    action: 'read',
+    requiredPermissions: ['iam:admin'],
+    module: 'iam',
+    action: 'admin',
   },
 ];

@@ -10,8 +10,8 @@ import {
   FormLabel,
   Typography,
   Chip,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 
 import { Download, Play, RefreshCw, FileText, Settings, Sparkles, Search } from 'lucide-react';
@@ -439,7 +439,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
     // 步骤2: 处理条件判断
     logger.info(`\n--- 步骤${stepNumber}: 处理条件判断 ---`);
     const conditionPattern = /\{\{#if (\w+)\}\}(.*?)\{\{\/if\}\}/gs;
-    let conditionMatches = result.match(conditionPattern);
+    const conditionMatches = result.match(conditionPattern);
     logger.info('找到的条件块数量:', conditionMatches ? conditionMatches.length : 0);
 
     result = result.replace(conditionPattern, (_: string, condition: string, content: string) => {
@@ -458,7 +458,7 @@ const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
     // 步骤3: 处理默认值
     logger.info(`\n--- 步骤${stepNumber}: 处理默认值 ---`);
     const defaultPattern = /\{\{(\w+)\s*\|\|\s*["']([^"']+)["']\}\}/g;
-    let defaultMatches = result.match(defaultPattern);
+    const defaultMatches = result.match(defaultPattern);
     logger.info('找到的默认值块数量:', defaultMatches ? defaultMatches.length : 0);
 
     result = result.replace(defaultPattern, (_: string, key: string, defaultValue: string) => {

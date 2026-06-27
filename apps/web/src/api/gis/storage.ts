@@ -25,18 +25,13 @@ export const storageApi = {
       `/api/gis/warehouse-locations?${queryParams.toString()}`
     );
     if (response.success && response.data) {
-      response.data = adaptResponse<StorageLocation>(
-        response.data,
-        'warehouse_locations'
-      );
+      response.data = adaptResponse<StorageLocation>(response.data, 'warehouse_locations');
     }
     return response as ApiResponse<PaginatedResponse<StorageLocation>>;
   },
 
   getStorageLocation: async (id: string): Promise<ApiResponse<StorageLocation>> => {
-    return apiClient.gis.get<StorageLocation>(
-      `/api/gis/warehouse-locations/${id}`
-    );
+    return apiClient.gis.get<StorageLocation>(`/api/gis/warehouse-locations/${id}`);
   },
 
   listStorageLocationsByMap: async (
@@ -55,20 +50,14 @@ export const storageApi = {
   createStorageLocation: async (
     data: CreateStorageLocationRequest
   ): Promise<ApiResponse<StorageLocation>> => {
-    return apiClient.gis.post<StorageLocation>(
-      '/api/gis/warehouse-locations',
-      data
-    );
+    return apiClient.gis.post<StorageLocation>('/api/gis/warehouse-locations', data);
   },
 
   updateStorageLocation: async (
     id: string,
     data: Partial<CreateStorageLocationRequest>
   ): Promise<ApiResponse<StorageLocation>> => {
-    return apiClient.gis.put<StorageLocation>(
-      `/api/gis/warehouse-locations/${id}`,
-      data
-    );
+    return apiClient.gis.put<StorageLocation>(`/api/gis/warehouse-locations/${id}`, data);
   },
 
   deleteStorageLocation: async (id: string): Promise<ApiResponse<void>> => {
@@ -87,10 +76,7 @@ export const storageApi = {
       `/api/gis/location-photos?${queryParams.toString()}`
     );
     if (response.success && response.data) {
-      response.data = adaptResponse<EvidenceRecord>(
-        response.data,
-        'location_photos'
-      );
+      response.data = adaptResponse<EvidenceRecord>(response.data, 'location_photos');
     }
     return response as ApiResponse<PaginatedResponse<EvidenceRecord>>;
   },
@@ -115,10 +101,7 @@ export const storageApi = {
   createEvidenceRecord: async (
     data: CreateEvidenceRecordRequest
   ): Promise<ApiResponse<EvidenceRecord>> => {
-    return apiClient.gis.post<EvidenceRecord>(
-      '/api/gis/location-photos',
-      data
-    );
+    return apiClient.gis.post<EvidenceRecord>('/api/gis/location-photos', data);
   },
 
   deleteEvidenceRecord: async (id: string): Promise<ApiResponse<void>> => {

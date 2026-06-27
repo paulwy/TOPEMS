@@ -30,8 +30,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { ehsApi } from '@/api/ehs';
@@ -48,7 +48,6 @@ const EhsIncidentReportPage: React.FC = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [formData, setFormData] = useState({
-
     title: '',
     description: '',
     incident_type: 'near_miss' as
@@ -355,7 +354,10 @@ const EhsIncidentReportPage: React.FC = () => {
   };
 
   return (
-    <PageContainer title='事件报告' subtitle='Incident Reporting'>
+    <PageContainer
+      title='事件报告'
+      subtitle='Incident Reporting'
+    >
       <ListPageTemplate
         title=''
         subtitle=''

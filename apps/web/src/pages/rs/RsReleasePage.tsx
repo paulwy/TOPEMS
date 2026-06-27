@@ -16,9 +16,9 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
-import { FileUpload } from '@/components/common';
+import { FileUpload, PageContainer } from '@/components/common';
 import { Plus, Eye, RotateCcw, Tag, Calendar, User } from 'lucide-react';
 import {
   ListPageTemplate,
@@ -26,7 +26,6 @@ import {
   type FilterConfig,
   type RowAction,
 } from '@/components/templates';
-import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
 import { useAppStore } from '@/store';
 import type { Deploy, CreateDeployRequest } from '@/api/rs';
@@ -90,7 +89,12 @@ const RsReleasePage: React.FC = () => {
           release_time: d.deploy_time || d.created_at || '',
           release_note: d.app_name || d.deploy_no,
           environment: d.env || d.environment || '',
-          status: d.status === 'success' ? 'released' : d.status === 'failed' ? 'rolled_back' : 'planning',
+          status:
+            d.status === 'success'
+              ? 'released'
+              : d.status === 'failed'
+                ? 'rolled_back'
+                : 'planning',
           release_by: d.deployer || d.operator || '',
         }));
         setReleases(transformed);

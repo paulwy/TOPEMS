@@ -16,7 +16,9 @@ import {
 
 export const eightDApi = {
   listEightDReports: async (): Promise<ApiResponse<EightDReport[]>> => {
-    const response = await apiClient.qms.get<{ reports?: EightDReportBackend[] }>('/api/qms/eightd');
+    const response = await apiClient.qms.get<{ reports?: EightDReportBackend[] }>(
+      '/api/qms/eightd'
+    );
     const adaptedData = (response.data?.reports || []).map(adaptEightDReportToFrontend);
     return { ...response, data: adaptedData };
   },
@@ -72,14 +74,11 @@ export const eightDApi = {
     id: string,
     data: { teamLeader?: string; teamMembers?: string[]; content?: string }
   ): Promise<ApiResponse<EightDReport>> => {
-    const response = await apiClient.qms.put<EightDReportBackend>(
-      `/api/qms/eightd/${id}/d1-team`,
-      {
-        team_leader: data.teamLeader,
-        team_members: data.teamMembers,
-        content: data.content,
-      }
-    );
+    const response = await apiClient.qms.put<EightDReportBackend>(`/api/qms/eightd/${id}/d1-team`, {
+      team_leader: data.teamLeader,
+      team_members: data.teamMembers,
+      content: data.content,
+    });
     return {
       ...response,
       data: response.data ? adaptEightDReportToFrontend(response.data) : undefined,

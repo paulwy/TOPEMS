@@ -1,13 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { logger } from '@/utils/logger';
-import {
-  Edit,
-  FileText,
-  Calendar,
-  DollarSign,
-  Building,
-  CheckCircle,
-} from 'lucide-react';
+import { Edit, FileText, Calendar, DollarSign, Building, CheckCircle } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Box,
@@ -145,7 +138,12 @@ const PmContractDetailPage: React.FC = () => {
       >
         <Card>
           <CardHeader sx={{ pb: 2 }}>
-            <Typography variant='h6' sx={{ fontSize: '1.125rem' }}>基本信息</Typography>
+            <Typography
+              variant='h6'
+              sx={{ fontSize: '1.125rem' }}
+            >
+              基本信息
+            </Typography>
           </CardHeader>
           <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             <Box
@@ -159,7 +157,9 @@ const PmContractDetailPage: React.FC = () => {
               }}
             >
               <Typography sx={{ color: 'grey.500' }}>合同编号</Typography>
-              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>{contract.contract_code}</Typography>
+              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
+                {contract.contract_code}
+              </Typography>
             </Box>
             <Box
               sx={{
@@ -187,7 +187,9 @@ const PmContractDetailPage: React.FC = () => {
               }}
             >
               <Typography sx={{ color: 'grey.500' }}>合同金额</Typography>
-              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>{formatCurrency(contract.amount)}</Typography>
+              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
+                {formatCurrency(contract.amount)}
+              </Typography>
             </Box>
             <Box
               sx={{
@@ -200,7 +202,9 @@ const PmContractDetailPage: React.FC = () => {
               }}
             >
               <Typography sx={{ color: 'grey.500' }}>签署日期</Typography>
-              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>{formatDate(contract.signing_date)}</Typography>
+              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
+                {formatDate(contract.signing_date)}
+              </Typography>
             </Box>
             <Box
               sx={{
@@ -211,14 +215,21 @@ const PmContractDetailPage: React.FC = () => {
               }}
             >
               <Typography sx={{ color: 'grey.500' }}>到期日期</Typography>
-              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>{formatDate(contract.end_date)}</Typography>
+              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
+                {formatDate(contract.end_date)}
+              </Typography>
             </Box>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader sx={{ pb: 2 }}>
-            <Typography variant='h6' sx={{ fontSize: '1.125rem' }}>合同方信息</Typography>
+            <Typography
+              variant='h6'
+              sx={{ fontSize: '1.125rem' }}
+            >
+              合同方信息
+            </Typography>
           </CardHeader>
           <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             <Box
@@ -232,7 +243,9 @@ const PmContractDetailPage: React.FC = () => {
               }}
             >
               <Typography sx={{ color: 'grey.500' }}>甲方</Typography>
-              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>{contract.party_a_name || '-'}</Typography>
+              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
+                {contract.party_a_name || '-'}
+              </Typography>
             </Box>
             <Box
               sx={{
@@ -245,7 +258,9 @@ const PmContractDetailPage: React.FC = () => {
               }}
             >
               <Typography sx={{ color: 'grey.500' }}>乙方</Typography>
-              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>{contract.party_b_name || '-'}</Typography>
+              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
+                {contract.party_b_name || '-'}
+              </Typography>
             </Box>
             <Box
               sx={{
@@ -258,7 +273,9 @@ const PmContractDetailPage: React.FC = () => {
               }}
             >
               <Typography sx={{ color: 'grey.500' }}>甲方联系人</Typography>
-              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>{contract.party_a_contact || '-'}</Typography>
+              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
+                {contract.party_a_contact || '-'}
+              </Typography>
             </Box>
             <Box
               sx={{
@@ -269,14 +286,21 @@ const PmContractDetailPage: React.FC = () => {
               }}
             >
               <Typography sx={{ color: 'grey.500' }}>乙方联系人</Typography>
-              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>{contract.party_b_contact || '-'}</Typography>
+              <Typography sx={{ fontWeight: 500, color: 'grey.900' }}>
+                {contract.party_b_contact || '-'}
+              </Typography>
             </Box>
           </CardContent>
         </Card>
 
         <Card sx={{ lg: { gridColumn: 'span 2' } }}>
           <CardHeader sx={{ pb: 2 }}>
-            <Typography variant='h6' sx={{ fontSize: '1.125rem' }}>合同描述</Typography>
+            <Typography
+              variant='h6'
+              sx={{ fontSize: '1.125rem' }}
+            >
+              合同描述
+            </Typography>
           </CardHeader>
           <CardContent>
             <Typography sx={{ color: 'grey.700' }}>{contract.description || '-'}</Typography>
@@ -286,137 +310,182 @@ const PmContractDetailPage: React.FC = () => {
     );
   }, [contract]);
 
-  const milestonesContent = useMemo(() => (
-    <Card>
-      <CardHeader sx={{ pb: 2 }}>
-        <Typography variant='h6' sx={{ fontSize: '1.125rem' }}>合同里程碑</Typography>
-      </CardHeader>
-      <CardContent>
-        {milestones.length === 0 ? (
-          <Typography sx={{ textAlign: 'center', color: 'grey.500', py: 6 }}>暂无里程碑数据</Typography>
-        ) : (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {milestones.map((milestone) => (
-              <Box
-                key={milestone.id}
-                sx={{
-                  border: '1px solid grey.100',
-                  borderRadius: 2,
-                  p: 2,
-                  transition: 'border-color 0.2s',
-                  '&:hover': { borderColor: '#93c5fd' },
-                }}
-              >
+  const milestonesContent = useMemo(
+    () => (
+      <Card>
+        <CardHeader sx={{ pb: 2 }}>
+          <Typography
+            variant='h6'
+            sx={{ fontSize: '1.125rem' }}
+          >
+            合同里程碑
+          </Typography>
+        </CardHeader>
+        <CardContent>
+          {milestones.length === 0 ? (
+            <Typography sx={{ textAlign: 'center', color: 'grey.500', py: 6 }}>
+              暂无里程碑数据
+            </Typography>
+          ) : (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {milestones.map((milestone) => (
                 <Box
+                  key={milestone.id}
                   sx={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    justifyContent: 'space-between',
+                    border: '1px solid grey.100',
+                    borderRadius: 2,
+                    p: 2,
+                    transition: 'border-color 0.2s',
+                    '&:hover': { borderColor: '#93c5fd' },
                   }}
                 >
-                  <Box sx={{ flex: 1 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography sx={{ fontWeight: 500 }}>{milestone.name}</Typography>
-                      <Badge sx={getMilestoneStatusSx(milestone.status)}>
-                        {milestone.status === 'completed'
-                          ? '已完成'
-                          : milestone.status === 'pending'
-                            ? '进行中'
-                            : milestone.status}
-                      </Badge>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      justifyContent: 'space-between',
+                    }}
+                  >
+                    <Box sx={{ flex: 1 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography sx={{ fontWeight: 500 }}>{milestone.name}</Typography>
+                        <Badge sx={getMilestoneStatusSx(milestone.status)}>
+                          {milestone.status === 'completed'
+                            ? '已完成'
+                            : milestone.status === 'pending'
+                              ? '进行中'
+                              : milestone.status}
+                        </Badge>
+                      </Box>
+                      {milestone.description && (
+                        <Typography
+                          variant='body2'
+                          sx={{ color: 'grey.500', mt: 0.5 }}
+                        >
+                          {milestone.description}
+                        </Typography>
+                      )}
                     </Box>
-                    {milestone.description && (
-                      <Typography variant='body2' sx={{ color: 'grey.500', mt: 0.5 }}>
-                        {milestone.description}
+                    <Box sx={{ textAlign: 'right' }}>
+                      <Typography
+                        variant='body2'
+                        sx={{ color: 'grey.500' }}
+                      >
+                        目标日期
                       </Typography>
-                    )}
-                  </Box>
-                  <Box sx={{ textAlign: 'right' }}>
-                    <Typography variant='body2' sx={{ color: 'grey.500' }}>目标日期</Typography>
-                    <Typography sx={{ fontWeight: 500 }}>{formatDate(milestone.target_date)}</Typography>
-                    <Typography variant='body2' sx={{ color: '#7e22ce', mt: 0.5 }}>
-                      {formatCurrency(milestone.payment_amount)}
-                    </Typography>
+                      <Typography sx={{ fontWeight: 500 }}>
+                        {formatDate(milestone.target_date)}
+                      </Typography>
+                      <Typography
+                        variant='body2'
+                        sx={{ color: '#7e22ce', mt: 0.5 }}
+                      >
+                        {formatCurrency(milestone.payment_amount)}
+                      </Typography>
+                    </Box>
                   </Box>
                 </Box>
-              </Box>
-            ))}
-          </Box>
-        )}
-      </CardContent>
-    </Card>
-  ), [milestones]);
+              ))}
+            </Box>
+          )}
+        </CardContent>
+      </Card>
+    ),
+    [milestones]
+  );
 
-  const paymentsContent = useMemo(() => (
-    <Card>
-      <CardHeader sx={{ pb: 2 }}>
-        <Typography variant='h6' sx={{ fontSize: '1.125rem' }}>付款计划</Typography>
-      </CardHeader>
-      <CardContent sx={{ p: 0 }}>
-        {payments.length === 0 ? (
-          <Typography sx={{ textAlign: 'center', color: 'grey.500', py: 6 }}>暂无付款计划数据</Typography>
-        ) : (
-          <Box sx={{ overflowX: 'auto' }}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>期次</TableCell>
-                  <TableCell>付款日期</TableCell>
-                  <TableCell>金额</TableCell>
-                  <TableCell>比例</TableCell>
-                  <TableCell>状态</TableCell>
-                  <TableCell>备注</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {payments.map((payment, index) => (
-                  <TableRow key={payment.id} sx={{ '&:hover': { bgcolor: 'grey.50' } }}>
-                    <TableCell sx={{ fontWeight: 500 }}>第 {index + 1} 期</TableCell>
-                    <TableCell sx={{ color: 'grey.600' }}>{formatDate(payment.due_date)}</TableCell>
-                    <TableCell sx={{ fontWeight: 500 }}>{formatCurrency(payment.payment_amount)}</TableCell>
-                    <TableCell sx={{ color: 'grey.600' }}>{payment.payment_percent || 0}%</TableCell>
-                    <TableCell>
-                      <Badge sx={getPaymentStatusSx(payment.status)}>
-                        {payment.status === 'paid'
-                          ? '已支付'
-                          : payment.status === 'pending'
-                            ? '待支付'
-                            : payment.status === 'overdue'
-                              ? '已逾期'
-                              : payment.status || '-'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell sx={{ color: 'grey.600' }}>{payment.remark || '-'}</TableCell>
+  const paymentsContent = useMemo(
+    () => (
+      <Card>
+        <CardHeader sx={{ pb: 2 }}>
+          <Typography
+            variant='h6'
+            sx={{ fontSize: '1.125rem' }}
+          >
+            付款计划
+          </Typography>
+        </CardHeader>
+        <CardContent sx={{ p: 0 }}>
+          {payments.length === 0 ? (
+            <Typography sx={{ textAlign: 'center', color: 'grey.500', py: 6 }}>
+              暂无付款计划数据
+            </Typography>
+          ) : (
+            <Box sx={{ overflowX: 'auto' }}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>期次</TableCell>
+                    <TableCell>付款日期</TableCell>
+                    <TableCell>金额</TableCell>
+                    <TableCell>比例</TableCell>
+                    <TableCell>状态</TableCell>
+                    <TableCell>备注</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Box>
-        )}
-      </CardContent>
-    </Card>
-  ), [payments]);
+                </TableHead>
+                <TableBody>
+                  {payments.map((payment, index) => (
+                    <TableRow
+                      key={payment.id}
+                      sx={{ '&:hover': { bgcolor: 'grey.50' } }}
+                    >
+                      <TableCell sx={{ fontWeight: 500 }}>第 {index + 1} 期</TableCell>
+                      <TableCell sx={{ color: 'grey.600' }}>
+                        {formatDate(payment.due_date)}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 500 }}>
+                        {formatCurrency(payment.payment_amount)}
+                      </TableCell>
+                      <TableCell sx={{ color: 'grey.600' }}>
+                        {payment.payment_percent || 0}%
+                      </TableCell>
+                      <TableCell>
+                        <Badge sx={getPaymentStatusSx(payment.status)}>
+                          {payment.status === 'paid'
+                            ? '已支付'
+                            : payment.status === 'pending'
+                              ? '待支付'
+                              : payment.status === 'overdue'
+                                ? '已逾期'
+                                : payment.status || '-'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell sx={{ color: 'grey.600' }}>{payment.remark || '-'}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Box>
+          )}
+        </CardContent>
+      </Card>
+    ),
+    [payments]
+  );
 
-  const tabs: TabConfig[] = useMemo(() => [
-    {
-      id: 'overview',
-      label: '合同概览',
-      content: overviewContent,
-    },
-    {
-      id: 'milestones',
-      label: '里程碑',
-      content: milestonesContent,
-    },
-    {
-      id: 'payments',
-      label: '付款计划',
-      content: paymentsContent,
-    },
-  ], [overviewContent, milestonesContent, paymentsContent]);
+  const tabs: TabConfig[] = useMemo(
+    () => [
+      {
+        id: 'overview',
+        label: '合同概览',
+        content: overviewContent,
+      },
+      {
+        id: 'milestones',
+        label: '里程碑',
+        content: milestonesContent,
+      },
+      {
+        id: 'payments',
+        label: '付款计划',
+        content: paymentsContent,
+      },
+    ],
+    [overviewContent, milestonesContent, paymentsContent]
+  );
 
   const infoCard = useMemo(() => {
-    if (!contract) return undefined;
+    if (!contract) return;
 
     const statusKey = contract.status || 'draft';
 
@@ -437,11 +506,19 @@ const PmContractDetailPage: React.FC = () => {
   }, [contract]);
 
   return (
-    <PageContainer title={contract?.contract_name || '合同详情'} subtitle={contract?.contract_code}>
+    <PageContainer
+      title={contract?.contract_name || '合同详情'}
+      subtitle={contract?.contract_code}
+    >
       <DetailPageTemplate
         title=''
         subtitle=''
-        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '项目管理', href: '/pm/projects' }, { label: '合同', href: '/pm/contracts' }, { label: '合同详情' }]}
+        breadcrumbs={[
+          { label: '首页', href: '/dashboard' },
+          { label: '项目管理', href: '/pm/projects' },
+          { label: '合同', href: '/pm/contracts' },
+          { label: '合同详情' },
+        ]}
         loading={loading}
         error={error}
         backHref='/pm/contracts'

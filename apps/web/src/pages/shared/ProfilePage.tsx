@@ -46,8 +46,8 @@ import {
   IconButton,
   CircularProgress,
   Divider,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 
 interface ActivityItem {
   id: string;
@@ -176,24 +176,29 @@ const ProfilePage: React.FC = () => {
     initialized.current = true;
     loadUserProfile();
     loadActivities();
-    
-    authApi.getPreferences().then((res) => {
-      if (res.success && res.data) {
-        if (res.data.shortcuts && setShortcuts) {
-          setShortcuts(res.data.shortcuts.map((s) => ({
-            id: s.id,
-            title: s.title,
-            path: s.path,
-            icon: (s as any).icon || 'Circle',
-          })));
+
+    authApi
+      .getPreferences()
+      .then((res) => {
+        if (res.success && res.data) {
+          if (res.data.shortcuts && setShortcuts) {
+            setShortcuts(
+              res.data.shortcuts.map((s) => ({
+                id: s.id,
+                title: s.title,
+                path: s.path,
+                icon: (s as any).icon || 'Circle',
+              }))
+            );
+          }
+          if (res.data.notification_settings && setNotificationSettings) {
+            setNotificationSettings(res.data.notification_settings);
+          }
         }
-        if (res.data.notification_settings && setNotificationSettings) {
-          setNotificationSettings(res.data.notification_settings);
-        }
-      }
-    }).catch((err) => {
-      apiLogger.error('加载用户偏好设置失败', err);
-    });
+      })
+      .catch((err) => {
+        apiLogger.error('加载用户偏好设置失败', err);
+      });
   }, [loadUserProfile, loadActivities, setShortcuts, setNotificationSettings]);
 
   const handleAvatarUpload = useCallback(
@@ -472,720 +477,720 @@ const ProfilePage: React.FC = () => {
           gap: 3,
         }}
       >
-          <Box>
-            <Card sx={{ position: 'sticky', top: 64 }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    textAlign: 'center',
-                  }}
+        <Box>
+          <Card sx={{ position: 'sticky', top: 64 }}>
+            <CardContent sx={{ p: 3 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                }}
+              >
+                <Box sx={{ position: 'relative' }}>
+                  <Avatar
+                    src={avatarUrl || undefined}
+                    sx={{
+                      width: 96,
+                      height: 96,
+                      mb: 2,
+                      bgcolor: 'primary.main',
+                      fontSize: 36,
+                    }}
+                  >
+                    {user.full_name?.charAt(0).toUpperCase() ||
+                      user.username.charAt(0).toUpperCase()}
+                  </Avatar>
+                  <IconButton
+                    onClick={() => fileInputRef.current?.click()}
+                    sx={{
+                      position: 'absolute',
+                      bottom: 8,
+                      right: 0,
+                      bgcolor: 'primary.main',
+                      color: 'white',
+                      '&:hover': { bgcolor: 'primary.dark' },
+                      width: 32,
+                      height: 32,
+                    }}
+                    size='small'
+                  >
+                    <Camera size={16} />
+                  </IconButton>
+                  <input
+                    ref={fileInputRef}
+                    type='file'
+                    accept='image/*'
+                    onChange={handleAvatarUpload}
+                    style={{ display: 'none' }}
+                  />
+                </Box>
+                <Typography
+                  variant='h6'
+                  sx={{ fontWeight: 600 }}
                 >
-                  <Box sx={{ position: 'relative' }}>
-                    <Avatar
-                      src={avatarUrl || undefined}
-                      sx={{
-                        width: 96,
-                        height: 96,
-                        mb: 2,
-                        bgcolor: 'primary.main',
-                        fontSize: 36,
-                      }}
+                  {user.full_name || user.username}
+                </Typography>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                  sx={{ mt: 0.5 }}
+                >
+                  {user.email}
+                </Typography>
+                <Box sx={{ mt: 2, width: '100%' }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 1,
+                      mb: 1,
+                    }}
+                  >
+                    <User size={16} />
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
                     >
-                      {user.full_name?.charAt(0).toUpperCase() ||
-                        user.username.charAt(0).toUpperCase()}
-                    </Avatar>
-                    <IconButton
-                      onClick={() => fileInputRef.current?.click()}
-                      sx={{
-                        position: 'absolute',
-                        bottom: 8,
-                        right: 0,
-                        bgcolor: 'primary.main',
-                        color: 'white',
-                        '&:hover': { bgcolor: 'primary.dark' },
-                        width: 32,
-                        height: 32,
-                      }}
-                      size='small'
-                    >
-                      <Camera size={16} />
-                    </IconButton>
-                    <input
-                      ref={fileInputRef}
-                      type='file'
-                      accept='image/*'
-                      onChange={handleAvatarUpload}
-                      style={{ display: 'none' }}
-                    />
+                      用户名: {user.username}
+                    </Typography>
                   </Box>
-                  <Typography
-                    variant='h6'
-                    sx={{ fontWeight: 600 }}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 1,
+                      mb: 1,
+                    }}
                   >
-                    {user.full_name || user.username}
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    color='text.secondary'
-                    sx={{ mt: 0.5 }}
+                    <Shield size={16} />
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      角色: {user.role || '普通用户'}
+                    </Typography>
+                  </Box>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 1,
+                    }}
                   >
-                    {user.email}
-                  </Typography>
-                  <Box sx={{ mt: 2, width: '100%' }}>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 1,
-                        mb: 1,
-                      }}
+                    <RefreshCw size={16} />
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
                     >
-                      <User size={16} />
-                      <Typography
-                        variant='body2'
-                        color='text.secondary'
-                      >
-                        用户名: {user.username}
-                      </Typography>
-                    </Box>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 1,
-                        mb: 1,
-                      }}
-                    >
-                      <Shield size={16} />
-                      <Typography
-                        variant='body2'
-                        color='text.secondary'
-                      >
-                        角色: {user.role || '普通用户'}
-                      </Typography>
-                    </Box>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 1,
-                      }}
-                    >
-                      <RefreshCw size={16} />
-                      <Typography
-                        variant='body2'
-                        color='text.secondary'
-                      >
-                        创建于: {new Date(user.created_at).toLocaleDateString('zh-CN')}
-                      </Typography>
-                    </Box>
+                      创建于: {new Date(user.created_at).toLocaleDateString('zh-CN')}
+                    </Typography>
                   </Box>
                 </Box>
-              </CardContent>
-            </Card>
-          </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        </Box>
 
-          <Box>
-            <Card>
-              <CardHeader
-                sx={{ pb: 0 }}
-                title={
-                  <Tabs
-                    value={activeTab}
-                    onChange={(_, v) => setActiveTab(v)}
-                  >
-                    <Tab
-                      icon={<User size={16} />}
-                      iconPosition='start'
-                      label='个人信息'
-                    />
-                    <Tab
-                      icon={<Shield size={16} />}
-                      iconPosition='start'
-                      label='账户安全'
-                    />
-                    <Tab
-                      icon={<Activity size={16} />}
-                      iconPosition='start'
-                      label='最近活动'
-                    />
-                    <Tab
-                      icon={<Bell size={16} />}
-                      iconPosition='start'
-                      label='通知设置'
-                    />
-                    <Tab
-                      icon={<Star size={16} />}
-                      iconPosition='start'
-                      label='快捷方式'
-                    />
-                  </Tabs>
-                }
-              />
-              <CardContent>
-                {activeTab === 0 && (
-                  <Box
-                    component='form'
-                    onSubmit={profileForm.handleSubmit(handleProfileUpdate)}
-                    sx={{ '& > :not(style)': { mb: 3 } }}
-                  >
-                    <TextField
-                      fullWidth
-                      label='姓名'
-                      {...profileForm.register('full_name')}
-                      placeholder='请输入姓名'
-                      size='small'
-                    />
-                    <Box>
-                      <TextField
-                        fullWidth
-                        label='邮箱 *'
-                        type='email'
-                        {...profileForm.register('email', {
-                          required: '邮箱是必填项',
-                          pattern: {
-                            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                            message: '请输入有效的邮箱地址',
-                          },
-                        })}
-                        placeholder='请输入邮箱'
-                        error={!!profileForm.formState.errors.email}
-                        helperText={profileForm.formState.errors.email?.message}
-                        size='small'
-                      />
-                    </Box>
-                    <TextField
-                      fullWidth
-                      label='用户名'
-                      value={user.username}
-                      disabled
-                      size='small'
-                    />
-                    <Box sx={{ display: 'flex', gap: 1.5, pt: 2 }}>
-                      <Button
-                        type='submit'
-                        variant='contained'
-                        startIcon={<Save size={16} />}
-                      >
-                        保存更改
-                      </Button>
-                      <Button
-                        type='button'
-                        variant='outlined'
-                        onClick={() => profileForm.reset()}
-                      >
-                        重置
-                      </Button>
-                    </Box>
-                  </Box>
-                )}
-
-                {activeTab === 1 && (
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        p: 2,
-                        bgcolor: 'grey.100',
-                        borderRadius: 1,
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <Shield
-                          size={20}
-                          style={{ color: 'primary.dark' }}
-                        />
-                        <Box>
-                          <Typography
-                            variant='subtitle1'
-                            sx={{ fontWeight: 500 }}
-                          >
-                            修改密码
-                          </Typography>
-                          <Typography
-                            variant='body2'
-                            color='text.secondary'
-                          >
-                            定期更新密码以保护账户安全
-                          </Typography>
-                        </Box>
-                      </Box>
-                      <Button
-                        variant='contained'
-                        onClick={() => setShowPasswordDialog(true)}
-                      >
-                        修改密码
-                      </Button>
-                    </Box>
-
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        p: 2,
-                        bgcolor: 'grey.100',
-                        borderRadius: 1,
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <Mail
-                          size={20}
-                          style={{ color: 'success.dark' }}
-                        />
-                        <Box>
-                          <Typography
-                            variant='subtitle1'
-                            sx={{ fontWeight: 500 }}
-                          >
-                            邮箱验证
-                          </Typography>
-                          <Typography
-                            variant='body2'
-                            color='text.secondary'
-                          >
-                            {user.email} 已验证
-                          </Typography>
-                        </Box>
-                      </Box>
-                      <CheckCircle2
-                        size={20}
-                        style={{ color: 'success.dark' }}
-                      />
-                    </Box>
-
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        p: 2,
-                        bgcolor: 'grey.100',
-                        borderRadius: 1,
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <Settings
-                          size={20}
-                          style={{ color: '#9333ea' }}
-                        />
-                        <Box>
-                          <Typography
-                            variant='subtitle1'
-                            sx={{ fontWeight: 500 }}
-                          >
-                            登录状态
-                          </Typography>
-                          <Typography
-                            variant='body2'
-                            color='text.secondary'
-                          >
-                            当前会话活跃中
-                          </Typography>
-                        </Box>
-                      </Box>
-                      <Button
-                        variant='outlined'
-                        onClick={() => {
-                          logout();
-                          navigate('/login');
-                        }}
-                      >
-                        退出登录
-                      </Button>
-                    </Box>
-                  </Box>
-                )}
-
-                {activeTab === 2 && (
+        <Box>
+          <Card>
+            <CardHeader
+              sx={{ pb: 0 }}
+              title={
+                <Tabs
+                  value={activeTab}
+                  onChange={(_, v) => setActiveTab(v)}
+                >
+                  <Tab
+                    icon={<User size={16} />}
+                    iconPosition='start'
+                    label='个人信息'
+                  />
+                  <Tab
+                    icon={<Shield size={16} />}
+                    iconPosition='start'
+                    label='账户安全'
+                  />
+                  <Tab
+                    icon={<Activity size={16} />}
+                    iconPosition='start'
+                    label='最近活动'
+                  />
+                  <Tab
+                    icon={<Bell size={16} />}
+                    iconPosition='start'
+                    label='通知设置'
+                  />
+                  <Tab
+                    icon={<Star size={16} />}
+                    iconPosition='start'
+                    label='快捷方式'
+                  />
+                </Tabs>
+              }
+            />
+            <CardContent>
+              {activeTab === 0 && (
+                <Box
+                  component='form'
+                  onSubmit={profileForm.handleSubmit(handleProfileUpdate)}
+                  sx={{ '& > :not(style)': { mb: 3 } }}
+                >
+                  <TextField
+                    fullWidth
+                    label='姓名'
+                    {...profileForm.register('full_name')}
+                    placeholder='请输入姓名'
+                    size='small'
+                  />
                   <Box>
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        mb: 2,
-                      }}
+                    <TextField
+                      fullWidth
+                      label='邮箱 *'
+                      type='email'
+                      {...profileForm.register('email', {
+                        required: '邮箱是必填项',
+                        pattern: {
+                          value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                          message: '请输入有效的邮箱地址',
+                        },
+                      })}
+                      placeholder='请输入邮箱'
+                      error={!!profileForm.formState.errors.email}
+                      helperText={profileForm.formState.errors.email?.message}
+                      size='small'
+                    />
+                  </Box>
+                  <TextField
+                    fullWidth
+                    label='用户名'
+                    value={user.username}
+                    disabled
+                    size='small'
+                  />
+                  <Box sx={{ display: 'flex', gap: 1.5, pt: 2 }}>
+                    <Button
+                      type='submit'
+                      variant='contained'
+                      startIcon={<Save size={16} />}
                     >
-                      <Typography
-                        variant='subtitle1'
-                        sx={{ fontWeight: 500 }}
-                      >
-                        最近活动记录
-                      </Typography>
-                      <Button
-                        variant='text'
-                        size='small'
-                        startIcon={<RefreshCw size={16} />}
-                        onClick={loadActivities}
-                      >
-                        刷新
-                      </Button>
-                    </Box>
-                    {loadingActivities ? (
-                      <Box sx={{ textAlign: 'center', py: 4 }}>
-                        <CircularProgress size={32} />
+                      保存更改
+                    </Button>
+                    <Button
+                      type='button'
+                      variant='outlined'
+                      onClick={() => profileForm.reset()}
+                    >
+                      重置
+                    </Button>
+                  </Box>
+                </Box>
+              )}
+
+              {activeTab === 1 && (
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      p: 2,
+                      bgcolor: 'grey.100',
+                      borderRadius: 1,
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <Shield
+                        size={20}
+                        style={{ color: 'primary.dark' }}
+                      />
+                      <Box>
+                        <Typography
+                          variant='subtitle1'
+                          sx={{ fontWeight: 500 }}
+                        >
+                          修改密码
+                        </Typography>
                         <Typography
                           variant='body2'
                           color='text.secondary'
-                          sx={{ mt: 1 }}
                         >
-                          加载中...
+                          定期更新密码以保护账户安全
                         </Typography>
                       </Box>
-                    ) : activities.length === 0 ? (
-                      <Box sx={{ textAlign: 'center', py: 4 }}>
-                        <Clock
-                          size={48}
-                          style={{ color: 'text.disabled', marginBottom: 12 }}
-                        />
-                        <Typography color='text.secondary'>暂无活动记录</Typography>
-                      </Box>
-                    ) : (
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          gap: 1.5,
-                        }}
-                      >
-                        {activities.map((activity) => (
-                          <Box
-                            key={activity.id}
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'flex-start',
-                              gap: 1.5,
-                              p: 1.5,
-                              bgcolor: 'grey.100',
-                              borderRadius: 1,
-                            }}
-                          >
-                            <Box
-                              sx={{
-                                width: 8,
-                                height: 8,
-                                borderRadius: '50%',
-                                bgcolor: activity.success ? 'success.main' : 'error.main',
-                                mt: 1,
-                              }}
-                            />
-                            <Box sx={{ flex: 1 }}>
-                              <Box
-                                sx={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'space-between',
-                                }}
-                              >
-                                <Typography
-                                  variant='body2'
-                                  sx={{ fontWeight: 500 }}
-                                >
-                                  {activity.action}
-                                </Typography>
-                                <Typography
-                                  variant='caption'
-                                  color='text.secondary'
-                                >
-                                  {new Date(activity.created_at).toLocaleString('zh-CN')}
-                                </Typography>
-                              </Box>
-                              <Typography
-                                variant='body2'
-                                color='text.secondary'
-                              >
-                                {activity.resource}
-                                {activity.ip_address && ` · ${activity.ip_address}`}
-                              </Typography>
-                              {activity.error_message && (
-                                <Typography
-                                  variant='caption'
-                                  color='error'
-                                >
-                                  {activity.error_message}
-                                </Typography>
-                              )}
-                            </Box>
-                          </Box>
-                        ))}
-                      </Box>
-                    )}
+                    </Box>
+                    <Button
+                      variant='contained'
+                      onClick={() => setShowPasswordDialog(true)}
+                    >
+                      修改密码
+                    </Button>
                   </Box>
-                )}
 
-                {activeTab === 3 && (
-                  <Box>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      p: 2,
+                      bgcolor: 'grey.100',
+                      borderRadius: 1,
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <Mail
+                        size={20}
+                        style={{ color: 'success.dark' }}
+                      />
+                      <Box>
+                        <Typography
+                          variant='subtitle1'
+                          sx={{ fontWeight: 500 }}
+                        >
+                          邮箱验证
+                        </Typography>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          {user.email} 已验证
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <CheckCircle2
+                      size={20}
+                      style={{ color: 'success.dark' }}
+                    />
+                  </Box>
+
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      p: 2,
+                      bgcolor: 'grey.100',
+                      borderRadius: 1,
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <Settings
+                        size={20}
+                        style={{ color: '#9333ea' }}
+                      />
+                      <Box>
+                        <Typography
+                          variant='subtitle1'
+                          sx={{ fontWeight: 500 }}
+                        >
+                          登录状态
+                        </Typography>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          当前会话活跃中
+                        </Typography>
+                      </Box>
+                    </Box>
+                    <Button
+                      variant='outlined'
+                      onClick={() => {
+                        logout();
+                        navigate('/login');
+                      }}
+                    >
+                      退出登录
+                    </Button>
+                  </Box>
+                </Box>
+              )}
+
+              {activeTab === 2 && (
+                <Box>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      mb: 2,
+                    }}
+                  >
                     <Typography
                       variant='subtitle1'
-                      sx={{ fontWeight: 500, mb: 2 }}
+                      sx={{ fontWeight: 500 }}
                     >
-                      通知偏好设置
+                      最近活动记录
                     </Typography>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                      {[
-                        {
-                          key: 'email_enabled' as const,
-                          icon: Mail,
-                          label: '邮件通知',
-                          desc: '接收重要信息的邮件通知',
-                          color: 'primary.dark',
-                        },
-                        {
-                          key: 'system_enabled' as const,
-                          icon: Bell,
-                          label: '系统通知',
-                          desc: '接收系统消息和公告',
-                          color: '#ca8a04',
-                        },
-                        {
-                          key: 'workflow_enabled' as const,
-                          icon: Activity,
-                          label: '工作流通知',
-                          desc: '接收工作流审批和任务提醒',
-                          color: 'success.dark',
-                        },
-                        {
-                          key: 'document_enabled' as const,
-                          icon: FileText,
-                          label: '文档通知',
-                          desc: '接收文档更新和评论提醒',
-                          color: '#9333ea',
-                        },
-                        {
-                          key: 'security_enabled' as const,
-                          icon: Shield,
-                          label: '安全通知',
-                          desc: '接收登录和账户安全提醒',
-                          color: 'error.dark',
-                        },
-                      ].map(({ key, icon: Icon, label, desc, color }) => (
+                    <Button
+                      variant='text'
+                      size='small'
+                      startIcon={<RefreshCw size={16} />}
+                      onClick={loadActivities}
+                    >
+                      刷新
+                    </Button>
+                  </Box>
+                  {loadingActivities ? (
+                    <Box sx={{ textAlign: 'center', py: 4 }}>
+                      <CircularProgress size={32} />
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                        sx={{ mt: 1 }}
+                      >
+                        加载中...
+                      </Typography>
+                    </Box>
+                  ) : activities.length === 0 ? (
+                    <Box sx={{ textAlign: 'center', py: 4 }}>
+                      <Clock
+                        size={48}
+                        style={{ color: 'text.disabled', marginBottom: 12 }}
+                      />
+                      <Typography color='text.secondary'>暂无活动记录</Typography>
+                    </Box>
+                  ) : (
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 1.5,
+                      }}
+                    >
+                      {activities.map((activity) => (
                         <Box
-                          key={key}
+                          key={activity.id}
                           sx={{
                             display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            p: 2,
+                            alignItems: 'flex-start',
+                            gap: 1.5,
+                            p: 1.5,
                             bgcolor: 'grey.100',
                             borderRadius: 1,
                           }}
                         >
                           <Box
                             sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 1.5,
+                              width: 8,
+                              height: 8,
+                              borderRadius: '50%',
+                              bgcolor: activity.success ? 'success.main' : 'error.main',
+                              mt: 1,
                             }}
-                          >
-                            <Icon
-                              size={20}
-                              style={{ color }}
-                            />
-                            <Box>
-                              <Typography
-                                variant='subtitle1'
-                                sx={{ fontWeight: 500 }}
-                              >
-                                {label}
-                              </Typography>
+                          />
+                          <Box sx={{ flex: 1 }}>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                              }}
+                            >
                               <Typography
                                 variant='body2'
+                                sx={{ fontWeight: 500 }}
+                              >
+                                {activity.action}
+                              </Typography>
+                              <Typography
+                                variant='caption'
                                 color='text.secondary'
                               >
-                                {desc}
+                                {new Date(activity.created_at).toLocaleString('zh-CN')}
                               </Typography>
                             </Box>
+                            <Typography
+                              variant='body2'
+                              color='text.secondary'
+                            >
+                              {activity.resource}
+                              {activity.ip_address && ` · ${activity.ip_address}`}
+                            </Typography>
+                            {activity.error_message && (
+                              <Typography
+                                variant='caption'
+                                color='error'
+                              >
+                                {activity.error_message}
+                              </Typography>
+                            )}
                           </Box>
-                          <Switch
-                            checked={notificationSettings[key]}
-                            onChange={() => handleNotificationSettingChange(key)}
-                          />
                         </Box>
                       ))}
                     </Box>
-                  </Box>
-                )}
+                  )}
+                </Box>
+              )}
 
-                {activeTab === 4 && (
-                  <Box>
-                    <Typography
-                      variant='subtitle1'
-                      sx={{ fontWeight: 500, mb: 2 }}
-                    >
-                      我的快捷方式
-                    </Typography>
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                      sx={{ mb: 2 }}
-                    >
-                      选择您常用的功能添加到快捷方式
-                    </Typography>
-                    <Box
-                      sx={{
-                        display: 'grid',
-                        gridTemplateColumns: {
-                          xs: 'repeat(2, 1fr)',
-                          md: 'repeat(3, 1fr)',
-                        },
-                        gap: 2,
-                      }}
-                    >
-                      {[
-                        {
-                          id: '1',
-                          title: '仪表盘',
-                          icon: Activity,
-                          iconName: 'Activity',
-                          path: '/dashboard',
-                          color: 'primary.main',
-                        },
-                        {
-                          id: '2',
-                          title: '文档中心',
-                          icon: FileText,
-                          iconName: 'FileText',
-                          path: '/documents',
-                          color: 'success.dark',
-                        },
-                        {
-                          id: '3',
-                          title: '工作流',
-                          icon: GitBranch,
-                          iconName: 'GitBranch',
-                          path: '/flow/definitions',
-                          color: '#a855f7',
-                        },
-                        {
-                          id: '4',
-                          title: '通知中心',
-                          icon: Bell,
-                          iconName: 'Bell',
-                          path: '/notifications',
-                          color: 'warning.main',
-                        },
-                        {
-                          id: '5',
-                          title: 'AI助手',
-                          icon: Bot,
-                          iconName: 'Bot',
-                          path: '/ai',
-                          color: '#ec4899',
-                        },
-                        {
-                          id: '6',
-                          title: '消息中心',
-                          icon: MessageSquare,
-                          iconName: 'MessageSquare',
-                          path: '/im',
-                          color: 'primary.light',
-                        },
-                      ].map((item) => {
-                        const isSelected = shortcuts.some((s) => s.id === item.id);
-                        const Icon = item.icon;
-                        return (
+              {activeTab === 3 && (
+                <Box>
+                  <Typography
+                    variant='subtitle1'
+                    sx={{ fontWeight: 500, mb: 2 }}
+                  >
+                    通知偏好设置
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {[
+                      {
+                        key: 'email_enabled' as const,
+                        icon: Mail,
+                        label: '邮件通知',
+                        desc: '接收重要信息的邮件通知',
+                        color: 'primary.dark',
+                      },
+                      {
+                        key: 'system_enabled' as const,
+                        icon: Bell,
+                        label: '系统通知',
+                        desc: '接收系统消息和公告',
+                        color: '#ca8a04',
+                      },
+                      {
+                        key: 'workflow_enabled' as const,
+                        icon: Activity,
+                        label: '工作流通知',
+                        desc: '接收工作流审批和任务提醒',
+                        color: 'success.dark',
+                      },
+                      {
+                        key: 'document_enabled' as const,
+                        icon: FileText,
+                        label: '文档通知',
+                        desc: '接收文档更新和评论提醒',
+                        color: '#9333ea',
+                      },
+                      {
+                        key: 'security_enabled' as const,
+                        icon: Shield,
+                        label: '安全通知',
+                        desc: '接收登录和账户安全提醒',
+                        color: 'error.dark',
+                      },
+                    ].map(({ key, icon: Icon, label, desc, color }) => (
+                      <Box
+                        key={key}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          p: 2,
+                          bgcolor: 'grey.100',
+                          borderRadius: 1,
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1.5,
+                          }}
+                        >
+                          <Icon
+                            size={20}
+                            style={{ color }}
+                          />
+                          <Box>
+                            <Typography
+                              variant='subtitle1'
+                              sx={{ fontWeight: 500 }}
+                            >
+                              {label}
+                            </Typography>
+                            <Typography
+                              variant='body2'
+                              color='text.secondary'
+                            >
+                              {desc}
+                            </Typography>
+                          </Box>
+                        </Box>
+                        <Switch
+                          checked={notificationSettings[key]}
+                          onChange={() => handleNotificationSettingChange(key)}
+                        />
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+              )}
+
+              {activeTab === 4 && (
+                <Box>
+                  <Typography
+                    variant='subtitle1'
+                    sx={{ fontWeight: 500, mb: 2 }}
+                  >
+                    我的快捷方式
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                    sx={{ mb: 2 }}
+                  >
+                    选择您常用的功能添加到快捷方式
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: 'grid',
+                      gridTemplateColumns: {
+                        xs: 'repeat(2, 1fr)',
+                        md: 'repeat(3, 1fr)',
+                      },
+                      gap: 2,
+                    }}
+                  >
+                    {[
+                      {
+                        id: '1',
+                        title: '仪表盘',
+                        icon: Activity,
+                        iconName: 'Activity',
+                        path: '/dashboard',
+                        color: 'primary.main',
+                      },
+                      {
+                        id: '2',
+                        title: '文档中心',
+                        icon: FileText,
+                        iconName: 'FileText',
+                        path: '/documents',
+                        color: 'success.dark',
+                      },
+                      {
+                        id: '3',
+                        title: '工作流',
+                        icon: GitBranch,
+                        iconName: 'GitBranch',
+                        path: '/flow/definitions',
+                        color: '#a855f7',
+                      },
+                      {
+                        id: '4',
+                        title: '通知中心',
+                        icon: Bell,
+                        iconName: 'Bell',
+                        path: '/notifications',
+                        color: 'warning.main',
+                      },
+                      {
+                        id: '5',
+                        title: 'AI助手',
+                        icon: Bot,
+                        iconName: 'Bot',
+                        path: '/ai',
+                        color: '#ec4899',
+                      },
+                      {
+                        id: '6',
+                        title: '消息中心',
+                        icon: MessageSquare,
+                        iconName: 'MessageSquare',
+                        path: '/im',
+                        color: 'primary.light',
+                      },
+                    ].map((item) => {
+                      const isSelected = shortcuts.some((s) => s.id === item.id);
+                      const Icon = item.icon;
+                      return (
+                        <Box
+                          key={item.id}
+                          onClick={() =>
+                            handleShortcutToggle({
+                              id: item.id,
+                              title: item.title,
+                              icon: item.iconName,
+                              path: item.path,
+                            })
+                          }
+                          sx={{
+                            p: 2,
+                            borderRadius: 1,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            border: 2,
+                            borderColor: isSelected ? 'primary.main' : 'transparent',
+                            bgcolor: isSelected ? 'primary.50' : 'grey.100',
+                            '&:hover': {
+                              borderColor: isSelected ? 'primary.main' : 'primary.light',
+                            },
+                          }}
+                        >
                           <Box
-                            key={item.id}
-                            onClick={() =>
-                              handleShortcutToggle({
-                                id: item.id,
-                                title: item.title,
-                                icon: item.iconName,
-                                path: item.path,
-                              })
-                            }
                             sx={{
-                              p: 2,
-                              borderRadius: 1,
-                              cursor: 'pointer',
-                              transition: 'all 0.2s',
-                              border: 2,
-                              borderColor: isSelected ? 'primary.main' : 'transparent',
-                              bgcolor: isSelected ? 'primary.50' : 'grey.100',
-                              '&:hover': {
-                                borderColor: isSelected ? 'primary.main' : 'primary.light',
-                              },
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              textAlign: 'center',
                             }}
                           >
                             <Box
                               sx={{
+                                width: 48,
+                                height: 48,
+                                borderRadius: 1,
                                 display: 'flex',
-                                flexDirection: 'column',
                                 alignItems: 'center',
-                                textAlign: 'center',
+                                justifyContent: 'center',
+                                mb: 1.5,
+                                bgcolor: item.color,
                               }}
                             >
-                              <Box
-                                sx={{
-                                  width: 48,
-                                  height: 48,
-                                  borderRadius: 1,
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  mb: 1.5,
-                                  bgcolor: item.color,
-                                }}
-                              >
-                                <Icon
-                                  size={24}
-                                  style={{ color: 'white' }}
-                                />
-                              </Box>
-                              <Typography
-                                variant='body2'
-                                sx={{ fontWeight: 500 }}
-                              >
-                                {item.title}
-                              </Typography>
-                              {isSelected && (
-                                <Chip
-                                  label='已添加'
-                                  size='small'
-                                  sx={{ mt: 1 }}
-                                />
-                              )}
+                              <Icon
+                                size={24}
+                                style={{ color: 'white' }}
+                              />
                             </Box>
+                            <Typography
+                              variant='body2'
+                              sx={{ fontWeight: 500 }}
+                            >
+                              {item.title}
+                            </Typography>
+                            {isSelected && (
+                              <Chip
+                                label='已添加'
+                                size='small'
+                                sx={{ mt: 1 }}
+                              />
+                            )}
                           </Box>
-                        );
-                      })}
-                    </Box>
-
-                    {shortcuts.length > 0 && (
-                      <Box sx={{ mt: 3 }}>
-                        <Typography
-                          variant='subtitle1'
-                          sx={{ fontWeight: 500, mb: 2 }}
-                        >
-                          当前快捷方式
-                        </Typography>
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                          {shortcuts.map((shortcut) => (
-                            <Chip
-                              key={shortcut.id}
-                              label={`${shortcut.title} ×`}
-                              variant='outlined'
-                              onClick={() => handleShortcutToggle(shortcut)}
-                              sx={{ cursor: 'pointer' }}
-                            />
-                          ))}
                         </Box>
-                      </Box>
-                    )}
+                      );
+                    })}
                   </Box>
-                )}
-              </CardContent>
-            </Card>
-          </Box>
+
+                  {shortcuts.length > 0 && (
+                    <Box sx={{ mt: 3 }}>
+                      <Typography
+                        variant='subtitle1'
+                        sx={{ fontWeight: 500, mb: 2 }}
+                      >
+                        当前快捷方式
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        {shortcuts.map((shortcut) => (
+                          <Chip
+                            key={shortcut.id}
+                            label={`${shortcut.title} ×`}
+                            variant='outlined'
+                            onClick={() => handleShortcutToggle(shortcut)}
+                            sx={{ cursor: 'pointer' }}
+                          />
+                        ))}
+                      </Box>
+                    </Box>
+                  )}
+                </Box>
+              )}
+            </CardContent>
+          </Card>
+        </Box>
       </Box>
 
       <Dialog

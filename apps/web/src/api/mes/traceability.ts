@@ -1,10 +1,6 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
-import type {
-  PaginationParams,
-  TraceChain,
-  QualityRecord,
-} from './types';
+import type { PaginationParams, TraceChain, QualityRecord } from './types';
 
 export const traceabilityApi = {
   async forwardTraceability(orderId: string): Promise<ApiResponse<TraceChain>> {
@@ -24,7 +20,7 @@ export const traceabilityApi = {
     searchParams.set('identifier', params.identifier);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(`/api/mes/traceability/chain${queryString ? '?' + queryString : ''}`);
+    return apiClient.mes.get(`/api/mes/traceability/chain${queryString ? `?${queryString}` : ''}`);
   },
 
   async listQualityRecords(params?: PaginationParams): Promise<
@@ -42,6 +38,8 @@ export const traceabilityApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(`/api/mes/traceability/quality-records${queryString ? '?' + queryString : ''}`);
+    return apiClient.mes.get(
+      `/api/mes/traceability/quality-records${queryString ? `?${queryString}` : ''}`
+    );
   },
 };

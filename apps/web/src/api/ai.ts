@@ -236,7 +236,7 @@ export const aiApi = {
     if (params?.category) searchParams.set('category', params.category);
 
     const queryString = searchParams.toString();
-    return apiClient.ai.get(`/api/ai/documents${queryString ? '?' + queryString : ''}`);
+    return apiClient.ai.get(`/api/ai/documents${queryString ? `?${queryString}` : ''}`);
   },
 
   getDocument: async (id: string): Promise<ApiResponse<Document>> => {
@@ -422,7 +422,7 @@ export const aiApi = {
     if (params?.query) searchParams.set('query', params.query);
 
     const queryString = searchParams.toString();
-    return apiClient.ai.get(`/api/ai/qa/history${queryString ? '?' + queryString : ''}`);
+    return apiClient.ai.get(`/api/ai/qa/history${queryString ? `?${queryString}` : ''}`);
   },
 
   deleteQAHistory: async (id: string): Promise<ApiResponse<string>> => {

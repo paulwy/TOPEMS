@@ -10,14 +10,10 @@ import {
   CardContent,
   Box,
   Typography,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { useAppStore } from '@/store';
-import {
-  ListPageTemplate,
-  type ColumnDef,
-  type RowAction,
-} from '@/components/templates';
+import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
 import type { AuditPlan } from '@/api/qms';
@@ -126,10 +122,10 @@ const QmsAuditManagementPage: React.FC = () => {
 
   const stats = {
     totalAudits: auditPlans.length,
-    completedAudits: auditPlans.filter((a) => a.status === 'completed' || a.status === '已完成').length,
-    inProgressAudits: auditPlans.filter(
-      (a) => a.status === 'in_progress' || a.status === '进行中'
-    ).length,
+    completedAudits: auditPlans.filter((a) => a.status === 'completed' || a.status === '已完成')
+      .length,
+    inProgressAudits: auditPlans.filter((a) => a.status === 'in_progress' || a.status === '进行中')
+      .length,
   };
 
   const statsCards = (

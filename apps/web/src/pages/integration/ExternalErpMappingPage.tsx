@@ -28,8 +28,8 @@ import {
   Select,
   FormControl,
   InputLabel,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import BackButton from '@/components/common/BackButton';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 import {
@@ -49,7 +49,7 @@ import {
   useUpdateSupplierMapping,
 } from '@/hooks/useExternalErp';
 import { EnhancedDataTable } from '@/components/EnhancedDataTable';
-import { AccountMappingDirection } from '@/types/external-erp';
+import type { AccountMappingDirection } from '@/types/external-erp';
 import { PageContainer } from '@/components/common';
 
 // 映射类型配置
@@ -475,564 +475,569 @@ export default function ExternalErpMappingPage() {
           gap: 3,
         }}
       >
-      {/* 头部信息 */}
-      <Stack
-        direction='row'
-        sx={{ alignItems: 'center', justifyContent: 'space-between' }}
-      >
+        {/* 头部信息 */}
         <Stack
           direction='row'
-          sx={{ alignItems: 'center' }}
-          spacing={2}
+          sx={{ alignItems: 'center', justifyContent: 'space-between' }}
         >
-          <BackButton href='/integration' />
-          <Box>
-            <Typography
-              variant='h5'
-              sx={{ fontWeight: 700 }}
-            >
-              映射管理
-            </Typography>
-            <Typography
-              variant='body2'
-              sx={{ color: 'grey.500' }}
-            >
-              {connection?.name || '加载中...'} - {connection?.type?.toUpperCase() || ''}
-            </Typography>
-          </Box>
+          <Stack
+            direction='row'
+            sx={{ alignItems: 'center' }}
+            spacing={2}
+          >
+            <BackButton href='/integration' />
+            <Box>
+              <Typography
+                variant='h5'
+                sx={{ fontWeight: 700 }}
+              >
+                映射管理
+              </Typography>
+              <Typography
+                variant='body2'
+                sx={{ color: 'grey.500' }}
+              >
+                {connection?.name || '加载中...'} - {connection?.type?.toUpperCase() || ''}
+              </Typography>
+            </Box>
+          </Stack>
+
+          <Button
+            variant='outlined'
+            size='small'
+            onClick={() => setShowSyncDialog(true)}
+            startIcon={<RefreshCw size={16} />}
+          >
+            同步数据
+          </Button>
         </Stack>
 
-        <Button
-          variant='outlined'
-          size='small'
-          onClick={() => setShowSyncDialog(true)}
-          startIcon={<RefreshCw size={16} />}
-        >
-          同步数据
-        </Button>
-      </Stack>
-
-      {/* 连接状态卡片 */}
-      {connection && (
-        <Card>
-          <CardContent sx={{ pt: 3 }}>
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' },
-                gap: 2,
-              }}
-            >
-              <Stack
-                direction='row'
-                sx={{ alignItems: 'center' }}
-                spacing={1.5}
+        {/* 连接状态卡片 */}
+        {connection && (
+          <Card>
+            <CardContent sx={{ pt: 3 }}>
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' },
+                  gap: 2,
+                }}
               >
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'white',
-                    fontWeight: 700,
-                    bgcolor:
-                      connection.type === 'kingdee'
-                        ? 'primary.main'
-                        : connection.type === 'yonyou'
-                          ? 'warning.main'
-                          : 'success.main',
-                  }}
+                <Stack
+                  direction='row'
+                  sx={{ alignItems: 'center' }}
+                  spacing={1.5}
                 >
-                  {connection.type === 'kingdee' ? 'K' : connection.type === 'yonyou' ? 'Y' : 'S'}
-                </Box>
+                  <Box
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'white',
+                      fontWeight: 700,
+                      bgcolor:
+                        connection.type === 'kingdee'
+                          ? 'primary.main'
+                          : connection.type === 'yonyou'
+                            ? 'warning.main'
+                            : 'success.main',
+                    }}
+                  >
+                    {connection.type === 'kingdee' ? 'K' : connection.type === 'yonyou' ? 'Y' : 'S'}
+                  </Box>
+                  <Box>
+                    <Typography
+                      variant='body2'
+                      sx={{ color: 'grey.500' }}
+                    >
+                      ERP类型
+                    </Typography>
+                    <Typography sx={{ fontWeight: 500 }}>
+                      {connection.type === 'kingdee'
+                        ? '金蝶K/3'
+                        : connection.type === 'yonyou'
+                          ? '用友U8'
+                          : 'SAP S/4'}
+                    </Typography>
+                  </Box>
+                </Stack>
+
                 <Box>
                   <Typography
                     variant='body2'
                     sx={{ color: 'grey.500' }}
                   >
-                    ERP类型
+                    连接状态
                   </Typography>
-                  <Typography sx={{ fontWeight: 500 }}>
-                    {connection.type === 'kingdee'
-                      ? '金蝶K/3'
-                      : connection.type === 'yonyou'
-                        ? '用友U8'
-                        : 'SAP S/4'}
+                  <Stack
+                    direction='row'
+                    sx={{ alignItems: 'center', mt: 0.5 }}
+                    spacing={1}
+                  >
+                    <Box
+                      sx={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: '50%',
+                        bgcolor: connection.status === 'connected' ? 'success.main' : 'grey.400',
+                      }}
+                    />
+                    <Typography sx={{ fontWeight: 500 }}>
+                      {connection.status === 'connected' ? '已连接' : '未连接'}
+                    </Typography>
+                  </Stack>
+                </Box>
+
+                <Box>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'grey.500' }}
+                  >
+                    同步方向
+                  </Typography>
+                  <Typography sx={{ fontWeight: 500, mt: 0.5 }}>
+                    {connection.sync_direction === 'bidirectional'
+                      ? '双向同步'
+                      : connection.sync_direction === 'import'
+                        ? '导入'
+                        : '导出'}
                   </Typography>
                 </Box>
-              </Stack>
 
-              <Box>
+                <Box>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'grey.500' }}
+                  >
+                    最后同步
+                  </Typography>
+                  <Typography sx={{ fontWeight: 500, mt: 0.5 }}>
+                    {connection.last_sync_at
+                      ? new Date(connection.last_sync_at).toLocaleString()
+                      : '从未同步'}
+                  </Typography>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* 映射统计 */}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
+            gap: 2,
+          }}
+        >
+          <Card
+            sx={{
+              cursor: 'pointer',
+              borderColor: activeMappingType === 'account' ? 'primary.main' : 'transparent',
+              '&:hover': { borderColor: 'primary.main' },
+              transition: 'border-color 0.2s',
+            }}
+            variant='outlined'
+            onClick={() => setActiveMappingType('account')}
+          >
+            <CardContent sx={{ pt: 3 }}>
+              <Stack
+                direction='row'
+                sx={{ alignItems: 'center', justifyContent: 'space-between' }}
+              >
+                <Box>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'grey.500' }}
+                  >
+                    科目映射
+                  </Typography>
+                  <Typography
+                    variant='h5'
+                    sx={{ fontWeight: 700, mt: 0.5 }}
+                  >
+                    {accountMappingsData?.data?.total || 0}
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 1,
+                    bgcolor: 'primary.light',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Typography variant='h5'>📊</Typography>
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
+
+          <Card
+            sx={{
+              cursor: 'pointer',
+              borderColor: activeMappingType === 'customer' ? 'success.main' : 'transparent',
+              '&:hover': { borderColor: 'success.main' },
+              transition: 'border-color 0.2s',
+            }}
+            variant='outlined'
+            onClick={() => setActiveMappingType('customer')}
+          >
+            <CardContent sx={{ pt: 3 }}>
+              <Stack
+                direction='row'
+                sx={{ alignItems: 'center', justifyContent: 'space-between' }}
+              >
+                <Box>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'grey.500' }}
+                  >
+                    客户映射
+                  </Typography>
+                  <Typography
+                    variant='h5'
+                    sx={{ fontWeight: 700, mt: 0.5 }}
+                  >
+                    {customerMappingsData?.data?.total || 0}
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 1,
+                    bgcolor: 'success.light',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Typography variant='h5'>👥</Typography>
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
+
+          <Card
+            sx={{
+              cursor: 'pointer',
+              borderColor: activeMappingType === 'supplier' ? 'warning.main' : 'transparent',
+              '&:hover': { borderColor: 'warning.main' },
+              transition: 'border-color 0.2s',
+            }}
+            variant='outlined'
+            onClick={() => setActiveMappingType('supplier')}
+          >
+            <CardContent sx={{ pt: 3 }}>
+              <Stack
+                direction='row'
+                sx={{ alignItems: 'center', justifyContent: 'space-between' }}
+              >
+                <Box>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'grey.500' }}
+                  >
+                    供应商映射
+                  </Typography>
+                  <Typography
+                    variant='h5'
+                    sx={{ fontWeight: 700, mt: 0.5 }}
+                  >
+                    {supplierMappingsData?.data?.total || 0}
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    borderRadius: 1,
+                    bgcolor: 'warning.light',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Typography variant='h5'>🏭</Typography>
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Box>
+
+        {/* 映射管理表格 */}
+        <Card>
+          <CardHeader
+            title={
+              <Stack
+                direction='row'
+                sx={{ alignItems: 'center' }}
+                spacing={1}
+              >
+                <Typography>{config.icon}</Typography>
+                <Typography>{config.label}</Typography>
+              </Stack>
+            }
+            action={
+              <Stack
+                direction='row'
+                sx={{ alignItems: 'center' }}
+                spacing={1}
+              >
+                <TextField
+                  size='small'
+                  placeholder='搜索映射...'
+                  value={searchKeyword}
+                  onChange={(e) => setSearchKeyword(e.target.value)}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <Search
+                          size={16}
+                          style={{ marginRight: 8, color: 'text.disabled' }}
+                        />
+                      ),
+                    },
+                  }}
+                  sx={{ width: 256 }}
+                />
+                <Button
+                  variant='outlined'
+                  size='small'
+                  onClick={() => setShowImportModal(true)}
+                  startIcon={<Upload size={16} />}
+                >
+                  导入
+                </Button>
+                <Button
+                  variant='outlined'
+                  size='small'
+                  onClick={handleAutoMatch}
+                  disabled={autoMatchAccountMappings.isPending}
+                  startIcon={<Wand2 size={16} />}
+                >
+                  自动匹配
+                </Button>
+              </Stack>
+            }
+          />
+          <CardContent>
+            <EnhancedDataTable
+              data={filteredMappings}
+              columns={getColumns()}
+              loading={isLoading()}
+              enableSelection={true}
+              enablePagination={true}
+              pageSize={10}
+              emptyState={
+                <Box sx={{ textAlign: 'center', py: 4, color: 'grey.500' }}>
+                  暂无{config.label}数据
+                </Box>
+              }
+            />
+          </CardContent>
+        </Card>
+
+        {/* 编辑映射弹窗 */}
+        <Dialog
+          open={showEditDialog}
+          onClose={() => setShowEditDialog(false)}
+          maxWidth='sm'
+          fullWidth
+        >
+          <DialogTitle>编辑映射</DialogTitle>
+          <DialogContent>
+            <Stack
+              spacing={2}
+              sx={{ mt: 2 }}
+            >
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                <TextField
+                  label={`本地${activeMappingType === 'account' ? '科目' : activeMappingType === 'customer' ? '客户' : '供应商'}编码`}
+                  value={editFormData.local_code}
+                  onChange={(e) => setEditFormData({ ...editFormData, local_code: e.target.value })}
+                  size='small'
+                />
+                <TextField
+                  label={`本地名称`}
+                  value={editFormData.local_name}
+                  onChange={(e) => setEditFormData({ ...editFormData, local_name: e.target.value })}
+                  size='small'
+                />
+              </Box>
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                <TextField
+                  label={`外部编码`}
+                  value={editFormData.external_code}
+                  onChange={(e) =>
+                    setEditFormData({ ...editFormData, external_code: e.target.value })
+                  }
+                  size='small'
+                />
+                <TextField
+                  label={`外部名称`}
+                  value={editFormData.external_name}
+                  onChange={(e) =>
+                    setEditFormData({ ...editFormData, external_name: e.target.value })
+                  }
+                  size='small'
+                />
+              </Box>
+              <FormControl
+                size='small'
+                sx={{ minWidth: 200 }}
+              >
+                <InputLabel>同步方向</InputLabel>
+                <Select
+                  value={editFormData.direction}
+                  label='同步方向'
+                  onChange={(e) => setEditFormData({ ...editFormData, direction: e.target.value })}
+                >
+                  <MenuItem value='bidirectional'>双向同步</MenuItem>
+                  <MenuItem value='to_external'>仅导出到外部</MenuItem>
+                  <MenuItem value='from_external'>仅从外部导入</MenuItem>
+                </Select>
+              </FormControl>
+            </Stack>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              variant='outlined'
+              onClick={() => setShowEditDialog(false)}
+            >
+              取消
+            </Button>
+            <Button
+              variant='contained'
+              onClick={handleEditSave}
+            >
+              保存
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* 导入弹窗 */}
+        <Drawer
+          anchor='right'
+          open={showImportModal}
+          onClose={() => setShowImportModal(false)}
+        >
+          <Box sx={{ width: 400, p: 3 }}>
+            <Typography
+              variant='h6'
+              sx={{ fontWeight: 600 }}
+            >
+              导入映射
+            </Typography>
+            <Typography
+              variant='body2'
+              sx={{ color: 'grey.500', mt: 0.5 }}
+            >
+              上传Excel或CSV文件导入映射数据
+            </Typography>
+            <Divider sx={{ my: 2 }} />
+            <Stack spacing={3}>
+              <Box
+                sx={{
+                  border: 2,
+                  borderStyle: 'dashed',
+                  borderColor: 'grey.300',
+                  borderRadius: 1,
+                  p: 4,
+                  textAlign: 'center',
+                }}
+              >
+                <Upload
+                  size={48}
+                  style={{
+                    marginLeft: 'auto',
+                    marginRight: 'auto',
+                    color: 'text.disabled',
+                    marginBottom: 16,
+                  }}
+                />
                 <Typography
                   variant='body2'
-                  sx={{ color: 'grey.500' }}
+                  sx={{ color: 'grey.500', mb: 1 }}
                 >
-                  连接状态
+                  拖拽文件到此处，或点击上传
                 </Typography>
-                <Stack
-                  direction='row'
-                  sx={{ alignItems: 'center', mt: 0.5 }}
-                  spacing={1}
+                <Typography
+                  variant='caption'
+                  sx={{ color: 'grey.400' }}
                 >
-                  <Box
-                    sx={{
-                      width: 8,
-                      height: 8,
-                      borderRadius: '50%',
-                      bgcolor: connection.status === 'connected' ? 'success.main' : 'grey.400',
-                    }}
-                  />
-                  <Typography sx={{ fontWeight: 500 }}>
-                    {connection.status === 'connected' ? '已连接' : '未连接'}
+                  支持 .xlsx, .csv 格式
+                </Typography>
+              </Box>
+
+              <Box>
+                <Typography sx={{ fontWeight: 500, mb: 1 }}>导入说明</Typography>
+                <Stack spacing={0.5}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'grey.500' }}
+                  >
+                    • 第一行为表头，请保持与模板一致
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'grey.500' }}
+                  >
+                    • 本地编码和外部编码为必填项
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'grey.500' }}
+                  >
+                    • 映射方向默认为双向同步
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'grey.500' }}
+                  >
+                    • 已存在的映射将被更新
                   </Typography>
                 </Stack>
               </Box>
 
-              <Box>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'grey.500' }}
-                >
-                  同步方向
-                </Typography>
-                <Typography sx={{ fontWeight: 500, mt: 0.5 }}>
-                  {connection.sync_direction === 'bidirectional'
-                    ? '双向同步'
-                    : connection.sync_direction === 'import'
-                      ? '导入'
-                      : '导出'}
-                </Typography>
-              </Box>
-
-              <Box>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'grey.500' }}
-                >
-                  最后同步
-                </Typography>
-                <Typography sx={{ fontWeight: 500, mt: 0.5 }}>
-                  {connection.last_sync_at
-                    ? new Date(connection.last_sync_at).toLocaleString()
-                    : '从未同步'}
-                </Typography>
-              </Box>
-            </Box>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* 映射统计 */}
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' },
-          gap: 2,
-        }}
-      >
-        <Card
-          sx={{
-            cursor: 'pointer',
-            borderColor: activeMappingType === 'account' ? 'primary.main' : 'transparent',
-            '&:hover': { borderColor: 'primary.main' },
-            transition: 'border-color 0.2s',
-          }}
-          variant='outlined'
-          onClick={() => setActiveMappingType('account')}
-        >
-          <CardContent sx={{ pt: 3 }}>
-            <Stack
-              direction='row'
-              sx={{ alignItems: 'center', justifyContent: 'space-between' }}
-            >
-              <Box>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'grey.500' }}
-                >
-                  科目映射
-                </Typography>
-                <Typography
-                  variant='h5'
-                  sx={{ fontWeight: 700, mt: 0.5 }}
-                >
-                  {accountMappingsData?.data?.total || 0}
-                </Typography>
-              </Box>
-              <Box
-                sx={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 1,
-                  bgcolor: 'primary.light',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
+              <Stack
+                direction='row'
+                sx={{ justifyContent: 'flex-end' }}
+                spacing={1}
               >
-                <Typography variant='h5'>📊</Typography>
-              </Box>
-            </Stack>
-          </CardContent>
-        </Card>
-
-        <Card
-          sx={{
-            cursor: 'pointer',
-            borderColor: activeMappingType === 'customer' ? 'success.main' : 'transparent',
-            '&:hover': { borderColor: 'success.main' },
-            transition: 'border-color 0.2s',
-          }}
-          variant='outlined'
-          onClick={() => setActiveMappingType('customer')}
-        >
-          <CardContent sx={{ pt: 3 }}>
-            <Stack
-              direction='row'
-              sx={{ alignItems: 'center', justifyContent: 'space-between' }}
-            >
-              <Box>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'grey.500' }}
+                <Button
+                  variant='outlined'
+                  onClick={() => setShowImportModal(false)}
                 >
-                  客户映射
-                </Typography>
-                <Typography
-                  variant='h5'
-                  sx={{ fontWeight: 700, mt: 0.5 }}
+                  取消
+                </Button>
+                <Button
+                  variant='contained'
+                  onClick={handleImport}
                 >
-                  {customerMappingsData?.data?.total || 0}
-                </Typography>
-              </Box>
-              <Box
-                sx={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 1,
-                  bgcolor: 'success.light',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Typography variant='h5'>👥</Typography>
-              </Box>
-            </Stack>
-          </CardContent>
-        </Card>
-
-        <Card
-          sx={{
-            cursor: 'pointer',
-            borderColor: activeMappingType === 'supplier' ? 'warning.main' : 'transparent',
-            '&:hover': { borderColor: 'warning.main' },
-            transition: 'border-color 0.2s',
-          }}
-          variant='outlined'
-          onClick={() => setActiveMappingType('supplier')}
-        >
-          <CardContent sx={{ pt: 3 }}>
-            <Stack
-              direction='row'
-              sx={{ alignItems: 'center', justifyContent: 'space-between' }}
-            >
-              <Box>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'grey.500' }}
-                >
-                  供应商映射
-                </Typography>
-                <Typography
-                  variant='h5'
-                  sx={{ fontWeight: 700, mt: 0.5 }}
-                >
-                  {supplierMappingsData?.data?.total || 0}
-                </Typography>
-              </Box>
-              <Box
-                sx={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 1,
-                  bgcolor: 'warning.light',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <Typography variant='h5'>🏭</Typography>
-              </Box>
-            </Stack>
-          </CardContent>
-        </Card>
-      </Box>
-
-      {/* 映射管理表格 */}
-      <Card>
-        <CardHeader
-          title={
-            <Stack
-              direction='row'
-              sx={{ alignItems: 'center' }}
-              spacing={1}
-            >
-              <Typography>{config.icon}</Typography>
-              <Typography>{config.label}</Typography>
-            </Stack>
-          }
-          action={
-            <Stack
-              direction='row'
-              sx={{ alignItems: 'center' }}
-              spacing={1}
-            >
-              <TextField
-                size='small'
-                placeholder='搜索映射...'
-                value={searchKeyword}
-                onChange={(e) => setSearchKeyword(e.target.value)}
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <Search
-                        size={16}
-                        style={{ marginRight: 8, color: 'text.disabled' }}
-                      />
-                    ),
-                  },
-                }}
-                sx={{ width: 256 }}
-              />
-              <Button
-                variant='outlined'
-                size='small'
-                onClick={() => setShowImportModal(true)}
-                startIcon={<Upload size={16} />}
-              >
-                导入
-              </Button>
-              <Button
-                variant='outlined'
-                size='small'
-                onClick={handleAutoMatch}
-                disabled={autoMatchAccountMappings.isPending}
-                startIcon={<Wand2 size={16} />}
-              >
-                自动匹配
-              </Button>
-            </Stack>
-          }
-        />
-        <CardContent>
-          <EnhancedDataTable
-            data={filteredMappings}
-            columns={getColumns()}
-            loading={isLoading()}
-            enableSelection={true}
-            enablePagination={true}
-            pageSize={10}
-            emptyState={
-              <Box sx={{ textAlign: 'center', py: 4, color: 'grey.500' }}>
-                暂无{config.label}数据
-              </Box>
-            }
-          />
-        </CardContent>
-      </Card>
-
-      {/* 编辑映射弹窗 */}
-      <Dialog
-        open={showEditDialog}
-        onClose={() => setShowEditDialog(false)}
-        maxWidth='sm'
-        fullWidth
-      >
-        <DialogTitle>编辑映射</DialogTitle>
-        <DialogContent>
-          <Stack
-            spacing={2}
-            sx={{ mt: 2 }}
-          >
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <TextField
-                label={`本地${activeMappingType === 'account' ? '科目' : activeMappingType === 'customer' ? '客户' : '供应商'}编码`}
-                value={editFormData.local_code}
-                onChange={(e) => setEditFormData({ ...editFormData, local_code: e.target.value })}
-                size='small'
-              />
-              <TextField
-                label={`本地名称`}
-                value={editFormData.local_name}
-                onChange={(e) => setEditFormData({ ...editFormData, local_name: e.target.value })}
-                size='small'
-              />
-            </Box>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <TextField
-                label={`外部编码`}
-                value={editFormData.external_code}
-                onChange={(e) =>
-                  setEditFormData({ ...editFormData, external_code: e.target.value })
-                }
-                size='small'
-              />
-              <TextField
-                label={`外部名称`}
-                value={editFormData.external_name}
-                onChange={(e) =>
-                  setEditFormData({ ...editFormData, external_name: e.target.value })
-                }
-                size='small'
-              />
-            </Box>
-            <FormControl
-              size='small'
-              sx={{ minWidth: 200 }}
-            >
-              <InputLabel>同步方向</InputLabel>
-              <Select
-                value={editFormData.direction}
-                label='同步方向'
-                onChange={(e) => setEditFormData({ ...editFormData, direction: e.target.value })}
-              >
-                <MenuItem value='bidirectional'>双向同步</MenuItem>
-                <MenuItem value='to_external'>仅导出到外部</MenuItem>
-                <MenuItem value='from_external'>仅从外部导入</MenuItem>
-              </Select>
-            </FormControl>
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            variant='outlined'
-            onClick={() => setShowEditDialog(false)}
-          >
-            取消
-          </Button>
-          <Button
-            variant='contained'
-            onClick={handleEditSave}
-          >
-            保存
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* 导入弹窗 */}
-      <Drawer
-        anchor='right'
-        open={showImportModal}
-        onClose={() => setShowImportModal(false)}
-      >
-        <Box sx={{ width: 400, p: 3 }}>
-          <Typography
-            variant='h6'
-            sx={{ fontWeight: 600 }}
-          >
-            导入映射
-          </Typography>
-          <Typography
-            variant='body2'
-            sx={{ color: 'grey.500', mt: 0.5 }}
-          >
-            上传Excel或CSV文件导入映射数据
-          </Typography>
-          <Divider sx={{ my: 2 }} />
-          <Stack spacing={3}>
-            <Box
-              sx={{
-                border: 2,
-                borderStyle: 'dashed',
-                borderColor: 'grey.300',
-                borderRadius: 1,
-                p: 4,
-                textAlign: 'center',
-              }}
-            >
-              <Upload
-                size={48}
-                style={{ margin: '0 auto', color: 'text.disabled', marginBottom: 16 }}
-              />
-              <Typography
-                variant='body2'
-                sx={{ color: 'grey.500', mb: 1 }}
-              >
-                拖拽文件到此处，或点击上传
-              </Typography>
-              <Typography
-                variant='caption'
-                sx={{ color: 'grey.400' }}
-              >
-                支持 .xlsx, .csv 格式
-              </Typography>
-            </Box>
-
-            <Box>
-              <Typography sx={{ fontWeight: 500, mb: 1 }}>导入说明</Typography>
-              <Stack spacing={0.5}>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'grey.500' }}
-                >
-                  • 第一行为表头，请保持与模板一致
-                </Typography>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'grey.500' }}
-                >
-                  • 本地编码和外部编码为必填项
-                </Typography>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'grey.500' }}
-                >
-                  • 映射方向默认为双向同步
-                </Typography>
-                <Typography
-                  variant='body2'
-                  sx={{ color: 'grey.500' }}
-                >
-                  • 已存在的映射将被更新
-                </Typography>
+                  开始导入
+                </Button>
               </Stack>
-            </Box>
-
-            <Stack
-              direction='row'
-              sx={{ justifyContent: 'flex-end' }}
-              spacing={1}
-            >
-              <Button
-                variant='outlined'
-                onClick={() => setShowImportModal(false)}
-              >
-                取消
-              </Button>
-              <Button
-                variant='contained'
-                onClick={handleImport}
-              >
-                开始导入
-              </Button>
             </Stack>
-          </Stack>
-        </Box>
-      </Drawer>
+          </Box>
+        </Drawer>
 
-      {/* 同步确认弹窗 */}
-      <ConfirmDialog
-        isOpen={showSyncDialog}
-        onClose={() => setShowSyncDialog(false)}
-        onConfirm={handleSync}
-        title='确认同步'
-        message={`确定要从外部ERP系统同步${config.label}数据吗？这将会根据映射规则同步${activeMappingType === 'account' ? '科目' : activeMappingType === 'customer' ? '客户' : '供应商'}数据。`}
-        confirmLabel='确定同步'
-      />
+        {/* 同步确认弹窗 */}
+        <ConfirmDialog
+          isOpen={showSyncDialog}
+          onClose={() => setShowSyncDialog(false)}
+          onConfirm={handleSync}
+          title='确认同步'
+          message={`确定要从外部ERP系统同步${config.label}数据吗？这将会根据映射规则同步${activeMappingType === 'account' ? '科目' : activeMappingType === 'customer' ? '客户' : '供应商'}数据。`}
+          confirmLabel='确定同步'
+        />
       </Box>
     </PageContainer>
   );

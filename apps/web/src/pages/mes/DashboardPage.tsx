@@ -59,22 +59,29 @@ export const DashboardPage: React.FC = () => {
           : [];
 
       const totalOrders = orders.length;
-      const inProduction = orders.filter((o) => o.status === 'in_progress' || o.status === 'processing').length;
-      const abnormalOrders = orders.filter((o) => o.status === 'abnormal' || o.status === 'error').length;
+      const inProduction = orders.filter(
+        (o) => o.status === 'in_progress' || o.status === 'processing'
+      ).length;
+      const abnormalOrders = orders.filter(
+        (o) => o.status === 'abnormal' || o.status === 'error'
+      ).length;
 
       const dailyOutput =
         recordRes.status === 'fulfilled' && recordRes.value.success && recordRes.value.data?.records
-          ? (recordRes.value.data.records as any[]).reduce((sum, r) => sum + (r.quantity_completed || 0), 0)
+          ? (recordRes.value.data.records as any[]).reduce(
+              (sum, r) => sum + (r.quantity_completed || 0),
+              0
+            )
           : 0;
 
       const equipmentInUse =
         equipRes.status === 'fulfilled' && equipRes.value.success && equipRes.value.data
-          ? (equipRes.value.data as any).in_use ?? 0
+          ? ((equipRes.value.data as any).in_use ?? 0)
           : 0;
 
       const equipmentMaintenance =
         equipRes.status === 'fulfilled' && equipRes.value.success && equipRes.value.data
-          ? (equipRes.value.data as any).maintenance ?? 0
+          ? ((equipRes.value.data as any).maintenance ?? 0)
           : 0;
 
       setStatsData({
@@ -132,11 +139,14 @@ export const DashboardPage: React.FC = () => {
 
       setChartData({
         weeklyOutput,
-        orderStatus: orderStatus.length > 0 ? orderStatus : [
-          { name: '生产中', value: 45 },
-          { name: '待排产', value: 25 },
-          { name: '已完成', value: 30 },
-        ],
+        orderStatus:
+          orderStatus.length > 0
+            ? orderStatus
+            : [
+                { name: '生产中', value: 45 },
+                { name: '待排产', value: 25 },
+                { name: '已完成', value: 30 },
+              ],
         dailyTrend,
       });
     } catch (err: unknown) {
@@ -261,7 +271,6 @@ export const DashboardPage: React.FC = () => {
 
   const quickActions: QuickAction[] = useMemo(
     () => [
-      
       {
         id: 'order-list',
         label: '工单列表',

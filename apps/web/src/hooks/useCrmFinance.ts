@@ -306,8 +306,8 @@ export function useBatchConfirmCollections() {
         queryKey: ['crm-sales-invoices'],
       });
       queryClient.invalidateQueries({ queryKey: ['crm-customer-finance'] });
-      const successCount = result.data?.success || 0;
-      const failedCount = result.data?.failed || 0;
+      const successCount = result?.data?.success || 0;
+      const failedCount = result?.data?.failed || 0;
       if (failedCount > 0) {
         showError(`成功确认 ${successCount} 条，失败 ${failedCount} 条`);
       } else {

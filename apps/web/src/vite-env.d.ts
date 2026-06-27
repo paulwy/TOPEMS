@@ -2,6 +2,7 @@
 
 declare module 'leaflet.heat' {
   import type * as L from 'leaflet';
+
   export function heatLayer(
     latlngs: Array<[number, number, number?]>,
     options?: {
@@ -17,6 +18,7 @@ declare module 'leaflet.heat' {
 
 declare module 'leaflet-3d-tiles' {
   import type * as L from 'leaflet';
+
   const L3DTiles: L.Layer;
   export default L3DTiles;
 }

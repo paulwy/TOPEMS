@@ -14,14 +14,9 @@ import {
   MenuItem,
   Button,
 } from '@mui/material';
-import {
-  Plus,
-  Edit,
-  Trash2,
-  RefreshCw,
-  Building2,
-} from 'lucide-react';
-import { ListPageTemplate, ColumnDef, RowAction } from '@/components/templates/ListPageTemplate';
+import { Plus, Edit, Trash2, RefreshCw, Building2 } from 'lucide-react';
+import type { ColumnDef, RowAction } from '@/components/templates/ListPageTemplate';
+import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
 import { PageContainer } from '@/components/common';
 import {
   useAccounts,
@@ -201,18 +196,32 @@ export default function AccountManagementPage() {
           label: row.type,
           color: 'default' as const,
         };
-        return <Chip size='small' color={config.color} label={config.label} />;
+        return (
+          <Chip
+            size='small'
+            color={config.color}
+            label={config.label}
+          />
+        );
       },
     },
     {
       id: 'balance_direction',
       label: '余额方向',
       render: (row) => {
-        const config = BALANCE_DIRECTION_CONFIG[row.balance_direction as keyof typeof BALANCE_DIRECTION_CONFIG] || {
+        const config = BALANCE_DIRECTION_CONFIG[
+          row.balance_direction as keyof typeof BALANCE_DIRECTION_CONFIG
+        ] || {
           label: row.balance_direction,
           color: 'default' as const,
         };
-        return <Chip size='small' color={config.color} label={config.label} />;
+        return (
+          <Chip
+            size='small'
+            color={config.color}
+            label={config.label}
+          />
+        );
       },
     },
     {
@@ -293,7 +302,10 @@ export default function AccountManagementPage() {
   }, [accountsData]);
 
   return (
-    <PageContainer title='会计科目管理' subtitle='管理企业会计科目体系，支持多级科目结构'>
+    <PageContainer
+      title='会计科目管理'
+      subtitle='管理企业会计科目体系，支持多级科目结构'
+    >
       {/* 统计卡片 */}
       <Box sx={{ p: 3, maxWidth: 1280, mx: 'auto' }}>
         <Box
@@ -305,28 +317,60 @@ export default function AccountManagementPage() {
           }}
         >
           <Box sx={{ bgcolor: 'white', borderRadius: 2, p: 3 }}>
-            <Typography variant='h4' sx={{ fontWeight: 'bold', color: 'primary.main' }}>
+            <Typography
+              variant='h4'
+              sx={{ fontWeight: 'bold', color: 'primary.main' }}
+            >
               {stats.total}
             </Typography>
-            <Typography variant='body2' color='text.secondary'>科目总数</Typography>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
+              科目总数
+            </Typography>
           </Box>
           <Box sx={{ bgcolor: 'white', borderRadius: 2, p: 3 }}>
-            <Typography variant='h4' sx={{ fontWeight: 'bold', color: 'success.main' }}>
+            <Typography
+              variant='h4'
+              sx={{ fontWeight: 'bold', color: 'success.main' }}
+            >
               {stats.detail}
             </Typography>
-            <Typography variant='body2' color='text.secondary'>明细科目</Typography>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
+              明细科目
+            </Typography>
           </Box>
           <Box sx={{ bgcolor: 'white', borderRadius: 2, p: 3 }}>
-            <Typography variant='h4' sx={{ fontWeight: 'bold', color: 'info.main' }}>
+            <Typography
+              variant='h4'
+              sx={{ fontWeight: 'bold', color: 'info.main' }}
+            >
               {stats.summary}
             </Typography>
-            <Typography variant='body2' color='text.secondary'>总账科目</Typography>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
+              总账科目
+            </Typography>
           </Box>
           <Box sx={{ bgcolor: 'white', borderRadius: 2, p: 3 }}>
-            <Typography variant='h4' sx={{ fontWeight: 'bold', color: 'warning.main' }}>
+            <Typography
+              variant='h4'
+              sx={{ fontWeight: 'bold', color: 'warning.main' }}
+            >
               {stats.inactive}
             </Typography>
-            <Typography variant='body2' color='text.secondary'>已停用</Typography>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
+              已停用
+            </Typography>
           </Box>
         </Box>
       </Box>
@@ -426,14 +470,21 @@ export default function AccountManagementPage() {
         <DialogContent>
           <Typography>确定要删除该科目吗？此操作不可恢复。</Typography>
           {accountsData?.data?.items?.some((a: Account) => a.parent_id === deletingId) && (
-            <Typography color='warning.main' sx={{ mt: 2 }}>
+            <Typography
+              color='warning.main'
+              sx={{ mt: 2 }}
+            >
               警告：该科目存在下级科目，删除后将同时删除所有下级科目。
             </Typography>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeletingId(null)}>取消</Button>
-          <Button color='error' onClick={handleDelete} variant='contained'>
+          <Button
+            color='error'
+            onClick={handleDelete}
+            variant='contained'
+          >
             删除
           </Button>
         </DialogActions>
@@ -492,7 +543,10 @@ function AccountForm({ account, accounts, onSubmit, onCancel, isLoading }: Accou
       />
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-        <FormControl size='small' fullWidth>
+        <FormControl
+          size='small'
+          fullWidth
+        >
           <InputLabel>科目类型 *</InputLabel>
           <Select
             value={formData.type}
@@ -508,7 +562,10 @@ function AccountForm({ account, accounts, onSubmit, onCancel, isLoading }: Accou
           </Select>
         </FormControl>
 
-        <FormControl size='small' fullWidth>
+        <FormControl
+          size='small'
+          fullWidth
+        >
           <InputLabel>余额方向 *</InputLabel>
           <Select
             value={formData.balance_direction}
@@ -526,7 +583,10 @@ function AccountForm({ account, accounts, onSubmit, onCancel, isLoading }: Accou
         </FormControl>
       </Box>
 
-      <FormControl size='small' fullWidth>
+      <FormControl
+        size='small'
+        fullWidth
+      >
         <InputLabel>上级科目</InputLabel>
         <Select
           value={formData.parent_id || ''}
@@ -542,7 +602,10 @@ function AccountForm({ account, accounts, onSubmit, onCancel, isLoading }: Accou
           {accounts
             .filter((a) => !a.is_detail && a.id !== account?.id)
             .map((a) => (
-              <MenuItem key={a.id} value={a.id}>
+              <MenuItem
+                key={a.id}
+                value={a.id}
+              >
                 {a.code} - {a.name}
               </MenuItem>
             ))}
@@ -550,7 +613,10 @@ function AccountForm({ account, accounts, onSubmit, onCancel, isLoading }: Accou
       </FormControl>
 
       <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-        <FormControl size='small' fullWidth>
+        <FormControl
+          size='small'
+          fullWidth
+        >
           <InputLabel>明细标志</InputLabel>
           <Select
             value={formData.is_detail ? 'detail' : 'summary'}
@@ -567,7 +633,10 @@ function AccountForm({ account, accounts, onSubmit, onCancel, isLoading }: Accou
           </Select>
         </FormControl>
 
-        <FormControl size='small' fullWidth>
+        <FormControl
+          size='small'
+          fullWidth
+        >
           <InputLabel>状态</InputLabel>
           <Select
             value={formData.is_active ? 'active' : 'inactive'}
@@ -605,10 +674,18 @@ function AccountForm({ account, accounts, onSubmit, onCancel, isLoading }: Accou
           borderColor: 'divider',
         }}
       >
-        <Button type='button' variant='outlined' onClick={onCancel}>
+        <Button
+          type='button'
+          variant='outlined'
+          onClick={onCancel}
+        >
           取消
         </Button>
-        <Button type='submit' variant='contained' disabled={isLoading}>
+        <Button
+          type='submit'
+          variant='contained'
+          disabled={isLoading}
+        >
           {isLoading ? '保存中...' : '保存'}
         </Button>
       </Box>

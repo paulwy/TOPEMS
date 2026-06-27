@@ -18,7 +18,7 @@ export const accountingSubjectApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/erp/accounting-subjects${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(`/api/erp/accounting-subjects${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<AccountingSubject>> {
@@ -54,7 +54,7 @@ export const openingBalanceApi = {
 
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/erp/finance/accounts/opening-balances${queryString ? '?' + queryString : ''}`
+      `/api/erp/finance/accounts/opening-balances${queryString ? `?${queryString}` : ''}`
     );
   },
 

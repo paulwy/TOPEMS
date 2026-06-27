@@ -166,7 +166,127 @@ export interface Product {
   code: string;
   version: string;
   status: string;
+  description?: string;
+  category?: string;
+  unit?: string;
   created_at: string;
+  updated_at?: string;
+}
+
+export interface CreateProductRequest {
+  name: string;
+  code: string;
+  version: string;
+  status: string;
+  description?: string;
+  category?: string;
+  unit?: string;
+}
+
+export interface UpdateProductRequest {
+  name?: string;
+  code?: string;
+  version?: string;
+  status?: string;
+  description?: string;
+  category?: string;
+  unit?: string;
+}
+
+export interface Material {
+  id: string;
+  code: string;
+  name: string;
+  category: string;
+  specification?: string;
+  unit: string;
+  unit_price: number;
+  supplier?: string;
+  status: string;
+  inventory_quantity?: number;
+  safety_stock?: number;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface CreateMaterialRequest {
+  code: string;
+  name: string;
+  category: string;
+  specification?: string;
+  unit: string;
+  unit_price: number;
+  supplier?: string;
+  status: string;
+  inventory_quantity?: number;
+  safety_stock?: number;
+}
+
+export interface UpdateMaterialRequest {
+  code?: string;
+  name?: string;
+  category?: string;
+  specification?: string;
+  unit?: string;
+  unit_price?: number;
+  supplier?: string;
+  status?: string;
+  inventory_quantity?: number;
+  safety_stock?: number;
+}
+
+export interface ChangeOrder {
+  id: string;
+  change_no: string;
+  title: string;
+  type: string;
+  priority: string;
+  status: string;
+  applicant: string;
+  applicant_name?: string;
+  apply_date: string;
+  approved_by?: string;
+  approved_date?: string;
+  implemented_by?: string;
+  implemented_date?: string;
+  description: string;
+  reason: string;
+  impact_analysis?: string;
+  affected_items?: string[];
+  remarks?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface CreateChangeOrderRequest {
+  change_no: string;
+  title: string;
+  type: string;
+  priority: string;
+  status: string;
+  applicant: string;
+  apply_date: string;
+  description: string;
+  reason: string;
+  impact_analysis?: string;
+  affected_items?: string[];
+  remarks?: string;
+}
+
+export interface UpdateChangeOrderRequest {
+  title?: string;
+  type?: string;
+  priority?: string;
+  status?: string;
+  approved_by?: string;
+  approved_date?: string;
+  implemented_by?: string;
+  implemented_date?: string;
+  description?: string;
+  reason?: string;
+  impact_analysis?: string;
+  affected_items?: string[];
+  remarks?: string;
 }
 
 export interface ProductConfig {
@@ -330,6 +450,55 @@ export const pdmApi = {
   getProduct: async (id: string): Promise<ApiResponse<Product>> => {
     return apiClient.pdm.get<Product>(`/api/pdm/products/${id}`);
   },
+  createProduct: async (data: CreateProductRequest): Promise<ApiResponse<Product>> => {
+    return apiClient.pdm.post<Product>('/api/pdm/products', data);
+  },
+  updateProduct: async (id: string, data: UpdateProductRequest): Promise<ApiResponse<Product>> => {
+    return apiClient.pdm.put<Product>(`/api/pdm/products/${id}`, data);
+  },
+  deleteProduct: async (id: string): Promise<ApiResponse<boolean>> => {
+    return apiClient.pdm.delete<boolean>(`/api/pdm/products/${id}`);
+  },
+
+  // Materials
+  listMaterials: async (): Promise<ApiResponse<Material[]>> => {
+    return apiClient.pdm.get<Material[]>('/api/pdm/materials');
+  },
+  getMaterial: async (id: string): Promise<ApiResponse<Material>> => {
+    return apiClient.pdm.get<Material>(`/api/pdm/materials/${id}`);
+  },
+  createMaterial: async (data: CreateMaterialRequest): Promise<ApiResponse<Material>> => {
+    return apiClient.pdm.post<Material>('/api/pdm/materials', data);
+  },
+  updateMaterial: async (
+    id: string,
+    data: UpdateMaterialRequest
+  ): Promise<ApiResponse<Material>> => {
+    return apiClient.pdm.put<Material>(`/api/pdm/materials/${id}`, data);
+  },
+  deleteMaterial: async (id: string): Promise<ApiResponse<boolean>> => {
+    return apiClient.pdm.delete<boolean>(`/api/pdm/materials/${id}`);
+  },
+
+  // Change Orders
+  listChangeOrders: async (): Promise<ApiResponse<ChangeOrder[]>> => {
+    return apiClient.pdm.get<ChangeOrder[]>('/api/pdm/change-orders');
+  },
+  getChangeOrder: async (id: string): Promise<ApiResponse<ChangeOrder>> => {
+    return apiClient.pdm.get<ChangeOrder>(`/api/pdm/change-orders/${id}`);
+  },
+  createChangeOrder: async (data: CreateChangeOrderRequest): Promise<ApiResponse<ChangeOrder>> => {
+    return apiClient.pdm.post<ChangeOrder>('/api/pdm/change-orders', data);
+  },
+  updateChangeOrder: async (
+    id: string,
+    data: UpdateChangeOrderRequest
+  ): Promise<ApiResponse<ChangeOrder>> => {
+    return apiClient.pdm.put<ChangeOrder>(`/api/pdm/change-orders/${id}`, data);
+  },
+  deleteChangeOrder: async (id: string): Promise<ApiResponse<boolean>> => {
+    return apiClient.pdm.delete<boolean>(`/api/pdm/change-orders/${id}`);
+  },
 
   // BOM Items
   listBomItems: async (): Promise<ApiResponse<BomItem[]>> => {
@@ -338,9 +507,7 @@ export const pdmApi = {
   getBomItem: async (id: string): Promise<ApiResponse<BomItem>> => {
     return apiClient.pdm.get<BomItem>(`/api/pdm/bom-items/${id}`);
   },
-  createBomItem: async (
-    data: CreateBomItemRequest
-  ): Promise<ApiResponse<BomItem>> => {
+  createBomItem: async (data: CreateBomItemRequest): Promise<ApiResponse<BomItem>> => {
     return apiClient.pdm.post<BomItem>('/api/pdm/bom-items', data);
   },
   updateBomItem: async (
@@ -390,9 +557,7 @@ export const pdmApi = {
   getVersion: async (id: string): Promise<ApiResponse<DocumentVersion>> => {
     return apiClient.pdm.get<DocumentVersion>(`/api/pdm/versions/${id}`);
   },
-  createVersion: async (
-    data: CreateVersionRequest
-  ): Promise<ApiResponse<DocumentVersion>> => {
+  createVersion: async (data: CreateVersionRequest): Promise<ApiResponse<DocumentVersion>> => {
     return apiClient.pdm.post<DocumentVersion>('/api/pdm/versions', data);
   },
   updateVersion: async (

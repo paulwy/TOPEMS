@@ -1,10 +1,7 @@
 import apiClient, { downloadBlob } from '../client';
 import type { ApiResponse } from '../client';
 import config from '../../config/runtime';
-import type {
-  AuditLog,
-  AuditLogQueryParams,
-} from './types';
+import type { AuditLog, AuditLogQueryParams } from './types';
 
 export const auditLimsApi = {
   listAuditLogs: async (

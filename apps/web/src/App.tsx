@@ -16,9 +16,6 @@ import { eventBus, ModuleEvents } from './modules/loader/EventBus';
 import { logger } from '@/utils/logger';
 import { PluginProvider } from './context/PluginContext';
 
-// Check if we're in static mode (Module Federation disabled)
-const IS_STATIC_MODE = import.meta.env.VITE_DEPLOYMENT_MODE !== 'module-federation';
-
 import {
   authRoutes,
   dashboardRoutes,
@@ -48,6 +45,9 @@ import {
   srmRoutes,
   type RouteConfig,
 } from './routes';
+
+// Check if we're in static mode (Module Federation disabled)
+const IS_STATIC_MODE = import.meta.env.VITE_DEPLOYMENT_MODE !== 'module-federation';
 
 const PageLoader: React.FC = () => (
   <Box
@@ -297,7 +297,7 @@ const AppContent: React.FC = () => {
           path='/config-debug'
           element={
             <Navigate
-              to='/system/config-debug'
+              to='/iam/debug'
               replace
             />
           }

@@ -70,34 +70,34 @@ const createBaseTheme = (mode: PaletteMode): ThemeOptions => {
     spacing: (factor: number) => `${factor * 8}px`,
     zIndex: designTokens.zIndex,
     shadows: isDark
-      ? [
+      ? ([
           designTokens.darkShadows.none,
           designTokens.darkShadows.xs,
           designTokens.darkShadows.sm,
           designTokens.darkShadows.md,
           designTokens.darkShadows.lg,
           designTokens.darkShadows.xl,
-          designTokens.darkShadows.float,
-          designTokens.darkShadows.xl,
+          designTokens.darkShadows['2xl'],
+          designTokens.darkShadows['3xl'],
+          designTokens.darkShadows.inner,
           designTokens.darkShadows.sm,
           designTokens.darkShadows.md,
           designTokens.darkShadows.lg,
           designTokens.darkShadows.xl,
-          designTokens.darkShadows.float,
-          designTokens.darkShadows.float,
+          designTokens.darkShadows['2xl'],
+          designTokens.darkShadows['3xl'],
+          designTokens.darkShadows.inner,
+          designTokens.darkShadows.sm,
+          designTokens.darkShadows.md,
+          designTokens.darkShadows.lg,
           designTokens.darkShadows.xl,
-          designTokens.darkShadows.float,
-          designTokens.darkShadows.float,
-          designTokens.darkShadows.xl,
-          designTokens.darkShadows.float,
-          designTokens.darkShadows.xl,
-          designTokens.darkShadows.float,
-          designTokens.darkShadows.xl,
-          designTokens.darkShadows.float,
-          designTokens.darkShadows.xl,
-          designTokens.darkShadows.float,
-        ] as unknown as ThemeOptions['shadows']
-      : [
+          designTokens.darkShadows['2xl'],
+          designTokens.darkShadows['3xl'],
+          designTokens.darkShadows.inner,
+          designTokens.darkShadows.sm,
+          designTokens.darkShadows.md,
+        ] as ThemeOptions['shadows'])
+      : ([
           designTokens.shadows.none,
           designTokens.shadows.xs,
           designTokens.shadows.sm,
@@ -123,7 +123,7 @@ const createBaseTheme = (mode: PaletteMode): ThemeOptions => {
           designTokens.shadows.inner,
           designTokens.shadows.sm,
           designTokens.shadows.md,
-        ] as unknown as ThemeOptions['shadows'],
+        ] as ThemeOptions['shadows']),
     transitions: {
       duration: designTokens.transitions.duration,
       easing: designTokens.transitions.easing,
@@ -252,7 +252,15 @@ export const createCustomTheme = (mode: PaletteMode): Theme => {
           },
           head: {
             fontWeight: designTokens.typography.fontWeight.semibold,
-            backgroundColor: designTokens.colors.grey[50],
+            backgroundColor: isDark ? designTokens.colors.grey[800] : designTokens.colors.grey[50],
+          },
+        },
+      },
+      MuiTableHead: {
+        styleOverrides: {
+          root: {
+            // In dark mode, use a slightly lighter background for table headers
+            backgroundColor: isDark ? designTokens.colors.grey[800] : designTokens.colors.grey[50],
           },
         },
       },

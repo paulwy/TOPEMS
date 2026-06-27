@@ -10,8 +10,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import { Car, Plus, Edit, Trash2, Calendar, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -414,7 +414,10 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({ onNavigat
   );
 
   return (
-    <PageContainer title='车辆管理' subtitle='管理企业车辆和用车申请'>
+    <PageContainer
+      title='车辆管理'
+      subtitle='管理企业车辆和用车申请'
+    >
       <ListPageTemplate
         title=''
         subtitle=''
@@ -435,7 +438,7 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({ onNavigat
         onFilterChange={handleFilterChange}
         pagination={{
           page: currentPage,
-          pageSize: pageSize,
+          pageSize,
           total: totalVehicles,
           onPageChange: setCurrentPage,
         }}

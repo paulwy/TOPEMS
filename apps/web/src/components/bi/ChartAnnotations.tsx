@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Flag, MessageSquare, Tag, Plus, X, Edit3, Check } from 'lucide-react';
-import { TextField, Chip, Paper } from '@mui/material';
-import { Button } from '@mui/material';
+import { TextField, Chip, Paper, Button } from '@mui/material';
 
 export interface Annotation {
   id: string;

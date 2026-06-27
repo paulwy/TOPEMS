@@ -30,7 +30,12 @@ const typeColors: Record<string, { bg: string; text: string; bar: string; iconBg
     bar: 'secondary.main',
     iconBg: 'secondary.light',
   },
-  工作流: { bg: 'success.light', text: 'success.dark', bar: 'success.dark', iconBg: 'success.lighter' },
+  工作流: {
+    bg: 'success.light',
+    text: 'success.dark',
+    bar: 'success.dark',
+    iconBg: 'success.lighter',
+  },
   培训: { bg: 'warning.lighter', text: '#ca8a04', bar: 'warning.main', iconBg: '#fef9c3' },
   默认: { bg: 'grey.50', text: 'grey.600', bar: '#94a3b8', iconBg: 'grey.100' },
 };

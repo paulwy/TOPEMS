@@ -552,13 +552,13 @@ const SuggestionItem = styled(ListItem, {
   backgroundColor: isHighlighted
     ? theme.palette.mode === 'dark'
       ? alpha(theme.palette.primary.main, 0.2)
-      : theme.palette.primary.light + '40'
+      : `${theme.palette.primary.light}40`
     : 'transparent',
   '&:hover': {
     backgroundColor:
       theme.palette.mode === 'dark'
         ? alpha(theme.palette.primary.main, 0.1)
-        : theme.palette.primary.light + '20',
+        : `${theme.palette.primary.light}20`,
   },
   '& .MuiListItemIcon-root': {
     color: theme.palette.text.secondary,
@@ -583,9 +583,9 @@ const SearchAction = styled('div')(({ theme }) => ({
   padding: 12,
   borderTop: `1px solid ${theme.palette.divider}`,
   cursor: 'pointer',
-  backgroundColor: theme.palette.primary.main + '10',
+  backgroundColor: `${theme.palette.primary.main}10`,
   '&:hover': {
-    backgroundColor: theme.palette.primary.main + '20',
+    backgroundColor: `${theme.palette.primary.main}20`,
   },
 }));
 

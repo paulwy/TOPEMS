@@ -22,8 +22,8 @@ import {
   Alert,
   Snackbar,
   CircularProgress,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import type {
   DevicePoint,
   Pipeline,
@@ -87,7 +87,8 @@ const GisContent: React.FC = () => {
   const getStatusStyle = (status: string) => {
     if (!status) return { bgcolor: 'grey.100', color: '#475569' };
     const s = status.toLowerCase();
-    if (s.includes('active') || s.includes('启用')) return { bgcolor: 'success.lighter', color: '#15803d' };
+    if (s.includes('active') || s.includes('启用'))
+      return { bgcolor: 'success.lighter', color: '#15803d' };
     if (s.includes('pending') || s.includes('待处理'))
       return { bgcolor: 'warning.light', color: '#b45309' };
     if (s.includes('inactive') || s.includes('禁用'))

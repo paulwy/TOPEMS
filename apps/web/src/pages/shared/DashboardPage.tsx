@@ -77,8 +77,6 @@ import { rsApi } from '@/api/rs';
 import { biApi } from '@/api/bi';
 import { scmApi } from '@/api/scm';
 import { useInstalledPlugins } from '../../context/PluginContext';
-import MobileHeader from '@/components/layout/MobileHeader';
-import { MobileNav } from '@/components/layout/MobileNav';
 import { usePermission } from '@/hooks/usePermission';
 import { useAuth } from '@/hooks/useAuth';
 import { useServiceStatus } from '@/hooks/useServiceStatus';
@@ -100,7 +98,6 @@ import {
   ServiceMonitorSection,
   RecentActivitySection,
 } from '@/components/dashboard';
-import { PageContainer } from '@/components/common';
 
 interface DashboardPageProps {
   onLogout?: () => void;
@@ -141,7 +138,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     moduleDistribution: [] as { name: string; value: number; color: string }[],
     monthlyTrend: [] as { name: string; value: number }[],
   });
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [recentActivities, setRecentActivities] = useState<ActivityItem[]>([]);
   const [todoTab, setTodoTab] = useState(0);
   const [todos, setTodos] = useState<
@@ -188,18 +184,28 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
       const [docRes, flowStatsRes, notificationRes] = await Promise.allSettled([
         docApi.list(),
         workflowApi.getStatistics(),
-        user?.id ? workflowApi.getNotificationCount(user.id) : Promise.resolve({ success: false, data: { count: 0 } } as any),
+        user?.id
+          ? workflowApi.getNotificationCount(user.id)
+          : Promise.resolve({ success: false, data: { count: 0 } } as any),
       ]);
 
-      const docData = docRes.status === 'fulfilled' && docRes.value.success ? docRes.value.data : null;
-      const flowData = flowStatsRes.status === 'fulfilled' && flowStatsRes.value.success ? flowStatsRes.value.data : null;
-      const notificationData = notificationRes.status === 'fulfilled' && notificationRes.value.success ? notificationRes.value.data : null;
+      const docData =
+        docRes.status === 'fulfilled' && docRes.value.success ? docRes.value.data : null;
+      const flowData =
+        flowStatsRes.status === 'fulfilled' && flowStatsRes.value.success
+          ? flowStatsRes.value.data
+          : null;
+      const notificationData =
+        notificationRes.status === 'fulfilled' && notificationRes.value.success
+          ? notificationRes.value.data
+          : null;
 
       const newStats = {
         fileCount: docData?.files?.length || 0,
         docCount: docData?.total || 0,
         workflowCount: flowData?.total_workflows || 0,
-        notificationCount: (notificationData as any)?.count ?? (notificationData as any)?.total ?? 0,
+        notificationCount:
+          (notificationData as any)?.count ?? (notificationData as any)?.total ?? 0,
       };
 
       setStats(newStats);
@@ -226,35 +232,61 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
       const newModuleStats = {
         qms: {
           total:
-            (qmsRes.status === 'fulfilled' && qmsRes.value.success && qmsRes.value.data?.total_inspections) || 0,
+            (qmsRes.status === 'fulfilled' &&
+              qmsRes.value.success &&
+              qmsRes.value.data?.total_inspections) ||
+            0,
           active:
-            (qmsRes.status === 'fulfilled' && qmsRes.value.success && qmsRes.value.data?.active_standards) || 0,
+            (qmsRes.status === 'fulfilled' &&
+              qmsRes.value.success &&
+              qmsRes.value.data?.active_standards) ||
+            0,
         },
         ehs: {
           total:
-            (ehsRes.status === 'fulfilled' && ehsRes.value.success && ehsRes.value.data?.total) || 0,
+            (ehsRes.status === 'fulfilled' && ehsRes.value.success && ehsRes.value.data?.total) ||
+            0,
           active:
             (ehsRes.status === 'fulfilled' &&
               ehsRes.value.success &&
-              ehsRes.value.data?.data?.filter((h: any) => h.status === 'active').length) || 0,
+              ehsRes.value.data?.data?.filter((h: any) => h.status === 'active').length) ||
+            0,
         },
         srm: {
           total:
-            (srmRes.status === 'fulfilled' && srmRes.value.success && srmRes.value.data?.total_suppliers) || 0,
+            (srmRes.status === 'fulfilled' &&
+              srmRes.value.success &&
+              srmRes.value.data?.total_suppliers) ||
+            0,
           active:
-            (srmRes.status === 'fulfilled' && srmRes.value.success && srmRes.value.data?.active_suppliers) || 0,
+            (srmRes.status === 'fulfilled' &&
+              srmRes.value.success &&
+              srmRes.value.data?.active_suppliers) ||
+            0,
         },
         lims: {
           total:
-            (limsRes.status === 'fulfilled' && limsRes.value.success && limsRes.value.data?.total_samples) || 0,
+            (limsRes.status === 'fulfilled' &&
+              limsRes.value.success &&
+              limsRes.value.data?.total_samples) ||
+            0,
           active:
-            (limsRes.status === 'fulfilled' && limsRes.value.success && limsRes.value.data?.testing_samples) || 0,
+            (limsRes.status === 'fulfilled' &&
+              limsRes.value.success &&
+              limsRes.value.data?.testing_samples) ||
+            0,
         },
         rs: {
           total:
-            (rsRes.status === 'fulfilled' && rsRes.value.success && rsRes.value.data?.total_projects) || 0,
+            (rsRes.status === 'fulfilled' &&
+              rsRes.value.success &&
+              rsRes.value.data?.total_projects) ||
+            0,
           active:
-            (rsRes.status === 'fulfilled' && rsRes.value.success && rsRes.value.data?.in_progress_projects) || 0,
+            (rsRes.status === 'fulfilled' &&
+              rsRes.value.success &&
+              rsRes.value.data?.in_progress_projects) ||
+            0,
         },
       };
 
@@ -276,19 +308,27 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         workflowApi.getStatistics(),
       ]);
 
-      const summary = summaryRes.status === 'fulfilled' && summaryRes.value.success ? summaryRes.value.data : null;
-      const flowStats = flowStatsRes.status === 'fulfilled' && flowStatsRes.value.success ? flowStatsRes.value.data : null;
+      const summary =
+        summaryRes.status === 'fulfilled' && summaryRes.value.success
+          ? summaryRes.value.data
+          : null;
+      const flowStats =
+        flowStatsRes.status === 'fulfilled' && flowStatsRes.value.success
+          ? flowStatsRes.value.data
+          : null;
 
       setChartData({
-        moduleDistribution: summary?.key_metrics?.map((metric: any) => ({
-          name: metric.title,
-          value: metric.value,
-          color: metric.icon || '#3b82f6',
-        })) || [],
-        monthlyTrend: flowStats?.monthly_data?.map((item: any) => ({
-          name: item.month,
-          value: item.instances_started || item.approvals_processed || 0,
-        })) || [],
+        moduleDistribution:
+          summary?.key_metrics?.map((metric: any) => ({
+            name: metric.title,
+            value: metric.value,
+            color: metric.icon || '#3b82f6',
+          })) || [],
+        monthlyTrend:
+          flowStats?.monthly_data?.map((item: any) => ({
+            name: item.month,
+            value: item.instances_started || item.approvals_processed || 0,
+          })) || [],
       });
     } catch (err: unknown) {
       apiLogger.error('加载图表数据失败:', err);
@@ -340,7 +380,11 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           if (log.module?.includes('doc') || log.module?.includes('file')) {
             icon = <FileText size={16} />;
             type = '文档';
-          } else if (log.module?.includes('flow') || log.module?.includes('workflow') || log.module?.includes('approval')) {
+          } else if (
+            log.module?.includes('flow') ||
+            log.module?.includes('workflow') ||
+            log.module?.includes('approval')
+          ) {
             icon = <GitBranch size={16} />;
             type = '工作流';
           } else if (log.module?.includes('folder')) {
@@ -821,7 +865,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           justifyContent: 'center',
         }}
       >
-        <Typography sx={{ fontSize: '1.125rem', color: 'grey.600' }}>加载中...</Typography>
+        <Typography sx={{ fontSize: '1.125rem', color: 'text.secondary' }}>加载中...</Typography>
       </Box>
     );
   }
@@ -860,232 +904,235 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   };
 
   return (
-    <PageContainer
-      padding={false}
-      maxWidth={false}
-      sx={{
-        minHeight: '100vh',
-        background: 'linear-gradient(to bottom right, #f8fafc, grey.100)',
-      }}
-    >
-      <MobileHeader
-        title='TOPEMS'
-        onMenuClick={() => setMobileNavOpen(true)}
-      />
-
-      <Box sx={{ '& > .MuiIconButton-root': { display: 'none' } }}>
-        <MobileNav
-          open={mobileNavOpen}
-          onClose={() => setMobileNavOpen(false)}
-          onOpen={() => setMobileNavOpen(true)}
-        />
-      </Box>
-
-      <Box className='desktop-only'>
-        <Box
-          component='main'
-          sx={{
-            width: '100%',
-            py: 4,
-          }}
-        >
-          {/* 欢迎标题 */}
-          <Box sx={{ mb: 4 }}>
-            <Typography
-              sx={{
-                fontSize: '1.875rem',
-                fontWeight: 700,
-                color: 'grey.900',
-                mb: 1,
-              }}
-            >
-              👋 欢迎回来，{user?.full_name || user?.username || '用户'}！
-            </Typography>
-            <Typography sx={{ color: 'grey.600' }}>
-              {getGreeting()}，今天有 {pendingTodos.length} 个待处理事项
-            </Typography>
-          </Box>
-
-          {/* 今日概览分区 */}
-          <DashboardSection
-            title='今日概览'
-            sx={{ mb: 4 }}
+    <Box>
+      <Box
+        component='div'
+        sx={{
+          width: '100%',
+        }}
+      >
+        {/* 欢迎标题 */}
+        <Box sx={{ mb: 4 }}>
+          <Typography
+            sx={{
+              fontSize: '1.875rem',
+              fontWeight: 700,
+              color: 'text.primary',
+              mb: 1,
+            }}
           >
-            <Box
+            👋 欢迎回来，{user?.full_name || user?.username || '用户'}！
+          </Typography>
+          <Typography sx={{ color: 'grey.600' }}>
+            {getGreeting()}，今天有 {pendingTodos.length} 个待处理事项
+          </Typography>
+        </Box>
+
+        {/* 今日概览分区 */}
+        <DashboardSection
+          title='今日概览'
+          sx={{ mb: 4 }}
+        >
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' },
+              gap: 3,
+            }}
+          >
+            <MetricCard
+              title='在线服务'
+              value={String(onlineServices)}
+              icon={<Activity size={24} />}
+              color='green'
+              change={onlineServices > 5 ? 10 : -5}
+            />
+            <MetricCard
+              title='文件数量'
+              value={String(stats.fileCount)}
+              icon={<FileText size={24} />}
+              color='purple'
+              change={8}
+            />
+            <MetricCard
+              title='工作流'
+              value={String(stats.workflowCount)}
+              icon={<GitBranch size={24} />}
+              color='orange'
+              change={-3}
+            />
+            <MetricCard
+              title='待处理'
+              value={String(pendingTodos.length)}
+              icon={<Clock size={24} />}
+              color='blue'
+            />
+          </Box>
+        </DashboardSection>
+
+        {/* 快捷入口分区 */}
+        <QuickAccessSection defaultExpanded={true}>
+          <DashboardQuickActions
+            quickActions={defaultQuickActions}
+            serviceStatuses={serviceStatuses}
+            onQuickAccess={handleQuickAccess}
+          />
+        </QuickAccessSection>
+
+        {/* 待办事项分区 */}
+        <TodoListSection>
+          <Box sx={{ mb: 2 }}>
+            <Tabs
+              value={todoTab}
+              onChange={(_, v) => setTodoTab(v)}
               sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' },
-                gap: 3,
+                minHeight: 36,
+                '& .MuiTabs-indicator': {
+                  bgcolor: 'primary.main',
+                },
               }}
             >
-              <MetricCard
-                title='在线服务'
-                value={String(onlineServices)}
-                icon={<Activity size={24} />}
-                color='green'
-                change={onlineServices > 5 ? 10 : -5}
+              <Tab
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <ListTodo size={16} />
+                    <Typography sx={{ fontSize: '0.875rem' }}>待处理</Typography>
+                    <Badge
+                      badgeContent={pendingTodos.length}
+                      color='primary'
+                      sx={{ ml: 1 }}
+                    />
+                  </Box>
+                }
+                sx={{ minHeight: 36, py: 1 }}
               />
-              <MetricCard
-                title='文件数量'
-                value={String(stats.fileCount)}
-                icon={<FileText size={24} />}
-                color='purple'
-                change={8}
+              <Tab
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <CheckCircle size={16} />
+                    <Typography sx={{ fontSize: '0.875rem' }}>已完成</Typography>
+                    <Badge
+                      badgeContent={completedTodos.length}
+                      color='success'
+                      sx={{ ml: 1 }}
+                    />
+                  </Box>
+                }
+                sx={{ minHeight: 36, py: 1 }}
               />
-              <MetricCard
-                title='工作流'
-                value={String(stats.workflowCount)}
-                icon={<GitBranch size={24} />}
-                color='orange'
-                change={-3}
-              />
-              <MetricCard
-                title='待处理'
-                value={String(pendingTodos.length)}
-                icon={<Clock size={24} />}
-                color='blue'
-              />
-            </Box>
-          </DashboardSection>
-
-          {/* 快捷入口分区 */}
-          <QuickAccessSection defaultExpanded={true}>
-            <DashboardQuickActions
-              quickActions={defaultQuickActions}
-              serviceStatuses={serviceStatuses}
-              onQuickAccess={handleQuickAccess}
-            />
-          </QuickAccessSection>
-
-          {/* 待办事项分区 */}
-          <TodoListSection>
-            <Box sx={{ mb: 2 }}>
-              <Tabs
-                value={todoTab}
-                onChange={(_, v) => setTodoTab(v)}
+            </Tabs>
+          </Box>
+          <List sx={{ py: 0 }}>
+            {(todoTab === 0 ? pendingTodos : completedTodos).map((todo) => (
+              <ListItem
+                key={todo.id}
                 sx={{
-                  minHeight: 36,
-                  '& .MuiTabs-indicator': {
-                    bgcolor: 'primary.main',
-                  },
+                  px: 0,
+                  borderBottom: '1px solid',
+                  borderColor: 'grey.100',
+                  '&:last-child': { borderBottom: 'none' },
                 }}
               >
-                <Tab
-                  label={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <ListTodo size={16} />
-                      <Typography sx={{ fontSize: '0.875rem' }}>待处理</Typography>
-                      <Badge
-                        badgeContent={pendingTodos.length}
-                        color='primary'
-                        sx={{ ml: 1 }}
-                      />
-                    </Box>
-                  }
-                  sx={{ minHeight: 36, py: 1 }}
-                />
-                <Tab
-                  label={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <CheckCircle size={16} />
-                      <Typography sx={{ fontSize: '0.875rem' }}>已完成</Typography>
-                      <Badge
-                        badgeContent={completedTodos.length}
-                        color='success'
-                        sx={{ ml: 1 }}
-                      />
-                    </Box>
-                  }
-                  sx={{ minHeight: 36, py: 1 }}
-                />
-              </Tabs>
-            </Box>
-            <List sx={{ py: 0 }}>
-              {(todoTab === 0 ? pendingTodos : completedTodos).map((todo) => (
-                <ListItem
-                  key={todo.id}
+                <ListItemButton
                   sx={{
-                    px: 0,
-                    borderBottom: '1px solid',
-                    borderColor: 'grey.100',
-                    '&:last-child': { borderBottom: 'none' },
+                    borderRadius: 1,
+                    '&:hover': { bgcolor: 'grey.50' },
                   }}
                 >
-                  <ListItemButton
-                    sx={{
-                      borderRadius: 1,
-                      '&:hover': { bgcolor: 'grey.50' },
-                    }}
-                  >
-                    <ListItemIcon sx={{ minWidth: 36 }}>
-                      <Checkbox
-                        checked={todo.done}
-                        onChange={() => handleTodoToggle(todo.id)}
-                        size='small'
-                        sx={{
-                          color: 'grey.400',
-                          '&.Mui-checked': { color: 'success.main' },
-                        }}
-                      />
-                    </ListItemIcon>
-                    <ListItemIcon sx={{ minWidth: 36 }}>
-                      <Box
-                        sx={{
-                          width: 28,
-                          height: 28,
-                          borderRadius: 1,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          bgcolor: todo.done ? 'grey.100' : 'primary.50',
-                          color: todo.done ? 'grey.500' : 'primary.main',
-                        }}
-                      >
-                        {getTodoIcon(todo.type)}
-                      </Box>
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={todo.title}
+                  <ListItemIcon sx={{ minWidth: 36 }}>
+                    <Checkbox
+                      checked={todo.done}
+                      onChange={() => handleTodoToggle(todo.id)}
+                      size='small'
                       sx={{
-                        '& .MuiListItemText-primary': {
-                          fontSize: '0.875rem',
-                          color: todo.done ? 'grey.500' : 'grey.900',
-                          textDecoration: todo.done ? 'line-through' : 'none',
-                        },
+                        color: 'grey.400',
+                        '&.Mui-checked': { color: 'success.main' },
                       }}
                     />
-                  </ListItemButton>
-                </ListItem>
-              ))}
-            </List>
-          </TodoListSection>
+                  </ListItemIcon>
+                  <ListItemIcon sx={{ minWidth: 36 }}>
+                    <Box
+                      sx={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        bgcolor: todo.done ? 'grey.100' : 'primary.50',
+                        color: todo.done ? 'grey.500' : 'primary.main',
+                      }}
+                    >
+                      {getTodoIcon(todo.type)}
+                    </Box>
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={todo.title}
+                    sx={{
+                      '& .MuiListItemText-primary': {
+                        fontSize: '0.875rem',
+                        color: todo.done ? 'grey.500' : 'grey.900',
+                        textDecoration: todo.done ? 'line-through' : 'none',
+                      },
+                    }}
+                  />
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
+        </TodoListSection>
 
-          {/* 模块导航分区 - 核心功能 */}
-          <ModuleNavigationSection title='🚀 核心功能'>
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: {
-                  xs: '1fr',
-                  md: 'repeat(2, 1fr)',
-                  lg: 'repeat(3, 1fr)',
-                },
-                gap: 3,
-              }}
-            >
-              {coreModules.map((item) => (
-                <ModuleCard
-                  key={item.title}
-                  item={item}
-                  onClick={() => navigate(item.path)}
-                  size='large'
-                />
-              ))}
-            </Box>
-          </ModuleNavigationSection>
+        {/* 模块导航分区 - 核心功能 */}
+        <ModuleNavigationSection title='🚀 核心功能'>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: '1fr',
+                md: 'repeat(2, 1fr)',
+                lg: 'repeat(3, 1fr)',
+              },
+              gap: 3,
+            }}
+          >
+            {coreModules.map((item) => (
+              <ModuleCard
+                key={item.title}
+                item={item}
+                onClick={() => navigate(item.path)}
+                size='large'
+              />
+            ))}
+          </Box>
+        </ModuleNavigationSection>
 
-          {/* 模块导航分区 - 业务模块 */}
-          <ModuleNavigationSection title='📊 业务模块'>
+        {/* 模块导航分区 - 业务模块 */}
+        <ModuleNavigationSection title='📊 业务模块'>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: '1fr',
+                md: 'repeat(2, 1fr)',
+                lg: 'repeat(4, 1fr)',
+              },
+              gap: 3,
+            }}
+          >
+            {businessModules.map((item) => (
+              <ModuleCard
+                key={item.title}
+                item={item}
+                onClick={() => navigate(item.path)}
+                size='small'
+              />
+            ))}
+          </Box>
+        </ModuleNavigationSection>
+
+        {/* 模块导航分区 - 系统服务 */}
+        {systemServicesModules.length > 0 && (
+          <ModuleNavigationSection title='⚙️ 系统服务'>
             <Box
               sx={{
                 display: 'grid',
@@ -1097,92 +1144,48 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
                 gap: 3,
               }}
             >
-              {businessModules.map((item) => (
+              {systemServicesModules.map((item) => (
                 <ModuleCard
                   key={item.title}
                   item={item}
                   onClick={() => navigate(item.path)}
-                  size='small'
+                  size='medium'
                 />
               ))}
             </Box>
           </ModuleNavigationSection>
+        )}
 
-          {/* 模块导航分区 - 系统服务 */}
-          {systemServicesModules.length > 0 && (
-            <ModuleNavigationSection title='⚙️ 系统服务'>
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: {
-                    xs: '1fr',
-                    md: 'repeat(2, 1fr)',
-                    lg: 'repeat(4, 1fr)',
-                  },
-                  gap: 3,
-                }}
-              >
-                {systemServicesModules.map((item) => (
-                  <ModuleCard
-                    key={item.title}
-                    item={item}
-                    onClick={() => navigate(item.path)}
-                    size='medium'
-                  />
-                ))}
-              </Box>
-            </ModuleNavigationSection>
-          )}
+        {/* 服务状态监测分区 */}
+        <ServiceMonitorSection
+          collapsible={true}
+          defaultExpanded={false}
+        >
+          <ServiceStatusMonitor
+            serviceStatuses={serviceStatuses}
+            onRefresh={refreshServiceStatuses}
+          />
+        </ServiceMonitorSection>
 
-          {/* 服务状态监测分区 */}
-          <ServiceMonitorSection
-            collapsible={true}
-            defaultExpanded={false}
-          >
-            <ServiceStatusMonitor
-              serviceStatuses={serviceStatuses}
-              onRefresh={refreshServiceStatuses}
-            />
-          </ServiceMonitorSection>
-
-          {/* 最近活动分区 */}
-          <RecentActivitySection
-            defaultExpanded={false}
-            headerRight={
-              <Typography
-                sx={{
-                  fontSize: '0.875rem',
-                  color: 'primary.main',
-                  cursor: 'pointer',
-                  '&:hover': { color: 'primary.dark' },
-                }}
-              >
-                查看全部
-              </Typography>
-            }
-          >
-            <RecentActivities activities={recentActivities} />
-          </RecentActivitySection>
-
-          {/* 页脚 */}
-          <Box
-            sx={{
-              mt: 4,
-              textAlign: 'center',
-              fontSize: '0.875rem',
-              color: 'grey.500',
-            }}
-          >
-            <Typography sx={{ color: 'grey.500' }}>
-              TOPEMS v2.0 | 化工新材料企业数字化平台
+        {/* 最近活动分区 */}
+        <RecentActivitySection
+          headerRight={
+            <Typography
+              sx={{
+                fontSize: '0.875rem',
+                color: 'primary.main',
+                cursor: 'pointer',
+                '&:hover': { color: 'primary.dark' },
+              }}
+            >
+              查看全部
             </Typography>
-            <Typography sx={{ color: 'grey.500', mt: 0.5 }}>
-              © 2026 TOPEMS Team. All rights reserved.
-            </Typography>
-          </Box>
-        </Box>
+          }
+        >
+          <RecentActivities activities={recentActivities} />
+        </RecentActivitySection>
       </Box>
-    </PageContainer>
+    </Box>
   );
 };
 

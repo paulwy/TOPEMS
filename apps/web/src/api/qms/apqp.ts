@@ -27,9 +27,7 @@ export const apqpApi = {
     return apiClient.qms.get<ApqpProject>(`/api/qms/apqp/projects/${id}`);
   },
 
-  createApqpProject: async (
-    data: CreateApqpProjectRequest
-  ): Promise<ApiResponse<ApqpProject>> => {
+  createApqpProject: async (data: CreateApqpProjectRequest): Promise<ApiResponse<ApqpProject>> => {
     return apiClient.qms.post<ApqpProject>('/api/qms/apqp/projects', data);
   },
 
@@ -48,10 +46,7 @@ export const apqpApi = {
     id: string,
     data: { target_status: string; operator: string; comment?: string }
   ): Promise<ApiResponse<ApqpProject>> => {
-    return apiClient.qms.post<ApqpProject>(
-      `/api/qms/apqp/projects/${id}/transition`,
-      data
-    );
+    return apiClient.qms.post<ApqpProject>(`/api/qms/apqp/projects/${id}/transition`, data);
   },
 
   getApqpProgress: async (id: string): Promise<ApiResponse<ApqpProgressStatistics>> => {
@@ -60,9 +55,7 @@ export const apqpApi = {
 
   // APQP Phases
   listApqpPhases: async (projectId?: string): Promise<ApiResponse<ApqpPhase[]>> => {
-    const url = projectId
-      ? `/api/qms/apqp/phases?project_id=${projectId}`
-      : '/api/qms/apqp/phases';
+    const url = projectId ? `/api/qms/apqp/phases?project_id=${projectId}` : '/api/qms/apqp/phases';
     return apiClient.qms.get<ApqpPhase[]>(url);
   },
 
@@ -121,10 +114,7 @@ export const apqpApi = {
     return apiClient.qms.post<ApqpTask>('/api/qms/apqp/tasks', data);
   },
 
-  updateApqpTask: async (
-    id: string,
-    data: Partial<ApqpTask>
-  ): Promise<ApiResponse<ApqpTask>> => {
+  updateApqpTask: async (id: string, data: Partial<ApqpTask>): Promise<ApiResponse<ApqpTask>> => {
     return apiClient.qms.put<ApqpTask>(`/api/qms/apqp/tasks/${id}`, data);
   },
 
@@ -160,10 +150,7 @@ export const apqpApi = {
     return apiClient.qms.post<ApqpRisk>('/api/qms/apqp/risks', data);
   },
 
-  updateApqpRisk: async (
-    id: string,
-    data: Partial<ApqpRisk>
-  ): Promise<ApiResponse<ApqpRisk>> => {
+  updateApqpRisk: async (id: string, data: Partial<ApqpRisk>): Promise<ApiResponse<ApqpRisk>> => {
     return apiClient.qms.put<ApqpRisk>(`/api/qms/apqp/risks/${id}`, data);
   },
 
@@ -192,9 +179,6 @@ export const apqpApi = {
     id: string,
     data: { approver: string; approved: boolean; comment?: string }
   ): Promise<ApiResponse<ApqpApproval>> => {
-    return apiClient.qms.post<ApqpApproval>(
-      `/api/qms/apqp/approvals/${id}/process`,
-      data
-    );
+    return apiClient.qms.post<ApqpApproval>(`/api/qms/apqp/approvals/${id}/process`, data);
   },
 };

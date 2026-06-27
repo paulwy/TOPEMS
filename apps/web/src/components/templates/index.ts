@@ -73,11 +73,7 @@ export type {
 } from './StatsPageTemplate';
 
 export { WizardPageTemplate } from './WizardPageTemplate';
-export type {
-  WizardStep,
-  WizardAction,
-  WizardPageTemplateProps,
-} from './WizardPageTemplate';
+export type { WizardStep, WizardAction, WizardPageTemplateProps } from './WizardPageTemplate';
 
 export { KanbanPageTemplate } from './KanbanPageTemplate';
 export type {

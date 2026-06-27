@@ -1,11 +1,6 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
-import type {
-  Pipeline,
-  CreatePipelineRequest,
-  ListQueryParams,
-  PaginatedResponse,
-} from './types';
+import type { Pipeline, CreatePipelineRequest, ListQueryParams, PaginatedResponse } from './types';
 import { adaptResponse } from './utils';
 
 export const pipelineApi = {
@@ -18,9 +13,7 @@ export const pipelineApi = {
     if (params?.search) queryParams.append('search', params.search);
     if (params?.status) queryParams.append('status', params.status);
 
-    const response = await apiClient.gis.get<any>(
-      `/api/gis/pipelines?${queryParams.toString()}`
-    );
+    const response = await apiClient.gis.get<any>(`/api/gis/pipelines?${queryParams.toString()}`);
     if (response.success && response.data) {
       response.data = adaptResponse<Pipeline>(response.data, 'pipelines');
     }
@@ -44,9 +37,7 @@ export const pipelineApi = {
     );
   },
 
-  createPipeline: async (
-    data: CreatePipelineRequest
-  ): Promise<ApiResponse<Pipeline>> => {
+  createPipeline: async (data: CreatePipelineRequest): Promise<ApiResponse<Pipeline>> => {
     return apiClient.gis.post<Pipeline>('/api/gis/pipelines', data);
   },
 

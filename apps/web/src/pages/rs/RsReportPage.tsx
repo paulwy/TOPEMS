@@ -201,26 +201,29 @@ const RsReportPage: React.FC = () => {
   const [timeRange, setTimeRange] = useState('month');
 
   return (
-    <PageContainer padding={false} maxWidth={false}>
+    <PageContainer
+      padding={false}
+      maxWidth={false}
+    >
       <StatsPageTemplate
-      title='研发报表分析'
-      subtitle='研发项目统计分析、试验数据汇总、成果评估'
-      statCards={statCards}
-      statColumns={3}
-      charts={charts}
-      tables={tables}
-      loading={loading}
-      timeRangeOptions={timeRangeOptions}
-      timeRange={timeRange}
-      onTimeRangeChange={setTimeRange}
-      onRefresh={loadData}
-      showTimeRange={true}
-      showRefresh={true}
-      showExport={true}
-      showSearch={false}
-      chartSectionTitle='数据分析'
-      tableSectionTitle='详细数据'
-    />
+        title='研发报表分析'
+        subtitle='研发项目统计分析、试验数据汇总、成果评估'
+        statCards={statCards}
+        statColumns={3}
+        charts={charts}
+        tables={tables}
+        loading={loading}
+        timeRangeOptions={timeRangeOptions}
+        timeRange={timeRange}
+        onTimeRangeChange={setTimeRange}
+        onRefresh={loadData}
+        showTimeRange={true}
+        showRefresh={true}
+        showExport={true}
+        showSearch={false}
+        chartSectionTitle='数据分析'
+        tableSectionTitle='详细数据'
+      />
     </PageContainer>
   );
 };

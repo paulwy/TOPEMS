@@ -8,6 +8,7 @@ import {
   Plus,
   ChevronLeft,
   Star,
+  BookOpen,
   MoreVertical,
   Trash2,
   Download,
@@ -49,8 +50,8 @@ import {
   Typography,
   Stack,
   IconButton,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { ModeToggle } from '@/components/theme/ModeToggle';
 
 interface File {
@@ -256,7 +257,7 @@ const DocumentsPage: React.FC = () => {
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
   };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -621,9 +622,14 @@ const DocumentsPage: React.FC = () => {
 
   return (
     <PageContainer
+      title='文档管理'
       maxWidth={false}
       padding={false}
       bgcolor='grey.100'
+      headerProps={{
+        pageIcon: <BookOpen style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+      }}
     >
       {/* Header */}
       <Box

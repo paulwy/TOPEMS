@@ -11,9 +11,9 @@ import {
   CardContent,
   Typography,
   CircularProgress,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
-import { Plus, Eye, Users, TrendingUp, Award, Edit2, Trash2 } from 'lucide-react';
+import { Plus, Eye, Handshake, Users, TrendingUp, Award, Edit2, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { srmApi } from '@/api/srm';
@@ -179,8 +179,7 @@ const SrmSupplierPage: React.FC = () => {
       {
         label: '评估',
         icon: <Award style={{ width: 16, height: 16 }} />,
-        onClick: (row) =>
-          navigate(`'/srm/evaluations'`),
+        onClick: (row) => navigate(`'/srm/evaluations'`),
       },
     ],
     [navigate]
@@ -622,6 +621,10 @@ const SrmSupplierPage: React.FC = () => {
         background: 'linear-gradient(135deg, secondary.light 0%, #f8fafc 100%)',
       }}
       padding={false}
+      headerProps={{
+        pageIcon: <Handshake style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)',
+      }}
     >
       <ListPageTemplate
         title=''

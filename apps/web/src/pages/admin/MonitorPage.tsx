@@ -6,8 +6,8 @@ import {
   Chip,
   Typography,
   LinearProgress,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import { monitorApi } from '@/api/monitor';
 import { apiLogger } from '@/utils/logger';
@@ -144,442 +144,441 @@ const MonitorPage: React.FC = () => {
       maxWidth='xl'
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: 'repeat(2, 1fr)',
+              md: 'repeat(4, 1fr)',
+            },
+            gap: 2,
+          }}
+        >
+          <Card>
+            <CardHeader>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Cpu sx={{ width: 16, height: 16, color: 'primary.main' }} />
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'text.secondary' }}
+                >
+                  CPU 使用率
+                </Typography>
+              </Box>
+            </CardHeader>
+            <CardContent>
+              <Typography
+                variant='h4'
+                sx={{
+                  fontWeight: 'bold',
+                  color:
+                    (systemMetrics?.cpu_usage || 0) >= 80
+                      ? 'error.main'
+                      : (systemMetrics?.cpu_usage || 0) >= 60
+                        ? 'warning.main'
+                        : 'success.main',
+                }}
+              >
+                {(systemMetrics?.cpu_usage || 0).toFixed(1)}%
+              </Typography>
+              <LinearProgress
+                variant='determinate'
+                value={systemMetrics?.cpu_usage || 0}
+                sx={{ mt: 2, height: 8 }}
+              />
+            </CardContent>
+          </Card>
 
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: {
-            xs: 'repeat(2, 1fr)',
-            md: 'repeat(4, 1fr)',
-          },
-          gap: 2,
-        }}
-      >
+          <Card>
+            <CardHeader>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <HardDrive sx={{ width: 16, height: 16, color: 'primary.main' }} />
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'text.secondary' }}
+                >
+                  内存使用率
+                </Typography>
+              </Box>
+            </CardHeader>
+            <CardContent>
+              <Typography
+                variant='h4'
+                sx={{
+                  fontWeight: 'bold',
+                  color:
+                    (systemMetrics?.memory_usage || 0) >= 80
+                      ? 'error.main'
+                      : (systemMetrics?.memory_usage || 0) >= 60
+                        ? 'warning.main'
+                        : 'success.main',
+                }}
+              >
+                {(systemMetrics?.memory_usage || 0).toFixed(1)}%
+              </Typography>
+              <LinearProgress
+                variant='determinate'
+                value={systemMetrics?.memory_usage || 0}
+                sx={{ mt: 2, height: 8 }}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Database sx={{ width: 16, height: 16, color: 'primary.main' }} />
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'text.secondary' }}
+                >
+                  磁盘使用率
+                </Typography>
+              </Box>
+            </CardHeader>
+            <CardContent>
+              <Typography
+                variant='h4'
+                sx={{
+                  fontWeight: 'bold',
+                  color:
+                    (systemMetrics?.disk_usage || 0) >= 80
+                      ? 'error.main'
+                      : (systemMetrics?.disk_usage || 0) >= 60
+                        ? 'warning.main'
+                        : 'success.main',
+                }}
+              >
+                {(systemMetrics?.disk_usage || 0).toFixed(1)}%
+              </Typography>
+              <LinearProgress
+                variant='determinate'
+                value={systemMetrics?.disk_usage || 0}
+                sx={{ mt: 2, height: 8 }}
+              />
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Activity sx={{ width: 16, height: 16, color: 'primary.main' }} />
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'text.secondary' }}
+                >
+                  系统运行时间
+                </Typography>
+              </Box>
+            </CardHeader>
+            <CardContent>
+              <Typography
+                variant='h4'
+                sx={{ fontWeight: 'bold', color: 'success.main' }}
+              >
+                {formatUptime(systemMetrics?.uptime || 0)}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Box>
+
         <Card>
           <CardHeader>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Cpu sx={{ width: 16, height: 16, color: 'primary.main' }} />
-              <Typography
-                variant='body2'
-                sx={{ color: 'text.secondary' }}
-              >
-                CPU 使用率
-              </Typography>
-            </Box>
-          </CardHeader>
-          <CardContent>
             <Typography
-              variant='h4'
+              variant='h6'
               sx={{
-                fontWeight: 'bold',
-                color:
-                  (systemMetrics?.cpu_usage || 0) >= 80
-                    ? 'error.main'
-                    : (systemMetrics?.cpu_usage || 0) >= 60
-                      ? 'warning.main'
-                      : 'success.main',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
               }}
             >
-              {(systemMetrics?.cpu_usage || 0).toFixed(1)}%
+              <Server sx={{ width: 20, height: 20 }} />
+              服务健康状态
             </Typography>
-            <LinearProgress
-              variant='determinate'
-              value={systemMetrics?.cpu_usage || 0}
-              sx={{ mt: 2, height: 8 }}
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <HardDrive sx={{ width: 16, height: 16, color: 'primary.main' }} />
-              <Typography
-                variant='body2'
-                sx={{ color: 'text.secondary' }}
-              >
-                内存使用率
-              </Typography>
-            </Box>
           </CardHeader>
           <CardContent>
-            <Typography
-              variant='h4'
-              sx={{
-                fontWeight: 'bold',
-                color:
-                  (systemMetrics?.memory_usage || 0) >= 80
-                    ? 'error.main'
-                    : (systemMetrics?.memory_usage || 0) >= 60
-                      ? 'warning.main'
-                      : 'success.main',
-              }}
-            >
-              {(systemMetrics?.memory_usage || 0).toFixed(1)}%
-            </Typography>
-            <LinearProgress
-              variant='determinate'
-              value={systemMetrics?.memory_usage || 0}
-              sx={{ mt: 2, height: 8 }}
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Database sx={{ width: 16, height: 16, color: 'primary.main' }} />
-              <Typography
-                variant='body2'
-                sx={{ color: 'text.secondary' }}
-              >
-                磁盘使用率
-              </Typography>
-            </Box>
-          </CardHeader>
-          <CardContent>
-            <Typography
-              variant='h4'
-              sx={{
-                fontWeight: 'bold',
-                color:
-                  (systemMetrics?.disk_usage || 0) >= 80
-                    ? 'error.main'
-                    : (systemMetrics?.disk_usage || 0) >= 60
-                      ? 'warning.main'
-                      : 'success.main',
-              }}
-            >
-              {(systemMetrics?.disk_usage || 0).toFixed(1)}%
-            </Typography>
-            <LinearProgress
-              variant='determinate'
-              value={systemMetrics?.disk_usage || 0}
-              sx={{ mt: 2, height: 8 }}
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Activity sx={{ width: 16, height: 16, color: 'primary.main' }} />
-              <Typography
-                variant='body2'
-                sx={{ color: 'text.secondary' }}
-              >
-                系统运行时间
-              </Typography>
-            </Box>
-          </CardHeader>
-          <CardContent>
-            <Typography
-              variant='h4'
-              sx={{ fontWeight: 'bold', color: 'success.main' }}
-            >
-              {formatUptime(systemMetrics?.uptime || 0)}
-            </Typography>
-          </CardContent>
-        </Card>
-      </Box>
-
-      <Card>
-        <CardHeader>
-          <Typography
-            variant='h6'
-            sx={{
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-            }}
-          >
-            <Server sx={{ width: 20, height: 20 }} />
-            服务健康状态
-          </Typography>
-        </CardHeader>
-        <CardContent>
-          <Box sx={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', fontSize: '0.875rem' }}>
-              <thead style={{ backgroundColor: 'grey.100' }}>
-                <tr>
-                  <th
-                    style={{
-                      padding: '12px 16px',
-                      textAlign: 'left',
-                      fontWeight: 500,
-                    }}
-                  >
-                    服务名称
-                  </th>
-                  <th
-                    style={{
-                      padding: '12px 16px',
-                      textAlign: 'center',
-                      fontWeight: 500,
-                    }}
-                  >
-                    状态
-                  </th>
-                  <th
-                    style={{
-                      padding: '12px 16px',
-                      textAlign: 'right',
-                      fontWeight: 500,
-                    }}
-                  >
-                    延迟 (ms)
-                  </th>
-                  <th
-                    style={{
-                      padding: '12px 16px',
-                      textAlign: 'right',
-                      fontWeight: 500,
-                    }}
-                  >
-                    错误率
-                  </th>
-                  <th
-                    style={{
-                      padding: '12px 16px',
-                      textAlign: 'right',
-                      fontWeight: 500,
-                    }}
-                  >
-                    可用性
-                  </th>
-                  <th
-                    style={{
-                      padding: '12px 16px',
-                      textAlign: 'left',
-                      fontWeight: 500,
-                    }}
-                  >
-                    最后检查
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {serviceHealth.length > 0 ? (
-                  serviceHealth.map((service) => (
-                    <tr
-                      key={service.service_name}
-                      style={{ borderBottom: '1px solid' }}
-                    >
-                      <td style={{ padding: '12px 16px' }}>{service.service_name}</td>
-                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                        <Chip
-                          size='small'
-                          label={
-                            service.status === 'healthy'
-                              ? '健康'
-                              : service.status === 'degraded'
-                                ? '降级'
-                                : '异常'
-                          }
-                          icon={
-                            service.status === 'healthy' ? (
-                              <CheckCircle sx={{ width: 14, height: 14 }} />
-                            ) : (
-                              <AlertTriangle sx={{ width: 14, height: 14 }} />
-                            )
-                          }
-                          sx={{
-                            bgcolor: `${getStatusColor(service.status)}20`,
-                          }}
-                        />
-                      </td>
-                      <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                        {service.latency}
-                      </td>
-                      <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                        {service.error_rate.toFixed(2)}%
-                      </td>
-                      <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                        {service.uptime_percentage.toFixed(1)}%
-                      </td>
-                      <td style={{ padding: '12px 16px' }}>
-                        {new Date(service.last_checked).toLocaleString()}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
+            <Box sx={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', fontSize: '0.875rem' }}>
+                <thead style={{ backgroundColor: 'grey.100' }}>
                   <tr>
-                    <td
-                      colSpan={6}
+                    <th
                       style={{
-                        padding: '32px 16px',
-                        textAlign: 'center',
-                        color: 'text.disabled',
+                        padding: '12px 16px',
+                        textAlign: 'left',
+                        fontWeight: 500,
                       }}
                     >
-                      暂无服务健康数据
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </Box>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <Typography
-            variant='h6'
-            sx={{
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-            }}
-          >
-            <AlertTriangle sx={{ width: 20, height: 20 }} />
-            告警列表
-          </Typography>
-          <Typography
-            variant='body2'
-            sx={{ color: 'grey.500' }}
-          >
-            最近20条告警记录
-          </Typography>
-        </CardHeader>
-        <CardContent>
-          <Box sx={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', fontSize: '0.875rem' }}>
-              <thead style={{ backgroundColor: 'grey.100' }}>
-                <tr>
-                  <th
-                    style={{
-                      padding: '12px 16px',
-                      textAlign: 'left',
-                      fontWeight: 500,
-                    }}
-                  >
-                    标题
-                  </th>
-                  <th
-                    style={{
-                      padding: '12px 16px',
-                      textAlign: 'center',
-                      fontWeight: 500,
-                    }}
-                  >
-                    级别
-                  </th>
-                  <th
-                    style={{
-                      padding: '12px 16px',
-                      textAlign: 'left',
-                      fontWeight: 500,
-                    }}
-                  >
-                    服务
-                  </th>
-                  <th
-                    style={{
-                      padding: '12px 16px',
-                      textAlign: 'left',
-                      fontWeight: 500,
-                    }}
-                  >
-                    消息
-                  </th>
-                  <th
-                    style={{
-                      padding: '12px 16px',
-                      textAlign: 'center',
-                      fontWeight: 500,
-                    }}
-                  >
-                    状态
-                  </th>
-                  <th
-                    style={{
-                      padding: '12px 16px',
-                      textAlign: 'left',
-                      fontWeight: 500,
-                    }}
-                  >
-                    创建时间
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {alerts.length > 0 ? (
-                  alerts.map((alert) => (
-                    <tr
-                      key={alert.id}
-                      style={{ borderBottom: '1px solid' }}
+                      服务名称
+                    </th>
+                    <th
+                      style={{
+                        padding: '12px 16px',
+                        textAlign: 'center',
+                        fontWeight: 500,
+                      }}
                     >
-                      <td style={{ padding: '12px 16px' }}>{alert.title}</td>
-                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                        <Chip
-                          size='small'
-                          label={
-                            alert.severity === 'critical'
-                              ? '严重'
-                              : alert.severity === 'warning'
-                                ? '警告'
-                                : '信息'
-                          }
-                          sx={{
-                            bgcolor: `${getSeverityColor(alert.severity)}20`,
-                            color: getSeverityColor(alert.severity),
-                          }}
-                        />
-                      </td>
-                      <td style={{ padding: '12px 16px' }}>{alert.service_name}</td>
+                      状态
+                    </th>
+                    <th
+                      style={{
+                        padding: '12px 16px',
+                        textAlign: 'right',
+                        fontWeight: 500,
+                      }}
+                    >
+                      延迟 (ms)
+                    </th>
+                    <th
+                      style={{
+                        padding: '12px 16px',
+                        textAlign: 'right',
+                        fontWeight: 500,
+                      }}
+                    >
+                      错误率
+                    </th>
+                    <th
+                      style={{
+                        padding: '12px 16px',
+                        textAlign: 'right',
+                        fontWeight: 500,
+                      }}
+                    >
+                      可用性
+                    </th>
+                    <th
+                      style={{
+                        padding: '12px 16px',
+                        textAlign: 'left',
+                        fontWeight: 500,
+                      }}
+                    >
+                      最后检查
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {serviceHealth.length > 0 ? (
+                    serviceHealth.map((service) => (
+                      <tr
+                        key={service.service_name}
+                        style={{ borderBottom: '1px solid' }}
+                      >
+                        <td style={{ padding: '12px 16px' }}>{service.service_name}</td>
+                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                          <Chip
+                            size='small'
+                            label={
+                              service.status === 'healthy'
+                                ? '健康'
+                                : service.status === 'degraded'
+                                  ? '降级'
+                                  : '异常'
+                            }
+                            icon={
+                              service.status === 'healthy' ? (
+                                <CheckCircle sx={{ width: 14, height: 14 }} />
+                              ) : (
+                                <AlertTriangle sx={{ width: 14, height: 14 }} />
+                              )
+                            }
+                            sx={{
+                              bgcolor: `${getStatusColor(service.status)}20`,
+                            }}
+                          />
+                        </td>
+                        <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                          {service.latency}
+                        </td>
+                        <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                          {service.error_rate.toFixed(2)}%
+                        </td>
+                        <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                          {service.uptime_percentage.toFixed(1)}%
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>
+                          {new Date(service.last_checked).toLocaleString()}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
                       <td
+                        colSpan={6}
                         style={{
-                          padding: '12px 16px',
-                          maxWidth: 300,
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
+                          padding: '32px 16px',
+                          textAlign: 'center',
+                          color: 'text.disabled',
                         }}
                       >
-                        {alert.message}
-                      </td>
-                      <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                        <Chip
-                          size='small'
-                          label={
-                            alert.status === 'active'
-                              ? '活跃'
-                              : alert.status === 'resolved'
-                                ? '已解决'
-                                : '已确认'
-                          }
-                          sx={{
-                            bgcolor: alert.status === 'active' ? 'error.light' : 'success.light',
-                          }}
-                        />
-                      </td>
-                      <td style={{ padding: '12px 16px' }}>
-                        {new Date(alert.created_at).toLocaleString()}
+                        暂无服务健康数据
                       </td>
                     </tr>
-                  ))
-                ) : (
+                  )}
+                </tbody>
+              </table>
+            </Box>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <Typography
+              variant='h6'
+              sx={{
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+              }}
+            >
+              <AlertTriangle sx={{ width: 20, height: 20 }} />
+              告警列表
+            </Typography>
+            <Typography
+              variant='body2'
+              sx={{ color: 'grey.500' }}
+            >
+              最近20条告警记录
+            </Typography>
+          </CardHeader>
+          <CardContent>
+            <Box sx={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', fontSize: '0.875rem' }}>
+                <thead style={{ backgroundColor: 'grey.100' }}>
                   <tr>
-                    <td
-                      colSpan={6}
+                    <th
                       style={{
-                        padding: '32px 16px',
-                        textAlign: 'center',
-                        color: 'text.disabled',
+                        padding: '12px 16px',
+                        textAlign: 'left',
+                        fontWeight: 500,
                       }}
                     >
-                      暂无告警记录
-                    </td>
+                      标题
+                    </th>
+                    <th
+                      style={{
+                        padding: '12px 16px',
+                        textAlign: 'center',
+                        fontWeight: 500,
+                      }}
+                    >
+                      级别
+                    </th>
+                    <th
+                      style={{
+                        padding: '12px 16px',
+                        textAlign: 'left',
+                        fontWeight: 500,
+                      }}
+                    >
+                      服务
+                    </th>
+                    <th
+                      style={{
+                        padding: '12px 16px',
+                        textAlign: 'left',
+                        fontWeight: 500,
+                      }}
+                    >
+                      消息
+                    </th>
+                    <th
+                      style={{
+                        padding: '12px 16px',
+                        textAlign: 'center',
+                        fontWeight: 500,
+                      }}
+                    >
+                      状态
+                    </th>
+                    <th
+                      style={{
+                        padding: '12px 16px',
+                        textAlign: 'left',
+                        fontWeight: 500,
+                      }}
+                    >
+                      创建时间
+                    </th>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </Box>
-        </CardContent>
-      </Card>
+                </thead>
+                <tbody>
+                  {alerts.length > 0 ? (
+                    alerts.map((alert) => (
+                      <tr
+                        key={alert.id}
+                        style={{ borderBottom: '1px solid' }}
+                      >
+                        <td style={{ padding: '12px 16px' }}>{alert.title}</td>
+                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                          <Chip
+                            size='small'
+                            label={
+                              alert.severity === 'critical'
+                                ? '严重'
+                                : alert.severity === 'warning'
+                                  ? '警告'
+                                  : '信息'
+                            }
+                            sx={{
+                              bgcolor: `${getSeverityColor(alert.severity)}20`,
+                              color: getSeverityColor(alert.severity),
+                            }}
+                          />
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>{alert.service_name}</td>
+                        <td
+                          style={{
+                            padding: '12px 16px',
+                            maxWidth: 300,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                          {alert.message}
+                        </td>
+                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
+                          <Chip
+                            size='small'
+                            label={
+                              alert.status === 'active'
+                                ? '活跃'
+                                : alert.status === 'resolved'
+                                  ? '已解决'
+                                  : '已确认'
+                            }
+                            sx={{
+                              bgcolor: alert.status === 'active' ? 'error.light' : 'success.light',
+                            }}
+                          />
+                        </td>
+                        <td style={{ padding: '12px 16px' }}>
+                          {new Date(alert.created_at).toLocaleString()}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={6}
+                        style={{
+                          padding: '32px 16px',
+                          textAlign: 'center',
+                          color: 'text.disabled',
+                        }}
+                      >
+                        暂无告警记录
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </Box>
+          </CardContent>
+        </Card>
       </Box>
     </PageContainer>
   );

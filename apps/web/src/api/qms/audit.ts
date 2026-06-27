@@ -1,10 +1,6 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
-import type {
-  AuditPlan,
-  AuditTask,
-  AuditFinding,
-} from './types';
+import type { AuditPlan, AuditTask, AuditFinding } from './types';
 
 export const auditApi = {
   listAuditPlans: async (): Promise<ApiResponse<AuditPlan[]>> => {
@@ -47,7 +43,10 @@ export const auditApi = {
 
   createAuditTask: async (
     planId: string,
-    data: Omit<AuditTask, 'id' | 'plan_id' | 'task_no' | 'created_at' | 'updated_at' | 'findings_count'>
+    data: Omit<
+      AuditTask,
+      'id' | 'plan_id' | 'task_no' | 'created_at' | 'updated_at' | 'findings_count'
+    >
   ): Promise<ApiResponse<AuditTask>> => {
     const response = await apiClient.qms.post<AuditTask>('/api/qms/audit-tasks', {
       plan_id: planId,
@@ -71,7 +70,10 @@ export const auditApi = {
 
   createAuditFinding: async (
     taskId: string,
-    data: Omit<AuditFinding, 'id' | 'task_id' | 'finding_no' | 'created_at' | 'updated_at' | 'resolved_at'>
+    data: Omit<
+      AuditFinding,
+      'id' | 'task_id' | 'finding_no' | 'created_at' | 'updated_at' | 'resolved_at'
+    >
   ): Promise<ApiResponse<AuditFinding>> => {
     const response = await apiClient.qms.post<AuditFinding>('/api/qms/audit-findings', {
       task_id: taskId,

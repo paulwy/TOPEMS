@@ -1,4 +1,5 @@
 import React from 'react';
+import { Navigate } from 'react-router-dom';
 import type { RouteConfig } from './utils';
 import { lazyWithRetry } from './utils';
 
@@ -31,7 +32,10 @@ const VoucherTemplatePage = lazy(() => import('../pages/asset/VoucherTemplatePag
 export const financeRoutes: RouteConfig[] = [
   {
     path: '/finance',
-    element: FinanceDashboardPage,
+    element: React.createElement(Navigate, {
+      to: '/finance/vouchers',
+      replace: true,
+    }),
     requiredPermissions: ['finance:read'],
     module: 'finance',
     action: 'read',
@@ -150,13 +154,6 @@ export const financeRoutes: RouteConfig[] = [
   },
   {
     path: '/finance/reports',
-    element: FinanceReportsPage,
-    requiredPermissions: ['finance:read'],
-    module: 'finance',
-    action: 'read',
-  },
-  {
-    path: '/finance/financial-reports',
     element: FinanceReportsPage,
     requiredPermissions: ['finance:read'],
     module: 'finance',

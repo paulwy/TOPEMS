@@ -12,8 +12,8 @@ import {
   InputLabel,
   Stack,
   Paper,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import React, { useState, useEffect, useCallback } from 'react';
 import type {
   DeliveryAppointmentStatus,
@@ -133,7 +133,7 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
       setLoading(true);
       const response = await scmApi.deliveryAppointments.list({
         page: currentPage,
-        pageSize: pageSize,
+        pageSize,
         status: statusFilter === '' ? undefined : statusFilter,
         search: keyword || undefined,
       });
@@ -491,7 +491,11 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
       { label: '已逾期', value: stats.overdue, color: '#d32f2f' },
     ];
     return (
-      <Stack direction='row' spacing={2} sx={{ mb: 2 }}>
+      <Stack
+        direction='row'
+        spacing={2}
+        sx={{ mb: 2 }}
+      >
         {cards.map((c) => (
           <Paper
             key={c.label}
@@ -527,7 +531,10 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
         onChange={(e) => setKeyword(e.target.value)}
         sx={{ minWidth: 200 }}
       />
-      <FormControl size='small' sx={{ minWidth: 160 }}>
+      <FormControl
+        size='small'
+        sx={{ minWidth: 160 }}
+      >
         <InputLabel id='status-filter-label'>状态</InputLabel>
         <Select
           labelId='status-filter-label'
@@ -539,13 +546,19 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
           }}
         >
           {STATUS_OPTIONS.map((opt) => (
-            <MenuItem key={opt.value} value={opt.value}>
+            <MenuItem
+              key={opt.value}
+              value={opt.value}
+            >
               {opt.label}
             </MenuItem>
           ))}
         </Select>
       </FormControl>
-      <Button variant='outlined' onClick={() => loadAppointments()}>
+      <Button
+        variant='outlined'
+        onClick={() => loadAppointments()}
+      >
         查询
       </Button>
       <Button
@@ -581,9 +594,7 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
     {
       id: 'delivery_date',
       label: '预约日期',
-      render: (row) => (
-        <Box sx={{ fontSize: '0.875rem' }}>{row.delivery_date || '-'}</Box>
-      ),
+      render: (row) => <Box sx={{ fontSize: '0.875rem' }}>{row.delivery_date || '-'}</Box>,
     },
     {
       id: 'delivery_method',
@@ -698,7 +709,10 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
   ];
 
   return (
-    <PageContainer title='供应商送货预约管理' subtitle='管理供应商送货预约，包括预约、审批、到货确认及完成全流程'>
+    <PageContainer
+      title='供应商送货预约管理'
+      subtitle='管理供应商送货预约，包括预约、审批、到货确认及完成全流程'
+    >
       {renderStats()}
       {filterBar}
 
@@ -743,9 +757,7 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
         maxWidth='md'
         fullWidth
       >
-        <DialogTitle>
-          {isEditing ? '编辑送货预约' : '新增送货预约'}
-        </DialogTitle>
+        <DialogTitle>{isEditing ? '编辑送货预约' : '新增送货预约'}</DialogTitle>
         <DialogContent>
           <form onSubmit={handleSubmit}>
             <Box
@@ -767,35 +779,27 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
               <TextField
                 label='供应商名称'
                 value={formData.supplier_name}
-                onChange={(e) =>
-                  setFormData({ ...formData, supplier_name: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, supplier_name: e.target.value })}
                 size='small'
               />
               <TextField
                 label='采购订单ID'
                 value={formData.purchase_order_id}
-                onChange={(e) =>
-                  setFormData({ ...formData, purchase_order_id: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, purchase_order_id: e.target.value })}
                 size='small'
                 disabled={isEditing}
               />
               <TextField
                 label='采购订单号'
                 value={formData.purchase_order_no}
-                onChange={(e) =>
-                  setFormData({ ...formData, purchase_order_no: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, purchase_order_no: e.target.value })}
                 size='small'
               />
               <TextField
                 label='预约日期 *'
                 type='date'
                 value={formData.delivery_date}
-                onChange={(e) =>
-                  setFormData({ ...formData, delivery_date: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, delivery_date: e.target.value })}
                 size='small'
                 required
                 slotProps={{ inputLabel: { shrink: true } }}
@@ -804,24 +808,26 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
                 label='预约时间'
                 type='time'
                 value={formData.delivery_time}
-                onChange={(e) =>
-                  setFormData({ ...formData, delivery_time: e.target.value })
-                }
+                onChange={(e) => setFormData({ ...formData, delivery_time: e.target.value })}
                 size='small'
                 slotProps={{ inputLabel: { shrink: true } }}
               />
-              <FormControl size='small' required>
+              <FormControl
+                size='small'
+                required
+              >
                 <InputLabel id='delivery-method-label'>送货方式 *</InputLabel>
                 <Select
                   labelId='delivery-method-label'
                   label='送货方式 *'
                   value={formData.delivery_method}
-                  onChange={(e) =>
-                    setFormData({ ...formData, delivery_method: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, delivery_method: e.target.value })}
                 >
                   {DELIVERY_METHOD_OPTIONS.map((m) => (
-                    <MenuItem key={m} value={m}>
+                    <MenuItem
+                      key={m}
+                      value={m}
+                    >
                       {m}
                     </MenuItem>
                   ))}
@@ -899,9 +905,7 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
               multiline
               rows={2}
               value={formData.cargo_description}
-              onChange={(e) =>
-                setFormData({ ...formData, cargo_description: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, cargo_description: e.target.value })}
               fullWidth
               size='small'
               sx={{ mt: 1 }}
@@ -917,10 +921,17 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
               sx={{ mt: 2 }}
             />
             <DialogActions sx={{ mt: 2 }}>
-              <Button variant='outlined' onClick={() => setShowDialog(false)}>
+              <Button
+                variant='outlined'
+                onClick={() => setShowDialog(false)}
+              >
                 取消
               </Button>
-              <Button type='submit' variant='contained' startIcon={<Truck size={14} />}>
+              <Button
+                type='submit'
+                variant='contained'
+                startIcon={<Truck size={14} />}
+              >
                 {isEditing ? '更新' : '保存'}
               </Button>
             </DialogActions>

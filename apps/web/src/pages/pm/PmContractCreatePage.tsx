@@ -19,7 +19,9 @@ const contractSchema = z.object({
   party_b_name: z.string().optional(),
   amount: z.string().refine((val) => parseFloat(val) > 0, '合同金额必须大于0'),
   currency: z.enum(['CNY', 'USD', 'EUR']),
-  tax_rate: z.string().refine((val) => parseFloat(val) >= 0 && parseFloat(val) <= 100, '税率必须在0-100之间'),
+  tax_rate: z
+    .string()
+    .refine((val) => parseFloat(val) >= 0 && parseFloat(val) <= 100, '税率必须在0-100之间'),
   signing_date: z.string().optional(),
   effective_date: z.string().optional(),
   end_date: z.string().optional(),

@@ -31,14 +31,16 @@ export const createPermissionInterceptor = () => {
         if (error.response?.status === 401) {
           const currentPath = window.location.pathname;
           // 登录页的 401 不处理（避免循环）
-          if (currentPath !== '/login' && currentPath !== '/register') {
-            if (localStorage.getItem('token')) {
-              apiLogger.warn('Unauthorized, but not redirecting temporarily - token invalid');
-              // 暂时不自动重定向
-              // localStorage.removeItem('token');
-              // localStorage.removeItem('user');
-              // window.location.href = '/login';
-            }
+          if (
+            currentPath !== '/login' &&
+            currentPath !== '/register' &&
+            localStorage.getItem('token')
+          ) {
+            apiLogger.warn('Unauthorized, but not redirecting temporarily - token invalid');
+            // 暂时不自动重定向
+            // localStorage.removeItem('token');
+            // localStorage.removeItem('user');
+            // window.location.href = '/login';
           }
         }
 
