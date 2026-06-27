@@ -21,7 +21,7 @@ export const voucherApi = {
     if (params?.period) searchParams.set('period', params.period);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/erp/vouchers${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(`/api/erp/vouchers${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<FinancialVoucher>> {

@@ -13,8 +13,8 @@ import {
   MenuItem,
   Typography,
   Stack,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -421,8 +421,15 @@ const InventoryPage: React.FC = () => {
           setShowLowStockDialog(true);
         }}
       >
-        <Stack direction='row' spacing={1} sx={{ alignItems: 'center', mb: 0.5 }}>
-          <AlertTriangle size={16} color='#b45309' />
+        <Stack
+          direction='row'
+          spacing={1}
+          sx={{ alignItems: 'center', mb: 0.5 }}
+        >
+          <AlertTriangle
+            size={16}
+            color='#b45309'
+          />
           <Typography
             variant='body2'
             sx={{ color: 'text.secondary' }}
@@ -472,6 +479,10 @@ const InventoryPage: React.FC = () => {
     <PageContainer
       title='库存管理'
       subtitle='管理仓库库存，查看库存状态和低库存预警'
+      headerProps={{
+        pageIcon: <Package style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #0EA5E9, #0284C7)',
+      }}
     >
       <ListPageTemplate
         title=''
@@ -904,16 +915,21 @@ const InventoryPage: React.FC = () => {
         fullWidth
       >
         <DialogTitle>
-          <Stack direction='row' spacing={1} sx={{ alignItems: 'center' }}>
-            <AlertTriangle size={20} color='#b45309' />
+          <Stack
+            direction='row'
+            spacing={1}
+            sx={{ alignItems: 'center' }}
+          >
+            <AlertTriangle
+              size={20}
+              color='#b45309'
+            />
             低库存预警列表
           </Stack>
         </DialogTitle>
         <DialogContent>
           {lowStockItems.length === 0 ? (
-            <Box sx={{ py: 4, textAlign: 'center', color: 'text.secondary' }}>
-              暂无低库存物品
-            </Box>
+            <Box sx={{ py: 4, textAlign: 'center', color: 'text.secondary' }}>暂无低库存物品</Box>
           ) : (
             <Box sx={{ mt: 1 }}>
               {lowStockItems.map((item) => (
@@ -930,18 +946,30 @@ const InventoryPage: React.FC = () => {
                   }}
                 >
                   <Box>
-                    <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                    <Typography
+                      variant='body2'
+                      sx={{ fontWeight: 500 }}
+                    >
                       {item.name}
                     </Typography>
-                    <Typography variant='caption' color='text.secondary'>
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                    >
                       {item.sku}
                     </Typography>
                   </Box>
                   <Box sx={{ textAlign: 'right' }}>
-                    <Typography variant='body2' sx={{ color: 'error.main', fontWeight: 600 }}>
+                    <Typography
+                      variant='body2'
+                      sx={{ color: 'error.main', fontWeight: 600 }}
+                    >
                       当前库存: {item.quantity} {item.unit}
                     </Typography>
-                    <Typography variant='caption' color='text.secondary'>
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                    >
                       最低库存: {item.min_quantity || 0} {item.unit}
                     </Typography>
                   </Box>

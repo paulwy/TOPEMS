@@ -15,8 +15,8 @@ import {
   Chip,
   useTheme,
   useMediaQuery,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import {
   ChevronRight,
   RefreshCw,
@@ -154,11 +154,12 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
     includeHome: true,
   });
 
-  const breadcrumbs = manualBreadcrumbs && manualBreadcrumbs.length > 0
-    ? manualBreadcrumbs
-    : autoBreadcrumbs
-    ? autoItems
-    : undefined;
+  const breadcrumbs =
+    manualBreadcrumbs && manualBreadcrumbs.length > 0
+      ? manualBreadcrumbs
+      : autoBreadcrumbs
+        ? autoItems
+        : undefined;
 
   // Determine pathTabs: explicit > auto-derived from route path > legacy breadcrumbs
   const resolvedPathTabs: PathTabItem[] | undefined = React.useMemo(() => {
@@ -172,62 +173,29 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
 
     // Don't show path tabs for platform-level pages
     const platformPaths = ['/', '/dashboard', '/modules'];
-    if (platformPaths.includes(pathname)) return undefined;
+    if (platformPaths.includes(pathname)) return;
 
-    const segments = pathname.split('/').filter(Boolean);
-    const tabs: PathTabItem[] = [];
+    const autoBreadcrumbItems = autoItems;
 
-    // Always add "首页"
-    tabs.push({ label: '首页', href: '/dashboard' });
+    if (!autoBreadcrumbItems || autoBreadcrumbItems.length === 0) {
+      return;
+    }
 
-    // First segment = module code (e.g., 'hrm', 'pm')
-    if (segments.length >= 1) {
-      const moduleCode = segments[0];
-      // Look up module name from NavigationRegistry
-      const moduleCard = navigationRegistry.getModuleCard(moduleCode);
-      const moduleName = moduleCard?.name || moduleCode;
+    const tabs: PathTabItem[] = autoBreadcrumbItems.map((item, index) => ({
+      label: item.label,
+      href: item.href,
+      active: index === autoBreadcrumbItems.length - 1,
+    }));
 
-      if (segments.length === 1) {
-        // On module root: 首页 > 人力资源 (active)
-        tabs.push({ label: moduleName, href: `/${moduleCode}`, active: true });
-      } else {
-        // On sub-page: add module as non-active
-        tabs.push({ label: moduleName, href: `/${moduleCode}` });
-
-        // Second segment = sub-page path (e.g., 'employees')
-        if (segments.length >= 2) {
-          const subPath = segments.slice(0, 2).join('/');
-          const fullSubPath = `/${subPath}`;
-
-          // Look up the sidebar_nav item for this sub-page to get its label
-          const sidebarItems = navigationRegistry.getSidebarNavItems(moduleCode) || [];
-          const matchedItem = sidebarItems.find(
-            (item: any) => item.path === fullSubPath || item.path === `/${moduleCode}/${segments[1]}`
-          );
-          const subLabel = matchedItem?.label || segments[1];
-
-          if (segments.length === 2) {
-            // On sub-page: 首页 > 人力资源 > 员工管理 (active)
-            tabs.push({ label: subLabel, href: fullSubPath, active: true });
-          } else {
-            // On detail page: add sub-page as non-active
-            tabs.push({ label: subLabel, href: fullSubPath });
-
-            // Third segment = detail page (e.g., employee/123)
-            if (segments.length >= 3) {
-              const detailPath = segments.slice(2).join('/');
-              // Try to find a readable label for the detail page
-              // Use the detailItemName prop or fall back to a generic label
-              const detailLabel = detailItemName || (segments.length === 3 ? '详情' : detailPath);
-              tabs.push({ label: detailLabel, active: true });
-            }
-          }
-        }
-      }
+    if (detailItemName && tabs.length > 0) {
+      tabs[tabs.length - 1] = {
+        ...tabs[tabs.length - 1],
+        label: detailItemName,
+      };
     }
 
     return tabs.length > 1 ? tabs : undefined;
-  }, [manualPathTabs, location.pathname, detailItemName]);
+  }, [manualPathTabs, location.pathname, detailItemName, autoItems]);
 
   const renderBreadcrumbs = () => {
     if (!breadcrumbs || breadcrumbs.length === 0) return null;
@@ -295,7 +263,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
               <ChevronRight sx={{ fontSize: 14, color: 'text.disabled', flexShrink: 0 }} />
             )}
             <Box
-              component="span"
+              component='span'
               onClick={() => tab.href && navigate(tab.href)}
               sx={{
                 fontSize: 13,
@@ -492,7 +460,10 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <Typography variant='h5' sx={{ fontWeight: 700, color: '#fff' }}>
+              <Typography
+                variant='h5'
+                sx={{ fontWeight: 700, color: '#fff' }}
+              >
                 {title}
               </Typography>
               {banner.chip && (
@@ -503,150 +474,154 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                 />
               )}
               {banner.summary && (
-                <Typography variant='body2' sx={{ opacity: 0.9, ml: 2, color: '#fff' }}>
+                <Typography
+                  variant='body2'
+                  sx={{ opacity: 0.9, ml: 2, color: '#fff' }}
+                >
                   {banner.summary}
                 </Typography>
               )}
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              {actions && actions.map((action, index) => (
-                <Button
-                  key={index}
-                  variant='outlined'
-                  onClick={action.onClick}
-                  disabled={action.disabled || action.loading}
-                  href={action.href}
-                  component={action.href ? RouterLink : 'button'}
-                  size={action.size || (isMobile ? 'small' : 'medium')}
-                  startIcon={action.icon}
-                  sx={{
-                    color: '#fff',
-                    borderColor: 'rgba(255,255,255,0.5)',
-                    '&:hover': {
-                      borderColor: '#fff',
-                      bgcolor: 'rgba(255,255,255,0.1)',
-                    },
-                  }}
-                >
-                  {!isMobile && action.label}
-                </Button>
-              ))}
+              {actions &&
+                actions.map((action, index) => (
+                  <Button
+                    key={index}
+                    variant='outlined'
+                    onClick={action.onClick}
+                    disabled={action.disabled || action.loading}
+                    href={action.href}
+                    component={action.href ? RouterLink : 'button'}
+                    size={action.size || (isMobile ? 'small' : 'medium')}
+                    startIcon={action.icon}
+                    sx={{
+                      color: '#fff',
+                      borderColor: 'rgba(255,255,255,0.5)',
+                      '&:hover': {
+                        borderColor: '#fff',
+                        bgcolor: 'rgba(255,255,255,0.1)',
+                      },
+                    }}
+                  >
+                    {!isMobile && action.label}
+                  </Button>
+                ))}
             </Box>
           </Paper>
         )}
 
         {/* 标题栏 */}
         {!banner && (
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: { xs: 'flex-start', sm: 'center' },
-            flexDirection: { xs: 'column', sm: 'row' },
-            justifyContent: 'space-between',
-            gap: 2,
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            {/* 返回按钮 */}
-            {backButton && backButton.visible !== false && (
-              <BackButton
-                size='small'
-                onClick={backButton.onClick}
-                href={backButton.href}
-              />
-            )}
-
-            {/* 页面图标 - only render when explicitly provided */}
-            {pageIcon && (
-              <Box
-                sx={{
-                  width: compact ? 32 : 40,
-                  height: compact ? 32 : 40,
-                  borderRadius: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  bgcolor: pageColor || 'primary.main',
-                  ...(pageGradient && { bgcolor: undefined, background: pageGradient }),
-                  color: 'white',
-                }}
-              >
-                {pageIcon}
-              </Box>
-            )}
-
-            {/* 标题和副标题 */}
-            <Box>
-              {loading ? (
-                <>
-                  <Skeleton
-                    width={200}
-                    height={32}
-                  />
-                  {subtitle && (
-                    <Skeleton
-                      width={150}
-                      height={20}
-                    />
-                  )}
-                </>
-              ) : (
-                <>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Typography
-                      variant={isMobile ? 'h5' : 'h4'}
-                      sx={{ fontWeight: 600 }}
-                    >
-                      {title}
-                    </Typography>
-                    {renderBadge()}
-                  </Box>
-                  {subtitle && (
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >
-                      {subtitle}
-                    </Typography>
-                  )}
-                  {description && !compact && (
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                      sx={{ mt: 0.5 }}
-                    >
-                      {description}
-                    </Typography>
-                  )}
-                </>
-              )}
-            </Box>
-          </Box>
-
-          {/* 搜索和操作按钮区域 */}
           <Box
             sx={{
               display: 'flex',
-              alignItems: 'center',
+              alignItems: { xs: 'flex-start', sm: 'center' },
+              flexDirection: { xs: 'column', sm: 'row' },
+              justifyContent: 'space-between',
               gap: 2,
-              flexWrap: 'wrap',
             }}
           >
-            {search && !isMobile && renderSearch()}
-            {customToolbar}
-            {!loading && renderActions()}
-            {onRefresh && !loading && (
-              <Tooltip title='刷新'>
-                <IconButton
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              {/* 返回按钮 */}
+              {backButton && backButton.visible !== false && (
+                <BackButton
                   size='small'
-                  onClick={onRefresh}
+                  onClick={backButton.onClick}
+                  href={backButton.href}
+                />
+              )}
+
+              {/* 页面图标 - only render when explicitly provided */}
+              {pageIcon && (
+                <Box
+                  sx={{
+                    width: compact ? 32 : 40,
+                    height: compact ? 32 : 40,
+                    borderRadius: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    bgcolor: pageColor || 'primary.main',
+                    ...(pageGradient && { bgcolor: undefined, background: pageGradient }),
+                    color: 'white',
+                  }}
                 >
-                  <RefreshCw style={{ width: 18, height: 18 }} />
-                </IconButton>
-              </Tooltip>
-            )}
+                  {pageIcon}
+                </Box>
+              )}
+
+              {/* 标题和副标题 */}
+              <Box>
+                {loading ? (
+                  <>
+                    <Skeleton
+                      width={200}
+                      height={32}
+                    />
+                    {subtitle && (
+                      <Skeleton
+                        width={150}
+                        height={20}
+                      />
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                      <Typography
+                        variant={isMobile ? 'h5' : 'h4'}
+                        sx={{ fontWeight: 600 }}
+                      >
+                        {title}
+                      </Typography>
+                      {renderBadge()}
+                    </Box>
+                    {subtitle && (
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
+                        {subtitle}
+                      </Typography>
+                    )}
+                    {description && !compact && (
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                        sx={{ mt: 0.5 }}
+                      >
+                        {description}
+                      </Typography>
+                    )}
+                  </>
+                )}
+              </Box>
+            </Box>
+
+            {/* 搜索和操作按钮区域 */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 2,
+                flexWrap: 'wrap',
+              }}
+            >
+              {search && !isMobile && renderSearch()}
+              {customToolbar}
+              {!loading && renderActions()}
+              {onRefresh && !loading && (
+                <Tooltip title='刷新'>
+                  <IconButton
+                    size='small'
+                    onClick={onRefresh}
+                  >
+                    <RefreshCw style={{ width: 18, height: 18 }} />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </Box>
           </Box>
-        </Box>
         )}
 
         {/* 移动端搜索 */}

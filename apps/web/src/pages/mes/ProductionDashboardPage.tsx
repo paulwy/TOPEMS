@@ -38,11 +38,7 @@ import {
   XCircle,
   Zap,
 } from 'lucide-react';
-import {
-  BarChart,
-  LineChart,
-  PieChart,
-} from '@/components/charts';
+import { BarChart, LineChart, PieChart } from '@/components/charts';
 import {
   productionOrderApi,
   productionRecordApi,
@@ -57,7 +53,6 @@ import {
   type WorkStation,
 } from '@/api/mes';
 import { apiLogger } from '@/utils/logger';
-import { PageHeader } from '@/components/layout/PageHeader';
 import { PageContainer } from '@/components/common';
 
 // ============== 类型定义 ==============
@@ -297,13 +292,7 @@ const StatCard: React.FC<{
         >
           <Chip
             size='small'
-            icon={
-              (delta as number) >= 0 ? (
-                <ArrowUp size={12} />
-              ) : (
-                <ArrowDown size={12} />
-              )
-            }
+            icon={(delta as number) >= 0 ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
             label={`${Math.abs(delta as number).toFixed(1)}%`}
             color={(delta as number) >= 0 ? 'success' : 'error'}
             variant='outlined'
@@ -902,12 +891,8 @@ const ProductionGantt: React.FC<{
           {/* 任务列表 */}
           <Stack spacing={0.75}>
             {schedules.slice(0, 12).map((s) => {
-              const startT = s.planned_start_time
-                ? new Date(s.planned_start_time).getTime()
-                : null;
-              const endT = s.planned_end_time
-                ? new Date(s.planned_end_time).getTime()
-                : null;
+              const startT = s.planned_start_time ? new Date(s.planned_start_time).getTime() : null;
+              const endT = s.planned_end_time ? new Date(s.planned_end_time).getTime() : null;
               if (!startT || !endT || !Number.isFinite(startT) || !Number.isFinite(endT)) {
                 return null;
               }
@@ -1179,8 +1164,7 @@ export const ProductionDashboardPage: React.FC = () => {
   const activeOrderCount = useMemo(
     () =>
       orders.filter(
-        (o) =>
-          o.status === 'in_progress' || o.status === 'processing' || o.status === 'pending'
+        (o) => o.status === 'in_progress' || o.status === 'processing' || o.status === 'pending'
       ).length,
     [orders]
   );
@@ -1234,10 +1218,7 @@ export const ProductionDashboardPage: React.FC = () => {
     });
   }, [workStations, records, orders, todayKey]);
 
-  const hourlyOutputTrend = useMemo(
-    () => buildHourlyTrend(records, TREND_HOURS),
-    [records]
-  );
+  const hourlyOutputTrend = useMemo(() => buildHourlyTrend(records, TREND_HOURS), [records]);
   const targetTrend = useMemo(() => buildDailyTarget(todayOutput), [todayOutput]);
 
   const orderStatusDistribution = useMemo(() => {
@@ -1366,17 +1347,20 @@ export const ProductionDashboardPage: React.FC = () => {
   );
 
   return (
-    <PageContainer padding={false} maxWidth={false}>
-      <Box sx={{ p: { xs: 2, md: 3 }, backgroundColor: 'grey.50', minHeight: '100vh' }}>
-      <PageHeader
-        title='MES 生产看板'
-        subtitle='实时生产数据监控 · 设备状态 · 排产进度'
-        breadcrumbs={[
+    <PageContainer
+      padding={false}
+      maxWidth={false}
+      title='MES 生产看板'
+      subtitle='实时生产数据监控 · 设备状态 · 排产进度'
+      headerProps={{
+        pageIcon: <Factory style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #EF4444, #B91C1C)',
+        breadcrumbs: [
           { label: '首页', href: '/dashboard' },
           { label: '生产执行', href: '/mes' },
           { label: '生产看板' },
-        ]}
-        actions={
+        ],
+        customToolbar: (
           <Stack
             direction='row'
             spacing={1.5}
@@ -1438,148 +1422,283 @@ export const ProductionDashboardPage: React.FC = () => {
               立即刷新
             </Button>
           </Stack>
-        }
-      />
-
-      {/* 状态指示条 */}
-      <Stack
-        direction='row'
-        spacing={2}
-        sx={{
-          alignItems: 'center',
-          mb: 2,
-          px: 2,
-          py: 1,
-          backgroundColor: 'background.paper',
-          border: '1px solid',
-          borderColor: 'grey.200',
-          borderRadius: 2,
-        }}
-      >
+        ),
+      }}
+    >
+      <Box sx={{ p: { xs: 2, md: 3 }, backgroundColor: 'grey.50', minHeight: '100vh' }}>
+        {/* 状态指示条 */}
         <Stack
           direction='row'
-          spacing={0.5}
-          sx={{ alignItems: 'center' }}
+          spacing={2}
+          sx={{
+            alignItems: 'center',
+            mb: 2,
+            px: 2,
+            py: 1,
+            backgroundColor: 'background.paper',
+            border: '1px solid',
+            borderColor: 'grey.200',
+            borderRadius: 2,
+          }}
         >
-          <Box
-            sx={{
-              width: 8,
-              height: 8,
-              borderRadius: '50%',
-              backgroundColor:
-                refreshStatus === 'loading'
-                  ? 'warning.main'
-                  : refreshStatus === 'error'
-                    ? 'error.main'
-                    : 'success.main',
-              animation:
-                refreshStatus === 'loading' ? 'pulse 1.2s ease-in-out infinite' : 'none',
-              '@keyframes pulse': {
-                '0%, 100%': { opacity: 1 },
-                '50%': { opacity: 0.4 },
-              },
-            }}
+          <Stack
+            direction='row'
+            spacing={0.5}
+            sx={{ alignItems: 'center' }}
+          >
+            <Box
+              sx={{
+                width: 8,
+                height: 8,
+                borderRadius: '50%',
+                backgroundColor:
+                  refreshStatus === 'loading'
+                    ? 'warning.main'
+                    : refreshStatus === 'error'
+                      ? 'error.main'
+                      : 'success.main',
+                animation: refreshStatus === 'loading' ? 'pulse 1.2s ease-in-out infinite' : 'none',
+                '@keyframes pulse': {
+                  '0%, 100%': { opacity: 1 },
+                  '50%': { opacity: 0.4 },
+                },
+              }}
+            />
+            <Typography
+              variant='caption'
+              sx={{ color: 'text.secondary' }}
+            >
+              {refreshStatus === 'loading'
+                ? '采集中…'
+                : refreshStatus === 'error'
+                  ? '采集失败'
+                  : '运行正常'}
+            </Typography>
+          </Stack>
+          <Divider
+            orientation='vertical'
+            flexItem
           />
+          <Stack
+            direction='row'
+            spacing={0.5}
+            sx={{ alignItems: 'center' }}
+          >
+            <Clock size={12} />
+            <Typography
+              variant='caption'
+              sx={{ color: 'text.secondary' }}
+            >
+              {lastUpdated ? `更新于 ${formatTime(lastUpdated)}` : '未更新'}
+            </Typography>
+          </Stack>
+          <Box sx={{ flex: 1 }} />
           <Typography
             variant='caption'
-            sx={{ color: 'text.secondary' }}
+            sx={{ color: 'text.disabled' }}
           >
-            {refreshStatus === 'loading'
-              ? '采集中…'
-              : refreshStatus === 'error'
-                ? '采集失败'
-                : '运行正常'}
+            刷新间隔 {REFRESH_INTERVAL_MS / 1000}s
           </Typography>
         </Stack>
-        <Divider
-          orientation='vertical'
-          flexItem
-        />
-        <Stack
-          direction='row'
-          spacing={0.5}
-          sx={{ alignItems: 'center' }}
+
+        {/* 顶部统计 */}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: 'repeat(2, 1fr)',
+              md: 'repeat(4, 1fr)',
+            },
+            gap: 2,
+            mb: 2,
+          }}
         >
-          <Clock size={12} />
-          <Typography
-            variant='caption'
-            sx={{ color: 'text.secondary' }}
+          <StatCard
+            title='今日产量'
+            value={todayOutput.toLocaleString()}
+            unit='件'
+            icon={<Package size={22} />}
+            color='#3B82F6'
+            delta={8.2}
+            hint='当日累计完成数量'
+            loading={loading}
+          />
+          <StatCard
+            title='不良品数'
+            value={todayDefects.toLocaleString()}
+            unit='件'
+            icon={<XCircle size={22} />}
+            color='#EF4444'
+            delta={-3.1}
+            hint='当日累计不良数'
+            loading={loading}
+          />
+          <StatCard
+            title='在制工单'
+            value={activeOrderCount}
+            unit='单'
+            icon={<Factory size={22} />}
+            color='#F59E0B'
+            delta={2.4}
+            hint={`已完成 ${completedOrderCount} 单`}
+            loading={loading}
+          />
+          <StatCard
+            title='设备综合利用率'
+            value={formatPercent(overallUtilization)}
+            icon={<Gauge size={22} />}
+            color='#10B981'
+            delta={overallUtilization > 0.6 ? 1.8 : -0.6}
+            hint={`运行 ${runningEquipmentCount} / 总 ${equipment.length} 台`}
+            loading={loading}
+          />
+        </Box>
+
+        {/* 趋势 & 分布 */}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' },
+            gap: 2,
+            mb: 2,
+          }}
+        >
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2.5,
+              borderRadius: 2,
+              border: '1px solid',
+              borderColor: 'grey.200',
+              height: '100%',
+            }}
           >
-            {lastUpdated ? `更新于 ${formatTime(lastUpdated)}` : '未更新'}
-          </Typography>
-        </Stack>
-        <Box sx={{ flex: 1 }} />
-        <Typography
-          variant='caption'
-          sx={{ color: 'text.disabled' }}
+            <Stack
+              direction='row'
+              sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 2 }}
+            >
+              <Stack
+                direction='row'
+                spacing={1}
+                sx={{ alignItems: 'center' }}
+              >
+                <TrendingUp
+                  size={18}
+                  color='#10B981'
+                />
+                <Typography
+                  variant='subtitle1'
+                  sx={{ fontWeight: 600 }}
+                >
+                  实时产量趋势
+                </Typography>
+              </Stack>
+              <Typography
+                variant='caption'
+                sx={{ color: 'text.secondary' }}
+              >
+                最近 {TREND_HOURS} 小时 · 实际 vs 目标
+              </Typography>
+            </Stack>
+            <Divider sx={{ mb: 1.5 }} />
+            <Box sx={{ height: 280 }}>
+              <LineChart
+                data={trendData}
+                xKey='name'
+                yKey='value'
+                yKeys={[
+                  { key: 'value', name: '实际产量', color: '#3B82F6' },
+                  { key: 'target', name: '目标产量', color: '#94A3B8' },
+                ]}
+                height={280}
+              />
+            </Box>
+          </Paper>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 2.5,
+              borderRadius: 2,
+              border: '1px solid',
+              borderColor: 'grey.200',
+              height: '100%',
+            }}
+          >
+            <Stack
+              direction='row'
+              sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 2 }}
+            >
+              <Stack
+                direction='row'
+                spacing={1}
+                sx={{ alignItems: 'center' }}
+              >
+                <Activity
+                  size={18}
+                  color='#F59E0B'
+                />
+                <Typography
+                  variant='subtitle1'
+                  sx={{ fontWeight: 600 }}
+                >
+                  工单状态分布
+                </Typography>
+              </Stack>
+            </Stack>
+            <Divider sx={{ mb: 1.5 }} />
+            <Box sx={{ height: 280 }}>
+              <PieChart
+                data={
+                  orderStatusDistribution.length > 0
+                    ? orderStatusDistribution
+                    : [{ name: '暂无数据', value: 1, color: 'grey.300' }]
+                }
+              />
+            </Box>
+          </Paper>
+        </Box>
+
+        {/* 设备状态 & 工站利用率 */}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '5fr 7fr' },
+            gap: 2,
+            mb: 2,
+          }}
         >
-          刷新间隔 {REFRESH_INTERVAL_MS / 1000}s
-        </Typography>
-      </Stack>
+          <EquipmentStatusPanel
+            buckets={equipmentBuckets}
+            total={equipment.length}
+            loading={loading}
+          />
+          <WorkStationUtilizationCard
+            data={workStationUtilization}
+            loading={loading}
+          />
+        </Box>
 
-      {/* 顶部统计 */}
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: {
-            xs: '1fr',
-            sm: 'repeat(2, 1fr)',
-            md: 'repeat(4, 1fr)',
-          },
-          gap: 2,
-          mb: 2,
-        }}
-      >
-        <StatCard
-          title='今日产量'
-          value={todayOutput.toLocaleString()}
-          unit='件'
-          icon={<Package size={22} />}
-          color='#3B82F6'
-          delta={8.2}
-          hint='当日累计完成数量'
-          loading={loading}
-        />
-        <StatCard
-          title='不良品数'
-          value={todayDefects.toLocaleString()}
-          unit='件'
-          icon={<XCircle size={22} />}
-          color='#EF4444'
-          delta={-3.1}
-          hint='当日累计不良数'
-          loading={loading}
-        />
-        <StatCard
-          title='在制工单'
-          value={activeOrderCount}
-          unit='单'
-          icon={<Factory size={22} />}
-          color='#F59E0B'
-          delta={2.4}
-          hint={`已完成 ${completedOrderCount} 单`}
-          loading={loading}
-        />
-        <StatCard
-          title='设备综合利用率'
-          value={formatPercent(overallUtilization)}
-          icon={<Gauge size={22} />}
-          color='#10B981'
-          delta={overallUtilization > 0.6 ? 1.8 : -0.6}
-          hint={`运行 ${runningEquipmentCount} / 总 ${equipment.length} 台`}
-          loading={loading}
-        />
-      </Box>
+        {/* 报警 & 甘特图 */}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '1fr 2fr' },
+            gap: 2,
+            mb: 2,
+          }}
+        >
+          <AlarmList
+            alarms={alarms}
+            loading={loading}
+          />
+          <ProductionGantt
+            schedules={schedules}
+            loading={loading}
+          />
+        </Box>
 
-      {/* 趋势 & 分布 */}
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' },
-          gap: 2,
-          mb: 2,
-        }}
-      >
+        {/* 底部效率柱状图 */}
         <Paper
           elevation={0}
           sx={{
@@ -1587,7 +1706,6 @@ export const ProductionDashboardPage: React.FC = () => {
             borderRadius: 2,
             border: '1px solid',
             borderColor: 'grey.200',
-            height: '100%',
           }}
         >
           <Stack
@@ -1599,193 +1717,59 @@ export const ProductionDashboardPage: React.FC = () => {
               spacing={1}
               sx={{ alignItems: 'center' }}
             >
-              <TrendingUp
+              <Settings2
                 size={18}
-                color='#10B981'
+                color='#6366F1'
               />
               <Typography
                 variant='subtitle1'
                 sx={{ fontWeight: 600 }}
               >
-                实时产量趋势
+                工站当日产出对比
               </Typography>
             </Stack>
             <Typography
               variant='caption'
               sx={{ color: 'text.secondary' }}
             >
-              最近 {TREND_HOURS} 小时 · 实际 vs 目标
+              数据按工站聚合
             </Typography>
           </Stack>
           <Divider sx={{ mb: 1.5 }} />
           <Box sx={{ height: 280 }}>
-            <LineChart
-              data={trendData}
+            <BarChart
+              data={workStationUtilization.map((w) => ({
+                name: w.workStation.name,
+                value: w.todayOutput,
+                utilization: Math.round(w.utilization * 100),
+              }))}
               xKey='name'
               yKey='value'
-              yKeys={[
-                { key: 'value', name: '实际产量', color: '#3B82F6' },
-                { key: 'target', name: '目标产量', color: '#94A3B8' },
-              ]}
               height={280}
             />
           </Box>
         </Paper>
-        <Paper
-          elevation={0}
-          sx={{
-            p: 2.5,
-            borderRadius: 2,
-            border: '1px solid',
-            borderColor: 'grey.200',
-            height: '100%',
-          }}
-        >
-          <Stack
-            direction='row'
-            sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 2 }}
-          >
-            <Stack
-              direction='row'
-              spacing={1}
-              sx={{ alignItems: 'center' }}
-            >
-              <Activity
-                size={18}
-                color='#F59E0B'
-              />
-              <Typography
-                variant='subtitle1'
-                sx={{ fontWeight: 600 }}
-              >
-                工单状态分布
-              </Typography>
-            </Stack>
-          </Stack>
-          <Divider sx={{ mb: 1.5 }} />
-          <Box sx={{ height: 280 }}>
-            <PieChart
-              data={
-                orderStatusDistribution.length > 0
-                  ? orderStatusDistribution
-                  : [{ name: '暂无数据', value: 1, color: 'grey.300' }]
-              }
-            />
-          </Box>
-        </Paper>
-      </Box>
 
-      {/* 设备状态 & 工站利用率 */}
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: '5fr 7fr' },
-          gap: 2,
-          mb: 2,
-        }}
-      >
-        <EquipmentStatusPanel
-          buckets={equipmentBuckets}
-          total={equipment.length}
-          loading={loading}
-        />
-        <WorkStationUtilizationCard
-          data={workStationUtilization}
-          loading={loading}
-        />
-      </Box>
-
-      {/* 报警 & 甘特图 */}
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: '1fr 2fr' },
-          gap: 2,
-          mb: 2,
-        }}
-      >
-        <AlarmList
-          alarms={alarms}
-          loading={loading}
-        />
-        <ProductionGantt
-          schedules={schedules}
-          loading={loading}
-        />
-      </Box>
-
-      {/* 底部效率柱状图 */}
-      <Paper
-        elevation={0}
-        sx={{
-          p: 2.5,
-          borderRadius: 2,
-          border: '1px solid',
-          borderColor: 'grey.200',
-        }}
-      >
-        <Stack
-          direction='row'
-          sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 2 }}
-        >
+        {/* 页脚信息 */}
+        <Box sx={{ mt: 3, textAlign: 'center' }}>
           <Stack
             direction='row'
             spacing={1}
-            sx={{ alignItems: 'center' }}
+            sx={{ alignItems: 'center', justifyContent: 'center' }}
           >
-            <Settings2
-              size={18}
-              color='#6366F1'
+            <Zap
+              size={12}
+              color='#94A3B8'
             />
             <Typography
-              variant='subtitle1'
-              sx={{ fontWeight: 600 }}
+              variant='caption'
+              sx={{ color: 'text.disabled' }}
             >
-              工站当日产出对比
+              TOPEMS MES v1.0 · 数据每 {REFRESH_INTERVAL_MS / 1000} 秒自动刷新
+              {wsConnected ? ' · WebSocket 实时推送' : ' · 轮询采集模式'}
             </Typography>
           </Stack>
-          <Typography
-            variant='caption'
-            sx={{ color: 'text.secondary' }}
-          >
-            数据按工站聚合
-          </Typography>
-        </Stack>
-        <Divider sx={{ mb: 1.5 }} />
-        <Box sx={{ height: 280 }}>
-          <BarChart
-            data={workStationUtilization.map((w) => ({
-              name: w.workStation.name,
-              value: w.todayOutput,
-              utilization: Math.round(w.utilization * 100),
-            }))}
-            xKey='name'
-            yKey='value'
-            height={280}
-          />
         </Box>
-      </Paper>
-
-      {/* 页脚信息 */}
-      <Box sx={{ mt: 3, textAlign: 'center' }}>
-        <Stack
-          direction='row'
-          spacing={1}
-          sx={{ alignItems: 'center', justifyContent: 'center' }}
-        >
-          <Zap
-            size={12}
-            color='#94A3B8'
-          />
-          <Typography
-            variant='caption'
-            sx={{ color: 'text.disabled' }}
-          >
-            TOPEMS MES v1.0 · 数据每 {REFRESH_INTERVAL_MS / 1000} 秒自动刷新
-            {wsConnected ? ' · WebSocket 实时推送' : ' · 轮询采集模式'}
-          </Typography>
-        </Stack>
-      </Box>
       </Box>
     </PageContainer>
   );

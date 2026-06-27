@@ -69,9 +69,27 @@ const SrmPerformancePage: React.FC = () => {
   };
 
   const getRankIcon = (index: number) => {
-    if (index === 0) return <Award size={20} color='gold' />;
-    if (index === 1) return <Award size={20} color='silver' />;
-    if (index === 2) return <Award size={20} color='#cd7f32' />;
+    if (index === 0)
+      return (
+        <Award
+          size={20}
+          color='gold'
+        />
+      );
+    if (index === 1)
+      return (
+        <Award
+          size={20}
+          color='silver'
+        />
+      );
+    if (index === 2)
+      return (
+        <Award
+          size={20}
+          color='#cd7f32'
+        />
+      );
     return null;
   };
 
@@ -175,9 +193,15 @@ const SrmPerformancePage: React.FC = () => {
         return (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {rate >= 0.9 ? (
-              <TrendingUp size={16} color='green' />
+              <TrendingUp
+                size={16}
+                color='green'
+              />
             ) : (
-              <TrendingDown size={16} color='red' />
+              <TrendingDown
+                size={16}
+                color='red'
+              />
             )}
             <Typography variant='body2'>{(rate * 100).toFixed(0)}%</Typography>
           </Box>
@@ -193,9 +217,15 @@ const SrmPerformancePage: React.FC = () => {
         return (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {rate <= 0.02 ? (
-              <TrendingDown size={16} color='green' />
+              <TrendingDown
+                size={16}
+                color='green'
+              />
             ) : (
-              <TrendingUp size={16} color='red' />
+              <TrendingUp
+                size={16}
+                color='red'
+              />
             )}
             <Typography variant='body2'>{(rate * 100).toFixed(2)}%</Typography>
           </Box>
@@ -213,7 +243,12 @@ const SrmPerformancePage: React.FC = () => {
     <Box>
       {summary && (
         <Box sx={{ mb: 4 }}>
-          <Typography variant='h6' sx={{ mb: 3, fontWeight: 'bold' }}>绩效概览</Typography>
+          <Typography
+            variant='h6'
+            sx={{ mb: 3, fontWeight: 'bold' }}
+          >
+            绩效概览
+          </Typography>
           <Box
             sx={{
               display: 'grid',
@@ -226,53 +261,113 @@ const SrmPerformancePage: React.FC = () => {
           >
             <Card>
               <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box
+                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                >
                   <div>
-                    <Typography color='text.secondary' variant='body2'>供应商总数</Typography>
-                    <Typography variant='h4' sx={{ fontWeight: 'bold' }}>{summary.total_suppliers}</Typography>
+                    <Typography
+                      color='text.secondary'
+                      variant='body2'
+                    >
+                      供应商总数
+                    </Typography>
+                    <Typography
+                      variant='h4'
+                      sx={{ fontWeight: 'bold' }}
+                    >
+                      {summary.total_suppliers}
+                    </Typography>
                   </div>
-                  <BarChart3 color='primary' fontSize='large' />
+                  <BarChart3
+                    color='primary'
+                    fontSize='large'
+                  />
                 </Box>
               </CardContent>
             </Card>
             <Card>
               <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box
+                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                >
                   <div>
-                    <Typography color='text.secondary' variant='body2'>已评估供应商</Typography>
-                    <Typography variant='h4' sx={{ fontWeight: 'bold' }}>{summary.evaluated_suppliers}</Typography>
+                    <Typography
+                      color='text.secondary'
+                      variant='body2'
+                    >
+                      已评估供应商
+                    </Typography>
+                    <Typography
+                      variant='h4'
+                      sx={{ fontWeight: 'bold' }}
+                    >
+                      {summary.evaluated_suppliers}
+                    </Typography>
                   </div>
-                  <Target color='primary' fontSize='large' />
+                  <Target
+                    color='primary'
+                    fontSize='large'
+                  />
                 </Box>
               </CardContent>
             </Card>
             <Card>
               <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box
+                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                >
                   <div>
-                    <Typography color='text.secondary' variant='body2'>评估覆盖率</Typography>
-                    <Typography variant='h4' sx={{ fontWeight: 'bold' }}>{(summary.evaluation_rate * 100).toFixed(1)}%</Typography>
+                    <Typography
+                      color='text.secondary'
+                      variant='body2'
+                    >
+                      评估覆盖率
+                    </Typography>
+                    <Typography
+                      variant='h4'
+                      sx={{ fontWeight: 'bold' }}
+                    >
+                      {(summary.evaluation_rate * 100).toFixed(1)}%
+                    </Typography>
                   </div>
-                  <TrendingUp color='success' fontSize='large' />
+                  <TrendingUp
+                    color='success'
+                    fontSize='large'
+                  />
                 </Box>
               </CardContent>
             </Card>
             <Card>
               <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box
+                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                >
                   <div>
-                    <Typography color='text.secondary' variant='body2'>平均综合评分</Typography>
+                    <Typography
+                      color='text.secondary'
+                      variant='body2'
+                    >
+                      平均综合评分
+                    </Typography>
                     <Typography
                       variant='h4'
                       sx={{
                         fontWeight: 'bold',
-                        color: summary.avg_overall_score >= 80 ? 'green' : summary.avg_overall_score >= 60 ? 'orange' : 'red',
+                        color:
+                          summary.avg_overall_score >= 80
+                            ? 'green'
+                            : summary.avg_overall_score >= 60
+                              ? 'orange'
+                              : 'red',
                       }}
                     >
                       {summary.avg_overall_score?.toFixed(1)}
                     </Typography>
                   </div>
-                  <Award color='primary' fontSize='large' />
+                  <Award
+                    color='primary'
+                    fontSize='large'
+                  />
                 </Box>
               </CardContent>
             </Card>
@@ -281,10 +376,20 @@ const SrmPerformancePage: React.FC = () => {
           {summary.top_supplier && (
             <Card sx={{ mt: 2 }}>
               <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box
+                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                >
                   <div>
-                    <Typography color='text.secondary' variant='body2'>最佳供应商</Typography>
-                    <Typography variant='h6' sx={{ fontWeight: 'bold' }}>
+                    <Typography
+                      color='text.secondary'
+                      variant='body2'
+                    >
+                      最佳供应商
+                    </Typography>
+                    <Typography
+                      variant='h6'
+                      sx={{ fontWeight: 'bold' }}
+                    >
                       {summary.top_supplier.name}
                       <Chip
                         sx={{ ml: 2 }}
@@ -294,7 +399,10 @@ const SrmPerformancePage: React.FC = () => {
                       />
                     </Typography>
                   </div>
-                  <Award color='gold' fontSize='large' />
+                  <Award
+                    color='gold'
+                    fontSize='large'
+                  />
                 </Box>
               </CardContent>
             </Card>

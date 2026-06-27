@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAppStore } from '../../store';
 import { Barcode, Camera, Shield, Clock, Sparkles } from 'lucide-react';
-import { SettingsPageTemplate, type SettingSection, type SettingValueType } from '@/components/templates';
+import {
+  SettingsPageTemplate,
+  type SettingSection,
+  type SettingValueType,
+} from '@/components/templates';
 
 interface ScanSetting {
   key: string;
@@ -17,19 +21,62 @@ const ScanSettingsPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [scanSettings, setScanSettings] = useState<ScanSetting[]>([
-    { key: 'enabled', label: '启用扫码', value: true, description: '允许使用摄像头扫描条码', type: 'switch' },
-    { key: 'auto_scan', label: '自动识别', value: true, description: '识别到条码后自动完成扫描', type: 'switch' },
-    { key: 'continuous', label: '连续扫描', value: false, description: '支持连续扫描多个条码', type: 'switch' },
-    { key: 'format', label: '条码格式', value: 'all', description: '支持的条码类型', type: 'select', options: [
-      { value: 'all', label: '全部格式' },
-      { value: 'code128', label: 'Code 128' },
-      { value: 'ean13', label: 'EAN-13' },
-      { value: 'qr', label: 'QR Code' },
-      { value: 'upc', label: 'UPC' },
-    ]},
-    { key: 'timeout', label: '超时时间', value: '10', description: '扫描超时时间（秒）', type: 'text' },
-    { key: 'history', label: '保存历史', value: true, description: '保存扫描历史记录', type: 'switch' },
-    { key: 'history_limit', label: '历史数量', value: '50', description: '最多保存的历史记录数', type: 'text' },
+    {
+      key: 'enabled',
+      label: '启用扫码',
+      value: true,
+      description: '允许使用摄像头扫描条码',
+      type: 'switch',
+    },
+    {
+      key: 'auto_scan',
+      label: '自动识别',
+      value: true,
+      description: '识别到条码后自动完成扫描',
+      type: 'switch',
+    },
+    {
+      key: 'continuous',
+      label: '连续扫描',
+      value: false,
+      description: '支持连续扫描多个条码',
+      type: 'switch',
+    },
+    {
+      key: 'format',
+      label: '条码格式',
+      value: 'all',
+      description: '支持的条码类型',
+      type: 'select',
+      options: [
+        { value: 'all', label: '全部格式' },
+        { value: 'code128', label: 'Code 128' },
+        { value: 'ean13', label: 'EAN-13' },
+        { value: 'qr', label: 'QR Code' },
+        { value: 'upc', label: 'UPC' },
+      ],
+    },
+    {
+      key: 'timeout',
+      label: '超时时间',
+      value: '10',
+      description: '扫描超时时间（秒）',
+      type: 'text',
+    },
+    {
+      key: 'history',
+      label: '保存历史',
+      value: true,
+      description: '保存扫描历史记录',
+      type: 'switch',
+    },
+    {
+      key: 'history_limit',
+      label: '历史数量',
+      value: '50',
+      description: '最多保存的历史记录数',
+      type: 'text',
+    },
   ]);
 
   const loadSettings = useCallback(async () => {
@@ -72,19 +119,62 @@ const ScanSettingsPage: React.FC = () => {
 
   const handleReset = useCallback(() => {
     setScanSettings([
-      { key: 'enabled', label: '启用扫码', value: true, description: '允许使用摄像头扫描条码', type: 'switch' },
-      { key: 'auto_scan', label: '自动识别', value: true, description: '识别到条码后自动完成扫描', type: 'switch' },
-      { key: 'continuous', label: '连续扫描', value: false, description: '支持连续扫描多个条码', type: 'switch' },
-      { key: 'format', label: '条码格式', value: 'all', description: '支持的条码类型', type: 'select', options: [
-        { value: 'all', label: '全部格式' },
-        { value: 'code128', label: 'Code 128' },
-        { value: 'ean13', label: 'EAN-13' },
-        { value: 'qr', label: 'QR Code' },
-        { value: 'upc', label: 'UPC' },
-      ]},
-      { key: 'timeout', label: '超时时间', value: '10', description: '扫描超时时间（秒）', type: 'text' },
-      { key: 'history', label: '保存历史', value: true, description: '保存扫描历史记录', type: 'switch' },
-      { key: 'history_limit', label: '历史数量', value: '50', description: '最多保存的历史记录数', type: 'text' },
+      {
+        key: 'enabled',
+        label: '启用扫码',
+        value: true,
+        description: '允许使用摄像头扫描条码',
+        type: 'switch',
+      },
+      {
+        key: 'auto_scan',
+        label: '自动识别',
+        value: true,
+        description: '识别到条码后自动完成扫描',
+        type: 'switch',
+      },
+      {
+        key: 'continuous',
+        label: '连续扫描',
+        value: false,
+        description: '支持连续扫描多个条码',
+        type: 'switch',
+      },
+      {
+        key: 'format',
+        label: '条码格式',
+        value: 'all',
+        description: '支持的条码类型',
+        type: 'select',
+        options: [
+          { value: 'all', label: '全部格式' },
+          { value: 'code128', label: 'Code 128' },
+          { value: 'ean13', label: 'EAN-13' },
+          { value: 'qr', label: 'QR Code' },
+          { value: 'upc', label: 'UPC' },
+        ],
+      },
+      {
+        key: 'timeout',
+        label: '超时时间',
+        value: '10',
+        description: '扫描超时时间（秒）',
+        type: 'text',
+      },
+      {
+        key: 'history',
+        label: '保存历史',
+        value: true,
+        description: '保存扫描历史记录',
+        type: 'switch',
+      },
+      {
+        key: 'history_limit',
+        label: '历史数量',
+        value: '50',
+        description: '最多保存的历史记录数',
+        type: 'text',
+      },
     ]);
     addNotification({ title: '已重置', message: '扫描设置已恢复默认值', type: 'info' });
   }, [addNotification]);

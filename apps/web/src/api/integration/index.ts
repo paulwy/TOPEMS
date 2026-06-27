@@ -1,17 +1,17 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
+import { connectionApi } from './connection';
+import { syncApi } from './sync';
+import { mappingApi } from './mapping';
+import { conversionRuleApi } from './conversion-rule';
+
 export * from './types';
 
 export { connectionApi } from './connection';
 export { syncApi } from './sync';
 export { mappingApi } from './mapping';
 export { conversionRuleApi } from './conversion-rule';
-
-import { connectionApi } from './connection';
-import { syncApi } from './sync';
-import { mappingApi } from './mapping';
-import { conversionRuleApi } from './conversion-rule';
 
 export const integrationApi = {
   connections: connectionApi,

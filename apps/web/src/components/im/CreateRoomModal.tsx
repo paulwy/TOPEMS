@@ -7,8 +7,8 @@ import {
   Tabs,
   Tab,
   Box,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import React, { useState } from 'react';
 import { X, Users, User, Save, MessageSquare } from 'lucide-react';
 
@@ -99,7 +99,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
       const request: CreateChatRoomRequest = {
         name: chatRoomName || undefined,
         room_type: chatRoomType,
-        members: members,
+        members,
         created_by: currentUserId,
       };
 

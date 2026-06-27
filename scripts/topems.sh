@@ -107,33 +107,24 @@ build_service() {
     [ -z "$service_path" ] && error "服务 $service_name 不存在" && return 1
 
     info "编译 $service_name 服务..."
-    cd "$PROJECT_ROOT/$service_path"
-    cargo build --release 2>&1 && success "$service_name 编译成功" || { error "$service_name 编译失败"; return 1; }
+    local executable_name=$(get_executable_name "$service_name")
+    cd "$PROJECT_ROOT"
+    cargo build --release --bin "$executable_name" 2>&1 && success "$service_name 编译成功" || { error "$service_name 编译失败"; return 1; }
 }
 
 # 全量编译所有后端服务
 build_all_backend() {
     info "全量编译所有后端服务..."
-    
-    local success_count=0
-    local fail_count=0
-    
-    for service in $(get_all_services); do
-        if build_service "$service" 2>/dev/null; then
-            success_count=$((success_count + 1))
-        else
-            fail_count=$((fail_count + 1))
-        fi
-    done
 
-    echo ""
-    if [ $fail_count -eq 0 ]; then
-        success "所有后端服务编译完成 ($success_count 成功)"
+    cd "$PROJECT_ROOT"
+    if cargo build --release --workspace 2>&1; then
+        local total=$(get_all_services | wc -l | tr -d ' ')
+        success "所有后端服务编译完成 ($total 成功)"
+        return 0
     else
-        warning "后端编译完成 ($success_count 成功, $fail_count 失败)"
+        error "后端编译失败"
+        return 1
     fi
-    
-    return $fail_count
 }
 
 # 编译前端
@@ -163,14 +154,18 @@ build_frontend() {
 # 全量编译（后端+前端）
 build_all() {
     info "========== 全量编译开始 =========="
-    
+
+    set +e
     build_all_backend
     local backend_result=$?
-    
+    set -e
+
     info "========== 编译前端 =========="
+    set +e
     build_frontend
     local frontend_result=$?
-    
+    set -e
+
     echo ""
     info "========== 全量编译完成 =========="
     if [ $backend_result -eq 0 ] && [ $frontend_result -eq 0 ]; then
@@ -186,34 +181,14 @@ build_all() {
 test_backend() {
     info "运行后端测试..."
 
-    local success_count=0
-    local fail_count=0
-
-    for service in $(get_all_services); do
-        local service_path=$(get_service_path "$service")
-        [ -z "$service_path" ] && { warning "服务 $service 路径未配置"; continue; }
-
-        cd "$PROJECT_ROOT/$service_path"
-        [ ! -f "Cargo.toml" ] && { warning "$service 无 Cargo.toml，跳过"; continue; }
-
-        info "测试 $service 服务..."
-        if cargo test --release -- --test-threads=1 2>&1 | grep -q "test result:"; then
-            success_count=$((success_count + 1))
-            success "$service 测试通过"
-        else
-            fail_count=$((fail_count + 1))
-            error "$service 测试失败"
-        fi
-    done
-
-    echo ""
-    if [ $fail_count -eq 0 ]; then
-        success "所有后端测试通过 ($success_count)"
+    cd "$PROJECT_ROOT"
+    if cargo test --release --workspace -- --test-threads=1 2>&1; then
+        success "所有后端测试通过"
+        return 0
     else
-        warning "后端测试完成 ($success_count 通过, $fail_count 失败)"
+        error "后端测试失败"
+        return 1
     fi
-
-    return $fail_count
 }
 
 # 运行前端测试
@@ -243,14 +218,18 @@ test_frontend() {
 # 运行所有测试
 test_all() {
     info "========== 运行所有测试 =========="
-    
+
+    set +e
     test_backend
     local backend_result=$?
-    
+    set -e
+
     info "========== 运行前端测试 =========="
+    set +e
     test_frontend
     local frontend_result=$?
-    
+    set -e
+
     echo ""
     info "========== 测试完成 =========="
     if [ $backend_result -eq 0 ] && [ $frontend_result -eq 0 ]; then
@@ -440,10 +419,12 @@ start_all_services() {
 # 停止所有服务
 stop_all_services() {
     info "停止所有服务..."
+    set +e
     for service in $(get_all_services); do
         stop_service "$service"
     done
     stop_frontend
+    set -e
 }
 
 # 启动开发环境（macOS）
@@ -1055,25 +1036,25 @@ case "${1:-help}" in
         ;;
     install-deps)
         info "调用依赖安装脚本..."
-        "$SCRIPT_DIR/install-deps.sh" all
+        "$SCRIPT_DIR/dev/install-deps.sh" all
         ;;
     ai)
         case "$2" in
             start|stop|status|pull)
-                "$SCRIPT_DIR/ai-models.sh" "$2" "${3:-}"
+                "$SCRIPT_DIR/dev/ai-models.sh" "$2" "${3:-}"
                 ;;
             *)
-                "$SCRIPT_DIR/ai-models.sh"
+                "$SCRIPT_DIR/dev/ai-models.sh"
                 ;;
         esac
         ;;
     deploy)
         info "调用部署脚本..."
-        "$SCRIPT_DIR/deploy.sh" deploy
+        "$SCRIPT_DIR/deploy/deploy.sh" deploy
         ;;
     update-password|reset-password)
         info "调用密码重置脚本..."
-        "$SCRIPT_DIR/update_admin_password.sh" "${2:-admin}" "${3:-admin123}"
+        "$SCRIPT_DIR/dev/update-admin-password.sh" "${2:-admin}" "${3:-admin123}"
         ;;
     help|--help|-h)
         show_help

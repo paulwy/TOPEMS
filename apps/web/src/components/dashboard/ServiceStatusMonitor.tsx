@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import type { SvgIconProps } from '@mui/material';
-import { Box, Typography, Chip } from '@mui/material';
-import { Button } from '@mui/material';
+import { Box, Typography, Chip, Button } from '@mui/material';
 import {
   Activity,
   CircleDot,
@@ -163,7 +162,7 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
       }, 10000);
       return () => clearInterval(interval);
     }
-    return undefined;
+    return;
   }, [hasExternalStatuses]);
 
   const handleRefresh = useCallback(() => {

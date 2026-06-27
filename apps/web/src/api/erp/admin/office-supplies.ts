@@ -1,10 +1,6 @@
 import apiClient from '../../client';
 import type { ApiResponse } from '../../client';
-import type {
-  OfficeSupply,
-  PaginationParams,
-  PaginatedResult,
-} from '../types';
+import type { OfficeSupply, PaginationParams, PaginatedResult } from '../types';
 
 export const officeSupplyApi = {
   async list(
@@ -18,7 +14,7 @@ export const officeSupplyApi = {
     if (params?.category) searchParams.set('category', params.category);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/erp/office-supplies${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(`/api/erp/office-supplies${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<OfficeSupply>> {

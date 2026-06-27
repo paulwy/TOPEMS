@@ -187,7 +187,13 @@ const SrmContractPage: React.FC = () => {
         id: 'contract_type',
         label: '合同类型',
         width: 120,
-        render: (row) => <Chip label={row.contract_type} size='small' variant='outlined' />,
+        render: (row) => (
+          <Chip
+            label={row.contract_type}
+            size='small'
+            variant='outlined'
+          />
+        ),
       },
       {
         id: 'amount',
@@ -223,7 +229,11 @@ const SrmContractPage: React.FC = () => {
         width: 100,
         sortable: true,
         render: (row) => (
-          <Chip label={getStatusLabel(row.status)} size='small' color={getStatusColor(row.status)} />
+          <Chip
+            label={getStatusLabel(row.status)}
+            size='small'
+            color={getStatusColor(row.status)}
+          />
         ),
       },
     ],
@@ -288,7 +298,11 @@ const SrmContractPage: React.FC = () => {
       <ListPageTemplate
         title=''
         subtitle=''
-        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '供应商关系', href: '/srm' }, { label: '合同管理' }]}
+        breadcrumbs={[
+          { label: '首页', href: '/dashboard' },
+          { label: '供应商关系', href: '/srm' },
+          { label: '合同管理' },
+        ]}
         columns={columns}
         data={contracts}
         loading={loading}

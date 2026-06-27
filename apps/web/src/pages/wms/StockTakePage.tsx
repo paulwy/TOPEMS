@@ -12,8 +12,8 @@ import {
   Select,
   MenuItem,
   Typography,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import {
   ListPageTemplate,
   type ColumnDef,

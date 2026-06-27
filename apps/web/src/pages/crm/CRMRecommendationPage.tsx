@@ -32,24 +32,18 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useAppStore } from '../../store';
-import {
-  ListPageTemplate,
-  type ColumnDef,
-  type RowAction,
-} from '@/components/templates';
+import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { crmApi } from '@/api/crm';
-import type {
-  RecommendationResult,
-  RecommendationItem,
-  RecommendationRequest,
-} from '@/api/crm';
+import type { RecommendationResult, RecommendationItem, RecommendationRequest } from '@/api/crm';
 
 const CRMRecommendationPage: React.FC = () => {
   const addNotification = useAppStore((state) => state.addNotification);
   const [recommendations, setRecommendations] = useState<RecommendationResult[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedRecommendation, setSelectedRecommendation] = useState<RecommendationResult | null>(null);
+  const [selectedRecommendation, setSelectedRecommendation] = useState<RecommendationResult | null>(
+    null
+  );
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [customers, setCustomers] = useState<any[]>([]);
@@ -173,7 +167,10 @@ const CRMRecommendationPage: React.FC = () => {
       label: '客户名称',
       render: (row) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+          <Typography
+            variant='body2'
+            sx={{ fontWeight: 500 }}
+          >
             {row.customer_name}
           </Typography>
         </Box>
@@ -186,8 +183,8 @@ const CRMRecommendationPage: React.FC = () => {
         <Chip
           icon={getRecommendationTypeIcon(row.recommendation_type)}
           label={getRecommendationTypeLabel(row.recommendation_type)}
-          size="small"
-          variant="outlined"
+          size='small'
+          variant='outlined'
         />
       ),
     },
@@ -195,7 +192,10 @@ const CRMRecommendationPage: React.FC = () => {
       id: 'recommendations_count',
       label: '推荐数量',
       render: (row) => (
-        <Typography variant="body2" color="text.secondary">
+        <Typography
+          variant='body2'
+          color='text.secondary'
+        >
           {row.recommendations.length} 项
         </Typography>
       ),
@@ -206,12 +206,15 @@ const CRMRecommendationPage: React.FC = () => {
       render: (row) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <LinearProgress
-            variant="determinate"
+            variant='determinate'
             value={row.confidence * 100}
             sx={{ width: 100, height: 6, borderRadius: 3 }}
             color={getConfidenceColor(row.confidence)}
           />
-          <Typography variant="body2" sx={{ fontWeight: 500 }}>
+          <Typography
+            variant='body2'
+            sx={{ fontWeight: 500 }}
+          >
             {(row.confidence * 100).toFixed(0)}%
           </Typography>
         </Box>
@@ -224,9 +227,9 @@ const CRMRecommendationPage: React.FC = () => {
         <Chip
           icon={<Sparkles size={14} />}
           label={row.model}
-          size="small"
-          color="primary"
-          variant="outlined"
+          size='small'
+          color='primary'
+          variant='outlined'
         />
       ),
     },
@@ -234,7 +237,10 @@ const CRMRecommendationPage: React.FC = () => {
       id: 'created_at',
       label: '生成时间',
       render: (row) => (
-        <Typography variant="body2" color="text.secondary">
+        <Typography
+          variant='body2'
+          color='text.secondary'
+        >
           {new Date(row.created_at).toLocaleString('zh-CN')}
         </Typography>
       ),
@@ -256,72 +262,103 @@ const CRMRecommendationPage: React.FC = () => {
     <Dialog
       open={showDetailDialog}
       onClose={() => setShowDetailDialog(false)}
-      maxWidth="md"
+      maxWidth='md'
       fullWidth
     >
       <DialogTitle>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Lightbulb size={20} />
-          <Typography variant="h6">推荐详情</Typography>
+          <Typography variant='h6'>推荐详情</Typography>
         </Box>
       </DialogTitle>
       <DialogContent>
         {selectedRecommendation && (
           <Box sx={{ pt: 2 }}>
-            <Grid container spacing={2}>
+            <Grid
+              container
+              spacing={2}
+            >
               <Grid size={12}>
                 <Paper sx={{ p: 2, bgcolor: 'grey.50' }}>
-                  <Typography variant="subtitle2" gutterBottom>
+                  <Typography
+                    variant='subtitle2'
+                    gutterBottom
+                  >
                     基本信息
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 2, mt: 1 }}>
-                    <Typography variant="body2">
+                    <Typography variant='body2'>
                       客户: {selectedRecommendation.customer_name}
                     </Typography>
-                    <Typography variant="body2">
+                    <Typography variant='body2'>
                       类型: {getRecommendationTypeLabel(selectedRecommendation.recommendation_type)}
                     </Typography>
-                    <Typography variant="body2">
+                    <Typography variant='body2'>
                       置信度: {(selectedRecommendation.confidence * 100).toFixed(0)}%
                     </Typography>
                   </Box>
                 </Paper>
               </Grid>
               <Grid size={12}>
-                <Typography variant="subtitle2" gutterBottom>
+                <Typography
+                  variant='subtitle2'
+                  gutterBottom
+                >
                   推荐项目 ({selectedRecommendation.recommendations.length})
                 </Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {selectedRecommendation.recommendations.map((item, index) => (
-                    <Card key={item.id || index} variant="outlined">
+                    <Card
+                      key={item.id || index}
+                      variant='outlined'
+                    >
                       <CardContent>
-                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'flex-start',
+                          }}
+                        >
                           <Box>
-                            <Typography variant="subtitle1" sx={{ fontWeight: 'medium' }}>
+                            <Typography
+                              variant='subtitle1'
+                              sx={{ fontWeight: 'medium' }}
+                            >
                               {item.name}
                             </Typography>
-                            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                            <Typography
+                              variant='body2'
+                              color='text.secondary'
+                              sx={{ mt: 1 }}
+                            >
                               {item.reason}
                             </Typography>
                             <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
                               <Chip
                                 label={`类型: ${item.item_type}`}
-                                size="small"
-                                variant="outlined"
+                                size='small'
+                                variant='outlined'
                               />
                               <Chip
                                 label={`评分: ${item.score}`}
-                                size="small"
-                                color="primary"
+                                size='small'
+                                color='primary'
                                 icon={<Star size={14} />}
                               />
                             </Box>
                           </Box>
                           <Box sx={{ textAlign: 'right' }}>
-                            <Typography variant="h6" color={getConfidenceColor(item.confidence)}>
+                            <Typography
+                              variant='h6'
+                              color={getConfidenceColor(item.confidence)}
+                            >
                               {(item.confidence * 100).toFixed(0)}%
                             </Typography>
-                            <Typography variant="caption" color="text.secondary">
+                            <Typography
+                              variant='caption'
+                              color='text.secondary'
+                            >
                               置信度
                             </Typography>
                           </Box>
@@ -345,13 +382,13 @@ const CRMRecommendationPage: React.FC = () => {
     <Dialog
       open={showCreateDialog}
       onClose={() => setShowCreateDialog(false)}
-      maxWidth="sm"
+      maxWidth='sm'
       fullWidth
     >
       <DialogTitle>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Sparkles size={20} />
-          <Typography variant="h6">生成客户推荐</Typography>
+          <Typography variant='h6'>生成客户推荐</Typography>
         </Box>
       </DialogTitle>
       <DialogContent>
@@ -361,10 +398,13 @@ const CRMRecommendationPage: React.FC = () => {
             <Select
               value={formData.customer_id}
               onChange={(e) => setFormData({ ...formData, customer_id: e.target.value })}
-              label="选择客户"
+              label='选择客户'
             >
               {customers.map((customer) => (
-                <MenuItem key={customer.id} value={customer.id}>
+                <MenuItem
+                  key={customer.id}
+                  value={customer.id}
+                >
                   {customer.name}
                 </MenuItem>
               ))}
@@ -375,20 +415,20 @@ const CRMRecommendationPage: React.FC = () => {
             <Select
               value={formData.recommendation_type}
               onChange={(e) => setFormData({ ...formData, recommendation_type: e.target.value })}
-              label="推荐类型"
+              label='推荐类型'
             >
-              <MenuItem value="product">产品推荐</MenuItem>
-              <MenuItem value="opportunity">商机推荐</MenuItem>
-              <MenuItem value="service">服务推荐</MenuItem>
-              <MenuItem value="cross-sell">交叉销售</MenuItem>
-              <MenuItem value="upsell">增值销售</MenuItem>
-              <MenuItem value="content">内容推荐</MenuItem>
-              <MenuItem value="general">综合推荐</MenuItem>
+              <MenuItem value='product'>产品推荐</MenuItem>
+              <MenuItem value='opportunity'>商机推荐</MenuItem>
+              <MenuItem value='service'>服务推荐</MenuItem>
+              <MenuItem value='cross-sell'>交叉销售</MenuItem>
+              <MenuItem value='upsell'>增值销售</MenuItem>
+              <MenuItem value='content'>内容推荐</MenuItem>
+              <MenuItem value='general'>综合推荐</MenuItem>
             </Select>
           </FormControl>
           <TextField
-            label="推荐数量"
-            type="number"
+            label='推荐数量'
+            type='number'
             value={formData.top_k}
             onChange={(e) => setFormData({ ...formData, top_k: parseInt(e.target.value) || 10 })}
             slotProps={{ input: { min: 1, max: 20 } }}
@@ -399,7 +439,7 @@ const CRMRecommendationPage: React.FC = () => {
       <DialogActions>
         <Button onClick={() => setShowCreateDialog(false)}>取消</Button>
         <Button
-          variant="contained"
+          variant='contained'
           onClick={handleCreateRecommendation}
           disabled={!formData.customer_id || loading}
           startIcon={<Sparkles size={16} />}
@@ -411,7 +451,10 @@ const CRMRecommendationPage: React.FC = () => {
   );
 
   return (
-    <PageContainer title='客户推荐' subtitle='基于 AI 的智能客户推荐系统'>
+    <PageContainer
+      title='客户推荐'
+      subtitle='基于 AI 的智能客户推荐系统'
+    >
       <ListPageTemplate
         title=''
         subtitle=''

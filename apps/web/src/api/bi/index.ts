@@ -1,5 +1,97 @@
 import apiClient from '../client';
 
+import {
+  fetchDashboards,
+  fetchDashboard,
+  createDashboard,
+  updateDashboard,
+  deleteDashboard,
+  cloneDashboard,
+  fetchPublicDashboards,
+  fetchUserDashboards,
+  fetchDashboardTemplates,
+  fetchDashboardTemplate,
+  createDashboardTemplate,
+  updateDashboardTemplate,
+  deleteDashboardTemplate,
+  createDashboardFromTemplate,
+} from './dashboard';
+
+import {
+  fetchWidgets,
+  fetchWidgetsByDashboard,
+  fetchWidget,
+  createWidget,
+  updateWidget,
+  deleteWidget,
+  fetchWidgetData,
+} from './widget';
+
+import { fetchReports, fetchReport, createReport, updateReport, deleteReport } from './report';
+
+import {
+  fetchSummaryDashboard,
+  fetchDevelopmentAnalytics,
+  fetchQualityAnalytics,
+  fetchProductionAnalytics,
+  fetchLaboratoryAnalytics,
+  fetchAnalyticsOverview,
+  fetchModuleAnalytics,
+  fetchModuleData,
+  fetchModuleDetailData,
+  fetchRsSummary,
+  fetchRsProjectTimeline,
+  fetchRsExperimentSuccessRate,
+  fetchRsMaterialUsage,
+  fetchRsProjectRanking,
+  fetchLimsSummary,
+  fetchLimsSampleTimeline,
+  fetchLimsTestPassRate,
+  fetchLimsInstrumentUsage,
+  fetchLimsSampleStatusDistribution,
+  fetchQmsSummary,
+  fetchQmsQualityTrend,
+  fetchQmsIssueDistribution,
+  fetchEhsSummary,
+  fetchEhsRiskDistribution,
+  fetchEhsIncidentTrend,
+  fetchSrmSummary,
+  fetchSrmSupplierRanking,
+  fetchSrmOrderTimeline,
+  fetchPdmSummary,
+  fetchPdmProductionTrend,
+  fetchPdmBatchStatusDistribution,
+} from './analytics';
+
+import {
+  listDataSources,
+  getDataSource,
+  createDataSource,
+  updateDataSource,
+  deleteDataSource,
+  testDataSource,
+  refreshDataSource,
+} from './data-source';
+
+import {
+  listComparisons,
+  getComparison,
+  createComparison,
+  updateComparison,
+  deleteComparison,
+  runComparison,
+  getComparisonResult,
+} from './comparison';
+
+import {
+  listSyncRecords,
+  getSyncRecord,
+  createSyncRecord,
+  updateSyncRecord,
+  deleteSyncRecord,
+  retrySync,
+} from './sync';
+
 export * from './types';
 
 export {
@@ -29,13 +121,7 @@ export {
   fetchWidgetData,
 } from './widget';
 
-export {
-  fetchReports,
-  fetchReport,
-  createReport,
-  updateReport,
-  deleteReport,
-} from './report';
+export { fetchReports, fetchReport, createReport, updateReport, deleteReport } from './report';
 
 export {
   fetchSummaryDashboard,
@@ -92,104 +178,6 @@ export {
 } from './comparison';
 
 export {
-  listSyncRecords,
-  getSyncRecord,
-  createSyncRecord,
-  updateSyncRecord,
-  deleteSyncRecord,
-  retrySync,
-} from './sync';
-
-import {
-  fetchDashboards,
-  fetchDashboard,
-  createDashboard,
-  updateDashboard,
-  deleteDashboard,
-  cloneDashboard,
-  fetchPublicDashboards,
-  fetchUserDashboards,
-  fetchDashboardTemplates,
-  fetchDashboardTemplate,
-  createDashboardTemplate,
-  updateDashboardTemplate,
-  deleteDashboardTemplate,
-  createDashboardFromTemplate,
-} from './dashboard';
-
-import {
-  fetchWidgets,
-  fetchWidgetsByDashboard,
-  fetchWidget,
-  createWidget,
-  updateWidget,
-  deleteWidget,
-  fetchWidgetData,
-} from './widget';
-
-import {
-  fetchReports,
-  fetchReport,
-  createReport,
-  updateReport,
-  deleteReport,
-} from './report';
-
-import {
-  fetchSummaryDashboard,
-  fetchDevelopmentAnalytics,
-  fetchQualityAnalytics,
-  fetchProductionAnalytics,
-  fetchLaboratoryAnalytics,
-  fetchAnalyticsOverview,
-  fetchModuleAnalytics,
-  fetchModuleData,
-  fetchModuleDetailData,
-  fetchRsSummary,
-  fetchRsProjectTimeline,
-  fetchRsExperimentSuccessRate,
-  fetchRsMaterialUsage,
-  fetchRsProjectRanking,
-  fetchLimsSummary,
-  fetchLimsSampleTimeline,
-  fetchLimsTestPassRate,
-  fetchLimsInstrumentUsage,
-  fetchLimsSampleStatusDistribution,
-  fetchQmsSummary,
-  fetchQmsQualityTrend,
-  fetchQmsIssueDistribution,
-  fetchEhsSummary,
-  fetchEhsRiskDistribution,
-  fetchEhsIncidentTrend,
-  fetchSrmSummary,
-  fetchSrmSupplierRanking,
-  fetchSrmOrderTimeline,
-  fetchPdmSummary,
-  fetchPdmProductionTrend,
-  fetchPdmBatchStatusDistribution,
-} from './analytics';
-
-import {
-  listDataSources,
-  getDataSource,
-  createDataSource,
-  updateDataSource,
-  deleteDataSource,
-  testDataSource,
-  refreshDataSource,
-} from './data-source';
-
-import {
-  listComparisons,
-  getComparison,
-  createComparison,
-  updateComparison,
-  deleteComparison,
-  runComparison,
-  getComparisonResult,
-} from './comparison';
-
-import {
   listSyncRecords,
   getSyncRecord,
   createSyncRecord,

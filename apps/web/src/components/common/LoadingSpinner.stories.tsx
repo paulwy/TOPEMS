@@ -1,11 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
 
-import {
-  LoadingSpinner,
-  LoadingOverlay,
-  SkeletonLoader,
-} from './LoadingSpinner';
+import { LoadingSpinner, LoadingOverlay, SkeletonLoader } from './LoadingSpinner';
 
 const meta = {
   title: 'Common/Loading',
@@ -40,9 +36,9 @@ export const SpinnerDefault: Story = {
 export const SpinnerSizes: Story = {
   render: () => (
     <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-      <LoadingSpinner size="sm" />
-      <LoadingSpinner size="md" />
-      <LoadingSpinner size="lg" />
+      <LoadingSpinner size='sm' />
+      <LoadingSpinner size='md' />
+      <LoadingSpinner size='lg' />
     </div>
   ),
 };
@@ -57,7 +53,10 @@ export const OverlayWithToggle: Story = {
           {isLoading ? '隐藏加载' : '显示加载'}
         </button>
         <div style={{ marginTop: '16px', position: 'relative', width: '200px', height: '100px' }}>
-          <LoadingOverlay isLoading={isLoading} message="加载中...">
+          <LoadingOverlay
+            isLoading={isLoading}
+            message='加载中...'
+          >
             <div style={{ padding: '16px', background: 'grey.100', borderRadius: '8px' }}>
               内容区域
             </div>

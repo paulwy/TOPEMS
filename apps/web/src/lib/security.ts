@@ -49,15 +49,15 @@ export const setCsrfToken = (token: string): void => {
 export const getCsrfToken = (): string | null => {
   const token = localStorage.getItem(CSRF_TOKEN_KEY);
   const expireTime = localStorage.getItem(CSRF_TOKEN_EXPIRE_KEY);
-  
+
   if (!token || !expireTime) return null;
-  
+
   if (Date.now() > parseInt(expireTime, 10)) {
     localStorage.removeItem(CSRF_TOKEN_KEY);
     localStorage.removeItem(CSRF_TOKEN_EXPIRE_KEY);
     return null;
   }
-  
+
   return token;
 };
 

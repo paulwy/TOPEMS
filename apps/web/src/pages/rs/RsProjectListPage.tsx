@@ -1,15 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { logger } from '@/utils/logger';
 import { Link, useNavigate } from 'react-router-dom';
-import {
-  Box,
-  Chip,
-  LinearProgress,
-  Typography,
-  Stack,
-} from '@mui/material';
-import { Button } from '@mui/material';
-import { Plus, Download, Eye, Edit, Trash2 } from 'lucide-react';
+import { Box, Chip, LinearProgress, Typography, Stack, Button } from '@mui/material';
+import { Plus, Download, Eye, Edit, Trash2, Code2 } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
@@ -241,7 +234,14 @@ const RsProjectListPage: React.FC = () => {
   );
 
   return (
-    <PageContainer title='研发项目管理' subtitle='管理研发项目、跟踪进度、分配资源'>
+    <PageContainer
+      title='研发项目管理'
+      subtitle='管理研发项目、跟踪进度、分配资源'
+      headerProps={{
+        pageIcon: <Code2 style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+      }}
+    >
       <ListPageTemplate
         title=''
         subtitle=''

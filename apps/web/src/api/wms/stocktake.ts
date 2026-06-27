@@ -10,9 +10,7 @@ import type {
 } from './types';
 
 export const stockTakeApi = {
-  list: async (
-    params?: PaginationParams
-  ): Promise<ApiResponse<PaginatedResponse<StockTake>>> => {
+  list: async (params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<StockTake>>> => {
     return apiClient.wms.get('/stock-takes', { params });
   },
 
@@ -20,16 +18,11 @@ export const stockTakeApi = {
     return apiClient.wms.get(`/stock-takes/${id}`);
   },
 
-  create: async (
-    data: CreateStockTakeRequest
-  ): Promise<ApiResponse<StockTake>> => {
+  create: async (data: CreateStockTakeRequest): Promise<ApiResponse<StockTake>> => {
     return apiClient.wms.post('/stock-takes', data);
   },
 
-  update: async (
-    id: string,
-    data: Partial<StockTake>
-  ): Promise<ApiResponse<StockTake>> => {
+  update: async (id: string, data: Partial<StockTake>): Promise<ApiResponse<StockTake>> => {
     return apiClient.wms.put(`/stock-takes/${id}`, data);
   },
 
@@ -37,7 +30,9 @@ export const stockTakeApi = {
     return apiClient.wms.delete(`/stock-takes/${id}`);
   },
 
-  listItems: async (id: string): Promise<
+  listItems: async (
+    id: string
+  ): Promise<
     ApiResponse<{
       items: StockTakeItem[];
       total: number;
@@ -48,10 +43,7 @@ export const stockTakeApi = {
     return apiClient.wms.get(`/stock-takes/${id}/items`);
   },
 
-  getItem: async (
-    id: string,
-    item_id: string
-  ): Promise<ApiResponse<StockTakeItem>> => {
+  getItem: async (id: string, item_id: string): Promise<ApiResponse<StockTakeItem>> => {
     return apiClient.wms.get(`/stock-takes/${id}/items/${item_id}`);
   },
 
@@ -70,10 +62,7 @@ export const stockTakeApi = {
     return apiClient.wms.put(`/stock-takes/${id}/items/${item_id}`, data);
   },
 
-  deleteItem: async (
-    id: string,
-    item_id: string
-  ): Promise<ApiResponse<string>> => {
+  deleteItem: async (id: string, item_id: string): Promise<ApiResponse<string>> => {
     return apiClient.wms.delete(`/stock-takes/${id}/items/${item_id}`);
   },
 

@@ -14,6 +14,7 @@ import {
   GitBranch,
   CheckCircle,
   XCircle,
+  Workflow as WorkflowIcon,
 } from 'lucide-react';
 import type { Workflow } from '@/api/workflow';
 import { workflowApi, CreateWorkflowRequest } from '@/api/workflow';
@@ -44,8 +45,8 @@ import {
   Tabs,
   Tab,
   CircularProgress,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { apiLogger } from '@/utils/logger';
 
 const FlowWorkflowPage: React.FC = () => {
@@ -320,23 +321,26 @@ const FlowWorkflowPage: React.FC = () => {
     inactive: workflows.filter((w) => !w.is_active).length,
   };
 
-  const headerActions = useMemo(() => [
-    {
-      label: '创建工作流',
-      icon: <Plus size={18} />,
-      onClick: () => setShowCreateDialog(true),
-      variant: 'contained' as const,
-      color: 'primary' as const,
-    },
-  ], []);
+  const headerActions = useMemo(
+    () => [
+      {
+        label: '创建工作流',
+        icon: <Plus size={18} />,
+        onClick: () => setShowCreateDialog(true),
+        variant: 'contained' as const,
+        color: 'primary' as const,
+      },
+    ],
+    []
+  );
 
   return (
     <PageContainer
       title='工作流管理'
       subtitle='设计和管理审批流程'
       headerProps={{
-        pageIcon: <GitBranch size={24} />,
-        pageColor: 'primary.main',
+        pageIcon: <WorkflowIcon size={24} />,
+        pageGradient: 'linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%)',
         backButton: {
           href: '/dashboard',
         },

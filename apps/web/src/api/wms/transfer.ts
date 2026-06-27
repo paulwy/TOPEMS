@@ -19,16 +19,11 @@ export const transferApi = {
     return apiClient.wms.get(`/transfers/${id}`);
   },
 
-  create: async (
-    data: CreateTransferOrderRequest
-  ): Promise<ApiResponse<TransferOrder>> => {
+  create: async (data: CreateTransferOrderRequest): Promise<ApiResponse<TransferOrder>> => {
     return apiClient.wms.post('/transfers', data);
   },
 
-  update: async (
-    id: string,
-    data: Partial<TransferOrder>
-  ): Promise<ApiResponse<TransferOrder>> => {
+  update: async (id: string, data: Partial<TransferOrder>): Promise<ApiResponse<TransferOrder>> => {
     return apiClient.wms.put(`/transfers/${id}`, data);
   },
 

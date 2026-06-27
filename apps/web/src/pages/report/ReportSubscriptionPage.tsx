@@ -14,8 +14,8 @@ import {
   FormControlLabel,
   Chip,
   Tooltip,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import {
   Plus as PlusIcon,
   Edit as EditIcon,
@@ -307,8 +307,7 @@ const ReportSubscriptionPage: React.FC = () => {
         id: 'created_at',
         label: '创建时间',
         minWidth: 160,
-        render: (row) =>
-          row.created_at ? new Date(row.created_at).toLocaleString('zh-CN') : '-',
+        render: (row) => (row.created_at ? new Date(row.created_at).toLocaleString('zh-CN') : '-'),
       },
     ],
     []
@@ -361,7 +360,10 @@ const ReportSubscriptionPage: React.FC = () => {
   }, []);
 
   return (
-    <PageContainer title='报表订阅管理' subtitle='管理报表订阅，设置订阅者、订阅方式和订阅频率'>
+    <PageContainer
+      title='报表订阅管理'
+      subtitle='管理报表订阅，设置订阅者、订阅方式和订阅频率'
+    >
       <ListPageTemplate
         title=''
         subtitle=''
@@ -387,11 +389,19 @@ const ReportSubscriptionPage: React.FC = () => {
         emptyMessage='暂无订阅数据'
       />
 
-      <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth='md' fullWidth>
+      <Dialog
+        open={dialogOpen}
+        onClose={handleCloseDialog}
+        maxWidth='md'
+        fullWidth
+      >
         <DialogTitle>{editMode ? '编辑订阅' : '新建订阅'}</DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <FormControl fullWidth required>
+            <FormControl
+              fullWidth
+              required
+            >
               <InputLabel>报表模板</InputLabel>
               <Select
                 value={(formData as CreateSubscriptionRequest).template_id as string}
@@ -399,7 +409,10 @@ const ReportSubscriptionPage: React.FC = () => {
                 label='报表模板'
               >
                 {templates.map((template) => (
-                  <MenuItem key={template.id} value={template.id}>
+                  <MenuItem
+                    key={template.id}
+                    value={template.id}
+                  >
                     {template.name}
                   </MenuItem>
                 ))}
@@ -420,7 +433,10 @@ const ReportSubscriptionPage: React.FC = () => {
               type='email'
               placeholder='接收报表的邮箱地址'
             />
-            <FormControl fullWidth required>
+            <FormControl
+              fullWidth
+              required
+            >
               <InputLabel>订阅频率</InputLabel>
               <Select
                 value={formData.frequency as SubscriptionFrequency}
@@ -428,7 +444,10 @@ const ReportSubscriptionPage: React.FC = () => {
                 label='订阅频率'
               >
                 {FREQUENCY_OPTIONS.map((option) => (
-                  <MenuItem key={option.value} value={option.value}>
+                  <MenuItem
+                    key={option.value}
+                    value={option.value}
+                  >
                     {option.label}
                   </MenuItem>
                 ))}
@@ -447,7 +466,10 @@ const ReportSubscriptionPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>取消</Button>
-          <Button onClick={handleSubmit} variant='contained'>
+          <Button
+            onClick={handleSubmit}
+            variant='contained'
+          >
             {editMode ? '保存' : '创建'}
           </Button>
         </DialogActions>

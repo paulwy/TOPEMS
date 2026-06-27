@@ -20,9 +20,7 @@ export const improvementApi = {
   },
 
   getImprovement: async (id: string): Promise<ApiResponse<QualityImprovement>> => {
-    const response = await apiClient.qms.get<CorrectiveActionBackend>(
-      `/api/qms/actions/${id}`
-    );
+    const response = await apiClient.qms.get<CorrectiveActionBackend>(`/api/qms/actions/${id}`);
     return {
       ...response,
       data: response.data ? adaptActionToFrontend(response.data) : undefined,

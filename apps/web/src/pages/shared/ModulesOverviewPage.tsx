@@ -1,13 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import {
-  Box,
-  Typography,
-  Paper,
-  TextField,
-  Grid,
-  Chip,
-  InputAdornment,
-} from '@mui/material';
+import { Box, Typography, Paper, TextField, Grid, Chip, InputAdornment } from '@mui/material';
 import {
   Search,
   Home,
@@ -70,7 +62,12 @@ const renderIcon = (iconName?: string, size = 26): React.ReactNode => {
   if (!iconName) return null;
   const Icon = iconMap[iconName];
   if (!Icon) return null;
-  return <Icon size={size} color="#fff" />;
+  return (
+    <Icon
+      size={size}
+      color='#fff'
+    />
+  );
 };
 
 /* ------------------------------------------------------------------ */
@@ -150,7 +147,10 @@ const ModuleCard: React.FC<ModuleCardProps> = ({ card, onClick }) => {
       </Typography>
 
       {/* Chinese name */}
-      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+      <Typography
+        variant='subtitle1'
+        sx={{ fontWeight: 600 }}
+      >
         {card.name}
       </Typography>
 
@@ -158,14 +158,18 @@ const ModuleCard: React.FC<ModuleCardProps> = ({ card, onClick }) => {
       {(card.status === 'beta' || card.status === 'new') && (
         <Chip
           label={card.status === 'beta' ? 'Beta' : 'New'}
-          size="small"
+          size='small'
           color={card.status === 'beta' ? 'warning' : 'primary'}
           sx={{ mt: 0.5, height: 20, fontSize: 11 }}
         />
       )}
 
       {/* Description - uses name as description since ModuleCardConfig has no dedicated description field */}
-      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+      <Typography
+        variant='body2'
+        color='text.secondary'
+        sx={{ mt: 0.5 }}
+      >
         {card.name}
       </Typography>
     </Paper>
@@ -188,17 +192,34 @@ const ModuleSection: React.FC<SectionProps> = ({ title, subtitle, cards, onCardC
 
   return (
     <Box sx={{ mb: 4 }}>
-      <Typography variant="h6" sx={{ fontWeight: 600 }}>
+      <Typography
+        variant='h6'
+        sx={{ fontWeight: 600 }}
+      >
         {title}
       </Typography>
-      <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+      <Typography
+        variant='body2'
+        color='text.secondary'
+        sx={{ mb: 0.5 }}
+      >
         {subtitle}
       </Typography>
 
-      <Grid container spacing={2} sx={{ mt: 1 }}>
+      <Grid
+        container
+        spacing={2}
+        sx={{ mt: 1 }}
+      >
         {cards.map((card) => (
-          <Grid size={{ xs: 6, sm: 4, md: 3, lg: 2 }} key={card.code}>
-            <ModuleCard card={card} onClick={() => onCardClick(card)} />
+          <Grid
+            size={{ xs: 6, sm: 4, md: 3, lg: 2 }}
+            key={card.code}
+          >
+            <ModuleCard
+              card={card}
+              onClick={() => onCardClick(card)}
+            />
           </Grid>
         ))}
       </Grid>
@@ -296,20 +317,18 @@ const ModulesOverviewPage: React.FC = () => {
     if (!searchQuery.trim()) return allCards;
     const q = searchQuery.toLowerCase();
     return allCards.filter(
-      (card) =>
-        card.code.toLowerCase().includes(q) ||
-        card.name.toLowerCase().includes(q),
+      (card) => card.code.toLowerCase().includes(q) || card.name.toLowerCase().includes(q)
     );
   }, [allCards, searchQuery]);
 
   /* Separate core vs plugin */
   const coreCards = useMemo(
     () => filteredCards.filter((c) => c.source === 'core'),
-    [filteredCards],
+    [filteredCards]
   );
   const pluginCards = useMemo(
     () => filteredCards.filter((c) => c.source === 'plugin'),
-    [filteredCards],
+    [filteredCards]
   );
 
   /* Group plugin cards by suite */
@@ -327,7 +346,7 @@ const ModulesOverviewPage: React.FC = () => {
     (card: ModuleCardConfig) => {
       navigate(card.path);
     },
-    [navigate],
+    [navigate]
   );
 
   const sortedSuiteKeys = useMemo(() => {
@@ -348,14 +367,14 @@ const ModulesOverviewPage: React.FC = () => {
       {/* Search bar */}
       <TextField
         fullWidth
-        size="small"
-        placeholder="搜索模块..."
+        size='small'
+        placeholder='搜索模块...'
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
         slotProps={{
           input: {
             startAdornment: (
-              <InputAdornment position="start">
+              <InputAdornment position='start'>
                 <Search size={18} />
               </InputAdornment>
             ),
@@ -366,8 +385,8 @@ const ModulesOverviewPage: React.FC = () => {
 
       {/* Core modules */}
       <ModuleSection
-        title="核心平台"
-        subtitle="企业管理基础能力，开箱即用"
+        title='核心平台'
+        subtitle='企业管理基础能力，开箱即用'
         cards={coreCards}
         onCardClick={handleCardClick}
       />
@@ -389,8 +408,8 @@ const ModulesOverviewPage: React.FC = () => {
       {/* Other / ungrouped plugin modules */}
       {suiteCards['other'] && suiteCards['other'].length > 0 && (
         <ModuleSection
-          title="更多应用"
-          subtitle="其他业务模块"
+          title='更多应用'
+          subtitle='其他业务模块'
           cards={suiteCards['other']}
           onCardClick={handleCardClick}
         />

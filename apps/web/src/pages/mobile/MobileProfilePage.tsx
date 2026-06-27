@@ -30,8 +30,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { MobileLayout } from '@/components/mobile';
-import { MobileCard } from '@/components/mobile';
+import { MobileLayout, MobileCard } from '@/components/mobile';
 import { useAppStore } from '@/store';
 import { useResponsive } from '@/hooks';
 
@@ -87,7 +86,14 @@ const MobileSettingsPage: React.FC = () => {
           subtitle: '缓存、同步策略',
           type: 'navigate',
           path: '/mobile/offline-sync',
-          badge: <Chip label='2.3 GB' size='small' variant='outlined' sx={{ height: 20, fontSize: '0.7rem' }} />,
+          badge: (
+            <Chip
+              label='2.3 GB'
+              size='small'
+              variant='outlined'
+              sx={{ height: 20, fontSize: '0.7rem' }}
+            />
+          ),
         },
         {
           id: 'app-settings',
@@ -199,7 +205,12 @@ const MobileSettingsPage: React.FC = () => {
     { id: 'home', label: '首页', icon: <Home style={{ width: 22, height: 22 }} /> },
     { id: 'tasks', label: '任务', icon: <ListTodo style={{ width: 22, height: 22 }} /> },
     { id: 'scan', label: '扫码', icon: <ScanLine style={{ width: 22, height: 22 }} /> },
-    { id: 'approval', label: '审批', icon: <CheckSquare style={{ width: 22, height: 22 }} />, badge: 3 },
+    {
+      id: 'approval',
+      label: '审批',
+      icon: <CheckSquare style={{ width: 22, height: 22 }} />,
+      badge: 3,
+    },
     { id: 'profile', label: '我的', icon: <User style={{ width: 22, height: 22 }} /> },
   ];
 
@@ -246,10 +257,17 @@ const MobileSettingsPage: React.FC = () => {
             {user?.fullName?.charAt(0) || user?.username?.charAt(0) || 'U'}
           </Avatar>
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant='h6' sx={{ fontWeight: 600, mb: 0.5 }}>
+            <Typography
+              variant='h6'
+              sx={{ fontWeight: 600, mb: 0.5 }}
+            >
               {user?.fullName || user?.username || '用户'}
             </Typography>
-            <Typography variant='body2' color='text.secondary' sx={{ mb: 0.5 }}>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{ mb: 0.5 }}
+            >
               {user?.email || 'user@example.com'}
             </Typography>
             <Chip
@@ -264,7 +282,10 @@ const MobileSettingsPage: React.FC = () => {
         </Box>
 
         {settingGroups.map((group, groupIndex) => (
-          <Box key={group.title} sx={{ mb: 3 }}>
+          <Box
+            key={group.title}
+            sx={{ mb: 3 }}
+          >
             <Typography
               variant='caption'
               color='text.secondary'
@@ -322,7 +343,10 @@ const MobileSettingsPage: React.FC = () => {
             pt: 2,
           }}
         >
-          <Typography variant='caption' color='text.secondary'>
+          <Typography
+            variant='caption'
+            color='text.secondary'
+          >
             TOPEMS v2.1.0
           </Typography>
         </Box>

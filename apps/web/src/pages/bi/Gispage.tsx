@@ -66,8 +66,8 @@ import {
   FormControlLabel,
   InputAdornment,
   CircularProgress,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { PageContainer } from '@/components/common';
 
 type TabType =
@@ -482,7 +482,8 @@ const GisContent: React.FC = () => {
   const getStatusStyle = (status: string) => {
     if (!status) return { bgcolor: 'grey.100', color: '#475569' };
     const s = status.toLowerCase();
-    if (s.includes('active') || s.includes('启用')) return { bgcolor: 'success.lighter', color: '#15803d' };
+    if (s.includes('active') || s.includes('启用'))
+      return { bgcolor: 'success.lighter', color: '#15803d' };
     if (s.includes('pending') || s.includes('待处理'))
       return { bgcolor: 'warning.light', color: '#b45309' };
     if (s.includes('inactive') || s.includes('禁用'))
@@ -894,1064 +895,1067 @@ const GisContent: React.FC = () => {
   );
 
   return (
-    <PageContainer padding={false} maxWidth={false}>
+    <PageContainer
+      padding={false}
+      maxWidth={false}
+    >
       <Box
         sx={{
           minHeight: '100vh',
           background: 'linear-gradient(135deg, #f8fafc 0%, #ecfeff 100%)',
         }}
       >
-      <Box sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3 }, py: 4 }}>
-        <Stack
-          direction='row'
-          spacing={2}
-          sx={{
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            mb: 4,
-          }}
-        >
+        <Box sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3 }, py: 4 }}>
           <Stack
             direction='row'
-            spacing={1.5}
-            sx={{ alignItems: 'center' }}
+            spacing={2}
+            sx={{
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              mb: 4,
+            }}
           >
-            <IconButton onClick={() => navigate('/dashboard')}>
-              <ChevronRight style={{ transform: 'rotate(180deg)' }} />
-            </IconButton>
-            <Box>
-              <Typography
-                variant='h4'
-                sx={{ fontWeight: 700 }}
-              >
-                厂区空间数字化
-              </Typography>
-              <Typography color='text.secondary'>
-                管理设备点位、管线、仓储位置、现场取证、厂区地图和业务位置
-              </Typography>
-            </Box>
-          </Stack>
-          <Stack
-            direction='row'
-            spacing={1.5}
-            sx={{ alignItems: 'center' }}
-          >
-            <Button
-              variant='contained'
-              color='success'
-              startIcon={<Upload size={16} />}
-              onClick={() => setShowImportModal(true)}
+            <Stack
+              direction='row'
+              spacing={1.5}
+              sx={{ alignItems: 'center' }}
             >
-              导入
-            </Button>
-            {activeTab !== 'map' && (
+              <IconButton onClick={() => navigate('/dashboard')}>
+                <ChevronRight style={{ transform: 'rotate(180deg)' }} />
+              </IconButton>
+              <Box>
+                <Typography
+                  variant='h4'
+                  sx={{ fontWeight: 700 }}
+                >
+                  厂区空间数字化
+                </Typography>
+                <Typography color='text.secondary'>
+                  管理设备点位、管线、仓储位置、现场取证、厂区地图和业务位置
+                </Typography>
+              </Box>
+            </Stack>
+            <Stack
+              direction='row'
+              spacing={1.5}
+              sx={{ alignItems: 'center' }}
+            >
               <Button
                 variant='contained'
-                sx={{
-                  bgcolor: 'info.main',
-                  '&:hover': { bgcolor: '#0891b2' },
-                }}
-                startIcon={<Plus size={16} />}
-                onClick={openCreateModal}
+                color='success'
+                startIcon={<Upload size={16} />}
+                onClick={() => setShowImportModal(true)}
               >
-                新建
+                导入
               </Button>
-            )}
-            <IconButton
-              onClick={() => loadAllData(true)}
-              sx={{ border: 1, borderColor: 'divider' }}
-            >
-              <RefreshCw
-                size={20}
-                className={loading ? 'animate-spin' : ''}
-                style={{
-                  animation: loading ? 'spin 1s linear infinite' : undefined,
-                }}
-              />
-            </IconButton>
-          </Stack>
-        </Stack>
-
-        {error && (
-          <Alert
-            severity='error'
-            icon={<AlertTriangle size={20} />}
-            sx={{ mb: 3 }}
-          >
-            {error}
-          </Alert>
-        )}
-
-        <Snackbar
-          open={Boolean(notification)}
-          autoHideDuration={3000}
-          onClose={() => setNotification(null)}
-          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-        >
-          <Alert
-            severity={notification?.type === 'success' ? 'success' : 'error'}
-            onClose={() => setNotification(null)}
-            icon={
-              notification?.type === 'success' ? (
-                <CheckCircle2 size={20} />
-              ) : (
-                <AlertCircle size={20} />
-              )
-            }
-          >
-            {notification?.message}
-          </Alert>
-        </Snackbar>
-
-        <Grid
-          container
-          spacing={2}
-          sx={{ mb: 4 }}
-        >
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <MetricCard
-              title='设备点位'
-              value={statistics?.device_points || 0}
-              icon={<MapPin size={24} />}
-              gradient={['#00C897', '#00A878']}
-              subtitle={`启用: ${statistics?.active_devices || 0}`}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <MetricCard
-              title='管线管理'
-              value={statistics?.pipelines || 0}
-              icon={<ArrowRight size={24} />}
-              gradient={['#6366F1', '#4F46E5']}
-              subtitle={`启用: ${statistics?.active_pipelines || 0}`}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <MetricCard
-              title='仓储位置'
-              value={statistics?.storage_locations || 0}
-              icon={<Warehouse size={24} />}
-              gradient={['warning.main', '#D97706']}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <MetricCard
-              title='现场取证'
-              value={statistics?.evidence_records || 0}
-              icon={<Camera size={24} />}
-              gradient={['#EC4899', '#DB2777']}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <MetricCard
-              title='厂区地图'
-              value={statistics?.factory_maps || 0}
-              icon={<Map size={24} />}
-              gradient={['#8B5CF6', '#7C3AED']}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <MetricCard
-              title='业务位置'
-              value={statistics?.business_locations || 0}
-              icon={<Building2 size={24} />}
-              gradient={['#14B8A6', '#0D9488']}
-            />
-          </Grid>
-        </Grid>
-
-        <Grid
-          container
-          spacing={3}
-          sx={{ mb: 4 }}
-        >
-          <Grid size={{ xs: 12, lg: 6 }}>
-            <StatsChart
-              title='业务类型分布'
-              type='pie'
-              data={[
-                {
-                  name: '设备点位',
-                  value: statistics?.device_points || 0,
-                  color: '#00C897',
-                },
-                {
-                  name: '管线',
-                  value: statistics?.pipelines || 0,
-                  color: '#6366F1',
-                },
-                {
-                  name: '仓储位置',
-                  value: statistics?.storage_locations || 0,
-                  color: 'warning.main',
-                },
-                {
-                  name: '厂区地图',
-                  value: statistics?.factory_maps || 0,
-                  color: '#8B5CF6',
-                },
-                {
-                  name: '业务位置',
-                  value: statistics?.business_locations || 0,
-                  color: '#14B8A6',
-                },
-              ].filter((d) => d.value > 0)}
-              dataKey='value'
-              nameKey='name'
-            />
-          </Grid>
-          <Grid size={{ xs: 12, lg: 6 }}>
-            <StatsChart
-              title='启用状态对比'
-              type='bar'
-              data={[
-                {
-                  name: '设备点位',
-                  启用: statistics?.active_devices || 0,
-                  总数: statistics?.device_points || 0,
-                },
-                {
-                  name: '管线',
-                  启用: statistics?.active_pipelines || 0,
-                  总数: statistics?.pipelines || 0,
-                },
-              ]}
-              dataKey='name'
-              yKeys={['启用', '总数']}
-              colors={['#00C897', '#6366F1']}
-            />
-          </Grid>
-        </Grid>
-
-        <Paper
-          elevation={0}
-          sx={{
-            borderBottom: 1,
-            borderColor: 'divider',
-            mb: 3,
-            overflowX: 'auto',
-          }}
-        >
-          <Tabs
-            value={activeTab}
-            onChange={(_, v) => setActiveTab(v)}
-            variant='scrollable'
-            scrollButtons='auto'
-            sx={{ minHeight: 48 }}
-          >
-            {tabs.map((tab) => (
-              <Tab
-                key={tab.id}
-                value={tab.id}
-                label={tab.label}
-                icon={tab.icon as React.ReactElement}
-                iconPosition='start'
-                sx={{ minHeight: 48, fontWeight: 500 }}
-              />
-            ))}
-          </Tabs>
-        </Paper>
-
-        {activeTab === 'map' ? (
-          <Paper
-            elevation={0}
-            sx={{
-              border: 1,
-              borderColor: 'divider',
-              borderRadius: 1.5,
-              overflow: 'hidden',
-              height: 500,
-              position: 'relative',
-            }}
-          >
-            {loading ? (
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  height: '100%',
-                }}
+              {activeTab !== 'map' && (
+                <Button
+                  variant='contained'
+                  sx={{
+                    bgcolor: 'info.main',
+                    '&:hover': { bgcolor: '#0891b2' },
+                  }}
+                  startIcon={<Plus size={16} />}
+                  onClick={openCreateModal}
+                >
+                  新建
+                </Button>
+              )}
+              <IconButton
+                onClick={() => loadAllData(true)}
+                sx={{ border: 1, borderColor: 'divider' }}
               >
-                <CircularProgress sx={{ color: 'info.main' }} />
-              </Box>
-            ) : (
-              <MapView
-                devicePoints={devicePoints}
-                pipelines={pipelines}
-                storageLocations={storageLocations}
-                onMarkerClick={(item) => setSelectedItem(item)}
-              />
-            )}
-          </Paper>
-        ) : (
-          <Paper
-            elevation={0}
-            sx={{
-              border: 1,
-              borderColor: 'divider',
-              borderRadius: 1.5,
-              overflow: 'hidden',
-            }}
-          >
-            <Box
-              sx={{
-                p: 2,
-                borderBottom: 1,
-                borderColor: 'divider',
-                bgcolor: 'grey.50',
-              }}
-            >
-              <Stack
-                direction='row'
-                spacing={2}
-                sx={{ justifyContent: 'space-between', alignItems: 'center' }}
-              >
-                <TextField
-                  size='small'
-                  placeholder='搜索...'
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  sx={{ flex: 1, maxWidth: 400 }}
-                  slotProps={{
-                    input: {
-                      startAdornment: (
-                        <InputAdornment position='start'>
-                          <SearchIcon size={18} />
-                        </InputAdornment>
-                      ),
-                    },
+                <RefreshCw
+                  size={20}
+                  className={loading ? 'animate-spin' : ''}
+                  style={{
+                    animation: loading ? 'spin 1s linear infinite' : undefined,
                   }}
                 />
-                <Button
-                  size='small'
-                  startIcon={<Download size={16} />}
-                  onClick={downloadTemplate}
-                  sx={{ color: 'text.secondary' }}
-                >
-                  下载模板
-                </Button>
-              </Stack>
-            </Box>
-            <Box sx={{ p: 3 }}>
+              </IconButton>
+            </Stack>
+          </Stack>
+
+          {error && (
+            <Alert
+              severity='error'
+              icon={<AlertTriangle size={20} />}
+              sx={{ mb: 3 }}
+            >
+              {error}
+            </Alert>
+          )}
+
+          <Snackbar
+            open={Boolean(notification)}
+            autoHideDuration={3000}
+            onClose={() => setNotification(null)}
+            anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+          >
+            <Alert
+              severity={notification?.type === 'success' ? 'success' : 'error'}
+              onClose={() => setNotification(null)}
+              icon={
+                notification?.type === 'success' ? (
+                  <CheckCircle2 size={20} />
+                ) : (
+                  <AlertCircle size={20} />
+                )
+              }
+            >
+              {notification?.message}
+            </Alert>
+          </Snackbar>
+
+          <Grid
+            container
+            spacing={2}
+            sx={{ mb: 4 }}
+          >
+            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+              <MetricCard
+                title='设备点位'
+                value={statistics?.device_points || 0}
+                icon={<MapPin size={24} />}
+                gradient={['#00C897', '#00A878']}
+                subtitle={`启用: ${statistics?.active_devices || 0}`}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+              <MetricCard
+                title='管线管理'
+                value={statistics?.pipelines || 0}
+                icon={<ArrowRight size={24} />}
+                gradient={['#6366F1', '#4F46E5']}
+                subtitle={`启用: ${statistics?.active_pipelines || 0}`}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+              <MetricCard
+                title='仓储位置'
+                value={statistics?.storage_locations || 0}
+                icon={<Warehouse size={24} />}
+                gradient={['warning.main', '#D97706']}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+              <MetricCard
+                title='现场取证'
+                value={statistics?.evidence_records || 0}
+                icon={<Camera size={24} />}
+                gradient={['#EC4899', '#DB2777']}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+              <MetricCard
+                title='厂区地图'
+                value={statistics?.factory_maps || 0}
+                icon={<Map size={24} />}
+                gradient={['#8B5CF6', '#7C3AED']}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
+              <MetricCard
+                title='业务位置'
+                value={statistics?.business_locations || 0}
+                icon={<Building2 size={24} />}
+                gradient={['#14B8A6', '#0D9488']}
+              />
+            </Grid>
+          </Grid>
+
+          <Grid
+            container
+            spacing={3}
+            sx={{ mb: 4 }}
+          >
+            <Grid size={{ xs: 12, lg: 6 }}>
+              <StatsChart
+                title='业务类型分布'
+                type='pie'
+                data={[
+                  {
+                    name: '设备点位',
+                    value: statistics?.device_points || 0,
+                    color: '#00C897',
+                  },
+                  {
+                    name: '管线',
+                    value: statistics?.pipelines || 0,
+                    color: '#6366F1',
+                  },
+                  {
+                    name: '仓储位置',
+                    value: statistics?.storage_locations || 0,
+                    color: 'warning.main',
+                  },
+                  {
+                    name: '厂区地图',
+                    value: statistics?.factory_maps || 0,
+                    color: '#8B5CF6',
+                  },
+                  {
+                    name: '业务位置',
+                    value: statistics?.business_locations || 0,
+                    color: '#14B8A6',
+                  },
+                ].filter((d) => d.value > 0)}
+                dataKey='value'
+                nameKey='name'
+              />
+            </Grid>
+            <Grid size={{ xs: 12, lg: 6 }}>
+              <StatsChart
+                title='启用状态对比'
+                type='bar'
+                data={[
+                  {
+                    name: '设备点位',
+                    启用: statistics?.active_devices || 0,
+                    总数: statistics?.device_points || 0,
+                  },
+                  {
+                    name: '管线',
+                    启用: statistics?.active_pipelines || 0,
+                    总数: statistics?.pipelines || 0,
+                  },
+                ]}
+                dataKey='name'
+                yKeys={['启用', '总数']}
+                colors={['#00C897', '#6366F1']}
+              />
+            </Grid>
+          </Grid>
+
+          <Paper
+            elevation={0}
+            sx={{
+              borderBottom: 1,
+              borderColor: 'divider',
+              mb: 3,
+              overflowX: 'auto',
+            }}
+          >
+            <Tabs
+              value={activeTab}
+              onChange={(_, v) => setActiveTab(v)}
+              variant='scrollable'
+              scrollButtons='auto'
+              sx={{ minHeight: 48 }}
+            >
+              {tabs.map((tab) => (
+                <Tab
+                  key={tab.id}
+                  value={tab.id}
+                  label={tab.label}
+                  icon={tab.icon as React.ReactElement}
+                  iconPosition='start'
+                  sx={{ minHeight: 48, fontWeight: 500 }}
+                />
+              ))}
+            </Tabs>
+          </Paper>
+
+          {activeTab === 'map' ? (
+            <Paper
+              elevation={0}
+              sx={{
+                border: 1,
+                borderColor: 'divider',
+                borderRadius: 1.5,
+                overflow: 'hidden',
+                height: 500,
+                position: 'relative',
+              }}
+            >
               {loading ? (
                 <Box
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    py: 6,
+                    height: '100%',
                   }}
                 >
                   <CircularProgress sx={{ color: 'info.main' }} />
                 </Box>
-              ) : filteredData.length === 0 ? (
-                <Box sx={{ textAlign: 'center', py: 6 }}>
+              ) : (
+                <MapView
+                  devicePoints={devicePoints}
+                  pipelines={pipelines}
+                  storageLocations={storageLocations}
+                  onMarkerClick={(item) => setSelectedItem(item)}
+                />
+              )}
+            </Paper>
+          ) : (
+            <Paper
+              elevation={0}
+              sx={{
+                border: 1,
+                borderColor: 'divider',
+                borderRadius: 1.5,
+                overflow: 'hidden',
+              }}
+            >
+              <Box
+                sx={{
+                  p: 2,
+                  borderBottom: 1,
+                  borderColor: 'divider',
+                  bgcolor: 'grey.50',
+                }}
+              >
+                <Stack
+                  direction='row'
+                  spacing={2}
+                  sx={{ justifyContent: 'space-between', alignItems: 'center' }}
+                >
+                  <TextField
+                    size='small'
+                    placeholder='搜索...'
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    sx={{ flex: 1, maxWidth: 400 }}
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position='start'>
+                            <SearchIcon size={18} />
+                          </InputAdornment>
+                        ),
+                      },
+                    }}
+                  />
+                  <Button
+                    size='small'
+                    startIcon={<Download size={16} />}
+                    onClick={downloadTemplate}
+                    sx={{ color: 'text.secondary' }}
+                  >
+                    下载模板
+                  </Button>
+                </Stack>
+              </Box>
+              <Box sx={{ p: 3 }}>
+                {loading ? (
                   <Box
                     sx={{
-                      width: 64,
-                      height: 64,
-                      mx: 'auto',
-                      mb: 2,
-                      bgcolor: 'grey.100',
-                      borderRadius: '50%',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
+                      py: 6,
                     }}
                   >
-                    <SearchIcon
-                      size={32}
+                    <CircularProgress sx={{ color: 'info.main' }} />
+                  </Box>
+                ) : filteredData.length === 0 ? (
+                  <Box sx={{ textAlign: 'center', py: 6 }}>
+                    <Box
+                      sx={{
+                        width: 64,
+                        height: 64,
+                        mx: 'auto',
+                        mb: 2,
+                        bgcolor: 'grey.100',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <SearchIcon
+                        size={32}
+                        color='text.disabled'
+                      />
+                    </Box>
+                    <Typography color='text.secondary'>暂无数据</Typography>
+                  </Box>
+                ) : (
+                  <>
+                    {activeTab === 'devicePoints' && (
+                      <DataTable
+                        columns={devicePointColumns}
+                        data={filteredData as DevicePoint[]}
+                        searchKey='name'
+                        searchPlaceholder='搜索设备名称...'
+                        exportFileName='gis-device-points'
+                      />
+                    )}
+                    {activeTab === 'pipelines' && (
+                      <DataTable
+                        columns={pipelineColumns}
+                        data={filteredData as Pipeline[]}
+                        searchKey='name'
+                        searchPlaceholder='搜索管线名称...'
+                        exportFileName='gis-pipelines'
+                      />
+                    )}
+                    {activeTab === 'storageLocations' && (
+                      <DataTable
+                        columns={storageLocationColumns}
+                        data={filteredData as StorageLocation[]}
+                        searchKey='name'
+                        searchPlaceholder='搜索库位名称...'
+                        exportFileName='gis-storage-locations'
+                      />
+                    )}
+                    {activeTab === 'evidenceRecords' && (
+                      <DataTable
+                        columns={evidenceRecordColumns}
+                        data={filteredData as EvidenceRecord[]}
+                        searchKey='title'
+                        searchPlaceholder='搜索记录标题...'
+                        exportFileName='gis-evidence-records'
+                      />
+                    )}
+                    {activeTab === 'factoryMaps' && (
+                      <DataTable
+                        columns={factoryMapColumns}
+                        data={filteredData as FactoryMap[]}
+                        searchKey='name'
+                        searchPlaceholder='搜索地图名称...'
+                        exportFileName='gis-factory-maps'
+                      />
+                    )}
+                    {activeTab === 'businessLocations' && (
+                      <DataTable
+                        columns={businessLocationColumns}
+                        data={filteredData as BusinessLocation[]}
+                        searchKey='business_name'
+                        searchPlaceholder='搜索业务名称...'
+                        exportFileName='gis-business-locations'
+                      />
+                    )}
+                  </>
+                )}
+              </Box>
+            </Paper>
+          )}
+
+          <Dialog
+            open={showModal}
+            onClose={resetModal}
+            maxWidth='md'
+            fullWidth
+            slotProps={{ paper: { sx: { borderRadius: 2 } } }}
+          >
+            <DialogTitle>
+              <Stack
+                direction='row'
+                sx={{ justifyContent: 'space-between', alignItems: 'center' }}
+              >
+                <Typography
+                  variant='h6'
+                  sx={{ fontWeight: 600 }}
+                >
+                  {modalType === 'create' ? '新建' : '编辑'}
+                </Typography>
+                <IconButton
+                  onClick={resetModal}
+                  size='small'
+                >
+                  <X size={20} />
+                </IconButton>
+              </Stack>
+            </DialogTitle>
+            <DialogContent dividers>
+              <Stack
+                spacing={3}
+                sx={{ pt: 1 }}
+              >
+                {activeTab === 'devicePoints' && (
+                  <Stack spacing={3}>
+                    <InputField
+                      label='名称'
+                      name='name'
+                      value={formData.name}
+                      onChange={(v) => setFormData({ ...formData, name: v })}
+                      error={formErrors.name}
+                      required
+                    />
+                    <InputField
+                      label='设备类型'
+                      name='device_type'
+                      value={formData.device_type}
+                      onChange={(v) => setFormData({ ...formData, device_type: v })}
+                      error={formErrors.device_type}
+                      required
+                    />
+                    <Grid
+                      container
+                      spacing={2}
+                    >
+                      <Grid size={6}>
+                        <InputField
+                          label='纬度'
+                          name='latitude'
+                          type='number'
+                          value={formData.latitude}
+                          onChange={(v) => setFormData({ ...formData, latitude: v })}
+                          error={formErrors.latitude}
+                          required
+                        />
+                      </Grid>
+                      <Grid size={6}>
+                        <InputField
+                          label='经度'
+                          name='longitude'
+                          type='number'
+                          value={formData.longitude}
+                          onChange={(v) => setFormData({ ...formData, longitude: v })}
+                          error={formErrors.longitude}
+                          required
+                        />
+                      </Grid>
+                    </Grid>
+                    <TextAreaField
+                      label='描述'
+                      value={formData.description}
+                      onChange={(v) => setFormData({ ...formData, description: v })}
+                    />
+                  </Stack>
+                )}
+                {activeTab === 'pipelines' && (
+                  <Stack spacing={3}>
+                    <InputField
+                      label='名称'
+                      name='name'
+                      value={formData.name}
+                      onChange={(v) => setFormData({ ...formData, name: v })}
+                      error={formErrors.name}
+                      required
+                    />
+                    <InputField
+                      label='管线类型'
+                      name='pipeline_type'
+                      value={formData.pipeline_type}
+                      onChange={(v) => setFormData({ ...formData, pipeline_type: v })}
+                      error={formErrors.pipeline_type}
+                      required
+                    />
+                    <Grid
+                      container
+                      spacing={2}
+                    >
+                      <Grid size={6}>
+                        <InputField
+                          label='起点纬度'
+                          name='start_lat'
+                          type='number'
+                          value={formData.start_lat}
+                          onChange={(v) => setFormData({ ...formData, start_lat: v })}
+                          error={formErrors.start_lat}
+                          required
+                        />
+                      </Grid>
+                      <Grid size={6}>
+                        <InputField
+                          label='起点经度'
+                          name='start_lng'
+                          type='number'
+                          value={formData.start_lng}
+                          onChange={(v) => setFormData({ ...formData, start_lng: v })}
+                          error={formErrors.start_lng}
+                          required
+                        />
+                      </Grid>
+                    </Grid>
+                    <Grid
+                      container
+                      spacing={2}
+                    >
+                      <Grid size={6}>
+                        <InputField
+                          label='终点纬度'
+                          name='end_lat'
+                          type='number'
+                          value={formData.end_lat}
+                          onChange={(v) => setFormData({ ...formData, end_lat: v })}
+                          error={formErrors.end_lat}
+                          required
+                        />
+                      </Grid>
+                      <Grid size={6}>
+                        <InputField
+                          label='终点经度'
+                          name='end_lng'
+                          type='number'
+                          value={formData.end_lng}
+                          onChange={(v) => setFormData({ ...formData, end_lng: v })}
+                          error={formErrors.end_lng}
+                          required
+                        />
+                      </Grid>
+                    </Grid>
+                  </Stack>
+                )}
+                {activeTab === 'storageLocations' && (
+                  <Stack spacing={3}>
+                    <InputField
+                      label='名称'
+                      name='name'
+                      value={formData.name}
+                      onChange={(v) => setFormData({ ...formData, name: v })}
+                      error={formErrors.name}
+                      required
+                    />
+                    <InputField
+                      label='类型'
+                      name='location_type'
+                      value={formData.location_type}
+                      onChange={(v) => setFormData({ ...formData, location_type: v })}
+                      error={formErrors.location_type}
+                      required
+                    />
+                    <Grid
+                      container
+                      spacing={2}
+                    >
+                      <Grid size={6}>
+                        <InputField
+                          label='纬度'
+                          name='latitude'
+                          type='number'
+                          value={formData.latitude}
+                          onChange={(v) => setFormData({ ...formData, latitude: v })}
+                          error={formErrors.latitude}
+                          required
+                        />
+                      </Grid>
+                      <Grid size={6}>
+                        <InputField
+                          label='经度'
+                          name='longitude'
+                          type='number'
+                          value={formData.longitude}
+                          onChange={(v) => setFormData({ ...formData, longitude: v })}
+                          error={formErrors.longitude}
+                          required
+                        />
+                      </Grid>
+                    </Grid>
+                    <Grid
+                      container
+                      spacing={2}
+                    >
+                      <Grid size={6}>
+                        <InputField
+                          label='容量'
+                          name='capacity'
+                          type='number'
+                          value={formData.capacity}
+                          onChange={(v) => setFormData({ ...formData, capacity: v })}
+                        />
+                      </Grid>
+                      <Grid size={6}>
+                        <InputField
+                          label='当前用量'
+                          name='current_usage'
+                          type='number'
+                          value={formData.current_usage}
+                          onChange={(v) => setFormData({ ...formData, current_usage: v })}
+                        />
+                      </Grid>
+                    </Grid>
+                  </Stack>
+                )}
+                {activeTab === 'evidenceRecords' && (
+                  <Stack spacing={3}>
+                    <InputField
+                      label='标题'
+                      name='title'
+                      value={formData.title}
+                      onChange={(v) => setFormData({ ...formData, title: v })}
+                      error={formErrors.title}
+                      required
+                    />
+                    <InputField
+                      label='类型'
+                      name='evidence_type'
+                      value={formData.evidence_type}
+                      onChange={(v) => setFormData({ ...formData, evidence_type: v })}
+                      error={formErrors.evidence_type}
+                      required
+                    />
+                    <Grid
+                      container
+                      spacing={2}
+                    >
+                      <Grid size={6}>
+                        <InputField
+                          label='纬度'
+                          name='latitude'
+                          type='number'
+                          value={formData.latitude}
+                          onChange={(v) => setFormData({ ...formData, latitude: v })}
+                          error={formErrors.latitude}
+                          required
+                        />
+                      </Grid>
+                      <Grid size={6}>
+                        <InputField
+                          label='经度'
+                          name='longitude'
+                          type='number'
+                          value={formData.longitude}
+                          onChange={(v) => setFormData({ ...formData, longitude: v })}
+                          error={formErrors.longitude}
+                          required
+                        />
+                      </Grid>
+                    </Grid>
+                    <InputField
+                      label='记录人'
+                      name='recorded_by'
+                      value={formData.recorded_by}
+                      onChange={(v) => setFormData({ ...formData, recorded_by: v })}
+                      error={formErrors.recorded_by}
+                      required
+                    />
+                  </Stack>
+                )}
+                {activeTab === 'factoryMaps' && (
+                  <Stack spacing={3}>
+                    <InputField
+                      label='名称'
+                      name='name'
+                      value={formData.name}
+                      onChange={(v) => setFormData({ ...formData, name: v })}
+                      error={formErrors.name}
+                      required
+                    />
+                    <InputField
+                      label='编号'
+                      name='code'
+                      value={formData.code}
+                      onChange={(v) => setFormData({ ...formData, code: v })}
+                      error={formErrors.code}
+                      required
+                    />
+                    <InputField
+                      label='地图类型'
+                      name='map_type'
+                      value={formData.map_type}
+                      onChange={(v) => setFormData({ ...formData, map_type: v })}
+                      error={formErrors.map_type}
+                      required
+                    />
+                    <InputField
+                      label='文件URL'
+                      name='file_url'
+                      value={formData.file_url}
+                      onChange={(v) => setFormData({ ...formData, file_url: v })}
+                    />
+                  </Stack>
+                )}
+                {activeTab === 'businessLocations' && (
+                  <Stack spacing={3}>
+                    <InputField
+                      label='业务名称'
+                      name='business_name'
+                      value={formData.business_name}
+                      onChange={(v) => setFormData({ ...formData, business_name: v })}
+                      error={formErrors.business_name}
+                      required
+                    />
+                    <InputField
+                      label='业务类型'
+                      name='business_type'
+                      value={formData.business_type}
+                      onChange={(v) => setFormData({ ...formData, business_type: v })}
+                      error={formErrors.business_type}
+                      required
+                    />
+                    <Grid
+                      container
+                      spacing={2}
+                    >
+                      <Grid size={6}>
+                        <InputField
+                          label='纬度'
+                          name='lat'
+                          type='number'
+                          value={formData.lat}
+                          onChange={(v) => setFormData({ ...formData, lat: v })}
+                          error={formErrors.lat}
+                          required
+                        />
+                      </Grid>
+                      <Grid size={6}>
+                        <InputField
+                          label='经度'
+                          name='lng'
+                          type='number'
+                          value={formData.lng}
+                          onChange={(v) => setFormData({ ...formData, lng: v })}
+                          error={formErrors.lng}
+                          required
+                        />
+                      </Grid>
+                    </Grid>
+                    <InputField
+                      label='地址'
+                      name='address'
+                      value={formData.address}
+                      onChange={(v) => setFormData({ ...formData, address: v })}
+                    />
+                    <Grid
+                      container
+                      spacing={2}
+                    >
+                      <Grid size={6}>
+                        <InputField
+                          label='联系人'
+                          name='contact_person'
+                          value={formData.contact_person}
+                          onChange={(v) => setFormData({ ...formData, contact_person: v })}
+                        />
+                      </Grid>
+                      <Grid size={6}>
+                        <InputField
+                          label='联系电话'
+                          name='contact_phone'
+                          value={formData.contact_phone}
+                          onChange={(v) => setFormData({ ...formData, contact_phone: v })}
+                        />
+                      </Grid>
+                    </Grid>
+                  </Stack>
+                )}
+              </Stack>
+            </DialogContent>
+            <DialogActions sx={{ px: 3, py: 2 }}>
+              <Button
+                onClick={resetModal}
+                variant='outlined'
+              >
+                取消
+              </Button>
+              <Button
+                onClick={modalType === 'create' ? handleCreate : handleEdit}
+                variant='contained'
+                sx={{
+                  bgcolor: 'info.main',
+                  '&:hover': { bgcolor: '#0891b2' },
+                }}
+              >
+                {modalType === 'create' ? '创建' : '保存'}
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          <Dialog
+            open={showImportModal}
+            onClose={() => {
+              setShowImportModal(false);
+              setImportFile(null);
+              setImportPreview(null);
+              setImportConfirm(false);
+            }}
+            maxWidth='sm'
+            fullWidth
+            slotProps={{ paper: { sx: { borderRadius: 2 } } }}
+          >
+            <DialogTitle>
+              <Stack
+                direction='row'
+                sx={{ justifyContent: 'space-between', alignItems: 'center' }}
+              >
+                <Typography
+                  variant='h6'
+                  sx={{ fontWeight: 600 }}
+                >
+                  导入数据
+                </Typography>
+                <IconButton
+                  onClick={() => {
+                    setShowImportModal(false);
+                    setImportFile(null);
+                    setImportPreview(null);
+                    setImportConfirm(false);
+                  }}
+                  size='small'
+                >
+                  <X size={20} />
+                </IconButton>
+              </Stack>
+            </DialogTitle>
+            <DialogContent dividers>
+              <Stack
+                spacing={3}
+                sx={{ pt: 1 }}
+              >
+                <Box>
+                  <Typography
+                    variant='body2'
+                    sx={{ fontWeight: 500, mb: 1 }}
+                  >
+                    选择CSV文件
+                  </Typography>
+                  <Box
+                    sx={{
+                      border: 2,
+                      borderStyle: 'dashed',
+                      borderColor: 'divider',
+                      borderRadius: 1.5,
+                      p: 4,
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      '&:hover': { borderColor: 'info.main' },
+                    }}
+                    component='label'
+                    htmlFor='csv-upload'
+                  >
+                    <input
+                      type='file'
+                      accept='.csv'
+                      onChange={handleFileChange}
+                      style={{ display: 'none' }}
+                      id='csv-upload'
+                    />
+                    <Upload
+                      size={48}
                       color='text.disabled'
+                      style={{ marginBottom: 8 }}
+                    />
+                    <Typography color='text.secondary'>点击或拖拽文件到此处</Typography>
+                    <Typography
+                      variant='caption'
+                      color='text.disabled'
+                      sx={{ mt: 1 }}
+                    >
+                      支持CSV格式文件
+                    </Typography>
+                  </Box>
+                </Box>
+                {importFile && (
+                  <Paper sx={{ p: 1.5, bgcolor: 'grey.50', borderRadius: 1.5 }}>
+                    <Stack
+                      direction='row'
+                      sx={{
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                      }}
+                    >
+                      <Stack
+                        direction='row'
+                        spacing={1.5}
+                        sx={{ alignItems: 'center' }}
+                      >
+                        <FileText
+                          size={32}
+                          color='text.secondary'
+                        />
+                        <Box>
+                          <Typography
+                            variant='body2'
+                            sx={{ fontWeight: 500 }}
+                          >
+                            {importFile.name}
+                          </Typography>
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                          >
+                            {(importFile.size / 1024).toFixed(1)} KB
+                          </Typography>
+                        </Box>
+                      </Stack>
+                      <IconButton
+                        size='small'
+                        onClick={() => {
+                          setImportFile(null);
+                          setImportPreview(null);
+                          setImportConfirm(false);
+                        }}
+                      >
+                        <X size={20} />
+                      </IconButton>
+                    </Stack>
+                  </Paper>
+                )}
+                {importPreview && (
+                  <Box>
+                    <Typography
+                      variant='body2'
+                      sx={{ fontWeight: 500, mb: 1 }}
+                    >
+                      文件预览（前10行）
+                    </Typography>
+                    <TableContainer
+                      component={Paper}
+                      variant='outlined'
+                      sx={{ maxHeight: 192, borderRadius: 1.5 }}
+                    >
+                      <Table
+                        size='small'
+                        stickyHeader
+                      >
+                        <TableHead>
+                          <TableRow>
+                            {importPreview[0]?.map((header, index) => (
+                              <TableCell
+                                key={index}
+                                sx={{ fontWeight: 500, bgcolor: 'grey.50' }}
+                              >
+                                {header}
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {importPreview.slice(1).map((row, rowIndex) => (
+                            <TableRow
+                              key={rowIndex}
+                              hover
+                            >
+                              {row.map((cell, cellIndex) => (
+                                <TableCell key={cellIndex}>{cell}</TableCell>
+                              ))}
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                    <FormControlLabel
+                      sx={{ mt: 1.5 }}
+                      control={
+                        <Checkbox
+                          checked={importConfirm}
+                          onChange={(e) => setImportConfirm(e.target.checked)}
+                        />
+                      }
+                      label='我确认要导入以上数据'
                     />
                   </Box>
-                  <Typography color='text.secondary'>暂无数据</Typography>
-                </Box>
-              ) : (
-                <>
-                  {activeTab === 'devicePoints' && (
-                    <DataTable
-                      columns={devicePointColumns}
-                      data={filteredData as DevicePoint[]}
-                      searchKey='name'
-                      searchPlaceholder='搜索设备名称...'
-                      exportFileName='gis-device-points'
-                    />
-                  )}
-                  {activeTab === 'pipelines' && (
-                    <DataTable
-                      columns={pipelineColumns}
-                      data={filteredData as Pipeline[]}
-                      searchKey='name'
-                      searchPlaceholder='搜索管线名称...'
-                      exportFileName='gis-pipelines'
-                    />
-                  )}
-                  {activeTab === 'storageLocations' && (
-                    <DataTable
-                      columns={storageLocationColumns}
-                      data={filteredData as StorageLocation[]}
-                      searchKey='name'
-                      searchPlaceholder='搜索库位名称...'
-                      exportFileName='gis-storage-locations'
-                    />
-                  )}
-                  {activeTab === 'evidenceRecords' && (
-                    <DataTable
-                      columns={evidenceRecordColumns}
-                      data={filteredData as EvidenceRecord[]}
-                      searchKey='title'
-                      searchPlaceholder='搜索记录标题...'
-                      exportFileName='gis-evidence-records'
-                    />
-                  )}
-                  {activeTab === 'factoryMaps' && (
-                    <DataTable
-                      columns={factoryMapColumns}
-                      data={filteredData as FactoryMap[]}
-                      searchKey='name'
-                      searchPlaceholder='搜索地图名称...'
-                      exportFileName='gis-factory-maps'
-                    />
-                  )}
-                  {activeTab === 'businessLocations' && (
-                    <DataTable
-                      columns={businessLocationColumns}
-                      data={filteredData as BusinessLocation[]}
-                      searchKey='business_name'
-                      searchPlaceholder='搜索业务名称...'
-                      exportFileName='gis-business-locations'
-                    />
-                  )}
-                </>
-              )}
-            </Box>
-          </Paper>
-        )}
-
-        <Dialog
-          open={showModal}
-          onClose={resetModal}
-          maxWidth='md'
-          fullWidth
-          slotProps={{ paper: { sx: { borderRadius: 2 } } }}
-        >
-          <DialogTitle>
-            <Stack
-              direction='row'
-              sx={{ justifyContent: 'space-between', alignItems: 'center' }}
-            >
-              <Typography
-                variant='h6'
-                sx={{ fontWeight: 600 }}
-              >
-                {modalType === 'create' ? '新建' : '编辑'}
-              </Typography>
-              <IconButton
-                onClick={resetModal}
-                size='small'
-              >
-                <X size={20} />
-              </IconButton>
-            </Stack>
-          </DialogTitle>
-          <DialogContent dividers>
-            <Stack
-              spacing={3}
-              sx={{ pt: 1 }}
-            >
-              {activeTab === 'devicePoints' && (
-                <Stack spacing={3}>
-                  <InputField
-                    label='名称'
-                    name='name'
-                    value={formData.name}
-                    onChange={(v) => setFormData({ ...formData, name: v })}
-                    error={formErrors.name}
-                    required
-                  />
-                  <InputField
-                    label='设备类型'
-                    name='device_type'
-                    value={formData.device_type}
-                    onChange={(v) => setFormData({ ...formData, device_type: v })}
-                    error={formErrors.device_type}
-                    required
-                  />
-                  <Grid
-                    container
-                    spacing={2}
-                  >
-                    <Grid size={6}>
-                      <InputField
-                        label='纬度'
-                        name='latitude'
-                        type='number'
-                        value={formData.latitude}
-                        onChange={(v) => setFormData({ ...formData, latitude: v })}
-                        error={formErrors.latitude}
-                        required
-                      />
-                    </Grid>
-                    <Grid size={6}>
-                      <InputField
-                        label='经度'
-                        name='longitude'
-                        type='number'
-                        value={formData.longitude}
-                        onChange={(v) => setFormData({ ...formData, longitude: v })}
-                        error={formErrors.longitude}
-                        required
-                      />
-                    </Grid>
-                  </Grid>
-                  <TextAreaField
-                    label='描述'
-                    value={formData.description}
-                    onChange={(v) => setFormData({ ...formData, description: v })}
-                  />
-                </Stack>
-              )}
-              {activeTab === 'pipelines' && (
-                <Stack spacing={3}>
-                  <InputField
-                    label='名称'
-                    name='name'
-                    value={formData.name}
-                    onChange={(v) => setFormData({ ...formData, name: v })}
-                    error={formErrors.name}
-                    required
-                  />
-                  <InputField
-                    label='管线类型'
-                    name='pipeline_type'
-                    value={formData.pipeline_type}
-                    onChange={(v) => setFormData({ ...formData, pipeline_type: v })}
-                    error={formErrors.pipeline_type}
-                    required
-                  />
-                  <Grid
-                    container
-                    spacing={2}
-                  >
-                    <Grid size={6}>
-                      <InputField
-                        label='起点纬度'
-                        name='start_lat'
-                        type='number'
-                        value={formData.start_lat}
-                        onChange={(v) => setFormData({ ...formData, start_lat: v })}
-                        error={formErrors.start_lat}
-                        required
-                      />
-                    </Grid>
-                    <Grid size={6}>
-                      <InputField
-                        label='起点经度'
-                        name='start_lng'
-                        type='number'
-                        value={formData.start_lng}
-                        onChange={(v) => setFormData({ ...formData, start_lng: v })}
-                        error={formErrors.start_lng}
-                        required
-                      />
-                    </Grid>
-                  </Grid>
-                  <Grid
-                    container
-                    spacing={2}
-                  >
-                    <Grid size={6}>
-                      <InputField
-                        label='终点纬度'
-                        name='end_lat'
-                        type='number'
-                        value={formData.end_lat}
-                        onChange={(v) => setFormData({ ...formData, end_lat: v })}
-                        error={formErrors.end_lat}
-                        required
-                      />
-                    </Grid>
-                    <Grid size={6}>
-                      <InputField
-                        label='终点经度'
-                        name='end_lng'
-                        type='number'
-                        value={formData.end_lng}
-                        onChange={(v) => setFormData({ ...formData, end_lng: v })}
-                        error={formErrors.end_lng}
-                        required
-                      />
-                    </Grid>
-                  </Grid>
-                </Stack>
-              )}
-              {activeTab === 'storageLocations' && (
-                <Stack spacing={3}>
-                  <InputField
-                    label='名称'
-                    name='name'
-                    value={formData.name}
-                    onChange={(v) => setFormData({ ...formData, name: v })}
-                    error={formErrors.name}
-                    required
-                  />
-                  <InputField
-                    label='类型'
-                    name='location_type'
-                    value={formData.location_type}
-                    onChange={(v) => setFormData({ ...formData, location_type: v })}
-                    error={formErrors.location_type}
-                    required
-                  />
-                  <Grid
-                    container
-                    spacing={2}
-                  >
-                    <Grid size={6}>
-                      <InputField
-                        label='纬度'
-                        name='latitude'
-                        type='number'
-                        value={formData.latitude}
-                        onChange={(v) => setFormData({ ...formData, latitude: v })}
-                        error={formErrors.latitude}
-                        required
-                      />
-                    </Grid>
-                    <Grid size={6}>
-                      <InputField
-                        label='经度'
-                        name='longitude'
-                        type='number'
-                        value={formData.longitude}
-                        onChange={(v) => setFormData({ ...formData, longitude: v })}
-                        error={formErrors.longitude}
-                        required
-                      />
-                    </Grid>
-                  </Grid>
-                  <Grid
-                    container
-                    spacing={2}
-                  >
-                    <Grid size={6}>
-                      <InputField
-                        label='容量'
-                        name='capacity'
-                        type='number'
-                        value={formData.capacity}
-                        onChange={(v) => setFormData({ ...formData, capacity: v })}
-                      />
-                    </Grid>
-                    <Grid size={6}>
-                      <InputField
-                        label='当前用量'
-                        name='current_usage'
-                        type='number'
-                        value={formData.current_usage}
-                        onChange={(v) => setFormData({ ...formData, current_usage: v })}
-                      />
-                    </Grid>
-                  </Grid>
-                </Stack>
-              )}
-              {activeTab === 'evidenceRecords' && (
-                <Stack spacing={3}>
-                  <InputField
-                    label='标题'
-                    name='title'
-                    value={formData.title}
-                    onChange={(v) => setFormData({ ...formData, title: v })}
-                    error={formErrors.title}
-                    required
-                  />
-                  <InputField
-                    label='类型'
-                    name='evidence_type'
-                    value={formData.evidence_type}
-                    onChange={(v) => setFormData({ ...formData, evidence_type: v })}
-                    error={formErrors.evidence_type}
-                    required
-                  />
-                  <Grid
-                    container
-                    spacing={2}
-                  >
-                    <Grid size={6}>
-                      <InputField
-                        label='纬度'
-                        name='latitude'
-                        type='number'
-                        value={formData.latitude}
-                        onChange={(v) => setFormData({ ...formData, latitude: v })}
-                        error={formErrors.latitude}
-                        required
-                      />
-                    </Grid>
-                    <Grid size={6}>
-                      <InputField
-                        label='经度'
-                        name='longitude'
-                        type='number'
-                        value={formData.longitude}
-                        onChange={(v) => setFormData({ ...formData, longitude: v })}
-                        error={formErrors.longitude}
-                        required
-                      />
-                    </Grid>
-                  </Grid>
-                  <InputField
-                    label='记录人'
-                    name='recorded_by'
-                    value={formData.recorded_by}
-                    onChange={(v) => setFormData({ ...formData, recorded_by: v })}
-                    error={formErrors.recorded_by}
-                    required
-                  />
-                </Stack>
-              )}
-              {activeTab === 'factoryMaps' && (
-                <Stack spacing={3}>
-                  <InputField
-                    label='名称'
-                    name='name'
-                    value={formData.name}
-                    onChange={(v) => setFormData({ ...formData, name: v })}
-                    error={formErrors.name}
-                    required
-                  />
-                  <InputField
-                    label='编号'
-                    name='code'
-                    value={formData.code}
-                    onChange={(v) => setFormData({ ...formData, code: v })}
-                    error={formErrors.code}
-                    required
-                  />
-                  <InputField
-                    label='地图类型'
-                    name='map_type'
-                    value={formData.map_type}
-                    onChange={(v) => setFormData({ ...formData, map_type: v })}
-                    error={formErrors.map_type}
-                    required
-                  />
-                  <InputField
-                    label='文件URL'
-                    name='file_url'
-                    value={formData.file_url}
-                    onChange={(v) => setFormData({ ...formData, file_url: v })}
-                  />
-                </Stack>
-              )}
-              {activeTab === 'businessLocations' && (
-                <Stack spacing={3}>
-                  <InputField
-                    label='业务名称'
-                    name='business_name'
-                    value={formData.business_name}
-                    onChange={(v) => setFormData({ ...formData, business_name: v })}
-                    error={formErrors.business_name}
-                    required
-                  />
-                  <InputField
-                    label='业务类型'
-                    name='business_type'
-                    value={formData.business_type}
-                    onChange={(v) => setFormData({ ...formData, business_type: v })}
-                    error={formErrors.business_type}
-                    required
-                  />
-                  <Grid
-                    container
-                    spacing={2}
-                  >
-                    <Grid size={6}>
-                      <InputField
-                        label='纬度'
-                        name='lat'
-                        type='number'
-                        value={formData.lat}
-                        onChange={(v) => setFormData({ ...formData, lat: v })}
-                        error={formErrors.lat}
-                        required
-                      />
-                    </Grid>
-                    <Grid size={6}>
-                      <InputField
-                        label='经度'
-                        name='lng'
-                        type='number'
-                        value={formData.lng}
-                        onChange={(v) => setFormData({ ...formData, lng: v })}
-                        error={formErrors.lng}
-                        required
-                      />
-                    </Grid>
-                  </Grid>
-                  <InputField
-                    label='地址'
-                    name='address'
-                    value={formData.address}
-                    onChange={(v) => setFormData({ ...formData, address: v })}
-                  />
-                  <Grid
-                    container
-                    spacing={2}
-                  >
-                    <Grid size={6}>
-                      <InputField
-                        label='联系人'
-                        name='contact_person'
-                        value={formData.contact_person}
-                        onChange={(v) => setFormData({ ...formData, contact_person: v })}
-                      />
-                    </Grid>
-                    <Grid size={6}>
-                      <InputField
-                        label='联系电话'
-                        name='contact_phone'
-                        value={formData.contact_phone}
-                        onChange={(v) => setFormData({ ...formData, contact_phone: v })}
-                      />
-                    </Grid>
-                  </Grid>
-                </Stack>
-              )}
-            </Stack>
-          </DialogContent>
-          <DialogActions sx={{ px: 3, py: 2 }}>
-            <Button
-              onClick={resetModal}
-              variant='outlined'
-            >
-              取消
-            </Button>
-            <Button
-              onClick={modalType === 'create' ? handleCreate : handleEdit}
-              variant='contained'
-              sx={{
-                bgcolor: 'info.main',
-                '&:hover': { bgcolor: '#0891b2' },
-              }}
-            >
-              {modalType === 'create' ? '创建' : '保存'}
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        <Dialog
-          open={showImportModal}
-          onClose={() => {
-            setShowImportModal(false);
-            setImportFile(null);
-            setImportPreview(null);
-            setImportConfirm(false);
-          }}
-          maxWidth='sm'
-          fullWidth
-          slotProps={{ paper: { sx: { borderRadius: 2 } } }}
-        >
-          <DialogTitle>
-            <Stack
-              direction='row'
-              sx={{ justifyContent: 'space-between', alignItems: 'center' }}
-            >
-              <Typography
-                variant='h6'
-                sx={{ fontWeight: 600 }}
-              >
-                导入数据
-              </Typography>
-              <IconButton
+                )}
+              </Stack>
+            </DialogContent>
+            <DialogActions sx={{ px: 3, py: 2 }}>
+              <Button
                 onClick={() => {
                   setShowImportModal(false);
                   setImportFile(null);
                   setImportPreview(null);
                   setImportConfirm(false);
                 }}
-                size='small'
+                variant='outlined'
               >
-                <X size={20} />
-              </IconButton>
-            </Stack>
-          </DialogTitle>
-          <DialogContent dividers>
-            <Stack
-              spacing={3}
-              sx={{ pt: 1 }}
-            >
-              <Box>
-                <Typography
-                  variant='body2'
-                  sx={{ fontWeight: 500, mb: 1 }}
-                >
-                  选择CSV文件
-                </Typography>
-                <Box
-                  sx={{
-                    border: 2,
-                    borderStyle: 'dashed',
-                    borderColor: 'divider',
-                    borderRadius: 1.5,
-                    p: 4,
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    '&:hover': { borderColor: 'info.main' },
-                  }}
-                  component='label'
-                  htmlFor='csv-upload'
-                >
-                  <input
-                    type='file'
-                    accept='.csv'
-                    onChange={handleFileChange}
-                    style={{ display: 'none' }}
-                    id='csv-upload'
-                  />
-                  <Upload
-                    size={48}
-                    color='text.disabled'
-                    style={{ marginBottom: 8 }}
-                  />
-                  <Typography color='text.secondary'>点击或拖拽文件到此处</Typography>
-                  <Typography
-                    variant='caption'
-                    color='text.disabled'
-                    sx={{ mt: 1 }}
-                  >
-                    支持CSV格式文件
-                  </Typography>
-                </Box>
-              </Box>
-              {importFile && (
-                <Paper sx={{ p: 1.5, bgcolor: 'grey.50', borderRadius: 1.5 }}>
-                  <Stack
-                    direction='row'
-                    sx={{
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <Stack
-                      direction='row'
-                      spacing={1.5}
-                      sx={{ alignItems: 'center' }}
-                    >
-                      <FileText
-                        size={32}
-                        color='text.secondary'
-                      />
-                      <Box>
-                        <Typography
-                          variant='body2'
-                          sx={{ fontWeight: 500 }}
-                        >
-                          {importFile.name}
-                        </Typography>
-                        <Typography
-                          variant='caption'
-                          color='text.secondary'
-                        >
-                          {(importFile.size / 1024).toFixed(1)} KB
-                        </Typography>
-                      </Box>
-                    </Stack>
-                    <IconButton
-                      size='small'
-                      onClick={() => {
-                        setImportFile(null);
-                        setImportPreview(null);
-                        setImportConfirm(false);
-                      }}
-                    >
-                      <X size={20} />
-                    </IconButton>
-                  </Stack>
-                </Paper>
-              )}
-              {importPreview && (
-                <Box>
-                  <Typography
-                    variant='body2'
-                    sx={{ fontWeight: 500, mb: 1 }}
-                  >
-                    文件预览（前10行）
-                  </Typography>
-                  <TableContainer
-                    component={Paper}
-                    variant='outlined'
-                    sx={{ maxHeight: 192, borderRadius: 1.5 }}
-                  >
-                    <Table
-                      size='small'
-                      stickyHeader
-                    >
-                      <TableHead>
-                        <TableRow>
-                          {importPreview[0]?.map((header, index) => (
-                            <TableCell
-                              key={index}
-                              sx={{ fontWeight: 500, bgcolor: 'grey.50' }}
-                            >
-                              {header}
-                            </TableCell>
-                          ))}
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {importPreview.slice(1).map((row, rowIndex) => (
-                          <TableRow
-                            key={rowIndex}
-                            hover
-                          >
-                            {row.map((cell, cellIndex) => (
-                              <TableCell key={cellIndex}>{cell}</TableCell>
-                            ))}
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                  <FormControlLabel
-                    sx={{ mt: 1.5 }}
-                    control={
-                      <Checkbox
-                        checked={importConfirm}
-                        onChange={(e) => setImportConfirm(e.target.checked)}
-                      />
-                    }
-                    label='我确认要导入以上数据'
-                  />
-                </Box>
-              )}
-            </Stack>
-          </DialogContent>
-          <DialogActions sx={{ px: 3, py: 2 }}>
-            <Button
-              onClick={() => {
-                setShowImportModal(false);
-                setImportFile(null);
-                setImportPreview(null);
-                setImportConfirm(false);
-              }}
-              variant='outlined'
-            >
-              取消
-            </Button>
-            <Button
-              onClick={handleImport}
-              variant='contained'
-              color='success'
-              disabled={!importFile || !importConfirm}
-            >
-              确认导入
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </Box>
+                取消
+              </Button>
+              <Button
+                onClick={handleImport}
+                variant='contained'
+                color='success'
+                disabled={!importFile || !importConfirm}
+              >
+                确认导入
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </Box>
       </Box>
     </PageContainer>
   );

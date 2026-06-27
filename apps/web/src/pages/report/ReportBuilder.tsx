@@ -11,8 +11,7 @@ import {
   CheckCircle,
   AlertCircle,
 } from 'lucide-react';
-import { Box, Typography, TextField, Checkbox, FormControlLabel } from '@mui/material';
-import { Button } from '@mui/material';
+import { Box, Typography, TextField, Checkbox, FormControlLabel, Button } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import type { ReportTypeInfo, ReportType, ExportFormat, CreateReportRequest } from '@/api/report';
 import { useAppStore } from '@/store';
@@ -155,7 +154,20 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
     : [];
 
   return (
-    <PageContainer padding={false} maxWidth={false} sx={{ position: 'fixed', inset: 0, bgcolor: 'rgba(0, 0, 0, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, minHeight: 'auto' }}>
+    <PageContainer
+      padding={false}
+      maxWidth={false}
+      sx={{
+        position: 'fixed',
+        inset: 0,
+        bgcolor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 50,
+        minHeight: 'auto',
+      }}
+    >
       <Box
         sx={{
           bgcolor: 'background.paper',

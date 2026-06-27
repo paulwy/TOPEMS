@@ -134,10 +134,22 @@ const FinancialReportPage: React.FC = () => {
   }, [periodType]);
 
   const tabs = [
-    { label: '资产负债表', value: 'balance-sheet', icon: <PieChart sx={{ width: 16, height: 16 }} /> },
-    { label: '利润表', value: 'income-statement', icon: <TrendingUp sx={{ width: 16, height: 16 }} /> },
+    {
+      label: '资产负债表',
+      value: 'balance-sheet',
+      icon: <PieChart sx={{ width: 16, height: 16 }} />,
+    },
+    {
+      label: '利润表',
+      value: 'income-statement',
+      icon: <TrendingUp sx={{ width: 16, height: 16 }} />,
+    },
     { label: '现金流量表', value: 'cash-flow', icon: <Activity sx={{ width: 16, height: 16 }} /> },
-    { label: '所有者权益变动表', value: 'equity-change', icon: <Building2 sx={{ width: 16, height: 16 }} /> },
+    {
+      label: '所有者权益变动表',
+      value: 'equity-change',
+      icon: <Building2 sx={{ width: 16, height: 16 }} />,
+    },
   ];
 
   const renderSummaryCards = () => {
@@ -150,10 +162,16 @@ const FinancialReportPage: React.FC = () => {
                 <DollarSign sx={{ width: 24, height: 24, color: 'primary.main' }} />
               </Box>
               <Box>
-                <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'text.secondary' }}
+                >
                   总资产
                 </Typography>
-                <Typography variant='h6' sx={{ fontWeight: 'bold' }}>
+                <Typography
+                  variant='h6'
+                  sx={{ fontWeight: 'bold' }}
+                >
                   {formatCurrency(balanceSheet.total_assets)}
                 </Typography>
               </Box>
@@ -165,10 +183,16 @@ const FinancialReportPage: React.FC = () => {
                 <TrendingDown sx={{ width: 24, height: 24, color: 'warning.main' }} />
               </Box>
               <Box>
-                <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'text.secondary' }}
+                >
                   总负债
                 </Typography>
-                <Typography variant='h6' sx={{ fontWeight: 'bold' }}>
+                <Typography
+                  variant='h6'
+                  sx={{ fontWeight: 'bold' }}
+                >
                   {formatCurrency(balanceSheet.total_liabilities)}
                 </Typography>
               </Box>
@@ -180,10 +204,16 @@ const FinancialReportPage: React.FC = () => {
                 <Wallet sx={{ width: 24, height: 24, color: 'success.main' }} />
               </Box>
               <Box>
-                <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'text.secondary' }}
+                >
                   所有者权益
                 </Typography>
-                <Typography variant='h6' sx={{ fontWeight: 'bold' }}>
+                <Typography
+                  variant='h6'
+                  sx={{ fontWeight: 'bold' }}
+                >
                   {formatCurrency(balanceSheet.total_equity)}
                 </Typography>
               </Box>
@@ -202,13 +232,17 @@ const FinancialReportPage: React.FC = () => {
                 <TrendingUp sx={{ width: 24, height: 24, color: 'success.main' }} />
               </Box>
               <Box>
-                <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'text.secondary' }}
+                >
                   营业总收入
                 </Typography>
-                <Typography variant='h6' sx={{ fontWeight: 'bold' }}>
-                  {formatCurrency(
-                    incomeStatement.revenues.reduce((sum, r) => sum + r.amount, 0)
-                  )}
+                <Typography
+                  variant='h6'
+                  sx={{ fontWeight: 'bold' }}
+                >
+                  {formatCurrency(incomeStatement.revenues.reduce((sum, r) => sum + r.amount, 0))}
                 </Typography>
               </Box>
             </Box>
@@ -219,13 +253,17 @@ const FinancialReportPage: React.FC = () => {
                 <TrendingDown sx={{ width: 24, height: 24, color: 'error.main' }} />
               </Box>
               <Box>
-                <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'text.secondary' }}
+                >
                   营业总成本
                 </Typography>
-                <Typography variant='h6' sx={{ fontWeight: 'bold' }}>
-                  {formatCurrency(
-                    incomeStatement.expenses.reduce((sum, e) => sum + e.amount, 0)
-                  )}
+                <Typography
+                  variant='h6'
+                  sx={{ fontWeight: 'bold' }}
+                >
+                  {formatCurrency(incomeStatement.expenses.reduce((sum, e) => sum + e.amount, 0))}
                 </Typography>
               </Box>
             </Box>
@@ -236,10 +274,16 @@ const FinancialReportPage: React.FC = () => {
                 <BarChart3 sx={{ width: 24, height: 24, color: 'primary.main' }} />
               </Box>
               <Box>
-                <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'text.secondary' }}
+                >
                   营业利润
                 </Typography>
-                <Typography variant='h6' sx={{ fontWeight: 'bold' }}>
+                <Typography
+                  variant='h6'
+                  sx={{ fontWeight: 'bold' }}
+                >
                   {formatCurrency(incomeStatement.operating_profit)}
                 </Typography>
               </Box>
@@ -263,7 +307,10 @@ const FinancialReportPage: React.FC = () => {
                 />
               </Box>
               <Box>
-                <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'text.secondary' }}
+                >
                   净利润
                 </Typography>
                 <Typography
@@ -291,10 +338,16 @@ const FinancialReportPage: React.FC = () => {
                 <Activity sx={{ width: 24, height: 24, color: 'success.main' }} />
               </Box>
               <Box>
-                <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'text.secondary' }}
+                >
                   经营活动现金流
                 </Typography>
-                <Typography variant='h6' sx={{ fontWeight: 'bold' }}>
+                <Typography
+                  variant='h6'
+                  sx={{ fontWeight: 'bold' }}
+                >
                   {formatCurrency(
                     cashFlowStatement.operating_activities.reduce((sum, i) => sum + i.amount, 0)
                   )}
@@ -308,10 +361,16 @@ const FinancialReportPage: React.FC = () => {
                 <Building2 sx={{ width: 24, height: 24, color: 'warning.main' }} />
               </Box>
               <Box>
-                <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'text.secondary' }}
+                >
                   投资活动现金流
                 </Typography>
-                <Typography variant='h6' sx={{ fontWeight: 'bold' }}>
+                <Typography
+                  variant='h6'
+                  sx={{ fontWeight: 'bold' }}
+                >
                   {formatCurrency(
                     cashFlowStatement.investing_activities.reduce((sum, i) => sum + i.amount, 0)
                   )}
@@ -325,10 +384,16 @@ const FinancialReportPage: React.FC = () => {
                 <DollarSign sx={{ width: 24, height: 24, color: 'primary.main' }} />
               </Box>
               <Box>
-                <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'text.secondary' }}
+                >
                   筹资活动现金流
                 </Typography>
-                <Typography variant='h6' sx={{ fontWeight: 'bold' }}>
+                <Typography
+                  variant='h6'
+                  sx={{ fontWeight: 'bold' }}
+                >
                   {formatCurrency(
                     cashFlowStatement.financing_activities.reduce((sum, i) => sum + i.amount, 0)
                   )}
@@ -354,7 +419,10 @@ const FinancialReportPage: React.FC = () => {
                 />
               </Box>
               <Box>
-                <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'text.secondary' }}
+                >
                   现金净流量
                 </Typography>
                 <Typography
@@ -387,28 +455,43 @@ const FinancialReportPage: React.FC = () => {
 
     if (activeTab === 'balance-sheet' && balanceSheet) {
       return (
-        <TableContainer component={Paper} sx={{ boxShadow: 1 }}>
+        <TableContainer
+          component={Paper}
+          sx={{ boxShadow: 1 }}
+        >
           <Table>
             <TableHead>
               <TableRow sx={{ bgcolor: 'grey.50' }}>
                 <TableCell sx={{ fontWeight: 'bold', width: 120 }}>项目代码</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>项目</TableCell>
-                <TableCell align='right' sx={{ fontWeight: 'bold', width: 180 }}>
+                <TableCell
+                  align='right'
+                  sx={{ fontWeight: 'bold', width: 180 }}
+                >
                   金额
                 </TableCell>
-                <TableCell align='right' sx={{ fontWeight: 'bold', width: 120 }}>
+                <TableCell
+                  align='right'
+                  sx={{ fontWeight: 'bold', width: 120 }}
+                >
                   占比(%)
                 </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               <TableRow>
-                <TableCell colSpan={4} sx={{ bgcolor: 'primary.50', fontWeight: 'bold' }}>
+                <TableCell
+                  colSpan={4}
+                  sx={{ bgcolor: 'primary.50', fontWeight: 'bold' }}
+                >
                   资产
                 </TableCell>
               </TableRow>
               {balanceSheet.assets.map((item: BalanceItem) => (
-                <TableRow key={`asset-${item.code}`} hover>
+                <TableRow
+                  key={`asset-${item.code}`}
+                  hover
+                >
                   <TableCell sx={{ pl: 4 }}>{item.code}</TableCell>
                   <TableCell>{item.name}</TableCell>
                   <TableCell align='right'>{formatCurrency(item.amount)}</TableCell>
@@ -416,12 +499,18 @@ const FinancialReportPage: React.FC = () => {
                 </TableRow>
               ))}
               <TableRow>
-                <TableCell colSpan={4} sx={{ bgcolor: 'warning.50', fontWeight: 'bold' }}>
+                <TableCell
+                  colSpan={4}
+                  sx={{ bgcolor: 'warning.50', fontWeight: 'bold' }}
+                >
                   负债
                 </TableCell>
               </TableRow>
               {balanceSheet.liabilities.map((item: BalanceItem) => (
-                <TableRow key={`liability-${item.code}`} hover>
+                <TableRow
+                  key={`liability-${item.code}`}
+                  hover
+                >
                   <TableCell sx={{ pl: 4 }}>{item.code}</TableCell>
                   <TableCell>{item.name}</TableCell>
                   <TableCell align='right'>{formatCurrency(item.amount)}</TableCell>
@@ -429,12 +518,18 @@ const FinancialReportPage: React.FC = () => {
                 </TableRow>
               ))}
               <TableRow>
-                <TableCell colSpan={4} sx={{ bgcolor: 'success.50', fontWeight: 'bold' }}>
+                <TableCell
+                  colSpan={4}
+                  sx={{ bgcolor: 'success.50', fontWeight: 'bold' }}
+                >
                   所有者权益
                 </TableCell>
               </TableRow>
               {balanceSheet.equity.map((item: BalanceItem) => (
-                <TableRow key={`equity-${item.code}`} hover>
+                <TableRow
+                  key={`equity-${item.code}`}
+                  hover
+                >
                   <TableCell sx={{ pl: 4 }}>{item.code}</TableCell>
                   <TableCell>{item.name}</TableCell>
                   <TableCell align='right'>{formatCurrency(item.amount)}</TableCell>
@@ -449,71 +544,113 @@ const FinancialReportPage: React.FC = () => {
 
     if (activeTab === 'income-statement' && incomeStatement) {
       return (
-        <TableContainer component={Paper} sx={{ boxShadow: 1 }}>
+        <TableContainer
+          component={Paper}
+          sx={{ boxShadow: 1 }}
+        >
           <Table>
             <TableHead>
               <TableRow sx={{ bgcolor: 'grey.50' }}>
                 <TableCell sx={{ fontWeight: 'bold', width: 120 }}>项目代码</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>项目</TableCell>
-                <TableCell align='right' sx={{ fontWeight: 'bold', width: 180 }}>
+                <TableCell
+                  align='right'
+                  sx={{ fontWeight: 'bold', width: 180 }}
+                >
                   金额
                 </TableCell>
-                <TableCell align='right' sx={{ fontWeight: 'bold', width: 120 }}>
+                <TableCell
+                  align='right'
+                  sx={{ fontWeight: 'bold', width: 120 }}
+                >
                   占比(%)
                 </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               <TableRow>
-                <TableCell colSpan={4} sx={{ bgcolor: 'success.50', fontWeight: 'bold' }}>
+                <TableCell
+                  colSpan={4}
+                  sx={{ bgcolor: 'success.50', fontWeight: 'bold' }}
+                >
                   营业收入
                 </TableCell>
               </TableRow>
               {incomeStatement.revenues.map((item: IncomeItem) => (
-                <TableRow key={`revenue-${item.code}`} hover>
+                <TableRow
+                  key={`revenue-${item.code}`}
+                  hover
+                >
                   <TableCell sx={{ pl: 4 }}>{item.code}</TableCell>
                   <TableCell>{item.name}</TableCell>
-                  <TableCell align='right' sx={{ color: 'success.main' }}>
+                  <TableCell
+                    align='right'
+                    sx={{ color: 'success.main' }}
+                  >
                     {formatCurrency(item.amount)}
                   </TableCell>
                   <TableCell align='right'>{item.percentage.toFixed(2)}</TableCell>
                 </TableRow>
               ))}
               <TableRow>
-                <TableCell colSpan={4} sx={{ bgcolor: 'error.50', fontWeight: 'bold' }}>
+                <TableCell
+                  colSpan={4}
+                  sx={{ bgcolor: 'error.50', fontWeight: 'bold' }}
+                >
                   营业成本及费用
                 </TableCell>
               </TableRow>
               {incomeStatement.expenses.map((item: IncomeItem) => (
-                <TableRow key={`expense-${item.code}`} hover>
+                <TableRow
+                  key={`expense-${item.code}`}
+                  hover
+                >
                   <TableCell sx={{ pl: 4 }}>{item.code}</TableCell>
                   <TableCell>{item.name}</TableCell>
-                  <TableCell align='right' sx={{ color: 'error.main' }}>
+                  <TableCell
+                    align='right'
+                    sx={{ color: 'error.main' }}
+                  >
                     {formatCurrency(item.amount)}
                   </TableCell>
                   <TableCell align='right'>{item.percentage.toFixed(2)}</TableCell>
                 </TableRow>
               ))}
               <TableRow sx={{ bgcolor: 'grey.100' }}>
-                <TableCell colSpan={2} sx={{ fontWeight: 'bold' }}>
+                <TableCell
+                  colSpan={2}
+                  sx={{ fontWeight: 'bold' }}
+                >
                   营业利润
                 </TableCell>
-                <TableCell align='right' sx={{ fontWeight: 'bold' }}>
+                <TableCell
+                  align='right'
+                  sx={{ fontWeight: 'bold' }}
+                >
                   {formatCurrency(incomeStatement.operating_profit)}
                 </TableCell>
                 <TableCell />
               </TableRow>
               <TableRow sx={{ bgcolor: 'grey.100' }}>
-                <TableCell colSpan={2} sx={{ fontWeight: 'bold' }}>
+                <TableCell
+                  colSpan={2}
+                  sx={{ fontWeight: 'bold' }}
+                >
                   利润总额
                 </TableCell>
-                <TableCell align='right' sx={{ fontWeight: 'bold' }}>
+                <TableCell
+                  align='right'
+                  sx={{ fontWeight: 'bold' }}
+                >
                   {formatCurrency(incomeStatement.gross_profit)}
                 </TableCell>
                 <TableCell />
               </TableRow>
               <TableRow sx={{ bgcolor: 'primary.50' }}>
-                <TableCell colSpan={2} sx={{ fontWeight: 'bold' }}>
+                <TableCell
+                  colSpan={2}
+                  sx={{ fontWeight: 'bold' }}
+                >
                   净利润
                 </TableCell>
                 <TableCell
@@ -535,62 +672,98 @@ const FinancialReportPage: React.FC = () => {
 
     if (activeTab === 'cash-flow' && cashFlowStatement) {
       return (
-        <TableContainer component={Paper} sx={{ boxShadow: 1 }}>
+        <TableContainer
+          component={Paper}
+          sx={{ boxShadow: 1 }}
+        >
           <Table>
             <TableHead>
               <TableRow sx={{ bgcolor: 'grey.50' }}>
                 <TableCell sx={{ fontWeight: 'bold', width: 120 }}>项目代码</TableCell>
                 <TableCell sx={{ fontWeight: 'bold' }}>项目</TableCell>
-                <TableCell align='right' sx={{ fontWeight: 'bold', width: 180 }}>
+                <TableCell
+                  align='right'
+                  sx={{ fontWeight: 'bold', width: 180 }}
+                >
                   金额
                 </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               <TableRow>
-                <TableCell colSpan={3} sx={{ bgcolor: 'success.50', fontWeight: 'bold' }}>
+                <TableCell
+                  colSpan={3}
+                  sx={{ bgcolor: 'success.50', fontWeight: 'bold' }}
+                >
                   经营活动产生的现金流量
                 </TableCell>
               </TableRow>
               {cashFlowStatement.operating_activities.map((item: CashFlowItem) => (
-                <TableRow key={`op-${item.code}`} hover>
+                <TableRow
+                  key={`op-${item.code}`}
+                  hover
+                >
                   <TableCell sx={{ pl: 4 }}>{item.code}</TableCell>
                   <TableCell>{item.name}</TableCell>
-                  <TableCell align='right' sx={{ color: item.amount >= 0 ? 'success.main' : 'error.main' }}>
+                  <TableCell
+                    align='right'
+                    sx={{ color: item.amount >= 0 ? 'success.main' : 'error.main' }}
+                  >
                     {formatCurrency(item.amount)}
                   </TableCell>
                 </TableRow>
               ))}
               <TableRow>
-                <TableCell colSpan={3} sx={{ bgcolor: 'warning.50', fontWeight: 'bold' }}>
+                <TableCell
+                  colSpan={3}
+                  sx={{ bgcolor: 'warning.50', fontWeight: 'bold' }}
+                >
                   投资活动产生的现金流量
                 </TableCell>
               </TableRow>
               {cashFlowStatement.investing_activities.map((item: CashFlowItem) => (
-                <TableRow key={`inv-${item.code}`} hover>
+                <TableRow
+                  key={`inv-${item.code}`}
+                  hover
+                >
                   <TableCell sx={{ pl: 4 }}>{item.code}</TableCell>
                   <TableCell>{item.name}</TableCell>
-                  <TableCell align='right' sx={{ color: item.amount >= 0 ? 'success.main' : 'error.main' }}>
+                  <TableCell
+                    align='right'
+                    sx={{ color: item.amount >= 0 ? 'success.main' : 'error.main' }}
+                  >
                     {formatCurrency(item.amount)}
                   </TableCell>
                 </TableRow>
               ))}
               <TableRow>
-                <TableCell colSpan={3} sx={{ bgcolor: 'primary.50', fontWeight: 'bold' }}>
+                <TableCell
+                  colSpan={3}
+                  sx={{ bgcolor: 'primary.50', fontWeight: 'bold' }}
+                >
                   筹资活动产生的现金流量
                 </TableCell>
               </TableRow>
               {cashFlowStatement.financing_activities.map((item: CashFlowItem) => (
-                <TableRow key={`fin-${item.code}`} hover>
+                <TableRow
+                  key={`fin-${item.code}`}
+                  hover
+                >
                   <TableCell sx={{ pl: 4 }}>{item.code}</TableCell>
                   <TableCell>{item.name}</TableCell>
-                  <TableCell align='right' sx={{ color: item.amount >= 0 ? 'success.main' : 'error.main' }}>
+                  <TableCell
+                    align='right'
+                    sx={{ color: item.amount >= 0 ? 'success.main' : 'error.main' }}
+                  >
                     {formatCurrency(item.amount)}
                   </TableCell>
                 </TableRow>
               ))}
               <TableRow sx={{ bgcolor: 'grey.100' }}>
-                <TableCell colSpan={2} sx={{ fontWeight: 'bold' }}>
+                <TableCell
+                  colSpan={2}
+                  sx={{ fontWeight: 'bold' }}
+                >
                   现金及现金等价物净增加额
                 </TableCell>
                 <TableCell
@@ -613,7 +786,10 @@ const FinancialReportPage: React.FC = () => {
       return (
         <Box sx={{ py: 8, textAlign: 'center' }}>
           <FileText sx={{ width: 48, height: 48, color: 'text.disabled', mx: 'auto', mb: 2 }} />
-          <Typography variant='body1' sx={{ color: 'text.secondary' }}>
+          <Typography
+            variant='body1'
+            sx={{ color: 'text.secondary' }}
+          >
             所有者权益变动表数据加载中...
           </Typography>
         </Box>
@@ -645,64 +821,83 @@ const FinancialReportPage: React.FC = () => {
         ],
       }}
     >
-        {error && (
-          <Alert severity='error' sx={{ mb: 2 }}>
-            {error}
-          </Alert>
-        )}
-
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            mb: 2,
-          }}
+      {error && (
+        <Alert
+          severity='error'
+          sx={{ mb: 2 }}
         >
-          <Tabs value={activeTab} onChange={(_, newValue) => setActiveTab(newValue)}>
-            {tabs.map((tab) => (
-              <Tab
-                key={tab.value}
-                value={tab.value}
-                label={tab.label}
-                icon={tab.icon}
-                iconPosition='start'
-              />
-            ))}
-          </Tabs>
+          {error}
+        </Alert>
+      )}
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <FormControl size='small' sx={{ minWidth: 120 }}>
-              <InputLabel>期间类型</InputLabel>
-              <Select
-                value={periodType}
-                label='期间类型'
-                onChange={(e) => {
-                  setPeriodType(e.target.value);
-                  setPeriod(periodOptions[0]?.value || '');
-                }}
-              >
-                <MenuItem value='year'>年度</MenuItem>
-                <MenuItem value='quarter'>季度</MenuItem>
-                <MenuItem value='month'>月度</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl size='small' sx={{ minWidth: 160 }}>
-              <InputLabel>选择期间</InputLabel>
-              <Select value={period} label='选择期间' onChange={(e) => setPeriod(e.target.value)}>
-                {periodOptions.map((opt) => (
-                  <MenuItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Box>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 2,
+        }}
+      >
+        <Tabs
+          value={activeTab}
+          onChange={(_, newValue) => setActiveTab(newValue)}
+        >
+          {tabs.map((tab) => (
+            <Tab
+              key={tab.value}
+              value={tab.value}
+              label={tab.label}
+              icon={tab.icon}
+              iconPosition='start'
+            />
+          ))}
+        </Tabs>
+
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <FormControl
+            size='small'
+            sx={{ minWidth: 120 }}
+          >
+            <InputLabel>期间类型</InputLabel>
+            <Select
+              value={periodType}
+              label='期间类型'
+              onChange={(e) => {
+                setPeriodType(e.target.value);
+                setPeriod(periodOptions[0]?.value || '');
+              }}
+            >
+              <MenuItem value='year'>年度</MenuItem>
+              <MenuItem value='quarter'>季度</MenuItem>
+              <MenuItem value='month'>月度</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl
+            size='small'
+            sx={{ minWidth: 160 }}
+          >
+            <InputLabel>选择期间</InputLabel>
+            <Select
+              value={period}
+              label='选择期间'
+              onChange={(e) => setPeriod(e.target.value)}
+            >
+              {periodOptions.map((opt) => (
+                <MenuItem
+                  key={opt.value}
+                  value={opt.value}
+                >
+                  {opt.label}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
         </Box>
+      </Box>
 
-        {renderSummaryCards()}
+      {renderSummaryCards()}
 
-        {renderReportTable()}
+      {renderReportTable()}
     </PageContainer>
   );
 };

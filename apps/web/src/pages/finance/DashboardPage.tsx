@@ -1,12 +1,6 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Box,
-  Typography,
-  Avatar,
-  Stack,
-  LinearProgress,
-} from '@mui/material';
+import { Box, Typography, Avatar, Stack, LinearProgress } from '@mui/material';
 import {
   FileText,
   CreditCard,
@@ -31,12 +25,7 @@ import {
   type QuickAction,
 } from '@/components/templates';
 import { PageContainer } from '@/components/common';
-import {
-  voucherApi,
-  receivablePayableApi,
-  reportApi,
-  accountApi,
-} from '@/api/finance';
+import { voucherApi, receivablePayableApi, reportApi, accountApi } from '@/api/finance';
 import type { Voucher, SalesInvoice, PurchaseInvoice } from '@/types/finance';
 
 const FinanceDashboardPage: React.FC = () => {
@@ -49,7 +38,13 @@ const FinanceDashboardPage: React.FC = () => {
     netProfit: 0,
   });
   const [recentVouchers, setRecentVouchers] = useState<
-    Array<{ id: string; title: string; subtitle: string; time: string; type: 'voucher' | 'invoice' | 'payment' }>
+    Array<{
+      id: string;
+      title: string;
+      subtitle: string;
+      time: string;
+      type: 'voucher' | 'invoice' | 'payment';
+    }>
   >([]);
   const [financialData, setFinancialData] = useState({
     income: 0,
@@ -70,22 +65,34 @@ const FinanceDashboardPage: React.FC = () => {
 
       const voucherCount =
         voucherRes.status === 'fulfilled' && voucherRes.value.success && voucherRes.value.data
-          ? voucherRes.value.data.total ?? 0
+          ? (voucherRes.value.data.total ?? 0)
           : 0;
 
       const receivableTotal =
-        invoiceRes.status === 'fulfilled' && invoiceRes.value.success && invoiceRes.value.data?.items
-          ? (invoiceRes.value.data.items as SalesInvoice[]).reduce((sum, inv) => sum + (inv.amount || 0), 0)
+        invoiceRes.status === 'fulfilled' &&
+        invoiceRes.value.success &&
+        invoiceRes.value.data?.items
+          ? (invoiceRes.value.data.items as SalesInvoice[]).reduce(
+              (sum, inv) => sum + (inv.amount || 0),
+              0
+            )
           : 0;
 
       const payableTotal =
-        payableRes.status === 'fulfilled' && payableRes.value.success && payableRes.value.data?.items
-          ? (payableRes.value.data.items as PurchaseInvoice[]).reduce((sum, inv) => sum + (inv.amount || 0), 0)
+        payableRes.status === 'fulfilled' &&
+        payableRes.value.success &&
+        payableRes.value.data?.items
+          ? (payableRes.value.data.items as PurchaseInvoice[]).reduce(
+              (sum, inv) => sum + (inv.amount || 0),
+              0
+            )
           : 0;
 
-      const netProfit = balanceRes.status === 'fulfilled' && balanceRes.value.success && balanceRes.value.data
-        ? ((balanceRes.value.data as any)?.assets?.total ?? 0) - ((balanceRes.value.data as any)?.liabilities?.total ?? 0)
-        : 0;
+      const netProfit =
+        balanceRes.status === 'fulfilled' && balanceRes.value.success && balanceRes.value.data
+          ? ((balanceRes.value.data as any)?.assets?.total ?? 0) -
+            ((balanceRes.value.data as any)?.liabilities?.total ?? 0)
+          : 0;
 
       setStatsData({
         voucherCount,
@@ -112,17 +119,53 @@ const FinanceDashboardPage: React.FC = () => {
         setRecentVouchers(items);
       } else {
         setRecentVouchers([
-          { id: '1', title: '记-2026-001', subtitle: '支付办公费用', time: new Date().toISOString().slice(0, 16).replace('T', ' '), type: 'voucher' },
-          { id: '2', title: '记-2026-002', subtitle: '收到客户货款', time: new Date().toISOString().slice(0, 16).replace('T', ' '), type: 'voucher' },
-          { id: '3', title: 'INV-2026-001', subtitle: '销售发票 #001', time: new Date().toISOString().slice(0, 16).replace('T', ' '), type: 'invoice' },
-          { id: '4', title: 'PAY-2026-001', subtitle: '供应商付款', time: new Date().toISOString().slice(0, 16).replace('T', ' '), type: 'payment' },
+          {
+            id: '1',
+            title: '记-2026-001',
+            subtitle: '支付办公费用',
+            time: new Date().toISOString().slice(0, 16).replace('T', ' '),
+            type: 'voucher',
+          },
+          {
+            id: '2',
+            title: '记-2026-002',
+            subtitle: '收到客户货款',
+            time: new Date().toISOString().slice(0, 16).replace('T', ' '),
+            type: 'voucher',
+          },
+          {
+            id: '3',
+            title: 'INV-2026-001',
+            subtitle: '销售发票 #001',
+            time: new Date().toISOString().slice(0, 16).replace('T', ' '),
+            type: 'invoice',
+          },
+          {
+            id: '4',
+            title: 'PAY-2026-001',
+            subtitle: '供应商付款',
+            time: new Date().toISOString().slice(0, 16).replace('T', ' '),
+            type: 'payment',
+          },
         ]);
       }
     } catch (err: unknown) {
       apiLogger.error('加载最近凭证失败:', err);
       setRecentVouchers([
-        { id: '1', title: '记-2026-001', subtitle: '支付办公费用', time: new Date().toISOString().slice(0, 16).replace('T', ' '), type: 'voucher' },
-        { id: '2', title: '记-2026-002', subtitle: '收到客户货款', time: new Date().toISOString().slice(0, 16).replace('T', ' '), type: 'voucher' },
+        {
+          id: '1',
+          title: '记-2026-001',
+          subtitle: '支付办公费用',
+          time: new Date().toISOString().slice(0, 16).replace('T', ' '),
+          type: 'voucher',
+        },
+        {
+          id: '2',
+          title: '记-2026-002',
+          subtitle: '收到客户货款',
+          time: new Date().toISOString().slice(0, 16).replace('T', ' '),
+          type: 'voucher',
+        },
       ]);
     }
   }, []);
@@ -248,7 +291,7 @@ const FinanceDashboardPage: React.FC = () => {
         href: '/finance/voucher/create',
         color: '#1976d2',
       },
-      
+
       {
         id: 'voucher-list',
         label: '凭证列表',
@@ -468,7 +511,9 @@ const FinanceDashboardPage: React.FC = () => {
         loading={loading}
         onRefresh={() => {
           setLoading(true);
-          Promise.all([loadStats(), loadRecentVouchers(), loadFinancialData()]).finally(() => setLoading(false));
+          Promise.all([loadStats(), loadRecentVouchers(), loadFinancialData()]).finally(() =>
+            setLoading(false)
+          );
         }}
       />
     </PageContainer>

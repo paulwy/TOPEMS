@@ -62,7 +62,80 @@ export type StatusVariant = 'filled' | 'outlined' | 'soft';
  */
 export type StatusSize = 'sm' | 'md' | 'lg';
 
-export type ModuleStatus = 'online' | 'beta' | 'plan' | 'new';
+export type EmployeeStatus =
+  | 'employee_active'
+  | 'employee_inactive'
+  | 'employee_probation'
+  | 'employee_pending';
+export type AttendanceStatus =
+  | 'attendance_normal'
+  | 'attendance_late'
+  | 'attendance_early_leave'
+  | 'attendance_absent'
+  | 'attendance_leave';
+export type LeaveStatus = 'leave_pending' | 'leave_approved' | 'leave_rejected' | 'leave_cancelled';
+export type PayrollStatus =
+  | 'payroll_draft'
+  | 'payroll_calculated'
+  | 'payroll_paid'
+  | 'payroll_processing';
+export type PerformanceStatus =
+  | 'performance_pending'
+  | 'performance_self_review'
+  | 'performance_manager_review'
+  | 'performance_completed'
+  | 'performance_not_started'
+  | 'performance_in_progress';
+export type CustomerStatus =
+  | 'customer_active'
+  | 'customer_inactive'
+  | 'customer_blocked'
+  | 'customer_potential';
+export type OpportunityStatus =
+  | 'opportunity_new'
+  | 'opportunity_qualifying'
+  | 'opportunity_proposal'
+  | 'opportunity_negotiation'
+  | 'opportunity_won'
+  | 'opportunity_lost';
+export type ProjectStatus =
+  | 'project_planning'
+  | 'project_active'
+  | 'project_on_hold'
+  | 'project_completed'
+  | 'project_cancelled';
+export type WorkflowStatus =
+  | 'workflow_draft'
+  | 'workflow_pending'
+  | 'workflow_approved'
+  | 'workflow_rejected'
+  | 'workflow_processing';
+export type FinanceStatus =
+  | 'finance_draft'
+  | 'finance_pending'
+  | 'finance_approved'
+  | 'finance_posted'
+  | 'finance_imported';
+export type ModuleStatusValue = 'online' | 'beta' | 'plan' | 'new';
+export type ModuleStatus = ModuleStatusValue;
+export type CommonStatus =
+  | 'active'
+  | 'inactive'
+  | 'pending'
+  | 'approved'
+  | 'rejected'
+  | 'draft'
+  | 'published'
+  | 'archived'
+  | 'deleted'
+  | 'completed'
+  | 'cancelled'
+  | 'processing'
+  | 'failed'
+  | 'success'
+  | 'warning'
+  | 'error'
+  | 'info';
 
 /**
  * 状态配置接口
@@ -502,22 +575,22 @@ export const DEFAULT_STATUS_MAP: StatusMapConfig = {
   },
 
   // Dashboard模块状态
-  module_online: {
+  online: {
     label: '上线',
     color: 'success',
     icon: <CheckCircle size={14} />,
   },
-  module_beta: {
+  beta: {
     label: '测试',
     color: 'warning',
     icon: <Zap size={14} />,
   },
-  module_plan: {
+  plan: {
     label: '规划',
     color: 'default',
     icon: <FileText size={14} />,
   },
-  module_new: {
+  new: {
     label: '新功能',
     color: 'info',
     icon: <Star size={14} />,
@@ -529,7 +602,7 @@ export const DEFAULT_STATUS_MAP: StatusMapConfig = {
 const SIZE_CONFIG: Record<StatusSize, 'small' | 'medium'> = {
   sm: 'small',
   md: 'medium',
-  lg: 'medium',
+  lg: 'medium', // MUI Chip max size is medium; icon sizing handled below
 };
 
 const SIZE_STYLES: Record<StatusSize, any> = {
@@ -553,7 +626,12 @@ const SIZE_STYLES: Record<StatusSize, any> = {
 // ============ 变体样式映射 ============
 
 const VARIANT_STYLES: Record<StatusVariant, any> = {
-  filled: {},
+  filled: (color: StatusColor) => ({
+    sx: {
+      bgcolor: color === 'default' ? 'grey.400' : `${color}.main`,
+      color: color === 'default' ? '#fff' : '#fff',
+    },
+  }),
   outlined: {
     variant: 'outlined',
   },
@@ -633,7 +711,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
   const config: StatusConfig = statusMap[status] || {
     label: label || status,
     color: color || 'default',
-    icon: icon,
+    icon,
   };
 
   // 如果提供了自定义渲染函数，使用它
@@ -675,7 +753,21 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
       label={label || config.label}
       color={chipColor}
       size={chipSize}
-      icon={showIcon && (icon || config.icon) ? <>{icon || config.icon}</> : undefined}
+      icon={
+        showIcon && (icon || config.icon) ? (
+          <Box
+            sx={{
+              display: 'flex',
+              '& svg': {
+                width: size === 'lg' ? 20 : size === 'md' ? 16 : 14,
+                height: size === 'lg' ? 20 : size === 'md' ? 16 : 14,
+              },
+            }}
+          >
+            {icon || config.icon}
+          </Box>
+        ) : undefined
+      }
       variant={variant === 'outlined' ? 'outlined' : 'filled'}
       onClick={clickable && !disabled ? onClick : undefined}
       disabled={disabled}
@@ -686,94 +778,85 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
 
 // ============ 便捷组件导出 ============
 
+interface TypedStatusBadgeProps<T extends string> extends Omit<StatusBadgeProps, 'status'> {
+  status: T;
+}
+
 /**
  * HRM员工状态徽章
  */
-export const EmployeeStatusBadge: React.FC<Omit<StatusBadgeProps, 'statusMap'>> = (props) => (
-  <StatusBadge
-    {...props}
-    statusMap={DEFAULT_STATUS_MAP}
-  />
+export const EmployeeStatusBadge: React.FC<TypedStatusBadgeProps<EmployeeStatus>> = (props) => (
+  <StatusBadge {...props} />
 );
 
 /**
  * HRM考勤状态徽章
  */
-export const AttendanceStatusBadge: React.FC<Omit<StatusBadgeProps, 'statusMap'>> = (props) => (
-  <StatusBadge
-    {...props}
-    statusMap={DEFAULT_STATUS_MAP}
-  />
+export const AttendanceStatusBadge: React.FC<TypedStatusBadgeProps<AttendanceStatus>> = (props) => (
+  <StatusBadge {...props} />
 );
 
 /**
  * HRM请假状态徽章
  */
-export const LeaveStatusBadge: React.FC<Omit<StatusBadgeProps, 'statusMap'>> = (props) => (
-  <StatusBadge
-    {...props}
-    statusMap={DEFAULT_STATUS_MAP}
-  />
+export const LeaveStatusBadge: React.FC<TypedStatusBadgeProps<LeaveStatus>> = (props) => (
+  <StatusBadge {...props} />
 );
+
+/**
+ * HRM薪酬状态徽章
+ */
+export const PayrollStatusBadge: React.FC<TypedStatusBadgeProps<PayrollStatus>> = (props) => (
+  <StatusBadge {...props} />
+);
+
+/**
+ * HRM绩效状态徽章
+ */
+export const PerformanceStatusBadge: React.FC<TypedStatusBadgeProps<PerformanceStatus>> = (
+  props
+) => <StatusBadge {...props} />;
 
 /**
  * CRM客户状态徽章
  */
-export const CustomerStatusBadge: React.FC<Omit<StatusBadgeProps, 'statusMap'>> = (props) => (
-  <StatusBadge
-    {...props}
-    statusMap={DEFAULT_STATUS_MAP}
-  />
+export const CustomerStatusBadge: React.FC<TypedStatusBadgeProps<CustomerStatus>> = (props) => (
+  <StatusBadge {...props} />
 );
 
 /**
  * CRM商机状态徽章
  */
-export const OpportunityStatusBadge: React.FC<Omit<StatusBadgeProps, 'statusMap'>> = (props) => (
-  <StatusBadge
-    {...props}
-    statusMap={DEFAULT_STATUS_MAP}
-  />
-);
+export const OpportunityStatusBadge: React.FC<TypedStatusBadgeProps<OpportunityStatus>> = (
+  props
+) => <StatusBadge {...props} />;
 
 /**
  * 项目状态徽章
  */
-export const ProjectStatusBadge: React.FC<Omit<StatusBadgeProps, 'statusMap'>> = (props) => (
-  <StatusBadge
-    {...props}
-    statusMap={DEFAULT_STATUS_MAP}
-  />
+export const ProjectStatusBadge: React.FC<TypedStatusBadgeProps<ProjectStatus>> = (props) => (
+  <StatusBadge {...props} />
 );
 
 /**
  * 工作流状态徽章
  */
-export const WorkflowStatusBadge: React.FC<Omit<StatusBadgeProps, 'statusMap'>> = (props) => (
-  <StatusBadge
-    {...props}
-    statusMap={DEFAULT_STATUS_MAP}
-  />
+export const WorkflowStatusBadge: React.FC<TypedStatusBadgeProps<WorkflowStatus>> = (props) => (
+  <StatusBadge {...props} />
 );
 
 /**
  * 财务状态徽章
  */
-export const FinanceStatusBadge: React.FC<Omit<StatusBadgeProps, 'statusMap'>> = (props) => (
-  <StatusBadge
-    {...props}
-    statusMap={DEFAULT_STATUS_MAP}
-  />
+export const FinanceStatusBadge: React.FC<TypedStatusBadgeProps<FinanceStatus>> = (props) => (
+  <StatusBadge {...props} />
 );
 
 /**
  * Dashboard模块状态徽章
  */
-export const ModuleStatusBadge: React.FC<Omit<StatusBadgeProps, 'statusMap'>> = (props) => (
-  <StatusBadge
-    {...props}
-    statusMap={DEFAULT_STATUS_MAP}
-  />
+export const ModuleStatusBadge: React.FC<TypedStatusBadgeProps<ModuleStatusValue>> = (props) => (
+  <StatusBadge {...props} />
 );
 
 // ============ 默认导出 ============

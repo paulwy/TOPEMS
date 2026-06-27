@@ -2,18 +2,19 @@
 
 ## 版本记录
 
-| 版本 | 日期 | 作者 | 变更说明 |
-|------|------|------|----------|
+| 版本 | 日期       | 作者   | 变更说明                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ---- | ---------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| v2.3 | 2026-06-27 | System | 统一页面内边距设置规范：为 PageContainer 添加详细 JSDoc 文档；补充 PageContainer 在模板体系中的定位和使用规范；明确各页面类型的 padding 配置建议（列表页/详情页/表单页用默认 true，仪表盘页/全屏内容用 false）；更新组件架构图和代码组织规范                                                                                                                                                                                                                                                                   |
 | v2.2 | 2026-06-20 | System | 修复 85 个 TypeScript 错误：修复 DashboardTemplate 图表布局比较问题；修复 FormPageTemplate saveDraft 类型安全；删除 ListPageTemplate、FormPageTemplate、AlertCard、ConfirmDialog、DataTable、StatusBadge 重复类型导出；修复 lucide-react 图标 `Icon` 变量名冲突；修复 Grid2 导入问题；修复 Finance DashboardPage 使用自定义区域 props；修复 common 组件的 sx 属性问题；修复 StatCardBase children 属性支持；修复类型转换 `as unknown as` 问题；修复 FinancialVoucher 缺失属性问题；修复 DialogActions 导入问题 |
-| v2.1 | 2026-06-20 | System | 修复测试套件中的 12 个失败测试用例；完善 formatFileSize 函数格式输出；修复 usePermission hook 权限判断逻辑；修复 DataTable.tsx 泛型语法问题 |
-| v2.0 | 2026-06-20 | System | 增强 FormPageTemplate（表单验证、布局配置、表单联动、草稿保存、进度条、权限配置）；增强 DashboardTemplate（图表集成、数据卡片布局、响应式布局、卡片分组、持久化配置、自定义渲染器）；更新 common/index.ts 标记旧组件为 deprecated；添加 54 个单元测试用例 |
-| v1.6 | 2026-06-16 | System | 为 ListPageTemplate 添加面包屑导航和返回按钮支持；为 HrmEmployeePage.tsx 添加面包屑导航 |
-| v1.5 | 2026-06-16 | System | 重构 EmployeeManagementPage.tsx 使用 ListPageTemplate 组件；修复 Chip color 类型错误 |
-| v1.4 | 2026-06-16 | System | 将统一模板规范推广到 CRM、PM 模块；修复 CRMBillingPage.tsx 中的 TypeScript 错误 |
-| v1.3 | 2026-06-16 | System | 清理 98 个 *Refactored.tsx 重复文件；修复 619 → 1 个 TypeScript 错误；创建 shadcn.tsx 补齐缺失组件 |
-| v1.2 | 2026-06-16 | System | 扩展 HRM 模块模板统一至所有页面（部门、招聘、培训、绩效、报表、员工管理） |
-| v1.1 | 2026-06-16 | System | HRM 模块页面模板统一，包括员工、合同、休假、考勤、薪酬页面 |
-| v1.0 | 2026-06-16 | System | 初始版本，存档现有模板设计 |
+| v2.1 | 2026-06-20 | System | 修复测试套件中的 12 个失败测试用例；完善 formatFileSize 函数格式输出；修复 usePermission hook 权限判断逻辑；修复 DataTable.tsx 泛型语法问题                                                                                                                                                                                                                                                                                                                                                                    |
+| v2.0 | 2026-06-20 | System | 增强 FormPageTemplate（表单验证、布局配置、表单联动、草稿保存、进度条、权限配置）；增强 DashboardTemplate（图表集成、数据卡片布局、响应式布局、卡片分组、持久化配置、自定义渲染器）；更新 common/index.ts 标记旧组件为 deprecated；添加 54 个单元测试用例                                                                                                                                                                                                                                                      |
+| v1.6 | 2026-06-16 | System | 为 ListPageTemplate 添加面包屑导航和返回按钮支持；为 HrmEmployeePage.tsx 添加面包屑导航                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| v1.5 | 2026-06-16 | System | 重构 EmployeeManagementPage.tsx 使用 ListPageTemplate 组件；修复 Chip color 类型错误                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| v1.4 | 2026-06-16 | System | 将统一模板规范推广到 CRM、PM 模块；修复 CRMBillingPage.tsx 中的 TypeScript 错误                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| v1.3 | 2026-06-16 | System | 清理 98 个 \*Refactored.tsx 重复文件；修复 619 → 1 个 TypeScript 错误；创建 shadcn.tsx 补齐缺失组件                                                                                                                                                                                                                                                                                                                                                                                                            |
+| v1.2 | 2026-06-16 | System | 扩展 HRM 模块模板统一至所有页面（部门、招聘、培训、绩效、报表、员工管理）                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| v1.1 | 2026-06-16 | System | HRM 模块页面模板统一，包括员工、合同、休假、考勤、薪酬页面                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| v1.0 | 2026-06-16 | System | 初始版本，存档现有模板设计                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 
 ---
 
@@ -44,45 +45,136 @@
 ### 2.1 模板组件架构
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    页面模板组件体系                           │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  ┌──────────────┐                                           │
-│  │  PageHeader  │ ← 页面头部（所有页面共用）                   │
-│  └──────┬───────┘                                           │
-│         │                                                   │
-│    ┌────┴────┬─────────────┬─────────────┬─────────────┐   │
-│    ▼         ▼             ▼             ▼             ▼   │
-│  ┌────────────────────────────────────────────────────────┐ │
-│  │  ListPageTemplate  │  DetailPageTemplate               │ │
-│  │  列表页模板        │  详情页模板                        │ │
-│  ├────────────────────────────────────────────────────────┤ │
-│  │  FormPageTemplate  │  DashboardTemplate               │ │
-│  │  表单页模板        │  仪表盘模板                        │ │
-│  └────────────────────────────────────────────────────────┘ │
-│                                                             │
-│  ┌──────────────┐                                           │
-│  │  EmptyState  │ ← 空状态组件（所有模板共用）                 │
-│  └──────────────┘                                           │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                      页面模板组件体系                             │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌──────────────────────────────────────────────────────────┐   │
+│  │  PageContainer（页面容器，所有页面最外层）                 │   │
+│  │  - 页面背景色、最大宽度、页面级 padding                   │   │
+│  │  - 可选的 PageHeader                                     │   │
+│  └───────────────────────┬──────────────────────────────────┘   │
+│                          │                                       │
+│  ┌───────────────────────┴──────────────────────────────────┐   │
+│  │  PageHeader（页面头部，所有页面共用）                      │   │
+│  └───────────────────────┬──────────────────────────────────┘   │
+│                          │                                       │
+│    ┌─────────────────────┴───────────┬─────────────┬─────────┐ │
+│    ▼                                 ▼             ▼         ▼ │
+│  ┌────────────────────────────────────────────────────────────┐ │
+│  │  ListPageTemplate  │  DetailPageTemplate  │  FormPageTemplate │
+│  │  列表页模板        │  详情页模板          │  表单页模板      │ │
+│  ├────────────────────────────────────────────────────────────┤ │
+│  │  DashboardTemplate  │  SettingsPageTemplate  │  StatsPageTemplate │
+│  │  仪表盘模板        │  设置页模板          │  统计页模板      │ │
+│  └────────────────────────────────────────────────────────────┘ │
+│                                                                 │
+│  ┌──────────────┐                                               │
+│  │  EmptyState  │ ← 空状态组件（所有模板共用）                     │
+│  └──────────────┘                                               │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ### 2.2 模板组件清单
 
-| 组件名称 | 功能定位 | 使用场景 | 状态 |
-|----------|----------|----------|------|
-| `PageHeader` | 页面头部 | 所有页面 | ✅ 稳定 |
-| `ListPageTemplate` | 列表页 | 数据列表展示 | ✅ 稳定 |
-| `DetailPageTemplate` | 详情页 | 数据详情展示 | ✅ 稳定 |
-| `FormPageTemplate` | 表单页 | 数据创建/编辑 | ✅ 稳定 |
-| `DashboardTemplate` | 仪表盘 | 数据概览展示 | ✅ 稳定 |
-| `EmptyState` | 空状态 | 数据为空时展示 | ✅ 稳定 |
+| 组件名称               | 功能定位 | 使用场景          | 状态    |
+| ---------------------- | -------- | ----------------- | ------- |
+| `PageContainer`        | 页面容器 | 所有页面最外层    | ✅ 稳定 |
+| `PageHeader`           | 页面头部 | 所有页面          | ✅ 稳定 |
+| `ListPageTemplate`     | 列表页   | 数据列表展示      | ✅ 稳定 |
+| `DetailPageTemplate`   | 详情页   | 数据详情展示      | ✅ 稳定 |
+| `FormPageTemplate`     | 表单页   | 数据创建/编辑     | ✅ 稳定 |
+| `DashboardTemplate`    | 仪表盘   | 数据概览展示      | ✅ 稳定 |
+| `SettingsPageTemplate` | 设置页   | 系统设置/偏好设置 | ✅ 稳定 |
+| `StatsPageTemplate`    | 统计页   | 数据统计报表      | ✅ 稳定 |
+| `EmptyState`           | 空状态   | 数据为空时展示    | ✅ 稳定 |
 
 ---
 
 ## 三、各模板详细设计
+
+### 3.0 PageContainer（页面容器）
+
+**组件位置**：`/components/common/PageContainer.tsx`
+
+**功能定位**：所有页面的最外层容器，提供统一的页面布局、背景色、最大宽度和内边距。
+
+**设计标准**：
+
+| 区域     | 功能       | 设计规范                                       |
+| -------- | ---------- | ---------------------------------------------- |
+| 背景色   | 页面背景   | 默认 `grey.50`，可通过 `bgcolor` 自定义        |
+| 最大宽度 | 内容区宽度 | 默认 `xl`（1200px），支持 xs/sm/md/lg/xl/false |
+| 内边距   | 页面留白   | 默认开启，`px: { xs: 2, sm: 3 }`，`pb: 4`      |
+| 页面头部 | 标题导航   | 可选，通过 `title` 或 `headerProps` 配置       |
+
+**Padding 使用规范**：
+
+| 页面类型                      | padding 值     | 说明                                             |
+| ----------------------------- | -------------- | ------------------------------------------------ |
+| 列表页（ListPageTemplate）    | `true`（默认） | 由 PageContainer 提供页面级 padding              |
+| 详情页（DetailPageTemplate）  | `true`（默认） | 由 PageContainer 提供页面级 padding              |
+| 表单页（FormPageTemplate）    | `true`（默认） | 由 PageContainer 提供页面级 padding              |
+| 仪表盘页（DashboardTemplate） | `false`        | Dashboard 内部卡片已包含间距，不需要额外 padding |
+| 全屏内容（地图、编辑器）      | `false`        | 内容需要撑满整个视口                             |
+
+**接口定义**：
+
+```typescript
+export interface PageContainerProps {
+  children: React.ReactNode;
+  title?: string;
+  subtitle?: string;
+  description?: string;
+  headerProps?: Omit<PageHeaderProps, 'title' | 'subtitle' | 'description'>;
+  maxWidth?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | false;
+  padding?: boolean; // 默认 true
+  paper?: boolean;
+  loading?: boolean;
+  bgcolor?: string;
+  className?: string;
+  sx?: SxProps;
+  contentSx?: SxProps;
+}
+```
+
+**使用示例**：
+
+```tsx
+// ✅ 列表页（推荐用法）
+<PageContainer title="用户管理" subtitle="管理平台用户账户">
+  <ListPageTemplate
+    columns={columns}
+    data={users}
+    // ...
+  />
+</PageContainer>
+
+// ✅ 仪表盘页（推荐用法）
+<PageContainer
+  title="数据概览"
+  padding={false}
+  maxWidth={false}
+>
+  <DashboardTemplate
+    stats={stats}
+    charts={charts}
+    // ...
+  />
+</PageContainer>
+
+// ✅ 详情页（推荐用法）
+<PageContainer title="员工详情">
+  <DetailPageTemplate
+    infoCard={infoCard}
+    sections={sections}
+    // ...
+  />
+</PageContainer>
+```
+
+---
 
 ### 3.1 PageHeader（页面头部）
 
@@ -90,13 +182,13 @@
 
 **设计标准**：
 
-| 区域 | 功能 | 设计规范 |
-|------|------|----------|
-| 面包屑 | 导航路径 | 使用 `Breadcrumbs` 组件，分隔符为 `ChevronRight` |
-| 返回按钮 | 返回上一页 | 位于标题左侧，使用 `ArrowLeft` 图标 |
-| 标题 | 页面标题 | 使用 `h4` 字号（移动端 `h5`），fontWeight: 600 |
-| 副标题 | 页面描述 | 使用 `body2`，color: text.secondary |
-| 操作按钮 | 页面级操作 | 位于右侧，支持多个操作按钮，移动端折叠多余按钮 |
+| 区域     | 功能       | 设计规范                                         |
+| -------- | ---------- | ------------------------------------------------ |
+| 面包屑   | 导航路径   | 使用 `Breadcrumbs` 组件，分隔符为 `ChevronRight` |
+| 返回按钮 | 返回上一页 | 位于标题左侧，使用 `ArrowLeft` 图标              |
+| 标题     | 页面标题   | 使用 `h4` 字号（移动端 `h5`），fontWeight: 600   |
+| 副标题   | 页面描述   | 使用 `body2`，color: text.secondary              |
+| 操作按钮 | 页面级操作 | 位于右侧，支持多个操作按钮，移动端折叠多余按钮   |
 
 **接口定义**：
 
@@ -120,17 +212,14 @@ export interface PageHeaderProps {
 
 ```tsx
 <PageHeader
-  title="员工管理"
-  subtitle="管理企业员工信息"
-  breadcrumbs={[
-    { label: "人力资源", href: "/hrm" },
-    { label: "员工列表" },
-  ]}
+  title='员工管理'
+  subtitle='管理企业员工信息'
+  breadcrumbs={[{ label: '人力资源', href: '/hrm' }, { label: '员工列表' }]}
   actions={[
     {
-      label: "新增员工",
+      label: '新增员工',
       icon: <Plus />,
-      variant: "contained",
+      variant: 'contained',
       onClick: handleAdd,
     },
   ]}
@@ -146,14 +235,14 @@ export interface PageHeaderProps {
 
 **设计标准**：
 
-| 区域 | 功能 | 设计规范 |
-|------|------|----------|
-| 搜索栏 | 全局搜索 | 支持 `searchable` 配置，placeholder 为"搜索..." |
-| 筛选栏 | 条件筛选 | 支持 `filters` 配置，包含多种筛选类型 |
-| 表格 | 数据展示 | 使用 `TableContainer` + `Table`，支持排序 |
-| 行操作 | 单行操作 | 使用 `RowAction` 配置，支持条件显示 |
-| 分页 | 数据分页 | 使用 `TablePagination`，默认每页 10 条 |
-| 空状态 | 无数据展示 | 使用 `EmptyState` 组件 |
+| 区域   | 功能       | 设计规范                                        |
+| ------ | ---------- | ----------------------------------------------- |
+| 搜索栏 | 全局搜索   | 支持 `searchable` 配置，placeholder 为"搜索..." |
+| 筛选栏 | 条件筛选   | 支持 `filters` 配置，包含多种筛选类型           |
+| 表格   | 数据展示   | 使用 `TableContainer` + `Table`，支持排序       |
+| 行操作 | 单行操作   | 使用 `RowAction` 配置，支持条件显示             |
+| 分页   | 数据分页   | 使用 `TablePagination`，默认每页 10 条          |
+| 空状态 | 无数据展示 | 使用 `EmptyState` 组件                          |
 
 **接口定义**：
 
@@ -183,7 +272,7 @@ export interface ListPageTemplateProps<T = any> {
 
   // 排序
   sortable?: boolean;
-  onSort?: (sortBy: string, sortOrder: "asc" | "desc") => void;
+  onSort?: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
 
   // 分页
   pagination?: {
@@ -240,7 +329,7 @@ export interface ListPageTemplateProps<T = any> {
   }}
   rowActions={rowActions}
   onRowClick={handleView}
-  emptyMessage="暂无数据"
+  emptyMessage='暂无数据'
 />
 ```
 
@@ -252,13 +341,13 @@ export interface ListPageTemplateProps<T = any> {
 
 **设计标准**：
 
-| 区域 | 功能 | 设计规范 |
-|------|------|----------|
+| 区域     | 功能     | 设计规范                                  |
+| -------- | -------- | ----------------------------------------- |
 | 信息卡片 | 主体信息 | 渐变背景（primary → secondary），白色文字 |
-| 标签页 | 内容分区 | 使用 `Tabs` 组件，支持 badge 显示 |
-| 区块 | 信息分组 | 使用 `Paper` 组件，带标题和内容区 |
-| 侧边栏 | 辅助信息 | 移动端折叠，桌面端固定定位 |
-| 操作按钮 | 数据操作 | 编辑、删除、分享等默认操作 |
+| 标签页   | 内容分区 | 使用 `Tabs` 组件，支持 badge 显示         |
+| 区块     | 信息分组 | 使用 `Paper` 组件，带标题和内容区         |
+| 侧边栏   | 辅助信息 | 移动端折叠，桌面端固定定位                |
+| 操作按钮 | 数据操作 | 编辑、删除、分享等默认操作                |
 
 **接口定义**：
 
@@ -304,7 +393,7 @@ export interface DetailPageTemplateProps {
 
 ```tsx
 <DetailPageTemplate
-  title="员工详情"
+  title='员工详情'
   subtitle={employee.name}
   breadcrumbs={breadcrumbs}
   onBack={() => navigate(-1)}
@@ -316,8 +405,8 @@ export interface DetailPageTemplateProps {
     subtitle: employee.position,
     tags: [getStatusBadge(employee.status)],
     stats: [
-      { label: "入职日期", value: employee.hire_date },
-      { label: "部门", value: departmentName },
+      { label: '入职日期', value: employee.hire_date },
+      { label: '部门', value: departmentName },
     ],
   }}
   sections={sections}
@@ -332,12 +421,12 @@ export interface DetailPageTemplateProps {
 
 **设计标准**：
 
-| 区域 | 功能 | 设计规范 |
-|------|------|----------|
-| 表单区块 | 字段分组 | 使用 `Paper` 组件，支持折叠 |
+| 区域     | 功能     | 设计规范                                    |
+| -------- | -------- | ------------------------------------------- |
+| 表单区块 | 字段分组 | 使用 `Paper` 组件，支持折叠                 |
 | 表单字段 | 数据输入 | 支持多种字段类型（text/select/date/file等） |
-| 验证提示 | 错误提示 | 使用 `Alert` 组件，支持字段级和表单级提示 |
-| 操作按钮 | 表单提交 | 保存、取消、重置按钮 |
+| 验证提示 | 错误提示 | 使用 `Alert` 组件，支持字段级和表单级提示   |
+| 操作按钮 | 表单提交 | 保存、取消、重置按钮                        |
 
 **接口定义**：
 
@@ -368,8 +457,8 @@ export interface FormPageTemplateProps {
 
 ```tsx
 <FormPageTemplate
-  title="新增员工"
-  subtitle="填写员工基本信息"
+  title='新增员工'
+  subtitle='填写员工基本信息'
   breadcrumbs={breadcrumbs}
   sections={sections}
   defaultValues={formData}
@@ -386,12 +475,12 @@ export interface FormPageTemplateProps {
 
 **设计标准**：
 
-| 区域 | 功能 | 设计规范 |
-|------|------|----------|
-| 统计卡片 | 数据概览 | 使用 `StatCard` 组件，带图标和数值 |
+| 区域     | 功能       | 设计规范                                |
+| -------- | ---------- | --------------------------------------- |
+| 统计卡片 | 数据概览   | 使用 `StatCard` 组件，带图标和数值      |
 | 图表卡片 | 数据可视化 | 使用 `ChartCard` 组件，支持多种图表类型 |
-| 快捷操作 | 快速入口 | 使用 `QuickAction` 配置 |
-| 最近记录 | 最新动态 | 使用 `RecentItem` 配置 |
+| 快捷操作 | 快速入口   | 使用 `QuickAction` 配置                 |
+| 最近记录 | 最新动态   | 使用 `RecentItem` 配置                  |
 
 ---
 
@@ -401,13 +490,13 @@ export interface FormPageTemplateProps {
 
 **设计标准**：
 
-| 类型 | 场景 | 设计规范 |
-|------|------|----------|
-| NoDataEmptyState | 无数据 | 显示空文件夹图标和"暂无数据"提示 |
-| SearchEmptyState | 搜索无结果 | 显示搜索图标和"未找到相关结果"提示 |
+| 类型             | 场景       | 设计规范                                 |
+| ---------------- | ---------- | ---------------------------------------- |
+| NoDataEmptyState | 无数据     | 显示空文件夹图标和"暂无数据"提示         |
+| SearchEmptyState | 搜索无结果 | 显示搜索图标和"未找到相关结果"提示       |
 | FilterEmptyState | 筛选无结果 | 显示筛选图标和"当前筛选条件下无数据"提示 |
-| FolderEmptyState | 文件夹为空 | 显示文件夹图标和"文件夹为空"提示 |
-| ErrorEmptyState | 加载错误 | 显示错误图标和错误信息，提供重试按钮 |
+| FolderEmptyState | 文件夹为空 | 显示文件夹图标和"文件夹为空"提示         |
+| ErrorEmptyState  | 加载错误   | 显示错误图标和错误信息，提供重试按钮     |
 
 ---
 
@@ -415,41 +504,41 @@ export interface FormPageTemplateProps {
 
 ### 4.1 颜色规范
 
-| 用途 | 颜色 | 值 |
-|------|------|-----|
-| 主色调 | primary | `#3b82f6` |
-| 成功色 | success | `#10b981` |
-| 警告色 | warning | `#f59e0b` |
-| 错误色 | error | `#ef4444` |
-| 信息色 | info | `#06b6d4` |
+| 用途   | 颜色       | 值        |
+| ------ | ---------- | --------- |
+| 主色调 | primary    | `#3b82f6` |
+| 成功色 | success    | `#10b981` |
+| 警告色 | warning    | `#f59e0b` |
+| 错误色 | error      | `#ef4444` |
+| 信息色 | info       | `#06b6d4` |
 | 背景色 | background | `#f5f5f5` |
-| 卡片色 | surface | `#ffffff` |
+| 卡片色 | surface    | `#ffffff` |
 
 ### 4.2 间距规范
 
-| 层级 | 间距 | 值 |
-|------|------|-----|
-| 页面内边距 | page | `24px` (md) / `16px` (xs) |
-| 卡片内边距 | card | `24px` |
-| 元素间距 | element | `16px` |
-| 小间距 | small | `8px` |
+| 层级       | 间距    | 值                        |
+| ---------- | ------- | ------------------------- |
+| 页面内边距 | page    | `24px` (md) / `16px` (xs) |
+| 卡片内边距 | card    | `24px`                    |
+| 元素间距   | element | `16px`                    |
+| 小间距     | small   | `8px`                     |
 
 ### 4.3 圆角规范
 
-| 组件 | 圆角 | 值 |
-|------|------|-----|
+| 组件      | 圆角 | 值    |
+| --------- | ---- | ----- |
 | 卡片/按钮 | 默认 | `8px` |
-| 输入框 | 默认 | `4px` |
-| 圆形组件 | 圆形 | `50%` |
+| 输入框    | 默认 | `4px` |
+| 圆形组件  | 圆形 | `50%` |
 
 ### 4.4 字体规范
 
-| 层级 | 字号 | 字重 |
-|------|------|------|
-| 页面标题 | 24px | 600 |
-| 卡片标题 | 16px | 600 |
-| 正文 | 14px | 400 |
-| 辅助文字 | 12px | 400 |
+| 层级     | 字号 | 字重 |
+| -------- | ---- | ---- |
+| 页面标题 | 24px | 600  |
+| 卡片标题 | 16px | 600  |
+| 正文     | 14px | 400  |
+| 辅助文字 | 12px | 400  |
 
 ---
 
@@ -457,28 +546,51 @@ export interface FormPageTemplateProps {
 
 ### 5.1 必须使用模板的场景
 
-| 页面类型 | 必须使用 | 说明 |
-|----------|----------|------|
-| 数据列表页 | ✅ | 使用 `ListPageTemplate` |
-| 数据详情页 | ✅ | 使用 `DetailPageTemplate` |
-| 数据表单页 | ✅ | 使用 `FormPageTemplate` |
-| 仪表盘页 | ✅ | 使用 `DashboardTemplate` |
-| 页面头部 | ✅ | 使用 `PageHeader` |
+| 页面类型   | 必须使用 | 说明                                                           |
+| ---------- | -------- | -------------------------------------------------------------- |
+| 所有页面   | ✅       | 最外层使用 `PageContainer`                                     |
+| 数据列表页 | ✅       | 使用 `ListPageTemplate`（放在 PageContainer 内）               |
+| 数据详情页 | ✅       | 使用 `DetailPageTemplate`（放在 PageContainer 内）             |
+| 数据表单页 | ✅       | 使用 `FormPageTemplate`（放在 PageContainer 内）               |
+| 仪表盘页   | ✅       | 使用 `DashboardTemplate`（PageContainer 设置 padding={false}） |
+| 页面头部   | ✅       | 使用 `PageHeader`（或通过 PageContainer 配置）                 |
 
-### 5.2 禁止直接使用的组件
+### 5.2 PageContainer 与模板组件的配合
 
-| 组件 | 禁止场景 | 替代方案 |
-|------|----------|----------|
-| `<Table>` | 数据列表 | 使用 `ListPageTemplate` |
-| `<TextField>` 搜索 | 列表搜索 | 使用 `ListPageTemplate` 的 `searchable` |
-| `<Paper>` + `<Card>` | 详情展示 | 使用 `DetailPageTemplate` |
-| `<form>` | 数据表单 | 使用 `FormPageTemplate` |
+**推荐的页面结构：**
 
-### 5.3 代码组织规范
+```
+PageContainer（页面最外层，提供背景、宽度、padding）
+  └── 模板组件（ListPageTemplate / DetailPageTemplate 等）
+        └── 业务内容
+```
+
+**各页面类型的 padding 配置：**
+
+| 页面类型 | PageContainer padding | 原因                                         |
+| -------- | --------------------- | -------------------------------------------- |
+| 列表页   | `true`（默认）        | 列表内容需要周围留白                         |
+| 详情页   | `true`（默认）        | 详情内容需要周围留白                         |
+| 表单页   | `true`（默认）        | 表单内容需要周围留白                         |
+| 仪表盘页 | `false`               | Dashboard 内部卡片已有间距，避免双重 padding |
+| 全屏内容 | `false`               | 地图、编辑器等需要撑满空间                   |
+
+### 5.3 禁止直接使用的组件
+
+| 组件                 | 禁止场景 | 替代方案                                |
+| -------------------- | -------- | --------------------------------------- |
+| `<Table>`            | 数据列表 | 使用 `ListPageTemplate`                 |
+| `<TextField>` 搜索   | 列表搜索 | 使用 `ListPageTemplate` 的 `searchable` |
+| `<Paper>` + `<Card>` | 详情展示 | 使用 `DetailPageTemplate`               |
+| `<form>`             | 数据表单 | 使用 `FormPageTemplate`                 |
+
+### 5.4 代码组织规范
 
 ```
 src/
 ├── components/
+│   ├── common/             # 通用组件
+│   │   └── PageContainer.tsx  # 页面容器
 │   ├── templates/          # 模板组件
 │   │   ├── PageHeader.tsx
 │   │   ├── ListPageTemplate.tsx
@@ -492,8 +604,8 @@ src/
 │   └── mui/                # MUI 基础组件封装
 │
 └── pages/
-    ├── HrmEmployeePage.tsx    # 使用 ListPageTemplate
-    ├── HrmContractPage.tsx    # 使用 ListPageTemplate
+    ├── HrmEmployeePage.tsx    # PageContainer + ListPageTemplate
+    ├── HrmContractPage.tsx    # PageContainer + ListPageTemplate
     └── ...
 ```
 
@@ -515,21 +627,21 @@ src/
 
 ### 6.2 待实施（v1.2）
 
-| 序号 | 任务 | 优先级 | 预计完成时间 |
-|------|------|--------|-------------|
-| 1 | 统一所有 HRM 页面的模板使用 | 高 | 2026-Q3 |
-| 2 | 添加 AI 辅助功能到合同管理页面 | 中 | 2026-Q3 |
-| 3 | 招聘管理页面模板统一 | 中 | 2026-Q3 |
-| 4 | 培训管理页面模板统一 | 中 | 2026-Q3 |
+| 序号 | 任务                           | 优先级 | 预计完成时间 |
+| ---- | ------------------------------ | ------ | ------------ |
+| 1    | 统一所有 HRM 页面的模板使用    | 高     | 2026-Q3      |
+| 2    | 添加 AI 辅助功能到合同管理页面 | 中     | 2026-Q3      |
+| 3    | 招聘管理页面模板统一           | 中     | 2026-Q3      |
+| 4    | 培训管理页面模板统一           | 中     | 2026-Q3      |
 
 ### 6.3 长期规划（v2.0）
 
-| 序号 | 任务 | 说明 |
-|------|------|------|
-| 1 | 通用 HRM 列表模板 | 抽象 HRM 模块的通用列表逻辑 |
-| 2 | 主题化支持 | 支持多主题切换 |
-| 3 | 响应式优化 | 完善移动端适配 |
-| 4 | 性能优化 | 虚拟滚动、懒加载 |
+| 序号 | 任务              | 说明                        |
+| ---- | ----------------- | --------------------------- |
+| 1    | 通用 HRM 列表模板 | 抽象 HRM 模块的通用列表逻辑 |
+| 2    | 主题化支持        | 支持多主题切换              |
+| 3    | 响应式优化        | 完善移动端适配              |
+| 4    | 性能优化          | 虚拟滚动、懒加载            |
 
 ---
 
@@ -554,10 +666,10 @@ src/
 ```typescript
 // /components/templates/index.ts
 
-export { PageHeader } from "./PageHeader";
-export type { BreadcrumbItem, PageAction, PageHeaderProps } from "./PageHeader";
+export { PageHeader } from './PageHeader';
+export type { BreadcrumbItem, PageAction, PageHeaderProps } from './PageHeader';
 
-export { ListPageTemplate } from "./ListPageTemplate";
+export { ListPageTemplate } from './ListPageTemplate';
 export type {
   ColumnDef,
   FilterConfig,
@@ -566,35 +678,41 @@ export type {
   ListPageTemplateProps,
   ExpandedRowRenderProps,
   ColumnConfig,
-} from "./ListPageTemplate";
+} from './ListPageTemplate';
 
-export { DetailPageTemplate } from "./DetailPageTemplate";
+export { DetailPageTemplate } from './DetailPageTemplate';
 export type {
   TabConfig,
   SectionConfig,
   DetailField,
   DetailPageTemplateProps,
-} from "./DetailPageTemplate";
+} from './DetailPageTemplate';
 
-export { FormPageTemplate } from "./FormPageTemplate";
+export { FormPageTemplate } from './FormPageTemplate';
 export type {
   FormField,
   FormSection,
   FormPageTemplateProps,
   FieldDependency,
   ValidationToast,
-} from "./FormPageTemplate";
+} from './FormPageTemplate';
 
-export { DashboardTemplate } from "./DashboardTemplate";
+export { DashboardTemplate } from './DashboardTemplate';
 export type {
   StatCard,
   ChartCard,
   RecentItem,
   QuickAction,
   DashboardTemplateProps,
-} from "./DashboardTemplate";
+} from './DashboardTemplate';
 
-export { EmptyState } from "./EmptyState";
-export type { EmptyStateProps, EmptyStateAction, EmptyStateType } from "./EmptyState";
-export { NoDataEmptyState, SearchEmptyState, FilterEmptyState, FolderEmptyState, ErrorEmptyState } from "./EmptyState";
+export { EmptyState } from './EmptyState';
+export type { EmptyStateProps, EmptyStateAction, EmptyStateType } from './EmptyState';
+export {
+  NoDataEmptyState,
+  SearchEmptyState,
+  FilterEmptyState,
+  FolderEmptyState,
+  ErrorEmptyState,
+} from './EmptyState';
 ```

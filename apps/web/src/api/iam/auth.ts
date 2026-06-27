@@ -1,11 +1,6 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
-import type {
-  AuthTokens,
-  ResetPasswordRequest,
-  SetNewPasswordRequest,
-  User,
-} from './types';
+import type { AuthTokens, ResetPasswordRequest, SetNewPasswordRequest, User } from './types';
 
 export const authModuleApi = {
   register: async (data: {

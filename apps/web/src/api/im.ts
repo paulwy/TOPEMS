@@ -267,9 +267,7 @@ export const imApi = {
     groupId: string,
     memberUserId: string
   ): Promise<ApiResponse<any>> => {
-    return apiClient.im.delete<any>(
-      `/contact-groups/${userId}/${groupId}/members/${memberUserId}`
-    );
+    return apiClient.im.delete<any>(`/contact-groups/${userId}/${groupId}/members/${memberUserId}`);
   },
 
   muteChatRoom: async (chatId: string): Promise<ApiResponse<any>> => {

@@ -16,9 +16,9 @@ import {
   Typography,
   Tabs,
   Tab,
+  Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type {
   ProductionSchedule,
@@ -143,7 +143,10 @@ const ProductionSchedulePage: React.FC = () => {
     e.preventDefault();
     try {
       if (selectedSchedule && !showAdjustDialog) {
-        await mesApi.schedules.update(selectedSchedule.id, formData as UpdateProductionScheduleRequest);
+        await mesApi.schedules.update(
+          selectedSchedule.id,
+          formData as UpdateProductionScheduleRequest
+        );
         addNotification({
           type: 'success',
           title: '更新成功',
@@ -281,17 +284,13 @@ const ProductionSchedulePage: React.FC = () => {
         id: 'planned_start_time',
         label: '计划开始时间',
         render: (row) =>
-          row.planned_start_time
-            ? new Date(row.planned_start_time).toLocaleString('zh-CN')
-            : '-',
+          row.planned_start_time ? new Date(row.planned_start_time).toLocaleString('zh-CN') : '-',
       },
       {
         id: 'planned_end_time',
         label: '计划结束时间',
         render: (row) =>
-          row.planned_end_time
-            ? new Date(row.planned_end_time).toLocaleString('zh-CN')
-            : '-',
+          row.planned_end_time ? new Date(row.planned_end_time).toLocaleString('zh-CN') : '-',
       },
       {
         id: 'status',
@@ -386,42 +385,72 @@ const ProductionSchedulePage: React.FC = () => {
       }}
     >
       <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 2 }}>
-        <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary' }}
+        >
           已排程
         </Typography>
-        <Typography variant='h5' sx={{ fontWeight: 700, color: '#4338ca' }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700, color: '#4338ca' }}
+        >
           {stats.scheduled}
         </Typography>
       </Box>
       <Box sx={{ p: 2, bgcolor: '#dbeafe', borderRadius: 2 }}>
-        <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary' }}
+        >
           执行中
         </Typography>
-        <Typography variant='h5' sx={{ fontWeight: 700 }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700 }}
+        >
           {stats.in_progress}
         </Typography>
       </Box>
       <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
-        <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary' }}
+        >
           已完成
         </Typography>
-        <Typography variant='h5' sx={{ fontWeight: 700 }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700 }}
+        >
           {stats.completed}
         </Typography>
       </Box>
       <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 2 }}>
-        <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary' }}
+        >
           已取消
         </Typography>
-        <Typography variant='h5' sx={{ fontWeight: 700 }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700 }}
+        >
           {stats.cancelled}
         </Typography>
       </Box>
       <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
-        <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary' }}
+        >
           总数
         </Typography>
-        <Typography variant='h5' sx={{ fontWeight: 700 }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700 }}
+        >
           {stats.total}
         </Typography>
       </Box>
@@ -442,7 +471,10 @@ const ProductionSchedulePage: React.FC = () => {
             color: 'text.secondary',
           }}
         >
-          <GanttChart size={48} strokeWidth={1.5} />
+          <GanttChart
+            size={48}
+            strokeWidth={1.5}
+          />
           <Typography sx={{ mt: 2 }}>暂无甘特图数据</Typography>
         </Box>
       );
@@ -452,8 +484,14 @@ const ProductionSchedulePage: React.FC = () => {
       <Box sx={{ overflow: 'auto' }}>
         <Box sx={{ minWidth: 800 }}>
           {ganttData.work_stations.map((ws) => (
-            <Box key={ws.id} sx={{ mb: 2 }}>
-              <Typography variant='subtitle2' sx={{ mb: 1, fontWeight: 600 }}>
+            <Box
+              key={ws.id}
+              sx={{ mb: 2 }}
+            >
+              <Typography
+                variant='subtitle2'
+                sx={{ mb: 1, fontWeight: 600 }}
+              >
                 {ws.name}
               </Typography>
               <Box
@@ -482,7 +520,10 @@ const ProductionSchedulePage: React.FC = () => {
                     if (task.status === 'cancelled') bgColor = '#ef4444';
 
                     return (
-                      <Tooltip key={task.id} title={`${task.name} - ${task.order_number}`}>
+                      <Tooltip
+                        key={task.id}
+                        title={`${task.name} - ${task.order_number}`}
+                      >
                         <Box
                           sx={{
                             position: 'absolute',
@@ -517,7 +558,10 @@ const ProductionSchedulePage: React.FC = () => {
   };
 
   return (
-    <PageContainer title="生产排程管理" subtitle="管理生产排程信息,包括工单、工序、工位、计划时间等">
+    <PageContainer
+      title='生产排程管理'
+      subtitle='管理生产排程信息,包括工单、工序、工位、计划时间等'
+    >
       <Box sx={{ mb: 2 }}>
         <Tabs
           value={activeTab}
@@ -539,8 +583,8 @@ const ProductionSchedulePage: React.FC = () => {
 
       {activeTab === 0 ? (
         <ListPageTemplate
-          title=""
-          subtitle=""
+          title=''
+          subtitle=''
           columns={columns}
           data={schedules}
           loading={loading}
@@ -572,7 +616,9 @@ const ProductionSchedulePage: React.FC = () => {
         />
       ) : (
         <Box>
-          <Box sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box
+            sx={{ mb: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+          >
             <Typography variant='h6'>甘特图视图</Typography>
             <Button
               startIcon={<RefreshCw size={16} />}
@@ -587,7 +633,11 @@ const ProductionSchedulePage: React.FC = () => {
       )}
 
       {/* 新增/编辑对话框 */}
-      <Dialog open={showDialog} onClose={() => setShowDialog(false)} maxWidth='md'>
+      <Dialog
+        open={showDialog}
+        onClose={() => setShowDialog(false)}
+        maxWidth='md'
+      >
         <DialogTitle>{selectedSchedule ? '编辑生产排程' : '新增生产排程'}</DialogTitle>
         <DialogContent>
           <Box
@@ -651,9 +701,7 @@ const ProductionSchedulePage: React.FC = () => {
                   id='work_station_id'
                   size='small'
                   value={formData.work_station_id || ''}
-                  onChange={(e) =>
-                    setFormData({ ...formData, work_station_id: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, work_station_id: e.target.value })}
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -690,7 +738,10 @@ const ProductionSchedulePage: React.FC = () => {
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <InputLabel htmlFor='priority'>优先级</InputLabel>
-                <FormControl fullWidth size='small'>
+                <FormControl
+                  fullWidth
+                  size='small'
+                >
                   <Select
                     id='priority'
                     value={formData.priority || 'normal'}
@@ -716,10 +767,17 @@ const ProductionSchedulePage: React.FC = () => {
               </Box>
             </Box>
             <DialogActions>
-              <Button type='button' variant='outlined' onClick={() => setShowDialog(false)}>
+              <Button
+                type='button'
+                variant='outlined'
+                onClick={() => setShowDialog(false)}
+              >
                 取消
               </Button>
-              <Button type='submit' variant='contained'>
+              <Button
+                type='submit'
+                variant='contained'
+              >
                 保存
               </Button>
             </DialogActions>
@@ -728,7 +786,11 @@ const ProductionSchedulePage: React.FC = () => {
       </Dialog>
 
       {/* 调整排程对话框 */}
-      <Dialog open={showAdjustDialog} onClose={() => setShowAdjustDialog(false)} maxWidth='sm'>
+      <Dialog
+        open={showAdjustDialog}
+        onClose={() => setShowAdjustDialog(false)}
+        maxWidth='sm'
+      >
         <DialogTitle>调整排程</DialogTitle>
         <DialogContent>
           <Box
@@ -799,7 +861,10 @@ const ProductionSchedulePage: React.FC = () => {
               >
                 取消
               </Button>
-              <Button type='submit' variant='contained'>
+              <Button
+                type='submit'
+                variant='contained'
+              >
                 确认调整
               </Button>
             </DialogActions>
@@ -808,7 +873,11 @@ const ProductionSchedulePage: React.FC = () => {
       </Dialog>
 
       {/* 详情对话框 */}
-      <Dialog open={showDetailDialog} onClose={() => setShowDetailDialog(false)} maxWidth='md'>
+      <Dialog
+        open={showDetailDialog}
+        onClose={() => setShowDetailDialog(false)}
+        maxWidth='md'
+      >
         <DialogTitle>生产排程详情</DialogTitle>
         <DialogContent>
           {selectedSchedule && (
@@ -822,7 +891,10 @@ const ProductionSchedulePage: React.FC = () => {
               >
                 <Box>
                   <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>工单号</InputLabel>
-                  <Box component='span' sx={{ fontWeight: 500 }}>
+                  <Box
+                    component='span'
+                    sx={{ fontWeight: 500 }}
+                  >
                     {selectedSchedule.order_number || '-'}
                   </Box>
                 </Box>

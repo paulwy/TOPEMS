@@ -79,7 +79,7 @@ class LocalStorage {
       const item: StorageItem<T> = {
         value,
         timestamp: Date.now(),
-        expires: expires,
+        expires,
       };
       localStorage.setItem(createKey(key, this.prefix), this.serialize(item));
     } catch (error: unknown) {

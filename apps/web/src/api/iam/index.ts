@@ -1,14 +1,14 @@
+import { authModuleApi } from './auth';
+import { userApi } from './user';
+import { roleApi } from './role';
+import { permissionApi } from './permission';
+
 export * from './types';
 
 export { authModuleApi } from './auth';
 export { userApi } from './user';
 export { roleApi } from './role';
 export { permissionApi } from './permission';
-
-import { authModuleApi } from './auth';
-import { userApi } from './user';
-import { roleApi } from './role';
-import { permissionApi } from './permission';
 
 export const authApi = {
   auth: authModuleApi,

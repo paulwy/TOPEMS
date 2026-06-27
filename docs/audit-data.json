@@ -1,0 +1,5267 @@
+{
+  "pages": [
+    {
+      "file": "pm/PmProjectCreatePage.tsx",
+      "module": "pm",
+      "name": "PmProjectCreatePage"
+    },
+    {
+      "file": "pm/PmContractDetailPage.tsx",
+      "module": "pm",
+      "name": "PmContractDetailPage"
+    },
+    {
+      "file": "pm/PmTemplatePage.tsx",
+      "module": "pm",
+      "name": "PmTemplatePage"
+    },
+    {
+      "file": "pm/PmContractCreatePage.tsx",
+      "module": "pm",
+      "name": "PmContractCreatePage"
+    },
+    {
+      "file": "pm/PmProjectDetailPage.tsx",
+      "module": "pm",
+      "name": "PmProjectDetailPage"
+    },
+    {
+      "file": "pm/PmContractListPage.tsx",
+      "module": "pm",
+      "name": "PmContractListPage"
+    },
+    {
+      "file": "pm/PmReportPage.tsx",
+      "module": "pm",
+      "name": "PmReportPage"
+    },
+    {
+      "file": "pm/PmResourcePage.tsx",
+      "module": "pm",
+      "name": "PmResourcePage"
+    },
+    {
+      "file": "pm/PmProjectListPage.tsx",
+      "module": "pm",
+      "name": "PmProjectListPage"
+    },
+    {
+      "file": "pm/DashboardPage.tsx",
+      "module": "pm",
+      "name": "DashboardPage"
+    },
+    {
+      "file": "lims/LimsSampleDetailPage.tsx",
+      "module": "lims",
+      "name": "LimsSampleDetailPage"
+    },
+    {
+      "file": "lims/LimsProcessPage.tsx",
+      "module": "lims",
+      "name": "LimsProcessPage"
+    },
+    {
+      "file": "lims/LimsSamplePage.tsx",
+      "module": "lims",
+      "name": "LimsSamplePage"
+    },
+    {
+      "file": "lims/LimsTaskPage.tsx",
+      "module": "lims",
+      "name": "LimsTaskPage"
+    },
+    {
+      "file": "lims/LimsInstrumentDataPage.tsx",
+      "module": "lims",
+      "name": "LimsInstrumentDataPage"
+    },
+    {
+      "file": "lims/LimsInstrumentMaintenancePage.tsx",
+      "module": "lims",
+      "name": "LimsInstrumentMaintenancePage"
+    },
+    {
+      "file": "lims/LimsTaskDetailPage.tsx",
+      "module": "lims",
+      "name": "LimsTaskDetailPage"
+    },
+    {
+      "file": "lims/LimsInstrumentPage.tsx",
+      "module": "lims",
+      "name": "LimsInstrumentPage"
+    },
+    {
+      "file": "monitor/MonitorAlertsPage.tsx",
+      "module": "monitor",
+      "name": "MonitorAlertsPage"
+    },
+    {
+      "file": "monitor/MonitorMetricsPage.tsx",
+      "module": "monitor",
+      "name": "MonitorMetricsPage"
+    },
+    {
+      "file": "monitor/MonitorDashboardPage.tsx",
+      "module": "monitor",
+      "name": "MonitorDashboardPage"
+    },
+    {
+      "file": "wms/InboundOrderPage.tsx",
+      "module": "wms",
+      "name": "InboundOrderPage"
+    },
+    {
+      "file": "wms/SupplierManagementPage.tsx",
+      "module": "wms",
+      "name": "SupplierManagementPage"
+    },
+    {
+      "file": "wms/WarehouseManagementPage.tsx",
+      "module": "wms",
+      "name": "WarehouseManagementPage"
+    },
+    {
+      "file": "wms/InventoryPage.tsx",
+      "module": "wms",
+      "name": "InventoryPage"
+    },
+    {
+      "file": "wms/SupplierDetailPage.tsx",
+      "module": "wms",
+      "name": "SupplierDetailPage"
+    },
+    {
+      "file": "wms/StockTakePage.tsx",
+      "module": "wms",
+      "name": "StockTakePage"
+    },
+    {
+      "file": "wms/OutboundOrderPage.tsx",
+      "module": "wms",
+      "name": "OutboundOrderPage"
+    },
+    {
+      "file": "wms/DashboardPage.tsx",
+      "module": "wms",
+      "name": "DashboardPage"
+    },
+    {
+      "file": "asset/EquipmentInspectionPage.tsx",
+      "module": "asset",
+      "name": "EquipmentInspectionPage"
+    },
+    {
+      "file": "asset/VoucherTemplatePage.tsx",
+      "module": "asset",
+      "name": "VoucherTemplatePage"
+    },
+    {
+      "file": "asset/VehicleManagementPage.tsx",
+      "module": "asset",
+      "name": "VehicleManagementPage"
+    },
+    {
+      "file": "asset/EquipmentMaintenancePage.tsx",
+      "module": "asset",
+      "name": "EquipmentMaintenancePage"
+    },
+    {
+      "file": "asset/OfficeSuppliesManagementPage.tsx",
+      "module": "asset",
+      "name": "OfficeSuppliesManagementPage"
+    },
+    {
+      "file": "asset/AssetManagementPage.tsx",
+      "module": "asset",
+      "name": "AssetManagementPage"
+    },
+    {
+      "file": "asset/EquipmentManagementPage.tsx",
+      "module": "asset",
+      "name": "EquipmentManagementPage"
+    },
+    {
+      "file": "notification/NotificationCenter.tsx",
+      "module": "notification",
+      "name": "NotificationCenter"
+    },
+    {
+      "file": "notification/NotificationDetailPage.tsx",
+      "module": "notification",
+      "name": "NotificationDetailPage"
+    },
+    {
+      "file": "notification/NotificationTemplatesPage.tsx",
+      "module": "notification",
+      "name": "NotificationTemplatesPage"
+    },
+    {
+      "file": "notification/NotificationArchivePage.tsx",
+      "module": "notification",
+      "name": "NotificationArchivePage"
+    },
+    {
+      "file": "notification/NotificationStatsPage.tsx",
+      "module": "notification",
+      "name": "NotificationStatsPage"
+    },
+    {
+      "file": "integration/IntegrationDashboardPage.tsx",
+      "module": "integration",
+      "name": "IntegrationDashboardPage"
+    },
+    {
+      "file": "integration/IntegrationMesErpPage.tsx",
+      "module": "integration",
+      "name": "IntegrationMesErpPage"
+    },
+    {
+      "file": "integration/ExternalErpConnectionsPage.tsx",
+      "module": "integration",
+      "name": "ExternalErpConnectionsPage"
+    },
+    {
+      "file": "integration/ExternalErpMappingPage.tsx",
+      "module": "integration",
+      "name": "ExternalErpMappingPage"
+    },
+    {
+      "file": "integration/IntegrationWmsScmPage.tsx",
+      "module": "integration",
+      "name": "IntegrationWmsScmPage"
+    },
+    {
+      "file": "integration/IntegrationEventsPage.tsx",
+      "module": "integration",
+      "name": "IntegrationEventsPage"
+    },
+    {
+      "file": "integration/ConversionRulesPage.tsx",
+      "module": "integration",
+      "name": "ConversionRulesPage"
+    },
+    {
+      "file": "integration/IntegrationLimsQmsPage.tsx",
+      "module": "integration",
+      "name": "IntegrationLimsQmsPage"
+    },
+    {
+      "file": "integration/IntegrationExternalErpOverviewPage.tsx",
+      "module": "integration",
+      "name": "IntegrationExternalErpOverviewPage"
+    },
+    {
+      "file": "crm/OpportunityDetailPage.tsx",
+      "module": "crm",
+      "name": "OpportunityDetailPage"
+    },
+    {
+      "file": "crm/CRMBillingPage.tsx",
+      "module": "crm",
+      "name": "CRMBillingPage"
+    },
+    {
+      "file": "crm/ContactDetailPage.tsx",
+      "module": "crm",
+      "name": "ContactDetailPage"
+    },
+    {
+      "file": "crm/CRMSalesFunnelPage.tsx",
+      "module": "crm",
+      "name": "CRMSalesFunnelPage"
+    },
+    {
+      "file": "crm/CustomerManagementPage.tsx",
+      "module": "crm",
+      "name": "CustomerManagementPage"
+    },
+    {
+      "file": "crm/CRMSalesForecastPage.tsx",
+      "module": "crm",
+      "name": "CRMSalesForecastPage"
+    },
+    {
+      "file": "crm/ContactManagementPage.tsx",
+      "module": "crm",
+      "name": "ContactManagementPage"
+    },
+    {
+      "file": "crm/CustomerDetailPage.tsx",
+      "module": "crm",
+      "name": "CustomerDetailPage"
+    },
+    {
+      "file": "crm/CRMCustomerScoringPage.tsx",
+      "module": "crm",
+      "name": "CRMCustomerScoringPage"
+    },
+    {
+      "file": "crm/InteractionManagementPage.tsx",
+      "module": "crm",
+      "name": "InteractionManagementPage"
+    },
+    {
+      "file": "crm/CustomerCreatePage.tsx",
+      "module": "crm",
+      "name": "CustomerCreatePage"
+    },
+    {
+      "file": "crm/OpportunityManagementPage.tsx",
+      "module": "crm",
+      "name": "OpportunityManagementPage"
+    },
+    {
+      "file": "crm/CRMRecommendationPage.tsx",
+      "module": "crm",
+      "name": "CRMRecommendationPage"
+    },
+    {
+      "file": "crm/CustomerEditPage.tsx",
+      "module": "crm",
+      "name": "CustomerEditPage"
+    },
+    {
+      "file": "crm/DashboardPage.tsx",
+      "module": "crm",
+      "name": "DashboardPage"
+    },
+    {
+      "file": "crm/CRMCustomerSegmentationPage.tsx",
+      "module": "crm",
+      "name": "CRMCustomerSegmentationPage"
+    },
+    {
+      "file": "plugin/PluginMarketplacePage.tsx",
+      "module": "plugin",
+      "name": "PluginMarketplacePage"
+    },
+    {
+      "file": "admin/RoleManagementPage.tsx",
+      "module": "admin",
+      "name": "RoleManagementPage"
+    },
+    {
+      "file": "admin/PluginManagementPage.tsx",
+      "module": "admin",
+      "name": "PluginManagementPage"
+    },
+    {
+      "file": "admin/SystemManagementPage.tsx",
+      "module": "admin",
+      "name": "SystemManagementPage"
+    },
+    {
+      "file": "admin/SystemSettingsPage.tsx",
+      "module": "admin",
+      "name": "SystemSettingsPage"
+    },
+    {
+      "file": "admin/BankAccountManagementPage.tsx",
+      "module": "admin",
+      "name": "BankAccountManagementPage"
+    },
+    {
+      "file": "admin/PermissionManagementPage.tsx",
+      "module": "admin",
+      "name": "PermissionManagementPage"
+    },
+    {
+      "file": "admin/DictionaryManagementPage.tsx",
+      "module": "admin",
+      "name": "DictionaryManagementPage"
+    },
+    {
+      "file": "admin/CompanyStructurePage.tsx",
+      "module": "admin",
+      "name": "CompanyStructurePage"
+    },
+    {
+      "file": "admin/UserManagementPage.tsx",
+      "module": "admin",
+      "name": "UserManagementPage"
+    },
+    {
+      "file": "admin/AuditLogPage.tsx",
+      "module": "admin",
+      "name": "AuditLogPage"
+    },
+    {
+      "file": "admin/ConfigDebugPage.tsx",
+      "module": "admin",
+      "name": "ConfigDebugPage"
+    },
+    {
+      "file": "admin/PerformanceMonitorPage.tsx",
+      "module": "admin",
+      "name": "PerformanceMonitorPage"
+    },
+    {
+      "file": "admin/DatabaseStructurePage.tsx",
+      "module": "admin",
+      "name": "DatabaseStructurePage"
+    },
+    {
+      "file": "admin/MonitorPage.tsx",
+      "module": "admin",
+      "name": "MonitorPage"
+    },
+    {
+      "file": "admin/MigrationAdminPage.tsx",
+      "module": "admin",
+      "name": "MigrationAdminPage"
+    },
+    {
+      "file": "admin/AccountManagementPage.tsx",
+      "module": "admin",
+      "name": "AccountManagementPage"
+    },
+    {
+      "file": "mes/EquipmentOEEPage.tsx",
+      "module": "mes",
+      "name": "EquipmentOEEPage"
+    },
+    {
+      "file": "mes/MobileWorkstationPage.tsx",
+      "module": "mes",
+      "name": "MobileWorkstationPage"
+    },
+    {
+      "file": "mes/MaterialIssuePage.tsx",
+      "module": "mes",
+      "name": "MaterialIssuePage"
+    },
+    {
+      "file": "mes/ProductionOrderManagementPage.tsx",
+      "module": "mes",
+      "name": "ProductionOrderManagementPage"
+    },
+    {
+      "file": "mes/ProductionDashboardPage.tsx",
+      "module": "mes",
+      "name": "ProductionDashboardPage"
+    },
+    {
+      "file": "mes/ProductionSchedulePage.tsx",
+      "module": "mes",
+      "name": "ProductionSchedulePage"
+    },
+    {
+      "file": "mes/MaterialReturnPage.tsx",
+      "module": "mes",
+      "name": "MaterialReturnPage"
+    },
+    {
+      "file": "mes/WorkStationPage.tsx",
+      "module": "mes",
+      "name": "WorkStationPage"
+    },
+    {
+      "file": "mes/ProductionRecordPage.tsx",
+      "module": "mes",
+      "name": "ProductionRecordPage"
+    },
+    {
+      "file": "mes/ProductionProcessPage.tsx",
+      "module": "mes",
+      "name": "ProductionProcessPage"
+    },
+    {
+      "file": "mes/WIPPage.tsx",
+      "module": "mes",
+      "name": "WIPPage"
+    },
+    {
+      "file": "mes/DashboardPage.tsx",
+      "module": "mes",
+      "name": "DashboardPage"
+    },
+    {
+      "file": "mes/QualityTraceabilityPage.tsx",
+      "module": "mes",
+      "name": "QualityTraceabilityPage"
+    },
+    {
+      "file": "mes/EquipmentManagementPage.tsx",
+      "module": "mes",
+      "name": "EquipmentManagementPage"
+    },
+    {
+      "file": "mes/MaterialBOMPage.tsx",
+      "module": "mes",
+      "name": "MaterialBOMPage"
+    },
+    {
+      "file": "mes/EquipmentDetailPage.tsx",
+      "module": "mes",
+      "name": "EquipmentDetailPage"
+    },
+    {
+      "file": "shared/LoginPage.tsx",
+      "module": "shared",
+      "name": "LoginPage"
+    },
+    {
+      "file": "shared/ForgotPasswordPage.tsx",
+      "module": "shared",
+      "name": "ForgotPasswordPage"
+    },
+    {
+      "file": "shared/HelpCenterPage.tsx",
+      "module": "shared",
+      "name": "HelpCenterPage"
+    },
+    {
+      "file": "shared/ProfilePage.tsx",
+      "module": "shared",
+      "name": "ProfilePage"
+    },
+    {
+      "file": "shared/ProjectDashboardPage.tsx",
+      "module": "shared",
+      "name": "ProjectDashboardPage"
+    },
+    {
+      "file": "shared/ErrorPage.tsx",
+      "module": "shared",
+      "name": "ErrorPage"
+    },
+    {
+      "file": "shared/PluginMarketplacePage.tsx",
+      "module": "shared",
+      "name": "PluginMarketplacePage"
+    },
+    {
+      "file": "shared/HybridHomePage.tsx",
+      "module": "shared",
+      "name": "HybridHomePage"
+    },
+    {
+      "file": "shared/AIPage.tsx",
+      "module": "shared",
+      "name": "AIPage"
+    },
+    {
+      "file": "shared/ModulesOverviewPage.tsx",
+      "module": "shared",
+      "name": "ModulesOverviewPage"
+    },
+    {
+      "file": "shared/Impage.tsx",
+      "module": "shared",
+      "name": "Impage"
+    },
+    {
+      "file": "shared/DashboardPage.tsx",
+      "module": "shared",
+      "name": "DashboardPage"
+    },
+    {
+      "file": "rs/RsBuildPage.tsx",
+      "module": "rs",
+      "name": "RsBuildPage"
+    },
+    {
+      "file": "rs/RsProjectCreatePage.tsx",
+      "module": "rs",
+      "name": "RsProjectCreatePage"
+    },
+    {
+      "file": "rs/RsFormulaListPage.tsx",
+      "module": "rs",
+      "name": "RsFormulaListPage"
+    },
+    {
+      "file": "rs/RsMilestonePage.tsx",
+      "module": "rs",
+      "name": "RsMilestonePage"
+    },
+    {
+      "file": "rs/RsSettingsPage.tsx",
+      "module": "rs",
+      "name": "RsSettingsPage"
+    },
+    {
+      "file": "rs/RsProjectDetailPage.tsx",
+      "module": "rs",
+      "name": "RsProjectDetailPage"
+    },
+    {
+      "file": "rs/RsReviewPage.tsx",
+      "module": "rs",
+      "name": "RsReviewPage"
+    },
+    {
+      "file": "rs/RsDeployPage.tsx",
+      "module": "rs",
+      "name": "RsDeployPage"
+    },
+    {
+      "file": "rs/RsProjectListPage.tsx",
+      "module": "rs",
+      "name": "RsProjectListPage"
+    },
+    {
+      "file": "rs/RsTestPage.tsx",
+      "module": "rs",
+      "name": "RsTestPage"
+    },
+    {
+      "file": "rs/RsReportPage.tsx",
+      "module": "rs",
+      "name": "RsReportPage"
+    },
+    {
+      "file": "rs/RsBugPage.tsx",
+      "module": "rs",
+      "name": "RsBugPage"
+    },
+    {
+      "file": "rs/RsDocPage.tsx",
+      "module": "rs",
+      "name": "RsDocPage"
+    },
+    {
+      "file": "rs/RsFormulaDetailPage.tsx",
+      "module": "rs",
+      "name": "RsFormulaDetailPage"
+    },
+    {
+      "file": "rs/RsExperimentDetailPage.tsx",
+      "module": "rs",
+      "name": "RsExperimentDetailPage"
+    },
+    {
+      "file": "rs/RsMaterialListPage.tsx",
+      "module": "rs",
+      "name": "RsMaterialListPage"
+    },
+    {
+      "file": "rs/RsReleasePage.tsx",
+      "module": "rs",
+      "name": "RsReleasePage"
+    },
+    {
+      "file": "rs/RsExperimentCreatePage.tsx",
+      "module": "rs",
+      "name": "RsExperimentCreatePage"
+    },
+    {
+      "file": "rs/DashboardPage.tsx",
+      "module": "rs",
+      "name": "DashboardPage"
+    },
+    {
+      "file": "rs/RsFormulaCreatePage.tsx",
+      "module": "rs",
+      "name": "RsFormulaCreatePage"
+    },
+    {
+      "file": "rs/RsCodePage.tsx",
+      "module": "rs",
+      "name": "RsCodePage"
+    },
+    {
+      "file": "rs/RsExperimentListPage.tsx",
+      "module": "rs",
+      "name": "RsExperimentListPage"
+    },
+    {
+      "file": "docs/DocumentCenterPage.tsx",
+      "module": "docs",
+      "name": "DocumentCenterPage"
+    },
+    {
+      "file": "docs/DocsFileDetailPage.tsx",
+      "module": "docs",
+      "name": "DocsFileDetailPage"
+    },
+    {
+      "file": "docs/DocumentsPage.tsx",
+      "module": "docs",
+      "name": "DocumentsPage"
+    },
+    {
+      "file": "docs/KnowledgeBasePage.tsx",
+      "module": "docs",
+      "name": "KnowledgeBasePage"
+    },
+    {
+      "file": "docs/DocsDashboardPage.tsx",
+      "module": "docs",
+      "name": "DocsDashboardPage"
+    },
+    {
+      "file": "ehs/EhsPlanPage.tsx",
+      "module": "ehs",
+      "name": "EhsPlanPage"
+    },
+    {
+      "file": "ehs/EhsHazardPage.tsx",
+      "module": "ehs",
+      "name": "EhsHazardPage"
+    },
+    {
+      "file": "ehs/EhsHazardDetailPage.tsx",
+      "module": "ehs",
+      "name": "EhsHazardDetailPage"
+    },
+    {
+      "file": "ehs/EhsIncidentReportPage.tsx",
+      "module": "ehs",
+      "name": "EhsIncidentReportPage"
+    },
+    {
+      "file": "ehs/EhsAccidentPage.tsx",
+      "module": "ehs",
+      "name": "EhsAccidentPage"
+    },
+    {
+      "file": "ehs/EhsDrillPage.tsx",
+      "module": "ehs",
+      "name": "EhsDrillPage"
+    },
+    {
+      "file": "ehs/EhsCheckPage.tsx",
+      "module": "ehs",
+      "name": "EhsCheckPage"
+    },
+    {
+      "file": "iam/DashboardPage.tsx",
+      "module": "iam",
+      "name": "DashboardPage"
+    },
+    {
+      "file": "hrm/HrmReportsPage.tsx",
+      "module": "hrm",
+      "name": "HrmReportsPage"
+    },
+    {
+      "file": "hrm/HrmPayrollPage.tsx",
+      "module": "hrm",
+      "name": "HrmPayrollPage"
+    },
+    {
+      "file": "hrm/HrmContractPage.tsx",
+      "module": "hrm",
+      "name": "HrmContractPage"
+    },
+    {
+      "file": "hrm/HrmPositionPage.tsx",
+      "module": "hrm",
+      "name": "HrmPositionPage"
+    },
+    {
+      "file": "hrm/HrmTrainingPage.tsx",
+      "module": "hrm",
+      "name": "HrmTrainingPage"
+    },
+    {
+      "file": "hrm/HrmLeavePage.tsx",
+      "module": "hrm",
+      "name": "HrmLeavePage"
+    },
+    {
+      "file": "hrm/HrmRecruitmentPage.tsx",
+      "module": "hrm",
+      "name": "HrmRecruitmentPage"
+    },
+    {
+      "file": "hrm/HrmPerformancePage.tsx",
+      "module": "hrm",
+      "name": "HrmPerformancePage"
+    },
+    {
+      "file": "hrm/HrmEmployeePage.tsx",
+      "module": "hrm",
+      "name": "HrmEmployeePage"
+    },
+    {
+      "file": "hrm/HrmCompanyPage.tsx",
+      "module": "hrm",
+      "name": "HrmCompanyPage"
+    },
+    {
+      "file": "hrm/HrmOrganizationPage.tsx",
+      "module": "hrm",
+      "name": "HrmOrganizationPage"
+    },
+    {
+      "file": "hrm/HrmSalaryAdjustmentPage.tsx",
+      "module": "hrm",
+      "name": "HrmSalaryAdjustmentPage"
+    },
+    {
+      "file": "hrm/HrmEmployeeDetailPage.tsx",
+      "module": "hrm",
+      "name": "HrmEmployeeDetailPage"
+    },
+    {
+      "file": "hrm/HrmEmployeeCreatePage.tsx",
+      "module": "hrm",
+      "name": "HrmEmployeeCreatePage"
+    },
+    {
+      "file": "hrm/HrmAttendancePage.tsx",
+      "module": "hrm",
+      "name": "HrmAttendancePage"
+    },
+    {
+      "file": "hrm/HrmDepartmentPage.tsx",
+      "module": "hrm",
+      "name": "HrmDepartmentPage"
+    },
+    {
+      "file": "hrm/HrmContractDetailPage.tsx",
+      "module": "hrm",
+      "name": "HrmContractDetailPage"
+    },
+    {
+      "file": "hrm/DashboardPage.tsx",
+      "module": "hrm",
+      "name": "DashboardPage"
+    },
+    {
+      "file": "hrm/HrmEmployeeEditPage.tsx",
+      "module": "hrm",
+      "name": "HrmEmployeeEditPage"
+    },
+    {
+      "file": "mobile/NotificationSettingsPage.tsx",
+      "module": "mobile",
+      "name": "NotificationSettingsPage"
+    },
+    {
+      "file": "mobile/ScanSettingsPage.tsx",
+      "module": "mobile",
+      "name": "ScanSettingsPage"
+    },
+    {
+      "file": "mobile/MobileScanPage.tsx",
+      "module": "mobile",
+      "name": "MobileScanPage"
+    },
+    {
+      "file": "mobile/MobileApprovalPage.tsx",
+      "module": "mobile",
+      "name": "MobileApprovalPage"
+    },
+    {
+      "file": "mobile/OfflineSyncPage.tsx",
+      "module": "mobile",
+      "name": "OfflineSyncPage"
+    },
+    {
+      "file": "mobile/MobileTaskListPage.tsx",
+      "module": "mobile",
+      "name": "MobileTaskListPage"
+    },
+    {
+      "file": "mobile/MobileHomePage.tsx",
+      "module": "mobile",
+      "name": "MobileHomePage"
+    },
+    {
+      "file": "mobile/MobileProfilePage.tsx",
+      "module": "mobile",
+      "name": "MobileProfilePage"
+    },
+    {
+      "file": "mobile/MobileSettingsPage.tsx",
+      "module": "mobile",
+      "name": "MobileSettingsPage"
+    },
+    {
+      "file": "ai/AiChatPage.tsx",
+      "module": "ai",
+      "name": "AiChatPage"
+    },
+    {
+      "file": "ai/DashboardPage.tsx",
+      "module": "ai",
+      "name": "DashboardPage"
+    },
+    {
+      "file": "workflow/FlowApprovalPage.tsx",
+      "module": "workflow",
+      "name": "FlowApprovalPage"
+    },
+    {
+      "file": "workflow/WorkflowDesignerPage.tsx",
+      "module": "workflow",
+      "name": "WorkflowDesignerPage"
+    },
+    {
+      "file": "workflow/FlowWorkflowPage.tsx",
+      "module": "workflow",
+      "name": "FlowWorkflowPage"
+    },
+    {
+      "file": "workflow/FlowNotificationCenter.tsx",
+      "module": "workflow",
+      "name": "FlowNotificationCenter"
+    },
+    {
+      "file": "workflow/FlowDefinitionPage.tsx",
+      "module": "workflow",
+      "name": "FlowDefinitionPage"
+    },
+    {
+      "file": "workflow/FlowSettingsPage.tsx",
+      "module": "workflow",
+      "name": "FlowSettingsPage"
+    },
+    {
+      "file": "workflow/FlowDesignerPage.tsx",
+      "module": "workflow",
+      "name": "FlowDesignerPage"
+    },
+    {
+      "file": "workflow/FlowTemplatePage.tsx",
+      "module": "workflow",
+      "name": "FlowTemplatePage"
+    },
+    {
+      "file": "workflow/FlowApprovalDetailPage.tsx",
+      "module": "workflow",
+      "name": "FlowApprovalDetailPage"
+    },
+    {
+      "file": "workflow/FlowInstanceDetailPage.tsx",
+      "module": "workflow",
+      "name": "FlowInstanceDetailPage"
+    },
+    {
+      "file": "workflow/FlowStatisticsPage.tsx",
+      "module": "workflow",
+      "name": "FlowStatisticsPage"
+    },
+    {
+      "file": "workflow/FlowInstanceListPage.tsx",
+      "module": "workflow",
+      "name": "FlowInstanceListPage"
+    },
+    {
+      "file": "workflow/DashboardPage.tsx",
+      "module": "workflow",
+      "name": "DashboardPage"
+    },
+    {
+      "file": "workflow/FlowMonitorPage.tsx",
+      "module": "workflow",
+      "name": "FlowMonitorPage"
+    },
+    {
+      "file": "workflow/FlowVersionHistoryPage.tsx",
+      "module": "workflow",
+      "name": "FlowVersionHistoryPage"
+    },
+    {
+      "file": "qms/QmsNonconformancePage.tsx",
+      "module": "qms",
+      "name": "QmsNonconformancePage"
+    },
+    {
+      "file": "qms/QmsInspectionPage.tsx",
+      "module": "qms",
+      "name": "QmsInspectionPage"
+    },
+    {
+      "file": "qms/QmsQualityControlPage.tsx",
+      "module": "qms",
+      "name": "QmsQualityControlPage"
+    },
+    {
+      "file": "qms/QmsApqpPage.tsx",
+      "module": "qms",
+      "name": "QmsApqpPage"
+    },
+    {
+      "file": "qms/QmsAuditManagementPage.tsx",
+      "module": "qms",
+      "name": "QmsAuditManagementPage"
+    },
+    {
+      "file": "qms/QmsStandardDetailPage.tsx",
+      "module": "qms",
+      "name": "QmsStandardDetailPage"
+    },
+    {
+      "file": "qms/QmsStandardListPage.tsx",
+      "module": "qms",
+      "name": "QmsStandardListPage"
+    },
+    {
+      "file": "bi/BIModuleDetailPage.tsx",
+      "module": "bi",
+      "name": "BIModuleDetailPage"
+    },
+    {
+      "file": "bi/BIDashboardPage.tsx",
+      "module": "bi",
+      "name": "BIDashboardPage"
+    },
+    {
+      "file": "bi/BIVisualizationPage.tsx",
+      "module": "bi",
+      "name": "BIVisualizationPage"
+    },
+    {
+      "file": "bi/BIReportPage.tsx",
+      "module": "bi",
+      "name": "BIReportPage"
+    },
+    {
+      "file": "bi/Gispage.tsx",
+      "module": "bi",
+      "name": "Gispage"
+    },
+    {
+      "file": "bi/BIDataSourcePage.tsx",
+      "module": "bi",
+      "name": "BIDataSourcePage"
+    },
+    {
+      "file": "bi/BIAnalyticsPage.tsx",
+      "module": "bi",
+      "name": "BIAnalyticsPage"
+    },
+    {
+      "file": "bi/BIComparisonPage.tsx",
+      "module": "bi",
+      "name": "BIComparisonPage"
+    },
+    {
+      "file": "report/ReportListPage.tsx",
+      "module": "report",
+      "name": "ReportListPage"
+    },
+    {
+      "file": "report/ReportDesignPage.tsx",
+      "module": "report",
+      "name": "ReportDesignPage"
+    },
+    {
+      "file": "report/ReportSchedulePage.tsx",
+      "module": "report",
+      "name": "ReportSchedulePage"
+    },
+    {
+      "file": "report/ReportViewer.tsx",
+      "module": "report",
+      "name": "ReportViewer"
+    },
+    {
+      "file": "report/TemplateManagementPage.tsx",
+      "module": "report",
+      "name": "TemplateManagementPage"
+    },
+    {
+      "file": "report/ReportPage.tsx",
+      "module": "report",
+      "name": "ReportPage"
+    },
+    {
+      "file": "report/ReportSubscriptionPage.tsx",
+      "module": "report",
+      "name": "ReportSubscriptionPage"
+    },
+    {
+      "file": "report/ReportBuilder.tsx",
+      "module": "report",
+      "name": "ReportBuilder"
+    },
+    {
+      "file": "finance/ConsolidationReportsPage.tsx",
+      "module": "finance",
+      "name": "ConsolidationReportsPage"
+    },
+    {
+      "file": "finance/VoucherCreatePage.tsx",
+      "module": "finance",
+      "name": "VoucherCreatePage"
+    },
+    {
+      "file": "finance/BudgetManagementPage.tsx",
+      "module": "finance",
+      "name": "BudgetManagementPage"
+    },
+    {
+      "file": "finance/FinanceBudgetPage.tsx",
+      "module": "finance",
+      "name": "FinanceBudgetPage"
+    },
+    {
+      "file": "finance/FinanceInvoicePage.tsx",
+      "module": "finance",
+      "name": "FinanceInvoicePage"
+    },
+    {
+      "file": "finance/FinanceCostPage.tsx",
+      "module": "finance",
+      "name": "FinanceCostPage"
+    },
+    {
+      "file": "finance/FinanceReportsPage.tsx",
+      "module": "finance",
+      "name": "FinanceReportsPage"
+    },
+    {
+      "file": "finance/VoucherDetailPage.tsx",
+      "module": "finance",
+      "name": "VoucherDetailPage"
+    },
+    {
+      "file": "finance/FinanceLedgerPage.tsx",
+      "module": "finance",
+      "name": "FinanceLedgerPage"
+    },
+    {
+      "file": "finance/FinanceExpensePage.tsx",
+      "module": "finance",
+      "name": "FinanceExpensePage"
+    },
+    {
+      "file": "finance/FinanceReceiptPage.tsx",
+      "module": "finance",
+      "name": "FinanceReceiptPage"
+    },
+    {
+      "file": "finance/FinanceReceivablePayablePage.tsx",
+      "module": "finance",
+      "name": "FinanceReceivablePayablePage"
+    },
+    {
+      "file": "finance/OpeningBalancePage.tsx",
+      "module": "finance",
+      "name": "OpeningBalancePage"
+    },
+    {
+      "file": "finance/ConsolidationScopePage.tsx",
+      "module": "finance",
+      "name": "ConsolidationScopePage"
+    },
+    {
+      "file": "finance/FinanceBudgetDetailPage.tsx",
+      "module": "finance",
+      "name": "FinanceBudgetDetailPage"
+    },
+    {
+      "file": "finance/FinanceAssetPage.tsx",
+      "module": "finance",
+      "name": "FinanceAssetPage"
+    },
+    {
+      "file": "finance/FinancePaymentPage.tsx",
+      "module": "finance",
+      "name": "FinancePaymentPage"
+    },
+    {
+      "file": "finance/DashboardPage.tsx",
+      "module": "finance",
+      "name": "DashboardPage"
+    },
+    {
+      "file": "finance/FinanceTaxPage.tsx",
+      "module": "finance",
+      "name": "FinanceTaxPage"
+    },
+    {
+      "file": "finance/FinanceVoucherPage.tsx",
+      "module": "finance",
+      "name": "FinanceVoucherPage"
+    },
+    {
+      "file": "im/MailPage.tsx",
+      "module": "im",
+      "name": "MailPage"
+    },
+    {
+      "file": "oa/MeetingRoomManagementPage.tsx",
+      "module": "oa",
+      "name": "MeetingRoomManagementPage"
+    },
+    {
+      "file": "oa/AnnouncementManagementPage.tsx",
+      "module": "oa",
+      "name": "AnnouncementManagementPage"
+    },
+    {
+      "file": "oa/AddressbookPage.tsx",
+      "module": "oa",
+      "name": "AddressbookPage"
+    },
+    {
+      "file": "oa/AdministrationDashboardPage.tsx",
+      "module": "oa",
+      "name": "AdministrationDashboardPage"
+    },
+    {
+      "file": "oa/ExpenseClaimPage.tsx",
+      "module": "oa",
+      "name": "ExpenseClaimPage"
+    },
+    {
+      "file": "scm/ScmDeliveryAppointmentPage.tsx",
+      "module": "scm",
+      "name": "ScmDeliveryAppointmentPage"
+    },
+    {
+      "file": "scm/ScmSupplierPage.tsx",
+      "module": "scm",
+      "name": "ScmSupplierPage"
+    },
+    {
+      "file": "scm/ScmPurchaseOrderPage.tsx",
+      "module": "scm",
+      "name": "ScmPurchaseOrderPage"
+    },
+    {
+      "file": "scm/ScmEvaluationPage.tsx",
+      "module": "scm",
+      "name": "ScmEvaluationPage"
+    },
+    {
+      "file": "scm/ScmPurchaseItemPage.tsx",
+      "module": "scm",
+      "name": "ScmPurchaseItemPage"
+    },
+    {
+      "file": "scm/DashboardPage.tsx",
+      "module": "scm",
+      "name": "DashboardPage"
+    },
+    {
+      "file": "erp/VoucherManagementPage.tsx",
+      "module": "erp",
+      "name": "VoucherManagementPage"
+    },
+    {
+      "file": "erp/DatabaseManagementPage.tsx",
+      "module": "erp",
+      "name": "DatabaseManagementPage"
+    },
+    {
+      "file": "erp/AuditLogPage.tsx",
+      "module": "erp",
+      "name": "AuditLogPage"
+    },
+    {
+      "file": "erp/FinancialReportPage.tsx",
+      "module": "erp",
+      "name": "FinancialReportPage"
+    },
+    {
+      "file": "erp/DictManagementPage.tsx",
+      "module": "erp",
+      "name": "DictManagementPage"
+    },
+    {
+      "file": "erp/DashboardPage.tsx",
+      "module": "erp",
+      "name": "DashboardPage"
+    },
+    {
+      "file": "gis/index.tsx",
+      "module": "gis",
+      "name": "index"
+    },
+    {
+      "file": "gis/GisTrackingPage.tsx",
+      "module": "gis",
+      "name": "GisTrackingPage"
+    },
+    {
+      "file": "gis/GisFencePage.tsx",
+      "module": "gis",
+      "name": "GisFencePage"
+    },
+    {
+      "file": "gis/DashboardPage.tsx",
+      "module": "gis",
+      "name": "DashboardPage"
+    },
+    {
+      "file": "srm/SrmContractPage.tsx",
+      "module": "srm",
+      "name": "SrmContractPage"
+    },
+    {
+      "file": "srm/SrmPerformancePage.tsx",
+      "module": "srm",
+      "name": "SrmPerformancePage"
+    },
+    {
+      "file": "srm/SrmOrderPage.tsx",
+      "module": "srm",
+      "name": "SrmOrderPage"
+    },
+    {
+      "file": "srm/SrmEvaluationPage.tsx",
+      "module": "srm",
+      "name": "SrmEvaluationPage"
+    },
+    {
+      "file": "srm/SrmSupplierPage.tsx",
+      "module": "srm",
+      "name": "SrmSupplierPage"
+    },
+    {
+      "file": "srm/SrmDashboardPage.tsx",
+      "module": "srm",
+      "name": "SrmDashboardPage"
+    },
+    {
+      "file": "srm/SrmFinancePage.tsx",
+      "module": "srm",
+      "name": "SrmFinancePage"
+    },
+    {
+      "file": "pdm/PdmBatchPage.tsx",
+      "module": "pdm",
+      "name": "PdmBatchPage"
+    },
+    {
+      "file": "pdm/PdmProcessPage.tsx",
+      "module": "pdm",
+      "name": "PdmProcessPage"
+    },
+    {
+      "file": "pdm/PdmStatsPage.tsx",
+      "module": "pdm",
+      "name": "PdmStatsPage"
+    },
+    {
+      "file": "pdm/PdmBomPage.tsx",
+      "module": "pdm",
+      "name": "PdmBomPage"
+    },
+    {
+      "file": "pdm/PdmStepPage.tsx",
+      "module": "pdm",
+      "name": "PdmStepPage"
+    },
+    {
+      "file": "pdm/PdmVersionPage.tsx",
+      "module": "pdm",
+      "name": "PdmVersionPage"
+    },
+    {
+      "file": "pdm/PdmProductConfigPage.tsx",
+      "module": "pdm",
+      "name": "PdmProductConfigPage"
+    },
+    {
+      "file": "pdm/PdmFormulaPage.tsx",
+      "module": "pdm",
+      "name": "PdmFormulaPage"
+    }
+  ],
+  "pages_by_module": {
+    "pm": [
+      "PmProjectCreatePage",
+      "PmContractDetailPage",
+      "PmTemplatePage",
+      "PmContractCreatePage",
+      "PmProjectDetailPage",
+      "PmContractListPage",
+      "PmReportPage",
+      "PmResourcePage",
+      "PmProjectListPage",
+      "DashboardPage"
+    ],
+    "lims": [
+      "LimsSampleDetailPage",
+      "LimsProcessPage",
+      "LimsSamplePage",
+      "LimsTaskPage",
+      "LimsInstrumentDataPage",
+      "LimsInstrumentMaintenancePage",
+      "LimsTaskDetailPage",
+      "LimsInstrumentPage"
+    ],
+    "monitor": [
+      "MonitorAlertsPage",
+      "MonitorMetricsPage",
+      "MonitorDashboardPage"
+    ],
+    "wms": [
+      "InboundOrderPage",
+      "SupplierManagementPage",
+      "WarehouseManagementPage",
+      "InventoryPage",
+      "SupplierDetailPage",
+      "StockTakePage",
+      "OutboundOrderPage",
+      "DashboardPage"
+    ],
+    "asset": [
+      "EquipmentInspectionPage",
+      "VoucherTemplatePage",
+      "VehicleManagementPage",
+      "EquipmentMaintenancePage",
+      "OfficeSuppliesManagementPage",
+      "AssetManagementPage",
+      "EquipmentManagementPage"
+    ],
+    "notification": [
+      "NotificationCenter",
+      "NotificationDetailPage",
+      "NotificationTemplatesPage",
+      "NotificationArchivePage",
+      "NotificationStatsPage"
+    ],
+    "integration": [
+      "IntegrationDashboardPage",
+      "IntegrationMesErpPage",
+      "ExternalErpConnectionsPage",
+      "ExternalErpMappingPage",
+      "IntegrationWmsScmPage",
+      "IntegrationEventsPage",
+      "ConversionRulesPage",
+      "IntegrationLimsQmsPage",
+      "IntegrationExternalErpOverviewPage"
+    ],
+    "crm": [
+      "OpportunityDetailPage",
+      "CRMBillingPage",
+      "ContactDetailPage",
+      "CRMSalesFunnelPage",
+      "CustomerManagementPage",
+      "CRMSalesForecastPage",
+      "ContactManagementPage",
+      "CustomerDetailPage",
+      "CRMCustomerScoringPage",
+      "InteractionManagementPage",
+      "CustomerCreatePage",
+      "OpportunityManagementPage",
+      "CRMRecommendationPage",
+      "CustomerEditPage",
+      "DashboardPage",
+      "CRMCustomerSegmentationPage"
+    ],
+    "plugin": [
+      "PluginMarketplacePage"
+    ],
+    "admin": [
+      "RoleManagementPage",
+      "PluginManagementPage",
+      "SystemManagementPage",
+      "SystemSettingsPage",
+      "BankAccountManagementPage",
+      "PermissionManagementPage",
+      "DictionaryManagementPage",
+      "CompanyStructurePage",
+      "UserManagementPage",
+      "AuditLogPage",
+      "ConfigDebugPage",
+      "PerformanceMonitorPage",
+      "DatabaseStructurePage",
+      "MonitorPage",
+      "MigrationAdminPage",
+      "AccountManagementPage"
+    ],
+    "mes": [
+      "EquipmentOEEPage",
+      "MobileWorkstationPage",
+      "MaterialIssuePage",
+      "ProductionOrderManagementPage",
+      "ProductionDashboardPage",
+      "ProductionSchedulePage",
+      "MaterialReturnPage",
+      "WorkStationPage",
+      "ProductionRecordPage",
+      "ProductionProcessPage",
+      "WIPPage",
+      "DashboardPage",
+      "QualityTraceabilityPage",
+      "EquipmentManagementPage",
+      "MaterialBOMPage",
+      "EquipmentDetailPage"
+    ],
+    "shared": [
+      "LoginPage",
+      "ForgotPasswordPage",
+      "HelpCenterPage",
+      "ProfilePage",
+      "ProjectDashboardPage",
+      "ErrorPage",
+      "PluginMarketplacePage",
+      "HybridHomePage",
+      "AIPage",
+      "ModulesOverviewPage",
+      "Impage",
+      "DashboardPage"
+    ],
+    "rs": [
+      "RsBuildPage",
+      "RsProjectCreatePage",
+      "RsFormulaListPage",
+      "RsMilestonePage",
+      "RsSettingsPage",
+      "RsProjectDetailPage",
+      "RsReviewPage",
+      "RsDeployPage",
+      "RsProjectListPage",
+      "RsTestPage",
+      "RsReportPage",
+      "RsBugPage",
+      "RsDocPage",
+      "RsFormulaDetailPage",
+      "RsExperimentDetailPage",
+      "RsMaterialListPage",
+      "RsReleasePage",
+      "RsExperimentCreatePage",
+      "DashboardPage",
+      "RsFormulaCreatePage",
+      "RsCodePage",
+      "RsExperimentListPage"
+    ],
+    "docs": [
+      "DocumentCenterPage",
+      "DocsFileDetailPage",
+      "DocumentsPage",
+      "KnowledgeBasePage",
+      "DocsDashboardPage"
+    ],
+    "ehs": [
+      "EhsPlanPage",
+      "EhsHazardPage",
+      "EhsHazardDetailPage",
+      "EhsIncidentReportPage",
+      "EhsAccidentPage",
+      "EhsDrillPage",
+      "EhsCheckPage"
+    ],
+    "iam": [
+      "DashboardPage"
+    ],
+    "hrm": [
+      "HrmReportsPage",
+      "HrmPayrollPage",
+      "HrmContractPage",
+      "HrmPositionPage",
+      "HrmTrainingPage",
+      "HrmLeavePage",
+      "HrmRecruitmentPage",
+      "HrmPerformancePage",
+      "HrmEmployeePage",
+      "HrmCompanyPage",
+      "HrmOrganizationPage",
+      "HrmSalaryAdjustmentPage",
+      "HrmEmployeeDetailPage",
+      "HrmEmployeeCreatePage",
+      "HrmAttendancePage",
+      "HrmDepartmentPage",
+      "HrmContractDetailPage",
+      "DashboardPage",
+      "HrmEmployeeEditPage"
+    ],
+    "mobile": [
+      "NotificationSettingsPage",
+      "ScanSettingsPage",
+      "MobileScanPage",
+      "MobileApprovalPage",
+      "OfflineSyncPage",
+      "MobileTaskListPage",
+      "MobileHomePage",
+      "MobileProfilePage",
+      "MobileSettingsPage"
+    ],
+    "ai": [
+      "AiChatPage",
+      "DashboardPage"
+    ],
+    "workflow": [
+      "FlowApprovalPage",
+      "WorkflowDesignerPage",
+      "FlowWorkflowPage",
+      "FlowNotificationCenter",
+      "FlowDefinitionPage",
+      "FlowSettingsPage",
+      "FlowDesignerPage",
+      "FlowTemplatePage",
+      "FlowApprovalDetailPage",
+      "FlowInstanceDetailPage",
+      "FlowStatisticsPage",
+      "FlowInstanceListPage",
+      "DashboardPage",
+      "FlowMonitorPage",
+      "FlowVersionHistoryPage"
+    ],
+    "qms": [
+      "QmsNonconformancePage",
+      "QmsInspectionPage",
+      "QmsQualityControlPage",
+      "QmsApqpPage",
+      "QmsAuditManagementPage",
+      "QmsStandardDetailPage",
+      "QmsStandardListPage"
+    ],
+    "bi": [
+      "BIModuleDetailPage",
+      "BIDashboardPage",
+      "BIVisualizationPage",
+      "BIReportPage",
+      "Gispage",
+      "BIDataSourcePage",
+      "BIAnalyticsPage",
+      "BIComparisonPage"
+    ],
+    "report": [
+      "ReportListPage",
+      "ReportDesignPage",
+      "ReportSchedulePage",
+      "ReportViewer",
+      "TemplateManagementPage",
+      "ReportPage",
+      "ReportSubscriptionPage",
+      "ReportBuilder"
+    ],
+    "finance": [
+      "ConsolidationReportsPage",
+      "VoucherCreatePage",
+      "BudgetManagementPage",
+      "FinanceBudgetPage",
+      "FinanceInvoicePage",
+      "FinanceCostPage",
+      "FinanceReportsPage",
+      "VoucherDetailPage",
+      "FinanceLedgerPage",
+      "FinanceExpensePage",
+      "FinanceReceiptPage",
+      "FinanceReceivablePayablePage",
+      "OpeningBalancePage",
+      "ConsolidationScopePage",
+      "FinanceBudgetDetailPage",
+      "FinanceAssetPage",
+      "FinancePaymentPage",
+      "DashboardPage",
+      "FinanceTaxPage",
+      "FinanceVoucherPage"
+    ],
+    "im": [
+      "MailPage"
+    ],
+    "oa": [
+      "MeetingRoomManagementPage",
+      "AnnouncementManagementPage",
+      "AddressbookPage",
+      "AdministrationDashboardPage",
+      "ExpenseClaimPage"
+    ],
+    "scm": [
+      "ScmDeliveryAppointmentPage",
+      "ScmSupplierPage",
+      "ScmPurchaseOrderPage",
+      "ScmEvaluationPage",
+      "ScmPurchaseItemPage",
+      "DashboardPage"
+    ],
+    "erp": [
+      "VoucherManagementPage",
+      "DatabaseManagementPage",
+      "AuditLogPage",
+      "FinancialReportPage",
+      "DictManagementPage",
+      "DashboardPage"
+    ],
+    "gis": [
+      "index",
+      "GisTrackingPage",
+      "GisFencePage",
+      "DashboardPage"
+    ],
+    "srm": [
+      "SrmContractPage",
+      "SrmPerformancePage",
+      "SrmOrderPage",
+      "SrmEvaluationPage",
+      "SrmSupplierPage",
+      "SrmDashboardPage",
+      "SrmFinancePage"
+    ],
+    "pdm": [
+      "PdmBatchPage",
+      "PdmProcessPage",
+      "PdmStatsPage",
+      "PdmBomPage",
+      "PdmStepPage",
+      "PdmVersionPage",
+      "PdmProductConfigPage",
+      "PdmFormulaPage"
+    ]
+  },
+  "routes": [
+    {
+      "path": "/gis",
+      "file": "gis.ts"
+    },
+    {
+      "path": "/gis/map",
+      "file": "gis.ts"
+    },
+    {
+      "path": "/gis/fence",
+      "file": "gis.ts"
+    },
+    {
+      "path": "/gis/tracking",
+      "file": "gis.ts"
+    },
+    {
+      "path": "/report/list",
+      "file": "report.ts"
+    },
+    {
+      "path": "/report/design",
+      "file": "report.ts"
+    },
+    {
+      "path": "/report/schedules",
+      "file": "report.ts"
+    },
+    {
+      "path": "/report/subscriptions",
+      "file": "report.ts"
+    },
+    {
+      "path": "/report/templates",
+      "file": "report.ts"
+    },
+    {
+      "path": "/report/builder",
+      "file": "report.ts"
+    },
+    {
+      "path": "/report/viewer",
+      "file": "report.ts"
+    },
+    {
+      "path": "/srm",
+      "file": "srm.ts"
+    },
+    {
+      "path": "/srm/dashboard",
+      "file": "srm.ts"
+    },
+    {
+      "path": "/srm/suppliers",
+      "file": "srm.ts"
+    },
+    {
+      "path": "/srm/suppliers/:id",
+      "file": "srm.ts"
+    },
+    {
+      "path": "/srm/evaluations",
+      "file": "srm.ts"
+    },
+    {
+      "path": "/srm/orders",
+      "file": "srm.ts"
+    },
+    {
+      "path": "/srm/contracts",
+      "file": "srm.ts"
+    },
+    {
+      "path": "/srm/finance",
+      "file": "srm.ts"
+    },
+    {
+      "path": "/srm/performance",
+      "file": "srm.ts"
+    },
+    {
+      "path": "/flow",
+      "file": "workflow.ts"
+    },
+    {
+      "path": "/flow/definitions",
+      "file": "workflow.ts"
+    },
+    {
+      "path": "/flow/designer",
+      "file": "workflow.ts"
+    },
+    {
+      "path": "/flow/instances",
+      "file": "workflow.ts"
+    },
+    {
+      "path": "/flow/instance/:id",
+      "file": "workflow.ts"
+    },
+    {
+      "path": "/flow/approvals",
+      "file": "workflow.ts"
+    },
+    {
+      "path": "/flow/approval/:id",
+      "file": "workflow.ts"
+    },
+    {
+      "path": "/flow/notifications",
+      "file": "workflow.ts"
+    },
+    {
+      "path": "/flow/statistics",
+      "file": "workflow.ts"
+    },
+    {
+      "path": "/flow/history",
+      "file": "workflow.ts"
+    },
+    {
+      "path": "/flow/definition",
+      "file": "workflow.ts"
+    },
+    {
+      "path": "/flow/flow-designer",
+      "file": "workflow.ts"
+    },
+    {
+      "path": "/flow/monitor",
+      "file": "workflow.ts"
+    },
+    {
+      "path": "/flow/settings",
+      "file": "workflow.ts"
+    },
+    {
+      "path": "/flow/templates",
+      "file": "workflow.ts"
+    },
+    {
+      "path": "/scm",
+      "file": "scm.ts"
+    },
+    {
+      "path": "/scm/suppliers",
+      "file": "scm.ts"
+    },
+    {
+      "path": "/scm/suppliers/:id",
+      "file": "scm.ts"
+    },
+    {
+      "path": "/scm/purchase-orders",
+      "file": "scm.ts"
+    },
+    {
+      "path": "/scm/purchase-items",
+      "file": "scm.ts"
+    },
+    {
+      "path": "/scm/evaluations",
+      "file": "scm.ts"
+    },
+    {
+      "path": "/scm/delivery-appointments",
+      "file": "scm.ts"
+    },
+    {
+      "path": "/notifications",
+      "file": "notifications.ts"
+    },
+    {
+      "path": "/notifications/templates",
+      "file": "notifications.ts"
+    },
+    {
+      "path": "/notifications/archive",
+      "file": "notifications.ts"
+    },
+    {
+      "path": "/notifications/stats",
+      "file": "notifications.ts"
+    },
+    {
+      "path": "/notifications/:id",
+      "file": "notifications.ts"
+    },
+    {
+      "path": "/admin/plugins",
+      "file": "plugin.ts"
+    },
+    {
+      "path": "/plugin/marketplace",
+      "file": "plugin.ts"
+    },
+    {
+      "path": "/rs",
+      "file": "rs.ts"
+    },
+    {
+      "path": "/rs/projects",
+      "file": "rs.ts"
+    },
+    {
+      "path": "/rs/projects/create",
+      "file": "rs.ts"
+    },
+    {
+      "path": "/rs/projects/:id",
+      "file": "rs.ts"
+    },
+    {
+      "path": "/rs/projects/:id/edit",
+      "file": "rs.ts"
+    },
+    {
+      "path": "/rs/experiments",
+      "file": "rs.ts"
+    },
+    {
+      "path": "/rs/experiments/create",
+      "file": "rs.ts"
+    },
+    {
+      "path": "/rs/experiments/:id",
+      "file": "rs.ts"
+    },
+    {
+      "path": "/rs/experiments/:id/edit",
+      "file": "rs.ts"
+    },
+    {
+      "path": "/rs/formulas",
+      "file": "rs.ts"
+    },
+    {
+      "path": "/rs/formulas/create",
+      "file": "rs.ts"
+    },
+    {
+      "path": "/rs/formulas/:id",
+      "file": "rs.ts"
+    },
+    {
+      "path": "/rs/formulas/:id/edit",
+      "file": "rs.ts"
+    },
+    {
+      "path": "/rs/materials",
+      "file": "rs.ts"
+    },
+    {
+      "path": "/rs/reports",
+      "file": "rs.ts"
+    },
+    {
+      "path": "/rs/bugs",
+      "file": "rs.ts"
+    },
+    {
+      "path": "/rs/builds",
+      "file": "rs.ts"
+    },
+    {
+      "path": "/rs/code",
+      "file": "rs.ts"
+    },
+    {
+      "path": "/rs/deploy",
+      "file": "rs.ts"
+    },
+    {
+      "path": "/rs/docs",
+      "file": "rs.ts"
+    },
+    {
+      "path": "/rs/milestones",
+      "file": "rs.ts"
+    },
+    {
+      "path": "/rs/releases",
+      "file": "rs.ts"
+    },
+    {
+      "path": "/rs/reviews",
+      "file": "rs.ts"
+    },
+    {
+      "path": "/rs/settings",
+      "file": "rs.ts"
+    },
+    {
+      "path": "/rs/tests",
+      "file": "rs.ts"
+    },
+    {
+      "path": "/meeting-room",
+      "file": "common.ts"
+    },
+    {
+      "path": "/system/settings",
+      "file": "common.ts"
+    },
+    {
+      "path": "/system/management",
+      "file": "common.ts"
+    },
+    {
+      "path": "/system/database",
+      "file": "common.ts"
+    },
+    {
+      "path": "/system/config-debug",
+      "file": "common.ts"
+    },
+    {
+      "path": "/system/company-structure",
+      "file": "common.ts"
+    },
+    {
+      "path": "/system/monitor",
+      "file": "common.ts"
+    },
+    {
+      "path": "/ehs/accidents",
+      "file": "common.ts"
+    },
+    {
+      "path": "/common/documents",
+      "file": "common.ts"
+    },
+    {
+      "path": "/im",
+      "file": "im.ts"
+    },
+    {
+      "path": "/mail",
+      "file": "im.ts"
+    },
+    {
+      "path": "/",
+      "file": "dashboard.ts"
+    },
+    {
+      "path": "/modules",
+      "file": "dashboard.ts"
+    },
+    {
+      "path": "/dashboard",
+      "file": "dashboard.ts"
+    },
+    {
+      "path": "/profile",
+      "file": "dashboard.ts"
+    },
+    {
+      "path": "/addressbook",
+      "file": "dashboard.ts"
+    },
+    {
+      "path": "/wms",
+      "file": "wms.ts"
+    },
+    {
+      "path": "/wms/warehouses",
+      "file": "wms.ts"
+    },
+    {
+      "path": "/wms/inventory",
+      "file": "wms.ts"
+    },
+    {
+      "path": "/wms/inbound-orders",
+      "file": "wms.ts"
+    },
+    {
+      "path": "/wms/outbound-orders",
+      "file": "wms.ts"
+    },
+    {
+      "path": "/wms/stock-takes",
+      "file": "wms.ts"
+    },
+    {
+      "path": "/wms/suppliers",
+      "file": "wms.ts"
+    },
+    {
+      "path": "/documents",
+      "file": "docs.ts"
+    },
+    {
+      "path": "/document-center",
+      "file": "docs.ts"
+    },
+    {
+      "path": "/documents/:id",
+      "file": "docs.ts"
+    },
+    {
+      "path": "/knowledge-base",
+      "file": "docs.ts"
+    },
+    {
+      "path": "/templates",
+      "file": "docs.ts"
+    },
+    {
+      "path": "/help",
+      "file": "docs.ts"
+    },
+    {
+      "path": "/pm",
+      "file": "pm.ts"
+    },
+    {
+      "path": "/pm/projects",
+      "file": "pm.ts"
+    },
+    {
+      "path": "/pm/projects/create",
+      "file": "pm.ts"
+    },
+    {
+      "path": "/pm/projects/:id",
+      "file": "pm.ts"
+    },
+    {
+      "path": "/pm/projects/:id/edit",
+      "file": "pm.ts"
+    },
+    {
+      "path": "/pm/contracts",
+      "file": "pm.ts"
+    },
+    {
+      "path": "/pm/contracts/create",
+      "file": "pm.ts"
+    },
+    {
+      "path": "/pm/contracts/:id",
+      "file": "pm.ts"
+    },
+    {
+      "path": "/pm/dashboard",
+      "file": "pm.ts"
+    },
+    {
+      "path": "/pm/templates",
+      "file": "pm.ts"
+    },
+    {
+      "path": "/pm/reports",
+      "file": "pm.ts"
+    },
+    {
+      "path": "/pm/reports/:projectId",
+      "file": "pm.ts"
+    },
+    {
+      "path": "/pm/resources",
+      "file": "pm.ts"
+    },
+    {
+      "path": "/mes",
+      "file": "mes.ts"
+    },
+    {
+      "path": "/mes/board",
+      "file": "mes.ts"
+    },
+    {
+      "path": "/mes/orders",
+      "file": "mes.ts"
+    },
+    {
+      "path": "/mes/processes",
+      "file": "mes.ts"
+    },
+    {
+      "path": "/mes/workstations",
+      "file": "mes.ts"
+    },
+    {
+      "path": "/mes/records",
+      "file": "mes.ts"
+    },
+    {
+      "path": "/mes/quality-traceability",
+      "file": "mes.ts"
+    },
+    {
+      "path": "/mes/wip",
+      "file": "mes.ts"
+    },
+    {
+      "path": "/mes/schedules",
+      "file": "mes.ts"
+    },
+    {
+      "path": "/mes/equipment",
+      "file": "mes.ts"
+    },
+    {
+      "path": "/mes/equipment-oee",
+      "file": "mes.ts"
+    },
+    {
+      "path": "/mes/boms",
+      "file": "mes.ts"
+    },
+    {
+      "path": "/mes/material-issues",
+      "file": "mes.ts"
+    },
+    {
+      "path": "/mes/material-returns",
+      "file": "mes.ts"
+    },
+    {
+      "path": "/mobile",
+      "file": "mobile.ts"
+    },
+    {
+      "path": "/mobile/home",
+      "file": "mobile.ts"
+    },
+    {
+      "path": "/mobile/tasks",
+      "file": "mobile.ts"
+    },
+    {
+      "path": "/mobile/scan-page",
+      "file": "mobile.ts"
+    },
+    {
+      "path": "/mobile/approvals",
+      "file": "mobile.ts"
+    },
+    {
+      "path": "/mobile/settings",
+      "file": "mobile.ts"
+    },
+    {
+      "path": "/mobile/settings-app",
+      "file": "mobile.ts"
+    },
+    {
+      "path": "/mobile/offline-sync",
+      "file": "mobile.ts"
+    },
+    {
+      "path": "/mobile/scan",
+      "file": "mobile.ts"
+    },
+    {
+      "path": "/mobile/notifications",
+      "file": "mobile.ts"
+    },
+    {
+      "path": "/ai",
+      "file": "ai.ts"
+    },
+    {
+      "path": "/ai/chat",
+      "file": "ai.ts"
+    },
+    {
+      "path": "/ai/assistant",
+      "file": "ai.ts"
+    },
+    {
+      "path": "/crm",
+      "file": "crm.ts"
+    },
+    {
+      "path": "/crm/dashboard",
+      "file": "crm.ts"
+    },
+    {
+      "path": "/crm/customers",
+      "file": "crm.ts"
+    },
+    {
+      "path": "/crm/contacts",
+      "file": "crm.ts"
+    },
+    {
+      "path": "/crm/opportunities",
+      "file": "crm.ts"
+    },
+    {
+      "path": "/crm/interactions",
+      "file": "crm.ts"
+    },
+    {
+      "path": "/crm/scoring",
+      "file": "crm.ts"
+    },
+    {
+      "path": "/crm/forecast",
+      "file": "crm.ts"
+    },
+    {
+      "path": "/crm/funnel",
+      "file": "crm.ts"
+    },
+    {
+      "path": "/crm/segments",
+      "file": "crm.ts"
+    },
+    {
+      "path": "/crm/recommendations",
+      "file": "crm.ts"
+    },
+    {
+      "path": "/crm/billing",
+      "file": "crm.ts"
+    },
+    {
+      "path": "/crm/customers/:id",
+      "file": "crm.ts"
+    },
+    {
+      "path": "/crm/customers/create",
+      "file": "crm.ts"
+    },
+    {
+      "path": "/crm/customers/:id/edit",
+      "file": "crm.ts"
+    },
+    {
+      "path": "/crm/opportunities/:id",
+      "file": "crm.ts"
+    },
+    {
+      "path": "/crm/contacts/:id",
+      "file": "crm.ts"
+    },
+    {
+      "path": "/bi",
+      "file": "bi.ts"
+    },
+    {
+      "path": "/bi/dashboard",
+      "file": "bi.ts"
+    },
+    {
+      "path": "/bi/analytics",
+      "file": "bi.ts"
+    },
+    {
+      "path": "/bi/comparison",
+      "file": "bi.ts"
+    },
+    {
+      "path": "/bi/reports",
+      "file": "bi.ts"
+    },
+    {
+      "path": "/bi/datasources",
+      "file": "bi.ts"
+    },
+    {
+      "path": "/bi/visualizations",
+      "file": "bi.ts"
+    },
+    {
+      "path": "/bi/module/:moduleId",
+      "file": "bi.ts"
+    },
+    {
+      "path": "/bi/gis",
+      "file": "bi.ts"
+    },
+    {
+      "path": "/iam",
+      "file": "iam.ts"
+    },
+    {
+      "path": "/iam/users",
+      "file": "iam.ts"
+    },
+    {
+      "path": "/iam/roles",
+      "file": "iam.ts"
+    },
+    {
+      "path": "/iam/permissions",
+      "file": "iam.ts"
+    },
+    {
+      "path": "/iam/audit",
+      "file": "iam.ts"
+    },
+    {
+      "path": "/iam/system",
+      "file": "iam.ts"
+    },
+    {
+      "path": "/iam/dictionaries",
+      "file": "iam.ts"
+    },
+    {
+      "path": "/iam/database",
+      "file": "iam.ts"
+    },
+    {
+      "path": "/iam/migration",
+      "file": "iam.ts"
+    },
+    {
+      "path": "/iam/debug",
+      "file": "iam.ts"
+    },
+    {
+      "path": "/iam/plugins",
+      "file": "iam.ts"
+    },
+    {
+      "path": "/iam/accounts",
+      "file": "iam.ts"
+    },
+    {
+      "path": "/iam/bank-accounts",
+      "file": "iam.ts"
+    },
+    {
+      "path": "/erp",
+      "file": "erp.ts"
+    },
+    {
+      "path": "/erp/dashboard",
+      "file": "erp.ts"
+    },
+    {
+      "path": "/assets",
+      "file": "erp.ts"
+    },
+    {
+      "path": "/equipment",
+      "file": "erp.ts"
+    },
+    {
+      "path": "/equipment/inspections",
+      "file": "erp.ts"
+    },
+    {
+      "path": "/equipment/maintenances",
+      "file": "erp.ts"
+    },
+    {
+      "path": "/equipment/:id",
+      "file": "erp.ts"
+    },
+    {
+      "path": "/administration",
+      "file": "erp.ts"
+    },
+    {
+      "path": "/expense-claims",
+      "file": "erp.ts"
+    },
+    {
+      "path": "/budget",
+      "file": "erp.ts"
+    },
+    {
+      "path": "/office-supplies",
+      "file": "erp.ts"
+    },
+    {
+      "path": "/meeting-rooms",
+      "file": "erp.ts"
+    },
+    {
+      "path": "/vehicles",
+      "file": "erp.ts"
+    },
+    {
+      "path": "/announcements",
+      "file": "erp.ts"
+    },
+    {
+      "path": "/erp/purchase/order",
+      "file": "erp.ts"
+    },
+    {
+      "path": "/erp/purchase/receipt",
+      "file": "erp.ts"
+    },
+    {
+      "path": "/erp/sales/order",
+      "file": "erp.ts"
+    },
+    {
+      "path": "/erp/sales/delivery",
+      "file": "erp.ts"
+    },
+    {
+      "path": "/erp/customer",
+      "file": "erp.ts"
+    },
+    {
+      "path": "/erp/financial-reports",
+      "file": "erp.ts"
+    },
+    {
+      "path": "/erp/vouchers",
+      "file": "erp.ts"
+    },
+    {
+      "path": "/erp/audit-logs",
+      "file": "erp.ts"
+    },
+    {
+      "path": "/erp/dict",
+      "file": "erp.ts"
+    },
+    {
+      "path": "/erp/database",
+      "file": "erp.ts"
+    },
+    {
+      "path": "/hrm",
+      "file": "hrm.ts"
+    },
+    {
+      "path": "/hrm/companies",
+      "file": "hrm.ts"
+    },
+    {
+      "path": "/hrm/departments",
+      "file": "hrm.ts"
+    },
+    {
+      "path": "/hrm/organization",
+      "file": "hrm.ts"
+    },
+    {
+      "path": "/hrm/positions",
+      "file": "hrm.ts"
+    },
+    {
+      "path": "/hrm/employees",
+      "file": "hrm.ts"
+    },
+    {
+      "path": "/hrm/employee/:id",
+      "file": "hrm.ts"
+    },
+    {
+      "path": "/hrm/employee/create",
+      "file": "hrm.ts"
+    },
+    {
+      "path": "/hrm/employee/:id/edit",
+      "file": "hrm.ts"
+    },
+    {
+      "path": "/hrm/leave",
+      "file": "hrm.ts"
+    },
+    {
+      "path": "/hrm/contracts",
+      "file": "hrm.ts"
+    },
+    {
+      "path": "/hrm/contract/:id",
+      "file": "hrm.ts"
+    },
+    {
+      "path": "/hrm/recruitment",
+      "file": "hrm.ts"
+    },
+    {
+      "path": "/hrm/payroll",
+      "file": "hrm.ts"
+    },
+    {
+      "path": "/hrm/salary-adjustments",
+      "file": "hrm.ts"
+    },
+    {
+      "path": "/hrm/performance",
+      "file": "hrm.ts"
+    },
+    {
+      "path": "/hrm/attendance",
+      "file": "hrm.ts"
+    },
+    {
+      "path": "/hrm/training",
+      "file": "hrm.ts"
+    },
+    {
+      "path": "/hrm/reports",
+      "file": "hrm.ts"
+    },
+    {
+      "path": "/monitor",
+      "file": "monitor.ts"
+    },
+    {
+      "path": "/monitor/dashboard",
+      "file": "monitor.ts"
+    },
+    {
+      "path": "/monitor/metrics",
+      "file": "monitor.ts"
+    },
+    {
+      "path": "/monitor/alerts",
+      "file": "monitor.ts"
+    },
+    {
+      "path": "/finance",
+      "file": "finance.ts"
+    },
+    {
+      "path": "/finance/vouchers",
+      "file": "finance.ts"
+    },
+    {
+      "path": "/finance/voucher/:id",
+      "file": "finance.ts"
+    },
+    {
+      "path": "/finance/voucher/create",
+      "file": "finance.ts"
+    },
+    {
+      "path": "/finance/ledger",
+      "file": "finance.ts"
+    },
+    {
+      "path": "/finance/receivable",
+      "file": "finance.ts"
+    },
+    {
+      "path": "/finance/payable",
+      "file": "finance.ts"
+    },
+    {
+      "path": "/finance/receipts",
+      "file": "finance.ts"
+    },
+    {
+      "path": "/finance/payments",
+      "file": "finance.ts"
+    },
+    {
+      "path": "/finance/invoices",
+      "file": "finance.ts"
+    },
+    {
+      "path": "/finance/tax",
+      "file": "finance.ts"
+    },
+    {
+      "path": "/finance/assets",
+      "file": "finance.ts"
+    },
+    {
+      "path": "/finance/expense",
+      "file": "finance.ts"
+    },
+    {
+      "path": "/finance/cost",
+      "file": "finance.ts"
+    },
+    {
+      "path": "/finance/budget",
+      "file": "finance.ts"
+    },
+    {
+      "path": "/finance/budget-management",
+      "file": "finance.ts"
+    },
+    {
+      "path": "/finance/budget/:id",
+      "file": "finance.ts"
+    },
+    {
+      "path": "/finance/reports",
+      "file": "finance.ts"
+    },
+    {
+      "path": "/finance/financial-reports",
+      "file": "finance.ts"
+    },
+    {
+      "path": "/finance/consolidation",
+      "file": "finance.ts"
+    },
+    {
+      "path": "/finance/consolidation-reports",
+      "file": "finance.ts"
+    },
+    {
+      "path": "/finance/opening-balance",
+      "file": "finance.ts"
+    },
+    {
+      "path": "/finance/voucher-templates",
+      "file": "finance.ts"
+    },
+    {
+      "path": "/pdm",
+      "file": "pdm.ts"
+    },
+    {
+      "path": "/pdm/stats",
+      "file": "pdm.ts"
+    },
+    {
+      "path": "/pdm/formula",
+      "file": "pdm.ts"
+    },
+    {
+      "path": "/pdm/process",
+      "file": "pdm.ts"
+    },
+    {
+      "path": "/pdm/batch",
+      "file": "pdm.ts"
+    },
+    {
+      "path": "/pdm/step",
+      "file": "pdm.ts"
+    },
+    {
+      "path": "/pdm/bom",
+      "file": "pdm.ts"
+    },
+    {
+      "path": "/pdm/version",
+      "file": "pdm.ts"
+    },
+    {
+      "path": "/pdm/product-config",
+      "file": "pdm.ts"
+    },
+    {
+      "path": "/login",
+      "file": "auth.ts"
+    },
+    {
+      "path": "/forgot-password",
+      "file": "auth.ts"
+    },
+    {
+      "path": "/lims",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/lims/samples",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/lims/processes",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/lims/tasks",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/lims/instruments",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/lims/sample/:id",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/lims/task/:id",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/lims/instrument/:id",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/lims/instrument-data",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/qms",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/qms/standards",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/qms/checks",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/qms/issues",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/qms/improvements",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/qms/standard/:id",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/qms/audit",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/qms/apqp",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/ehs",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/ehs/hazards",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/ehs/checks",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/ehs/hazard/:id",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/ehs/incident",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/ehs/drills",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/ehs/plan",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/integration/external-erp",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/integration/external-erp/:connectionId/mappings",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/integration",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/integration/dashboard",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/integration/lims-qms",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/integration/mes-erp",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/integration/wms-scm",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/integration/events",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/integration/rules",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/integration/external-erp-overview",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/mobile-workstation",
+      "file": "professional.ts"
+    },
+    {
+      "path": "/performance",
+      "file": "professional.ts"
+    }
+  ],
+  "nav_items": [
+    {
+      "path": "/erp",
+      "label": "仪表盘"
+    },
+    {
+      "path": "/erp/dashboard",
+      "label": "财务报表"
+    },
+    {
+      "path": "/erp/financial-reports",
+      "label": "凭证管理"
+    },
+    {
+      "path": "/erp/vouchers",
+      "label": "财务管理"
+    },
+    {
+      "path": "/finance",
+      "label": "库存管理"
+    },
+    {
+      "path": "/wms/inventory",
+      "label": "销售管理"
+    },
+    {
+      "path": "/erp/sales/order",
+      "label": "审计日志"
+    },
+    {
+      "path": "/erp/audit-logs",
+      "label": "数据字典"
+    },
+    {
+      "path": "/erp/dict",
+      "label": "数据库管理"
+    },
+    {
+      "path": "/erp/database",
+      "label": "仪表盘"
+    },
+    {
+      "path": "/erp/dashboard",
+      "label": "财务报表"
+    },
+    {
+      "path": "/erp/financial-reports",
+      "label": "凭证管理"
+    },
+    {
+      "path": "/erp/vouchers",
+      "label": "财务管理"
+    },
+    {
+      "path": "/finance",
+      "label": "库存管理"
+    },
+    {
+      "path": "/wms/inventory",
+      "label": "销售管理"
+    },
+    {
+      "path": "/erp/sales/order",
+      "label": "审计日志"
+    },
+    {
+      "path": "/erp/audit-logs",
+      "label": "数据字典"
+    },
+    {
+      "path": "/erp/dict",
+      "label": "数据库管理"
+    },
+    {
+      "path": "/erp/database",
+      "label": "项目管理"
+    },
+    {
+      "path": "/pm",
+      "label": "项目列表"
+    },
+    {
+      "path": "/pm/projects",
+      "label": "合同管理"
+    },
+    {
+      "path": "/pm/contracts",
+      "label": "报表分析"
+    },
+    {
+      "path": "/pm/reports",
+      "label": "资源管理"
+    },
+    {
+      "path": "/pm/resources",
+      "label": "项目列表"
+    },
+    {
+      "path": "/pm/projects",
+      "label": "合同管理"
+    },
+    {
+      "path": "/pm/contracts",
+      "label": "报表分析"
+    },
+    {
+      "path": "/pm/reports",
+      "label": "资源管理"
+    },
+    {
+      "path": "/pm/resources",
+      "label": "研发管理"
+    },
+    {
+      "path": "/rs",
+      "label": "研发项目"
+    },
+    {
+      "path": "/rs/projects",
+      "label": "文档管理"
+    },
+    {
+      "path": "/rs/docs",
+      "label": "测试管理"
+    },
+    {
+      "path": "/rs/tests",
+      "label": "版本发布"
+    },
+    {
+      "path": "/rs/releases",
+      "label": "缺陷管理"
+    },
+    {
+      "path": "/rs/bugs",
+      "label": "构建管理"
+    },
+    {
+      "path": "/rs/builds",
+      "label": "代码管理"
+    },
+    {
+      "path": "/rs/code",
+      "label": "部署管理"
+    },
+    {
+      "path": "/rs/deploy",
+      "label": "里程碑"
+    },
+    {
+      "path": "/rs/milestones",
+      "label": "评审管理"
+    },
+    {
+      "path": "/rs/reviews",
+      "label": "研发设置"
+    },
+    {
+      "path": "/rs/settings",
+      "label": "研发项目"
+    },
+    {
+      "path": "/rs/projects",
+      "label": "文档管理"
+    },
+    {
+      "path": "/rs/docs",
+      "label": "测试管理"
+    },
+    {
+      "path": "/rs/tests",
+      "label": "版本发布"
+    },
+    {
+      "path": "/rs/releases",
+      "label": "缺陷管理"
+    },
+    {
+      "path": "/rs/bugs",
+      "label": "构建管理"
+    },
+    {
+      "path": "/rs/builds",
+      "label": "代码管理"
+    },
+    {
+      "path": "/rs/code",
+      "label": "部署管理"
+    },
+    {
+      "path": "/rs/deploy",
+      "label": "里程碑"
+    },
+    {
+      "path": "/rs/milestones",
+      "label": "评审管理"
+    },
+    {
+      "path": "/rs/reviews",
+      "label": "研发设置"
+    },
+    {
+      "path": "/rs/settings",
+      "label": "供应链"
+    },
+    {
+      "path": "/scm",
+      "label": "供应商管理"
+    },
+    {
+      "path": "/scm/suppliers",
+      "label": "采购订单"
+    },
+    {
+      "path": "/scm/purchase-orders",
+      "label": "送货预约"
+    },
+    {
+      "path": "/scm/delivery-appointments",
+      "label": "供应商管理"
+    },
+    {
+      "path": "/scm/suppliers",
+      "label": "采购订单"
+    },
+    {
+      "path": "/scm/purchase-orders",
+      "label": "送货预约"
+    },
+    {
+      "path": "/scm/delivery-appointments",
+      "label": "财务管理"
+    },
+    {
+      "path": "/finance",
+      "label": "凭证管理"
+    },
+    {
+      "path": "/finance/vouchers",
+      "label": "总账管理"
+    },
+    {
+      "path": "/finance/ledger",
+      "label": "应收管理"
+    },
+    {
+      "path": "/finance/receivable",
+      "label": "应付管理"
+    },
+    {
+      "path": "/finance/payable",
+      "label": "发票管理"
+    },
+    {
+      "path": "/finance/invoices",
+      "label": "税务管理"
+    },
+    {
+      "path": "/finance/tax",
+      "label": "费用管理"
+    },
+    {
+      "path": "/finance/expense",
+      "label": "成本管理"
+    },
+    {
+      "path": "/finance/cost",
+      "label": "财务报表"
+    },
+    {
+      "path": "/finance/reports",
+      "label": "预算管理"
+    },
+    {
+      "path": "/finance/budget",
+      "label": "资产管理"
+    },
+    {
+      "path": "/finance/assets",
+      "label": "合并报表"
+    },
+    {
+      "path": "/finance/consolidation",
+      "label": "凭证管理"
+    },
+    {
+      "path": "/finance/vouchers",
+      "label": "总账管理"
+    },
+    {
+      "path": "/finance/ledger",
+      "label": "应收管理"
+    },
+    {
+      "path": "/finance/receivable",
+      "label": "应付管理"
+    },
+    {
+      "path": "/finance/payable",
+      "label": "发票管理"
+    },
+    {
+      "path": "/finance/invoices",
+      "label": "税务管理"
+    },
+    {
+      "path": "/finance/tax",
+      "label": "费用管理"
+    },
+    {
+      "path": "/finance/expense",
+      "label": "成本管理"
+    },
+    {
+      "path": "/finance/cost",
+      "label": "财务报表"
+    },
+    {
+      "path": "/finance/reports",
+      "label": "预算管理"
+    },
+    {
+      "path": "/finance/budget",
+      "label": "资产管理"
+    },
+    {
+      "path": "/finance/assets",
+      "label": "合并报表"
+    },
+    {
+      "path": "/finance/consolidation",
+      "label": "生产执行"
+    },
+    {
+      "path": "/mes",
+      "label": "生产看板"
+    },
+    {
+      "path": "/mes/board",
+      "label": "生产订单"
+    },
+    {
+      "path": "/mes/orders",
+      "label": "生产排程"
+    },
+    {
+      "path": "/mes/schedules",
+      "label": "生产过程"
+    },
+    {
+      "path": "/mes/processes",
+      "label": "工作站"
+    },
+    {
+      "path": "/mes/workstations",
+      "label": "设备管理"
+    },
+    {
+      "path": "/mes/equipment",
+      "label": "OEE分析"
+    },
+    {
+      "path": "/mes/equipment-oee",
+      "label": "物料BOM"
+    },
+    {
+      "path": "/mes/boms",
+      "label": "在制品"
+    },
+    {
+      "path": "/mes/wip",
+      "label": "物料领用"
+    },
+    {
+      "path": "/mes/material-issues",
+      "label": "物料退库"
+    },
+    {
+      "path": "/mes/material-returns",
+      "label": "生产记录"
+    },
+    {
+      "path": "/mes/records",
+      "label": "质量追溯"
+    },
+    {
+      "path": "/mes/quality-traceability",
+      "label": "生产看板"
+    },
+    {
+      "path": "/mes/board",
+      "label": "生产订单"
+    },
+    {
+      "path": "/mes/orders",
+      "label": "生产排程"
+    },
+    {
+      "path": "/mes/schedules",
+      "label": "生产过程"
+    },
+    {
+      "path": "/mes/processes",
+      "label": "工作站"
+    },
+    {
+      "path": "/mes/workstations",
+      "label": "设备管理"
+    },
+    {
+      "path": "/mes/equipment",
+      "label": "OEE分析"
+    },
+    {
+      "path": "/mes/equipment-oee",
+      "label": "物料BOM"
+    },
+    {
+      "path": "/mes/boms",
+      "label": "在制品"
+    },
+    {
+      "path": "/mes/wip",
+      "label": "物料领用"
+    },
+    {
+      "path": "/mes/material-issues",
+      "label": "物料退库"
+    },
+    {
+      "path": "/mes/material-returns",
+      "label": "生产记录"
+    },
+    {
+      "path": "/mes/records",
+      "label": "质量追溯"
+    },
+    {
+      "path": "/mes/quality-traceability",
+      "label": "客户关系"
+    },
+    {
+      "path": "/crm",
+      "label": "客户管理"
+    },
+    {
+      "path": "/crm/customers",
+      "label": "商机管理"
+    },
+    {
+      "path": "/crm/opportunities",
+      "label": "客户分群"
+    },
+    {
+      "path": "/crm/segments",
+      "label": "销售漏斗"
+    },
+    {
+      "path": "/crm/funnel",
+      "label": "客户推荐"
+    },
+    {
+      "path": "/crm/recommendations",
+      "label": "客户管理"
+    },
+    {
+      "path": "/crm/customers",
+      "label": "商机管理"
+    },
+    {
+      "path": "/crm/opportunities",
+      "label": "客户分群"
+    },
+    {
+      "path": "/crm/segments",
+      "label": "销售漏斗"
+    },
+    {
+      "path": "/crm/funnel",
+      "label": "客户推荐"
+    },
+    {
+      "path": "/crm/recommendations",
+      "label": "AI助手"
+    },
+    {
+      "path": "/ai",
+      "label": "智能对话"
+    },
+    {
+      "path": "/ai/chat",
+      "label": "AI助手"
+    },
+    {
+      "path": "/ai/assistant",
+      "label": "智能对话"
+    },
+    {
+      "path": "/ai/chat",
+      "label": "AI助手"
+    },
+    {
+      "path": "/ai/assistant",
+      "label": "地理信息"
+    },
+    {
+      "path": "/gis",
+      "label": "地图视图"
+    },
+    {
+      "path": "/gis/map",
+      "label": "地图视图"
+    },
+    {
+      "path": "/gis/map",
+      "label": "人力资源"
+    },
+    {
+      "path": "/hrm",
+      "label": "员工管理"
+    },
+    {
+      "path": "/hrm/employees",
+      "label": "公司管理"
+    },
+    {
+      "path": "/hrm/companies",
+      "label": "部门管理"
+    },
+    {
+      "path": "/hrm/departments",
+      "label": "组织架构"
+    },
+    {
+      "path": "/hrm/organization",
+      "label": "职位管理"
+    },
+    {
+      "path": "/hrm/positions",
+      "label": "考勤管理"
+    },
+    {
+      "path": "/hrm/attendance",
+      "label": "请假管理"
+    },
+    {
+      "path": "/hrm/leave",
+      "label": "合同管理"
+    },
+    {
+      "path": "/hrm/contracts",
+      "label": "招聘管理"
+    },
+    {
+      "path": "/hrm/recruitment",
+      "label": "薪酬管理"
+    },
+    {
+      "path": "/hrm/payroll",
+      "label": "培训管理"
+    },
+    {
+      "path": "/hrm/training",
+      "label": "绩效考核"
+    },
+    {
+      "path": "/hrm/performance",
+      "label": "人事报表"
+    },
+    {
+      "path": "/hrm/reports",
+      "label": "薪资调整"
+    },
+    {
+      "path": "/hrm/salary-adjustments",
+      "label": "员工管理"
+    },
+    {
+      "path": "/hrm/employees",
+      "label": "公司管理"
+    },
+    {
+      "path": "/hrm/companies",
+      "label": "部门管理"
+    },
+    {
+      "path": "/hrm/departments",
+      "label": "职位管理"
+    },
+    {
+      "path": "/hrm/positions",
+      "label": "考勤管理"
+    },
+    {
+      "path": "/hrm/attendance",
+      "label": "请假管理"
+    },
+    {
+      "path": "/hrm/leave",
+      "label": "合同管理"
+    },
+    {
+      "path": "/hrm/contracts",
+      "label": "招聘管理"
+    },
+    {
+      "path": "/hrm/recruitment",
+      "label": "薪酬管理"
+    },
+    {
+      "path": "/hrm/payroll",
+      "label": "培训管理"
+    },
+    {
+      "path": "/hrm/training",
+      "label": "绩效考核"
+    },
+    {
+      "path": "/hrm/performance",
+      "label": "人事报表"
+    },
+    {
+      "path": "/hrm/reports",
+      "label": "即时通讯"
+    },
+    {
+      "path": "/im",
+      "label": "邮件"
+    },
+    {
+      "path": "/mail",
+      "label": "邮件"
+    },
+    {
+      "path": "/mail",
+      "label": "商业智能"
+    },
+    {
+      "path": "/bi",
+      "label": "仪表盘"
+    },
+    {
+      "path": "/bi/dashboard",
+      "label": "数据分析"
+    },
+    {
+      "path": "/bi/analytics",
+      "label": "对比分析"
+    },
+    {
+      "path": "/bi/comparison",
+      "label": "报表中心"
+    },
+    {
+      "path": "/bi/reports",
+      "label": "数据源"
+    },
+    {
+      "path": "/bi/datasources",
+      "label": "可视化"
+    },
+    {
+      "path": "/bi/visualizations",
+      "label": "GIS分析"
+    },
+    {
+      "path": "/bi/gis",
+      "label": "仪表盘"
+    },
+    {
+      "path": "/bi/dashboard",
+      "label": "数据分析"
+    },
+    {
+      "path": "/bi/analytics",
+      "label": "对比分析"
+    },
+    {
+      "path": "/bi/comparison",
+      "label": "报表中心"
+    },
+    {
+      "path": "/bi/reports",
+      "label": "数据源"
+    },
+    {
+      "path": "/bi/datasources",
+      "label": "可视化"
+    },
+    {
+      "path": "/bi/visualizations",
+      "label": "GIS分析"
+    },
+    {
+      "path": "/bi/gis",
+      "label": "权限管理"
+    },
+    {
+      "path": "/iam",
+      "label": "控制台"
+    },
+    {
+      "path": "/iam",
+      "label": "用户管理"
+    },
+    {
+      "path": "/iam/users",
+      "label": "角色管理"
+    },
+    {
+      "path": "/iam/roles",
+      "label": "权限管理"
+    },
+    {
+      "path": "/iam/permissions",
+      "label": "审计日志"
+    },
+    {
+      "path": "/iam/audit",
+      "label": "系统管理"
+    },
+    {
+      "path": "/iam/system",
+      "label": "数据字典"
+    },
+    {
+      "path": "/iam/dictionaries",
+      "label": "插件市场"
+    },
+    {
+      "path": "/iam/plugins",
+      "label": "系统监控"
+    },
+    {
+      "path": "/system/monitor",
+      "label": "控制台"
+    },
+    {
+      "path": "/iam",
+      "label": "用户管理"
+    },
+    {
+      "path": "/iam/users",
+      "label": "角色管理"
+    },
+    {
+      "path": "/iam/roles",
+      "label": "权限管理"
+    },
+    {
+      "path": "/iam/permissions",
+      "label": "审计日志"
+    },
+    {
+      "path": "/iam/audit",
+      "label": "系统管理"
+    },
+    {
+      "path": "/iam/system",
+      "label": "工作流"
+    },
+    {
+      "path": "/flow",
+      "label": "仪表盘"
+    },
+    {
+      "path": "/flow",
+      "label": "流程定义"
+    },
+    {
+      "path": "/flow/definitions",
+      "label": "流程设计"
+    },
+    {
+      "path": "/flow/designer",
+      "label": "流程实例"
+    },
+    {
+      "path": "/flow/instances",
+      "label": "审批中心"
+    },
+    {
+      "path": "/flow/approvals",
+      "label": "统计分析"
+    },
+    {
+      "path": "/flow/statistics",
+      "label": "版本历史"
+    },
+    {
+      "path": "/flow/history",
+      "label": "流程定义管理"
+    },
+    {
+      "path": "/flow/definition",
+      "label": "流程设计器"
+    },
+    {
+      "path": "/flow/flow-designer",
+      "label": "流程监控"
+    },
+    {
+      "path": "/flow/monitor",
+      "label": "流程设置"
+    },
+    {
+      "path": "/flow/settings",
+      "label": "流程模板"
+    },
+    {
+      "path": "/flow/templates",
+      "label": "仪表盘"
+    },
+    {
+      "path": "/flow",
+      "label": "流程定义"
+    },
+    {
+      "path": "/flow/definitions",
+      "label": "流程设计"
+    },
+    {
+      "path": "/flow/designer",
+      "label": "流程实例"
+    },
+    {
+      "path": "/flow/instances",
+      "label": "审批中心"
+    },
+    {
+      "path": "/flow/approvals",
+      "label": "统计分析"
+    },
+    {
+      "path": "/flow/statistics",
+      "label": "版本历史"
+    },
+    {
+      "path": "/flow/history",
+      "label": "流程定义管理"
+    },
+    {
+      "path": "/flow/definition",
+      "label": "流程设计器"
+    },
+    {
+      "path": "/flow/flow-designer",
+      "label": "流程监控"
+    },
+    {
+      "path": "/flow/monitor",
+      "label": "流程设置"
+    },
+    {
+      "path": "/flow/settings",
+      "label": "流程模板"
+    },
+    {
+      "path": "/flow/templates",
+      "label": "仓储管理"
+    },
+    {
+      "path": "/wms",
+      "label": "仪表盘"
+    },
+    {
+      "path": "/wms",
+      "label": "仓库管理"
+    },
+    {
+      "path": "/wms/warehouses",
+      "label": "库存管理"
+    },
+    {
+      "path": "/wms/inventory",
+      "label": "入库管理"
+    },
+    {
+      "path": "/wms/inbound-orders",
+      "label": "出库管理"
+    },
+    {
+      "path": "/wms/outbound-orders",
+      "label": "盘点管理"
+    },
+    {
+      "path": "/wms/stock-takes",
+      "label": "供应商管理"
+    },
+    {
+      "path": "/wms/suppliers",
+      "label": "仪表盘"
+    },
+    {
+      "path": "/wms",
+      "label": "仓库管理"
+    },
+    {
+      "path": "/wms/warehouses",
+      "label": "库存管理"
+    },
+    {
+      "path": "/wms/inventory",
+      "label": "入库管理"
+    },
+    {
+      "path": "/wms/inbound-orders",
+      "label": "出库管理"
+    },
+    {
+      "path": "/wms/outbound-orders",
+      "label": "盘点管理"
+    },
+    {
+      "path": "/wms/stock-takes",
+      "label": "供应商管理"
+    },
+    {
+      "path": "/wms/suppliers",
+      "label": "产品数据"
+    },
+    {
+      "path": "/pdm",
+      "label": "统计概览"
+    },
+    {
+      "path": "/pdm/stats",
+      "label": "配方管理"
+    },
+    {
+      "path": "/pdm/formula",
+      "label": "工艺流程"
+    },
+    {
+      "path": "/pdm/process",
+      "label": "批次管理"
+    },
+    {
+      "path": "/pdm/batch",
+      "label": "步骤管理"
+    },
+    {
+      "path": "/pdm/step",
+      "label": "BOM管理"
+    },
+    {
+      "path": "/pdm/bom",
+      "label": "版本管理"
+    },
+    {
+      "path": "/pdm/version",
+      "label": "产品配置"
+    },
+    {
+      "path": "/pdm/product-config",
+      "label": "统计概览"
+    },
+    {
+      "path": "/pdm/stats",
+      "label": "配方管理"
+    },
+    {
+      "path": "/pdm/formula",
+      "label": "工艺流程"
+    },
+    {
+      "path": "/pdm/process",
+      "label": "批次管理"
+    },
+    {
+      "path": "/pdm/batch",
+      "label": "步骤管理"
+    },
+    {
+      "path": "/pdm/step",
+      "label": "BOM管理"
+    },
+    {
+      "path": "/pdm/bom",
+      "label": "版本管理"
+    },
+    {
+      "path": "/pdm/version",
+      "label": "产品配置"
+    },
+    {
+      "path": "/pdm/product-config",
+      "label": "系统监控"
+    },
+    {
+      "path": "/monitor",
+      "label": "监控概览"
+    },
+    {
+      "path": "/monitor/dashboard",
+      "label": "性能指标"
+    },
+    {
+      "path": "/monitor/metrics",
+      "label": "告警中心"
+    },
+    {
+      "path": "/monitor/alerts",
+      "label": "监控概览"
+    },
+    {
+      "path": "/monitor/dashboard",
+      "label": "性能指标"
+    },
+    {
+      "path": "/monitor/metrics",
+      "label": "告警中心"
+    },
+    {
+      "path": "/monitor/alerts",
+      "label": "文档中心"
+    },
+    {
+      "path": "/documents",
+      "label": "文档首页"
+    },
+    {
+      "path": "/documents",
+      "label": "文档库"
+    },
+    {
+      "path": "/document-center",
+      "label": "知识库"
+    },
+    {
+      "path": "/knowledge-base",
+      "label": "模板管理"
+    },
+    {
+      "path": "/templates",
+      "label": "帮助中心"
+    },
+    {
+      "path": "/help",
+      "label": "文档首页"
+    },
+    {
+      "path": "/documents",
+      "label": "文档库"
+    },
+    {
+      "path": "/document-center",
+      "label": "知识库"
+    },
+    {
+      "path": "/knowledge-base",
+      "label": "模板管理"
+    },
+    {
+      "path": "/templates",
+      "label": "通知中心"
+    },
+    {
+      "path": "/notifications",
+      "label": "通知列表"
+    },
+    {
+      "path": "/notifications",
+      "label": "通知模板"
+    },
+    {
+      "path": "/notifications/templates",
+      "label": "归档管理"
+    },
+    {
+      "path": "/notifications/archive",
+      "label": "统计分析"
+    },
+    {
+      "path": "/notifications/stats",
+      "label": "通知列表"
+    },
+    {
+      "path": "/notifications",
+      "label": "通知模板"
+    },
+    {
+      "path": "/notifications/templates",
+      "label": "归档管理"
+    },
+    {
+      "path": "/notifications/archive",
+      "label": "统计分析"
+    },
+    {
+      "path": "/notifications/stats",
+      "label": "报表中心"
+    },
+    {
+      "path": "/report/list",
+      "label": "报表列表"
+    },
+    {
+      "path": "/report/list",
+      "label": "报表设计"
+    },
+    {
+      "path": "/report/design",
+      "label": "定时任务"
+    },
+    {
+      "path": "/report/schedules",
+      "label": "订阅管理"
+    },
+    {
+      "path": "/report/subscriptions",
+      "label": "报表模板"
+    },
+    {
+      "path": "/report/templates",
+      "label": "报表构建"
+    },
+    {
+      "path": "/report/builder",
+      "label": "报表查看"
+    },
+    {
+      "path": "/report/viewer",
+      "label": "报表列表"
+    },
+    {
+      "path": "/report/list",
+      "label": "报表设计"
+    },
+    {
+      "path": "/report/design",
+      "label": "定时任务"
+    },
+    {
+      "path": "/report/schedules",
+      "label": "订阅管理"
+    },
+    {
+      "path": "/report/subscriptions",
+      "label": "报表模板"
+    },
+    {
+      "path": "/report/templates",
+      "label": "报表构建"
+    },
+    {
+      "path": "/report/builder",
+      "label": "移动配置"
+    },
+    {
+      "path": "/mobile",
+      "label": "基础设置"
+    },
+    {
+      "path": "/mobile/settings",
+      "label": "离线同步"
+    },
+    {
+      "path": "/mobile/offline-sync",
+      "label": "扫码设置"
+    },
+    {
+      "path": "/mobile/scan",
+      "label": "推送设置"
+    },
+    {
+      "path": "/mobile/notifications",
+      "label": "基础设置"
+    },
+    {
+      "path": "/mobile/settings",
+      "label": "离线同步"
+    },
+    {
+      "path": "/mobile/offline-sync",
+      "label": "扫码设置"
+    },
+    {
+      "path": "/mobile/scan",
+      "label": "推送设置"
+    },
+    {
+      "path": "/mobile/notifications",
+      "label": "系统集成"
+    },
+    {
+      "path": "/integration",
+      "label": "集成概览"
+    },
+    {
+      "path": "/integration/dashboard",
+      "label": "LIMS-QMS"
+    },
+    {
+      "path": "/integration/lims-qms",
+      "label": "MES-ERP"
+    },
+    {
+      "path": "/integration/mes-erp",
+      "label": "WMS-SCM"
+    },
+    {
+      "path": "/integration/wms-scm",
+      "label": "事件中心"
+    },
+    {
+      "path": "/integration/events",
+      "label": "转换规则"
+    },
+    {
+      "path": "/integration/rules",
+      "label": "外部ERP"
+    },
+    {
+      "path": "/integration/external-erp",
+      "label": "集成概览"
+    },
+    {
+      "path": "/integration/dashboard",
+      "label": "LIMS-QMS"
+    },
+    {
+      "path": "/integration/lims-qms",
+      "label": "MES-ERP"
+    },
+    {
+      "path": "/integration/mes-erp",
+      "label": "事件中心"
+    },
+    {
+      "path": "/integration/events",
+      "label": "供应商管理"
+    },
+    {
+      "path": "/srm",
+      "label": "仪表盘"
+    },
+    {
+      "path": "/srm/dashboard",
+      "label": "供应商"
+    },
+    {
+      "path": "/srm/suppliers",
+      "label": "供应商详情"
+    },
+    {
+      "path": "/srm/suppliers/:id",
+      "label": "供应商评估"
+    },
+    {
+      "path": "/srm/evaluations",
+      "label": "绩效报表"
+    },
+    {
+      "path": "/srm/performance",
+      "label": "寻源管理"
+    },
+    {
+      "path": "/srm/sourcing",
+      "label": "采购订单"
+    },
+    {
+      "path": "/srm/orders",
+      "label": "合同管理"
+    },
+    {
+      "path": "/srm/contracts",
+      "label": "财务结算"
+    },
+    {
+      "path": "/srm/finance",
+      "label": "仪表盘"
+    },
+    {
+      "path": "/srm/dashboard",
+      "label": "供应商"
+    },
+    {
+      "path": "/srm/suppliers",
+      "label": "供应商评估"
+    },
+    {
+      "path": "/srm/evaluations",
+      "label": "绩效报表"
+    },
+    {
+      "path": "/srm/performance",
+      "label": "寻源管理"
+    },
+    {
+      "path": "/srm/sourcing",
+      "label": "采购订单"
+    },
+    {
+      "path": "/srm/orders",
+      "label": "合同管理"
+    },
+    {
+      "path": "/srm/contracts",
+      "label": "财务结算"
+    },
+    {
+      "path": "/srm/finance",
+      "label": "行政综合"
+    },
+    {
+      "path": "/administration",
+      "label": "行政概览"
+    },
+    {
+      "path": "/administration",
+      "label": "公告管理"
+    },
+    {
+      "path": "/announcements",
+      "label": "会议室管理"
+    },
+    {
+      "path": "/meeting-rooms",
+      "label": "车辆管理"
+    },
+    {
+      "path": "/vehicles",
+      "label": "办公用品"
+    },
+    {
+      "path": "/office-supplies",
+      "label": "行政概览"
+    },
+    {
+      "path": "/administration",
+      "label": "公告管理"
+    },
+    {
+      "path": "/announcements",
+      "label": "会议室管理"
+    },
+    {
+      "path": "/meeting-rooms",
+      "label": "车辆管理"
+    },
+    {
+      "path": "/vehicles",
+      "label": "办公用品"
+    },
+    {
+      "path": "/office-supplies",
+      "label": "实验室管理"
+    },
+    {
+      "path": "/lims",
+      "label": "样品管理"
+    },
+    {
+      "path": "/lims/samples",
+      "label": "样品详情"
+    },
+    {
+      "path": "/lims/sample/:id",
+      "label": "流程管理"
+    },
+    {
+      "path": "/lims/processes",
+      "label": "任务管理"
+    },
+    {
+      "path": "/lims/tasks",
+      "label": "任务详情"
+    },
+    {
+      "path": "/lims/task/:id",
+      "label": "仪器管理"
+    },
+    {
+      "path": "/lims/instruments",
+      "label": "仪器详情"
+    },
+    {
+      "path": "/lims/instrument/:id",
+      "label": "样品管理"
+    },
+    {
+      "path": "/lims/samples",
+      "label": "流程管理"
+    },
+    {
+      "path": "/lims/processes",
+      "label": "任务管理"
+    },
+    {
+      "path": "/lims/tasks",
+      "label": "仪器管理"
+    },
+    {
+      "path": "/lims/instruments",
+      "label": "质量管理"
+    },
+    {
+      "path": "/qms",
+      "label": "质量标准"
+    },
+    {
+      "path": "/qms/standards",
+      "label": "标准详情"
+    },
+    {
+      "path": "/qms/standard/:id",
+      "label": "检验管理"
+    },
+    {
+      "path": "/qms/checks",
+      "label": "不合格品"
+    },
+    {
+      "path": "/qms/issues",
+      "label": "持续改进"
+    },
+    {
+      "path": "/qms/improvements",
+      "label": "审核管理"
+    },
+    {
+      "path": "/qms/audit",
+      "label": "APQP策划"
+    },
+    {
+      "path": "/qms/apqp",
+      "label": "质量标准"
+    },
+    {
+      "path": "/qms/standards",
+      "label": "检验管理"
+    },
+    {
+      "path": "/qms/checks",
+      "label": "不合格品"
+    },
+    {
+      "path": "/qms/issues",
+      "label": "持续改进"
+    },
+    {
+      "path": "/qms/improvements",
+      "label": "审核管理"
+    },
+    {
+      "path": "/qms/audit",
+      "label": "APQP策划"
+    },
+    {
+      "path": "/qms/apqp",
+      "label": "环境健康"
+    },
+    {
+      "path": "/ehs",
+      "label": "危险源管理"
+    },
+    {
+      "path": "/ehs/hazards",
+      "label": "危险源详情"
+    },
+    {
+      "path": "/ehs/hazard/:id",
+      "label": "安全检查"
+    },
+    {
+      "path": "/ehs/checks",
+      "label": "应急演练"
+    },
+    {
+      "path": "/ehs/drills",
+      "label": "事故报告"
+    },
+    {
+      "path": "/ehs/incident",
+      "label": "事故记录"
+    },
+    {
+      "path": "/ehs/accidents",
+      "label": "应急预案"
+    },
+    {
+      "path": "/ehs/plan",
+      "label": "危险源管理"
+    },
+    {
+      "path": "/ehs/hazards",
+      "label": "安全检查"
+    },
+    {
+      "path": "/ehs/checks",
+      "label": "应急演练"
+    },
+    {
+      "path": "/ehs/drills",
+      "label": "事故报告"
+    },
+    {
+      "path": "/ehs/incident",
+      "label": "事故记录"
+    },
+    {
+      "path": "/ehs/accidents",
+      "label": "应急预案"
+    }
+  ],
+  "page_links": [
+    {
+      "page": "pm/PmProjectCreatePage.tsx",
+      "links": [
+        "/pm/projects"
+      ]
+    },
+    {
+      "page": "pm/PmTemplatePage.tsx",
+      "links": [
+        "/pm/projects",
+        "/pm/projects/create"
+      ]
+    },
+    {
+      "page": "pm/PmContractCreatePage.tsx",
+      "links": [
+        "/pm/contracts"
+      ]
+    },
+    {
+      "page": "pm/PmContractListPage.tsx",
+      "links": [
+        "/pm/contracts/create"
+      ]
+    },
+    {
+      "page": "pm/PmReportPage.tsx",
+      "links": [
+        "/pm/reports"
+      ]
+    },
+    {
+      "page": "pm/PmProjectListPage.tsx",
+      "links": [
+        "/pm/projects/create"
+      ]
+    },
+    {
+      "page": "pm/DashboardPage.tsx",
+      "links": [
+        "/pm/projects/create",
+        "/pm/reports"
+      ]
+    },
+    {
+      "page": "lims/LimsSampleDetailPage.tsx",
+      "links": [
+        "/lims"
+      ]
+    },
+    {
+      "page": "lims/LimsProcessPage.tsx",
+      "links": [
+        "/dashboard",
+        "/lims/tasks"
+      ]
+    },
+    {
+      "page": "lims/LimsSamplePage.tsx",
+      "links": [
+        "/dashboard"
+      ]
+    },
+    {
+      "page": "lims/LimsTaskPage.tsx",
+      "links": [
+        "/dashboard"
+      ]
+    },
+    {
+      "page": "lims/LimsInstrumentMaintenancePage.tsx",
+      "links": [
+        "/lims"
+      ]
+    },
+    {
+      "page": "lims/LimsTaskDetailPage.tsx",
+      "links": [
+        "/lims"
+      ]
+    },
+    {
+      "page": "lims/LimsInstrumentPage.tsx",
+      "links": [
+        "/dashboard"
+      ]
+    },
+    {
+      "page": "wms/SupplierDetailPage.tsx",
+      "links": [
+        "/scm/suppliers"
+      ]
+    },
+    {
+      "page": "wms/DashboardPage.tsx",
+      "links": [
+        "/wms/inventory",
+        "/wms/warehouses"
+      ]
+    },
+    {
+      "page": "asset/EquipmentInspectionPage.tsx",
+      "links": [
+        "/equipment"
+      ]
+    },
+    {
+      "page": "asset/VehicleManagementPage.tsx",
+      "links": [
+        "/dashboard"
+      ]
+    },
+    {
+      "page": "asset/EquipmentMaintenancePage.tsx",
+      "links": [
+        "/equipment"
+      ]
+    },
+    {
+      "page": "asset/OfficeSuppliesManagementPage.tsx",
+      "links": [
+        "/dashboard"
+      ]
+    },
+    {
+      "page": "asset/AssetManagementPage.tsx",
+      "links": [
+        "/dashboard"
+      ]
+    },
+    {
+      "page": "asset/EquipmentManagementPage.tsx",
+      "links": [
+        "/dashboard",
+        "/equipment/inspections",
+        "/equipment/maintenances"
+      ]
+    },
+    {
+      "page": "notification/NotificationCenter.tsx",
+      "links": [
+        "/notifications/archive",
+        "/notifications/stats",
+        "/notifications/templates"
+      ]
+    },
+    {
+      "page": "notification/NotificationTemplatesPage.tsx",
+      "links": [
+        "/notifications"
+      ]
+    },
+    {
+      "page": "notification/NotificationArchivePage.tsx",
+      "links": [
+        "/notifications"
+      ]
+    },
+    {
+      "page": "integration/IntegrationDashboardPage.tsx",
+      "links": [
+        "/integration/events",
+        "/integration/external-erp",
+        "/integration/lims-qms",
+        "/integration/mes-erp",
+        "/integration/rules",
+        "/integration/wms-scm"
+      ]
+    },
+    {
+      "page": "integration/ExternalErpMappingPage.tsx",
+      "links": [
+        "/integration"
+      ]
+    },
+    {
+      "page": "integration/IntegrationExternalErpOverviewPage.tsx",
+      "links": [
+        "/integration/external-erp"
+      ]
+    },
+    {
+      "page": "crm/OpportunityDetailPage.tsx",
+      "links": [
+        "/crm/opportunities"
+      ]
+    },
+    {
+      "page": "crm/CRMBillingPage.tsx",
+      "links": [
+        "/crm"
+      ]
+    },
+    {
+      "page": "crm/ContactDetailPage.tsx",
+      "links": [
+        "/crm/contacts"
+      ]
+    },
+    {
+      "page": "crm/CustomerCreatePage.tsx",
+      "links": [
+        "/crm/customers"
+      ]
+    },
+    {
+      "page": "crm/CustomerEditPage.tsx",
+      "links": [
+        "/crm/customers"
+      ]
+    },
+    {
+      "page": "admin/SystemManagementPage.tsx",
+      "links": [
+        "/dashboard",
+        "/iam/audit",
+        "/iam/database",
+        "/iam/debug",
+        "/iam/dictionaries",
+        "/iam/permissions",
+        "/iam/roles",
+        "/iam/users"
+      ]
+    },
+    {
+      "page": "admin/PermissionManagementPage.tsx",
+      "links": [
+        "/dashboard"
+      ]
+    },
+    {
+      "page": "admin/DictionaryManagementPage.tsx",
+      "links": [
+        "/dashboard"
+      ]
+    },
+    {
+      "page": "admin/PerformanceMonitorPage.tsx",
+      "links": [
+        "/dashboard"
+      ]
+    },
+    {
+      "page": "admin/DatabaseStructurePage.tsx",
+      "links": [
+        "/dashboard"
+      ]
+    },
+    {
+      "page": "mes/EquipmentDetailPage.tsx",
+      "links": [
+        "/equipment"
+      ]
+    },
+    {
+      "page": "shared/LoginPage.tsx",
+      "links": [
+        "/forgot-password"
+      ]
+    },
+    {
+      "page": "shared/ForgotPasswordPage.tsx",
+      "links": [
+        "/login"
+      ]
+    },
+    {
+      "page": "shared/ProfilePage.tsx",
+      "links": [
+        "/ai",
+        "/dashboard",
+        "/documents",
+        "/flow/definitions",
+        "/im",
+        "/login",
+        "/notifications"
+      ]
+    },
+    {
+      "page": "shared/ProjectDashboardPage.tsx",
+      "links": [
+        "/rs"
+      ]
+    },
+    {
+      "page": "shared/AIPage.tsx",
+      "links": [
+        "/dashboard"
+      ]
+    },
+    {
+      "page": "shared/DashboardPage.tsx",
+      "links": [
+        "/addressbook",
+        "/administration",
+        "/ai",
+        "/assets",
+        "/bi/dashboard",
+        "/budget",
+        "/document-center",
+        "/documents",
+        "/ehs",
+        "/finance",
+        "/flow/definitions",
+        "/gis",
+        "/help",
+        "/hrm/companies",
+        "/hrm/contracts",
+        "/hrm/departments",
+        "/hrm/employees",
+        "/hrm/payroll",
+        "/iam/system",
+        "/im",
+        "/integration",
+        "/lims",
+        "/login",
+        "/mail",
+        "/mobile-workstation",
+        "/pdm",
+        "/pm/projects",
+        "/qms",
+        "/report/list",
+        "/rs",
+        "/srm",
+        "/templates"
+      ]
+    },
+    {
+      "page": "rs/RsProjectCreatePage.tsx",
+      "links": [
+        "/rs/projects"
+      ]
+    },
+    {
+      "page": "rs/RsFormulaListPage.tsx",
+      "links": [
+        "/rs/formulas/create"
+      ]
+    },
+    {
+      "page": "rs/RsProjectListPage.tsx",
+      "links": [
+        "/rs/projects/create"
+      ]
+    },
+    {
+      "page": "rs/RsExperimentCreatePage.tsx",
+      "links": [
+        "/rs/experiments"
+      ]
+    },
+    {
+      "page": "rs/DashboardPage.tsx",
+      "links": [
+        "/rs/deploy",
+        "/rs/projects/create",
+        "/rs/tests"
+      ]
+    },
+    {
+      "page": "rs/RsFormulaCreatePage.tsx",
+      "links": [
+        "/rs/formulas"
+      ]
+    },
+    {
+      "page": "rs/RsExperimentListPage.tsx",
+      "links": [
+        "/rs/experiments/create"
+      ]
+    },
+    {
+      "page": "docs/DocsFileDetailPage.tsx",
+      "links": [
+        "/documents"
+      ]
+    },
+    {
+      "page": "docs/DocumentsPage.tsx",
+      "links": [
+        "/dashboard"
+      ]
+    },
+    {
+      "page": "docs/DocsDashboardPage.tsx",
+      "links": [
+        "/document-center",
+        "/documents",
+        "/documents/upload",
+        "/knowledge-base",
+        "/templates"
+      ]
+    },
+    {
+      "page": "ehs/EhsIncidentReportPage.tsx",
+      "links": [
+        "/ehs"
+      ]
+    },
+    {
+      "page": "iam/DashboardPage.tsx",
+      "links": [
+        "/iam/audit",
+        "/iam/permissions",
+        "/iam/roles",
+        "/iam/users"
+      ]
+    },
+    {
+      "page": "hrm/HrmContractPage.tsx",
+      "links": [
+        "/hrm"
+      ]
+    },
+    {
+      "page": "hrm/HrmLeavePage.tsx",
+      "links": [
+        "/hrm"
+      ]
+    },
+    {
+      "page": "hrm/HrmRecruitmentPage.tsx",
+      "links": [
+        "/dashboard",
+        "/hrm"
+      ]
+    },
+    {
+      "page": "hrm/HrmEmployeePage.tsx",
+      "links": [
+        "/hrm"
+      ]
+    },
+    {
+      "page": "hrm/HrmEmployeeCreatePage.tsx",
+      "links": [
+        "/hrm/employees"
+      ]
+    },
+    {
+      "page": "hrm/DashboardPage.tsx",
+      "links": [
+        "/hrm/employee/create",
+        "/hrm/performance",
+        "/hrm/recruitment",
+        "/hrm/training"
+      ]
+    },
+    {
+      "page": "hrm/HrmEmployeeEditPage.tsx",
+      "links": [
+        "/hrm/employees"
+      ]
+    },
+    {
+      "page": "mobile/MobileScanPage.tsx",
+      "links": [
+        "/mobile/approvals",
+        "/mobile/home",
+        "/mobile/scan",
+        "/mobile/settings",
+        "/mobile/tasks"
+      ]
+    },
+    {
+      "page": "mobile/MobileApprovalPage.tsx",
+      "links": [
+        "/mobile/home",
+        "/mobile/scan-page",
+        "/mobile/settings",
+        "/mobile/tasks"
+      ]
+    },
+    {
+      "page": "mobile/MobileTaskListPage.tsx",
+      "links": [
+        "/mobile/approvals",
+        "/mobile/home",
+        "/mobile/scan-page",
+        "/mobile/settings"
+      ]
+    },
+    {
+      "page": "mobile/MobileHomePage.tsx",
+      "links": [
+        "/dashboard",
+        "/hrm/employees",
+        "/mobile/approvals",
+        "/mobile/scan-page",
+        "/mobile/settings",
+        "/mobile/tasks",
+        "/notifications",
+        "/wms/inbound-orders",
+        "/wms/inventory",
+        "/wms/outbound-orders"
+      ]
+    },
+    {
+      "page": "mobile/MobileProfilePage.tsx",
+      "links": [
+        "/help",
+        "/login",
+        "/mobile/approvals",
+        "/mobile/home",
+        "/mobile/notifications",
+        "/mobile/offline-sync",
+        "/mobile/scan",
+        "/mobile/scan-page",
+        "/mobile/settings",
+        "/mobile/settings-app",
+        "/mobile/tasks"
+      ]
+    },
+    {
+      "page": "ai/DashboardPage.tsx",
+      "links": [
+        "/ai/chat"
+      ]
+    },
+    {
+      "page": "workflow/DashboardPage.tsx",
+      "links": [
+        "/flow/approvals",
+        "/flow/designer",
+        "/flow/instances",
+        "/flow/statistics"
+      ]
+    },
+    {
+      "page": "qms/QmsApqpPage.tsx",
+      "links": [
+        "/qms"
+      ]
+    },
+    {
+      "page": "qms/QmsStandardDetailPage.tsx",
+      "links": [
+        "/qms",
+        "/qms/standards"
+      ]
+    },
+    {
+      "page": "bi/Gispage.tsx",
+      "links": [
+        "/dashboard"
+      ]
+    },
+    {
+      "page": "bi/BIAnalyticsPage.tsx",
+      "links": [
+        "/bi/module/development",
+        "/bi/module/ehs",
+        "/bi/module/laboratory"
+      ]
+    },
+    {
+      "page": "bi/BIComparisonPage.tsx",
+      "links": [
+        "/bi/dashboard"
+      ]
+    },
+    {
+      "page": "report/ReportPage.tsx",
+      "links": [
+        "/dashboard"
+      ]
+    },
+    {
+      "page": "finance/VoucherCreatePage.tsx",
+      "links": [
+        "/finance/vouchers"
+      ]
+    },
+    {
+      "page": "finance/BudgetManagementPage.tsx",
+      "links": [
+        "/dashboard"
+      ]
+    },
+    {
+      "page": "finance/FinanceInvoicePage.tsx",
+      "links": [
+        "/dashboard"
+      ]
+    },
+    {
+      "page": "finance/FinanceCostPage.tsx",
+      "links": [
+        "/dashboard"
+      ]
+    },
+    {
+      "page": "finance/VoucherDetailPage.tsx",
+      "links": [
+        "/finance/vouchers"
+      ]
+    },
+    {
+      "page": "finance/FinanceLedgerPage.tsx",
+      "links": [
+        "/dashboard"
+      ]
+    },
+    {
+      "page": "finance/FinanceReceiptPage.tsx",
+      "links": [
+        "/dashboard"
+      ]
+    },
+    {
+      "page": "finance/FinanceAssetPage.tsx",
+      "links": [
+        "/dashboard"
+      ]
+    },
+    {
+      "page": "finance/FinancePaymentPage.tsx",
+      "links": [
+        "/dashboard"
+      ]
+    },
+    {
+      "page": "finance/FinanceVoucherPage.tsx",
+      "links": [
+        "/dashboard"
+      ]
+    },
+    {
+      "page": "im/MailPage.tsx",
+      "links": [
+        "/dashboard"
+      ]
+    },
+    {
+      "page": "oa/AdministrationDashboardPage.tsx",
+      "links": [
+        "/oa/announcement",
+        "/oa/attendance",
+        "/oa/certificate",
+        "/oa/expense",
+        "/oa/leave",
+        "/oa/meeting",
+        "/oa/supplies",
+        "/oa/vehicle"
+      ]
+    },
+    {
+      "page": "scm/DashboardPage.tsx",
+      "links": [
+        "/scm/suppliers/create"
+      ]
+    },
+    {
+      "page": "erp/VoucherManagementPage.tsx",
+      "links": [
+        "/erp/dashboard"
+      ]
+    },
+    {
+      "page": "erp/DatabaseManagementPage.tsx",
+      "links": [
+        "/erp/dashboard"
+      ]
+    },
+    {
+      "page": "erp/AuditLogPage.tsx",
+      "links": [
+        "/erp/dashboard"
+      ]
+    },
+    {
+      "page": "erp/DictManagementPage.tsx",
+      "links": [
+        "/erp/dashboard"
+      ]
+    },
+    {
+      "page": "gis/DashboardPage.tsx",
+      "links": [
+        "/gis/map"
+      ]
+    },
+    {
+      "page": "srm/SrmSupplierPage.tsx",
+      "links": [
+        "/srm/performance"
+      ]
+    }
+  ],
+  "multi_content_issues": [
+    {
+      "page": "bi/BIModuleDetailPage.tsx",
+      "pageContainerCount": 2,
+      "issue": "包含多个 PageContainer，可能需要拆分"
+    },
+    {
+      "page": "bi/BIVisualizationPage.tsx",
+      "pageContainerCount": 2,
+      "issue": "包含多个 PageContainer，可能需要拆分"
+    },
+    {
+      "page": "srm/SrmFinancePage.tsx",
+      "pageContainerCount": 2,
+      "issue": "包含多个 PageContainer，可能需要拆分"
+    }
+  ],
+  "api_modules": [
+    "addressbook",
+    "ai",
+    "bi",
+    "bi",
+    "consolidation",
+    "consolidation-contract",
+    "crm",
+    "crm",
+    "crm-finance",
+    "doc",
+    "ehs",
+    "email",
+    "erp",
+    "erp",
+    "external-erp",
+    "file",
+    "finance",
+    "finance",
+    "financial-report",
+    "gis",
+    "gis",
+    "hrm",
+    "hrm",
+    "iam",
+    "iam",
+    "im",
+    "integration",
+    "integration",
+    "lims",
+    "mail",
+    "mes",
+    "migration",
+    "mobile",
+    "monitor",
+    "notification",
+    "pdm",
+    "permission-interceptor",
+    "plugin",
+    "plugin",
+    "pm",
+    "pm",
+    "qms",
+    "qms",
+    "report",
+    "rs",
+    "rs",
+    "scm",
+    "scm",
+    "srm",
+    "system",
+    "template",
+    "voucher-template",
+    "wms",
+    "wms",
+    "workflow",
+    "workflow"
+  ],
+  "nav_without_route": [
+    "/srm/sourcing"
+  ],
+  "route_without_nav": [
+    "/",
+    "/addressbook",
+    "/admin/plugins",
+    "/assets",
+    "/bi/module/:moduleId",
+    "/budget",
+    "/common/documents",
+    "/crm/billing",
+    "/crm/contacts",
+    "/crm/contacts/:id",
+    "/crm/customers/:id",
+    "/crm/customers/:id/edit",
+    "/crm/customers/create",
+    "/crm/dashboard",
+    "/crm/forecast",
+    "/crm/interactions",
+    "/crm/opportunities/:id",
+    "/crm/scoring",
+    "/dashboard",
+    "/documents/:id",
+    "/equipment",
+    "/equipment/:id",
+    "/equipment/inspections",
+    "/equipment/maintenances",
+    "/erp/customer",
+    "/erp/purchase/order",
+    "/erp/purchase/receipt",
+    "/erp/sales/delivery",
+    "/expense-claims",
+    "/finance/budget-management",
+    "/finance/budget/:id",
+    "/finance/consolidation-reports",
+    "/finance/financial-reports",
+    "/finance/opening-balance",
+    "/finance/payments",
+    "/finance/receipts",
+    "/finance/voucher-templates",
+    "/finance/voucher/:id",
+    "/finance/voucher/create",
+    "/flow/approval/:id",
+    "/flow/instance/:id",
+    "/flow/notifications",
+    "/forgot-password",
+    "/gis/fence",
+    "/gis/tracking",
+    "/hrm/contract/:id",
+    "/hrm/employee/:id",
+    "/hrm/employee/:id/edit",
+    "/hrm/employee/create",
+    "/iam/accounts",
+    "/iam/bank-accounts",
+    "/iam/database",
+    "/iam/debug",
+    "/iam/migration",
+    "/integration/external-erp-overview",
+    "/integration/external-erp/:connectionId/mappings",
+    "/lims/instrument-data",
+    "/login",
+    "/meeting-room",
+    "/mobile-workstation",
+    "/mobile/approvals",
+    "/mobile/home",
+    "/mobile/scan-page",
+    "/mobile/settings-app",
+    "/mobile/tasks",
+    "/modules",
+    "/notifications/:id",
+    "/performance",
+    "/plugin/marketplace",
+    "/pm/contracts/:id",
+    "/pm/contracts/create",
+    "/pm/dashboard",
+    "/pm/projects/:id",
+    "/pm/projects/:id/edit",
+    "/pm/projects/create",
+    "/pm/reports/:projectId",
+    "/pm/templates",
+    "/profile",
+    "/rs/experiments",
+    "/rs/experiments/:id",
+    "/rs/experiments/:id/edit",
+    "/rs/experiments/create",
+    "/rs/formulas",
+    "/rs/formulas/:id",
+    "/rs/formulas/:id/edit",
+    "/rs/formulas/create",
+    "/rs/materials",
+    "/rs/projects/:id",
+    "/rs/projects/:id/edit",
+    "/rs/projects/create",
+    "/rs/reports",
+    "/scm/evaluations",
+    "/scm/purchase-items",
+    "/scm/suppliers/:id",
+    "/system/company-structure",
+    "/system/config-debug",
+    "/system/database",
+    "/system/management",
+    "/system/settings"
+  ]
+}

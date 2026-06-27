@@ -12,8 +12,7 @@ import {
   RefreshCw,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, Chip } from '@mui/material';
-import { Button } from '@mui/material';
+import { Box, Typography, Chip, Button } from '@mui/material';
 import type {
   NotificationTemplate,
   CreateTemplateRequest,
@@ -439,7 +438,10 @@ const NotificationTemplatesPage: React.FC = () => {
   }, []);
 
   return (
-    <PageContainer title='通知模板管理' subtitle='管理系统通知模板'>
+    <PageContainer
+      title='通知模板管理'
+      subtitle='管理系统通知模板'
+    >
       <ListPageTemplate
         title=''
         subtitle=''
@@ -460,7 +462,7 @@ const NotificationTemplatesPage: React.FC = () => {
         pagination={{
           page: page - 1,
           pageSize: 20,
-          total: total,
+          total,
           onPageChange: (p) => setPage(p + 1),
         }}
         rowActions={rowActions}

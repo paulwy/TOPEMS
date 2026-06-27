@@ -11,9 +11,9 @@ import {
   DialogActions,
   Stack,
   Paper,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
-import { FileUpload } from '@/components/common';
+import { FileUpload, PageContainer } from '@/components/common';
 import {
   Plus,
   Upload,
@@ -27,7 +27,6 @@ import {
   Folder,
 } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
-import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
 import { useAppStore } from '@/store';
 import type { RsStatistics } from '@/api/rs';
@@ -76,14 +75,14 @@ const RsDocPage: React.FC = () => {
       if (response.success && response.data) {
         const stats = response.data;
         setStatistics(stats);
-        
+
         const docTypes = [
           { type: '设计文档', count: stats.total_projects || 0 },
           { type: '接口文档', count: stats.total_experiments || 0 },
           { type: '用户文档', count: stats.total_formulas || 0 },
           { type: '测试文档', count: stats.total_tasks || 0 },
         ];
-        
+
         const newDocs: Document[] = docTypes.flatMap((dt, index) => {
           return Array.from({ length: Math.min(dt.count, 3) }, (_, i) => ({
             id: `${index}-${i}`,
@@ -95,7 +94,7 @@ const RsDocPage: React.FC = () => {
             status: i % 2 === 0 ? 'published' : 'draft',
           }));
         });
-        
+
         setDocs(newDocs);
         setTotal(newDocs.length);
       }

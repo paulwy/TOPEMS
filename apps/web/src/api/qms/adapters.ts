@@ -224,7 +224,9 @@ export const adaptSpcDataPointToFrontend = (backend: SpcDataPointBackend): SpcDa
   createdAt: backend.created_at,
 });
 
-export const adaptControlLimitsToFrontend = (backend: ControlLimitsResultBackend): ControlLimitsResult => ({
+export const adaptControlLimitsToFrontend = (
+  backend: ControlLimitsResultBackend
+): ControlLimitsResult => ({
   ucl: backend.ucl,
   lcl: backend.lcl,
   cl: backend.cl,
@@ -458,7 +460,9 @@ export const adaptFmeaStatisticsToFrontend = (backend: FmeaStatisticsBackend): F
 });
 
 // Quality Dashboard adapters
-export const adaptQualityOverviewToFrontend = (backend: QualityOverviewBackend): QualityOverview => ({
+export const adaptQualityOverviewToFrontend = (
+  backend: QualityOverviewBackend
+): QualityOverview => ({
   totalStandards: backend.total_standards,
   totalInspections: backend.total_inspections,
   totalIssues: backend.total_issues,
@@ -473,22 +477,25 @@ export const adaptQualityOverviewToFrontend = (backend: QualityOverviewBackend):
   fmeaCount: backend.fmea_count,
   eightdCount: backend.eightd_count,
   auditPlanCount: backend.audit_plan_count,
-  trendData: backend.trend_data?.map(item => ({
-    date: item.date,
-    passRate: item.pass_rate,
-    defectCount: item.defect_count,
-    issueCount: item.issue_count,
-  })) || [],
-  topIssues: backend.top_issues?.map(item => ({
-    category: item.category,
-    count: item.count,
-    percentage: item.percentage,
-  })) || [],
-  departmentPerformance: backend.department_performance?.map(item => ({
-    department: item.department,
-    passRate: item.pass_rate,
-    issueCount: item.issue_count,
-  })) || [],
+  trendData:
+    backend.trend_data?.map((item) => ({
+      date: item.date,
+      passRate: item.pass_rate,
+      defectCount: item.defect_count,
+      issueCount: item.issue_count,
+    })) || [],
+  topIssues:
+    backend.top_issues?.map((item) => ({
+      category: item.category,
+      count: item.count,
+      percentage: item.percentage,
+    })) || [],
+  departmentPerformance:
+    backend.department_performance?.map((item) => ({
+      department: item.department,
+      passRate: item.pass_rate,
+      issueCount: item.issue_count,
+    })) || [],
 });
 
 // Data Sync adapters

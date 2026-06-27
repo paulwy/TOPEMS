@@ -1,4 +1,5 @@
 import React from 'react';
+import { Navigate } from 'react-router-dom';
 import type { RouteConfig } from './utils';
 import { lazyWithRetry } from './utils';
 
@@ -11,29 +12,32 @@ const MonitorAlertsPage = lazy(() => import('../pages/monitor/MonitorAlertsPage'
 export const monitorRoutes: RouteConfig[] = [
   {
     path: '/monitor',
-    element: MonitorDashboardPage,
-    requiredPermissions: [],
+    element: React.createElement(Navigate, {
+      to: '/monitor/dashboard',
+      replace: true,
+    }),
+    requiredPermissions: ['monitor:read'],
     module: 'monitor',
     action: 'read',
   },
   {
     path: '/monitor/dashboard',
     element: MonitorDashboardPage,
-    requiredPermissions: [],
+    requiredPermissions: ['monitor:read'],
     module: 'monitor',
     action: 'read',
   },
   {
     path: '/monitor/metrics',
     element: MonitorMetricsPage,
-    requiredPermissions: [],
+    requiredPermissions: ['monitor:read'],
     module: 'monitor',
     action: 'read',
   },
   {
     path: '/monitor/alerts',
     element: MonitorAlertsPage,
-    requiredPermissions: [],
+    requiredPermissions: ['monitor:read'],
     module: 'monitor',
     action: 'read',
   },

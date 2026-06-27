@@ -23,7 +23,7 @@ export const productionRecordApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(`/api/mes/records${queryString ? '?' + queryString : ''}`);
+    return apiClient.mes.get(`/api/mes/records${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<ProductionRecord>> {

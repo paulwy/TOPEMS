@@ -27,8 +27,8 @@ import {
   TableCell,
   Chip,
   Alert,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { Grid } from '@/components';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -297,106 +297,123 @@ const BIModuleDetailPage = () => {
     color: 'grey.500',
   };
 
-  const loadModuleData = useCallback(async (showRefreshing = false) => {
-    if (showRefreshing) setIsRefreshing(true);
-    else setLoading(true);
-    setError(null);
+  const loadModuleData = useCallback(
+    async (showRefreshing = false) => {
+      if (showRefreshing) setIsRefreshing(true);
+      else setLoading(true);
+      setError(null);
 
-    const modId = moduleId || 'rs';
-    const fallback = getFallbackData(modId);
-
-    try {
-      const apiConfig = moduleApiMap[modId];
-      if (!apiConfig) {
-        setModuleData(fallback);
-        return;
-      }
-
-      let summaryData: any = null;
-      let timelineData: any[] = fallback.timeline;
-      let distributionData: any[] = fallback.distribution;
+      const modId = moduleId || 'rs';
+      const fallback = getFallbackData(modId);
 
       try {
-        const summaryRes = await apiConfig.summary();
-        if (summaryRes.success && summaryRes.data) {
-          summaryData = summaryRes.data;
+        const apiConfig = moduleApiMap[modId];
+        if (!apiConfig) {
+          setModuleData(fallback);
+          return;
         }
-      } catch (e) {
-        logger.error(`Failed to load ${modId} summary:`, e);
-      }
 
-      if (apiConfig.timeline) {
+        let summaryData: any = null;
+        let timelineData: any[] = fallback.timeline;
+        let distributionData: any[] = fallback.distribution;
+
         try {
-          const timelineRes = await apiConfig.timeline();
-          if (timelineRes.success && timelineRes.data) {
-            const timelineItems = timelineRes.data.items || timelineRes.data || [];
-            if (Array.isArray(timelineItems) && timelineItems.length > 0) {
-              timelineData = timelineItems.map((item: any, index: number) => ({
-                month: item.month || item.date || `${index + 1}月`,
-                count: item.count || item.value || 0,
-              }));
-            }
+          const summaryRes = await apiConfig.summary();
+          if (summaryRes.success && summaryRes.data) {
+            summaryData = summaryRes.data;
           }
         } catch (e) {
-          logger.error(`Failed to load ${modId} timeline:`, e);
+          logger.error(`Failed to load ${modId} summary:`, e);
         }
-      }
 
-      const summary = summaryData || fallback.summary;
+        if (apiConfig.timeline) {
+          try {
+            const timelineRes = await apiConfig.timeline();
+            if (timelineRes.success && timelineRes.data) {
+              const timelineItems = timelineRes.data.items || timelineRes.data || [];
+              if (Array.isArray(timelineItems) && timelineItems.length > 0) {
+                timelineData = timelineItems.map((item: any, index: number) => ({
+                  month: item.month || item.date || `${index + 1}月`,
+                  count: item.count || item.value || 0,
+                }));
+              }
+            }
+          } catch (e) {
+            logger.error(`Failed to load ${modId} timeline:`, e);
+          }
+        }
 
-      if (modId === 'rs' && summaryData?.project_type_distribution) {
-        distributionData = Object.entries(summaryData.project_type_distribution).map(
-          ([key, value]) => ({
-            name: key === 'research' ? '研发' : key === 'development' ? '开发' : key === 'improvement' ? '改进' : key,
-            value: value as number,
-          })
-        );
-      } else if (modId === 'lims' && summaryData?.test_type_distribution) {
-        distributionData = Object.entries(summaryData.test_type_distribution).map(
-          ([key, value]) => ({
+        const summary = summaryData || fallback.summary;
+
+        if (modId === 'rs' && summaryData?.project_type_distribution) {
+          distributionData = Object.entries(summaryData.project_type_distribution).map(
+            ([key, value]) => ({
+              name:
+                key === 'research'
+                  ? '研发'
+                  : key === 'development'
+                    ? '开发'
+                    : key === 'improvement'
+                      ? '改进'
+                      : key,
+              value: value as number,
+            })
+          );
+        } else if (modId === 'lims' && summaryData?.test_type_distribution) {
+          distributionData = Object.entries(summaryData.test_type_distribution).map(
+            ([key, value]) => ({
+              name:
+                key === 'chemical'
+                  ? '化学检验'
+                  : key === 'physical'
+                    ? '物理检验'
+                    : key === 'microbiological'
+                      ? '微生物检验'
+                      : '其他',
+              value: value as number,
+            })
+          );
+        } else if (modId === 'qms' && summaryData?.defect_types) {
+          distributionData = Object.entries(summaryData.defect_types).map(([key, value]) => ({
             name:
-              key === 'chemical'
-                ? '化学检验'
-                : key === 'physical'
-                  ? '物理检验'
-                  : key === 'microbiological'
-                    ? '微生物检验'
+              key === 'material'
+                ? '材料'
+                : key === 'process'
+                  ? '工艺'
+                  : key === 'equipment'
+                    ? '设备'
                     : '其他',
             value: value as number,
-          })
-        );
-      } else if (modId === 'qms' && summaryData?.defect_types) {
-        distributionData = Object.entries(summaryData.defect_types).map(([key, value]) => ({
-          name: key === 'material' ? '材料' : key === 'process' ? '工艺' : key === 'equipment' ? '设备' : '其他',
-          value: value as number,
-        }));
-      } else if (modId === 'ehs' && summaryData?.risk_distribution) {
-        distributionData = Object.entries(summaryData.risk_distribution).map(([key, value]) => ({
-          name: key === 'high' ? '高风险' : key === 'medium' ? '中风险' : '低风险',
-          value: value as number,
-        }));
-      } else if (modId === 'pdm' && summaryData?.product_line_usage) {
-        distributionData = Object.entries(summaryData.product_line_usage).map(([key, value]) => ({
-          name: key,
-          value: value as number,
-        }));
-      }
+          }));
+        } else if (modId === 'ehs' && summaryData?.risk_distribution) {
+          distributionData = Object.entries(summaryData.risk_distribution).map(([key, value]) => ({
+            name: key === 'high' ? '高风险' : key === 'medium' ? '中风险' : '低风险',
+            value: value as number,
+          }));
+        } else if (modId === 'pdm' && summaryData?.product_line_usage) {
+          distributionData = Object.entries(summaryData.product_line_usage).map(([key, value]) => ({
+            name: key,
+            value: value as number,
+          }));
+        }
 
-      setModuleData({
-        summary,
-        timeline: timelineData,
-        distribution: distributionData,
-        detailTable: [],
-      });
-    } catch (error: unknown) {
-      logger.error('Failed to load module data:', error);
-      setError('加载模块数据失败，请稍后重试');
-      setModuleData(fallback);
-    } finally {
-      setLoading(false);
-      setIsRefreshing(false);
-    }
-  }, [moduleId]);
+        setModuleData({
+          summary,
+          timeline: timelineData,
+          distribution: distributionData,
+          detailTable: [],
+        });
+      } catch (error: unknown) {
+        logger.error('Failed to load module data:', error);
+        setError('加载模块数据失败，请稍后重试');
+        setModuleData(fallback);
+      } finally {
+        setLoading(false);
+        setIsRefreshing(false);
+      }
+    },
+    [moduleId]
+  );
 
   useEffect(() => {
     loadModuleData();
@@ -584,97 +601,100 @@ const BIModuleDetailPage = () => {
           </Box>
         }
       >
-      {error && (
-        <Alert severity="warning" sx={{ mb: 3 }}>
-          {error}
-        </Alert>
-      )}
+        {error && (
+          <Alert
+            severity='warning'
+            sx={{ mb: 3 }}
+          >
+            {error}
+          </Alert>
+        )}
 
-      {/* 数据明细表 */}
-      <Card>
-        <CardHeader
-          title='数据明细表'
-          subheader='详细业务数据'
-          avatar={<TableIcon size={20} />}
-        />
-        <CardContent>
-          <Box sx={{ overflow: 'auto' }}>
-            <Table size='small'>
-              <TableHead>
-                <TableRow>
-                  {moduleId === 'rs' && (
-                    <>
-                      <TableCell sx={{ fontWeight: 600 }}>项目编号</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>项目名称</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>进度</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>负责人</TableCell>
-                    </>
-                  )}
-                  {moduleId === 'lims' && (
-                    <>
-                      <TableCell sx={{ fontWeight: 600 }}>样品编号</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>样品名称</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>检验类型</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>结果</TableCell>
-                    </>
-                  )}
-                  {moduleId === 'qms' && (
-                    <>
-                      <TableCell sx={{ fontWeight: 600 }}>检验单号</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>检验项目</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>批次</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>质量等级</TableCell>
-                    </>
-                  )}
-                  {moduleId === 'ehs' && (
-                    <>
-                      <TableCell sx={{ fontWeight: 600 }}>风险编号</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>风险描述</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>风险等级</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>处理状态</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>日期</TableCell>
-                    </>
-                  )}
-                  {moduleId === 'srm' && (
-                    <>
-                      <TableCell sx={{ fontWeight: 600 }}>供应商编号</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>供应商名称</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>类型</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>评分</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                    </>
-                  )}
-                  {moduleId === 'pdm' && (
-                    <>
-                      <TableCell sx={{ fontWeight: 600 }}>批次编号</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>产品</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>产量</TableCell>
-                    </>
-                  )}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {moduleData?.detailTable.map((row, index) => (
-                  <TableRow
-                    key={index}
-                    hover
-                  >
-                    {Object.values(row).map((cell, cellIndex) => (
-                      <TableCell key={cellIndex}>
-                        {typeof cell === 'number' ? cell.toLocaleString() : cell}
-                      </TableCell>
-                    ))}
+        {/* 数据明细表 */}
+        <Card>
+          <CardHeader
+            title='数据明细表'
+            subheader='详细业务数据'
+            avatar={<TableIcon size={20} />}
+          />
+          <CardContent>
+            <Box sx={{ overflow: 'auto' }}>
+              <Table size='small'>
+                <TableHead>
+                  <TableRow>
+                    {moduleId === 'rs' && (
+                      <>
+                        <TableCell sx={{ fontWeight: 600 }}>项目编号</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>项目名称</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>进度</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>负责人</TableCell>
+                      </>
+                    )}
+                    {moduleId === 'lims' && (
+                      <>
+                        <TableCell sx={{ fontWeight: 600 }}>样品编号</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>样品名称</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>检验类型</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>结果</TableCell>
+                      </>
+                    )}
+                    {moduleId === 'qms' && (
+                      <>
+                        <TableCell sx={{ fontWeight: 600 }}>检验单号</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>检验项目</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>批次</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>质量等级</TableCell>
+                      </>
+                    )}
+                    {moduleId === 'ehs' && (
+                      <>
+                        <TableCell sx={{ fontWeight: 600 }}>风险编号</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>风险描述</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>风险等级</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>处理状态</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>日期</TableCell>
+                      </>
+                    )}
+                    {moduleId === 'srm' && (
+                      <>
+                        <TableCell sx={{ fontWeight: 600 }}>供应商编号</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>供应商名称</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>类型</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>评分</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
+                      </>
+                    )}
+                    {moduleId === 'pdm' && (
+                      <>
+                        <TableCell sx={{ fontWeight: 600 }}>批次编号</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>产品</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>状态</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>产量</TableCell>
+                      </>
+                    )}
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Box>
-        </CardContent>
-      </Card>
+                </TableHead>
+                <TableBody>
+                  {moduleData?.detailTable.map((row, index) => (
+                    <TableRow
+                      key={index}
+                      hover
+                    >
+                      {Object.values(row).map((cell, cellIndex) => (
+                        <TableCell key={cellIndex}>
+                          {typeof cell === 'number' ? cell.toLocaleString() : cell}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Box>
+          </CardContent>
+        </Card>
       </DashboardTemplate>
     </PageContainer>
   );

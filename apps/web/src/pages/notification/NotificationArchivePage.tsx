@@ -10,8 +10,7 @@ import {
   Eye,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography } from '@mui/material';
-import { Button } from '@mui/material';
+import { Box, Typography, Button } from '@mui/material';
 import type { ArchiveConfig, ArchivedNotification, NotificationTypeEnum } from '@/api/notification';
 import {
   getArchivedNotifications,
@@ -240,7 +239,10 @@ const NotificationArchivePage: React.FC = () => {
   const totalPages = Math.max(1, Math.ceil(total / 20));
 
   return (
-    <PageContainer title='通知归档管理' subtitle='查看和管理已归档的通知'>
+    <PageContainer
+      title='通知归档管理'
+      subtitle='查看和管理已归档的通知'
+    >
       <ListPageTemplate
         title=''
         subtitle=''
@@ -258,7 +260,7 @@ const NotificationArchivePage: React.FC = () => {
         pagination={{
           page: page - 1,
           pageSize: 20,
-          total: total,
+          total,
           onPageChange: (p) => setPage(p + 1),
         }}
         rowActions={rowActions}

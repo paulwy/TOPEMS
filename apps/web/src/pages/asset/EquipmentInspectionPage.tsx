@@ -10,8 +10,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Plus, Edit, ClipboardCheck } from 'lucide-react';
@@ -19,11 +19,7 @@ import { useNavigate } from 'react-router-dom';
 import { assetApi, type Asset } from '@/api/erp';
 import { mesEquipmentApi, type InspectionRecord } from '@/api/mes';
 import { useAppStore } from '../../store';
-import {
-  ListPageTemplate,
-  type ColumnDef,
-  type RowAction,
-} from '@/components/templates';
+import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { apiLogger } from '@/utils/logger';
 
 const STATUS_COLOR_MAP: Record<string, 'success' | 'error' | 'default'> = {
@@ -194,7 +190,9 @@ const EquipmentInspectionPage: React.FC = () => {
         label: '点检人',
         width: 100,
         render: (row) => (
-          <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>{row.inspector || '-'}</Typography>
+          <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
+            {row.inspector || '-'}
+          </Typography>
         ),
       },
       {
@@ -203,7 +201,9 @@ const EquipmentInspectionPage: React.FC = () => {
         width: 130,
         sortable: true,
         render: (row) => (
-          <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>{row.inspection_date}</Typography>
+          <Typography sx={{ fontSize: '0.875rem', color: 'grey.600' }}>
+            {row.inspection_date}
+          </Typography>
         ),
       },
       {
@@ -255,7 +255,11 @@ const EquipmentInspectionPage: React.FC = () => {
   );
 
   return (
-    <PageContainer sx={{ minHeight: '100vh', backgroundColor: 'grey.50' }} title='设备点检记录' subtitle='设备点检记录管理'>
+    <PageContainer
+      sx={{ minHeight: '100vh', backgroundColor: 'background.default' }}
+      title='设备点检记录'
+      subtitle='设备点检记录管理'
+    >
       <ListPageTemplate
         title=''
         subtitle=''
@@ -315,7 +319,7 @@ const EquipmentInspectionPage: React.FC = () => {
                   sx={{
                     fontSize: '0.875rem',
                     fontWeight: 500,
-                    color: '#475569',
+                    color: 'text.secondary',
                   }}
                 >
                   设备: {selectedForInspection?.name} ({selectedForInspection?.asset_number})

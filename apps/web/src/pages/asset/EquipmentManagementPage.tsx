@@ -10,8 +10,8 @@ import {
   Select,
   MenuItem,
   Box,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import { Plus, Edit, Trash2, DollarSign, ClipboardCheck, Wrench } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -351,7 +351,10 @@ const EquipmentManagementPage: React.FC = () => {
   );
 
   return (
-    <PageContainer title='设备管理' subtitle='设备台账管理'>
+    <PageContainer
+      title='设备管理'
+      subtitle='设备台账管理'
+    >
       <ListPageTemplate
         title=''
         subtitle=''
@@ -372,7 +375,7 @@ const EquipmentManagementPage: React.FC = () => {
         onFilterChange={handleFilterChange}
         pagination={{
           page: currentPage,
-          pageSize: pageSize,
+          pageSize,
           total: totalAssets,
           onPageChange: setCurrentPage,
         }}

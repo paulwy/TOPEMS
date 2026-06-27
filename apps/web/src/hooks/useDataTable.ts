@@ -51,10 +51,10 @@ export function useDataTable<TData extends RowData>({
 
   const tableOptions = useMemo(
     () => ({
-      getCoreRowModel: getCoreRowModel,
-      getSortedRowModel: getSortedRowModel,
-      getFilteredRowModel: getFilteredRowModel,
-      getPaginationRowModel: getPaginationRowModel,
+      getCoreRowModel,
+      getSortedRowModel,
+      getFilteredRowModel,
+      getPaginationRowModel,
       onSortingChange: setSorting,
       onColumnFiltersChange: setColumnFilters,
       onPaginationChange: setPagination,
@@ -107,7 +107,7 @@ export function useExportData<TData extends RowData, TValue>(columns: ColumnDef<
           ),
         ].join('\n');
 
-        const blob = new Blob(['\ufeff' + csvData], {
+        const blob = new Blob([`\uFEFF${csvData}`], {
           type: 'text/csv;charset=utf-8;',
         });
         const url = URL.createObjectURL(blob);
@@ -142,7 +142,7 @@ export function useExportData<TData extends RowData, TValue>(columns: ColumnDef<
         const worksheetData = [headers, ...rows];
         const csvContent = worksheetData.map((row) => row.join('\t')).join('\n');
 
-        const blob = new Blob(['\ufeff' + csvContent], {
+        const blob = new Blob([`\uFEFF${csvContent}`], {
           type: 'application/vnd.ms-excel;charset=utf-8;',
         });
         const url = URL.createObjectURL(blob);

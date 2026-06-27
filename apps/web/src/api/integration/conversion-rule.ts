@@ -55,9 +55,13 @@ export const conversionRuleApi = {
     return apiClient.integration.post(`/api/integration/rules/${id}/disable`);
   },
 
-  listRules: async (
-    params?: { source_system?: string; target_system?: string; status?: RuleStatus; page?: number; pageSize?: number }
-  ): Promise<ApiResponse<ConversionRule[]>> => {
+  listRules: async (params?: {
+    source_system?: string;
+    target_system?: string;
+    status?: RuleStatus;
+    page?: number;
+    pageSize?: number;
+  }): Promise<ApiResponse<ConversionRule[]>> => {
     return apiClient.integration.get('/api/integration/conversion-rules', { params });
   },
 
@@ -65,9 +69,7 @@ export const conversionRuleApi = {
     return apiClient.integration.get(`/api/integration/conversion-rules/${id}`);
   },
 
-  createRule: async (
-    data: CreateConversionRuleRequest
-  ): Promise<ApiResponse<ConversionRule>> => {
+  createRule: async (data: CreateConversionRuleRequest): Promise<ApiResponse<ConversionRule>> => {
     return apiClient.integration.post('/api/integration/conversion-rules', data);
   },
 

@@ -37,11 +37,7 @@ vi.mock('@/store', () => ({
 }));
 
 const renderWithProviders = (ui: React.ReactElement) => {
-  return render(
-    <BrowserRouter>
-      {ui}
-    </BrowserRouter>
-  );
+  return render(<BrowserRouter>{ui}</BrowserRouter>);
 };
 
 const mockAssets = [
@@ -120,9 +116,7 @@ describe('EquipmentManagementPage', () => {
       fireEvent.change(searchInput, { target: { value: 'CNC' } });
     });
     await waitFor(() => {
-      expect(assetApi.list).toHaveBeenCalledWith(
-        expect.objectContaining({ search: 'CNC' })
-      );
+      expect(assetApi.list).toHaveBeenCalledWith(expect.objectContaining({ search: 'CNC' }));
     });
   });
 

@@ -1,8 +1,7 @@
 // modules/TrackModule/TrackPlayer.tsx
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Play, Pause, Square, SkipBack, SkipForward } from 'lucide-react';
-import { Box, Typography, Paper, IconButton, Slider, Grid } from '@mui/material';
-import { Button } from '@mui/material';
+import { Box, Typography, Paper, IconButton, Slider, Grid, Button } from '@mui/material';
 import type { TrackRecord, TrackStatistics } from './types';
 
 interface TrackPlayerProps {

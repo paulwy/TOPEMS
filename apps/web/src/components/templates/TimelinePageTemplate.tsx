@@ -136,8 +136,18 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
   onFilterChange,
   timeRanges = [
     { id: 'today', label: '今天', start: new Date(), end: new Date() },
-    { id: 'week', label: '本周', start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), end: new Date() },
-    { id: 'month', label: '本月', start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), end: new Date() },
+    {
+      id: 'week',
+      label: '本周',
+      start: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+      end: new Date(),
+    },
+    {
+      id: 'month',
+      label: '本月',
+      start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+      end: new Date(),
+    },
     { id: 'all', label: '全部', start: new Date(0), end: new Date() },
   ],
   selectedTimeRange = 'week',
@@ -178,7 +188,12 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
   const getTypeIcon = (type?: string) => {
     switch (type) {
       case 'milestone':
-        return <Badge badgeContent='!' color='warning' />;
+        return (
+          <Badge
+            badgeContent='!'
+            color='warning'
+          />
+        );
       case 'task':
         return <Clock style={{ width: 16, height: 16 }} />;
       case 'meeting':
@@ -235,21 +250,33 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
       >
         {showSearch && (
           <Box sx={{ position: 'relative', minWidth: 250 }}>
-            <Search style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', width: 18, height: 18, color: 'text.secondary' }} />
+            <Search
+              style={{
+                position: 'absolute',
+                left: 12,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: 18,
+                height: 18,
+                color: 'text.secondary',
+              }}
+            />
             <input
               type='text'
               value={searchInput}
               onChange={handleSearch}
               placeholder='搜索时间线...'
-              style={{
-                width: '100%',
-                padding: '8px 12px 8px 40px',
-                borderRadius: 8,
-                border: '1px solid',
-                borderColor: theme.palette.divider,
-                fontSize: '0.875rem',
-                outline: 'none',
-              } as React.CSSProperties}
+              style={
+                {
+                  width: '100%',
+                  padding: '8px 12px 8px 40px',
+                  borderRadius: 8,
+                  border: '1px solid',
+                  borderColor: theme.palette.divider,
+                  fontSize: '0.875rem',
+                  outline: 'none',
+                } as React.CSSProperties
+              }
             />
           </Box>
         )}
@@ -345,7 +372,10 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
               </Box>
               <Box sx={{ flex: 1 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                  <Typography variant='body1' sx={{ fontWeight: 500 }}>
+                  <Typography
+                    variant='body1'
+                    sx={{ fontWeight: 500 }}
+                  >
                     {node.title}
                   </Typography>
                   {node.status && (
@@ -367,13 +397,22 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
                 </Box>
 
                 {node.description && (
-                  <Typography variant='body2' color='text.secondary' sx={{ mt: 0.5 }}>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                    sx={{ mt: 0.5 }}
+                  >
                     {node.description}
                   </Typography>
                 )}
 
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1, flexWrap: 'wrap' }}>
-                  <Typography variant='caption' color='text.secondary'>
+                <Box
+                  sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1, flexWrap: 'wrap' }}
+                >
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
                     {new Date(node.date).toLocaleDateString('zh-CN', {
                       year: 'numeric',
                       month: 'long',
@@ -382,14 +421,20 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
                     })}
                   </Typography>
                   {node.time && (
-                    <Typography variant='caption' color='text.secondary'>
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                    >
                       {node.time}
                     </Typography>
                   )}
                   {node.location && (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <MapPin style={{ width: 12, height: 12, color: 'text.secondary' }} />
-                      <Typography variant='caption' color='text.secondary'>
+                      <Typography
+                        variant='caption'
+                        color='text.secondary'
+                      >
                         {node.location}
                       </Typography>
                     </Box>
@@ -426,16 +471,17 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
                       </Avatar>
                     ))}
                     {node.participants.length > 3 && (
-                      <Typography variant='caption' color='text.secondary'>
+                      <Typography
+                        variant='caption'
+                        color='text.secondary'
+                      >
                         +{node.participants.length - 3}
                       </Typography>
                     )}
                   </Box>
                 )}
 
-                {node.actions && (
-                  <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>{node.actions}</Box>
-                )}
+                {node.actions && <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>{node.actions}</Box>}
               </Box>
 
               {node.children && node.children.length > 0 && (
@@ -458,9 +504,7 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
         </Box>
 
         {node.children && node.children.length > 0 && isExpanded && (
-          <Box sx={{ ml: 2 }}>
-            {node.children.map((child) => renderNode(child, true))}
-          </Box>
+          <Box sx={{ ml: 2 }}>{node.children.map((child) => renderNode(child, true))}</Box>
         )}
       </React.Fragment>
     );
@@ -470,7 +514,10 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
     const isExpanded = expandedGroups.has(group.id);
 
     return (
-      <Paper key={group.id} sx={{ borderRadius: 2, overflow: 'hidden', mb: 2 }}>
+      <Paper
+        key={group.id}
+        sx={{ borderRadius: 2, overflow: 'hidden', mb: 2 }}
+      >
         <Box
           sx={{
             p: 2,
@@ -502,10 +549,16 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
               </Box>
             )}
             <Box>
-              <Typography variant='subtitle1' sx={{ fontWeight: 600 }}>
+              <Typography
+                variant='subtitle1'
+                sx={{ fontWeight: 600 }}
+              >
                 {group.title}
               </Typography>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 {group.nodes.length} 个事件
               </Typography>
             </Box>
@@ -524,11 +577,19 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
         <Box sx={{ p: 2 }}>
           {loading ? (
             Array.from({ length: 3 }).map((_, index) => (
-              <Skeleton key={index} variant='rectangular' height={60} sx={{ borderRadius: 1, mb: 1 }} />
+              <Skeleton
+                key={index}
+                variant='rectangular'
+                height={60}
+                sx={{ borderRadius: 1, mb: 1 }}
+              />
             ))
           ) : group.nodes.length === 0 ? (
             <Box sx={{ p: 4, textAlign: 'center' }}>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 暂无事件
               </Typography>
             </Box>
@@ -536,7 +597,10 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
             group.nodes.map((node) => renderNode(node))
           ) : (
             <Box sx={{ p: 2, textAlign: 'center' }}>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 点击展开查看 {group.nodes.length} 个事件
               </Typography>
             </Box>
@@ -550,7 +614,10 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
     if (error) {
       return (
         <Paper sx={{ p: 4, borderRadius: 2 }}>
-          <Typography variant='body1' color='error'>
+          <Typography
+            variant='body1'
+            color='error'
+          >
             {error}
           </Typography>
         </Paper>
@@ -566,12 +633,22 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
         <Box sx={{ p: 3 }}>
           {loading ? (
             Array.from({ length: 5 }).map((_, index) => (
-              <Skeleton key={index} variant='rectangular' height={80} sx={{ borderRadius: 1, mb: 2 }} />
+              <Skeleton
+                key={index}
+                variant='rectangular'
+                height={80}
+                sx={{ borderRadius: 1, mb: 2 }}
+              />
             ))
           ) : nodes.length === 0 ? (
             <Box sx={{ p: 8, textAlign: 'center' }}>
-              <Calendar style={{ width: 48, height: 48, color: 'text.secondary', margin: '0 auto 16px' }} />
-              <Typography variant='body1' color='text.secondary'>
+              <Calendar
+                style={{ width: 48, height: 48, color: 'text.secondary', margin: '0 auto 16px' }}
+              />
+              <Typography
+                variant='body1'
+                color='text.secondary'
+              >
                 暂无时间线事件
               </Typography>
             </Box>

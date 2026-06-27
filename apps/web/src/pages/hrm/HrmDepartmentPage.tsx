@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { apiLogger } from '@/utils/logger';
+import { apiLogger, logger } from '@/utils/logger';
 import {
   Card,
   CardContent,
@@ -22,9 +22,9 @@ import {
   useTheme,
   useMediaQuery,
   Chip,
+  Button,
 } from '@mui/material';
 import { StatusBadge } from '@/components/common/StatusBadge';
-import { Button } from '@mui/material';
 import { Plus, Edit, Trash2, Eye, Building2, Building, User, Mail, Phone } from 'lucide-react';
 import {
   departmentApi,
@@ -44,9 +44,8 @@ import {
   type TreeStatCard,
   type TreeAction,
 } from '@/components/templates';
-import { EmptyState } from '@/components/mui';
+import { EmptyState } from '@/components';
 import { ImageUpload, PageContainer } from '@/components/common';
-import { logger } from '@/utils/logger';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 
 const HrmDepartmentPage: React.FC = () => {
@@ -332,7 +331,12 @@ const HrmDepartmentPage: React.FC = () => {
               </Box>
             </Box>
           }
-          action={<StatusBadge status={`department_${selectedDept.status}`} showIcon />}
+          action={
+            <StatusBadge
+              status={`department_${selectedDept.status}`}
+              showIcon
+            />
+          }
         />
         <CardContent>
           {/* 统计卡片 */}
@@ -484,7 +488,10 @@ const HrmDepartmentPage: React.FC = () => {
                         >
                           {emp.name}
                         </Typography>
-                        <StatusBadge status={`employee_${emp.status}`} size='sm' />
+                        <StatusBadge
+                          status={`employee_${emp.status}`}
+                          size='sm'
+                        />
                       </Box>
                       <Typography
                         variant='caption'
@@ -861,7 +868,10 @@ const HrmDepartmentPage: React.FC = () => {
                   状态
                 </Typography>
                 <Box sx={{ mt: 0.5 }}>
-                  <StatusBadge status={`department_${selectedDepartment.status}`} showIcon />
+                  <StatusBadge
+                    status={`department_${selectedDepartment.status}`}
+                    showIcon
+                  />
                 </Box>
               </Box>
               <Box>
@@ -912,7 +922,6 @@ const HrmDepartmentPage: React.FC = () => {
         onApplySuggestions={handleApplySuggestions}
         onFixIssue={handleFixIssue}
       />
-
       <ConfirmDialog
         isOpen={confirmDialogOpen}
         onClose={() => setConfirmDialogOpen(false)}

@@ -8,8 +8,8 @@ import {
   Typography,
   IconButton,
   Chip,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import { Shield, Plus, Trash2, Edit, Key, CheckCircle } from 'lucide-react';
 import { authApi, type Role, type Permission } from '@/api/iam';
@@ -334,7 +334,10 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate: _on
   }, [roles, searchQuery]);
 
   return (
-    <PageContainer title='角色管理' subtitle='管理用户角色、权限配置'>
+    <PageContainer
+      title='角色管理'
+      subtitle='管理用户角色、权限配置'
+    >
       <ListPageTemplate
         title=''
         subtitle=''

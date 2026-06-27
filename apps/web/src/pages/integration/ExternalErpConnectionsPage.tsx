@@ -21,8 +21,8 @@ import {
   MenuItem,
   Switch,
   FormControlLabel,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 
 import {
   ListPageTemplate,
@@ -438,10 +438,13 @@ export default function ExternalErpConnectionsPage() {
   };
 
   return (
-    <PageContainer title="外部ERP连接管理" subtitle="管理金蝶、用友、SAP等外部ERP系统的连接配置">
+    <PageContainer
+      title='外部ERP连接管理'
+      subtitle='管理金蝶、用友、SAP等外部ERP系统的连接配置'
+    >
       <ListPageTemplate
-        title=""
-        subtitle=""
+        title=''
+        subtitle=''
         columns={columns}
         data={filteredData}
         loading={isLoading}

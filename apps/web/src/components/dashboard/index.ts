@@ -1,7 +1,7 @@
 export { DashboardHeader } from './DashboardHeader';
 export { DashboardQuickActions, defaultQuickActions } from './DashboardQuickActions';
 export { ModuleStatusBadge as StatusBadge } from '@/components/common/StatusBadge';
-export type { ModuleStatus } from '@/components/common/StatusBadge';
+export type { ModuleStatusValue } from '@/components/common/StatusBadge';
 export { ModuleCard, type ModuleItem } from './ModuleCard';
 export { ModuleStatsCard } from './ModuleStatsCard';
 export { ServiceStatusCard } from './ServiceStatusCard';

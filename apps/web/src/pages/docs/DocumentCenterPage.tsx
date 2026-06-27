@@ -1,17 +1,32 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { PageContainer } from '@/components/common';
-import {
-  CardListTemplate,
-  type CardRenderConfig,
-  type CardAction,
-} from '@/components/templates';
+import { CardListTemplate, type CardRenderConfig, type CardAction } from '@/components/templates';
 import { docApi } from '@/api/doc';
 import type { FileMetadata, Folder as FolderType } from '@/api/doc';
 import { logger } from '@/utils/logger';
 import { useAppStore } from '@/store';
-import { File, Folder, Star, Download, Eye, Trash2, Clock, Upload, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  File,
+  Folder,
+  Star,
+  Download,
+  Eye,
+  Trash2,
+  Clock,
+  Upload,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, Dialog, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+} from '@mui/material';
 
 interface DocumentWithFavorite extends FileMetadata {
   is_favorite?: boolean;
@@ -39,23 +54,43 @@ const DocumentCenterPage: React.FC = () => {
   const [uploading, setUploading] = useState(false);
 
   const formatFileSize = (bytes: number): string => {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
-    if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
-    return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+    return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
   };
 
   const getFileIcon = (contentType: string) => {
     if (contentType.includes('pdf')) {
-      return <File size={24} style={{ color: '#dc2626' }} />;
+      return (
+        <File
+          size={24}
+          style={{ color: '#dc2626' }}
+        />
+      );
     }
     if (contentType.includes('word') || contentType.includes('doc')) {
-      return <File size={24} style={{ color: '#2563eb' }} />;
+      return (
+        <File
+          size={24}
+          style={{ color: '#2563eb' }}
+        />
+      );
     }
     if (contentType.includes('excel') || contentType.includes('spreadsheet')) {
-      return <File size={24} style={{ color: '#16a34a' }} />;
+      return (
+        <File
+          size={24}
+          style={{ color: '#16a34a' }}
+        />
+      );
     }
-    return <File size={24} style={{ color: '#6b7280' }} />;
+    return (
+      <File
+        size={24}
+        style={{ color: '#6b7280' }}
+      />
+    );
   };
 
   const loadData = useCallback(async () => {
@@ -327,7 +362,9 @@ const DocumentCenterPage: React.FC = () => {
       subtitle='统一管理企业文档，支持分类、标签和全文搜索'
     >
       {/* 面包屑导航 */}
-      <Box sx={{ px: 3, py: 2, bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider' }}>
+      <Box
+        sx={{ px: 3, py: 2, bgcolor: 'background.paper', borderBottom: 1, borderColor: 'divider' }}
+      >
         <Box sx={{ maxWidth: 1400, mx: 'auto' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, fontSize: '0.875rem' }}>
             <Box
@@ -366,13 +403,20 @@ const DocumentCenterPage: React.FC = () => {
       {/* 文件夹列表 */}
       {currentPath.length === 0 && folders.length > 0 && (
         <Box sx={{ px: 3, py: 2 }}>
-          <Typography variant='h6' sx={{ fontWeight: 600, color: 'grey.900', mb: 2 }}>
+          <Typography
+            variant='h6'
+            sx={{ fontWeight: 600, color: 'grey.900', mb: 2 }}
+          >
             文件夹
           </Typography>
           <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: { xs: 'repeat(2, 1fr)', sm: 'repeat(4, 1fr)', md: 'repeat(6, 1fr)' },
+              gridTemplateColumns: {
+                xs: 'repeat(2, 1fr)',
+                sm: 'repeat(4, 1fr)',
+                md: 'repeat(6, 1fr)',
+              },
               gap: 2,
             }}
           >
@@ -394,7 +438,13 @@ const DocumentCenterPage: React.FC = () => {
                 <Folder sx={{ width: 40, height: 40, color: 'warning.main', mb: 1.5 }} />
                 <Typography
                   variant='body2'
-                  sx={{ fontWeight: 500, color: 'grey.900', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+                  sx={{
+                    fontWeight: 500,
+                    color: 'grey.900',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
                 >
                   {folder.name}
                 </Typography>
@@ -429,7 +479,7 @@ const DocumentCenterPage: React.FC = () => {
         pagination={{
           page: currentPage,
           pageSize: 20,
-          total: total,
+          total,
           onPageChange: setCurrentPage,
         }}
         cardActions={cardActions}
@@ -441,7 +491,11 @@ const DocumentCenterPage: React.FC = () => {
       />
 
       {/* 上传对话框 */}
-      <Dialog open={showUploadModal} onClose={() => setShowUploadModal(false)} maxWidth='md'>
+      <Dialog
+        open={showUploadModal}
+        onClose={() => setShowUploadModal(false)}
+        maxWidth='md'
+      >
         <DialogTitle>上传文件</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -466,11 +520,17 @@ const DocumentCenterPage: React.FC = () => {
               <Upload sx={{ width: 48, height: 48, color: 'grey.400', mx: 'auto', mb: 2 }} />
               <Typography sx={{ color: 'grey.600', mb: 1 }}>
                 拖拽文件到此处，或{' '}
-                <Box component='span' sx={{ color: 'primary.main', cursor: 'pointer' }}>
+                <Box
+                  component='span'
+                  sx={{ color: 'primary.main', cursor: 'pointer' }}
+                >
                   点击选择
                 </Box>
               </Typography>
-              <Typography variant='caption' sx={{ color: 'grey.500' }}>
+              <Typography
+                variant='caption'
+                sx={{ color: 'grey.500' }}
+              >
                 支持 .pdf, .docx, .xlsx, .txt 等格式，单个文件不超过 100MB
               </Typography>
             </Box>
@@ -482,7 +542,10 @@ const DocumentCenterPage: React.FC = () => {
               style={{ display: 'none' }}
               id='file-upload'
             />
-            <Button variant='outlined' onClick={() => document.getElementById('file-upload')?.click()}>
+            <Button
+              variant='outlined'
+              onClick={() => document.getElementById('file-upload')?.click()}
+            >
               选择文件
             </Button>
 
@@ -502,7 +565,10 @@ const DocumentCenterPage: React.FC = () => {
                   >
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                       <File sx={{ width: 20, height: 20, color: 'grey.500' }} />
-                      <Typography variant='body2' sx={{ color: 'grey.700' }}>
+                      <Typography
+                        variant='body2'
+                        sx={{ color: 'grey.700' }}
+                      >
                         {file.name}
                       </Typography>
                     </Box>
@@ -520,7 +586,10 @@ const DocumentCenterPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowUploadModal(false)}>取消</Button>
-          <Button onClick={handleUpload} disabled={uploading || uploadFiles.length === 0}>
+          <Button
+            onClick={handleUpload}
+            disabled={uploading || uploadFiles.length === 0}
+          >
             {uploading ? '上传中...' : '开始上传'}
           </Button>
         </DialogActions>

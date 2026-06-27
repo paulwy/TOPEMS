@@ -19,16 +19,11 @@ export const locationApi = {
     return apiClient.wms.get(`/locations/${id}`);
   },
 
-  create: async (
-    data: CreateLocationRequest
-  ): Promise<ApiResponse<Location>> => {
+  create: async (data: CreateLocationRequest): Promise<ApiResponse<Location>> => {
     return apiClient.wms.post('/locations', data);
   },
 
-  update: async (
-    id: string,
-    data: UpdateLocationRequest
-  ): Promise<ApiResponse<Location>> => {
+  update: async (id: string, data: UpdateLocationRequest): Promise<ApiResponse<Location>> => {
     return apiClient.wms.put(`/locations/${id}`, data);
   },
 
@@ -36,9 +31,7 @@ export const locationApi = {
     return apiClient.wms.delete(`/locations/${id}`);
   },
 
-  getStatus: async (
-    warehouse_id?: string
-  ): Promise<ApiResponse<LocationStatusSummary>> => {
+  getStatus: async (warehouse_id?: string): Promise<ApiResponse<LocationStatusSummary>> => {
     return apiClient.wms.get('/locations/status', { params: { warehouse_id } });
   },
 
@@ -48,15 +41,14 @@ export const locationApi = {
     return apiClient.wms.post('/locations/batch', data);
   },
 
-  batchUpdate: async (
-    data: { ids: string[]; updates: UpdateLocationRequest }
-  ): Promise<ApiResponse<{ updated_count: number }>> => {
+  batchUpdate: async (data: {
+    ids: string[];
+    updates: UpdateLocationRequest;
+  }): Promise<ApiResponse<{ updated_count: number }>> => {
     return apiClient.wms.put('/locations/batch', data);
   },
 
-  batchDelete: async (
-    ids: string[]
-  ): Promise<ApiResponse<{ deleted_count: number }>> => {
+  batchDelete: async (ids: string[]): Promise<ApiResponse<{ deleted_count: number }>> => {
     return apiClient.wms.post('/locations/batch-delete', { ids });
   },
 };
@@ -71,9 +63,7 @@ export async function getLocation(id: string): Promise<ApiResponse<Location>> {
   return locationApi.get(id);
 }
 
-export async function createLocation(
-  data: CreateLocationRequest
-): Promise<ApiResponse<Location>> {
+export async function createLocation(data: CreateLocationRequest): Promise<ApiResponse<Location>> {
   return locationApi.create(data);
 }
 
@@ -100,9 +90,10 @@ export async function batchCreateLocations(
   return locationApi.batchCreate(data);
 }
 
-export async function batchUpdateLocations(
-  data: { ids: string[]; updates: UpdateLocationRequest }
-): Promise<ApiResponse<{ updated_count: number }>> {
+export async function batchUpdateLocations(data: {
+  ids: string[];
+  updates: UpdateLocationRequest;
+}): Promise<ApiResponse<{ updated_count: number }>> {
   return locationApi.batchUpdate(data);
 }
 

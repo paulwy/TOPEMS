@@ -58,10 +58,7 @@ export const deliveryAppointmentApi = {
     id: string,
     data?: DeliveryAppointmentArrivalRequest
   ): Promise<ApiResponse<SupplierDeliveryAppointment>> => {
-    return apiClient.scm.post(
-      `/api/scm/delivery-appointments/${id}/confirm-arrival`,
-      data || {}
-    );
+    return apiClient.scm.post(`/api/scm/delivery-appointments/${id}/confirm-arrival`, data || {});
   },
 
   complete: async (

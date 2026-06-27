@@ -8,9 +8,7 @@ import type {
 } from './types';
 
 export const warehouseApi = {
-  list: async (
-    params?: PaginationParams
-  ): Promise<ApiResponse<PaginatedResponse<Warehouse>>> => {
+  list: async (params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Warehouse>>> => {
     return apiClient.wms.get('/warehouses', { params });
   },
 
@@ -18,16 +16,11 @@ export const warehouseApi = {
     return apiClient.wms.get(`/warehouses/${id}`);
   },
 
-  create: async (
-    data: CreateWarehouseRequest
-  ): Promise<ApiResponse<Warehouse>> => {
+  create: async (data: CreateWarehouseRequest): Promise<ApiResponse<Warehouse>> => {
     return apiClient.wms.post('/warehouses', data);
   },
 
-  update: async (
-    id: string,
-    data: UpdateWarehouseRequest
-  ): Promise<ApiResponse<Warehouse>> => {
+  update: async (id: string, data: UpdateWarehouseRequest): Promise<ApiResponse<Warehouse>> => {
     return apiClient.wms.put(`/warehouses/${id}`, data);
   },
 

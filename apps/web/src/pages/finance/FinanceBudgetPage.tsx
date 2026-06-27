@@ -28,13 +28,21 @@ import {
   CardContent,
   Stack,
 } from '@mui/material';
-import { ListPageTemplate, StatCardGroup } from '@/components/mui';
+import { ListPageTemplate, StatCardGroup } from '@/components';
 import OrganizationFilter, {
   type OrganizationFilterValue,
 } from '@/components/ui/OrganizationFilter';
 import { StatsChart } from '@/components/bi/StatsChart';
 import { apiLogger } from '@/utils/logger';
-import { ActionButton, FormField, FormSelect, Dialog, ConfirmDialog, StatusBadge, PageContainer} from '@/components/common';
+import {
+  ActionButton,
+  FormField,
+  FormSelect,
+  Dialog,
+  ConfirmDialog,
+  StatusBadge,
+  PageContainer,
+} from '@/components/common';
 
 const FinanceBudgetPage: React.FC = () => {
   const navigate = useNavigate();
@@ -501,7 +509,7 @@ const FinanceBudgetPage: React.FC = () => {
         onClick: (row: Budget) => handleDeleteClick(row.id),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     []
   );
 
@@ -540,7 +548,10 @@ const FinanceBudgetPage: React.FC = () => {
   );
 
   return (
-    <PageContainer title="预算列表" subtitle="">
+    <PageContainer
+      title='预算列表'
+      subtitle=''
+    >
       <Box
         sx={{
           display: 'flex',
@@ -636,7 +647,8 @@ const FinanceBudgetPage: React.FC = () => {
 
       {/* 预算列表 */}
       <ListPageTemplate
-        title="" subtitle=""
+        title=''
+        subtitle=''
         columns={columns}
         data={filteredBudgets}
         loading={loading}
@@ -739,7 +751,7 @@ const FinanceBudgetPage: React.FC = () => {
         onClose={() => setShowDetailDialog(false)}
         title='预算详情'
       >
-          {selectedBudget && (
+        {selectedBudget && (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 1 }}>
             <Box
               sx={{

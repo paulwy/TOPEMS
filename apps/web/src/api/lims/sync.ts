@@ -1,10 +1,6 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
-import type {
-  SyncRecord,
-  SyncRecordQueryParams,
-  PaginatedResult,
-} from './types';
+import type { SyncRecord, SyncRecordQueryParams, PaginatedResult } from './types';
 
 export const syncRecordApi = {
   listSyncRecords: async (

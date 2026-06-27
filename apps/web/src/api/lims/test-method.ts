@@ -48,7 +48,9 @@ export const methodCategoryApi = {
     return apiClient.lims.get('/api/lims/method-categories', { params });
   },
 
-  createCategory: async (data: CreateMethodCategoryRequest): Promise<ApiResponse<MethodCategory>> => {
+  createCategory: async (
+    data: CreateMethodCategoryRequest
+  ): Promise<ApiResponse<MethodCategory>> => {
     return apiClient.lims.post('/api/lims/method-categories', data);
   },
 
@@ -65,9 +67,7 @@ export const methodCategoryApi = {
 };
 
 export const methodValidationApi = {
-  listMethodValidations: async (
-    params?: ListParams
-  ): Promise<ApiResponse<MethodValidation[]>> => {
+  listMethodValidations: async (params?: ListParams): Promise<ApiResponse<MethodValidation[]>> => {
     return apiClient.lims.get('/api/lims/method-validations', { params });
   },
 

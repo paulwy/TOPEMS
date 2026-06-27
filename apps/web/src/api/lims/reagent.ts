@@ -1,12 +1,7 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 import { createCrudApi } from './utils';
-import type {
-  Reagent,
-  CreateReagentRequest,
-  UpdateReagentRequest,
-  ListParams,
-} from './types';
+import type { Reagent, CreateReagentRequest, UpdateReagentRequest, ListParams } from './types';
 
 export const reagentApi = {
   ...createCrudApi<Reagent>('/api/lims/reagents'),

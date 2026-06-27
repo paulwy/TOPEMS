@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { FormPageTemplate, type FormSection, type FormField } from '@/components/templates/FormPageTemplate';
+import {
+  FormPageTemplate,
+  type FormSection,
+  type FormField,
+} from '@/components/templates/FormPageTemplate';
 import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
 import { useAppStore } from '@/store';

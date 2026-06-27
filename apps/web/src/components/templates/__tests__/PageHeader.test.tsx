@@ -2,7 +2,7 @@ import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import PageHeader from '../../templates/PageHeader';
+import PageHeader from '../PageHeader';
 import { useAutoBreadcrumbs } from '@/hooks';
 
 vi.mock('@/hooks', () => ({
@@ -19,11 +19,7 @@ vi.mock('@/hooks', () => ({
 const mockUseAutoBreadcrumbs = useAutoBreadcrumbs as vi.Mock;
 
 const renderWithRouter = (ui: React.ReactElement) => {
-  return render(
-    <BrowserRouter>
-      {ui}
-    </BrowserRouter>
-  );
+  return render(<BrowserRouter>{ui}</BrowserRouter>);
 };
 
 describe('PageHeader', () => {
@@ -38,12 +34,22 @@ describe('PageHeader', () => {
   });
 
   it('should render subtitle when provided', () => {
-    renderWithRouter(<PageHeader title='测试页面' subtitle='这是副标题' />);
+    renderWithRouter(
+      <PageHeader
+        title='测试页面'
+        subtitle='这是副标题'
+      />
+    );
     expect(screen.getByText('这是副标题')).toBeInTheDocument();
   });
 
   it('should render description when provided', () => {
-    renderWithRouter(<PageHeader title='测试页面' description='这是描述信息' />);
+    renderWithRouter(
+      <PageHeader
+        title='测试页面'
+        description='这是描述信息'
+      />
+    );
     expect(screen.getByText('这是描述信息')).toBeInTheDocument();
   });
 
@@ -92,7 +98,12 @@ describe('PageHeader', () => {
       { label: '新建', onClick: handleClick, variant: 'contained' as const },
       { label: '导出', onClick: vi.fn(), variant: 'outlined' as const },
     ];
-    renderWithRouter(<PageHeader title='测试页面' actions={actions} />);
+    renderWithRouter(
+      <PageHeader
+        title='测试页面'
+        actions={actions}
+      />
+    );
     expect(screen.getByRole('button', { name: /新建/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /导出/i })).toBeInTheDocument();
   });
@@ -100,7 +111,12 @@ describe('PageHeader', () => {
   it('should call action onClick when button is clicked', () => {
     const handleClick = vi.fn();
     const actions = [{ label: '新建', onClick: handleClick, variant: 'contained' as const }];
-    renderWithRouter(<PageHeader title='测试页面' actions={actions} />);
+    renderWithRouter(
+      <PageHeader
+        title='测试页面'
+        actions={actions}
+      />
+    );
     const button = screen.getByRole('button', { name: /新建/i });
     fireEvent.click(button);
     expect(handleClick).toHaveBeenCalledTimes(1);
@@ -108,21 +124,36 @@ describe('PageHeader', () => {
 
   it('should render refresh button when onRefresh is provided', () => {
     const handleRefresh = vi.fn();
-    renderWithRouter(<PageHeader title='测试页面' onRefresh={handleRefresh} />);
+    renderWithRouter(
+      <PageHeader
+        title='测试页面'
+        onRefresh={handleRefresh}
+      />
+    );
     const refreshButton = screen.getByLabelText('刷新');
     expect(refreshButton).toBeInTheDocument();
   });
 
   it('should call onRefresh when refresh button is clicked', () => {
     const handleRefresh = vi.fn();
-    renderWithRouter(<PageHeader title='测试页面' onRefresh={handleRefresh} />);
+    renderWithRouter(
+      <PageHeader
+        title='测试页面'
+        onRefresh={handleRefresh}
+      />
+    );
     const refreshButton = screen.getByLabelText('刷新');
     fireEvent.click(refreshButton);
     expect(handleRefresh).toHaveBeenCalledTimes(1);
   });
 
   it('should render loading skeletons when loading is true', () => {
-    renderWithRouter(<PageHeader title='测试页面' loading={true} />);
+    renderWithRouter(
+      <PageHeader
+        title='测试页面'
+        loading={true}
+      />
+    );
     const skeletons = document.querySelectorAll('.MuiSkeleton-root');
     expect(skeletons.length).toBeGreaterThan(0);
   });
@@ -132,7 +163,12 @@ describe('PageHeader', () => {
       { label: '总数', value: 100, color: 'primary.light' },
       { label: '活跃', value: 50 },
     ];
-    renderWithRouter(<PageHeader title='测试页面' stats={stats} />);
+    renderWithRouter(
+      <PageHeader
+        title='测试页面'
+        stats={stats}
+      />
+    );
     expect(screen.getByText('总数: 100')).toBeInTheDocument();
     expect(screen.getByText('活跃: 50')).toBeInTheDocument();
   });
@@ -142,7 +178,12 @@ describe('PageHeader', () => {
       { label: '全部', value: 'all', active: true },
       { label: '已完成', value: 'done' },
     ];
-    renderWithRouter(<PageHeader title='测试页面' tabs={tabs} />);
+    renderWithRouter(
+      <PageHeader
+        title='测试页面'
+        tabs={tabs}
+      />
+    );
     expect(screen.getByRole('tab', { name: /全部/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /已完成/i })).toBeInTheDocument();
   });

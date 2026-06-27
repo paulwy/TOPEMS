@@ -81,15 +81,40 @@ const FlowInstanceDetailPage: React.FC = () => {
     switch (status) {
       case 'completed':
       case 'approved':
-        return <CheckCircle size={20} style={{ color: '#16a34a' }} />;
+        return (
+          <CheckCircle
+            size={20}
+            style={{ color: '#16a34a' }}
+          />
+        );
       case 'rejected':
-        return <XCircle size={20} style={{ color: '#dc2626' }} />;
+        return (
+          <XCircle
+            size={20}
+            style={{ color: '#dc2626' }}
+          />
+        );
       case 'running':
-        return <Play size={20} style={{ color: '#1e40af' }} />;
+        return (
+          <Play
+            size={20}
+            style={{ color: '#1e40af' }}
+          />
+        );
       case 'pending':
-        return <Clock size={20} style={{ color: '#ca8a04' }} />;
+        return (
+          <Clock
+            size={20}
+            style={{ color: '#ca8a04' }}
+          />
+        );
       default:
-        return <AlertCircle size={20} style={{ color: '#6b7280' }} />;
+        return (
+          <AlertCircle
+            size={20}
+            style={{ color: '#6b7280' }}
+          />
+        );
     }
   };
 
@@ -133,49 +158,111 @@ const FlowInstanceDetailPage: React.FC = () => {
           <Box>
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
               <Box>
-                <Typography variant='body2' sx={{ color: 'grey.500', mb: 0.5 }}>实例ID</Typography>
-                <Typography variant='body2' sx={{ fontFamily: 'monospace' }}>{instance.id}</Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.500', mb: 0.5 }}
+                >
+                  实例ID
+                </Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ fontFamily: 'monospace' }}
+                >
+                  {instance.id}
+                </Typography>
               </Box>
               <Box>
-                <Typography variant='body2' sx={{ color: 'grey.500', mb: 0.5 }}>工作流ID</Typography>
-                <Typography variant='body2' sx={{ fontFamily: 'monospace' }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.500', mb: 0.5 }}
+                >
+                  工作流ID
+                </Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ fontFamily: 'monospace' }}
+                >
                   {instance.workflow_id || 'N/A'}
                 </Typography>
               </Box>
               <Box>
-                <Typography variant='body2' sx={{ color: 'grey.500', mb: 0.5 }}>当前节点</Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.500', mb: 0.5 }}
+                >
+                  当前节点
+                </Typography>
                 <Typography variant='body2'>{instance.current_node || 'N/A'}</Typography>
               </Box>
               <Box>
-                <Typography variant='body2' sx={{ color: 'grey.500', mb: 0.5 }}>发起人</Typography>
-                <Stack direction='row' spacing={0.5} sx={{ alignItems: 'center' }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.500', mb: 0.5 }}
+                >
+                  发起人
+                </Typography>
+                <Stack
+                  direction='row'
+                  spacing={0.5}
+                  sx={{ alignItems: 'center' }}
+                >
                   <User size={14} />
                   <Typography variant='body2'>{instance.initiator_id || '系统'}</Typography>
                 </Stack>
               </Box>
               <Box>
-                <Typography variant='body2' sx={{ color: 'grey.500', mb: 0.5 }}>创建时间</Typography>
-                <Typography variant='body2'>{new Date(instance.created_at).toLocaleString()}</Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.500', mb: 0.5 }}
+                >
+                  创建时间
+                </Typography>
+                <Typography variant='body2'>
+                  {new Date(instance.created_at).toLocaleString()}
+                </Typography>
               </Box>
               <Box>
-                <Typography variant='body2' sx={{ color: 'grey.500', mb: 0.5 }}>启动时间</Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.500', mb: 0.5 }}
+                >
+                  启动时间
+                </Typography>
                 <Typography variant='body2'>
                   {instance.started_at ? new Date(instance.started_at).toLocaleString() : 'N/A'}
                 </Typography>
               </Box>
               {instance.completed_at && (
                 <Box>
-                  <Typography variant='body2' sx={{ color: 'grey.500', mb: 0.5 }}>完成时间</Typography>
-                  <Typography variant='body2'>{new Date(instance.completed_at).toLocaleString()}</Typography>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'grey.500', mb: 0.5 }}
+                  >
+                    完成时间
+                  </Typography>
+                  <Typography variant='body2'>
+                    {new Date(instance.completed_at).toLocaleString()}
+                  </Typography>
                 </Box>
               )}
             </Box>
             {instance.data && Object.keys(instance.data).length > 0 && (
               <Box sx={{ mt: 2 }}>
-                <Typography variant='body2' sx={{ color: 'grey.500', mb: 1 }}>实例数据</Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.500', mb: 1 }}
+                >
+                  实例数据
+                </Typography>
                 <Box
                   component='pre'
-                  sx={{ bgcolor: 'grey.50', p: 1.5, borderRadius: 1, fontSize: 12, overflow: 'auto' }}
+                  sx={{
+                    bgcolor: 'grey.50',
+                    p: 1.5,
+                    borderRadius: 1,
+                    fontSize: 12,
+                    overflow: 'auto',
+                  }}
                 >
                   {JSON.stringify(instance.data, null, 2)}
                 </Box>
@@ -192,7 +279,15 @@ const FlowInstanceDetailPage: React.FC = () => {
           <Box>
             {approvals.length === 0 ? (
               <Box sx={{ textAlign: 'center', py: 4 }}>
-                <Users size={48} style={{ color: 'grey.300', margin: '0 auto', marginBottom: 8 }} />
+                <Users
+                  size={48}
+                  style={{
+                    color: 'grey.300',
+                    marginLeft: 'auto',
+                    marginRight: 'auto',
+                    marginBottom: 8,
+                  }}
+                />
                 <Typography sx={{ color: 'grey.500' }}>暂无审批节点</Typography>
               </Box>
             ) : (
@@ -207,7 +302,11 @@ const FlowInstanceDetailPage: React.FC = () => {
                       sx={{ alignItems: 'flex-start', justifyContent: 'space-between' }}
                       spacing={2}
                     >
-                      <Stack direction='row' spacing={1} sx={{ alignItems: 'center' }}>
+                      <Stack
+                        direction='row'
+                        spacing={1}
+                        sx={{ alignItems: 'center' }}
+                      >
                         <Box
                           sx={{
                             width: 24,
@@ -219,14 +318,20 @@ const FlowInstanceDetailPage: React.FC = () => {
                             justifyContent: 'center',
                           }}
                         >
-                          <Typography variant='caption' sx={{ fontWeight: 700, color: 'primary.main' }}>
+                          <Typography
+                            variant='caption'
+                            sx={{ fontWeight: 700, color: 'primary.main' }}
+                          >
                             {index + 1}
                           </Typography>
                         </Box>
                         <Box>
                           <Typography sx={{ fontWeight: 500 }}>{approval.task_name}</Typography>
                           {approval.node_id && (
-                            <Typography variant='caption' color='text.secondary'>
+                            <Typography
+                              variant='caption'
+                              color='text.secondary'
+                            >
                               节点: {approval.node_id}
                             </Typography>
                           )}
@@ -239,32 +344,69 @@ const FlowInstanceDetailPage: React.FC = () => {
                         size='small'
                       />
                     </Stack>
-                    <Stack direction='row' spacing={2} sx={{ ml: 4, mt: 1 }}>
-                      <Stack direction='row' spacing={0.5} sx={{ alignItems: 'center' }}>
+                    <Stack
+                      direction='row'
+                      spacing={2}
+                      sx={{ ml: 4, mt: 1 }}
+                    >
+                      <Stack
+                        direction='row'
+                        spacing={0.5}
+                        sx={{ alignItems: 'center' }}
+                      >
                         <User size={12} />
-                        <Typography variant='caption' color='text.secondary'>
+                        <Typography
+                          variant='caption'
+                          color='text.secondary'
+                        >
                           审批人: {approval.assignee_id || 'N/A'}
                         </Typography>
                       </Stack>
-                      <Stack direction='row' spacing={0.5} sx={{ alignItems: 'center' }}>
+                      <Stack
+                        direction='row'
+                        spacing={0.5}
+                        sx={{ alignItems: 'center' }}
+                      >
                         <Clock size={12} />
-                        <Typography variant='caption' color='text.secondary'>
+                        <Typography
+                          variant='caption'
+                          color='text.secondary'
+                        >
                           创建: {new Date(approval.created_at).toLocaleString()}
                         </Typography>
                       </Stack>
                       {approval.approved_at && (
-                        <Stack direction='row' spacing={0.5} sx={{ alignItems: 'center' }}>
+                        <Stack
+                          direction='row'
+                          spacing={0.5}
+                          sx={{ alignItems: 'center' }}
+                        >
                           <CheckCircle size={12} />
-                          <Typography variant='caption' color='text.secondary'>
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                          >
                             处理: {new Date(approval.approved_at).toLocaleString()}
                           </Typography>
                         </Stack>
                       )}
                     </Stack>
                     {approval.comment && (
-                      <Stack direction='row' spacing={1} sx={{ ml: 4, mt: 1, alignItems: 'flex-start' }}>
-                        <MessageSquare size={16} style={{ color: 'text.secondary', marginTop: 2 }} />
-                        <Typography variant='body2' color='text.secondary'>{approval.comment}</Typography>
+                      <Stack
+                        direction='row'
+                        spacing={1}
+                        sx={{ ml: 4, mt: 1, alignItems: 'flex-start' }}
+                      >
+                        <MessageSquare
+                          size={16}
+                          style={{ color: 'text.secondary', marginTop: 2 }}
+                        />
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          {approval.comment}
+                        </Typography>
                       </Stack>
                     )}
                   </Box>
@@ -282,27 +424,59 @@ const FlowInstanceDetailPage: React.FC = () => {
           <Box>
             {records.length === 0 ? (
               <Box sx={{ textAlign: 'center', py: 4 }}>
-                <FileText size={48} style={{ color: 'grey.300', margin: '0 auto', marginBottom: 8 }} />
+                <FileText
+                  size={48}
+                  style={{
+                    color: 'grey.300',
+                    marginLeft: 'auto',
+                    marginRight: 'auto',
+                    marginBottom: 8,
+                  }}
+                />
                 <Typography sx={{ color: 'grey.500' }}>暂无审批记录</Typography>
               </Box>
             ) : (
               <Stack spacing={2}>
                 {records.map((record) => (
-                  <Box key={record.id} sx={{ borderLeft: 2, borderColor: 'grey.300', pl: 2 }}>
-                    <Stack direction='row' spacing={0.5} sx={{ alignItems: 'center' }}>
+                  <Box
+                    key={record.id}
+                    sx={{ borderLeft: 2, borderColor: 'grey.300', pl: 2 }}
+                  >
+                    <Stack
+                      direction='row'
+                      spacing={0.5}
+                      sx={{ alignItems: 'center' }}
+                    >
                       {record.action === 'approve' ? (
-                        <CheckCircle2 size={16} style={{ color: '#16a34a' }} />
+                        <CheckCircle2
+                          size={16}
+                          style={{ color: '#16a34a' }}
+                        />
                       ) : (
-                        <XCircle size={16} style={{ color: '#dc2626' }} />
+                        <XCircle
+                          size={16}
+                          style={{ color: '#dc2626' }}
+                        />
                       )}
-                      <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                      <Typography
+                        variant='body2'
+                        sx={{ fontWeight: 500 }}
+                      >
                         {record.action === 'approve' ? '通过' : '拒绝'}
                       </Typography>
                     </Stack>
-                    <Typography variant='caption' color='text.secondary' sx={{ display: 'block' }}>
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                      sx={{ display: 'block' }}
+                    >
                       {record.actor_name || record.actor_id}
                     </Typography>
-                    <Typography variant='caption' color='text.secondary' sx={{ display: 'block' }}>
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                      sx={{ display: 'block' }}
+                    >
                       {new Date(record.created_at).toLocaleString()}
                     </Typography>
                     {record.comment && (
@@ -325,7 +499,10 @@ const FlowInstanceDetailPage: React.FC = () => {
   }, [details]);
 
   return (
-    <PageContainer padding={false} maxWidth={false}>
+    <PageContainer
+      padding={false}
+      maxWidth={false}
+    >
       <DetailPageTemplate
         title='实例详情'
         subtitle={details?.instance.id}
@@ -333,11 +510,15 @@ const FlowInstanceDetailPage: React.FC = () => {
         error={error}
         backHref='/flow/instances'
         tabs={tabs}
-        infoCard={details?.instance ? {
-          title: `实例 ${details.instance.id.substring(0, 8)}...`,
-          subtitle: getStatusText(details.instance.status),
-          tags: [getStatusText(details.instance.status)],
-        } : undefined}
+        infoCard={
+          details?.instance
+            ? {
+                title: `实例 ${details.instance.id.substring(0, 8)}...`,
+                subtitle: getStatusText(details.instance.status),
+                tags: [getStatusText(details.instance.status)],
+              }
+            : undefined
+        }
       />
     </PageContainer>
   );

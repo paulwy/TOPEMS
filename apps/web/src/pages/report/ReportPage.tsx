@@ -33,8 +33,8 @@ import {
   FormControl,
   InputLabel,
   Switch,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import type {
   ReportData,
   ReportTypeInfo,

@@ -18,11 +18,14 @@ export const InputSanitizer = ({
 }: InputSanitizerProps) => {
   const [localValue, setLocalValue] = useState(value);
 
-  const handleChange = useCallback((e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const sanitized = sanitizeInput(e.target.value);
-    setLocalValue(sanitized);
-    onChange(sanitized);
-  }, [onChange]);
+  const handleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const sanitized = sanitizeInput(e.target.value);
+      setLocalValue(sanitized);
+      onChange(sanitized);
+    },
+    [onChange]
+  );
 
   if (type === 'textarea') {
     return (
@@ -37,7 +40,7 @@ export const InputSanitizer = ({
 
   return (
     <input
-      type="text"
+      type='text'
       value={localValue}
       onChange={handleChange}
       placeholder={placeholder}

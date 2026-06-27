@@ -11,8 +11,8 @@ import {
   InputAdornment,
   Typography,
   Box,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import type { ProjectTemplate } from '@/components/pm/ProjectTemplateCard';
 import ProjectTemplateCard from '@/components/pm/ProjectTemplateCard';
 import ProjectTemplateModal from '@/components/pm/ProjectTemplateModal';
@@ -140,61 +140,61 @@ const PmTemplatePage: React.FC = () => {
         ],
       }}
     >
+      <Card>
+        <CardContent sx={{ p: 2 }}>
+          <TextField
+            type='text'
+            placeholder='搜索模板名称、类型或标签...'
+            value={searchTerm}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
+            sx={{ width: 400 }}
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position='start'>
+                    <Search sx={{ color: 'text.secondary' }} />
+                  </InputAdornment>
+                ),
+              },
+            }}
+          />
+        </CardContent>
+      </Card>
+
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            md: 'repeat(2, 1fr)',
+            lg: 'repeat(3, 1fr)',
+          },
+          gap: 3,
+        }}
+      >
+        {filteredTemplates.map((template) => (
+          <ProjectTemplateCard
+            key={template.id}
+            template={template}
+            onSelect={handleSelectTemplate}
+          />
+        ))}
+      </Box>
+
+      {filteredTemplates.length === 0 && (
         <Card>
-          <CardContent sx={{ p: 2 }}>
-            <TextField
-              type='text'
-              placeholder='搜索模板名称、类型或标签...'
-              value={searchTerm}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
-              sx={{ width: 400 }}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position='start'>
-                      <Search sx={{ color: 'text.secondary' }} />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
+          <CardContent sx={{ p: 6, textAlign: 'center' }}>
+            <Typography sx={{ color: 'text.secondary' }}>未找到匹配的模板</Typography>
           </CardContent>
         </Card>
+      )}
 
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: {
-              xs: '1fr',
-              md: 'repeat(2, 1fr)',
-              lg: 'repeat(3, 1fr)',
-            },
-            gap: 3,
-          }}
-        >
-          {filteredTemplates.map((template) => (
-            <ProjectTemplateCard
-              key={template.id}
-              template={template}
-              onSelect={handleSelectTemplate}
-            />
-          ))}
-        </Box>
-
-        {filteredTemplates.length === 0 && (
-          <Card>
-            <CardContent sx={{ p: 6, textAlign: 'center' }}>
-              <Typography sx={{ color: 'text.secondary' }}>未找到匹配的模板</Typography>
-            </CardContent>
-          </Card>
-        )}
-
-        <ProjectTemplateModal
-          open={isModalOpen}
-          onOpenChange={setIsModalOpen}
-          template={selectedTemplate}
-          onConfirm={handleCreateProject}
-        />
+      <ProjectTemplateModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        template={selectedTemplate}
+        onConfirm={handleCreateProject}
+      />
     </PageContainer>
   );
 };

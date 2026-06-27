@@ -16,15 +16,7 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material';
-import {
-  GitBranch,
-  Plus,
-  Check,
-  Clock,
-  User,
-  Tag,
-  Edit,
-} from 'lucide-react';
+import { GitBranch, Plus, Check, Clock, User, Tag, Edit } from 'lucide-react';
 import { pdmApi } from '@/api/pdm';
 import type { DocumentVersion, Document } from '@/api/pdm';
 import { useAppStore } from '@/store';
@@ -284,7 +276,9 @@ export const PdmVersionPage: React.FC = () => {
             }}
           >
             <GitBranch size={18} />
-            <Typography sx={{ fontWeight: 600, color: 'grey.900' }}>{row.version_number}</Typography>
+            <Typography sx={{ fontWeight: 600, color: 'grey.900' }}>
+              {row.version_number}
+            </Typography>
             <Chip
               size='small'
               label={VERSION_TYPE_LABEL_MAP[row.type] || row.type}
@@ -517,7 +511,10 @@ export const PdmVersionPage: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, document_id: e.target.value })}
               >
                 {documents.map((doc) => (
-                  <MenuItem key={doc.id} value={doc.id}>
+                  <MenuItem
+                    key={doc.id}
+                    value={doc.id}
+                  >
                     {doc.name} ({doc.type})
                   </MenuItem>
                 ))}
@@ -565,7 +562,10 @@ export const PdmVersionPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDialog(false)}>取消</Button>
-          <Button variant='contained' onClick={handleSave}>
+          <Button
+            variant='contained'
+            onClick={handleSave}
+          >
             创建版本
           </Button>
         </DialogActions>

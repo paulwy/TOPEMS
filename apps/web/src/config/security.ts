@@ -23,11 +23,18 @@ const isDev = import.meta.env.DEV;
 export const securityConfig: SecurityConfig = {
   xFrameOptions: 'DENY',
   xXssProtection: '1; mode=block',
-  
+
   csp: {
     defaultSrc: ["'self'"],
     scriptSrc: isDev
-      ? ["'self'", "'unsafe-inline'", "'unsafe-eval'", 'http://localhost:*', 'ws://localhost:*', 'wss://localhost:*']
+      ? [
+          "'self'",
+          "'unsafe-inline'",
+          "'unsafe-eval'",
+          'http://localhost:*',
+          'ws://localhost:*',
+          'wss://localhost:*',
+        ]
       : [
           "'self'",
           "'strict-dynamic'",
@@ -37,39 +44,18 @@ export const securityConfig: SecurityConfig = {
           'https://*.google.com',
           'https://*.google-analytics.com',
         ],
-    styleSrc: [
-      "'self'",
-      "'unsafe-inline'",
-      'https://fonts.googleapis.com',
-    ],
-    imgSrc: [
-      "'self'",
-      'data:',
-      'blob:',
-      'https://*.amap.com',
-      'https://*.gravatar.com',
-    ],
-    fontSrc: [
-      "'self'",
-      'https://fonts.gstatic.com',
-    ],
+    styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+    imgSrc: ["'self'", 'data:', 'blob:', 'https://*.amap.com', 'https://*.gravatar.com'],
+    fontSrc: ["'self'", 'https://fonts.gstatic.com'],
     connectSrc: isDev
       ? ["'self'", 'http://localhost:*', 'ws://localhost:*', 'wss://localhost:*']
-      : [
-          "'self'",
-          'https://*.amap.com',
-          'https://api.map.baidu.com',
-          'wss://*',
-        ],
+      : ["'self'", 'https://*.amap.com', 'https://api.map.baidu.com', 'wss://*'],
     objectSrc: ["'none'"],
-    frameSrc: [
-      "'self'",
-      'https://*.amap.com',
-    ],
+    frameSrc: ["'self'", 'https://*.amap.com'],
     formAction: ["'self'"],
     baseUri: ["'self'"],
   },
-  
+
   contentSecurityPolicy: isDev
     ? [
         "default-src 'self'",

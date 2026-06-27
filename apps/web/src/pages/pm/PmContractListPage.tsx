@@ -1,5 +1,15 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Plus, Search, Eye, Edit, Trash2, FileText, CheckCircle, AlertCircle, DollarSign } from 'lucide-react';
+import {
+  Plus,
+  Search,
+  Eye,
+  Edit,
+  Trash2,
+  FileText,
+  CheckCircle,
+  AlertCircle,
+  DollarSign,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Box, LinearProgress, IconButton, Tooltip } from '@mui/material';
 import type { Contract } from '@/api/pm';
@@ -265,132 +275,148 @@ const PmContractListPage: React.FC = () => {
       <ListPageTemplate
         title=''
         subtitle=''
-      breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '项目管理' }, { label: '合同' }]}
-      columns={columns}
-      data={filteredData}
-      loading={loading}
-      selectable
-      pagination={{
-        page: currentPage,
-        pageSize,
-        total: totalCount,
-        onPageChange: handlePageChange,
-      }}
-      searchable
-      searchPlaceholder='搜索合同名称或编号...'
-      searchValue={searchTerm}
-      onSearch={setSearchTerm}
-      filters={filters}
-      filtersValue={{ contract_type: selectedType, status: selectedStatus }}
-      onFilterChange={(f) => {
-        if (f.contract_type !== undefined) setSelectedType(f.contract_type);
-        if (f.status !== undefined) setSelectedStatus(f.status);
-      }}
-      actions={[
-        {
-          label: '创建合同',
-          icon: <Plus size={16} />,
-          onClick: () => navigate('/pm/contracts/create'),
-          variant: 'contained',
-        },
-      ]}
-      showRowNumber
-      columnConfigurable
-      persistColumnConfig
-      columnConfigStorageKey='pm-contracts-columns'
-      onRefresh={() => loadContracts(currentPage)}
-      headerContent={
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' },
-            gap: 2,
-            mb: 3,
-          }}
-        >
+        breadcrumbs={[
+          { label: '首页', href: '/dashboard' },
+          { label: '项目管理' },
+          { label: '合同' },
+        ]}
+        columns={columns}
+        data={filteredData}
+        loading={loading}
+        selectable
+        pagination={{
+          page: currentPage,
+          pageSize,
+          total: totalCount,
+          onPageChange: handlePageChange,
+        }}
+        searchable
+        searchPlaceholder='搜索合同名称或编号...'
+        searchValue={searchTerm}
+        onSearch={setSearchTerm}
+        filters={filters}
+        filtersValue={{ contract_type: selectedType, status: selectedStatus }}
+        onFilterChange={(f) => {
+          if (f.contract_type !== undefined) setSelectedType(f.contract_type);
+          if (f.status !== undefined) setSelectedStatus(f.status);
+        }}
+        actions={[
+          {
+            label: '创建合同',
+            icon: <Plus size={16} />,
+            onClick: () => navigate('/pm/contracts/create'),
+            variant: 'contained',
+          },
+        ]}
+        showRowNumber
+        columnConfigurable
+        persistColumnConfig
+        columnConfigStorageKey='pm-contracts-columns'
+        onRefresh={() => loadContracts(currentPage)}
+        headerContent={
           <Box
             sx={{
-              bgcolor: 'background.paper',
-              borderRadius: 2,
-              boxShadow: 1,
-              p: 3,
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' },
+              gap: 2,
+              mb: 3,
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Box sx={{ p: 1.5, bgcolor: '#dbeafe', borderRadius: '50%' }}>
-                <FileText size={24} color='primary.dark' />
+            <Box
+              sx={{
+                bgcolor: 'background.paper',
+                borderRadius: 2,
+                boxShadow: 1,
+                p: 3,
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Box sx={{ p: 1.5, bgcolor: '#dbeafe', borderRadius: '50%' }}>
+                  <FileText
+                    size={24}
+                    color='primary.dark'
+                  />
+                </Box>
+                <Box>
+                  <Box sx={{ fontSize: '0.875rem', color: 'grey.500' }}>合同总数</Box>
+                  <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'grey.900' }}>
+                    {contracts.length}
+                  </Box>
+                </Box>
               </Box>
-              <Box>
-                <Box sx={{ fontSize: '0.875rem', color: 'grey.500' }}>合同总数</Box>
-                <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'grey.900' }}>
-                  {contracts.length}
+            </Box>
+            <Box
+              sx={{
+                bgcolor: 'background.paper',
+                borderRadius: 2,
+                boxShadow: 1,
+                p: 3,
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Box sx={{ p: 1.5, bgcolor: 'success.light', borderRadius: '50%' }}>
+                  <CheckCircle
+                    size={24}
+                    color='success.dark'
+                  />
+                </Box>
+                <Box>
+                  <Box sx={{ fontSize: '0.875rem', color: 'grey.500' }}>执行中</Box>
+                  <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'success.dark' }}>
+                    {activeCount}
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+            <Box
+              sx={{
+                bgcolor: 'background.paper',
+                borderRadius: 2,
+                boxShadow: 1,
+                p: 3,
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Box sx={{ p: 1.5, bgcolor: 'warning.light', borderRadius: '50%' }}>
+                  <AlertCircle
+                    size={24}
+                    color='#ca8a04'
+                  />
+                </Box>
+                <Box>
+                  <Box sx={{ fontSize: '0.875rem', color: 'grey.500' }}>待审批</Box>
+                  <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'warning.dark' }}>
+                    {pendingCount}
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+            <Box
+              sx={{
+                bgcolor: 'background.paper',
+                borderRadius: 2,
+                boxShadow: 1,
+                p: 3,
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Box sx={{ p: 1.5, bgcolor: '#e9d5ff', borderRadius: '50%' }}>
+                  <DollarSign
+                    size={24}
+                    color='#7e22ce'
+                  />
+                </Box>
+                <Box>
+                  <Box sx={{ fontSize: '0.875rem', color: 'grey.500' }}>合同总金额</Box>
+                  <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: '#7e22ce' }}>
+                    {formatCurrency(totalAmount)}
+                  </Box>
                 </Box>
               </Box>
             </Box>
           </Box>
-          <Box
-            sx={{
-              bgcolor: 'background.paper',
-              borderRadius: 2,
-              boxShadow: 1,
-              p: 3,
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Box sx={{ p: 1.5, bgcolor: 'success.light', borderRadius: '50%' }}>
-                <CheckCircle size={24} color='success.dark' />
-              </Box>
-              <Box>
-                <Box sx={{ fontSize: '0.875rem', color: 'grey.500' }}>执行中</Box>
-                <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'success.dark' }}>
-                  {activeCount}
-                </Box>
-              </Box>
-            </Box>
-          </Box>
-          <Box
-            sx={{
-              bgcolor: 'background.paper',
-              borderRadius: 2,
-              boxShadow: 1,
-              p: 3,
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Box sx={{ p: 1.5, bgcolor: 'warning.light', borderRadius: '50%' }}>
-                <AlertCircle size={24} color='#ca8a04' />
-              </Box>
-              <Box>
-                <Box sx={{ fontSize: '0.875rem', color: 'grey.500' }}>待审批</Box>
-                <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'warning.dark' }}>
-                  {pendingCount}
-                </Box>
-              </Box>
-            </Box>
-          </Box>
-          <Box
-            sx={{
-              bgcolor: 'background.paper',
-              borderRadius: 2,
-              boxShadow: 1,
-              p: 3,
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Box sx={{ p: 1.5, bgcolor: '#e9d5ff', borderRadius: '50%' }}>
-                <DollarSign size={24} color='#7e22ce' />
-              </Box>
-              <Box>
-                <Box sx={{ fontSize: '0.875rem', color: 'grey.500' }}>合同总金额</Box>
-                <Box sx={{ fontSize: '1.5rem', fontWeight: 700, color: '#7e22ce' }}>
-                  {formatCurrency(totalAmount)}
-                </Box>
-              </Box>
-            </Box>
-          </Box>
-        </Box>
-      }
-    />
+        }
+      />
     </PageContainer>
   );
 };

@@ -25,8 +25,8 @@ import {
   TableRow,
   Paper,
   IconButton,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import type { ReportData } from '@/api/report';
 
@@ -106,7 +106,20 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
   };
 
   return (
-    <PageContainer padding={false} maxWidth={false} sx={{ position: 'fixed', inset: 0, bgcolor: 'rgba(0, 0, 0, 0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 50, minHeight: 'auto' }}>
+    <PageContainer
+      padding={false}
+      maxWidth={false}
+      sx={{
+        position: 'fixed',
+        inset: 0,
+        bgcolor: 'rgba(0, 0, 0, 0.5)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 50,
+        minHeight: 'auto',
+      }}
+    >
       <Box
         sx={{
           bgcolor: 'background.paper',

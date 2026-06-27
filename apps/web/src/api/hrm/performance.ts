@@ -1,6 +1,12 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
-import type { PerformanceReview, PerformanceGoal, ListParams, PaginatedResult, CrudOperations } from './types';
+import type {
+  PerformanceReview,
+  PerformanceGoal,
+  ListParams,
+  PaginatedResult,
+  CrudOperations,
+} from './types';
 import { buildQueryString } from './types';
 
 function createCrudApi<T>(endpoint: string): CrudOperations<T> {

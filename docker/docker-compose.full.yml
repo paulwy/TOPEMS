@@ -367,7 +367,7 @@ services:
       <<: *common-env
       DATABASE_URL: postgres://topems:topems_secret@postgres:5432/topems
     ports:
-      - "8057:8057"
+      - "8071:8071"
     networks:
       - topems-network
     depends_on:

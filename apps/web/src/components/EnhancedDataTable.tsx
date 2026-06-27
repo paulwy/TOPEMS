@@ -19,8 +19,8 @@ import {
   ListItemText,
   Divider,
   CircularProgress,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import React, { useMemo, useCallback } from 'react';
 import type {
   ColumnDef,
@@ -124,7 +124,7 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
   const [pagination, setPagination] = React.useState<PaginationState>({
     pageIndex: currentPage,
-    pageSize: pageSize,
+    pageSize,
   });
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [exportAnchorEl, setExportAnchorEl] = React.useState<null | HTMLElement>(null);

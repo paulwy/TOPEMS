@@ -1,6 +1,15 @@
 import { apiClient } from '../client';
 import type { ApiResponse } from '../client';
 
+import { customerApi, tagApi } from './customer';
+import { contactApi } from './contact';
+import { opportunityApi } from './opportunity';
+import { interactionApi } from './interaction';
+import { customerScoringApi } from './scoring';
+import { salesForecastApi } from './forecast';
+import { billingApi } from './billing';
+import { customerSegmentationApi, customerRecommendationApi } from './segmentation';
+
 export * from './types';
 
 export { customerApi, tagApi } from './customer';
@@ -11,15 +20,6 @@ export { customerScoringApi } from './scoring';
 export { salesForecastApi } from './forecast';
 export { billingApi } from './billing';
 export { customerSegmentationApi, customerRecommendationApi } from './segmentation';
-
-import { customerApi, tagApi } from './customer';
-import { contactApi } from './contact';
-import { opportunityApi } from './opportunity';
-import { interactionApi } from './interaction';
-import { customerScoringApi } from './scoring';
-import { salesForecastApi } from './forecast';
-import { billingApi } from './billing';
-import { customerSegmentationApi, customerRecommendationApi } from './segmentation';
 
 export const crmApi = {
   customers: customerApi,

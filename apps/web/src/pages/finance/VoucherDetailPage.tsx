@@ -15,8 +15,8 @@ import {
   Paper,
   IconButton,
   Tooltip,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -747,7 +747,10 @@ const VoucherDetailPage: React.FC = () => {
   ];
 
   return (
-    <PageContainer title={voucher.voucher_number} subtitle={`期间: ${voucher.period}`}>
+    <PageContainer
+      title={voucher.voucher_number}
+      subtitle={`期间: ${voucher.period}`}
+    >
       <DetailPageTemplate
         title=''
         subtitle=''

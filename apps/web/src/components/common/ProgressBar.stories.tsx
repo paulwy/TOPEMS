@@ -69,11 +69,26 @@ export const Default: Story = {
 export const LinearVariants: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
-      <ProgressBar value={30} color="primary" />
-      <ProgressBar value={60} color="success" />
-      <ProgressBar value={45} color="warning" />
-      <ProgressBar value={80} color="error" />
-      <ProgressBar value={50} color="gradient" />
+      <ProgressBar
+        value={30}
+        color='primary'
+      />
+      <ProgressBar
+        value={60}
+        color='success'
+      />
+      <ProgressBar
+        value={45}
+        color='warning'
+      />
+      <ProgressBar
+        value={80}
+        color='error'
+      />
+      <ProgressBar
+        value={50}
+        color='gradient'
+      />
     </div>
   ),
 };
@@ -81,11 +96,31 @@ export const LinearVariants: Story = {
 export const Circular: Story = {
   render: () => (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '32px' }}>
-      <ProgressBar value={30} variant="circular" color="primary" />
-      <ProgressBar value={60} variant="circular" color="success" />
-      <ProgressBar value={45} variant="circular" color="warning" />
-      <ProgressBar value={80} variant="circular" color="error" />
-      <ProgressBar value={50} variant="circular" color="gradient" />
+      <ProgressBar
+        value={30}
+        variant='circular'
+        color='primary'
+      />
+      <ProgressBar
+        value={60}
+        variant='circular'
+        color='success'
+      />
+      <ProgressBar
+        value={45}
+        variant='circular'
+        color='warning'
+      />
+      <ProgressBar
+        value={80}
+        variant='circular'
+        color='error'
+      />
+      <ProgressBar
+        value={50}
+        variant='circular'
+        color='gradient'
+      />
     </div>
   ),
 };
@@ -93,9 +128,21 @@ export const Circular: Story = {
 export const Segmented: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
-      <ProgressBar value={30} variant="segmented" segments={10} />
-      <ProgressBar value={60} variant="segmented" segments={10} />
-      <ProgressBar value={45} variant="segmented" segments={20} />
+      <ProgressBar
+        value={30}
+        variant='segmented'
+        segments={10}
+      />
+      <ProgressBar
+        value={60}
+        variant='segmented'
+        segments={10}
+      />
+      <ProgressBar
+        value={45}
+        variant='segmented'
+        segments={20}
+      />
     </div>
   ),
 };
@@ -111,9 +158,22 @@ export const WithLabel: Story = {
 export const Animated: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
-      <ProgressBar value={40} animated color="primary" />
-      <ProgressBar value={60} animated color="gradient" />
-      <ProgressBar value={80} animated variant="circular" color="gradient" />
+      <ProgressBar
+        value={40}
+        animated
+        color='primary'
+      />
+      <ProgressBar
+        value={60}
+        animated
+        color='gradient'
+      />
+      <ProgressBar
+        value={80}
+        animated
+        variant='circular'
+        color='gradient'
+      />
     </div>
   ),
 };
@@ -129,9 +189,18 @@ export const Striped: Story = {
 export const Sizes: Story = {
   render: () => (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', width: '100%' }}>
-      <ProgressBar value={50} size="small" />
-      <ProgressBar value={50} size="medium" />
-      <ProgressBar value={50} size="large" />
+      <ProgressBar
+        value={50}
+        size='small'
+      />
+      <ProgressBar
+        value={50}
+        size='medium'
+      />
+      <ProgressBar
+        value={50}
+        size='large'
+      />
     </div>
   ),
 };

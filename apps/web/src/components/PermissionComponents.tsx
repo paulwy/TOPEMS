@@ -115,9 +115,7 @@ export const RequirePermission: React.FC<RequirePermissionProps> = ({
   if (permission) {
     hasPermission = checkPermission(permission);
   } else if (permissions.length > 0) {
-    hasPermission = requireAll
-      ? checkAllPermissions(permissions)
-      : checkAnyPermission(permissions);
+    hasPermission = requireAll ? checkAllPermissions(permissions) : checkAnyPermission(permissions);
   }
 
   if (hasPermission) {
@@ -132,7 +130,7 @@ export const RequirePermission: React.FC<RequirePermissionProps> = ({
     return (
       <div
         style={{ opacity: 0.5, cursor: 'not-allowed' }}
-        title="您没有此操作的权限"
+        title='您没有此操作的权限'
       >
         {children}
       </div>
@@ -232,7 +230,15 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
         backgroundColor: '#f3f4f6',
       }}
     >
-      <div style={{ textAlign: 'center', padding: '24px', backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
+      <div
+        style={{
+          textAlign: 'center',
+          padding: '24px',
+          backgroundColor: 'white',
+          borderRadius: '12px',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+        }}
+      >
         <div style={{ fontSize: '64px', marginBottom: '16px' }}>🔒</div>
         <h2 style={{ fontSize: '24px', fontWeight: 700, color: '#1f2937', marginBottom: '8px' }}>
           权限不足
@@ -310,20 +316,22 @@ export const ModulePermissionGuard: React.FC<ModulePermissionGuardProps> = ({
             <div style={{ flexShrink: 0, marginRight: '12px' }}>
               <svg
                 style={{ height: 20, width: 20, color: '#d97706' }}
-                viewBox="0 0 20 20"
-                fill="currentColor"
+                viewBox='0 0 20 20'
+                fill='currentColor'
               >
                 <path
-                  fillRule="evenodd"
-                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                  clipRule="evenodd"
+                  fillRule='evenodd'
+                  d='M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z'
+                  clipRule='evenodd'
                 />
               </svg>
             </div>
             <div>
               <h3 style={{ fontSize: '14px', fontWeight: 500, color: '#92400e' }}>权限提示</h3>
               <div style={{ marginTop: '8px', fontSize: '14px', color: '#92400e' }}>
-                <p>您没有访问 {module} 模块的 {action} 权限。</p>
+                <p>
+                  您没有访问 {module} 模块的 {action} 权限。
+                </p>
               </div>
             </div>
           </div>
@@ -357,9 +365,7 @@ export const ConditionalRender: React.FC<ConditionalRenderProps> = ({
   if (permission) {
     hasPermission = checkPermission(permission);
   } else if (permissions.length > 0) {
-    hasPermission = requireAll
-      ? checkAllPermissions(permissions)
-      : checkAnyPermission(permissions);
+    hasPermission = requireAll ? checkAllPermissions(permissions) : checkAnyPermission(permissions);
   }
 
   return <>{hasPermission ? children : elseContent}</>;

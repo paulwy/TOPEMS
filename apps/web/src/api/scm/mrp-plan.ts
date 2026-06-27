@@ -9,9 +9,7 @@ import type {
 } from './types';
 
 export const mrpPlanApi = {
-  list: async (
-    params?: MrpPlanQueryParams
-  ): Promise<ApiResponse<PaginatedResponse<MrpPlan>>> => {
+  list: async (params?: MrpPlanQueryParams): Promise<ApiResponse<PaginatedResponse<MrpPlan>>> => {
     return apiClient.scm.get('/api/scm/mrp-plans', { params });
   },
 
@@ -23,10 +21,7 @@ export const mrpPlanApi = {
     return apiClient.scm.get(`/api/scm/mrp-plans/${id}`);
   },
 
-  update: async (
-    id: string,
-    data: UpdateMrpPlanRequest
-  ): Promise<ApiResponse<MrpPlan>> => {
+  update: async (id: string, data: UpdateMrpPlanRequest): Promise<ApiResponse<MrpPlan>> => {
     return apiClient.scm.put(`/api/scm/mrp-plans/${id}`, data);
   },
 

@@ -31,9 +31,24 @@ import {
   StatsPageTemplate,
   type StatsStatCard,
 } from '@/components/templates';
-import { ConfirmDialog, PageContainer } from '@/components/common';
-import { Button, TextField, FormControl, InputLabel, Select, MenuItem, Box, Typography, Chip, Avatar, FormLabel, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
-import { ImageUpload } from '@/components/common';
+import { ConfirmDialog, PageContainer, ImageUpload } from '@/components/common';
+import {
+  Button,
+  TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Box,
+  Typography,
+  Chip,
+  Avatar,
+  FormLabel,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from '@mui/material';
 
 const HrmTrainingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -148,7 +163,11 @@ const HrmTrainingPage: React.FC = () => {
       }
 
       if (response.code === 200) {
-        addNotification({ title: '成功', message: editItem ? '更新成功' : '创建成功', type: 'success' });
+        addNotification({
+          title: '成功',
+          message: editItem ? '更新成功' : '创建成功',
+          type: 'success',
+        });
         setShowModal(false);
         loadData();
       }
@@ -158,58 +177,71 @@ const HrmTrainingPage: React.FC = () => {
     }
   }, [editItem, formData, activeTab, addNotification, loadData]);
 
-  const handleDelete = useCallback(async (id: string) => {
-    try {
-      let response;
-      if (activeTab === 'plans') {
-        response = await trainingPlanApi.delete(id);
-      } else if (activeTab === 'courses') {
-        response = await trainingCourseApi.delete(id);
-      } else {
-        response = await trainingRecordApi.delete(id);
-      }
+  const handleDelete = useCallback(
+    async (id: string) => {
+      try {
+        let response;
+        if (activeTab === 'plans') {
+          response = await trainingPlanApi.delete(id);
+        } else if (activeTab === 'courses') {
+          response = await trainingCourseApi.delete(id);
+        } else {
+          response = await trainingRecordApi.delete(id);
+        }
 
-      if (response.code === 200) {
-        addNotification({ title: '成功', message: '删除成功', type: 'success' });
-        loadData();
+        if (response.code === 200) {
+          addNotification({ title: '成功', message: '删除成功', type: 'success' });
+          loadData();
+        }
+      } catch (err: unknown) {
+        apiLogger.error('Failed to delete:', err);
+        addNotification({ title: '失败', message: '删除失败', type: 'error' });
       }
-    } catch (err: unknown) {
-      apiLogger.error('Failed to delete:', err);
-      addNotification({ title: '失败', message: '删除失败', type: 'error' });
-    }
-  }, [activeTab, addNotification, loadData]);
+    },
+    [activeTab, addNotification, loadData]
+  );
 
-  const handleStatusChange = useCallback(async (id: string, activate: boolean) => {
-    try {
-      const response = await (activate
-        ? trainingPlanApi.activate(id)
-        : trainingPlanApi.deactivate(id));
-      if (response.code === 200) {
-        addNotification({ title: '成功', message: activate ? '已启用' : '已停用', type: 'success' });
-        loadData();
+  const handleStatusChange = useCallback(
+    async (id: string, activate: boolean) => {
+      try {
+        const response = await (activate
+          ? trainingPlanApi.activate(id)
+          : trainingPlanApi.deactivate(id));
+        if (response.code === 200) {
+          addNotification({
+            title: '成功',
+            message: activate ? '已启用' : '已停用',
+            type: 'success',
+          });
+          loadData();
+        }
+      } catch (err: unknown) {
+        apiLogger.error('Failed to update status:', err);
+        addNotification({ title: '失败', message: '操作失败', type: 'error' });
       }
-    } catch (err: unknown) {
-      apiLogger.error('Failed to update status:', err);
-      addNotification({ title: '失败', message: '操作失败', type: 'error' });
-    }
-  }, [addNotification, loadData]);
+    },
+    [addNotification, loadData]
+  );
 
-  const handleEnroll = useCallback(async (employeeId: string) => {
-    if (!selectedCourse) return;
+  const handleEnroll = useCallback(
+    async (employeeId: string) => {
+      if (!selectedCourse) return;
 
-    try {
-      const response = await trainingRecordApi.enroll(selectedCourse.id, employeeId);
-      if (response.code === 200) {
-        addNotification({ title: '成功', message: '报名成功', type: 'success' });
-        setShowEnrollModal(false);
-        setSelectedCourse(null);
-        loadData();
+      try {
+        const response = await trainingRecordApi.enroll(selectedCourse.id, employeeId);
+        if (response.code === 200) {
+          addNotification({ title: '成功', message: '报名成功', type: 'success' });
+          setShowEnrollModal(false);
+          setSelectedCourse(null);
+          loadData();
+        }
+      } catch (err: unknown) {
+        apiLogger.error('Failed to enroll:', err);
+        addNotification({ title: '失败', message: '报名失败', type: 'error' });
       }
-    } catch (err: unknown) {
-      apiLogger.error('Failed to enroll:', err);
-      addNotification({ title: '失败', message: '报名失败', type: 'error' });
-    }
-  }, [selectedCourse, addNotification, loadData]);
+    },
+    [selectedCourse, addNotification, loadData]
+  );
 
   const filteredPlans = plans.filter(
     (plan) =>
@@ -253,12 +285,13 @@ const HrmTrainingPage: React.FC = () => {
     {
       id: 'avgCompletionRate',
       title: '平均完成率',
-      value: records.length > 0
-        ? Math.round(
-            (records.filter((r) => r.completion_status === 'completed').length / records.length) *
-              100
-          )
-        : 0,
+      value:
+        records.length > 0
+          ? Math.round(
+              (records.filter((r) => r.completion_status === 'completed').length / records.length) *
+                100
+            )
+          : 0,
       suffix: '%',
       icon: <Users size={20} />,
       color: 'info',
@@ -284,8 +317,12 @@ const HrmTrainingPage: React.FC = () => {
       label: '时间安排',
       width: 180,
       render: (row) => (
-        <Typography variant="body2" color="text.secondary">
-          {new Date(row.start_date).toLocaleDateString()} ~ {new Date(row.end_date).toLocaleDateString()}
+        <Typography
+          variant='body2'
+          color='text.secondary'
+        >
+          {new Date(row.start_date).toLocaleDateString()} ~{' '}
+          {new Date(row.end_date).toLocaleDateString()}
         </Typography>
       ),
     },
@@ -295,7 +332,9 @@ const HrmTrainingPage: React.FC = () => {
       width: 120,
       align: 'right',
       render: (row) => (
-        <Typography variant="body2">{row.budget ? `¥${row.budget.toLocaleString()}` : '-'}</Typography>
+        <Typography variant='body2'>
+          {row.budget ? `¥${row.budget.toLocaleString()}` : '-'}
+        </Typography>
       ),
     },
     {
@@ -303,7 +342,11 @@ const HrmTrainingPage: React.FC = () => {
       label: '状态',
       width: 100,
       render: (row) => (
-        <Chip size="small" label={row.status === 'active' ? '进行中' : '已结束'} color={row.status === 'active' ? 'primary' : 'default'} />
+        <Chip
+          size='small'
+          label={row.status === 'active' ? '进行中' : '已结束'}
+          color={row.status === 'active' ? 'primary' : 'default'}
+        />
       ),
     },
   ];
@@ -331,12 +374,25 @@ const HrmTrainingPage: React.FC = () => {
       width: 200,
       render: (row) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.light', color: 'primary.dark', fontSize: 14 }}>
+          <Avatar
+            sx={{
+              width: 32,
+              height: 32,
+              bgcolor: 'primary.light',
+              color: 'primary.dark',
+              fontSize: 14,
+            }}
+          >
             {row.name.charAt(0).toUpperCase()}
           </Avatar>
           <Box>
             <Typography sx={{ fontWeight: 600 }}>{row.name}</Typography>
-            <Typography variant="body2" color="text.secondary">{row.code || '未设置代码'}</Typography>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
+              {row.code || '未设置代码'}
+            </Typography>
           </Box>
         </Box>
       ),
@@ -346,7 +402,10 @@ const HrmTrainingPage: React.FC = () => {
       label: '分类',
       width: 120,
       render: (row) => (
-        <Chip size="small" label={row.category} />
+        <Chip
+          size='small'
+          label={row.category}
+        />
       ),
     },
     {
@@ -359,23 +418,27 @@ const HrmTrainingPage: React.FC = () => {
       label: '时长',
       width: 100,
       render: (row) => (
-        <Typography variant="body2">{row.duration_hours ? `${row.duration_hours}小时` : '-'}</Typography>
+        <Typography variant='body2'>
+          {row.duration_hours ? `${row.duration_hours}小时` : '-'}
+        </Typography>
       ),
     },
     {
       id: 'instructor',
       label: '讲师',
       width: 120,
-      render: (row) => (
-        <Typography variant="body2">{row.instructor_name || '-'}</Typography>
-      ),
+      render: (row) => <Typography variant='body2'>{row.instructor_name || '-'}</Typography>,
     },
     {
       id: 'status',
       label: '状态',
       width: 100,
       render: (row) => (
-        <Chip size="small" label={row.status === 'active' ? '开放报名' : '已关闭'} color={row.status === 'active' ? 'success' : 'default'} />
+        <Chip
+          size='small'
+          label={row.status === 'active' ? '开放报名' : '已关闭'}
+          color={row.status === 'active' ? 'success' : 'default'}
+        />
       ),
     },
   ];
@@ -410,10 +473,23 @@ const HrmTrainingPage: React.FC = () => {
       width: 150,
       render: (row) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.light', color: 'primary.dark', fontSize: 14 }}>
+          <Avatar
+            sx={{
+              width: 32,
+              height: 32,
+              bgcolor: 'primary.light',
+              color: 'primary.dark',
+              fontSize: 14,
+            }}
+          >
             {getEmployeeName(row.employee_id).charAt(0).toUpperCase()}
           </Avatar>
-          <Typography variant="body2" sx={{ fontWeight: 500 }}>{getEmployeeName(row.employee_id)}</Typography>
+          <Typography
+            variant='body2'
+            sx={{ fontWeight: 500 }}
+          >
+            {getEmployeeName(row.employee_id)}
+          </Typography>
         </Box>
       ),
     },
@@ -422,7 +498,12 @@ const HrmTrainingPage: React.FC = () => {
       label: '课程',
       width: 150,
       render: (row) => (
-        <Typography variant="body2" color="text.secondary">{row.course_id.substring(0, 8)}...</Typography>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+        >
+          {row.course_id.substring(0, 8)}...
+        </Typography>
       ),
     },
     {
@@ -430,7 +511,9 @@ const HrmTrainingPage: React.FC = () => {
       label: '报名日期',
       width: 120,
       render: (row) => (
-        <Typography variant="body2">{new Date(row.enrollment_date).toLocaleDateString()}</Typography>
+        <Typography variant='body2'>
+          {new Date(row.enrollment_date).toLocaleDateString()}
+        </Typography>
       ),
     },
     {
@@ -441,7 +524,7 @@ const HrmTrainingPage: React.FC = () => {
         const status = row.attendance_status;
         return (
           <Chip
-            size="small"
+            size='small'
             label={status === 'attended' ? '已出勤' : status === 'absent' ? '缺勤' : '未考勤'}
             color={status === 'attended' ? 'success' : status === 'absent' ? 'error' : 'default'}
             variant={status === 'pending' ? 'outlined' : 'filled'}
@@ -455,7 +538,7 @@ const HrmTrainingPage: React.FC = () => {
       width: 100,
       render: (row) => (
         <Chip
-          size="small"
+          size='small'
           label={row.completion_status === 'completed' ? '已完成' : '未完成'}
           color={row.completion_status === 'completed' ? 'success' : 'default'}
           variant={row.completion_status === 'completed' ? 'filled' : 'outlined'}
@@ -467,7 +550,7 @@ const HrmTrainingPage: React.FC = () => {
       label: '成绩',
       width: 100,
       render: (row) => (
-        <Typography variant="body2">{row.score ? `${row.score}分` : '-'}</Typography>
+        <Typography variant='body2'>{row.score ? `${row.score}分` : '-'}</Typography>
       ),
     },
   ];
@@ -489,7 +572,10 @@ const HrmTrainingPage: React.FC = () => {
   ];
 
   return (
-    <PageContainer padding={false} maxWidth={false}>
+    <PageContainer
+      padding={false}
+      maxWidth={false}
+    >
       <StatsPageTemplate
         title='培训管理'
         subtitle='管理培训计划、课程和培训记录'
@@ -587,7 +673,12 @@ const HrmTrainingPage: React.FC = () => {
       )}
 
       {showModal && (
-        <Dialog open={showModal} onClose={() => setShowModal(false)} maxWidth="sm" fullWidth>
+        <Dialog
+          open={showModal}
+          onClose={() => setShowModal(false)}
+          maxWidth='sm'
+          fullWidth
+        >
           <DialogTitle>
             {editItem ? '编辑' : '新增'}
             {activeTab === 'plans' ? '培训计划' : '培训课程'}
@@ -597,38 +688,38 @@ const HrmTrainingPage: React.FC = () => {
               {activeTab === 'plans' ? (
                 <>
                   <Box>
-                    <FormLabel htmlFor="plan-name">计划名称 *</FormLabel>
+                    <FormLabel htmlFor='plan-name'>计划名称 *</FormLabel>
                     <TextField
-                      id="plan-name"
-                      size="small"
+                      id='plan-name'
+                      size='small'
                       fullWidth
-                      type="text"
+                      type='text'
                       value={(formData as TrainingPlan).name || ''}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="请输入计划名称"
+                      placeholder='请输入计划名称'
                     />
                   </Box>
                   <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
                     <Box>
-                      <FormLabel htmlFor="plan-code">计划代码</FormLabel>
+                      <FormLabel htmlFor='plan-code'>计划代码</FormLabel>
                       <TextField
-                        id="plan-code"
-                        size="small"
+                        id='plan-code'
+                        size='small'
                         fullWidth
-                        type="text"
+                        type='text'
                         value={(formData as TrainingPlan).code || ''}
                         onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                        placeholder="自动生成"
+                        placeholder='自动生成'
                         disabled={!!editItem}
                       />
                     </Box>
                     <Box>
-                      <FormLabel htmlFor="plan-budget">预算</FormLabel>
+                      <FormLabel htmlFor='plan-budget'>预算</FormLabel>
                       <TextField
-                        id="plan-budget"
-                        size="small"
+                        id='plan-budget'
+                        size='small'
                         fullWidth
-                        type="number"
+                        type='number'
                         value={(formData as TrainingPlan).budget?.toString() || ''}
                         onChange={(e) =>
                           setFormData({
@@ -636,18 +727,18 @@ const HrmTrainingPage: React.FC = () => {
                             budget: parseFloat(e.target.value) || undefined,
                           })
                         }
-                        placeholder="请输入预算金额"
+                        placeholder='请输入预算金额'
                       />
                     </Box>
                   </Box>
                   <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
                     <Box>
-                      <FormLabel htmlFor="plan-start">开始日期 *</FormLabel>
+                      <FormLabel htmlFor='plan-start'>开始日期 *</FormLabel>
                       <TextField
-                        id="plan-start"
-                        size="small"
+                        id='plan-start'
+                        size='small'
                         fullWidth
-                        type="date"
+                        type='date'
                         value={(formData as TrainingPlan).start_date || ''}
                         onChange={(e) =>
                           setFormData({
@@ -658,87 +749,103 @@ const HrmTrainingPage: React.FC = () => {
                       />
                     </Box>
                     <Box>
-                      <FormLabel htmlFor="plan-end">结束日期 *</FormLabel>
+                      <FormLabel htmlFor='plan-end'>结束日期 *</FormLabel>
                       <TextField
-                        id="plan-end"
-                        size="small"
+                        id='plan-end'
+                        size='small'
                         fullWidth
-                        type="date"
+                        type='date'
                         value={(formData as TrainingPlan).end_date || ''}
                         onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
                       />
                     </Box>
                   </Box>
                   <Box>
-                    <FormLabel htmlFor="plan-description">描述</FormLabel>
+                    <FormLabel htmlFor='plan-description'>描述</FormLabel>
                     <TextField
-                      id="plan-description"
-                      size="small"
+                      id='plan-description'
+                      size='small'
                       fullWidth
                       multiline
                       rows={3}
                       value={(formData as TrainingPlan).description || ''}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      placeholder="请输入计划描述"
+                      placeholder='请输入计划描述'
                     />
                   </Box>
                 </>
               ) : (
                 <>
                   <Box>
-                    <FormLabel htmlFor="course-name">课程名称 *</FormLabel>
+                    <FormLabel htmlFor='course-name'>课程名称 *</FormLabel>
                     <TextField
-                      id="course-name"
-                      size="small"
+                      id='course-name'
+                      size='small'
                       fullWidth
-                      type="text"
+                      type='text'
                       value={(formData as TrainingCourse).name || ''}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="请输入课程名称"
+                      placeholder='请输入课程名称'
                     />
                   </Box>
                   <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
                     <Box>
-                      <FormLabel htmlFor="course-category">分类 *</FormLabel>
-                      <FormControl size="small" fullWidth>
+                      <FormLabel htmlFor='course-category'>分类 *</FormLabel>
+                      <FormControl
+                        size='small'
+                        fullWidth
+                      >
                         <Select
                           value={(formData as TrainingCourse).category || ''}
                           onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                           displayEmpty
                         >
-                          <MenuItem value="" disabled>请选择分类</MenuItem>
-                          <MenuItem value="technical">技术培训</MenuItem>
-                          <MenuItem value="management">管理培训</MenuItem>
-                          <MenuItem value="soft_skill">软技能</MenuItem>
-                          <MenuItem value="onboarding">入职培训</MenuItem>
+                          <MenuItem
+                            value=''
+                            disabled
+                          >
+                            请选择分类
+                          </MenuItem>
+                          <MenuItem value='technical'>技术培训</MenuItem>
+                          <MenuItem value='management'>管理培训</MenuItem>
+                          <MenuItem value='soft_skill'>软技能</MenuItem>
+                          <MenuItem value='onboarding'>入职培训</MenuItem>
                         </Select>
                       </FormControl>
                     </Box>
                     <Box>
-                      <FormLabel htmlFor="course-level">级别 *</FormLabel>
-                      <FormControl size="small" fullWidth>
+                      <FormLabel htmlFor='course-level'>级别 *</FormLabel>
+                      <FormControl
+                        size='small'
+                        fullWidth
+                      >
                         <Select
                           value={(formData as TrainingCourse).level || ''}
                           onChange={(e) => setFormData({ ...formData, level: e.target.value })}
                           displayEmpty
                         >
-                          <MenuItem value="" disabled>请选择级别</MenuItem>
-                          <MenuItem value="beginner">入门级</MenuItem>
-                          <MenuItem value="intermediate">中级</MenuItem>
-                          <MenuItem value="advanced">高级</MenuItem>
-                          <MenuItem value="expert">专家级</MenuItem>
+                          <MenuItem
+                            value=''
+                            disabled
+                          >
+                            请选择级别
+                          </MenuItem>
+                          <MenuItem value='beginner'>入门级</MenuItem>
+                          <MenuItem value='intermediate'>中级</MenuItem>
+                          <MenuItem value='advanced'>高级</MenuItem>
+                          <MenuItem value='expert'>专家级</MenuItem>
                         </Select>
                       </FormControl>
                     </Box>
                   </Box>
                   <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
                     <Box>
-                      <FormLabel htmlFor="course-duration">时长(小时)</FormLabel>
+                      <FormLabel htmlFor='course-duration'>时长(小时)</FormLabel>
                       <TextField
-                        id="course-duration"
-                        size="small"
+                        id='course-duration'
+                        size='small'
                         fullWidth
-                        type="number"
+                        type='number'
                         value={(formData as TrainingCourse).duration_hours?.toString() || ''}
                         onChange={(e) =>
                           setFormData({
@@ -749,12 +856,12 @@ const HrmTrainingPage: React.FC = () => {
                       />
                     </Box>
                     <Box>
-                      <FormLabel htmlFor="course-participants">最大人数</FormLabel>
+                      <FormLabel htmlFor='course-participants'>最大人数</FormLabel>
                       <TextField
-                        id="course-participants"
-                        size="small"
+                        id='course-participants'
+                        size='small'
                         fullWidth
-                        type="number"
+                        type='number'
                         value={(formData as TrainingCourse).max_participants?.toString() || ''}
                         onChange={(e) =>
                           setFormData({
@@ -766,12 +873,12 @@ const HrmTrainingPage: React.FC = () => {
                     </Box>
                   </Box>
                   <Box>
-                    <FormLabel htmlFor="course-instructor">讲师</FormLabel>
+                    <FormLabel htmlFor='course-instructor'>讲师</FormLabel>
                     <TextField
-                      id="course-instructor"
-                      size="small"
+                      id='course-instructor'
+                      size='small'
                       fullWidth
-                      type="text"
+                      type='text'
                       value={(formData as TrainingCourse).instructor_name || ''}
                       onChange={(e) =>
                         setFormData({
@@ -779,30 +886,30 @@ const HrmTrainingPage: React.FC = () => {
                           instructor_name: e.target.value,
                         })
                       }
-                      placeholder="请输入讲师姓名"
+                      placeholder='请输入讲师姓名'
                     />
                   </Box>
                   <Box>
-                    <FormLabel htmlFor="course-description">描述</FormLabel>
+                    <FormLabel htmlFor='course-description'>描述</FormLabel>
                     <TextField
-                      id="course-description"
-                      size="small"
+                      id='course-description'
+                      size='small'
                       fullWidth
                       multiline
                       rows={3}
                       value={(formData as TrainingCourse).description || ''}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      placeholder="请输入课程描述"
+                      placeholder='请输入课程描述'
                     />
                   </Box>
                   <Box>
-                    <FormLabel htmlFor="course-images">课程图片</FormLabel>
+                    <FormLabel htmlFor='course-images'>课程图片</FormLabel>
                     <Box sx={{ mt: 1 }}>
                       <ImageUpload
                         value={(formData as any).images || []}
                         onChange={(files) => setFormData({ ...formData, images: files } as any)}
                         maxCount={9}
-                        accept="image/*"
+                        accept='image/*'
                         cropEnabled
                         height={150}
                       />
@@ -813,59 +920,127 @@ const HrmTrainingPage: React.FC = () => {
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button variant="outlined" onClick={() => setShowModal(false)}>取消</Button>
-            <Button variant="contained" onClick={handleSave}>{editItem ? '保存' : '创建'}</Button>
+            <Button
+              variant='outlined'
+              onClick={() => setShowModal(false)}
+            >
+              取消
+            </Button>
+            <Button
+              variant='contained'
+              onClick={handleSave}
+            >
+              {editItem ? '保存' : '创建'}
+            </Button>
           </DialogActions>
         </Dialog>
       )}
 
       {showRecordModal && selectedRecord && (
-        <Dialog open={showRecordModal} onClose={() => setShowRecordModal(false)} maxWidth="sm" fullWidth>
+        <Dialog
+          open={showRecordModal}
+          onClose={() => setShowRecordModal(false)}
+          maxWidth='sm'
+          fullWidth
+        >
           <DialogTitle>培训记录详情</DialogTitle>
           <DialogContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-                  <Avatar sx={{ width: 48, height: 48, bgcolor: 'primary.light', color: 'primary.dark' }}>
+                  <Avatar
+                    sx={{ width: 48, height: 48, bgcolor: 'primary.light', color: 'primary.dark' }}
+                  >
                     {getEmployeeName(selectedRecord.employee_id).charAt(0).toUpperCase()}
                   </Avatar>
                   <Box>
-                    <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                    <Typography
+                      variant='subtitle1'
+                      sx={{ fontWeight: 600 }}
+                    >
                       {getEmployeeName(selectedRecord.employee_id)}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
                       员工ID: {selectedRecord.employee_id.substring(0, 8)}...
                     </Typography>
                   </Box>
                 </Box>
                 <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
                   <Box>
-                    <Typography variant="body2" color="text.secondary">课程ID</Typography>
-                    <Typography variant="body2">{selectedRecord.course_id.substring(0, 8)}...</Typography>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      课程ID
+                    </Typography>
+                    <Typography variant='body2'>
+                      {selectedRecord.course_id.substring(0, 8)}...
+                    </Typography>
                   </Box>
                   <Box>
-                    <Typography variant="body2" color="text.secondary">报名日期</Typography>
-                    <Typography variant="body2">{new Date(selectedRecord.enrollment_date).toLocaleDateString()}</Typography>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      报名日期
+                    </Typography>
+                    <Typography variant='body2'>
+                      {new Date(selectedRecord.enrollment_date).toLocaleDateString()}
+                    </Typography>
                   </Box>
                   <Box>
-                    <Typography variant="body2" color="text.secondary">出勤状态</Typography>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      出勤状态
+                    </Typography>
                     <Chip
-                      size="small"
-                      label={selectedRecord.attendance_status === 'attended' ? '已出勤' : selectedRecord.attendance_status === 'absent' ? '缺勤' : '未考勤'}
-                      color={selectedRecord.attendance_status === 'attended' ? 'success' : selectedRecord.attendance_status === 'absent' ? 'error' : 'default'}
+                      size='small'
+                      label={
+                        selectedRecord.attendance_status === 'attended'
+                          ? '已出勤'
+                          : selectedRecord.attendance_status === 'absent'
+                            ? '缺勤'
+                            : '未考勤'
+                      }
+                      color={
+                        selectedRecord.attendance_status === 'attended'
+                          ? 'success'
+                          : selectedRecord.attendance_status === 'absent'
+                            ? 'error'
+                            : 'default'
+                      }
                     />
                   </Box>
                   <Box>
-                    <Typography variant="body2" color="text.secondary">完成状态</Typography>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      完成状态
+                    </Typography>
                     <Chip
-                      size="small"
+                      size='small'
                       label={selectedRecord.completion_status === 'completed' ? '已完成' : '未完成'}
-                      color={selectedRecord.completion_status === 'completed' ? 'success' : 'default'}
+                      color={
+                        selectedRecord.completion_status === 'completed' ? 'success' : 'default'
+                      }
                     />
                   </Box>
                   <Box>
-                    <Typography variant="body2" color="text.secondary">成绩</Typography>
-                    <Typography variant="body2">{selectedRecord.score ? `${selectedRecord.score}分` : '-'}</Typography>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      成绩
+                    </Typography>
+                    <Typography variant='body2'>
+                      {selectedRecord.score ? `${selectedRecord.score}分` : '-'}
+                    </Typography>
                   </Box>
                 </Box>
               </Box>
@@ -878,16 +1053,33 @@ const HrmTrainingPage: React.FC = () => {
       )}
 
       {showEnrollModal && selectedCourse && (
-        <Dialog open={showEnrollModal} onClose={() => setShowEnrollModal(false)} maxWidth="sm" fullWidth>
+        <Dialog
+          open={showEnrollModal}
+          onClose={() => setShowEnrollModal(false)}
+          maxWidth='sm'
+          fullWidth
+        >
           <DialogTitle>报名课程</DialogTitle>
           <DialogContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Typography variant="body2" color="text.secondary">选择员工报名参加课程: {selectedCourse.name}</Typography>
-              <FormControl size="small" fullWidth>
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
+                选择员工报名参加课程: {selectedCourse.name}
+              </Typography>
+              <FormControl
+                size='small'
+                fullWidth
+              >
                 <InputLabel>员工</InputLabel>
                 <Select>
                   {employees.map((emp) => (
-                    <MenuItem key={emp.id} value={emp.id} onClick={() => handleEnroll(emp.id)}>
+                    <MenuItem
+                      key={emp.id}
+                      value={emp.id}
+                      onClick={() => handleEnroll(emp.id)}
+                    >
                       {emp.name} ({emp.employee_no})
                     </MenuItem>
                   ))}

@@ -1,6 +1,5 @@
 import React from 'react';
-import { Box, Typography, IconButton } from '@mui/material';
-import { Button } from '@mui/material';
+import { Box, Typography, IconButton, Button } from '@mui/material';
 import {
   X,
   Activity,

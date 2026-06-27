@@ -33,15 +33,13 @@ export const complianceApi = {
     if (params?.category) queryParams.append('category', params.category);
     if (params?.regulation_type) queryParams.append('regulation_type', params.regulation_type);
     if (params?.status) queryParams.append('status', params.status);
-  
+
     return apiClient.ehs.get<PaginatedResponse<EnvironmentalRegulation>>(
       `/api/ehs/environmental-compliance/regulations?${queryParams.toString()}`
     );
   },
 
-  getEnvironmentalRegulation: async (
-    id: string
-  ): Promise<ApiResponse<EnvironmentalRegulation>> => {
+  getEnvironmentalRegulation: async (id: string): Promise<ApiResponse<EnvironmentalRegulation>> => {
     return apiClient.ehs.get<EnvironmentalRegulation>(
       `/api/ehs/environmental-compliance/regulations/${id}`
     );
@@ -67,9 +65,7 @@ export const complianceApi = {
   },
 
   deleteEnvironmentalRegulation: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(
-      `/api/ehs/environmental-compliance/regulations/${id}`
-    );
+    return apiClient.ehs.delete<void>(`/api/ehs/environmental-compliance/regulations/${id}`);
   },
 
   listComplianceAssessments: async (
@@ -79,19 +75,16 @@ export const complianceApi = {
     if (params?.page) queryParams.append('page', params.page.toString());
     if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.search) queryParams.append('search', params.search);
-    if (params?.assessment_type)
-      queryParams.append('assessment_type', params.assessment_type);
+    if (params?.assessment_type) queryParams.append('assessment_type', params.assessment_type);
     if (params?.result) queryParams.append('result', params.result);
     if (params?.status) queryParams.append('status', params.status);
-  
+
     return apiClient.ehs.get<PaginatedResponse<ComplianceAssessment>>(
       `/api/ehs/environmental-compliance/assessments?${queryParams.toString()}`
     );
   },
 
-  getComplianceAssessment: async (
-    id: string
-  ): Promise<ApiResponse<ComplianceAssessment>> => {
+  getComplianceAssessment: async (id: string): Promise<ApiResponse<ComplianceAssessment>> => {
     return apiClient.ehs.get<ComplianceAssessment>(
       `/api/ehs/environmental-compliance/assessments/${id}`
     );
@@ -117,9 +110,7 @@ export const complianceApi = {
   },
 
   deleteComplianceAssessment: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(
-      `/api/ehs/environmental-compliance/assessments/${id}`
-    );
+    return apiClient.ehs.delete<void>(`/api/ehs/environmental-compliance/assessments/${id}`);
   },
 
   listDischargePermits: async (
@@ -132,25 +123,20 @@ export const complianceApi = {
     if (params?.permit_type) queryParams.append('permit_type', params.permit_type);
     if (params?.permit_category) queryParams.append('permit_category', params.permit_category);
     if (params?.status) queryParams.append('status', params.status);
-  
+
     return apiClient.ehs.get<PaginatedResponse<DischargePermit>>(
       `/api/ehs/environmental-compliance/permits?${queryParams.toString()}`
     );
   },
 
   getDischargePermit: async (id: string): Promise<ApiResponse<DischargePermit>> => {
-    return apiClient.ehs.get<DischargePermit>(
-      `/api/ehs/environmental-compliance/permits/${id}`
-    );
+    return apiClient.ehs.get<DischargePermit>(`/api/ehs/environmental-compliance/permits/${id}`);
   },
 
   createDischargePermit: async (
     data: CreateDischargePermitRequest
   ): Promise<ApiResponse<DischargePermit>> => {
-    return apiClient.ehs.post<DischargePermit>(
-      '/api/ehs/environmental-compliance/permits',
-      data
-    );
+    return apiClient.ehs.post<DischargePermit>('/api/ehs/environmental-compliance/permits', data);
   },
 
   updateDischargePermit: async (
@@ -164,9 +150,7 @@ export const complianceApi = {
   },
 
   deleteDischargePermit: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(
-      `/api/ehs/environmental-compliance/permits/${id}`
-    );
+    return apiClient.ehs.delete<void>(`/api/ehs/environmental-compliance/permits/${id}`);
   },
 
   listEnvironmentalEvents: async (
@@ -182,25 +166,20 @@ export const complianceApi = {
     if (params?.status) queryParams.append('status', params.status);
     if (params?.start_date) queryParams.append('start_date', params.start_date);
     if (params?.end_date) queryParams.append('end_date', params.end_date);
-  
+
     return apiClient.ehs.get<PaginatedResponse<EnvironmentalEvent>>(
       `/api/ehs/environmental-compliance/events?${queryParams.toString()}`
     );
   },
 
   getEnvironmentalEvent: async (id: string): Promise<ApiResponse<EnvironmentalEvent>> => {
-    return apiClient.ehs.get<EnvironmentalEvent>(
-      `/api/ehs/environmental-compliance/events/${id}`
-    );
+    return apiClient.ehs.get<EnvironmentalEvent>(`/api/ehs/environmental-compliance/events/${id}`);
   },
 
   createEnvironmentalEvent: async (
     data: CreateEnvironmentalEventRequest
   ): Promise<ApiResponse<EnvironmentalEvent>> => {
-    return apiClient.ehs.post<EnvironmentalEvent>(
-      '/api/ehs/environmental-compliance/events',
-      data
-    );
+    return apiClient.ehs.post<EnvironmentalEvent>('/api/ehs/environmental-compliance/events', data);
   },
 
   updateEnvironmentalEvent: async (
@@ -214,9 +193,7 @@ export const complianceApi = {
   },
 
   deleteEnvironmentalEvent: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(
-      `/api/ehs/environmental-compliance/events/${id}`
-    );
+    return apiClient.ehs.delete<void>(`/api/ehs/environmental-compliance/events/${id}`);
   },
 };
 

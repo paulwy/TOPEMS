@@ -31,8 +31,8 @@ import {
   Stack,
   Tabs,
   Tab,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import {
   useCompanyRelations,
@@ -326,7 +326,6 @@ export default function CompanyStructurePage() {
       subtitle='管理母子公司关系，用于多公司合并报表'
       maxWidth='xl'
     >
-
       {/* 搜索栏 */}
       <Card sx={{ mb: 3 }}>
         <CardContent>

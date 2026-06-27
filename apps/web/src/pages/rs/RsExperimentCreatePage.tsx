@@ -1,6 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { FormPageTemplate, type FormSection, type FormField } from '@/components/templates/FormPageTemplate';
+import {
+  FormPageTemplate,
+  type FormSection,
+  type FormField,
+} from '@/components/templates/FormPageTemplate';
 import { PageContainer } from '@/components/common';
 import { rsApi, formulaApi } from '@/api/rs';
 import { useAppStore } from '@/store';
@@ -40,124 +44,130 @@ const RsExperimentCreatePage: React.FC = () => {
     scale_unit: 'kg',
   };
 
-  const sections: FormSection[] = useMemo(() => [
-    {
-      id: 'basic',
-      title: '基本信息',
-      description: '试验核心信息',
-      collapsible: true,
-      defaultExpanded: true,
-      fields: [
-        {
-          name: 'name',
-          label: '试验名称',
-          type: 'text',
-          required: true,
-          placeholder: '请输入试验名称',
-        },
-        {
-          name: 'code',
-          label: '试验编码',
-          type: 'text',
-          required: true,
-          disabled: isEdit,
-          placeholder: '例如: EXP-2024-001',
-          helperText: '编辑时编码不可修改',
-        },
-        {
-          name: 'project_id',
-          label: '所属项目',
-          type: 'select',
-          required: true,
-          options: projectsLoading
-            ? [{ label: '加载中...', value: '' }]
-            : projects.map((p) => ({
-                label: p.name || p.project_name || p.code,
-                value: p.id,
-              })),
-        },
-        {
-          name: 'formula_id',
-          label: '关联配方',
-          type: 'select',
-          options: formulasLoading
-            ? [{ label: '加载中...', value: '' }]
-            : [{ label: '无', value: '' }, ...formulas.map((f) => ({
-                label: `${f.name} (${f.version})`,
-                value: f.id,
-              }))],
-        },
-        {
-          name: 'experiment_type',
-          label: '试验类型',
-          type: 'select',
-          options: experimentTypes.map((type) => ({ label: type, value: type })),
-        },
-        {
-          name: 'phase',
-          label: '试验阶段',
-          type: 'select',
-          options: phases.map((phase) => ({ label: phase, value: phase })),
-        },
-      ],
-    },
-    {
-      id: 'content',
-      title: '试验内容',
-      description: '试验目标和方法',
-      collapsible: true,
-      defaultExpanded: true,
-      fields: [
-        {
-          name: 'objective',
-          label: '试验目标',
-          type: 'textarea',
-          rows: 3,
-          placeholder: '请输入试验目标',
-        },
-        {
-          name: 'method',
-          label: '实验方法',
-          type: 'textarea',
-          rows: 4,
-          placeholder: '请输入实验方法描述',
-        },
-      ],
-    },
-    {
-      id: 'execution',
-      title: '执行信息',
-      description: '实验员和批次信息',
-      collapsible: true,
-      defaultExpanded: true,
-      fields: [
-        {
-          name: 'experimenter',
-          label: '实验员',
-          type: 'text',
-          placeholder: '请输入实验员姓名',
-        },
-        {
-          name: 'batch_number',
-          label: '批次号',
-          type: 'text',
-          placeholder: '例如: B-2024-001',
-        },
-        {
-          name: 'scale',
-          label: '试验规模',
-          type: 'number',
-          placeholder: '请输入规模数值',
-        },
-        {
-          name: 'scale_unit',
-          label: '规模单位',
-          type: 'select',
-          options: scaleUnits.map((unit) => ({ label: unit, value: unit })),
-        },
-      ],
-    },
-  ], [projects, formulas, projectsLoading, formulasLoading, isEdit]);
+  const sections: FormSection[] = useMemo(
+    () => [
+      {
+        id: 'basic',
+        title: '基本信息',
+        description: '试验核心信息',
+        collapsible: true,
+        defaultExpanded: true,
+        fields: [
+          {
+            name: 'name',
+            label: '试验名称',
+            type: 'text',
+            required: true,
+            placeholder: '请输入试验名称',
+          },
+          {
+            name: 'code',
+            label: '试验编码',
+            type: 'text',
+            required: true,
+            disabled: isEdit,
+            placeholder: '例如: EXP-2024-001',
+            helperText: '编辑时编码不可修改',
+          },
+          {
+            name: 'project_id',
+            label: '所属项目',
+            type: 'select',
+            required: true,
+            options: projectsLoading
+              ? [{ label: '加载中...', value: '' }]
+              : projects.map((p) => ({
+                  label: p.name || p.project_name || p.code,
+                  value: p.id,
+                })),
+          },
+          {
+            name: 'formula_id',
+            label: '关联配方',
+            type: 'select',
+            options: formulasLoading
+              ? [{ label: '加载中...', value: '' }]
+              : [
+                  { label: '无', value: '' },
+                  ...formulas.map((f) => ({
+                    label: `${f.name} (${f.version})`,
+                    value: f.id,
+                  })),
+                ],
+          },
+          {
+            name: 'experiment_type',
+            label: '试验类型',
+            type: 'select',
+            options: experimentTypes.map((type) => ({ label: type, value: type })),
+          },
+          {
+            name: 'phase',
+            label: '试验阶段',
+            type: 'select',
+            options: phases.map((phase) => ({ label: phase, value: phase })),
+          },
+        ],
+      },
+      {
+        id: 'content',
+        title: '试验内容',
+        description: '试验目标和方法',
+        collapsible: true,
+        defaultExpanded: true,
+        fields: [
+          {
+            name: 'objective',
+            label: '试验目标',
+            type: 'textarea',
+            rows: 3,
+            placeholder: '请输入试验目标',
+          },
+          {
+            name: 'method',
+            label: '实验方法',
+            type: 'textarea',
+            rows: 4,
+            placeholder: '请输入实验方法描述',
+          },
+        ],
+      },
+      {
+        id: 'execution',
+        title: '执行信息',
+        description: '实验员和批次信息',
+        collapsible: true,
+        defaultExpanded: true,
+        fields: [
+          {
+            name: 'experimenter',
+            label: '实验员',
+            type: 'text',
+            placeholder: '请输入实验员姓名',
+          },
+          {
+            name: 'batch_number',
+            label: '批次号',
+            type: 'text',
+            placeholder: '例如: B-2024-001',
+          },
+          {
+            name: 'scale',
+            label: '试验规模',
+            type: 'number',
+            placeholder: '请输入规模数值',
+          },
+          {
+            name: 'scale_unit',
+            label: '规模单位',
+            type: 'select',
+            options: scaleUnits.map((unit) => ({ label: unit, value: unit })),
+          },
+        ],
+      },
+    ],
+    [projects, formulas, projectsLoading, formulasLoading, isEdit]
+  );
 
   useEffect(() => {
     loadProjects();

@@ -53,7 +53,6 @@ import {
   TextareaAutosize,
 } from '@mui/material';
 import { Grid } from '@/components';
-import { PageHeader } from '@/components/templates/PageHeader';
 import { PageContainer } from '@/components/common';
 import { apiLogger } from '@/utils/logger';
 import type {
@@ -70,11 +69,7 @@ import type {
   ParseResult,
   ParseDataRequest,
 } from '@/api/lims';
-import {
-  instrumentDataApi,
-  collectionTaskApi,
-  parseRuleApi,
-} from '@/api/lims';
+import { instrumentDataApi, collectionTaskApi, parseRuleApi } from '@/api/lims';
 
 const LimsInstrumentDataPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -589,7 +584,11 @@ const LimsInstrumentDataPage: React.FC = () => {
   }) => (
     <Card sx={{ height: '100%' }}>
       <CardContent>
-        <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+        <Stack
+          direction='row'
+          spacing={2}
+          sx={{ alignItems: 'center' }}
+        >
           <Box
             sx={{
               width: 48,
@@ -601,13 +600,22 @@ const LimsInstrumentDataPage: React.FC = () => {
               justifyContent: 'center',
             }}
           >
-            <Icon color={color} size={24} />
+            <Icon
+              color={color}
+              size={24}
+            />
           </Box>
           <Box>
-            <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+            <Typography
+              variant='h4'
+              sx={{ fontWeight: 'bold' }}
+            >
               {value}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               {title}
             </Typography>
           </Box>
@@ -617,68 +625,141 @@ const LimsInstrumentDataPage: React.FC = () => {
   );
 
   return (
-    <PageContainer title="仪器数据采集" subtitle="LIMS 仪器数据自动采集与解析管理" maxWidth="xl">
-
-      <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard title="数据总条数" value={statistics.total_data_count} icon={Database} color="primary" />
+    <PageContainer
+      title='仪器数据采集'
+      subtitle='LIMS 仪器数据自动采集与解析管理'
+      maxWidth='xl'
+    >
+      <Grid
+        container
+        spacing={3}
+        sx={{ mb: 3 }}
+      >
+        <Grid
+          item
+          xs={12}
+          sm={6}
+          md={3}
+        >
+          <StatCard
+            title='数据总条数'
+            value={statistics.total_data_count}
+            icon={Database}
+            color='primary'
+          />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard title="今日采集" value={statistics.today_count} icon={Activity} color="success" />
+        <Grid
+          item
+          xs={12}
+          sm={6}
+          md={3}
+        >
+          <StatCard
+            title='今日采集'
+            value={statistics.today_count}
+            icon={Activity}
+            color='success'
+          />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard title="采集任务" value={statistics.total_tasks} icon={Play} color="info" />
+        <Grid
+          item
+          xs={12}
+          sm={6}
+          md={3}
+        >
+          <StatCard
+            title='采集任务'
+            value={statistics.total_tasks}
+            icon={Play}
+            color='info'
+          />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
-          <StatCard title="解析规则" value={statistics.total_rules} icon={Settings} color="warning" />
+        <Grid
+          item
+          xs={12}
+          sm={6}
+          md={3}
+        >
+          <StatCard
+            title='解析规则'
+            value={statistics.total_rules}
+            icon={Settings}
+            color='warning'
+          />
         </Grid>
       </Grid>
 
       <Paper sx={{ mb: 3 }}>
-        <Tabs value={activeTab} onChange={handleTabChange}>
-          <Tab icon={<Database size={18} />} iconPosition="start" label="数据记录" />
-          <Tab icon={<Play size={18} />} iconPosition="start" label="采集任务" />
-          <Tab icon={<Settings size={18} />} iconPosition="start" label="解析规则" />
+        <Tabs
+          value={activeTab}
+          onChange={handleTabChange}
+        >
+          <Tab
+            icon={<Database size={18} />}
+            iconPosition='start'
+            label='数据记录'
+          />
+          <Tab
+            icon={<Play size={18} />}
+            iconPosition='start'
+            label='采集任务'
+          />
+          <Tab
+            icon={<Settings size={18} />}
+            iconPosition='start'
+            label='解析规则'
+          />
         </Tabs>
       </Paper>
 
       <Paper sx={{ p: 2, mb: 3 }}>
-        <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
+        <Stack
+          direction='row'
+          spacing={2}
+          sx={{ alignItems: 'center' }}
+        >
           <TextField
-            size="small"
-            placeholder="搜索..."
+            size='small'
+            placeholder='搜索...'
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             sx={{ width: 250 }}
           />
-          <FormControl size="small" sx={{ width: 150 }}>
+          <FormControl
+            size='small'
+            sx={{ width: 150 }}
+          >
             <InputLabel>状态</InputLabel>
             <Select
               value={statusFilter}
-              label="状态"
+              label='状态'
               onChange={(e) => setStatusFilter(e.target.value)}
             >
-              <MenuItem value="">全部</MenuItem>
-              <MenuItem value="pending">待解析</MenuItem>
-              <MenuItem value="success">成功</MenuItem>
-              <MenuItem value="failed">失败</MenuItem>
-              <MenuItem value="running">运行中</MenuItem>
-              <MenuItem value="stopped">已停止</MenuItem>
-              <MenuItem value="active">启用</MenuItem>
-              <MenuItem value="inactive">禁用</MenuItem>
+              <MenuItem value=''>全部</MenuItem>
+              <MenuItem value='pending'>待解析</MenuItem>
+              <MenuItem value='success'>成功</MenuItem>
+              <MenuItem value='failed'>失败</MenuItem>
+              <MenuItem value='running'>运行中</MenuItem>
+              <MenuItem value='stopped'>已停止</MenuItem>
+              <MenuItem value='active'>启用</MenuItem>
+              <MenuItem value='inactive'>禁用</MenuItem>
             </Select>
           </FormControl>
           <Box sx={{ flexGrow: 1 }} />
           {activeTab === 0 && (
             <>
               <Button
-                variant="outlined"
+                variant='outlined'
                 startIcon={<RefreshCw size={18} />}
                 onClick={() => loadInstrumentData()}
               >
                 刷新
               </Button>
-              <Button variant="contained" startIcon={<Plus size={18} />} onClick={handleCreateData}>
+              <Button
+                variant='contained'
+                startIcon={<Plus size={18} />}
+                onClick={handleCreateData}
+              >
                 新增数据
               </Button>
             </>
@@ -686,13 +767,17 @@ const LimsInstrumentDataPage: React.FC = () => {
           {activeTab === 1 && (
             <>
               <Button
-                variant="outlined"
+                variant='outlined'
                 startIcon={<RefreshCw size={18} />}
                 onClick={() => loadCollectionTasks()}
               >
                 刷新
               </Button>
-              <Button variant="contained" startIcon={<Plus size={18} />} onClick={handleCreateTask}>
+              <Button
+                variant='contained'
+                startIcon={<Plus size={18} />}
+                onClick={handleCreateTask}
+              >
                 新建任务
               </Button>
             </>
@@ -700,20 +785,24 @@ const LimsInstrumentDataPage: React.FC = () => {
           {activeTab === 2 && (
             <>
               <Button
-                variant="outlined"
+                variant='outlined'
                 startIcon={<FileJson size={18} />}
                 onClick={() => setShowParseTest(true)}
               >
                 解析测试
               </Button>
               <Button
-                variant="outlined"
+                variant='outlined'
                 startIcon={<RefreshCw size={18} />}
                 onClick={() => loadParseRules()}
               >
                 刷新
               </Button>
-              <Button variant="contained" startIcon={<Plus size={18} />} onClick={handleCreateRule}>
+              <Button
+                variant='contained'
+                startIcon={<Plus size={18} />}
+                onClick={handleCreateRule}
+              >
                 新建规则
               </Button>
             </>
@@ -724,7 +813,7 @@ const LimsInstrumentDataPage: React.FC = () => {
       {activeTab === 0 && (
         <Paper>
           <TableContainer>
-            <Table size="small">
+            <Table size='small'>
               <TableHead>
                 <TableRow>
                   <TableCell>数据编号</TableCell>
@@ -746,10 +835,19 @@ const LimsInstrumentDataPage: React.FC = () => {
                   </TableRow>
                 ) : instrumentDataList.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} align="center">
+                    <TableCell
+                      colSpan={8}
+                      align='center'
+                    >
                       <Box sx={{ py: 4 }}>
-                        <Database size={48} opacity={0.3} />
-                        <Typography color="text.secondary" sx={{ mt: 1 }}>
+                        <Database
+                          size={48}
+                          opacity={0.3}
+                        />
+                        <Typography
+                          color='text.secondary'
+                          sx={{ mt: 1 }}
+                        >
                           暂无数据
                         </Typography>
                       </Box>
@@ -757,17 +855,24 @@ const LimsInstrumentDataPage: React.FC = () => {
                   </TableRow>
                 ) : (
                   instrumentDataList.map((item) => (
-                    <TableRow key={item.id} hover>
+                    <TableRow
+                      key={item.id}
+                      hover
+                    >
                       <TableCell>{item.data_no}</TableCell>
                       <TableCell>{item.instrument_name || '-'}</TableCell>
                       <TableCell>{item.batch_no}</TableCell>
                       <TableCell>
-                        <Chip label={item.protocol} size="small" variant="outlined" />
+                        <Chip
+                          label={item.protocol}
+                          size='small'
+                          variant='outlined'
+                        />
                       </TableCell>
                       <TableCell>
                         <Chip
                           label={getStatusLabel(item.status)}
-                          size="small"
+                          size='small'
                           color={getStatusColor(item.status) as any}
                         />
                       </TableCell>
@@ -778,21 +883,33 @@ const LimsInstrumentDataPage: React.FC = () => {
                       </TableCell>
                       <TableCell>{item.collected_at || '-'}</TableCell>
                       <TableCell>
-                        <Stack direction="row" spacing={1}>
-                          <Tooltip title="查看详情">
-                            <IconButton size="small" onClick={() => handleViewDataDetail(item)}>
+                        <Stack
+                          direction='row'
+                          spacing={1}
+                        >
+                          <Tooltip title='查看详情'>
+                            <IconButton
+                              size='small'
+                              onClick={() => handleViewDataDetail(item)}
+                            >
                               <Eye size={16} />
                             </IconButton>
                           </Tooltip>
                           {item.status === 'pending' || item.status === 'failed' ? (
-                            <Tooltip title="重新解析">
-                              <IconButton size="small" onClick={() => handleParseData(item.id)}>
+                            <Tooltip title='重新解析'>
+                              <IconButton
+                                size='small'
+                                onClick={() => handleParseData(item.id)}
+                              >
                                 <RefreshCw size={16} />
                               </IconButton>
                             </Tooltip>
                           ) : null}
-                          <Tooltip title="删除">
-                            <IconButton size="small" onClick={() => handleDeleteData(item.id)}>
+                          <Tooltip title='删除'>
+                            <IconButton
+                              size='small'
+                              onClick={() => handleDeleteData(item.id)}
+                            >
                               <Trash2 size={16} />
                             </IconButton>
                           </Tooltip>
@@ -806,7 +923,7 @@ const LimsInstrumentDataPage: React.FC = () => {
           </TableContainer>
           <TablePagination
             rowsPerPageOptions={[10, 25, 50]}
-            component="div"
+            component='div'
             count={statistics.total_data_count}
             rowsPerPage={dataRowsPerPage}
             page={dataPage}
@@ -822,7 +939,7 @@ const LimsInstrumentDataPage: React.FC = () => {
       {activeTab === 1 && (
         <Paper>
           <TableContainer>
-            <Table size="small">
+            <Table size='small'>
               <TableHead>
                 <TableRow>
                   <TableCell>任务编号</TableCell>
@@ -844,10 +961,19 @@ const LimsInstrumentDataPage: React.FC = () => {
                   </TableRow>
                 ) : collectionTasks.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} align="center">
+                    <TableCell
+                      colSpan={8}
+                      align='center'
+                    >
                       <Box sx={{ py: 4 }}>
-                        <Play size={48} opacity={0.3} />
-                        <Typography color="text.secondary" sx={{ mt: 1 }}>
+                        <Play
+                          size={48}
+                          opacity={0.3}
+                        />
+                        <Typography
+                          color='text.secondary'
+                          sx={{ mt: 1 }}
+                        >
                           暂无采集任务
                         </Typography>
                       </Box>
@@ -855,36 +981,55 @@ const LimsInstrumentDataPage: React.FC = () => {
                   </TableRow>
                 ) : (
                   collectionTasks.map((task) => (
-                    <TableRow key={task.id} hover>
+                    <TableRow
+                      key={task.id}
+                      hover
+                    >
                       <TableCell>{task.task_no}</TableCell>
                       <TableCell>{task.task_name}</TableCell>
                       <TableCell>{task.instrument_name || '-'}</TableCell>
                       <TableCell>
-                        <Chip label={task.protocol} size="small" variant="outlined" />
+                        <Chip
+                          label={task.protocol}
+                          size='small'
+                          variant='outlined'
+                        />
                       </TableCell>
                       <TableCell>{getStatusLabel(task.collection_mode)}</TableCell>
                       <TableCell>
                         <Chip
                           label={getStatusLabel(task.status)}
-                          size="small"
+                          size='small'
                           color={getStatusColor(task.status) as any}
                         />
                       </TableCell>
                       <TableCell>{task.last_run_at || '-'}</TableCell>
                       <TableCell>
-                        <Stack direction="row" spacing={1}>
-                          <Tooltip title="立即采集">
-                            <IconButton size="small" onClick={() => handleTriggerTask(task.id)}>
+                        <Stack
+                          direction='row'
+                          spacing={1}
+                        >
+                          <Tooltip title='立即采集'>
+                            <IconButton
+                              size='small'
+                              onClick={() => handleTriggerTask(task.id)}
+                            >
                               <Play size={16} />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title="编辑">
-                            <IconButton size="small" onClick={() => handleEditTask(task)}>
+                          <Tooltip title='编辑'>
+                            <IconButton
+                              size='small'
+                              onClick={() => handleEditTask(task)}
+                            >
                               <Edit size={16} />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title="删除">
-                            <IconButton size="small" onClick={() => handleDeleteTask(task.id)}>
+                          <Tooltip title='删除'>
+                            <IconButton
+                              size='small'
+                              onClick={() => handleDeleteTask(task.id)}
+                            >
                               <Trash2 size={16} />
                             </IconButton>
                           </Tooltip>
@@ -898,7 +1043,7 @@ const LimsInstrumentDataPage: React.FC = () => {
           </TableContainer>
           <TablePagination
             rowsPerPageOptions={[10, 25, 50]}
-            component="div"
+            component='div'
             count={statistics.total_tasks}
             rowsPerPage={taskRowsPerPage}
             page={taskPage}
@@ -914,7 +1059,7 @@ const LimsInstrumentDataPage: React.FC = () => {
       {activeTab === 2 && (
         <Paper>
           <TableContainer>
-            <Table size="small">
+            <Table size='small'>
               <TableHead>
                 <TableRow>
                   <TableCell>规则编号</TableCell>
@@ -936,10 +1081,19 @@ const LimsInstrumentDataPage: React.FC = () => {
                   </TableRow>
                 ) : parseRules.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} align="center">
+                    <TableCell
+                      colSpan={8}
+                      align='center'
+                    >
                       <Box sx={{ py: 4 }}>
-                        <Settings size={48} opacity={0.3} />
-                        <Typography color="text.secondary" sx={{ mt: 1 }}>
+                        <Settings
+                          size={48}
+                          opacity={0.3}
+                        />
+                        <Typography
+                          color='text.secondary'
+                          sx={{ mt: 1 }}
+                        >
                           暂无解析规则
                         </Typography>
                       </Box>
@@ -947,31 +1101,47 @@ const LimsInstrumentDataPage: React.FC = () => {
                   </TableRow>
                 ) : (
                   parseRules.map((rule) => (
-                    <TableRow key={rule.id} hover>
+                    <TableRow
+                      key={rule.id}
+                      hover
+                    >
                       <TableCell>{rule.rule_no}</TableCell>
                       <TableCell>{rule.rule_name}</TableCell>
                       <TableCell>
-                        <Chip label={rule.protocol} size="small" variant="outlined" />
+                        <Chip
+                          label={rule.protocol}
+                          size='small'
+                          variant='outlined'
+                        />
                       </TableCell>
                       <TableCell>{rule.instrument_type || '-'}</TableCell>
                       <TableCell>v{rule.version}</TableCell>
                       <TableCell>
                         <Chip
                           label={getStatusLabel(rule.status)}
-                          size="small"
+                          size='small'
                           color={getStatusColor(rule.status) as any}
                         />
                       </TableCell>
                       <TableCell>{rule.created_at || '-'}</TableCell>
                       <TableCell>
-                        <Stack direction="row" spacing={1}>
-                          <Tooltip title="编辑">
-                            <IconButton size="small" onClick={() => handleEditRule(rule)}>
+                        <Stack
+                          direction='row'
+                          spacing={1}
+                        >
+                          <Tooltip title='编辑'>
+                            <IconButton
+                              size='small'
+                              onClick={() => handleEditRule(rule)}
+                            >
                               <Edit size={16} />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title="删除">
-                            <IconButton size="small" onClick={() => handleDeleteRule(rule.id)}>
+                          <Tooltip title='删除'>
+                            <IconButton
+                              size='small'
+                              onClick={() => handleDeleteRule(rule.id)}
+                            >
                               <Trash2 size={16} />
                             </IconButton>
                           </Tooltip>
@@ -985,7 +1155,7 @@ const LimsInstrumentDataPage: React.FC = () => {
           </TableContainer>
           <TablePagination
             rowsPerPageOptions={[10, 25, 50]}
-            component="div"
+            component='div'
             count={statistics.total_rules}
             rowsPerPage={ruleRowsPerPage}
             page={rulePage}
@@ -998,48 +1168,95 @@ const LimsInstrumentDataPage: React.FC = () => {
         </Paper>
       )}
 
-      <Dialog open={showDataDetail} onClose={() => setShowDataDetail(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={showDataDetail}
+        onClose={() => setShowDataDetail(false)}
+        maxWidth='md'
+        fullWidth
+      >
         <DialogTitle>数据详情</DialogTitle>
         <DialogContent dividers>
           {selectedData && (
             <Stack spacing={3}>
-              <Grid container spacing={2}>
-                <Grid item xs={6}>
-                  <Typography variant="subtitle2" color="text.secondary">
+              <Grid
+                container
+                spacing={2}
+              >
+                <Grid
+                  item
+                  xs={6}
+                >
+                  <Typography
+                    variant='subtitle2'
+                    color='text.secondary'
+                  >
                     数据编号
                   </Typography>
                   <Typography>{selectedData.data_no}</Typography>
                 </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="subtitle2" color="text.secondary">
+                <Grid
+                  item
+                  xs={6}
+                >
+                  <Typography
+                    variant='subtitle2'
+                    color='text.secondary'
+                  >
                     批次号
                   </Typography>
                   <Typography>{selectedData.batch_no}</Typography>
                 </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="subtitle2" color="text.secondary">
+                <Grid
+                  item
+                  xs={6}
+                >
+                  <Typography
+                    variant='subtitle2'
+                    color='text.secondary'
+                  >
                     仪器
                   </Typography>
                   <Typography>{selectedData.instrument_name || '-'}</Typography>
                 </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="subtitle2" color="text.secondary">
+                <Grid
+                  item
+                  xs={6}
+                >
+                  <Typography
+                    variant='subtitle2'
+                    color='text.secondary'
+                  >
                     协议
                   </Typography>
-                  <Chip label={selectedData.protocol} size="small" />
+                  <Chip
+                    label={selectedData.protocol}
+                    size='small'
+                  />
                 </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="subtitle2" color="text.secondary">
+                <Grid
+                  item
+                  xs={6}
+                >
+                  <Typography
+                    variant='subtitle2'
+                    color='text.secondary'
+                  >
                     状态
                   </Typography>
                   <Chip
                     label={getStatusLabel(selectedData.status)}
-                    size="small"
+                    size='small'
                     color={getStatusColor(selectedData.status) as any}
                   />
                 </Grid>
-                <Grid item xs={6}>
-                  <Typography variant="subtitle2" color="text.secondary">
+                <Grid
+                  item
+                  xs={6}
+                >
+                  <Typography
+                    variant='subtitle2'
+                    color='text.secondary'
+                  >
                     质量分
                   </Typography>
                   <Typography>
@@ -1053,11 +1270,22 @@ const LimsInstrumentDataPage: React.FC = () => {
               <Divider />
 
               <Box>
-                <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                <Typography
+                  variant='subtitle2'
+                  color='text.secondary'
+                  sx={{ mb: 1 }}
+                >
                   原始数据
                 </Typography>
-                <Paper variant="outlined" sx={{ p: 2, maxHeight: 200, overflow: 'auto' }}>
-                  <Typography component="pre" variant="body2" sx={{ fontFamily: 'monospace' }}>
+                <Paper
+                  variant='outlined'
+                  sx={{ p: 2, maxHeight: 200, overflow: 'auto' }}
+                >
+                  <Typography
+                    component='pre'
+                    variant='body2'
+                    sx={{ fontFamily: 'monospace' }}
+                  >
                     {formatJson(selectedData.raw_data)}
                   </Typography>
                 </Paper>
@@ -1065,11 +1293,22 @@ const LimsInstrumentDataPage: React.FC = () => {
 
               {selectedData.parsed_data && (
                 <Box>
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                  <Typography
+                    variant='subtitle2'
+                    color='text.secondary'
+                    sx={{ mb: 1 }}
+                  >
                     解析结果
                   </Typography>
-                  <Paper variant="outlined" sx={{ p: 2, maxHeight: 200, overflow: 'auto' }}>
-                    <Typography component="pre" variant="body2" sx={{ fontFamily: 'monospace' }}>
+                  <Paper
+                    variant='outlined'
+                    sx={{ p: 2, maxHeight: 200, overflow: 'auto' }}
+                  >
+                    <Typography
+                      component='pre'
+                      variant='body2'
+                      sx={{ fontFamily: 'monospace' }}
+                    >
                       {formatJson(selectedData.parsed_data)}
                     </Typography>
                   </Paper>
@@ -1078,11 +1317,18 @@ const LimsInstrumentDataPage: React.FC = () => {
 
               {selectedData.error_msg && (
                 <Box>
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                  <Typography
+                    variant='subtitle2'
+                    color='text.secondary'
+                    sx={{ mb: 1 }}
+                  >
                     错误信息
                   </Typography>
-                  <Paper variant="outlined" sx={{ p: 2, bgcolor: 'error.lighter' }}>
-                    <Typography color="error">{selectedData.error_msg}</Typography>
+                  <Paper
+                    variant='outlined'
+                    sx={{ p: 2, bgcolor: 'error.lighter' }}
+                  >
+                    <Typography color='error'>{selectedData.error_msg}</Typography>
                   </Paper>
                 </Box>
               )}
@@ -1093,7 +1339,7 @@ const LimsInstrumentDataPage: React.FC = () => {
           <Button onClick={() => setShowDataDetail(false)}>关闭</Button>
           {(selectedData?.status === 'pending' || selectedData?.status === 'failed') && (
             <Button
-              variant="contained"
+              variant='contained'
               startIcon={<RefreshCw size={18} />}
               onClick={() => {
                 if (selectedData) {
@@ -1108,12 +1354,20 @@ const LimsInstrumentDataPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      <Dialog open={showDataForm} onClose={() => setShowDataForm(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showDataForm}
+        onClose={() => setShowDataForm(false)}
+        maxWidth='sm'
+        fullWidth
+      >
         <DialogTitle>{isEditingData ? '编辑数据' : '新增数据'}</DialogTitle>
         <DialogContent dividers>
-          <Stack spacing={2} sx={{ mt: 1 }}>
+          <Stack
+            spacing={2}
+            sx={{ mt: 1 }}
+          >
             <TextField
-              label="批次号"
+              label='批次号'
               fullWidth
               value={dataFormData.batch_no}
               onChange={(e) => setDataFormData({ ...dataFormData, batch_no: e.target.value })}
@@ -1122,16 +1376,20 @@ const LimsInstrumentDataPage: React.FC = () => {
               <InputLabel>协议类型</InputLabel>
               <Select
                 value={dataFormData.protocol}
-                label="协议类型"
+                label='协议类型'
                 onChange={(e) => setDataFormData({ ...dataFormData, protocol: e.target.value })}
               >
-                <MenuItem value="JSON">JSON</MenuItem>
-                <MenuItem value="HL7">HL7</MenuItem>
-                <MenuItem value="ASTM">ASTM</MenuItem>
+                <MenuItem value='JSON'>JSON</MenuItem>
+                <MenuItem value='HL7'>HL7</MenuItem>
+                <MenuItem value='ASTM'>ASTM</MenuItem>
               </Select>
             </FormControl>
             <Box>
-              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+              <Typography
+                variant='subtitle2'
+                color='text.secondary'
+                sx={{ mb: 1 }}
+              >
                 原始数据 (JSON)
               </Typography>
               <TextareaAutosize
@@ -1154,18 +1412,30 @@ const LimsInstrumentDataPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowDataForm(false)}>取消</Button>
-          <Button variant="contained" onClick={handleSaveData} disabled={submitting}>
+          <Button
+            variant='contained'
+            onClick={handleSaveData}
+            disabled={submitting}
+          >
             {submitting ? '保存中...' : '保存'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={showTaskForm} onClose={() => setShowTaskForm(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={showTaskForm}
+        onClose={() => setShowTaskForm(false)}
+        maxWidth='sm'
+        fullWidth
+      >
         <DialogTitle>{isEditingTask ? '编辑采集任务' : '新建采集任务'}</DialogTitle>
         <DialogContent dividers>
-          <Stack spacing={2} sx={{ mt: 1 }}>
+          <Stack
+            spacing={2}
+            sx={{ mt: 1 }}
+          >
             <TextField
-              label="任务名称"
+              label='任务名称'
               fullWidth
               value={taskFormData.task_name}
               onChange={(e) => setTaskFormData({ ...taskFormData, task_name: e.target.value })}
@@ -1174,33 +1444,33 @@ const LimsInstrumentDataPage: React.FC = () => {
               <InputLabel>协议类型</InputLabel>
               <Select
                 value={taskFormData.protocol}
-                label="协议类型"
+                label='协议类型'
                 onChange={(e) => setTaskFormData({ ...taskFormData, protocol: e.target.value })}
               >
-                <MenuItem value="JSON">JSON</MenuItem>
-                <MenuItem value="HL7">HL7</MenuItem>
-                <MenuItem value="ASTM">ASTM</MenuItem>
+                <MenuItem value='JSON'>JSON</MenuItem>
+                <MenuItem value='HL7'>HL7</MenuItem>
+                <MenuItem value='ASTM'>ASTM</MenuItem>
               </Select>
             </FormControl>
             <FormControl fullWidth>
               <InputLabel>采集方式</InputLabel>
               <Select
                 value={taskFormData.collection_mode}
-                label="采集方式"
+                label='采集方式'
                 onChange={(e) =>
                   setTaskFormData({ ...taskFormData, collection_mode: e.target.value })
                 }
               >
-                <MenuItem value="manual">手动触发</MenuItem>
-                <MenuItem value="scheduled">定时采集</MenuItem>
-                <MenuItem value="interval">间隔采集</MenuItem>
+                <MenuItem value='manual'>手动触发</MenuItem>
+                <MenuItem value='scheduled'>定时采集</MenuItem>
+                <MenuItem value='interval'>间隔采集</MenuItem>
               </Select>
             </FormControl>
             {taskFormData.collection_mode === 'scheduled' && (
               <TextField
-                label="Cron 表达式"
+                label='Cron 表达式'
                 fullWidth
-                placeholder="0 0 * * *"
+                placeholder='0 0 * * *'
                 value={taskFormData.cron_expression}
                 onChange={(e) =>
                   setTaskFormData({ ...taskFormData, cron_expression: e.target.value })
@@ -1209,8 +1479,8 @@ const LimsInstrumentDataPage: React.FC = () => {
             )}
             {taskFormData.collection_mode === 'interval' && (
               <TextField
-                label="间隔时间（分钟）"
-                type="number"
+                label='间隔时间（分钟）'
+                type='number'
                 fullWidth
                 value={taskFormData.interval_minutes}
                 onChange={(e) =>
@@ -1225,44 +1495,66 @@ const LimsInstrumentDataPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowTaskForm(false)}>取消</Button>
-          <Button variant="contained" onClick={handleSaveTask} disabled={submitting}>
+          <Button
+            variant='contained'
+            onClick={handleSaveTask}
+            disabled={submitting}
+          >
             {submitting ? '保存中...' : '保存'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={showRuleForm} onClose={() => setShowRuleForm(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={showRuleForm}
+        onClose={() => setShowRuleForm(false)}
+        maxWidth='md'
+        fullWidth
+      >
         <DialogTitle>{isEditingRule ? '编辑解析规则' : '新建解析规则'}</DialogTitle>
         <DialogContent dividers>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <Grid container spacing={2}>
-              <Grid item xs={6}>
+          <Stack
+            spacing={2}
+            sx={{ mt: 1 }}
+          >
+            <Grid
+              container
+              spacing={2}
+            >
+              <Grid
+                item
+                xs={6}
+              >
                 <TextField
-                  label="规则名称"
+                  label='规则名称'
                   fullWidth
                   value={ruleFormData.rule_name}
                   onChange={(e) => setRuleFormData({ ...ruleFormData, rule_name: e.target.value })}
                 />
               </Grid>
-              <Grid item xs={6}>
+              <Grid
+                item
+                xs={6}
+              >
                 <FormControl fullWidth>
                   <InputLabel>协议类型</InputLabel>
                   <Select
                     value={ruleFormData.protocol}
-                    label="协议类型"
-                    onChange={(e) =>
-                      setRuleFormData({ ...ruleFormData, protocol: e.target.value })
-                    }
+                    label='协议类型'
+                    onChange={(e) => setRuleFormData({ ...ruleFormData, protocol: e.target.value })}
                   >
-                    <MenuItem value="JSON">JSON</MenuItem>
-                    <MenuItem value="HL7">HL7</MenuItem>
-                    <MenuItem value="ASTM">ASTM</MenuItem>
+                    <MenuItem value='JSON'>JSON</MenuItem>
+                    <MenuItem value='HL7'>HL7</MenuItem>
+                    <MenuItem value='ASTM'>ASTM</MenuItem>
                   </Select>
                 </FormControl>
               </Grid>
-              <Grid item xs={6}>
+              <Grid
+                item
+                xs={6}
+              >
                 <TextField
-                  label="仪器类型"
+                  label='仪器类型'
                   fullWidth
                   value={ruleFormData.instrument_type}
                   onChange={(e) =>
@@ -1270,9 +1562,12 @@ const LimsInstrumentDataPage: React.FC = () => {
                   }
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid
+                item
+                xs={12}
+              >
                 <TextField
-                  label="描述"
+                  label='描述'
                   fullWidth
                   multiline
                   rows={2}
@@ -1285,7 +1580,11 @@ const LimsInstrumentDataPage: React.FC = () => {
             </Grid>
 
             <Box>
-              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+              <Typography
+                variant='subtitle2'
+                color='text.secondary'
+                sx={{ mb: 1 }}
+              >
                 解析配置 (JSON)
               </Typography>
               <TextareaAutosize
@@ -1309,7 +1608,11 @@ const LimsInstrumentDataPage: React.FC = () => {
             </Box>
 
             <Box>
-              <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+              <Typography
+                variant='subtitle2'
+                color='text.secondary'
+                sx={{ mb: 1 }}
+              >
                 质量校验规则 (JSON)
               </Typography>
               <TextareaAutosize
@@ -1335,34 +1638,54 @@ const LimsInstrumentDataPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowRuleForm(false)}>取消</Button>
-          <Button variant="contained" onClick={handleSaveRule} disabled={submitting}>
+          <Button
+            variant='contained'
+            onClick={handleSaveRule}
+            disabled={submitting}
+          >
             {submitting ? '保存中...' : '保存'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={showParseTest} onClose={() => setShowParseTest(false)} maxWidth="lg" fullWidth>
+      <Dialog
+        open={showParseTest}
+        onClose={() => setShowParseTest(false)}
+        maxWidth='lg'
+        fullWidth
+      >
         <DialogTitle>解析测试</DialogTitle>
         <DialogContent dividers>
-          <Grid container spacing={3} sx={{ mt: 1 }}>
-            <Grid item xs={6}>
+          <Grid
+            container
+            spacing={3}
+            sx={{ mt: 1 }}
+          >
+            <Grid
+              item
+              xs={6}
+            >
               <Stack spacing={2}>
                 <FormControl fullWidth>
                   <InputLabel>协议类型</InputLabel>
                   <Select
                     value={parseTestData.protocol}
-                    label="协议类型"
+                    label='协议类型'
                     onChange={(e) =>
                       setParseTestData({ ...parseTestData, protocol: e.target.value })
                     }
                   >
-                    <MenuItem value="JSON">JSON</MenuItem>
-                    <MenuItem value="HL7">HL7</MenuItem>
-                    <MenuItem value="ASTM">ASTM</MenuItem>
+                    <MenuItem value='JSON'>JSON</MenuItem>
+                    <MenuItem value='HL7'>HL7</MenuItem>
+                    <MenuItem value='ASTM'>ASTM</MenuItem>
                   </Select>
                 </FormControl>
                 <Box>
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
+                  <Typography
+                    variant='subtitle2'
+                    color='text.secondary'
+                    sx={{ mb: 1 }}
+                  >
                     输入数据 (JSON)
                   </Typography>
                   <TextareaAutosize
@@ -1385,7 +1708,7 @@ const LimsInstrumentDataPage: React.FC = () => {
                   />
                 </Box>
                 <Button
-                  variant="contained"
+                  variant='contained'
                   startIcon={<Play size={18} />}
                   onClick={handleTestParse}
                   disabled={submitting}
@@ -1394,19 +1717,38 @@ const LimsInstrumentDataPage: React.FC = () => {
                 </Button>
               </Stack>
             </Grid>
-            <Grid item xs={6}>
+            <Grid
+              item
+              xs={6}
+            >
               <Stack spacing={2}>
-                <Typography variant="subtitle2" color="text.secondary">
+                <Typography
+                  variant='subtitle2'
+                  color='text.secondary'
+                >
                   解析结果
                 </Typography>
-                <Paper variant="outlined" sx={{ p: 2, minHeight: 400, maxHeight: 500, overflow: 'auto' }}>
+                <Paper
+                  variant='outlined'
+                  sx={{ p: 2, minHeight: 400, maxHeight: 500, overflow: 'auto' }}
+                >
                   {parseTestResult ? (
                     <Stack spacing={2}>
-                      <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                      <Stack
+                        direction='row'
+                        spacing={1}
+                        sx={{ alignItems: 'center' }}
+                      >
                         {parseTestResult.success ? (
-                          <CheckCircle2 color="success" size={20} />
+                          <CheckCircle2
+                            color='success'
+                            size={20}
+                          />
                         ) : (
-                          <AlertCircle color="error" size={20} />
+                          <AlertCircle
+                            color='error'
+                            size={20}
+                          />
                         )}
                         <Typography sx={{ fontWeight: 'bold' }}>
                           {parseTestResult.success ? '解析成功' : '解析失败'}
@@ -1414,23 +1756,33 @@ const LimsInstrumentDataPage: React.FC = () => {
                         {parseTestResult.quality_score !== undefined && (
                           <Chip
                             label={`质量分: ${parseTestResult.quality_score}%`}
-                            size="small"
-                            color="primary"
+                            size='small'
+                            color='primary'
                           />
                         )}
                       </Stack>
                       {parseTestResult.error_msg && (
                         <Paper sx={{ p: 2, bgcolor: 'error.lighter' }}>
-                          <Typography color="error">{parseTestResult.error_msg}</Typography>
+                          <Typography color='error'>{parseTestResult.error_msg}</Typography>
                         </Paper>
                       )}
                       {parseTestResult.parsed_data && (
                         <Box>
-                          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                          <Typography
+                            variant='subtitle2'
+                            sx={{ mb: 1 }}
+                          >
                             解析数据
                           </Typography>
-                          <Paper variant="outlined" sx={{ p: 2 }}>
-                            <Typography component="pre" variant="body2" sx={{ fontFamily: 'monospace' }}>
+                          <Paper
+                            variant='outlined'
+                            sx={{ p: 2 }}
+                          >
+                            <Typography
+                              component='pre'
+                              variant='body2'
+                              sx={{ fontFamily: 'monospace' }}
+                            >
                               {formatJson(parseTestResult.parsed_data)}
                             </Typography>
                           </Paper>
@@ -1438,11 +1790,17 @@ const LimsInstrumentDataPage: React.FC = () => {
                       )}
                       {parseTestResult.test_items && parseTestResult.test_items.length > 0 && (
                         <Box>
-                          <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                          <Typography
+                            variant='subtitle2'
+                            sx={{ mb: 1 }}
+                          >
                             检测项目 ({parseTestResult.test_items.length})
                           </Typography>
-                          <TableContainer component={Paper} variant="outlined">
-                            <Table size="small">
+                          <TableContainer
+                            component={Paper}
+                            variant='outlined'
+                          >
+                            <Table size='small'>
                               <TableHead>
                                 <TableRow>
                                   <TableCell>项目</TableCell>
@@ -1455,17 +1813,15 @@ const LimsInstrumentDataPage: React.FC = () => {
                                 {parseTestResult.test_items.map((item, idx) => (
                                   <TableRow key={idx}>
                                     <TableCell>{item.test_item_name || item.test_item}</TableCell>
-                                    <TableCell>{item.result || item.numeric_result || '-'}</TableCell>
+                                    <TableCell>
+                                      {item.result || item.numeric_result || '-'}
+                                    </TableCell>
                                     <TableCell>{item.unit || '-'}</TableCell>
                                     <TableCell>
                                       <Chip
                                         label={item.status || '-'}
-                                        size="small"
-                                        color={
-                                          item.abnormal_flag
-                                            ? 'warning'
-                                            : ('default' as any)
-                                        }
+                                        size='small'
+                                        color={item.abnormal_flag ? 'warning' : ('default' as any)}
                                       />
                                     </TableCell>
                                   </TableRow>
@@ -1485,7 +1841,7 @@ const LimsInstrumentDataPage: React.FC = () => {
                         height: 300,
                       }}
                     >
-                      <Typography color="text.secondary">点击"开始解析"查看结果</Typography>
+                      <Typography color='text.secondary'>点击"开始解析"查看结果</Typography>
                     </Box>
                   )}
                 </Paper>

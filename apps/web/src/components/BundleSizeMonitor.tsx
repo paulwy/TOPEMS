@@ -39,7 +39,7 @@ const formatSize = (bytes: number): string => {
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 };
 
 const getTypeColor = (type: BundleEntry['type']): string => {
@@ -103,10 +103,18 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
       });
 
       const totalSize = bundleEntries.reduce((sum, entry) => sum + entry.size, 0);
-      const jsSize = bundleEntries.filter((e) => e.type === 'js').reduce((sum, e) => sum + e.size, 0);
-      const cssSize = bundleEntries.filter((e) => e.type === 'css').reduce((sum, e) => sum + e.size, 0);
-      const imgSize = bundleEntries.filter((e) => e.type === 'img').reduce((sum, e) => sum + e.size, 0);
-      const fontSize = bundleEntries.filter((e) => e.type === 'font').reduce((sum, e) => sum + e.size, 0);
+      const jsSize = bundleEntries
+        .filter((e) => e.type === 'js')
+        .reduce((sum, e) => sum + e.size, 0);
+      const cssSize = bundleEntries
+        .filter((e) => e.type === 'css')
+        .reduce((sum, e) => sum + e.size, 0);
+      const imgSize = bundleEntries
+        .filter((e) => e.type === 'img')
+        .reduce((sum, e) => sum + e.size, 0);
+      const fontSize = bundleEntries
+        .filter((e) => e.type === 'font')
+        .reduce((sum, e) => sum + e.size, 0);
 
       const loadTime = performance.now() - startTime;
 
@@ -124,14 +132,16 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
       setStats(newStats);
       setHasWarning(totalSize > threshold);
 
-      logger.info(`[Bundle Monitor] Total size: ${formatSize(totalSize)}, Entries: ${bundleEntries.length}`);
+      logger.info(
+        `[Bundle Monitor] Total size: ${formatSize(totalSize)}, Entries: ${bundleEntries.length}`
+      );
     } catch (error) {
       logger.error('[Bundle Monitor] Failed to analyze bundle:', error);
     }
   }, [enabled, threshold]);
 
   useEffect(() => {
-    if (!enabled) return undefined;
+    if (!enabled) return;
 
     const handleLoad = () => {
       setTimeout(analyzeBundle, 1000);
@@ -139,7 +149,7 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
 
     if (document.readyState === 'complete') {
       handleLoad();
-      return undefined;
+      return;
     } else {
       window.addEventListener('load', handleLoad);
       return () => window.removeEventListener('load', handleLoad);
@@ -233,7 +243,12 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
                   style={{
                     fontSize: '36px',
                     fontWeight: 700,
-                    color: getScoreColor() === 'text-green-500' ? '#16a34a' : getScoreColor() === 'text-yellow-500' ? '#ca8a04' : '#dc2626',
+                    color:
+                      getScoreColor() === 'text-green-500'
+                        ? '#16a34a'
+                        : getScoreColor() === 'text-yellow-500'
+                          ? '#ca8a04'
+                          : '#dc2626',
                   }}
                 >
                   {getScore()}
@@ -299,11 +314,7 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
               }}
             >
               <span className='font-medium'>资源详情</span>
-              {isExpanded ? (
-                <ChevronUp className='w-4 h-4' />
-              ) : (
-                <ChevronDown className='w-4 h-4' />
-              )}
+              {isExpanded ? <ChevronUp className='w-4 h-4' /> : <ChevronDown className='w-4 h-4' />}
             </button>
 
             {isExpanded && (
@@ -343,7 +354,9 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
                         {entry.name}
                       </span>
                     </div>
-                    <span className='text-sm font-medium text-gray-700'>{formatSize(entry.size)}</span>
+                    <span className='text-sm font-medium text-gray-700'>
+                      {formatSize(entry.size)}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -411,17 +424,20 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
                 )}
                 {stats.cssSize > 0 && (
                   <span className='text-xs text-gray-500'>
-                    <span className='text-purple-500 font-medium'>CSS</span> {formatSize(stats.cssSize)}
+                    <span className='text-purple-500 font-medium'>CSS</span>{' '}
+                    {formatSize(stats.cssSize)}
                   </span>
                 )}
                 {stats.imgSize > 0 && (
                   <span className='text-xs text-gray-500'>
-                    <span className='text-green-500 font-medium'>Img</span> {formatSize(stats.imgSize)}
+                    <span className='text-green-500 font-medium'>Img</span>{' '}
+                    {formatSize(stats.imgSize)}
                   </span>
                 )}
                 {stats.fontSize > 0 && (
                   <span className='text-xs text-gray-500'>
-                    <span className='text-orange-500 font-medium'>Font</span> {formatSize(stats.fontSize)}
+                    <span className='text-orange-500 font-medium'>Font</span>{' '}
+                    {formatSize(stats.fontSize)}
                   </span>
                 )}
               </div>

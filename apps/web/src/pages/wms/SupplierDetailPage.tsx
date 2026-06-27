@@ -10,8 +10,8 @@ import {
   TableHead,
   TableRow,
   Paper,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -472,7 +472,10 @@ const SupplierDetailPage: React.FC = () => {
   }
 
   return (
-    <PageContainer title='供应商详情' subtitle='查看和编辑供应商档案信息'>
+    <PageContainer
+      title='供应商详情'
+      subtitle='查看和编辑供应商档案信息'
+    >
       <DetailPageTemplate
         title=''
         subtitle=''

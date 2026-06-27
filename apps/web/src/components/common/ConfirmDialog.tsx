@@ -12,8 +12,8 @@ import {
   IconButton,
   Box,
   Typography,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import {
   AlertCircle,
   CheckCircle,
@@ -287,7 +287,7 @@ export default function ConfirmDialog({
         document.removeEventListener('mouseup', onMouseUp);
       };
     }
-    return undefined;
+    return;
   }, [isDragging, handleMouseMove, handleMouseUp]);
 
   React.useEffect(() => {
@@ -351,6 +351,7 @@ export default function ConfirmDialog({
               <IconComponent
                 size={40}
                 style={{ color: config.color }}
+                aria-hidden="true"
               />
             )}
           </Box>
@@ -374,6 +375,7 @@ export default function ConfirmDialog({
                 <IconComponent
                   size={20}
                   style={{ color: config.color }}
+                  aria-hidden="true"
                 />
               ))}
             <Typography
@@ -390,6 +392,7 @@ export default function ConfirmDialog({
             onClick={onClose}
             disabled={isLoading}
             sx={{ ml: 'auto' }}
+            aria-label="关闭"
           >
             <X size={20} />
           </IconButton>
@@ -460,7 +463,9 @@ export default function ConfirmDialog({
               onClick={handleConfirm}
               disabled={confirmDisabled || isLoading}
               sx={{
-                ...(danger ? { bgcolor: 'error.dark', '&:hover': { bgcolor: 'error.darker' } } : {}),
+                ...(danger
+                  ? { bgcolor: 'error.dark', '&:hover': { bgcolor: 'error.darker' } }
+                  : {}),
               }}
             >
               {isLoading ? (

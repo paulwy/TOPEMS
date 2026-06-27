@@ -298,10 +298,15 @@ pub struct DataMasking;
 impl DataMasking {
     pub fn phone(phone: &str) -> String {
         let digits: String = phone.chars().filter(|c| c.is_ascii_digit()).collect();
-        if digits.len() >= 7 {
-            format!("{}****{}", &digits[..3], &digits[digits.len() - 4..])
-        } else if digits.len() >= 4 {
-            format!("{}****{}", &digits[..1], &digits[digits.len() - 1..])
+        let phone_digits = if digits.len() > 11 {
+            &digits[digits.len() - 11..]
+        } else {
+            &digits
+        };
+        if phone_digits.len() >= 7 {
+            format!("{}****{}", &phone_digits[..3], &phone_digits[phone_digits.len() - 4..])
+        } else if phone_digits.len() >= 4 {
+            format!("{}****{}", &phone_digits[..1], &phone_digits[phone_digits.len() - 1..])
         } else {
             "****".to_string()
         }
@@ -389,8 +394,9 @@ impl DataMasking {
         let chars: Vec<char> = tax.chars().collect();
         if chars.len() >= 15 {
             let prefix: String = chars[..3].iter().collect();
-            let suffix: String = chars[chars.len() - 3..].iter().collect();
-            format!("{}***********{}", prefix, suffix)
+            let suffix: String = chars[chars.len() - 4..].iter().collect();
+            let middle_stars: String = std::iter::repeat('*').take(chars.len() - 7).collect();
+            format!("{}{}{}", prefix, middle_stars, suffix)
         } else if chars.len() >= 6 {
             let prefix: String = chars[..2].iter().collect();
             let suffix: String = chars[chars.len() - 2..].iter().collect();
@@ -565,7 +571,7 @@ mod tests {
     fn test_bank_card_masking() {
         assert_eq!(
             DataMasking::bank_card("6222021234567890123"),
-            "6222 ********** 0123"
+            "6222 *********** 0123"
         );
         assert_eq!(DataMasking::bank_card("1234 5678 9012 3456"), "1234 ******** 3456");
     }

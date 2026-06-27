@@ -15,15 +15,11 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { useAppStore } from '@/store';
 import * as z from 'zod';
-import {
-  ListPageTemplate,
-  type ColumnDef,
-  type RowAction,
-} from '@/components/templates';
+import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
 import type { QualityIssue } from '@/api/qms';
@@ -248,13 +244,15 @@ const QmsNonconformancePage: React.FC = () => {
         });
         if (response.success) {
           setIssues((prev) =>
-            prev.map((item) =>
-              item.id === selectedItem.id ? { ...item, ...response.data } : item
-            )
+            prev.map((item) => (item.id === selectedItem.id ? { ...item, ...response.data } : item))
           );
           addNotification({ title: '成功', message: '记录更新成功', type: 'success' });
         } else {
-          addNotification({ title: '失败', message: response.message || '更新失败', type: 'error' });
+          addNotification({
+            title: '失败',
+            message: response.message || '更新失败',
+            type: 'error',
+          });
         }
       } else {
         const response = await qmsApi.createIssue({
@@ -270,7 +268,11 @@ const QmsNonconformancePage: React.FC = () => {
           setIssues((prev) => [response.data!, ...prev]);
           addNotification({ title: '成功', message: '记录创建成功', type: 'success' });
         } else {
-          addNotification({ title: '失败', message: response.message || '创建失败', type: 'error' });
+          addNotification({
+            title: '失败',
+            message: response.message || '创建失败',
+            type: 'error',
+          });
         }
       }
       setShowModal(false);

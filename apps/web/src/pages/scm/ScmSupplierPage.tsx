@@ -10,9 +10,9 @@ import {
   DialogActions,
   Rating,
   Grid,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
-import { Plus, Eye, TrendingUp, Award, Target } from 'lucide-react';
+import { Plus, Eye, TrendingUp, Award, Target, Truck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
@@ -60,7 +60,7 @@ const ScmSupplierPage: React.FC = () => {
       setLoading(true);
       const response = await scmApi.suppliers.list({
         page: currentPage,
-        pageSize: pageSize,
+        pageSize,
       });
       if (response.success && response.data) {
         setSuppliers(response.data.items || []);
@@ -152,9 +152,7 @@ const ScmSupplierPage: React.FC = () => {
       label: '绩效评分',
       align: 'center',
       render: (row) => {
-        const performance = supplierPerformance.find(
-          (p) => p.supplier_id === row.id
-        );
+        const performance = supplierPerformance.find((p) => p.supplier_id === row.id);
         if (!performance) {
           return <Box>-</Box>;
         }
@@ -172,8 +170,8 @@ const ScmSupplierPage: React.FC = () => {
                     performance.overall_score >= 80
                       ? '#10B981'
                       : performance.overall_score >= 60
-                      ? '#F59E0B'
-                      : '#EF4444',
+                        ? '#F59E0B'
+                        : '#EF4444',
                 },
               }}
             />
@@ -189,9 +187,7 @@ const ScmSupplierPage: React.FC = () => {
       label: '评级',
       align: 'center',
       render: (row) => {
-        const performance = supplierPerformance.find(
-          (p) => p.supplier_id === row.id
-        );
+        const performance = supplierPerformance.find((p) => p.supplier_id === row.id);
         if (!performance?.grade) {
           return <Box>-</Box>;
         }
@@ -202,10 +198,10 @@ const ScmSupplierPage: React.FC = () => {
               performance.grade === 'A'
                 ? 'success'
                 : performance.grade === 'B'
-                ? 'primary'
-                : performance.grade === 'C'
-                ? 'warning'
-                : 'error'
+                  ? 'primary'
+                  : performance.grade === 'C'
+                    ? 'warning'
+                    : 'error'
             }
             size='small'
           />
@@ -215,9 +211,7 @@ const ScmSupplierPage: React.FC = () => {
   ];
 
   const handleViewPerformance = (supplier: Supplier) => {
-    const performance = supplierPerformance.find(
-      (p) => p.supplier_id === supplier.id
-    );
+    const performance = supplierPerformance.find((p) => p.supplier_id === supplier.id);
     if (performance) {
       setSelectedPerformance(performance);
       setShowPerformanceModal(true);
@@ -249,7 +243,13 @@ const ScmSupplierPage: React.FC = () => {
   ];
 
   return (
-    <PageContainer title='供应商管理'>
+    <PageContainer
+      title='供应商管理'
+      headerProps={{
+        pageIcon: <Truck style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+      }}
+    >
       <ListPageTemplate
         title=''
         columns={columns}
@@ -447,11 +447,21 @@ const ScmSupplierPage: React.FC = () => {
                 {selectedPerformance.supplier_name}
               </Typography>
 
-              <Grid container spacing={3} sx={{ mt: 3 }}>
+              <Grid
+                container
+                spacing={3}
+                sx={{ mt: 3 }}
+              >
                 <Grid size={{ xs: 6, sm: 6 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Award size={20} color='primary' />
-                    <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
+                    <Award
+                      size={20}
+                      color='primary'
+                    />
+                    <Typography
+                      variant='subtitle2'
+                      sx={{ fontWeight: 600 }}
+                    >
                       综合评级
                     </Typography>
                   </Box>
@@ -462,10 +472,10 @@ const ScmSupplierPage: React.FC = () => {
                         selectedPerformance.grade === 'A'
                           ? 'success'
                           : selectedPerformance.grade === 'B'
-                          ? 'primary'
-                          : selectedPerformance.grade === 'C'
-                          ? 'warning'
-                          : 'error'
+                            ? 'primary'
+                            : selectedPerformance.grade === 'C'
+                              ? 'warning'
+                              : 'error'
                       }
                       sx={{ fontSize: '1.25rem', padding: '8px 16px' }}
                     />
@@ -473,8 +483,14 @@ const ScmSupplierPage: React.FC = () => {
                 </Grid>
                 <Grid size={{ xs: 6, sm: 6 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Target size={20} color='primary' />
-                    <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
+                    <Target
+                      size={20}
+                      color='primary'
+                    />
+                    <Typography
+                      variant='subtitle2'
+                      sx={{ fontWeight: 600 }}
+                    >
                       排名
                     </Typography>
                   </Box>

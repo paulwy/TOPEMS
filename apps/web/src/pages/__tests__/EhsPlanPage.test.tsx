@@ -17,11 +17,7 @@ const renderWithProviders = (ui: React.ReactElement) => {
   (useAppStore as vi.Mock).mockImplementation((selector: any) => {
     return selector({ addNotification: mockAddNotification });
   });
-  return render(
-    <BrowserRouter>
-      {ui}
-    </BrowserRouter>
-  );
+  return render(<BrowserRouter>{ui}</BrowserRouter>);
 };
 
 const mockPlans = [
@@ -101,18 +97,14 @@ describe('EhsPlanPage', () => {
     await waitFor(() => {
       expect(ehsApi.createPlan).toHaveBeenCalled();
     });
-    expect(mockAddNotification).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'success' })
-    );
+    expect(mockAddNotification).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
   });
 
   it('should handle API error', async () => {
     (ehsApi.listPlans as vi.Mock).mockRejectedValue(new Error('Network error'));
     renderWithProviders(<EhsPlanPage />);
     await waitFor(() => {
-      expect(mockAddNotification).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'error' })
-      );
+      expect(mockAddNotification).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }));
     });
   });
 });

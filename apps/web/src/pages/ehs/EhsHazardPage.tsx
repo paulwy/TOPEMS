@@ -20,8 +20,8 @@ import {
   Step,
   StepLabel,
   LinearProgress,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import {
   Plus,
   Eye,
@@ -56,7 +56,6 @@ const EhsHazardPage: React.FC = () => {
   const [rectification, setRectification] = useState<Rectification | null>(null);
   const [verification, setVerification] = useState<Verification | null>(null);
   const [formData, setFormData] = useState({
-
     title: '',
     description: '',
     category: 'equipment',
@@ -443,7 +442,10 @@ const EhsHazardPage: React.FC = () => {
   const steps = ['隐患上报', '整改中', '待验收', '已验收', '已闭环'];
 
   return (
-    <PageContainer title='隐患管理' subtitle='Safety Hazard Management'>
+    <PageContainer
+      title='隐患管理'
+      subtitle='Safety Hazard Management'
+    >
       <Box
         sx={{
           display: 'grid',

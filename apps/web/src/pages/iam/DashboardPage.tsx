@@ -142,6 +142,10 @@ export const DashboardPage: React.FC = () => {
     <PageContainer
       title='系统管理'
       subtitle={`${getGreeting()}，身份认证与访问控制`}
+      headerProps={{
+        pageIcon: <Shield style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+      }}
       padding={false}
       maxWidth={false}
     >

@@ -9,6 +9,7 @@ import {
   DollarSign,
   User,
   Settings,
+  Layers,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { assetApi, type Asset } from '@/api/erp';
@@ -32,8 +33,8 @@ import {
   MenuItem,
   Chip,
   IconButton,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 
 interface AssetManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -486,7 +487,14 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({ onNavigate })
   );
 
   return (
-    <PageContainer title='资产管理' subtitle='管理企业资产、设备台账'>
+    <PageContainer
+      title='资产管理'
+      subtitle='管理企业资产、设备台账'
+      headerProps={{
+        pageIcon: <Layers style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)',
+      }}
+    >
       <ListPageTemplate
         title=''
         subtitle=''

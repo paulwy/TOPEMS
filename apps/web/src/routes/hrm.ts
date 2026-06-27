@@ -28,7 +28,10 @@ const HrmReportsPage = lazy(() => import('../pages/hrm/HrmReportsPage'));
 export const hrmRoutes: RouteConfig[] = [
   {
     path: '/hrm',
-    element: HrmDashboardPage,
+    element: React.createElement(Navigate, {
+      to: '/hrm/companies',
+      replace: true,
+    }),
     requiredPermissions: ['hrm:read'],
     module: 'hrm',
     action: 'read',

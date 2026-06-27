@@ -166,9 +166,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
       setValues((prev) => ({ ...prev, [fieldId]: value }));
       setHasChanges(true);
 
-      const field = allSections
-        .flatMap((s) => s.fields)
-        .find((f) => f.id === fieldId);
+      const field = allSections.flatMap((s) => s.fields).find((f) => f.id === fieldId);
 
       if (field?.validation) {
         const validationResult = field.validation(value);
@@ -255,12 +253,19 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
     const isDisabled = field.disabled || loading;
 
     return (
-      <Box key={field.id} sx={{ mb: 3 }}>
+      <Box
+        key={field.id}
+        sx={{ mb: 3 }}
+      >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <FormLabel sx={{ fontWeight: 500 }}>
             {field.label}
             {field.required && (
-              <Typography component='span' color='error' sx={{ ml: 0.5 }}>
+              <Typography
+                component='span'
+                color='error'
+                sx={{ ml: 0.5 }}
+              >
                 *
               </Typography>
             )}
@@ -281,7 +286,10 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
               onChange={(e) => handleFieldChange(field.id, e.target.checked)}
               disabled={isDisabled}
             />
-            <Typography variant='body2' color='text.secondary'>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               {value ? '开启' : '关闭'}
             </Typography>
           </Box>
@@ -309,7 +317,11 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
         )}
 
         {field.type === 'select' && (
-          <FormControl fullWidth size='small' error={!!error}>
+          <FormControl
+            fullWidth
+            size='small'
+            error={!!error}
+          >
             <InputLabel>{field.label}</InputLabel>
             <Select
               value={value as string}
@@ -319,10 +331,17 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
               error={!!error}
             >
               {field.options?.map((option) => (
-                <MenuItem key={String(option.value)} value={option.value as string} disabled={option.disabled}>
+                <MenuItem
+                  key={String(option.value)}
+                  value={option.value as string}
+                  disabled={option.disabled}
+                >
                   {option.label}
                   {option.description && (
-                    <Typography variant='caption' color='text.secondary'>
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                    >
                       {option.description}
                     </Typography>
                   )}
@@ -370,7 +389,9 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
             type='number'
             size='small'
             value={value as number}
-            onChange={(e) => handleFieldChange(field.id, e.target.value === '' ? '' : Number(e.target.value))}
+            onChange={(e) =>
+              handleFieldChange(field.id, e.target.value === '' ? '' : Number(e.target.value))
+            }
             disabled={isDisabled}
             placeholder={field.placeholder}
             error={!!error}
@@ -398,7 +419,10 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
     const isExpanded = expandedSections.has(section.id);
 
     return (
-      <Paper key={section.id} sx={{ borderRadius: 2, mb: 2, overflow: 'hidden' }}>
+      <Paper
+        key={section.id}
+        sx={{ borderRadius: 2, mb: 2, overflow: 'hidden' }}
+      >
         <Box
           sx={{
             p: 2,
@@ -428,11 +452,17 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
               {getSectionIcon(section.icon)}
             </Box>
             <Box>
-              <Typography variant='subtitle1' sx={{ fontWeight: 600 }}>
+              <Typography
+                variant='subtitle1'
+                sx={{ fontWeight: 600 }}
+              >
                 {section.title}
               </Typography>
               {section.description && (
-                <Typography variant='caption' color='text.secondary'>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   {section.description}
                 </Typography>
               )}
@@ -455,13 +485,21 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
         <Box sx={{ p: 3 }}>
           {loading ? (
             Array.from({ length: 3 }).map((_, index) => (
-              <Skeleton key={index} variant='rectangular' height={48} sx={{ borderRadius: 1, mb: 2 }} />
+              <Skeleton
+                key={index}
+                variant='rectangular'
+                height={48}
+                sx={{ borderRadius: 1, mb: 2 }}
+              />
             ))
           ) : isExpanded || !section.collapsible ? (
             section.fields.map(renderField)
           ) : (
             <Box sx={{ textAlign: 'center', py: 2 }}>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 点击展开查看 {section.fields.length} 个设置项
               </Typography>
             </Box>
@@ -487,7 +525,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
             key={tab.id}
             label={tab.label}
             icon={tab.icon as React.ReactElement | undefined}
-            iconPosition={isMobile ? 'start' as const : 'top' as const}
+            iconPosition={isMobile ? ('start' as const) : ('top' as const)}
           />
         ))}
       </Tabs>
@@ -524,7 +562,9 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
           {Object.keys(errors).length > 0 && (
             <Box sx={{ display: 'flex', alignItems: 'center', color: 'error.main' }}>
               <AlertCircle style={{ width: 16, height: 16 }} />
-              <Typography variant='caption'>{Object.keys(errors).length}个设置项存在错误</Typography>
+              <Typography variant='caption'>
+                {Object.keys(errors).length}个设置项存在错误
+              </Typography>
             </Box>
           )}
         </Box>
@@ -547,7 +587,11 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
               disabled={saving || loading || !hasChanges}
               startIcon={
                 saving ? (
-                  <Skeleton variant='circular' width={16} height={16} />
+                  <Skeleton
+                    variant='circular'
+                    width={16}
+                    height={16}
+                  />
                 ) : (
                   <Save style={{ width: 16, height: 16 }} />
                 )
@@ -578,7 +622,10 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
           sx={{ mb: 3 }}
           icon={<AlertCircle style={{ width: 20, height: 20 }} />}
           action={
-            <IconButton size='small' onClick={() => setErrors({})}>
+            <IconButton
+              size='small'
+              onClick={() => setErrors({})}
+            >
               <X style={{ width: 16, height: 16 }} />
             </IconButton>
           }
@@ -593,7 +640,10 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
           sx={{ mb: 3 }}
           icon={<CheckCircle style={{ width: 20, height: 20 }} />}
           action={
-            <IconButton size='small' onClick={() => {}}>
+            <IconButton
+              size='small'
+              onClick={() => {}}
+            >
               <X style={{ width: 16, height: 16 }} />
             </IconButton>
           }

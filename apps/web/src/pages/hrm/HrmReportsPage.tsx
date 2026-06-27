@@ -272,7 +272,14 @@ const HrmReportsPage: React.FC = () => {
       default:
         return [];
     }
-  }, [activeTab, employeeSummary, contractSummary, trainingSummary, attendanceSummary, payrollSummary]);
+  }, [
+    activeTab,
+    employeeSummary,
+    contractSummary,
+    trainingSummary,
+    attendanceSummary,
+    payrollSummary,
+  ]);
 
   const charts = useMemo(() => {
     switch (activeTab) {
@@ -416,7 +423,15 @@ const HrmReportsPage: React.FC = () => {
       default:
         return [];
     }
-  }, [activeTab, employeeSummary, departmentSummary, contractSummary, trainingSummary, attendanceSummary, payrollSummary]);
+  }, [
+    activeTab,
+    employeeSummary,
+    departmentSummary,
+    contractSummary,
+    trainingSummary,
+    attendanceSummary,
+    payrollSummary,
+  ]);
 
   const tables = useMemo(() => {
     switch (activeTab) {
@@ -433,7 +448,8 @@ const HrmReportsPage: React.FC = () => {
             ],
             data: departmentSummary.map((d) => ({
               ...d,
-              rate: d.employee_count > 0 ? Math.round((d.active_count / d.employee_count) * 100) : 0,
+              rate:
+                d.employee_count > 0 ? Math.round((d.active_count / d.employee_count) * 100) : 0,
             })),
           },
         ];
@@ -452,14 +468,18 @@ const HrmReportsPage: React.FC = () => {
                 status: '在职',
                 count: employeeSummary?.active_employees || 0,
                 rate: employeeSummary?.total_employees
-                  ? Math.round((employeeSummary.active_employees / employeeSummary.total_employees) * 100)
+                  ? Math.round(
+                      (employeeSummary.active_employees / employeeSummary.total_employees) * 100
+                    )
                   : 0,
               },
               {
                 status: '离职',
                 count: employeeSummary?.inactive_employees || 0,
                 rate: employeeSummary?.total_employees
-                  ? Math.round((employeeSummary.inactive_employees / employeeSummary.total_employees) * 100)
+                  ? Math.round(
+                      (employeeSummary.inactive_employees / employeeSummary.total_employees) * 100
+                    )
                   : 0,
               },
             ],
@@ -484,7 +504,9 @@ const HrmReportsPage: React.FC = () => {
                 gender: '女',
                 count: employeeSummary?.female_count || 0,
                 rate: employeeSummary?.total_employees
-                  ? Math.round((employeeSummary.female_count / employeeSummary.total_employees) * 100)
+                  ? Math.round(
+                      (employeeSummary.female_count / employeeSummary.total_employees) * 100
+                    )
                   : 0,
               },
             ],
@@ -505,9 +527,14 @@ const HrmReportsPage: React.FC = () => {
               {
                 type: '培训计划',
                 total: trainingSummary?.total_plans || 0,
-                completed: (trainingSummary?.total_plans || 0) - (trainingSummary?.active_plans || 0),
+                completed:
+                  (trainingSummary?.total_plans || 0) - (trainingSummary?.active_plans || 0),
                 rate: trainingSummary?.total_plans
-                  ? Math.round(((trainingSummary.total_plans - trainingSummary.active_plans) / trainingSummary.total_plans) * 100)
+                  ? Math.round(
+                      ((trainingSummary.total_plans - trainingSummary.active_plans) /
+                        trainingSummary.total_plans) *
+                        100
+                    )
                   : 0,
               },
               {
@@ -515,7 +542,9 @@ const HrmReportsPage: React.FC = () => {
                 total: trainingSummary?.total_courses || 0,
                 completed: trainingSummary?.completed_courses || 0,
                 rate: trainingSummary?.total_courses
-                  ? Math.round((trainingSummary.completed_courses / trainingSummary.total_courses) * 100)
+                  ? Math.round(
+                      (trainingSummary.completed_courses / trainingSummary.total_courses) * 100
+                    )
                   : 0,
               },
               {
@@ -523,7 +552,9 @@ const HrmReportsPage: React.FC = () => {
                 total: trainingSummary?.total_records || 0,
                 completed: trainingSummary?.completed_records || 0,
                 rate: trainingSummary?.total_records
-                  ? Math.round((trainingSummary.completed_records / trainingSummary.total_records) * 100)
+                  ? Math.round(
+                      (trainingSummary.completed_records / trainingSummary.total_records) * 100
+                    )
                   : 0,
               },
             ],
@@ -566,34 +597,34 @@ const HrmReportsPage: React.FC = () => {
   return (
     <PageContainer maxWidth='xl'>
       <StatsPageTemplate
-      title='HR数据分析报表'
-      subtitle='实时查看人力资源数据统计与分析'
-      statCards={statCards}
-      statColumns={6}
-      charts={charts}
-      chartColumns={{ xs: 1, md: 2, lg: 2 }}
-      tables={tables}
-      loading={loading}
-      timeRangeOptions={[
-        { label: '本周', value: 'week' },
-        { label: '本月', value: 'month' },
-        { label: '本季度', value: 'quarter' },
-        { label: '本年', value: 'year' },
-      ]}
-      timeRange={timeRange}
-      onTimeRangeChange={setTimeRange}
-      tabs={tabs}
-      tabValue={activeTab}
-      onTabChange={setActiveTab}
-      showTimeRange={true}
-      showSearch={false}
-      showExport={true}
-      showRefresh={true}
-      onRefresh={loadReports}
-      exportText='导出报表'
-      showStatCards={true}
-      showCharts={true}
-      showTables={true}
+        title='HR数据分析报表'
+        subtitle='实时查看人力资源数据统计与分析'
+        statCards={statCards}
+        statColumns={6}
+        charts={charts}
+        chartColumns={{ xs: 1, md: 2, lg: 2 }}
+        tables={tables}
+        loading={loading}
+        timeRangeOptions={[
+          { label: '本周', value: 'week' },
+          { label: '本月', value: 'month' },
+          { label: '本季度', value: 'quarter' },
+          { label: '本年', value: 'year' },
+        ]}
+        timeRange={timeRange}
+        onTimeRangeChange={setTimeRange}
+        tabs={tabs}
+        tabValue={activeTab}
+        onTabChange={setActiveTab}
+        showTimeRange={true}
+        showSearch={false}
+        showExport={true}
+        showRefresh={true}
+        onRefresh={loadReports}
+        exportText='导出报表'
+        showStatCards={true}
+        showCharts={true}
+        showTables={true}
       />
     </PageContainer>
   );

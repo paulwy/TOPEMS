@@ -36,9 +36,23 @@ export const MobileSkeleton: React.FC<MobileSkeletonProps> = ({
             />
           )}
           <Box sx={{ flex: 1 }}>
-            <Skeleton variant='text' width='60%' height={20} sx={{ mb: 1 }} />
-            <Skeleton variant='text' width='100%' height={16} sx={{ mb: 0.5 }} />
-            <Skeleton variant='text' width='40%' height={14} />
+            <Skeleton
+              variant='text'
+              width='60%'
+              height={20}
+              sx={{ mb: 1 }}
+            />
+            <Skeleton
+              variant='text'
+              width='100%'
+              height={16}
+              sx={{ mb: 0.5 }}
+            />
+            <Skeleton
+              variant='text'
+              width='40%'
+              height={14}
+            />
           </Box>
         </Box>
       ))}
@@ -48,7 +62,10 @@ export const MobileSkeleton: React.FC<MobileSkeletonProps> = ({
   const renderCardSkeleton = () => (
     <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
       {Array.from({ length: Math.ceil(count / 2) }).map((_, rowIndex) => (
-        <Box key={rowIndex} sx={{ display: 'flex', gap: 2 }}>
+        <Box
+          key={rowIndex}
+          sx={{ display: 'flex', gap: 2 }}
+        >
           {[0, 1].map((colIndex) => (
             <Box
               key={colIndex}
@@ -59,10 +76,23 @@ export const MobileSkeleton: React.FC<MobileSkeletonProps> = ({
                 backgroundColor: theme.palette.background.paper,
               }}
             >
-              <Skeleton variant='rectangular' width='100%' height={100} />
+              <Skeleton
+                variant='rectangular'
+                width='100%'
+                height={100}
+              />
               <Box sx={{ p: 1.5 }}>
-                <Skeleton variant='text' width='80%' height={18} sx={{ mb: 0.5 }} />
-                <Skeleton variant='text' width='50%' height={14} />
+                <Skeleton
+                  variant='text'
+                  width='80%'
+                  height={18}
+                  sx={{ mb: 0.5 }}
+                />
+                <Skeleton
+                  variant='text'
+                  width='50%'
+                  height={14}
+                />
               </Box>
             </Box>
           ))}
@@ -73,12 +103,35 @@ export const MobileSkeleton: React.FC<MobileSkeletonProps> = ({
 
   const renderDetailSkeleton = () => (
     <Box sx={{ p: 2 }}>
-      <Skeleton variant='text' width='80%' height={28} sx={{ mb: 2 }} />
-      <Skeleton variant='rectangular' width='100%' height={200} sx={{ borderRadius: 2, mb: 2 }} />
+      <Skeleton
+        variant='text'
+        width='80%'
+        height={28}
+        sx={{ mb: 2 }}
+      />
+      <Skeleton
+        variant='rectangular'
+        width='100%'
+        height={200}
+        sx={{ borderRadius: 2, mb: 2 }}
+      />
       {Array.from({ length: count }).map((_, index) => (
-        <Box key={index} sx={{ mb: 2 }}>
-          <Skeleton variant='text' width='30%' height={16} sx={{ mb: 0.5 }} />
-          <Skeleton variant='rectangular' width='100%' height={44} sx={{ borderRadius: 1 }} />
+        <Box
+          key={index}
+          sx={{ mb: 2 }}
+        >
+          <Skeleton
+            variant='text'
+            width='30%'
+            height={16}
+            sx={{ mb: 0.5 }}
+          />
+          <Skeleton
+            variant='rectangular'
+            width='100%'
+            height={44}
+            sx={{ borderRadius: 1 }}
+          />
         </Box>
       ))}
     </Box>
@@ -97,8 +150,17 @@ export const MobileSkeleton: React.FC<MobileSkeletonProps> = ({
               backgroundColor: theme.palette.background.paper,
             }}
           >
-            <Skeleton variant='text' width='60%' height={14} sx={{ mb: 1 }} />
-            <Skeleton variant='text' width='80%' height={24} />
+            <Skeleton
+              variant='text'
+              width='60%'
+              height={14}
+              sx={{ mb: 1 }}
+            />
+            <Skeleton
+              variant='text'
+              width='80%'
+              height={24}
+            />
           </Box>
         ))}
       </Box>
@@ -113,13 +175,32 @@ export const MobileSkeleton: React.FC<MobileSkeletonProps> = ({
               backgroundColor: theme.palette.background.paper,
             }}
           >
-            <Skeleton variant='text' width='70%' height={14} sx={{ mb: 1 }} />
-            <Skeleton variant='text' width='50%' height={20} />
+            <Skeleton
+              variant='text'
+              width='70%'
+              height={14}
+              sx={{ mb: 1 }}
+            />
+            <Skeleton
+              variant='text'
+              width='50%'
+              height={20}
+            />
           </Box>
         ))}
       </Box>
-      <Skeleton variant='rectangular' width='100%' height={180} sx={{ borderRadius: 2, mb: 2 }} />
-      <Skeleton variant='rectangular' width='100%' height={150} sx={{ borderRadius: 2 }} />
+      <Skeleton
+        variant='rectangular'
+        width='100%'
+        height={180}
+        sx={{ borderRadius: 2, mb: 2 }}
+      />
+      <Skeleton
+        variant='rectangular'
+        width='100%'
+        height={150}
+        sx={{ borderRadius: 2 }}
+      />
     </Box>
   );
 

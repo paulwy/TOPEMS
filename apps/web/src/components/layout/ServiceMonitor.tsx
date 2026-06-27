@@ -66,7 +66,7 @@ export default function ServiceMonitor({
 
       return () => clearInterval(timer);
     }
-    return undefined;
+    return;
   }, [refreshInterval, onRefresh]);
 
   return (

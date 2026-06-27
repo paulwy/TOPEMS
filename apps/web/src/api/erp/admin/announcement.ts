@@ -1,10 +1,6 @@
 import apiClient from '../../client';
 import type { ApiResponse } from '../../client';
-import type {
-  Announcement,
-  PaginationParams,
-  PaginatedResult,
-} from '../types';
+import type { Announcement, PaginationParams, PaginatedResult } from '../types';
 
 export const announcementApi = {
   async list(
@@ -18,7 +14,7 @@ export const announcementApi = {
     if (params?.priority) searchParams.set('priority', params.priority);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/erp/announcements${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(`/api/erp/announcements${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<Announcement>> {

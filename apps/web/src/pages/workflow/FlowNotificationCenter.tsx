@@ -5,8 +5,7 @@ import type { Notification } from '@/api/workflow';
 import { workflowApi } from '@/api/workflow';
 import { useAppStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
-import { Box, Typography, Tabs, Tab, CircularProgress } from '@mui/material';
-import { Button } from '@mui/material';
+import { Box, Typography, Tabs, Tab, CircularProgress, Button } from '@mui/material';
 import { PageContainer } from '@/components/common';
 
 const FlowNotificationCenter: React.FC = () => {

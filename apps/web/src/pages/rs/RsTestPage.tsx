@@ -14,9 +14,9 @@ import {
   MenuItem,
   Tooltip,
   Typography,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
-import { FileUpload } from '@/components/common';
+import { FileUpload, PageContainer } from '@/components/common';
 import {
   Plus,
   Play,
@@ -27,9 +27,9 @@ import {
   XCircle,
   Clock,
 } from 'lucide-react';
-import { ListPageTemplate, type ColumnDef } from '@/components/templates';
-import type { RowAction, FilterConfig } from '@/components/templates';
-import { PageContainer } from '@/components/common';
+import { ListPageTemplate } from '@/components/templates';
+
+import type { RowAction, FilterConfig, ColumnDef } from '@/components/templates';
 import { rsApi } from '@/api/rs';
 import { useAppStore } from '@/store';
 import type { TestCase, CreateTestCaseRequest, UpdateTestCaseRequest } from '@/api/rs';
@@ -370,7 +370,10 @@ const RsTestPage: React.FC = () => {
   );
 
   return (
-    <PageContainer title='测试管理' subtitle='管理测试用例和测试计划'>
+    <PageContainer
+      title='测试管理'
+      subtitle='管理测试用例和测试计划'
+    >
       <ListPageTemplate<TestCase>
         title=''
         subtitle=''

@@ -19,8 +19,8 @@ import {
   ListItemText,
   Chip,
   Stack,
+  Grid,
 } from '@mui/material';
-import { Grid } from '@mui/material';
 import {
   TrendingUp,
   TrendingDown,
@@ -485,7 +485,9 @@ const StatCardComponent: React.FC<StatCard & { loading?: boolean }> = ({
                           width: `${progress}%`,
                           height: '100%',
                           bgcolor: bgColor,
-                          ...(customGradient ? { background: customGradient, bgcolor: 'unset' } : {}),
+                          ...(customGradient
+                            ? { background: customGradient, bgcolor: 'unset' }
+                            : {}),
                           transition: 'width 0.3s ease',
                         }}
                       />
@@ -1427,7 +1429,10 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
                         justifyContent: 'center',
                         ...(action.color?.startsWith('linear-gradient')
                           ? { background: action.color, color: '#fff' }
-                          : { bgcolor: action.color || 'primary.light', color: action.color || 'primary.main' }),
+                          : {
+                              bgcolor: action.color || 'primary.light',
+                              color: action.color || 'primary.main',
+                            }),
                         position: 'relative',
                       }}
                     >
@@ -1470,7 +1475,7 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
 
   return (
     <Box
-      sx={{ padding: padding }}
+      sx={{ padding }}
       {...props}
     >
       {/* 页面头部 */}

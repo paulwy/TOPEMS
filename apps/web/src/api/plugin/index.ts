@@ -1,5 +1,8 @@
 import type { ApiResponse } from '../client';
 
+import { marketplaceApi } from './marketplace';
+import { pluginApi } from './plugin';
+
 export * from './types';
 
 export { SUITES, PLUGIN_SUITE_MAP, PLUGIN_REGISTRY } from './registry';
@@ -12,9 +15,6 @@ export {
 
 export { marketplaceApi } from './marketplace';
 export { pluginApi } from './plugin';
-
-import { marketplaceApi } from './marketplace';
-import { pluginApi } from './plugin';
 
 export const getMarketplaceSummary = marketplaceApi.getSummary;
 export const getPluginCategories = marketplaceApi.getCategories;

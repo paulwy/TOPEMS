@@ -6,7 +6,7 @@ plugin_type: business
 
 deployment:
   type: standalone
-  port: 8012
+  port: 8029
   base_path: /api/crm
 
 permissions:

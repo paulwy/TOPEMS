@@ -74,7 +74,7 @@ export const workflowRoutes: RouteConfig[] = [
   {
     path: '/flow/notifications',
     element: FlowNotificationCenter,
-    requiredPermissions: [],
+    requiredPermissions: ['workflow:read'],
     module: 'workflow',
     action: 'read',
   },
@@ -116,15 +116,15 @@ export const workflowRoutes: RouteConfig[] = [
   {
     path: '/flow/settings',
     element: FlowSettingsPage,
-    requiredPermissions: ['workflow:read'],
+    requiredPermissions: ['workflow:admin'],
     module: 'workflow',
-    action: 'read',
+    action: 'admin',
   },
   {
     path: '/flow/templates',
     element: FlowTemplatePage,
-    requiredPermissions: ['workflow:read'],
+    requiredPermissions: ['workflow:admin'],
     module: 'workflow',
-    action: 'read',
+    action: 'admin',
   },
 ];

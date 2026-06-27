@@ -15,8 +15,8 @@ import {
   Divider,
   LinearProgress,
   Alert,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { Edit, History, CheckCircle } from 'lucide-react';
 import { DetailPageTemplate, type SectionConfig } from '@/components/templates';
 import { formulaApi } from '@/api/rs';
@@ -211,8 +211,14 @@ const RsFormulaDetailPage: React.FC = () => {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} align='center'>
-                    <Typography variant='body2' color='text.secondary'>
+                  <TableCell
+                    colSpan={6}
+                    align='center'
+                  >
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
                       暂无配方组成
                     </Typography>
                   </TableCell>
@@ -257,14 +263,21 @@ const RsFormulaDetailPage: React.FC = () => {
               {v.changes || '暂无变更说明'}
             </Typography>
             {v.approved_by && (
-              <Typography variant='caption' color='text.secondary' sx={{ mt: 1 }}>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+                sx={{ mt: 1 }}
+              >
                 审批人: {v.approved_by}
               </Typography>
             )}
           </Paper>
         ))
       ) : (
-        <Typography variant='body2' color='text.secondary'>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+        >
           暂无版本历史
         </Typography>
       )}
@@ -274,10 +287,7 @@ const RsFormulaDetailPage: React.FC = () => {
   const infoCard = {
     title: formula.name,
     subtitle: `编码: ${formula.code}`,
-    tags: [
-      formula.version,
-      getStatusLabel(formula.status),
-    ],
+    tags: [formula.version, getStatusLabel(formula.status)],
     stats: [
       { label: '创建人', value: formula.created_by },
       { label: '创建时间', value: formula.created_at },
@@ -311,7 +321,10 @@ const RsFormulaDetailPage: React.FC = () => {
   ].filter(Boolean) as any[];
 
   return (
-    <PageContainer title={formula.name} subtitle={`编码: ${formula.code}`}>
+    <PageContainer
+      title={formula.name}
+      subtitle={`编码: ${formula.code}`}
+    >
       <DetailPageTemplate
         title=''
         subtitle=''

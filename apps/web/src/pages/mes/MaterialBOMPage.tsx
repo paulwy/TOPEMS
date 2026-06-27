@@ -21,9 +21,9 @@ import {
   TableHead,
   TableRow,
   Paper,
+  Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type {
   MaterialBom,
@@ -183,14 +183,15 @@ const MaterialBOMPage: React.FC = () => {
           version: detailBom.version,
           status: detailBom.status,
           description: detailBom.description,
-          items: detailBom.items?.map((item) => ({
-            material_code: item.material_code,
-            material_name: item.material_name,
-            quantity: item.quantity,
-            unit: item.unit,
-            sequence: item.sequence,
-            remark: item.remark,
-          })) || [],
+          items:
+            detailBom.items?.map((item) => ({
+              material_code: item.material_code,
+              material_name: item.material_name,
+              quantity: item.quantity,
+              unit: item.unit,
+              sequence: item.sequence,
+              remark: item.remark,
+            })) || [],
         });
         setShowDialog(true);
       }
@@ -368,36 +369,63 @@ const MaterialBOMPage: React.FC = () => {
     >
       <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 2 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          <Package size={18} sx={{ color: '#4338ca' }} />
-          <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+          <Package
+            size={18}
+            sx={{ color: '#4338ca' }}
+          />
+          <Typography
+            variant='body2'
+            sx={{ color: 'text.secondary' }}
+          >
             BOM总数
           </Typography>
         </Box>
-        <Typography variant='h5' sx={{ fontWeight: 700, color: '#4338ca' }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700, color: '#4338ca' }}
+        >
           {boms.length}
         </Typography>
       </Box>
       <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
-        <Typography variant='body2' sx={{ color: 'text.secondary', mb: 1 }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary', mb: 1 }}
+        >
           启用
         </Typography>
-        <Typography variant='h5' sx={{ fontWeight: 700, color: '#15803d' }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700, color: '#15803d' }}
+        >
           {boms.filter((b) => b.status === 'active').length}
         </Typography>
       </Box>
       <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 2 }}>
-        <Typography variant='body2' sx={{ color: 'text.secondary', mb: 1 }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary', mb: 1 }}
+        >
           停用
         </Typography>
-        <Typography variant='h5' sx={{ fontWeight: 700, color: '#b45309' }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700, color: '#b45309' }}
+        >
           {boms.filter((b) => b.status === 'inactive').length}
         </Typography>
       </Box>
       <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
-        <Typography variant='body2' sx={{ color: 'text.secondary', mb: 1 }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary', mb: 1 }}
+        >
           草稿
         </Typography>
-        <Typography variant='h5' sx={{ fontWeight: 700 }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700 }}
+        >
           {boms.filter((b) => b.status === 'draft').length}
         </Typography>
       </Box>
@@ -405,10 +433,13 @@ const MaterialBOMPage: React.FC = () => {
   );
 
   return (
-    <PageContainer title="物料BOM管理" subtitle="管理物料清单(BOM),包括产品结构、子项物料、版本等信息">
+    <PageContainer
+      title='物料BOM管理'
+      subtitle='管理物料清单(BOM),包括产品结构、子项物料、版本等信息'
+    >
       <ListPageTemplate
-        title=""
-        subtitle=""
+        title=''
+        subtitle=''
         columns={columns}
         data={boms}
         loading={loading}
@@ -440,7 +471,11 @@ const MaterialBOMPage: React.FC = () => {
       />
 
       {/* 新增/编辑对话框 */}
-      <Dialog open={showDialog} onClose={() => setShowDialog(false)} maxWidth='lg'>
+      <Dialog
+        open={showDialog}
+        onClose={() => setShowDialog(false)}
+        maxWidth='lg'
+      >
         <DialogTitle>{selectedBom ? '编辑BOM' : '新增BOM'}</DialogTitle>
         <DialogContent>
           <Box
@@ -470,9 +505,7 @@ const MaterialBOMPage: React.FC = () => {
                   required
                   size='small'
                   value={formData.product_code}
-                  onChange={(e) =>
-                    setFormData({ ...formData, product_code: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, product_code: e.target.value })}
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -482,9 +515,7 @@ const MaterialBOMPage: React.FC = () => {
                   required
                   size='small'
                   value={formData.product_name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, product_name: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, product_name: e.target.value })}
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -498,7 +529,10 @@ const MaterialBOMPage: React.FC = () => {
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <InputLabel htmlFor='status'>状态</InputLabel>
-                <FormControl fullWidth size='small'>
+                <FormControl
+                  fullWidth
+                  size='small'
+                >
                   <Select
                     id='status'
                     value={formData.status || 'active'}
@@ -519,9 +553,7 @@ const MaterialBOMPage: React.FC = () => {
                   multiline
                   rows={2}
                   value={formData.description || ''}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 />
               </Box>
             </Box>
@@ -535,7 +567,10 @@ const MaterialBOMPage: React.FC = () => {
                   mb: 1,
                 }}
               >
-                <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
+                <Typography
+                  variant='subtitle2'
+                  sx={{ fontWeight: 600 }}
+                >
                   BOM子项
                 </Typography>
                 <Button
@@ -546,7 +581,10 @@ const MaterialBOMPage: React.FC = () => {
                   添加子项
                 </Button>
               </Box>
-              <TableContainer component={Paper} variant='outlined'>
+              <TableContainer
+                component={Paper}
+                variant='outlined'
+              >
                 <Table size='small'>
                   <TableHead>
                     <TableRow>
@@ -600,11 +638,7 @@ const MaterialBOMPage: React.FC = () => {
                               type='number'
                               value={item.quantity}
                               onChange={(e) =>
-                                updateBomItem(
-                                  index,
-                                  'quantity',
-                                  parseFloat(e.target.value) || 0
-                                )
+                                updateBomItem(index, 'quantity', parseFloat(e.target.value) || 0)
                               }
                               sx={{ width: 100 }}
                             />
@@ -613,9 +647,7 @@ const MaterialBOMPage: React.FC = () => {
                             <TextField
                               size='small'
                               value={item.unit || ''}
-                              onChange={(e) =>
-                                updateBomItem(index, 'unit', e.target.value)
-                              }
+                              onChange={(e) => updateBomItem(index, 'unit', e.target.value)}
                               sx={{ width: 80 }}
                             />
                           </TableCell>
@@ -623,9 +655,7 @@ const MaterialBOMPage: React.FC = () => {
                             <TextField
                               size='small'
                               value={item.remark || ''}
-                              onChange={(e) =>
-                                updateBomItem(index, 'remark', e.target.value)
-                              }
+                              onChange={(e) => updateBomItem(index, 'remark', e.target.value)}
                             />
                           </TableCell>
                           <TableCell align='center'>
@@ -646,10 +676,18 @@ const MaterialBOMPage: React.FC = () => {
             </Box>
 
             <DialogActions sx={{ mt: 2 }}>
-              <Button type='button' variant='outlined' onClick={() => setShowDialog(false)}>
+              <Button
+                type='button'
+                variant='outlined'
+                onClick={() => setShowDialog(false)}
+              >
                 取消
               </Button>
-              <Button type='submit' variant='contained' startIcon={<Save size={16} />}>
+              <Button
+                type='submit'
+                variant='contained'
+                startIcon={<Save size={16} />}
+              >
                 保存
               </Button>
             </DialogActions>
@@ -658,7 +696,11 @@ const MaterialBOMPage: React.FC = () => {
       </Dialog>
 
       {/* 详情对话框 */}
-      <Dialog open={showDetailDialog} onClose={() => setShowDetailDialog(false)} maxWidth='lg'>
+      <Dialog
+        open={showDetailDialog}
+        onClose={() => setShowDetailDialog(false)}
+        maxWidth='lg'
+      >
         <DialogTitle>BOM详情</DialogTitle>
         <DialogContent>
           {selectedBom && (
@@ -672,7 +714,10 @@ const MaterialBOMPage: React.FC = () => {
               >
                 <Box>
                   <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>产品编码</InputLabel>
-                  <Box component='span' sx={{ fontWeight: 500 }}>
+                  <Box
+                    component='span'
+                    sx={{ fontWeight: 500 }}
+                  >
                     {selectedBom.product_code}
                   </Box>
                 </Box>
@@ -695,10 +740,16 @@ const MaterialBOMPage: React.FC = () => {
               </Box>
 
               <Box>
-                <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 1 }}>
+                <Typography
+                  variant='subtitle2'
+                  sx={{ fontWeight: 600, mb: 1 }}
+                >
                   BOM子项 ({selectedBom.items?.length || 0})
                 </Typography>
-                <TableContainer component={Paper} variant='outlined'>
+                <TableContainer
+                  component={Paper}
+                  variant='outlined'
+                >
                   <Table size='small'>
                     <TableHead>
                       <TableRow>

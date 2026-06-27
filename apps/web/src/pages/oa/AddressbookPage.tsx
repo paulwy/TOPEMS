@@ -81,21 +81,24 @@ const AddressbookPage: React.FC = () => {
     loadDepartments();
   }, [loadDepartments]);
 
-  const handleContactClick = useCallback(async (contact: AddressbookEntry) => {
-    try {
-      const response = await addressbookApi.getContactDetail(contact.id, contact.contact_type);
-      if (response.success) {
-        setSelectedContact(response.data);
+  const handleContactClick = useCallback(
+    async (contact: AddressbookEntry) => {
+      try {
+        const response = await addressbookApi.getContactDetail(contact.id, contact.contact_type);
+        if (response.success) {
+          setSelectedContact(response.data);
+        }
+      } catch (error: unknown) {
+        logger.error('加载联系人详情失败:', error);
+        addNotification({
+          title: '加载失败',
+          message: '加载联系人详情失败',
+          type: 'error',
+        });
       }
-    } catch (error: unknown) {
-      logger.error('加载联系人详情失败:', error);
-      addNotification({
-        title: '加载失败',
-        message: '加载联系人详情失败',
-        type: 'error',
-      });
-    }
-  }, [addNotification]);
+    },
+    [addNotification]
+  );
 
   const handleExport = useCallback(async () => {
     try {
@@ -220,7 +223,8 @@ const AddressbookPage: React.FC = () => {
 
   const cardConfig: CardRenderConfig = {
     title: (item: unknown) => (item as AddressbookEntry).name,
-    description: (item: unknown) => (item as AddressbookEntry).position || (item as AddressbookEntry).department_name || '',
+    description: (item: unknown) =>
+      (item as AddressbookEntry).position || (item as AddressbookEntry).department_name || '',
     status: {
       field: 'status',
       options: {
@@ -292,7 +296,7 @@ const AddressbookPage: React.FC = () => {
         pagination={{
           page: currentPage,
           pageSize: 20,
-          total: total,
+          total,
           onPageChange: setCurrentPage,
         }}
         onCardClick={(item: unknown) => handleContactClick(item as AddressbookEntry)}

@@ -1,14 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Box,
-  Chip,
-  Typography,
-  Tabs,
-  Tab,
-  LinearProgress,
-} from '@mui/material';
-import { Button } from '@mui/material';
+import { Box, Chip, Typography, Tabs, Tab, LinearProgress, Button } from '@mui/material';
 import type { BillingRecord } from '@/api/crm';
 import { crmApi } from '@/api/crm';
 import { useAppStore } from '@/store';
@@ -91,7 +83,10 @@ const CRMBillingPage: React.FC = () => {
   };
 
   const getStatusChip = (status: string) => {
-    const config: Record<string, { label: string; color: 'success' | 'warning' | 'error' | 'default' }> = {
+    const config: Record<
+      string,
+      { label: string; color: 'success' | 'warning' | 'error' | 'default' }
+    > = {
       pending: { label: '待支付', color: 'warning' },
       paid: { label: '已支付', color: 'success' },
       overdue: { label: '已逾期', color: 'error' },
@@ -147,20 +142,23 @@ const CRMBillingPage: React.FC = () => {
 
   const totalAmount = bills.reduce((sum, b) => sum + b.amount, 0);
 
-  const agingSummary = useMemo(() => ({
-    normal: bills
-      .filter((b) => getAgingStatus(b.due_date).color === 'success')
-      .reduce((sum, b) => sum + b.amount, 0),
-    days30: bills
-      .filter((b) => getAgingStatus(b.due_date).label === '30天内')
-      .reduce((sum, b) => sum + b.amount, 0),
-    days60: bills
-      .filter((b) => getAgingStatus(b.due_date).label === '60天内')
-      .reduce((sum, b) => sum + b.amount, 0),
-    days90: bills
-      .filter((b) => getAgingStatus(b.due_date).label === '90天以上')
-      .reduce((sum, b) => sum + b.amount, 0),
-  }), [bills]);
+  const agingSummary = useMemo(
+    () => ({
+      normal: bills
+        .filter((b) => getAgingStatus(b.due_date).color === 'success')
+        .reduce((sum, b) => sum + b.amount, 0),
+      days30: bills
+        .filter((b) => getAgingStatus(b.due_date).label === '30天内')
+        .reduce((sum, b) => sum + b.amount, 0),
+      days60: bills
+        .filter((b) => getAgingStatus(b.due_date).label === '60天内')
+        .reduce((sum, b) => sum + b.amount, 0),
+      days90: bills
+        .filter((b) => getAgingStatus(b.due_date).label === '90天以上')
+        .reduce((sum, b) => sum + b.amount, 0),
+    }),
+    [bills]
+  );
 
   const getColumns = (): ColumnDef<BillingRecord>[] => {
     if (activeTab === 'aging') {
@@ -196,7 +194,13 @@ const CRMBillingPage: React.FC = () => {
           width: 120,
           render: (row) => {
             const aging = getAgingStatus(row.due_date);
-            return <Chip size='small' label={aging.label} color={aging.color} />;
+            return (
+              <Chip
+                size='small'
+                label={aging.label}
+                color={aging.color}
+              />
+            );
           },
         },
         {
@@ -205,8 +209,15 @@ const CRMBillingPage: React.FC = () => {
           width: 120,
           render: (row) => {
             const aging = getAgingStatus(row.due_date);
-            const riskLabel = aging.color === 'error' ? '高风险' : aging.color === 'warning' ? '中风险' : '低风险';
-            return <Chip size='small' label={riskLabel} color={aging.color} />;
+            const riskLabel =
+              aging.color === 'error' ? '高风险' : aging.color === 'warning' ? '中风险' : '低风险';
+            return (
+              <Chip
+                size='small'
+                label={riskLabel}
+                color={aging.color}
+              />
+            );
           },
         },
       ];
@@ -328,85 +339,97 @@ const CRMBillingPage: React.FC = () => {
     return null;
   }, [activeTab, agingSummary]);
 
-  const tabTotalLabel = activeTab === 'invoices' ? '待收总额' : activeTab === 'collections' ? '已收总额' : '应收总额';
+  const tabTotalLabel =
+    activeTab === 'invoices' ? '待收总额' : activeTab === 'collections' ? '已收总额' : '应收总额';
 
   return (
-    <PageContainer title='账单管理' subtitle='管理客户账单、收款和账龄分析'>
+    <PageContainer
+      title='账单管理'
+      subtitle='管理客户账单、收款和账龄分析'
+    >
       <ListPageTemplate
         title=''
         subtitle=''
-      breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '客户关系管理', href: '/crm' }, { label: '账单管理' }]}
-      backButton={{ onClick: () => navigate('/crm') }}
-      columns={getColumns()}
-      data={paginatedBills}
-      loading={loading}
-      pagination={{
-        page: currentPage,
-        pageSize,
-        total: filteredBills.length,
-        onPageChange: setCurrentPage,
-      }}
-      searchable
-      searchPlaceholder={activeTab === 'aging' ? '搜索客户...' : '搜索发票号或客户...'}
-      searchValue={searchQuery}
-      onSearch={(value) => {
-        setSearchQuery(value);
-        setCurrentPage(0);
-      }}
-      actions={activeTab === 'invoices' ? [
-        {
-          label: tabTotalLabel + ': ' + formatCurrency(totalAmount),
-          variant: 'text',
-        },
-      ] : [
-        {
-          label: tabTotalLabel + ': ' + formatCurrency(totalAmount),
-          variant: 'text',
-        },
-      ]}
-      rowActions={getRowActions()}
-      onRefresh={loadBills}
-      showRowNumber
-      columnConfigurable
-      persistColumnConfig
-      columnConfigStorageKey={`crm-billing-${activeTab}-columns`}
-      headerContent={
-        <Box>
-          <Box
-            sx={{
-              display: 'flex',
-              gap: 1,
-              p: 1,
-              bgcolor: 'grey.100',
-              borderRadius: 1,
-              mb: 3,
-            }}
-          >
-            <TabButton
-              active={activeTab === 'invoices'}
-              onClick={() => setActiveTab('invoices')}
+        breadcrumbs={[
+          { label: '首页', href: '/dashboard' },
+          { label: '客户关系管理', href: '/crm' },
+          { label: '账单管理' },
+        ]}
+        backButton={{ onClick: () => navigate('/crm') }}
+        columns={getColumns()}
+        data={paginatedBills}
+        loading={loading}
+        pagination={{
+          page: currentPage,
+          pageSize,
+          total: filteredBills.length,
+          onPageChange: setCurrentPage,
+        }}
+        searchable
+        searchPlaceholder={activeTab === 'aging' ? '搜索客户...' : '搜索发票号或客户...'}
+        searchValue={searchQuery}
+        onSearch={(value) => {
+          setSearchQuery(value);
+          setCurrentPage(0);
+        }}
+        actions={
+          activeTab === 'invoices'
+            ? [
+                {
+                  label: `${tabTotalLabel}: ${formatCurrency(totalAmount)}`,
+                  variant: 'text',
+                },
+              ]
+            : [
+                {
+                  label: `${tabTotalLabel}: ${formatCurrency(totalAmount)}`,
+                  variant: 'text',
+                },
+              ]
+        }
+        rowActions={getRowActions()}
+        onRefresh={loadBills}
+        showRowNumber
+        columnConfigurable
+        persistColumnConfig
+        columnConfigStorageKey={`crm-billing-${activeTab}-columns`}
+        headerContent={
+          <Box>
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 1,
+                p: 1,
+                bgcolor: 'grey.100',
+                borderRadius: 1,
+                mb: 3,
+              }}
             >
-              <Receipt sx={{ width: 16, height: 16, mr: 1 }} />
-              待收账单
-            </TabButton>
-            <TabButton
-              active={activeTab === 'collections'}
-              onClick={() => setActiveTab('collections')}
-            >
-              <CheckCircle sx={{ width: 16, height: 16, mr: 1 }} />
-              已收账单
-            </TabButton>
-            <TabButton
-              active={activeTab === 'aging'}
-              onClick={() => setActiveTab('aging')}
-            >
-              <Clock sx={{ width: 16, height: 16, mr: 1 }} />
-              账龄分析
-            </TabButton>
+              <TabButton
+                active={activeTab === 'invoices'}
+                onClick={() => setActiveTab('invoices')}
+              >
+                <Receipt sx={{ width: 16, height: 16, mr: 1 }} />
+                待收账单
+              </TabButton>
+              <TabButton
+                active={activeTab === 'collections'}
+                onClick={() => setActiveTab('collections')}
+              >
+                <CheckCircle sx={{ width: 16, height: 16, mr: 1 }} />
+                已收账单
+              </TabButton>
+              <TabButton
+                active={activeTab === 'aging'}
+                onClick={() => setActiveTab('aging')}
+              >
+                <Clock sx={{ width: 16, height: 16, mr: 1 }} />
+                账龄分析
+              </TabButton>
+            </Box>
+            {headerContent}
           </Box>
-          {headerContent}
-        </Box>
-      }
+        }
       />
     </PageContainer>
   );

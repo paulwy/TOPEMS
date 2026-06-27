@@ -1,5 +1,4 @@
-import { Chip, Typography, Box, InputLabel } from '@mui/material';
-import { Button } from '@mui/material';
+import { Chip, Typography, Box, InputLabel, Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
@@ -655,7 +654,10 @@ const CustomerDetailPage: React.FC = () => {
   const sections = useMemo<SectionConfig[]>(() => [footerSection], [footerSection]);
 
   return (
-    <PageContainer title='客户详情' subtitle='查看和编辑客户档案信息'>
+    <PageContainer
+      title='客户详情'
+      subtitle='查看和编辑客户档案信息'
+    >
       <DetailPageTemplate
         title=''
         subtitle=''

@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Box, Typography, Paper, IconButton } from '@mui/material';
-import { Button } from '@mui/material';
+import { Box, Typography, Paper, IconButton, Button } from '@mui/material';
 import { ChevronRight, ChevronLeft, ZoomIn, ZoomOut } from 'lucide-react';
 import type { GanttPhase, GanttMilestone } from '@/api/pm';
 
@@ -52,7 +51,7 @@ const GanttChart: React.FC<GanttChartProps> = ({
 
   const getMonthLabels = () => {
     const labels = [];
-    let currentDate = new Date(minDate);
+    const currentDate = new Date(minDate);
     while (currentDate <= maxDate) {
       labels.push({
         date: new Date(currentDate),

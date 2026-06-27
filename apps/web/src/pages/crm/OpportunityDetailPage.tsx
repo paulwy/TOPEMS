@@ -83,7 +83,10 @@ const OpportunityDetailPage: React.FC = () => {
   };
 
   const getStageColor = (stage: string) => {
-    const colors: Record<string, 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'> = {
+    const colors: Record<
+      string,
+      'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning'
+    > = {
       prospecting: 'default',
       qualified: 'info',
       proposal: 'primary',
@@ -117,7 +120,11 @@ const OpportunityDetailPage: React.FC = () => {
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>阶段</InputLabel>
           <Box sx={{ mt: 0.5 }}>
-            <Chip size='small' color={getStageColor(opportunity.stage)} label={getStageLabel(opportunity.stage)} />
+            <Chip
+              size='small'
+              color={getStageColor(opportunity.stage)}
+              label={getStageLabel(opportunity.stage)}
+            />
           </Box>
         </Box>
         <Box>
@@ -152,14 +159,23 @@ const OpportunityDetailPage: React.FC = () => {
             value={opportunity.probability || 0}
             sx={{ flex: 1, height: 10, borderRadius: 5 }}
           />
-          <Typography variant='h6' sx={{ fontWeight: 600 }}>
+          <Typography
+            variant='h6'
+            sx={{ fontWeight: 600 }}
+          >
             {opportunity.probability || 0}%
           </Typography>
         </Box>
         {opportunity.probability !== undefined && (
           <Box>
-            <Typography variant='body2' color='text.secondary'>
-              加权预期金额: {formatMoney(opportunity.value ? opportunity.value * (opportunity.probability / 100) : undefined)}
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
+              加权预期金额:{' '}
+              {formatMoney(
+                opportunity.value ? opportunity.value * (opportunity.probability / 100) : undefined
+              )}
             </Typography>
           </Box>
         )}
@@ -181,16 +197,37 @@ const OpportunityDetailPage: React.FC = () => {
           }}
         >
           <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
-            <Typography variant='body2' color='text.secondary'>创建时间</Typography>
-            <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>{formatDateTime(opportunity.created_at)}</Typography>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
+              创建时间
+            </Typography>
+            <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
+              {formatDateTime(opportunity.created_at)}
+            </Typography>
           </Box>
           <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
-            <Typography variant='body2' color='text.secondary'>更新时间</Typography>
-            <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>{formatDateTime(opportunity.updated_at)}</Typography>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
+              更新时间
+            </Typography>
+            <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
+              {formatDateTime(opportunity.updated_at)}
+            </Typography>
           </Box>
           <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
-            <Typography variant='body2' color='text.secondary'>商机ID</Typography>
-            <Typography sx={{ fontWeight: 'medium', mt: 0.5, fontFamily: 'monospace', fontSize: '0.875rem' }}>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
+              商机ID
+            </Typography>
+            <Typography
+              sx={{ fontWeight: 'medium', mt: 0.5, fontFamily: 'monospace', fontSize: '0.875rem' }}
+            >
               {opportunity.id.substring(0, 8)}...
             </Typography>
           </Box>
@@ -223,7 +260,11 @@ const OpportunityDetailPage: React.FC = () => {
         { label: '成交概率', value: `${opportunity?.probability || 0}%` },
         {
           label: '预期金额',
-          value: formatMoney(opportunity?.value && opportunity?.probability ? opportunity.value * (opportunity.probability / 100) : undefined),
+          value: formatMoney(
+            opportunity?.value && opportunity?.probability
+              ? opportunity.value * (opportunity.probability / 100)
+              : undefined
+          ),
         },
       ],
     }),
@@ -246,7 +287,10 @@ const OpportunityDetailPage: React.FC = () => {
   };
 
   return (
-    <PageContainer title='商机详情' subtitle='查看和编辑商机信息'>
+    <PageContainer
+      title='商机详情'
+      subtitle='查看和编辑商机信息'
+    >
       <DetailPageTemplate
         title=''
         subtitle=''

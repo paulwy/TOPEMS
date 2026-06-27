@@ -1,11 +1,4 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  Typography,
-  Box,
-  LinearProgress,
-} from '@mui/material';
+import { Card, CardContent, CardHeader, Typography, Box, LinearProgress } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import type {
   Opportunity,
@@ -17,7 +10,14 @@ import type {
 import { crmApi } from '@/api/crm';
 import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
-import {DataExport, ActionButton, FormField, Dialog, StatusBadge, PageContainer} from '@/components/common';
+import {
+  DataExport,
+  ActionButton,
+  FormField,
+  Dialog,
+  StatusBadge,
+  PageContainer,
+} from '@/components/common';
 import {
   Plus,
   Edit,
@@ -328,446 +328,458 @@ const OpportunityManagementPage: React.FC = () => {
   );
 
   return (
-    <PageContainer title='商机管理' subtitle='管理商机信息，跟踪销售机会和成交进度'>
-    <>
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' },
-          gap: 2,
-          mb: 3,
-        }}
-      >
-        <Card>
-          <CardContent sx={{ p: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-              <Target sx={{ width: 18, height: 18, color: 'primary.main' }} />
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
-                商机总数
-              </Typography>
-            </Box>
-            <Typography
-              variant='h4'
-              sx={{ fontWeight: 'bold' }}
-            >
-              {stats?.total_count || 0}
-            </Typography>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent sx={{ p: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-              <TrendingUp sx={{ width: 18, height: 18, color: 'warning.main' }} />
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
-                总金额
-              </Typography>
-            </Box>
-            <Typography
-              variant='h4'
-              sx={{ fontWeight: 'bold' }}
-            >
-              ¥{(stats?.total_value || 0).toLocaleString()}
-            </Typography>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent sx={{ p: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-              <CheckCircle sx={{ width: 18, height: 18, color: 'success.main' }} />
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
-                赢单数量
-              </Typography>
-            </Box>
-            <Typography
-              variant='h4'
-              sx={{ fontWeight: 'bold', color: 'success.main' }}
-            >
-              {stats?.won_count || 0}
-            </Typography>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent sx={{ p: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-              <XCircle sx={{ width: 18, height: 18, color: 'error.main' }} />
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
-                输单数量
-              </Typography>
-            </Box>
-            <Typography
-              variant='h4'
-              sx={{ fontWeight: 'bold', color: 'error.main' }}
-            >
-              {stats?.lost_count || 0}
-            </Typography>
-          </CardContent>
-        </Card>
-      </Box>
-
-      <Card sx={{ mb: 3 }}>
-        <CardHeader>
-          <Typography
-            variant='h6'
-            sx={{
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-            }}
-          >
-            <TrendingUp style={{ width: 20, height: 20 }} />
-            销售漏斗
-          </Typography>
-          <Typography
-            variant='body2'
-            sx={{ color: 'grey.500' }}
-          >
-            各阶段商机数量与金额统计
-          </Typography>
-        </CardHeader>
-        <CardContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {funnelData.map((item, index) => {
-              const widthPercent = 100 - index * 10;
-              const stageColors: Record<string, string> = {
-                prospecting: 'text.disabled',
-                qualified: 'primary.main',
-                proposal: '#8B5CF6',
-                negotiation: 'warning.main',
-                closed_won: 'success.main',
-                closed_lost: 'error.main',
-              };
-              return (
-                <Box
-                  key={item.stage}
-                  sx={{ display: 'flex', alignItems: 'center', gap: 3 }}
+    <PageContainer
+      title='商机管理'
+      subtitle='管理商机信息，跟踪销售机会和成交进度'
+    >
+      <>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: 'repeat(4, 1fr)' },
+            gap: 2,
+            mb: 3,
+          }}
+        >
+          <Card>
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+                <Target sx={{ width: 18, height: 18, color: 'primary.main' }} />
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
                 >
-                  <Box sx={{ width: 80, textAlign: 'right' }}>
-                    <Typography
-                      variant='body1'
-                      sx={{ fontWeight: 500 }}
-                    >
-                      {item.stage_label}
-                    </Typography>
-                  </Box>
-                  <Box sx={{ flex: 1, maxWidth: '400px' }}>
-                    <Box
-                      sx={{
-                        height: 40,
-                        bgcolor: 'grey.100',
-                        borderRadius: 1,
-                        overflow: 'hidden',
-                        position: 'relative',
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          height: '100%',
-                          bgcolor: stageColors[item.stage] || 'grey.500',
-                          width: `${widthPercent}%`,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          px: 2,
-                          transition: 'width 0.3s',
-                        }}
+                  商机总数
+                </Typography>
+              </Box>
+              <Typography
+                variant='h4'
+                sx={{ fontWeight: 'bold' }}
+              >
+                {stats?.total_count || 0}
+              </Typography>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+                <TrendingUp sx={{ width: 18, height: 18, color: 'warning.main' }} />
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  总金额
+                </Typography>
+              </Box>
+              <Typography
+                variant='h4'
+                sx={{ fontWeight: 'bold' }}
+              >
+                ¥{(stats?.total_value || 0).toLocaleString()}
+              </Typography>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+                <CheckCircle sx={{ width: 18, height: 18, color: 'success.main' }} />
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  赢单数量
+                </Typography>
+              </Box>
+              <Typography
+                variant='h4'
+                sx={{ fontWeight: 'bold', color: 'success.main' }}
+              >
+                {stats?.won_count || 0}
+              </Typography>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent sx={{ p: 2 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
+                <XCircle sx={{ width: 18, height: 18, color: 'error.main' }} />
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
+                  输单数量
+                </Typography>
+              </Box>
+              <Typography
+                variant='h4'
+                sx={{ fontWeight: 'bold', color: 'error.main' }}
+              >
+                {stats?.lost_count || 0}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Box>
+
+        <Card sx={{ mb: 3 }}>
+          <CardHeader>
+            <Typography
+              variant='h6'
+              sx={{
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+              }}
+            >
+              <TrendingUp style={{ width: 20, height: 20 }} />
+              销售漏斗
+            </Typography>
+            <Typography
+              variant='body2'
+              sx={{ color: 'grey.500' }}
+            >
+              各阶段商机数量与金额统计
+            </Typography>
+          </CardHeader>
+          <CardContent>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+              {funnelData.map((item, index) => {
+                const widthPercent = 100 - index * 10;
+                const stageColors: Record<string, string> = {
+                  prospecting: 'text.disabled',
+                  qualified: 'primary.main',
+                  proposal: '#8B5CF6',
+                  negotiation: 'warning.main',
+                  closed_won: 'success.main',
+                  closed_lost: 'error.main',
+                };
+                return (
+                  <Box
+                    key={item.stage}
+                    sx={{ display: 'flex', alignItems: 'center', gap: 3 }}
+                  >
+                    <Box sx={{ width: 80, textAlign: 'right' }}>
+                      <Typography
+                        variant='body1'
+                        sx={{ fontWeight: 500 }}
                       >
-                        <Typography
-                          variant='body2'
-                          sx={{ color: 'white', fontWeight: 500 }}
-                        >
-                          {item.count} 个商机
-                        </Typography>
-                        <Typography
-                          variant='body2'
-                          sx={{ color: 'white' }}
-                        >
-                          ¥{(item.total_value || 0).toLocaleString()}
-                        </Typography>
-                      </Box>
+                        {item.stage_label}
+                      </Typography>
                     </Box>
-                    {item.avg_probability !== undefined && (
+                    <Box sx={{ flex: 1, maxWidth: '400px' }}>
                       <Box
                         sx={{
-                          mt: 0.5,
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 1,
+                          height: 40,
+                          bgcolor: 'grey.100',
+                          borderRadius: 1,
+                          overflow: 'hidden',
+                          position: 'relative',
                         }}
                       >
-                        <LinearProgress
-                          variant='determinate'
-                          value={item.avg_probability}
-                          sx={{ flex: 1, height: 4, borderRadius: 2 }}
-                        />
-                        <Typography
-                          variant='caption'
+                        <Box
                           sx={{
-                            color: 'text.secondary',
-                            width: 40,
-                            textAlign: 'right',
+                            height: '100%',
+                            bgcolor: stageColors[item.stage] || 'grey.500',
+                            width: `${widthPercent}%`,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            px: 2,
+                            transition: 'width 0.3s',
                           }}
                         >
-                          {item.avg_probability.toFixed(0)}%
-                        </Typography>
+                          <Typography
+                            variant='body2'
+                            sx={{ color: 'white', fontWeight: 500 }}
+                          >
+                            {item.count} 个商机
+                          </Typography>
+                          <Typography
+                            variant='body2'
+                            sx={{ color: 'white' }}
+                          >
+                            ¥{(item.total_value || 0).toLocaleString()}
+                          </Typography>
+                        </Box>
                       </Box>
-                    )}
+                      {item.avg_probability !== undefined && (
+                        <Box
+                          sx={{
+                            mt: 0.5,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                          }}
+                        >
+                          <LinearProgress
+                            variant='determinate'
+                            value={item.avg_probability}
+                            sx={{ flex: 1, height: 4, borderRadius: 2 }}
+                          />
+                          <Typography
+                            variant='caption'
+                            sx={{
+                              color: 'text.secondary',
+                              width: 40,
+                              textAlign: 'right',
+                            }}
+                          >
+                            {item.avg_probability.toFixed(0)}%
+                          </Typography>
+                        </Box>
+                      )}
+                    </Box>
+                    <Box sx={{ width: 100, textAlign: 'right' }}>
+                      <Typography
+                        variant='body2'
+                        sx={{ color: 'text.secondary' }}
+                      >
+                        平均概率
+                      </Typography>
+                      <Typography
+                        variant='body1'
+                        sx={{ fontWeight: 500 }}
+                      >
+                        {item.avg_probability ? `${item.avg_probability.toFixed(0)}%` : '-'}
+                      </Typography>
+                    </Box>
                   </Box>
-                  <Box sx={{ width: 100, textAlign: 'right' }}>
-                    <Typography
-                      variant='body2'
-                      sx={{ color: 'text.secondary' }}
-                    >
-                      平均概率
-                    </Typography>
-                    <Typography
-                      variant='body1'
-                      sx={{ fontWeight: 500 }}
-                    >
-                      {item.avg_probability ? `${item.avg_probability.toFixed(0)}%` : '-'}
-                    </Typography>
-                  </Box>
-                </Box>
-              );
-            })}
-          </Box>
-        </CardContent>
-      </Card>
+                );
+              })}
+            </Box>
+          </CardContent>
+        </Card>
 
-      <ListPageTemplate<Opportunity>
-        title=''
-        subtitle=''
-        backButton={{
-          href: '/dashboard',
-        }}
-        columns={columns}
-        data={opportunities}
-        loading={loading}
-        searchable
-        searchPlaceholder='搜索商机名称...'
-        searchValue={searchTerm}
-        onSearch={(value) => {
-          setSearchTerm(value);
-        }}
-        filters={filters}
-        rowActions={rowActions}
-        pagination={{
-          page: pagination.page,
-          pageSize: pagination.pageSize,
-          total: pagination.total,
-          onPageChange: (page) => {
-            setPagination((prev) => ({ ...prev, page }));
-          },
-          onPageSizeChange: (pageSize) => {
-            setPagination((prev) => ({ ...prev, pageSize, page: 0 }));
-          },
-        }}
-        actions={[
-          {
-            label: '导出',
-            icon: <Eye size={18} />,
-            onClick: () => {},
-            variant: 'outlined',
-          },
-          {
-            label: '新增商机',
-            icon: <Plus size={18} />,
-            onClick: () => {
-              resetForm();
-              setShowDialog(true);
+        <ListPageTemplate<Opportunity>
+          title=''
+          subtitle=''
+          backButton={{
+            href: '/dashboard',
+          }}
+          columns={columns}
+          data={opportunities}
+          loading={loading}
+          searchable
+          searchPlaceholder='搜索商机名称...'
+          searchValue={searchTerm}
+          onSearch={(value) => {
+            setSearchTerm(value);
+          }}
+          filters={filters}
+          rowActions={rowActions}
+          pagination={{
+            page: pagination.page,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
+            onPageChange: (page) => {
+              setPagination((prev) => ({ ...prev, page }));
             },
-            variant: 'contained',
-          },
-        ]}
-        headerContent={
-          <DataExport
-            data={opportunities as unknown as Record<string, unknown>[]}
-            fields={exportFields}
-            defaultFileName='商机数据'
-            buttonText=''
-          />
-        }
-      />
+            onPageSizeChange: (pageSize) => {
+              setPagination((prev) => ({ ...prev, pageSize, page: 0 }));
+            },
+          }}
+          actions={[
+            {
+              label: '导出',
+              icon: <Eye size={18} />,
+              onClick: () => {},
+              variant: 'outlined',
+            },
+            {
+              label: '新增商机',
+              icon: <Plus size={18} />,
+              onClick: () => {
+                resetForm();
+                setShowDialog(true);
+              },
+              variant: 'contained',
+            },
+          ]}
+          headerContent={
+            <DataExport
+              data={opportunities as unknown as Record<string, unknown>[]}
+              fields={exportFields}
+              defaultFileName='商机数据'
+              buttonText=''
+            />
+          }
+        />
 
-      <Dialog
-        open={showDialog}
-        onClose={() => setShowDialog(false)}
-        title={selectedOpportunity ? '编辑商机' : '新增商机'}
-        maxWidth='md'
-        fullWidth
-        cancelButton={{ label: '取消' }}
-        confirmButton={{ label: '保存', onClick: () => handleSubmit({ preventDefault: () => {} } as React.FormEvent) }}
-      >
-        <form onSubmit={handleSubmit}>
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(2, 1fr)',
-              gap: 2,
-              pt: 1,
-            }}
-          >
-            <FormField
-              name='name'
-              label='商机名称 *'
-              required
-              value={formData.name}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, name: e.target.value })}
-              fullWidth
-              sx={{ gridColumn: 'span 2' }}
-            />
-            <FormField
-              name='value'
-              label='金额'
-              type='number'
-              value={formData.value || ''}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setFormData({
-                  ...formData,
-                  value: e.target.value ? Number(e.target.value) : undefined,
-                })
-              }
-              fullWidth
-            />
-            <FormField
-              name='probability'
-              label='成交概率 (%)'
-              type='number'
-              value={formData.probability || ''}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setFormData({
-                  ...formData,
-                  probability: e.target.value ? Number(e.target.value) : undefined,
-                })
-              }
-              fullWidth
-            />
-            <FormField
-              name='close_date'
-              label='预计成交日期'
-              type='date'
-              value={formData.close_date}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, close_date: e.target.value })}
-              fullWidth
-              sx={{ gridColumn: 'span 2' }}
-            />
-            <FormField
-              name='notes'
-              label='备注'
-              multiline
-              rows={3}
-              value={formData.notes}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, notes: e.target.value })}
-              fullWidth
-              sx={{ gridColumn: 'span 2' }}
-            />
-          </Box>
-        </form>
-      </Dialog>
+        <Dialog
+          open={showDialog}
+          onClose={() => setShowDialog(false)}
+          title={selectedOpportunity ? '编辑商机' : '新增商机'}
+          maxWidth='md'
+          fullWidth
+          cancelButton={{ label: '取消' }}
+          confirmButton={{
+            label: '保存',
+            onClick: () => handleSubmit({ preventDefault: () => {} } as React.FormEvent),
+          }}
+        >
+          <form onSubmit={handleSubmit}>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
+                gap: 2,
+                pt: 1,
+              }}
+            >
+              <FormField
+                name='name'
+                label='商机名称 *'
+                required
+                value={formData.name}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, name: e.target.value })
+                }
+                fullWidth
+                sx={{ gridColumn: 'span 2' }}
+              />
+              <FormField
+                name='value'
+                label='金额'
+                type='number'
+                value={formData.value || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({
+                    ...formData,
+                    value: e.target.value ? Number(e.target.value) : undefined,
+                  })
+                }
+                fullWidth
+              />
+              <FormField
+                name='probability'
+                label='成交概率 (%)'
+                type='number'
+                value={formData.probability || ''}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({
+                    ...formData,
+                    probability: e.target.value ? Number(e.target.value) : undefined,
+                  })
+                }
+                fullWidth
+              />
+              <FormField
+                name='close_date'
+                label='预计成交日期'
+                type='date'
+                value={formData.close_date}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, close_date: e.target.value })
+                }
+                fullWidth
+                sx={{ gridColumn: 'span 2' }}
+              />
+              <FormField
+                name='notes'
+                label='备注'
+                multiline
+                rows={3}
+                value={formData.notes}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormData({ ...formData, notes: e.target.value })
+                }
+                fullWidth
+                sx={{ gridColumn: 'span 2' }}
+              />
+            </Box>
+          </form>
+        </Dialog>
 
-      <Dialog
-        open={showDetailDialog}
-        onClose={() => setShowDetailDialog(false)}
-        title='商机详情'
-        maxWidth='md'
-        fullWidth
-        confirmButton={{ label: '关闭' }}
-      >
-        {selectedOpportunity && (
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(2, 1fr)',
-              gap: 2,
-            }}
-          >
-            <Box>
-              <Typography
-                variant='caption'
-                color='text.secondary'
-              >
-                商机名称
-              </Typography>
-              <Typography sx={{ fontWeight: 'medium' }}>{selectedOpportunity.name}</Typography>
+        <Dialog
+          open={showDetailDialog}
+          onClose={() => setShowDetailDialog(false)}
+          title='商机详情'
+          maxWidth='md'
+          fullWidth
+          confirmButton={{ label: '关闭' }}
+        >
+          {selectedOpportunity && (
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(2, 1fr)',
+                gap: 2,
+              }}
+            >
+              <Box>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  商机名称
+                </Typography>
+                <Typography sx={{ fontWeight: 'medium' }}>{selectedOpportunity.name}</Typography>
+              </Box>
+              <Box>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  金额
+                </Typography>
+                <Typography>¥{(selectedOpportunity.value || 0).toLocaleString()}</Typography>
+              </Box>
+              <Box>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  阶段
+                </Typography>
+                <Box sx={{ mt: 0.5 }}>{getStageBadge(selectedOpportunity.stage)}</Box>
+              </Box>
+              <Box>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  成交概率
+                </Typography>
+                <Typography>
+                  {selectedOpportunity.probability ? `${selectedOpportunity.probability}%` : '-'}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  预计成交日期
+                </Typography>
+                <Typography>
+                  {selectedOpportunity.close_date
+                    ? new Date(selectedOpportunity.close_date).toLocaleDateString('zh-CN')
+                    : '-'}
+                </Typography>
+              </Box>
+              <Box>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  创建时间
+                </Typography>
+                <Typography>
+                  {new Date(selectedOpportunity.created_at).toLocaleString('zh-CN')}
+                </Typography>
+              </Box>
+              <Box sx={{ gridColumn: 'span 2' }}>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  备注
+                </Typography>
+                <Typography>{selectedOpportunity.notes || '-'}</Typography>
+              </Box>
             </Box>
-            <Box>
-              <Typography
-                variant='caption'
-                color='text.secondary'
-              >
-                金额
-              </Typography>
-              <Typography>¥{(selectedOpportunity.value || 0).toLocaleString()}</Typography>
-            </Box>
-            <Box>
-              <Typography
-                variant='caption'
-                color='text.secondary'
-              >
-                阶段
-              </Typography>
-              <Box sx={{ mt: 0.5 }}>{getStageBadge(selectedOpportunity.stage)}</Box>
-            </Box>
-            <Box>
-              <Typography
-                variant='caption'
-                color='text.secondary'
-              >
-                成交概率
-              </Typography>
-              <Typography>
-                {selectedOpportunity.probability ? `${selectedOpportunity.probability}%` : '-'}
-              </Typography>
-            </Box>
-            <Box>
-              <Typography
-                variant='caption'
-                color='text.secondary'
-              >
-                预计成交日期
-              </Typography>
-              <Typography>
-                {selectedOpportunity.close_date
-                  ? new Date(selectedOpportunity.close_date).toLocaleDateString('zh-CN')
-                  : '-'}
-              </Typography>
-            </Box>
-            <Box>
-              <Typography
-                variant='caption'
-                color='text.secondary'
-              >
-                创建时间
-              </Typography>
-              <Typography>
-                {new Date(selectedOpportunity.created_at).toLocaleString('zh-CN')}
-              </Typography>
-            </Box>
-            <Box sx={{ gridColumn: 'span 2' }}>
-              <Typography
-                variant='caption'
-                color='text.secondary'
-              >
-                备注
-              </Typography>
-              <Typography>{selectedOpportunity.notes || '-'}</Typography>
-            </Box>
-          </Box>
-        )}
-      </Dialog>
-    </>
+          )}
+        </Dialog>
+      </>
     </PageContainer>
   );
 };

@@ -9,8 +9,8 @@ import {
   FormLabel,
   Typography,
   Box,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 
 import { Plus, Trash2, GripVertical, Sparkles, Eye, EyeOff } from 'lucide-react';
@@ -146,8 +146,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
     const cursorPos = textarea?.selectionStart;
     if (cursorPos !== undefined) {
       const content = formData.content;
-      const newContent =
-        content.slice(0, cursorPos) + `{{${variableKey}}}` + content.slice(cursorPos);
+      const newContent = `${content.slice(0, cursorPos)}{{${variableKey}}}${content.slice(cursorPos)}`;
       setFormData((prev) => ({ ...prev, content: newContent }));
     }
   };

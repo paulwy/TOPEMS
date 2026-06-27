@@ -11,12 +11,7 @@ import {
   Eye,
   Plus,
 } from 'lucide-react';
-import {
-  attendanceApi,
-  leaveApi,
-  type AttendanceRecord,
-  type LeaveRequest,
-} from '@/api/hrm';
+import { attendanceApi, leaveApi, type AttendanceRecord, type LeaveRequest } from '@/api/hrm';
 import { apiLogger } from '@/utils/logger';
 import { useAppStore } from '../../store';
 import {
@@ -28,7 +23,21 @@ import {
 } from '@/components/templates';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { PageContainer } from '@/components/common';
-import { Button, TextField, Box, Typography, Chip, Dialog, DialogTitle, DialogContent, DialogActions, FormLabel, FormControl, Select, MenuItem } from '@mui/material';
+import {
+  Button,
+  TextField,
+  Box,
+  Typography,
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormLabel,
+  FormControl,
+  Select,
+  MenuItem,
+} from '@mui/material';
 
 const HrmAttendancePage: React.FC = () => {
   const addNotification = useAppStore((state) => state.addNotification);
@@ -80,18 +89,25 @@ const HrmAttendancePage: React.FC = () => {
     return types[type] || type;
   };
 
-  const handleLeaveAction = useCallback(async (id: string, action: 'approve' | 'reject') => {
-    try {
-      const response = await leaveApi.approve(id, action);
-      if (response.code === 200) {
-        addNotification({ title: '成功', message: action === 'approve' ? '已批准' : '已拒绝', type: 'success' });
-        loadData();
+  const handleLeaveAction = useCallback(
+    async (id: string, action: 'approve' | 'reject') => {
+      try {
+        const response = await leaveApi.approve(id, action);
+        if (response.code === 200) {
+          addNotification({
+            title: '成功',
+            message: action === 'approve' ? '已批准' : '已拒绝',
+            type: 'success',
+          });
+          loadData();
+        }
+      } catch (err: unknown) {
+        apiLogger.error('Failed to process leave:', err);
+        addNotification({ title: '失败', message: '操作失败', type: 'error' });
       }
-    } catch (err: unknown) {
-      apiLogger.error('Failed to process leave:', err);
-      addNotification({ title: '失败', message: '操作失败', type: 'error' });
-    }
-  }, [addNotification, loadData]);
+    },
+    [addNotification, loadData]
+  );
 
   const handleCreateLeave = useCallback(async () => {
     try {
@@ -108,14 +124,12 @@ const HrmAttendancePage: React.FC = () => {
     }
   }, [leaveFormData, addNotification, loadData]);
 
-  const filteredRecords = records.filter(
-    (r) =>
-      r.employee_name?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredRecords = records.filter((r) =>
+    r.employee_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredLeaves = leaves.filter(
-    (l) =>
-      l.employee_name?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredLeaves = leaves.filter((l) =>
+    l.employee_name?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const attendanceStats = useMemo(() => {
@@ -124,9 +138,12 @@ const HrmAttendancePage: React.FC = () => {
     const totalLate = records.filter((r) => r.status === 'late').length;
     const totalAbsent = records.filter((r) => r.status === 'absent').length;
     const presentRate = totalEmployees > 0 ? Math.round((totalPresent / totalEmployees) * 100) : 0;
-    const avgWorkHours = records.length > 0
-      ? Math.round((records.reduce((sum, r) => sum + (r.work_hours || 0), 0) / records.length) * 10) / 10
-      : 0;
+    const avgWorkHours =
+      records.length > 0
+        ? Math.round(
+            (records.reduce((sum, r) => sum + (r.work_hours || 0), 0) / records.length) * 10
+          ) / 10
+        : 0;
 
     return {
       totalEmployees,
@@ -198,8 +215,18 @@ const HrmAttendancePage: React.FC = () => {
       width: 150,
       render: (row) => (
         <Box>
-          <Typography variant="body2" sx={{ fontWeight: 500 }}>{row.employee_name}</Typography>
-          <Typography variant="caption" color="text.secondary">{row.employee_id.substring(0, 8)}...</Typography>
+          <Typography
+            variant='body2'
+            sx={{ fontWeight: 500 }}
+          >
+            {row.employee_name}
+          </Typography>
+          <Typography
+            variant='caption'
+            color='text.secondary'
+          >
+            {row.employee_id.substring(0, 8)}...
+          </Typography>
         </Box>
       ),
     },
@@ -213,7 +240,7 @@ const HrmAttendancePage: React.FC = () => {
       label: '上班打卡',
       width: 120,
       render: (row) => (
-        <Typography variant="body2">{row.check_in || row.check_in_time || '-'}</Typography>
+        <Typography variant='body2'>{row.check_in || row.check_in_time || '-'}</Typography>
       ),
     },
     {
@@ -221,7 +248,7 @@ const HrmAttendancePage: React.FC = () => {
       label: '下班打卡',
       width: 120,
       render: (row) => (
-        <Typography variant="body2">{row.check_out || row.check_out_time || '-'}</Typography>
+        <Typography variant='body2'>{row.check_out || row.check_out_time || '-'}</Typography>
       ),
     },
     {
@@ -229,14 +256,21 @@ const HrmAttendancePage: React.FC = () => {
       label: '工时',
       width: 100,
       render: (row) => (
-        <Typography variant="body2">{row.work_hours && row.work_hours > 0 ? `${row.work_hours}h` : '-'}</Typography>
+        <Typography variant='body2'>
+          {row.work_hours && row.work_hours > 0 ? `${row.work_hours}h` : '-'}
+        </Typography>
       ),
     },
     {
       id: 'status',
       label: '状态',
       width: 100,
-      render: (row) => <StatusBadge status={`attendance_${row.status}`} showIcon />,
+      render: (row) => (
+        <StatusBadge
+          status={`attendance_${row.status}`}
+          showIcon
+        />
+      ),
     },
   ];
 
@@ -254,7 +288,12 @@ const HrmAttendancePage: React.FC = () => {
       label: '申请人',
       width: 120,
       render: (row) => (
-        <Typography variant="body2" sx={{ fontWeight: 500 }}>{row.employee_name}</Typography>
+        <Typography
+          variant='body2'
+          sx={{ fontWeight: 500 }}
+        >
+          {row.employee_name}
+        </Typography>
       ),
     },
     {
@@ -262,7 +301,10 @@ const HrmAttendancePage: React.FC = () => {
       label: '请假类型',
       width: 100,
       render: (row) => (
-        <Chip size="small" label={getLeaveTypeName(row.leave_type)} />
+        <Chip
+          size='small'
+          label={getLeaveTypeName(row.leave_type)}
+        />
       ),
     },
     {
@@ -279,16 +321,18 @@ const HrmAttendancePage: React.FC = () => {
       id: 'days',
       label: '天数',
       width: 80,
-      render: (row) => (
-        <Typography variant="body2">{row.days}天</Typography>
-      ),
+      render: (row) => <Typography variant='body2'>{row.days}天</Typography>,
     },
     {
       id: 'reason',
       label: '原因',
       width: 150,
       render: (row) => (
-        <Typography variant="body2" sx={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={row.reason}>
+        <Typography
+          variant='body2'
+          sx={{ maxWidth: 150, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
+          title={row.reason}
+        >
           {row.reason}
         </Typography>
       ),
@@ -297,7 +341,12 @@ const HrmAttendancePage: React.FC = () => {
       id: 'status',
       label: '状态',
       width: 100,
-      render: (row) => <StatusBadge status={`leave_${row.status}`} showIcon />,
+      render: (row) => (
+        <StatusBadge
+          status={`leave_${row.status}`}
+          showIcon
+        />
+      ),
     },
   ];
 
@@ -357,20 +406,26 @@ const HrmAttendancePage: React.FC = () => {
   const renderDatePicker = (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
       <TextField
-        type="date"
-        size="small"
+        type='date'
+        size='small'
         value={selectedDate}
         onChange={(e) => setSelectedDate(e.target.value)}
         sx={{ bgcolor: 'white', borderRadius: 1 }}
       />
-      <Button variant="outlined" startIcon={<Download size={18} />}>
+      <Button
+        variant='outlined'
+        startIcon={<Download size={18} />}
+      >
         导出
       </Button>
     </Box>
   );
 
   return (
-    <PageContainer padding={false} maxWidth={false}>
+    <PageContainer
+      padding={false}
+      maxWidth={false}
+    >
       {activeTab === 'statistics' ? (
         <StatsPageTemplate
           title='考勤统计'
@@ -381,7 +436,9 @@ const HrmAttendancePage: React.FC = () => {
         />
       ) : (
         <>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+          <Box
+            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}
+          >
             {renderTabs}
             {renderDatePicker}
           </Box>
@@ -429,38 +486,55 @@ const HrmAttendancePage: React.FC = () => {
       )}
 
       {showLeaveModal && (
-        <Dialog open={showLeaveModal} onClose={() => setShowLeaveModal(false)} maxWidth="sm" fullWidth>
+        <Dialog
+          open={showLeaveModal}
+          onClose={() => setShowLeaveModal(false)}
+          maxWidth='sm'
+          fullWidth
+        >
           <DialogTitle>请假申请</DialogTitle>
           <DialogContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
               <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
                 <Box>
                   <FormLabel>请假类型 *</FormLabel>
-                  <FormControl size="small" fullWidth>
+                  <FormControl
+                    size='small'
+                    fullWidth
+                  >
                     <Select
                       value={leaveFormData.leave_type || ''}
-                      onChange={(e) => setLeaveFormData({ ...leaveFormData, leave_type: e.target.value })}
+                      onChange={(e) =>
+                        setLeaveFormData({ ...leaveFormData, leave_type: e.target.value })
+                      }
                       displayEmpty
                     >
-                      <MenuItem value="" disabled>请选择类型</MenuItem>
-                      <MenuItem value="sick">病假</MenuItem>
-                      <MenuItem value="personal">事假</MenuItem>
-                      <MenuItem value="annual">年假</MenuItem>
-                      <MenuItem value="marriage">婚假</MenuItem>
-                      <MenuItem value="maternity">产假</MenuItem>
-                      <MenuItem value="funeral">丧假</MenuItem>
+                      <MenuItem
+                        value=''
+                        disabled
+                      >
+                        请选择类型
+                      </MenuItem>
+                      <MenuItem value='sick'>病假</MenuItem>
+                      <MenuItem value='personal'>事假</MenuItem>
+                      <MenuItem value='annual'>年假</MenuItem>
+                      <MenuItem value='marriage'>婚假</MenuItem>
+                      <MenuItem value='maternity'>产假</MenuItem>
+                      <MenuItem value='funeral'>丧假</MenuItem>
                     </Select>
                   </FormControl>
                 </Box>
                 <Box>
                   <FormLabel>请假天数 *</FormLabel>
                   <TextField
-                    size="small"
+                    size='small'
                     fullWidth
-                    type="number"
+                    type='number'
                     value={leaveFormData.days?.toString() || ''}
-                    onChange={(e) => setLeaveFormData({ ...leaveFormData, days: parseInt(e.target.value) || 0 })}
-                    placeholder="请输入天数"
+                    onChange={(e) =>
+                      setLeaveFormData({ ...leaveFormData, days: parseInt(e.target.value) || 0 })
+                    }
+                    placeholder='请输入天数'
                   />
                 </Box>
               </Box>
@@ -468,41 +542,55 @@ const HrmAttendancePage: React.FC = () => {
                 <Box>
                   <FormLabel>开始日期 *</FormLabel>
                   <TextField
-                    size="small"
+                    size='small'
                     fullWidth
-                    type="date"
+                    type='date'
                     value={leaveFormData.start_date || ''}
-                    onChange={(e) => setLeaveFormData({ ...leaveFormData, start_date: e.target.value })}
+                    onChange={(e) =>
+                      setLeaveFormData({ ...leaveFormData, start_date: e.target.value })
+                    }
                   />
                 </Box>
                 <Box>
                   <FormLabel>结束日期 *</FormLabel>
                   <TextField
-                    size="small"
+                    size='small'
                     fullWidth
-                    type="date"
+                    type='date'
                     value={leaveFormData.end_date || ''}
-                    onChange={(e) => setLeaveFormData({ ...leaveFormData, end_date: e.target.value })}
+                    onChange={(e) =>
+                      setLeaveFormData({ ...leaveFormData, end_date: e.target.value })
+                    }
                   />
                 </Box>
               </Box>
               <Box>
                 <FormLabel>请假原因 *</FormLabel>
                 <TextField
-                  size="small"
+                  size='small'
                   fullWidth
                   multiline
                   rows={3}
                   value={leaveFormData.reason || ''}
                   onChange={(e) => setLeaveFormData({ ...leaveFormData, reason: e.target.value })}
-                  placeholder="请输入请假原因"
+                  placeholder='请输入请假原因'
                 />
               </Box>
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button variant="outlined" onClick={() => setShowLeaveModal(false)}>取消</Button>
-            <Button variant="contained" onClick={handleCreateLeave}>提交申请</Button>
+            <Button
+              variant='outlined'
+              onClick={() => setShowLeaveModal(false)}
+            >
+              取消
+            </Button>
+            <Button
+              variant='contained'
+              onClick={handleCreateLeave}
+            >
+              提交申请
+            </Button>
           </DialogActions>
         </Dialog>
       )}

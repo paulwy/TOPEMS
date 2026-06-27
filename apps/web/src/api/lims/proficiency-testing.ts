@@ -50,25 +50,19 @@ export const ptPlanApi = {
 };
 
 export const ptSampleApi = {
-  receivePtSample: async (
-    data: PtSampleReceiveRequest
-  ): Promise<ApiResponse<PtSample>> => {
+  receivePtSample: async (data: PtSampleReceiveRequest): Promise<ApiResponse<PtSample>> => {
     return apiClient.lims.post('/api/lims/pt-samples/receive', data);
   },
 };
 
 export const ptResultApi = {
-  submitPtResult: async (
-    data: CreatePtResultRequest
-  ): Promise<ApiResponse<PtResult>> => {
+  submitPtResult: async (data: CreatePtResultRequest): Promise<ApiResponse<PtResult>> => {
     return apiClient.lims.post('/api/lims/pt-results', data);
   },
 };
 
 export const ptEvaluationApi = {
-  evaluatePtResult: async (
-    data: PtEvaluateRequest
-  ): Promise<ApiResponse<PtEvaluation>> => {
+  evaluatePtResult: async (data: PtEvaluateRequest): Promise<ApiResponse<PtEvaluation>> => {
     return apiClient.lims.post('/api/lims/pt-evaluations', data);
   },
 };

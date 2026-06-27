@@ -90,9 +90,9 @@ export const useModuleLoadingStore = create<ModuleLoadingStore>((set, get) => ({
         loadingModules.length > 0
           ? loadingModules.reduce((sum, m) => sum + m.progress, 0) / loadingModules.length
           : Object.values(modules).filter((m) => m.status === 'loaded').length ===
-            Object.keys(modules).length
-          ? 100
-          : 0;
+              Object.keys(modules).length
+            ? 100
+            : 0;
 
       return { modules, totalProgress };
     }),
@@ -143,7 +143,7 @@ export const useModuleLoadingStore = create<ModuleLoadingStore>((set, get) => ({
 
   getModuleLoadTime: (moduleId) => {
     const module = get().modules[moduleId];
-    if (!module?.startTime) return undefined;
+    if (!module?.startTime) return;
     const endTime = module.endTime || Date.now();
     return endTime - module.startTime;
   },

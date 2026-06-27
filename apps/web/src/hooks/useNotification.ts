@@ -16,7 +16,12 @@ export interface UseNotificationResult {
   error: (message: string, titleOrDuration?: string | number, duration?: number) => string;
   info: (message: string, titleOrDuration?: string | number, duration?: number) => string;
   warning: (message: string, titleOrDuration?: string | number, duration?: number) => string;
-  showNotification: (type: NotificationType, message: string, titleOrDuration?: string | number, duration?: number) => string;
+  showNotification: (
+    type: NotificationType,
+    message: string,
+    titleOrDuration?: string | number,
+    duration?: number
+  ) => string;
   hideNotification: (id: string) => void;
   addNotification: (options: NotificationOptions) => string;
   clearNotifications: () => void;

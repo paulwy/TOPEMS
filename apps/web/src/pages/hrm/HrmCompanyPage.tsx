@@ -19,9 +19,9 @@ import {
   Divider,
   IconButton,
   Tooltip,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
-import { Grid } from '@/components/common';
+import { Grid, PageContainer } from '@/components/common';
 import {
   Building,
   Plus,
@@ -51,9 +51,8 @@ import {
   type TreeStatCard as StatCard,
   type TreeAction,
 } from '@/components/templates';
-import { EmptyState } from '@/components/mui';
+import { EmptyState } from '@/components';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
-import { PageContainer } from '@/components/common';
 
 const HrmCompanyPage: React.FC = () => {
   const addNotification = useAppStore((state) => state.addNotification);
@@ -91,57 +90,63 @@ const HrmCompanyPage: React.FC = () => {
     setConfirmDialogOpen(true);
   };
 
-  const fetchCompanies = useCallback(async (params?: any) => {
-    setLoading(true);
-    try {
-      const response = await companyApi.list(params);
-      if (response.code === 200 && response.data) {
-        const data = response.data as PaginatedResult<Company>;
-        setCompanies(data.items || []);
-        setTotal(data.total || data.items?.length || 0);
-      } else {
+  const fetchCompanies = useCallback(
+    async (params?: any) => {
+      setLoading(true);
+      try {
+        const response = await companyApi.list(params);
+        if (response.code === 200 && response.data) {
+          const data = response.data as PaginatedResult<Company>;
+          setCompanies(data.items || []);
+          setTotal(data.total || data.items?.length || 0);
+        } else {
+          setCompanies([]);
+          setTotal(0);
+        }
+      } catch (error: unknown) {
+        addNotification({
+          title: '加载失败',
+          message: (error as { message?: string }).message || '获取公司列表失败',
+          type: 'error',
+        });
         setCompanies([]);
         setTotal(0);
+      } finally {
+        setLoading(false);
       }
-    } catch (error: unknown) {
-      addNotification({
-        title: '加载失败',
-        message: (error as { message?: string }).message || '获取公司列表失败',
-        type: 'error',
-      });
-      setCompanies([]);
-      setTotal(0);
-    } finally {
-      setLoading(false);
-    }
-  }, [addNotification]);
+    },
+    [addNotification]
+  );
 
-  const fetchCompanyDetails = useCallback(async (companyId: string) => {
-    try {
-      const [deptResponse, empResponse] = await Promise.all([
-        departmentApi.list({ company_id: companyId, page_size: 100 }),
-        employeeApi.list({ page_size: 200 }),
-      ]);
+  const fetchCompanyDetails = useCallback(
+    async (companyId: string) => {
+      try {
+        const [deptResponse, empResponse] = await Promise.all([
+          departmentApi.list({ company_id: companyId, page_size: 100 }),
+          employeeApi.list({ page_size: 200 }),
+        ]);
 
-      const depts: Department[] =
-        deptResponse.code === 200 && deptResponse.data
-          ? (deptResponse.data as PaginatedResult<Department>).items || []
-          : [];
-      const emps: Employee[] =
-        empResponse.code === 200 && empResponse.data
-          ? (empResponse.data as PaginatedResult<Employee>).items || []
-          : [];
+        const depts: Department[] =
+          deptResponse.code === 200 && deptResponse.data
+            ? (deptResponse.data as PaginatedResult<Department>).items || []
+            : [];
+        const emps: Employee[] =
+          empResponse.code === 200 && empResponse.data
+            ? (empResponse.data as PaginatedResult<Employee>).items || []
+            : [];
 
-      setDepartments(depts);
-      setEmployees(emps);
-    } catch (error: unknown) {
-      addNotification({
-        title: '加载失败',
-        message: (error as { message?: string }).message || '获取公司详情失败',
-        type: 'error',
-      });
-    }
-  }, [addNotification]);
+        setDepartments(depts);
+        setEmployees(emps);
+      } catch (error: unknown) {
+        addNotification({
+          title: '加载失败',
+          message: (error as { message?: string }).message || '获取公司详情失败',
+          type: 'error',
+        });
+      }
+    },
+    [addNotification]
+  );
 
   const buildTree = useCallback((): TreeNode[] => {
     const deptMap = new Map<string, TreeNode>();
@@ -300,11 +305,17 @@ const HrmCompanyPage: React.FC = () => {
                 <Building sx={{ width: 24, height: 24 }} />
               </Avatar>
               <Box>
-                <Typography variant='h6' sx={{ fontWeight: 600 }}>
+                <Typography
+                  variant='h6'
+                  sx={{ fontWeight: 600 }}
+                >
                   {selectedCompanyData.name}
                 </Typography>
                 {selectedCompanyData.short_name && (
-                  <Typography variant='body2' color='text.secondary'>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     {selectedCompanyData.short_name}
                   </Typography>
                 )}
@@ -315,37 +326,99 @@ const HrmCompanyPage: React.FC = () => {
             <Chip
               size='small'
               color={selectedCompanyData.status === 'active' ? 'success' : 'default'}
-              label={selectedCompanyData.status === 'active' ? '启用' : selectedCompanyData.status === 'inactive' ? '禁用' : '归档'}
+              label={
+                selectedCompanyData.status === 'active'
+                  ? '启用'
+                  : selectedCompanyData.status === 'inactive'
+                    ? '禁用'
+                    : '归档'
+              }
               variant='outlined'
             />
           }
         />
         <CardContent>
-          <Grid container spacing={3} sx={{ mb: 3 }}>
-            <Grid item xs={6} sm={3}>
+          <Grid
+            container
+            spacing={3}
+            sx={{ mb: 3 }}
+          >
+            <Grid
+              item
+              xs={6}
+              sm={3}
+            >
               <Box sx={{ bgcolor: 'grey.50', borderRadius: 2, p: 2 }}>
-                <Typography variant='caption' color='text.secondary'>部门数量</Typography>
-                <Typography variant='h5' sx={{ fontWeight: 700 }}>{departments.length}</Typography>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  部门数量
+                </Typography>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 700 }}
+                >
+                  {departments.length}
+                </Typography>
               </Box>
             </Grid>
-            <Grid item xs={6} sm={3}>
+            <Grid
+              item
+              xs={6}
+              sm={3}
+            >
               <Box sx={{ bgcolor: 'grey.50', borderRadius: 2, p: 2 }}>
-                <Typography variant='caption' color='text.secondary'>员工数量</Typography>
-                <Typography variant='h5' sx={{ fontWeight: 700 }}>{employees.length}</Typography>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  员工数量
+                </Typography>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 700 }}
+                >
+                  {employees.length}
+                </Typography>
               </Box>
             </Grid>
-            <Grid item xs={6} sm={3}>
+            <Grid
+              item
+              xs={6}
+              sm={3}
+            >
               <Box sx={{ bgcolor: 'grey.50', borderRadius: 2, p: 2 }}>
-                <Typography variant='caption' color='text.secondary'>注册号</Typography>
-                <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  注册号
+                </Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ fontWeight: 500 }}
+                >
                   {selectedCompanyData.registration_number || '-'}
                 </Typography>
               </Box>
             </Grid>
-            <Grid item xs={6} sm={3}>
+            <Grid
+              item
+              xs={6}
+              sm={3}
+            >
               <Box sx={{ bgcolor: 'grey.50', borderRadius: 2, p: 2 }}>
-                <Typography variant='caption' color='text.secondary'>税号</Typography>
-                <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  税号
+                </Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ fontWeight: 500 }}
+                >
                   {selectedCompanyData.tax_number || '-'}
                 </Typography>
               </Box>
@@ -354,26 +427,38 @@ const HrmCompanyPage: React.FC = () => {
 
           {selectedCompanyData.address && (
             <Box sx={{ mb: 3 }}>
-              <Typography variant='body2' color='text.secondary' sx={{ mb: 0.5 }}>地址</Typography>
+              <Typography
+                variant='body2'
+                color='text.secondary'
+                sx={{ mb: 0.5 }}
+              >
+                地址
+              </Typography>
               <Typography variant='body2'>{selectedCompanyData.address}</Typography>
             </Box>
           )}
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap', mb: 3 }}>
             {selectedCompanyData.contact_phone && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary' }}>
+              <Box
+                sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary' }}
+              >
                 <Phone sx={{ width: 16, height: 16 }} />
                 <Typography variant='body2'>{selectedCompanyData.contact_phone}</Typography>
               </Box>
             )}
             {selectedCompanyData.email && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary' }}>
+              <Box
+                sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary' }}
+              >
                 <Mail sx={{ width: 16, height: 16 }} />
                 <Typography variant='body2'>{selectedCompanyData.email}</Typography>
               </Box>
             )}
             {selectedCompanyData.website && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary' }}>
+              <Box
+                sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'text.secondary' }}
+              >
                 <Globe sx={{ width: 16, height: 16 }} />
                 <Typography variant='body2'>{selectedCompanyData.website}</Typography>
               </Box>
@@ -385,12 +470,26 @@ const HrmCompanyPage: React.FC = () => {
           <Box>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <Folder sx={{ width: 20, height: 20, color: 'warning.main' }} />
-              <Typography variant='subtitle1' sx={{ fontWeight: 600 }}>部门列表</Typography>
-              <Chip size='small' variant='outlined' label={`${departments.length} 个`} sx={{ ml: 'auto' }} />
+              <Typography
+                variant='subtitle1'
+                sx={{ fontWeight: 600 }}
+              >
+                部门列表
+              </Typography>
+              <Chip
+                size='small'
+                variant='outlined'
+                label={`${departments.length} 个`}
+                sx={{ ml: 'auto' }}
+              />
             </Box>
 
             {departments.length === 0 ? (
-              <EmptyState emoji='📁' title='暂无部门数据' compact />
+              <EmptyState
+                emoji='📁'
+                title='暂无部门数据'
+                compact
+              />
             ) : (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                 {departments.map((dept) => (
@@ -407,9 +506,19 @@ const HrmCompanyPage: React.FC = () => {
                     }}
                   >
                     <Box>
-                      <Typography variant='body2' sx={{ fontWeight: 500 }}>{dept.name}</Typography>
+                      <Typography
+                        variant='body2'
+                        sx={{ fontWeight: 500 }}
+                      >
+                        {dept.name}
+                      </Typography>
                       {dept.code && (
-                        <Typography variant='caption' color='text.secondary'>编码: {dept.code}</Typography>
+                        <Typography
+                          variant='caption'
+                          color='text.secondary'
+                        >
+                          编码: {dept.code}
+                        </Typography>
                       )}
                     </Box>
                     <Chip
@@ -565,11 +674,20 @@ const HrmCompanyPage: React.FC = () => {
       >
         <DialogTitle>{showCreateModal ? '新增公司' : '编辑公司'}</DialogTitle>
         <DialogContent sx={{ maxHeight: '70vh', overflowY: 'auto' }}>
-          <Box component='form' onSubmit={showCreateModal ? handleCreate : handleUpdate} sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+          <Box
+            component='form'
+            onSubmit={showCreateModal ? handleCreate : handleUpdate}
+            sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}
+          >
             <Box>
               <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>
                 公司名称{' '}
-                <Typography component='span' sx={{ color: 'error.main' }}>*</Typography>
+                <Typography
+                  component='span'
+                  sx={{ color: 'error.main' }}
+                >
+                  *
+                </Typography>
               </InputLabel>
               <TextField
                 fullWidth
@@ -659,7 +777,10 @@ const HrmCompanyPage: React.FC = () => {
             </Box>
             <Box>
               <InputLabel sx={{ mb: 0.5, fontSize: 14, fontWeight: 500 }}>状态</InputLabel>
-              <FormControl fullWidth size='small'>
+              <FormControl
+                fullWidth
+                size='small'
+              >
                 <Select
                   value={(formData as Company)?.status || 'active'}
                   onChange={(e) => handleInputChange('status', e.target.value as string)}
@@ -672,13 +793,19 @@ const HrmCompanyPage: React.FC = () => {
             </Box>
 
             <DialogActions sx={{ p: 0, pt: 2, justifyContent: 'flex-end', gap: 1 }}>
-              <Button variant='outlined' onClick={() => {
-                setShowCreateModal(false);
-                setShowEditModal(false);
-              }}>
+              <Button
+                variant='outlined'
+                onClick={() => {
+                  setShowCreateModal(false);
+                  setShowEditModal(false);
+                }}
+              >
                 取消
               </Button>
-              <Button type='submit' variant='contained'>
+              <Button
+                type='submit'
+                variant='contained'
+              >
                 {showCreateModal ? '创建' : '保存'}
               </Button>
             </DialogActions>
@@ -686,64 +813,125 @@ const HrmCompanyPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showViewModal} onClose={() => setShowViewModal(false)} maxWidth='sm' fullWidth>
+      <Dialog
+        open={showViewModal}
+        onClose={() => setShowViewModal(false)}
+        maxWidth='sm'
+        fullWidth
+      >
         <DialogTitle>公司详情</DialogTitle>
         <DialogContent>
           {selectedCompany && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
               <Box>
-                <Typography variant='caption' color='text.secondary'>公司名称</Typography>
-                <Typography variant='body1' sx={{ fontWeight: 500 }}>{selectedCompany.name}</Typography>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  公司名称
+                </Typography>
+                <Typography
+                  variant='body1'
+                  sx={{ fontWeight: 500 }}
+                >
+                  {selectedCompany.name}
+                </Typography>
               </Box>
               {selectedCompany.short_name && (
                 <Box>
-                  <Typography variant='caption' color='text.secondary'>公司简称</Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    公司简称
+                  </Typography>
                   <Typography variant='body1'>{selectedCompany.short_name}</Typography>
                 </Box>
               )}
               {selectedCompany.registration_number && (
                 <Box>
-                  <Typography variant='caption' color='text.secondary'>注册号</Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    注册号
+                  </Typography>
                   <Typography variant='body1'>{selectedCompany.registration_number}</Typography>
                 </Box>
               )}
               {selectedCompany.tax_number && (
                 <Box>
-                  <Typography variant='caption' color='text.secondary'>税号</Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    税号
+                  </Typography>
                   <Typography variant='body1'>{selectedCompany.tax_number}</Typography>
                 </Box>
               )}
               {selectedCompany.address && (
                 <Box>
-                  <Typography variant='caption' color='text.secondary'>地址</Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    地址
+                  </Typography>
                   <Typography variant='body1'>{selectedCompany.address}</Typography>
                 </Box>
               )}
               {selectedCompany.contact_phone && (
                 <Box>
-                  <Typography variant='caption' color='text.secondary'>联系电话</Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    联系电话
+                  </Typography>
                   <Typography variant='body1'>{selectedCompany.contact_phone}</Typography>
                 </Box>
               )}
               {selectedCompany.email && (
                 <Box>
-                  <Typography variant='caption' color='text.secondary'>邮箱</Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    邮箱
+                  </Typography>
                   <Typography variant='body1'>{selectedCompany.email}</Typography>
                 </Box>
               )}
               {selectedCompany.website && (
                 <Box>
-                  <Typography variant='caption' color='text.secondary'>网站</Typography>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    网站
+                  </Typography>
                   <Typography variant='body1'>{selectedCompany.website}</Typography>
                 </Box>
               )}
               <Box>
-                <Typography variant='caption' color='text.secondary'>状态</Typography>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
+                  状态
+                </Typography>
                 <Box sx={{ mt: 0.5 }}>
                   <Chip
                     size='small'
                     color={selectedCompany.status === 'active' ? 'success' : 'default'}
-                    label={selectedCompany.status === 'active' ? '启用' : selectedCompany.status === 'inactive' ? '禁用' : '归档'}
+                    label={
+                      selectedCompany.status === 'active'
+                        ? '启用'
+                        : selectedCompany.status === 'inactive'
+                          ? '禁用'
+                          : '归档'
+                    }
                     variant='outlined'
                   />
                 </Box>

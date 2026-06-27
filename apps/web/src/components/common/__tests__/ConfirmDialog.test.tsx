@@ -146,9 +146,7 @@ describe('ConfirmDialog', () => {
       />
     );
     const closeButtons = screen.getAllByRole('button');
-    const hasCloseButton = closeButtons.some(
-      (btn) => btn.querySelector('svg') !== null
-    );
+    const hasCloseButton = closeButtons.some((btn) => btn.querySelector('svg') !== null);
     expect(hasCloseButton).toBe(true);
   });
 

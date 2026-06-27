@@ -11,8 +11,8 @@ import {
   DialogContent,
   DialogTitle,
   Typography,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { FileUpload, PageContainer } from '@/components/common';
 import { Eye, Plus, Edit, Send, Ban, Upload, GitBranch } from 'lucide-react';
 import { ListPageTemplate } from '@/components/templates';
@@ -78,7 +78,7 @@ const FlowDefinitionPage: React.FC = () => {
 
   const filteredData = data.filter((item) => {
     const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = !typeFilter || (item.data?.type === typeFilter);
+    const matchesType = !typeFilter || item.data?.type === typeFilter;
     const matchesStatus = !statusFilter || String(item.is_active) === statusFilter;
     return matchesSearch && matchesType && matchesStatus;
   });
@@ -95,9 +95,7 @@ const FlowDefinitionPage: React.FC = () => {
   const handlePublish = async (flow: Workflow) => {
     try {
       await workflowApi.updateWorkflow(flow.id, { is_active: true });
-      setData((prev) =>
-        prev.map((f) => (f.id === flow.id ? { ...f, is_active: true } : f))
-      );
+      setData((prev) => prev.map((f) => (f.id === flow.id ? { ...f, is_active: true } : f)));
       success('流程已发布');
     } catch (err: unknown) {
       apiLogger.error('Error publishing workflow:', err);
@@ -108,9 +106,7 @@ const FlowDefinitionPage: React.FC = () => {
   const handleDisable = async (flow: Workflow) => {
     try {
       await workflowApi.updateWorkflow(flow.id, { is_active: false });
-      setData((prev) =>
-        prev.map((f) => (f.id === flow.id ? { ...f, is_active: false } : f))
-      );
+      setData((prev) => prev.map((f) => (f.id === flow.id ? { ...f, is_active: false } : f)));
       success('流程已禁用');
     } catch (err: unknown) {
       apiLogger.error('Error disabling workflow:', err);
@@ -299,7 +295,9 @@ const FlowDefinitionPage: React.FC = () => {
                 >
                   流程类型
                 </Typography>
-                <Typography variant='body1'>{getTypeText(selectedFlow.data?.type || 'approval')}</Typography>
+                <Typography variant='body1'>
+                  {getTypeText(selectedFlow.data?.type || 'approval')}
+                </Typography>
               </Box>
               <Box sx={{ mb: 2 }}>
                 <Typography
@@ -308,7 +306,9 @@ const FlowDefinitionPage: React.FC = () => {
                 >
                   版本
                 </Typography>
-                <Typography variant='body1'>{selectedFlow.definition?.version || 'v1.0'}</Typography>
+                <Typography variant='body1'>
+                  {selectedFlow.definition?.version || 'v1.0'}
+                </Typography>
               </Box>
               <Box sx={{ mb: 2 }}>
                 <Typography
@@ -339,7 +339,9 @@ const FlowDefinitionPage: React.FC = () => {
                 >
                   创建时间
                 </Typography>
-                <Typography variant='body1'>{new Date(selectedFlow.created_at).toLocaleString('zh-CN')}</Typography>
+                <Typography variant='body1'>
+                  {new Date(selectedFlow.created_at).toLocaleString('zh-CN')}
+                </Typography>
               </Box>
             </Box>
           )}

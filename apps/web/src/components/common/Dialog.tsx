@@ -11,8 +11,8 @@ import {
   IconButton,
   Box,
   Typography,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { X } from 'lucide-react';
 
 // ============ 类型定义 ============
@@ -156,7 +156,7 @@ export const Dialog: React.FC<DialogProps> = ({
     if (cancelButton) {
       buttons.push(
         <Button
-          key="cancel"
+          key='cancel'
           onClick={cancelButton.onClick || handleClose}
           disabled={cancelButton.disabled}
         >
@@ -169,8 +169,8 @@ export const Dialog: React.FC<DialogProps> = ({
     if (confirmButton) {
       buttons.push(
         <Button
-          key="confirm"
-          variant="contained"
+          key='confirm'
+          variant='contained'
           color={confirmButton.color || 'primary'}
           onClick={confirmButton.onClick}
           disabled={confirmButton.disabled || confirmButton.loading}
@@ -208,14 +208,14 @@ export const Dialog: React.FC<DialogProps> = ({
           }}
         >
           <Typography
-            variant="h6"
+            variant='h6'
             sx={{ fontWeight: 600 }}
           >
             {title}
           </Typography>
           {showCloseButton && closable && (
             <IconButton
-              size="small"
+              size='small'
               onClick={handleClose}
               sx={{ ml: 'auto' }}
             >
@@ -226,15 +226,11 @@ export const Dialog: React.FC<DialogProps> = ({
       )}
 
       {/* 内容区域 */}
-      <DialogContent sx={{ ...contentSx }}>
-        {children}
-      </DialogContent>
+      <DialogContent sx={{ ...contentSx }}>{children}</DialogContent>
 
       {/* 操作区域 */}
       {renderDefaultButtons() && (
-        <DialogActions sx={{ px: 3, pb: 2, ...actionsSx }}>
-          {renderDefaultButtons()}
-        </DialogActions>
+        <DialogActions sx={{ px: 3, pb: 2, ...actionsSx }}>{renderDefaultButtons()}</DialogActions>
       )}
     </MuiDialog>
   );

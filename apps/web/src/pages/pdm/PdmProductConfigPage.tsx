@@ -15,17 +15,9 @@ import {
   Checkbox,
   FormGroup,
   FormControlLabel,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
-import {
-  Settings,
-  Plus,
-  Edit,
-  Delete,
-  Zap,
-  Package,
-  Shield,
-} from 'lucide-react';
+import { Settings, Plus, Edit, Delete, Zap, Package, Shield } from 'lucide-react';
 import { pdmApi } from '@/api/pdm';
 import type { ProductConfig } from '@/api/pdm';
 import { useAppStore } from '@/store';
@@ -219,7 +211,11 @@ export const PdmProductConfigPage: React.FC = () => {
       setEditingConfig(null);
       loadConfigs();
     } catch (err: unknown) {
-      addNotification({ title: '错误', message: editingConfig ? '更新失败' : '创建失败', type: 'error' });
+      addNotification({
+        title: '错误',
+        message: editingConfig ? '更新失败' : '创建失败',
+        type: 'error',
+      });
       apiLogger.error('保存产品配置失败:', err);
     }
   };
@@ -303,7 +299,12 @@ export const PdmProductConfigPage: React.FC = () => {
         render: (row) => (
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
             {(row.options || []).map((option, idx) => (
-              <Chip key={idx} size='small' label={option} variant='outlined' />
+              <Chip
+                key={idx}
+                size='small'
+                label={option}
+                variant='outlined'
+              />
             ))}
           </Box>
         ),
@@ -347,14 +348,21 @@ export const PdmProductConfigPage: React.FC = () => {
 
   const headerContent = (
     <Box>
-      <Grid container spacing={3} sx={{ mb: 2 }}>
+      <Grid
+        container
+        spacing={3}
+        sx={{ mb: 2 }}
+      >
         {[
           { label: '配置总数', value: stats.total, icon: <Settings size={20} />, color: 'primary' },
           { label: '启用配置', value: stats.active, icon: <Zap size={20} />, color: 'success' },
           { label: '草稿配置', value: stats.draft, icon: <Package size={20} />, color: 'warning' },
           { label: '归档配置', value: stats.archived, icon: <Shield size={20} />, color: 'error' },
         ].map((stat) => (
-          <Grid size={{ xs: 6, sm: 3 }} key={stat.label}>
+          <Grid
+            size={{ xs: 6, sm: 3 }}
+            key={stat.label}
+          >
             <Box
               sx={{
                 p: 2,
@@ -364,7 +372,15 @@ export const PdmProductConfigPage: React.FC = () => {
                 borderColor: 'divider',
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1, color: stat.color + '.main' }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5,
+                  mb: 1,
+                  color: `${stat.color}.main`,
+                }}
+              >
                 {stat.icon}
                 <Box sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>{stat.label}</Box>
               </Box>
@@ -385,9 +401,15 @@ export const PdmProductConfigPage: React.FC = () => {
         }}
       >
         <Box sx={{ fontWeight: 600, mb: 2 }}>属性定义</Box>
-        <Grid container spacing={2}>
+        <Grid
+          container
+          spacing={2}
+        >
           {configAttributes.map((attr) => (
-            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={attr.name}>
+            <Grid
+              size={{ xs: 12, sm: 6, md: 4 }}
+              key={attr.name}
+            >
               <Box
                 sx={{
                   p: 2,
@@ -395,9 +417,20 @@ export const PdmProductConfigPage: React.FC = () => {
                   backgroundColor: attr.required ? 'primary.50' : 'grey.50',
                 }}
               >
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    mb: 1,
+                  }}
+                >
                   <Box sx={{ fontWeight: 500 }}>{attr.name}</Box>
-                  <Chip size='small' label={attr.required ? '必填' : '选填'} color={attr.required ? 'primary' : 'default'} />
+                  <Chip
+                    size='small'
+                    label={attr.required ? '必填' : '选填'}
+                    color={attr.required ? 'primary' : 'default'}
+                  />
                 </Box>
                 <Box sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
                   类型: {attr.type}
@@ -444,7 +477,12 @@ export const PdmProductConfigPage: React.FC = () => {
         emptyMessage='暂无配置数据'
       />
 
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth='sm' fullWidth>
+      <Dialog
+        open={openDialog}
+        onClose={() => setOpenDialog(false)}
+        maxWidth='sm'
+        fullWidth
+      >
         <DialogTitle>{editingConfig ? '编辑产品配置' : '创建产品配置'}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, mt: 2 }}>
@@ -477,7 +515,10 @@ export const PdmProductConfigPage: React.FC = () => {
               </Select>
             </FormControl>
             <Box sx={{ fontWeight: 500 }}>属性配置</Box>
-            <Grid container spacing={3}>
+            <Grid
+              container
+              spacing={3}
+            >
               <Grid size={{ xs: 6 }}>
                 <FormControl fullWidth>
                   <InputLabel>颜色</InputLabel>
@@ -579,7 +620,10 @@ export const PdmProductConfigPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDialog(false)}>取消</Button>
-          <Button variant='contained' onClick={handleSave}>
+          <Button
+            variant='contained'
+            onClick={handleSave}
+          >
             {editingConfig ? '更新配置' : '创建配置'}
           </Button>
         </DialogActions>

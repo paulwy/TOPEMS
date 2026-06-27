@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Plus, Search, Edit, Trash2, Eye } from 'lucide-react';
+import { Plus, Search, Edit, Trash2, Eye, FolderKanban } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Box, LinearProgress, IconButton, Tooltip, MenuItem } from '@mui/material';
 import type { Project } from '@/api/pm';
@@ -280,62 +280,66 @@ const PmProjectListPage: React.FC = () => {
     <PageContainer
       title='项目管理'
       subtitle='管理所有类型的项目，跟踪进度和状态'
+      headerProps={{
+        pageIcon: <FolderKanban style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+      }}
     >
       <ListPageTemplate
         title=''
         subtitle=''
-      breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '项目' }]}
-      columns={columns}
-      data={filteredData}
-      loading={loading}
-      selectable
-      pagination={{
-        page: currentPage,
-        pageSize,
-        total: totalCount,
-        onPageChange: handlePageChange,
-      }}
-      searchable
-      searchPlaceholder='搜索项目名称或编号...'
-      searchValue={searchTerm}
-      onSearch={setSearchTerm}
-      filters={filters}
-      filtersValue={{ project_type: selectedType, status: selectedStatus }}
-      onFilterChange={(f) => {
-        if (f.project_type !== undefined) setSelectedType(f.project_type);
-        if (f.status !== undefined) setSelectedStatus(f.status);
-      }}
-      actions={[
-        {
-          label: '创建项目',
-          icon: <Plus size={16} />,
-          onClick: () => navigate('/pm/projects/create'),
-          variant: 'contained',
-        },
-      ]}
-      headerContent={
-        <DataExport
-          data={projects as unknown as Record<string, unknown>[]}
-          fields={[
-            { key: 'name', title: '项目名称' },
-            { key: 'code', title: '项目编码' },
-            { key: 'project_type', title: '项目类型' },
-            { key: 'status', title: '状态' },
-            { key: 'progress', title: '进度' },
-            { key: 'budget', title: '预算' },
-            { key: 'start_date', title: '开始日期' },
-            { key: 'end_date', title: '结束日期' },
-          ]}
-          defaultFileName='项目数据'
-          buttonText='导出'
-        />
-      }
-      showRowNumber
-      columnConfigurable
-      persistColumnConfig
-      columnConfigStorageKey='pm-projects-columns'
-      onRefresh={() => loadProjects(currentPage)}
-    />
+        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '项目' }]}
+        columns={columns}
+        data={filteredData}
+        loading={loading}
+        selectable
+        pagination={{
+          page: currentPage,
+          pageSize,
+          total: totalCount,
+          onPageChange: handlePageChange,
+        }}
+        searchable
+        searchPlaceholder='搜索项目名称或编号...'
+        searchValue={searchTerm}
+        onSearch={setSearchTerm}
+        filters={filters}
+        filtersValue={{ project_type: selectedType, status: selectedStatus }}
+        onFilterChange={(f) => {
+          if (f.project_type !== undefined) setSelectedType(f.project_type);
+          if (f.status !== undefined) setSelectedStatus(f.status);
+        }}
+        actions={[
+          {
+            label: '创建项目',
+            icon: <Plus size={16} />,
+            onClick: () => navigate('/pm/projects/create'),
+            variant: 'contained',
+          },
+        ]}
+        headerContent={
+          <DataExport
+            data={projects as unknown as Record<string, unknown>[]}
+            fields={[
+              { key: 'name', title: '项目名称' },
+              { key: 'code', title: '项目编码' },
+              { key: 'project_type', title: '项目类型' },
+              { key: 'status', title: '状态' },
+              { key: 'progress', title: '进度' },
+              { key: 'budget', title: '预算' },
+              { key: 'start_date', title: '开始日期' },
+              { key: 'end_date', title: '结束日期' },
+            ]}
+            defaultFileName='项目数据'
+            buttonText='导出'
+          />
+        }
+        showRowNumber
+        columnConfigurable
+        persistColumnConfig
+        columnConfigStorageKey='pm-projects-columns'
+        onRefresh={() => loadProjects(currentPage)}
+      />
     </PageContainer>
   );
 };

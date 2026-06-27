@@ -26,7 +26,7 @@ export const wipApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(`/api/mes/wips${queryString ? '?' + queryString : ''}`);
+    return apiClient.mes.get(`/api/mes/wips${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<Wip>> {
@@ -63,7 +63,7 @@ export const wipApi = {
     if (params?.wip_id) searchParams.set('wip_id', params.wip_id);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(`/api/mes/wips/transfers${queryString ? '?' + queryString : ''}`);
+    return apiClient.mes.get(`/api/mes/wips/transfers${queryString ? `?${queryString}` : ''}`);
   },
 
   async getStatistics(): Promise<ApiResponse<WipStatistics>> {

@@ -37,12 +37,11 @@ import {
   Filter,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { MobileLayout } from '@/components/mobile';
-import { PullToRefresh } from '@/components/mobile';
-import { MobileSkeleton } from '@/components/mobile';
-import { MobileButton } from '@/components/mobile';
+import { MobileLayout, PullToRefresh, MobileSkeleton, MobileButton } from '@/components/mobile';
 import { SwipeAction, type SwipeActionItem } from '@/components/mobile';
 import { useAppStore } from '@/store';
+import { approvalTaskApi } from '@/api/workflow/approval';
+import { apiLogger } from '@/utils/logger';
 
 interface ApprovalItem {
   id: string;
@@ -62,62 +61,102 @@ interface ApprovalItem {
   }[];
 }
 
-const generateMockApprovals = (count: number): ApprovalItem[] => {
-  const types: ApprovalItem['type'][] = ['purchase', 'leave', 'expense', 'contract', 'other'];
-  const priorities: ApprovalItem['priority'][] = ['high', 'medium', 'low'];
-  const applicants = ['张三', '李四', '王五', '赵六', '钱七'];
-  const departments = ['采购部', '研发部', '财务部', '人力资源部', '生产部'];
-
-  return Array.from({ length: count }).map((_, index) => {
-    const type = types[index % types.length];
-    const id = index + 1;
-
-    return {
-      id: `APV-${id.toString().padStart(5, '0')}`,
-      title: [
-        `采购申请 - 电子元器件 #${id}`,
-        `请假申请 - 张三 ${id}`,
-        `报销申请 - 差旅费 #${id}`,
-        `合同审批 - 供应商协议 #${id}`,
-        `其他审批 - 事项 ${id}`,
-      ][index % 5],
-      type,
-      applicant: applicants[index % applicants.length],
-      department: departments[index % departments.length],
-      submitTime: `2024-06-${(20 - (index % 10)).toString().padStart(2, '0')} ${(9 + (index % 8)).toString().padStart(2, '0')}:${(index * 7 % 60).toString().padStart(2, '0')}`,
-      amount: type === 'purchase' || type === 'expense' ? `¥${(Math.random() * 10000 + 1000).toFixed(2)}` : undefined,
-      priority: priorities[index % priorities.length],
-      status: 'pending',
-      description: '请审批该申请，相关材料已附上。如有疑问请联系申请人。',
-      steps: [
-        { name: '提交申请', status: 'completed', time: '昨天 14:30' },
-        { name: '部门审批', status: 'completed', time: '昨天 16:00' },
-        { name: '财务审批', status: 'current' },
-        { name: '总经理审批', status: 'pending' },
-      ],
-    };
-  });
+const mapApiApprovalToApprovalItem = (apiApproval: any): ApprovalItem => {
+  const typeMap: Record<string, ApprovalItem['type']> = {
+    purchase: 'purchase',
+    采购: 'purchase',
+    leave: 'leave',
+    请假: 'leave',
+    expense: 'expense',
+    报销: 'expense',
+    contract: 'contract',
+    合同: 'contract',
+  };
+  const priorityMap: Record<string, ApprovalItem['priority']> = {
+    high: 'high',
+    高: 'high',
+    medium: 'medium',
+    中: 'medium',
+    low: 'low',
+    低: 'low',
+  };
+  const statusMap: Record<string, ApprovalItem['status']> = {
+    pending: 'pending',
+    待审批: 'pending',
+    approved: 'approved',
+    已通过: 'approved',
+    rejected: 'rejected',
+    已驳回: 'rejected',
+  };
+  return {
+    id: apiApproval.id || String(apiApproval.task_id || apiApproval.id),
+    title: apiApproval.title || apiApproval.task_name || `审批 ${apiApproval.id}`,
+    type: typeMap[apiApproval.type] || 'other',
+    applicant:
+      apiApproval.applicant_name || apiApproval.assignee_name || apiApproval.applicant || '未知',
+    department: apiApproval.department || apiApproval.department_name || '',
+    submitTime: apiApproval.created_at
+      ? new Date(apiApproval.created_at).toLocaleString('zh-CN')
+      : '',
+    amount: apiApproval.amount ? `¥${Number(apiApproval.amount).toFixed(2)}` : undefined,
+    priority: priorityMap[apiApproval.priority] || 'medium',
+    status: statusMap[apiApproval.status] || 'pending',
+    description: apiApproval.description || apiApproval.remarks || '',
+    steps: apiApproval.steps || [
+      { name: '提交申请', status: 'completed' },
+      { name: '审批中', status: 'current' },
+    ],
+  };
 };
 
 const MobileApprovalPage: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const { addNotification } = useAppStore();
+  const { user, addNotification } = useAppStore();
   const [activeTab, setActiveTab] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [approvals, setApprovals] = useState<ApprovalItem[]>([]);
   const [selectedApproval, setSelectedApproval] = useState<ApprovalItem | null>(null);
   const [approvalComment, setApprovalComment] = useState('');
+  const [processing, setProcessing] = useState(false);
 
   const tabs = ['待审批', '已审批', '我发起的'];
 
   const loadApprovals = useCallback(async () => {
     setLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    setApprovals(generateMockApprovals(8));
-    setLoading(false);
-  }, []);
+    try {
+      const params: any = {};
+      if (searchQuery) {
+        params.search = searchQuery;
+      }
+
+      if (activeTab === 0) {
+        params.status = 'pending';
+        params.assignee_id = user?.id;
+      } else if (activeTab === 1) {
+        params.status = 'completed';
+        params.assignee_id = user?.id;
+      } else if (activeTab === 2) {
+        params.initiator_id = user?.id;
+      }
+
+      const response = await approvalTaskApi.listApprovalTasks(params);
+      if (response.success && response.data) {
+        const data = response.data as any;
+        const apiApprovals = Array.isArray(data) ? data : data.items || [];
+        const mappedApprovals = apiApprovals.map(mapApiApprovalToApprovalItem);
+        setApprovals(mappedApprovals);
+      } else {
+        setApprovals([]);
+      }
+    } catch (err) {
+      apiLogger.error('加载审批列表失败:', err);
+      setApprovals([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [activeTab, searchQuery, user?.id]);
 
   useEffect(() => {
     loadApprovals();
@@ -203,24 +242,52 @@ const MobileApprovalPage: React.FC = () => {
     }
   };
 
-  const handleApprove = (approval: ApprovalItem) => {
-    setApprovals((prev) => prev.filter((a) => a.id !== approval.id));
-    setSelectedApproval(null);
-    addNotification({
-      title: '审批通过',
-      message: `${approval.title} 已通过`,
-      type: 'success',
-    });
+  const handleApprove = async (approval: ApprovalItem) => {
+    setProcessing(true);
+    try {
+      await approvalTaskApi.approveTask(approval.id, { comment: approvalComment });
+      setApprovals((prev) => prev.filter((a) => a.id !== approval.id));
+      setSelectedApproval(null);
+      setApprovalComment('');
+      addNotification({
+        title: '审批通过',
+        message: `${approval.title} 已通过`,
+        type: 'success',
+      });
+    } catch (err) {
+      apiLogger.error('审批通过失败:', err);
+      addNotification({
+        title: '操作失败',
+        message: '审批通过操作失败，请重试',
+        type: 'error',
+      });
+    } finally {
+      setProcessing(false);
+    }
   };
 
-  const handleReject = (approval: ApprovalItem) => {
-    setApprovals((prev) => prev.filter((a) => a.id !== approval.id));
-    setSelectedApproval(null);
-    addNotification({
-      title: '已驳回',
-      message: `${approval.title} 已驳回`,
-      type: 'warning',
-    });
+  const handleReject = async (approval: ApprovalItem) => {
+    setProcessing(true);
+    try {
+      await approvalTaskApi.rejectTask(approval.id, { comment: approvalComment });
+      setApprovals((prev) => prev.filter((a) => a.id !== approval.id));
+      setSelectedApproval(null);
+      setApprovalComment('');
+      addNotification({
+        title: '已驳回',
+        message: `${approval.title} 已驳回`,
+        type: 'warning',
+      });
+    } catch (err) {
+      apiLogger.error('审批驳回失败:', err);
+      addNotification({
+        title: '操作失败',
+        message: '审批驳回操作失败，请重试',
+        type: 'error',
+      });
+    } finally {
+      setProcessing(false);
+    }
   };
 
   const rightSwipeActions: SwipeActionItem[] = [
@@ -253,7 +320,12 @@ const MobileApprovalPage: React.FC = () => {
     { id: 'home', label: '首页', icon: <Home style={{ width: 22, height: 22 }} /> },
     { id: 'tasks', label: '任务', icon: <ListTodo style={{ width: 22, height: 22 }} /> },
     { id: 'scan', label: '扫码', icon: <ScanLine style={{ width: 22, height: 22 }} /> },
-    { id: 'approval', label: '审批', icon: <CheckSquare style={{ width: 22, height: 22 }} />, badge: 3 },
+    {
+      id: 'approval',
+      label: '审批',
+      icon: <CheckSquare style={{ width: 22, height: 22 }} />,
+      badge: 3,
+    },
     { id: 'profile', label: '我的', icon: <User style={{ width: 22, height: 22 }} /> },
   ];
 
@@ -292,7 +364,10 @@ const MobileApprovalPage: React.FC = () => {
                 {getTypeIcon(selectedApproval.type)}
               </Box>
               <Box sx={{ flex: 1 }}>
-                <Typography variant='h6' sx={{ fontWeight: 600, mb: 0.5 }}>
+                <Typography
+                  variant='h6'
+                  sx={{ fontWeight: 600, mb: 0.5 }}
+                >
                   {selectedApproval.title}
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -323,10 +398,16 @@ const MobileApprovalPage: React.FC = () => {
                   justifyContent: 'space-between',
                 }}
               >
-                <Typography variant='body2' color='text.secondary'>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
                   申请金额
                 </Typography>
-                <Typography variant='h5' sx={{ fontWeight: 700, color: 'primary.main' }}>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 700, color: 'primary.main' }}
+                >
                   {selectedApproval.amount}
                 </Typography>
               </Box>
@@ -343,7 +424,10 @@ const MobileApprovalPage: React.FC = () => {
               borderColor: 'divider',
             }}
           >
-            <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, mb: 2 }}
+            >
               申请人信息
             </Typography>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -351,10 +435,16 @@ const MobileApprovalPage: React.FC = () => {
                 <UserIcon style={{ width: 22, height: 22 }} />
               </Avatar>
               <Box>
-                <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                <Typography
+                  variant='body2'
+                  sx={{ fontWeight: 500 }}
+                >
                   {selectedApproval.applicant}
                 </Typography>
-                <Typography variant='caption' color='text.secondary'>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   {selectedApproval.department}
                 </Typography>
               </Box>
@@ -362,7 +452,10 @@ const MobileApprovalPage: React.FC = () => {
             <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                 <Clock style={{ width: 14, height: 14, color: 'text.secondary' }} />
-                <Typography variant='caption' color='text.secondary'>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   提交时间：{selectedApproval.submitTime}
                 </Typography>
               </Box>
@@ -379,10 +472,16 @@ const MobileApprovalPage: React.FC = () => {
               borderColor: 'divider',
             }}
           >
-            <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, mb: 2 }}
+            >
               审批说明
             </Typography>
-            <Typography variant='body2' color='text.secondary'>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               {selectedApproval.description}
             </Typography>
           </Paper>
@@ -397,12 +496,22 @@ const MobileApprovalPage: React.FC = () => {
               borderColor: 'divider',
             }}
           >
-            <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, mb: 2 }}
+            >
               审批流程
             </Typography>
             <Box sx={{ position: 'relative', pl: 2 }}>
               {selectedApproval.steps.map((step, index) => (
-                <Box key={index} sx={{ display: 'flex', gap: 2, pb: index < selectedApproval.steps.length - 1 ? 3 : 0 }}>
+                <Box
+                  key={index}
+                  sx={{
+                    display: 'flex',
+                    gap: 2,
+                    pb: index < selectedApproval.steps.length - 1 ? 3 : 0,
+                  }}
+                >
                   <Box sx={{ position: 'relative' }}>
                     <Box
                       sx={{
@@ -416,8 +525,8 @@ const MobileApprovalPage: React.FC = () => {
                           step.status === 'completed'
                             ? 'success.main'
                             : step.status === 'current'
-                            ? 'primary.main'
-                            : 'grey.300',
+                              ? 'primary.main'
+                              : 'grey.300',
                         color: 'white',
                         flexShrink: 0,
                         zIndex: 1,
@@ -426,7 +535,10 @@ const MobileApprovalPage: React.FC = () => {
                       {step.status === 'completed' ? (
                         <Check style={{ width: 14, height: 14 }} />
                       ) : (
-                        <Typography variant='caption' sx={{ fontWeight: 600 }}>
+                        <Typography
+                          variant='caption'
+                          sx={{ fontWeight: 600 }}
+                        >
                           {index + 1}
                         </Typography>
                       )}
@@ -440,8 +552,7 @@ const MobileApprovalPage: React.FC = () => {
                           transform: 'translateX(-50%)',
                           width: 2,
                           height: 'calc(100% + 12px)',
-                          bgcolor:
-                            step.status === 'completed' ? 'success.main' : 'grey.200',
+                          bgcolor: step.status === 'completed' ? 'success.main' : 'grey.200',
                         }}
                       />
                     )}
@@ -457,7 +568,10 @@ const MobileApprovalPage: React.FC = () => {
                       {step.name}
                     </Typography>
                     {step.time && (
-                      <Typography variant='caption' color='text.secondary'>
+                      <Typography
+                        variant='caption'
+                        color='text.secondary'
+                      >
                         {step.time}
                       </Typography>
                     )}
@@ -485,7 +599,10 @@ const MobileApprovalPage: React.FC = () => {
               borderColor: 'divider',
             }}
           >
-            <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, mb: 2 }}
+            >
               审批意见
             </Typography>
             <TextField
@@ -508,19 +625,21 @@ const MobileApprovalPage: React.FC = () => {
               fullWidth
               variant='outlined'
               color='error'
-              startIcon={<X style={{ width: 20, height: 20 }} />}
+              startIcon={processing ? null : <X style={{ width: 20, height: 20 }} />}
               onClick={() => handleReject(selectedApproval)}
+              disabled={processing}
             >
-              驳回
+              {processing ? '处理中...' : '驳回'}
             </MobileButton>
             <MobileButton
               fullWidth
               variant='contained'
               color='success'
-              startIcon={<Check style={{ width: 20, height: 20 }} />}
+              startIcon={processing ? null : <Check style={{ width: 20, height: 20 }} />}
               onClick={() => handleApprove(selectedApproval)}
+              disabled={processing}
             >
-              通过
+              {processing ? '处理中...' : '通过'}
             </MobileButton>
           </Box>
         </Box>
@@ -611,7 +730,10 @@ const MobileApprovalPage: React.FC = () => {
 
       <PullToRefresh onRefresh={handleRefresh}>
         {loading ? (
-          <MobileSkeleton type='list' count={6} />
+          <MobileSkeleton
+            type='list'
+            count={6}
+          />
         ) : filteredApprovals.length === 0 ? (
           <Box
             sx={{
@@ -637,10 +759,17 @@ const MobileApprovalPage: React.FC = () => {
             >
               <CheckSquare style={{ width: 32, height: 32, color: 'text.secondary' }} />
             </Box>
-            <Typography variant='subtitle1' sx={{ mb: 1, fontWeight: 500 }}>
+            <Typography
+              variant='subtitle1'
+              sx={{ mb: 1, fontWeight: 500 }}
+            >
               暂无待审批
             </Typography>
-            <Typography variant='body2' color='text.secondary' sx={{ textAlign: 'center' }}>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{ textAlign: 'center' }}
+            >
               {searchQuery ? '没有找到匹配的审批' : '当前没有待您审批的事项'}
             </Typography>
           </Box>
@@ -693,11 +822,21 @@ const MobileApprovalPage: React.FC = () => {
                               >
                                 {approval.title}
                               </Typography>
-                              <Typography variant='caption' color='text.secondary'>
+                              <Typography
+                                variant='caption'
+                                color='text.secondary'
+                              >
                                 {approval.id}
                               </Typography>
                             </Box>
-                            <ChevronRight style={{ width: 18, height: 18, color: 'text.secondary', flexShrink: 0 }} />
+                            <ChevronRight
+                              style={{
+                                width: 18,
+                                height: 18,
+                                color: 'text.secondary',
+                                flexShrink: 0,
+                              }}
+                            />
                           </Box>
                         }
                         secondary={
@@ -720,14 +859,22 @@ const MobileApprovalPage: React.FC = () => {
                             </Box>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                                <UserIcon style={{ width: 14, height: 14, color: 'text.secondary' }} />
-                                <Typography variant='caption' color='text.secondary'>
+                                <UserIcon
+                                  style={{ width: 14, height: 14, color: 'text.secondary' }}
+                                />
+                                <Typography
+                                  variant='caption'
+                                  color='text.secondary'
+                                >
                                   {approval.applicant}
                                 </Typography>
                               </Box>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                 <Clock style={{ width: 14, height: 14, color: 'text.secondary' }} />
-                                <Typography variant='caption' color='text.secondary'>
+                                <Typography
+                                  variant='caption'
+                                  color='text.secondary'
+                                >
                                   {approval.submitTime.split(' ')[0]}
                                 </Typography>
                               </Box>

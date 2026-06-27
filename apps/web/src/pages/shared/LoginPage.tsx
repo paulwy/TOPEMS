@@ -16,8 +16,8 @@ import {
   IconButton,
   Typography,
   TextField,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 
 import { ModeToggle } from '@/components/theme/ModeToggle';
 
@@ -39,7 +39,7 @@ interface LoginPageProps {
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, isAuthenticated, logout, user } = useAuth();
   const addNotification = useAppStore((state) => state.addNotification);
 
   const [isRegister, setIsRegister] = useState(false);
@@ -68,7 +68,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
         return;
       }
 
-      let response = await login({
+      const response = await login({
         username: values.username,
         password: values.password,
       });
@@ -81,6 +81,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           message: '欢迎回来!',
           type: 'success',
         });
+        const from = (window.history.state as { usr?: string })?.usr || '/dashboard';
+        navigate(from, { replace: true });
       } else {
         addNotification({
           title: '登录失败',
@@ -416,6 +418,28 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
                       特殊字符
                     </Typography>
                   </Box>
+                </Box>
+              )}
+
+              {!isRegister && (
+                <Box
+                  sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
+                  <Button
+                    type='button'
+                    onClick={() => navigate('/forgot-password')}
+                    sx={{
+                      color: '#667eea',
+                      '&:hover': { color: '#5a6fd6' },
+                      fontSize: '0.875rem',
+                      background: 'transparent',
+                      fontWeight: 500,
+                      padding: 0,
+                      minWidth: 'auto',
+                    }}
+                  >
+                    忘记密码？
+                  </Button>
                 </Box>
               )}
 

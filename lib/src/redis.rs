@@ -423,27 +423,29 @@ impl BloomFilter {
         ((bits as f64 / expected_elements as f64) * (2.0f64).ln()).ceil() as usize
     }
 
-    fn hash(&self, key: &str, hash_index: usize) -> usize {
+    fn hash(&self, key: &str, hash_index: usize, bits_len: usize) -> usize {
         use std::collections::hash_map::DefaultHasher;
         let mut hasher = DefaultHasher::new();
         hasher.write_u64(self.seed);
         hasher.write_usize(hash_index);
         hasher.write(key.as_bytes());
-        hasher.finish() as usize % self.bits.read().len()
+        hasher.finish() as usize % bits_len
     }
 
     pub fn insert(&self, key: &str) {
         let mut bits = self.bits.write();
+        let bits_len = bits.len();
         for i in 0..self.num_hashes {
-            let idx = self.hash(key, i);
+            let idx = self.hash(key, i, bits_len);
             bits[idx] = true;
         }
     }
 
     pub fn might_contain(&self, key: &str) -> bool {
         let bits = self.bits.read();
+        let bits_len = bits.len();
         for i in 0..self.num_hashes {
-            let idx = self.hash(key, i);
+            let idx = self.hash(key, i, bits_len);
             if !bits[idx] {
                 return false;
             }

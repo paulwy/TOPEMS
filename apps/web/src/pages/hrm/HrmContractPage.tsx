@@ -14,12 +14,10 @@ import {
   Clock,
   FileTextIcon,
 } from 'lucide-react';
-import type { Contract, ContractRenewal, Employee } from '@/api/hrm';
+import type { Contract, ContractRenewal, Employee, PaginatedResult } from '@/api/hrm';
 import { contractApi, contractRenewalApi, employeeApi } from '@/api/hrm';
-import type { PaginatedResult } from '@/api/hrm';
-import { ListPageTemplate } from '@/components/mui';
-import type { ColumnDef, RowAction } from '@/components/mui';
-import { StatCard } from '@/components/mui/StatCard';
+import { ListPageTemplate, MuiStatCard as StatCard } from '@/components';
+import type { ColumnDef, RowAction } from '@/components';
 
 import {
   Card,
@@ -648,7 +646,10 @@ export default function ContractManagementPage() {
   );
 
   return (
-    <PageContainer padding={false} maxWidth={false}>
+    <PageContainer
+      padding={false}
+      maxWidth={false}
+    >
       <Snackbar
         open={!!notification}
         autoHideDuration={3000}
@@ -669,9 +670,15 @@ export default function ContractManagementPage() {
         title={confirmDialog?.title}
         maxWidth='sm'
         cancelButton={{ label: '取消' }}
-        confirmButton={{ label: '确定', onClick: () => { confirmDialog?.onConfirm(); setConfirmDialog(null); }, color: 'error' }}
-      >
-      </Dialog>
+        confirmButton={{
+          label: '确定',
+          onClick: () => {
+            confirmDialog?.onConfirm();
+            setConfirmDialog(null);
+          },
+          color: 'error',
+        }}
+      ></Dialog>
 
       <Box
         sx={{
@@ -835,7 +842,11 @@ export default function ContractManagementPage() {
         maxWidth='md'
         fullWidth
         cancelButton={modalType !== 'view' ? { label: '取消' } : undefined}
-        confirmButton={modalType !== 'view' ? { label: modalType === 'create' ? '创建' : '保存', onClick: handleSave } : { label: '关闭' }}
+        confirmButton={
+          modalType !== 'view'
+            ? { label: modalType === 'create' ? '创建' : '保存', onClick: handleSave }
+            : { label: '关闭' }
+        }
       >
         {modalType !== 'view' ? (
           <Stack spacing={2}>
@@ -843,7 +854,10 @@ export default function ContractManagementPage() {
               name='employee_id'
               label='员工 *'
               value={formState.employee_id}
-              options={[{ value: '', label: '请选择员工' }, ...employees.map((e) => ({ value: e.id, label: e.name }))]}
+              options={[
+                { value: '', label: '请选择员工' },
+                ...employees.map((e) => ({ value: e.id, label: e.name })),
+              ]}
               onChange={(value) => setFormState((s) => ({ ...s, employee_id: value as string }))}
             />
 
@@ -851,7 +865,9 @@ export default function ContractManagementPage() {
               name='contract_no'
               label='合同编号'
               value={formState.contract_no}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormState((s) => ({ ...s, contract_no: e.target.value }))}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setFormState((s) => ({ ...s, contract_no: e.target.value }))
+              }
               disabled={modalType === 'create'}
               placeholder={modalType === 'create' ? '自动生成' : ''}
               fullWidth
@@ -865,12 +881,17 @@ export default function ContractManagementPage() {
               onChange={(value) => setFormState((s) => ({ ...s, contract_type: value as string }))}
             />
 
-            <Stack direction='row' spacing={2}>
+            <Stack
+              direction='row'
+              spacing={2}
+            >
               <FormField
                 name='party_a_name'
                 label='甲方名称'
                 value={formState.party_a_name}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormState((s) => ({ ...s, party_a_name: e.target.value }))}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormState((s) => ({ ...s, party_a_name: e.target.value }))
+                }
                 placeholder='公司名称'
                 fullWidth
               />
@@ -878,18 +899,25 @@ export default function ContractManagementPage() {
                 name='party_a_contact'
                 label='甲方联系人'
                 value={formState.party_a_contact}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormState((s) => ({ ...s, party_a_contact: e.target.value }))}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormState((s) => ({ ...s, party_a_contact: e.target.value }))
+                }
                 placeholder='联系人姓名'
                 fullWidth
               />
             </Stack>
 
-            <Stack direction='row' spacing={2}>
+            <Stack
+              direction='row'
+              spacing={2}
+            >
               <FormField
                 name='party_b_name'
                 label='乙方名称'
                 value={formState.party_b_name}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormState((s) => ({ ...s, party_b_name: e.target.value }))}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormState((s) => ({ ...s, party_b_name: e.target.value }))
+                }
                 placeholder='员工姓名'
                 fullWidth
               />
@@ -897,19 +925,26 @@ export default function ContractManagementPage() {
                 name='party_b_contact'
                 label='乙方联系人'
                 value={formState.party_b_contact}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormState((s) => ({ ...s, party_b_contact: e.target.value }))}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormState((s) => ({ ...s, party_b_contact: e.target.value }))
+                }
                 placeholder='员工联系方式'
                 fullWidth
               />
             </Stack>
 
-            <Stack direction='row' spacing={2}>
+            <Stack
+              direction='row'
+              spacing={2}
+            >
               <FormField
                 name='start_date'
                 label='开始日期 *'
                 type='date'
                 value={formState.start_date}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormState((s) => ({ ...s, start_date: e.target.value }))}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormState((s) => ({ ...s, start_date: e.target.value }))
+                }
                 fullWidth
                 slotProps={{ inputLabel: { shrink: true } }}
               />
@@ -918,20 +953,27 @@ export default function ContractManagementPage() {
                 label='结束日期'
                 type='date'
                 value={formState.end_date}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormState((s) => ({ ...s, end_date: e.target.value }))}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormState((s) => ({ ...s, end_date: e.target.value }))
+                }
                 placeholder='无固定期限'
                 fullWidth
                 slotProps={{ inputLabel: { shrink: true } }}
               />
             </Stack>
 
-            <Stack direction='row' spacing={2}>
+            <Stack
+              direction='row'
+              spacing={2}
+            >
               <FormField
                 name='salary'
                 label='薪资'
                 type='number'
                 value={formState.salary}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormState((s) => ({ ...s, salary: e.target.value }))}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormState((s) => ({ ...s, salary: e.target.value }))
+                }
                 placeholder='0'
                 fullWidth
               />
@@ -940,7 +982,9 @@ export default function ContractManagementPage() {
                 label='试用期(天)'
                 type='number'
                 value={formState.probation_period_days}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormState((s) => ({ ...s, probation_period_days: e.target.value }))}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormState((s) => ({ ...s, probation_period_days: e.target.value }))
+                }
                 placeholder='0'
                 fullWidth
               />
@@ -949,7 +993,9 @@ export default function ContractManagementPage() {
                 label='提前提醒天数'
                 type='number'
                 value={formState.reminder_days}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormState((s) => ({ ...s, reminder_days: e.target.value }))}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setFormState((s) => ({ ...s, reminder_days: e.target.value }))
+                }
                 placeholder='30'
                 fullWidth
               />
@@ -972,7 +1018,9 @@ export default function ContractManagementPage() {
               name='notes'
               label='备注'
               value={formState.notes}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormState((s) => ({ ...s, notes: e.target.value }))}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setFormState((s) => ({ ...s, notes: e.target.value }))
+              }
               multiline
               rows={3}
               placeholder='备注信息'
@@ -980,287 +1028,287 @@ export default function ContractManagementPage() {
             />
           </Stack>
         ) : (
-            <Box>
-              {currentContract && (
-                <Stack spacing={2}>
-                  <Stack
-                    direction='row'
-                    spacing={2}
-                  >
-                    <Card sx={{ flex: 1, bgcolor: 'grey.50', boxShadow: 'none' }}>
-                      <CardContent sx={{ p: 1.5 }}>
-                        <Typography
-                          variant='body2'
-                          sx={{ color: 'grey.500' }}
-                        >
-                          合同编号
-                        </Typography>
-                        <Typography sx={{ fontWeight: 500 }}>
-                          {currentContract.contract_no || '-'}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                    <Card sx={{ flex: 1, bgcolor: 'grey.50', boxShadow: 'none' }}>
-                      <CardContent sx={{ p: 1.5 }}>
-                        <Typography
-                          variant='body2'
-                          sx={{ color: 'grey.500' }}
-                        >
-                          员工
-                        </Typography>
-                        <Typography sx={{ fontWeight: 500 }}>
-                          {getEmployeeName(currentContract.employee_id)}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Stack>
-                  <Stack
-                    direction='row'
-                    spacing={2}
-                  >
-                    <Card sx={{ flex: 1, bgcolor: 'grey.50', boxShadow: 'none' }}>
-                      <CardContent sx={{ p: 1.5 }}>
-                        <Typography
-                          variant='body2'
-                          sx={{ color: 'grey.500' }}
-                        >
-                          合同类型
-                        </Typography>
-                        <Typography sx={{ fontWeight: 500 }}>
-                          {contractTypes.find((t) => t.value === currentContract.contract_type)
-                            ?.label || currentContract.contract_type}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                    <Card sx={{ flex: 1, bgcolor: 'grey.50', boxShadow: 'none' }}>
-                      <CardContent sx={{ p: 1.5 }}>
-                        <Typography
-                          variant='body2'
-                          sx={{ color: 'grey.500' }}
-                        >
-                          状态
-                        </Typography>
-                        <Chip
-                          size='small'
-                          label={statusMap[currentContract.status]?.text || currentContract.status}
-                          color={statusMap[currentContract.status]?.color || 'default'}
-                        />
-                      </CardContent>
-                    </Card>
-                  </Stack>
-                  <Stack
-                    direction='row'
-                    spacing={2}
-                  >
-                    <Card sx={{ flex: 1, bgcolor: 'grey.50', boxShadow: 'none' }}>
-                      <CardContent sx={{ p: 1.5 }}>
-                        <Typography
-                          variant='body2'
-                          sx={{ color: 'grey.500' }}
-                        >
-                          薪资
-                        </Typography>
-                        <Typography sx={{ fontWeight: 500 }}>
-                          {currentContract.salary?.toLocaleString() || '-'}
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                    <Card sx={{ flex: 1, bgcolor: 'grey.50', boxShadow: 'none' }}>
-                      <CardContent sx={{ p: 1.5 }}>
-                        <Typography
-                          variant='body2'
-                          sx={{ color: 'grey.500' }}
-                        >
-                          试用期
-                        </Typography>
-                        <Typography sx={{ fontWeight: 500 }}>
-                          {currentContract.probation_period_days || 0} 天
-                        </Typography>
-                      </CardContent>
-                    </Card>
-                  </Stack>
-                  <Card sx={{ bgcolor: 'grey.50', boxShadow: 'none' }}>
+          <Box>
+            {currentContract && (
+              <Stack spacing={2}>
+                <Stack
+                  direction='row'
+                  spacing={2}
+                >
+                  <Card sx={{ flex: 1, bgcolor: 'grey.50', boxShadow: 'none' }}>
                     <CardContent sx={{ p: 1.5 }}>
                       <Typography
                         variant='body2'
                         sx={{ color: 'grey.500' }}
                       >
-                        有效期
+                        合同编号
                       </Typography>
                       <Typography sx={{ fontWeight: 500 }}>
-                        {new Date(currentContract.start_date).toLocaleDateString('zh-CN')}~{' '}
-                        {currentContract.end_date
-                          ? new Date(currentContract.end_date).toLocaleDateString('zh-CN')
-                          : '无固定期限'}
+                        {currentContract.contract_no || '-'}
                       </Typography>
                     </CardContent>
                   </Card>
-                  <Card sx={{ bgcolor: 'grey.50', boxShadow: 'none' }}>
+                  <Card sx={{ flex: 1, bgcolor: 'grey.50', boxShadow: 'none' }}>
                     <CardContent sx={{ p: 1.5 }}>
                       <Typography
                         variant='body2'
                         sx={{ color: 'grey.500' }}
                       >
-                        甲方信息
+                        员工
                       </Typography>
                       <Typography sx={{ fontWeight: 500 }}>
-                        {currentContract.party_a_name || '-'}
-                      </Typography>
-                      <Typography variant='body2'>
-                        {currentContract.party_a_contact || '-'}
+                        {getEmployeeName(currentContract.employee_id)}
                       </Typography>
                     </CardContent>
                   </Card>
-                  <Card sx={{ bgcolor: 'grey.50', boxShadow: 'none' }}>
-                    <CardContent sx={{ p: 1.5 }}>
-                      <Typography
-                        variant='body2'
-                        sx={{ color: 'grey.500' }}
-                      >
-                        乙方信息
-                      </Typography>
-                      <Typography sx={{ fontWeight: 500 }}>
-                        {currentContract.party_b_name || '-'}
-                      </Typography>
-                      <Typography variant='body2'>
-                        {currentContract.party_b_contact || '-'}
-                      </Typography>
-                    </CardContent>
-                  </Card>
-                  {currentContract.notes && (
-                    <Card sx={{ bgcolor: 'grey.50', boxShadow: 'none' }}>
-                      <CardContent sx={{ p: 1.5 }}>
-                        <Typography
-                          variant='body2'
-                          sx={{ color: 'grey.500' }}
-                        >
-                          备注
-                        </Typography>
-                        <Typography sx={{ fontWeight: 500 }}>{currentContract.notes}</Typography>
-                      </CardContent>
-                    </Card>
-                  )}
                 </Stack>
-              )}
-
-              {showRenewals && (
-                <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
-                  <Typography sx={{ fontWeight: 500, mb: 1.5 }}>续签记录</Typography>
-                  {renewals.length === 0 ? (
-                    <Typography sx={{ color: 'grey.500', textAlign: 'center', py: 2 }}>
-                      暂无续签记录
+                <Stack
+                  direction='row'
+                  spacing={2}
+                >
+                  <Card sx={{ flex: 1, bgcolor: 'grey.50', boxShadow: 'none' }}>
+                    <CardContent sx={{ p: 1.5 }}>
+                      <Typography
+                        variant='body2'
+                        sx={{ color: 'grey.500' }}
+                      >
+                        合同类型
+                      </Typography>
+                      <Typography sx={{ fontWeight: 500 }}>
+                        {contractTypes.find((t) => t.value === currentContract.contract_type)
+                          ?.label || currentContract.contract_type}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                  <Card sx={{ flex: 1, bgcolor: 'grey.50', boxShadow: 'none' }}>
+                    <CardContent sx={{ p: 1.5 }}>
+                      <Typography
+                        variant='body2'
+                        sx={{ color: 'grey.500' }}
+                      >
+                        状态
+                      </Typography>
+                      <Chip
+                        size='small'
+                        label={statusMap[currentContract.status]?.text || currentContract.status}
+                        color={statusMap[currentContract.status]?.color || 'default'}
+                      />
+                    </CardContent>
+                  </Card>
+                </Stack>
+                <Stack
+                  direction='row'
+                  spacing={2}
+                >
+                  <Card sx={{ flex: 1, bgcolor: 'grey.50', boxShadow: 'none' }}>
+                    <CardContent sx={{ p: 1.5 }}>
+                      <Typography
+                        variant='body2'
+                        sx={{ color: 'grey.500' }}
+                      >
+                        薪资
+                      </Typography>
+                      <Typography sx={{ fontWeight: 500 }}>
+                        {currentContract.salary?.toLocaleString() || '-'}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                  <Card sx={{ flex: 1, bgcolor: 'grey.50', boxShadow: 'none' }}>
+                    <CardContent sx={{ p: 1.5 }}>
+                      <Typography
+                        variant='body2'
+                        sx={{ color: 'grey.500' }}
+                      >
+                        试用期
+                      </Typography>
+                      <Typography sx={{ fontWeight: 500 }}>
+                        {currentContract.probation_period_days || 0} 天
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                </Stack>
+                <Card sx={{ bgcolor: 'grey.50', boxShadow: 'none' }}>
+                  <CardContent sx={{ p: 1.5 }}>
+                    <Typography
+                      variant='body2'
+                      sx={{ color: 'grey.500' }}
+                    >
+                      有效期
                     </Typography>
-                  ) : (
-                    <Stack spacing={1}>
-                      {renewals.map((renewal) => (
-                        <Card
-                          key={renewal.id}
-                          sx={{ border: 1, borderColor: 'divider' }}
-                        >
-                          <CardContent sx={{ p: 1.5 }}>
-                            <Stack
-                              sx={{
-                                display: 'flex',
-                                flexDirection: 'row',
-                                justifyContent: 'space-between',
-                                alignItems: 'flex-start',
-                                mb: 1,
-                              }}
-                            >
-                              <Box>
-                                <Typography sx={{ fontWeight: 500 }}>
-                                  {renewalTypes.find((t) => t.value === renewal.renewal_type)
-                                    ?.label || renewal.renewal_type}
-                                </Typography>
-                                <Typography
-                                  variant='body2'
-                                  sx={{ color: 'grey.500', ml: 1 }}
-                                >
-                                  {new Date(renewal.created_at).toLocaleString('zh-CN')}
-                                </Typography>
-                              </Box>
-                              <StatusBadge
-                                status={renewal.status}
-                                label={renewalStatusMap[renewal.status]?.text || renewal.status}
-                                color={renewalStatusMap[renewal.status]?.color || 'default'}
-                              />
-                            </Stack>
+                    <Typography sx={{ fontWeight: 500 }}>
+                      {new Date(currentContract.start_date).toLocaleDateString('zh-CN')}~{' '}
+                      {currentContract.end_date
+                        ? new Date(currentContract.end_date).toLocaleDateString('zh-CN')
+                        : '无固定期限'}
+                    </Typography>
+                  </CardContent>
+                </Card>
+                <Card sx={{ bgcolor: 'grey.50', boxShadow: 'none' }}>
+                  <CardContent sx={{ p: 1.5 }}>
+                    <Typography
+                      variant='body2'
+                      sx={{ color: 'grey.500' }}
+                    >
+                      甲方信息
+                    </Typography>
+                    <Typography sx={{ fontWeight: 500 }}>
+                      {currentContract.party_a_name || '-'}
+                    </Typography>
+                    <Typography variant='body2'>
+                      {currentContract.party_a_contact || '-'}
+                    </Typography>
+                  </CardContent>
+                </Card>
+                <Card sx={{ bgcolor: 'grey.50', boxShadow: 'none' }}>
+                  <CardContent sx={{ p: 1.5 }}>
+                    <Typography
+                      variant='body2'
+                      sx={{ color: 'grey.500' }}
+                    >
+                      乙方信息
+                    </Typography>
+                    <Typography sx={{ fontWeight: 500 }}>
+                      {currentContract.party_b_name || '-'}
+                    </Typography>
+                    <Typography variant='body2'>
+                      {currentContract.party_b_contact || '-'}
+                    </Typography>
+                  </CardContent>
+                </Card>
+                {currentContract.notes && (
+                  <Card sx={{ bgcolor: 'grey.50', boxShadow: 'none' }}>
+                    <CardContent sx={{ p: 1.5 }}>
+                      <Typography
+                        variant='body2'
+                        sx={{ color: 'grey.500' }}
+                      >
+                        备注
+                      </Typography>
+                      <Typography sx={{ fontWeight: 500 }}>{currentContract.notes}</Typography>
+                    </CardContent>
+                  </Card>
+                )}
+              </Stack>
+            )}
+
+            {showRenewals && (
+              <Box sx={{ mt: 2, pt: 2, borderTop: 1, borderColor: 'divider' }}>
+                <Typography sx={{ fontWeight: 500, mb: 1.5 }}>续签记录</Typography>
+                {renewals.length === 0 ? (
+                  <Typography sx={{ color: 'grey.500', textAlign: 'center', py: 2 }}>
+                    暂无续签记录
+                  </Typography>
+                ) : (
+                  <Stack spacing={1}>
+                    {renewals.map((renewal) => (
+                      <Card
+                        key={renewal.id}
+                        sx={{ border: 1, borderColor: 'divider' }}
+                      >
+                        <CardContent sx={{ p: 1.5 }}>
+                          <Stack
+                            sx={{
+                              display: 'flex',
+                              flexDirection: 'row',
+                              justifyContent: 'space-between',
+                              alignItems: 'flex-start',
+                              mb: 1,
+                            }}
+                          >
+                            <Box>
+                              <Typography sx={{ fontWeight: 500 }}>
+                                {renewalTypes.find((t) => t.value === renewal.renewal_type)
+                                  ?.label || renewal.renewal_type}
+                              </Typography>
+                              <Typography
+                                variant='body2'
+                                sx={{ color: 'grey.500', ml: 1 }}
+                              >
+                                {new Date(renewal.created_at).toLocaleString('zh-CN')}
+                              </Typography>
+                            </Box>
+                            <StatusBadge
+                              status={renewal.status}
+                              label={renewalStatusMap[renewal.status]?.text || renewal.status}
+                              color={renewalStatusMap[renewal.status]?.color || 'default'}
+                            />
+                          </Stack>
+                          <Typography
+                            variant='body2'
+                            sx={{ color: 'grey.600', mb: 1 }}
+                          >
+                            新合同期限:{' '}
+                            {new Date(renewal.new_start_date).toLocaleDateString('zh-CN')} ~{' '}
+                            {renewal.new_end_date
+                              ? new Date(renewal.new_end_date).toLocaleDateString('zh-CN')
+                              : '无固定期限'}
+                          </Typography>
+                          {renewal.new_salary && (
                             <Typography
                               variant='body2'
                               sx={{ color: 'grey.600', mb: 1 }}
                             >
-                              新合同期限:{' '}
-                              {new Date(renewal.new_start_date).toLocaleDateString('zh-CN')} ~{' '}
-                              {renewal.new_end_date
-                                ? new Date(renewal.new_end_date).toLocaleDateString('zh-CN')
-                                : '无固定期限'}
+                              新薪资: {renewal.new_salary.toLocaleString()}
                             </Typography>
-                            {renewal.new_salary && (
-                              <Typography
-                                variant='body2'
-                                sx={{ color: 'grey.600', mb: 1 }}
-                              >
-                                新薪资: {renewal.new_salary.toLocaleString()}
-                              </Typography>
-                            )}
-                            {renewal.renewal_reason && (
-                              <Typography
-                                variant='body2'
-                                sx={{ color: 'grey.600', mb: 1 }}
-                              >
-                                续签原因: {renewal.renewal_reason}
-                              </Typography>
-                            )}
-                            {renewal.rejection_reason && (
-                              <Typography
-                                variant='body2'
-                                sx={{ color: 'error.main' }}
-                              >
-                                拒绝理由: {renewal.rejection_reason}
-                              </Typography>
-                            )}
-                            <Stack
-                              direction='row'
-                              spacing={1}
-                              sx={{ mt: 1.5 }}
+                          )}
+                          {renewal.renewal_reason && (
+                            <Typography
+                              variant='body2'
+                              sx={{ color: 'grey.600', mb: 1 }}
                             >
-                              {renewal.status === 'pending' && (
-                                <>
-                                  <ActionButton
-                                    label='批准'
-                                    icon={<Check size={12} />}
-                                    onClick={() => handleApproveRenewal(renewal.id)}
-                                    variant='success'
-                                    size='small'
-                                  />
-                                  <ActionButton
-                                    label='拒绝'
-                                    icon={<X size={12} />}
-                                    onClick={() => handleRejectRenewal(renewal.id)}
-                                    variant='danger'
-                                    size='small'
-                                  />
-                                </>
-                              )}
-                              {renewal.status === 'approved' && (
+                              续签原因: {renewal.renewal_reason}
+                            </Typography>
+                          )}
+                          {renewal.rejection_reason && (
+                            <Typography
+                              variant='body2'
+                              sx={{ color: 'error.main' }}
+                            >
+                              拒绝理由: {renewal.rejection_reason}
+                            </Typography>
+                          )}
+                          <Stack
+                            direction='row'
+                            spacing={1}
+                            sx={{ mt: 1.5 }}
+                          >
+                            {renewal.status === 'pending' && (
+                              <>
                                 <ActionButton
-                                  label='执行续签'
-                                  icon={<RefreshCw size={12} />}
-                                  onClick={() => handleExecuteRenewal(renewal.id)}
-                                  variant='secondary'
+                                  label='批准'
+                                  icon={<Check size={12} />}
+                                  onClick={() => handleApproveRenewal(renewal.id)}
+                                  variant='success'
                                   size='small'
                                 />
-                              )}
-                            </Stack>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </Stack>
-                  )}
-                </Box>
-              )}
-            </Box>
-          )}
+                                <ActionButton
+                                  label='拒绝'
+                                  icon={<X size={12} />}
+                                  onClick={() => handleRejectRenewal(renewal.id)}
+                                  variant='danger'
+                                  size='small'
+                                />
+                              </>
+                            )}
+                            {renewal.status === 'approved' && (
+                              <ActionButton
+                                label='执行续签'
+                                icon={<RefreshCw size={12} />}
+                                onClick={() => handleExecuteRenewal(renewal.id)}
+                                variant='secondary'
+                                size='small'
+                              />
+                            )}
+                          </Stack>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </Stack>
+                )}
+              </Box>
+            )}
+          </Box>
+        )}
       </Dialog>
 
       <Dialog
@@ -1272,22 +1320,32 @@ export default function ContractManagementPage() {
         cancelButton={{ label: '取消' }}
         confirmButton={{ label: '提交申请', onClick: handleSubmitRenew }}
       >
-        <Stack spacing={2} sx={{ pt: 1 }}>
+        <Stack
+          spacing={2}
+          sx={{ pt: 1 }}
+        >
           <FormSelect
             name='renewal_type'
             label='续签类型 *'
             value={renewFormState.renewal_type}
             options={renewalTypes}
-            onChange={(value) => setRenewFormState((s) => ({ ...s, renewal_type: value as string }))}
+            onChange={(value) =>
+              setRenewFormState((s) => ({ ...s, renewal_type: value as string }))
+            }
           />
 
-          <Stack direction='row' spacing={2}>
+          <Stack
+            direction='row'
+            spacing={2}
+          >
             <FormField
               name='new_start_date'
               label='新合同开始日期 *'
               type='date'
               value={renewFormState.new_start_date}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRenewFormState((s) => ({ ...s, new_start_date: e.target.value }))}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setRenewFormState((s) => ({ ...s, new_start_date: e.target.value }))
+              }
               fullWidth
               slotProps={{ inputLabel: { shrink: true } }}
             />
@@ -1296,7 +1354,9 @@ export default function ContractManagementPage() {
               label='新合同结束日期'
               type='date'
               value={renewFormState.new_end_date}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRenewFormState((s) => ({ ...s, new_end_date: e.target.value }))}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setRenewFormState((s) => ({ ...s, new_end_date: e.target.value }))
+              }
               placeholder='无固定期限'
               fullWidth
               slotProps={{ inputLabel: { shrink: true } }}
@@ -1308,7 +1368,9 @@ export default function ContractManagementPage() {
             label='新薪资'
             type='number'
             value={renewFormState.new_salary}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRenewFormState((s) => ({ ...s, new_salary: e.target.value }))}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setRenewFormState((s) => ({ ...s, new_salary: e.target.value }))
+            }
             placeholder='不修改请留空'
             fullWidth
           />
@@ -1317,7 +1379,9 @@ export default function ContractManagementPage() {
             name='renewal_reason'
             label='续签原因'
             value={renewFormState.renewal_reason}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setRenewFormState((s) => ({ ...s, renewal_reason: e.target.value }))}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setRenewFormState((s) => ({ ...s, renewal_reason: e.target.value }))
+            }
             multiline
             rows={3}
             placeholder='请说明续签原因'

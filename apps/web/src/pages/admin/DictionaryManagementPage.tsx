@@ -38,8 +38,8 @@ import {
   Paper,
   Switch,
   IconButton,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 

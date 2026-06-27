@@ -10,15 +10,11 @@ import {
   Typography,
   IconButton,
   Tooltip,
+  Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
-import type {
-  WorkStation,
-  CreateWorkStationRequest,
-  UpdateWorkStationRequest,
-} from '@/api/mes';
+import type { WorkStation, CreateWorkStationRequest, UpdateWorkStationRequest } from '@/api/mes';
 import { mesApi } from '@/api/mes';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -309,10 +305,13 @@ const WorkStationPage: React.FC = () => {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <PageContainer title="工作站管理" subtitle="管理生产工作站,包括工作站名称、编码、位置、容量等">
+    <PageContainer
+      title='工作站管理'
+      subtitle='管理生产工作站,包括工作站名称、编码、位置、容量等'
+    >
       <ListPageTemplate
-        title=""
-        subtitle=""
+        title=''
+        subtitle=''
         columns={columns}
         data={workstations}
         loading={loading}

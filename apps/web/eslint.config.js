@@ -64,6 +64,8 @@ export default [
           argsIgnorePattern: '^_',
           varsIgnorePattern: '^_',
           caughtErrorsIgnorePattern: '^_',
+          ignoreRestSiblings: true,
+          destructuredArrayIgnorePattern: '^_',
         },
       ],
       '@typescript-eslint/no-explicit-any': 'warn',
@@ -160,57 +162,7 @@ export default [
       'react/prop-types': 'off',
       'react/display-name': 'off',
 
-      'import/order': [
-        'warn',
-        {
-          groups: [
-            'builtin',
-            'external',
-            'internal',
-            'parent',
-            'sibling',
-            'index',
-            'object',
-            'type',
-          ],
-          pathGroups: [
-            {
-              pattern: 'react',
-              group: 'external',
-              position: 'before',
-            },
-            {
-              pattern: 'react-*',
-              group: 'external',
-              position: 'before',
-            },
-            {
-              pattern: '@mui/**',
-              group: 'external',
-            },
-            {
-              pattern: '@tanstack/**',
-              group: 'external',
-            },
-            {
-              pattern: '@topems/**',
-              group: 'internal',
-              position: 'before',
-            },
-            {
-              pattern: '@/**',
-              group: 'internal',
-              position: 'before',
-            },
-          ],
-          pathGroupsExcludedImportTypes: ['builtin', 'react'],
-          'newlines-between': 'always',
-          alphabetize: {
-            order: 'asc',
-            caseInsensitive: true,
-          },
-        },
-      ],
+      'import/order': 'off',
       'import/no-unresolved': 'off',
       'import/no-duplicates': 'warn',
       'import/first': 'warn',
@@ -280,6 +232,22 @@ export default [
     files: ['src/**/*.stories.{ts,tsx}'],
     rules: {
       'check-file/filename-naming-convention': 'off',
+    },
+  },
+  {
+    files: ['**/__tests__/**', '**/*.test.{ts,tsx}'],
+    languageOptions: {
+      parserOptions: {
+        project: null,
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/naming-convention': 'off',
+      '@typescript-eslint/consistent-type-imports': 'off',
+      '@typescript-eslint/no-misused-promises': 'off',
+      '@typescript-eslint/restrict-template-expressions': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
     },
   },
   {

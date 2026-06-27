@@ -9,17 +9,35 @@ import { apiClient } from './client';
 // 类型定义
 // ============================================
 
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page?: number;
+  page_size?: number;
+}
+
 export interface CustomerFinanceInfo {
   customer_id: string;
   customer_name: string;
   credit_limit: number;
   credit_used: number;
   credit_available: number;
+  credit_term_days: number;
   receivable_balance: number;
+  accounts_receivable: number;
   overdue_amount: number;
+  overdue_receivable: number;
+  avg_collection_days: number;
+  total_sales: number;
+  total_received: number;
   last_transaction_date?: string;
   payment_terms: string;
   risk_level: 'low' | 'medium' | 'high';
+  status: string;
+  bank_name?: string;
+  bank_account?: string;
+  account_name?: string;
+  tax_number?: string;
 }
 
 export interface SalesInvoice {
@@ -67,10 +85,7 @@ export const crmFinanceApi = {
   },
 
   // 更新客户财务信息
-  updateCustomerFinanceInfo: async (
-    customerId: string,
-    data: Partial<CustomerFinanceInfo>
-  ) => {
+  updateCustomerFinanceInfo: async (customerId: string, data: Partial<CustomerFinanceInfo>) => {
     const response = await apiClient.crm.put<{ data: CustomerFinanceInfo }>(
       `/api/crm/customers/${customerId}/finance`,
       data
@@ -88,7 +103,7 @@ export const crmFinanceApi = {
     page?: number;
     page_size?: number;
   }) => {
-    const response = await apiClient.crm.get<{ data: SalesInvoice[]; total: number }>(
+    const response = await apiClient.crm.get<{ data: PaginatedResponse<SalesInvoice> }>(
       '/api/crm/invoices',
       { params }
     );
@@ -105,10 +120,7 @@ export const crmFinanceApi = {
 
   // 创建销售发票
   createSalesInvoice: async (data: Partial<SalesInvoice>) => {
-    const response = await apiClient.crm.post<{ data: SalesInvoice }>(
-      '/api/crm/invoices',
-      data
-    );
+    const response = await apiClient.crm.post<{ data: SalesInvoice }>('/api/crm/invoices', data);
     return response.data;
   },
 
@@ -162,7 +174,7 @@ export const crmFinanceApi = {
     page?: number;
     page_size?: number;
   }) => {
-    const response = await apiClient.crm.get<{ data: CollectionRecord[]; total: number }>(
+    const response = await apiClient.crm.get<{ data: PaginatedResponse<CollectionRecord> }>(
       '/api/crm/collections',
       { params }
     );

@@ -7,10 +7,7 @@ import type {
   UpdateQualityIssueRequestBackend,
   PaginatedResponse,
 } from './types';
-import {
-  adaptIssueToFrontend,
-  adaptIssueToBackend,
-} from './adapters';
+import { adaptIssueToFrontend, adaptIssueToBackend } from './adapters';
 
 export const issueApi = {
   listIssues: async (): Promise<ApiResponse<QualityIssue[]>> => {

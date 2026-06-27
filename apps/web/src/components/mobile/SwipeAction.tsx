@@ -36,13 +36,10 @@ export const SwipeAction: React.FC<SwipeActionProps> = ({
   const maxLeftSwipe = rightActions.length * actionWidth;
   const maxRightSwipe = leftActions.length * actionWidth;
 
-  const handleTouchStart = useCallback(
-    (e: React.TouchEvent) => {
-      startXRef.current = e.touches[0].clientX;
-      setIsDragging(true);
-    },
-    []
-  );
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    startXRef.current = e.touches[0].clientX;
+    setIsDragging(true);
+  }, []);
 
   const handleTouchMove = useCallback(
     (e: React.TouchEvent) => {
@@ -77,7 +74,15 @@ export const SwipeAction: React.FC<SwipeActionProps> = ({
 
       setTranslateX(newTranslate);
     },
-    [isDragging, isOpen, translateX, maxLeftSwipe, maxRightSwipe, leftActions.length, rightActions.length]
+    [
+      isDragging,
+      isOpen,
+      translateX,
+      maxLeftSwipe,
+      maxRightSwipe,
+      leftActions.length,
+      rightActions.length,
+    ]
   );
 
   const handleTouchEnd = useCallback(() => {
@@ -96,16 +101,22 @@ export const SwipeAction: React.FC<SwipeActionProps> = ({
       setIsOpen(false);
       onClose?.();
     }
-  }, [translateX, threshold, rightActions.length, leftActions.length, maxLeftSwipe, maxRightSwipe, onOpen, onClose]);
+  }, [
+    translateX,
+    threshold,
+    rightActions.length,
+    leftActions.length,
+    maxLeftSwipe,
+    maxRightSwipe,
+    onOpen,
+    onClose,
+  ]);
 
-  const handleActionClick = useCallback(
-    (action: SwipeActionItem) => {
-      action.onClick();
-      setTranslateX(0);
-      setIsOpen(false);
-    },
-    []
-  );
+  const handleActionClick = useCallback((action: SwipeActionItem) => {
+    action.onClick();
+    setTranslateX(0);
+    setIsOpen(false);
+  }, []);
 
   return (
     <Box
@@ -144,11 +155,17 @@ export const SwipeAction: React.FC<SwipeActionProps> = ({
               }}
               onClick={() => handleActionClick(action)}
             >
-              <IconButton sx={{ color: 'white' }} size='small'>
+              <IconButton
+                sx={{ color: 'white' }}
+                size='small'
+              >
                 {action.icon}
               </IconButton>
               {action.label && (
-                <Typography variant='caption' sx={{ color: 'white', mt: 0.5 }}>
+                <Typography
+                  variant='caption'
+                  sx={{ color: 'white', mt: 0.5 }}
+                >
                   {action.label}
                 </Typography>
               )}
@@ -182,11 +199,17 @@ export const SwipeAction: React.FC<SwipeActionProps> = ({
               }}
               onClick={() => handleActionClick(action)}
             >
-              <IconButton sx={{ color: 'white' }} size='small'>
+              <IconButton
+                sx={{ color: 'white' }}
+                size='small'
+              >
                 {action.icon}
               </IconButton>
               {action.label && (
-                <Typography variant='caption' sx={{ color: 'white', mt: 0.5 }}>
+                <Typography
+                  variant='caption'
+                  sx={{ color: 'white', mt: 0.5 }}
+                >
                   {action.label}
                 </Typography>
               )}

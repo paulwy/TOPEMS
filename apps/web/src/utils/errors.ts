@@ -65,7 +65,7 @@ export const handleApiError = (error: unknown): AppError => {
       case 404:
         return { code: ErrorCode.NOT_FOUND, message: '资源未找到' };
       case 400:
-        return { code: ErrorCode.VALIDATION, message: message };
+        return { code: ErrorCode.VALIDATION, message };
       case 500:
         return { code: ErrorCode.SERVER, message: '服务器内部错误' };
       default:

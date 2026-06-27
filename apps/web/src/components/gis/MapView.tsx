@@ -32,8 +32,7 @@ import {
   Thermometer,
   Box,
 } from 'lucide-react';
-import { Box as MuiBox, Typography, Paper, Chip, IconButton } from '@mui/material';
-import { Button } from '@mui/material';
+import { Box as MuiBox, Typography, Paper, Chip, IconButton, Button } from '@mui/material';
 import type { DevicePoint, Pipeline, StorageLocation, GeoJSONFeature } from '../../api/gis';
 import DeviceTrackPanel from './DeviceTrackPanel';
 import HeatmapLayer, { HeatmapLegend } from './HeatmapLayer';
@@ -540,7 +539,7 @@ const MapView: React.FC<MapViewProps> = ({
   };
 
   const exportGeoJSON = (drawOnly: boolean = false) => {
-    let features: GeoJSONFeature[] = [];
+    const features: GeoJSONFeature[] = [];
 
     if (!drawOnly) {
       if (visibleLayers.devices) {

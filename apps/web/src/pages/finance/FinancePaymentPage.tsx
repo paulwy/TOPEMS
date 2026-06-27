@@ -11,17 +11,8 @@ import {
   Eye,
   RefreshCw,
 } from 'lucide-react';
-import { Grid } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import { useAppStore } from '../../store';
-import type { ColumnDef } from '@/components/mui';
-import { ListPageTemplate, StatCard } from '@/components/mui';
-import { DataExport, PageContainer} from '@/components/common';
-import { financeApi } from '@/api/finance';
-import { apiLogger } from '@/utils/logger';
-import type { PaymentRecord } from '@/types/finance';
-
 import {
+  Grid,
   TextField,
   FormControl,
   InputLabel,
@@ -37,8 +28,17 @@ import {
   Stack,
   IconButton,
   Tooltip,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+import { useAppStore } from '../../store';
+import type { ColumnDef } from '@/components';
+import { ListPageTemplate, MuiStatCard as StatCard } from '@/components';
+import { DataExport, PageContainer } from '@/components/common';
+import { financeApi } from '@/api/finance';
+import { apiLogger } from '@/utils/logger';
+import type { PaymentRecord } from '@/types/finance';
+
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 
 interface Payment {
@@ -81,7 +81,7 @@ const FinancePaymentPage: React.FC = () => {
     const bankAccount = record.bank_name
       ? `${record.bank_name} ${record.bank_account_no}`
       : record.bank_account_no;
-    
+
     let statusText = '';
     switch (record.status) {
       case 'recorded':
@@ -248,7 +248,9 @@ const FinancePaymentPage: React.FC = () => {
 
   const handleReject = () => {
     if (!rejectingPayment) return;
-    setPaymentData(paymentData.map((p) => (p.id === rejectingPayment.id ? { ...p, status: '已拒绝' } : p)));
+    setPaymentData(
+      paymentData.map((p) => (p.id === rejectingPayment.id ? { ...p, status: '已拒绝' } : p))
+    );
     addNotification({
       title: '已拒绝',
       message: '付款申请已拒绝',
@@ -484,10 +486,13 @@ const FinancePaymentPage: React.FC = () => {
   );
 
   return (
-    <PageContainer title="付款管理" subtitle="管理供应商付款申请，审批和确认付款">
+    <PageContainer
+      title='付款管理'
+      subtitle='管理供应商付款申请，审批和确认付款'
+    >
       <ListPageTemplate
-        title=""
-        subtitle=""
+        title=''
+        subtitle=''
         backButton={{
           onClick: () => navigate('/dashboard'),
         }}

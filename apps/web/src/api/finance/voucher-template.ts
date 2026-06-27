@@ -1,10 +1,5 @@
 import { apiClient } from '../client';
-import type {
-  VoucherTemplate,
-  Voucher,
-  PaginatedResult,
-  ApiResponse,
-} from '../../types/finance';
+import type { VoucherTemplate, Voucher, PaginatedResult, ApiResponse } from '../../types/finance';
 
 const createApiClient = () => {
   return apiClient.erp;

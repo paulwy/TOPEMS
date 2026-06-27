@@ -1,9 +1,6 @@
 import apiClient from '../client';
 import type { ApiResponse, PaginatedResponse } from '../client';
-import type {
-  AuditLog,
-  AuditLogPaginationParams,
-} from './types';
+import type { AuditLog, AuditLogPaginationParams } from './types';
 
 export const auditLogApi = {
   list: async (

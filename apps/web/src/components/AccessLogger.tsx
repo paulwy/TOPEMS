@@ -71,7 +71,7 @@ export const AccessLogger: React.FC<AccessLoggerProps> = ({
 
         await authApi.createAccessLog(logEntry);
         logger.info(`Access logged: ${action} on ${resource} by ${user.username}`);
-        
+
         if (onLogSuccess) {
           onLogSuccess();
         }

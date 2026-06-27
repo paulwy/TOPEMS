@@ -11,6 +11,7 @@ import {
   IconButton,
   Menu,
   MenuItem,
+  Select,
   Divider,
   Table,
   TableBody,
@@ -25,8 +26,8 @@ import {
   DialogTitle,
   TextField,
   Chip,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import {
   Search,
   Filter,
@@ -327,7 +328,7 @@ export function DataTable<TData, TValue>({
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: currentPage,
-    pageSize: pageSize,
+    pageSize,
   });
   const [localSearch, setLocalSearch] = useState('');
   const [showAdvancedFilterDialog, setShowAdvancedFilterDialog] = useState(false);
@@ -380,7 +381,7 @@ export function DataTable<TData, TValue>({
       columnVisibility,
     },
     initialState: {
-      pagination: { pageIndex: currentPage, pageSize: pageSize },
+      pagination: { pageIndex: currentPage, pageSize },
     },
   });
 
@@ -427,7 +428,15 @@ export function DataTable<TData, TValue>({
         handleSelectionChange(allKeys);
       }
     }
-  }, [selectedKeys, table, getRowKey, handleSelectionChange, selectedIds, selectionKey, onSelectionChange]);
+  }, [
+    selectedKeys,
+    table,
+    getRowKey,
+    handleSelectionChange,
+    selectedIds,
+    selectionKey,
+    onSelectionChange,
+  ]);
 
   const handleSelectRow = useCallback(
     (row: TData) => {
@@ -547,35 +556,21 @@ export function DataTable<TData, TValue>({
             }}
           >
             {showSearch && searchKey && (
-              <Box sx={{ position: 'relative', width: '100%', maxWidth: 320 }}>
-                <Search
-                  style={{
-                    position: 'absolute',
-                    left: 12,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    width: 16,
-                    height: 16,
-                    color: 'rgba(0,0,0,0.25)',
-                  }}
-                />
-                <input
-                  type='text'
-                  placeholder={searchPlaceholder}
-                  value={localSearch}
-                  onChange={(event) => handleSearch(event.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '10px 12px 10px 40px',
-                    border: '1px solid',
-                    borderColor: '#e0e0e0',
-                    borderRadius: 4,
-                    fontSize: 14,
-                    backgroundColor: 'white',
-                    outline: 'none',
-                  }}
-                />
-              </Box>
+              <TextField
+                size='small'
+                placeholder={searchPlaceholder}
+                value={localSearch}
+                onChange={(event) => handleSearch(event.target.value)}
+                aria-label={searchPlaceholder || '搜索'}
+                sx={{ width: '100%', maxWidth: 320 }}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <Search sx={{ width: 16, height: 16, mr: 1, color: 'text.secondary' }} />
+                    ),
+                  },
+                }}
+              />
             )}
 
             {enableAdvancedFilter && advancedFilters.length > 0 && (
@@ -758,6 +753,7 @@ export function DataTable<TData, TValue>({
       >
         <Box sx={{ overflowX: responsive ? 'auto' : 'hidden' }}>
           <Table
+            aria-label='数据表格'
             sx={{
               minWidth: 640,
               ...(enableStickyHeader && {
@@ -779,6 +775,7 @@ export function DataTable<TData, TValue>({
                   {/* 选择列 */}
                   {showSelection && (
                     <TableCell
+                      scope="col"
                       padding='checkbox'
                       sx={{
                         position: 'sticky',
@@ -798,6 +795,7 @@ export function DataTable<TData, TValue>({
                   {/* 行号列 */}
                   {showRowNumber && (
                     <TableCell
+                      scope="col"
                       sx={{
                         whiteSpace: 'nowrap',
                         fontWeight: 600,
@@ -817,6 +815,7 @@ export function DataTable<TData, TValue>({
                   {/* 展开列 */}
                   {enableRowExpansion && (
                     <TableCell
+                      scope="col"
                       sx={{
                         whiteSpace: 'nowrap',
                         fontWeight: 600,
@@ -837,6 +836,7 @@ export function DataTable<TData, TValue>({
                   {headerGroup.headers.map((header) => (
                     <TableCell
                       key={header.id}
+                      scope="col"
                       sx={{
                         whiteSpace: 'nowrap',
                         fontWeight: 600,
@@ -898,7 +898,15 @@ export function DataTable<TData, TValue>({
                     <>
                       <TableRow
                         key={row.id}
-                        onClick={() => onRowClick?.(row.original)}
+                        hover={!!onRowClick}
+                        tabIndex={onRowClick ? 0 : undefined}
+                        onClick={onRowClick ? () => onRowClick(row.original) : undefined}
+                        onKeyDown={onRowClick ? (e: React.KeyboardEvent) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            onRowClick(row.original);
+                          }
+                        } : undefined}
                         sx={{
                           cursor: onRowClick ? 'pointer' : 'default',
                           '&:hover': {
@@ -962,6 +970,7 @@ export function DataTable<TData, TValue>({
                           >
                             <IconButton
                               size='small'
+                              aria-label={isExpanded ? '收起行' : '展开行'}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleRowExpand(row.original);
@@ -1072,6 +1081,7 @@ export function DataTable<TData, TValue>({
             <Typography
               variant='body2'
               color='text.secondary'
+              aria-live="polite"
             >
               共 {totalRecords} 条记录
             </Typography>
@@ -1084,23 +1094,18 @@ export function DataTable<TData, TValue>({
                 >
                   每页
                 </Typography>
-                <select
+                <Select
+                  size='small'
                   value={pageSize}
                   onChange={(e) => onPageSizeChange(Number(e.target.value))}
-                  style={{
-                    border: '1px solid',
-                    borderColor: '#e0e0e0',
-                    borderRadius: 4,
-                    padding: '4px 8px',
-                    fontSize: 14,
-                    backgroundColor: 'white',
-                  }}
+                  sx={{ minWidth: 70, height: 32 }}
+                  aria-label="每页显示条数"
                 >
-                  <option value={10}>10</option>
-                  <option value={20}>20</option>
-                  <option value={50}>50</option>
-                  <option value={100}>100</option>
-                </select>
+                  <MenuItem value={10}>10</MenuItem>
+                  <MenuItem value={20}>20</MenuItem>
+                  <MenuItem value={50}>50</MenuItem>
+                  <MenuItem value={100}>100</MenuItem>
+                </Select>
               </Box>
             )}
           </Box>
@@ -1118,6 +1123,7 @@ export function DataTable<TData, TValue>({
               上一页
             </Button>
             <IconButton
+              aria-label="上一页"
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
               sx={{ display: { xs: 'flex', sm: 'none' } }}
@@ -1144,6 +1150,7 @@ export function DataTable<TData, TValue>({
               下一页
             </Button>
             <IconButton
+              aria-label="下一页"
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
               sx={{ display: { xs: 'flex', sm: 'none' } }}

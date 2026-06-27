@@ -23,10 +23,10 @@ import {
   Alert,
   AlertTitle,
   Stack,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
-import { ListPageTemplate } from '@/components/mui';
-import type { ColumnDef, RowAction, FilterConfig } from '@/components/mui';
+import { ListPageTemplate } from '@/components';
+import type { ColumnDef, RowAction, FilterConfig } from '@/components';
 import { PageContainer } from '@/components/common';
 
 /** 账户类型配置 */
@@ -321,7 +321,10 @@ export default function BankAccountManagementPage() {
   };
 
   return (
-    <PageContainer title='银行账户管理' subtitle='管理企业银行账户信息'>
+    <PageContainer
+      title='银行账户管理'
+      subtitle='管理企业银行账户信息'
+    >
       <Box
         sx={{
           maxWidth: 1400,

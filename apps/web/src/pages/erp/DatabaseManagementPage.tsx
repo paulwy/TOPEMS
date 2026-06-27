@@ -20,7 +20,7 @@ import {
   Settings,
   ArrowUpDown,
 } from 'lucide-react';
-import { PageContainer } from '@/components/common';
+import { PageContainer, StatusBadge, ActionButton, ConfirmDialog } from '@/components/common';
 import {
   Box,
   Typography,
@@ -52,8 +52,8 @@ import {
   LinearProgress,
   Card,
   CardContent,
+  InputAdornment,
 } from '@mui/material';
-import { StatusBadge, ActionButton, ConfirmDialog } from '@/components/common';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { useNavigate } from 'react-router-dom';
@@ -96,39 +96,322 @@ export interface BackupRecord {
 }
 
 const mockTables: DatabaseTable[] = [
-  { id: '1', table_name: 'sys_user', table_comment: '用户表', record_count: 1256, data_size: '2.4 MB', index_size: '896 KB', total_size: '3.3 MB', engine: 'InnoDB', collation: 'utf8mb4_general_ci', create_time: '2024-01-01 00:00:00', update_time: '2024-06-15 10:30:00', rows: 1256 },
-  { id: '2', table_name: 'sys_role', table_comment: '角色表', record_count: 24, data_size: '16 KB', index_size: '32 KB', total_size: '48 KB', engine: 'InnoDB', collation: 'utf8mb4_general_ci', create_time: '2024-01-01 00:00:00', update_time: '2024-06-10 14:20:00', rows: 24 },
-  { id: '3', table_name: 'erp_voucher', table_comment: '会计凭证表', record_count: 8932, data_size: '15.6 MB', index_size: '4.2 MB', total_size: '19.8 MB', engine: 'InnoDB', collation: 'utf8mb4_general_ci', create_time: '2024-01-01 00:00:00', update_time: '2024-06-15 16:45:00', rows: 8932 },
-  { id: '4', table_name: 'erp_voucher_item', table_comment: '凭证明细表', record_count: 45672, data_size: '32.8 MB', index_size: '8.5 MB', total_size: '41.3 MB', engine: 'InnoDB', collation: 'utf8mb4_general_ci', create_time: '2024-01-01 00:00:00', update_time: '2024-06-15 16:45:00', rows: 45672 },
-  { id: '5', table_name: 'erp_accounting_subject', table_comment: '会计科目表', record_count: 156, data_size: '128 KB', index_size: '64 KB', total_size: '192 KB', engine: 'InnoDB', collation: 'utf8mb4_general_ci', create_time: '2024-01-01 00:00:00', update_time: '2024-05-20 09:15:00', rows: 156 },
-  { id: '6', table_name: 'erp_fixed_asset', table_comment: '固定资产表', record_count: 328, data_size: '2.1 MB', index_size: '512 KB', total_size: '2.6 MB', engine: 'InnoDB', collation: 'utf8mb4_general_ci', create_time: '2024-01-01 00:00:00', update_time: '2024-06-12 11:30:00', rows: 328 },
-  { id: '7', table_name: 'erp_bank_account', table_comment: '银行账户表', record_count: 42, data_size: '64 KB', index_size: '32 KB', total_size: '96 KB', engine: 'InnoDB', collation: 'utf8mb4_general_ci', create_time: '2024-01-01 00:00:00', update_time: '2024-06-08 15:00:00', rows: 42 },
-  { id: '8', table_name: 'erp_bank_transaction', table_comment: '银行交易表', record_count: 5621, data_size: '8.3 MB', index_size: '2.1 MB', total_size: '10.4 MB', engine: 'InnoDB', collation: 'utf8mb4_general_ci', create_time: '2024-01-01 00:00:00', update_time: '2024-06-15 08:00:00', rows: 5621 },
-  { id: '9', table_name: 'sys_dict_type', table_comment: '字典类型表', record_count: 36, data_size: '32 KB', index_size: '16 KB', total_size: '48 KB', engine: 'InnoDB', collation: 'utf8mb4_general_ci', create_time: '2024-01-01 00:00:00', update_time: '2024-06-05 10:00:00', rows: 36 },
-  { id: '10', table_name: 'sys_dict_item', table_comment: '字典项表', record_count: 258, data_size: '256 KB', index_size: '128 KB', total_size: '384 KB', engine: 'InnoDB', collation: 'utf8mb4_general_ci', create_time: '2024-01-01 00:00:00', update_time: '2024-06-05 10:00:00', rows: 258 },
+  {
+    id: '1',
+    table_name: 'sys_user',
+    table_comment: '用户表',
+    record_count: 1256,
+    data_size: '2.4 MB',
+    index_size: '896 KB',
+    total_size: '3.3 MB',
+    engine: 'InnoDB',
+    collation: 'utf8mb4_general_ci',
+    create_time: '2024-01-01 00:00:00',
+    update_time: '2024-06-15 10:30:00',
+    rows: 1256,
+  },
+  {
+    id: '2',
+    table_name: 'sys_role',
+    table_comment: '角色表',
+    record_count: 24,
+    data_size: '16 KB',
+    index_size: '32 KB',
+    total_size: '48 KB',
+    engine: 'InnoDB',
+    collation: 'utf8mb4_general_ci',
+    create_time: '2024-01-01 00:00:00',
+    update_time: '2024-06-10 14:20:00',
+    rows: 24,
+  },
+  {
+    id: '3',
+    table_name: 'erp_voucher',
+    table_comment: '会计凭证表',
+    record_count: 8932,
+    data_size: '15.6 MB',
+    index_size: '4.2 MB',
+    total_size: '19.8 MB',
+    engine: 'InnoDB',
+    collation: 'utf8mb4_general_ci',
+    create_time: '2024-01-01 00:00:00',
+    update_time: '2024-06-15 16:45:00',
+    rows: 8932,
+  },
+  {
+    id: '4',
+    table_name: 'erp_voucher_item',
+    table_comment: '凭证明细表',
+    record_count: 45672,
+    data_size: '32.8 MB',
+    index_size: '8.5 MB',
+    total_size: '41.3 MB',
+    engine: 'InnoDB',
+    collation: 'utf8mb4_general_ci',
+    create_time: '2024-01-01 00:00:00',
+    update_time: '2024-06-15 16:45:00',
+    rows: 45672,
+  },
+  {
+    id: '5',
+    table_name: 'erp_accounting_subject',
+    table_comment: '会计科目表',
+    record_count: 156,
+    data_size: '128 KB',
+    index_size: '64 KB',
+    total_size: '192 KB',
+    engine: 'InnoDB',
+    collation: 'utf8mb4_general_ci',
+    create_time: '2024-01-01 00:00:00',
+    update_time: '2024-05-20 09:15:00',
+    rows: 156,
+  },
+  {
+    id: '6',
+    table_name: 'erp_fixed_asset',
+    table_comment: '固定资产表',
+    record_count: 328,
+    data_size: '2.1 MB',
+    index_size: '512 KB',
+    total_size: '2.6 MB',
+    engine: 'InnoDB',
+    collation: 'utf8mb4_general_ci',
+    create_time: '2024-01-01 00:00:00',
+    update_time: '2024-06-12 11:30:00',
+    rows: 328,
+  },
+  {
+    id: '7',
+    table_name: 'erp_bank_account',
+    table_comment: '银行账户表',
+    record_count: 42,
+    data_size: '64 KB',
+    index_size: '32 KB',
+    total_size: '96 KB',
+    engine: 'InnoDB',
+    collation: 'utf8mb4_general_ci',
+    create_time: '2024-01-01 00:00:00',
+    update_time: '2024-06-08 15:00:00',
+    rows: 42,
+  },
+  {
+    id: '8',
+    table_name: 'erp_bank_transaction',
+    table_comment: '银行交易表',
+    record_count: 5621,
+    data_size: '8.3 MB',
+    index_size: '2.1 MB',
+    total_size: '10.4 MB',
+    engine: 'InnoDB',
+    collation: 'utf8mb4_general_ci',
+    create_time: '2024-01-01 00:00:00',
+    update_time: '2024-06-15 08:00:00',
+    rows: 5621,
+  },
+  {
+    id: '9',
+    table_name: 'sys_dict_type',
+    table_comment: '字典类型表',
+    record_count: 36,
+    data_size: '32 KB',
+    index_size: '16 KB',
+    total_size: '48 KB',
+    engine: 'InnoDB',
+    collation: 'utf8mb4_general_ci',
+    create_time: '2024-01-01 00:00:00',
+    update_time: '2024-06-05 10:00:00',
+    rows: 36,
+  },
+  {
+    id: '10',
+    table_name: 'sys_dict_item',
+    table_comment: '字典项表',
+    record_count: 258,
+    data_size: '256 KB',
+    index_size: '128 KB',
+    total_size: '384 KB',
+    engine: 'InnoDB',
+    collation: 'utf8mb4_general_ci',
+    create_time: '2024-01-01 00:00:00',
+    update_time: '2024-06-05 10:00:00',
+    rows: 258,
+  },
 ];
 
 const mockColumns: TableColumn[] = [
-  { column_name: 'id', data_type: 'varchar', character_maximum_length: 36, is_nullable: 'NO', column_default: null, column_comment: '主键ID', column_key: 'PRI', extra: '' },
-  { column_name: 'voucher_number', data_type: 'varchar', character_maximum_length: 50, is_nullable: 'NO', column_default: null, column_comment: '凭证编号', column_key: 'UNI', extra: '' },
-  { column_name: 'voucher_date', data_type: 'date', character_maximum_length: null, is_nullable: 'NO', column_default: null, column_comment: '凭证日期', column_key: 'MUL', extra: '' },
-  { column_name: 'period', data_type: 'varchar', character_maximum_length: 10, is_nullable: 'NO', column_default: null, column_comment: '会计期间', column_key: 'MUL', extra: '' },
-  { column_name: 'summary', data_type: 'varchar', character_maximum_length: 500, is_nullable: 'YES', column_default: null, column_comment: '摘要', column_key: '', extra: '' },
-  { column_name: 'total_debit', data_type: 'decimal', character_maximum_length: null, is_nullable: 'NO', column_default: '0.00', column_comment: '借方合计', column_key: '', extra: '' },
-  { column_name: 'total_credit', data_type: 'decimal', character_maximum_length: null, is_nullable: 'NO', column_default: '0.00', column_comment: '贷方合计', column_key: '', extra: '' },
-  { column_name: 'status', data_type: 'varchar', character_maximum_length: 20, is_nullable: 'NO', column_default: 'draft', column_comment: '状态', column_key: 'MUL', extra: '' },
-  { column_name: 'maker_id', data_type: 'varchar', character_maximum_length: 36, is_nullable: 'YES', column_default: null, column_comment: '制单人ID', column_key: '', extra: '' },
-  { column_name: 'maker_name', data_type: 'varchar', character_maximum_length: 50, is_nullable: 'YES', column_default: null, column_comment: '制单人姓名', column_key: '', extra: '' },
-  { column_name: 'created_at', data_type: 'datetime', character_maximum_length: null, is_nullable: 'NO', column_default: 'CURRENT_TIMESTAMP', column_comment: '创建时间', column_key: '', extra: '' },
-  { column_name: 'updated_at', data_type: 'datetime', character_maximum_length: null, is_nullable: 'NO', column_default: 'CURRENT_TIMESTAMP', column_comment: '更新时间', column_key: '', extra: 'on update CURRENT_TIMESTAMP' },
+  {
+    column_name: 'id',
+    data_type: 'varchar',
+    character_maximum_length: 36,
+    is_nullable: 'NO',
+    column_default: null,
+    column_comment: '主键ID',
+    column_key: 'PRI',
+    extra: '',
+  },
+  {
+    column_name: 'voucher_number',
+    data_type: 'varchar',
+    character_maximum_length: 50,
+    is_nullable: 'NO',
+    column_default: null,
+    column_comment: '凭证编号',
+    column_key: 'UNI',
+    extra: '',
+  },
+  {
+    column_name: 'voucher_date',
+    data_type: 'date',
+    character_maximum_length: null,
+    is_nullable: 'NO',
+    column_default: null,
+    column_comment: '凭证日期',
+    column_key: 'MUL',
+    extra: '',
+  },
+  {
+    column_name: 'period',
+    data_type: 'varchar',
+    character_maximum_length: 10,
+    is_nullable: 'NO',
+    column_default: null,
+    column_comment: '会计期间',
+    column_key: 'MUL',
+    extra: '',
+  },
+  {
+    column_name: 'summary',
+    data_type: 'varchar',
+    character_maximum_length: 500,
+    is_nullable: 'YES',
+    column_default: null,
+    column_comment: '摘要',
+    column_key: '',
+    extra: '',
+  },
+  {
+    column_name: 'total_debit',
+    data_type: 'decimal',
+    character_maximum_length: null,
+    is_nullable: 'NO',
+    column_default: '0.00',
+    column_comment: '借方合计',
+    column_key: '',
+    extra: '',
+  },
+  {
+    column_name: 'total_credit',
+    data_type: 'decimal',
+    character_maximum_length: null,
+    is_nullable: 'NO',
+    column_default: '0.00',
+    column_comment: '贷方合计',
+    column_key: '',
+    extra: '',
+  },
+  {
+    column_name: 'status',
+    data_type: 'varchar',
+    character_maximum_length: 20,
+    is_nullable: 'NO',
+    column_default: 'draft',
+    column_comment: '状态',
+    column_key: 'MUL',
+    extra: '',
+  },
+  {
+    column_name: 'maker_id',
+    data_type: 'varchar',
+    character_maximum_length: 36,
+    is_nullable: 'YES',
+    column_default: null,
+    column_comment: '制单人ID',
+    column_key: '',
+    extra: '',
+  },
+  {
+    column_name: 'maker_name',
+    data_type: 'varchar',
+    character_maximum_length: 50,
+    is_nullable: 'YES',
+    column_default: null,
+    column_comment: '制单人姓名',
+    column_key: '',
+    extra: '',
+  },
+  {
+    column_name: 'created_at',
+    data_type: 'datetime',
+    character_maximum_length: null,
+    is_nullable: 'NO',
+    column_default: 'CURRENT_TIMESTAMP',
+    column_comment: '创建时间',
+    column_key: '',
+    extra: '',
+  },
+  {
+    column_name: 'updated_at',
+    data_type: 'datetime',
+    character_maximum_length: null,
+    is_nullable: 'NO',
+    column_default: 'CURRENT_TIMESTAMP',
+    column_comment: '更新时间',
+    column_key: '',
+    extra: 'on update CURRENT_TIMESTAMP',
+  },
 ];
 
 const mockBackups: BackupRecord[] = [
-  { id: '1', backup_name: 'backup_full_20240615_0200', backup_type: 'full', file_size: '156.8 MB', status: 'success', created_at: '2024-06-15 02:00:00', created_by: 'system', remark: '每日定时全量备份' },
-  { id: '2', backup_name: 'backup_incr_20240614_2000', backup_type: 'incremental', file_size: '12.4 MB', status: 'success', created_at: '2024-06-14 20:00:00', created_by: 'system', remark: '增量备份' },
-  { id: '3', backup_name: 'backup_incr_20240613_2000', backup_type: 'incremental', file_size: '8.7 MB', status: 'success', created_at: '2024-06-13 20:00:00', created_by: 'system', remark: '增量备份' },
-  { id: '4', backup_name: 'backup_full_20240601_0200', backup_type: 'full', file_size: '142.3 MB', status: 'success', created_at: '2024-06-01 02:00:00', created_by: 'system', remark: '月初全量备份' },
-  { id: '5', backup_name: 'backup_manual_20240520', backup_type: 'full', file_size: '128.5 MB', status: 'failed', created_at: '2024-05-20 14:30:00', created_by: '管理员', remark: '手动备份失败' },
+  {
+    id: '1',
+    backup_name: 'backup_full_20240615_0200',
+    backup_type: 'full',
+    file_size: '156.8 MB',
+    status: 'success',
+    created_at: '2024-06-15 02:00:00',
+    created_by: 'system',
+    remark: '每日定时全量备份',
+  },
+  {
+    id: '2',
+    backup_name: 'backup_incr_20240614_2000',
+    backup_type: 'incremental',
+    file_size: '12.4 MB',
+    status: 'success',
+    created_at: '2024-06-14 20:00:00',
+    created_by: 'system',
+    remark: '增量备份',
+  },
+  {
+    id: '3',
+    backup_name: 'backup_incr_20240613_2000',
+    backup_type: 'incremental',
+    file_size: '8.7 MB',
+    status: 'success',
+    created_at: '2024-06-13 20:00:00',
+    created_by: 'system',
+    remark: '增量备份',
+  },
+  {
+    id: '4',
+    backup_name: 'backup_full_20240601_0200',
+    backup_type: 'full',
+    file_size: '142.3 MB',
+    status: 'success',
+    created_at: '2024-06-01 02:00:00',
+    created_by: 'system',
+    remark: '月初全量备份',
+  },
+  {
+    id: '5',
+    backup_name: 'backup_manual_20240520',
+    backup_type: 'full',
+    file_size: '128.5 MB',
+    status: 'failed',
+    created_at: '2024-05-20 14:30:00',
+    created_by: '管理员',
+    remark: '手动备份失败',
+  },
 ];
 
 const DatabaseManagementPage: React.FC = () => {
@@ -168,9 +451,7 @@ const DatabaseManagementPage: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      await Promise.all([
-        new Promise((resolve) => setTimeout(resolve, 400)),
-      ]);
+      await Promise.all([new Promise((resolve) => setTimeout(resolve, 400))]);
       setTables(mockTables);
       setBackups(mockBackups);
       setTotalCount(mockTables.length);
@@ -283,7 +564,12 @@ const DatabaseManagementPage: React.FC = () => {
     };
     const config = badges[status] || { color: 'default', label: status, icon: <Info size={14} /> };
     return (
-      <StatusBadge status={status} label={config.label} color={config.color} icon={config.icon} />
+      <StatusBadge
+        status={status}
+        label={config.label}
+        color={config.color}
+        icon={config.icon}
+      />
     );
   };
 
@@ -296,7 +582,10 @@ const DatabaseManagementPage: React.FC = () => {
     return {
       tableCount: tables.length,
       totalRecords,
-      totalSize: totalSizeMB > 1024 ? `${(totalSizeMB / 1024).toFixed(2)} GB` : `${totalSizeMB.toFixed(1)} MB`,
+      totalSize:
+        totalSizeMB > 1024
+          ? `${(totalSizeMB / 1024).toFixed(2)} GB`
+          : `${totalSizeMB.toFixed(1)} MB`,
       backupCount: backups.filter((b) => b.status === 'success').length,
     };
   }, [tables, backups]);
@@ -326,326 +615,234 @@ const DatabaseManagementPage: React.FC = () => {
         ],
       }}
     >
-        {backingUp && (
-          <Alert severity='info' sx={{ mb: 2 }}>
-            <Box sx={{ width: '100%' }}>
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                <Typography variant='body2'>正在备份数据库...</Typography>
-                <Typography variant='body2'>{backupProgress}%</Typography>
-              </Box>
-              <LinearProgress variant='determinate' value={backupProgress} />
-            </Box>
-          </Alert>
-        )}
-
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: 2, md: 4 },
-            gap: 2,
-            mb: 3,
-          }}
+      {backingUp && (
+        <Alert
+          severity='info'
+          sx={{ mb: 2 }}
         >
-          {[
-            {
-              label: '数据表数量',
-              value: stats.tableCount,
-              icon: <Table size={20} />,
-              color: 'primary',
-              bg: 'primary.100',
-            },
-            {
-              label: '总记录数',
-              value: stats.totalRecords.toLocaleString(),
-              icon: <FileText size={20} />,
-              color: 'success',
-              bg: 'success.100',
-            },
-            {
-              label: '数据大小',
-              value: stats.totalSize,
-              icon: <HardDrive size={20} />,
-              color: 'warning',
-              bg: 'warning.100',
-            },
-            {
-              label: '可用备份',
-              value: stats.backupCount,
-              icon: <Download size={20} />,
-              color: 'info',
-              bg: 'info.100',
-            },
-          ].map((stat) => (
+          <Box sx={{ width: '100%' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+              <Typography variant='body2'>正在备份数据库...</Typography>
+              <Typography variant='body2'>{backupProgress}%</Typography>
+            </Box>
+            <LinearProgress
+              variant='determinate'
+              value={backupProgress}
+            />
+          </Box>
+        </Alert>
+      )}
+
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: 2, md: 4 },
+          gap: 2,
+          mb: 3,
+        }}
+      >
+        {[
+          {
+            label: '数据表数量',
+            value: stats.tableCount,
+            icon: <Table size={20} />,
+            color: 'primary',
+            bg: 'primary.100',
+          },
+          {
+            label: '总记录数',
+            value: stats.totalRecords.toLocaleString(),
+            icon: <FileText size={20} />,
+            color: 'success',
+            bg: 'success.100',
+          },
+          {
+            label: '数据大小',
+            value: stats.totalSize,
+            icon: <HardDrive size={20} />,
+            color: 'warning',
+            bg: 'warning.100',
+          },
+          {
+            label: '可用备份',
+            value: stats.backupCount,
+            icon: <Download size={20} />,
+            color: 'info',
+            bg: 'info.100',
+          },
+        ].map((stat) => (
+          <Box
+            key={stat.label}
+            sx={{
+              p: 2.5,
+              bgcolor: 'background.paper',
+              borderRadius: 2,
+              boxShadow: 1,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+            }}
+          >
             <Box
-              key={stat.label}
               sx={{
-                p: 2.5,
-                bgcolor: 'background.paper',
-                borderRadius: 2,
-                boxShadow: 1,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 2,
+                p: 1.5,
+                borderRadius: 1.5,
+                bgcolor: stat.bg,
+                color: `${stat.color}.main`,
               }}
             >
-              <Box
-                sx={{
-                  p: 1.5,
-                  borderRadius: 1.5,
-                  bgcolor: stat.bg,
-                  color: `${stat.color}.main`,
-                }}
-              >
-                {stat.icon}
-              </Box>
-              <Box>
-                <Typography variant='body2' sx={{ color: 'text.secondary' }}>
-                  {stat.label}
-                </Typography>
-                <Typography variant='h6' sx={{ fontWeight: 'bold' }}>
-                  {stat.value}
-                </Typography>
-              </Box>
+              {stat.icon}
             </Box>
-          ))}
-        </Box>
+            <Box>
+              <Typography
+                variant='body2'
+                sx={{ color: 'text.secondary' }}
+              >
+                {stat.label}
+              </Typography>
+              <Typography
+                variant='h6'
+                sx={{ fontWeight: 'bold' }}
+              >
+                {stat.value}
+              </Typography>
+            </Box>
+          </Box>
+        ))}
+      </Box>
 
-        <Box
-          sx={{
-            bgcolor: 'background.paper',
-            borderRadius: 2,
-            boxShadow: 1,
-            overflow: 'hidden',
-          }}
+      <Box
+        sx={{
+          bgcolor: 'background.paper',
+          borderRadius: 2,
+          boxShadow: 1,
+          overflow: 'hidden',
+        }}
+      >
+        <Tabs
+          value={activeTab}
+          onChange={(_, newValue) => setActiveTab(newValue)}
+          sx={{ px: 2, borderBottom: 1, borderColor: 'divider' }}
         >
-          <Tabs
-            value={activeTab}
-            onChange={(_, newValue) => setActiveTab(newValue)}
-            sx={{ px: 2, borderBottom: 1, borderColor: 'divider' }}
-          >
-            <Tab value='tables' label='数据表' icon={<Table size={16} />} iconPosition='start' />
-            <Tab value='backup' label='备份管理' icon={<Download size={16} />} iconPosition='start' />
-          </Tabs>
+          <Tab
+            value='tables'
+            label='数据表'
+            icon={<Table size={16} />}
+            iconPosition='start'
+          />
+          <Tab
+            value='backup'
+            label='备份管理'
+            icon={<Download size={16} />}
+            iconPosition='start'
+          />
+        </Tabs>
 
-          {activeTab === 'tables' && (
-            <>
-              <Box
-                sx={{
-                  p: 2,
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: 2,
-                  alignItems: 'center',
-                  borderBottom: 1,
-                  borderColor: 'divider',
-                }}
-              >
-                <TextField
-                  size='small'
-                  placeholder='搜索表名或备注...'
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  InputProps={{
+        {activeTab === 'tables' && (
+          <>
+            <Box
+              sx={{
+                p: 2,
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 2,
+                alignItems: 'center',
+                borderBottom: 1,
+                borderColor: 'divider',
+              }}
+            >
+              <TextField
+                size='small'
+                placeholder='搜索表名或备注...'
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                slotProps={{
+                  input: {
                     startAdornment: (
-                      <Search size={16} style={{ marginRight: 8, opacity: 0.5 }} />
+                      <InputAdornment position='start'>
+                        <Search
+                          size={16}
+                          style={{ opacity: 0.5 }}
+                        />
+                      </InputAdornment>
                     ),
-                  }}
-                  sx={{ minWidth: 280 }}
-                />
-                <Box sx={{ flexGrow: 1 }} />
-                <FormControl size='small' sx={{ minWidth: 140 }}>
-                  <InputLabel>排序</InputLabel>
-                  <Select value='' label='排序'>
-                    <MenuItem value=''>默认排序</MenuItem>
-                    <MenuItem value='name'>按表名</MenuItem>
-                    <MenuItem value='size'>按大小</MenuItem>
-                    <MenuItem value='records'>按记录数</MenuItem>
-                    <MenuItem value='time'>按更新时间</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
-
-              {loading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-                  <CircularProgress />
-                </Box>
-              ) : (
-                <>
-                  <TableContainer>
-                    <MuiTable>
-                      <TableHead>
-                        <TableRow sx={{ bgcolor: 'grey.50' }}>
-                          <TableCell sx={{ fontWeight: 'bold' }}>表名</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold' }}>说明</TableCell>
-                          <TableCell align='right' sx={{ fontWeight: 'bold' }}>
-                            记录数
-                          </TableCell>
-                          <TableCell align='right' sx={{ fontWeight: 'bold' }}>
-                            数据大小
-                          </TableCell>
-                          <TableCell align='right' sx={{ fontWeight: 'bold' }}>
-                            索引大小
-                          </TableCell>
-                          <TableCell align='right' sx={{ fontWeight: 'bold' }}>
-                            总大小
-                          </TableCell>
-                          <TableCell sx={{ fontWeight: 'bold' }}>引擎</TableCell>
-                          <TableCell sx={{ fontWeight: 'bold' }}>最后更新</TableCell>
-                          <TableCell align='center' sx={{ fontWeight: 'bold', width: 120 }}>
-                            操作
-                          </TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {filteredTables.length === 0 ? (
-                          <TableRow>
-                            <TableCell colSpan={9} sx={{ py: 8, textAlign: 'center' }}>
-                              <Database
-                                sx={{
-                                  width: 48,
-                                  height: 48,
-                                  color: 'text.disabled',
-                                  mx: 'auto',
-                                  mb: 2,
-                                }}
-                              />
-                              <Typography variant='body1' sx={{ color: 'text.secondary' }}>
-                                暂无数据表
-                              </Typography>
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          filteredTables.map((table) => (
-                            <TableRow key={table.id} hover>
-                              <TableCell>
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                  <Table size={16} style={{ opacity: 0.5 }} />
-                                  <Typography
-                                    sx={{
-                                      fontWeight: 500,
-                                      color: 'primary.main',
-                                      fontFamily: 'monospace',
-                                      fontSize: '0.875rem',
-                                    }}
-                                  >
-                                    {table.table_name}
-                                  </Typography>
-                                </Box>
-                              </TableCell>
-                              <TableCell>{table.table_comment}</TableCell>
-                              <TableCell align='right'>
-                                {table.record_count.toLocaleString()}
-                              </TableCell>
-                              <TableCell align='right'>{table.data_size}</TableCell>
-                              <TableCell align='right'>{table.index_size}</TableCell>
-                              <TableCell align='right'>
-                                <Chip
-                                  label={table.total_size}
-                                  size='small'
-                                  color='primary'
-                                  variant='outlined'
-                                />
-                              </TableCell>
-                              <TableCell>
-                                <Chip label={table.engine} size='small' variant='outlined' />
-                              </TableCell>
-                              <TableCell>
-                                <Typography variant='body2' sx={{ color: 'text.secondary' }}>
-                                  {table.update_time}
-                                </Typography>
-                              </TableCell>
-                              <TableCell align='center'>
-                                <Tooltip title='查看结构'>
-                                  <IconButton
-                                    size='small'
-                                    onClick={() => handleViewStructure(table)}
-                                  >
-                                    <Eye size={16} />
-                                  </IconButton>
-                                </Tooltip>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                      </TableBody>
-                    </MuiTable>
-                  </TableContainer>
-                  <TablePagination
-                    component='div'
-                    count={totalCount}
-                    page={page}
-                    onPageChange={(_, newPage) => setPage(newPage)}
-                    rowsPerPage={rowsPerPage}
-                    onRowsPerPageChange={(e) => {
-                      setRowsPerPage(parseInt(e.target.value, 10));
-                      setPage(0);
-                    }}
-                    rowsPerPageOptions={[10, 25, 50, 100]}
-                    labelRowsPerPage='每页行数'
-                  />
-                </>
-              )}
-            </>
-          )}
-
-          {activeTab === 'backup' && (
-            <>
-              <Box
-                sx={{
-                  p: 2,
-                  display: 'flex',
-                  flexWrap: 'wrap',
-                  gap: 2,
-                  alignItems: 'center',
-                  borderBottom: 1,
-                  borderColor: 'divider',
+                  },
                 }}
+                sx={{ minWidth: 280 }}
+              />
+              <Box sx={{ flexGrow: 1 }} />
+              <FormControl
+                size='small'
+                sx={{ minWidth: 140 }}
               >
-                <Box sx={{ flexGrow: 1 }} />
-                <Button
-                  variant='outlined'
-                  size='small'
-                  startIcon={<Upload size={16} />}
-                  onClick={() => setShowRestoreModal(true)}
+                <InputLabel>排序</InputLabel>
+                <Select
+                  value=''
+                  label='排序'
                 >
-                  上传备份
-                </Button>
-                <Button
-                  variant='contained'
-                  size='small'
-                  startIcon={<Play size={16} />}
-                  onClick={handleBackup}
-                >
-                  立即备份
-                </Button>
-              </Box>
+                  <MenuItem value=''>默认排序</MenuItem>
+                  <MenuItem value='name'>按表名</MenuItem>
+                  <MenuItem value='size'>按大小</MenuItem>
+                  <MenuItem value='records'>按记录数</MenuItem>
+                  <MenuItem value='time'>按更新时间</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
 
-              {loading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-                  <CircularProgress />
-                </Box>
-              ) : (
+            {loading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+                <CircularProgress />
+              </Box>
+            ) : (
+              <>
                 <TableContainer>
                   <MuiTable>
                     <TableHead>
                       <TableRow sx={{ bgcolor: 'grey.50' }}>
-                        <TableCell sx={{ fontWeight: 'bold' }}>备份名称</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>类型</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>文件大小</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>状态</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>创建人</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>创建时间</TableCell>
-                        <TableCell sx={{ fontWeight: 'bold' }}>备注</TableCell>
-                        <TableCell align='center' sx={{ fontWeight: 'bold', width: 160 }}>
+                        <TableCell sx={{ fontWeight: 'bold' }}>表名</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>说明</TableCell>
+                        <TableCell
+                          align='right'
+                          sx={{ fontWeight: 'bold' }}
+                        >
+                          记录数
+                        </TableCell>
+                        <TableCell
+                          align='right'
+                          sx={{ fontWeight: 'bold' }}
+                        >
+                          数据大小
+                        </TableCell>
+                        <TableCell
+                          align='right'
+                          sx={{ fontWeight: 'bold' }}
+                        >
+                          索引大小
+                        </TableCell>
+                        <TableCell
+                          align='right'
+                          sx={{ fontWeight: 'bold' }}
+                        >
+                          总大小
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>引擎</TableCell>
+                        <TableCell sx={{ fontWeight: 'bold' }}>最后更新</TableCell>
+                        <TableCell
+                          align='center'
+                          sx={{ fontWeight: 'bold', width: 120 }}
+                        >
                           操作
                         </TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {backups.length === 0 ? (
+                      {filteredTables.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={8} sx={{ py: 8, textAlign: 'center' }}>
-                            <Download
+                          <TableCell
+                            colSpan={9}
+                            sx={{ py: 8, textAlign: 'center' }}
+                          >
+                            <Database
                               sx={{
                                 width: 48,
                                 height: 48,
@@ -654,79 +851,76 @@ const DatabaseManagementPage: React.FC = () => {
                                 mb: 2,
                               }}
                             />
-                            <Typography variant='body1' sx={{ color: 'text.secondary' }}>
-                              暂无备份记录
+                            <Typography
+                              variant='body1'
+                              sx={{ color: 'text.secondary' }}
+                            >
+                              暂无数据表
                             </Typography>
                           </TableCell>
                         </TableRow>
                       ) : (
-                        backups.map((backup) => (
-                          <TableRow key={backup.id} hover>
+                        filteredTables.map((table) => (
+                          <TableRow
+                            key={table.id}
+                            hover
+                          >
                             <TableCell>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <Database size={16} style={{ opacity: 0.5 }} />
-                                <Typography sx={{ fontWeight: 500, fontFamily: 'monospace', fontSize: '0.875rem' }}>
-                                  {backup.backup_name}
+                                <Table
+                                  size={16}
+                                  style={{ opacity: 0.5 }}
+                                />
+                                <Typography
+                                  sx={{
+                                    fontWeight: 500,
+                                    color: 'primary.main',
+                                    fontFamily: 'monospace',
+                                    fontSize: '0.875rem',
+                                  }}
+                                >
+                                  {table.table_name}
                                 </Typography>
                               </Box>
                             </TableCell>
-                            <TableCell>
+                            <TableCell>{table.table_comment}</TableCell>
+                            <TableCell align='right'>
+                              {table.record_count.toLocaleString()}
+                            </TableCell>
+                            <TableCell align='right'>{table.data_size}</TableCell>
+                            <TableCell align='right'>{table.index_size}</TableCell>
+                            <TableCell align='right'>
                               <Chip
-                                label={backup.backup_type === 'full' ? '全量备份' : '增量备份'}
+                                label={table.total_size}
                                 size='small'
-                                color={backup.backup_type === 'full' ? 'primary' : 'default'}
+                                color='primary'
                                 variant='outlined'
                               />
                             </TableCell>
-                            <TableCell>{backup.file_size}</TableCell>
-                            <TableCell>{getBackupStatusBadge(backup.status)}</TableCell>
-                            <TableCell>{backup.created_by}</TableCell>
                             <TableCell>
-                              <Typography variant='body2' sx={{ color: 'text.secondary' }}>
-                                {backup.created_at}
-                              </Typography>
+                              <Chip
+                                label={table.engine}
+                                size='small'
+                                variant='outlined'
+                              />
                             </TableCell>
                             <TableCell>
                               <Typography
-                                sx={{
-                                  maxWidth: 200,
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap',
-                                  color: 'text.secondary',
-                                }}
+                                variant='body2'
+                                sx={{ color: 'text.secondary' }}
                               >
-                                {backup.remark || '-'}
+                                {table.update_time}
                               </Typography>
                             </TableCell>
                             <TableCell align='center'>
-                              <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
-                                <Tooltip title='下载'>
-                                  <IconButton size='small' color='primary'>
-                                    <Download size={16} />
-                                  </IconButton>
-                                </Tooltip>
-                                {backup.status === 'success' && (
-                                  <Tooltip title='恢复'>
-                                    <IconButton
-                                      size='small'
-                                      color='warning'
-                                      onClick={() => handleRestore(backup.id)}
-                                    >
-                                      <Upload size={16} />
-                                    </IconButton>
-                                  </Tooltip>
-                                )}
-                                <Tooltip title='删除'>
-                                  <IconButton
-                                    size='small'
-                                    color='error'
-                                    onClick={() => handleDeleteBackup(backup.id)}
-                                  >
-                                    <Trash2 size={16} />
-                                  </IconButton>
-                                </Tooltip>
-                              </Box>
+                              <Tooltip title='查看结构'>
+                                <IconButton
+                                  size='small'
+                                  onClick={() => handleViewStructure(table)}
+                                >
+                                  <Eye size={16} />
+                                </IconButton>
+                              </Tooltip>
                             </TableCell>
                           </TableRow>
                         ))
@@ -734,10 +928,201 @@ const DatabaseManagementPage: React.FC = () => {
                     </TableBody>
                   </MuiTable>
                 </TableContainer>
-              )}
-            </>
-          )}
-        </Box>
+                <TablePagination
+                  component='div'
+                  count={totalCount}
+                  page={page}
+                  onPageChange={(_, newPage) => setPage(newPage)}
+                  rowsPerPage={rowsPerPage}
+                  onRowsPerPageChange={(e) => {
+                    setRowsPerPage(parseInt(e.target.value, 10));
+                    setPage(0);
+                  }}
+                  rowsPerPageOptions={[10, 25, 50, 100]}
+                  labelRowsPerPage='每页行数'
+                />
+              </>
+            )}
+          </>
+        )}
+
+        {activeTab === 'backup' && (
+          <>
+            <Box
+              sx={{
+                p: 2,
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 2,
+                alignItems: 'center',
+                borderBottom: 1,
+                borderColor: 'divider',
+              }}
+            >
+              <Box sx={{ flexGrow: 1 }} />
+              <Button
+                variant='outlined'
+                size='small'
+                startIcon={<Upload size={16} />}
+                onClick={() => setShowRestoreModal(true)}
+              >
+                上传备份
+              </Button>
+              <Button
+                variant='contained'
+                size='small'
+                startIcon={<Play size={16} />}
+                onClick={handleBackup}
+              >
+                立即备份
+              </Button>
+            </Box>
+
+            {loading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
+                <CircularProgress />
+              </Box>
+            ) : (
+              <TableContainer>
+                <MuiTable>
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: 'grey.50' }}>
+                      <TableCell sx={{ fontWeight: 'bold' }}>备份名称</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>类型</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>文件大小</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>状态</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>创建人</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>创建时间</TableCell>
+                      <TableCell sx={{ fontWeight: 'bold' }}>备注</TableCell>
+                      <TableCell
+                        align='center'
+                        sx={{ fontWeight: 'bold', width: 160 }}
+                      >
+                        操作
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {backups.length === 0 ? (
+                      <TableRow>
+                        <TableCell
+                          colSpan={8}
+                          sx={{ py: 8, textAlign: 'center' }}
+                        >
+                          <Download
+                            sx={{
+                              width: 48,
+                              height: 48,
+                              color: 'text.disabled',
+                              mx: 'auto',
+                              mb: 2,
+                            }}
+                          />
+                          <Typography
+                            variant='body1'
+                            sx={{ color: 'text.secondary' }}
+                          >
+                            暂无备份记录
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      backups.map((backup) => (
+                        <TableRow
+                          key={backup.id}
+                          hover
+                        >
+                          <TableCell>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Database
+                                size={16}
+                                style={{ opacity: 0.5 }}
+                              />
+                              <Typography
+                                sx={{
+                                  fontWeight: 500,
+                                  fontFamily: 'monospace',
+                                  fontSize: '0.875rem',
+                                }}
+                              >
+                                {backup.backup_name}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={backup.backup_type === 'full' ? '全量备份' : '增量备份'}
+                              size='small'
+                              color={backup.backup_type === 'full' ? 'primary' : 'default'}
+                              variant='outlined'
+                            />
+                          </TableCell>
+                          <TableCell>{backup.file_size}</TableCell>
+                          <TableCell>{getBackupStatusBadge(backup.status)}</TableCell>
+                          <TableCell>{backup.created_by}</TableCell>
+                          <TableCell>
+                            <Typography
+                              variant='body2'
+                              sx={{ color: 'text.secondary' }}
+                            >
+                              {backup.created_at}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography
+                              sx={{
+                                maxWidth: 200,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                color: 'text.secondary',
+                              }}
+                            >
+                              {backup.remark || '-'}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align='center'>
+                            <Box sx={{ display: 'flex', justifyContent: 'center', gap: 0.5 }}>
+                              <Tooltip title='下载'>
+                                <IconButton
+                                  size='small'
+                                  color='primary'
+                                >
+                                  <Download size={16} />
+                                </IconButton>
+                              </Tooltip>
+                              {backup.status === 'success' && (
+                                <Tooltip title='恢复'>
+                                  <IconButton
+                                    size='small'
+                                    color='warning'
+                                    onClick={() => handleRestore(backup.id)}
+                                  >
+                                    <Upload size={16} />
+                                  </IconButton>
+                                </Tooltip>
+                              )}
+                              <Tooltip title='删除'>
+                                <IconButton
+                                  size='small'
+                                  color='error'
+                                  onClick={() => handleDeleteBackup(backup.id)}
+                                >
+                                  <Trash2 size={16} />
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </MuiTable>
+              </TableContainer>
+            )}
+          </>
+        )}
+      </Box>
 
       <Dialog
         open={showStructureModal}
@@ -762,7 +1147,10 @@ const DatabaseManagementPage: React.FC = () => {
                 }}
               >
                 <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                  <Typography variant='body2' sx={{ color: 'text.secondary', mb: 0.5 }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'text.secondary', mb: 0.5 }}
+                  >
                     表名
                   </Typography>
                   <Typography sx={{ fontFamily: 'monospace', fontWeight: 500 }}>
@@ -770,19 +1158,28 @@ const DatabaseManagementPage: React.FC = () => {
                   </Typography>
                 </Box>
                 <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                  <Typography variant='body2' sx={{ color: 'text.secondary', mb: 0.5 }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'text.secondary', mb: 0.5 }}
+                  >
                     引擎
                   </Typography>
                   <Typography sx={{ fontWeight: 500 }}>{currentTable.engine}</Typography>
                 </Box>
                 <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                  <Typography variant='body2' sx={{ color: 'text.secondary', mb: 0.5 }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'text.secondary', mb: 0.5 }}
+                  >
                     字符集
                   </Typography>
                   <Typography sx={{ fontWeight: 500 }}>{currentTable.collation}</Typography>
                 </Box>
                 <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                  <Typography variant='body2' sx={{ color: 'text.secondary', mb: 0.5 }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'text.secondary', mb: 0.5 }}
+                  >
                     记录数
                   </Typography>
                   <Typography sx={{ fontWeight: 500 }}>
@@ -792,17 +1189,26 @@ const DatabaseManagementPage: React.FC = () => {
               </Box>
 
               <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-                <Typography variant='body2' sx={{ color: 'text.secondary', mb: 0.5 }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'text.secondary', mb: 0.5 }}
+                >
                   说明
                 </Typography>
                 <Typography>{currentTable.table_comment}</Typography>
               </Box>
 
-              <Typography variant='subtitle2' sx={{ fontWeight: 600, mt: 1 }}>
+              <Typography
+                variant='subtitle2'
+                sx={{ fontWeight: 600, mt: 1 }}
+              >
                 字段列表
               </Typography>
 
-              <TableContainer component={Paper} variant='outlined'>
+              <TableContainer
+                component={Paper}
+                variant='outlined'
+              >
                 <MuiTable size='small'>
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'grey.50' }}>
@@ -824,32 +1230,58 @@ const DatabaseManagementPage: React.FC = () => {
                           </Typography>
                         </TableCell>
                         <TableCell>
-                          <Chip label={col.data_type} size='small' variant='outlined' />
+                          <Chip
+                            label={col.data_type}
+                            size='small'
+                            variant='outlined'
+                          />
                         </TableCell>
                         <TableCell>{col.character_maximum_length || '-'}</TableCell>
                         <TableCell>
                           {col.is_nullable === 'YES' ? (
-                            <Chip label='是' size='small' color='default' variant='outlined' />
+                            <Chip
+                              label='是'
+                              size='small'
+                              color='default'
+                              variant='outlined'
+                            />
                           ) : (
-                            <Chip label='否' size='small' color='warning' variant='outlined' />
+                            <Chip
+                              label='否'
+                              size='small'
+                              color='warning'
+                              variant='outlined'
+                            />
                           )}
                         </TableCell>
                         <TableCell>
-                          <Typography
-                            sx={{ fontFamily: 'monospace', color: 'text.secondary' }}
-                          >
+                          <Typography sx={{ fontFamily: 'monospace', color: 'text.secondary' }}>
                             {col.column_default || '-'}
                           </Typography>
                         </TableCell>
                         <TableCell>
                           {col.column_key === 'PRI' && (
-                            <Chip label='主键' size='small' color='primary' />
+                            <Chip
+                              label='主键'
+                              size='small'
+                              color='primary'
+                            />
                           )}
                           {col.column_key === 'UNI' && (
-                            <Chip label='唯一' size='small' color='success' variant='outlined' />
+                            <Chip
+                              label='唯一'
+                              size='small'
+                              color='success'
+                              variant='outlined'
+                            />
                           )}
                           {col.column_key === 'MUL' && (
-                            <Chip label='索引' size='small' color='default' variant='outlined' />
+                            <Chip
+                              label='索引'
+                              size='small'
+                              color='default'
+                              variant='outlined'
+                            />
                           )}
                           {!col.column_key && '-'}
                         </TableCell>
@@ -886,7 +1318,10 @@ const DatabaseManagementPage: React.FC = () => {
             </Alert>
             <FormControl size='small'>
               <InputLabel>备份类型</InputLabel>
-              <Select value='full' label='备份类型'>
+              <Select
+                value='full'
+                label='备份类型'
+              >
                 <MenuItem value='full'>全量备份</MenuItem>
                 <MenuItem value='incremental'>增量备份</MenuItem>
               </Select>
@@ -902,7 +1337,11 @@ const DatabaseManagementPage: React.FC = () => {
         </DialogContent>
         <DialogActions sx={{ px: 3, py: 2 }}>
           <Button onClick={() => setShowBackupModal(false)}>取消</Button>
-          <Button variant='contained' startIcon={<Play size={16} />} onClick={startBackup}>
+          <Button
+            variant='contained'
+            startIcon={<Play size={16} />}
+            onClick={startBackup}
+          >
             开始备份
           </Button>
         </DialogActions>
@@ -926,7 +1365,10 @@ const DatabaseManagementPage: React.FC = () => {
         <DialogContent dividers>
           <Box sx={{ pt: 1 }}>
             <Alert severity='warning'>
-              <Typography variant='body2' sx={{ fontWeight: 500, mb: 1 }}>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500, mb: 1 }}
+              >
                 警告：数据恢复操作将覆盖当前数据库！
               </Typography>
               <Typography variant='body2'>
@@ -934,7 +1376,10 @@ const DatabaseManagementPage: React.FC = () => {
               </Typography>
             </Alert>
             <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-              <Typography variant='body2' sx={{ color: 'text.secondary', mb: 0.5 }}>
+              <Typography
+                variant='body2'
+                sx={{ color: 'text.secondary', mb: 0.5 }}
+              >
                 要恢复的备份
               </Typography>
               <Typography sx={{ fontWeight: 500, fontFamily: 'monospace' }}>

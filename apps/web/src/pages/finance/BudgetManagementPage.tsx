@@ -1,21 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import {
-  TrendingUp,
-  Plus,
-  Edit,
-  Trash2,
-  DollarSign,
-  Calendar,
-  Settings,
-} from 'lucide-react';
+import { TrendingUp, Plus, Edit, Trash2, DollarSign, Calendar, Settings } from 'lucide-react';
 import { budgetApi, type Budget } from '@/api/erp';
 import { BackButton, PageContainer } from '@/components/common';
 import { departmentApi, type Department } from '@/api/hrm';
 import { financeApi } from '@/api/finance';
 import { apiLogger } from '@/utils/logger';
 import { useAppStore } from '../../store';
-import { ListPageTemplate, StatCardGroup } from '@/components/mui';
-import type { ColumnDef, RowAction, BatchAction } from '@/components/mui';
+import { ListPageTemplate, StatCardGroup } from '@/components';
+import type { ColumnDef, RowAction, BatchAction } from '@/components';
 
 import {
   TextField,
@@ -32,8 +24,8 @@ import {
   Box,
   Typography,
   Stack,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { ModeToggle } from '@/components/theme/ModeToggle';
 import OrganizationFilter, {
   type OrganizationFilterValue,
@@ -533,7 +525,10 @@ const BudgetManagementPage: React.FC = () => {
   );
 
   return (
-    <PageContainer padding={false} maxWidth={false}>
+    <PageContainer
+      padding={false}
+      maxWidth={false}
+    >
       <Box
         sx={{
           bgcolor: 'background.paper',

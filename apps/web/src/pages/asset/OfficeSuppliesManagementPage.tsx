@@ -12,8 +12,8 @@ import {
   MenuItem,
   Chip,
   IconButton,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Package,
@@ -417,7 +417,10 @@ const OfficeSuppliesManagementPage: React.FC<OfficeSuppliesManagementPageProps> 
   );
 
   return (
-    <PageContainer title='办公用品管理' subtitle='管理办公用品的库存、领用、归还等'>
+    <PageContainer
+      title='办公用品管理'
+      subtitle='管理办公用品的库存、领用、归还等'
+    >
       <ListPageTemplate
         title=''
         subtitle=''

@@ -1,0 +1,199 @@
+import React from 'react';
+import {
+  Avatar as MuiAvatar,
+  AvatarGroup as MuiAvatarGroup,
+  Box,
+  Typography,
+  Badge,
+  Tooltip,
+  Stack,
+} from '@mui/material';
+import type { SxProps, Theme } from '@mui/material';
+
+export type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+export type AvatarStatus = 'online' | 'offline' | 'busy' | 'away';
+
+export interface CustomAvatarProps {
+  src?: string;
+  name?: string;
+  label?: string;
+  size?: AvatarSize;
+  variant?: 'circular' | 'rounded' | 'square';
+  color?: string;
+  bgColor?: string;
+  status?: AvatarStatus;
+  statusColor?: string;
+  badge?: number | string;
+  badgeColor?: 'primary' | 'secondary' | 'error' | 'warning' | 'success' | 'info';
+  onClick?: () => void;
+  sx?: SxProps<Theme>;
+  children?: React.ReactNode;
+}
+
+const sizeMap: Record<AvatarSize, number> = {
+  xs: 24,
+  sm: 32,
+  md: 40,
+  lg: 56,
+  xl: 72,
+};
+
+const fontSizeMap: Record<AvatarSize, string> = {
+  xs: '0.625rem',
+  sm: '0.75rem',
+  md: '0.875rem',
+  lg: '1.25rem',
+  xl: '1.5rem',
+};
+
+const statusColorMap: Record<AvatarStatus, string> = {
+  online: '#22c55e',
+  offline: '#9ca3af',
+  busy: '#ef4444',
+  away: '#f59e0b',
+};
+
+const getInitials = (name: string): string => {
+  if (!name) return '?';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return name.slice(0, 2).toUpperCase();
+};
+
+export const Avatar: React.FC<CustomAvatarProps> = ({
+  src,
+  name,
+  label,
+  size = 'md',
+  variant = 'circular',
+  color,
+  bgColor,
+  status,
+  statusColor,
+  badge,
+  badgeColor = 'error',
+  onClick,
+  sx,
+  children,
+}) => {
+  const dimension = sizeMap[size];
+  const displayText = label || (name ? getInitials(name) : undefined);
+
+  const avatar = (
+    <MuiAvatar
+      src={src}
+      alt={name || label}
+      sx={{
+        width: dimension,
+        height: dimension,
+        fontSize: fontSizeMap[size],
+        bgcolor: bgColor || (src ? undefined : `${color || 'primary'}.light`),
+        color: color || src ? undefined : `${color || 'primary'}.dark`,
+        borderRadius: variant === 'square' ? 2 : variant === 'rounded' ? 2 : '50%',
+        cursor: onClick ? 'pointer' : 'default',
+        ...(onClick
+          ? { '&:hover': { opacity: 0.85, transform: 'scale(1.05)' }, transition: 'all 0.2s' }
+          : {}),
+        ...sx,
+      }}
+      onClick={onClick}
+    >
+      {children ||
+        (displayText && (
+          <Typography
+            variant='inherit'
+            sx={{ fontWeight: 600 }}
+          >
+            {displayText}
+          </Typography>
+        ))}
+    </MuiAvatar>
+  );
+
+  const withStatus = status ? (
+    <Box sx={{ position: 'relative', display: 'inline-flex' }}>
+      {avatar}
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: 0,
+          right: 0,
+          width: dimension * 0.28,
+          height: dimension * 0.28,
+          borderRadius: '50%',
+          bgcolor: statusColor || statusColorMap[status],
+          border: '2px solid',
+          borderColor: 'background.paper',
+        }}
+      />
+    </Box>
+  ) : (
+    avatar
+  );
+
+  if (badge !== undefined) {
+    return (
+      <Badge
+        badgeContent={badge}
+        color={badgeColor}
+        sx={{ '& .MuiBadge-badge': { fontSize: '0.625rem', minWidth: 16, height: 16 } }}
+      >
+        {withStatus}
+      </Badge>
+    );
+  }
+
+  return withStatus;
+};
+
+export interface AvatarGroupProps {
+  avatars: Array<Omit<CustomAvatarProps, 'size'>>;
+  max?: number;
+  size?: AvatarSize;
+  spacing?: number;
+  sx?: SxProps<Theme>;
+}
+
+export const AvatarGroup: React.FC<AvatarGroupProps> = ({
+  avatars,
+  max = 5,
+  size = 'md',
+  spacing = -8,
+  sx,
+}) => {
+  const getAvatarSx = () => {
+    switch (size) {
+      case 'xs':
+        return { width: 24, height: 24, fontSize: '0.625rem' };
+      case 'sm':
+        return { width: 32, height: 32, fontSize: '0.75rem' };
+      case 'md':
+        return { width: 40, height: 40, fontSize: '0.875rem' };
+      case 'lg':
+        return { width: 56, height: 56, fontSize: '1.25rem' };
+      case 'xl':
+        return { width: 72, height: 72, fontSize: '1.5rem' };
+      default:
+        return { width: 40, height: 40, fontSize: '0.875rem' };
+    }
+  };
+  const avatarSize = getAvatarSx();
+  return (
+    // @ts-ignore MUI complex union type
+    <MuiAvatarGroup max={max} sx={{ '& .MuiAvatar-root': avatarSize, ...sx }}>
+      {avatars.map((avatarProps, index) => (
+        <Tooltip
+          key={index}
+          title={avatarProps.name || ''}
+        >
+          <Avatar
+            size={size}
+            {...avatarProps}
+          />
+        </Tooltip>
+      ))}
+    </MuiAvatarGroup>
+  );
+};
+
+export default Avatar;

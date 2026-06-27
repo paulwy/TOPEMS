@@ -4,6 +4,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { usePermission } from '../../hooks/usePermission';
 import { useRole } from '../../hooks/useRole';
+import { Button, Box, Typography } from '@mui/material';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -20,7 +21,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   requireAllPermissions = false,
   fallbackPath = '/login',
 }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, logout } = useAuth();
   const { checkAnyPermission, checkAllPermissions } = usePermission();
   const { checkAnyRole } = useRole();
   const location = useLocation();
@@ -71,44 +72,48 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
     if (!hasPermissions) {
       return (
-        <div
-          style={{
+        <Box
+          sx={{
             minHeight: '100vh',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔒</div>
-            <h2
-              style={{
-                fontSize: '24px',
-                fontWeight: 700,
-                color: 'grey.900',
-                marginBottom: '8px',
-              }}
+          <Box sx={{ textAlign: 'center' }}>
+            <Box sx={{ fontSize: '48px', mb: 2 }}>🔒</Box>
+            <Typography
+              variant='h5'
+              sx={{ fontWeight: 700, color: 'grey.900', mb: 1 }}
             >
               权限不足
-            </h2>
-            <p style={{ color: 'grey.600', marginBottom: '16px' }}>
-              您没有访问此页面的权限。请联系管理员获取相应权限。
-            </p>
-            <button
-              onClick={() => window.history.back()}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: 'primary.dark',
-                color: 'white',
-                borderRadius: '8px',
-                border: 'none',
-                cursor: 'pointer',
-              }}
+            </Typography>
+            <Typography
+              variant='body2'
+              sx={{ color: 'grey.600', mb: 3 }}
             >
-              返回上一页
-            </button>
-          </div>
-        </div>
+              您没有访问此页面的权限。请联系管理员获取相应权限。
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+              <Button
+                onClick={() => window.history.back()}
+                variant='outlined'
+              >
+                返回上一页
+              </Button>
+              <Button
+                onClick={() => {
+                  logout();
+                  window.location.href = '/login';
+                }}
+                variant='contained'
+                color='primary'
+              >
+                退出登录
+              </Button>
+            </Box>
+          </Box>
+        </Box>
       );
     }
   }
@@ -118,44 +123,48 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
     if (!hasRoles) {
       return (
-        <div
-          style={{
+        <Box
+          sx={{
             minHeight: '100vh',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🔒</div>
-            <h2
-              style={{
-                fontSize: '24px',
-                fontWeight: 700,
-                color: 'grey.900',
-                marginBottom: '8px',
-              }}
+          <Box sx={{ textAlign: 'center' }}>
+            <Box sx={{ fontSize: '48px', mb: 2 }}>🔒</Box>
+            <Typography
+              variant='h5'
+              sx={{ fontWeight: 700, color: 'grey.900', mb: 1 }}
             >
               角色权限不足
-            </h2>
-            <p style={{ color: 'grey.600', marginBottom: '16px' }}>
-              您没有访问此页面的角色权限。请联系管理员分配相应角色。
-            </p>
-            <button
-              onClick={() => window.history.back()}
-              style={{
-                padding: '8px 16px',
-                backgroundColor: 'primary.dark',
-                color: 'white',
-                borderRadius: '8px',
-                border: 'none',
-                cursor: 'pointer',
-              }}
+            </Typography>
+            <Typography
+              variant='body2'
+              sx={{ color: 'grey.600', mb: 3 }}
             >
-              返回上一页
-            </button>
-          </div>
-        </div>
+              您没有访问此页面的角色权限。请联系管理员分配相应角色。
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center' }}>
+              <Button
+                onClick={() => window.history.back()}
+                variant='outlined'
+              >
+                返回上一页
+              </Button>
+              <Button
+                onClick={() => {
+                  logout();
+                  window.location.href = '/login';
+                }}
+                variant='contained'
+                color='primary'
+              >
+                退出登录
+              </Button>
+            </Box>
+          </Box>
+        </Box>
       );
     }
   }
@@ -243,17 +252,6 @@ interface GuestRouteProps {
 }
 
 export const GuestRoute: React.FC<GuestRouteProps> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
-
-  if (isAuthenticated) {
-    return (
-      <Navigate
-        to='/dashboard'
-        replace
-      />
-    );
-  }
-
   return <>{children}</>;
 };
 

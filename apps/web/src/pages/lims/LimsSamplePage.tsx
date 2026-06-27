@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { PageContainer } from '@/components/common';
 import { useNavigate } from 'react-router-dom';
+import { FlaskConical, Plus, Edit, Eye, Download, Upload, Filter, Trash2 } from 'lucide-react';
 import {
   Box,
   Dialog,
@@ -13,9 +14,8 @@ import {
   CardContent,
   Typography,
   MenuItem,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
-import { Plus, Edit, Eye, Download, Upload, FlaskConical, Filter, Trash2 } from 'lucide-react';
 import {
   ListPageTemplate,
   type ColumnDef,
@@ -250,7 +250,10 @@ const LimsSamplePage: React.FC = () => {
     try {
       setSaving(true);
       if (isEditing && selectedSample) {
-        const response = await limsApi.updateSample(selectedSample.id, formData as UpdateSampleRequest);
+        const response = await limsApi.updateSample(
+          selectedSample.id,
+          formData as UpdateSampleRequest
+        );
         if (response.success) {
           addNotification({
             title: '成功',
@@ -327,7 +330,9 @@ const LimsSamplePage: React.FC = () => {
 
   const stats = {
     total: samples.length,
-    pending: samples.filter((s) => s.status === '待接收' || s.status === '待检测' || s.status === 'pending').length,
+    pending: samples.filter(
+      (s) => s.status === '待接收' || s.status === '待检测' || s.status === 'pending'
+    ).length,
     inProgress: samples.filter((s) => s.status === '检测中' || s.status === 'in_progress').length,
     completed: samples.filter((s) => s.status === '已完成' || s.status === 'completed').length,
   };
@@ -508,10 +513,17 @@ const LimsSamplePage: React.FC = () => {
   }
 
   return (
-    <PageContainer title="样品管理" subtitle="Sample Management">
+    <PageContainer
+      title='样品管理'
+      subtitle='Sample Management'
+      headerProps={{
+        pageIcon: <FlaskConical style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)',
+      }}
+    >
       <ListPageTemplate
-        title=""
-        subtitle=""
+        title=''
+        subtitle=''
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
           { label: 'LIMS' },

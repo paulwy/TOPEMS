@@ -12,7 +12,7 @@ import {
 import { useAppStore } from '../../store';
 import { DataExport, PageContainer } from '@/components/common';
 import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
-import { StatCardGroup } from '@/components/mui';
+import { StatCardGroup } from '@/components';
 import type { StatCard } from '@/components/templates/DashboardTemplate';
 import { financeApi } from '@/api/finance';
 import type { SalesInvoice, PurchaseInvoice } from '@/types/finance';
@@ -29,8 +29,8 @@ import {
   Stack,
   IconButton,
   Tooltip,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 
 interface TaxEntry {
   id: string;
@@ -72,7 +72,10 @@ const FinanceTaxPage: React.FC = () => {
         financeApi.receivablePayable.listPurchaseInvoices(),
       ]);
 
-      const receivableTaxEntries: TaxEntry[] = (salesInvoicesRes.success && salesInvoicesRes.data?.items || []).map((r: SalesInvoice) => ({
+      const receivableTaxEntries: TaxEntry[] = (
+        (salesInvoicesRes.success && salesInvoicesRes.data?.items) ||
+        []
+      ).map((r: SalesInvoice) => ({
         id: r.id,
         tax_type: '增值税',
         declaration_period: r.invoice_date?.slice(0, 7) || new Date().toISOString().slice(0, 7),
@@ -80,12 +83,23 @@ const FinanceTaxPage: React.FC = () => {
         tax_rate: 13,
         tax_amount: r.tax_amount || Math.round(r.amount * 0.13),
         paid_amount: r.received_amount || 0,
-        owed_amount: Math.max(0, (r.tax_amount || Math.round(r.amount * 0.13)) - (r.received_amount || 0)),
-        status: r.status === 'received' ? '已申报' : r.status === 'partial_received' ? '待缴纳' : '待申报',
+        owed_amount: Math.max(
+          0,
+          (r.tax_amount || Math.round(r.amount * 0.13)) - (r.received_amount || 0)
+        ),
+        status:
+          r.status === 'received'
+            ? '已申报'
+            : r.status === 'partial_received'
+              ? '待缴纳'
+              : '待申报',
         related_document: r.invoice_no,
       }));
 
-      const payableTaxEntries: TaxEntry[] = (purchaseInvoicesRes.success && purchaseInvoicesRes.data?.items || []).map((p: PurchaseInvoice) => ({
+      const payableTaxEntries: TaxEntry[] = (
+        (purchaseInvoicesRes.success && purchaseInvoicesRes.data?.items) ||
+        []
+      ).map((p: PurchaseInvoice) => ({
         id: p.id,
         tax_type: '企业所得税',
         declaration_period: p.invoice_date?.slice(0, 7) || new Date().toISOString().slice(0, 7),
@@ -93,7 +107,10 @@ const FinanceTaxPage: React.FC = () => {
         tax_rate: 25,
         tax_amount: p.tax_amount || Math.round(p.amount * 0.25),
         paid_amount: p.paid_amount || 0,
-        owed_amount: Math.max(0, (p.tax_amount || Math.round(p.amount * 0.25)) - (p.paid_amount || 0)),
+        owed_amount: Math.max(
+          0,
+          (p.tax_amount || Math.round(p.amount * 0.25)) - (p.paid_amount || 0)
+        ),
         status: p.status === 'received' ? '已申报' : '待缴纳',
         related_document: p.invoice_no,
       }));
@@ -272,7 +289,10 @@ const FinanceTaxPage: React.FC = () => {
   );
 
   return (
-    <PageContainer padding={false} maxWidth={false}>
+    <PageContainer
+      padding={false}
+      maxWidth={false}
+    >
       <MuiBox sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, pt: 3 }}>
         <StatCardGroup
           stats={statCards}

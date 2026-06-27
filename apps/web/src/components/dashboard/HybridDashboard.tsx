@@ -1,20 +1,8 @@
 import React from 'react';
-import {
-  Box,
-  Typography,
-  Paper,
-  Button,
-  Checkbox,
-  Avatar,
-  Badge,
-  IconButton,
-} from '@mui/material';
+import { Box, Typography, Paper, Button, Checkbox, Avatar, Badge, IconButton } from '@mui/material';
 import { Grid } from '@/components';
 import { useNavigate } from 'react-router-dom';
-import {
-  MessageSquare,
-  Phone,
-} from 'lucide-react';
+import { MessageSquare, Phone } from 'lucide-react';
 import { useAuth } from '@/hooks';
 
 // ── Mock Data ──────────────────────────────────────────────
@@ -28,11 +16,41 @@ const todoData = [
 ];
 
 const activityData = [
-  { name: '李四', initial: '李', action: '提交了采购订单', time: '5分钟前', gradient: 'primary' as const },
-  { name: '王五', initial: '王', action: '完成了生产批次 B-2024-156', time: '23分钟前', gradient: 'success' as const },
-  { name: '赵六', initial: '赵', action: '新增了客户"恒达化工"', time: '1小时前', gradient: 'warning' as const },
-  { name: '陈七', initial: '陈', action: '更新了项目进度至78%', time: '2小时前', gradient: 'info' as const },
-  { name: '孙八', initial: '孙', action: '上传了质检报告', time: '3小时前', gradient: 'secondary' as const },
+  {
+    name: '李四',
+    initial: '李',
+    action: '提交了采购订单',
+    time: '5分钟前',
+    gradient: 'primary' as const,
+  },
+  {
+    name: '王五',
+    initial: '王',
+    action: '完成了生产批次 B-2024-156',
+    time: '23分钟前',
+    gradient: 'success' as const,
+  },
+  {
+    name: '赵六',
+    initial: '赵',
+    action: '新增了客户"恒达化工"',
+    time: '1小时前',
+    gradient: 'warning' as const,
+  },
+  {
+    name: '陈七',
+    initial: '陈',
+    action: '更新了项目进度至78%',
+    time: '2小时前',
+    gradient: 'info' as const,
+  },
+  {
+    name: '孙八',
+    initial: '孙',
+    action: '上传了质检报告',
+    time: '3小时前',
+    gradient: 'secondary' as const,
+  },
 ];
 
 const contactData = [
@@ -106,10 +124,16 @@ const PersonalInfoCard: React.FC = () => {
           {name.charAt(0)}
         </Avatar>
         <Box>
-          <Typography variant="h6" sx={{ fontWeight: 600, lineHeight: 1.3 }}>
+          <Typography
+            variant='h6'
+            sx={{ fontWeight: 600, lineHeight: 1.3 }}
+          >
             {greeting}，{name}
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             系统管理员 · 技术部
           </Typography>
         </Box>
@@ -129,7 +153,10 @@ const PersonalInfoCard: React.FC = () => {
               alignItems: 'center',
             }}
           >
-            <Typography variant="caption" color="text.secondary">
+            <Typography
+              variant='caption'
+              color='text.secondary'
+            >
               {label}
             </Typography>
           </Box>
@@ -170,14 +197,20 @@ const CompactHero: React.FC = () => {
 
       {/* Content */}
       <Box sx={{ position: 'relative', zIndex: 1 }}>
-        <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 0.5 }}>
+        <Typography
+          variant='subtitle1'
+          sx={{ fontWeight: 700, mb: 0.5 }}
+        >
           TOPEMS 企业数字化平台
         </Typography>
-        <Typography variant="body2" sx={{ opacity: 0.85, mb: 2 }}>
+        <Typography
+          variant='body2'
+          sx={{ opacity: 0.85, mb: 2 }}
+        >
           化工新材料行业一站式数字化管理解决方案
         </Typography>
         <Button
-          size="small"
+          size='small'
           sx={{
             bgcolor: 'white',
             color: 'primary.main',
@@ -202,13 +235,16 @@ const TodoList: React.FC = () => {
   return (
     <Paper sx={{ borderRadius: 2, p: 2 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+        <Typography
+          variant='subtitle2'
+          sx={{ fontWeight: 600 }}
+        >
           待办事项
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Badge
             badgeContent={todoData.length}
-            color="primary"
+            color='primary'
             sx={{
               '& .MuiBadge-badge': {
                 fontSize: 11,
@@ -239,10 +275,14 @@ const TodoList: React.FC = () => {
             borderColor: 'divider',
           }}
         >
-          <Checkbox size="small" />
+          <Checkbox size='small' />
           <Box sx={{ flex: 1 }}>
-            <Typography variant="body2">{item.title}</Typography>
-            <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+            <Typography variant='body2'>{item.title}</Typography>
+            <Typography
+              variant='caption'
+              color='text.secondary'
+              sx={{ ml: 1 }}
+            >
               {item.time}
             </Typography>
           </Box>
@@ -269,7 +309,10 @@ const RecentActivities: React.FC = () => {
   return (
     <Paper sx={{ borderRadius: 2, p: 2 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+        <Typography
+          variant='subtitle2'
+          sx={{ fontWeight: 600 }}
+        >
           最近动态
         </Typography>
         <Typography
@@ -305,13 +348,19 @@ const RecentActivities: React.FC = () => {
             {item.initial}
           </Avatar>
           <Box sx={{ flex: 1 }}>
-            <Typography variant="body2">
-              <Box component="span" sx={{ fontWeight: 600 }}>
+            <Typography variant='body2'>
+              <Box
+                component='span'
+                sx={{ fontWeight: 600 }}
+              >
                 {item.name}
-              </Box>
-              {' '}{item.action}
+              </Box>{' '}
+              {item.action}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography
+              variant='caption'
+              color='text.secondary'
+            >
               {item.time}
             </Typography>
           </Box>
@@ -328,7 +377,10 @@ const FrequentContacts: React.FC = () => {
   return (
     <Paper sx={{ borderRadius: 2, p: 2 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-        <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+        <Typography
+          variant='subtitle2'
+          sx={{ fontWeight: 600 }}
+        >
           常用联系人
         </Typography>
         <Typography
@@ -364,18 +416,30 @@ const FrequentContacts: React.FC = () => {
             {item.initial}
           </Avatar>
           <Box sx={{ flex: 1 }}>
-            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+            <Typography
+              variant='body2'
+              sx={{ fontWeight: 500 }}
+            >
               {item.name}
             </Typography>
-            <Typography variant="caption" color="text.secondary">
+            <Typography
+              variant='caption'
+              color='text.secondary'
+            >
               {item.role}
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', gap: 0.5 }}>
-            <IconButton size="small" sx={{ color: 'text.secondary' }}>
+            <IconButton
+              size='small'
+              sx={{ color: 'text.secondary' }}
+            >
               <MessageSquare size={16} />
             </IconButton>
-            <IconButton size="small" sx={{ color: 'text.secondary' }}>
+            <IconButton
+              size='small'
+              sx={{ color: 'text.secondary' }}
+            >
               <Phone size={16} />
             </IconButton>
           </Box>
@@ -391,7 +455,10 @@ export const HybridDashboard: React.FC = () => {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100%' }}>
       {/* 1. Personal Info Card + Compact Hero (combined row) */}
-      <Grid container spacing={2}>
+      <Grid
+        container
+        spacing={2}
+      >
         <Grid size={{ xs: 12, md: 6 }}>
           <PersonalInfoCard />
         </Grid>
@@ -402,7 +469,10 @@ export const HybridDashboard: React.FC = () => {
 
       {/* 3. Todo + Activities + Contacts (3-column layout) */}
       <Box sx={{ mt: 3 }}>
-        <Grid container spacing={2}>
+        <Grid
+          container
+          spacing={2}
+        >
           <Grid size={{ xs: 12, md: 4 }}>
             <TodoList />
           </Grid>

@@ -485,7 +485,9 @@ export const srmApi = {
     const query = new URLSearchParams(params).toString();
     return apiClient.srm.get(`/api/srm/performance/trend${query ? `?${query}` : ''}`);
   },
-  compareSupplierPerformance: async (supplier_ids: string[]): Promise<ApiResponse<SupplierComparisonResponse>> => {
+  compareSupplierPerformance: async (
+    supplier_ids: string[]
+  ): Promise<ApiResponse<SupplierComparisonResponse>> => {
     return apiClient.srm.get(`/api/srm/performance/compare?supplier_ids=${supplier_ids.join(',')}`);
   },
 

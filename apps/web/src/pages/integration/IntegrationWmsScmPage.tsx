@@ -6,8 +6,15 @@
 import React, { useState, useCallback } from 'react';
 import { PageContainer } from '@/components/common';
 import { Plus, RefreshCw, Eye, Trash2 } from 'lucide-react';
-import { Box, Chip, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
-import { Button } from '@mui/material';
+import {
+  Box,
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+} from '@mui/material';
 
 import {
   ListPageTemplate,
@@ -255,10 +262,13 @@ const IntegrationWmsScmPage: React.FC = () => {
   };
 
   return (
-    <PageContainer title="WMS ↔ SCM 同步" subtitle="管理 WMS 库存与 SCM 供应的同步">
+    <PageContainer
+      title='WMS ↔ SCM 同步'
+      subtitle='管理 WMS 库存与 SCM 供应的同步'
+    >
       <ListPageTemplate
-        title=""
-        subtitle=""
+        title=''
+        subtitle=''
         columns={columns}
         data={filteredData}
         loading={loading}

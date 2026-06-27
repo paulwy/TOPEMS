@@ -21,14 +21,12 @@ import {
   Stack,
   TextField,
   Typography,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { Eye, Bell, Ban, RotateCcw, Search, Activity, Loader2 } from 'lucide-react';
 import { PageContainer } from '@/components/common/PageContainer';
 
-const getStatusColor = (
-  status: string
-): 'success' | 'error' | 'warning' | 'default' => {
+const getStatusColor = (status: string): 'success' | 'error' | 'warning' | 'default' => {
   switch (status) {
     case 'running':
       return 'warning';
@@ -105,7 +103,10 @@ const FlowMonitorPage: React.FC = () => {
   const filteredData = data.filter((item) => {
     const matchesSearch =
       String(item.id).toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ((item.data?.applicant ? String(item.data.applicant) : '').toLowerCase().includes(searchTerm.toLowerCase()) || false);
+      (item.data?.applicant ? String(item.data.applicant) : '')
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase()) ||
+      false;
     const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -159,323 +160,339 @@ const FlowMonitorPage: React.FC = () => {
     <PageContainer
       maxWidth={false}
       padding={false}
-      bgcolor='grey.50'
+      bgcolor='background.default'
     >
       <Box sx={{ p: 3 }}>
-        <Box sx={{ bgcolor: 'white', borderRadius: 1, boxShadow: 1, p: 3, mb: 3 }}>
-        <Stack
-          direction='row'
-          sx={{ alignItems: 'center' }}
-          spacing={2}
-        >
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              bgcolor: 'primary.light',
-              borderRadius: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
+        <Box sx={{ bgcolor: 'background.paper', borderRadius: 1, boxShadow: 1, p: 3, mb: 3 }}>
+          <Stack
+            direction='row'
+            sx={{ alignItems: 'center' }}
+            spacing={2}
           >
-            <Activity
-              size={24}
-              style={{ color: 'secondary.main' }}
-            />
-          </Box>
-          <Box>
-            <Typography
-              variant='h5'
-              sx={{ fontWeight: 700 }}
-            >
-              流程监控
-            </Typography>
-            <Typography
-              variant='body2'
-              sx={{ color: 'grey.500' }}
-            >
-              监控所有流程实例的运行状态
-            </Typography>
-          </Box>
-          <Box sx={{ ml: 'auto' }}>
-            <Stack
-              direction='row'
-              spacing={3}
-            >
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography
-                  variant='h4'
-                  sx={{ fontWeight: 700, color: 'warning.main' }}
-                >
-                  {stats?.running_instances || runningCount}
-                </Typography>
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
-                  进行中
-                </Typography>
-              </Box>
-              <Box sx={{ textAlign: 'center' }}>
-                <Typography
-                  variant='h4'
-                  sx={{ fontWeight: 700, color: 'success.dark' }}
-                >
-                  {stats?.completed_instances || completedCount}
-                </Typography>
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
-                  已完成
-                </Typography>
-              </Box>
-            </Stack>
-          </Box>
-        </Stack>
-      </Box>
-
-      <Box sx={{ bgcolor: 'white', borderRadius: 1, boxShadow: 1, p: 3, mb: 3 }}>
-        <Stack
-          direction='row'
-          sx={{ alignItems: 'center' }}
-          spacing={2}
-        >
-          <TextField
-            size='small'
-            type='text'
-            placeholder='搜索实例ID或申请人...'
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <Search
-                    size={20}
-                    style={{ marginRight: 8, color: 'text.disabled' }}
-                  />
-                ),
-              },
-            }}
-            sx={{ flex: 1, maxWidth: 300 }}
-          />
-          <FormControl
-            size='small'
-            sx={{ minWidth: 180 }}
-          >
-            <InputLabel>流程名称</InputLabel>
-            <Select
-              value={nameFilter}
-              label='流程名称'
-              onChange={(e) => setNameFilter(e.target.value)}
-            >
-              <MenuItem value='all'>全部</MenuItem>
-              {uniqueFlowNames.map((name) => (
-                <MenuItem
-                  key={name}
-                  value={name}
-                >
-                  {name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-          <FormControl
-            size='small'
-            sx={{ minWidth: 120 }}
-          >
-            <InputLabel>状态</InputLabel>
-            <Select
-              value={statusFilter}
-              label='状态'
-              onChange={(e) => setStatusFilter(e.target.value)}
-            >
-              <MenuItem value='all'>全部</MenuItem>
-              <MenuItem value='running'>进行中</MenuItem>
-              <MenuItem value='completed'>已完成</MenuItem>
-              <MenuItem value='rejected'>已拒绝</MenuItem>
-              <MenuItem value='terminated'>已终止</MenuItem>
-            </Select>
-          </FormControl>
-          <IconButton
-            onClick={handleRefresh}
-            title='刷新'
-          >
-            <Loader2
-              size={20}
-              sx={{
-                animation: loading ? 'spin 1s linear infinite' : 'none',
-              }}
-            />
-          </IconButton>
-        </Stack>
-      </Box>
-
-      <Card>
-        <CardContent sx={{ p: 0 }}>
-          <Box sx={{ overflowX: 'auto' }}>
             <Box
-              component='table'
-              sx={{ width: '100%', borderCollapse: 'collapse' }}
+              sx={{
+                width: 48,
+                height: 48,
+                bgcolor: 'primary.light',
+                borderRadius: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
             >
-              <Box component='thead'>
-                <Box
-                  component='tr'
-                  sx={{
-                    bgcolor: 'grey.100',
-                    '& th': {
-                      px: 3,
-                      py: 2,
-                      textAlign: 'left',
-                      fontWeight: 600,
-                      fontSize: 14,
-                      color: 'grey.700',
-                    },
-                  }}
-                >
-                  <th>实例ID</th>
-                  <th>流程名称</th>
-                  <th>发起人</th>
-                  <th>当前节点</th>
-                  <th>状态</th>
-                  <th>耗时</th>
-                  <th>开始时间</th>
-                  <th>操作</th>
+              <Activity
+                size={24}
+                style={{ color: 'secondary.main' }}
+              />
+            </Box>
+            <Box>
+              <Typography
+                variant='h5'
+                sx={{ fontWeight: 700 }}
+              >
+                流程监控
+              </Typography>
+              <Typography
+                variant='body2'
+                sx={{ color: 'text.secondary' }}
+              >
+                监控所有流程实例的运行状态
+              </Typography>
+            </Box>
+            <Box sx={{ ml: 'auto' }}>
+              <Stack
+                direction='row'
+                spacing={3}
+              >
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography
+                    variant='h4'
+                    sx={{ fontWeight: 700, color: 'warning.main' }}
+                  >
+                    {stats?.running_instances || runningCount}
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
+                    进行中
+                  </Typography>
                 </Box>
-              </Box>
-              <Box component='tbody'>
-                {paginatedData.map((instance, index) => (
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography
+                    variant='h4'
+                    sx={{ fontWeight: 700, color: 'success.dark' }}
+                  >
+                    {stats?.completed_instances || completedCount}
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
+                    已完成
+                  </Typography>
+                </Box>
+              </Stack>
+            </Box>
+          </Stack>
+        </Box>
+
+        <Box sx={{ bgcolor: 'white', borderRadius: 1, boxShadow: 1, p: 3, mb: 3 }}>
+          <Stack
+            direction='row'
+            sx={{ alignItems: 'center' }}
+            spacing={2}
+          >
+            <TextField
+              size='small'
+              type='text'
+              placeholder='搜索实例ID或申请人...'
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <Search
+                      size={20}
+                      style={{ marginRight: 8, color: 'text.disabled' }}
+                    />
+                  ),
+                },
+              }}
+              sx={{ flex: 1, maxWidth: 300 }}
+            />
+            <FormControl
+              size='small'
+              sx={{ minWidth: 180 }}
+            >
+              <InputLabel>流程名称</InputLabel>
+              <Select
+                value={nameFilter}
+                label='流程名称'
+                onChange={(e) => setNameFilter(e.target.value)}
+              >
+                <MenuItem value='all'>全部</MenuItem>
+                {uniqueFlowNames.map((name) => (
+                  <MenuItem
+                    key={name}
+                    value={name}
+                  >
+                    {name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+            <FormControl
+              size='small'
+              sx={{ minWidth: 120 }}
+            >
+              <InputLabel>状态</InputLabel>
+              <Select
+                value={statusFilter}
+                label='状态'
+                onChange={(e) => setStatusFilter(e.target.value)}
+              >
+                <MenuItem value='all'>全部</MenuItem>
+                <MenuItem value='running'>进行中</MenuItem>
+                <MenuItem value='completed'>已完成</MenuItem>
+                <MenuItem value='rejected'>已拒绝</MenuItem>
+                <MenuItem value='terminated'>已终止</MenuItem>
+              </Select>
+            </FormControl>
+            <IconButton
+              onClick={handleRefresh}
+              title='刷新'
+            >
+              <Loader2
+                size={20}
+                sx={{
+                  animation: loading ? 'spin 1s linear infinite' : 'none',
+                }}
+              />
+            </IconButton>
+          </Stack>
+        </Box>
+
+        <Card>
+          <CardContent sx={{ p: 0 }}>
+            <Box sx={{ overflowX: 'auto' }}>
+              <Box
+                component='table'
+                sx={{ width: '100%', borderCollapse: 'collapse' }}
+              >
+                <Box component='thead'>
                   <Box
                     component='tr'
-                    key={instance.id}
                     sx={{
-                      borderBottom: '1px solid',
-                      borderColor: 'divider',
-                      bgcolor: index % 2 === 0 ? 'white' : 'grey.50',
-                      '&:hover': { bgcolor: 'primary.light' },
-                      '& td': {
+                      bgcolor: 'grey.100',
+                      '& th': {
                         px: 3,
                         py: 2,
+                        textAlign: 'left',
+                        fontWeight: 600,
                         fontSize: 14,
+                        color: 'text.secondary',
                       },
                     }}
                   >
-                    <td>{String(instance.id)}</td>
-                    <td>{String(instance.data?.name || instance.workflow_id || '-')}</td>
-                    <td>{String(instance.data?.applicant || instance.initiator_id || '-')}</td>
-                    <td>{instance.current_node || '-'}</td>
-                    <td>
-                      <Chip
-                        size='small'
-                        label={getStatusText(instance.status)}
-                        color={getStatusColor(instance.status)}
-                      />
-                    </td>
-                    <td>
-                      {instance.started_at ? (
-                        instance.completed_at ? (
-                          <span>{Math.round((new Date(instance.completed_at).getTime() - new Date(instance.started_at).getTime()) / 60000)} 分钟</span>
-                        ) : (
-                          <span>{Math.round((Date.now() - new Date(instance.started_at).getTime()) / 60000)} 分钟</span>
-                        )
-                      ) : (
-                        '-'
-                      )}
-                    </td>
-                    <td>{instance.started_at ? new Date(instance.started_at).toLocaleString('zh-CN') : '-'}</td>
-                    <td>
-                      <Stack
-                        direction='row'
-                        spacing={1}
-                      >
-                        <IconButton
+                    <th>实例ID</th>
+                    <th>流程名称</th>
+                    <th>发起人</th>
+                    <th>当前节点</th>
+                    <th>状态</th>
+                    <th>耗时</th>
+                    <th>开始时间</th>
+                    <th>操作</th>
+                  </Box>
+                </Box>
+                <Box component='tbody'>
+                  {paginatedData.map((instance, index) => (
+                    <Box
+                      component='tr'
+                      key={instance.id}
+                      sx={{
+                        borderBottom: '1px solid',
+                        borderColor: 'divider',
+                        bgcolor: index % 2 === 0 ? 'white' : 'grey.50',
+                        '&:hover': { bgcolor: 'primary.light' },
+                        '& td': {
+                          px: 3,
+                          py: 2,
+                          fontSize: 14,
+                        },
+                      }}
+                    >
+                      <td>{String(instance.id)}</td>
+                      <td>{String(instance.data?.name || instance.workflow_id || '-')}</td>
+                      <td>{String(instance.data?.applicant || instance.initiator_id || '-')}</td>
+                      <td>{instance.current_node || '-'}</td>
+                      <td>
+                        <Chip
                           size='small'
-                          onClick={() => handleView(instance)}
-                          title='查看'
-                        >
-                          <Eye size={18} />
-                        </IconButton>
-                        {instance.status === 'running' && (
-                          <>
-                            <IconButton
-                              size='small'
-                              onClick={() => handleUrge(instance)}
-                              title='催办'
-                            >
-                              <Bell size={18} />
-                            </IconButton>
-                            <IconButton
-                              size='small'
-                              onClick={() => handleTerminate(instance)}
-                              title='终止'
-                            >
-                              <Ban size={18} />
-                            </IconButton>
-                          </>
+                          label={getStatusText(instance.status)}
+                          color={getStatusColor(instance.status)}
+                        />
+                      </td>
+                      <td>
+                        {instance.started_at ? (
+                          instance.completed_at ? (
+                            <span>
+                              {Math.round(
+                                (new Date(instance.completed_at).getTime() -
+                                  new Date(instance.started_at).getTime()) /
+                                  60000
+                              )}{' '}
+                              分钟
+                            </span>
+                          ) : (
+                            <span>
+                              {Math.round(
+                                (Date.now() - new Date(instance.started_at).getTime()) / 60000
+                              )}{' '}
+                              分钟
+                            </span>
+                          )
+                        ) : (
+                          '-'
                         )}
-                        {instance.status === 'running' && (
+                      </td>
+                      <td>
+                        {instance.started_at
+                          ? new Date(instance.started_at).toLocaleString('zh-CN')
+                          : '-'}
+                      </td>
+                      <td>
+                        <Stack
+                          direction='row'
+                          spacing={1}
+                        >
                           <IconButton
                             size='small'
-                            onClick={() => handleRecall(instance)}
-                            title='取回'
+                            onClick={() => handleView(instance)}
+                            title='查看'
                           >
-                            <RotateCcw size={18} />
+                            <Eye size={18} />
                           </IconButton>
-                        )}
-                      </Stack>
-                    </td>
-                  </Box>
-                ))}
+                          {instance.status === 'running' && (
+                            <>
+                              <IconButton
+                                size='small'
+                                onClick={() => handleUrge(instance)}
+                                title='催办'
+                              >
+                                <Bell size={18} />
+                              </IconButton>
+                              <IconButton
+                                size='small'
+                                onClick={() => handleTerminate(instance)}
+                                title='终止'
+                              >
+                                <Ban size={18} />
+                              </IconButton>
+                            </>
+                          )}
+                          {instance.status === 'running' && (
+                            <IconButton
+                              size='small'
+                              onClick={() => handleRecall(instance)}
+                              title='取回'
+                            >
+                              <RotateCcw size={18} />
+                            </IconButton>
+                          )}
+                        </Stack>
+                      </td>
+                    </Box>
+                  ))}
+                </Box>
               </Box>
             </Box>
+          </CardContent>
+        </Card>
+
+        {totalPages > 1 && (
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+            <Pagination
+              count={totalPages}
+              page={page}
+              onChange={(_, newPage) => setPage(newPage)}
+              color='primary'
+            />
           </Box>
-        </CardContent>
-      </Card>
+        )}
 
-      {totalPages > 1 && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-          <Pagination
-            count={totalPages}
-            page={page}
-            onChange={(_, newPage) => setPage(newPage)}
-            color='primary'
-          />
-        </Box>
-      )}
-
-      <Dialog
-        open={showTerminateDialog}
-        onClose={() => setShowTerminateDialog(false)}
-      >
-        <DialogTitle>终止流程实例</DialogTitle>
-        <DialogContent>
-          <Typography>
-            确定要终止流程实例 <strong>{selectedInstance?.id}</strong> 吗？
-          </Typography>
-          <Typography
-            variant='body2'
-            sx={{ color: 'grey.500', mt: 1 }}
-          >
-            终止后该流程将无法恢复
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            color='inherit'
-            onClick={() => setShowTerminateDialog(false)}
-          >
-            取消
-          </Button>
-          <Button
-            variant='contained'
-            color='error'
-            onClick={confirmTerminate}
-          >
-            确认终止
-          </Button>
-        </DialogActions>
-      </Dialog>
+        <Dialog
+          open={showTerminateDialog}
+          onClose={() => setShowTerminateDialog(false)}
+        >
+          <DialogTitle>终止流程实例</DialogTitle>
+          <DialogContent>
+            <Typography>
+              确定要终止流程实例 <strong>{selectedInstance?.id}</strong> 吗？
+            </Typography>
+            <Typography
+              variant='body2'
+              sx={{ color: 'text.secondary', mt: 1 }}
+            >
+              终止后该流程将无法恢复
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              color='inherit'
+              onClick={() => setShowTerminateDialog(false)}
+            >
+              取消
+            </Button>
+            <Button
+              variant='contained'
+              color='error'
+              onClick={confirmTerminate}
+            >
+              确认终止
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </PageContainer>
   );

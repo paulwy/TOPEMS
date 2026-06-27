@@ -1,13 +1,6 @@
 import React from 'react';
 import { BottomNavigation, BottomNavigationAction, Paper, useTheme, Badge } from '@mui/material';
-import {
-  Home,
-  ListTodo,
-  ScanLine,
-  CheckSquare,
-  User,
-  Bell,
-} from 'lucide-react';
+import { Home, ListTodo, ScanLine, CheckSquare, User, Bell } from 'lucide-react';
 
 export interface TabItem {
   id: string;
@@ -26,7 +19,12 @@ const defaultTabs: TabItem[] = [
   { id: 'home', label: '首页', icon: <Home style={{ width: 22, height: 22 }} /> },
   { id: 'tasks', label: '任务', icon: <ListTodo style={{ width: 22, height: 22 }} /> },
   { id: 'scan', label: '扫码', icon: <ScanLine style={{ width: 22, height: 22 }} /> },
-  { id: 'approval', label: '审批', icon: <CheckSquare style={{ width: 22, height: 22 }} />, badge: 3 },
+  {
+    id: 'approval',
+    label: '审批',
+    icon: <CheckSquare style={{ width: 22, height: 22 }} />,
+    badge: 3,
+  },
   { id: 'profile', label: '我的', icon: <User style={{ width: 22, height: 22 }} /> },
 ];
 

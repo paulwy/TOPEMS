@@ -10,8 +10,8 @@ import {
   Stack,
   TextField,
   FormLabel,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import {
   CheckCircle,
   XCircle,
@@ -140,13 +140,33 @@ const FlowApprovalDetailPage: React.FC = () => {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'approved':
-        return <CheckCircle size={20} style={{ color: '#16a34a' }} />;
+        return (
+          <CheckCircle
+            size={20}
+            style={{ color: '#16a34a' }}
+          />
+        );
       case 'rejected':
-        return <XCircle size={20} style={{ color: '#dc2626' }} />;
+        return (
+          <XCircle
+            size={20}
+            style={{ color: '#dc2626' }}
+          />
+        );
       case 'pending':
-        return <Clock size={20} style={{ color: '#ca8a04' }} />;
+        return (
+          <Clock
+            size={20}
+            style={{ color: '#ca8a04' }}
+          />
+        );
       default:
-        return <AlertCircle size={20} style={{ color: '#6b7280' }} />;
+        return (
+          <AlertCircle
+            size={20}
+            style={{ color: '#6b7280' }}
+          />
+        );
     }
   };
 
@@ -183,21 +203,49 @@ const FlowApprovalDetailPage: React.FC = () => {
           <Box>
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
               <Box>
-                <Typography variant='body2' sx={{ color: 'grey.500', mb: 0.5 }}>审批ID</Typography>
-                <Typography variant='body2' sx={{ fontFamily: 'monospace' }}>{approval.id}</Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.500', mb: 0.5 }}
+                >
+                  审批ID
+                </Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ fontFamily: 'monospace' }}
+                >
+                  {approval.id}
+                </Typography>
               </Box>
               <Box>
-                <Typography variant='body2' sx={{ color: 'grey.500', mb: 0.5 }}>任务名称</Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.500', mb: 0.5 }}
+                >
+                  任务名称
+                </Typography>
                 <Typography variant='body2'>{approval.task_name}</Typography>
               </Box>
               <Box>
-                <Typography variant='body2' sx={{ color: 'grey.500', mb: 0.5 }}>节点ID</Typography>
-                <Typography variant='body2' sx={{ fontFamily: 'monospace' }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.500', mb: 0.5 }}
+                >
+                  节点ID
+                </Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ fontFamily: 'monospace' }}
+                >
                   {approval.node_id || 'N/A'}
                 </Typography>
               </Box>
               <Box>
-                <Typography variant='body2' sx={{ color: 'grey.500', mb: 0.5 }}>审批类型</Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.500', mb: 0.5 }}
+                >
+                  审批类型
+                </Typography>
                 <Typography variant='body2'>
                   {approval.approval_type === 'single'
                     ? '单人审批'
@@ -209,43 +257,90 @@ const FlowApprovalDetailPage: React.FC = () => {
                 </Typography>
               </Box>
               <Box>
-                <Typography variant='body2' sx={{ color: 'grey.500', mb: 0.5 }}>审批人</Typography>
-                <Stack direction='row' spacing={0.5} sx={{ alignItems: 'center' }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.500', mb: 0.5 }}
+                >
+                  审批人
+                </Typography>
+                <Stack
+                  direction='row'
+                  spacing={0.5}
+                  sx={{ alignItems: 'center' }}
+                >
                   <User size={14} />
                   <Typography variant='body2'>{approval.assignee_id || 'N/A'}</Typography>
                 </Stack>
               </Box>
               <Box>
-                <Typography variant='body2' sx={{ color: 'grey.500', mb: 0.5 }}>创建时间</Typography>
-                <Typography variant='body2'>{new Date(approval.created_at).toLocaleString()}</Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.500', mb: 0.5 }}
+                >
+                  创建时间
+                </Typography>
+                <Typography variant='body2'>
+                  {new Date(approval.created_at).toLocaleString()}
+                </Typography>
               </Box>
               {approval.approved_by && (
                 <>
                   <Box>
-                    <Typography variant='body2' sx={{ color: 'grey.500', mb: 0.5 }}>审批人</Typography>
+                    <Typography
+                      variant='body2'
+                      sx={{ color: 'grey.500', mb: 0.5 }}
+                    >
+                      审批人
+                    </Typography>
                     <Typography variant='body2'>{approval.approved_by}</Typography>
                   </Box>
                   <Box>
-                    <Typography variant='body2' sx={{ color: 'grey.500', mb: 0.5 }}>审批时间</Typography>
+                    <Typography
+                      variant='body2'
+                      sx={{ color: 'grey.500', mb: 0.5 }}
+                    >
+                      审批时间
+                    </Typography>
                     <Typography variant='body2'>
-                      {approval.approved_at ? new Date(approval.approved_at).toLocaleString() : 'N/A'}
+                      {approval.approved_at
+                        ? new Date(approval.approved_at).toLocaleString()
+                        : 'N/A'}
                     </Typography>
                   </Box>
                 </>
               )}
               {approval.timeout_at && (
                 <Box>
-                  <Typography variant='body2' sx={{ color: 'grey.500', mb: 0.5 }}>超时时间</Typography>
-                  <Typography variant='body2'>{new Date(approval.timeout_at).toLocaleString()}</Typography>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'grey.500', mb: 0.5 }}
+                  >
+                    超时时间
+                  </Typography>
+                  <Typography variant='body2'>
+                    {new Date(approval.timeout_at).toLocaleString()}
+                  </Typography>
                 </Box>
               )}
             </Box>
             {approval.comment && (
               <Box sx={{ mt: 2 }}>
-                <Typography variant='body2' sx={{ color: 'grey.500', mb: 1 }}>审批意见</Typography>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.500', mb: 1 }}
+                >
+                  审批意见
+                </Typography>
                 <Box sx={{ bgcolor: 'grey.50', p: 1.5, borderRadius: 1 }}>
-                  <Stack direction='row' spacing={1} sx={{ alignItems: 'flex-start' }}>
-                    <MessageSquare size={16} style={{ color: 'text.disabled', marginTop: 2 }} />
+                  <Stack
+                    direction='row'
+                    spacing={1}
+                    sx={{ alignItems: 'flex-start' }}
+                  >
+                    <MessageSquare
+                      size={16}
+                      style={{ color: 'text.disabled', marginTop: 2 }}
+                    />
                     <Typography variant='body2'>{approval.comment}</Typography>
                   </Stack>
                 </Box>
@@ -262,8 +357,21 @@ const FlowApprovalDetailPage: React.FC = () => {
           <Box>
             {records.length === 0 ? (
               <Box sx={{ textAlign: 'center', py: 4 }}>
-                <FileText size={48} style={{ color: 'grey.300', margin: '0 auto', marginBottom: 4 }} />
-                <Typography variant='body2' sx={{ color: 'grey.500' }}>暂无审批记录</Typography>
+                <FileText
+                  size={48}
+                  style={{
+                    color: 'grey.300',
+                    marginLeft: 'auto',
+                    marginRight: 'auto',
+                    marginBottom: 4,
+                  }}
+                />
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.500' }}
+                >
+                  暂无审批记录
+                </Typography>
               </Box>
             ) : (
               <Stack spacing={2}>
@@ -272,25 +380,51 @@ const FlowApprovalDetailPage: React.FC = () => {
                     key={record.id}
                     sx={{ borderLeft: 2, borderColor: 'primary.light', pl: 2 }}
                   >
-                    <Stack direction='row' spacing={1} sx={{ mb: 0.5 }}>
+                    <Stack
+                      direction='row'
+                      spacing={1}
+                      sx={{ mb: 0.5 }}
+                    >
                       {record.action === 'approve' ? (
-                        <CheckCircle2 size={16} style={{ color: '#16a34a' }} />
+                        <CheckCircle2
+                          size={16}
+                          style={{ color: '#16a34a' }}
+                        />
                       ) : (
-                        <XCircle size={16} style={{ color: '#dc2626' }} />
+                        <XCircle
+                          size={16}
+                          style={{ color: '#dc2626' }}
+                        />
                       )}
-                      <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                      <Typography
+                        variant='body2'
+                        sx={{ fontWeight: 500 }}
+                      >
                         {record.action === 'approve' ? '通过' : '拒绝'}
                       </Typography>
                     </Stack>
-                    <Stack direction='row' spacing={0.5} sx={{ mb: 0.5 }}>
+                    <Stack
+                      direction='row'
+                      spacing={0.5}
+                      sx={{ mb: 0.5 }}
+                    >
                       <User size={12} />
-                      <Typography variant='caption' sx={{ color: 'grey.500' }}>
+                      <Typography
+                        variant='caption'
+                        sx={{ color: 'grey.500' }}
+                      >
                         {record.actor_name || record.actor_id}
                       </Typography>
                     </Stack>
-                    <Stack direction='row' spacing={0.5}>
+                    <Stack
+                      direction='row'
+                      spacing={0.5}
+                    >
                       <Clock size={12} />
-                      <Typography variant='caption' sx={{ color: 'grey.500' }}>
+                      <Typography
+                        variant='caption'
+                        sx={{ color: 'grey.500' }}
+                      >
                         {new Date(record.created_at).toLocaleString()}
                       </Typography>
                     </Stack>
@@ -303,7 +437,10 @@ const FlowApprovalDetailPage: React.FC = () => {
                       </Typography>
                     )}
                     {index < records.length - 1 && (
-                      <Typography variant='caption' sx={{ color: 'grey.400', display: 'block', mt: 1 }}>
+                      <Typography
+                        variant='caption'
+                        sx={{ color: 'grey.400', display: 'block', mt: 1 }}
+                      >
                         状态变更: {record.previous_status} → {record.new_status}
                       </Typography>
                     )}
@@ -347,7 +484,10 @@ const FlowApprovalDetailPage: React.FC = () => {
   }, [approval]);
 
   return (
-    <PageContainer padding={false} maxWidth={false}>
+    <PageContainer
+      padding={false}
+      maxWidth={false}
+    >
       <DetailPageTemplate
         title='审批详情'
         subtitle={approval?.task_name}
@@ -356,11 +496,15 @@ const FlowApprovalDetailPage: React.FC = () => {
         backHref='/flow/approvals'
         tabs={tabs}
         actions={actions}
-        infoCard={approval ? {
-          title: approval.task_name,
-          subtitle: `审批ID: ${approval.id}`,
-          tags: [getStatusText(approval.status)],
-        } : undefined}
+        infoCard={
+          approval
+            ? {
+                title: approval.task_name,
+                subtitle: `审批ID: ${approval.id}`,
+                tags: [getStatusText(approval.status)],
+              }
+            : undefined
+        }
       />
 
       <Dialog
@@ -369,16 +513,25 @@ const FlowApprovalDetailPage: React.FC = () => {
       >
         <DialogTitle>{approvalAction === 'approve' ? '通过审批' : '拒绝审批'}</DialogTitle>
         <DialogContent>
-          <Typography variant='body2' sx={{ mb: 2 }}>
+          <Typography
+            variant='body2'
+            sx={{ mb: 2 }}
+          >
             {approvalAction === 'approve' ? '确认通过该审批任务' : '确认拒绝该审批任务'}
           </Typography>
           {approval && (
             <>
-              <Typography variant='body2' sx={{ color: 'grey.600', mb: 1 }}>
+              <Typography
+                variant='body2'
+                sx={{ color: 'grey.600', mb: 1 }}
+              >
                 任务: {approval.task_name}
               </Typography>
               {approval.node_id && (
-                <Typography variant='body2' sx={{ color: 'grey.600', mb: 1 }}>
+                <Typography
+                  variant='body2'
+                  sx={{ color: 'grey.600', mb: 1 }}
+                >
                   节点: {approval.node_id}
                 </Typography>
               )}
@@ -398,14 +551,24 @@ const FlowApprovalDetailPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button color='inherit' onClick={() => setShowApprovalModal(false)}>取消</Button>
+          <Button
+            color='inherit'
+            onClick={() => setShowApprovalModal(false)}
+          >
+            取消
+          </Button>
           <Button
             variant='contained'
             onClick={handleProcessApproval}
             disabled={processing || (approvalAction === 'reject' && !comment.trim())}
             color={approvalAction === 'approve' ? 'success' : 'error'}
             startIcon={
-              processing ? <Loader2 size={16} className='animate-spin' /> : undefined
+              processing ? (
+                <Loader2
+                  size={16}
+                  className='animate-spin'
+                />
+              ) : undefined
             }
           >
             {approvalAction === 'approve' ? '确认通过' : '确认拒绝'}

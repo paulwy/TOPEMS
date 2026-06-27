@@ -183,11 +183,14 @@ export interface IntegrationSyncStats {
   total_syncs: number;
   success_rate: number;
   last_sync_at?: string;
-  integration_stats: Record<string, {
-    total: number;
-    synced: number;
-    failed: number;
-  }>;
+  integration_stats: Record<
+    string,
+    {
+      total: number;
+      synced: number;
+      failed: number;
+    }
+  >;
 }
 
 export type RuleStatus = 'active' | 'inactive' | 'draft';
@@ -261,7 +264,13 @@ export interface UpdateConversionRuleRequest {
   stop_on_failure?: boolean;
 }
 
-export type MappingType = 'account' | 'customer' | 'supplier' | 'project' | 'department' | 'employee';
+export type MappingType =
+  | 'account'
+  | 'customer'
+  | 'supplier'
+  | 'project'
+  | 'department'
+  | 'employee';
 export type MappingDirection = 'to_external' | 'from_external' | 'bidirectional';
 
 export interface ErpMapping {

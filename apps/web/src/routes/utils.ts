@@ -19,13 +19,9 @@ export const lazyWithRetry = <T extends ComponentType<any>>(
       } catch (error: unknown) {
         lastError = error instanceof Error ? error : new Error(String(error));
         logger.error(
-          '[Lazy Load] Failed to load component ' +
-            (moduleName || 'unknown') +
-            ' (attempt ' +
-            attempt +
-            '/' +
-            MAX_RETRIES +
-            '):',
+          `[Lazy Load] Failed to load component ${moduleName || 'unknown'} (attempt ${attempt}/${
+            MAX_RETRIES
+          }):`,
           lastError.message
         );
         if (attempt < MAX_RETRIES) {
@@ -34,11 +30,7 @@ export const lazyWithRetry = <T extends ComponentType<any>>(
       }
     }
     logger.error(
-      '[Lazy Load] Component ' +
-        (moduleName || 'unknown') +
-        ' failed after ' +
-        MAX_RETRIES +
-        ' retries'
+      `[Lazy Load] Component ${moduleName || 'unknown'} failed after ${MAX_RETRIES} retries`
     );
     return { default: ErrorPage as unknown as T };
   });

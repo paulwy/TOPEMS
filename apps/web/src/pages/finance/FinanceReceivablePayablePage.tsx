@@ -15,8 +15,8 @@ import {
   Tabs,
   Tab,
   Box,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import {
   Plus,
   Edit2,
@@ -27,7 +27,7 @@ import {
   ArrowUpRight,
   ArrowDownRight,
 } from 'lucide-react';
-import { ListPageTemplate, StatCardGroup, type ColumnDef, type RowAction } from '@/components/mui';
+import { ListPageTemplate, StatCardGroup, type ColumnDef, type RowAction } from '@/components';
 import { financeApi } from '@/api/finance';
 import type { SalesInvoice, PurchaseInvoice, InvoiceStatus } from '../../types/finance';
 import { useAppStore } from '../../store';
@@ -203,7 +203,10 @@ const FinanceReceivablePayablePage: React.FC = () => {
         invoice_type: formData.invoice_type,
         status: formData.status,
       };
-      const response = await financeApi.receivablePayable.updatePurchaseInvoice(editingItem.id, data);
+      const response = await financeApi.receivablePayable.updatePurchaseInvoice(
+        editingItem.id,
+        data
+      );
       if (response.success) {
         addNotification({
           title: '成功',
@@ -446,7 +449,9 @@ const FinanceReceivablePayablePage: React.FC = () => {
         id: 'total_amount',
         label: '含税金额',
         align: 'right',
-        render: (row) => <Box sx={{ fontFamily: 'monospace' }}>{formatCurrency(row.total_amount)}</Box>,
+        render: (row) => (
+          <Box sx={{ fontFamily: 'monospace' }}>{formatCurrency(row.total_amount)}</Box>
+        ),
       },
       {
         id: 'received_amount',
@@ -467,8 +472,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
             sx={{
               fontFamily: 'monospace',
               fontWeight: 'medium',
-              color:
-                isOverdue(row.due_date) && !isPaid(row.status) ? 'error.main' : 'warning.main',
+              color: isOverdue(row.due_date) && !isPaid(row.status) ? 'error.main' : 'warning.main',
             }}
           >
             {formatCurrency(row.total_amount - row.received_amount)}
@@ -481,8 +485,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
         render: (row) => (
           <Box
             sx={{
-              color:
-                isOverdue(row.due_date) && !isPaid(row.status) ? 'error.main' : 'text.primary',
+              color: isOverdue(row.due_date) && !isPaid(row.status) ? 'error.main' : 'text.primary',
             }}
           >
             {row.due_date ? new Date(row.due_date).toLocaleDateString() : '-'}
@@ -515,7 +518,9 @@ const FinanceReceivablePayablePage: React.FC = () => {
         id: 'total_amount',
         label: '含税金额',
         align: 'right',
-        render: (row) => <Box sx={{ fontFamily: 'monospace' }}>{formatCurrency(row.total_amount)}</Box>,
+        render: (row) => (
+          <Box sx={{ fontFamily: 'monospace' }}>{formatCurrency(row.total_amount)}</Box>
+        ),
       },
       {
         id: 'paid_amount',
@@ -536,8 +541,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
             sx={{
               fontFamily: 'monospace',
               fontWeight: 'medium',
-              color:
-                isOverdue(row.due_date) && !isPaid(row.status) ? 'error.main' : 'warning.main',
+              color: isOverdue(row.due_date) && !isPaid(row.status) ? 'error.main' : 'warning.main',
             }}
           >
             {formatCurrency(row.total_amount - row.paid_amount)}
@@ -550,8 +554,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
         render: (row) => (
           <Box
             sx={{
-              color:
-                isOverdue(row.due_date) && !isPaid(row.status) ? 'error.main' : 'text.primary',
+              color: isOverdue(row.due_date) && !isPaid(row.status) ? 'error.main' : 'text.primary',
             }}
           >
             {row.due_date ? new Date(row.due_date).toLocaleDateString() : '-'}
@@ -648,7 +651,10 @@ const FinanceReceivablePayablePage: React.FC = () => {
   };
 
   return (
-    <PageContainer padding={false} maxWidth={false}>
+    <PageContainer
+      padding={false}
+      maxWidth={false}
+    >
       <Box
         sx={{
           display: 'flex',
@@ -889,7 +895,9 @@ const FinanceReceivablePayablePage: React.FC = () => {
               <Select
                 value={formData.status}
                 label='状态'
-                onChange={(e) => setFormData({ ...formData, status: e.target.value as InvoiceStatus })}
+                onChange={(e) =>
+                  setFormData({ ...formData, status: e.target.value as InvoiceStatus })
+                }
               >
                 <MenuItem value='draft'>草稿</MenuItem>
                 <MenuItem value='approved'>已审核</MenuItem>

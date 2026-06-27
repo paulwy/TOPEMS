@@ -315,9 +315,7 @@ export const getCompanyFinancialData = async (
 /**
  * 获取公司架构树
  */
-export const getCompanyTree = async (): Promise<
-  ApiResponse<CompanyTreeNode>
-> => {
+export const getCompanyTree = async (): Promise<ApiResponse<CompanyTreeNode>> => {
   return apiClient.erp.get('/api/consolidation/company-tree');
 };
 

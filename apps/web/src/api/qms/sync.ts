@@ -1,12 +1,7 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
-import type {
-  SyncRecord,
-  SyncRecordBackend,
-} from './types';
-import {
-  adaptSyncRecordToFrontend,
-} from './adapters';
+import type { SyncRecord, SyncRecordBackend } from './types';
+import { adaptSyncRecordToFrontend } from './adapters';
 
 export const syncApi = {
   listSyncRecords: async (params?: {

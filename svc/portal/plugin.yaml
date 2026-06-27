@@ -5,7 +5,7 @@ description: "Portal 企业门户 - 首页、公告、快捷入口"
 category: "System"
 plugin_type: "system"
 deployment:
-  port: 8066
+  port: 8063
   base_path: "/api/portal"
 permissions:
   - code: "announcement"

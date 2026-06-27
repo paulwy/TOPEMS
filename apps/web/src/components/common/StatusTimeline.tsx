@@ -163,11 +163,17 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  border: item.status === 'current' ? `2px solid ${customColor || config.color}` : 'none',
-                  boxShadow: item.status === 'current' ? `0 0 0 4px ${customColor || config.bgColor}` : 'none',
+                  border:
+                    item.status === 'current' ? `2px solid ${customColor || config.color}` : 'none',
+                  boxShadow:
+                    item.status === 'current'
+                      ? `0 0 0 4px ${customColor || config.bgColor}`
+                      : 'none',
                 }}
               >
-                <Box sx={{ color: customColor || config.color }}>{item.icon || (showIcons && config.icon)}</Box>
+                <Box sx={{ color: customColor || config.color }}>
+                  {item.icon || (showIcons && config.icon)}
+                </Box>
               </Box>
               {index < items.length - 1 && (
                 <Box
@@ -175,11 +181,11 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
                     width: 2,
                     flex: 1,
                     minHeight: 40,
-                    bgcolor: customColor || (
-                      items[index + 1].status === 'completed' || item.status === 'completed'
+                    bgcolor:
+                      customColor ||
+                      (items[index + 1].status === 'completed' || item.status === 'completed'
                         ? config.color
-                        : 'divider'
-                    ),
+                        : 'divider'),
                     mt: 1,
                   }}
                 />

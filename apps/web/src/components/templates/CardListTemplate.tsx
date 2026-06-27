@@ -22,10 +22,10 @@ import {
   Collapse,
   useTheme,
   useMediaQuery,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { Search, RefreshCw, Filter, Plus, ChevronDown, ChevronUp, Grid, List } from 'lucide-react';
-import { EmptyState } from '@/components/mui';
+import { EmptyState } from '@/components/common';
 
 /**
  * 统计卡片类型
@@ -702,7 +702,8 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
             onClick={(e) => e.stopPropagation()}
           >
             {cardActions.map((action, idx) => {
-              const actionIcon = typeof action.icon === 'function' ? action.icon(item) : action.icon;
+              const actionIcon =
+                typeof action.icon === 'function' ? action.icon(item) : action.icon;
               return (
                 <Button
                   key={idx}

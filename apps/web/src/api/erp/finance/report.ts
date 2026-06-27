@@ -21,7 +21,7 @@ export const financeReportApi = {
     if (params?.period) searchParams.set('period', params.period);
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/erp/reports/balance-sheet${queryString ? '?' + queryString : ''}`
+      `/api/erp/reports/balance-sheet${queryString ? `?${queryString}` : ''}`
     );
   },
 
@@ -30,7 +30,7 @@ export const financeReportApi = {
     if (params?.period) searchParams.set('period', params.period);
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/erp/reports/income-statement${queryString ? '?' + queryString : ''}`
+      `/api/erp/reports/income-statement${queryString ? `?${queryString}` : ''}`
     );
   },
 
@@ -38,7 +38,7 @@ export const financeReportApi = {
     const searchParams = new URLSearchParams();
     if (params?.period) searchParams.set('period', params.period);
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/erp/reports/cash-flow${queryString ? '?' + queryString : ''}`);
+    return apiClient.erp.get(`/api/erp/reports/cash-flow${queryString ? `?${queryString}` : ''}`);
   },
 
   async businessOverview(params?: { period?: string }): Promise<ApiResponse<BusinessOverview>> {
@@ -46,7 +46,7 @@ export const financeReportApi = {
     if (params?.period) searchParams.set('period', params.period);
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/erp/reports/business-overview${queryString ? '?' + queryString : ''}`
+      `/api/erp/reports/business-overview${queryString ? `?${queryString}` : ''}`
     );
   },
 
@@ -57,7 +57,7 @@ export const financeReportApi = {
     if (params?.project_id) searchParams.set('project_id', params.project_id);
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/erp/reports/project-summary${queryString ? '?' + queryString : ''}`
+      `/api/erp/reports/project-summary${queryString ? `?${queryString}` : ''}`
     );
   },
 
@@ -72,7 +72,7 @@ export const financeReportApi = {
     if (params?.department_id) searchParams.set('department_id', params.department_id);
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/erp/reports/department-summary${queryString ? '?' + queryString : ''}`
+      `/api/erp/reports/department-summary${queryString ? `?${queryString}` : ''}`
     );
   },
 
@@ -85,7 +85,7 @@ export const financeReportApi = {
     if (params?.period) searchParams.set('period', params.period);
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/erp/reports/voucher-statistics${queryString ? '?' + queryString : ''}`
+      `/api/erp/reports/voucher-statistics${queryString ? `?${queryString}` : ''}`
     );
   },
 
@@ -94,7 +94,7 @@ export const financeReportApi = {
     if (params?.period) searchParams.set('period', params.period);
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/erp/reports/cash-flow-analysis${queryString ? '?' + queryString : ''}`
+      `/api/erp/reports/cash-flow-analysis${queryString ? `?${queryString}` : ''}`
     );
   },
 
@@ -103,7 +103,7 @@ export const financeReportApi = {
     if (params?.period) searchParams.set('period', params.period);
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/erp/reports/expense-analysis${queryString ? '?' + queryString : ''}`
+      `/api/erp/reports/expense-analysis${queryString ? `?${queryString}` : ''}`
     );
   },
 
@@ -112,7 +112,7 @@ export const financeReportApi = {
     if (params?.period) searchParams.set('period', params.period);
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/erp/reports/profit-analysis${queryString ? '?' + queryString : ''}`
+      `/api/erp/reports/profit-analysis${queryString ? `?${queryString}` : ''}`
     );
   },
 
@@ -121,7 +121,7 @@ export const financeReportApi = {
     if (params?.period) searchParams.set('period', params.period);
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/erp/reports/financial-overview${queryString ? '?' + queryString : ''}`
+      `/api/erp/reports/financial-overview${queryString ? `?${queryString}` : ''}`
     );
   },
 };

@@ -22,11 +22,7 @@ vi.mock('@/api/mes', () => ({
 }));
 
 const renderWithProviders = (ui: React.ReactElement) => {
-  return render(
-    <BrowserRouter>
-      {ui}
-    </BrowserRouter>
-  );
+  return render(<BrowserRouter>{ui}</BrowserRouter>);
 };
 
 const mockOrders = [
@@ -115,11 +111,26 @@ describe('ProductionDashboardPage', () => {
     });
     (workStationApi.list as vi.Mock).mockResolvedValue({
       success: true,
-      data: { workstations: mockWorkStations, total: mockWorkStations.length, page: 1, page_size: 100 },
+      data: {
+        workstations: mockWorkStations,
+        total: mockWorkStations.length,
+        page: 1,
+        page_size: 100,
+      },
     });
     (mesEquipmentApi.getStatistics as vi.Mock).mockResolvedValue({
       success: true,
-      data: { total: 10, in_use: 8, idle: 1, maintenance: 1, scrapped: 0, total_value: 1000000, monthly_inspections: 50, monthly_maintenances: 10, pending_repairs: 0 },
+      data: {
+        total: 10,
+        in_use: 8,
+        idle: 1,
+        maintenance: 1,
+        scrapped: 0,
+        total_value: 1000000,
+        monthly_inspections: 50,
+        monthly_maintenances: 10,
+        pending_repairs: 0,
+      },
     });
     (productionScheduleApi.list as vi.Mock).mockResolvedValue({
       success: true,

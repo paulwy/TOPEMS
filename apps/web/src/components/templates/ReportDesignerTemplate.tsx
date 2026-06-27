@@ -56,7 +56,16 @@ export type LayoutType = 'table' | 'chart' | 'card';
 
 export type ChartType = 'line' | 'bar' | 'pie' | 'area' | 'scatter';
 
-export type FilterOperator = 'equals' | 'not_equals' | 'contains' | 'not_contains' | 'greater_than' | 'less_than' | 'between' | 'in' | 'is_null';
+export type FilterOperator =
+  | 'equals'
+  | 'not_equals'
+  | 'contains'
+  | 'not_contains'
+  | 'greater_than'
+  | 'less_than'
+  | 'between'
+  | 'in'
+  | 'is_null';
 
 export type SortDirection = 'asc' | 'desc';
 
@@ -152,7 +161,17 @@ const MOCK_FIELDS: Record<string, DataSourceField[]> = {
     { id: 'customer_name', name: 'customer_name', type: 'string', label: '客户名称' },
     { id: 'order_date', name: 'order_date', type: 'date', label: '订单日期' },
     { id: 'amount', name: 'amount', type: 'number', label: '订单金额' },
-    { id: 'status', name: 'status', type: 'select', label: '订单状态', options: [{ label: '待处理', value: 'pending' }, { label: '已完成', value: 'completed' }, { label: '已取消', value: 'cancelled' }] },
+    {
+      id: 'status',
+      name: 'status',
+      type: 'select',
+      label: '订单状态',
+      options: [
+        { label: '待处理', value: 'pending' },
+        { label: '已完成', value: 'completed' },
+        { label: '已取消', value: 'cancelled' },
+      ],
+    },
     { id: 'product_name', name: 'product_name', type: 'string', label: '产品名称' },
     { id: 'quantity', name: 'quantity', type: 'number', label: '数量' },
     { id: 'discount', name: 'discount', type: 'number', label: '折扣' },
@@ -165,7 +184,16 @@ const MOCK_FIELDS: Record<string, DataSourceField[]> = {
     { id: 'department', name: 'department', type: 'string', label: '部门' },
     { id: 'position', name: 'position', type: 'string', label: '职位' },
     { id: 'created_at', name: 'created_at', type: 'date', label: '创建时间' },
-    { id: 'status', name: 'status', type: 'select', label: '状态', options: [{ label: '在职', value: 'active' }, { label: '离职', value: 'inactive' }] },
+    {
+      id: 'status',
+      name: 'status',
+      type: 'select',
+      label: '状态',
+      options: [
+        { label: '在职', value: 'active' },
+        { label: '离职', value: 'inactive' },
+      ],
+    },
   ],
   projects: [
     { id: 'project_id', name: 'project_id', type: 'string', label: '项目编号' },
@@ -175,29 +203,156 @@ const MOCK_FIELDS: Record<string, DataSourceField[]> = {
     { id: 'end_date', name: 'end_date', type: 'date', label: '结束日期' },
     { id: 'budget', name: 'budget', type: 'number', label: '预算' },
     { id: 'progress', name: 'progress', type: 'number', label: '进度(%)' },
-    { id: 'status', name: 'status', type: 'select', label: '状态', options: [{ label: '进行中', value: 'in_progress' }, { label: '已完成', value: 'completed' }, { label: '已暂停', value: 'paused' }] },
+    {
+      id: 'status',
+      name: 'status',
+      type: 'select',
+      label: '状态',
+      options: [
+        { label: '进行中', value: 'in_progress' },
+        { label: '已完成', value: 'completed' },
+        { label: '已暂停', value: 'paused' },
+      ],
+    },
   ],
 };
 
 const MOCK_DATA: Record<string, Record<string, any>[]> = {
   orders: [
-    { order_id: 'ORD001', customer_name: '张三', order_date: '2024-01-15', amount: 12500, status: 'completed', product_name: '产品A', quantity: 10, discount: 0.1 },
-    { order_id: 'ORD002', customer_name: '李四', order_date: '2024-01-16', amount: 8900, status: 'pending', product_name: '产品B', quantity: 5, discount: 0.05 },
-    { order_id: 'ORD003', customer_name: '王五', order_date: '2024-01-17', amount: 15600, status: 'completed', product_name: '产品A', quantity: 12, discount: 0.15 },
-    { order_id: 'ORD004', customer_name: '赵六', order_date: '2024-01-18', amount: 6700, status: 'cancelled', product_name: '产品C', quantity: 3, discount: 0 },
-    { order_id: 'ORD005', customer_name: '孙七', order_date: '2024-01-19', amount: 23400, status: 'completed', product_name: '产品B', quantity: 15, discount: 0.2 },
+    {
+      order_id: 'ORD001',
+      customer_name: '张三',
+      order_date: '2024-01-15',
+      amount: 12500,
+      status: 'completed',
+      product_name: '产品A',
+      quantity: 10,
+      discount: 0.1,
+    },
+    {
+      order_id: 'ORD002',
+      customer_name: '李四',
+      order_date: '2024-01-16',
+      amount: 8900,
+      status: 'pending',
+      product_name: '产品B',
+      quantity: 5,
+      discount: 0.05,
+    },
+    {
+      order_id: 'ORD003',
+      customer_name: '王五',
+      order_date: '2024-01-17',
+      amount: 15600,
+      status: 'completed',
+      product_name: '产品A',
+      quantity: 12,
+      discount: 0.15,
+    },
+    {
+      order_id: 'ORD004',
+      customer_name: '赵六',
+      order_date: '2024-01-18',
+      amount: 6700,
+      status: 'cancelled',
+      product_name: '产品C',
+      quantity: 3,
+      discount: 0,
+    },
+    {
+      order_id: 'ORD005',
+      customer_name: '孙七',
+      order_date: '2024-01-19',
+      amount: 23400,
+      status: 'completed',
+      product_name: '产品B',
+      quantity: 15,
+      discount: 0.2,
+    },
   ],
   users: [
-    { user_id: 'U001', username: 'zhangsan', email: 'zhangsan@example.com', phone: '13800138001', department: '技术部', position: '工程师', created_at: '2023-06-01', status: 'active' },
-    { user_id: 'U002', username: 'lisi', email: 'lisi@example.com', phone: '13800138002', department: '销售部', position: '销售经理', created_at: '2023-07-15', status: 'active' },
-    { user_id: 'U003', username: 'wangwu', email: 'wangwu@example.com', phone: '13800138003', department: '技术部', position: '高级工程师', created_at: '2023-05-20', status: 'active' },
-    { user_id: 'U004', username: 'zhaoliu', email: 'zhaoliu@example.com', phone: '13800138004', department: '财务部', position: '会计', created_at: '2023-08-01', status: 'inactive' },
+    {
+      user_id: 'U001',
+      username: 'zhangsan',
+      email: 'zhangsan@example.com',
+      phone: '13800138001',
+      department: '技术部',
+      position: '工程师',
+      created_at: '2023-06-01',
+      status: 'active',
+    },
+    {
+      user_id: 'U002',
+      username: 'lisi',
+      email: 'lisi@example.com',
+      phone: '13800138002',
+      department: '销售部',
+      position: '销售经理',
+      created_at: '2023-07-15',
+      status: 'active',
+    },
+    {
+      user_id: 'U003',
+      username: 'wangwu',
+      email: 'wangwu@example.com',
+      phone: '13800138003',
+      department: '技术部',
+      position: '高级工程师',
+      created_at: '2023-05-20',
+      status: 'active',
+    },
+    {
+      user_id: 'U004',
+      username: 'zhaoliu',
+      email: 'zhaoliu@example.com',
+      phone: '13800138004',
+      department: '财务部',
+      position: '会计',
+      created_at: '2023-08-01',
+      status: 'inactive',
+    },
   ],
   projects: [
-    { project_id: 'PRJ001', project_name: 'ERP系统升级', manager: '张三', start_date: '2024-01-01', end_date: '2024-06-30', budget: 500000, progress: 65, status: 'in_progress' },
-    { project_id: 'PRJ002', project_name: '移动端APP开发', manager: '李四', start_date: '2024-02-01', end_date: '2024-08-31', budget: 800000, progress: 30, status: 'in_progress' },
-    { project_id: 'PRJ003', project_name: '数据分析平台', manager: '王五', start_date: '2023-10-01', end_date: '2024-03-31', budget: 300000, progress: 100, status: 'completed' },
-    { project_id: 'PRJ004', project_name: 'CRM系统实施', manager: '赵六', start_date: '2024-03-01', end_date: '2024-09-30', budget: 450000, progress: 15, status: 'paused' },
+    {
+      project_id: 'PRJ001',
+      project_name: 'ERP系统升级',
+      manager: '张三',
+      start_date: '2024-01-01',
+      end_date: '2024-06-30',
+      budget: 500000,
+      progress: 65,
+      status: 'in_progress',
+    },
+    {
+      project_id: 'PRJ002',
+      project_name: '移动端APP开发',
+      manager: '李四',
+      start_date: '2024-02-01',
+      end_date: '2024-08-31',
+      budget: 800000,
+      progress: 30,
+      status: 'in_progress',
+    },
+    {
+      project_id: 'PRJ003',
+      project_name: '数据分析平台',
+      manager: '王五',
+      start_date: '2023-10-01',
+      end_date: '2024-03-31',
+      budget: 300000,
+      progress: 100,
+      status: 'completed',
+    },
+    {
+      project_id: 'PRJ004',
+      project_name: 'CRM系统实施',
+      manager: '赵六',
+      start_date: '2024-03-01',
+      end_date: '2024-09-30',
+      budget: 450000,
+      progress: 15,
+      status: 'paused',
+    },
   ],
 };
 
@@ -288,20 +443,20 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
   }, [state.dataSource]);
 
   const unselectedFields = useMemo(() => {
-    const selectedIds = new Set(state.selectedFields.map(f => f.fieldId));
-    return availableFields.filter(f => !selectedIds.has(f.id));
+    const selectedIds = new Set(state.selectedFields.map((f) => f.fieldId));
+    return availableFields.filter((f) => !selectedIds.has(f.id));
   }, [availableFields, state.selectedFields]);
 
   const previewData = useMemo(() => {
     const sourceName = state.dataSource.tableName || 'orders';
     const rawData = MOCK_DATA[sourceName] || [];
-    const visibleFields = state.selectedFields.filter(f => f.visible);
-    
+    const visibleFields = state.selectedFields.filter((f) => f.visible);
+
     if (visibleFields.length === 0) return rawData;
-    
-    return rawData.map(row => {
+
+    return rawData.map((row) => {
       const newRow: Record<string, any> = {};
-      visibleFields.forEach(field => {
+      visibleFields.forEach((field) => {
         newRow[field.fieldName] = row[field.fieldName];
       });
       return newRow;
@@ -309,7 +464,7 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
   }, [state.dataSource.tableName, state.selectedFields]);
 
   const handleDataSourceTypeChange = useCallback((type: DataSourceType) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       dataSource: {
         ...prev.dataSource,
@@ -323,42 +478,18 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
     }));
   }, []);
 
-  const handleTableSelect = useCallback((tableName: string) => {
-    const fields = MOCK_FIELDS[tableName] || [];
-    setState(prev => ({
-      ...prev,
-      dataSource: {
-        ...prev.dataSource,
-        tableName,
-        name: availableTables.find(t => t.name === tableName)?.label || tableName,
-        fields,
-      },
-      selectedFields: fields.map(f => ({
-        fieldId: f.id,
-        fieldName: f.name,
-        label: f.label,
-        type: f.type,
-        width: 150,
-        visible: true,
-        sortable: true,
-      })),
-    }));
-  }, [availableTables]);
-
-  const handleApiSelect = useCallback((apiName: string) => {
-    const api = availableApis.find(a => a.name === apiName);
-    if (api) {
-      const fields = MOCK_FIELDS['orders'] || [];
-      setState(prev => ({
+  const handleTableSelect = useCallback(
+    (tableName: string) => {
+      const fields = MOCK_FIELDS[tableName] || [];
+      setState((prev) => ({
         ...prev,
         dataSource: {
           ...prev.dataSource,
-          apiUrl: api.url,
-          name: api.label,
-          apiMethod: 'GET',
+          tableName,
+          name: availableTables.find((t) => t.name === tableName)?.label || tableName,
           fields,
         },
-        selectedFields: fields.map(f => ({
+        selectedFields: fields.map((f) => ({
           fieldId: f.id,
           fieldName: f.name,
           label: f.label,
@@ -368,14 +499,44 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
           sortable: true,
         })),
       }));
-    }
-  }, [availableApis]);
+    },
+    [availableTables]
+  );
+
+  const handleApiSelect = useCallback(
+    (apiName: string) => {
+      const api = availableApis.find((a) => a.name === apiName);
+      if (api) {
+        const fields = MOCK_FIELDS['orders'] || [];
+        setState((prev) => ({
+          ...prev,
+          dataSource: {
+            ...prev.dataSource,
+            apiUrl: api.url,
+            name: api.label,
+            apiMethod: 'GET',
+            fields,
+          },
+          selectedFields: fields.map((f) => ({
+            fieldId: f.id,
+            fieldName: f.name,
+            label: f.label,
+            type: f.type,
+            width: 150,
+            visible: true,
+            sortable: true,
+          })),
+        }));
+      }
+    },
+    [availableApis]
+  );
 
   const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       const fields = MOCK_FIELDS['orders'] || [];
-      setState(prev => ({
+      setState((prev) => ({
         ...prev,
         dataSource: {
           ...prev.dataSource,
@@ -383,7 +544,7 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
           name: file.name,
           fields,
         },
-        selectedFields: fields.map(f => ({
+        selectedFields: fields.map((f) => ({
           fieldId: f.id,
           fieldName: f.name,
           label: f.label,
@@ -397,7 +558,7 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
   }, []);
 
   const handleAddField = useCallback((field: DataSourceField) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       selectedFields: [
         ...prev.selectedFields,
@@ -415,14 +576,14 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
   }, []);
 
   const handleRemoveField = useCallback((fieldId: string) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
-      selectedFields: prev.selectedFields.filter(f => f.fieldId !== fieldId),
+      selectedFields: prev.selectedFields.filter((f) => f.fieldId !== fieldId),
     }));
   }, []);
 
   const handleReorderFields = useCallback((fromIndex: number, toIndex: number) => {
-    setState(prev => {
+    setState((prev) => {
       const newFields = [...prev.selectedFields];
       const [removed] = newFields.splice(fromIndex, 1);
       newFields.splice(toIndex, 0, removed);
@@ -431,9 +592,9 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
   }, []);
 
   const handleFieldUpdate = useCallback((fieldId: string, updates: Partial<SelectedField>) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
-      selectedFields: prev.selectedFields.map(f =>
+      selectedFields: prev.selectedFields.map((f) =>
         f.fieldId === fieldId ? { ...f, ...updates } : f
       ),
     }));
@@ -447,32 +608,32 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
       operator: 'equals',
       value: null,
     };
-    setState(prev => ({ ...prev, filters: [...prev.filters, newFilter] }));
+    setState((prev) => ({ ...prev, filters: [...prev.filters, newFilter] }));
   }, [availableFields]);
 
   const handleUpdateFilter = useCallback((filterId: string, updates: Partial<FilterCondition>) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
-      filters: prev.filters.map(f => (f.id === filterId ? { ...f, ...updates } : f)),
+      filters: prev.filters.map((f) => (f.id === filterId ? { ...f, ...updates } : f)),
     }));
   }, []);
 
   const handleRemoveFilter = useCallback((filterId: string) => {
-    setState(prev => ({ ...prev, filters: prev.filters.filter(f => f.id !== filterId) }));
+    setState((prev) => ({ ...prev, filters: prev.filters.filter((f) => f.id !== filterId) }));
   }, []);
 
   const handleAddGroupBy = useCallback(() => {
-    const numericFields = availableFields.filter(f => f.type === 'number');
+    const numericFields = availableFields.filter((f) => f.type === 'number');
     const newGroup: GroupByConfig = {
       fieldId: availableFields[0]?.id || '',
       fieldName: availableFields[0]?.name || '',
       aggregate: numericFields.length > 0 ? 'sum' : undefined,
     };
-    setState(prev => ({ ...prev, groupBy: [...prev.groupBy, newGroup] }));
+    setState((prev) => ({ ...prev, groupBy: [...prev.groupBy, newGroup] }));
   }, [availableFields]);
 
   const handleUpdateGroupBy = useCallback((index: number, updates: Partial<GroupByConfig>) => {
-    setState(prev => {
+    setState((prev) => {
       const newGroupBy = [...prev.groupBy];
       newGroupBy[index] = { ...newGroupBy[index], ...updates };
       return { ...prev, groupBy: newGroupBy };
@@ -480,7 +641,7 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
   }, []);
 
   const handleRemoveGroupBy = useCallback((index: number) => {
-    setState(prev => {
+    setState((prev) => {
       const newGroupBy = [...prev.groupBy];
       newGroupBy.splice(index, 1);
       return { ...prev, groupBy: newGroupBy };
@@ -488,7 +649,7 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
   }, []);
 
   const handleLayoutChange = useCallback((type: LayoutType) => {
-    setState(prev => ({
+    setState((prev) => ({
       ...prev,
       layout: {
         ...prev.layout,
@@ -502,9 +663,12 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
     onSave?.(state);
   }, [state, onSave]);
 
-  const handleExport = useCallback((format: 'excel' | 'pdf' | 'csv') => {
-    onExport?.(format);
-  }, [onExport]);
+  const handleExport = useCallback(
+    (format: 'excel' | 'pdf' | 'csv') => {
+      onExport?.(format);
+    },
+    [onExport]
+  );
 
   const handlePreview = useCallback(() => {
     onPreview?.(state);
@@ -525,10 +689,19 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Database sx={{ width: 18, height: 18, color: 'primary.main' }} />
-            <Typography variant='subtitle1' sx={{ fontWeight: 600 }}>数据源</Typography>
+            <Typography
+              variant='subtitle1'
+              sx={{ fontWeight: 600 }}
+            >
+              数据源
+            </Typography>
           </Box>
           <IconButton size='small'>
-            {showDataSourcePanel ? <ChevronUp sx={{ width: 18, height: 18 }} /> : <ChevronDown sx={{ width: 18, height: 18 }} />}
+            {showDataSourcePanel ? (
+              <ChevronUp sx={{ width: 18, height: 18 }} />
+            ) : (
+              <ChevronDown sx={{ width: 18, height: 18 }} />
+            )}
           </IconButton>
         </Box>
         <Divider sx={{ mb: 2 }} />
@@ -580,8 +753,13 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
                   label='选择数据表'
                   onChange={(e) => handleTableSelect(e.target.value)}
                 >
-                  {availableTables.map(table => (
-                    <MenuItem key={table.name} value={table.name}>{table.label}</MenuItem>
+                  {availableTables.map((table) => (
+                    <MenuItem
+                      key={table.name}
+                      value={table.name}
+                    >
+                      {table.label}
+                    </MenuItem>
                   ))}
                 </Select>
               </FormControl>
@@ -593,17 +771,33 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
                 <Select
                   value={state.dataSource.apiUrl || ''}
                   label='选择API接口'
-                  onChange={(e) => handleApiSelect(availableApis.find(a => a.url === e.target.value)?.name || '')}
+                  onChange={(e) =>
+                    handleApiSelect(availableApis.find((a) => a.url === e.target.value)?.name || '')
+                  }
                 >
-                  {availableApis.map(api => (
-                    <MenuItem key={api.name} value={api.url}>{api.label}</MenuItem>
+                  {availableApis.map((api) => (
+                    <MenuItem
+                      key={api.name}
+                      value={api.url}
+                    >
+                      {api.label}
+                    </MenuItem>
                   ))}
                 </Select>
               </FormControl>
             )}
 
             {state.dataSource.type === 'excel' && (
-              <Box sx={{ p: 3, border: 2, borderStyle: 'dashed', borderColor: 'grey.300', borderRadius: 2, textAlign: 'center' }}>
+              <Box
+                sx={{
+                  p: 3,
+                  border: 2,
+                  borderStyle: 'dashed',
+                  borderColor: 'grey.300',
+                  borderRadius: 2,
+                  textAlign: 'center',
+                }}
+              >
                 <input
                   type='file'
                   accept='.xlsx,.xls,.csv'
@@ -611,11 +805,26 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
                   style={{ display: 'none' }}
                   id='excel-upload'
                 />
-                <label htmlFor='excel-upload' style={{ cursor: 'pointer' }}>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                <label
+                  htmlFor='excel-upload'
+                  style={{ cursor: 'pointer' }}
+                >
+                  <Box
+                    sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}
+                  >
                     <FileSpreadsheet sx={{ width: 48, height: 48, color: 'grey.400' }} />
-                    <Typography variant='body1' sx={{ color: 'grey.600' }}>点击上传Excel文件</Typography>
-                    <Typography variant='caption' sx={{ color: 'grey.400' }}>支持 .xlsx, .xls, .csv 格式</Typography>
+                    <Typography
+                      variant='body1'
+                      sx={{ color: 'grey.600' }}
+                    >
+                      点击上传Excel文件
+                    </Typography>
+                    <Typography
+                      variant='caption'
+                      sx={{ color: 'grey.400' }}
+                    >
+                      支持 .xlsx, .xls, .csv 格式
+                    </Typography>
                   </Box>
                 </label>
               </Box>
@@ -638,14 +847,22 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
     return (
       <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
         <Box sx={{ flex: 1, minWidth: 200 }}>
-          <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 1, color: 'grey.600' }}>可用字段</Typography>
+          <Typography
+            variant='subtitle2'
+            sx={{ fontWeight: 600, mb: 1, color: 'grey.600' }}
+          >
+            可用字段
+          </Typography>
           <Paper sx={{ p: 1, maxHeight: 300, overflowY: 'auto', borderRadius: 1 }}>
             {unselectedFields.length === 0 ? (
-              <Typography variant='caption' sx={{ p: 2, display: 'block', color: 'grey.400' }}>
+              <Typography
+                variant='caption'
+                sx={{ p: 2, display: 'block', color: 'grey.400' }}
+              >
                 所有字段已添加
               </Typography>
             ) : (
-              unselectedFields.map(field => (
+              unselectedFields.map((field) => (
                 <Box
                   key={field.id}
                   sx={{
@@ -658,8 +875,18 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
                   }}
                 >
                   <Box>
-                    <Typography variant='body2' sx={{ fontWeight: 500 }}>{field.label}</Typography>
-                    <Typography variant='caption' sx={{ color: 'grey.400' }}>{field.type}</Typography>
+                    <Typography
+                      variant='body2'
+                      sx={{ fontWeight: 500 }}
+                    >
+                      {field.label}
+                    </Typography>
+                    <Typography
+                      variant='caption'
+                      sx={{ color: 'grey.400' }}
+                    >
+                      {field.type}
+                    </Typography>
                   </Box>
                   <IconButton
                     size='small'
@@ -675,13 +902,28 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
         </Box>
 
         <Box sx={{ flex: 1, minWidth: 250 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
-            <Typography variant='subtitle2' sx={{ fontWeight: 600, color: 'grey.600' }}>已选字段 ({state.selectedFields.length})</Typography>
-            <Typography variant='caption' sx={{ color: 'grey.400' }}>拖拽排序</Typography>
+          <Box
+            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}
+          >
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, color: 'grey.600' }}
+            >
+              已选字段 ({state.selectedFields.length})
+            </Typography>
+            <Typography
+              variant='caption'
+              sx={{ color: 'grey.400' }}
+            >
+              拖拽排序
+            </Typography>
           </Box>
           <Paper sx={{ p: 1, maxHeight: 300, overflowY: 'auto', borderRadius: 1 }}>
             {state.selectedFields.length === 0 ? (
-              <Typography variant='caption' sx={{ p: 2, display: 'block', color: 'grey.400' }}>
+              <Typography
+                variant='caption'
+                sx={{ p: 2, display: 'block', color: 'grey.400' }}
+              >
                 请从左侧添加字段
               </Typography>
             ) : (
@@ -720,7 +962,9 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
                   </IconButton>
                   <Checkbox
                     checked={field.visible}
-                    onChange={(e) => handleFieldUpdate(field.fieldId, { visible: e.target.checked })}
+                    onChange={(e) =>
+                      handleFieldUpdate(field.fieldId, { visible: e.target.checked })
+                    }
                     size='small'
                   />
                   <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -761,20 +1005,36 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Filter sx={{ width: 18, height: 18, color: 'secondary.main' }} />
-            <Typography variant='subtitle1' sx={{ fontWeight: 600 }}>筛选条件</Typography>
+            <Typography
+              variant='subtitle1'
+              sx={{ fontWeight: 600 }}
+            >
+              筛选条件
+            </Typography>
             {state.filters.length > 0 && (
-              <Chip size='small' label={state.filters.length} sx={{ ml: 1 }} />
+              <Chip
+                size='small'
+                label={state.filters.length}
+                sx={{ ml: 1 }}
+              />
             )}
           </Box>
           <IconButton size='small'>
-            {showFilterPanel ? <ChevronUp sx={{ width: 18, height: 18 }} /> : <ChevronDown sx={{ width: 18, height: 18 }} />}
+            {showFilterPanel ? (
+              <ChevronUp sx={{ width: 18, height: 18 }} />
+            ) : (
+              <ChevronDown sx={{ width: 18, height: 18 }} />
+            )}
           </IconButton>
         </Box>
         <Divider sx={{ mb: 2 }} />
         {showFilterPanel && (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {state.filters.map(filter => (
-              <Box key={filter.id} sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+            {state.filters.map((filter) => (
+              <Box
+                key={filter.id}
+                sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}
+              >
                 <FormControl sx={{ minWidth: 150 }}>
                   <InputLabel size='small'>字段</InputLabel>
                   <Select
@@ -782,12 +1042,20 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
                     value={filter.fieldId}
                     label='字段'
                     onChange={(e) => {
-                      const field = availableFields.find(f => f.id === e.target.value);
-                      handleUpdateFilter(filter.id, { fieldId: e.target.value, fieldName: field?.name || '' });
+                      const field = availableFields.find((f) => f.id === e.target.value);
+                      handleUpdateFilter(filter.id, {
+                        fieldId: e.target.value,
+                        fieldName: field?.name || '',
+                      });
                     }}
                   >
-                    {availableFields.map(f => (
-                      <MenuItem key={f.id} value={f.id}>{f.label}</MenuItem>
+                    {availableFields.map((f) => (
+                      <MenuItem
+                        key={f.id}
+                        value={f.id}
+                      >
+                        {f.label}
+                      </MenuItem>
                     ))}
                   </Select>
                 </FormControl>
@@ -797,10 +1065,17 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
                     size='small'
                     value={filter.operator}
                     label='操作符'
-                    onChange={(e) => handleUpdateFilter(filter.id, { operator: e.target.value as FilterOperator })}
+                    onChange={(e) =>
+                      handleUpdateFilter(filter.id, { operator: e.target.value as FilterOperator })
+                    }
                   >
-                    {FILTER_OPERATORS.map(op => (
-                      <MenuItem key={op.value} value={op.value}>{op.label}</MenuItem>
+                    {FILTER_OPERATORS.map((op) => (
+                      <MenuItem
+                        key={op.value}
+                        value={op.value}
+                      >
+                        {op.label}
+                      </MenuItem>
                     ))}
                   </Select>
                 </FormControl>
@@ -856,20 +1131,36 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
         >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <BarChart3 sx={{ width: 18, height: 18, color: 'success.main' }} />
-            <Typography variant='subtitle1' sx={{ fontWeight: 600 }}>分组设置</Typography>
+            <Typography
+              variant='subtitle1'
+              sx={{ fontWeight: 600 }}
+            >
+              分组设置
+            </Typography>
             {state.groupBy.length > 0 && (
-              <Chip size='small' label={state.groupBy.length} sx={{ ml: 1 }} />
+              <Chip
+                size='small'
+                label={state.groupBy.length}
+                sx={{ ml: 1 }}
+              />
             )}
           </Box>
           <IconButton size='small'>
-            {showGroupPanel ? <ChevronUp sx={{ width: 18, height: 18 }} /> : <ChevronDown sx={{ width: 18, height: 18 }} />}
+            {showGroupPanel ? (
+              <ChevronUp sx={{ width: 18, height: 18 }} />
+            ) : (
+              <ChevronDown sx={{ width: 18, height: 18 }} />
+            )}
           </IconButton>
         </Box>
         <Divider sx={{ mb: 2 }} />
         {showGroupPanel && (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             {state.groupBy.map((group, index) => (
-              <Box key={index} sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+              <Box
+                key={index}
+                sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}
+              >
                 <FormControl sx={{ minWidth: 150 }}>
                   <InputLabel size='small'>分组字段</InputLabel>
                   <Select
@@ -877,12 +1168,20 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
                     value={group.fieldId}
                     label='分组字段'
                     onChange={(e) => {
-                      const field = availableFields.find(f => f.id === e.target.value);
-                      handleUpdateGroupBy(index, { fieldId: e.target.value, fieldName: field?.name || '' });
+                      const field = availableFields.find((f) => f.id === e.target.value);
+                      handleUpdateGroupBy(index, {
+                        fieldId: e.target.value,
+                        fieldName: field?.name || '',
+                      });
                     }}
                   >
-                    {availableFields.map(f => (
-                      <MenuItem key={f.id} value={f.id}>{f.label}</MenuItem>
+                    {availableFields.map((f) => (
+                      <MenuItem
+                        key={f.id}
+                        value={f.id}
+                      >
+                        {f.label}
+                      </MenuItem>
                     ))}
                   </Select>
                 </FormControl>
@@ -892,11 +1191,20 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
                     size='small'
                     value={group.aggregate || ''}
                     label='聚合方式'
-                    onChange={(e) => handleUpdateGroupBy(index, { aggregate: e.target.value as GroupByConfig['aggregate'] })}
+                    onChange={(e) =>
+                      handleUpdateGroupBy(index, {
+                        aggregate: e.target.value as GroupByConfig['aggregate'],
+                      })
+                    }
                   >
                     <MenuItem value=''>无</MenuItem>
-                    {AGGREGATE_OPTIONS.map(op => (
-                      <MenuItem key={op.value} value={op.value}>{op.label}</MenuItem>
+                    {AGGREGATE_OPTIONS.map((op) => (
+                      <MenuItem
+                        key={op.value}
+                        value={op.value}
+                      >
+                        {op.label}
+                      </MenuItem>
                     ))}
                   </Select>
                 </FormControl>
@@ -925,7 +1233,12 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
   const renderLayoutPanel = () => {
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-        <Typography variant='subtitle2' sx={{ fontWeight: 600, color: 'grey.600' }}>布局类型</Typography>
+        <Typography
+          variant='subtitle2'
+          sx={{ fontWeight: 600, color: 'grey.600' }}
+        >
+          布局类型
+        </Typography>
         <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
           <Button
             variant={state.layout.type === 'table' ? 'contained' : 'outlined'}
@@ -955,7 +1268,12 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
 
         {state.layout.type === 'chart' && (
           <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-            <Typography variant='body2' sx={{ fontWeight: 500, mb: 2 }}>图表配置</Typography>
+            <Typography
+              variant='body2'
+              sx={{ fontWeight: 500, mb: 2 }}
+            >
+              图表配置
+            </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
               <FormControl>
                 <InputLabel size='small'>图表类型</InputLabel>
@@ -963,7 +1281,15 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
                   size='small'
                   value={state.layout.chart?.type || 'bar'}
                   label='图表类型'
-                  onChange={(e) => setState(prev => ({ ...prev, layout: { ...prev.layout, chart: { ...prev.layout.chart!, type: e.target.value as ChartType } } }))}
+                  onChange={(e) =>
+                    setState((prev) => ({
+                      ...prev,
+                      layout: {
+                        ...prev.layout,
+                        chart: { ...prev.layout.chart!, type: e.target.value as ChartType },
+                      },
+                    }))
+                  }
                 >
                   <MenuItem value='line'>折线图</MenuItem>
                   <MenuItem value='bar'>柱状图</MenuItem>
@@ -978,11 +1304,26 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
                   size='small'
                   value={state.layout.chart?.xAxisField || ''}
                   label='X轴字段'
-                  onChange={(e) => setState((prev: any) => ({ ...prev, layout: { ...prev.layout, chart: { ...prev.layout.chart, xAxisField: e.target.value } } }))}
+                  onChange={(e) =>
+                    setState((prev: any) => ({
+                      ...prev,
+                      layout: {
+                        ...prev.layout,
+                        chart: { ...prev.layout.chart, xAxisField: e.target.value },
+                      },
+                    }))
+                  }
                 >
-                  {state.selectedFields.filter(f => f.visible).map(f => (
-                    <MenuItem key={f.fieldId} value={f.fieldId}>{f.label}</MenuItem>
-                  ))}
+                  {state.selectedFields
+                    .filter((f) => f.visible)
+                    .map((f) => (
+                      <MenuItem
+                        key={f.fieldId}
+                        value={f.fieldId}
+                      >
+                        {f.label}
+                      </MenuItem>
+                    ))}
                 </Select>
               </FormControl>
               <FormControl>
@@ -992,20 +1333,58 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
                   multiple
                   value={state.layout.chart?.yAxisFields || []}
                   label='Y轴字段'
-                  onChange={(e) => setState((prev: any) => ({ ...prev, layout: { ...prev.layout, chart: { ...prev.layout.chart, yAxisFields: e.target.value as string[] } } }))}
+                  onChange={(e) =>
+                    setState((prev: any) => ({
+                      ...prev,
+                      layout: {
+                        ...prev.layout,
+                        chart: { ...prev.layout.chart, yAxisFields: e.target.value as string[] },
+                      },
+                    }))
+                  }
                 >
-                  {state.selectedFields.filter(f => f.visible && f.type === 'number').map(f => (
-                    <MenuItem key={f.fieldId} value={f.fieldId}>{f.label}</MenuItem>
-                  ))}
+                  {state.selectedFields
+                    .filter((f) => f.visible && f.type === 'number')
+                    .map((f) => (
+                      <MenuItem
+                        key={f.fieldId}
+                        value={f.fieldId}
+                      >
+                        {f.label}
+                      </MenuItem>
+                    ))}
                 </Select>
               </FormControl>
               <Box sx={{ display: 'flex', gap: 4 }}>
                 <FormControlLabel
-                  control={<Switch checked={state.layout.chart?.showLegend} onChange={(e) => setState((prev: any) => ({ ...prev, layout: { ...prev.layout, chart: { ...prev.layout.chart, showLegend: e.target.checked } } }))} />}
+                  control={
+                    <Switch
+                      checked={state.layout.chart?.showLegend}
+                      onChange={(e) =>
+                        setState((prev: any) => ({
+                          ...prev,
+                          layout: {
+                            ...prev.layout,
+                            chart: { ...prev.layout.chart, showLegend: e.target.checked },
+                          },
+                        }))
+                      }
+                    />
+                  }
                   label='显示图例'
                 />
                 <FormControlLabel
-                  control={<Switch checked={state.layout.chart?.showGrid} onChange={(e) => setState((prev: any) => ({ ...prev, layout: { ...prev.layout.chart, showGrid: e.target.checked } }))} />}
+                  control={
+                    <Switch
+                      checked={state.layout.chart?.showGrid}
+                      onChange={(e) =>
+                        setState((prev: any) => ({
+                          ...prev,
+                          layout: { ...prev.layout.chart, showGrid: e.target.checked },
+                        }))
+                      }
+                    />
+                  }
                   label='显示网格'
                 />
               </Box>
@@ -1015,14 +1394,24 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
 
         {state.layout.type === 'card' && (
           <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-            <Typography variant='body2' sx={{ fontWeight: 500, mb: 2 }}>卡片配置</Typography>
+            <Typography
+              variant='body2'
+              sx={{ fontWeight: 500, mb: 2 }}
+            >
+              卡片配置
+            </Typography>
             <FormControl>
               <InputLabel size='small'>列数</InputLabel>
               <Select
                 size='small'
                 value={state.layout.columns}
                 label='列数'
-                onChange={(e) => setState(prev => ({ ...prev, layout: { ...prev.layout, columns: e.target.value as number } }))}
+                onChange={(e) =>
+                  setState((prev) => ({
+                    ...prev,
+                    layout: { ...prev.layout, columns: e.target.value as number },
+                  }))
+                }
               >
                 <MenuItem value={1}>单列</MenuItem>
                 <MenuItem value={2}>两列</MenuItem>
@@ -1035,15 +1424,45 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
 
         <Box sx={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
           <FormControlLabel
-            control={<Switch checked={state.layout.showHeader} onChange={(e) => setState(prev => ({ ...prev, layout: { ...prev.layout, showHeader: e.target.checked } }))} />}
+            control={
+              <Switch
+                checked={state.layout.showHeader}
+                onChange={(e) =>
+                  setState((prev) => ({
+                    ...prev,
+                    layout: { ...prev.layout, showHeader: e.target.checked },
+                  }))
+                }
+              />
+            }
             label='显示表头'
           />
           <FormControlLabel
-            control={<Switch checked={state.layout.showFooter} onChange={(e) => setState(prev => ({ ...prev, layout: { ...prev.layout, showFooter: e.target.checked } }))} />}
+            control={
+              <Switch
+                checked={state.layout.showFooter}
+                onChange={(e) =>
+                  setState((prev) => ({
+                    ...prev,
+                    layout: { ...prev.layout, showFooter: e.target.checked },
+                  }))
+                }
+              />
+            }
             label='显示表尾'
           />
           <FormControlLabel
-            control={<Switch checked={state.layout.pagination} onChange={(e) => setState(prev => ({ ...prev, layout: { ...prev.layout, pagination: e.target.checked } }))} />}
+            control={
+              <Switch
+                checked={state.layout.pagination}
+                onChange={(e) =>
+                  setState((prev) => ({
+                    ...prev,
+                    layout: { ...prev.layout, pagination: e.target.checked },
+                  }))
+                }
+              />
+            }
             label='分页显示'
           />
         </Box>
@@ -1055,7 +1474,12 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
               size='small'
               value={state.layout.pageSize}
               label='每页条数'
-              onChange={(e) => setState(prev => ({ ...prev, layout: { ...prev.layout, pageSize: e.target.value as number } }))}
+              onChange={(e) =>
+                setState((prev) => ({
+                  ...prev,
+                  layout: { ...prev.layout, pageSize: e.target.value as number },
+                }))
+              }
             >
               <MenuItem value={5}>5条/页</MenuItem>
               <MenuItem value={10}>10条/页</MenuItem>
@@ -1069,41 +1493,68 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
   };
 
   const renderPreviewTable = () => {
-    const visibleFields = state.selectedFields.filter(f => f.visible);
+    const visibleFields = state.selectedFields.filter((f) => f.visible);
     if (visibleFields.length === 0) return null;
 
     return (
       <Paper sx={{ borderRadius: 1, overflow: 'hidden' }}>
         {state.layout.showHeader && (
-          <Box sx={{ display: 'grid', gridTemplateColumns: visibleFields.map(() => '1fr').join(' '), px: 2, py: 1.5, bgcolor: 'grey.100', fontWeight: 600 }}>
-            {visibleFields.map(field => (
-              <Typography key={field.fieldId} variant='body2' sx={{ color: 'grey.600' }}>{field.label}</Typography>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: visibleFields.map(() => '1fr').join(' '),
+              px: 2,
+              py: 1.5,
+              bgcolor: 'grey.100',
+              fontWeight: 600,
+            }}
+          >
+            {visibleFields.map((field) => (
+              <Typography
+                key={field.fieldId}
+                variant='body2'
+                sx={{ color: 'grey.600' }}
+              >
+                {field.label}
+              </Typography>
             ))}
           </Box>
         )}
         <Box sx={{ maxHeight: 300, overflowY: 'auto' }}>
-          {previewData.slice(0, state.layout.pagination ? state.layout.pageSize : previewData.length).map((row, idx) => (
-            <Box
-              key={idx}
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: visibleFields.map(() => '1fr').join(' '),
-                px: 2,
-                py: 1.5,
-                borderBottom: idx < previewData.length - 1 ? 1 : 0,
-                borderColor: 'divider',
-                '&:hover': { bgcolor: 'grey.50' },
-              }}
-            >
-              {visibleFields.map(field => (
-                <Typography key={field.fieldId} variant='body2'>{row[field.fieldName] || '-'}</Typography>
-              ))}
-            </Box>
-          ))}
+          {previewData
+            .slice(0, state.layout.pagination ? state.layout.pageSize : previewData.length)
+            .map((row, idx) => (
+              <Box
+                key={idx}
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: visibleFields.map(() => '1fr').join(' '),
+                  px: 2,
+                  py: 1.5,
+                  borderBottom: idx < previewData.length - 1 ? 1 : 0,
+                  borderColor: 'divider',
+                  '&:hover': { bgcolor: 'grey.50' },
+                }}
+              >
+                {visibleFields.map((field) => (
+                  <Typography
+                    key={field.fieldId}
+                    variant='body2'
+                  >
+                    {row[field.fieldName] || '-'}
+                  </Typography>
+                ))}
+              </Box>
+            ))}
         </Box>
         {state.layout.showFooter && (
           <Box sx={{ px: 2, py: 1.5, bgcolor: 'grey.50', textAlign: 'right' }}>
-            <Typography variant='caption' sx={{ color: 'grey.500' }}>共 {previewData.length} 条记录</Typography>
+            <Typography
+              variant='caption'
+              sx={{ color: 'grey.500' }}
+            >
+              共 {previewData.length} 条记录
+            </Typography>
           </Box>
         )}
       </Paper>
@@ -1112,16 +1563,21 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
 
   const renderPreviewChart = () => {
     const chartType = state.layout.chart?.type || 'bar';
-    const xField = state.selectedFields.find(f => f.fieldId === state.layout.chart?.xAxisField);
+    const xField = state.selectedFields.find((f) => f.fieldId === state.layout.chart?.xAxisField);
     const yFields = (state.layout.chart?.yAxisFields || [])
-      .map(id => state.selectedFields.find(f => f.fieldId === id))
+      .map((id) => state.selectedFields.find((f) => f.fieldId === id))
       .filter(Boolean) as SelectedField[];
 
     if (!xField || yFields.length === 0) {
       return (
         <Box sx={{ p: 6, textAlign: 'center', bgcolor: 'grey.50', borderRadius: 1 }}>
           <BarChart3 sx={{ width: 48, height: 48, color: 'grey.300', mx: 'auto', mb: 2 }} />
-          <Typography variant='body1' sx={{ color: 'grey.400' }}>请配置图表字段</Typography>
+          <Typography
+            variant='body1'
+            sx={{ color: 'grey.400' }}
+          >
+            请配置图表字段
+          </Typography>
         </Box>
       );
     }
@@ -1130,14 +1586,39 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
 
     return (
       <Paper sx={{ p: 3, borderRadius: 1 }}>
-        <Box sx={{ height: 300, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', gap: 1 }}>
+        <Box
+          sx={{
+            height: 300,
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'space-around',
+            gap: 1,
+          }}
+        >
           {previewData.slice(0, 5).map((row, idx) => (
-            <Box key={idx} sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <Typography variant='caption' sx={{ mb: 1, color: 'grey.600' }}>{row[xField.fieldName]}</Typography>
-              <Box sx={{ flex: 1, display: 'flex', alignItems: 'flex-end', gap: 2, width: '100%', justifyContent: 'center' }}>
+            <Box
+              key={idx}
+              sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+            >
+              <Typography
+                variant='caption'
+                sx={{ mb: 1, color: 'grey.600' }}
+              >
+                {row[xField.fieldName]}
+              </Typography>
+              <Box
+                sx={{
+                  flex: 1,
+                  display: 'flex',
+                  alignItems: 'flex-end',
+                  gap: 2,
+                  width: '100%',
+                  justifyContent: 'center',
+                }}
+              >
                 {yFields.map((yField, yIdx) => {
                   const value = row[yField.fieldName] || 0;
-                  const maxValue = Math.max(...previewData.map(r => r[yField.fieldName] || 0), 1);
+                  const maxValue = Math.max(...previewData.map((r) => r[yField.fieldName] || 0), 1);
                   const height = (value / maxValue) * 100;
                   return (
                     <Box
@@ -1160,8 +1641,18 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
         {state.layout.chart?.showLegend && yFields.length > 1 && (
           <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center', gap: 3 }}>
             {yFields.map((yField, idx) => (
-              <Box key={idx} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Box sx={{ width: 12, height: 12, bgcolor: chartColors[idx % chartColors.length], borderRadius: 2 }} />
+              <Box
+                key={idx}
+                sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
+              >
+                <Box
+                  sx={{
+                    width: 12,
+                    height: 12,
+                    bgcolor: chartColors[idx % chartColors.length],
+                    borderRadius: 2,
+                  }}
+                />
                 <Typography variant='caption'>{yField.label}</Typography>
               </Box>
             ))}
@@ -1172,21 +1663,45 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
   };
 
   const renderPreviewCards = () => {
-    const visibleFields = state.selectedFields.filter(f => f.visible);
+    const visibleFields = state.selectedFields.filter((f) => f.visible);
     if (visibleFields.length === 0) return null;
 
     return (
-      <Box sx={{ display: 'grid', gridTemplateColumns: `repeat(${state.layout.columns}, 1fr)`, gap: 2 }}>
-        {previewData.slice(0, state.layout.pagination ? state.layout.pageSize : previewData.length).map((row, idx) => (
-          <Paper key={idx} sx={{ p: 2, borderRadius: 1 }}>
-            {visibleFields.map(field => (
-              <Box key={field.fieldId} sx={{ mb: 1 }}>
-                <Typography variant='caption' sx={{ color: 'grey.500' }}>{field.label}</Typography>
-                <Typography variant='body2' sx={{ fontWeight: 500 }}>{row[field.fieldName] || '-'}</Typography>
-              </Box>
-            ))}
-          </Paper>
-        ))}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: `repeat(${state.layout.columns}, 1fr)`,
+          gap: 2,
+        }}
+      >
+        {previewData
+          .slice(0, state.layout.pagination ? state.layout.pageSize : previewData.length)
+          .map((row, idx) => (
+            <Paper
+              key={idx}
+              sx={{ p: 2, borderRadius: 1 }}
+            >
+              {visibleFields.map((field) => (
+                <Box
+                  key={field.fieldId}
+                  sx={{ mb: 1 }}
+                >
+                  <Typography
+                    variant='caption'
+                    sx={{ color: 'grey.500' }}
+                  >
+                    {field.label}
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    sx={{ fontWeight: 500 }}
+                  >
+                    {row[field.fieldName] || '-'}
+                  </Typography>
+                </Box>
+              ))}
+            </Paper>
+          ))}
       </Box>
     );
   };
@@ -1211,8 +1726,20 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
   return (
     <Box sx={{ p: { xs: 2, md: 3 }, maxWidth: '100%' }}>
       <Box sx={{ mb: 3 }}>
-        <Typography variant='h5' sx={{ fontWeight: 600, mb: 0.5 }}>{title}</Typography>
-        {subtitle && <Typography variant='body2' color='text.secondary'>{subtitle}</Typography>}
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 600, mb: 0.5 }}
+        >
+          {title}
+        </Typography>
+        {subtitle && (
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
+            {subtitle}
+          </Typography>
+        )}
       </Box>
 
       <Paper sx={{ p: 2, mb: 3, borderRadius: 2 }}>
@@ -1220,7 +1747,7 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
           fullWidth
           label='报表标题'
           value={state.title}
-          onChange={(e) => setState(prev => ({ ...prev, title: e.target.value }))}
+          onChange={(e) => setState((prev) => ({ ...prev, title: e.target.value }))}
           sx={{ mb: 2 }}
         />
         <TextField
@@ -1229,13 +1756,11 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
           multiline
           rows={2}
           value={state.description}
-          onChange={(e) => setState(prev => ({ ...prev, description: e.target.value }))}
+          onChange={(e) => setState((prev) => ({ ...prev, description: e.target.value }))}
         />
       </Paper>
 
-      <Paper sx={{ p: 3, mb: 3, borderRadius: 2 }}>
-        {renderDataSourcePanel()}
-      </Paper>
+      <Paper sx={{ p: 3, mb: 3, borderRadius: 2 }}>{renderDataSourcePanel()}</Paper>
 
       <Paper sx={{ p: 3, borderRadius: 2 }}>
         <Tabs
@@ -1244,7 +1769,12 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
           sx={{ mb: 3 }}
         >
           {tabs.map((tab, idx) => (
-            <Tab key={idx} label={tab.label} icon={tab.icon} iconPosition='start' />
+            <Tab
+              key={idx}
+              label={tab.label}
+              icon={tab.icon}
+              iconPosition='start'
+            />
           ))}
         </Tabs>
 
@@ -1263,7 +1793,12 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
 
         {activeTab === 2 && (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            <Typography variant='subtitle2' sx={{ fontWeight: 600, color: 'grey.600' }}>预览效果</Typography>
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, color: 'grey.600' }}
+            >
+              预览效果
+            </Typography>
             {renderPreview()}
           </Box>
         )}
@@ -1302,13 +1837,18 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
         maxWidth='lg'
         fullWidth
       >
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <DialogTitle
+          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+        >
           <Typography variant='h6'>报表预览</Typography>
-          <Typography variant='subtitle1' sx={{ color: 'grey.500' }}>{state.title || '未命名报表'}</Typography>
+          <Typography
+            variant='subtitle1'
+            sx={{ color: 'grey.500' }}
+          >
+            {state.title || '未命名报表'}
+          </Typography>
         </DialogTitle>
-        <DialogContent>
-          {renderPreview()}
-        </DialogContent>
+        <DialogContent>{renderPreview()}</DialogContent>
         <DialogActions>
           <Button onClick={() => setPreviewOpen(false)}>关闭</Button>
           <Button onClick={() => handleExport('excel')}>导出Excel</Button>

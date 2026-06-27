@@ -1,6 +1,27 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Box, Typography, InputLabel, Avatar, Chip, DialogTitle, DialogContent, DialogActions, Button } from '@mui/material';
-import { User, Building2, Calendar, Phone, Mail, MapPin, GraduationCap, Briefcase, Clock, AlertCircle } from 'lucide-react';
+import {
+  Box,
+  Typography,
+  InputLabel,
+  Avatar,
+  Chip,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+} from '@mui/material';
+import {
+  User,
+  Building2,
+  Calendar,
+  Phone,
+  Mail,
+  MapPin,
+  GraduationCap,
+  Briefcase,
+  Clock,
+  AlertCircle,
+} from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { hrmApi, type Employee } from '@/api/hrm';
 import { useNotification } from '@/hooks/useNotification';
@@ -53,7 +74,10 @@ const HrmEmployeeDetailPage: React.FC = () => {
   };
 
   const getStatusConfig = (status: string) => {
-    const config: Record<string, { color: 'success' | 'error' | 'default' | 'warning'; label: string }> = {
+    const config: Record<
+      string,
+      { color: 'success' | 'error' | 'default' | 'warning'; label: string }
+    > = {
       active: { color: 'success', label: '在职' },
       probation: { color: 'warning', label: '试用期' },
       leave: { color: 'default', label: '休假' },
@@ -109,18 +133,34 @@ const HrmEmployeeDetailPage: React.FC = () => {
             mb: 4,
           }}
         >
-          <Avatar sx={{ width: 80, height: 80, fontSize: 32 }}>
-            {employee.name?.charAt(0)}
-          </Avatar>
+          <Avatar sx={{ width: 80, height: 80, fontSize: 32 }}>{employee.name?.charAt(0)}</Avatar>
           <Box sx={{ flex: 1 }}>
-            <Typography variant='h4' sx={{ fontWeight: 'bold' }}>{employee.name}</Typography>
-            <Typography variant='body1' color='text.secondary'>
+            <Typography
+              variant='h4'
+              sx={{ fontWeight: 'bold' }}
+            >
+              {employee.name}
+            </Typography>
+            <Typography
+              variant='body1'
+              color='text.secondary'
+            >
               {employee.position} | {employee.department_name}
             </Typography>
             <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
               <StatusBadge status={employee.status} />
-              <StatusBadge status={getGenderLabel(employee.gender || '')} label={getGenderLabel(employee.gender || '')} color='default' variant='outlined' />
-              <StatusBadge status={`${calculateWorkYears()}年工龄`} label={`${calculateWorkYears()}年工龄`} color='default' variant='outlined' />
+              <StatusBadge
+                status={getGenderLabel(employee.gender || '')}
+                label={getGenderLabel(employee.gender || '')}
+                color='default'
+                variant='outlined'
+              />
+              <StatusBadge
+                status={`${calculateWorkYears()}年工龄`}
+                label={`${calculateWorkYears()}年工龄`}
+                color='default'
+                variant='outlined'
+              />
             </Box>
           </Box>
         </Box>
@@ -134,12 +174,16 @@ const HrmEmployeeDetailPage: React.FC = () => {
         >
           <Box>
             <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>员工编号</InputLabel>
-            <Typography sx={{ mt: 0.5, fontFamily: 'monospace' }}>{employee.employee_no}</Typography>
+            <Typography sx={{ mt: 0.5, fontFamily: 'monospace' }}>
+              {employee.employee_no}
+            </Typography>
           </Box>
           <Box>
             <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>身份证号</InputLabel>
             <Typography sx={{ mt: 0.5, fontFamily: 'monospace' }}>
-              {employee.id_number ? `${employee.id_number.slice(0, 4)}****${employee.id_number.slice(-4)}` : '-'}
+              {employee.id_number
+                ? `${employee.id_number.slice(0, 4)}****${employee.id_number.slice(-4)}`
+                : '-'}
             </Typography>
           </Box>
           <Box>
@@ -207,7 +251,9 @@ const HrmEmployeeDetailPage: React.FC = () => {
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>员工类型</InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{employee.employee_type === 'full_time' ? '全职' : '兼职'}</Typography>
+          <Typography sx={{ mt: 0.5 }}>
+            {employee.employee_type === 'full_time' ? '全职' : '兼职'}
+          </Typography>
         </Box>
       </Box>
     );
@@ -262,7 +308,12 @@ const HrmEmployeeDetailPage: React.FC = () => {
 
   const infoCard = useMemo(
     () => ({
-      avatar: <User size={32} color='#1976d2' />,
+      avatar: (
+        <User
+          size={32}
+          color='#1976d2'
+        />
+      ),
       title: employee?.name,
       subtitle: employee?.employee_no || undefined,
       tags: [employee?.department_name || ''],
@@ -275,7 +326,10 @@ const HrmEmployeeDetailPage: React.FC = () => {
   );
 
   return (
-    <PageContainer title='员工详情' subtitle='查看和管理员工信息'>
+    <PageContainer
+      title='员工详情'
+      subtitle='查看和管理员工信息'
+    >
       <DetailPageTemplate
         title=''
         subtitle=''
@@ -307,10 +361,16 @@ const HrmEmployeeDetailPage: React.FC = () => {
           确定要为 <strong>{employee?.name}</strong> 办理调岗手续吗？
         </Typography>
         <Box sx={{ mt: 2 }}>
-          <Typography variant='body2' color='text.secondary'>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             当前职位：{employee?.position}
           </Typography>
-          <Typography variant='body2' color='text.secondary'>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             当前部门：{employee?.department_name}
           </Typography>
         </Box>

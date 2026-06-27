@@ -23,7 +23,7 @@ export const inspectionApi = {
     if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.status) queryParams.append('status', params.status);
-  
+
     return apiClient.ehs.get<PaginatedResponse<InspectionPlan>>(
       `/api/ehs/checks/plans?${queryParams.toString()}`
     );
@@ -77,7 +77,7 @@ export const inspectionApi = {
     if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.status) queryParams.append('status', params.status);
-  
+
     return apiClient.ehs.get<PaginatedResponse<InspectionRecord>>(
       `/api/ehs/checks/records?${queryParams.toString()}`
     );

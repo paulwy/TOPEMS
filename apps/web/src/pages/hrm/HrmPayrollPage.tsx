@@ -16,14 +16,13 @@ import {
   CheckCircle,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Box, InputBase, Typography } from '@mui/material';
-import { Button } from '@mui/material';
+import { Box, InputBase, Typography, Button } from '@mui/material';
 import { apiLogger } from '@/utils/logger';
 import { useNotification } from '@/hooks/useNotification';
 import { StatsChart } from '@/components/bi/StatsChart';
 import { StatusBadge } from '@/components/common/StatusBadge';
-import { ListPageTemplate, StatCard } from '@/components/mui';
-import type { ColumnDef, RowAction } from '@/components/mui';
+import { ListPageTemplate, MuiStatCard as StatCard } from '@/components';
+import type { ColumnDef, RowAction } from '@/components';
 import {
   payrollApi,
   payrollItemApi,
@@ -615,7 +614,10 @@ const HrmPayrollPage: React.FC = () => {
   }
 
   return (
-    <PageContainer padding={false} maxWidth={false}>
+    <PageContainer
+      padding={false}
+      maxWidth={false}
+    >
       {/* StatCards */}
       <Box
         sx={{

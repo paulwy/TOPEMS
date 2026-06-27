@@ -75,16 +75,16 @@ export const Default: Story = {
 export const AllStatuses: Story = {
   render: () => (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
-      <StatusBadge status="active" />
-      <StatusBadge status="inactive" />
-      <StatusBadge status="pending" />
-      <StatusBadge status="approved" />
-      <StatusBadge status="rejected" />
-      <StatusBadge status="draft" />
-      <StatusBadge status="published" />
-      <StatusBadge status="completed" />
-      <StatusBadge status="failed" />
-      <StatusBadge status="processing" />
+      <StatusBadge status='active' />
+      <StatusBadge status='inactive' />
+      <StatusBadge status='pending' />
+      <StatusBadge status='approved' />
+      <StatusBadge status='rejected' />
+      <StatusBadge status='draft' />
+      <StatusBadge status='published' />
+      <StatusBadge status='completed' />
+      <StatusBadge status='failed' />
+      <StatusBadge status='processing' />
     </div>
   ),
 };
@@ -99,9 +99,18 @@ export const WithIcon: Story = {
 export const Sizes: Story = {
   render: () => (
     <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-      <StatusBadge status="active" size="sm" />
-      <StatusBadge status="active" size="md" />
-      <StatusBadge status="active" size="lg" />
+      <StatusBadge
+        status='active'
+        size='sm'
+      />
+      <StatusBadge
+        status='active'
+        size='md'
+      />
+      <StatusBadge
+        status='active'
+        size='lg'
+      />
     </div>
   ),
 };
@@ -109,9 +118,18 @@ export const Sizes: Story = {
 export const Variants: Story = {
   render: () => (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
-      <StatusBadge status="active" variant="filled" />
-      <StatusBadge status="active" variant="outlined" />
-      <StatusBadge status="active" variant="soft" />
+      <StatusBadge
+        status='active'
+        variant='filled'
+      />
+      <StatusBadge
+        status='active'
+        variant='outlined'
+      />
+      <StatusBadge
+        status='active'
+        variant='soft'
+      />
     </div>
   ),
 };
@@ -126,10 +144,10 @@ export const Clickable: Story = {
 export const HRMStatuses: Story = {
   render: () => (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
-      <StatusBadge status="employee_active" />
-      <StatusBadge status="employee_inactive" />
-      <StatusBadge status="employee_probation" />
-      <StatusBadge status="employee_pending" />
+      <StatusBadge status='employee_active' />
+      <StatusBadge status='employee_inactive' />
+      <StatusBadge status='employee_probation' />
+      <StatusBadge status='employee_pending' />
     </div>
   ),
 };
@@ -137,11 +155,11 @@ export const HRMStatuses: Story = {
 export const AttendanceStatuses: Story = {
   render: () => (
     <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
-      <StatusBadge status="attendance_normal" />
-      <StatusBadge status="attendance_late" />
-      <StatusBadge status="attendance_early_leave" />
-      <StatusBadge status="attendance_absent" />
-      <StatusBadge status="attendance_leave" />
+      <StatusBadge status='attendance_normal' />
+      <StatusBadge status='attendance_late' />
+      <StatusBadge status='attendance_early_leave' />
+      <StatusBadge status='attendance_absent' />
+      <StatusBadge status='attendance_leave' />
     </div>
   ),
 };

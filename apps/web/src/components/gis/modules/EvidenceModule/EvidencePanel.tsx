@@ -10,8 +10,8 @@ import {
   Chip,
   Grid as MuiGrid,
   Stack,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import type { EvidenceRecord, EvidenceType } from './types';
 import PhotoCapture from './PhotoCapture';
 import AudioCapture from './AudioCapture';

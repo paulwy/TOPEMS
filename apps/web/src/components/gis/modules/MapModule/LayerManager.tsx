@@ -1,8 +1,7 @@
 // modules/MapModule/LayerManager.tsx
 import React from 'react';
 import { Layers, ChevronDown, ChevronUp, MapPin, Navigation, Info, Pencil } from 'lucide-react';
-import { Box, Typography, Paper, IconButton } from '@mui/material';
-import { Button } from '@mui/material';
+import { Box, Typography, Paper, IconButton, Button } from '@mui/material';
 
 interface LayerToggleProps {
   label: string;

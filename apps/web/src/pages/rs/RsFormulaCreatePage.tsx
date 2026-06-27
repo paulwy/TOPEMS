@@ -1,9 +1,18 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { FormPageTemplate, type FormSection, type FormField } from '@/components/templates/FormPageTemplate';
+import {
+  FormPageTemplate,
+  type FormSection,
+  type FormField,
+} from '@/components/templates/FormPageTemplate';
 import { PageContainer } from '@/components/common';
 import { formulaApi, rsApi } from '@/api/rs';
-import type { Formula, FormulaIngredient, CreateFormulaRequest, UpdateFormulaRequest } from '@/api/rs';
+import type {
+  Formula,
+  FormulaIngredient,
+  CreateFormulaRequest,
+  UpdateFormulaRequest,
+} from '@/api/rs';
 import { useAppStore } from '@/store';
 import {
   Paper,
@@ -54,73 +63,76 @@ const RsFormulaCreatePage: React.FC = () => {
     expiration_date: '',
   };
 
-  const sections: FormSection[] = useMemo(() => [
-    {
-      id: 'basic',
-      title: '基本信息',
-      description: '配方核心信息',
-      collapsible: true,
-      defaultExpanded: true,
-      fields: [
-        {
-          name: 'name',
-          label: '配方名称',
-          type: 'text',
-          required: true,
-          placeholder: '请输入配方名称',
-        },
-        {
-          name: 'code',
-          label: '配方编码',
-          type: 'text',
-          required: true,
-          placeholder: '例如: FM-2024-001',
-        },
-        {
-          name: 'version',
-          label: '版本号',
-          type: 'text',
-          placeholder: '例如: v1.0',
-        },
-        {
-          name: 'project_id',
-          label: '所属项目',
-          type: 'select',
-          required: true,
-          options: projects.map((p) => ({ label: p.name, value: p.id })),
-        },
-        {
-          name: 'status',
-          label: '状态',
-          type: 'select',
-          options: statuses.map((s) => ({ label: s.label, value: s.value })),
-        },
-        {
-          name: 'category',
-          label: '配方类别',
-          type: 'text',
-          placeholder: '请输入配方类别',
-        },
-        {
-          name: 'effective_date',
-          label: '生效日期',
-          type: 'date',
-        },
-        {
-          name: 'expiration_date',
-          label: '过期日期',
-          type: 'date',
-        },
-        {
-          name: 'description',
-          label: '配方描述',
-          type: 'textarea',
-          rows: 3,
-          placeholder: '请输入配方描述',
-        },
-      ],
-    },
-  ], [projects]);
+  const sections: FormSection[] = useMemo(
+    () => [
+      {
+        id: 'basic',
+        title: '基本信息',
+        description: '配方核心信息',
+        collapsible: true,
+        defaultExpanded: true,
+        fields: [
+          {
+            name: 'name',
+            label: '配方名称',
+            type: 'text',
+            required: true,
+            placeholder: '请输入配方名称',
+          },
+          {
+            name: 'code',
+            label: '配方编码',
+            type: 'text',
+            required: true,
+            placeholder: '例如: FM-2024-001',
+          },
+          {
+            name: 'version',
+            label: '版本号',
+            type: 'text',
+            placeholder: '例如: v1.0',
+          },
+          {
+            name: 'project_id',
+            label: '所属项目',
+            type: 'select',
+            required: true,
+            options: projects.map((p) => ({ label: p.name, value: p.id })),
+          },
+          {
+            name: 'status',
+            label: '状态',
+            type: 'select',
+            options: statuses.map((s) => ({ label: s.label, value: s.value })),
+          },
+          {
+            name: 'category',
+            label: '配方类别',
+            type: 'text',
+            placeholder: '请输入配方类别',
+          },
+          {
+            name: 'effective_date',
+            label: '生效日期',
+            type: 'date',
+          },
+          {
+            name: 'expiration_date',
+            label: '过期日期',
+            type: 'date',
+          },
+          {
+            name: 'description',
+            label: '配方描述',
+            type: 'textarea',
+            rows: 3,
+            placeholder: '请输入配方描述',
+          },
+        ],
+      },
+    ],
+    [projects]
+  );
 
   useEffect(() => {
     loadProjects();
@@ -133,9 +145,7 @@ const RsFormulaCreatePage: React.FC = () => {
     try {
       const response = await rsApi.listProjects();
       if (response.success && response.data) {
-        setProjects(
-          response.data.projects?.map((p) => ({ id: p.id, name: p.name })) || []
-        );
+        setProjects(response.data.projects?.map((p) => ({ id: p.id, name: p.name })) || []);
       }
     } catch (err: unknown) {
       addNotification({
@@ -153,9 +163,11 @@ const RsFormulaCreatePage: React.FC = () => {
       const response = await formulaApi.getFormula(formulaId);
       if (response.success && response.data) {
         const formula = response.data;
-        setIngredients(formula.ingredients || [
-          { name: '', quantity: 0, unit: '%', purity: '', supplier: '', notes: '' },
-        ]);
+        setIngredients(
+          formula.ingredients || [
+            { name: '', quantity: 0, unit: '%', purity: '', supplier: '', notes: '' },
+          ]
+        );
       } else {
         setError('无法获取配方数据');
         addNotification({
@@ -289,7 +301,10 @@ const RsFormulaCreatePage: React.FC = () => {
 
   const additionalContent = (
     <Paper sx={{ p: 3, mt: 3 }}>
-      <Typography variant='h6' gutterBottom>
+      <Typography
+        variant='h6'
+        gutterBottom
+      >
         配方组成
       </Typography>
       <Divider sx={{ mb: 2 }} />
@@ -313,9 +328,7 @@ const RsFormulaCreatePage: React.FC = () => {
                   <TextField
                     size='small'
                     value={comp.name}
-                    onChange={(e) =>
-                      handleIngredientChange(index, 'name', e.target.value)
-                    }
+                    onChange={(e) => handleIngredientChange(index, 'name', e.target.value)}
                     disabled={submitting}
                   />
                 </TableCell>
@@ -325,11 +338,7 @@ const RsFormulaCreatePage: React.FC = () => {
                     type='number'
                     value={comp.quantity}
                     onChange={(e) =>
-                      handleIngredientChange(
-                        index,
-                        'quantity',
-                        parseFloat(e.target.value) || 0
-                      )
+                      handleIngredientChange(index, 'quantity', parseFloat(e.target.value) || 0)
                     }
                     disabled={submitting}
                   />
@@ -338,9 +347,7 @@ const RsFormulaCreatePage: React.FC = () => {
                   <TextField
                     size='small'
                     value={comp.unit}
-                    onChange={(e) =>
-                      handleIngredientChange(index, 'unit', e.target.value)
-                    }
+                    onChange={(e) => handleIngredientChange(index, 'unit', e.target.value)}
                     disabled={submitting}
                   />
                 </TableCell>
@@ -348,9 +355,7 @@ const RsFormulaCreatePage: React.FC = () => {
                   <TextField
                     size='small'
                     value={comp.purity}
-                    onChange={(e) =>
-                      handleIngredientChange(index, 'purity', e.target.value)
-                    }
+                    onChange={(e) => handleIngredientChange(index, 'purity', e.target.value)}
                     disabled={submitting}
                   />
                 </TableCell>
@@ -358,9 +363,7 @@ const RsFormulaCreatePage: React.FC = () => {
                   <TextField
                     size='small'
                     value={comp.supplier}
-                    onChange={(e) =>
-                      handleIngredientChange(index, 'supplier', e.target.value)
-                    }
+                    onChange={(e) => handleIngredientChange(index, 'supplier', e.target.value)}
                     disabled={submitting}
                   />
                 </TableCell>
@@ -368,9 +371,7 @@ const RsFormulaCreatePage: React.FC = () => {
                   <TextField
                     size='small'
                     value={comp.notes}
-                    onChange={(e) =>
-                      handleIngredientChange(index, 'notes', e.target.value)
-                    }
+                    onChange={(e) => handleIngredientChange(index, 'notes', e.target.value)}
                     disabled={submitting}
                   />
                 </TableCell>

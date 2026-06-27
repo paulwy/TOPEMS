@@ -112,7 +112,7 @@ export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({ navItems, on
   // 渲染导航项
   const renderNavItem = (item: NavItem, index: number) => {
     const isActive =
-      item.path === location.pathname || location.pathname.startsWith(item.path + '/');
+      item.path === location.pathname || location.pathname.startsWith(`${item.path}/`);
 
     return (
       <Box

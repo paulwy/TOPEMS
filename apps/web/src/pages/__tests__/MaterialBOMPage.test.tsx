@@ -24,11 +24,7 @@ vi.mock('@/store', () => ({
 const mockAddNotification = vi.fn();
 
 const renderWithProviders = (ui: React.ReactElement) => {
-  return render(
-    <BrowserRouter>
-      {ui}
-    </BrowserRouter>
-  );
+  return render(<BrowserRouter>{ui}</BrowserRouter>);
 };
 
 const mockBOMs = [
@@ -86,9 +82,7 @@ describe('MaterialBOMPage', () => {
       fireEvent.change(searchInput, { target: { value: '产品A' } });
     });
     await waitFor(() => {
-      expect(mesApi.boms.list).toHaveBeenCalledWith(
-        expect.objectContaining({ search: '产品A' })
-      );
+      expect(mesApi.boms.list).toHaveBeenCalledWith(expect.objectContaining({ search: '产品A' }));
     });
   });
 
@@ -112,18 +106,14 @@ describe('MaterialBOMPage', () => {
     await waitFor(() => {
       expect(mesApi.boms.create).toHaveBeenCalled();
     });
-    expect(mockAddNotification).toHaveBeenCalledWith(
-      expect.objectContaining({ type: 'success' })
-    );
+    expect(mockAddNotification).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
   });
 
   it('should handle API error', async () => {
     (mesApi.boms.list as vi.Mock).mockRejectedValue(new Error('Network error'));
     renderWithProviders(<MaterialBOMPage />);
     await waitFor(() => {
-      expect(mockAddNotification).toHaveBeenCalledWith(
-        expect.objectContaining({ type: 'error' })
-      );
+      expect(mockAddNotification).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }));
     });
   });
 });

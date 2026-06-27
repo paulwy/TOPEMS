@@ -183,8 +183,28 @@ export const designTokens = {
     md: '0 4px 6px -1px rgb(0 0 0 / 0.25)',
     lg: '0 10px 15px -3px rgb(0 0 0 / 0.3)',
     xl: '0 20px 25px -5px rgb(0 0 0 / 0.35)',
+    '2xl': '0 25px 50px -12px rgb(0 0 0 / 0.4)',
     float: '0 25px 50px -12px rgb(0 0 0 / 0.3)',
+    '3xl': '0 35px 60px -15px rgb(0 0 0 / 0.45)',
+    inner: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.15)',
   },
+
+  motion: {
+    duration: {
+      instant: '0ms',
+      fast: '100ms',
+      normal: '200ms',
+      slow: '300ms',
+      deliberate: '500ms',
+      skeleton: '2000ms',
+    },
+    easing: {
+      default: 'cubic-bezier(0.4, 0, 0.2, 1)', // Material standard
+      decelerate: 'cubic-bezier(0, 0, 0.2, 1)', // Enter
+      accelerate: 'cubic-bezier(0.4, 0, 1, 1)', // Exit
+      sharp: 'cubic-bezier(0.4, 0, 0.6, 1)', // Shared axis
+    },
+  } as const,
 
   typography: {
     fontFamily:

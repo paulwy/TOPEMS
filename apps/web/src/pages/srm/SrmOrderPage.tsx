@@ -10,8 +10,8 @@ import {
   Card,
   CardContent,
   Typography,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import {
   Plus,
   ClipboardList,
@@ -557,119 +557,41 @@ const SrmOrderPage: React.FC = () => {
           getRowId={(row) => row.id || row.po_no || Math.random().toString()}
         />
 
-      <Dialog
-        open={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        maxWidth='md'
-        fullWidth
-      >
-        <DialogTitle>新增订单</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <TextField
-                fullWidth
-                label='订单编号 *'
-                value={formData.po_no}
-                onChange={(e) => setFormData({ ...formData, po_no: e.target.value })}
-                placeholder='请输入订单编号'
-              />
-              <TextField
-                fullWidth
-                label='供应商ID'
-                value={formData.supplier_id}
-                onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
-                placeholder='请输入供应商ID'
-              />
-              <TextField
-                fullWidth
-                label='订单金额'
-                type='number'
-                value={formData.total_amount}
-                onChange={(e) =>
-                  setFormData({ ...formData, total_amount: parseFloat(e.target.value) || 0 })
-                }
-                placeholder='请输入订单金额'
-              />
-            </Box>
-            <TextField
-              fullWidth
-              select
-              label='状态'
-              value={formData.status}
-              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-            >
-              <option value='pending'>待处理</option>
-              <option value='processing'>处理中</option>
-              <option value='delivered'>已交付</option>
-              <option value='completed'>已完成</option>
-              <option value='cancelled'>已取消</option>
-            </TextField>
-            <TextField
-              fullWidth
-              label='备注'
-              value={formData.remarks}
-              onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
-              placeholder='请输入备注'
-              multiline
-              rows={2}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            variant='outlined'
-            onClick={() => setShowCreateModal(false)}
-          >
-            取消
-          </Button>
-          <Button
-            variant='contained'
-            onClick={handleSave}
-            sx={{ bgcolor: 'primary.main' }}
-          >
-            保存
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog
-        open={showEditModal}
-        onClose={() => {
-          setShowEditModal(false);
-          setEditingId(null);
-        }}
-        maxWidth='md'
-        fullWidth
-      >
-        <DialogTitle>编辑订单</DialogTitle>
-        <DialogContent>
-          <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-              <TextField
-                fullWidth
-                label='订单编号 *'
-                value={formData.po_no}
-                onChange={(e) => setFormData({ ...formData, po_no: e.target.value })}
-                placeholder='请输入订单编号'
-              />
-              <TextField
-                fullWidth
-                label='供应商ID'
-                value={formData.supplier_id}
-                onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
-                placeholder='请输入供应商ID'
-              />
-              <TextField
-                fullWidth
-                label='订单金额'
-                type='number'
-                value={formData.total_amount}
-                onChange={(e) =>
-                  setFormData({ ...formData, total_amount: parseFloat(e.target.value) || 0 })
-                }
-                placeholder='请输入订单金额'
-              />
+        <Dialog
+          open={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          maxWidth='md'
+          fullWidth
+        >
+          <DialogTitle>新增订单</DialogTitle>
+          <DialogContent>
+            <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                <TextField
+                  fullWidth
+                  label='订单编号 *'
+                  value={formData.po_no}
+                  onChange={(e) => setFormData({ ...formData, po_no: e.target.value })}
+                  placeholder='请输入订单编号'
+                />
+                <TextField
+                  fullWidth
+                  label='供应商ID'
+                  value={formData.supplier_id}
+                  onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
+                  placeholder='请输入供应商ID'
+                />
+                <TextField
+                  fullWidth
+                  label='订单金额'
+                  type='number'
+                  value={formData.total_amount}
+                  onChange={(e) =>
+                    setFormData({ ...formData, total_amount: parseFloat(e.target.value) || 0 })
+                  }
+                  placeholder='请输入订单金额'
+                />
+              </Box>
               <TextField
                 fullWidth
                 select
@@ -683,37 +605,115 @@ const SrmOrderPage: React.FC = () => {
                 <option value='completed'>已完成</option>
                 <option value='cancelled'>已取消</option>
               </TextField>
+              <TextField
+                fullWidth
+                label='备注'
+                value={formData.remarks}
+                onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
+                placeholder='请输入备注'
+                multiline
+                rows={2}
+              />
             </Box>
-            <TextField
-              fullWidth
-              label='备注'
-              value={formData.remarks}
-              onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
-              placeholder='请输入备注'
-              multiline
-              rows={2}
-            />
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            variant='outlined'
-            onClick={() => {
-              setShowEditModal(false);
-              setEditingId(null);
-            }}
-          >
-            取消
-          </Button>
-          <Button
-            variant='contained'
-            onClick={handleUpdate}
-            sx={{ bgcolor: 'primary.main' }}
-          >
-            更新
-          </Button>
-        </DialogActions>
-      </Dialog>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              variant='outlined'
+              onClick={() => setShowCreateModal(false)}
+            >
+              取消
+            </Button>
+            <Button
+              variant='contained'
+              onClick={handleSave}
+              sx={{ bgcolor: 'primary.main' }}
+            >
+              保存
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={showEditModal}
+          onClose={() => {
+            setShowEditModal(false);
+            setEditingId(null);
+          }}
+          maxWidth='md'
+          fullWidth
+        >
+          <DialogTitle>编辑订单</DialogTitle>
+          <DialogContent>
+            <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                <TextField
+                  fullWidth
+                  label='订单编号 *'
+                  value={formData.po_no}
+                  onChange={(e) => setFormData({ ...formData, po_no: e.target.value })}
+                  placeholder='请输入订单编号'
+                />
+                <TextField
+                  fullWidth
+                  label='供应商ID'
+                  value={formData.supplier_id}
+                  onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
+                  placeholder='请输入供应商ID'
+                />
+                <TextField
+                  fullWidth
+                  label='订单金额'
+                  type='number'
+                  value={formData.total_amount}
+                  onChange={(e) =>
+                    setFormData({ ...formData, total_amount: parseFloat(e.target.value) || 0 })
+                  }
+                  placeholder='请输入订单金额'
+                />
+                <TextField
+                  fullWidth
+                  select
+                  label='状态'
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                >
+                  <option value='pending'>待处理</option>
+                  <option value='processing'>处理中</option>
+                  <option value='delivered'>已交付</option>
+                  <option value='completed'>已完成</option>
+                  <option value='cancelled'>已取消</option>
+                </TextField>
+              </Box>
+              <TextField
+                fullWidth
+                label='备注'
+                value={formData.remarks}
+                onChange={(e) => setFormData({ ...formData, remarks: e.target.value })}
+                placeholder='请输入备注'
+                multiline
+                rows={2}
+              />
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              variant='outlined'
+              onClick={() => {
+                setShowEditModal(false);
+                setEditingId(null);
+              }}
+            >
+              取消
+            </Button>
+            <Button
+              variant='contained'
+              onClick={handleUpdate}
+              sx={{ bgcolor: 'primary.main' }}
+            >
+              更新
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </PageContainer>
   );

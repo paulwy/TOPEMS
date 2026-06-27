@@ -150,18 +150,37 @@ const DocsFileDetailPage: React.FC = () => {
           }}
         >
           <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
-            <Typography variant='body2' color='text.secondary'>文件ID</Typography>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
+              文件ID
+            </Typography>
             <Typography sx={{ fontWeight: 'medium', mt: 0.5, fontFamily: 'monospace' }}>
               {file.id.substring(0, 8)}...
             </Typography>
           </Box>
           <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
-            <Typography variant='body2' color='text.secondary'>文件类型</Typography>
-            <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>{file.content_type || '-'}</Typography>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
+              文件类型
+            </Typography>
+            <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
+              {file.content_type || '-'}
+            </Typography>
           </Box>
           <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
-            <Typography variant='body2' color='text.secondary'>文件大小</Typography>
-            <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>{formatFileSize(file.size)}</Typography>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
+              文件大小
+            </Typography>
+            <Typography sx={{ fontWeight: 'medium', mt: 0.5 }}>
+              {formatFileSize(file.size)}
+            </Typography>
           </Box>
         </Box>
       ),
@@ -178,7 +197,12 @@ const DocsFileDetailPage: React.FC = () => {
 
   const infoCard = useMemo(
     () => ({
-      avatar: <FileText size={32} color='#1976d2' />,
+      avatar: (
+        <FileText
+          size={32}
+          color='#1976d2'
+        />
+      ),
       title: file?.name,
       subtitle: file?.content_type || undefined,
       tags: [formatFileSize(file?.size) || '-'],
@@ -187,7 +211,10 @@ const DocsFileDetailPage: React.FC = () => {
   );
 
   return (
-    <PageContainer title='文件详情' subtitle='查看文件详细信息'>
+    <PageContainer
+      title='文件详情'
+      subtitle='查看文件详细信息'
+    >
       <DetailPageTemplate
         title=''
         subtitle=''

@@ -39,8 +39,8 @@ import {
   LinearProgress,
   Avatar,
   Stack,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import type {
   Instrument,
   CreateInstrumentRequest,
@@ -50,7 +50,6 @@ import type {
 } from '@/api/lims';
 import { limsApi } from '@/api/lims';
 import { PageContainer } from '@/components/common';
-import { PageHeader } from '@/components/templates/PageHeader';
 import { CardListTemplate } from '@/components/templates/CardListTemplate';
 import { apiLogger } from '@/utils/logger';
 
@@ -173,7 +172,7 @@ const LimsInstrumentPage: React.FC = () => {
     try {
       const response = await limsApi.listInstruments();
       if (response.success && response.data) {
-        let instrumentData = response.data as any;
+        const instrumentData = response.data as any;
         let rawInstruments: any[] = [];
 
         if (Array.isArray(instrumentData)) {
@@ -670,6 +669,19 @@ const LimsInstrumentPage: React.FC = () => {
         background: 'linear-gradient(135deg, #f8fafc 0%, border.default 100%)',
       }}
       padding={false}
+      title='仪器管理'
+      subtitle='Instrument Management'
+      headerProps={{
+        pageIcon: <Settings style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #14B8A6, #0D9488)',
+        breadcrumbs: [
+          { label: '首页', href: '/dashboard' },
+          { label: 'LIMS' },
+          { label: '仪器管理' },
+        ],
+        backButton: { onClick: () => navigate('/dashboard') },
+        loading,
+      }}
     >
       <Snackbar
         open={Boolean(notification)}
@@ -691,21 +703,6 @@ const LimsInstrumentPage: React.FC = () => {
         maxWidth='xl'
         sx={{ px: { xs: 2, sm: 3 }, py: 3 }}
       >
-        <PageHeader
-          title='仪器管理'
-          subtitle='Instrument Management'
-          pageIcon={<Settings style={{ width: 20, height: 20 }} />}
-          pageColor='linear-gradient(135deg, #14B8A6, #0D9488)'
-          breadcrumbs={[
-            { label: '首页', href: '/dashboard' },
-            { label: 'LIMS' },
-            { label: '仪器管理' },
-          ]}
-          backButton={{ onClick: () => navigate('/dashboard') }}
-          actions={[]}
-          loading={loading}
-        />
-
         <CardListTemplate
           title=''
           data={filteredInstruments}

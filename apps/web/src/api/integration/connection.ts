@@ -9,9 +9,12 @@ import type {
 } from './types';
 
 export const connectionApi = {
-  listConnections: async (
-    params?: { type?: string; status?: string; page?: number; pageSize?: number }
-  ): Promise<ApiResponse<ErpConnection[]>> => {
+  listConnections: async (params?: {
+    type?: string;
+    status?: string;
+    page?: number;
+    pageSize?: number;
+  }): Promise<ApiResponse<ErpConnection[]>> => {
     return apiClient.integration.get('/api/integration/erp/connections', { params });
   },
 

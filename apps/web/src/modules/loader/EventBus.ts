@@ -1,10 +1,10 @@
+import { logger } from '@/utils/logger';
+
 type EventHandler<T = any> = (data: T) => void;
 
 interface EventListeners {
   [eventName: string]: Set<EventHandler>;
 }
-
-import { logger } from '@/utils/logger';
 
 export class EventBus {
   private listeners: EventListeners = {};

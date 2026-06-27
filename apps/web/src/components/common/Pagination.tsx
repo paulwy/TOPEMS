@@ -1,5 +1,4 @@
-import { Box, Typography, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
-import { Button } from '@mui/material';
+import { Box, Typography, Select, MenuItem, FormControl, InputLabel, Button } from '@mui/material';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 export interface PaginationConfig {

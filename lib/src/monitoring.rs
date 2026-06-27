@@ -362,16 +362,28 @@ impl Default for MonitoringState {
 
 impl MonitoringState {
     pub fn new() -> Self {
-        let state = Self::default();
-        let alert_rules = Arc::clone(&state.alert_rules);
-        let suppression_rules = Arc::clone(&state.suppression_rules);
-        tokio::spawn(async move {
-            let mut rules = alert_rules.write().await;
-            *rules = default_alert_rules();
-            let mut suppressions = suppression_rules.write().await;
-            *suppressions = default_suppression_rules();
-        });
-        state
+        Self {
+            services: Arc::new(RwLock::new(HashMap::new())),
+            metrics: Arc::new(RwLock::new(MonitoringMetrics {
+                requests_total: 0,
+                requests_success: 0,
+                requests_failed: 0,
+                avg_response_time_ms: 0,
+                active_connections: 0,
+                memory_usage_mb: 0,
+                cpu_usage_percent: 0.0,
+            })),
+            alerts: Arc::new(RwLock::new(Vec::new())),
+            alert_rules: Arc::new(RwLock::new(default_alert_rules())),
+            suppression_rules: Arc::new(RwLock::new(default_suppression_rules())),
+            silence_rules: Arc::new(RwLock::new(Vec::new())),
+            convergence_config: Arc::new(RwLock::new(AlertConvergenceConfig::default())),
+            request_count: AtomicU64::new(0),
+            success_count: AtomicU64::new(0),
+            failure_count: AtomicU64::new(0),
+            response_times: Arc::new(RwLock::new(Vec::new())),
+            last_alert_triggered: Arc::new(RwLock::new(HashMap::new())),
+        }
     }
 
     pub async fn record_request(&self, success: bool, response_time_ms: u64) {
@@ -428,11 +440,13 @@ impl MonitoringState {
             return None;
         }
 
-        let last_triggered = self.last_alert_triggered.read().await;
-        if let Some(last_time) = last_triggered.get(&rule.id) {
-            let cooldown = Duration::seconds(rule.cooldown_seconds as i64);
-            if Utc::now() - *last_time < cooldown {
-                return None;
+        {
+            let last_triggered = self.last_alert_triggered.read().await;
+            if let Some(last_time) = last_triggered.get(&rule.id) {
+                let cooldown = Duration::seconds(rule.cooldown_seconds as i64);
+                if Utc::now() - *last_time < cooldown {
+                    return None;
+                }
             }
         }
 

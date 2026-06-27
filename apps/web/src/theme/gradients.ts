@@ -11,19 +11,19 @@ export const gradients = {
 
   // 模块专属渐变（与设计稿 CSS 变量 --gradient-module-* 保持同步）
   modules: {
-    hrm: 'linear-gradient(135deg, #3b82f6, #60a5fa)',
-    crm: 'linear-gradient(135deg, #22c55e, #4ade80)',
-    pm: 'linear-gradient(135deg, #f59e0b, #fbbf24)',
-    finance: 'linear-gradient(135deg, #6366f1, #818cf8)',
-    mes: 'linear-gradient(135deg, #14b8a6, #2dd4bf)',
-    scm: 'linear-gradient(135deg, #10b981, #34d399)',
-    wms: 'linear-gradient(135deg, #6366f1, #818cf8)',
-    bi: 'linear-gradient(135deg, #ec4899, #f472b6)',
-    gis: 'linear-gradient(135deg, #10b981, #34d399)',
-    im: 'linear-gradient(135deg, #f43f5e, #fb7185)',
-    ai: 'linear-gradient(135deg, #8b5cf6, #a78bfa)',
-    qms: 'linear-gradient(135deg, #3b82f6, #60a5fa)',
-    flow: 'linear-gradient(135deg, #14b8a6, #2dd4bf)',
+    hrm: 'linear-gradient(135deg, #22C55E 0%, #15803D 100%)',
+    crm: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+    pm: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+    finance: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+    mes: 'linear-gradient(135deg, #EF4444 0%, #B91C1C 100%)',
+    scm: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+    wms: 'linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%)',
+    bi: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',
+    gis: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+    im: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+    ai: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+    qms: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+    flow: 'linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%)',
   },
 
   // 背景渐变

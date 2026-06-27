@@ -13,19 +13,12 @@ import {
   Select,
   MenuItem,
   Typography,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
-import {
-  Rocket,
-  FileText,
-  RotateCcw,
-  Globe,
-  CheckCircle,
-  XCircle,
-  Clock,
-} from 'lucide-react';
-import { ListPageTemplate, type ColumnDef } from '@/components/templates';
-import type { RowAction, FilterConfig } from '@/components/templates';
+import { Rocket, FileText, RotateCcw, Globe, CheckCircle, XCircle, Clock } from 'lucide-react';
+import { ListPageTemplate } from '@/components/templates';
+
+import type { RowAction, FilterConfig, ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
 import { useAppStore } from '@/store';
@@ -84,10 +77,7 @@ const RsDeployPage: React.FC = () => {
     }
   };
 
-  const uniqueEnvs = useMemo(
-    () => [...new Set(deploys.map((d) => d.env))],
-    [deploys]
-  );
+  const uniqueEnvs = useMemo(() => [...new Set(deploys.map((d) => d.env))], [deploys]);
 
   const getStatusLabel = (status: string): string => {
     switch (status) {
@@ -393,7 +383,10 @@ const RsDeployPage: React.FC = () => {
   );
 
   return (
-    <PageContainer title='部署管理' subtitle='管理应用部署和发布流程'>
+    <PageContainer
+      title='部署管理'
+      subtitle='管理应用部署和发布流程'
+    >
       <ListPageTemplate<Deploy>
         title=''
         subtitle=''
@@ -442,26 +435,20 @@ const RsDeployPage: React.FC = () => {
               label='项目ID'
               fullWidth
               value={newDeployForm.project_id}
-              onChange={(e) =>
-                setNewDeployForm({ ...newDeployForm, project_id: e.target.value })
-              }
+              onChange={(e) => setNewDeployForm({ ...newDeployForm, project_id: e.target.value })}
             />
             <TextField
               label='构建ID'
               fullWidth
               value={newDeployForm.build_id}
-              onChange={(e) =>
-                setNewDeployForm({ ...newDeployForm, build_id: e.target.value })
-              }
+              onChange={(e) => setNewDeployForm({ ...newDeployForm, build_id: e.target.value })}
             />
             <FormControl fullWidth>
               <InputLabel>部署环境</InputLabel>
               <Select
                 value={newDeployForm.env}
                 label='部署环境'
-                onChange={(e) =>
-                  setNewDeployForm({ ...newDeployForm, env: e.target.value })
-                }
+                onChange={(e) => setNewDeployForm({ ...newDeployForm, env: e.target.value })}
               >
                 <MenuItem value='prod'>生产环境</MenuItem>
                 <MenuItem value='staging'>预发布环境</MenuItem>

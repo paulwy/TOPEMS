@@ -49,8 +49,7 @@ import L from 'leaflet';
 import type { LatLngExpression } from 'leaflet';
 
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
   iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 });
@@ -156,7 +155,13 @@ interface MapControlProps {
   isFullscreen: boolean;
 }
 
-function MapControl({ onZoomIn, onZoomOut, onLocate, onFullscreen, isFullscreen }: MapControlProps) {
+function MapControl({
+  onZoomIn,
+  onZoomOut,
+  onLocate,
+  onFullscreen,
+  isFullscreen,
+}: MapControlProps) {
   return (
     <Box
       sx={{
@@ -226,12 +231,30 @@ function LayerPanel({
   onOverlayToggle,
 }: LayerPanelProps) {
   return (
-    <Drawer anchor='right' open={open} onClose={onClose} sx={{ '& .MuiDrawer-paper': { width: 280, padding: 2 } }}>
+    <Drawer
+      anchor='right'
+      open={open}
+      onClose={onClose}
+      sx={{ '& .MuiDrawer-paper': { width: 280, padding: 2 } }}
+    >
       <Box sx={{ mb: 3 }}>
-        <Typography variant='h6' sx={{ fontWeight: 600 }}>图层管理</Typography>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600 }}
+        >
+          图层管理
+        </Typography>
       </Box>
-      <Typography variant='subtitle2' sx={{ fontWeight: 500, mb: 2 }}>底图</Typography>
-      <List dense sx={{ mb: 3 }}>
+      <Typography
+        variant='subtitle2'
+        sx={{ fontWeight: 500, mb: 2 }}
+      >
+        底图
+      </Typography>
+      <List
+        dense
+        sx={{ mb: 3 }}
+      >
         {baseLayers.map((layer) => {
           const isSelected = selectedBaseLayer === layer.id;
           return (
@@ -246,18 +269,34 @@ function LayerPanel({
               }}
             >
               <ListItemText primary={layer.name} />
-              {isSelected && <Layers size={16} sx={{ color: '#fff' }} />}
+              {isSelected && (
+                <Layers
+                  size={16}
+                  sx={{ color: '#fff' }}
+                />
+              )}
             </ListItem>
           );
         })}
       </List>
       <Divider sx={{ mb: 3 }} />
-      <Typography variant='subtitle2' sx={{ fontWeight: 500, mb: 2 }}>叠加层</Typography>
+      <Typography
+        variant='subtitle2'
+        sx={{ fontWeight: 500, mb: 2 }}
+      >
+        叠加层
+      </Typography>
       <List dense>
         {overlayLayers.map((layer) => (
           <ListItem key={layer.id}>
             <FormControlLabel
-              control={<Switch checked={layer.visible} onChange={() => onOverlayToggle(layer.id)} size='small' />}
+              control={
+                <Switch
+                  checked={layer.visible}
+                  onChange={() => onOverlayToggle(layer.id)}
+                  size='small'
+                />
+              }
               label={layer.name}
               sx={{ margin: 0 }}
             />
@@ -286,7 +325,12 @@ function SearchPanel({ open, onClose, onSearch }: SearchPanelProps) {
   }, [open]);
 
   return (
-    <Drawer anchor='top' open={open} onClose={onClose} sx={{ '& .MuiDrawer-paper': { height: 'auto', padding: 2 } }}>
+    <Drawer
+      anchor='top'
+      open={open}
+      onClose={onClose}
+      sx={{ '& .MuiDrawer-paper': { height: 'auto', padding: 2 } }}
+    >
       <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
         <TextField
           autoFocus
@@ -297,11 +341,20 @@ function SearchPanel({ open, onClose, onSearch }: SearchPanelProps) {
           sx={{ flex: 1 }}
           slotProps={{
             input: {
-              startAdornment: <InputAdornment position='start'><Search size={20} /></InputAdornment>,
+              startAdornment: (
+                <InputAdornment position='start'>
+                  <Search size={20} />
+                </InputAdornment>
+              ),
             },
           }}
         />
-        <Button variant='contained' onClick={handleSearch}>搜索</Button>
+        <Button
+          variant='contained'
+          onClick={handleSearch}
+        >
+          搜索
+        </Button>
       </Box>
     </Drawer>
   );
@@ -330,25 +383,42 @@ function DrawControl({ onDraw, onClear, drawMode }: DrawControlProps) {
         boxShadow: 2,
       }}
     >
-      <Typography variant='caption' sx={{ textAlign: 'center', fontWeight: 500, mb: 1 }}>围栏绘制</Typography>
+      <Typography
+        variant='caption'
+        sx={{ textAlign: 'center', fontWeight: 500, mb: 1 }}
+      >
+        围栏绘制
+      </Typography>
       <Tooltip title='圆形围栏'>
-        <IconButton onClick={() => onDraw('circle')} sx={{ color: drawMode === 'circle' ? 'primary.main' : 'text.primary' }}>
+        <IconButton
+          onClick={() => onDraw('circle')}
+          sx={{ color: drawMode === 'circle' ? 'primary.main' : 'text.primary' }}
+        >
           <Circle size={20} />
         </IconButton>
       </Tooltip>
       <Tooltip title='矩形围栏'>
-        <IconButton onClick={() => onDraw('rectangle')} sx={{ color: drawMode === 'rectangle' ? 'primary.main' : 'text.primary' }}>
+        <IconButton
+          onClick={() => onDraw('rectangle')}
+          sx={{ color: drawMode === 'rectangle' ? 'primary.main' : 'text.primary' }}
+        >
           <Square size={20} />
         </IconButton>
       </Tooltip>
       <Tooltip title='多边形围栏'>
-        <IconButton onClick={() => onDraw('polygon')} sx={{ color: drawMode === 'polygon' ? 'primary.main' : 'text.primary' }}>
+        <IconButton
+          onClick={() => onDraw('polygon')}
+          sx={{ color: drawMode === 'polygon' ? 'primary.main' : 'text.primary' }}
+        >
           <PenTool size={20} />
         </IconButton>
       </Tooltip>
       <Divider sx={{ my: 1, width: '100%' }} />
       <Tooltip title='清除绘制'>
-        <IconButton onClick={onClear} color='error'>
+        <IconButton
+          onClick={onClear}
+          color='error'
+        >
           <Trash2 size={20} />
         </IconButton>
       </Tooltip>
@@ -378,21 +448,48 @@ function TrackPlayback({
   onSpeedChange,
 }: TrackPlaybackProps) {
   return (
-    <Drawer anchor='bottom' open={open} onClose={onClose} sx={{ '& .MuiDrawer-paper': { height: 160, padding: 3 } }}>
+    <Drawer
+      anchor='bottom'
+      open={open}
+      onClose={onClose}
+      sx={{ '& .MuiDrawer-paper': { height: 160, padding: 3 } }}
+    >
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-          <Typography variant='subtitle2' sx={{ fontWeight: 500 }}>轨迹回放</Typography>
+          <Typography
+            variant='subtitle2'
+            sx={{ fontWeight: 500 }}
+          >
+            轨迹回放
+          </Typography>
           <Box sx={{ display: 'flex', gap: 1 }}>
-            <IconButton onClick={onReset}><RotateCcw size={20} /></IconButton>
+            <IconButton onClick={onReset}>
+              <RotateCcw size={20} />
+            </IconButton>
             {isPlaying ? (
-              <IconButton onClick={onPause} color='primary'><Pause size={24} /></IconButton>
+              <IconButton
+                onClick={onPause}
+                color='primary'
+              >
+                <Pause size={24} />
+              </IconButton>
             ) : (
-              <IconButton onClick={onPlay} color='primary'><Play size={24} /></IconButton>
+              <IconButton
+                onClick={onPlay}
+                color='primary'
+              >
+                <Play size={24} />
+              </IconButton>
             )}
           </Box>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-          <Typography variant='body2' sx={{ width: 80 }}>播放速度</Typography>
+          <Typography
+            variant='body2'
+            sx={{ width: 80 }}
+          >
+            播放速度
+          </Typography>
           <Slider
             value={playbackSpeed}
             onChange={(_, value) => onSpeedChange(value as number)}
@@ -468,7 +565,9 @@ export function GisMapTemplate({
         });
       }, 1000 / playbackSpeed);
     }
-    return () => { if (interval) clearInterval(interval); };
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, [isPlaying, trackPoints.length, playbackSpeed]);
 
   useEffect(() => {
@@ -482,7 +581,8 @@ export function GisMapTemplate({
   const handleLocate = useCallback(() => {
     if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
-        (position) => mapRef.current?.setView([position.coords.latitude, position.coords.longitude], 15),
+        (position) =>
+          mapRef.current?.setView([position.coords.latitude, position.coords.longitude], 15),
         (error) => console.error('定位失败:', error)
       );
     }
@@ -500,15 +600,18 @@ export function GisMapTemplate({
     setShowLayers(false);
   }, []);
 
-  const handleOverlayToggle = useCallback((layerId: string) => {
-    setOverlayLayers((prev) => prev.map((layer) =>
-      layer.id === layerId ? { ...layer, visible: !layer.visible } : layer
-    ));
-    onLayerVisibilityChange?.(layerId, !overlayLayers.find((l) => l.id === layerId)?.visible);
-  }, [overlayLayers, onLayerVisibilityChange]);
+  const handleOverlayToggle = useCallback(
+    (layerId: string) => {
+      setOverlayLayers((prev) =>
+        prev.map((layer) => (layer.id === layerId ? { ...layer, visible: !layer.visible } : layer))
+      );
+      onLayerVisibilityChange?.(layerId, !overlayLayers.find((l) => l.id === layerId)?.visible);
+    },
+    [overlayLayers, onLayerVisibilityChange]
+  );
 
   const handleDraw = useCallback((type: 'circle' | 'polygon' | 'rectangle') => {
-    setDrawMode((prev) => prev === type ? null : type);
+    setDrawMode((prev) => (prev === type ? null : type));
   }, []);
 
   const handleClearDraw = useCallback(() => setDrawMode(null), []);
@@ -547,10 +650,14 @@ export function GisMapTemplate({
     });
   };
 
-  const isLayerVisible = (layerId: string) => overlaysToRender.find((l) => l.id === layerId)?.visible ?? true;
+  const isLayerVisible = (layerId: string) =>
+    overlaysToRender.find((l) => l.id === layerId)?.visible ?? true;
 
   return (
-    <Box {...props} sx={{ position: 'relative', width: '100%', height: '100%', ...props.sx }}>
+    <Box
+      {...props}
+      sx={{ position: 'relative', width: '100%', height: '100%', ...props.sx }}
+    >
       <MapContainer
         ref={mapRef}
         center={initialCenter}
@@ -558,44 +665,52 @@ export function GisMapTemplate({
         style={{ width: '100%', height: '100%' }}
         zoomControl={zoomControl}
       >
-        {baseLayersToRender.filter((layer) => layer.id === selectedBaseLayer).map((layer) => (
-          <TileLayer key={layer.id} url={layer.url || ''} attribution={layer.attribution} />
-        ))}
+        {baseLayersToRender
+          .filter((layer) => layer.id === selectedBaseLayer)
+          .map((layer) => (
+            <TileLayer
+              key={layer.id}
+              url={layer.url || ''}
+              attribution={layer.attribution}
+            />
+          ))}
 
-        {isLayerVisible('markers') && markers.map((marker) => (
-          <Marker
-            key={marker.id}
-            position={marker.position}
-            icon={getMarkerIcon(marker.type)}
-            eventHandlers={{ click: () => onMarkerClick?.(marker) }}
-          >
-            {marker.popupContent && <Popup>{marker.popupContent}</Popup>}
-          </Marker>
-        ))}
+        {isLayerVisible('markers') &&
+          markers.map((marker) => (
+            <Marker
+              key={marker.id}
+              position={marker.position}
+              icon={getMarkerIcon(marker.type)}
+              eventHandlers={{ click: () => onMarkerClick?.(marker) }}
+            >
+              {marker.popupContent && <Popup>{marker.popupContent}</Popup>}
+            </Marker>
+          ))}
 
-        {isLayerVisible('fences') && fences.map((fence) => (
-          <React.Fragment key={fence.id}>
-            {fence.type === 'circle' && fence.radius && (
-              <LeafletCircle
-                center={fence.position}
-                radius={fence.radius}
-                color={fence.color || '#f44336'}
-                fillColor={fence.color || '#f44336'}
-                fillOpacity={0.2}
-                eventHandlers={{ click: () => onFenceClick?.(fence) }}
-              />
-            )}
-            {(fence.type === 'polygon' || fence.type === 'rectangle') && fence.coordinates && (
-              <Polygon
-                positions={fence.coordinates as L.LatLngExpression[]}
-                color={fence.color || '#f44336'}
-                fillColor={fence.color || '#f44336'}
-                fillOpacity={0.2}
-                eventHandlers={{ click: () => onFenceClick?.(fence) }}
-              />
-            )}
-          </React.Fragment>
-        ))}
+        {isLayerVisible('fences') &&
+          fences.map((fence) => (
+            <React.Fragment key={fence.id}>
+              {fence.type === 'circle' && fence.radius && (
+                <LeafletCircle
+                  center={fence.position}
+                  radius={fence.radius}
+                  color={fence.color || '#f44336'}
+                  fillColor={fence.color || '#f44336'}
+                  fillOpacity={0.2}
+                  eventHandlers={{ click: () => onFenceClick?.(fence) }}
+                />
+              )}
+              {(fence.type === 'polygon' || fence.type === 'rectangle') && fence.coordinates && (
+                <Polygon
+                  positions={fence.coordinates as L.LatLngExpression[]}
+                  color={fence.color || '#f44336'}
+                  fillColor={fence.color || '#f44336'}
+                  fillOpacity={0.2}
+                  eventHandlers={{ click: () => onFenceClick?.(fence) }}
+                />
+              )}
+            </React.Fragment>
+          ))}
 
         {isLayerVisible('tracks') && trackPoints.length > 0 && (
           <Polyline
@@ -621,31 +736,54 @@ export function GisMapTemplate({
         {children}
       </MapContainer>
 
-      <Box sx={{ position: 'absolute', top: 20, left: 20, display: 'flex', flexDirection: 'column', gap: 1, zIndex: 1000 }}>
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 20,
+          left: 20,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 1,
+          zIndex: 1000,
+        }}
+      >
         {searchable && (
           <Tooltip title='搜索'>
-            <IconButton onClick={() => setShowSearch(true)} sx={{ bgcolor: 'background.paper', boxShadow: 1 }}>
+            <IconButton
+              onClick={() => setShowSearch(true)}
+              sx={{ bgcolor: 'background.paper', boxShadow: 1 }}
+            >
               <Search size={20} />
             </IconButton>
           </Tooltip>
         )}
         {showLayerPanel && (
           <Tooltip title='图层'>
-            <IconButton onClick={() => setShowLayers(true)} sx={{ bgcolor: 'background.paper', boxShadow: 1 }}>
+            <IconButton
+              onClick={() => setShowLayers(true)}
+              sx={{ bgcolor: 'background.paper', boxShadow: 1 }}
+            >
               <Layers size={20} />
             </IconButton>
           </Tooltip>
         )}
         {trackPoints.length > 0 && (
           <Tooltip title='轨迹回放'>
-            <IconButton onClick={() => setShowTrackPlayback(true)} sx={{ bgcolor: 'background.paper', boxShadow: 1 }}>
+            <IconButton
+              onClick={() => setShowTrackPlayback(true)}
+              sx={{ bgcolor: 'background.paper', boxShadow: 1 }}
+            >
               <Navigation size={20} />
             </IconButton>
           </Tooltip>
         )}
       </Box>
 
-      <DrawControl onDraw={handleDraw} onClear={handleClearDraw} drawMode={drawMode} />
+      <DrawControl
+        onDraw={handleDraw}
+        onClear={handleClearDraw}
+        drawMode={drawMode}
+      />
 
       {(zoomControl || fullscreenControl || locateControl) && (
         <MapControl

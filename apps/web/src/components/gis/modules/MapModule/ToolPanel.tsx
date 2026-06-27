@@ -12,8 +12,7 @@ import {
   Box,
   Globe,
 } from 'lucide-react';
-import { Box as MuiBox, Typography, Paper, Divider } from '@mui/material';
-import { Button } from '@mui/material';
+import { Box as MuiBox, Typography, Paper, Divider, Button } from '@mui/material';
 import type { DrawFeature } from '../shared/types';
 
 type ToolMode =

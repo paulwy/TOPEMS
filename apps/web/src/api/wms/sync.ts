@@ -1,11 +1,6 @@
 import apiClient from '../client';
 import type { ApiResponse, PaginatedResponse } from '../client';
-import type {
-  SyncRecord,
-  SyncRecordItem,
-  SyncStatistics,
-  SyncPaginationParams,
-} from './types';
+import type { SyncRecord, SyncRecordItem, SyncStatistics, SyncPaginationParams } from './types';
 
 export const syncRecordApi = {
   list: async (
@@ -36,29 +31,35 @@ export const syncRecordApi = {
     return apiClient.wms.post(`/sync-records/${id}/retry-items`, { item_ids });
   },
 
-  getStatistics: async (
-    params?: { sync_type?: string; date_range?: string }
-  ): Promise<ApiResponse<SyncStatistics>> => {
+  getStatistics: async (params?: {
+    sync_type?: string;
+    date_range?: string;
+  }): Promise<ApiResponse<SyncStatistics>> => {
     return apiClient.wms.get('/sync-records/statistics', { params });
   },
 };
 
 export const syncApi = {
-  withScm: async (
-    data: { sync_type: string; full_sync?: boolean }
-  ): Promise<ApiResponse<SyncRecord>> => {
+  withScm: async (data: {
+    sync_type: string;
+    full_sync?: boolean;
+  }): Promise<ApiResponse<SyncRecord>> => {
     return apiClient.wms.post('/sync/scm', data);
   },
 
-  inventoryWithScm: async (
-    data?: { warehouse_id?: string; sku?: string; full_sync?: boolean }
-  ): Promise<ApiResponse<SyncRecord>> => {
+  inventoryWithScm: async (data?: {
+    warehouse_id?: string;
+    sku?: string;
+    full_sync?: boolean;
+  }): Promise<ApiResponse<SyncRecord>> => {
     return apiClient.wms.post('/sync/scm/inventory', data);
   },
 
-  ordersWithScm: async (
-    data?: { order_type?: string; date_range?: string; full_sync?: boolean }
-  ): Promise<ApiResponse<SyncRecord>> => {
+  ordersWithScm: async (data?: {
+    order_type?: string;
+    date_range?: string;
+    full_sync?: boolean;
+  }): Promise<ApiResponse<SyncRecord>> => {
     return apiClient.wms.post('/sync/scm/orders', data);
   },
 };
@@ -91,27 +92,33 @@ export async function retryFailedSyncItems(
   return syncRecordApi.retryFailedItems(id, item_ids);
 }
 
-export async function getSyncStatistics(
-  params?: { sync_type?: string; date_range?: string }
-): Promise<ApiResponse<SyncStatistics>> {
+export async function getSyncStatistics(params?: {
+  sync_type?: string;
+  date_range?: string;
+}): Promise<ApiResponse<SyncStatistics>> {
   return syncRecordApi.getStatistics(params);
 }
 
-export async function syncWithScm(
-  data: { sync_type: string; full_sync?: boolean }
-): Promise<ApiResponse<SyncRecord>> {
+export async function syncWithScm(data: {
+  sync_type: string;
+  full_sync?: boolean;
+}): Promise<ApiResponse<SyncRecord>> {
   return syncApi.withScm(data);
 }
 
-export async function syncInventoryWithScm(
-  data?: { warehouse_id?: string; sku?: string; full_sync?: boolean }
-): Promise<ApiResponse<SyncRecord>> {
+export async function syncInventoryWithScm(data?: {
+  warehouse_id?: string;
+  sku?: string;
+  full_sync?: boolean;
+}): Promise<ApiResponse<SyncRecord>> {
   return syncApi.inventoryWithScm(data);
 }
 
-export async function syncOrdersWithScm(
-  data?: { order_type?: string; date_range?: string; full_sync?: boolean }
-): Promise<ApiResponse<SyncRecord>> {
+export async function syncOrdersWithScm(data?: {
+  order_type?: string;
+  date_range?: string;
+  full_sync?: boolean;
+}): Promise<ApiResponse<SyncRecord>> {
   return syncApi.ordersWithScm(data);
 }
 

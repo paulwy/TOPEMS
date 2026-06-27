@@ -1,196 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Box, Paper, Typography, Button } from '@mui/material';
-import { ChevronLeft, Home } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePermission } from '@/hooks/usePermission';
 import { navigationRegistry, type NavItem } from '@/lib/NavigationRegistry';
 
-// ---- Lucide 图标映射（与 GlobalLayout.tsx 保持一致的 renderIcon 模式） ----
-import {
-  Users,
-  Building2,
-  Briefcase,
-  BarChart3,
-  Settings,
-  Bell,
-  User,
-  FileText,
-  Calendar,
-  DollarSign,
-  LayoutDashboard,
-  FolderKanban,
-  FlaskConical,
-  Truck,
-  Wallet,
-  Factory,
-  Bot,
-  Map,
-  MessageCircle,
-  Shield,
-  GitBranch,
-  Warehouse,
-  Activity,
-  Package,
-  FileSearch,
-  BookOpen,
-  Layers,
-  Tag,
-  ListTodo,
-  CheckCircle,
-  Leaf,
-  FlaskRound,
-  Microscope,
-  TestTube,
-  ClipboardCheck,
-  AlertCircle,
-  AlertTriangle,
-  TrendingUp,
-  Handshake,
-  Award,
-  Target,
-  ShoppingCart,
-  FileSignature,
-  Download,
-  Upload,
-  ClipboardList,
-  Hash,
-  ListOrdered,
-  PieChart,
-  Database,
-  FolderOpen,
-  LayoutTemplate,
-  HelpCircle,
-  Archive,
-  BarChart2,
-  Clock,
-  Mail,
-  Smartphone,
-  CloudOff,
-  ScanLine,
-  Network,
-  Link,
-  SlidersHorizontal,
-  Globe,
-  Plug,
-  Zap,
-  Star,
-  Wrench,
-  Monitor,
-  AlertOctagon,
-  FileCheck,
-  Rocket,
-  Pencil,
-  History,
-  Key,
-  UserCheck,
-  Building,
-  Calculator,
-  Book,
-  CreditCard,
-  GraduationCap,
-  MessageSquare,
-  Grid3X3,
-  GanttChart,
-  ShieldAlert,
-  Plus,
-} from 'lucide-react';
-
-const lucideIcons: Record<string, React.ComponentType<{ style?: React.CSSProperties }> | null> = {
-  Home,
-  Users,
-  Building2,
-  Briefcase,
-  BarChart3,
-  Settings,
-  Bell,
-  User,
-  FileText,
-  Calendar,
-  DollarSign,
-  LayoutDashboard,
-  FolderKanban,
-  FlaskConical,
-  Truck,
-  Wallet,
-  Factory,
-  Bot,
-  Map,
-  MessageCircle,
-  Shield,
-  GitBranch,
-  Warehouse,
-  Activity,
-  Package,
-  FileSearch,
-  BookOpen,
-  Layers,
-  Tag,
-  ListTodo,
-  CheckCircle,
-  Leaf,
-  FlaskRound,
-  Microscope,
-  TestTube,
-  ClipboardCheck,
-  AlertCircle,
-  AlertTriangle,
-  TrendingUp,
-  Handshake,
-  Award,
-  Target,
-  ShoppingCart,
-  FileSignature,
-  Download,
-  Upload,
-  ClipboardList,
-  Hash,
-  ListOrdered,
-  PieChart,
-  Database,
-  FolderOpen,
-  LayoutTemplate,
-  HelpCircle,
-  Archive,
-  BarChart2,
-  Clock,
-  Mail,
-  Smartphone,
-  CloudOff,
-  ScanLine,
-  Network,
-  Link,
-  SlidersHorizontal,
-  Globe,
-  Plug,
-  Zap,
-  Star,
-  Wrench,
-  Monitor,
-  AlertOctagon,
-  FileCheck,
-  Rocket,
-  Pencil,
-  History,
-  Key,
-  UserCheck,
-  Building,
-  Calculator,
-  Book,
-  CreditCard,
-  GraduationCap,
-  MessageSquare,
-  Grid3X3,
-  GanttChart,
-  ShieldAlert,
-  Plus,
-};
-
-const renderIcon = (iconName?: string, size = 18) => {
-  if (!iconName) return null;
-  const IconComponent = lucideIcons[iconName];
-  if (!IconComponent) return null;
-  return <IconComponent style={{ width: size, height: size }} />;
-};
+import { ChevronLeft, Home } from 'lucide-react';
+import { lucideIcons, renderIcon } from '@/lib/iconMapping';
 
 // ---- 从路径解析模块 code（与 GlobalLayout / useTopNav 一致） ----
 function getModuleFromPath(pathname: string): string | null {
@@ -216,9 +31,11 @@ function isPlatformPath(pathname: string): boolean {
 export interface AppSidebarProps {
   collapsed: boolean;
   onToggleCollapse: () => void;
+  /** 当在 Drawer 中使用时，覆盖内部 display 样式使其始终可见 */
+  forceVisible?: boolean;
 }
 
-export const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggleCollapse }) => {
+export const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggleCollapse, forceVisible }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { checkPermission } = usePermission();
@@ -277,7 +94,10 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggleColla
     px: collapsed ? 0 : 1.5,
     py: 1.25,
     borderRadius: 1,
-    cursor: hasPath ? 'pointer' : 'default',
+    cursor: 'pointer',
+    border: 'none',
+    background: 'none',
+    padding: 0,
     borderLeft: '3px solid',
     borderLeftColor: isActive ? 'primary.main' : 'transparent',
     bgcolor: isActive ? 'primary.50' : 'transparent',
@@ -292,19 +112,22 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggleColla
 
   return (
     <Paper
+      role="navigation"
+      aria-label="主导航"
       elevation={0}
       sx={{
         width: collapsed ? 64 : 240,
         transition: 'width 300ms ease',
-        height: 'calc(100vh - 56px)',
-        position: 'sticky',
-        top: 56,
+        height: forceVisible ? '100%' : 'calc(100vh - 56px)',
+        position: forceVisible ? 'static' : 'sticky',
+        top: forceVisible ? 'auto' : 56,
         flexShrink: 0,
-        display: { xs: 'none', lg: 'flex' },
+        display: forceVisible ? 'flex' : { xs: 'none', lg: 'flex' },
         flexDirection: 'column',
         bgcolor: 'background.paper',
         borderRight: '1px solid',
         borderColor: 'divider',
+        boxShadow: 'none',
       }}
     >
       {/* ---- 1. 导航菜单 ---- */}
@@ -333,14 +156,21 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggleColla
           <>
             {/* 返回平台 */}
             <Box
+              component="button"
+              role="menuitem"
+              tabIndex={0}
               onClick={() => navigate('/dashboard')}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  navigate('/dashboard');
+                }
+              }}
               sx={navItemSx(false, true)}
             >
               <Home style={{ width: 18, height: 18, flexShrink: 0 }} />
               {!collapsed && (
-                <Typography sx={{ fontSize: 14, fontWeight: 500 }}>
-                  返回平台
-                </Typography>
+                <Typography sx={{ fontSize: 14, fontWeight: 500 }}>返回平台</Typography>
               )}
             </Box>
 
@@ -373,9 +203,14 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggleColla
                 {!collapsed && (
                   <Typography
                     sx={{
-                      px: 2, py: 1, fontSize: 12, fontWeight: 600,
-                      color: 'text.secondary', textTransform: 'uppercase',
-                      letterSpacing: '0.5px', userSelect: 'none',
+                      px: 2,
+                      py: 1,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: 'text.secondary',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      userSelect: 'none',
                     }}
                   >
                     核心功能
@@ -385,12 +220,22 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggleColla
                   {coreNavItems.map((item: NavItem, index: number) => {
                     const isActive = Boolean(
                       item.path === location.pathname ||
-                      (item.path && location.pathname.startsWith(item.path + '/'))
+                      (item.path && location.pathname.startsWith(`${item.path}/`))
                     );
                     return (
                       <Box
+                        component="button"
+                        role="menuitem"
+                        tabIndex={0}
                         key={item.code || `${item.label}-${index}`}
                         onClick={() => item.path && navigate(item.path)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            item.path && navigate(item.path);
+                          }
+                        }}
+                        aria-current={isActive ? 'page' : undefined}
                         sx={navItemSx(isActive, true)}
                       >
                         {renderIcon(item.icon, 18) || (
@@ -414,9 +259,14 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggleColla
                 {!collapsed && (
                   <Typography
                     sx={{
-                      px: 2, py: 1, fontSize: 12, fontWeight: 600,
-                      color: 'text.secondary', textTransform: 'uppercase',
-                      letterSpacing: '0.5px', userSelect: 'none',
+                      px: 2,
+                      py: 1,
+                      fontSize: 12,
+                      fontWeight: 600,
+                      color: 'text.secondary',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      userSelect: 'none',
                     }}
                   >
                     业务应用
@@ -426,12 +276,22 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggleColla
                   {pluginNavItems.map((item: NavItem, index: number) => {
                     const isActive = Boolean(
                       item.path === location.pathname ||
-                      (item.path && location.pathname.startsWith(item.path + '/'))
+                      (item.path && location.pathname.startsWith(`${item.path}/`))
                     );
                     return (
                       <Box
+                        component="button"
+                        role="menuitem"
+                        tabIndex={0}
                         key={item.code || `${item.label}-${index}`}
                         onClick={() => item.path && navigate(item.path)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            item.path && navigate(item.path);
+                          }
+                        }}
+                        aria-current={isActive ? 'page' : undefined}
                         sx={navItemSx(isActive, true)}
                       >
                         {renderIcon(item.icon, 18) || (
@@ -456,13 +316,23 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggleColla
           {displayNavItems.map((item: NavItem, index: number) => {
             const isActive = Boolean(
               item.path === location.pathname ||
-              (item.path && location.pathname.startsWith(item.path + '/'))
+              (item.path && location.pathname.startsWith(`${item.path}/`))
             );
 
             return (
               <Box
+                component="button"
+                role="menuitem"
+                tabIndex={0}
                 key={item.code || `${item.label}-${index}`}
                 onClick={() => item.path && navigate(item.path)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    item.path && navigate(item.path);
+                  }
+                }}
+                aria-current={isActive ? 'page' : undefined}
                 sx={navItemSx(isActive, item.path ? true : false)}
               >
                 {item.icon ? (
@@ -483,9 +353,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggleColla
                   </Typography>
                 )}
                 {!collapsed && (
-                  <Typography sx={{ fontSize: 14, fontWeight: 500 }}>
-                    {item.label}
-                  </Typography>
+                  <Typography sx={{ fontSize: 14, fontWeight: 500 }}>{item.label}</Typography>
                 )}
               </Box>
             );
@@ -525,11 +393,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggleColla
               transition: 'transform 300ms ease',
             }}
           />
-          {!collapsed && (
-            <Typography sx={{ fontSize: 13, fontWeight: 500 }}>
-              收起菜单
-            </Typography>
-          )}
+          {!collapsed && <Typography sx={{ fontSize: 13, fontWeight: 500 }}>收起菜单</Typography>}
         </Button>
       </Box>
     </Paper>
@@ -542,9 +406,7 @@ export default AppSidebar;
 
 /** 确保导航列表首位有一个"首页"项 */
 function ensureHomeItem(items: NavItem[]): NavItem[] {
-  const hasHome = items.some(
-    (item) => item.path === '/dashboard' || item.code === 'home'
-  );
+  const hasHome = items.some((item) => item.path === '/dashboard' || item.code === 'home');
   if (hasHome) {
     return items;
   }

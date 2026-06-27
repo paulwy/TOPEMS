@@ -192,7 +192,8 @@ export class PluginLoader {
 
       return pluginInfo;
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? (error as { message?: string }).message : 'Unknown error';
+      const errorMessage =
+        error instanceof Error ? (error as { message?: string }).message : 'Unknown error';
       pluginInfo.status = 'error';
       pluginInfo.error = errorMessage;
       pluginInfo.lastErrorAt = new Date();
@@ -320,20 +321,20 @@ export class PluginLoader {
       existing.status = 'uninstalling';
       this.emitter.emit('pluginUninstalling', pluginCode, existing);
     }
-    
+
     this.loadedPlugins.delete(pluginCode);
     this.cache.forEach((_, key) => {
       if (key.startsWith(pluginCode)) {
         this.cache.delete(key);
       }
     });
-    
+
     this.emitter.emit('pluginUninstalled', pluginCode);
   }
 
   async loadAllPlugins(manifests: PluginManifest[]): Promise<PluginInfo[]> {
     const results: PluginInfo[] = [];
-    
+
     for (const manifest of manifests) {
       try {
         const pluginInfo = await this.loadPlugin(manifest.pluginCode, manifest);
@@ -342,7 +343,7 @@ export class PluginLoader {
         continue;
       }
     }
-    
+
     return results;
   }
 
@@ -351,7 +352,7 @@ export class PluginLoader {
     if (!existing || !existing.manifest) {
       throw new Error(`Plugin ${pluginCode} not found or has no manifest`);
     }
-    
+
     this.unloadPlugin(pluginCode);
     return this.loadPlugin(pluginCode, existing.manifest);
   }

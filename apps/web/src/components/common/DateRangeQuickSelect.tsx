@@ -1,16 +1,6 @@
 import React, { useState } from 'react';
-import {
-  Box,
-  Button,
-  Typography,
-  Popover,
-  Divider,
-} from '@mui/material';
-import {
-  Calendar,
-  ChevronDown,
-  Clock,
-} from 'lucide-react';
+import { Box, Button, Typography, Popover, Divider } from '@mui/material';
+import { Calendar, ChevronDown, Clock } from 'lucide-react';
 import { formatDate } from '@/utils/format';
 
 export interface DateRange {
@@ -173,7 +163,10 @@ export const DateRangeQuickSelect: React.FC<DateRangeQuickSelectProps> = ({
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, ...sx }}>
       {label && (
-        <Typography variant='body2' sx={{ fontWeight: 500 }}>
+        <Typography
+          variant='body2'
+          sx={{ fontWeight: 500 }}
+        >
           {label}
         </Typography>
       )}
@@ -188,17 +181,27 @@ export const DateRangeQuickSelect: React.FC<DateRangeQuickSelectProps> = ({
           minHeight: 36,
         }}
       >
-        <Calendar size={18} sx={{ mr: 1, color: 'text.secondary' }} />
+        <Calendar
+          size={18}
+          sx={{ mr: 1, color: 'text.secondary' }}
+        />
         {value?.label ? (
-          <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, justifyContent: 'space-between' }}>
+          <Box
+            sx={{ display: 'flex', alignItems: 'center', flex: 1, justifyContent: 'space-between' }}
+          >
             <Typography variant='body2'>
               {value.label} ({value.startDate} ~ {value.endDate})
             </Typography>
             <ChevronDown size={16} />
           </Box>
         ) : (
-          <Box sx={{ display: 'flex', alignItems: 'center', flex: 1, justifyContent: 'space-between' }}>
-            <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+          <Box
+            sx={{ display: 'flex', alignItems: 'center', flex: 1, justifyContent: 'space-between' }}
+          >
+            <Typography
+              variant='body2'
+              sx={{ color: 'text.secondary' }}
+            >
               {placeholder}
             </Typography>
             <ChevronDown size={16} />
@@ -221,7 +224,10 @@ export const DateRangeQuickSelect: React.FC<DateRangeQuickSelectProps> = ({
         }}
       >
         <Box sx={{ p: 1 }}>
-          <Typography variant='caption' sx={{ px: 2, color: 'text.secondary' }}>
+          <Typography
+            variant='caption'
+            sx={{ px: 2, color: 'text.secondary' }}
+          >
             常用
           </Typography>
           {quickRanges.map((range) => (
@@ -237,14 +243,20 @@ export const DateRangeQuickSelect: React.FC<DateRangeQuickSelectProps> = ({
                 '&:hover': { bgcolor: 'action.hover' },
               }}
             >
-              <range.icon size={16} sx={{ mr: 1.5, color: 'text.secondary' }} />
+              <range.icon
+                size={16}
+                sx={{ mr: 1.5, color: 'text.secondary' }}
+              />
               <Typography variant='body2'>{range.label}</Typography>
             </Button>
           ))}
 
           <Divider sx={{ my: 1 }} />
 
-          <Typography variant='caption' sx={{ px: 2, color: 'text.secondary' }}>
+          <Typography
+            variant='caption'
+            sx={{ px: 2, color: 'text.secondary' }}
+          >
             最近
           </Typography>
           {recentRanges.map((range) => (
@@ -260,7 +272,10 @@ export const DateRangeQuickSelect: React.FC<DateRangeQuickSelectProps> = ({
                 '&:hover': { bgcolor: 'action.hover' },
               }}
             >
-              <range.icon size={16} sx={{ mr: 1.5, color: 'text.secondary' }} />
+              <range.icon
+                size={16}
+                sx={{ mr: 1.5, color: 'text.secondary' }}
+              />
               <Typography variant='body2'>{range.label}</Typography>
             </Button>
           ))}

@@ -161,7 +161,10 @@ export const DashboardPage: React.FC = () => {
   ];
 
   return (
-    <PageContainer padding={false} maxWidth={false}>
+    <PageContainer
+      padding={false}
+      maxWidth={false}
+    >
       <DashboardTemplate
         title='工作流程'
         subtitle={`${getGreeting()}，流程审批与进度追踪`}

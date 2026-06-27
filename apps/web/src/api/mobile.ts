@@ -212,8 +212,11 @@ export const mobileApi = {
     return apiClient.mobile.post<VideoRecording>('/api/mobile/video-recordings', data);
   },
 
-  listMobileTasks: async (): Promise<ApiResponse<ListResponse<MobileTask>>> => {
-    return apiClient.mobile.get<ListResponse<MobileTask>>('/api/mobile/mobile-tasks');
+  listMobileTasks: async (params?: {
+    page?: number;
+    page_size?: number;
+  }): Promise<ApiResponse<ListResponse<MobileTask>>> => {
+    return apiClient.mobile.get<ListResponse<MobileTask>>('/api/mobile/mobile-tasks', { params });
   },
   createMobileTask: async (data: CreateMobileTaskRequest): Promise<ApiResponse<MobileTask>> => {
     return apiClient.mobile.post<MobileTask>('/api/mobile/mobile-tasks', data);

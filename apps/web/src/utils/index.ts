@@ -11,6 +11,6 @@ export { lazyImport, default as lazyImportDefault } from './lazyImport';
 export type { LazyImportOptions } from './lazyImport';
 
 export const utils = {
-  createLogger: createLogger,
-  session: session,
+  createLogger,
+  session,
 };

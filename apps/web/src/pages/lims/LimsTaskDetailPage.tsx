@@ -24,8 +24,8 @@ import {
   Box,
   Typography,
   MenuItem,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 
 import { DataTable } from '@/components/common/DataTable';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -425,7 +425,10 @@ const LimsTaskDetailPage: React.FC = () => {
   const isTaskCompleted = task.status === 'completed' || task.status === '已完成';
 
   return (
-    <PageContainer title='检验任务详情' subtitle='Inspection Task Detail'>
+    <PageContainer
+      title='检验任务详情'
+      subtitle='Inspection Task Detail'
+    >
       <DetailPageTemplate
         title=''
         subtitle=''
@@ -468,134 +471,134 @@ const LimsTaskDetailPage: React.FC = () => {
               ]
         }
       >
-      <Dialog
-        open={showRecordModal}
-        onClose={() => setShowRecordModal(false)}
-        maxWidth='sm'
-        fullWidth
-      >
-        <DialogTitle>添加检验记录</DialogTitle>
-        <DialogContent>
-          <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField
-              label='检验步骤 *'
-              value={recordForm.step_name}
-              onChange={(e) =>
-                setRecordForm((prev) => ({
-                  ...prev,
-                  step_name: e.target.value,
-                }))
-              }
-              fullWidth
-              size='small'
-              placeholder='请输入检验步骤名称'
-            />
-            <TextField
-              label='检验员 *'
-              value={recordForm.inspector}
-              onChange={(e) =>
-                setRecordForm((prev) => ({
-                  ...prev,
-                  inspector: e.target.value,
-                }))
-              }
-              fullWidth
-              size='small'
-              placeholder='请输入检验员姓名'
-            />
-            <TextField
-              label='检验结果 *'
-              value={recordForm.result}
-              onChange={(e) => setRecordForm((prev) => ({ ...prev, result: e.target.value }))}
-              fullWidth
-              multiline
-              rows={4}
-              placeholder='请详细描述检验结果...'
-            />
-            <TextField
-              select
-              label='结论'
-              value={recordForm.conclusion}
-              onChange={(e) =>
-                setRecordForm((prev) => ({
-                  ...prev,
-                  conclusion: e.target.value,
-                }))
-              }
-              fullWidth
-              size='small'
+        <Dialog
+          open={showRecordModal}
+          onClose={() => setShowRecordModal(false)}
+          maxWidth='sm'
+          fullWidth
+        >
+          <DialogTitle>添加检验记录</DialogTitle>
+          <DialogContent>
+            <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <TextField
+                label='检验步骤 *'
+                value={recordForm.step_name}
+                onChange={(e) =>
+                  setRecordForm((prev) => ({
+                    ...prev,
+                    step_name: e.target.value,
+                  }))
+                }
+                fullWidth
+                size='small'
+                placeholder='请输入检验步骤名称'
+              />
+              <TextField
+                label='检验员 *'
+                value={recordForm.inspector}
+                onChange={(e) =>
+                  setRecordForm((prev) => ({
+                    ...prev,
+                    inspector: e.target.value,
+                  }))
+                }
+                fullWidth
+                size='small'
+                placeholder='请输入检验员姓名'
+              />
+              <TextField
+                label='检验结果 *'
+                value={recordForm.result}
+                onChange={(e) => setRecordForm((prev) => ({ ...prev, result: e.target.value }))}
+                fullWidth
+                multiline
+                rows={4}
+                placeholder='请详细描述检验结果...'
+              />
+              <TextField
+                select
+                label='结论'
+                value={recordForm.conclusion}
+                onChange={(e) =>
+                  setRecordForm((prev) => ({
+                    ...prev,
+                    conclusion: e.target.value,
+                  }))
+                }
+                fullWidth
+                size='small'
+              >
+                <MenuItem value=''>请选择结论</MenuItem>
+                <MenuItem value='合格'>合格</MenuItem>
+                <MenuItem value='不合格'>不合格</MenuItem>
+                <MenuItem value='待定'>待定</MenuItem>
+              </TextField>
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              variant='outlined'
+              onClick={() => setShowRecordModal(false)}
             >
-              <MenuItem value=''>请选择结论</MenuItem>
-              <MenuItem value='合格'>合格</MenuItem>
-              <MenuItem value='不合格'>不合格</MenuItem>
-              <MenuItem value='待定'>待定</MenuItem>
-            </TextField>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            variant='outlined'
-            onClick={() => setShowRecordModal(false)}
-          >
-            取消
-          </Button>
-          <Button
-            variant='contained'
-            onClick={handleCompleteStep}
-          >
-            保存记录
-          </Button>
-        </DialogActions>
-      </Dialog>
+              取消
+            </Button>
+            <Button
+              variant='contained'
+              onClick={handleCompleteStep}
+            >
+              保存记录
+            </Button>
+          </DialogActions>
+        </Dialog>
 
-      <Dialog
-        open={showCompleteModal}
-        onClose={() => setShowCompleteModal(false)}
-        maxWidth='sm'
-        fullWidth
-      >
-        <DialogTitle>完成检验任务</DialogTitle>
-        <DialogContent>
-          <Box sx={{ py: 2 }}>
-            <Typography sx={{ color: 'text.secondary' }}>
-              确定要完成此检验任务吗？这将标记所有未完成的步骤为已完成状态。
-            </Typography>
-            <Box
+        <Dialog
+          open={showCompleteModal}
+          onClose={() => setShowCompleteModal(false)}
+          maxWidth='sm'
+          fullWidth
+        >
+          <DialogTitle>完成检验任务</DialogTitle>
+          <DialogContent>
+            <Box sx={{ py: 2 }}>
+              <Typography sx={{ color: 'text.secondary' }}>
+                确定要完成此检验任务吗？这将标记所有未完成的步骤为已完成状态。
+              </Typography>
+              <Box
+                sx={{
+                  mt: 2,
+                  p: 2,
+                  backgroundColor: 'warning.lighter',
+                  borderRadius: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  color: '#854d0e',
+                }}
+              >
+                <AlertCircle sx={{ width: 20, height: 20 }} />
+                <span style={{ fontSize: '0.875rem' }}>任务编号: {task.task_no || task.id}</span>
+              </Box>
+            </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button
+              variant='outlined'
+              onClick={() => setShowCompleteModal(false)}
+            >
+              取消
+            </Button>
+            <Button
+              variant='contained'
+              onClick={() => setShowCompleteModal(false)}
               sx={{
-                mt: 2,
-                p: 2,
-                backgroundColor: 'warning.lighter',
-                borderRadius: 1,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-                color: '#854d0e',
+                backgroundColor: 'success.dark',
+                '&:hover': { backgroundColor: '#15803d' },
               }}
             >
-              <AlertCircle sx={{ width: 20, height: 20 }} />
-              <span style={{ fontSize: '0.875rem' }}>任务编号: {task.task_no || task.id}</span>
-            </Box>
-          </Box>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            variant='outlined'
-            onClick={() => setShowCompleteModal(false)}
-          >
-            取消
-          </Button>
-          <Button
-            variant='contained'
-            onClick={() => setShowCompleteModal(false)}
-            sx={{
-              backgroundColor: 'success.dark',
-              '&:hover': { backgroundColor: '#15803d' },
-            }}
-          >
-            确认完成
-          </Button>
-        </DialogActions>
-      </Dialog>
+              确认完成
+            </Button>
+          </DialogActions>
+        </Dialog>
       </DetailPageTemplate>
     </PageContainer>
   );

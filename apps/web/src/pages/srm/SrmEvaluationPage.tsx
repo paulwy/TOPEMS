@@ -49,9 +49,7 @@ const SrmEvaluationPage: React.FC = () => {
       }
 
       if (evalResponse.success && evalResponse.data) {
-        const supplierMap = new Map(
-          (supplierResponse.data || []).map((s) => [s.id, s.name])
-        );
+        const supplierMap = new Map((supplierResponse.data || []).map((s) => [s.id, s.name]));
         const evaluationsWithSupplier = evalResponse.data.map((evalItem) => ({
           ...evalItem,
           supplier_name: supplierMap.get(evalItem.supplier_id),
@@ -192,7 +190,13 @@ const SrmEvaluationPage: React.FC = () => {
         sortable: true,
         render: (row) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Rating value={row.overall_score || 0} readOnly max={10} precision={0.5} size='small' />
+            <Rating
+              value={row.overall_score || 0}
+              readOnly
+              max={10}
+              precision={0.5}
+              size='small'
+            />
             <span>{row.overall_score || '-'}</span>
           </Box>
         ),
@@ -237,7 +241,11 @@ const SrmEvaluationPage: React.FC = () => {
         width: 100,
         sortable: true,
         render: (row) => (
-          <Chip label={getStatusLabel(row.status)} size='small' color={getStatusColor(row.status)} />
+          <Chip
+            label={getStatusLabel(row.status)}
+            size='small'
+            color={getStatusColor(row.status)}
+          />
         ),
       },
     ],

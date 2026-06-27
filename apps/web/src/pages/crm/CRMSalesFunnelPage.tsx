@@ -2,10 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Typography, Card, CardContent, LinearProgress, Chip } from '@mui/material';
 import { TrendingUp, TrendingDown, Users, Target, DollarSign } from 'lucide-react';
 import { useAppStore } from '../../store';
-import {
-  StatsPageTemplate,
-  type StatsStatCard,
-} from '@/components/templates';
+import { StatsPageTemplate, type StatsStatCard } from '@/components/templates';
 import apiClient from '@/api/client';
 import { PageContainer } from '@/components/common';
 
@@ -108,14 +105,26 @@ const CRMSalesFunnelPage: React.FC = () => {
       dataKey: 'value',
       nameKey: 'name',
       data: stages.flatMap((stage) => [
-        { name: `${stageLabelMap[stage.stage] || stage.stage}-商机数`, value: stage.count, color: '#3b82f6' },
-        { name: `${stageLabelMap[stage.stage] || stage.stage}-总价值(万)`, value: Math.round(Number(stage.total_value) / 10000), color: '#10b981' },
+        {
+          name: `${stageLabelMap[stage.stage] || stage.stage}-商机数`,
+          value: stage.count,
+          color: '#3b82f6',
+        },
+        {
+          name: `${stageLabelMap[stage.stage] || stage.stage}-总价值(万)`,
+          value: Math.round(Number(stage.total_value) / 10000),
+          color: '#10b981',
+        },
       ]),
     },
   ];
 
   return (
-    <PageContainer title='销售漏斗' subtitle='可视化销售机会的阶段性转化' maxWidth='xl'>
+    <PageContainer
+      title='销售漏斗'
+      subtitle='可视化销售机会的阶段性转化'
+      maxWidth='xl'
+    >
       <StatsPageTemplate
         title='漏斗分析'
         statCards={stats}
@@ -148,14 +157,23 @@ const CRMSalesFunnelPage: React.FC = () => {
           {stages.map((stage, idx) => {
             const max = Math.max(...stages.map((s) => s.count), 1);
             return (
-              <Card key={stage.stage} variant='outlined'>
+              <Card
+                key={stage.stage}
+                variant='outlined'
+              >
                 <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                     <Box>
-                      <Typography variant='caption' color='text.secondary'>
+                      <Typography
+                        variant='caption'
+                        color='text.secondary'
+                      >
                         阶段 {idx + 1}
                       </Typography>
-                      <Typography variant='h6' sx={{ fontWeight: 600 }}>
+                      <Typography
+                        variant='h6'
+                        sx={{ fontWeight: 600 }}
+                      >
                         {stageLabelMap[stage.stage] || stage.stage}
                       </Typography>
                     </Box>
@@ -175,14 +193,24 @@ const CRMSalesFunnelPage: React.FC = () => {
                     >
                       {stage.count}
                     </Typography>
-                    <Typography variant='body2' color='text.secondary'>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
                       个商机
                     </Typography>
                   </Box>
-                  <Typography variant='body2' color='text.secondary'>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     总价值: ¥{Math.round(Number(stage.total_value)).toLocaleString()}
                   </Typography>
-                  <Typography variant='body2' color='text.secondary' sx={{ mb: 2 }}>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                    sx={{ mb: 2 }}
+                  >
                     平均价值: ¥{Math.round(Number(stage.avg_value)).toLocaleString()}
                   </Typography>
                   <LinearProgress

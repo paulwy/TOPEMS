@@ -15,14 +15,11 @@ import {
   Stack,
   Typography,
   LinearProgress,
+  Button,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
-import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import type {
-  OeeRecord,
-  OeeStatistics,
-} from '@/api/mes';
+import type { OeeRecord, OeeStatistics } from '@/api/mes';
 import { mesApi } from '@/api/mes';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -152,156 +149,9 @@ const EquipmentOEEPage: React.FC = () => {
     setCurrentPage(1);
   };
 
-  if (loading) return <LoadingSpinner />;
-
   const formatPercent = (value: number) => {
     return `${value.toFixed(1)}%`;
   };
-
-  const statsContent = (
-    <Box
-      sx={{
-        display: 'grid',
-        gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
-        gap: 2,
-        mb: 3,
-      }}
-    >
-      <Box sx={{ p: 2, bgcolor: '#dbeafe', borderRadius: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          <Activity size={18} sx={{ color: 'primary.dark' }} />
-          <Typography variant='body2' sx={{ color: 'text.secondary' }}>
-            综合OEE
-          </Typography>
-        </Box>
-        <Typography
-          variant='h5'
-          sx={{
-            fontWeight: 700,
-            color: statistics ? getOEEColorHex(statistics.avg_oee) : 'text.primary',
-          }}
-        >
-          {statistics ? formatPercent(statistics.avg_oee) : '-'}
-        </Typography>
-        <LinearProgress
-          variant='determinate'
-          value={statistics?.avg_oee || 0}
-          sx={{ mt: 1, height: 6, borderRadius: 3 }}
-          color={statistics ? getOEEColor(statistics.avg_oee) : 'primary'}
-        />
-      </Box>
-      <Box sx={{ p: 2, bgcolor: '#dcfce7', borderRadius: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          <Gauge size={18} sx={{ color: '#15803d' }} />
-          <Typography variant='body2' sx={{ color: 'text.secondary' }}>
-            可用率
-          </Typography>
-        </Box>
-        <Typography variant='h5' sx={{ fontWeight: 700, color: '#15803d' }}>
-          {statistics ? formatPercent(statistics.avg_availability) : '-'}
-        </Typography>
-        <LinearProgress
-          variant='determinate'
-          value={statistics?.avg_availability || 0}
-          sx={{ mt: 1, height: 6, borderRadius: 3 }}
-          color='success'
-        />
-      </Box>
-      <Box sx={{ p: 2, bgcolor: '#fef3c7', borderRadius: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          <TrendingUp size={18} sx={{ color: '#b45309' }} />
-          <Typography variant='body2' sx={{ color: 'text.secondary' }}>
-            性能率
-          </Typography>
-        </Box>
-        <Typography variant='h5' sx={{ fontWeight: 700, color: '#b45309' }}>
-          {statistics ? formatPercent(statistics.avg_performance) : '-'}
-        </Typography>
-        <LinearProgress
-          variant='determinate'
-          value={statistics?.avg_performance || 0}
-          sx={{ mt: 1, height: 6, borderRadius: 3 }}
-          color='warning'
-        />
-      </Box>
-      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-          <CheckCircle2 size={18} sx={{ color: '#4338ca' }} />
-          <Typography variant='body2' sx={{ color: 'text.secondary' }}>
-            质量率
-          </Typography>
-        </Box>
-        <Typography variant='h5' sx={{ fontWeight: 700, color: '#4338ca' }}>
-          {statistics ? formatPercent(statistics.avg_quality) : '-'}
-        </Typography>
-        <LinearProgress
-          variant='determinate'
-          value={statistics?.avg_quality || 0}
-          sx={{ mt: 1, height: 6, borderRadius: 3 }}
-          color='primary'
-        />
-      </Box>
-    </Box>
-  );
-
-  const filterBarContent = (
-    <Box
-      sx={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: 2,
-        mb: 2,
-        alignItems: 'flex-end',
-      }}
-    >
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, minWidth: 150 }}>
-        <InputLabel sx={{ fontSize: 12 }}>开始日期</InputLabel>
-        <TextField
-          type='date'
-          size='small'
-          value={startDate}
-          onChange={(e) => {
-            setStartDate(e.target.value);
-            handleFilterChange();
-          }}
-        />
-      </Box>
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, minWidth: 150 }}>
-        <InputLabel sx={{ fontSize: 12 }}>结束日期</InputLabel>
-        <TextField
-          type='date'
-          size='small'
-          value={endDate}
-          onChange={(e) => {
-            setEndDate(e.target.value);
-            handleFilterChange();
-          }}
-        />
-      </Box>
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, minWidth: 180 }}>
-        <InputLabel sx={{ fontSize: 12 }}>设备筛选</InputLabel>
-        <FormControl size='small' sx={{ minWidth: 180 }}>
-          <Select
-            value={equipmentFilter}
-            onChange={(e) => {
-              setEquipmentFilter(e.target.value);
-              handleFilterChange();
-            }}
-          >
-            <MenuItem value='all'>全部设备</MenuItem>
-          </Select>
-        </FormControl>
-      </Box>
-      <Button
-        startIcon={<RefreshCw size={16} />}
-        onClick={handleResetFilters}
-        size='small'
-        variant='outlined'
-      >
-        重置筛选
-      </Button>
-    </Box>
-  );
 
   const columns: ColumnDef<OeeRecord>[] = useMemo(
     () => [
@@ -312,9 +162,7 @@ const EquipmentOEEPage: React.FC = () => {
         label: '记录日期',
         sortable: true,
         render: (row) =>
-          row.record_date
-            ? new Date(row.record_date).toLocaleDateString('zh-CN')
-            : '-',
+          row.record_date ? new Date(row.record_date).toLocaleDateString('zh-CN') : '-',
       },
       { id: 'shift', label: '班次' },
       {
@@ -392,11 +240,197 @@ const EquipmentOEEPage: React.FC = () => {
     [handleViewDetail]
   );
 
+  if (loading) return <LoadingSpinner />;
+
+  const statsContent = (
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' },
+        gap: 2,
+        mb: 3,
+      }}
+    >
+      <Box sx={{ p: 2, bgcolor: '#dbeafe', borderRadius: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+          <Activity
+            size={18}
+            sx={{ color: 'primary.dark' }}
+          />
+          <Typography
+            variant='body2'
+            sx={{ color: 'text.secondary' }}
+          >
+            综合OEE
+          </Typography>
+        </Box>
+        <Typography
+          variant='h5'
+          sx={{
+            fontWeight: 700,
+            color: statistics ? getOEEColorHex(statistics.avg_oee) : 'text.primary',
+          }}
+        >
+          {statistics ? formatPercent(statistics.avg_oee) : '-'}
+        </Typography>
+        <LinearProgress
+          variant='determinate'
+          value={statistics?.avg_oee || 0}
+          sx={{ mt: 1, height: 6, borderRadius: 3 }}
+          color={statistics ? getOEEColor(statistics.avg_oee) : 'primary'}
+        />
+      </Box>
+      <Box sx={{ p: 2, bgcolor: '#dcfce7', borderRadius: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+          <Gauge
+            size={18}
+            sx={{ color: '#15803d' }}
+          />
+          <Typography
+            variant='body2'
+            sx={{ color: 'text.secondary' }}
+          >
+            可用率
+          </Typography>
+        </Box>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700, color: '#15803d' }}
+        >
+          {statistics ? formatPercent(statistics.avg_availability) : '-'}
+        </Typography>
+        <LinearProgress
+          variant='determinate'
+          value={statistics?.avg_availability || 0}
+          sx={{ mt: 1, height: 6, borderRadius: 3 }}
+          color='success'
+        />
+      </Box>
+      <Box sx={{ p: 2, bgcolor: '#fef3c7', borderRadius: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+          <TrendingUp
+            size={18}
+            sx={{ color: '#b45309' }}
+          />
+          <Typography
+            variant='body2'
+            sx={{ color: 'text.secondary' }}
+          >
+            性能率
+          </Typography>
+        </Box>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700, color: '#b45309' }}
+        >
+          {statistics ? formatPercent(statistics.avg_performance) : '-'}
+        </Typography>
+        <LinearProgress
+          variant='determinate'
+          value={statistics?.avg_performance || 0}
+          sx={{ mt: 1, height: 6, borderRadius: 3 }}
+          color='warning'
+        />
+      </Box>
+      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 2 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+          <CheckCircle2
+            size={18}
+            sx={{ color: '#4338ca' }}
+          />
+          <Typography
+            variant='body2'
+            sx={{ color: 'text.secondary' }}
+          >
+            质量率
+          </Typography>
+        </Box>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700, color: '#4338ca' }}
+        >
+          {statistics ? formatPercent(statistics.avg_quality) : '-'}
+        </Typography>
+        <LinearProgress
+          variant='determinate'
+          value={statistics?.avg_quality || 0}
+          sx={{ mt: 1, height: 6, borderRadius: 3 }}
+          color='primary'
+        />
+      </Box>
+    </Box>
+  );
+
+  const filterBarContent = (
+    <Box
+      sx={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: 2,
+        mb: 2,
+        alignItems: 'flex-end',
+      }}
+    >
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, minWidth: 150 }}>
+        <InputLabel sx={{ fontSize: 12 }}>开始日期</InputLabel>
+        <TextField
+          type='date'
+          size='small'
+          value={startDate}
+          onChange={(e) => {
+            setStartDate(e.target.value);
+            handleFilterChange();
+          }}
+        />
+      </Box>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, minWidth: 150 }}>
+        <InputLabel sx={{ fontSize: 12 }}>结束日期</InputLabel>
+        <TextField
+          type='date'
+          size='small'
+          value={endDate}
+          onChange={(e) => {
+            setEndDate(e.target.value);
+            handleFilterChange();
+          }}
+        />
+      </Box>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, minWidth: 180 }}>
+        <InputLabel sx={{ fontSize: 12 }}>设备筛选</InputLabel>
+        <FormControl
+          size='small'
+          sx={{ minWidth: 180 }}
+        >
+          <Select
+            value={equipmentFilter}
+            onChange={(e) => {
+              setEquipmentFilter(e.target.value);
+              handleFilterChange();
+            }}
+          >
+            <MenuItem value='all'>全部设备</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
+      <Button
+        startIcon={<RefreshCw size={16} />}
+        onClick={handleResetFilters}
+        size='small'
+        variant='outlined'
+      >
+        重置筛选
+      </Button>
+    </Box>
+  );
+
   return (
-    <PageContainer title="设备OEE分析" subtitle="分析设备综合效率(OEE),包括可用率、性能率、质量率等指标">
+    <PageContainer
+      title='设备OEE分析'
+      subtitle='分析设备综合效率(OEE),包括可用率、性能率、质量率等指标'
+    >
       <ListPageTemplate
-        title=""
-        subtitle=""
+        title=''
+        subtitle=''
         columns={columns}
         data={records}
         loading={loading}
@@ -427,7 +461,11 @@ const EquipmentOEEPage: React.FC = () => {
       />
 
       {/* 详情对话框 */}
-      <Dialog open={showDetailDialog} onClose={() => setShowDetailDialog(false)} maxWidth='md'>
+      <Dialog
+        open={showDetailDialog}
+        onClose={() => setShowDetailDialog(false)}
+        maxWidth='md'
+      >
         <DialogTitle>OEE记录详情</DialogTitle>
         <DialogContent>
           {selectedRecord && (
@@ -441,7 +479,10 @@ const EquipmentOEEPage: React.FC = () => {
               >
                 <Box>
                   <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>设备编号</InputLabel>
-                  <Box component='span' sx={{ fontWeight: 500 }}>
+                  <Box
+                    component='span'
+                    sx={{ fontWeight: 500 }}
+                  >
                     {selectedRecord.equipment_code}
                   </Box>
                 </Box>
@@ -469,7 +510,10 @@ const EquipmentOEEPage: React.FC = () => {
                 }}
               >
                 <Box sx={{ p: 2, bgcolor: '#dbeafe', borderRadius: 2, textAlign: 'center' }}>
-                  <Typography variant='body2' sx={{ color: 'text.secondary', mb: 0.5 }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'text.secondary', mb: 0.5 }}
+                  >
                     综合OEE
                   </Typography>
                   <Typography
@@ -483,26 +527,44 @@ const EquipmentOEEPage: React.FC = () => {
                   </Typography>
                 </Box>
                 <Box sx={{ p: 2, bgcolor: '#dcfce7', borderRadius: 2, textAlign: 'center' }}>
-                  <Typography variant='body2' sx={{ color: 'text.secondary', mb: 0.5 }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'text.secondary', mb: 0.5 }}
+                  >
                     可用率
                   </Typography>
-                  <Typography variant='h5' sx={{ fontWeight: 700, color: '#15803d' }}>
+                  <Typography
+                    variant='h5'
+                    sx={{ fontWeight: 700, color: '#15803d' }}
+                  >
                     {formatPercent(selectedRecord.availability)}
                   </Typography>
                 </Box>
                 <Box sx={{ p: 2, bgcolor: '#fef3c7', borderRadius: 2, textAlign: 'center' }}>
-                  <Typography variant='body2' sx={{ color: 'text.secondary', mb: 0.5 }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'text.secondary', mb: 0.5 }}
+                  >
                     性能率
                   </Typography>
-                  <Typography variant='h5' sx={{ fontWeight: 700, color: '#b45309' }}>
+                  <Typography
+                    variant='h5'
+                    sx={{ fontWeight: 700, color: '#b45309' }}
+                  >
                     {formatPercent(selectedRecord.performance)}
                   </Typography>
                 </Box>
                 <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 2, textAlign: 'center' }}>
-                  <Typography variant='body2' sx={{ color: 'text.secondary', mb: 0.5 }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ color: 'text.secondary', mb: 0.5 }}
+                  >
                     质量率
                   </Typography>
-                  <Typography variant='h5' sx={{ fontWeight: 700, color: '#4338ca' }}>
+                  <Typography
+                    variant='h5'
+                    sx={{ fontWeight: 700, color: '#4338ca' }}
+                  >
                     {formatPercent(selectedRecord.quality)}
                   </Typography>
                 </Box>
@@ -541,13 +603,19 @@ const EquipmentOEEPage: React.FC = () => {
                 </Box>
                 <Box>
                   <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>合格数量</InputLabel>
-                  <Box component='span' sx={{ color: 'success.dark' }}>
+                  <Box
+                    component='span'
+                    sx={{ color: 'success.dark' }}
+                  >
                     {selectedRecord.good_count} 件
                   </Box>
                 </Box>
                 <Box>
                   <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>不良数量</InputLabel>
-                  <Box component='span' sx={{ color: 'error.dark' }}>
+                  <Box
+                    component='span'
+                    sx={{ color: 'error.dark' }}
+                  >
                     {selectedRecord.reject_count} 件
                   </Box>
                 </Box>

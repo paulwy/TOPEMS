@@ -12,11 +12,20 @@ const OutboundOrderPage = lazy(() => import('../pages/wms/OutboundOrderPage'));
 const StockTakePage = lazy(() => import('../pages/wms/StockTakePage'));
 const SupplierManagementPage = lazy(() => import('../pages/wms/SupplierManagementPage'));
 const WmsDashboardPage = lazy(() => import('../pages/wms/DashboardPage'));
+const LocationPage = lazy(() => import('../pages/wms/LocationPage'));
+const TransferPage = lazy(() => import('../pages/wms/TransferPage'));
+const ReplenishmentPage = lazy(() => import('../pages/wms/ReplenishmentPage'));
+const InboundPage = lazy(() => import('../pages/wms/InboundPage'));
+const OutboundPage = lazy(() => import('../pages/wms/OutboundPage'));
+const InventoryReportPage = lazy(() => import('../pages/wms/InventoryReportPage'));
 
 export const wmsRoutes: RouteConfig[] = [
   {
     path: '/wms',
-    element: WmsDashboardPage,
+    element: React.createElement(Navigate, {
+      to: '/wms/warehouses',
+      replace: true,
+    }),
     requiredPermissions: ['wms:read'],
     module: 'wms',
     action: 'read',
@@ -59,6 +68,48 @@ export const wmsRoutes: RouteConfig[] = [
   {
     path: '/wms/suppliers',
     element: SupplierManagementPage,
+    requiredPermissions: ['wms:read'],
+    module: 'wms',
+    action: 'read',
+  },
+  {
+    path: '/wms/locations',
+    element: LocationPage,
+    requiredPermissions: ['wms:read'],
+    module: 'wms',
+    action: 'read',
+  },
+  {
+    path: '/wms/transfers',
+    element: TransferPage,
+    requiredPermissions: ['wms:read'],
+    module: 'wms',
+    action: 'read',
+  },
+  {
+    path: '/wms/replenishment',
+    element: ReplenishmentPage,
+    requiredPermissions: ['wms:read'],
+    module: 'wms',
+    action: 'read',
+  },
+  {
+    path: '/wms/inbound',
+    element: InboundPage,
+    requiredPermissions: ['wms:read'],
+    module: 'wms',
+    action: 'read',
+  },
+  {
+    path: '/wms/outbound',
+    element: OutboundPage,
+    requiredPermissions: ['wms:read'],
+    module: 'wms',
+    action: 'read',
+  },
+  {
+    path: '/wms/reports',
+    element: InventoryReportPage,
     requiredPermissions: ['wms:read'],
     module: 'wms',
     action: 'read',

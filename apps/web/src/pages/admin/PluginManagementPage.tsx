@@ -21,8 +21,8 @@ import {
   CircularProgress,
   Alert,
   Stack,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import {
   Package,
   Play,
@@ -41,11 +41,7 @@ import {
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import { useAppStore } from '@/store';
-import {
-  type Plugin,
-  fetchAllPluginInfo,
-  PLUGIN_REGISTRY,
-} from '@/api/plugin';
+import { type Plugin, fetchAllPluginInfo, PLUGIN_REGISTRY } from '@/api/plugin';
 import { usePluginStore } from '@/store/pluginStore';
 import { extractErrorMessage } from '@/utils/errors';
 
@@ -360,7 +356,8 @@ const PluginManagementPage: React.FC = () => {
       const matchesSearch =
         plugin.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         plugin.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (plugin.description && plugin.description.toLowerCase().includes(searchQuery.toLowerCase()));
+        (plugin.description &&
+          plugin.description.toLowerCase().includes(searchQuery.toLowerCase()));
       const matchesType = typeFilter === 'all' || plugin.plugin_type === typeFilter;
       return matchesSearch && matchesType;
     });
@@ -491,7 +488,10 @@ const PluginManagementPage: React.FC = () => {
   );
 
   return (
-    <PageContainer title='插件管理' subtitle='管理系统插件，启用、禁用或卸载插件'>
+    <PageContainer
+      title='插件管理'
+      subtitle='管理系统插件，启用、禁用或卸载插件'
+    >
       {error && (
         <Alert
           severity='error'
@@ -505,7 +505,11 @@ const PluginManagementPage: React.FC = () => {
       <ListPageTemplate
         title=''
         subtitle=''
-        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '系统管理' }, { label: '插件管理' }]}
+        breadcrumbs={[
+          { label: '首页', href: '/dashboard' },
+          { label: '系统管理' },
+          { label: '插件管理' },
+        ]}
         columns={columns}
         data={filteredPlugins}
         loading={loading}
@@ -600,9 +604,7 @@ const PluginManagementPage: React.FC = () => {
                   >
                     您即将安装以下插件：
                   </Typography>
-                  <Box
-                    sx={{ p: 2, mb: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}
-                  >
+                  <Box sx={{ p: 2, mb: 2, border: 1, borderColor: 'divider', borderRadius: 1 }}>
                     <Typography
                       variant='subtitle1'
                       sx={{ fontWeight: 600 }}

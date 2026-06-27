@@ -20,8 +20,8 @@ import {
   ListItemIcon,
   ListItemText,
   Divider,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { Download, FileSpreadsheet, FileText, File, ChevronDown, Settings, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
@@ -234,7 +234,7 @@ const DataExport: React.FC<DataExportProps> = ({
       const worksheet = XLSX.utils.json_to_sheet(filteredData);
       const csv = XLSX.utils.sheet_to_csv(worksheet);
 
-      const blob = new Blob(['\ufeff' + csv], {
+      const blob = new Blob([`\uFEFF${csv}`], {
         type: 'text/csv;charset=utf-8;',
       });
       const link = document.createElement('a');
@@ -308,7 +308,7 @@ const DataExport: React.FC<DataExportProps> = ({
    * 执行导出
    */
   const handleExport = (format: ExportFormat) => {
-    let exportData = beforeExport ? beforeExport(data) : data;
+    const exportData = beforeExport ? beforeExport(data) : data;
 
     switch (format) {
       case 'xlsx':

@@ -98,7 +98,9 @@ export const reportApi = {
 
   exportIncomeStatement: async (params: ReportQueryParams): Promise<Blob> => {
     const baseURL = (apiClient.erp as any).defaults?.baseURL || config.services.erp;
-    return downloadBlob(baseURL, '/api/finance/reports/income-statement/export', { params: params as unknown as Record<string, unknown> });
+    return downloadBlob(baseURL, '/api/finance/reports/income-statement/export', {
+      params: params as unknown as Record<string, unknown>,
+    });
   },
 
   exportCashFlowStatement: async (params: ReportQueryParams): Promise<Blob> => {

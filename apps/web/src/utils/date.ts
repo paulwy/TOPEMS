@@ -12,7 +12,7 @@ export const getWeekday = (date?: Date): number => {
 
 const parseDate = (date: Date | string): Date => {
   if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    return new Date(date + 'T00:00:00');
+    return new Date(`${date}T00:00:00`);
   }
   return new Date(date);
 };

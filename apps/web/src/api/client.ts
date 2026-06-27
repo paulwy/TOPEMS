@@ -3,7 +3,11 @@ import axios from 'axios';
 import config, { isProduction, isDevelopment } from '../config/runtime';
 import { createLogger, apiLogger } from '../utils/logger';
 import { API_TIMEOUT } from '@/constants/timeouts';
-import { csrfRequestInterceptor, csrfResponseInterceptor, initCsrfProtection } from '@/components/security';
+import {
+  csrfRequestInterceptor,
+  csrfResponseInterceptor,
+  initCsrfProtection,
+} from '@/components/security';
 
 const logger = createLogger('ApiClient');
 
@@ -191,7 +195,7 @@ class ApiClient {
 
   constructor() {
     initCsrfProtection();
-    
+
     Object.entries(config.services).forEach(([name, baseURL]) => {
       const timeout = name === 'ai' ? API_TIMEOUT.AI : config.api.timeout;
       const client = axios.create({
@@ -274,7 +278,7 @@ class ApiClient {
               data: response.data,
             });
           }
-          
+
           csrfResponseInterceptor(response);
           return response.data;
         },
@@ -479,15 +483,27 @@ class ApiClient {
     return this.clients.master.get<T>(url, config);
   }
 
-  async post<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  async post<T = unknown>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig
+  ): Promise<ApiResponse<T>> {
     return this.clients.master.post<T>(url, data, config);
   }
 
-  async put<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  async put<T = unknown>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig
+  ): Promise<ApiResponse<T>> {
     return this.clients.master.put<T>(url, data, config);
   }
 
-  async patch<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+  async patch<T = unknown>(
+    url: string,
+    data?: unknown,
+    config?: AxiosRequestConfig
+  ): Promise<ApiResponse<T>> {
     return this.clients.master.patch<T>(url, data, config);
   }
 

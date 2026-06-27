@@ -14,9 +14,7 @@ export const inspectionRecordApi = {
     return apiClient.scm.get(`/api/scm/incoming-inspections/${inspectionId}/records`, { params });
   },
 
-  create: async (
-    data: CreateInspectionRecordRequest
-  ): Promise<ApiResponse<InspectionRecord>> => {
+  create: async (data: CreateInspectionRecordRequest): Promise<ApiResponse<InspectionRecord>> => {
     return apiClient.scm.post('/api/scm/inspection-records', data);
   },
 

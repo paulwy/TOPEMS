@@ -77,15 +77,21 @@ export const syncApi = {
     return apiClient.integration.post(`/api/integration/wms-scm/${id}/sync`);
   },
 
-  getIntegrationSyncStats: async (
-    params?: { connection_id?: string; start_date?: string; end_date?: string }
-  ): Promise<ApiResponse<IntegrationSyncStats>> => {
+  getIntegrationSyncStats: async (params?: {
+    connection_id?: string;
+    start_date?: string;
+    end_date?: string;
+  }): Promise<ApiResponse<IntegrationSyncStats>> => {
     return apiClient.integration.get('/api/integration/sync-stats', { params });
   },
 
-  getIntegrationSyncHistory: async (
-    params?: { connection_id?: string; sync_type?: string; status?: string; page?: number; pageSize?: number }
-  ): Promise<ApiResponse<SyncHistoryItem[]>> => {
+  getIntegrationSyncHistory: async (params?: {
+    connection_id?: string;
+    sync_type?: string;
+    status?: string;
+    page?: number;
+    pageSize?: number;
+  }): Promise<ApiResponse<SyncHistoryItem[]>> => {
     return apiClient.integration.get('/api/integration/sync-stats/history', { params });
   },
 };

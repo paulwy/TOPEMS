@@ -57,7 +57,7 @@ export const DashboardPage: React.FC = () => {
 
       const totalEmployees =
         empRes.status === 'fulfilled' && empRes.value.success && empRes.value.data
-          ? empRes.value.data.total ?? 0
+          ? (empRes.value.data.total ?? 0)
           : 0;
 
       const newHires =
@@ -65,18 +65,21 @@ export const DashboardPage: React.FC = () => {
           ? (empRes.value.data.items as Employee[]).filter((e) => {
               const hireDate = new Date(e.hire_date || '');
               const now = new Date();
-              return hireDate.getMonth() === now.getMonth() && hireDate.getFullYear() === now.getFullYear();
+              return (
+                hireDate.getMonth() === now.getMonth() &&
+                hireDate.getFullYear() === now.getFullYear()
+              );
             }).length
           : 0;
 
       const trainingCourses =
         courseRes.status === 'fulfilled' && courseRes.value.success && courseRes.value.data
-          ? courseRes.value.data.total ?? 0
+          ? (courseRes.value.data.total ?? 0)
           : 0;
 
       const performanceReviews =
         reviewRes.status === 'fulfilled' && reviewRes.value.success && reviewRes.value.data
-          ? reviewRes.value.data.total ?? 0
+          ? (reviewRes.value.data.total ?? 0)
           : 0;
 
       const onTimeRate =
@@ -132,7 +135,14 @@ export const DashboardPage: React.FC = () => {
         statusCounts[e.status] = (statusCounts[e.status] || 0) + 1;
       });
       const statusDistribution = Object.entries(statusCounts).map(([name, value]) => ({
-        name: name === 'active' ? '正式' : name === 'probation' ? '试用期' : name === 'intern' ? '实习' : name,
+        name:
+          name === 'active'
+            ? '正式'
+            : name === 'probation'
+              ? '试用期'
+              : name === 'intern'
+                ? '实习'
+                : name,
         value,
       }));
 
@@ -143,20 +153,26 @@ export const DashboardPage: React.FC = () => {
       }));
 
       setChartData({
-        departmentDistribution: departmentDistribution.length > 0 ? departmentDistribution : [
-          { name: '技术部', value: 85 },
-          { name: '产品部', value: 45 },
-          { name: '市场部', value: 52 },
-          { name: '财务部', value: 28 },
-          { name: '人事部', value: 18 },
-          { name: '运营部', value: 28 },
-        ],
+        departmentDistribution:
+          departmentDistribution.length > 0
+            ? departmentDistribution
+            : [
+                { name: '技术部', value: 85 },
+                { name: '产品部', value: 45 },
+                { name: '市场部', value: 52 },
+                { name: '财务部', value: 28 },
+                { name: '人事部', value: 18 },
+                { name: '运营部', value: 28 },
+              ],
         monthlyTrend,
-        statusDistribution: statusDistribution.length > 0 ? statusDistribution : [
-          { name: '试用期', value: 15 },
-          { name: '正式', value: 75 },
-          { name: '实习', value: 10 },
-        ],
+        statusDistribution:
+          statusDistribution.length > 0
+            ? statusDistribution
+            : [
+                { name: '试用期', value: 15 },
+                { name: '正式', value: 75 },
+                { name: '实习', value: 10 },
+              ],
       });
     } catch (err: unknown) {
       apiLogger.error('加载 HRM 图表数据失败:', err);

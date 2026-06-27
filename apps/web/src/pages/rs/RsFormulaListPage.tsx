@@ -157,7 +157,12 @@ const RsFormulaListPage: React.FC = () => {
         id: 'version',
         label: '版本',
         width: 100,
-        render: (row) => <Chip label={row.version} size='small' />,
+        render: (row) => (
+          <Chip
+            label={row.version}
+            size='small'
+          />
+        ),
       },
       {
         id: 'project',
@@ -230,11 +235,18 @@ const RsFormulaListPage: React.FC = () => {
   );
 
   return (
-    <PageContainer title='配方管理' subtitle='管理研发配方、版本控制、配方发布'>
+    <PageContainer
+      title='配方管理'
+      subtitle='管理研发配方、版本控制、配方发布'
+    >
       <ListPageTemplate
         title=''
         subtitle=''
-        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '研发', href: '/rs' }, { label: '配方管理' }]}
+        breadcrumbs={[
+          { label: '首页', href: '/dashboard' },
+          { label: '研发', href: '/rs' },
+          { label: '配方管理' },
+        ]}
         columns={columns}
         data={paginatedFormulas}
         loading={loading}

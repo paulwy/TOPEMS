@@ -14,8 +14,8 @@ import {
   DollarSign,
 } from 'lucide-react';
 import { useAppStore } from '../../store';
-import { DataExport, BackButton, PageContainer} from '@/components/common';
-import { ListPageTemplate, StatCardGroup } from '@/components/mui';
+import { DataExport, BackButton, PageContainer } from '@/components/common';
+import { ListPageTemplate, StatCardGroup } from '@/components';
 import { financeApi, accountApi } from '@/api/finance';
 import type { Account } from '@/types/finance';
 import { apiLogger } from '@/utils/logger';
@@ -36,8 +36,8 @@ import {
   Typography,
   Stack,
   Tooltip,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 
 const FinanceAssetPage: React.FC = () => {
@@ -381,9 +381,7 @@ const FinanceAssetPage: React.FC = () => {
         id: 'level',
         label: '层级',
         render: (row: Account) => (
-          <MuiBox sx={{ color: 'warning.main', fontFamily: 'monospace' }}>
-            {row.level}
-          </MuiBox>
+          <MuiBox sx={{ color: 'warning.main', fontFamily: 'monospace' }}>{row.level}</MuiBox>
         ),
       },
       {
@@ -450,9 +448,7 @@ const FinanceAssetPage: React.FC = () => {
         id: 'category',
         label: '科目类别',
         type: 'select' as const,
-        options: [
-          { value: 'asset', label: '资产类' },
-        ],
+        options: [{ value: 'asset', label: '资产类' }],
         value: filterCategory,
         onChange: setFilterCategory,
       },
@@ -485,7 +481,10 @@ const FinanceAssetPage: React.FC = () => {
   );
 
   return (
-    <PageContainer padding={false} maxWidth={false}>
+    <PageContainer
+      padding={false}
+      maxWidth={false}
+    >
       <MuiBox
         sx={{
           bgcolor: 'background.paper',
@@ -507,11 +506,11 @@ const FinanceAssetPage: React.FC = () => {
             sx={{ justifyContent: 'space-between', alignItems: 'center' }}
           >
             <Stack
-            direction='row'
-            sx={{ alignItems: 'center' }}
-            spacing={2}
-          >
-            <BackButton href='/dashboard' />
+              direction='row'
+              sx={{ alignItems: 'center' }}
+              spacing={2}
+            >
+              <BackButton href='/dashboard' />
               <MuiBox>
                 <Typography
                   variant='h5'
@@ -857,7 +856,10 @@ const FinanceAssetPage: React.FC = () => {
                   ¥1,000.00
                 </Typography>
               </MuiBox>
-              <Typography variant='body2' color='text.secondary'>
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
                 此操作将创建一张计提折旧凭证，借方为累计折旧科目，贷方为该资产科目。
               </Typography>
             </Stack>

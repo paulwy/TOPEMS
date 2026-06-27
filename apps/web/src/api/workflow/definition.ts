@@ -52,7 +52,9 @@ export const workflowDefinitionApi = {
   },
 
   activateVersion: (workflowId: string, versionId: string) => {
-    return apiClient.workflow.post(`/api/flow/workflows/${workflowId}/versions/${versionId}/activate`);
+    return apiClient.workflow.post(
+      `/api/flow/workflows/${workflowId}/versions/${versionId}/activate`
+    );
   },
 
   rollback: (workflowId: string, data: RollbackRequest) => {
@@ -60,7 +62,9 @@ export const workflowDefinitionApi = {
   },
 
   compareVersions: (workflowId: string, version1: string, version2: string) => {
-    return apiClient.workflow.get(`/api/flow/workflows/${workflowId}/compare/${version1}/${version2}`);
+    return apiClient.workflow.get(
+      `/api/flow/workflows/${workflowId}/compare/${version1}/${version2}`
+    );
   },
 
   deleteVersion: (workflowId: string, versionId: string) => {

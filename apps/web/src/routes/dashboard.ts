@@ -27,5 +27,8 @@ export const dashboardRoutes: RouteConfig[] = [
   {
     path: '/addressbook',
     element: AddressbookPage,
+    requiredPermissions: ['hrm:read'],
+    module: 'hrm',
+    action: 'read',
   },
 ];

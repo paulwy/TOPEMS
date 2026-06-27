@@ -1,11 +1,5 @@
 import React from 'react';
-import {
-  Drawer as MuiDrawer,
-  Box,
-  IconButton,
-  Typography,
-  Divider,
-} from '@mui/material';
+import { Drawer as MuiDrawer, Box, IconButton, Typography, Divider } from '@mui/material';
 import { X } from 'lucide-react';
 
 export type DrawerAnchor = 'left' | 'right' | 'top' | 'bottom';
@@ -91,7 +85,7 @@ export const Drawer: React.FC<DrawerProps> = ({
           <>
             {showTitle && title && (
               <Typography
-                variant="h6"
+                variant='h6'
                 sx={{ fontWeight: 600 }}
               >
                 {title}
@@ -99,7 +93,7 @@ export const Drawer: React.FC<DrawerProps> = ({
             )}
             {showCloseButton && closable && (
               <IconButton
-                size="small"
+                size='small'
                 onClick={handleClose}
                 sx={{ ml: 'auto' }}
               >
@@ -118,9 +112,7 @@ export const Drawer: React.FC<DrawerProps> = ({
     return (
       <>
         {showDivider && <Divider />}
-        <Box sx={{ p: 2 }}>
-          {footerContent}
-        </Box>
+        <Box sx={{ p: 2 }}>{footerContent}</Box>
       </>
     );
   };

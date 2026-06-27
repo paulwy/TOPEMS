@@ -1,6 +1,13 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
-import type { PayrollRun, PayrollItem, PayrollDetail, SalaryAdjustment, ListParams, PaginatedResult } from './types';
+import type {
+  PayrollRun,
+  PayrollItem,
+  PayrollDetail,
+  SalaryAdjustment,
+  ListParams,
+  PaginatedResult,
+} from './types';
 import { buildQueryString } from './types';
 
 export const payrollApi = {

@@ -22,17 +22,10 @@ import {
   Select,
   MenuItem,
   Grid,
+  Button,
 } from '@mui/material';
-import { Button } from '@mui/material';
 import React, { useState, useMemo } from 'react';
-import {
-  Plus,
-  Eye,
-  Filter,
-  CheckSquare,
-  XCircle,
-  X,
-} from 'lucide-react';
+import { Plus, Eye, Filter, CheckSquare, XCircle, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../../store';
 import { PageContainer } from '@/components/common';
@@ -260,7 +253,14 @@ const ExpenseClaimPage: React.FC = () => {
     });
     const entries = Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
     const maxAmount = entries.length > 0 ? entries[0][1] : 1;
-    const colors = ['primary.main', 'success.main', 'warning.main', 'secondary.main', 'info.main', 'error.main'];
+    const colors = [
+      'primary.main',
+      'success.main',
+      'warning.main',
+      'secondary.main',
+      'info.main',
+      'error.main',
+    ];
     return entries.map(([category, amount], idx) => ({
       category,
       amount,
@@ -283,7 +283,10 @@ const ExpenseClaimPage: React.FC = () => {
   };
 
   return (
-    <PageContainer title='费用报销' subtitle='管理费用报销申请、审批流程'>
+    <PageContainer
+      title='费用报销'
+      subtitle='管理费用报销申请、审批流程'
+    >
       <Stack spacing={2}>
         <Box
           sx={{
@@ -421,9 +424,24 @@ const ExpenseClaimPage: React.FC = () => {
                 </Typography>
                 <Stack spacing={1.5}>
                   {[
-                    { label: '待审批', status: 'pending', color: 'warning.main', data: stats.pending },
-                    { label: '已批准', status: 'approved', color: 'success.main', data: stats.approved },
-                    { label: '已拒绝', status: 'rejected', color: 'error.main', data: stats.rejected },
+                    {
+                      label: '待审批',
+                      status: 'pending',
+                      color: 'warning.main',
+                      data: stats.pending,
+                    },
+                    {
+                      label: '已批准',
+                      status: 'approved',
+                      color: 'success.main',
+                      data: stats.approved,
+                    },
+                    {
+                      label: '已拒绝',
+                      status: 'rejected',
+                      color: 'error.main',
+                      data: stats.rejected,
+                    },
                   ].map((item) => (
                     <Box
                       key={item.status}
@@ -569,7 +587,12 @@ const ExpenseClaimPage: React.FC = () => {
                   disabled={currentModalType !== 'create'}
                 >
                   {EXPENSE_CATEGORIES.map((cat) => (
-                    <MenuItem key={cat} value={cat}>{cat}</MenuItem>
+                    <MenuItem
+                      key={cat}
+                      value={cat}
+                    >
+                      {cat}
+                    </MenuItem>
                   ))}
                 </Select>
               </FormControl>
