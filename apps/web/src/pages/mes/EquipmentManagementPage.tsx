@@ -15,6 +15,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material';
+import { PageContainer } from '@/components/common';
 import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type {
@@ -428,10 +429,10 @@ const EquipmentManagementPage: React.FC = () => {
   );
 
   return (
-    <>
+    <PageContainer title="设备管理" subtitle="管理设备信息,包括设备编号、名称、型号、状态等">
       <ListPageTemplate
-        title='设备管理'
-        subtitle='管理设备信息,包括设备编号、名称、型号、状态等'
+        title=""
+        subtitle=""
         columns={columns}
         data={equipment}
         loading={loading}
@@ -830,7 +831,7 @@ const EquipmentManagementPage: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

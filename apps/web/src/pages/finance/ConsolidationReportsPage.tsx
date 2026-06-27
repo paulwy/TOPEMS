@@ -7,6 +7,7 @@ import { useNotification } from '@/hooks/useNotification';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import type { StatCard, ChartConfig, DataTable, TableColumn } from '@/components/templates/StatsPageTemplate';
 import type { ConsolidationReport, ConsolidationReportType } from '@/types/consolidation';
+import { PageContainer } from '@/components/common';
 
 const REPORT_TYPE_CONFIG: Record<ConsolidationReportType, { name: string; icon: React.ElementType; color: string }> = {
   consolidated_balance_sheet: { name: '合并资产负债表', icon: Building2, color: '#1976D2' },
@@ -201,7 +202,7 @@ export default function ConsolidationReportsPage() {
   );
 
   return (
-    <>
+    <PageContainer maxWidth='xl'>
       <StatsPageTemplate
         title='合并报表'
         subtitle='查看多公司合并后的财务报表'
@@ -309,7 +310,7 @@ export default function ConsolidationReportsPage() {
           </DialogActions>
         </Dialog>
       )}
-    </>
+    </PageContainer>
   );
 }
 

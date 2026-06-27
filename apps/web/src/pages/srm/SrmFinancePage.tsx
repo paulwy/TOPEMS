@@ -27,6 +27,7 @@ import type {
 } from '@/api/srm';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
+import { PageContainer } from '@/components/common';
 
 interface FinanceRecord {
   id: string;
@@ -329,42 +330,45 @@ const SrmFinancePage: React.FC = () => {
 
   if (loading) {
     return (
-      <Box
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'linear-gradient(135deg, success.light 0%, #f8fafc 100%)',
-        }}
-      >
-        <Box sx={{ textAlign: 'center' }}>
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              border: 4,
-              borderColor: 'success.main',
-              borderTopColor: 'success.dark',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-              mx: 'auto',
-              mb: 2,
-            }}
-          />
-          <Typography sx={{ color: 'slate.600' }}>加载中...</Typography>
+      <PageContainer maxWidth={false}>
+        <Box
+          sx={{
+            minHeight: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'linear-gradient(135deg, success.light 0%, #f8fafc 100%)',
+          }}
+        >
+          <Box sx={{ textAlign: 'center' }}>
+            <Box
+              sx={{
+                width: 48,
+                height: 48,
+                border: 4,
+                borderColor: 'success.main',
+                borderTopColor: 'success.dark',
+                borderRadius: '50%',
+                animation: 'spin 1s linear infinite',
+                mx: 'auto',
+                mb: 2,
+              }}
+            />
+            <Typography sx={{ color: 'slate.600' }}>加载中...</Typography>
+          </Box>
         </Box>
-      </Box>
+      </PageContainer>
     );
   }
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, success.light 0%, #f8fafc 100%)',
-      }}
-    >
+    <PageContainer maxWidth={false} padding={false}>
+      <Box
+        sx={{
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, success.light 0%, #f8fafc 100%)',
+        }}
+      >
       <Box
         component='header'
         sx={{
@@ -671,7 +675,8 @@ const SrmFinancePage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+      </Box>
+    </PageContainer>
   );
 };
 

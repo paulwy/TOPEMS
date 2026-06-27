@@ -13,6 +13,7 @@ import {
   Wifi,
   Zap,
 } from 'lucide-react';
+import { PageContainer } from '@/components/common';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import type { StatCard, ChartConfig, DataTable, TableColumn } from '@/components/templates/StatsPageTemplate';
 import { monitorApi } from '@/api/monitor';
@@ -178,26 +179,28 @@ export const MonitorDashboardPage: React.FC = () => {
   ];
 
   return (
-    <StatsPageTemplate
-      title='监控仪表盘'
-      subtitle='实时监控系统运行状态和性能指标'
-      statCards={statCards}
-      statColumns={4}
-      charts={charts}
-      chartColumns={{ xs: 1, md: 2 }}
-      tables={tables}
-      loading={loading}
-      timeRangeOptions={timeRangeOptions}
-      timeRange={timeRange}
-      onTimeRangeChange={setTimeRange}
-      showTimeRange={true}
-      showRefresh={true}
-      onRefresh={loadData}
-      showStatCards={true}
-      showCharts={true}
-      showTables={true}
-      statCardDirection='row'
-    />
+    <PageContainer padding={false}>
+      <StatsPageTemplate
+        title='监控仪表盘'
+        subtitle='实时监控系统运行状态和性能指标'
+        statCards={statCards}
+        statColumns={4}
+        charts={charts}
+        chartColumns={{ xs: 1, md: 2 }}
+        tables={tables}
+        loading={loading}
+        timeRangeOptions={timeRangeOptions}
+        timeRange={timeRange}
+        onTimeRangeChange={setTimeRange}
+        showTimeRange={true}
+        showRefresh={true}
+        onRefresh={loadData}
+        showStatCards={true}
+        showCharts={true}
+        showTables={true}
+        statCardDirection='row'
+      />
+    </PageContainer>
   );
 };
 

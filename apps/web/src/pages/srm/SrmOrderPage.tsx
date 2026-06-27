@@ -28,6 +28,7 @@ import { srmApi } from '@/api/srm';
 import type { PurchaseOrder, CreatePurchaseOrderRequest } from '@/api/srm';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
+import { PageContainer } from '@/components/common';
 
 const SrmOrderPage: React.FC = () => {
   const [orders, setOrders] = useState<PurchaseOrder[]>([]);
@@ -520,38 +521,41 @@ const SrmOrderPage: React.FC = () => {
   );
 
   return (
-    <Box
+    <PageContainer
+      title='采购订单'
+      subtitle='Purchase Orders'
       sx={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #dbeafe 0%, #f8fafc 100%)',
-        p: { xs: 2, md: 3 },
       }}
+      padding={false}
     >
-      <ListPageTemplate
-        title='采购订单'
-        subtitle='Purchase Orders'
-        columns={columns}
-        data={filteredOrders}
-        loading={loading}
-        rowActions={rowActions}
-        searchable
-        searchPlaceholder='搜索订单编号或供应商...'
-        searchValue={searchTerm}
-        onSearch={setSearchTerm}
-        actions={[
-          {
-            label: '新增订单',
-            icon: <Plus style={{ width: 18, height: 18 }} />,
-            onClick: handleCreate,
-            variant: 'contained',
-          },
-        ]}
-        onRefresh={loadOrders}
-        emptyMessage='暂无订单数据'
-        emptyIcon={<ClipboardList style={{ width: 48, height: 48, color: 'text.disabled' }} />}
-        headerContent={headerContent}
-        getRowId={(row) => row.id || row.po_no || Math.random().toString()}
-      />
+      <Box sx={{ p: { xs: 2, md: 3 } }}>
+        <ListPageTemplate
+          title=''
+          subtitle=''
+          columns={columns}
+          data={filteredOrders}
+          loading={loading}
+          rowActions={rowActions}
+          searchable
+          searchPlaceholder='搜索订单编号或供应商...'
+          searchValue={searchTerm}
+          onSearch={setSearchTerm}
+          actions={[
+            {
+              label: '新增订单',
+              icon: <Plus style={{ width: 18, height: 18 }} />,
+              onClick: handleCreate,
+              variant: 'contained',
+            },
+          ]}
+          onRefresh={loadOrders}
+          emptyMessage='暂无订单数据'
+          emptyIcon={<ClipboardList style={{ width: 48, height: 48, color: 'text.disabled' }} />}
+          headerContent={headerContent}
+          getRowId={(row) => row.id || row.po_no || Math.random().toString()}
+        />
 
       <Dialog
         open={showCreateModal}
@@ -710,7 +714,8 @@ const SrmOrderPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+      </Box>
+    </PageContainer>
   );
 };
 

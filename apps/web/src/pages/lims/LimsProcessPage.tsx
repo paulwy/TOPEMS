@@ -11,6 +11,7 @@ import {
   Avatar,
   Stack,
 } from '@mui/material';
+import { PageContainer } from '@/components/common';
 import { Button } from '@mui/material';
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { ClipboardList, ChevronRight, FileText, Play, Clock, CheckCircle, X } from 'lucide-react';
@@ -410,10 +411,10 @@ const LimsProcessPage: React.FC = () => {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', backgroundColor: 'grey.50' }}>
+    <PageContainer title="检验流程" subtitle="Inspection Processes">
       <ListPageTemplate
-        title='检验流程'
-        subtitle='Inspection Processes'
+        title=""
+        subtitle=""
         backButton={{
           onClick: () => navigate('/dashboard'),
         }}
@@ -513,7 +514,7 @@ const LimsProcessPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };
 

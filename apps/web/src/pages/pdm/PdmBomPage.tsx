@@ -30,6 +30,7 @@ import {
   type RowAction,
   type FilterConfig,
 } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 
 interface BomItemFormData {
   part_number: string;
@@ -312,10 +313,13 @@ export const PdmBomPage: React.FC = () => {
   );
 
   return (
-    <>
+    <PageContainer
+      title='物料清单 (BOM)'
+      subtitle='管理产品的物料组成和成本结构'
+    >
       <ListPageTemplate
-        title='物料清单 (BOM)'
-        subtitle='管理产品的物料组成和成本结构'
+        title=''
+        subtitle=''
         columns={columns}
         data={filteredBomItems}
         loading={loading}
@@ -425,7 +429,7 @@ export const PdmBomPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

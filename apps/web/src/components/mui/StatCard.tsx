@@ -1,5 +1,18 @@
-import React from 'react';
-import { Card, CardContent, Box, Typography, Skeleton, Tooltip, useTheme } from '@mui/material';
+/**
+ * 统一的统计卡片组件库
+ * 提供 StatCard、StatCardGroup 等统计展示组件
+ * 支持丰富的交互和动画效果
+ */
+import React, { useEffect, useState, useRef } from 'react';
+import {
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  Skeleton,
+  Tooltip,
+  useTheme,
+} from '@mui/material';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 
 // ============ 类型定义 ============
@@ -27,10 +40,15 @@ export interface StatCardProps {
 
   // 状态
   loading?: boolean;
-  trendData?: number[];
 
   // 子内容
   children?: React.ReactNode;
+}
+
+export interface StatCardGroupProps {
+  stats: Omit<StatCardProps, ''>[];
+  loading?: boolean;
+  columns?: number;
 }
 
 // ============ StatCard 组件 ============
@@ -242,13 +260,7 @@ export const StatCard: React.FC<StatCardProps> = ({
   return content;
 };
 
-// ============ 快捷统计卡片组 ============
-
-export interface StatCardGroupProps {
-  stats: Omit<StatCardProps, ''>[];
-  loading?: boolean;
-  columns?: number;
-}
+// ============ StatCardGroup 组件 ============
 
 export const StatCardGroup: React.FC<StatCardGroupProps> = ({ stats, loading, columns = 4 }) => {
   return (

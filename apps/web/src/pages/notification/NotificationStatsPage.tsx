@@ -7,6 +7,7 @@ import {
   TrendingUp,
   Calendar,
 } from 'lucide-react';
+import { PageContainer } from '@/components/common';
 import type { NotificationStats } from '@/api/notification';
 import { getMyNotificationStats, notificationServiceApi } from '@/api/notification';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
@@ -208,75 +209,77 @@ const NotificationStatsPage: React.FC = () => {
   const [timeRange, setTimeRange] = useState('week');
 
   return (
-    <StatsPageTemplate
-      title='通知统计'
-      subtitle='查看通知数据的统计分析'
-      statCards={statCards}
-      charts={charts}
-      tables={tables}
-      loading={loading}
-      timeRangeOptions={timeRangeOptions}
-      timeRange={timeRange}
-      onTimeRangeChange={setTimeRange}
-      onRefresh={loadData}
-      showTimeRange={true}
-      showRefresh={true}
-      showExport={true}
-      showSearch={false}
-      customToolbar={
-        serviceStatus && (
-          <div
-            style={{
-              backgroundColor: 'white',
-              borderRadius: 8,
-              padding: 16,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center' }}>
-              <div
-                style={{
-                  width: 12,
-                  height: 12,
-                  borderRadius: '50%',
-                  marginRight: 12,
-                  backgroundColor: serviceStatus.status === 'healthy' ? '#16a34a' : '#dc2626',
-                }}
-              />
-              <span
-                style={{
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
-                  color: '#1f2937',
-                }}
-              >
-                通知服务状态：{serviceStatus.status === 'healthy' ? '健康' : '异常'}
-              </span>
-            </div>
+    <PageContainer padding={false}>
+      <StatsPageTemplate
+        title='通知统计'
+        subtitle='查看通知数据的统计分析'
+        statCards={statCards}
+        charts={charts}
+        tables={tables}
+        loading={loading}
+        timeRangeOptions={timeRangeOptions}
+        timeRange={timeRange}
+        onTimeRangeChange={setTimeRange}
+        onRefresh={loadData}
+        showTimeRange={true}
+        showRefresh={true}
+        showExport={true}
+        showSearch={false}
+        customToolbar={
+          serviceStatus && (
             <div
               style={{
+                backgroundColor: 'white',
+                borderRadius: 8,
+                padding: 16,
                 display: 'flex',
                 alignItems: 'center',
-                gap: 24,
-                fontSize: '0.875rem',
-                color: '#6b7280',
+                justifyContent: 'space-between',
               }}
             >
-              <span>运行时长：{serviceStatus.uptime}</span>
-              {serviceStatus.dependencies.map((dep, idx) => (
-                <span key={idx}>
-                  {dep.name}：{dep.status === 'healthy' ? '正常' : '异常'}
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <div
+                  style={{
+                    width: 12,
+                    height: 12,
+                    borderRadius: '50%',
+                    marginRight: 12,
+                    backgroundColor: serviceStatus.status === 'healthy' ? '#16a34a' : '#dc2626',
+                  }}
+                />
+                <span
+                  style={{
+                    fontSize: '0.875rem',
+                    fontWeight: 500,
+                    color: '#1f2937',
+                  }}
+                >
+                  通知服务状态：{serviceStatus.status === 'healthy' ? '健康' : '异常'}
                 </span>
-              ))}
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 24,
+                  fontSize: '0.875rem',
+                  color: '#6b7280',
+                }}
+              >
+                <span>运行时长：{serviceStatus.uptime}</span>
+                {serviceStatus.dependencies.map((dep, idx) => (
+                  <span key={idx}>
+                    {dep.name}：{dep.status === 'healthy' ? '正常' : '异常'}
+                  </span>
+                ))}
+              </div>
             </div>
-          </div>
-        )
-      }
-      chartSectionTitle='数据图表'
-      tableSectionTitle='详细数据'
-    />
+          )
+        }
+        chartSectionTitle='数据图表'
+        tableSectionTitle='详细数据'
+      />
+    </PageContainer>
   );
 };
 

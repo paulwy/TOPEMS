@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { FileText, ArrowRight, Activity, Layers, MapPin, Globe } from 'lucide-react';
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import BarChartComponent from '../../components/charts/BarChart';
 import LineChartComponent from '../../components/charts/LineChart';
 import PieChartComponent from '../../components/charts/PieChart';
@@ -128,15 +129,22 @@ export const DashboardPage: React.FC = () => {
   ];
 
   return (
-    <DashboardTemplate
+    <PageContainer
       title='地理信息系统'
       subtitle={`${getGreeting()}，地图视图与空间分析`}
-      stats={stats}
-      charts={charts}
-      quickActions={quickActions}
-      quickActionsTitle='快捷操作'
-      loading={loading}
-    />
+      padding={false}
+      maxWidth={false}
+    >
+      <DashboardTemplate
+        title=''
+        subtitle=''
+        stats={stats}
+        charts={charts}
+        quickActions={quickActions}
+        quickActionsTitle='快捷操作'
+        loading={loading}
+      />
+    </PageContainer>
   );
 };
 

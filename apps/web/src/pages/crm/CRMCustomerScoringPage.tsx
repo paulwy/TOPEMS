@@ -15,6 +15,7 @@ import type { CustomerScore, ScoreFactor } from '@/api/crm';
 import { crmApi } from '@/api/crm';
 import { useAppStore } from '@/store';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { apiLogger } from '@/utils/logger';
 import { Star, TrendingUp, TrendingDown, Minus, Award, Calculator, Eye } from 'lucide-react';
 
@@ -349,10 +350,11 @@ const CRMCustomerScoringPage: React.FC = () => {
   ), [gradeDistribution]);
 
   return (
+    <PageContainer title='客户价值评分' subtitle='根据客户数据自动计算客户价值评分和等级'>
     <>
       <ListPageTemplate
-        title='客户价值评分'
-        subtitle='根据客户数据自动计算客户价值评分和等级'
+        title=''
+        subtitle=''
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
           { label: '客户关系管理', href: '/crm' },
@@ -512,6 +514,7 @@ const CRMCustomerScoringPage: React.FC = () => {
         </DialogActions>
       </Dialog>
     </>
+    </PageContainer>
   );
 };
 

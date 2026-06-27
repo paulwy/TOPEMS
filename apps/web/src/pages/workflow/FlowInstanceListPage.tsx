@@ -35,6 +35,7 @@ import type { WorkflowInstance, Workflow } from '@/api/workflow';
 import { workflowApi } from '@/api/workflow';
 import { useAppStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
+import { PageContainer } from '@/components/common';
 import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
 import type { ColumnDef, RowAction, FilterConfig } from '@/components/templates/ListPageTemplate';
 
@@ -346,10 +347,13 @@ const FlowInstanceListPage: React.FC = () => {
   ];
 
   return (
-    <>
+    <PageContainer
+      title='工作流实例'
+      subtitle='管理运行中的工作流实例'
+    >
       <ListPageTemplate
-        title='工作流实例'
-        subtitle='管理运行中的工作流实例'
+        title=''
+        subtitle=''
         columns={columns}
         data={instances}
         loading={loading}
@@ -424,7 +428,7 @@ const FlowInstanceListPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

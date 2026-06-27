@@ -32,7 +32,7 @@ import { wmsApi } from '@/api/wms';
 import { useAppStore } from '@/store';
 import { Plus, Edit, Trash2, Eye, Package, AlertTriangle } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
-import { ConfirmDialog } from '@/components/common';
+import { ConfirmDialog, PageContainer } from '@/components/common';
 
 const statusConfig: Record<
   string,
@@ -469,10 +469,13 @@ const InventoryPage: React.FC = () => {
   );
 
   return (
-    <>
+    <PageContainer
+      title='库存管理'
+      subtitle='管理仓库库存，查看库存状态和低库存预警'
+    >
       <ListPageTemplate
-        title='库存管理'
-        subtitle='管理仓库库存，查看库存状态和低库存预警'
+        title=''
+        subtitle=''
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
           { label: '仓储', href: '/wms' },
@@ -956,7 +959,7 @@ const InventoryPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

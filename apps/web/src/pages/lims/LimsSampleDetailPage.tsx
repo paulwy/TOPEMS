@@ -30,6 +30,7 @@ import {
 import { Button } from '@mui/material';
 
 import { DataTable } from '@/components/common/DataTable';
+import { PageContainer } from '@/components/common';
 import type { ColumnDef } from '@tanstack/react-table';
 import { limsApi } from '@/api/lims';
 import type { Sample, InspectionTask, InspectionRecord } from '@/api/lims';
@@ -544,9 +545,10 @@ const LimsSampleDetailPage: React.FC = () => {
   }
 
   return (
-    <DetailPageTemplate
-      title='样品详情'
-      subtitle='Sample Detail'
+    <PageContainer padding={false} maxWidth={false}>
+      <DetailPageTemplate
+        title='样品详情'
+        subtitle='Sample Detail'
       breadcrumbs={[
         { label: '首页', href: '/dashboard' },
         { label: 'LIMS', href: '/lims' },
@@ -686,7 +688,8 @@ const LimsSampleDetailPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </DetailPageTemplate>
+      </DetailPageTemplate>
+    </PageContainer>
   );
 };
 

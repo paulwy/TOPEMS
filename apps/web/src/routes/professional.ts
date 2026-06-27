@@ -28,7 +28,7 @@ const IntegrationExternalErpOverviewPage = lazy(
   () => import('../pages/integration/IntegrationExternalErpOverviewPage')
 );
 const MobileWorkstationPage = lazy(() => import('../pages/mes/MobileWorkstationPage'));
-const PerformanceMonitorPage = lazy(() => import('../pages/system/PerformanceMonitorPage'));
+const PerformanceMonitorPage = lazy(() => import('../pages/admin/PerformanceMonitorPage'));
 const ExternalErpMappingPage = lazy(() => import('../pages/integration/ExternalErpMappingPage'));
 const ExternalErpConnectionsPage = lazy(
   () => import('../pages/integration/ExternalErpConnectionsPage')

@@ -20,6 +20,7 @@ import {
   Settings,
   ArrowUpDown,
 } from 'lucide-react';
+import { PageContainer } from '@/components/common';
 import {
   Box,
   Typography,
@@ -301,71 +302,30 @@ const DatabaseManagementPage: React.FC = () => {
   }, [tables, backups]);
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'slate.50' }}>
-      <Box
-        sx={{
-          bgcolor: 'background.paper',
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: 'divider',
-        }}
-      >
-        <Box sx={{ maxWidth: 1400, mx: 'auto', px: 2, py: 3 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <ActionButton
-                label='返回'
-                icon={<ChevronLeft size={20} />}
-                variant='text'
-                onClick={() => navigate('/erp/dashboard')}
-              />
-              <Box>
-                <Typography
-                  variant='h5'
-                  sx={{
-                    fontWeight: 'bold',
-                    color: 'text.primary',
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Database sx={{ width: 28, height: 28, mr: 1.5, color: 'indigo.600' }} />
-                  数据库管理
-                </Typography>
-                <Typography variant='body2' sx={{ mt: 0.5, color: 'text.secondary' }}>
-                  数据表列表、表结构查看、数据备份与恢复
-                </Typography>
-              </Box>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Button
-                variant='outlined'
-                size='small'
-                startIcon={<RefreshCw size={16} />}
-                onClick={loadData}
-              >
-                刷新
-              </Button>
-              <Button
-                variant='contained'
-                size='small'
-                startIcon={<Download size={16} />}
-                onClick={handleBackup}
-              >
-                数据备份
-              </Button>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-
-      <Box sx={{ maxWidth: 1400, mx: 'auto', px: 2, py: 3 }}>
+    <PageContainer
+      title='数据库管理'
+      subtitle='数据表列表、表结构查看、数据备份与恢复'
+      maxWidth='xl'
+      headerProps={{
+        backButton: {
+          onClick: () => navigate('/erp/dashboard'),
+        },
+        actions: [
+          {
+            label: '刷新',
+            icon: <RefreshCw size={16} />,
+            onClick: loadData,
+            variant: 'outlined',
+          },
+          {
+            label: '数据备份',
+            icon: <Download size={16} />,
+            onClick: handleBackup,
+            variant: 'contained',
+          },
+        ],
+      }}
+    >
         {backingUp && (
           <Alert severity='info' sx={{ mb: 2 }}>
             <Box sx={{ width: '100%' }}>
@@ -778,7 +738,6 @@ const DatabaseManagementPage: React.FC = () => {
             </>
           )}
         </Box>
-      </Box>
 
       <Dialog
         open={showStructureModal}
@@ -1015,7 +974,7 @@ const DatabaseManagementPage: React.FC = () => {
         message='确定要删除该备份文件吗？此操作不可撤销。'
         danger
       />
-    </Box>
+    </PageContainer>
   );
 };
 

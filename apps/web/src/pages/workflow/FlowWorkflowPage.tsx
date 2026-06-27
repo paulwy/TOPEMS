@@ -19,7 +19,7 @@ import type { Workflow } from '@/api/workflow';
 import { workflowApi, CreateWorkflowRequest } from '@/api/workflow';
 import { useAppStore } from '../../store';
 import type { ColumnDef } from '@tanstack/react-table';
-import { DataTable, BackButton } from '@/components/common';
+import { DataTable, PageContainer } from '@/components/common';
 import {
   Box,
   TextField,
@@ -320,58 +320,29 @@ const FlowWorkflowPage: React.FC = () => {
     inactive: workflows.filter((w) => !w.is_active).length,
   };
 
-  return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50', p: 3 }}>
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <BackButton href='/dashboard' />
-              <Box
-                sx={{
-                  width: 48,
-                  height: 48,
-                  bgcolor: 'primary.light',
-                  borderRadius: 1,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <GitBranch sx={{ width: 24, height: 24, color: 'primary.main' }} />
-              </Box>
-              <Box>
-                <Typography
-                  variant='h5'
-                  sx={{ fontWeight: 'bold' }}
-                >
-                  工作流管理
-                </Typography>
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
-                  设计和管理审批流程
-                </Typography>
-              </Box>
-            </Box>
-            <Button
-              variant='contained'
-              startIcon={<Plus sx={{ width: 20, height: 20 }} />}
-              onClick={() => setShowCreateDialog(true)}
-            >
-              创建工作流
-            </Button>
-          </Box>
-        </CardContent>
-      </Card>
+  const headerActions = useMemo(() => [
+    {
+      label: '创建工作流',
+      icon: <Plus size={18} />,
+      onClick: () => setShowCreateDialog(true),
+      variant: 'contained' as const,
+      color: 'primary' as const,
+    },
+  ], []);
 
+  return (
+    <PageContainer
+      title='工作流管理'
+      subtitle='设计和管理审批流程'
+      headerProps={{
+        pageIcon: <GitBranch size={24} />,
+        pageColor: 'primary.main',
+        backButton: {
+          href: '/dashboard',
+        },
+        actions: headerActions,
+      }}
+    >
       <Box
         sx={{
           display: 'grid',
@@ -588,7 +559,7 @@ const FlowWorkflowPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };
 

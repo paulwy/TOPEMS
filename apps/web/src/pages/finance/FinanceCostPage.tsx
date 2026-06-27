@@ -8,7 +8,7 @@ import {
   Wallet,
   Download,
 } from 'lucide-react';
-import { DataExport, BackButton } from '@/components/common';
+import { DataExport, BackButton, PageContainer} from '@/components/common';
 import { useAppStore } from '@/store';
 import { ListPageTemplate, StatCardGroup } from '@/components/mui';
 import { financeApi, accountApi } from '@/api/finance';
@@ -263,7 +263,7 @@ const FinanceCostPage: React.FC = () => {
   );
 
   return (
-    <MuiBox sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+    <PageContainer padding={false} maxWidth={false}>
       <MuiBox
         sx={{
           bgcolor: 'background.paper',
@@ -494,7 +494,7 @@ const FinanceCostPage: React.FC = () => {
           <Button onClick={() => setShowAnalysisModal(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </MuiBox>
+    </PageContainer>
   );
 };
 

@@ -5,7 +5,7 @@ import { lazyWithRetry } from './utils';
 const lazy = lazyWithRetry;
 
 const Impage = lazy(() => import('../pages/shared/Impage'));
-const MailPage = lazy(() => import('../pages/common/MailPage'));
+const MailPage = lazy(() => import('../pages/im/MailPage'));
 
 export const imRoutes: RouteConfig[] = [
   {

@@ -37,6 +37,7 @@ import {
 } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { ehsApi } from '@/api/ehs';
+import { PageContainer } from '@/components/common';
 import type { SafetyIssue, Rectification, Verification } from '@/api/ehs';
 import { useAppStore } from '@/store';
 
@@ -442,7 +443,7 @@ const EhsHazardPage: React.FC = () => {
   const steps = ['隐患上报', '整改中', '待验收', '已验收', '已闭环'];
 
   return (
-    <>
+    <PageContainer title='隐患管理' subtitle='Safety Hazard Management'>
       <Box
         sx={{
           display: 'grid',
@@ -589,8 +590,8 @@ const EhsHazardPage: React.FC = () => {
       </Box>
 
       <ListPageTemplate
-        title='隐患管理'
-        subtitle='Safety Hazard Management'
+        title=''
+        subtitle=''
         columns={columns}
         data={filteredIssues}
         loading={loading}
@@ -1158,7 +1159,7 @@ const EhsHazardPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

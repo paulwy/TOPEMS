@@ -23,7 +23,7 @@ import {
   Clock,
   Building2,
 } from 'lucide-react';
-import { ActionButton, FormField, FormSelect, Dialog, ConfirmDialog, StatusBadge } from '@/components/common';
+import { ActionButton, FormField, FormSelect, Dialog, ConfirmDialog, StatusBadge, PageContainer} from '@/components/common';
 import { useNavigate } from 'react-router-dom';
 import {
   voucherApi,
@@ -620,13 +620,7 @@ const FinanceVoucherPage: React.FC = () => {
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        bgcolor: 'slate.50',
-        dark: { bgcolor: 'slate.900' },
-      }}
-    >
+    <PageContainer padding={false} maxWidth={false}>
       <Box
         sx={{
           bgcolor: 'background.paper',
@@ -1509,7 +1503,7 @@ const FinanceVoucherPage: React.FC = () => {
         message={`确定要删除选中的 ${selectedIds.length} 张凭证吗？`}
         danger
       />
-    </Box>
+    </PageContainer>
   );
 };
 

@@ -34,6 +34,7 @@ import {
   type RowAction,
   type FilterConfig,
 } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { apiLogger } from '@/utils/logger';
 
 interface FormData {
@@ -453,10 +454,13 @@ export const PdmVersionPage: React.FC = () => {
   );
 
   return (
-    <Box sx={{ minHeight: '100vh', backgroundColor: 'grey.50' }}>
+    <PageContainer
+      title='版本管理'
+      subtitle='管理文档和产品的版本历史与变更记录'
+    >
       <ListPageTemplate
-        title='版本管理'
-        subtitle='管理文档和产品的版本历史与变更记录'
+        title=''
+        subtitle=''
         columns={columns}
         data={versions}
         loading={loading}
@@ -566,7 +570,7 @@ export const PdmVersionPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };
 

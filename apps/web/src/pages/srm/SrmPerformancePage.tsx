@@ -5,6 +5,7 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { srmApi, type SupplierPerformance, type PerformanceSummary } from '@/api/srm';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
+import { PageContainer } from '@/components/common';
 
 const SrmPerformancePage: React.FC = () => {
   const addNotification = useAppStore((state) => state.addNotification);
@@ -306,42 +307,47 @@ const SrmPerformancePage: React.FC = () => {
   );
 
   return (
-    <ListPageTemplate
+    <PageContainer
       title='供应商绩效'
       subtitle='分析供应商绩效数据、评估供应商表现、优化供应链'
-      columns={columns}
-      data={performances}
-      loading={loading}
-      pagination={{
-        page,
-        pageSize: rowsPerPage,
-        total,
-        onPageChange: setPage,
-        onPageSizeChange: (size) => {
-          setRowsPerPage(size);
+    >
+      <ListPageTemplate
+        title=''
+        subtitle=''
+        columns={columns}
+        data={performances}
+        loading={loading}
+        pagination={{
+          page,
+          pageSize: rowsPerPage,
+          total,
+          onPageChange: setPage,
+          onPageSizeChange: (size) => {
+            setRowsPerPage(size);
+            setPage(0);
+          },
+        }}
+        searchable
+        searchPlaceholder='搜索供应商名称...'
+        searchValue={searchTerm}
+        onSearch={(value) => {
+          setSearchTerm(value);
           setPage(0);
-        },
-      }}
-      searchable
-      searchPlaceholder='搜索供应商名称...'
-      searchValue={searchTerm}
-      onSearch={(value) => {
-        setSearchTerm(value);
-        setPage(0);
-      }}
-      actions={[
-        {
-          label: '刷新数据',
-          icon: <RefreshCw size={18} />,
-          onClick: loadData,
-          variant: 'outlined',
-        },
-      ]}
-      headerContent={headerContent}
-      getRowId={(row) => row.supplier_id}
-      onRefresh={loadData}
-      emptyMessage='暂无绩效数据'
-    />
+        }}
+        actions={[
+          {
+            label: '刷新数据',
+            icon: <RefreshCw size={18} />,
+            onClick: loadData,
+            variant: 'outlined',
+          },
+        ]}
+        headerContent={headerContent}
+        getRowId={(row) => row.supplier_id}
+        onRefresh={loadData}
+        emptyMessage='暂无绩效数据'
+      />
+    </PageContainer>
   );
 };
 

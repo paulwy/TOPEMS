@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import type { RowAction, FilterConfig } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
 import { useAppStore } from '@/store';
 import type { Deploy, CreateDeployRequest } from '@/api/rs';
@@ -392,10 +393,10 @@ const RsDeployPage: React.FC = () => {
   );
 
   return (
-    <>
+    <PageContainer title='部署管理' subtitle='管理应用部署和发布流程'>
       <ListPageTemplate<Deploy>
-        title='部署管理'
-        subtitle='管理应用部署和发布流程'
+        title=''
+        subtitle=''
         backButton={{
           href: '/dashboard',
         }}
@@ -610,7 +611,7 @@ const RsDeployPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

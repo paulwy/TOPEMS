@@ -5,7 +5,7 @@ import { Box, LinearProgress, IconButton, Tooltip, MenuItem } from '@mui/materia
 import type { Project } from '@/api/pm';
 import { useAppStore } from '@/store';
 import { pmApi } from '@/api/pm';
-import { DataExport, StatusBadge } from '@/components/common';
+import { DataExport, StatusBadge, PageContainer } from '@/components/common';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 
@@ -277,9 +277,13 @@ const PmProjectListPage: React.FC = () => {
   const completedCount = projects.filter((p) => p.status === 'completed').length;
 
   return (
-    <ListPageTemplate
+    <PageContainer
       title='项目管理'
       subtitle='管理所有类型的项目，跟踪进度和状态'
+    >
+      <ListPageTemplate
+        title=''
+        subtitle=''
       breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '项目' }]}
       columns={columns}
       data={filteredData}
@@ -332,6 +336,7 @@ const PmProjectListPage: React.FC = () => {
       columnConfigStorageKey='pm-projects-columns'
       onRefresh={() => loadProjects(currentPage)}
     />
+    </PageContainer>
   );
 };
 

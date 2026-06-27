@@ -10,7 +10,7 @@ import {
   DollarSign,
 } from 'lucide-react';
 import { useAppStore } from '../../store';
-import { DataExport } from '@/components/common';
+import { DataExport, PageContainer } from '@/components/common';
 import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
 import { StatCardGroup } from '@/components/mui';
 import type { StatCard } from '@/components/templates/DashboardTemplate';
@@ -272,7 +272,7 @@ const FinanceTaxPage: React.FC = () => {
   );
 
   return (
-    <MuiBox sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+    <PageContainer padding={false} maxWidth={false}>
       <MuiBox sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, pt: 3 }}>
         <StatCardGroup
           stats={statCards}
@@ -800,7 +800,7 @@ const FinanceTaxPage: React.FC = () => {
           <Button onClick={() => setShowAnalysisModal(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </MuiBox>
+    </PageContainer>
   );
 };
 

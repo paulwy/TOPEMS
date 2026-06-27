@@ -36,6 +36,7 @@ import {
   type RowAction,
   type FilterConfig,
 } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 
 interface ConfigAttribute {
   name: string;
@@ -413,10 +414,13 @@ export const PdmProductConfigPage: React.FC = () => {
   );
 
   return (
-    <>
+    <PageContainer
+      title='产品配置管理'
+      subtitle='管理产品的配置选项和属性定义'
+    >
       <ListPageTemplate
-        title='产品配置管理'
-        subtitle='管理产品的配置选项和属性定义'
+        title=''
+        subtitle=''
         columns={columns}
         data={filteredConfigs}
         loading={loading}
@@ -580,7 +584,7 @@ export const PdmProductConfigPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

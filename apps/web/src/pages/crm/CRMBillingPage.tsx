@@ -14,6 +14,7 @@ import { crmApi } from '@/api/crm';
 import { useAppStore } from '@/store';
 import { Receipt, CheckCircle, Clock, AlertCircle, Send, TrendingUp } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { apiLogger } from '@/utils/logger';
 
 type TabType = 'invoices' | 'collections' | 'aging';
@@ -330,9 +331,10 @@ const CRMBillingPage: React.FC = () => {
   const tabTotalLabel = activeTab === 'invoices' ? '待收总额' : activeTab === 'collections' ? '已收总额' : '应收总额';
 
   return (
-    <ListPageTemplate
-      title='账单管理'
-      subtitle='管理客户账单、收款和账龄分析'
+    <PageContainer title='账单管理' subtitle='管理客户账单、收款和账龄分析'>
+      <ListPageTemplate
+        title=''
+        subtitle=''
       breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '客户关系管理', href: '/crm' }, { label: '账单管理' }]}
       backButton={{ onClick: () => navigate('/crm') }}
       columns={getColumns()}
@@ -405,7 +407,8 @@ const CRMBillingPage: React.FC = () => {
           {headerContent}
         </Box>
       }
-    />
+      />
+    </PageContainer>
   );
 };
 

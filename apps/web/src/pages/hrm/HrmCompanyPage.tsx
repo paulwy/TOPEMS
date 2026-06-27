@@ -53,6 +53,7 @@ import {
 } from '@/components/templates';
 import { EmptyState } from '@/components/mui';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { PageContainer } from '@/components/common';
 
 const HrmCompanyPage: React.FC = () => {
   const addNotification = useAppStore((state) => state.addNotification);
@@ -522,7 +523,7 @@ const HrmCompanyPage: React.FC = () => {
   }, []);
 
   return (
-    <>
+    <PageContainer maxWidth='xl'>
       <TreePageTemplate
         title='公司管理'
         subtitle='管理企业基本信息和组织架构'
@@ -766,7 +767,7 @@ const HrmCompanyPage: React.FC = () => {
         message={confirmDialogConfig?.message || ''}
         danger={confirmDialogConfig?.danger}
       />
-    </>
+    </PageContainer>
   );
 };
 

@@ -42,6 +42,7 @@ import { pmApi } from '@/api/pm';
 import type { PmStatistics, ProjectBenefit } from '@/api/pm';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import type { StatCard, ChartConfig } from '@/components/templates/StatsPageTemplate';
+import { PageContainer } from '@/components/common';
 
 const PmReportPage: React.FC = () => {
   const navigate = useNavigate();
@@ -618,7 +619,8 @@ const PmReportPage: React.FC = () => {
   ), [params.projectId, navigate, projectStatusData, riskData, trendData, budgetUtilization, stats, benefits]);
 
   return (
-    <StatsPageTemplate
+    <PageContainer padding={false} maxWidth={false}>
+      <StatsPageTemplate
       title='项目报表'
       subtitle={params.projectId ? '项目详情报表' : '全局项目统计报表'}
       statCards={statCards}
@@ -641,6 +643,7 @@ const PmReportPage: React.FC = () => {
       showCharts={false}
       showTables={false}
     />
+    </PageContainer>
   );
 };
 

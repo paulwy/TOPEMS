@@ -1,7 +1,7 @@
 import { lazy } from 'react';
 import type { RouteConfig } from './utils';
 
-const MeetingRoomManagementPage = lazy(() => import('../pages/common/MeetingRoomManagementPage'));
+const MeetingRoomManagementPage = lazy(() => import('../pages/oa/MeetingRoomManagementPage'));
 const EhsAccidentPage = lazy(() => import('../pages/ehs/EhsAccidentPage'));
 
 const SystemSettingsPage = lazy(() => import('../pages/admin/SystemSettingsPage'));
@@ -9,8 +9,8 @@ const SystemManagementPage = lazy(() => import('../pages/admin/SystemManagementP
 const DatabaseStructurePage = lazy(() => import('../pages/admin/DatabaseStructurePage'));
 const ConfigDebugPage = lazy(() => import('../pages/admin/ConfigDebugPage'));
 const CompanyStructurePage = lazy(() => import('../pages/admin/CompanyStructurePage'));
-const MonitorPage = lazy(() => import('../pages/system/MonitorPage'));
-const DocumentsPage = lazy(() => import('../pages/common/DocumentsPage'));
+const MonitorPage = lazy(() => import('../pages/admin/MonitorPage'));
+const DocumentsPage = lazy(() => import('../pages/docs/DocumentsPage'));
 
 export const commonRoutes: RouteConfig[] = [
   {

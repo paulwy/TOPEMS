@@ -25,6 +25,7 @@ import type {
 } from '@/api/srm';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
+import { PageContainer } from '@/components/common';
 
 const SrmSupplierPage: React.FC = () => {
   const navigate = useNavigate();
@@ -613,15 +614,18 @@ const SrmSupplierPage: React.FC = () => {
   );
 
   return (
-    <Box
+    <PageContainer
+      title='供应商管理'
+      subtitle='Supplier Management'
       sx={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg, secondary.light 0%, #f8fafc 100%)',
       }}
+      padding={false}
     >
       <ListPageTemplate
-        title='供应商管理'
-        subtitle='Supplier Management'
+        title=''
+        subtitle=''
         columns={columns}
         data={filteredSuppliers}
         loading={loading}
@@ -858,7 +862,7 @@ const SrmSupplierPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>{' '}
-    </Box>
+    </PageContainer>
   );
 };
 

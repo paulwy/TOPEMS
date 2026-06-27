@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Typography } from '@mui/material';
 import { Button } from '@mui/material';
-import { FileText, Brain, GitBranch, Clock, Bell, User } from 'lucide-react';
+import { FileText, Brain, GitBranch, Clock, Bell, User, ShoppingCart } from 'lucide-react';
 
 type IconComponent = React.ComponentType<{
   className?: string;
@@ -160,6 +160,15 @@ export const defaultQuickActions: QuickAction[] = [
     color: 'primary.main',
     bgColor: '#eef2ff',
     hoverColor: 'primary.main',
+    service: null,
+  },
+  {
+    label: '插件市场',
+    icon: ShoppingCart,
+    path: '/plugin/marketplace',
+    color: '#7c3aed',
+    bgColor: '#f5f3ff',
+    hoverColor: '#7c3aed',
     service: null,
   },
 ];

@@ -9,7 +9,7 @@ import {
   Check,
   RefreshCw,
 } from 'lucide-react';
-import { DataExport, BackButton } from '@/components/common';
+import { DataExport, BackButton, PageContainer} from '@/components/common';
 import { ListPageTemplate, StatCardGroup } from '@/components/mui';
 import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
@@ -434,7 +434,7 @@ const FinanceReceiptPage: React.FC = () => {
   );
 
   return (
-    <MuiBox sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+    <PageContainer padding={false} maxWidth={false}>
       <MuiBox
         sx={{
           bgcolor: 'background.paper',
@@ -765,7 +765,7 @@ const FinanceReceiptPage: React.FC = () => {
         message='确定要删除该收款记录吗？'
         danger
       />
-    </MuiBox>
+    </PageContainer>
   );
 };
 

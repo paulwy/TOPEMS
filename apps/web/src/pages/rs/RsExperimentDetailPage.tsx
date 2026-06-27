@@ -31,6 +31,7 @@ import {
   MenuItem,
 } from '@mui/material';
 import { Button } from '@mui/material';
+import { PageContainer } from '@/components/common';
 import {
   Timeline,
   TimelineItem,
@@ -233,10 +234,7 @@ const RsExperimentDetailPage: React.FC = () => {
   }
 
   return (
-    <Container
-      maxWidth='xl'
-      sx={{ py: 3 }}
-    >
+    <PageContainer maxWidth='xl'>
       {/* 页面头部 */}
       <div style={{ marginBottom: 12 }}>
         <Stack
@@ -558,7 +556,7 @@ const RsExperimentDetailPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Container>
+    </PageContainer>
   );
 };
 

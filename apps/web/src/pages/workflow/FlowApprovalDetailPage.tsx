@@ -31,6 +31,7 @@ import { useAppStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate } from '@/components/templates/DetailPageTemplate';
 import type { TabConfig, SectionConfig } from '@/components/templates/DetailPageTemplate';
+import { PageContainer } from '@/components/common';
 
 const FlowApprovalDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -346,7 +347,7 @@ const FlowApprovalDetailPage: React.FC = () => {
   }, [approval]);
 
   return (
-    <>
+    <PageContainer padding={false} maxWidth={false}>
       <DetailPageTemplate
         title='审批详情'
         subtitle={approval?.task_name}
@@ -411,7 +412,7 @@ const FlowApprovalDetailPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

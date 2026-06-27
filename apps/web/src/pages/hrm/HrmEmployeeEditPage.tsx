@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { User, Mail, Phone, Calendar, MapPin, Briefcase } from 'lucide-react';
 import FormPageTemplate from '@/components/templates/FormPageTemplate';
 import type { FormSection, FormField } from '@/components/templates/FormPageTemplate';
+import { PageContainer } from '@/components/common';
 import {
   employeeApi,
   departmentApi,
@@ -288,27 +289,32 @@ const HrmEmployeeEditPage: React.FC = () => {
   ];
 
   return (
-    <FormPageTemplate
+    <PageContainer
       title='编辑员工'
       subtitle='修改员工档案信息'
-      breadcrumbs={[
-        { label: '首页', href: '/dashboard' },
-        { label: '人力资源', href: '/hrm' },
-        { label: '员工管理', href: '/hrm/employees' },
-        { label: '编辑员工' },
-      ]}
-      sections={sections}
-      schema={employeeSchema}
-      defaultValues={defaultValues}
-      loading={loading}
-      submitting={submitting}
-      onSubmit={handleSubmit}
-      onCancel={handleCancel}
-      submitText='保存修改'
-      cancelText='取消'
-      columns={3}
-      stickyFooter={true}
-    />
+    >
+      <FormPageTemplate
+        title=''
+        subtitle=''
+        breadcrumbs={[
+          { label: '首页', href: '/dashboard' },
+          { label: '人力资源', href: '/hrm' },
+          { label: '员工管理', href: '/hrm/employees' },
+          { label: '编辑员工' },
+        ]}
+        sections={sections}
+        schema={employeeSchema}
+        defaultValues={defaultValues}
+        loading={loading}
+        submitting={submitting}
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+        submitText='保存修改'
+        cancelText='取消'
+        columns={3}
+        stickyFooter={true}
+      />
+    </PageContainer>
   );
 };
 

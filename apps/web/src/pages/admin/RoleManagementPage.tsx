@@ -16,6 +16,7 @@ import { authApi, type Role, type Permission } from '@/api/iam';
 import { useAppStore } from '../../store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { extractErrorMessage } from '@/utils/errors';
+import { PageContainer } from '@/components/common';
 
 interface RoleManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -333,10 +334,10 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate: _on
   }, [roles, searchQuery]);
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100' }}>
+    <PageContainer title='角色管理' subtitle='管理用户角色、权限配置'>
       <ListPageTemplate
-        title='角色管理'
-        subtitle='管理用户角色、权限配置'
+        title=''
+        subtitle=''
         columns={columns}
         data={filteredRoles}
         loading={loading}
@@ -547,7 +548,7 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate: _on
           <Button onClick={() => setShowPermissionsModal(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };
 

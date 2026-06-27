@@ -10,7 +10,7 @@ import {
   Grid,
   OutlinedInput,
 } from '@mui/material';
-import { FormField, FormSelect, ActionButton } from '@/components/common';
+import {FormField, FormSelect, ActionButton, PageContainer} from '@/components/common';
 import type {
   Customer,
   CreateCustomerRequest,
@@ -564,10 +564,11 @@ const CustomerManagementPage: React.FC = () => {
   const availableTags = allTags.filter((tag) => !customerTags.some((ct) => ct.id === tag.id));
 
   return (
+    <PageContainer title='客户管理' subtitle='管理客户信息，包括客户基本信息、联系方式、分类和标签等'>
     <>
       <ListPageTemplate<Customer>
-        title='客户管理'
-        subtitle='管理客户信息，包括客户基本信息、联系方式、分类和标签等'
+        title=''
+        subtitle=''
         backButton={{
           href: '/dashboard',
         }}
@@ -982,6 +983,7 @@ const CustomerManagementPage: React.FC = () => {
         </DialogContent>
       </Dialog>
     </>
+    </PageContainer>
   );
 };
 

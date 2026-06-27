@@ -22,11 +22,11 @@ import { useAppStore } from '@/store';
 import * as z from 'zod';
 import {
   ListPageTemplate,
-  PageHeader,
   type ColumnDef,
   type FilterConfig,
   type RowAction,
 } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
 import type { QualityIssue, AuditPlan } from '@/api/qms';
 
@@ -622,66 +622,55 @@ const QmsQualityControlPage: React.FC = () => {
   const currentRowActions =
     activeTab === 'nonconformance' ? nonconformanceRowActions : auditRowActions;
 
-  return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, grey.100 0%, #f8fafc 100%)',
-      }}
-    >
-      <PageHeader
-        title='质量管理'
-        subtitle='Quality Management System'
-        pageIcon={<Shield style={{ width: 20, height: 20 }} />}
-        pageColor='linear-gradient(135deg, #6366F1, #8B5CF6)'
-        breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: 'QMS' },
-          { label: '质量管理' },
-        ]}
-        tabs={[
-          {
-            label: '不合格品管理',
-            value: 'nonconformance',
-            active: activeTab === 'nonconformance',
+  const headerTabs = [
+    {
+      label: '不合格品管理',
+      value: 'nonconformance',
+      active: activeTab === 'nonconformance',
+    },
+    { label: '审核管理', value: 'audit', active: activeTab === 'audit' },
+  ];
+
+  const headerActions = activeTab === 'nonconformance'
+    ? [
+        {
+          label: '新增不合格品',
+          icon: <Plus style={{ width: 18, height: 18 }} />,
+          variant: 'contained' as const,
+          color: 'primary' as const,
+          onClick: () => {
+            setIsEditing(false);
+            setFormData({
+              code: '',
+              title: '',
+              description: '',
+              severity: 'medium',
+              category: '',
+            });
+            setShowModal(true);
           },
-          { label: '审核管理', value: 'audit', active: activeTab === 'audit' },
-        ]}
-        onTabChange={(value) => setActiveTab(value as 'nonconformance' | 'audit')}
-        search={{
+        },
+      ]
+    : [];
+
+  return (
+    <PageContainer
+      title='质量管理'
+      subtitle='Quality Management System'
+      headerProps={{
+        pageIcon: <Shield style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+        tabs: headerTabs,
+        onTabChange: (value) => setActiveTab(value as 'nonconformance' | 'audit'),
+        search: {
           value: searchTerm,
           onChange: setSearchTerm,
           placeholder: '搜索编号或标题...',
-        }}
-        actions={
-          activeTab === 'nonconformance'
-            ? [
-                {
-                  label: '新增不合格品',
-                  icon: <Plus style={{ width: 18, height: 18 }} />,
-                  variant: 'contained',
-                  color: 'primary',
-                  onClick: () => {
-                    setIsEditing(false);
-                    setFormData({
-                      code: '',
-                      title: '',
-                      description: '',
-                      severity: 'medium',
-                      category: '',
-                    });
-                    setShowModal(true);
-                  },
-                },
-              ]
-            : []
-        }
-      />
-
-      <Box
-        component='main'
-        sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}
-      >
+        },
+        actions: headerActions,
+      }}
+      maxWidth='xl'
+    >
         {statsCards}
 
         <Card>
@@ -698,7 +687,6 @@ const QmsQualityControlPage: React.FC = () => {
             />
           </CardContent>
         </Card>
-      </Box>
 
       <Dialog
         open={showModal}
@@ -1144,7 +1132,7 @@ const QmsQualityControlPage: React.FC = () => {
           <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };
 

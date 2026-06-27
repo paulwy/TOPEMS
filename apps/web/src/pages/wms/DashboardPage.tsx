@@ -13,6 +13,7 @@ import {
   type ChartCard,
   type QuickAction,
 } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 
 const barData = [
   { name: 'A区', value: 1200 },
@@ -172,17 +173,24 @@ export const DashboardPage: React.FC = () => {
   );
 
   return (
-    <DashboardTemplate
+    <PageContainer
       title='仓储管理'
       subtitle={`${getGreeting()}，仓库库存与物流概览`}
-      breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '仓储' }]}
-      stats={stats}
-      charts={charts}
-      quickActions={quickActions}
-      quickActionsTitle='快速操作'
-      loading={loading}
-      headerContent={headerContent}
-    />
+      padding={false}
+      maxWidth={false}
+    >
+      <DashboardTemplate
+        title=''
+        subtitle=''
+        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '仓储' }]}
+        stats={stats}
+        charts={charts}
+        quickActions={quickActions}
+        quickActionsTitle='快速操作'
+        loading={loading}
+        headerContent={headerContent}
+      />
+    </PageContainer>
   );
 };
 

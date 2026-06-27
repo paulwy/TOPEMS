@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Bell, CheckCircle, XCircle, Clock, Check, Play, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { Notification } from '@/api/workflow';
@@ -7,6 +7,7 @@ import { useAppStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
 import { Box, Typography, Tabs, Tab, CircularProgress } from '@mui/material';
 import { Button } from '@mui/material';
+import { PageContainer } from '@/components/common';
 
 const FlowNotificationCenter: React.FC = () => {
   const navigate = useNavigate();
@@ -122,68 +123,36 @@ const FlowNotificationCenter: React.FC = () => {
   const filteredNotifications =
     filter === 'unread' ? notifications.filter((n) => !n.is_read) : notifications;
 
-  return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50', p: 3 }}>
-      {/* Header */}
-      <Box sx={{ bgcolor: 'background.paper', borderRadius: 1, p: 3, mb: 3 }}>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Box
-              sx={{
-                width: 48,
-                height: 48,
-                bgcolor: 'warning.100',
-                borderRadius: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Bell sx={{ width: 24, height: 24, color: 'warning.main' }} />
-            </Box>
-            <Box>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 'bold' }}
-              >
-                通知中心
-              </Typography>
-              <Typography
-                variant='body2'
-                color='text.secondary'
-              >
-                {unreadCount > 0 ? (
-                  <Typography
-                    component='span'
-                    sx={{ color: 'warning.main', fontWeight: 500 }}
-                  >
-                    {unreadCount} 条未读通知
-                  </Typography>
-                ) : (
-                  '暂无未读通知'
-                )}
-              </Typography>
-            </Box>
-          </Box>
-          {unreadCount > 0 && (
-            <Button
-              variant='contained'
-              onClick={handleMarkAsRead}
-              startIcon={<Check sx={{ width: 20, height: 20 }} />}
-              sx={{ textTransform: 'none' }}
-            >
-              全部标记为已读
-            </Button>
-          )}
-        </Box>
-      </Box>
+  const headerActions = useMemo(() => {
+    if (unreadCount <= 0) return [];
+    return [
+      {
+        label: '全部标记为已读',
+        icon: <Check size={18} />,
+        onClick: handleMarkAsRead,
+        variant: 'contained' as const,
+        color: 'primary' as const,
+      },
+    ];
+  }, [unreadCount]);
 
+  const subtitleText = useMemo(() => {
+    if (unreadCount > 0) {
+      return `${unreadCount} 条未读通知`;
+    }
+    return '暂无未读通知';
+  }, [unreadCount]);
+
+  return (
+    <PageContainer
+      title='通知中心'
+      subtitle={subtitleText}
+      headerProps={{
+        pageIcon: <Bell size={24} />,
+        pageColor: 'warning.main',
+        actions: headerActions,
+      }}
+    >
       {/* Tabs */}
       <Box sx={{ bgcolor: 'background.paper', borderRadius: 1, mb: 3 }}>
         <Tabs
@@ -421,7 +390,7 @@ const FlowNotificationCenter: React.FC = () => {
           </Box>
         )}
       </Box>
-    </Box>
+    </PageContainer>
   );
 };
 

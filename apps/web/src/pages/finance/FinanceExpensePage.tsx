@@ -41,7 +41,7 @@ import {
   IconButton,
   Tooltip,
 } from '@mui/material';
-import { FormField, FormSelect, ActionButton } from '@/components/common';
+import { FormField, FormSelect, ActionButton, PageContainer } from '@/components/common';
 import { ModeToggle } from '@/components/theme/ModeToggle';
 import { DashboardTemplate } from '@/components/templates/DashboardTemplate';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
@@ -559,9 +559,10 @@ const FinanceExpensePage: React.FC = () => {
   }, [columns]);
 
   return (
-    <DashboardTemplate
-      title='费用科目'
-      subtitle='管理费用类会计科目，维护科目结构'
+    <PageContainer padding={false} maxWidth={false}>
+      <DashboardTemplate
+        title='费用科目'
+        subtitle='管理费用类会计科目，维护科目结构'
       stats={statsCards}
       onRefresh={loadData}
       headerContent={
@@ -990,7 +991,8 @@ const FinanceExpensePage: React.FC = () => {
         message={`确定要删除选中的 ${selectedIds.length} 条费用科目吗？`}
         danger
       />
-    </DashboardTemplate>
+      </DashboardTemplate>
+    </PageContainer>
   );
 };
 

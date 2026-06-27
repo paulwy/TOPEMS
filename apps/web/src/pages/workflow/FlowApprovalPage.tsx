@@ -29,6 +29,7 @@ import type { Approval } from '@/api/workflow';
 import { workflowApi } from '@/api/workflow';
 import { useAppStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
+import { PageContainer } from '@/components/common';
 import { ListPageTemplate } from '@/components/templates/ListPageTemplate';
 import type { ColumnDef, RowAction, FilterConfig } from '@/components/templates/ListPageTemplate';
 
@@ -330,10 +331,13 @@ const FlowApprovalPage: React.FC = () => {
   ];
 
   return (
-    <>
+    <PageContainer
+      title='审批管理'
+      subtitle={pendingCount > 0 ? `${pendingCount} 项待审批` : '暂无待审批项'}
+    >
       <ListPageTemplate
-        title='审批管理'
-        subtitle={pendingCount > 0 ? `${pendingCount} 项待审批` : '暂无待审批项'}
+        title=''
+        subtitle=''
         columns={columns}
         data={filteredApprovals}
         loading={loading}
@@ -433,7 +437,7 @@ const FlowApprovalPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

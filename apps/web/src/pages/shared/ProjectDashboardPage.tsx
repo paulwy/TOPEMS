@@ -13,6 +13,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { StatsPageTemplate, StatCard, ChartConfig } from '@/components/templates/StatsPageTemplate';
 import { apiClient } from '@/api/client';
+import { PageContainer } from '@/components/common';
 
 interface ProjectSummary {
   total_projects: number;
@@ -234,41 +235,46 @@ const ProjectDashboardPage: React.FC = () => {
   const [timeRange, setTimeRange] = useState('month');
 
   return (
-    <StatsPageTemplate
-      title='项目管理驾驶舱'
-      subtitle='实时监控项目状态、进度和绩效'
-      statCards={statCards}
-      statColumns={4}
-      charts={charts}
-      tables={tables}
-      loading={loading}
-      timeRangeOptions={timeRangeOptions}
-      timeRange={timeRange}
-      onTimeRangeChange={setTimeRange}
-      onRefresh={loadDashboardData}
-      showTimeRange={true}
-      showRefresh={true}
-      showExport={true}
-      showSearch={false}
-      chartSectionTitle='数据图表'
-      tableSectionTitle='项目列表'
-      customToolbar={
-        <button
-          onClick={() => navigate('/rs')}
-          style={{
-            fontSize: '0.875rem',
-            color: '#1976d2',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            marginLeft: 'auto',
-            display: 'block',
-          }}
-        >
-          查看全部 →
-        </button>
-      }
-    />
+    <PageContainer
+      padding={false}
+      maxWidth={false}
+    >
+      <StatsPageTemplate
+        title='项目管理驾驶舱'
+        subtitle='实时监控项目状态、进度和绩效'
+        statCards={statCards}
+        statColumns={4}
+        charts={charts}
+        tables={tables}
+        loading={loading}
+        timeRangeOptions={timeRangeOptions}
+        timeRange={timeRange}
+        onTimeRangeChange={setTimeRange}
+        onRefresh={loadDashboardData}
+        showTimeRange={true}
+        showRefresh={true}
+        showExport={true}
+        showSearch={false}
+        chartSectionTitle='数据图表'
+        tableSectionTitle='项目列表'
+        customToolbar={
+          <button
+            onClick={() => navigate('/rs')}
+            style={{
+              fontSize: '0.875rem',
+              color: '#1976d2',
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              marginLeft: 'auto',
+              display: 'block',
+            }}
+          >
+            查看全部 →
+          </button>
+        }
+      />
+    </PageContainer>
   );
 };
 

@@ -10,6 +10,7 @@ import {
   type ChartCard,
   type QuickAction,
 } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { scmApi } from '@/api/scm';
 import type { SupplyChainOverview, SupplyChainFullLinkStat, MrpPlan, IncomingInspection, InventoryTurnoverStat, PriceComparison } from '@/api/scm';
 import { useAppStore } from '@/store';
@@ -285,16 +286,23 @@ export const DashboardPage: React.FC = () => {
   );
 
   return (
-    <DashboardTemplate
+    <PageContainer
       title='供应链管理'
       subtitle={`${getGreeting()}，供应商与物流追踪`}
-      breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '供应链' }]}
-      stats={stats}
-      charts={charts}
-      quickActions={quickActions}
-      quickActionsTitle='快捷操作'
-      loading={loading}
-    />
+      padding={false}
+      maxWidth={false}
+    >
+      <DashboardTemplate
+        title=''
+        subtitle=''
+        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '供应链' }]}
+        stats={stats}
+        charts={charts}
+        quickActions={quickActions}
+        quickActionsTitle='快捷操作'
+        loading={loading}
+      />
+    </PageContainer>
   );
 };
 

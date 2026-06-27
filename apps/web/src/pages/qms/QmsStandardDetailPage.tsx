@@ -24,6 +24,7 @@ import {
 import { Button } from '@mui/material';
 
 import { DetailPageTemplate, ListPageTemplate, type ColumnDef } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { qmsApi } from '@/api/qms';
 import type { QualityStandard, StandardRevision } from '@/api/qms';
 import { useAppStore } from '@/store';
@@ -316,10 +317,10 @@ const QmsStandardDetailPage: React.FC = () => {
   }
 
   return (
-    <>
+    <PageContainer title='质量标准详情' subtitle='Quality Standard Detail'>
       <DetailPageTemplate
-        title='质量标准详情'
-        subtitle='Quality Standard Detail'
+        title=''
+        subtitle=''
         backHref='/qms'
         onBack={() => navigate('/qms')}
         onEdit={() => setShowEditModal(true)}
@@ -788,7 +789,7 @@ const QmsStandardDetailPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

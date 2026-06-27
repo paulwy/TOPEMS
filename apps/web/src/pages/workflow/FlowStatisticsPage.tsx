@@ -21,6 +21,7 @@ import { useAppStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import type { StatCard, ChartConfig, DataTable, TableColumn } from '@/components/templates/StatsPageTemplate';
+import { PageContainer } from '@/components/common';
 
 const FlowStatisticsPage: React.FC = () => {
   const addNotification = useAppStore((state) => state.addNotification);
@@ -182,7 +183,8 @@ const FlowStatisticsPage: React.FC = () => {
   ];
 
   return (
-    <StatsPageTemplate
+    <PageContainer padding={false} maxWidth={false}>
+      <StatsPageTemplate
       title='统计分析报表'
       subtitle='工作流数据统计和分析'
       statCards={statCards}
@@ -205,6 +207,7 @@ const FlowStatisticsPage: React.FC = () => {
       showTimeRange
       showSearch
     />
+    </PageContainer>
   );
 };
 

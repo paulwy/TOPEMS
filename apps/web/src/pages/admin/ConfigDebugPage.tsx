@@ -3,6 +3,7 @@ import { Box, Paper, Typography, Card, CardContent, CardHeader } from '@mui/mate
 import { Server, Database, Code } from 'lucide-react';
 import config from '../../config/runtime';
 import { SettingsPageTemplate, type SettingSection } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 
 const ConfigDebugPage: React.FC = () => {
   const sections: SettingSection[] = [

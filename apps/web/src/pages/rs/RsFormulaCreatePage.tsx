@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { FormPageTemplate, type FormSection, type FormField } from '@/components/templates/FormPageTemplate';
+import { PageContainer } from '@/components/common';
 import { formulaApi, rsApi } from '@/api/rs';
 import type { Formula, FormulaIngredient, CreateFormulaRequest, UpdateFormulaRequest } from '@/api/rs';
 import { useAppStore } from '@/store';
@@ -400,25 +401,30 @@ const RsFormulaCreatePage: React.FC = () => {
   );
 
   return (
-    <FormPageTemplate
+    <PageContainer
       title={isEdit ? '编辑配方' : '新增配方'}
       subtitle={isEdit ? '修改配方信息' : '创建新的研发配方'}
-      sections={sections}
-      defaultValues={defaultValues}
-      loading={loading}
-      submitting={submitting}
-      error={error}
-      onSubmit={handleSubmit}
-      onCancel={handleCancel}
-      submitText={isEdit ? '保存修改' : '创建配方'}
-      columns={2}
-      showValidationHints
-      validationToasts={[
-        { message: '提交成功', type: 'success' },
-        { message: '提交失败，请检查表单', type: 'error' },
-      ]}
-      footerContent={additionalContent}
-    />
+    >
+      <FormPageTemplate
+        title=''
+        subtitle=''
+        sections={sections}
+        defaultValues={defaultValues}
+        loading={loading}
+        submitting={submitting}
+        error={error}
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+        submitText={isEdit ? '保存修改' : '创建配方'}
+        columns={2}
+        showValidationHints
+        validationToasts={[
+          { message: '提交成功', type: 'success' },
+          { message: '提交失败，请检查表单', type: 'error' },
+        ]}
+        footerContent={additionalContent}
+      />
+    </PageContainer>
   );
 };
 

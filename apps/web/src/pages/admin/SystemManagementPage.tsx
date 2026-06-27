@@ -13,6 +13,7 @@ import {
 import MobileHeader from '@/components/layout/MobileHeader';
 import { MobileNav } from '@/components/layout/MobileNav';
 import { Box, Typography } from '@mui/material';
+import { PageContainer } from '@/components/common';
 
 interface SystemManagementPageProps {
   onNavigate?: (page: string) => void;
@@ -82,174 +83,180 @@ const SystemManagementPage: React.FC<SystemManagementPageProps> = ({ onNavigate:
   ];
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        background: 'linear-gradient(to bottom right, grey.100, #f8fafc)',
-      }}
+    <PageContainer
+      padding={false}
+      sx={{ minHeight: '100vh' }}
+      bgcolor='transparent'
     >
-      <MobileHeader
-        title='系统管理'
-        onMenuClick={() => setMobileNavOpen(true)}
-      />
-
-      <Box sx={{ '& > .MuiIconButton-root': { display: 'none' } }}>
-        <MobileNav
-          open={mobileNavOpen}
-          onClose={() => setMobileNavOpen(false)}
-          onOpen={() => setMobileNavOpen(true)}
-        />
-      </Box>
-
       <Box
         sx={{
-          bgcolor: 'background.paper',
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: 'divider',
-          position: 'sticky',
-          top: 0,
-          zIndex: 10,
+          minHeight: '100vh',
+          background: 'linear-gradient(to bottom right, grey.100, #f8fafc)',
         }}
-        className='desktop-only'
       >
-        <Box sx={{ maxWidth: 1200, mx: 'auto', px: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', height: 64 }}>
-            <Box
-              component='button'
-              onClick={() => navigate('/dashboard')}
-              sx={{
-                p: 1,
-                borderRadius: 1,
-                '&:hover': { bgcolor: 'grey.100' },
-                border: 'none',
-                bgcolor: 'transparent',
-                cursor: 'pointer',
-                mr: 1,
-              }}
-            >
-              <ChevronLeft sx={{ width: 20, height: 20 }} />
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        <MobileHeader
+          title='系统管理'
+          onMenuClick={() => setMobileNavOpen(true)}
+        />
+
+        <Box sx={{ '& > .MuiIconButton-root': { display: 'none' } }}>
+          <MobileNav
+            open={mobileNavOpen}
+            onClose={() => setMobileNavOpen(false)}
+            onOpen={() => setMobileNavOpen(true)}
+          />
+        </Box>
+
+        <Box
+          sx={{
+            bgcolor: 'background.paper',
+            boxShadow: 1,
+            borderBottom: 1,
+            borderColor: 'divider',
+            position: 'sticky',
+            top: 0,
+            zIndex: 10,
+          }}
+          className='desktop-only'
+        >
+          <Box sx={{ maxWidth: 1200, mx: 'auto', px: 3 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', height: 64 }}>
               <Box
+                component='button'
+                onClick={() => navigate('/dashboard')}
                 sx={{
-                  width: 40,
-                  height: 40,
-                  background: 'linear-gradient(to bottom right, #475569, #475569)',
-                  borderRadius: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: 2,
+                  p: 1,
+                  borderRadius: 1,
+                  '&:hover': { bgcolor: 'grey.100' },
+                  border: 'none',
+                  bgcolor: 'transparent',
+                  cursor: 'pointer',
+                  mr: 1,
                 }}
               >
-                <Settings sx={{ width: 24, height: 24, color: 'white' }} />
+                <ChevronLeft sx={{ width: 20, height: 20 }} />
               </Box>
-              <Box>
-                <Typography
-                  variant='h6'
-                  sx={{ fontWeight: 700, color: 'grey.900' }}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <Box
+                  sx={{
+                    width: 40,
+                    height: 40,
+                    background: 'linear-gradient(to bottom right, #475569, #475569)',
+                    borderRadius: 2,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: 2,
+                  }}
                 >
-                  系统管理
-                </Typography>
-                <Typography
-                  variant='caption'
-                  sx={{ color: 'grey.500' }}
-                >
-                  用户、角色、权限和系统配置
-                </Typography>
+                  <Settings sx={{ width: 24, height: 24, color: 'white' }} />
+                </Box>
+                <Box>
+                  <Typography
+                    variant='h6'
+                    sx={{ fontWeight: 700, color: 'grey.900' }}
+                  >
+                    系统管理
+                  </Typography>
+                  <Typography
+                    variant='caption'
+                    sx={{ color: 'grey.500' }}
+                  >
+                    用户、角色、权限和系统配置
+                  </Typography>
+                </Box>
               </Box>
             </Box>
           </Box>
         </Box>
-      </Box>
 
-      <Box
-        sx={{ maxWidth: 1200, mx: 'auto', px: 3, py: 4 }}
-        className='desktop-only'
-      >
         <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: {
-              xs: '1fr',
-              md: 'repeat(2, 1fr)',
-              lg: 'repeat(3, 1fr)',
-            },
-            gap: 3,
-          }}
+          sx={{ maxWidth: 1200, mx: 'auto', px: 3, py: 4 }}
+          className='desktop-only'
         >
-          {systemFeatures.map((feature) => {
-            const Icon = feature.icon;
-            return (
-              <Box
-                key={feature.id}
-                onClick={() => navigate(feature.path)}
-                sx={{
-                  bgcolor: 'background.paper',
-                  borderRadius: 2,
-                  boxShadow: 1,
-                  '&:hover': { boxShadow: 3 },
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                }}
-              >
-                <Box sx={{ p: 3 }}>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'flex-start',
-                      justifyContent: 'space-between',
-                      mb: 2,
-                    }}
-                  >
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: '1fr',
+                md: 'repeat(2, 1fr)',
+                lg: 'repeat(3, 1fr)',
+              },
+              gap: 3,
+            }}
+          >
+            {systemFeatures.map((feature) => {
+              const Icon = feature.icon;
+              return (
+                <Box
+                  key={feature.id}
+                  onClick={() => navigate(feature.path)}
+                  sx={{
+                    bgcolor: 'background.paper',
+                    borderRadius: 2,
+                    boxShadow: 1,
+                    '&:hover': { boxShadow: 3 },
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  <Box sx={{ p: 3 }}>
                     <Box
                       sx={{
-                        width: 48,
-                        height: 48,
-                        bgcolor: feature.color.replace('bg-', ''),
-                        borderRadius: 2,
                         display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: 2,
-                        '&:hover': { transform: 'scale(1.1)' },
-                        transition: 'transform 0.2s',
+                        alignItems: 'flex-start',
+                        justifyContent: 'space-between',
+                        mb: 2,
                       }}
                     >
-                      <Icon sx={{ width: 24, height: 24, color: 'white' }} />
+                      <Box
+                        sx={{
+                          width: 48,
+                          height: 48,
+                          bgcolor: feature.color.replace('bg-', ''),
+                          borderRadius: 2,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          boxShadow: 2,
+                          '&:hover': { transform: 'scale(1.1)' },
+                          transition: 'transform 0.2s',
+                        }}
+                      >
+                        <Icon sx={{ width: 24, height: 24, color: 'white' }} />
+                      </Box>
+                    </Box>
+                    <Typography
+                      variant='h6'
+                      sx={{ fontWeight: 600, color: 'grey.900', mb: 0.5 }}
+                    >
+                      {feature.title}
+                    </Typography>
+                    <Typography
+                      variant='body2'
+                      sx={{ color: 'grey.600', mb: 2 }}
+                    >
+                      {feature.description}
+                    </Typography>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        color: 'primary.main',
+                        fontSize: '0.875rem',
+                        fontWeight: 500,
+                      }}
+                    >
+                      进入管理 →
                     </Box>
                   </Box>
-                  <Typography
-                    variant='h6'
-                    sx={{ fontWeight: 600, color: 'grey.900', mb: 0.5 }}
-                  >
-                    {feature.title}
-                  </Typography>
-                  <Typography
-                    variant='body2'
-                    sx={{ color: 'grey.600', mb: 2 }}
-                  >
-                    {feature.description}
-                  </Typography>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      color: 'primary.main',
-                      fontSize: '0.875rem',
-                      fontWeight: 500,
-                    }}
-                  >
-                    进入管理 →
-                  </Box>
                 </Box>
-              </Box>
-            );
-          })}
+              );
+            })}
+          </Box>
         </Box>
       </Box>
-    </Box>
+    </PageContainer>
   );
 };
 

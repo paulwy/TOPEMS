@@ -34,7 +34,7 @@ import OrganizationFilter, {
 } from '@/components/ui/OrganizationFilter';
 import { StatsChart } from '@/components/bi/StatsChart';
 import { apiLogger } from '@/utils/logger';
-import { ActionButton, FormField, FormSelect, Dialog, ConfirmDialog, StatusBadge } from '@/components/common';
+import { ActionButton, FormField, FormSelect, Dialog, ConfirmDialog, StatusBadge, PageContainer} from '@/components/common';
 
 const FinanceBudgetPage: React.FC = () => {
   const navigate = useNavigate();
@@ -540,7 +540,7 @@ const FinanceBudgetPage: React.FC = () => {
   );
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+    <PageContainer title="预算列表" subtitle="">
       <Box
         sx={{
           display: 'flex',
@@ -636,7 +636,7 @@ const FinanceBudgetPage: React.FC = () => {
 
       {/* 预算列表 */}
       <ListPageTemplate
-        title='预算列表'
+        title="" subtitle=""
         columns={columns}
         data={filteredBudgets}
         loading={loading}
@@ -897,7 +897,7 @@ const FinanceBudgetPage: React.FC = () => {
           </Box>
         )}
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };
 

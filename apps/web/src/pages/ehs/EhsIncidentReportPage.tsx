@@ -35,6 +35,7 @@ import { Button } from '@mui/material';
 
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { ehsApi } from '@/api/ehs';
+import { PageContainer } from '@/components/common';
 import type { Incident, IncidentAction } from '@/api/ehs';
 import { useAppStore } from '@/store';
 
@@ -354,10 +355,10 @@ const EhsIncidentReportPage: React.FC = () => {
   };
 
   return (
-    <>
+    <PageContainer title='事件报告' subtitle='Incident Reporting'>
       <ListPageTemplate
-        title='事件报告'
-        subtitle='Incident Reporting'
+        title=''
+        subtitle=''
         backButton={{
           href: '/ehs',
           onClick: () => navigate('/ehs'),
@@ -882,7 +883,7 @@ const EhsIncidentReportPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

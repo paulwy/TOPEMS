@@ -7,6 +7,7 @@ import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { PageContainer } from '@/components/common';
 
 const DocsFileDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -186,10 +187,10 @@ const DocsFileDetailPage: React.FC = () => {
   );
 
   return (
-    <>
+    <PageContainer title='文件详情' subtitle='查看文件详细信息'>
       <DetailPageTemplate
-        title='文件详情'
-        subtitle='查看文件详细信息'
+        title=''
+        subtitle=''
         backHref='/documents'
         loading={loading}
         error={errorMessage}
@@ -210,7 +211,7 @@ const DocsFileDetailPage: React.FC = () => {
         message='确定要删除此文件吗？'
         danger
       />
-    </>
+    </PageContainer>
   );
 };
 

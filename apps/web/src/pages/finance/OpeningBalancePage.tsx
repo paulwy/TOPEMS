@@ -48,6 +48,7 @@ import {
 } from '@/hooks/useFinance';
 import { useNotification } from '@/hooks/useNotification';
 import type { Account, AccountOpeningBalance, AccountCategory } from '@/types/finance';
+import { PageContainer } from '@/components/common';
 
 // 科目类别配置
 const CATEGORY_CONFIG: Record<
@@ -211,56 +212,33 @@ export default function OpeningBalancePage() {
   };
 
   return (
-    <Box sx={{ containerType: 'inline-size', mx: 'auto', p: 3 }}>
-      {/* 页面标题 */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          mb: 3,
-        }}
-      >
-        <Box>
-          <Typography
-            variant='h4'
-            sx={{
-              fontWeight: 'bold',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 1,
-            }}
-          >
-            <Calculator sx={{ width: 24, height: 24, color: 'primary.dark' }} />
-            期初余额管理
-          </Typography>
-          <Typography
-            variant='body2'
-            color='text.secondary'
-            sx={{ mt: 0.5 }}
-          >
-            设置会计科目的期初余额，用于新会计期间初始化
-          </Typography>
-        </Box>
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Button
-            variant='outlined'
-            onClick={() => setShowCarryForwardModal(true)}
-          >
-            <Calendar sx={{ width: 16, height: 16, marginRight: 8 }} />
-            结转余额
-          </Button>
-          <Button variant='outlined'>
-            <Upload sx={{ width: 16, height: 16, marginRight: 8 }} />
-            导入
-          </Button>
-          <Button variant='outlined'>
-            <Download sx={{ width: 16, height: 16, mr: 1 }} />
-            导出
-          </Button>
-        </Box>
-      </Box>
-
+    <PageContainer
+      title='期初余额管理'
+      subtitle='设置会计科目的期初余额，用于新会计期间初始化'
+      maxWidth='xl'
+      headerProps={{
+        actions: [
+          {
+            label: '结转余额',
+            icon: <Calendar sx={{ width: 16, height: 16 }} />,
+            onClick: () => setShowCarryForwardModal(true),
+            variant: 'outlined',
+          },
+          {
+            label: '导入',
+            icon: <Upload sx={{ width: 16, height: 16 }} />,
+            onClick: () => {},
+            variant: 'outlined',
+          },
+          {
+            label: '导出',
+            icon: <Download sx={{ width: 16, height: 16 }} />,
+            onClick: () => {},
+            variant: 'outlined',
+          },
+        ],
+      }}
+    >
       {/* 筛选条件 */}
       <Card sx={{ mb: 3 }}>
         <CardContent sx={{ pt: 3 }}>
@@ -639,6 +617,6 @@ export default function OpeningBalancePage() {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 }

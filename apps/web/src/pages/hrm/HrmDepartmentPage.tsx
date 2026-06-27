@@ -45,7 +45,7 @@ import {
   type TreeAction,
 } from '@/components/templates';
 import { EmptyState } from '@/components/mui';
-import { ImageUpload } from '@/components/common';
+import { ImageUpload, PageContainer } from '@/components/common';
 import { logger } from '@/utils/logger';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 
@@ -745,7 +745,7 @@ const HrmDepartmentPage: React.FC = () => {
 
   // ============ 渲染 ============
   return (
-    <>
+    <PageContainer maxWidth='xl'>
       <TreePageTemplate
         title='部门管理'
         subtitle={`${totalDepartments} 个部门`}
@@ -924,7 +924,7 @@ const HrmDepartmentPage: React.FC = () => {
         message={confirmDialogConfig?.message || ''}
         danger={confirmDialogConfig?.danger}
       />
-    </>
+    </PageContainer>
   );
 };
 

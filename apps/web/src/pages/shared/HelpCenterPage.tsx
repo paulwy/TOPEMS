@@ -18,6 +18,7 @@ import {
 import { Box, Typography, Tabs, Tab, Chip } from '@mui/material';
 import { Button } from '@mui/material';
 import { useNotification } from '@/hooks/useNotification';
+import { PageContainer } from '@/components/common';
 
 // 内网文档中心地址（可配置）
 const DOCS_CENTER_URL = import.meta.env.VITE_DOCS_CENTER_URL || 'http://localhost:8080';
@@ -310,7 +311,12 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100' }}>
+    <PageContainer
+      padding={false}
+      maxWidth={false}
+      bgcolor='grey.100'
+      sx={{ minHeight: '100vh' }}
+    >
       {/* Header */}
       <Box
         sx={{
@@ -1104,7 +1110,7 @@ A: 在项目详情页的"成员管理"中，可以为每个成员设置不同的
           </Box>
         </Box>
       )}
-    </Box>
+    </PageContainer>
   );
 };
 

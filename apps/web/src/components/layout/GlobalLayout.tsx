@@ -428,6 +428,34 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
               gap: 1,
             }}
           >
+            <Tooltip title='AI 助手'>
+              <IconButton
+                size='small'
+                onClick={() => navigate('/ai')}
+                sx={{
+                  width: 36,
+                  height: 36,
+                  '&:hover': { bgcolor: 'action.hover' },
+                  color: 'primary.main',
+                }}
+              >
+                <Sparkles style={{ width: 18, height: 18 }} />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title='插件市场'>
+              <IconButton
+                size='small'
+                onClick={() => navigate('/plugin/marketplace')}
+                sx={{
+                  width: 36,
+                  height: 36,
+                  '&:hover': { bgcolor: 'action.hover' },
+                  color: 'secondary.main',
+                }}
+              >
+                <ShoppingCart style={{ width: 18, height: 18 }} />
+              </IconButton>
+            </Tooltip>
             <Tooltip title='通知'>
               <IconButton size='small' sx={{ width: 36, height: 36 }}>
                 <Box sx={{ position: 'relative', display: 'inline-flex' }}>

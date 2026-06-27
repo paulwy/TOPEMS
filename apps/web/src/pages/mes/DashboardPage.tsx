@@ -12,6 +12,7 @@ import {
   type ChartCard,
   type QuickAction,
 } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import {
   productionOrderApi,
   productionRecordApi,
@@ -287,20 +288,27 @@ export const DashboardPage: React.FC = () => {
   );
 
   return (
-    <DashboardTemplate
+    <PageContainer
       title='生产执行管理'
       subtitle={`${getGreeting()}，生产进度与工单追踪`}
-      breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '生产执行' }]}
-      stats={stats}
-      charts={charts}
-      quickActions={quickActions}
-      quickActionsTitle='快速操作'
-      loading={loading}
-      onRefresh={() => {
-        setLoading(true);
-        Promise.all([loadStats(), loadChartData()]).finally(() => setLoading(false));
-      }}
-    />
+      padding={false}
+      maxWidth={false}
+    >
+      <DashboardTemplate
+        title=''
+        subtitle=''
+        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '生产执行' }]}
+        stats={stats}
+        charts={charts}
+        quickActions={quickActions}
+        quickActionsTitle='快速操作'
+        loading={loading}
+        onRefresh={() => {
+          setLoading(true);
+          Promise.all([loadStats(), loadChartData()]).finally(() => setLoading(false));
+        }}
+      />
+    </PageContainer>
   );
 };
 

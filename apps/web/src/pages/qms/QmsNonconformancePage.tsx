@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { AlertCircle, CheckCircle, Plus, Edit, Trash2, Eye } from 'lucide-react';
 import {
-  Box,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -10,343 +9,316 @@ import {
   Chip,
   Card,
   CardContent,
+  Box,
   Typography,
+  FormControl,
+  InputLabel,
   Select,
   MenuItem,
-  InputLabel,
-  FormControl,
 } from '@mui/material';
 import { Button } from '@mui/material';
-import { Plus, Eye, AlertTriangle } from 'lucide-react';
+import { useAppStore } from '@/store';
+import * as z from 'zod';
 import {
   ListPageTemplate,
   type ColumnDef,
-  type FilterConfig,
   type RowAction,
 } from '@/components/templates';
-import { qmsApi, type QualityIssue } from '@/api/qms';
-import { useAppStore } from '@/store';
-
-const SEVERITY_MAP: Record<string, { label: string; bg: string; color: string }> = {
-  high: { label: '严重', bg: 'error.lighter', color: 'error.dark' },
-  medium: { label: '一般', bg: '#fef9c3', color: '#ca8a04' },
-  low: { label: '轻微', bg: 'success.lighter', color: 'success.dark' },
-  critical: { label: '危急', bg: 'error.lighter', color: 'error.dark' },
-};
-
-const STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
-  open: { label: '待评审', bg: '#fef9c3', color: '#ca8a04' },
-  in_progress: { label: '处理中', bg: '#dbeafe', color: 'primary.dark' },
-  resolved: { label: '已解决', bg: '#dbeafe', color: 'primary.dark' },
-  closed: { label: '已关闭', bg: 'success.lighter', color: 'success.dark' },
-  pending: { label: '待处理', bg: '#fef9c3', color: '#ca8a04' },
-};
-
-const CATEGORY_MAP: Record<string, string> = {
-  appearance: '外观缺陷',
-  dimension: '尺寸偏差',
-  performance: '性能不达标',
-  packaging: '包装破损',
-  material: '材料混用',
-  incoming: '来料检验',
-  process: '过程检验',
-  final: '成品检验',
-};
-
-const getSeverityLabel = (severity: string): string => {
-  return SEVERITY_MAP[severity]?.label || severity;
-};
-
-const getCategoryLabel = (category: string): string => {
-  return CATEGORY_MAP[category] || category;
-};
+import { PageContainer } from '@/components/common';
+import { qmsApi } from '@/api/qms';
+import type { QualityIssue } from '@/api/qms';
 
 const QmsNonconformancePage: React.FC = () => {
-  const navigate = useNavigate();
-  const [issues, setIssues] = useState<QualityIssue[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<QualityIssue | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [categoryFilter, setCategoryFilter] = useState('all');
-  const [severityFilter, setSeverityFilter] = useState('all');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedIssue, setSelectedIssue] = useState<QualityIssue | null>(null);
   const [formData, setFormData] = useState({
+    code: '',
     title: '',
     description: '',
-    severity: 'medium',
-    category: 'appearance',
+    severity: 'medium' as 'high' | 'medium' | 'low',
+    category: '',
   });
-  const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(10);
+
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const addNotification = useAppStore((state) => state.addNotification);
 
-  useEffect(() => {
-    loadIssues();
-  }, []);
+  const [issues, setIssues] = useState<QualityIssue[]>([]);
 
-  const loadIssues = async () => {
-    setLoading(true);
+  const nonconformanceSchema = z.object({
+    title: z.string().min(2, '标题至少需要2个字符').max(100, '标题不能超过100个字符'),
+    description: z.string().max(500, '描述不能超过500个字符'),
+    severity: z.enum(['high', 'medium', 'low']),
+    category: z.string().max(50, '类别不能超过50个字符'),
+  });
+
+  const validateForm = (data: typeof formData) => {
+    const result = nonconformanceSchema.safeParse(data);
+    if (!result.success) {
+      const newErrors: Record<string, string> = {};
+      result.error.issues.forEach((issue) => {
+        const field = issue.path[0] as string;
+        newErrors[field] = issue.message;
+      });
+      setErrors(newErrors);
+      return false;
+    }
+    setErrors({});
+    return true;
+  };
+
+  const loadIssues = useCallback(async () => {
     try {
+      setLoading(true);
       const response = await qmsApi.listIssues();
       if (response.success && response.data) {
         setIssues(response.data);
-      } else if (!response.success) {
-        addNotification({
-          title: '加载失败',
-          message: response.message || '加载不合格品数据失败',
-          type: 'error',
-        });
       }
     } catch (error: unknown) {
-      console.error('Failed to load issues:', error);
       addNotification({
         title: '加载失败',
         message: '加载不合格品数据失败',
         type: 'error',
       });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  };
+  }, [addNotification]);
+
+  useEffect(() => {
+    loadIssues();
+  }, [loadIssues]);
 
   const getSeverityBadge = (severity: string) => {
-    const config = SEVERITY_MAP[severity] || {
-      bg: 'grey.100',
-      color: 'text.secondary',
-      label: severity,
+    const colors = {
+      high: { bg: 'error.lighter', color: 'error.dark' },
+      critical: { bg: 'error.lighter', color: 'error.dark' },
+      严重: { bg: 'error.lighter', color: 'error.dark' },
+      medium: { bg: '#fef9c3', color: '#ca8a04' },
+      中等: { bg: '#fef9c3', color: '#ca8a04' },
+      一般: { bg: '#fef9c3', color: '#ca8a04' },
+      low: { bg: 'success.lighter', color: 'success.dark' },
+      轻微: { bg: 'success.lighter', color: 'success.dark' },
     };
+    const labels = {
+      high: '严重',
+      critical: '严重',
+      严重: '严重',
+      medium: '中等',
+      中等: '中等',
+      一般: '一般',
+      low: '轻微',
+      轻微: '轻微',
+    };
+    const colorKey = severity as keyof typeof colors;
+    const labelKey = severity as keyof typeof labels;
     return (
       <Chip
-        label={config.label}
+        label={labels[labelKey] || severity}
         size='small'
         sx={{
-          backgroundColor: config.bg,
-          color: config.color,
-          fontWeight: 500,
+          backgroundColor: colors[colorKey]?.bg || 'grey.100',
+          color: colors[colorKey]?.color || 'text.secondary',
         }}
       />
     );
   };
 
   const getStatusBadge = (status: string) => {
-    const config = STATUS_MAP[status] || {
-      bg: 'grey.100',
-      color: 'text.secondary',
-      label: status,
+    const colors: Record<string, { bg: string; color: string }> = {
+      open: { bg: 'error.lighter', color: 'error.dark' },
+      待处理: { bg: 'error.lighter', color: 'error.dark' },
+      in_progress: { bg: '#fef9c3', color: '#ca8a04' },
+      处理中: { bg: '#fef9c3', color: '#ca8a04' },
+      closed: { bg: 'success.lighter', color: 'success.dark' },
+      resolved: { bg: 'success.lighter', color: 'success.dark' },
+      已关闭: { bg: 'success.lighter', color: 'success.dark' },
     };
+    const labels: Record<string, string> = {
+      open: '待处理',
+      待处理: '待处理',
+      in_progress: '处理中',
+      处理中: '处理中',
+      closed: '已关闭',
+      resolved: '已关闭',
+      已关闭: '已关闭',
+    };
+    const colorKey = status as keyof typeof colors;
     return (
       <Chip
-        label={config.label}
+        label={labels[status] || status}
         size='small'
         sx={{
-          backgroundColor: config.bg,
-          color: config.color,
-          fontWeight: 500,
+          backgroundColor: colors[colorKey]?.bg || 'grey.100',
+          color: colors[colorKey]?.color || 'text.secondary',
         }}
       />
     );
   };
 
-  const columns: ColumnDef<QualityIssue>[] = [
-    { id: 'issue_no', label: '不合格单号' },
+  const nonconformanceColumns: ColumnDef<QualityIssue>[] = [
+    { id: 'issue_no', label: '编号' },
     { id: 'title', label: '问题标题' },
-    {
-      id: 'category',
-      label: '不合格类型',
-      render: (row) => getCategoryLabel(row.category),
-    },
+    { id: 'category', label: '类别' },
     {
       id: 'severity',
       label: '严重程度',
       render: (row) => getSeverityBadge(row.severity),
     },
-    { id: 'assignee', label: '负责人' },
     {
       id: 'status',
       label: '状态',
       render: (row) => getStatusBadge(row.status),
     },
+    { id: 'assignee', label: '负责人' },
+    { id: 'created_at', label: '创建日期' },
   ];
 
-  const rowActions: RowAction<QualityIssue>[] = [
-    {
-      label: '详情',
-      icon: <Eye style={{ width: 16, height: 16 }} />,
-      onClick: (row) => handleView(row),
-    },
-    {
-      label: '关闭',
-      icon: <AlertTriangle style={{ width: 16, height: 16 }} />,
-      color: 'success',
-      show: (row) => row.status !== 'closed',
-      onClick: (row) => handleClose(row),
-    },
-  ];
-
-  const filters: FilterConfig[] = [
-    {
-      id: 'category',
-      label: '不合格类型',
-      type: 'select',
-      options: [
-        { label: '全部', value: 'all' },
-        { label: '外观缺陷', value: 'appearance' },
-        { label: '尺寸偏差', value: 'dimension' },
-        { label: '性能不达标', value: 'performance' },
-        { label: '包装破损', value: 'packaging' },
-        { label: '材料混用', value: 'material' },
-      ],
-      value: categoryFilter,
-      onChange: (value) => setCategoryFilter(value),
-    },
-    {
-      id: 'severity',
-      label: '严重程度',
-      type: 'select',
-      options: [
-        { label: '全部', value: 'all' },
-        { label: '严重', value: 'high' },
-        { label: '一般', value: 'medium' },
-        { label: '轻微', value: 'low' },
-      ],
-      value: severityFilter,
-      onChange: (value) => setSeverityFilter(value),
-    },
-    {
-      id: 'status',
-      label: '状态',
-      type: 'select',
-      options: [
-        { label: '全部', value: 'all' },
-        { label: '待评审', value: 'open' },
-        { label: '处理中', value: 'in_progress' },
-        { label: '已关闭', value: 'closed' },
-      ],
-      value: statusFilter,
-      onChange: (value) => setStatusFilter(value),
-    },
-  ];
-
-  const filteredIssues = issues.filter((issue) => {
-    const matchesSearch =
-      issue.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      issue.issue_no.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = categoryFilter === 'all' || issue.category === categoryFilter;
-    const matchesSeverity = severityFilter === 'all' || issue.severity === severityFilter;
-    const matchesStatus = statusFilter === 'all' || issue.status === statusFilter;
-    return matchesSearch && matchesCategory && matchesSeverity && matchesStatus;
-  });
-
-  const paginatedData = filteredIssues.slice(page * pageSize, page * pageSize + pageSize);
-
-  const handleView = (issue: QualityIssue) => {
-    setSelectedIssue(issue);
+  const viewItem = (item: QualityIssue) => {
+    setSelectedItem(item);
     setShowDetailModal(true);
   };
 
-  const handleCreate = () => {
+  const editItem = (item: QualityIssue) => {
+    setSelectedItem(item);
+    setIsEditing(true);
+    setShowModal(true);
     setFormData({
-      title: '',
-      description: '',
-      severity: 'medium',
-      category: 'appearance',
+      code: item.issue_no,
+      title: item.title,
+      description: item.description,
+      severity: (item.severity as 'high' | 'medium' | 'low') || 'medium',
+      category: item.category,
     });
-    setShowCreateModal(true);
   };
 
-  const handleClose = async (issue: QualityIssue) => {
+  const deleteItem = async (id: string) => {
+    if (!confirm('确定要删除此记录吗？')) return;
     try {
-      const response = await qmsApi.updateIssue(issue.id, {
-        issue_no: issue.issue_no,
-        title: issue.title,
-        description: issue.description,
-        severity: issue.severity,
-        category: issue.category,
-        status: 'closed',
-        assignee: issue.assignee,
-      });
+      const response = await qmsApi.deleteIssue(id);
       if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '不合格品已关闭',
-          type: 'success',
-        });
-        loadIssues();
+        setIssues((prev) => prev.filter((item) => item.id !== id));
+        addNotification({ title: '成功', message: '记录删除成功', type: 'success' });
       } else {
-        addNotification({
-          title: '失败',
-          message: response.message || '关闭失败',
-          type: 'error',
-        });
+        addNotification({ title: '失败', message: response.message || '删除失败', type: 'error' });
       }
     } catch (error: unknown) {
-      console.error('Failed to close issue:', error);
-      addNotification({
-        title: '错误',
-        message: '关闭时发生错误',
-        type: 'error',
-      });
+      addNotification({ title: '错误', message: '删除记录时发生错误', type: 'error' });
     }
   };
 
-  const handleSave = async () => {
+  const nonconformanceRowActions: RowAction<QualityIssue>[] = [
+    {
+      label: '查看',
+      icon: <Eye style={{ width: 16, height: 16 }} />,
+      onClick: (row) => viewItem(row),
+    },
+    {
+      label: '编辑',
+      icon: <Edit style={{ width: 16, height: 16 }} />,
+      onClick: (row) => editItem(row),
+    },
+    {
+      label: '删除',
+      icon: <Trash2 style={{ width: 16, height: 16 }} />,
+      color: 'error',
+      onClick: (row) => deleteItem(row.id),
+    },
+  ];
+
+  const handleSubmit = async () => {
+    if (!validateForm(formData)) {
+      return;
+    }
+    setSubmitting(true);
     try {
-      setSubmitting(true);
-      const response = await qmsApi.createIssue({
-        issue_no: `ISS-${Date.now()}`,
-        title: formData.title,
-        description: formData.description,
-        severity: formData.severity,
-        category: formData.category,
-        status: 'open',
-        assignee: '',
-      });
-      if (response.success) {
-        addNotification({
-          title: '成功',
-          message: '不合格品创建成功',
-          type: 'success',
+      if (isEditing && selectedItem) {
+        const response = await qmsApi.updateIssue(selectedItem.id, {
+          issue_no: formData.code,
+          title: formData.title,
+          description: formData.description,
+          severity: formData.severity,
+          category: formData.category,
+          status: selectedItem.status,
+          assignee: selectedItem.assignee,
         });
-        loadIssues();
-        setShowCreateModal(false);
+        if (response.success) {
+          setIssues((prev) =>
+            prev.map((item) =>
+              item.id === selectedItem.id ? { ...item, ...response.data } : item
+            )
+          );
+          addNotification({ title: '成功', message: '记录更新成功', type: 'success' });
+        } else {
+          addNotification({ title: '失败', message: response.message || '更新失败', type: 'error' });
+        }
       } else {
-        addNotification({
-          title: '失败',
-          message: response.message || '创建失败',
-          type: 'error',
+        const response = await qmsApi.createIssue({
+          issue_no: formData.code || `NC-${Date.now()}`,
+          title: formData.title,
+          description: formData.description,
+          severity: formData.severity,
+          category: formData.category,
+          status: 'open',
+          assignee: '',
         });
+        if (response.success && response.data) {
+          setIssues((prev) => [response.data!, ...prev]);
+          addNotification({ title: '成功', message: '记录创建成功', type: 'success' });
+        } else {
+          addNotification({ title: '失败', message: response.message || '创建失败', type: 'error' });
+        }
       }
-    } catch (error: unknown) {
-      console.error('Failed to create issue:', error);
-      addNotification({
-        title: '错误',
-        message: '创建不合格品时发生错误',
-        type: 'error',
+      setShowModal(false);
+      setIsEditing(false);
+      setFormData({
+        code: '',
+        title: '',
+        description: '',
+        severity: 'medium',
+        category: '',
       });
+      setErrors({});
+    } catch (error: unknown) {
+      addNotification({ title: '错误', message: '操作失败，请重试', type: 'error' });
     } finally {
       setSubmitting(false);
     }
   };
 
+  const filteredIssues = useMemo(() => {
+    return issues.filter(
+      (item) =>
+        item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.issue_no.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [issues, searchTerm]);
+
   const stats = {
-    total: issues.length,
-    open: issues.filter((i) => i.status === 'open' || i.status === 'pending').length,
-    inProgress: issues.filter((i) => i.status === 'in_progress').length,
-    closed: issues.filter((i) => i.status === 'closed').length,
+    totalNonconformances: issues.length,
+    openNonconformances: issues.filter((n) => n.status === 'open' || n.status === '待处理').length,
+    closedNonconformances: issues.filter(
+      (n) => n.status === 'closed' || n.status === 'resolved' || n.status === '已关闭'
+    ).length,
   };
 
   const statsCards = (
     <Box
       sx={{
         display: 'grid',
-        gridTemplateColumns: { xs: 'repeat(1, 1fr)', md: 'repeat(4, 1fr)' },
+        gridTemplateColumns: {
+          xs: 'repeat(1, 1fr)',
+          md: 'repeat(3, 1fr)',
+        },
         gap: 2,
-        mb: 3,
+        mb: 4,
       }}
     >
-      <Card sx={{ bgcolor: 'primary.light' }}>
+      <Card>
         <CardContent sx={{ p: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
@@ -360,7 +332,7 @@ const QmsNonconformancePage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <AlertTriangle sx={{ width: 20, height: 20, color: 'error.dark' }} />
+              <AlertCircle sx={{ width: 20, height: 20, color: 'error.dark' }} />
             </Box>
             <Box>
               <Typography
@@ -373,7 +345,7 @@ const QmsNonconformancePage: React.FC = () => {
                 variant='h5'
                 sx={{ fontWeight: 700, color: 'slate.900' }}
               >
-                {stats.total}
+                {stats.totalNonconformances}
               </Typography>
             </Box>
           </Box>
@@ -386,60 +358,27 @@ const QmsNonconformancePage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: 'warning.light',
+                bgcolor: '#fef9c3',
                 borderRadius: 2,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              <AlertTriangle sx={{ width: 20, height: 20, color: '#ca8a04' }} />
+              <AlertCircle sx={{ width: 20, height: 20, color: '#ca8a04' }} />
             </Box>
             <Box>
               <Typography
                 variant='body2'
                 sx={{ color: 'slate.600', fontSize: '0.875rem' }}
               >
-                待评审
+                待处理
               </Typography>
               <Typography
                 variant='h5'
                 sx={{ fontWeight: 700, color: 'slate.900' }}
               >
-                {stats.open}
-              </Typography>
-            </Box>
-          </Box>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent sx={{ p: 2 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <Box
-              sx={{
-                width: 40,
-                height: 40,
-                bgcolor: '#dbeafe',
-                borderRadius: 2,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <AlertTriangle sx={{ width: 20, height: 20, color: 'primary.dark' }} />
-            </Box>
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ color: 'slate.600', fontSize: '0.875rem' }}
-              >
-                处理中
-              </Typography>
-              <Typography
-                variant='h5'
-                sx={{ fontWeight: 700, color: 'slate.900' }}
-              >
-                {stats.inProgress}
+                {stats.openNonconformances}
               </Typography>
             </Box>
           </Box>
@@ -459,7 +398,7 @@ const QmsNonconformancePage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <AlertTriangle sx={{ width: 20, height: 20, color: 'success.dark' }} />
+              <CheckCircle sx={{ width: 20, height: 20, color: 'success.dark' }} />
             </Box>
             <Box>
               <Typography
@@ -472,7 +411,7 @@ const QmsNonconformancePage: React.FC = () => {
                 variant='h5'
                 sx={{ fontWeight: 700, color: 'slate.900' }}
               >
-                {stats.closed}
+                {stats.closedNonconformances}
               </Typography>
             </Box>
           </Box>
@@ -481,148 +420,255 @@ const QmsNonconformancePage: React.FC = () => {
     </Box>
   );
 
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'linear-gradient(135deg, primary.light 0%, #f8fafc 100%)',
-        }}
-      >
-        <Box sx={{ textAlign: 'center' }}>
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              border: 4,
-              borderColor: 'primary.main',
-              borderTopColor: 'primary.dark',
-              borderRadius: '50%',
-              animation: 'spin 1s linear infinite',
-              mx: 'auto',
-              mb: 2,
-            }}
-          />
-          <Typography sx={{ color: 'slate.600' }}>加载中...</Typography>
-        </Box>
-      </Box>
-    );
-  }
+  const headerActions = [
+    {
+      label: '新增不合格品',
+      icon: <Plus style={{ width: 18, height: 18 }} />,
+      variant: 'contained' as const,
+      color: 'primary' as const,
+      onClick: () => {
+        setIsEditing(false);
+        setFormData({
+          code: '',
+          title: '',
+          description: '',
+          severity: 'medium',
+          category: '',
+        });
+        setShowModal(true);
+      },
+    },
+  ];
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, primary.light 0%, #f8fafc 100%)',
+    <PageContainer
+      title='不合格品管理'
+      subtitle='Nonconformance Management'
+      headerProps={{
+        pageIcon: <AlertCircle style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #EF4444, #F97316)',
+        search: {
+          value: searchTerm,
+          onChange: setSearchTerm,
+          placeholder: '搜索编号或标题...',
+        },
+        actions: headerActions,
       }}
+      maxWidth='xl'
     >
-      <ListPageTemplate
-        title='不合格品管理'
-        subtitle='Nonconformance Management'
-        breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: 'QMS' },
-          { label: '不合格品管理' },
-        ]}
-        columns={columns}
-        data={paginatedData}
-        loading={loading}
-        getRowId={(row) => row.id}
-        filters={filters}
-        searchable
-        searchPlaceholder='搜索问题标题或单号...'
-        searchValue={searchTerm}
-        onSearch={setSearchTerm}
-        pagination={{
-          page,
-          pageSize,
-          total: filteredIssues.length,
-          onPageChange: setPage,
-          onPageSizeChange: setPageSize,
-        }}
-        actions={[
-          {
-            label: '新建不合格单',
-            icon: <Plus style={{ width: 18, height: 18 }} />,
-            onClick: handleCreate,
-            variant: 'contained',
-          },
-        ]}
-        rowActions={rowActions}
-        headerContent={statsCards}
-      />
+      {statsCards}
+
+      <Card>
+        <CardContent sx={{ p: 0 }}>
+          <ListPageTemplate
+            columns={nonconformanceColumns}
+            data={filteredIssues}
+            loading={loading}
+            getRowId={(row) => row.id}
+            rowActions={nonconformanceRowActions}
+            searchable={false}
+            filters={[]}
+            actions={[]}
+          />
+        </CardContent>
+      </Card>
 
       <Dialog
-        open={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        maxWidth='sm'
+        open={showModal}
+        onClose={() => setShowModal(false)}
+        maxWidth='lg'
         fullWidth
       >
-        <DialogTitle>新建不合格单</DialogTitle>
+        <DialogTitle>{isEditing ? '编辑不合格品' : '新增不合格品'}</DialogTitle>
         <DialogContent>
-          <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField
-              fullWidth
-              label='问题标题 *'
-              value={formData.title}
-              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              placeholder='请输入问题标题'
-            />
-            <TextField
-              fullWidth
-              label='问题描述'
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              placeholder='请输入问题描述'
-              multiline
-              rows={3}
-            />
-            <FormControl fullWidth>
-              <InputLabel>不合格类型</InputLabel>
-              <Select
+          <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Box
+                  component='label'
+                  sx={{
+                    display: 'block',
+                    mb: 0.5,
+                    fontSize: '0.875rem',
+                    color: 'text.secondary',
+                  }}
+                >
+                  编号
+                </Box>
+                <TextField
+                  size='small'
+                  fullWidth
+                  value={formData.code}
+                  onChange={(e) => {
+                    setFormData((prev) => ({ ...prev, code: e.target.value }));
+                    if (errors.code) setErrors((prev) => ({ ...prev, code: '' }));
+                  }}
+                  placeholder='NC-XXXX-XXX'
+                  error={!!errors.code}
+                />
+                {errors.code && (
+                  <Typography
+                    variant='caption'
+                    sx={{ color: 'error.main', fontSize: '0.875rem' }}
+                  >
+                    {errors.code}
+                  </Typography>
+                )}
+              </Box>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Box
+                  component='label'
+                  sx={{
+                    display: 'block',
+                    mb: 0.5,
+                    fontSize: '0.875rem',
+                    color: 'text.secondary',
+                  }}
+                >
+                  严重程度
+                </Box>
+                <FormControl
+                  fullWidth
+                  size='small'
+                >
+                  <InputLabel>请选择</InputLabel>
+                  <Select
+                    value={formData.severity}
+                    label='请选择'
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        severity: e.target.value as 'high' | 'medium' | 'low',
+                      }))
+                    }
+                  >
+                    <MenuItem value='high'>严重</MenuItem>
+                    <MenuItem value='medium'>中等</MenuItem>
+                    <MenuItem value='low'>轻微</MenuItem>
+                  </Select>
+                </FormControl>
+              </Box>
+            </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <Box
+                component='label'
+                sx={{
+                  display: 'block',
+                  mb: 0.5,
+                  fontSize: '0.875rem',
+                  color: 'text.secondary',
+                }}
+              >
+                问题标题 *
+              </Box>
+              <TextField
+                size='small'
+                fullWidth
+                value={formData.title}
+                onChange={(e) => {
+                  setFormData((prev) => ({ ...prev, title: e.target.value }));
+                  if (errors.title) setErrors((prev) => ({ ...prev, title: '' }));
+                }}
+                placeholder='请输入问题标题'
+                error={!!errors.title}
+              />
+              {errors.title && (
+                <Typography
+                  variant='caption'
+                  sx={{ color: 'error.main', fontSize: '0.875rem' }}
+                >
+                  {errors.title}
+                </Typography>
+              )}
+            </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <Box
+                component='label'
+                sx={{
+                  display: 'block',
+                  mb: 0.5,
+                  fontSize: '0.875rem',
+                  color: 'text.secondary',
+                }}
+              >
+                问题类别
+              </Box>
+              <TextField
+                size='small'
+                fullWidth
                 value={formData.category}
-                label='不合格类型'
-                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                onChange={(e) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    category: e.target.value,
+                  }));
+                  if (errors.category) setErrors((prev) => ({ ...prev, category: '' }));
+                }}
+                placeholder='外观缺陷、尺寸问题、包装问题等'
+                error={!!errors.category}
+              />
+              {errors.category && (
+                <Typography
+                  variant='caption'
+                  sx={{ color: 'error.main', fontSize: '0.875rem' }}
+                >
+                  {errors.category}
+                </Typography>
+              )}
+            </Box>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <Box
+                component='label'
+                sx={{
+                  display: 'block',
+                  mb: 0.5,
+                  fontSize: '0.875rem',
+                  color: 'text.secondary',
+                }}
               >
-                <MenuItem value='appearance'>外观缺陷</MenuItem>
-                <MenuItem value='dimension'>尺寸偏差</MenuItem>
-                <MenuItem value='performance'>性能不达标</MenuItem>
-                <MenuItem value='packaging'>包装破损</MenuItem>
-                <MenuItem value='material'>材料混用</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl fullWidth>
-              <InputLabel>严重程度</InputLabel>
-              <Select
-                value={formData.severity}
-                label='严重程度'
-                onChange={(e) => setFormData({ ...formData, severity: e.target.value })}
-              >
-                <MenuItem value='low'>轻微</MenuItem>
-                <MenuItem value='medium'>一般</MenuItem>
-                <MenuItem value='high'>严重</MenuItem>
-              </Select>
-            </FormControl>
+                问题描述
+              </Box>
+              <TextField
+                size='small'
+                fullWidth
+                multiline
+                rows={4}
+                value={formData.description}
+                onChange={(e) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    description: e.target.value,
+                  }));
+                  if (errors.description) setErrors((prev) => ({ ...prev, description: '' }));
+                }}
+                placeholder='请详细描述问题...'
+                error={!!errors.description}
+              />
+              {errors.description && (
+                <Typography
+                  variant='caption'
+                  sx={{ color: 'error.main', fontSize: '0.875rem' }}
+                >
+                  {errors.description}
+                </Typography>
+              )}
+            </Box>
           </Box>
         </DialogContent>
         <DialogActions>
           <Button
             variant='outlined'
-            onClick={() => setShowCreateModal(false)}
+            onClick={() => setShowModal(false)}
             disabled={submitting}
           >
             取消
           </Button>
           <Button
             variant='contained'
-            onClick={handleSave}
-            sx={{ bgcolor: 'primary.main' }}
+            onClick={handleSubmit}
             disabled={submitting}
           >
-            {submitting ? '保存中...' : '保存'}
+            {submitting ? '保存中...' : isEditing ? '保存' : '创建'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -630,114 +676,127 @@ const QmsNonconformancePage: React.FC = () => {
       <Dialog
         open={showDetailModal}
         onClose={() => setShowDetailModal(false)}
-        maxWidth='md'
+        maxWidth='lg'
         fullWidth
       >
-        <DialogTitle>不合格品详情</DialogTitle>
+        <DialogTitle>
+          {selectedItem ? `${selectedItem.issue_no} - ${selectedItem.title}` : ''}
+        </DialogTitle>
         <DialogContent>
-          {selectedIssue && (
-            <Box
-              sx={{
-                pt: 2,
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: 2,
-              }}
-            >
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  不合格单号
+          {selectedItem && (
+            <Box sx={{ mt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: 2,
+                }}
+              >
+                <Box>
+                  <Typography
+                    component='label'
+                    sx={{
+                      display: 'block',
+                      fontSize: '0.875rem',
+                      color: 'text.secondary',
+                      mb: 0.5,
+                    }}
+                  >
+                    严重程度
+                  </Typography>
+                  <Box sx={{ mt: 0.5 }}>{getSeverityBadge(selectedItem.severity)}</Box>
                 </Box>
-                <Box sx={{ fontWeight: 500 }}>{selectedIssue.issue_no}</Box>
+                <Box>
+                  <Typography
+                    component='label'
+                    sx={{
+                      display: 'block',
+                      fontSize: '0.875rem',
+                      color: 'text.secondary',
+                      mb: 0.5,
+                    }}
+                  >
+                    状态
+                  </Typography>
+                  <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedItem.status)}</Box>
+                </Box>
               </Box>
               <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+                <Typography
+                  component='label'
+                  sx={{
+                    display: 'block',
+                    fontSize: '0.875rem',
+                    color: 'text.secondary',
+                    mb: 0.5,
+                  }}
                 >
-                  问题标题
-                </Box>
-                <Box sx={{ fontWeight: 500 }}>{selectedIssue.title}</Box>
+                  问题类别
+                </Typography>
+                <Typography sx={{ mt: 0.5 }}>{selectedItem.category}</Typography>
               </Box>
               <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  不合格类型
-                </Box>
-                <Box>{getCategoryLabel(selectedIssue.category)}</Box>
-              </Box>
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  严重程度
-                </Box>
-                <Box sx={{ mt: 0.5 }}>{getSeverityBadge(selectedIssue.severity)}</Box>
-              </Box>
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  负责人
-                </Box>
-                <Box>{selectedIssue.assignee || '-'}</Box>
-              </Box>
-              <Box>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
-                >
-                  状态
-                </Box>
-                <Box sx={{ mt: 0.5 }}>{getStatusBadge(selectedIssue.status)}</Box>
-              </Box>
-              <Box sx={{ gridColumn: '1 / -1' }}>
-                <Box
-                  component='span'
-                  sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+                <Typography
+                  component='label'
+                  sx={{
+                    display: 'block',
+                    fontSize: '0.875rem',
+                    color: 'text.secondary',
+                    mb: 0.5,
+                  }}
                 >
                   问题描述
-                </Box>
-                <Box>{selectedIssue.description || '-'}</Box>
+                </Typography>
+                <Typography sx={{ mt: 0.5 }}>{selectedItem.description}</Typography>
               </Box>
-              {selectedIssue.resolution && (
-                <Box sx={{ gridColumn: '1 / -1' }}>
-                  <Box
-                    component='span'
-                    sx={{ color: 'text.secondary', fontSize: '0.875rem' }}
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: 2,
+                }}
+              >
+                <Box>
+                  <Typography
+                    component='label'
+                    sx={{
+                      display: 'block',
+                      fontSize: '0.875rem',
+                      color: 'text.secondary',
+                      mb: 0.5,
+                    }}
                   >
-                    解决方案
-                  </Box>
-                  <Box>{selectedIssue.resolution}</Box>
+                    负责人
+                  </Typography>
+                  <Typography sx={{ mt: 0.5 }}>{selectedItem.assignee || '-'}</Typography>
                 </Box>
-              )}
+                <Box>
+                  <Typography
+                    component='label'
+                    sx={{
+                      display: 'block',
+                      fontSize: '0.875rem',
+                      color: 'text.secondary',
+                      mb: 0.5,
+                    }}
+                  >
+                    创建日期
+                  </Typography>
+                  <Typography sx={{ mt: 0.5 }}>
+                    {selectedItem.created_at
+                      ? new Date(selectedItem.created_at).toLocaleDateString('zh-CN')
+                      : '-'}
+                  </Typography>
+                </Box>
+              </Box>
             </Box>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
-          {selectedIssue && selectedIssue.status !== 'closed' && (
-            <Button
-              variant='contained'
-              onClick={async () => {
-                await handleClose(selectedIssue);
-                setShowDetailModal(false);
-              }}
-              sx={{ bgcolor: 'success.dark' }}
-            >
-              关闭
-            </Button>
-          )}
         </DialogActions>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };
 

@@ -6,7 +6,7 @@ import type { Contract } from '@/api/pm';
 import { pmApi } from '@/api/pm';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
-import { StatusBadge } from '@/components/common';
+import { StatusBadge, PageContainer } from '@/components/common';
 
 const CONTRACT_TYPES = [
   { value: '', label: '全部类型' },
@@ -258,9 +258,13 @@ const PmContractListPage: React.FC = () => {
   const totalAmount = contracts.reduce((sum, c) => sum + (c.amount || 0), 0);
 
   return (
-    <ListPageTemplate
+    <PageContainer
       title='合同管理'
       subtitle='管理项目相关的合同，跟踪合同执行状态'
+    >
+      <ListPageTemplate
+        title=''
+        subtitle=''
       breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '项目管理' }, { label: '合同' }]}
       columns={columns}
       data={filteredData}
@@ -387,6 +391,7 @@ const PmContractListPage: React.FC = () => {
         </Box>
       }
     />
+    </PageContainer>
   );
 };
 

@@ -26,6 +26,7 @@ import {
   type FilterConfig,
   type RowAction,
 } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
 import { useAppStore } from '@/store';
 import type { Deploy, CreateDeployRequest } from '@/api/rs';
@@ -392,9 +393,9 @@ const RsReleasePage: React.FC = () => {
   ];
 
   return (
-    <Box sx={{ bgcolor: 'grey.100', minHeight: '100vh', py: 3 }}>
+    <PageContainer title='发布管理'>
       <ListPageTemplate
-        title='发布管理'
+        title=''
         columns={columns}
         data={filteredReleases}
         loading={loading}
@@ -578,7 +579,7 @@ const RsReleasePage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };
 

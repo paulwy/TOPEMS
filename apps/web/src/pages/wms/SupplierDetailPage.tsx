@@ -30,6 +30,7 @@ import { useNotification } from '@/hooks/useNotification';
 import type { Supplier } from '@/api/scm';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 
 const SupplierDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -471,31 +472,33 @@ const SupplierDetailPage: React.FC = () => {
   }
 
   return (
-    <DetailPageTemplate
-      title='供应商详情'
-      subtitle='查看和编辑供应商档案信息'
-      loading={loading}
-      backHref='/scm/suppliers'
-      onBack={() => navigate('/scm/suppliers')}
-      onEdit={() => setIsEditing(!isEditing)}
-      infoCard={
-        supplier
-          ? {
-              avatar: <Truck sx={{ width: 32, height: 32 }} />,
-              title: supplier.name,
-              subtitle: supplier.short_name,
-              tags: [supplier.contact_name, supplier.contact_phone, supplier.email].filter(
-                (tag): tag is string => Boolean(tag)
-              ),
-              stats: statsData.map((stat) => ({
-                label: stat.label,
-                value: stat.value,
-              })),
-            }
-          : undefined
-      }
-      tabs={tabs}
-    />
+    <PageContainer title='供应商详情' subtitle='查看和编辑供应商档案信息'>
+      <DetailPageTemplate
+        title=''
+        subtitle=''
+        loading={loading}
+        backHref='/scm/suppliers'
+        onBack={() => navigate('/scm/suppliers')}
+        onEdit={() => setIsEditing(!isEditing)}
+        infoCard={
+          supplier
+            ? {
+                avatar: <Truck sx={{ width: 32, height: 32 }} />,
+                title: supplier.name,
+                subtitle: supplier.short_name,
+                tags: [supplier.contact_name, supplier.contact_phone, supplier.email].filter(
+                  (tag): tag is string => Boolean(tag)
+                ),
+                stats: statsData.map((stat) => ({
+                  label: stat.label,
+                  value: stat.value,
+                })),
+              }
+            : undefined
+        }
+        tabs={tabs}
+      />
+    </PageContainer>
   );
 };
 

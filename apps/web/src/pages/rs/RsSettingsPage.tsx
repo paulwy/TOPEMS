@@ -37,6 +37,7 @@ import {
   ArrowRight,
 } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
 import { useAppStore } from '@/store';
 import type { RsStatistics } from '@/api/rs';
@@ -330,8 +331,8 @@ const RsSettingsPage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ bgcolor: 'grey.100', minHeight: '100vh', py: 3 }}>
-      <Box sx={{ maxWidth: 1200, mx: 'auto', px: 3 }}>
+    <PageContainer title='研发设置'>
+      <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
         {/* 页面头部 */}
         <Box
           sx={{
@@ -570,7 +571,7 @@ const RsSettingsPage: React.FC = () => {
           </Box>
         </Box>
       </Box>
-    </Box>
+    </PageContainer>
   );
 };
 

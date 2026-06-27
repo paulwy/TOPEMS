@@ -18,6 +18,7 @@ import ProjectTemplateCard from '@/components/pm/ProjectTemplateCard';
 import ProjectTemplateModal from '@/components/pm/ProjectTemplateModal';
 import { pmApi } from '@/api/pm';
 import type { CreateProjectRequest } from '@/api/pm';
+import { PageContainer } from '@/components/common';
 
 const PmTemplatePage: React.FC = () => {
   const navigate = useNavigate();
@@ -124,33 +125,21 @@ const PmTemplatePage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: 'grey.100' }}>
-      <Box sx={{ flex: 1, p: 3 }}>
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            mb: 3,
-          }}
-        >
-          <Box>
-            <Typography
-              variant='h5'
-              sx={{ fontWeight: 700, color: 'text.primary' }}
-            >
-              项目模板
-            </Typography>
-            <Typography sx={{ color: 'text.secondary', mt: 0.5 }}>
-              选择模板快速创建项目，提高工作效率
-            </Typography>
-          </Box>
-          <Button onClick={() => navigate('/pm/projects/create')}>
-            <Plus sx={{ width: 16, height: 16, marginRight: 8 }} />
-            新建项目
-          </Button>
-        </Box>
-
+    <PageContainer
+      title='项目模板'
+      subtitle='选择模板快速创建项目，提高工作效率'
+      maxWidth='xl'
+      headerProps={{
+        actions: [
+          {
+            label: '新建项目',
+            icon: <Plus sx={{ width: 16, height: 16 }} />,
+            onClick: () => navigate('/pm/projects/create'),
+            variant: 'contained',
+          },
+        ],
+      }}
+    >
         <Card>
           <CardContent sx={{ p: 2 }}>
             <TextField
@@ -206,8 +195,7 @@ const PmTemplatePage: React.FC = () => {
           template={selectedTemplate}
           onConfirm={handleCreateProject}
         />
-      </Box>
-    </Box>
+    </PageContainer>
   );
 };
 

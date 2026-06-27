@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { FormPageTemplate, type FormSection, type FormField } from '@/components/templates/FormPageTemplate';
+import { PageContainer } from '@/components/common';
 import { rsApi, formulaApi } from '@/api/rs';
 import { useAppStore } from '@/store';
 import type { Project, Formula } from '@/api/rs';
@@ -281,24 +282,29 @@ const RsExperimentCreatePage: React.FC = () => {
   };
 
   return (
-    <FormPageTemplate
+    <PageContainer
       title={isEdit ? '编辑试验' : '新建试验'}
       subtitle={isEdit ? '修改试验信息' : '创建新的研发试验记录'}
-      sections={sections}
-      defaultValues={defaultValues}
-      loading={loading}
-      submitting={submitting}
-      error={error}
-      onSubmit={handleSubmit}
-      onCancel={handleCancel}
-      submitText={isEdit ? '保存修改' : '创建试验'}
-      columns={2}
-      showValidationHints
-      validationToasts={[
-        { message: '提交成功', type: 'success' },
-        { message: '提交失败，请检查表单', type: 'error' },
-      ]}
-    />
+    >
+      <FormPageTemplate
+        title=''
+        subtitle=''
+        sections={sections}
+        defaultValues={defaultValues}
+        loading={loading}
+        submitting={submitting}
+        error={error}
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+        submitText={isEdit ? '保存修改' : '创建试验'}
+        columns={2}
+        showValidationHints
+        validationToasts={[
+          { message: '提交成功', type: 'success' },
+          { message: '提交失败，请检查表单', type: 'error' },
+        ]}
+      />
+    </PageContainer>
   );
 };
 

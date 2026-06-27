@@ -58,6 +58,7 @@ import {
 } from '@/api/plugin';
 import { usePluginStore } from '@/store/pluginStore';
 import { useAppStore } from '@/store';
+import { PageContainer } from '@/components/common';
 
 type SortOption = 'popular' | 'rating' | 'newest' | 'price';
 type ViewMode = 'grid' | 'list';
@@ -773,7 +774,8 @@ const PluginMarketplacePage: React.FC = () => {
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
+    <PageContainer padding={false} maxWidth={false}>
+      <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
       <Box
         sx={{
           background: 'linear-gradient(90deg, primary.main 0%, primary.main 100%)',
@@ -1049,7 +1051,8 @@ const PluginMarketplacePage: React.FC = () => {
           onClose={() => setSelectedPlugin(null)}
         />
       )}
-    </Box>
+      </Box>
+    </PageContainer>
   );
 };
 

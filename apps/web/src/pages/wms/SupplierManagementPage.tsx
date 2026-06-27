@@ -21,7 +21,7 @@ import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
 import { Search, Plus, Edit, Trash2, Eye } from 'lucide-react';
-import { ImageUpload } from '@/components/common';
+import { ImageUpload, PageContainer } from '@/components/common';
 import { apiLogger } from '@/utils/logger';
 
 const SupplierManagementPage: React.FC = () => {
@@ -260,10 +260,13 @@ const SupplierManagementPage: React.FC = () => {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <>
+    <PageContainer
+      title='供应商管理'
+      subtitle='管理供应商信息,包括基本信息、联系方式、银行账户等'
+    >
       <ListPageTemplate
-        title='供应商管理'
-        subtitle='管理供应商信息,包括基本信息、联系方式、银行账户等'
+        title=''
+        subtitle=''
         columns={columns}
         data={suppliers}
         loading={loading}
@@ -527,7 +530,7 @@ const SupplierManagementPage: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

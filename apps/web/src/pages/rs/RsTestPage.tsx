@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import type { RowAction, FilterConfig } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
 import { useAppStore } from '@/store';
 import type { TestCase, CreateTestCaseRequest, UpdateTestCaseRequest } from '@/api/rs';
@@ -369,10 +370,10 @@ const RsTestPage: React.FC = () => {
   );
 
   return (
-    <>
+    <PageContainer title='测试管理' subtitle='管理测试用例和测试计划'>
       <ListPageTemplate<TestCase>
-        title='测试管理'
-        subtitle='管理测试用例和测试计划'
+        title=''
+        subtitle=''
         backButton={{
           href: '/dashboard',
         }}
@@ -544,7 +545,7 @@ const RsTestPage: React.FC = () => {
           <Button onClick={() => setDetailDialogOpen(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

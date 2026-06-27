@@ -7,6 +7,7 @@ import {
   type ColumnDef,
   type RowAction,
 } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import apiClient from '@/api/client';
 
 interface CustomerSegment {
@@ -114,7 +115,8 @@ const CRMCustomerSegmentationPage: React.FC = () => {
   ];
 
   return (
-    <Box>
+    <PageContainer title='客户分群' subtitle='基于多维度条件对客户进行精细化分群运营'>
+      <Box>
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <Box>
           <Typography
@@ -257,7 +259,8 @@ const CRMCustomerSegmentationPage: React.FC = () => {
         searchable={true}
         emptyMessage='暂无客户分群'
       />
-    </Box>
+      </Box>
+    </PageContainer>
   );
 };
 

@@ -15,6 +15,7 @@ import {
   Server,
   Zap,
 } from 'lucide-react';
+import { PageContainer } from '@/components/common';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import type { StatCard, ChartConfig, DataTable, TableColumn } from '@/components/templates/StatsPageTemplate';
 import { monitorApi } from '@/api/monitor';
@@ -156,26 +157,28 @@ export const MonitorMetricsPage: React.FC = () => {
   ];
 
   return (
-    <StatsPageTemplate
-      title='性能指标监控'
-      subtitle='系统资源、API性能和数据库指标监控'
-      statCards={statCards}
-      statColumns={4}
-      charts={charts}
-      chartColumns={{ xs: 1, md: 2 }}
-      tables={tables}
-      loading={loading}
-      timeRangeOptions={timeRangeOptions}
-      timeRange={timeRange}
-      onTimeRangeChange={setTimeRange}
-      showTimeRange={true}
-      showRefresh={true}
-      onRefresh={loadData}
-      showStatCards={true}
-      showCharts={true}
-      showTables={true}
-      statCardDirection='row'
-    />
+    <PageContainer padding={false}>
+      <StatsPageTemplate
+        title='性能指标监控'
+        subtitle='系统资源、API性能和数据库指标监控'
+        statCards={statCards}
+        statColumns={4}
+        charts={charts}
+        chartColumns={{ xs: 1, md: 2 }}
+        tables={tables}
+        loading={loading}
+        timeRangeOptions={timeRangeOptions}
+        timeRange={timeRange}
+        onTimeRangeChange={setTimeRange}
+        showTimeRange={true}
+        showRefresh={true}
+        onRefresh={loadData}
+        showStatCards={true}
+        showCharts={true}
+        showTables={true}
+        statCardDirection='row'
+      />
+    </PageContainer>
   );
 };
 

@@ -50,6 +50,7 @@ import {
 } from '@/hooks/useExternalErp';
 import { EnhancedDataTable } from '@/components/EnhancedDataTable';
 import { AccountMappingDirection } from '@/types/external-erp';
+import { PageContainer } from '@/components/common';
 
 // 映射类型配置
 const MAPPING_TYPE_CONFIG = {
@@ -466,16 +467,14 @@ export default function ExternalErpMappingPage() {
   const config = MAPPING_TYPE_CONFIG[activeMappingType];
 
   return (
-    <Box
-      sx={{
-        maxWidth: 1280,
-        mx: 'auto',
-        p: 3,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 3,
-      }}
-    >
+    <PageContainer maxWidth='xl'>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 3,
+        }}
+      >
       {/* 头部信息 */}
       <Stack
         direction='row'
@@ -1034,6 +1033,7 @@ export default function ExternalErpMappingPage() {
         message={`确定要从外部ERP系统同步${config.label}数据吗？这将会根据映射规则同步${activeMappingType === 'account' ? '科目' : activeMappingType === 'customer' ? '客户' : '供应商'}数据。`}
         confirmLabel='确定同步'
       />
-    </Box>
+      </Box>
+    </PageContainer>
   );
 }

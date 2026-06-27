@@ -6,6 +6,7 @@ import type { ProjectResource, Project } from '@/api/pm';
 import { pmApi } from '@/api/pm';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 
 const STATUS_LABELS: Record<string, string> = {
   available: '可用',
@@ -303,9 +304,13 @@ const PmResourcePage: React.FC = () => {
   const totalCost = resources.reduce((sum, r) => sum + (r.actual_cost || 0), 0);
 
   return (
-    <ListPageTemplate
+    <PageContainer
       title='资源管理'
       subtitle='管理项目资源的分配与使用情况'
+    >
+      <ListPageTemplate
+        title=''
+        subtitle=''
       breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '项目管理' }, { label: '资源管理' }]}
       columns={columns}
       data={filteredData}
@@ -433,6 +438,7 @@ const PmResourcePage: React.FC = () => {
         </Box>
       }
     />
+    </PageContainer>
   );
 };
 

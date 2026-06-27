@@ -15,6 +15,7 @@ import { useAppStore } from '@/store';
 import { Plus, Eye, Edit, Trash2 } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 
 const ScmPurchaseItemPage: React.FC = () => {
   const [items, setItems] = useState<PurchaseItem[]>([]);
@@ -216,10 +217,10 @@ const ScmPurchaseItemPage: React.FC = () => {
   ];
 
   return (
-    <>
+    <PageContainer title='采购明细管理' subtitle='管理采购订单明细,包括产品编码、名称、规格、数量等'>
       <ListPageTemplate
-        title='采购明细管理'
-        subtitle='管理采购订单明细,包括产品编码、名称、规格、数量等'
+        title=''
+        subtitle=''
         columns={columns}
         data={items}
         loading={loading}
@@ -353,7 +354,7 @@ const ScmPurchaseItemPage: React.FC = () => {
           </form>
         </DialogContent>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

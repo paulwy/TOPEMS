@@ -32,6 +32,7 @@ import {
   Info,
 } from 'lucide-react';
 import { FormPageTemplate } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import {
   voucherApi,
   accountingSubjectApi,
@@ -601,20 +602,25 @@ const VoucherCreatePage: React.FC = () => {
   ];
 
   return (
-    <FormPageTemplate
+    <PageContainer
       title='新建凭证'
-      breadcrumbs={[
-        { label: '首页', href: '/dashboard' },
-        { label: '财务', href: '/finance' },
-        { label: '凭证管理', href: '/finance/vouchers' },
-        { label: '新建凭证' },
-      ]}
-      sections={sections}
-      onSubmit={handleSubmit}
-      onCancel={handleCancel}
-      submitText='保存凭证'
-      submitting={submitting}
-    />
+    >
+      <FormPageTemplate
+        title=''
+        subtitle=''
+        breadcrumbs={[
+          { label: '首页', href: '/dashboard' },
+          { label: '财务', href: '/finance' },
+          { label: '凭证管理', href: '/finance/vouchers' },
+          { label: '新建凭证' },
+        ]}
+        sections={sections}
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+        submitText='保存凭证'
+        submitting={submitting}
+      />
+    </PageContainer>
   );
 };
 

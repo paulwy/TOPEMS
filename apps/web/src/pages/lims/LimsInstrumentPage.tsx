@@ -49,6 +49,7 @@ import type {
   LimsStatistics,
 } from '@/api/lims';
 import { limsApi } from '@/api/lims';
+import { PageContainer } from '@/components/common';
 import { PageHeader } from '@/components/templates/PageHeader';
 import { CardListTemplate } from '@/components/templates/CardListTemplate';
 import { apiLogger } from '@/utils/logger';
@@ -663,11 +664,12 @@ const LimsInstrumentPage: React.FC = () => {
   }
 
   return (
-    <Box
+    <PageContainer
       sx={{
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #f8fafc 0%, border.default 100%)',
       }}
+      padding={false}
     >
       <Snackbar
         open={Boolean(notification)}
@@ -1561,7 +1563,7 @@ const LimsInstrumentPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };
 

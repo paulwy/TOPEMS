@@ -10,7 +10,7 @@ import {
   Eye,
   RefreshCw,
 } from 'lucide-react';
-import { DataExport, BackButton } from '@/components/common';
+import { DataExport, BackButton, PageContainer} from '@/components/common';
 import { ListPageTemplate } from '@/components/templates';
 import type { ColumnDef, RowAction, FilterConfig } from '@/components/templates';
 import { StatCard, StatCardGroup } from '@/components/mui';
@@ -452,7 +452,7 @@ const FinanceInvoicePage: React.FC = () => {
   );
 
   return (
-    <MuiBox sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+    <PageContainer padding={false} maxWidth={false}>
       <MuiBox
         sx={{
           bgcolor: 'background.paper',
@@ -843,7 +843,7 @@ const FinanceInvoicePage: React.FC = () => {
           <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </MuiBox>
+    </PageContainer>
   );
 };
 

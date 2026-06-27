@@ -37,6 +37,7 @@ import {
   type ColumnDef,
   type RowAction,
 } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { crmApi } from '@/api/crm';
 import type {
   RecommendationResult,
@@ -410,10 +411,10 @@ const CRMRecommendationPage: React.FC = () => {
   );
 
   return (
-    <Box>
+    <PageContainer title='客户推荐' subtitle='基于 AI 的智能客户推荐系统'>
       <ListPageTemplate
-        title="客户推荐"
-        subtitle="基于 AI 的智能客户推荐系统"
+        title=''
+        subtitle=''
         columns={columns}
         data={recommendations}
         loading={loading}
@@ -429,7 +430,7 @@ const CRMRecommendationPage: React.FC = () => {
       />
       <RecommendationDetailDialog />
       <CreateRecommendationDialog />
-    </Box>
+    </PageContainer>
   );
 };
 

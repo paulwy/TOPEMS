@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { Building2, Mail, Phone, MapPin, Globe } from 'lucide-react';
 import FormPageTemplate from '@/components/templates/FormPageTemplate';
 import type { FormSection, FormField } from '@/components/templates/FormPageTemplate';
+import { PageContainer } from '@/components/common';
 import { customerApi } from '@/api/crm';
 import { useNotification } from '@/hooks/useNotification';
 import { logger } from '@/utils/logger';
@@ -195,25 +196,30 @@ const CustomerCreatePage: React.FC = () => {
   ];
 
   return (
-    <FormPageTemplate
+    <PageContainer
       title='新建客户'
       subtitle='创建新的客户档案'
-      breadcrumbs={[
-        { label: '首页', href: '/dashboard' },
-        { label: '客户管理', href: '/crm' },
-        { label: '客户列表', href: '/crm/customers' },
-        { label: '新建客户' },
-      ]}
-      sections={sections}
-      schema={customerSchema}
-      submitting={submitting}
-      onSubmit={handleSubmit}
-      onCancel={handleCancel}
-      submitText='创建客户'
-      cancelText='取消'
-      columns={3}
-      stickyFooter={true}
-    />
+    >
+      <FormPageTemplate
+        title=''
+        subtitle=''
+        breadcrumbs={[
+          { label: '首页', href: '/dashboard' },
+          { label: '客户管理', href: '/crm' },
+          { label: '客户列表', href: '/crm/customers' },
+          { label: '新建客户' },
+        ]}
+        sections={sections}
+        schema={customerSchema}
+        submitting={submitting}
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+        submitText='创建客户'
+        cancelText='取消'
+        columns={3}
+        stickyFooter={true}
+      />
+    </PageContainer>
   );
 };
 

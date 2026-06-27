@@ -42,6 +42,7 @@ import {
   type StatCard,
   type ChartCard as ChartCardType,
 } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 
 const ModuleCard = ({
   id,
@@ -588,24 +589,30 @@ const BIAnalyticsPage = () => {
   ];
 
   return (
-    <DashboardTemplate
+    <PageContainer
       title='BI 概览分析'
       subtitle='各业务模块数据总览'
-      breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: 'BI' }, { label: '概览分析' }]}
-      stats={statsCards}
-      charts={chartCards}
-      loading={loading}
-      onRefresh={handleRefresh}
-      headerContent={
-        <OrganizationFilter
-          value={organizationFilter}
-          onChange={setOrganizationFilter}
-          showCompany={true}
-          showDepartment={true}
-          showEmployee={false}
-        />
-      }
+      padding={false}
+      maxWidth={false}
     >
+      <DashboardTemplate
+        title=''
+        subtitle=''
+        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: 'BI' }, { label: '概览分析' }]}
+        stats={statsCards}
+        charts={chartCards}
+        loading={loading}
+        onRefresh={handleRefresh}
+        headerContent={
+          <OrganizationFilter
+            value={organizationFilter}
+            onChange={setOrganizationFilter}
+            showCompany={true}
+            showDepartment={true}
+            showEmployee={false}
+          />
+        }
+      >
       {error && (
         <Alert severity="error" sx={{ mb: 3 }}>
           {error}
@@ -749,7 +756,8 @@ const BIAnalyticsPage = () => {
           </Box>
         </Box>
       </Box>
-    </DashboardTemplate>
+      </DashboardTemplate>
+    </PageContainer>
   );
 };
 

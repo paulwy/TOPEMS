@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { PageContainer } from '@/components/common';
 import {
   Plus,
   Edit,
@@ -341,7 +342,7 @@ const LeaveManagementPage: React.FC = () => {
   );
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
+    <PageContainer padding={false} maxWidth={false}>
       <Box sx={{ p: 3 }}>
         {/* 面包屑导航 */}
         <Box sx={{ mb: 2 }}>
@@ -682,7 +683,7 @@ const LeaveManagementPage: React.FC = () => {
           )}
         </Dialog>
       </Box>
-    </Box>
+    </PageContainer>
   );
 };
 

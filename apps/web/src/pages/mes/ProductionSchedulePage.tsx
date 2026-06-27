@@ -17,6 +17,7 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
+import { PageContainer } from '@/components/common';
 import { Button } from '@mui/material';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type {
@@ -516,7 +517,7 @@ const ProductionSchedulePage: React.FC = () => {
   };
 
   return (
-    <>
+    <PageContainer title="生产排程管理" subtitle="管理生产排程信息,包括工单、工序、工位、计划时间等">
       <Box sx={{ mb: 2 }}>
         <Tabs
           value={activeTab}
@@ -538,8 +539,8 @@ const ProductionSchedulePage: React.FC = () => {
 
       {activeTab === 0 ? (
         <ListPageTemplate
-          title='生产排程管理'
-          subtitle='管理生产排程信息,包括工单、工序、工位、计划时间等'
+          title=""
+          subtitle=""
           columns={columns}
           data={schedules}
           loading={loading}
@@ -906,7 +907,7 @@ const ProductionSchedulePage: React.FC = () => {
           )}
         </DialogContent>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

@@ -8,6 +8,7 @@ import { apiLogger } from '@/utils/logger';
 import { TrendingUp, Target, Calendar, Calculator, BarChart3 } from 'lucide-react';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import type { StatCard, ChartConfig, DataTable, TableColumn } from '@/components/templates/StatsPageTemplate';
+import { PageContainer } from '@/components/common';
 
 const CRMSalesForecastPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -185,26 +186,28 @@ const CRMSalesForecastPage: React.FC = () => {
   );
 
   return (
-    <StatsPageTemplate
-      title='销售预测'
-      subtitle='基于历史数据预测未来销售趋势'
-      statCards={statCards}
-      statColumns={4}
-      charts={charts}
-      chartColumns={{ xs: 1, lg: 2 }}
-      tables={tables}
-      loading={loading}
-      timeRangeOptions={timeRangeOptions}
-      timeRange={timeRange}
-      onTimeRangeChange={setTimeRange}
-      onRefresh={loadForecasts}
-      showExport={false}
-      showRefresh={true}
-      showTimeRange={true}
-      showSearch={false}
-      customToolbar={customToolbar}
-      statCardDirection='row'
-    />
+    <PageContainer maxWidth='xl'>
+      <StatsPageTemplate
+        title='销售预测'
+        subtitle='基于历史数据预测未来销售趋势'
+        statCards={statCards}
+        statColumns={4}
+        charts={charts}
+        chartColumns={{ xs: 1, lg: 2 }}
+        tables={tables}
+        loading={loading}
+        timeRangeOptions={timeRangeOptions}
+        timeRange={timeRange}
+        onTimeRangeChange={setTimeRange}
+        onRefresh={loadForecasts}
+        showExport={false}
+        showRefresh={true}
+        showTimeRange={true}
+        showSearch={false}
+        customToolbar={customToolbar}
+        statCardDirection='row'
+      />
+    </PageContainer>
   );
 };
 

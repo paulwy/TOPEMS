@@ -45,6 +45,7 @@ import { apiLogger } from '@/utils/logger';
 import { useAppStore } from '../../store';
 import AISettingsModal from '@/components/ai/AISettingsModal';
 import { AIDocumentGenerator, DocumentManager, AIAnalyzer } from '@/components/ai';
+import { PageContainer } from '@/components/common';
 
 import { ModeToggle } from '@/components/theme/ModeToggle';
 
@@ -667,7 +668,13 @@ const AIPage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ display: 'flex', height: '100vh', bgcolor: 'grey.50' }}>
+    <PageContainer
+      padding={false}
+      maxWidth={false}
+      bgcolor='grey.50'
+      sx={{ height: '100vh' }}
+      contentSx={{ display: 'flex', height: '100%' }}
+    >
       <Box
         sx={{
           width: 288,
@@ -1487,7 +1494,7 @@ const AIPage: React.FC = () => {
           });
         }}
       />
-    </Box>
+    </PageContainer>
   );
 };
 

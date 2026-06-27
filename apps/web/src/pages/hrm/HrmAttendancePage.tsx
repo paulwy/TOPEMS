@@ -27,6 +27,7 @@ import {
   type StatsStatCard,
 } from '@/components/templates';
 import { StatusBadge } from '@/components/common/StatusBadge';
+import { PageContainer } from '@/components/common';
 import { Button, TextField, Box, Typography, Chip, Dialog, DialogTitle, DialogContent, DialogActions, FormLabel, FormControl, Select, MenuItem } from '@mui/material';
 
 const HrmAttendancePage: React.FC = () => {
@@ -369,7 +370,7 @@ const HrmAttendancePage: React.FC = () => {
   );
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100', p: 3 }}>
+    <PageContainer padding={false} maxWidth={false}>
       {activeTab === 'statistics' ? (
         <StatsPageTemplate
           title='考勤统计'
@@ -505,7 +506,7 @@ const HrmAttendancePage: React.FC = () => {
           </DialogActions>
         </Dialog>
       )}
-    </Box>
+    </PageContainer>
   );
 };
 

@@ -8,9 +8,9 @@ const ReportListPage = lazy(() => import('../pages/report/ReportListPage'));
 const ReportDesignPage = lazy(() => import('../pages/report/ReportDesignPage'));
 const ReportSchedulePage = lazy(() => import('../pages/report/ReportSchedulePage'));
 const ReportSubscriptionPage = lazy(() => import('../pages/report/ReportSubscriptionPage'));
-const ReportBuilder = lazy(() => import('../pages/templates/ReportBuilder'));
-const ReportPage = lazy(() => import('../pages/templates/ReportPage'));
-const ReportViewer = lazy(() => import('../pages/templates/ReportViewer'));
+const ReportBuilder = lazy(() => import('../pages/report/ReportBuilder'));
+const ReportPage = lazy(() => import('../pages/report/ReportPage'));
+const ReportViewer = lazy(() => import('../pages/report/ReportViewer'));
 
 export const reportRoutes: RouteConfig[] = [
   {

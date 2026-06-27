@@ -12,6 +12,7 @@ import {
 import { apiLogger } from '@/utils/logger';
 import { useNotification } from '@/hooks/useNotification';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
+import { PageContainer } from '@/components/common';
 
 interface EmployeeSummary {
   total_employees: number;
@@ -563,7 +564,8 @@ const HrmReportsPage: React.FC = () => {
   }, [activeTab, employeeSummary, departmentSummary, trainingSummary, payrollSummary]);
 
   return (
-    <StatsPageTemplate
+    <PageContainer maxWidth='xl'>
+      <StatsPageTemplate
       title='HR数据分析报表'
       subtitle='实时查看人力资源数据统计与分析'
       statCards={statCards}
@@ -592,7 +594,8 @@ const HrmReportsPage: React.FC = () => {
       showStatCards={true}
       showCharts={true}
       showTables={true}
-    />
+      />
+    </PageContainer>
   );
 };
 

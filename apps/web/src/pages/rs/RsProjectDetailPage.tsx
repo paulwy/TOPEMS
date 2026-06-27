@@ -47,6 +47,7 @@ import {
 } from 'lucide-react';
 import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { rsApi } from '@/api/rs';
+import { PageContainer } from '@/components/common';
 import { useAppStore } from '@/store';
 import type { Project, GanttPhase, GanttMilestone, Experiment } from '@/api/rs';
 
@@ -419,15 +420,17 @@ const RsProjectDetailPage: React.FC = () => {
   ];
 
   return (
-    <DetailPageTemplate
-      title={project?.name || '项目详情'}
-      subtitle={project ? `编码: ${project.code} | 类型: ${project.project_type} | 负责人: ${project.leader}` : ''}
-      infoCard={infoCard}
-      tabs={tabContents}
-      defaultTab='phases'
-      actions={actions}
-      loading={loading}
-    />
+    <PageContainer title={project?.name || '项目详情'} subtitle={project ? `编码: ${project.code} | 类型: ${project.project_type} | 负责人: ${project.leader}` : ''}>
+      <DetailPageTemplate
+        title=''
+        subtitle=''
+        infoCard={infoCard}
+        tabs={tabContents}
+        defaultTab='phases'
+        actions={actions}
+        loading={loading}
+      />
+    </PageContainer>
   );
 };
 

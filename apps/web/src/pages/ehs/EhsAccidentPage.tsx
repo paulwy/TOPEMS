@@ -28,6 +28,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { ehsApi } from '@/api/ehs';
 import type { Accident, AccidentDetail, TreatmentAction } from '@/api/ehs';
 import { useAppStore } from '@/store';
@@ -443,10 +444,11 @@ const EhsAccidentPage: React.FC = () => {
   };
 
   return (
+    <PageContainer title='事故记录' subtitle='管理安全事故记录，包括事故上报、调查和处理'>
     <>
       <ListPageTemplate
-        title='事故记录'
-        subtitle='管理安全事故记录，包括事故上报、调查和处理'
+        title=''
+        subtitle=''
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
           { label: 'EHS管理', href: '/ehs' },
@@ -923,6 +925,7 @@ const EhsAccidentPage: React.FC = () => {
         </DialogActions>
       </Dialog>
     </>
+    </PageContainer>
   );
 };
 

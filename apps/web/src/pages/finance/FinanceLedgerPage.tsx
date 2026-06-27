@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { ListPageTemplate, StatCardGroup } from '@/components/mui';
 import { useAppStore } from '@/store';
-import { DataExport, BackButton } from '@/components/common';
+import { DataExport, BackButton, PageContainer} from '@/components/common';
 import { financeApi } from '@/api/finance';
 import type { Account, AccountBalance } from '@/types/finance';
 import type { AccountingSubject } from '@/api/erp';
@@ -279,7 +279,7 @@ const FinanceLedgerPage: React.FC = () => {
   );
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+    <PageContainer padding={false} maxWidth={false}>
       <Box
         sx={{
           bgcolor: 'background.paper',
@@ -517,7 +517,7 @@ const FinanceLedgerPage: React.FC = () => {
           <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };
 

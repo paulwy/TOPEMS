@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { FolderOpen, Calendar, Users, DollarSign, Tag, FileText } from 'lucide-react';
 import FormPageTemplate from '@/components/templates/FormPageTemplate';
 import type { FormSection, FormField } from '@/components/templates/FormPageTemplate';
+import { PageContainer } from '@/components/common';
 import { pmApi } from '@/api/pm';
 import { useNotification } from '@/hooks/useNotification';
 import { logger } from '@/utils/logger';
@@ -188,25 +189,30 @@ const PmProjectCreatePage: React.FC = () => {
   ];
 
   return (
-    <FormPageTemplate
+    <PageContainer
       title='创建项目'
       subtitle='填写项目基本信息'
-      breadcrumbs={[
-        { label: '首页', href: '/dashboard' },
-        { label: '项目管理', href: '/pm' },
-        { label: '项目列表', href: '/pm/projects' },
-        { label: '创建项目' },
-      ]}
-      sections={sections}
-      schema={projectSchema}
-      submitting={submitting}
-      onSubmit={handleSubmit}
-      onCancel={handleCancel}
-      submitText='保存项目'
-      cancelText='取消'
-      columns={2}
-      stickyFooter={true}
-    />
+    >
+      <FormPageTemplate
+        title=''
+        subtitle=''
+        breadcrumbs={[
+          { label: '首页', href: '/dashboard' },
+          { label: '项目管理', href: '/pm' },
+          { label: '项目列表', href: '/pm/projects' },
+          { label: '创建项目' },
+        ]}
+        sections={sections}
+        schema={projectSchema}
+        submitting={submitting}
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+        submitText='保存项目'
+        cancelText='取消'
+        columns={2}
+        stickyFooter={true}
+      />
+    </PageContainer>
   );
 };
 

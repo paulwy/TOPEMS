@@ -71,6 +71,8 @@ export interface ModuleCardConfig {
   status?: 'online' | 'beta' | 'plan' | 'new';
   /** 模块来源：core=核心功能（平台自带，不可卸载），plugin=业务插件（来自插件市场，可安装/卸载） */
   source?: 'core' | 'plugin';
+  /** 专业套件分组：finance=财务套件, hr=人力套件, manufacturing=制造套件, supply=供应链套件, crm=客户套件, quality=质量套件, project=项目套件, gis=地理套件 */
+  suite?: 'finance' | 'hr' | 'manufacturing' | 'supply' | 'crm' | 'quality' | 'project' | 'gis';
 }
 
 export interface PluginNavConfig {
@@ -472,6 +474,7 @@ const registerDefaultModules = () => {
       order: 2,
       permission: 'pm:read',
       source: 'core',
+      suite: 'project',
     },
   });
 
@@ -636,6 +639,7 @@ const registerDefaultModules = () => {
       order: 3,
       permission: 'rs:read',
       source: 'core',
+      suite: 'project',
     },
   });
 
@@ -706,6 +710,7 @@ const registerDefaultModules = () => {
       order: 4,
       permission: 'scm:read',
       source: 'plugin',
+      suite: 'supply',
     },
   });
 
@@ -902,6 +907,7 @@ const registerDefaultModules = () => {
       order: 10,
       permission: 'finance:read',
       source: 'plugin',
+      suite: 'finance',
     },
   });
 
@@ -1112,6 +1118,7 @@ const registerDefaultModules = () => {
       order: 11,
       permission: 'mes:read',
       source: 'plugin',
+      suite: 'manufacturing',
     },
   });
 
@@ -1210,6 +1217,7 @@ const registerDefaultModules = () => {
       order: 5,
       permission: 'crm:read',
       source: 'plugin',
+      suite: 'crm',
     },
   });
 
@@ -1308,6 +1316,7 @@ const registerDefaultModules = () => {
       order: 7,
       permission: 'gis:read',
       source: 'plugin',
+      suite: 'gis',
     },
   });
 
@@ -1520,6 +1529,7 @@ const registerDefaultModules = () => {
       order: 8,
       permission: 'hrm:read',
       source: 'plugin',
+      suite: 'hr',
     },
   });
 
@@ -1530,7 +1540,7 @@ const registerDefaultModules = () => {
         label: '即时通讯',
         icon: 'MessageCircle',
         path: '/im',
-        group: 'business',
+        group: 'core',
         order: 9,
         permission: 'im:read',
       },
@@ -1561,7 +1571,7 @@ const registerDefaultModules = () => {
       status: 'online',
       order: 9,
       permission: 'im:read',
-      source: 'plugin',
+      source: 'core',
     },
   });
 
@@ -1688,6 +1698,7 @@ const registerDefaultModules = () => {
       order: 12,
       permission: 'bi:read',
       source: 'plugin',
+      suite: 'crm',
     },
   });
 
@@ -1823,7 +1834,7 @@ const registerDefaultModules = () => {
       status: 'online',
       order: 20,
       permission: 'iam:users_read',
-      source: 'plugin',
+      source: 'core',
     },
   });
 
@@ -2122,6 +2133,7 @@ const registerDefaultModules = () => {
       order: 14,
       permission: 'wms:read',
       source: 'plugin',
+      suite: 'manufacturing',
     },
   });
 
@@ -2244,6 +2256,7 @@ const registerDefaultModules = () => {
       order: 15,
       permission: 'pdm:read',
       source: 'plugin',
+      suite: 'manufacturing',
     },
   });
 
@@ -2945,6 +2958,7 @@ const registerDefaultModules = () => {
       order: 23,
       permission: 'srm:read',
       source: 'plugin',
+      suite: 'supply',
     },
   });
 
@@ -3157,6 +3171,7 @@ const registerDefaultModules = () => {
       order: 24,
       permission: 'lims:read',
       source: 'plugin',
+      suite: 'quality',
     },
   });
 
@@ -3278,6 +3293,7 @@ const registerDefaultModules = () => {
       order: 25,
       permission: 'qms:read',
       source: 'plugin',
+      suite: 'quality',
     },
   });
 
@@ -3393,6 +3409,7 @@ const registerDefaultModules = () => {
       order: 26,
       permission: 'ehs:read',
       source: 'plugin',
+      suite: 'quality',
     },
   });
 };

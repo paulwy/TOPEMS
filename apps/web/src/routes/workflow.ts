@@ -7,7 +7,7 @@ const lazy = lazyWithRetry;
 
 const FlowWorkflowPage = lazy(() => import('../pages/workflow/FlowWorkflowPage'));
 const WorkflowDashboardPage = lazy(() => import('../pages/workflow/DashboardPage'));
-const WorkflowDesignerPage = lazy(() => import('../pages/templates/WorkflowDesignerPage'));
+const WorkflowDesignerPage = lazy(() => import('../pages/workflow/WorkflowDesignerPage'));
 const FlowInstanceListPage = lazy(() => import('../pages/workflow/FlowInstanceListPage'));
 const FlowInstanceDetailPage = lazy(() => import('../pages/workflow/FlowInstanceDetailPage'));
 const FlowApprovalPage = lazy(() => import('../pages/workflow/FlowApprovalPage'));
@@ -15,11 +15,11 @@ const FlowApprovalDetailPage = lazy(() => import('../pages/workflow/FlowApproval
 const FlowNotificationCenter = lazy(() => import('../pages/workflow/FlowNotificationCenter'));
 const FlowStatisticsPage = lazy(() => import('../pages/workflow/FlowStatisticsPage'));
 const FlowVersionHistoryPage = lazy(() => import('../pages/workflow/FlowVersionHistoryPage'));
-const FlowDefinitionPage = lazy(() => import('../pages/flow/FlowDefinitionPage'));
-const FlowDesignerPage = lazy(() => import('../pages/flow/FlowDesignerPage'));
-const FlowMonitorPage = lazy(() => import('../pages/flow/FlowMonitorPage'));
-const FlowSettingsPage = lazy(() => import('../pages/flow/FlowSettingsPage'));
-const FlowTemplatePage = lazy(() => import('../pages/flow/FlowTemplatePage'));
+const FlowDefinitionPage = lazy(() => import('../pages/workflow/FlowDefinitionPage'));
+const FlowDesignerPage = lazy(() => import('../pages/workflow/FlowDesignerPage'));
+const FlowMonitorPage = lazy(() => import('../pages/workflow/FlowMonitorPage'));
+const FlowSettingsPage = lazy(() => import('../pages/workflow/FlowSettingsPage'));
+const FlowTemplatePage = lazy(() => import('../pages/workflow/FlowTemplatePage'));
 
 export const workflowRoutes: RouteConfig[] = [
   {

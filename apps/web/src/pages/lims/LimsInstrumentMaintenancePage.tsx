@@ -30,8 +30,8 @@ import { Button } from '@mui/material';
 
 import { limsApi } from '@/api/lims';
 import type { Instrument, MaintenanceRecord } from '@/api/lims';
-import { PageHeader } from '@/components/templates/PageHeader';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { logger } from '@/utils/logger';
 import { useAppStore } from '@/store';
 
@@ -424,37 +424,28 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
     );
   }
 
-  return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #f8fafc 0%, grey.100 100%)',
-      }}
-    >
-      <PageHeader
-        title='仪器维护记录'
-        subtitle='Instrument Maintenance'
-        pageIcon={<Wrench style={{ width: 20, height: 20 }} />}
-        pageColor='linear-gradient(135deg, #14B8A6, #0D9488)'
-        breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: 'LIMS' },
-          { label: '仪器管理' },
-          { label: '维护记录' },
-        ]}
-        backButton={{ onClick: () => navigate('/lims') }}
-        actions={[
-          {
-            label: '添加维护记录',
-            icon: <Plus style={{ width: 18, height: 18 }} />,
-            variant: 'contained',
-            color: 'primary',
-            onClick: () => setShowAddModal(true),
-          },
-        ]}
-      />
+  const headerActions = [
+    {
+      label: '添加维护记录',
+      icon: <Plus style={{ width: 18, height: 18 }} />,
+      variant: 'contained' as const,
+      color: 'primary' as const,
+      onClick: () => setShowAddModal(true),
+    },
+  ];
 
-      <main style={{ maxWidth: 1280, margin: '0 auto', padding: '32px 16px' }}>
+  return (
+    <PageContainer
+      title='仪器维护记录'
+      subtitle='Instrument Maintenance'
+      headerProps={{
+        pageIcon: <Wrench style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #14B8A6, #0D9488)',
+        backButton: { onClick: () => navigate('/lims') },
+        actions: headerActions,
+      }}
+      maxWidth='xl'
+    >
         <Box
           sx={{
             display: 'grid',
@@ -715,7 +706,6 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
             </Card>
           </Box>
         </Box>
-      </main>
 
       <Dialog
         open={showAddModal}
@@ -962,7 +952,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </div>
+    </PageContainer>
   );
 };
 

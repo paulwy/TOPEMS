@@ -42,16 +42,6 @@ export type {
   DashboardTemplateProps,
 } from './DashboardTemplate';
 
-export { EmptyState } from './EmptyState';
-export type { EmptyStateProps, EmptyStateAction, EmptyStateType } from './EmptyState';
-export {
-  NoDataEmptyState,
-  SearchEmptyState,
-  FilterEmptyState,
-  FolderEmptyState,
-  ErrorEmptyState,
-} from './EmptyState';
-
 export { TreePageTemplate } from './TreePageTemplate';
 export type {
   TreeNode,

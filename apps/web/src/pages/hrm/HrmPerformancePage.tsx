@@ -3,6 +3,7 @@ import { apiLogger } from '@/utils/logger';
 import { Award, Target, BarChart3, CheckCircle, Clock, TrendingUp } from 'lucide-react';
 import { useNotification } from '@/hooks/useNotification';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
+import { PageContainer } from '@/components/common';
 import {
   performanceReviewApi,
   performanceGoalApi,
@@ -399,7 +400,8 @@ const HrmPerformancePage: React.FC = () => {
   })();
 
   return (
-    <StatsPageTemplate
+    <PageContainer maxWidth='xl'>
+      <StatsPageTemplate
       title='绩效管理'
       subtitle='管理员工绩效评估、目标设定和绩效考核'
       statCards={statCards}
@@ -427,7 +429,8 @@ const HrmPerformancePage: React.FC = () => {
       showStatCards={activeTab === 'rankings'}
       showCharts={activeTab === 'rankings'}
       showTables={true}
-    />
+      />
+    </PageContainer>
   );
 };
 

@@ -17,7 +17,7 @@ import type {
 import { crmApi } from '@/api/crm';
 import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
-import { DataExport, ActionButton, FormField, Dialog, StatusBadge } from '@/components/common';
+import {DataExport, ActionButton, FormField, Dialog, StatusBadge, PageContainer} from '@/components/common';
 import {
   Plus,
   Edit,
@@ -328,6 +328,7 @@ const OpportunityManagementPage: React.FC = () => {
   );
 
   return (
+    <PageContainer title='商机管理' subtitle='管理商机信息，跟踪销售机会和成交进度'>
     <>
       <Box
         sx={{
@@ -546,8 +547,8 @@ const OpportunityManagementPage: React.FC = () => {
       </Card>
 
       <ListPageTemplate<Opportunity>
-        title='商机管理'
-        subtitle='管理商机信息，跟踪销售机会和成交进度'
+        title=''
+        subtitle=''
         backButton={{
           href: '/dashboard',
         }}
@@ -767,6 +768,7 @@ const OpportunityManagementPage: React.FC = () => {
         )}
       </Dialog>
     </>
+    </PageContainer>
   );
 };
 

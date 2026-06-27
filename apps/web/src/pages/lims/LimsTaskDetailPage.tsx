@@ -34,6 +34,7 @@ import type { InspectionTask, InspectionRecord, InspectionProcess } from '@/api/
 import { apiLogger } from '@/utils/logger';
 import { useAppStore } from '@/store';
 import { DetailPageTemplate, type SectionConfig } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 
 interface TaskRecord extends InspectionRecord {
   step_name: string;
@@ -424,48 +425,49 @@ const LimsTaskDetailPage: React.FC = () => {
   const isTaskCompleted = task.status === 'completed' || task.status === '已完成';
 
   return (
-    <DetailPageTemplate
-      title='检验任务详情'
-      subtitle='Inspection Task Detail'
-      breadcrumbs={[
-        { label: '首页', href: '/dashboard' },
-        { label: 'LIMS', href: '/lims' },
-        { label: '任务详情' },
-      ]}
-      backHref='/lims'
-      loading={loading}
-      infoCard={{
-        avatar: <ClipboardCheck sx={{ fontSize: 40, color: 'secondary.dark' }} />,
-        title: task.task_no || task.id,
-        subtitle: task.sample_name || '未关联样品',
-        tags: [task.status],
-        stats: [
-          { label: '当前步骤', value: `${completedSteps}/${totalSteps}` },
-          { label: '完成率', value: `${Math.round(progressPercent)}%` },
-        ],
-      }}
-      sidebar={sidebarContent}
-      sections={sections}
-      actions={
-        isTaskCompleted
-          ? []
-          : [
-              {
-                label: '添加记录',
-                icon: <Plus style={{ width: 18, height: 18 }} />,
-                onClick: () => setShowRecordModal(true),
-                variant: 'outlined',
-              },
-              {
-                label: '完成任务',
-                icon: <Play style={{ width: 18, height: 18 }} />,
-                onClick: () => setShowCompleteModal(true),
-                variant: 'contained',
-                color: 'success',
-              },
-            ]
-      }
-    >
+    <PageContainer title='检验任务详情' subtitle='Inspection Task Detail'>
+      <DetailPageTemplate
+        title=''
+        subtitle=''
+        breadcrumbs={[
+          { label: '首页', href: '/dashboard' },
+          { label: 'LIMS', href: '/lims' },
+          { label: '任务详情' },
+        ]}
+        backHref='/lims'
+        loading={loading}
+        infoCard={{
+          avatar: <ClipboardCheck sx={{ fontSize: 40, color: 'secondary.dark' }} />,
+          title: task.task_no || task.id,
+          subtitle: task.sample_name || '未关联样品',
+          tags: [task.status],
+          stats: [
+            { label: '当前步骤', value: `${completedSteps}/${totalSteps}` },
+            { label: '完成率', value: `${Math.round(progressPercent)}%` },
+          ],
+        }}
+        sidebar={sidebarContent}
+        sections={sections}
+        actions={
+          isTaskCompleted
+            ? []
+            : [
+                {
+                  label: '添加记录',
+                  icon: <Plus style={{ width: 18, height: 18 }} />,
+                  onClick: () => setShowRecordModal(true),
+                  variant: 'outlined',
+                },
+                {
+                  label: '完成任务',
+                  icon: <Play style={{ width: 18, height: 18 }} />,
+                  onClick: () => setShowCompleteModal(true),
+                  variant: 'contained',
+                  color: 'success',
+                },
+              ]
+        }
+      >
       <Dialog
         open={showRecordModal}
         onClose={() => setShowRecordModal(false)}
@@ -594,7 +596,8 @@ const LimsTaskDetailPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </DetailPageTemplate>
+      </DetailPageTemplate>
+    </PageContainer>
   );
 };
 

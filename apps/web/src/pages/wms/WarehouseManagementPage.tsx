@@ -22,7 +22,7 @@ import {
   type RowAction,
   type FilterConfig,
 } from '@/components/templates';
-import { ConfirmDialog } from '@/components/common';
+import { ConfirmDialog, PageContainer } from '@/components/common';
 
 const WarehouseManagementPage: React.FC = () => {
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
@@ -256,10 +256,13 @@ const WarehouseManagementPage: React.FC = () => {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <>
+    <PageContainer
+      title='仓库管理'
+      subtitle='管理仓库信息,包括仓库名称、编码、地址、负责人等'
+    >
       <ListPageTemplate
-        title='仓库管理'
-        subtitle='管理仓库信息,包括仓库名称、编码、地址、负责人等'
+        title=''
+        subtitle=''
         columns={columns}
         data={warehouses}
         loading={loading}
@@ -502,7 +505,7 @@ const WarehouseManagementPage: React.FC = () => {
         message='确定要删除这个仓库吗？'
         danger
       />
-    </>
+    </PageContainer>
   );
 };
 

@@ -70,7 +70,7 @@ import {
 } from '@/components/templates';
 import { FilterBar, type FilterConfig } from '@/components/mui/FilterBar';
 import { AIHelperButton, AICodeGenerator, AIDataCompleter, AIFormValidator } from '@/components/ai';
-import { ImageUpload, DataExport } from '@/components/common';
+import { ImageUpload, DataExport, PageContainer } from '@/components/common';
 import type { CompletionItem as AICompletionItem } from '@/types/ai';
 
 type ViewMode = 'list' | 'tree';
@@ -807,7 +807,7 @@ const HrmEmployeePage: React.FC = () => {
   );
 
   return (
-    <Box sx={{ p: { xs: 2, md: 3 } }}>
+    <PageContainer padding={false} maxWidth={false}>
       {/* 面包屑导航 */}
       <Box sx={{ mb: 2 }}>
         <Typography
@@ -1311,7 +1311,7 @@ const HrmEmployeePage: React.FC = () => {
         message='确定要删除这个员工吗？'
         danger
       />
-    </Box>
+    </PageContainer>
   );
 };
 

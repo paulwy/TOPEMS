@@ -17,6 +17,7 @@ import {
   Settings,
   AlertCircle,
 } from 'lucide-react';
+import { PageContainer } from '@/components/common';
 import {
   Box,
   Typography,
@@ -568,74 +569,33 @@ const DictManagementPage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'slate.50' }}>
-      <Box
-        sx={{
-          bgcolor: 'background.paper',
-          boxShadow: 1,
-          borderBottom: 1,
-          borderColor: 'divider',
-        }}
-      >
-        <Box sx={{ maxWidth: 1400, mx: 'auto', px: 2, py: 3 }}>
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <ActionButton
-                label='返回'
-                icon={<ChevronLeft size={20} />}
-                variant='text'
-                onClick={() => navigate('/erp/dashboard')}
-              />
-              <Box>
-                <Typography
-                  variant='h5'
-                  sx={{
-                    fontWeight: 'bold',
-                    color: 'text.primary',
-                    display: 'flex',
-                    alignItems: 'center',
-                  }}
-                >
-                  <Book sx={{ width: 28, height: 28, mr: 1.5, color: 'indigo.600' }} />
-                  数据字典管理
-                </Typography>
-                <Typography variant='body2' sx={{ mt: 0.5, color: 'text.secondary' }}>
-                  字典类型管理、字典项维护
-                </Typography>
-              </Box>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Button
-                variant='outlined'
-                size='small'
-                startIcon={<RefreshCw size={16} />}
-                onClick={loadDictTypes}
-              >
-                刷新
-              </Button>
-              <Button
-                variant='contained'
-                size='small'
-                startIcon={<Plus size={16} />}
-                onClick={() => {
-                  resetTypeForm();
-                  setShowTypeModal(true);
-                }}
-              >
-                新增字典
-              </Button>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-
-      <Box sx={{ maxWidth: 1400, mx: 'auto', px: 2, py: 3 }}>
+    <PageContainer
+      title='数据字典管理'
+      subtitle='字典类型管理、字典项维护'
+      maxWidth='xl'
+      headerProps={{
+        backButton: {
+          onClick: () => navigate('/erp/dashboard'),
+        },
+        actions: [
+          {
+            label: '刷新',
+            icon: <RefreshCw size={16} />,
+            onClick: loadDictTypes,
+            variant: 'outlined',
+          },
+          {
+            label: '新增字典',
+            icon: <Plus size={16} />,
+            onClick: () => {
+              resetTypeForm();
+              setShowTypeModal(true);
+            },
+            variant: 'contained',
+          },
+        ],
+      }}
+    >
         <Box
           sx={{
             display: 'grid',
@@ -991,7 +951,6 @@ const DictManagementPage: React.FC = () => {
             )}
           </Box>
         </Box>
-      </Box>
 
       <Dialog
         open={showTypeModal}
@@ -1183,7 +1142,7 @@ const DictManagementPage: React.FC = () => {
         message='确定要删除该字典项吗？此操作不可撤销。'
         danger
       />
-    </Box>
+    </PageContainer>
   );
 };
 

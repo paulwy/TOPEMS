@@ -9,9 +9,9 @@ const AuditLogPage = lazy(() => import('../pages/admin/AuditLogPage'));
 const SystemManagementPage = lazy(() => import('../pages/admin/SystemManagementPage'));
 const DictionaryManagementPage = lazy(() => import('../pages/admin/DictionaryManagementPage'));
 const DatabaseStructurePage = lazy(() => import('../pages/admin/DatabaseStructurePage'));
-const MigrationAdminPage = lazy(() => import('../pages/system/MigrationAdminPage'));
+const MigrationAdminPage = lazy(() => import('../pages/admin/MigrationAdminPage'));
 const ConfigDebugPage = lazy(() => import('../pages/admin/ConfigDebugPage'));
-const PluginMarketplacePage = lazy(() => import('../pages/plugin/PluginMarketplacePage'));
+const PluginMarketplacePage = lazy(() => import('../pages/shared/PluginMarketplacePage'));
 const AccountManagementPage = lazy(() => import('../pages/admin/AccountManagementPage'));
 const BankAccountManagementPage = lazy(() => import('../pages/admin/BankAccountManagementPage'));
 

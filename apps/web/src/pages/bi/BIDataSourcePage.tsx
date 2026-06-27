@@ -22,6 +22,7 @@ import {
   type RowAction,
   type FilterConfig,
 } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import {
   listDataSources,
   deleteDataSource,
@@ -338,9 +339,10 @@ const BIDataSourcePage = () => {
   );
 
   return (
-    <ListPageTemplate<DataSource>
-      title='数据源管理'
-      subtitle='配置和管理BI数据源连接'
+    <PageContainer title='数据源管理' subtitle='配置和管理BI数据源连接'>
+      <ListPageTemplate<DataSource>
+        title=''
+        subtitle=''
       columns={columns}
       data={datasources}
       loading={loading}
@@ -364,7 +366,8 @@ const BIDataSourcePage = () => {
           onClick: () => logger.info('Add datasource'),
         },
       ]}
-    />
+      />
+    </PageContainer>
   );
 };
 

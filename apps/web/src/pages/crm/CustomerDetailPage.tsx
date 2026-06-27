@@ -23,6 +23,7 @@ import { useNotification } from '@/hooks/useNotification';
 import type { Customer } from '@/api/crm';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 
 const CustomerDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -654,16 +655,18 @@ const CustomerDetailPage: React.FC = () => {
   const sections = useMemo<SectionConfig[]>(() => [footerSection], [footerSection]);
 
   return (
-    <DetailPageTemplate
-      title='客户详情'
-      subtitle='查看和编辑客户档案信息'
-      backHref='/crm/customers'
-      loading={loading}
-      onEdit={() => {}}
-      infoCard={infoCard}
-      tabs={tabs}
-      sections={sections}
-    />
+    <PageContainer title='客户详情' subtitle='查看和编辑客户档案信息'>
+      <DetailPageTemplate
+        title=''
+        subtitle=''
+        backHref='/crm/customers'
+        loading={loading}
+        onEdit={() => {}}
+        infoCard={infoCard}
+        tabs={tabs}
+        sections={sections}
+      />
+    </PageContainer>
   );
 };
 

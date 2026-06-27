@@ -27,6 +27,7 @@ import {
   Folder,
 } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type FilterConfig } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
 import { useAppStore } from '@/store';
 import type { RsStatistics } from '@/api/rs';
@@ -318,9 +319,9 @@ const RsDocPage: React.FC = () => {
   ];
 
   return (
-    <Box sx={{ bgcolor: 'grey.100', minHeight: '100vh', py: 3 }}>
+    <PageContainer title='文档管理'>
       <ListPageTemplate
-        title='文档管理'
+        title=''
         columns={columns}
         data={paginatedDocs}
         loading={loading}
@@ -531,7 +532,7 @@ const RsDocPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };
 

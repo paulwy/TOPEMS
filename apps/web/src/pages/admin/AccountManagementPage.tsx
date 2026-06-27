@@ -22,6 +22,7 @@ import {
   Building2,
 } from 'lucide-react';
 import { ListPageTemplate, ColumnDef, RowAction } from '@/components/templates/ListPageTemplate';
+import { PageContainer } from '@/components/common';
 import {
   useAccounts,
   useCreateAccount,
@@ -292,7 +293,7 @@ export default function AccountManagementPage() {
   }, [accountsData]);
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
+    <PageContainer title='会计科目管理' subtitle='管理企业会计科目体系，支持多级科目结构'>
       {/* 统计卡片 */}
       <Box sx={{ p: 3, maxWidth: 1280, mx: 'auto' }}>
         <Box
@@ -331,8 +332,8 @@ export default function AccountManagementPage() {
       </Box>
 
       <ListPageTemplate
-        title='会计科目管理'
-        subtitle='管理企业会计科目体系，支持多级科目结构'
+        title=''
+        subtitle=''
         columns={columns}
         data={filteredAccounts}
         loading={isLoading}
@@ -437,7 +438,7 @@ export default function AccountManagementPage() {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 }
 

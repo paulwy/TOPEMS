@@ -45,7 +45,7 @@ import { FormField } from '@/components/common/FormField';
 import { FormSelect } from '@/components/common/FormSelect';
 import { StatusBadge } from '@/components/common/StatusBadge';
 import { Dialog } from '@/components/common/Dialog';
-import { FileUpload } from '@/components/common';
+import { FileUpload, PageContainer } from '@/components/common';
 
 const contractTypes = [
   { value: 'labor', label: '劳动合同' },
@@ -648,7 +648,7 @@ export default function ContractManagementPage() {
   );
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
+    <PageContainer padding={false} maxWidth={false}>
       <Snackbar
         open={!!notification}
         autoHideDuration={3000}
@@ -1325,6 +1325,6 @@ export default function ContractManagementPage() {
           />
         </Stack>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 }

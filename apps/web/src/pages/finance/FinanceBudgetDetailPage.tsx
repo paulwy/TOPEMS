@@ -8,6 +8,7 @@ import { financeApi } from '@/api/finance';
 import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 
 interface BudgetItem {
   id: string;
@@ -390,10 +391,10 @@ const FinanceBudgetDetailPage: React.FC = () => {
   );
 
   return (
-    <>
+    <PageContainer title='预算详情' subtitle='查看和管理预算执行情况'>
       <DetailPageTemplate
-        title='预算详情'
-        subtitle='查看和管理预算执行情况'
+        title=''
+        subtitle=''
         backHref='/finance/budget'
         loading={loading}
         error={errorMessage}
@@ -448,7 +449,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
           <Button onClick={() => setShowAnalysis(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

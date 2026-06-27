@@ -30,6 +30,7 @@ import {
   type ChartCard,
   type QuickAction,
 } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import {
   voucherApi,
   receivablePayableApi,
@@ -449,21 +450,28 @@ const FinanceDashboardPage: React.FC = () => {
   );
 
   return (
-    <DashboardTemplate
+    <PageContainer
       title='财务概览'
-      breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '财务' }]}
-      stats={stats}
-      charts={charts}
-      recentItems={recentItems}
-      recentTitle='最近凭证'
-      quickActions={quickActions}
-      quickActionsTitle='快捷操作'
-      loading={loading}
-      onRefresh={() => {
-        setLoading(true);
-        Promise.all([loadStats(), loadRecentVouchers(), loadFinancialData()]).finally(() => setLoading(false));
-      }}
-    />
+      padding={false}
+      maxWidth={false}
+    >
+      <DashboardTemplate
+        title=''
+        subtitle=''
+        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '财务' }]}
+        stats={stats}
+        charts={charts}
+        recentItems={recentItems}
+        recentTitle='最近凭证'
+        quickActions={quickActions}
+        quickActionsTitle='快捷操作'
+        loading={loading}
+        onRefresh={() => {
+          setLoading(true);
+          Promise.all([loadStats(), loadRecentVouchers(), loadFinancialData()]).finally(() => setLoading(false));
+        }}
+      />
+    </PageContainer>
   );
 };
 

@@ -12,6 +12,7 @@ import {
 import { Button } from '@mui/material';
 import { apiLogger } from '@/utils/logger';
 import { Plus, Eye, Clock } from 'lucide-react';
+import { PageContainer } from '@/components/common';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import type { RowAction, FilterConfig } from '@/components/templates';
 import { pdmApi } from '@/api/pdm';
@@ -255,10 +256,13 @@ const PdmFormulaPage: React.FC = () => {
   );
 
   return (
-    <>
+    <PageContainer
+      title='配方管理'
+      subtitle='Production Formula'
+    >
       <ListPageTemplate<ProductionFormula>
-        title='配方管理'
-        subtitle='Production Formula'
+        title=''
+        subtitle=''
         backButton={{ href: '/dashboard' }}
         columns={columns}
         data={filteredFormulas}
@@ -439,7 +443,7 @@ const PdmFormulaPage: React.FC = () => {
           <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

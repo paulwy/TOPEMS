@@ -7,6 +7,7 @@ import { srmApi, type SupplierContract } from '@/api/srm';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { PageContainer } from '@/components/common';
 
 const STATUS_OPTIONS = [
   { label: '全部', value: '' },
@@ -280,10 +281,13 @@ const SrmContractPage: React.FC = () => {
   );
 
   return (
-    <>
+    <PageContainer
+      title='合同管理'
+      subtitle='管理供应商合同、跟踪合同状态、合同归档'
+    >
       <ListPageTemplate
-        title='合同管理'
-        subtitle='管理供应商合同、跟踪合同状态、合同归档'
+        title=''
+        subtitle=''
         breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '供应商关系', href: '/srm' }, { label: '合同管理' }]}
         columns={columns}
         data={contracts}
@@ -340,7 +344,7 @@ const SrmContractPage: React.FC = () => {
         message={`确定要删除合同 "${selectedContract?.title}" 吗？此操作不可恢复。`}
         danger
       />
-    </>
+    </PageContainer>
   );
 };
 

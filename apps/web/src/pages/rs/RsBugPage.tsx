@@ -21,6 +21,7 @@ import { Button } from '@mui/material';
 import { Plus, Eye, Edit, Bug as BugIcon, User, CheckCircle } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import type { RowAction, FilterConfig } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { rsApi } from '@/api/rs';
 import { useAppStore } from '@/store';
 import type { Bug, CreateBugRequest, UpdateBugRequest } from '@/api/rs';
@@ -389,10 +390,10 @@ const RsBugPage: React.FC = () => {
   );
 
   return (
-    <>
+    <PageContainer title='缺陷管理' subtitle='管理项目缺陷和 Bug 追踪'>
       <ListPageTemplate<Bug>
-        title='缺陷管理'
-        subtitle='管理项目缺陷和 Bug 追踪'
+        title=''
+        subtitle=''
         backButton={{
           href: '/dashboard',
         }}
@@ -575,7 +576,7 @@ const RsBugPage: React.FC = () => {
           <Button onClick={() => setDetailDialogOpen(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </>
+    </PageContainer>
   );
 };
 

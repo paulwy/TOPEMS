@@ -39,6 +39,7 @@ import {
   type FilterConfig,
   type RowAction,
 } from '@/components/templates';
+import { PageContainer } from '@/components/common';
 import { qmsApi, type QualityCheck, type CreateQualityCheckRequest } from '@/api/qms';
 import { useAppStore } from '@/store';
 
@@ -760,15 +761,10 @@ const QmsInspectionPage: React.FC = () => {
   }
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, primary.light 0%, #f8fafc 100%)',
-      }}
-    >
+    <PageContainer title='质量检验' subtitle='Quality Inspection'>
       <ListPageTemplate
-        title='质量检验'
-        subtitle='Quality Inspection'
+        title=''
+        subtitle=''
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
           { label: 'QMS' },
@@ -1294,7 +1290,7 @@ const QmsInspectionPage: React.FC = () => {
           <Button onClick={() => setShowDetailModal(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </PageContainer>
   );
 };
 
