@@ -1,0 +1,244 @@
+{/* Typography.mdx — 排版系统文档 */}
+import { Meta } from '@storybook/addon-docs';
+import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Divider, Stack, Chip } from '@mui/material';
+import { designTokens } from '@topems/tokens';
+
+<Meta title="Design System/Typography" />
+
+# 排版系统
+
+TOPEMS 排版系统基于 **Inter + Noto Sans SC** 字体栈，提供从 h1 到 caption 的完整排版层级，所有排版参数源自 `@topems/tokens`。
+
+## 字体族
+
+<Box sx={{ p: 3, borderRadius: 2, border: '1px solid', borderColor: 'divider', mb: 3 }}>
+  <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>fontFamily</Typography>
+  <Typography sx={{ fontFamily: designTokens.typography.fontFamily, fontSize: '1.5rem' }}>
+    Inter + Noto Sans SC
+  </Typography>
+  <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'text.secondary', display: 'block', mt: 1 }}>
+    "{designTokens.typography.fontFamily}"
+  </Typography>
+</Box>
+
+## 标题层级
+
+import React from 'react';
+
+{/* 标题样例组件 */}
+const HeadingSpecimen = ({ variant, tokenKey }) => {
+  const token = designTokens.typography[tokenKey];
+  return (
+    <Paper sx={{ p: 2, mb: 2, display: 'flex', alignItems: 'center', gap: 3, flexWrap: 'wrap' }}>
+      <Box sx={{ flex: '1 1 300px' }}>
+        <Typography variant={variant} sx={{ mb: 0 }}>
+          {tokenKey === 'h1' ? '主标题 Heading 1' : tokenKey === 'h2' ? '区域标题 Heading 2' : tokenKey === 'h3' ? '卡片标题 Heading 3' : tokenKey === 'h4' ? '子区块标题 Heading 4' : tokenKey === 'h5' ? '小节标题 Heading 5' : '标签/分类标题 Heading 6'}
+        </Typography>
+      </Box>
+      <Box sx={{ flex: '0 0 auto', display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+        <Chip label={`fontSize: ${token.fontSize}`} size="small" variant="outlined" />
+        <Chip label={`fontWeight: ${token.fontWeight}`} size="small" variant="outlined" />
+        <Chip label={`lineHeight: ${token.lineHeight}`} size="small" variant="outlined" />
+        {token.letterSpacing && (
+          <Chip label={`letterSpacing: ${token.letterSpacing}`} size="small" variant="outlined" />
+        )}
+      </Box>
+    </Paper>
+  );
+};
+
+<HeadingSpecimen variant="h1" tokenKey="h1" />
+<HeadingSpecimen variant="h2" tokenKey="h2" />
+<HeadingSpecimen variant="h3" tokenKey="h3" />
+<HeadingSpecimen variant="h4" tokenKey="h4" />
+<HeadingSpecimen variant="h5" tokenKey="h5" />
+<HeadingSpecimen variant="h6" tokenKey="h6" />
+
+## 正文样式
+
+{/* 正文样例组件 */}
+const BodySpecimen = ({ variant, tokenKey, label, sampleText }) => {
+  const token = designTokens.typography[tokenKey];
+  return (
+    <Paper sx={{ p: 2, mb: 2, display: 'flex', alignItems: 'flex-start', gap: 3, flexWrap: 'wrap' }}>
+      <Box sx={{ flex: '1 1 300px' }}>
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 0.5, fontWeight: 600 }}>{label}</Typography>
+        <Typography variant={variant}>{sampleText}</Typography>
+      </Box>
+      <Box sx={{ flex: '0 0 auto', display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+        <Chip label={`fontSize: ${token.fontSize}`} size="small" variant="outlined" />
+        <Chip label={`fontWeight: ${token.fontWeight}`} size="small" variant="outlined" />
+        <Chip label={`lineHeight: ${token.lineHeight}`} size="small" variant="outlined" />
+        {token.letterSpacing && (
+          <Chip label={`letterSpacing: ${token.letterSpacing}`} size="small" variant="outlined" />
+        )}
+      </Box>
+    </Paper>
+  );
+};
+
+<BodySpecimen variant="body1" tokenKey="body1" label="Body 1（默认正文）" sampleText="这是一段默认正文文本，用于页面主要内容区域。TOPEMS 设计系统遵循单一数据源原则，所有设计值均源自统一的令牌文件。" />
+<BodySpecimen variant="body2" tokenKey="body2" label="Body 2（次要正文）" sampleText="这是一段次要正文文本，常用于表格内容、列表项和辅助说明。" />
+<BodySpecimen variant="caption" tokenKey="caption" label="Caption（辅助说明）" sampleText="辅助说明文本，用于标签、时间戳、脚注等场景。" />
+<BodySpecimen variant="button" tokenKey="button" label="Button（按钮文本）" sampleText="这是一段按钮样式的文本示例" />
+<BodySpecimen variant="overline" tokenKey="overline" label="Overline（大号标签）" sampleText="大号标签文本" />
+
+## 字号对照表
+
+<Box sx={{ mb: 4 }}>
+  <Typography variant="h6" sx={{ mb: 2 }}>字号梯度</Typography>
+  <TableContainer>
+    <Table size="small">
+      <TableHead>
+        <TableRow>
+          <TableCell>Token</TableCell>
+          <TableCell>值</TableCell>
+          <TableCell>等效 px (16px base)</TableCell>
+          <TableCell>预览</TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {Object.entries(designTokens.typography.fontSize).map(([key, value]) => (
+          <TableRow key={key}>
+            <TableCell sx={{ fontFamily: 'monospace', fontSize: '0.8125rem' }}>fontSize.{key}</TableCell>
+            <TableCell sx={{ fontFamily: 'monospace' }}>{value}</TableCell>
+            <TableCell>{parseFloat(value) * 16}px</TableCell>
+            <TableCell>
+              <Typography sx={{ fontSize: value }}>
+                Aa 示例文本
+              </Typography>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </TableContainer>
+</Box>
+
+## 字重梯度
+
+<Box sx={{ mb: 4 }}>
+  <Typography variant="h6" sx={{ mb: 2 }}>字重梯度</Typography>
+  <Stack spacing={1}>
+    {Object.entries(designTokens.typography.fontWeight).map(([key, value]) => (
+      <Box key={key} sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 0.5 }}>
+        <Chip label={`fontWeight.${key}`} size="small" sx={{ minWidth: 120 }} />
+        <Typography sx={{ fontWeight: value, fontSize: '1rem', flex: 1 }}>
+          TOPEMS 设计系统 (weight: {value})
+        </Typography>
+      </Box>
+    ))}
+  </Stack>
+</Box>
+
+## 行高与字间距
+
+<Box sx={{ mb: 4 }}>
+  <Typography variant="h6" sx={{ mb: 2 }}>行高（lineHeight）</Typography>
+  <TableContainer>
+    <Table size="small">
+      <TableHead>
+        <TableRow>
+          <TableCell>Token</TableCell>
+          <TableCell>值</TableCell>
+          <TableCell>用途</TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        <TableRow>
+          <TableCell sx={{ fontFamily: 'monospace' }}>lineHeight.tight</TableCell>
+          <TableCell>{designTokens.typography.lineHeight.tight}</TableCell>
+          <TableCell>大标题（h1、h2）</TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell sx={{ fontFamily: 'monospace' }}>lineHeight.normal</TableCell>
+          <TableCell>{designTokens.typography.lineHeight.normal}</TableCell>
+          <TableCell>正文、列表</TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell sx={{ fontFamily: 'monospace' }}>lineHeight.relaxed</TableCell>
+          <TableCell>{designTokens.typography.lineHeight.relaxed}</TableCell>
+          <TableCell>大段文本、辅助说明</TableCell>
+        </TableRow>
+      </TableBody>
+    </Table>
+  </TableContainer>
+</Box>
+
+<Box sx={{ mb: 4 }}>
+  <Typography variant="h6" sx={{ mb: 2 }}>字间距（letterSpacing）</Typography>
+  <TableContainer>
+    <Table size="small">
+      <TableHead>
+        <TableRow>
+          <TableCell>Token</TableCell>
+          <TableCell>值</TableCell>
+          <TableCell>用途</TableCell>
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        <TableRow>
+          <TableCell sx={{ fontFamily: 'monospace' }}>letterSpacing.tighter</TableCell>
+          <TableCell>{designTokens.typography.letterSpacing.tighter}</TableCell>
+          <TableCell>大标题负间距</TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell sx={{ fontFamily: 'monospace' }}>letterSpacing.tight</TableCell>
+          <TableCell>{designTokens.typography.letterSpacing.tight}</TableCell>
+          <TableCell>h1、h2 标题</TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell sx={{ fontFamily: 'monospace' }}>letterSpacing.normal</TableCell>
+          <TableCell>{designTokens.typography.letterSpacing.normal}</TableCell>
+          <TableCell>正文（默认）</TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell sx={{ fontFamily: 'monospace' }}>letterSpacing.wide</TableCell>
+          <TableCell>{designTokens.typography.letterSpacing.wide}</TableCell>
+          <TableCell>按钮、caption</TableCell>
+        </TableRow>
+        <TableRow>
+          <TableCell sx={{ fontFamily: 'monospace' }}>letterSpacing.wider</TableCell>
+          <TableCell>{designTokens.typography.letterSpacing.wider}</TableCell>
+          <TableCell>大号标签</TableCell>
+        </TableRow>
+      </TableBody>
+    </Table>
+  </TableContainer>
+</Box>
+
+## 语义化排版令牌
+
+`semanticTokens.text` 将基础排版令牌与语义场景结合：
+
+| 语义 | Token 路径 | 基础令牌 | 颜色 |
+|------|-----------|---------|------|
+| 页面主标题 | `semanticTokens.text.heading.1` | h1 | `#1e293b` |
+| 区域标题 | `semanticTokens.text.heading.2` | h2 | `#1e293b` |
+| 卡片标题 | `semanticTokens.text.heading.3` | h3 | `#1e293b` |
+| 子区块标题 | `semanticTokens.text.heading.4` | h4 | `#1e293b` |
+| 小节标题 | `semanticTokens.text.heading.5` | h5 | `#1e293b` |
+| 标签标题 | `semanticTokens.text.heading.6` | h6 | `#64748b` |
+| 默认正文 | `semanticTokens.text.body.default` | body1 | `#1e293b` |
+| 次要正文 | `semanticTokens.text.body.secondary` | body2 | `#64748b` |
+| 辅助说明 | `semanticTokens.text.body.muted` | caption | `#94a3b8` |
+| 按钮文本 | `semanticTokens.text.button` | button | — |
+| 标签 | `semanticTokens.text.caption` | caption | `#94a3b8` |
+| 大号标签 | `semanticTokens.text.overline` | overline | `#64748b` |
+
+## 使用指南
+
+```tsx
+import { designTokens, semanticTokens } from '@topems/tokens';
+
+// 使用基础排版令牌
+const h1Style = designTokens.typography.h1;
+// { fontSize: '2.5rem', fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.025em' }
+
+// 使用语义排版令牌（推荐 — 包含颜色）
+const heading1 = semanticTokens.text.heading['1'];
+// { fontSize: '2.5rem', fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.025em', color: '#1e293b' }
+
+// 在 sx prop 中
+<Typography sx={heading1}>页面标题</Typography>
+```

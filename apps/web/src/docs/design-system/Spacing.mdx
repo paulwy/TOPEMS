@@ -1,0 +1,370 @@
+{/* Spacing.mdx — 间距与布局文档 */}
+import { Meta } from '@storybook/addon-docs';
+import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Stack, Divider, Chip } from '@mui/material';
+import { designTokens, semanticTokens } from '@topems/tokens';
+
+<Meta title="Design System/Spacing" />
+
+# 间距与布局
+
+TOPEMS 设计系统提供完整的间距、圆角、阴影、断点和层级体系，所有值源自 `@topems/tokens`。此外，`semanticTokens` 提供语义化映射，描述"在做什么"而非"是多少 px"。
+
+import React from 'react';
+
+{/* 间距可视条组件 */}
+const SpacingBar = ({ name, value, color = 'primary' }) => (
+  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1.5 }}>
+    <Chip label={name} size="small" sx={{ minWidth: 56 }} color={color === 'primary' ? 'primary' : 'secondary'} />
+    <Box sx={{ flex: 1 }}>
+      <Box sx={{
+        height: 32,
+        width: `${value}px`,
+        maxWidth: '100%',
+        backgroundColor: color === 'primary' ? designTokens.colors.primary.main : designTokens.colors.secondary.main,
+        borderRadius: designTokens.borderRadius.sm,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color: '#ffffff',
+        fontSize: '0.75rem',
+        fontFamily: 'monospace',
+        fontWeight: 600,
+        minWidth: 28,
+      }}>
+        {value}px
+      </Box>
+    </Box>
+    <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'text.secondary', flexShrink: 0 }}>
+      {value === 0 ? '0' : `${value / 8}u`}
+    </Typography>
+  </Box>
+);
+
+{/* 圆角可视组件 */}
+const RadiusBox = ({ name, value }) => (
+  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+    <Box sx={{
+      width: 64,
+      height: 64,
+      borderRadius: value === 9999 ? '50%' : `${value}px`,
+      border: `2px solid ${designTokens.colors.primary.main}`,
+      backgroundColor: designTokens.colors.primary[50],
+    }} />
+    <Typography variant="caption" fontWeight="bold">{name}</Typography>
+    <Typography variant="caption" sx={{ fontFamily: 'monospace', color: 'text.secondary' }}>
+      {value === 9999 ? '9999 (full)' : `${value}px`}
+    </Typography>
+  </Box>
+);
+
+{/* 阴影可视组件 */}
+const ShadowBox = ({ name, value }) => (
+  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+    <Box sx={{
+      width: 80,
+      height: 56,
+      borderRadius: designTokens.borderRadius.lg,
+      boxShadow: value,
+      backgroundColor: '#ffffff',
+      border: `1px solid ${designTokens.colors.border.light}`,
+    }} />
+    <Typography variant="caption" fontWeight="bold">{name}</Typography>
+  </Box>
+);
+
+---
+
+## 间距（Spacing）
+
+### 基础间距梯度
+
+<Box sx={{ mb: 1 }}>
+  <Typography variant="h6" sx={{ mb: 2 }}>基础间距</Typography>
+  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+    Token 路径：<code>designTokens.spacing</code> — MUI 默认 spacing 系数为 8px，因此 `theme.spacing(1) = 8px`。
+  </Typography>
+</Box>
+<Paper sx={{ p: 3, mb: 4 }}>
+  {Object.entries(designTokens.spacing).map(([key, value]) => (
+    <SpacingBar key={key} name={`spacing.${key}`} value={value as number} />
+  ))}
+</Paper>
+
+### 语义化间距
+
+<Box sx={{ mb: 1 }}>
+  <Typography variant="h6" sx={{ mb: 2 }}>语义化间距</Typography>
+  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+    Token 路径：<code>semanticTokens.space</code> — 描述"在做什么"而非具体像素值。
+  </Typography>
+</Box>
+
+<TableContainer sx={{ mb: 4 }}>
+  <Table size="small">
+    <TableHead>
+      <TableRow>
+        <TableCell>场景</TableCell>
+        <TableCell>Token</TableCell>
+        <TableCell>值</TableCell>
+        <TableCell>说明</TableCell>
+      </TableRow>
+    </TableHead>
+    <TableBody>
+      <TableRow><TableCell rowSpan={3}><strong>页面</strong></TableCell><TableCell sx={{ fontFamily: 'monospace' }}>space.page.horizontal</TableCell><TableCell>{semanticTokens.space.page.horizontal}</TableCell><TableCell>页面水平外边距</TableCell></TableRow>
+      <TableRow><TableCell sx={{ fontFamily: 'monospace' }}>space.page.vertical</TableCell><TableCell>{semanticTokens.space.page.vertical}</TableCell><TableCell>页面垂直外边距</TableCell></TableRow>
+      <TableRow><TableCell sx={{ fontFamily: 'monospace' }}>space.page.sectionGap</TableCell><TableCell>{semanticTokens.space.page.sectionGap}</TableCell><TableCell>页面区块间距</TableCell></TableRow>
+      <TableRow><TableCell rowSpan={4}><strong>卡片</strong></TableCell><TableCell sx={{ fontFamily: 'monospace' }}>space.card.padding</TableCell><TableCell>{semanticTokens.space.card.padding}</TableCell><TableCell>卡片内边距</TableCell></TableRow>
+      <TableRow><TableCell sx={{ fontFamily: 'monospace' }}>space.card.paddingDense</TableCell><TableCell>{semanticTokens.space.card.paddingDense}</TableCell><TableCell>紧凑卡片内边距</TableCell></TableRow>
+      <TableRow><TableCell sx={{ fontFamily: 'monospace' }}>space.card.gap</TableCell><TableCell>{semanticTokens.space.card.gap}</TableCell><TableCell>卡片内部元素间距</TableCell></TableRow>
+      <TableRow><TableCell sx={{ fontFamily: 'monospace' }}>space.card.headerGap</TableCell><TableCell>{semanticTokens.space.card.headerGap}</TableCell><TableCell>卡片标题与内容间距</TableCell></TableRow>
+      <TableRow><TableCell rowSpan={4}><strong>表单</strong></TableCell><TableCell sx={{ fontFamily: 'monospace' }}>space.form.fieldGap</TableCell><TableCell>{semanticTokens.space.form.fieldGap}</TableCell><TableCell>表单字段间距</TableCell></TableRow>
+      <TableRow><TableCell sx={{ fontFamily: 'monospace' }}>space.form.groupGap</TableCell><TableCell>{semanticTokens.space.form.groupGap}</TableCell><TableCell>表单分组间距</TableCell></TableRow>
+      <TableRow><TableCell sx={{ fontFamily: 'monospace' }}>space.form.labelGap</TableCell><TableCell>{semanticTokens.space.form.labelGap}</TableCell><TableCell>标签与输入框间距</TableCell></TableRow>
+      <TableRow><TableCell sx={{ fontFamily: 'monospace' }}>space.form.helperGap</TableCell><TableCell>{semanticTokens.space.form.helperGap}</TableCell><TableCell>输入框与提示文本间距</TableCell></TableRow>
+    </TableBody>
+  </Table>
+</TableContainer>
+
+---
+
+## 圆角（Border Radius）
+
+### 基础圆角梯度
+
+<Box sx={{ mb: 1 }}>
+  <Typography variant="h6" sx={{ mb: 2 }}>基础圆角</Typography>
+  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+    Token 路径：<code>designTokens.borderRadius</code>
+  </Typography>
+</Box>
+<Paper sx={{ p: 3, mb: 4 }}>
+  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, justifyContent: 'flex-start' }}>
+    {Object.entries(designTokens.borderRadius).map(([key, value]) => (
+      <RadiusBox key={key} name={key} value={value as number} />
+    ))}
+  </Box>
+</Paper>
+
+### 语义化圆角
+
+<TableContainer sx={{ mb: 4 }}>
+  <Table size="small">
+    <TableHead>
+      <TableRow>
+        <TableCell>用途</TableCell>
+        <TableCell>Token</TableCell>
+        <TableCell>值</TableCell>
+      </TableRow>
+    </TableHead>
+    <TableBody>
+      <TableRow><TableCell>小元素（Chip、Badge、Tag）</TableCell><TableCell sx={{ fontFamily: 'monospace' }}>radius.pill</TableCell><TableCell>{semanticTokens.radius.pill}px (full)</TableCell></TableRow>
+      <TableRow><TableCell>按钮、输入框</TableCell><TableCell sx={{ fontFamily: 'monospace' }}>radius.input</TableCell><TableCell>{semanticTokens.radius.input}px</TableCell></TableRow>
+      <TableRow><TableCell>卡片容器</TableCell><TableCell sx={{ fontFamily: 'monospace' }}>radius.card</TableCell><TableCell>{semanticTokens.radius.card}px</TableCell></TableRow>
+      <TableRow><TableCell>对话框、弹出层</TableCell><TableCell sx={{ fontFamily: 'monospace' }}>radius.dialog</TableCell><TableCell>{semanticTokens.radius.dialog}px</TableCell></TableRow>
+      <TableRow><TableCell>Tooltip、小 Tag</TableCell><TableCell sx={{ fontFamily: 'monospace' }}>radius.small</TableCell><TableCell>{semanticTokens.radius.small}px</TableCell></TableRow>
+      <TableRow><TableCell>默认</TableCell><TableCell sx={{ fontFamily: 'monospace' }}>radius.default</TableCell><TableCell>{semanticTokens.radius.default}px</TableCell></TableRow>
+    </TableBody>
+  </Table>
+</TableContainer>
+
+---
+
+## 阴影（Shadows）
+
+### 亮色模式阴影
+
+<Box sx={{ mb: 1 }}>
+  <Typography variant="h6" sx={{ mb: 2 }}>阴影层级（亮色模式）</Typography>
+  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+    Token 路径：<code>designTokens.shadows</code>
+  </Typography>
+</Box>
+<Paper sx={{ p: 3, mb: 2 }}>
+  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3, justifyContent: 'flex-start' }}>
+    {Object.entries(designTokens.shadows).map(([key, value]) => (
+      <ShadowBox key={key} name={key} value={value as string} />
+    ))}
+  </Box>
+</Paper>
+
+### 语义化阴影映射
+
+<TableContainer sx={{ mb: 4 }}>
+  <Table size="small">
+    <TableHead>
+      <TableRow>
+        <TableCell>组件层级</TableCell>
+        <TableCell>Token</TableCell>
+        <TableCell>阴影值</TableCell>
+      </TableRow>
+    </TableHead>
+    <TableBody>
+      <TableRow><TableCell>平面内容（卡片）</TableCell><TableCell sx={{ fontFamily: 'monospace' }}>elevation.card</TableCell><TableCell>shadow-sm</TableCell></TableRow>
+      <TableRow><TableCell>可交互卡片悬停</TableCell><TableCell sx={{ fontFamily: 'monospace' }}>elevation.cardHover</TableCell><TableCell>shadow-md</TableCell></TableRow>
+      <TableRow><TableCell>下拉菜单、选择器</TableCell><TableCell sx={{ fontFamily: 'monospace' }}>elevation.dropdown</TableCell><TableCell>shadow-lg</TableCell></TableRow>
+      <TableRow><TableCell>模态对话框</TableCell><TableCell sx={{ fontFamily: 'monospace' }}>elevation.dialog</TableCell><TableCell>shadow-xl</TableCell></TableRow>
+      <TableRow><TableCell>悬浮提示</TableCell><TableCell sx={{ fontFamily: 'monospace' }}>elevation.tooltip</TableCell><TableCell>shadow-sm</TableCell></TableRow>
+      <TableRow><TableCell>命令面板</TableCell><TableCell sx={{ fontFamily: 'monospace' }}>elevation.commandPalette</TableCell><TableCell>shadow-2xl</TableCell></TableRow>
+      <TableRow><TableCell>侧边抽屉</TableCell><TableCell sx={{ fontFamily: 'monospace' }}>elevation.drawer</TableCell><TableCell>shadow-xl</TableCell></TableRow>
+    </TableBody>
+  </Table>
+</TableContainer>
+
+---
+
+## 断点（Breakpoints）
+
+<Box sx={{ mb: 1 }}>
+  <Typography variant="h6" sx={{ mb: 2 }}>响应式断点</Typography>
+  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+    Token 路径：<code>designTokens.breakpoints.values</code>
+  </Typography>
+</Box>
+<TableContainer sx={{ mb: 4 }}>
+  <Table>
+    <TableHead>
+      <TableRow>
+        <TableCell>断点</TableCell>
+        <TableCell>最小宽度</TableCell>
+        <TableCell>典型设备</TableCell>
+      </TableRow>
+    </TableHead>
+    <TableBody>
+      <TableRow>
+        <TableCell><Chip label="xs" size="small" color="primary" /></TableCell>
+        <TableCell sx={{ fontFamily: 'monospace' }}>{designTokens.breakpoints.values.xs}px</TableCell>
+        <TableCell>手机（竖屏）</TableCell>
+      </TableRow>
+      <TableRow>
+        <TableCell><Chip label="sm" size="small" color="primary" /></TableCell>
+        <TableCell sx={{ fontFamily: 'monospace' }}>{designTokens.breakpoints.values.sm}px</TableCell>
+        <TableCell>手机（横屏）/ 小平板</TableCell>
+      </TableRow>
+      <TableRow>
+        <TableCell><Chip label="md" size="small" color="primary" /></TableCell>
+        <TableCell sx={{ fontFamily: 'monospace' }}>{designTokens.breakpoints.values.md}px</TableCell>
+        <TableCell>平板 / 小屏笔记本</TableCell>
+      </TableRow>
+      <TableRow>
+        <TableCell><Chip label="lg" size="small" color="primary" /></TableCell>
+        <TableCell sx={{ fontFamily: 'monospace' }}>{designTokens.breakpoints.values.lg}px</TableCell>
+        <TableCell>桌面显示器</TableCell>
+      </TableRow>
+      <TableRow>
+        <TableCell><Chip label="xl" size="small" color="primary" /></TableCell>
+        <TableCell sx={{ fontFamily: 'monospace' }}>{designTokens.breakpoints.values.xl}px</TableCell>
+        <TableCell>大屏显示器</TableCell>
+      </TableRow>
+    </TableBody>
+  </Table>
+</TableContainer>
+
+---
+
+## Z-index 层级
+
+### 基础层级
+
+<Box sx={{ mb: 1 }}>
+  <Typography variant="h6" sx={{ mb: 2 }}>Z-index 层级</Typography>
+  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+    Token 路径：<code>designTokens.zIndex</code>
+  </Typography>
+</Box>
+<TableContainer sx={{ mb: 4 }}>
+  <Table size="small">
+    <TableHead>
+      <TableRow>
+        <TableCell>组件</TableCell>
+        <TableCell>Token</TableCell>
+        <TableCell>值</TableCell>
+      </TableRow>
+    </TableHead>
+    <TableBody>
+      {Object.entries(designTokens.zIndex).map(([key, value]) => (
+        <TableRow key={key}>
+          <TableCell>{key}</TableCell>
+          <TableCell sx={{ fontFamily: 'monospace' }}>zIndex.{key}</TableCell>
+          <TableCell>{value}</TableCell>
+        </TableRow>
+      ))}
+    </TableBody>
+  </Table>
+</TableContainer>
+
+### 语义化层级
+
+<Box sx={{ mb: 1 }}>
+  <Typography variant="h6" sx={{ mb: 2 }}>语义化层级</Typography>
+  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+    Token 路径：<code>semanticTokens.layer</code> — 按用途排列，推荐在自定义组件中使用。
+  </Typography>
+</Box>
+<TableContainer sx={{ mb: 4 }}>
+  <Table size="small">
+    <TableHead>
+      <TableRow>
+        <TableCell>用途</TableCell>
+        <TableCell>Token</TableCell>
+        <TableCell>值</TableCell>
+      </TableRow>
+    </TableHead>
+    <TableBody>
+      {Object.entries(semanticTokens.layer).map(([key, value]) => (
+        <TableRow key={key}>
+          <TableCell>{key}</TableCell>
+          <TableCell sx={{ fontFamily: 'monospace' }}>layer.{key}</TableCell>
+          <TableCell>{value}</TableCell>
+        </TableRow>
+      ))}
+    </TableBody>
+  </Table>
+</TableContainer>
+
+---
+
+## 动效（Motion）
+
+<Box sx={{ mb: 1 }}>
+  <Typography variant="h6" sx={{ mb: 2 }}>过渡时长</Typography>
+</Box>
+<TableContainer sx={{ mb: 3 }}>
+  <Table size="small">
+    <TableHead>
+      <TableRow>
+        <TableCell>Token</TableCell>
+        <TableCell>值</TableCell>
+        <TableCell>用途</TableCell>
+      </TableRow>
+    </TableHead>
+    <TableBody>
+      <TableRow><TableCell sx={{ fontFamily: 'monospace' }}>duration.instant</TableCell><TableCell>{designTokens.motion.duration.instant}</TableCell><TableCell>即时切换（Tab 切换）</TableCell></TableRow>
+      <TableRow><TableCell sx={{ fontFamily: 'monospace' }}>duration.fast</TableCell><TableCell>{designTokens.motion.duration.fast}</TableCell><TableCell>快速动画（Tooltip 显示）</TableCell></TableRow>
+      <TableRow><TableCell sx={{ fontFamily: 'monospace' }}>duration.normal</TableCell><TableCell>{designTokens.motion.duration.normal}</TableCell><TableCell>标准过渡（hover 效果）</TableCell></TableRow>
+      <TableRow><TableCell sx={{ fontFamily: 'monospace' }}>duration.slow</TableCell><TableCell>{designTokens.motion.duration.slow}</TableCell><TableCell>慢速动画（展开/折叠）</TableCell></TableRow>
+      <TableRow><TableCell sx={{ fontFamily: 'monospace' }}>duration.deliberate</TableCell><TableCell>{designTokens.motion.duration.deliberate}</TableCell><TableCell>刻意动画（对话框进入）</TableCell></TableRow>
+      <TableRow><TableCell sx={{ fontFamily: 'monospace' }}>duration.skeleton</TableCell><TableCell>{designTokens.motion.duration.skeleton}</TableCell><TableCell>骨架屏闪烁循环</TableCell></TableRow>
+    </TableBody>
+  </Table>
+</TableContainer>
+
+<Box sx={{ mb: 1 }}>
+  <Typography variant="h6" sx={{ mb: 2 }}>缓动函数</Typography>
+</Box>
+<TableContainer sx={{ mb: 4 }}>
+  <Table size="small">
+    <TableHead>
+      <TableRow>
+        <TableCell>Token</TableCell>
+        <TableCell>值</TableCell>
+        <TableCell>用途</TableCell>
+      </TableRow>
+    </TableHead>
+    <TableBody>
+      <TableRow><TableCell sx={{ fontFamily: 'monospace' }}>easing.default</TableCell><TableCell sx={{ fontSize: '0.75rem' }}>{designTokens.motion.easing.default}</TableCell><TableCell>标准过渡</TableCell></TableRow>
+      <TableRow><TableCell sx={{ fontFamily: 'monospace' }}>easing.decelerate</TableCell><TableCell sx={{ fontSize: '0.75rem' }}>{designTokens.motion.easing.decelerate}</TableCell><TableCell>进入动画</TableCell></TableRow>
+      <TableRow><TableCell sx={{ fontFamily: 'monospace' }}>easing.accelerate</TableCell><TableCell sx={{ fontSize: '0.75rem' }}>{designTokens.motion.easing.accelerate}</TableCell><TableCell>退出动画</TableCell></TableRow>
+      <TableRow><TableCell sx={{ fontFamily: 'monospace' }}>easing.sharp</TableCell><TableCell sx={{ fontSize: '0.75rem' }}>{designTokens.motion.easing.sharp}</TableCell><TableCell>共享轴动画</TableCell></TableRow>
+    </TableBody>
+  </Table>
+</TableContainer>
