@@ -67,7 +67,6 @@ const FlowWorkflowPage: React.FC = () => {
 
   useEffect(() => {
     loadWorkflows();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
 
   const loadWorkflows = async () => {
@@ -311,7 +310,7 @@ const FlowWorkflowPage: React.FC = () => {
         ),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [navigate]
   );
 

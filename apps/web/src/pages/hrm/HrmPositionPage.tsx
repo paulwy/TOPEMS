@@ -94,7 +94,6 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
   useEffect(() => {
     fetchPositions();
     fetchDepartments();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleAdd = () => {

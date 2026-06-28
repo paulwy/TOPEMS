@@ -11,7 +11,7 @@ import {
   InputLabel,
   Checkbox,
   IconButton,
-  Tooltip,
+  _Tooltip,
   Tabs,
   Tab,
   Chip,
@@ -22,7 +22,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Autocomplete,
+  _Autocomplete,
   Radio,
   RadioGroup,
   FormControlLabel,
@@ -38,16 +38,16 @@ import {
   Eye,
   Save,
   Download,
-  Settings,
+  _Settings,
   Filter,
   BarChart3,
   Table,
   LayoutGrid,
   ChevronDown,
   ChevronUp,
-  FolderOpen,
-  Wand2,
-  RefreshCw,
+  _FolderOpen,
+  _Wand2,
+  _RefreshCw,
 } from 'lucide-react';
 
 export type DataSourceType = 'database' | 'api' | 'excel';
@@ -383,7 +383,7 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
   onSave,
   onExport,
   onPreview,
-  loading = false,
+  _loading = false,
   availableTables = [
     { name: 'orders', label: '订单表' },
     { name: 'users', label: '用户表' },
@@ -396,7 +396,7 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
   ],
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const _isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const [activeTab, setActiveTab] = useState(0);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -1562,7 +1562,7 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
   };
 
   const renderPreviewChart = () => {
-    const chartType = state.layout.chart?.type || 'bar';
+    const _chartType = state.layout.chart?.type || 'bar';
     const xField = state.selectedFields.find((f) => f.fieldId === state.layout.chart?.xAxisField);
     const yFields = (state.layout.chart?.yAxisFields || [])
       .map((id) => state.selectedFields.find((f) => f.fieldId === id))

@@ -59,7 +59,6 @@ const AmapLayer = forwardRef<AmapLayerRef, AmapLayerProps>(
         .catch((error) => {
           logger.error('高德地图加载失败:', error);
         });
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     useEffect(() => {
@@ -68,7 +67,6 @@ const AmapLayer = forwardRef<AmapLayerRef, AmapLayerProps>(
       mapRef.current.plugin(['AMap.Marker'], () => {
         updateMarkers((window as any).AMap, mapRef.current);
       });
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [devicePoints, storageLocations]);
 
     const updateMarkers = (AMap: any, map: any) => {

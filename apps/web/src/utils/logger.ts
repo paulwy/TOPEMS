@@ -3,6 +3,7 @@
  * 用于替代 console.log/error/warn
  * 使用方法：import logger from "@/utils/logger";
  */
+/* eslint-disable no-console */
 
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { PageContainer } from '@/components/common';
 import { CardListTemplate, type CardRenderConfig, type CardAction } from '@/components/templates';
 import { docApi } from '@/api/doc';
-import type { FileMetadata, Folder as FolderType } from '@/api/doc';
+import type { FileMetadata, FileVersion, Folder as FolderType } from '@/api/doc';
 import { logger } from '@/utils/logger';
 import { useAppStore } from '@/store';
 import {
@@ -16,6 +16,10 @@ import {
   Upload,
   ChevronLeft,
   ChevronRight,
+  History,
+  RotateCcw,
+  User,
+  Loader2,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -26,6 +30,10 @@ import {
   DialogContent,
   DialogActions,
   Button,
+  Chip,
+  Stack,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 
 interface DocumentWithFavorite extends FileMetadata {
@@ -52,6 +60,10 @@ const DocumentCenterPage: React.FC = () => {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [versionDoc, setVersionDoc] = useState<DocumentWithFavorite | null>(null);
+  const [versions, setVersions] = useState<FileVersion[]>([]);
+  const [versionsLoading, setVersionsLoading] = useState(false);
 
   const formatFileSize = (bytes: number): string => {
     if (bytes < 1024) return `${bytes} B`;
@@ -272,6 +284,53 @@ const DocumentCenterPage: React.FC = () => {
     }
   };
 
+  const handleOpenVersionHistory = async (doc: DocumentWithFavorite) => {
+    setVersionDoc(doc);
+    setShowVersionHistory(true);
+    setVersionsLoading(true);
+    try {
+      const response = await docApi.getVersions(doc.id);
+      if (response.success && response.data) {
+        setVersions(response.data);
+      } else {
+        setVersions([]);
+      }
+    } catch (err: unknown) {
+      logger.error('加载版本历史失败:', err);
+      setVersions([]);
+    } finally {
+      setVersionsLoading(false);
+    }
+  };
+
+  const handleRestoreVersion = async (doc: DocumentWithFavorite, version: FileVersion) => {
+    try {
+      const response = await docApi.restoreVersion(doc.id, version.version);
+      if (response.success) {
+        addNotification({
+          title: '恢复成功',
+          message: `已恢复到版本 v${version.version}`,
+          type: 'success',
+        });
+        loadData();
+        handleOpenVersionHistory(doc);
+      } else {
+        addNotification({
+          title: '恢复失败',
+          message: response.message || '恢复版本失败',
+          type: 'error',
+        });
+      }
+    } catch (err: unknown) {
+      logger.error('恢复版本失败:', err);
+      addNotification({
+        title: '恢复失败',
+        message: '恢复版本失败',
+        type: 'error',
+      });
+    }
+  };
+
   const filters = [
     {
       id: 'category',
@@ -345,6 +404,13 @@ const DocumentCenterPage: React.FC = () => {
       ),
       onClick: (item: unknown) => handleToggleFavorite((item as DocumentWithFavorite).id),
       color: 'warning',
+      variant: 'text',
+    },
+    {
+      label: '版本历史',
+      icon: <History size={16} />,
+      onClick: (item: unknown) => handleOpenVersionHistory(item as DocumentWithFavorite),
+      color: 'primary',
       variant: 'text',
     },
     {
@@ -592,6 +658,178 @@ const DocumentCenterPage: React.FC = () => {
           >
             {uploading ? '上传中...' : '开始上传'}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* 版本历史对话框 */}
+      <Dialog
+        open={showVersionHistory}
+        onClose={() => setShowVersionHistory(false)}
+        maxWidth='sm'
+        fullWidth
+      >
+        <DialogTitle>
+          <Stack
+            direction='row'
+            spacing={1}
+            sx={{ alignItems: 'center' }}
+          >
+            <History size={20} />
+            <Typography>
+              版本历史 - {versionDoc?.name}
+            </Typography>
+          </Stack>
+        </DialogTitle>
+        <DialogContent dividers>
+          {versionsLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+              <Loader2
+                size={32}
+                className='animate-spin'
+                style={{ color: 'grey.400' }}
+              />
+            </Box>
+          ) : versions.length === 0 ? (
+            <Box sx={{ textAlign: 'center', py: 6 }}>
+              <History
+                size={48}
+                style={{
+                  color: 'grey.300',
+                  marginLeft: 'auto',
+                  marginRight: 'auto',
+                  marginBottom: 8,
+                }}
+              />
+              <Typography sx={{ color: 'grey.500' }}>
+                暂无版本历史记录
+              </Typography>
+              <Typography
+                variant='caption'
+                sx={{ color: 'grey.400', display: 'block', mt: 0.5 }}
+              >
+                每次更新文件后系统将自动记录版本
+              </Typography>
+            </Box>
+          ) : (
+            <Stack spacing={2} sx={{ py: 1 }}>
+              {versions.map((ver, index) => (
+                <Box
+                  key={ver.id}
+                  sx={{
+                    p: 2,
+                    border: 1,
+                    borderColor: index === 0 ? 'primary.main' : 'divider',
+                    borderRadius: 2,
+                    bgcolor: index === 0 ? 'primary.50' : 'transparent',
+                  }}
+                >
+                  <Stack
+                    direction='row'
+                    sx={{ alignItems: 'center', justifyContent: 'space-between' }}
+                  >
+                    <Stack
+                      direction='row'
+                      spacing={1}
+                      sx={{ alignItems: 'center' }}
+                    >
+                      <Typography
+                        variant='body2'
+                        sx={{ fontWeight: 700 }}
+                      >
+                        v{ver.version}
+                      </Typography>
+                      {index === 0 && (
+                        <Chip
+                          label='当前版本'
+                          size='small'
+                          color='primary'
+                          sx={{ height: 20, fontSize: '0.7rem' }}
+                        />
+                      )}
+                    </Stack>
+                    <Stack
+                      direction='row'
+                      spacing={0.5}
+                    >
+                      {index !== 0 && versionDoc && (
+                        <Tooltip title='恢复到此版本'>
+                          <IconButton
+                            size='small'
+                            onClick={() => handleRestoreVersion(versionDoc, ver)}
+                            sx={{ color: 'warning.main' }}
+                          >
+                            <RotateCcw size={16} />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                      {ver.download_url && (
+                        <Tooltip title='下载此版本'>
+                          <IconButton
+                            size='small'
+                            onClick={() => {
+                              if (versionDoc) handleDownload(versionDoc);
+                            }}
+                          >
+                            <Download size={16} />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </Stack>
+                  </Stack>
+                  {ver.change_note && (
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                      sx={{ mt: 1, mb: 0.5 }}
+                    >
+                      {ver.change_note}
+                    </Typography>
+                  )}
+                  <Stack
+                    direction='row'
+                    spacing={2}
+                    sx={{ mt: 0.5 }}
+                  >
+                    <Stack
+                      direction='row'
+                      spacing={0.5}
+                      sx={{ alignItems: 'center' }}
+                    >
+                      <User size={12} style={{ color: 'grey.400' }} />
+                      <Typography
+                        variant='caption'
+                        sx={{ color: 'grey.500' }}
+                      >
+                        {ver.created_by || '系统'}
+                      </Typography>
+                    </Stack>
+                    <Stack
+                      direction='row'
+                      spacing={0.5}
+                      sx={{ alignItems: 'center' }}
+                    >
+                      <Clock size={12} style={{ color: 'grey.400' }} />
+                      <Typography
+                        variant='caption'
+                        sx={{ color: 'grey.500' }}
+                      >
+                        {new Date(ver.created_at).toLocaleString()}
+                      </Typography>
+                    </Stack>
+                    <Typography
+                      variant='caption'
+                      sx={{ color: 'grey.400' }}
+                    >
+                      {formatFileSize(ver.size)}
+                    </Typography>
+                  </Stack>
+                </Box>
+              ))}
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowVersionHistory(false)}>关闭</Button>
         </DialogActions>
       </Dialog>
     </PageContainer>

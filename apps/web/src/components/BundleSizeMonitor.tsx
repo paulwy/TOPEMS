@@ -2,9 +2,9 @@ import React, { useEffect, useState, useCallback } from 'react';
 import {
   Package,
   HardDrive,
-  TrendingUp,
+  _TrendingUp,
   AlertTriangle,
-  CheckCircle,
+  _CheckCircle,
   BarChart3,
   X,
   ChevronDown,
@@ -42,7 +42,7 @@ const formatSize = (bytes: number): string => {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 };
 
-const getTypeColor = (type: BundleEntry['type']): string => {
+const _getTypeColor = (type: BundleEntry['type']): string => {
   const colors: Record<BundleEntry['type'], string> = {
     js: 'text-blue-500',
     css: 'text-purple-500',
@@ -53,7 +53,7 @@ const getTypeColor = (type: BundleEntry['type']): string => {
   return colors[type];
 };
 
-const getTypeLabel = (type: BundleEntry['type']): string => {
+const _getTypeLabel = (type: BundleEntry['type']): string => {
   const labels: Record<BundleEntry['type'], string> = {
     js: 'JavaScript',
     css: 'CSS',

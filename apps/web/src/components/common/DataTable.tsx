@@ -4,7 +4,7 @@
  * 使用TanStack React Table，支持搜索、排序、筛选、分页、选择、导出等功能
  * 增强特性：列配置持久化、行展开功能、虚拟滚动支持、高级筛选、Excel导出
  */
-import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   Box,
   Typography,
@@ -19,7 +19,7 @@ import {
   TableHead,
   TableRow,
   Checkbox,
-  Tooltip,
+  _Tooltip,
   Skeleton,
   Dialog,
   DialogContent,
@@ -39,7 +39,7 @@ import {
   Eye,
   EyeOff,
   RefreshCw,
-  MoreVertical,
+  _MoreVertical,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
@@ -283,7 +283,7 @@ export function DataTable<TData, TValue>({
   searchKey,
   searchPlaceholder = '搜索...',
   showSearch = true,
-  showFilters = true,
+  _showFilters = true,
   showExport = true,
   showSelection = false,
   showCreate = false,
@@ -299,7 +299,7 @@ export function DataTable<TData, TValue>({
   onPageSizeChange,
   onRowClick,
   onSelectionChange,
-  showRefresh = false,
+  _showRefresh = false,
   onRefresh,
   loading = false,
   responsive = true,
@@ -312,15 +312,15 @@ export function DataTable<TData, TValue>({
   columnConfigKey = 'default',
   enableRowExpansion = false,
   expandedRowRender,
-  enableVirtualization = false,
-  rowHeight = 52,
+  _enableVirtualization = false,
+  _rowHeight = 52,
   enableStickyHeader = false,
   showRowNumber = false,
   enableAdvancedFilter = false,
   advancedFilters = [],
   striped = true,
   compact = false,
-  emptyState,
+  _emptyState,
   selectionKey,
   selectedIds = [],
 }: DataTableProps<TData, TValue>) {
@@ -775,7 +775,7 @@ export function DataTable<TData, TValue>({
                   {/* 选择列 */}
                   {showSelection && (
                     <TableCell
-                      scope="col"
+                      scope='col'
                       padding='checkbox'
                       sx={{
                         position: 'sticky',
@@ -787,7 +787,7 @@ export function DataTable<TData, TValue>({
                     >
                       <Checkbox
                         checked={isAllSelected}
-                        onChange={(e) => handleSelectAll()}
+                        onChange={(_e) => handleSelectAll()}
                         indeterminate={hasSelected && !isAllSelected}
                       />
                     </TableCell>
@@ -795,7 +795,7 @@ export function DataTable<TData, TValue>({
                   {/* 行号列 */}
                   {showRowNumber && (
                     <TableCell
-                      scope="col"
+                      scope='col'
                       sx={{
                         whiteSpace: 'nowrap',
                         fontWeight: 600,
@@ -815,7 +815,7 @@ export function DataTable<TData, TValue>({
                   {/* 展开列 */}
                   {enableRowExpansion && (
                     <TableCell
-                      scope="col"
+                      scope='col'
                       sx={{
                         whiteSpace: 'nowrap',
                         fontWeight: 600,
@@ -836,7 +836,7 @@ export function DataTable<TData, TValue>({
                   {headerGroup.headers.map((header) => (
                     <TableCell
                       key={header.id}
-                      scope="col"
+                      scope='col'
                       sx={{
                         whiteSpace: 'nowrap',
                         fontWeight: 600,
@@ -901,12 +901,16 @@ export function DataTable<TData, TValue>({
                         hover={!!onRowClick}
                         tabIndex={onRowClick ? 0 : undefined}
                         onClick={onRowClick ? () => onRowClick(row.original) : undefined}
-                        onKeyDown={onRowClick ? (e: React.KeyboardEvent) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            onRowClick(row.original);
-                          }
-                        } : undefined}
+                        onKeyDown={
+                          onRowClick
+                            ? (e: React.KeyboardEvent) => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                  e.preventDefault();
+                                  onRowClick(row.original);
+                                }
+                              }
+                            : undefined
+                        }
                         sx={{
                           cursor: onRowClick ? 'pointer' : 'default',
                           '&:hover': {
@@ -1081,7 +1085,7 @@ export function DataTable<TData, TValue>({
             <Typography
               variant='body2'
               color='text.secondary'
-              aria-live="polite"
+              aria-live='polite'
             >
               共 {totalRecords} 条记录
             </Typography>
@@ -1099,7 +1103,7 @@ export function DataTable<TData, TValue>({
                   value={pageSize}
                   onChange={(e) => onPageSizeChange(Number(e.target.value))}
                   sx={{ minWidth: 70, height: 32 }}
-                  aria-label="每页显示条数"
+                  aria-label='每页显示条数'
                 >
                   <MenuItem value={10}>10</MenuItem>
                   <MenuItem value={20}>20</MenuItem>
@@ -1123,7 +1127,7 @@ export function DataTable<TData, TValue>({
               上一页
             </Button>
             <IconButton
-              aria-label="上一页"
+              aria-label='上一页'
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
               sx={{ display: { xs: 'flex', sm: 'none' } }}
@@ -1150,7 +1154,7 @@ export function DataTable<TData, TValue>({
               下一页
             </Button>
             <IconButton
-              aria-label="下一页"
+              aria-label='下一页'
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
               sx={{ display: { xs: 'flex', sm: 'none' } }}

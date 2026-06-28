@@ -6,13 +6,13 @@ import {
   Chip,
   Skeleton,
   IconButton,
-  Tooltip,
+  _Tooltip,
   Menu,
   MenuItem,
   ListItemIcon,
   ListItemText,
 } from '@mui/material';
-import { TrendingUp, MoreVertical, RefreshCw, Download, Maximize, ChevronDown } from 'lucide-react';
+import { MoreVertical, RefreshCw, Download, Maximize, ChevronDown } from 'lucide-react';
 import type { ChartCard as ChartCardType } from './types';
 
 export const ChartCardComponent: React.FC<ChartCardType> = ({

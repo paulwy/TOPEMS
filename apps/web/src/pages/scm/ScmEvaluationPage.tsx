@@ -46,7 +46,6 @@ const ScmEvaluationPage: React.FC = () => {
 
   useEffect(() => {
     loadEvaluations();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, pageSize]);
 
   const loadEvaluations = async () => {

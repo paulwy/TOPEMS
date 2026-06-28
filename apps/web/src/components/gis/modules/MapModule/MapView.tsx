@@ -366,7 +366,7 @@ const MapView: React.FC<MapViewProps> = ({
   const [mapCenter] = useState<[number, number]>([39.9, 116.4]); // 北京
   const [zoom, setZoom] = useState(10); // 在离线瓦片范围内
   const [selectedItem, setSelectedItem] = useState<DevicePoint | StorageLocation | null>(null);
-  const [showDetailsPanel, setShowDetailsPanel] = useState(false);
+  const [_showDetailsPanel, setShowDetailsPanel] = useState(false);
   const [showLayerPanel, setShowLayerPanel] = useState(true);
   const [visibleLayers, setVisibleLayers] = useState({
     devices: true,

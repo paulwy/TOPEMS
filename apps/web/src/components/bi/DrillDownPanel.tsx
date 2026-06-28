@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { X, ChevronRight, Search, Filter, RefreshCw } from 'lucide-react';
 import {
-  Card,
+  _Card,
   CardHeader,
   CardContent,
   TextField,

@@ -14,7 +14,7 @@ import {
   Select,
   MenuItem,
   FormControl,
-  InputLabel,
+  _InputLabel,
   Chip,
   Skeleton,
   Tooltip,
@@ -22,10 +22,10 @@ import {
   Tab,
   useTheme,
   useMediaQuery,
-  Divider,
+  _Divider,
   Button,
 } from '@mui/material';
-import { Search, RefreshCw, Download, Filter, ChevronDown, Calendar } from 'lucide-react';
+import { Search, RefreshCw, Download, Calendar } from 'lucide-react';
 import { EmptyState } from '@/components/common';
 
 /**
@@ -246,8 +246,8 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
   statCardDirection = 'row',
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
+  const _isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const _isTablet = useMediaQuery(theme.breakpoints.down('lg'));
 
   // 内部状态
   const [internalTabValue, setInternalTabValue] = useState<string>('');

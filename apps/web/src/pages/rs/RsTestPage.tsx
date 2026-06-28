@@ -58,7 +58,6 @@ const RsTestPage: React.FC = () => {
 
   useEffect(() => {
     loadTestCases();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, caseTypeFilter, priorityFilter, statusFilter, page, rowsPerPage]);
 
   const loadTestCases = async () => {

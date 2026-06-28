@@ -73,16 +73,16 @@ export const Map3DView: React.FC<Map3DViewProps> = ({
   viewState,
   onViewStateChange,
   buildings = [],
-  terrain,
+  _terrain,
   enable3D = true,
-  enableTerrain = true,
+  _enableTerrain = true,
   enableBuildings = true,
   children,
   className = '',
   style = {},
 }) => {
   const mapRef = useRef<L.Map | null>(null);
-  const [isReady, setIsReady] = useState(false);
+  const [_isReady, setIsReady] = useState(false);
 
   // 初始化3D地图
   useEffect(() => {
@@ -99,7 +99,7 @@ export const Map3DView: React.FC<Map3DViewProps> = ({
   }, [enable3D]);
 
   // 处理视角变化
-  const handleMove = useCallback(() => {
+  const _handleMove = useCallback(() => {
     if (mapRef.current && onViewStateChange) {
       const center = mapRef.current.getCenter();
       onViewStateChange({
@@ -155,7 +155,7 @@ export const Map3DView: React.FC<Map3DViewProps> = ({
   );
 
   // 渲染3D建筑
-  const renderBuildings = useCallback(() => {
+  const _renderBuildings = useCallback(() => {
     if (!enableBuildings || !mapRef.current) return null;
 
     return buildings.map((building) => (
@@ -349,7 +349,7 @@ export const HeightVisualization: React.FC<HeightVisualizationProps> = ({
 // 3D视角控制器hook
 export function use3DViewController(initialView?: ViewState3D) {
   const [viewState, setViewState] = useState<ViewState3D>(initialView || DEFAULT_3D_VIEW);
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [isAnimating, _setIsAnimating] = useState(false);
 
   // 飞向指定位置
   const flyTo = useCallback((position: [number, number], zoom?: number, pitch?: number) => {

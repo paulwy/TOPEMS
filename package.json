@@ -21,7 +21,10 @@
     "build:shared-types": "pnpm --filter @topems/shared-types build",
     "build:shared-utils": "pnpm --filter @topems/shared-utils build",
     "build": "pnpm run build:shared-types && pnpm run build:shared-utils && pnpm run build:core && pnpm run build:host",
-    "lint": "pnpm --filter topems-portal lint",
+    "lint": "eslint apps/ packages/ --ext .ts,.tsx --max-warnings 100",
+    "lint:fix": "eslint apps/ packages/ --ext .ts,.tsx --fix",
+    "format": "prettier --write \"apps/**/*.{ts,tsx}\" \"packages/**/*.{ts,tsx}\"",
+    "format:check": "prettier --check \"apps/**/*.{ts,tsx}\" \"packages/**/*.{ts,tsx}\"",
     "test": "pnpm --filter topems-portal test",
     "typecheck": "pnpm --filter topems-portal typecheck",
     "topems": "./scripts/topems.sh",
@@ -41,7 +44,18 @@
     "react-leaflet": "^5.0.0"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/eslint-plugin-jsx-a11y": "^6",
+    "eslint": "^10.6.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-prettier": "^5.5.6",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.3",
+    "globals": "^17.7.0",
     "husky": "^9.1.7",
-    "lint-staged": "^17.0.8"
+    "lint-staged": "^17.0.8",
+    "prettier": "^3.9.1",
+    "typescript-eslint": "^8.62.0"
   }
 }

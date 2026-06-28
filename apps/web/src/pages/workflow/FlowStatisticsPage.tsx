@@ -33,7 +33,6 @@ const FlowStatisticsPage: React.FC = () => {
 
   useEffect(() => {
     loadStatistics();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeRange]);
 
   const loadStatistics = async () => {

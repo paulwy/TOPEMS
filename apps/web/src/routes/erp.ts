@@ -5,13 +5,7 @@ import { lazyWithRetry } from './utils';
 
 const lazy = lazyWithRetry;
 
-const AssetManagementPage = lazy(() => import('../pages/asset/AssetManagementPage'));
-const EquipmentManagementPage = lazy(() => import('../pages/asset/EquipmentManagementPage'));
-const EquipmentInspectionPage = lazy(() => import('../pages/asset/EquipmentInspectionPage'));
-const EquipmentMaintenancePage = lazy(() => import('../pages/asset/EquipmentMaintenancePage'));
-const EquipmentDetailPage = lazy(() => import('../pages/mes/EquipmentDetailPage'));
 const AdministrationDashboardPage = lazy(() => import('../pages/oa/AdministrationDashboardPage'));
-const BudgetManagementPage = lazy(() => import('../pages/finance/BudgetManagementPage'));
 const OfficeSuppliesManagementPage = lazy(
   () => import('../pages/asset/OfficeSuppliesManagementPage')
 );
@@ -19,13 +13,6 @@ const MeetingRoomManagementPage = lazy(() => import('../pages/oa/MeetingRoomMana
 const VehicleManagementPage = lazy(() => import('../pages/asset/VehicleManagementPage'));
 const AnnouncementManagementPage = lazy(() => import('../pages/oa/AnnouncementManagementPage'));
 const ExpenseClaimPage = lazy(() => import('../pages/oa/ExpenseClaimPage'));
-const VoucherTemplatePage = lazy(() => import('../pages/asset/VoucherTemplatePage'));
-const AccountManagementPage = lazy(() => import('../pages/admin/AccountManagementPage'));
-const BankAccountManagementPage = lazy(() => import('../pages/admin/BankAccountManagementPage'));
-const ConsolidationScopePage = lazy(() => import('../pages/finance/ConsolidationScopePage'));
-const ConsolidationReportsPage = lazy(() => import('../pages/finance/ConsolidationReportsPage'));
-const CompanyStructurePage = lazy(() => import('../pages/admin/CompanyStructurePage'));
-const OpeningBalancePage = lazy(() => import('../pages/finance/OpeningBalancePage'));
 const ERPHomePage = lazy(() => import('../pages/erp/DashboardPage'));
 const FinancialReportPage = lazy(() => import('../pages/erp/FinancialReportPage'));
 const VoucherManagementPage = lazy(() => import('../pages/erp/VoucherManagementPage'));
@@ -53,38 +40,53 @@ export const erpRoutes: RouteConfig[] = [
   },
   {
     path: '/assets',
-    element: AssetManagementPage,
-    requiredPermissions: ['erp:admin'],
-    module: 'erp',
-    action: 'admin',
+    element: React.createElement(Navigate, {
+      to: '/finance/assets',
+      replace: true,
+    }),
+    requiredPermissions: ['finance:read'],
+    module: 'finance',
+    action: 'read',
   },
   {
     path: '/equipment',
-    element: EquipmentManagementPage,
-    requiredPermissions: ['erp:admin'],
-    module: 'erp',
-    action: 'admin',
+    element: React.createElement(Navigate, {
+      to: '/mes/equipment',
+      replace: true,
+    }),
+    requiredPermissions: ['mes:read'],
+    module: 'mes',
+    action: 'read',
   },
   {
     path: '/equipment/inspections',
-    element: EquipmentInspectionPage,
-    requiredPermissions: ['erp:admin'],
-    module: 'erp',
-    action: 'admin',
+    element: React.createElement(Navigate, {
+      to: '/mes/equipment',
+      replace: true,
+    }),
+    requiredPermissions: ['mes:read'],
+    module: 'mes',
+    action: 'read',
   },
   {
     path: '/equipment/maintenances',
-    element: EquipmentMaintenancePage,
-    requiredPermissions: ['erp:admin'],
-    module: 'erp',
-    action: 'admin',
+    element: React.createElement(Navigate, {
+      to: '/mes/equipment',
+      replace: true,
+    }),
+    requiredPermissions: ['mes:read'],
+    module: 'mes',
+    action: 'read',
   },
   {
     path: '/equipment/:id',
-    element: EquipmentDetailPage,
-    requiredPermissions: ['erp:admin'],
-    module: 'erp',
-    action: 'admin',
+    element: React.createElement(Navigate, {
+      to: '/mes/equipment',
+      replace: true,
+    }),
+    requiredPermissions: ['mes:read'],
+    module: 'mes',
+    action: 'read',
   },
   {
     path: '/administration',
@@ -102,10 +104,13 @@ export const erpRoutes: RouteConfig[] = [
   },
   {
     path: '/budget',
-    element: BudgetManagementPage,
-    requiredPermissions: ['erp:admin'],
-    module: 'erp',
-    action: 'admin',
+    element: React.createElement(Navigate, {
+      to: '/finance/budget-management',
+      replace: true,
+    }),
+    requiredPermissions: ['finance:read'],
+    module: 'finance',
+    action: 'read',
   },
   {
     path: '/office-supplies',

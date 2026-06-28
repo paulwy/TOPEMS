@@ -51,7 +51,6 @@ const ScmPurchaseOrderPage: React.FC = () => {
 
   useEffect(() => {
     loadOrders();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, pageSize]);
 
   const loadOrders = async () => {

@@ -50,7 +50,6 @@ const WorkStationPage: React.FC = () => {
 
   useEffect(() => {
     loadWorkStations();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, searchTerm, statusFilter]);
 
   const loadWorkStations = async () => {

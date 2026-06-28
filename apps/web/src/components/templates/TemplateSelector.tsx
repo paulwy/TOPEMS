@@ -28,7 +28,7 @@ import type {
   Template,
   TemplateType,
   TemplateCategory,
-  RenderTemplateResponse,
+  _RenderTemplateResponse,
 } from '../../api/template';
 import { templateApi } from '../../api/template';
 import { apiLogger } from '@/utils/logger';
@@ -79,7 +79,6 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
       setSelectedTemplate(null);
       setVariableValues({});
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, templateType]);
 
   const loadTemplates = async () => {

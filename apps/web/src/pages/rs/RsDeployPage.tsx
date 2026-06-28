@@ -46,7 +46,6 @@ const RsDeployPage: React.FC = () => {
 
   useEffect(() => {
     loadDeploys();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, statusFilter, envFilter, page, rowsPerPage]);
 
   const loadDeploys = async () => {

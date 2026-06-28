@@ -9,7 +9,7 @@ import {
   Step,
   StepLabel,
   StepContent,
-  Divider,
+  _Divider,
   LinearProgress,
   useTheme,
   useMediaQuery,
@@ -105,7 +105,7 @@ export const WizardPageTemplate: React.FC<WizardPageTemplateProps> = ({
   submitting,
   error,
   success,
-  showStepNumbers = true,
+  _showStepNumbers = true,
   showProgress = true,
   showNavigation = true,
   backButtonText = '上一步',
@@ -212,7 +212,7 @@ export const WizardPageTemplate: React.FC<WizardPageTemplateProps> = ({
     return index + 1;
   };
 
-  const getStepStatus = (step: WizardStep, index: number) => {
+  const _getStepStatus = (step: WizardStep, index: number) => {
     if (completedSteps.has(step.id)) return 'completed';
     if (skippedSteps.has(step.id)) return 'completed';
     if (index === currentStep) return 'active';

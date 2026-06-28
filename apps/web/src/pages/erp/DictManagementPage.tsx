@@ -357,7 +357,6 @@ const DictManagementPage: React.FC = () => {
     if (selectedDict) {
       loadDictItems(selectedDict.dict_code);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDict]);
 
   const loadDictTypes = async () => {

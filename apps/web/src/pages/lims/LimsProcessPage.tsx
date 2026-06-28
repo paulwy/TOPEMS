@@ -135,7 +135,6 @@ const LimsProcessPage: React.FC = () => {
     } else {
       setLoading(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serviceStatuses.lims, currentPage, pageSize, debouncedSearch, filterStatus]);
 
   const loadStatistics = async () => {

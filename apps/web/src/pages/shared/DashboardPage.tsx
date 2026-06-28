@@ -144,7 +144,6 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     Array<{ id: number; title: string; type: string; done: boolean }>
   >([]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   const moduleToService: Record<string, string> = {
     rs: 'rs',
     lims: 'lims',

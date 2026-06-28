@@ -65,7 +65,6 @@ const EquipmentInspectionPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, pageSize, debouncedSearch]);
 
   const loadData = useCallback(async () => {

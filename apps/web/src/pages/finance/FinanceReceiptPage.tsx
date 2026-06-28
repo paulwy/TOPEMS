@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Plus, Trash2, Banknote, CheckCircle, Clock, Eye, Check, RefreshCw } from 'lucide-react';
-import { DataExport, BackButton, PageContainer } from '@/components/common';
+import { DataExport, BackButton, PageContainer, CurrencyField } from '@/components/common';
 import { ListPageTemplate, StatCardGroup } from '@/components';
 import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
@@ -585,15 +585,14 @@ const FinanceReceiptPage: React.FC = () => {
                   <MenuItem value='现金'>现金</MenuItem>
                 </Select>
               </FormControl>
-              <TextField
+              <CurrencyField
                 label='收款金额 *'
-                type='number'
                 fullWidth
-                value={newReceipt.amount}
-                onChange={(e) =>
+                value={newReceipt.amount || 0}
+                onChange={(val) =>
                   setNewReceipt({
                     ...newReceipt,
-                    amount: parseFloat(e.target.value) || 0,
+                    amount: val,
                   })
                 }
               />

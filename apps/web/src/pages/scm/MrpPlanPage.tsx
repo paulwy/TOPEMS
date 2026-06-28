@@ -61,7 +61,6 @@ const MrpPlanPage: React.FC = () => {
 
   useEffect(() => {
     loadPlans();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, pageSize]);
 
   const loadPlans = async () => {

@@ -153,7 +153,7 @@ const controlStatusConfig: Record<string, { color: string; label: string }> = {
 export const EHSStatusBadge: React.FC<EHSStatusBadgeProps> = ({
   status,
   type = 'hazard',
-  className = '',
+  _className = '',
 }) => {
   const getConfig = () => {
     if (type === 'incident') return incidentStatusConfig;
@@ -239,7 +239,10 @@ const severityConfig: Record<string, { color: string; label: string }> = {
   未遂: { color: 'bg-blue-100 text-blue-700 border-blue-200', label: '未遂' },
 };
 
-export const EHSSeverityBadge: React.FC<EHSSeverityBadgeProps> = ({ severity, className = '' }) => {
+export const EHSSeverityBadge: React.FC<EHSSeverityBadgeProps> = ({
+  severity,
+  _className = '',
+}) => {
   const item = severityConfig[severity] || {
     color: 'bg-gray-100 text-gray-700 border-gray-200',
     label: severity,
@@ -293,7 +296,7 @@ const riskLevelConfig: Record<string, { color: string; label: string }> = {
 export const EHSRiskLevelBadge: React.FC<EHSRiskLevelBadgeProps> = ({
   level,
   showLabel = true,
-  className = '',
+  _className = '',
 }) => {
   const item = riskLevelConfig[level] || {
     color: 'bg-gray-100 text-gray-700 border-gray-200',
@@ -358,7 +361,7 @@ const measureTypeConfig: Record<string, { color: string; label: string }> = {
 
 export const EHSMeasureTypeBadge: React.FC<EHSMeasureTypeBadgeProps> = ({
   type,
-  className = '',
+  _className = '',
 }) => {
   const item = measureTypeConfig[type] || {
     color: 'bg-gray-100 text-gray-700 border-gray-200',
@@ -437,7 +440,7 @@ const incidentTypeConfig: Record<string, { color: string; label: string }> = {
 
 export const EHSIncidentTypeBadge: React.FC<EHSIncidentTypeBadgeProps> = ({
   type,
-  className = '',
+  _className = '',
 }) => {
   const item = incidentTypeConfig[type] || {
     color: 'bg-gray-100 text-gray-700 border-gray-200',

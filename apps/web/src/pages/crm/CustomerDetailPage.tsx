@@ -47,7 +47,6 @@ const CustomerDetailPage: React.FC = () => {
     if (id) {
       loadCustomer(id);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const loadCustomer = async (customerId: string) => {

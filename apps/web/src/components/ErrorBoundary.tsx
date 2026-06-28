@@ -9,7 +9,7 @@ import {
   ChevronDown,
   ChevronUp,
   Bug,
-  Wifi,
+  _Wifi,
   FileX,
   Layers,
 } from 'lucide-react';
@@ -778,7 +778,14 @@ export const lazyWithErrorBoundary = <P extends object>(
   importFn: () => Promise<{ default: React.ComponentType<P> }>,
   options?: ErrorBoundaryOptions
 ): React.LazyExoticComponent<React.ComponentType<P>> => {
-  const { level = 'module', fallback, onError, onReport, showDetails, enableRetry } = options || {};
+  const {
+    _level = 'module',
+    _fallback,
+    _onError,
+    _onReport,
+    _showDetails,
+    _enableRetry,
+  } = options || {};
 
   return React.lazy(() =>
     importFn().catch((error) => {

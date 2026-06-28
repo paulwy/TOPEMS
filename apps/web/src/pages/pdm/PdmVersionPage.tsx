@@ -103,7 +103,6 @@ export const PdmVersionPage: React.FC = () => {
   useEffect(() => {
     loadDocuments();
     loadVersions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, pageSize, debouncedSearch, filterType, selectedDocument]);
 
   const loadDocuments = async () => {

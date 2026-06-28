@@ -69,7 +69,6 @@ const PmReportPage: React.FC = () => {
 
   useEffect(() => {
     loadReportData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.projectId, selectedPeriod]);
 
   const loadReportData = async () => {

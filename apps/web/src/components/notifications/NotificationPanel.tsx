@@ -21,7 +21,6 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
   useEffect(() => {
     fetchNotifications();
     fetchUnreadCount();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchNotifications = async () => {

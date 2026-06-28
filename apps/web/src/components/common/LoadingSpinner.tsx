@@ -7,7 +7,7 @@ interface LoadingSpinnerProps {
   className?: string;
 }
 
-export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ size = 'md', className = '' }) => {
+export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ size = 'md', _className = '' }) => {
   return (
     <div
       role='status'
@@ -68,7 +68,7 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ isLoading, child
   );
 };
 
-export const SkeletonLoader: React.FC<{ className?: string }> = ({ className = '' }) => {
+export const SkeletonLoader: React.FC<{ _className?: string }> = ({ _className = '' }) => {
   return (
     <div
       style={{

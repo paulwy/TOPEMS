@@ -208,7 +208,7 @@ export default function ConfirmDialog({
   showTitle = true,
   showMessage = true,
   centered = true,
-  closeOnBackdropClick = true,
+  _closeOnBackdropClick = true,
   showSuccessIcon = false,
   sx,
 }: ConfirmDialogConfig) {
@@ -351,7 +351,7 @@ export default function ConfirmDialog({
               <IconComponent
                 size={40}
                 style={{ color: config.color }}
-                aria-hidden="true"
+                aria-hidden='true'
               />
             )}
           </Box>
@@ -375,7 +375,7 @@ export default function ConfirmDialog({
                 <IconComponent
                   size={20}
                   style={{ color: config.color }}
-                  aria-hidden="true"
+                  aria-hidden='true'
                 />
               ))}
             <Typography
@@ -392,7 +392,7 @@ export default function ConfirmDialog({
             onClick={onClose}
             disabled={isLoading}
             sx={{ ml: 'auto' }}
-            aria-label="关闭"
+            aria-label='关闭'
           >
             <X size={20} />
           </IconButton>

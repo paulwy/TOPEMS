@@ -205,12 +205,10 @@ const DocumentsPage: React.FC = () => {
   useEffect(() => {
     loadFolders();
     loadFiles();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     loadFiles();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFolderId]);
 
   const loadFolders = async () => {
@@ -446,7 +444,6 @@ const DocumentsPage: React.FC = () => {
   const handleCreateFolderSuccess = useCallback(() => {
     loadFolders();
     loadFiles();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const toggleFileSelect = useCallback((fileId: string) => {
@@ -493,7 +490,6 @@ const DocumentsPage: React.FC = () => {
       },
       danger: true,
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedFiles, addNotification]);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -542,7 +538,7 @@ const DocumentsPage: React.FC = () => {
         });
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [selectedFolderId, addNotification]
   );
 

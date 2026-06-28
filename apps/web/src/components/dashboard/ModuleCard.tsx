@@ -1,6 +1,6 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { ModuleStatusBadge } from '@/components/common/StatusBadge';
-import type { StatusBadgeProps, ModuleStatusValue } from '@/components/common/StatusBadge';
+import type { ModuleStatusValue } from '@/components/common/StatusBadge';
 
 type IconComponent = React.ComponentType<{
   className?: string;
@@ -44,7 +44,7 @@ const colorToGradient: Record<string, string> = {
   'bg-pink-500': 'linear-gradient(135deg, #ec4899, #db2727)',
 };
 
-const colorToBgLight: Record<string, string> = {
+const _colorToBgLight: Record<string, string> = {
   'bg-blue-500': 'primary.light',
   'bg-purple-500': 'secondary.light',
   'bg-green-500': 'success.light',

@@ -4,13 +4,13 @@ import {
   TextField,
   Menu,
   MenuItem,
-  ListItemIcon,
+  _ListItemIcon,
   ListItemText,
   Avatar,
   Chip,
   CircularProgress,
 } from '@mui/material';
-import { Search, User, X, Check } from 'lucide-react';
+import { Search, User, Check } from 'lucide-react';
 
 export interface User {
   id: string;
@@ -69,7 +69,7 @@ export const UserSelect: React.FC<UserSelectProps> = ({
     (user: User) => {
       if (multiple) {
         const currentValue = (value as User[]) || [];
-        const exists = currentValue.find((u) => u.id === user.id);
+        const exists = currentValue.some((u) => u.id === user.id);
         if (exists) {
           onChange(currentValue.filter((u) => u.id !== user.id));
         } else {

@@ -10,10 +10,9 @@ import {
   Select,
   MenuItem,
   Box,
-  InputAdornment,
+  _InputAdornment,
   Button,
 } from '@mui/material';
-import { Send } from 'lucide-react';
 
 interface EmployeeFormProps {
   formData: Partial<Employee>;

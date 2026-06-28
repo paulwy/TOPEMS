@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, IconButton, Button } from '@mui/material';
+import { Box, Typography, IconButton } from '@mui/material';
 import { Clock, LogOut, Zap } from 'lucide-react';
 import { NotificationBell } from '../notifications';
 import { ModeToggle } from '../theme/ModeToggle';

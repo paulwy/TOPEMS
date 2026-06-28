@@ -1,3 +1,10 @@
+/**
+ * 模块主题配置 - 定义各业务模块的图标、渐变色、主题色
+ *
+ * NOTE: 当前未被任何组件直接导入。保留作为基础设施配置，
+ * 未来可在模块概览页、侧边栏、主题切换等功能中使用。
+ * 可通过 `import { moduleThemes, getModuleTheme } from '@/lib/moduleThemes'` 使用。
+ */
 import type React from 'react';
 import {
   Shield,

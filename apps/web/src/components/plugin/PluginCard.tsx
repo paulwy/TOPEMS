@@ -4,11 +4,11 @@ import {
   Star,
   Download,
   CheckCircle,
-  AlertCircle,
+  _AlertCircle,
   ShoppingCart,
   ExternalLink,
 } from 'lucide-react';
-import { Card, CardContent, Typography, Button, Chip, Rating } from '@mui/material';
+import { Card, CardContent, Typography, Button, Chip } from '@mui/material';
 import type { Plugin } from '@/api/plugin';
 import { usePluginStore } from '@/store/pluginStore';
 import { useAppStore } from '@/store';

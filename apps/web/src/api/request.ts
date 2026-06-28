@@ -1,5 +1,5 @@
 import type { ApiResponse } from './client';
-import { handleApiError, type AppError } from '../utils/errors';
+import { handleApiError, type AppError, AppExceptionError } from '../utils/errors';
 import createLogger from '../utils/logger';
 
 const logger = createLogger('request');
@@ -81,10 +81,9 @@ export async function paginatedRequest<T>(
   const response = await requestFn(params);
 
   if (!response.success) {
-    throw {
-      code: response.code,
-      message: response.message,
-    };
+    const error = new Error(response.message) as Error & { code?: string | number };
+    error.code = response.code;
+    throw error;
   }
 
   return response.data as unknown as {

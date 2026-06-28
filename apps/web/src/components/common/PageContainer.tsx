@@ -90,7 +90,7 @@ export const PageContainer: React.FC<PageContainerProps> = ({
   contentSx,
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const _isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const hasHeader = Boolean(title || headerProps);
 

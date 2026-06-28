@@ -11,6 +11,19 @@ export interface FileMetadata {
   created_at: string;
   updated_at: string;
   created_by: string;
+  version?: number;
+}
+
+export interface FileVersion {
+  id: string;
+  file_id: string;
+  version: number;
+  size: number;
+  content_type: string;
+  created_at: string;
+  created_by: string;
+  change_note?: string;
+  download_url?: string;
 }
 
 export interface FileListResponse {
@@ -108,6 +121,20 @@ export const docApi = {
 
   deleteFolder: async (id: string): Promise<ApiResponse<void>> => {
     return apiClient.doc.delete<void>(`/folders/${id}`);
+  },
+
+  // ========== 版本历史 ==========
+
+  getVersions: async (fileId: string): Promise<ApiResponse<FileVersion[]>> => {
+    return apiClient.doc.get<FileVersion[]>(`/documents/${fileId}/versions`);
+  },
+
+  getVersion: async (fileId: string, version: number): Promise<ApiResponse<FileVersion>> => {
+    return apiClient.doc.get<FileVersion>(`/documents/${fileId}/versions/${version}`);
+  },
+
+  restoreVersion: async (fileId: string, version: number): Promise<ApiResponse<FileMetadata>> => {
+    return apiClient.doc.post<FileMetadata>(`/documents/${fileId}/versions/${version}/restore`);
   },
 
   // ========== 健康检查 ==========

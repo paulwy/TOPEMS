@@ -1,3 +1,7 @@
+/**
+ * NOTE: 当前未被任何组件直接导入（通过 utils/index.ts 的 export * 导出）。
+ * DateRangeQuickSelect.tsx 自行实现了 getDateRange。保留作为备选实现。
+ */
 import { formatDate } from './format';
 
 export { formatDate };

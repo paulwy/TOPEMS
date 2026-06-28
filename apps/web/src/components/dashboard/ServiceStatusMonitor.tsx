@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import type { SvgIconProps } from '@mui/material';
 import { Box, Typography, Chip, Button } from '@mui/material';
 import {
   Activity,
@@ -10,13 +9,13 @@ import {
   Users,
   Factory,
   ClipboardList,
-  AlertTriangle,
+  _AlertTriangle,
   Truck,
   ShoppingCart,
   Warehouse,
   Map,
   BarChart2,
-  Bot,
+  _Bot,
   Smartphone,
   FlaskConical,
   RefreshCw,

@@ -216,8 +216,7 @@ const MobileTaskListPage: React.FC = () => {
     loadTasks(true);
   };
 
-  const handleTaskClick = (task: Task) => {
-    console.log('Task clicked:', task.id);
+  const handleTaskClick = (_task: Task) => {
   };
 
   const rightSwipeActions: SwipeActionItem[] = [
@@ -227,7 +226,6 @@ const MobileTaskListPage: React.FC = () => {
       label: '完成',
       color: theme.palette.success.main,
       onClick: () => {
-        console.log('Complete task');
       },
     },
     {
@@ -236,7 +234,6 @@ const MobileTaskListPage: React.FC = () => {
       label: '删除',
       color: theme.palette.error.main,
       onClick: () => {
-        console.log('Delete task');
       },
     },
   ];

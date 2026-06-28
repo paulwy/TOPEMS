@@ -111,7 +111,6 @@ const BudgetManagementPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadData = async () => {
@@ -444,7 +443,7 @@ const BudgetManagementPage: React.FC = () => {
         render: (row) => getStatusBadge(row.status),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [departments]
   );
 
@@ -465,7 +464,7 @@ const BudgetManagementPage: React.FC = () => {
         confirmMessage: '确定要删除这条预算记录吗？',
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     []
   );
 
@@ -488,7 +487,7 @@ const BudgetManagementPage: React.FC = () => {
         confirmMessage: '确定要删除选中的预算记录吗？',
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [selectedIds]
   );
 

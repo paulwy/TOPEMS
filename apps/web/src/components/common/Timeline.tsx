@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Paper, Chip, Tooltip, Skeleton } from '@mui/material';
+import { Box, Typography, Chip, Skeleton } from '@mui/material';
 import { Circle, CheckCircle, XCircle, Clock, AlertCircle, type LucideIcon } from 'lucide-react';
 
 export interface TimelineItem {

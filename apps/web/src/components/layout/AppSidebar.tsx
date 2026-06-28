@@ -5,7 +5,7 @@ import { usePermission } from '@/hooks/usePermission';
 import { navigationRegistry, type NavItem } from '@/lib/NavigationRegistry';
 
 import { ChevronLeft, Home } from 'lucide-react';
-import { lucideIcons, renderIcon } from '@/lib/iconMapping';
+import { renderIcon } from '@/lib/iconMapping';
 
 // ---- 从路径解析模块 code（与 GlobalLayout / useTopNav 一致） ----
 function getModuleFromPath(pathname: string): string | null {
@@ -35,7 +35,11 @@ export interface AppSidebarProps {
   forceVisible?: boolean;
 }
 
-export const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggleCollapse, forceVisible }) => {
+export const AppSidebar: React.FC<AppSidebarProps> = ({
+  collapsed,
+  onToggleCollapse,
+  forceVisible,
+}) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { checkPermission } = usePermission();
@@ -87,7 +91,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggleColla
   const displayNavItems = isModuleMode ? moduleNavItems : [];
 
   // ---- 公共的导航项样式 ----
-  const navItemSx = (isActive: boolean, hasPath: boolean) => ({
+  const navItemSx = (isActive: boolean, _hasPath: boolean) => ({
     display: 'flex',
     alignItems: 'center',
     gap: 1.5,
@@ -112,8 +116,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggleColla
 
   return (
     <Paper
-      role="navigation"
-      aria-label="主导航"
+      role='navigation'
+      aria-label='主导航'
       elevation={0}
       sx={{
         width: collapsed ? 64 : 240,
@@ -156,8 +160,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggleColla
           <>
             {/* 返回平台 */}
             <Box
-              component="button"
-              role="menuitem"
+              component='button'
+              role='menuitem'
               tabIndex={0}
               onClick={() => navigate('/dashboard')}
               onKeyDown={(e) => {
@@ -224,8 +228,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggleColla
                     );
                     return (
                       <Box
-                        component="button"
-                        role="menuitem"
+                        component='button'
+                        role='menuitem'
                         tabIndex={0}
                         key={item.code || `${item.label}-${index}`}
                         onClick={() => item.path && navigate(item.path)}
@@ -280,8 +284,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggleColla
                     );
                     return (
                       <Box
-                        component="button"
-                        role="menuitem"
+                        component='button'
+                        role='menuitem'
                         tabIndex={0}
                         key={item.code || `${item.label}-${index}`}
                         onClick={() => item.path && navigate(item.path)}
@@ -321,8 +325,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({ collapsed, onToggleColla
 
             return (
               <Box
-                component="button"
-                role="menuitem"
+                component='button'
+                role='menuitem'
                 tabIndex={0}
                 key={item.code || `${item.label}-${index}`}
                 onClick={() => item.path && navigate(item.path)}
@@ -405,7 +409,7 @@ export default AppSidebar;
 // ---- Helpers ----
 
 /** 确保导航列表首位有一个"首页"项 */
-function ensureHomeItem(items: NavItem[]): NavItem[] {
+function _ensureHomeItem(items: NavItem[]): NavItem[] {
   const hasHome = items.some((item) => item.path === '/dashboard' || item.code === 'home');
   if (hasHome) {
     return items;

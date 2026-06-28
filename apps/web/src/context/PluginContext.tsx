@@ -3,6 +3,9 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import type { Plugin, TenantInstalledPlugin } from '@/api/plugin';
 import { PLUGIN_REGISTRY, checkAllPluginsHealth, pluginApi } from '@/api/plugin';
 import { useAuth } from '@/hooks/useAuth';
+import createLogger from '@/utils/logger';
+
+const logger = createLogger('PluginContext');
 
 export interface PluginContextType {
   installedPlugins: TenantInstalledPlugin[];
@@ -69,9 +72,9 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
     } catch (error: unknown) {
       const status = (error as { response?: { status?: number } })?.response?.status;
       if (status === 401) {
-        console.debug('Plugin fetch skipped: not authenticated');
+        logger.debug('Plugin fetch skipped: not authenticated');
       } else {
-        console.error('Failed to fetch plugins:', error);
+        logger.error('Failed to fetch plugins:', error);
       }
     } finally {
       setIsLoading(false);

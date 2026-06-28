@@ -57,7 +57,6 @@ const ProductionProcessPage: React.FC = () => {
 
   useEffect(() => {
     loadProcesses();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, searchTerm, statusFilter]);
 
   const loadProcesses = async () => {

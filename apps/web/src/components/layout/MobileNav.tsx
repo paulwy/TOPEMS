@@ -6,7 +6,7 @@ import {
   ListItem,
   ListItemButton,
   ListItemIcon,
-  ListItemText,
+  _ListItemText,
   Collapse,
   Divider,
   IconButton,
@@ -15,7 +15,7 @@ import {
 import {
   Home,
   Bell,
-  ChevronDown,
+  _ChevronDown,
   ChevronRight,
   X,
   Menu,
@@ -51,7 +51,6 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePermission } from '../../hooks/usePermission';
 import { navigationRegistry, type NavItem } from '../../lib/NavigationRegistry';
-import { useBackNavigation } from '@/hooks';
 
 const iconMap: Record<string, React.ReactNode> = {
   Home: <Home style={{ width: 20, height: 20 }} />,

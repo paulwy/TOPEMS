@@ -279,7 +279,6 @@ const ReportPage: React.FC = () => {
   useEffect(() => {
     loadReports();
     loadTemplates();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const showNotification = (type: 'success' | 'error', message: string) => {

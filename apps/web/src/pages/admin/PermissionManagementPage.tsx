@@ -418,7 +418,7 @@ const PermissionManagementPage: React.FC<PermissionManagementPageProps> = ({
         ),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     []
   );
 

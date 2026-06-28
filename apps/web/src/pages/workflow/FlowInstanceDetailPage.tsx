@@ -42,7 +42,6 @@ const FlowInstanceDetailPage: React.FC = () => {
     if (id) {
       loadInstanceDetails();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const loadInstanceDetails = async () => {

@@ -342,12 +342,12 @@ const MapView: React.FC<MapViewProps> = ({
   const [heatmapMode, setHeatmapMode] = useState<'density' | 'status'>('density');
   const [mapType, setMapType] = useState<'osm' | 'amap'>('osm');
   const [show3DView, setShow3DView] = useState(false);
-  const [offlineMode, setOfflineMode] = useState(true); // 默认使用离线瓦片
+  const [offlineMode, _setOfflineMode] = useState(true); // 默认使用离线瓦片
   const _mapRef = useRef<any>(null);
   const leafletMapRef = useRef<any>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [mapKey, setMapKey] = useState(0);
-  const renderCountRef = useRef(0);
+  const _renderCountRef = useRef(0);
   const stableId = useId();
 
   // Force new key when map type changes to ensure proper remount
@@ -729,7 +729,6 @@ const MapView: React.FC<MapViewProps> = ({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentDrawing]);
 
   return (

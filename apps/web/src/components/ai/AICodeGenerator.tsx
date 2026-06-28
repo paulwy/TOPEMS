@@ -320,7 +320,6 @@ export function AICodeGenerator({
       setSelectedCode(null);
       setCustomCode('');
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, context.entityType, existingCodes]);
 
   const handleRegenerate = () => {

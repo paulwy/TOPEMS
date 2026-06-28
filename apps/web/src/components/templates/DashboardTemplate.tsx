@@ -914,7 +914,7 @@ export const DashboardTemplate: React.FC<DashboardTemplateProps> = ({
     xl: 3,
   };
 
-  const chartsBreakpoints = layout?.chartsBreakpoints || {
+  const _chartsBreakpoints = layout?.chartsBreakpoints || {
     xs: 12,
     sm: 12,
     md: 6,

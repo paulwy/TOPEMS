@@ -86,12 +86,12 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
   shortcutModifier = ['ctrl', 'meta'],
   shortcutKey = 'k',
   placeholder = '搜索...',
-  autoFocus = false,
+  _autoFocus = false,
   width = 400,
   disabled = false,
   className,
 }) => {
-  const theme = useTheme();
+  const _theme = useTheme();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [history, setHistory] = useState<SearchHistoryItem[]>([]);
@@ -493,7 +493,7 @@ const SearchIconWrapper = styled('div')(({ theme }) => ({
   marginRight: 8,
 }));
 
-const StyledInputBase = styled(InputBase)(({ theme }) => ({
+const StyledInputBase = styled(InputBase)(({ _theme }) => ({
   flex: 1,
   color: 'inherit',
   '& .MuiInputBase-input': {
@@ -530,7 +530,7 @@ const SuggestionsPaper = styled(Paper, {
   overflow: 'auto',
 }));
 
-const HistoryHeader = styled('div')(({ theme }) => ({
+const HistoryHeader = styled('div')(({ _theme }) => ({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
@@ -568,7 +568,7 @@ const SuggestionItem = styled(ListItem, {
   },
 }));
 
-const EmptyState = styled('div')(({ theme }) => ({
+const EmptyState = styled('div')(({ _theme }) => ({
   padding: 24,
   textAlign: 'center',
   display: 'flex',

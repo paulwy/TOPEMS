@@ -98,7 +98,6 @@ export function AIAnalyzer({
         runAllAnalysis();
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, initialText]);
 
   const clearResults = () => {

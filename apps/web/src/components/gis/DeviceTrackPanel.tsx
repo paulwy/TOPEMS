@@ -24,10 +24,10 @@ import {
   InputLabel,
   IconButton,
   Slider,
-  Chip,
+  _Chip,
   Stack,
   Grid,
-  Divider,
+  _Divider,
   Button,
 } from '@mui/material';
 import type { DevicePoint, DeviceLocationRecord } from '../../api/gis';
@@ -76,7 +76,6 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
     if (selectedDevice) {
       fetchTrackData();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDevice, timeRange]);
 
   useEffect(() => {

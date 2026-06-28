@@ -42,7 +42,6 @@ const ContactManagementPage: React.FC = () => {
 
   useEffect(() => {
     loadContacts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, statusFilter, pagination.page, pagination.pageSize]);
 
   const loadContacts = async () => {
@@ -237,7 +236,7 @@ const ContactManagementPage: React.FC = () => {
         confirmMessage: '确定要删除这个联系人吗?',
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     []
   );
 

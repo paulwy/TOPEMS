@@ -61,7 +61,6 @@ const LimsTaskDetailPage: React.FC = () => {
     if (id) {
       loadTaskDetail(id);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const loadTaskDetail = async (taskId: string) => {

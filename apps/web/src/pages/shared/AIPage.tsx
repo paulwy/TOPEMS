@@ -176,7 +176,6 @@ const AIPage: React.FC = () => {
     }
 
     loadDocuments();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -865,7 +864,9 @@ const AIPage: React.FC = () => {
                             <MessageSquare
                               size={20}
                               color={
-                                currentConversationId === conv.id ? 'secondary.main' : 'text.disabled'
+                                currentConversationId === conv.id
+                                  ? 'secondary.main'
+                                  : 'text.disabled'
                               }
                             />
                           )}

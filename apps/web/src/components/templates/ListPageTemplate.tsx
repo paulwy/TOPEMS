@@ -15,7 +15,7 @@ import {
   Tooltip,
   Checkbox,
   Skeleton,
-  Chip,
+  _Chip,
   Menu,
   MenuItem,
   ListItemIcon,
@@ -29,7 +29,7 @@ import {
   Button,
 } from '@mui/material';
 import { EmptyState, ErrorEmptyState } from '../common/EmptyState';
-import { MoreHorizontal, ChevronDown, ChevronRight, Columns3, RefreshCw } from 'lucide-react';
+import { MoreHorizontal, ChevronRight, Columns3, RefreshCw } from 'lucide-react';
 import { Link as RouterLink } from 'react-router-dom';
 import { useAutoBreadcrumbs } from '@/hooks';
 import { BackButton } from '../common';
@@ -98,7 +98,7 @@ export function ListPageTemplate<T>({
   filtersValue,
   onFilterChange,
   actions,
-  renderRowActions,
+  _renderRowActions,
   rowActions,
   onRefresh,
   batchActions = [],

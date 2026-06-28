@@ -49,12 +49,12 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
 }) => {
   const resolvedAction =
     action || (actionLabel ? { label: actionLabel, onClick: onAction } : undefined);
-  const theme = useTheme();
+  const _theme = useTheme();
 
   return (
     <Box
-      role="status"
-      aria-live="polite"
+      role='status'
+      aria-live='polite'
       sx={{
         display: 'flex',
         flexDirection: 'column',
@@ -67,7 +67,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
     >
       {/* 图标 */}
       <Box
-        aria-hidden="true"
+        aria-hidden='true'
         sx={{
           width: compact ? 64 : 80,
           height: compact ? 64 : 80,

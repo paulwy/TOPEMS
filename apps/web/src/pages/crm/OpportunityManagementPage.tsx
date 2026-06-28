@@ -61,7 +61,6 @@ const OpportunityManagementPage: React.FC = () => {
     loadOpportunities();
     loadFunnelData();
     loadStats();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, stageFilter, pagination.page, pagination.pageSize]);
 
   const loadOpportunities = async () => {
@@ -286,7 +285,7 @@ const OpportunityManagementPage: React.FC = () => {
         confirmMessage: '确定要删除这个商机吗?',
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     []
   );
 

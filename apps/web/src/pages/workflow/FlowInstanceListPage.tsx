@@ -59,7 +59,6 @@ const FlowInstanceListPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter, workflowFilter]);
 
   const loadData = async () => {

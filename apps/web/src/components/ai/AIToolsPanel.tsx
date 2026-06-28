@@ -4,7 +4,7 @@ import {
   Typography,
   TextField,
   IconButton,
-  InputAdornment,
+  _InputAdornment,
   FormControl,
   InputLabel,
   Alert,
@@ -182,7 +182,7 @@ const DateCalculator: React.FC = () => {
       date.setDate(date.getDate() + days);
       setStartDate(date.toISOString().split('T')[0]);
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [startDate]
   );
 
@@ -680,7 +680,7 @@ interface AIToolsPanelProps {
   onClose?: () => void;
 }
 
-export const AIToolsPanel: React.FC<AIToolsPanelProps> = ({ defaultTool, onClose }) => {
+export const AIToolsPanel: React.FC<AIToolsPanelProps> = ({ defaultTool, _onClose }) => {
   const [activeTab, setActiveTab] = useState(defaultTool || 'json');
 
   const tools = [

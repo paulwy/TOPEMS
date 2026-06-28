@@ -22,9 +22,9 @@ import {
 import {
   Menu as MenuIcon,
   Bell,
-  Sun,
-  Moon,
-  User,
+  _Sun,
+  _Moon,
+  _User,
   X,
   ChevronDown,
   ChevronRight,
@@ -72,7 +72,7 @@ interface ResponsiveHeaderProps {
 export const ResponsiveHeader: React.FC<ResponsiveHeaderProps> = ({ navItems, onNavClick }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const theme = useTheme();
+  const _theme = useTheme();
   const { isMobile, isTablet, isDesktop } = useResponsive();
 
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);

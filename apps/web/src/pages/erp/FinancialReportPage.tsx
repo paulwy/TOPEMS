@@ -62,7 +62,6 @@ const FinancialReportPage: React.FC = () => {
 
   useEffect(() => {
     loadReportData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, period]);
 
   const loadReportData = async () => {

@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
-import { Box, Typography, Avatar, TextField, Chip, Divider, Paper, Button } from '@mui/material';
-import { Send, ThumbsUp, MoreHorizontal, Reply, User } from 'lucide-react';
+import { Box, Typography, Avatar, TextField, Paper, Button } from '@mui/material';
+import { Send, ThumbsUp, Reply, User } from 'lucide-react';
 
 export interface Comment {
   id: string;

@@ -27,6 +27,7 @@ import {
   ConfirmDialog,
   StatusBadge,
   PageContainer,
+  CurrencyField,
 } from '@/components/common';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -78,7 +79,6 @@ const FinanceVoucherPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadData = async () => {
@@ -279,17 +279,17 @@ const FinanceVoucherPage: React.FC = () => {
       });
 
       if (result.success && result.data) {
-        const { success_count, failed_count, errors } = result.data;
-        if (failed_count === 0) {
+        const { success_count: successCount, failed_count: failedCount, errors } = result.data;
+        if (failedCount === 0) {
           addNotification({
             title: '成功',
-            message: `成功导入${success_count}张凭证`,
+            message: `成功导入${successCount}张凭证`,
             type: 'success',
           });
         } else {
           addNotification({
             title: '部分成功',
-            message: `成功导入${success_count}张，失败${failed_count}张`,
+            message: `成功导入${successCount}张，失败${failedCount}张`,
             type: 'warning',
           });
           errors.forEach((err) => apiLogger.warn('导入错误:', err));
@@ -1116,25 +1116,23 @@ const FinanceVoucherPage: React.FC = () => {
                     slotProps={{ input: { readOnly: true } }}
                     placeholder='科目名称'
                   />
-                  <FormField
+                  <CurrencyField
                     name={`debit_amount_${index}`}
                     label=''
-                    sx={{ width: 100 }}
-                    type='number'
-                    value={item.debit_amount || ''}
-                    onChange={(e) =>
-                      updateVoucherItem(index, 'debit_amount', parseFloat(e.target.value) || 0)
+                    sx={{ width: 150 }}
+                    value={item.debit_amount || 0}
+                    onChange={(val) =>
+                      updateVoucherItem(index, 'debit_amount', val)
                     }
                     placeholder='借方'
                   />
-                  <FormField
+                  <CurrencyField
                     name={`credit_amount_${index}`}
                     label=''
-                    sx={{ width: 100 }}
-                    type='number'
-                    value={item.credit_amount || ''}
-                    onChange={(e) =>
-                      updateVoucherItem(index, 'credit_amount', parseFloat(e.target.value) || 0)
+                    sx={{ width: 150 }}
+                    value={item.credit_amount || 0}
+                    onChange={(val) =>
+                      updateVoucherItem(index, 'credit_amount', val)
                     }
                     placeholder='贷方'
                   />

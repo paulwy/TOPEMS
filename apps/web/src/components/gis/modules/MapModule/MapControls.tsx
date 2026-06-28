@@ -1,7 +1,7 @@
 // modules/MapModule/MapControls.tsx
 import React from 'react';
 import { ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
-import { Box, IconButton, Paper } from '@mui/material';
+import { Box, IconButton } from '@mui/material';
 
 interface MapControlsProps {
   zoom: number;
@@ -12,7 +12,7 @@ interface MapControlsProps {
 }
 
 const MapControls: React.FC<MapControlsProps> = ({
-  zoom,
+  _zoom,
   onZoomIn,
   onZoomOut,
   bounds,

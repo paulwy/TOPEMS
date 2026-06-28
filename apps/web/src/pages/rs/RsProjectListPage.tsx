@@ -25,7 +25,6 @@ const RsProjectListPage: React.FC = () => {
 
   useEffect(() => {
     loadProjects();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, statusFilter, page, rowsPerPage]);
 
   const loadProjects = async () => {

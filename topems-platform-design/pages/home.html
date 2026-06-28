@@ -216,16 +216,27 @@
   style="height:56px; background:var(--color-surface); border-bottom:1px solid var(--color-border); box-shadow:var(--shadow-sm);"
 >
   <div class="flex items-center justify-between h-full px-4 lg:px-6 max-w-[1800px] mx-auto">
-    <!-- Left: Logo + Brand Name -->
+    <!-- Left: Mobile Hamburger + Logo + Brand Name -->
     <div class="flex items-center gap-3">
+      <!-- Mobile Menu Toggle (visible < lg) -->
+      <button
+        id="mobile-menu-btn"
+        class="lg:hidden flex items-center justify-center rounded-md transition-colors duration-150"
+        style="width:36px; height:36px; color:var(--color-text-secondary);"
+        aria-label="打开菜单"
+      >
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
       <div
         class="flex items-center justify-center text-white font-bold"
-        style="width:36px; height:36px; border-radius:var(--radius-md); background:linear-gradient(135deg, #3b82f6, #8b5cf6); font-size:var(--font-size-xl); font-family:var(--font-sans);"
+        style="width:36px; height:36px; border-radius:var(--radius-md); background:var(--gradient-brand); font-size:var(--font-size-xl); font-family:var(--font-sans);"
         aria-label="TOPEMS Logo"
       >T</div>
       <span
         class="text-lg font-bold select-none"
-        style="font-family:var(--font-sans); font-weight:var(--font-weight-bold); background:linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;"
+        style="font-family:var(--font-sans); font-weight:var(--font-weight-bold); background:var(--gradient-brand); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;"
       >TOPEMS</span>
     </div>
 
@@ -297,6 +308,14 @@
 </header>
 
 <!-- ============================== -->
+<!-- MOBILE SIDEBAR OVERLAY         -->
+<!-- ============================== -->
+<div
+  id="sidebar-overlay"
+  class="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm hidden lg:hidden transition-opacity duration-300"
+  style="opacity:0;"
+></div>
+
 <!-- BODY WRAPPER                    -->
 <!-- ============================== -->
 <div class="flex" style="min-height:calc(100vh - 56px);">
@@ -306,9 +325,23 @@
   <!-- ============================== -->
   <aside
     id="topems-sidebar"
-    class="hidden lg:flex flex-col flex-shrink-0 transition-all duration-300"
-    style="width:240px; background:var(--color-surface); border-right:1px solid var(--color-border);"
+    class="fixed inset-y-0 left-0 z-40 w-[260px] flex flex-col flex-shrink-0 transition-transform duration-300 -translate-x-full lg:translate-x-0 lg:sticky lg:top-[56px]"
+    style="background:var(--color-surface); border-right:1px solid var(--color-border); height:calc(100vh - 56px); margin-top:0;"
+    data-sidebar
   >
+    <!-- Mobile Close Button -->
+    <div class="flex items-center justify-between px-4 py-3 lg:hidden" style="border-bottom:1px solid var(--color-border);">
+      <span class="text-sm font-semibold" style="color:var(--color-text-primary); font-family:var(--font-sans);">导航菜单</span>
+      <button
+        id="mobile-menu-close-btn"
+        class="flex items-center justify-center rounded-md transition-colors duration-150"
+        style="width:32px; height:32px; color:var(--color-text-muted);"
+        aria-label="关闭菜单"
+      >
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+
     <!-- User Info Card -->
     <div class="px-4 py-4" style="border-bottom:1px solid var(--color-border);">
       <div class="flex items-center gap-3">
@@ -414,19 +447,10 @@
   <!-- ============================== -->
   <main
     id="topems-main"
-    class="flex-1 overflow-y-auto"
+    class="flex-1 overflow-y-auto min-w-0"
     style="background:var(--color-background);"
   >
-    <div class="mx-auto" style="max-width:1600px; padding:16px;">
-      <!-- Responsive padding overrides -->
-      <style>
-        @media (min-width: 640px) {
-          #topems-main > div { padding-left: 24px !important; padding-right: 24px !important; }
-        }
-        @media (min-width: 1024px) {
-          #topems-main > div { padding-left: 32px !important; padding-right: 32px !important; }
-        }
-      </style>
+    <div class="mx-auto max-w-[1800px] px-4 lg:px-6 py-6">
 
       <!-- SLOT: activeNavItem = 首页 (set via data-active="true" above) -->
 
@@ -437,7 +461,7 @@
       <!-- ============================== -->
       <!-- 1. HERO BANNER SECTION        -->
       <!-- ============================== -->
-      <section class="relative w-full overflow-hidden" style="height:500px; border-radius:var(--radius-lg); margin-bottom:var(--spacing-xl);">
+      <section class="relative w-full overflow-hidden" style="height:clamp(300px, 50vw, 500px); border-radius:var(--radius-lg); margin-bottom:var(--spacing-xl);">
         <!-- Background image -->
         <div class="absolute inset-0">
           <img
@@ -856,6 +880,15 @@
   #sidebar-nav::-webkit-scrollbar-track {
     background: transparent;
   }
+
+  /* Mobile sidebar open state */
+  #topems-sidebar.sidebar-open {
+    transform: translateX(0) !important;
+  }
+  #sidebar-overlay.overlay-visible {
+    display: block !important;
+    opacity: 1 !important;
+  }
 </style>
 
 <!-- ============================== -->
@@ -864,8 +897,34 @@
 <script>
 (function() {
   'use strict';
-  var collapseBtn = document.getElementById('sidebar-collapse-btn');
+
+  // ---- Mobile Sidebar Toggle ----
+  var mobileMenuBtn = document.getElementById('mobile-menu-btn');
+  var mobileCloseBtn = document.getElementById('mobile-menu-close-btn');
   var sidebar = document.getElementById('topems-sidebar');
+  var overlay = document.getElementById('sidebar-overlay');
+
+  function openMobileSidebar() {
+    if (sidebar && overlay) {
+      sidebar.classList.add('sidebar-open');
+      overlay.classList.add('overlay-visible');
+      document.body.style.overflow = 'hidden';
+    }
+  }
+  function closeMobileSidebar() {
+    if (sidebar && overlay) {
+      sidebar.classList.remove('sidebar-open');
+      overlay.classList.remove('overlay-visible');
+      document.body.style.overflow = '';
+    }
+  }
+
+  if (mobileMenuBtn) { mobileMenuBtn.addEventListener('click', openMobileSidebar); }
+  if (mobileCloseBtn) { mobileCloseBtn.addEventListener('click', closeMobileSidebar); }
+  if (overlay) { overlay.addEventListener('click', closeMobileSidebar); }
+
+  // ---- Sidebar collapse toggle (desktop) ----
+  var collapseBtn = document.getElementById('sidebar-collapse-btn');
   if (collapseBtn && sidebar) {
     collapseBtn.addEventListener('click', function() {
       sidebar.classList.toggle('collapsed');
@@ -906,6 +965,8 @@
       this.style.color = 'var(--color-primary)';
       this.style.borderLeftColor = 'var(--color-primary)';
       this.style.background = 'var(--color-primary-50)';
+      // Close mobile sidebar after selecting a menu item
+      closeMobileSidebar();
     });
   });
 })();

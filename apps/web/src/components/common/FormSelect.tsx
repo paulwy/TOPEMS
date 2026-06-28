@@ -8,7 +8,7 @@ import {
   FormControl,
   InputLabel,
   Select,
-  SelectProps,
+  _SelectProps,
   MenuItem,
   FormHelperText,
   Box,

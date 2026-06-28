@@ -41,16 +41,16 @@ import {
   Image,
   Table,
   Minus,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
+  _AlignLeft,
+  _AlignCenter,
+  _AlignRight,
   Save,
   Download,
   History,
   Eye,
-  EyeOff,
+  _EyeOff,
   Plus,
-  Trash2,
+  _Trash2,
   Copy,
   Check,
   AlertCircle,
@@ -303,9 +303,9 @@ export const MarkdownEditorTemplate: React.FC<MarkdownEditorTemplateProps> = ({
   enableVersionHistory = false,
   versions = [],
   onSaveVersion,
-  enableFileUpload = true,
+  _enableFileUpload = true,
   enableImageUpload = true,
-  uploadConfig = {},
+  _uploadConfig = {},
   toolbarActions = defaultToolbarActions,
   readOnly = false,
   showPreviewByDefault = false,
@@ -686,7 +686,7 @@ ${content
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     components={{
-                      code({ node, className, children, ...props }) {
+                      code({ _node, className, children, ...props }) {
                         const match = /language-(\w+)/.exec(className || '');
                         const isInline = (props as any).inline;
                         return !isInline && match ? (

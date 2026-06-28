@@ -1,6 +1,6 @@
 // modules/EvidenceModule/PhotoCapture.tsx
 import React, { useRef, useState, useCallback, useEffect } from 'react';
-import { Camera, SwitchCamera, Sun, X, Check } from 'lucide-react';
+import { Camera, SwitchCamera, Sun, X } from 'lucide-react';
 import { Box, IconButton, Typography, Button } from '@mui/material';
 import { logger } from '@/utils/logger';
 
@@ -55,7 +55,6 @@ const PhotoCapture: React.FC<PhotoCaptureProps> = ({
         stream.getTracks().forEach((track) => track.stop());
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [facingMode]);
 
   // Switch camera

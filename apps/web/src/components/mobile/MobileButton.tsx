@@ -13,7 +13,7 @@ export const MobileButton: React.FC<MobileButtonProps> = ({
   sx,
   ...props
 }) => {
-  const theme = useTheme();
+  const _theme = useTheme();
 
   const getHeight = () => {
     switch (size) {

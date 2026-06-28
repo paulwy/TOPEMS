@@ -7,7 +7,7 @@ import {
   Eye,
   EyeOff,
   Trash2,
-  GripVertical,
+  _GripVertical,
   BarChart3,
   PieChart,
   LineChart,
@@ -37,7 +37,6 @@ import {
 import type { ChartType, ChartDataPoint } from './ChartLibrary';
 import ChartComponent from './ChartLibrary';
 import PivotTable from './PivotTable';
-import { logger } from '@/utils/logger';
 
 export interface DashboardWidget {
   id: string;
@@ -121,7 +120,7 @@ export const DashboardEditor: React.FC<{
   const [widgets, setWidgets] = useState<DashboardWidget[]>(initialConfig?.widgets || []);
   const [selectedWidgetId, setSelectedWidgetId] = useState<string | null>(null);
   const [dashboardName, setDashboardName] = useState(initialConfig?.name || '未命名仪表盘');
-  const [dashboardDescription, setDashboardDescription] = useState(
+  const [dashboardDescription, _setDashboardDescription] = useState(
     initialConfig?.description || ''
   );
   const [showAddWidgetModal, setShowAddWidgetModal] = useState(false);
@@ -134,7 +133,7 @@ export const DashboardEditor: React.FC<{
   const [dragging, setDragging] = useState<string | null>(null);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
   const [resizing, setResizing] = useState<string | null>(null);
-  const [resizeDirection, setResizeDirection] = useState<'se' | 'sw' | 'ne' | 'nw'>('se');
+  const [_resizeDirection, setResizeDirection] = useState<'se' | 'sw' | 'ne' | 'nw'>('se');
 
   useEffect(() => {
     historyIndexRef.current = historyIndex;

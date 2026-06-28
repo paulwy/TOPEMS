@@ -32,7 +32,6 @@ export const NotificationList: React.FC<NotificationListProps> = ({ userId = 'cu
 
   useEffect(() => {
     loadNotifications();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   const handleMarkAsRead = async (notificationId: string) => {

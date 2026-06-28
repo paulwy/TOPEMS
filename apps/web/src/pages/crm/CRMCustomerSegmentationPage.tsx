@@ -116,8 +116,7 @@ const CRMCustomerSegmentationPage: React.FC = () => {
     {
       label: '编辑',
       icon: <Tag size={16} />,
-      onClick: (row: CustomerSegment) => {
-        console.log('编辑分群', row.id);
+      onClick: (_row: CustomerSegment) => {
       },
     },
   ];

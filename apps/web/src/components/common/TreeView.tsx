@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { Box, Typography, IconButton, Collapse, Badge, SxProps, Theme } from '@mui/material';
+import { Box, Typography, IconButton, Collapse, Badge } from '@mui/material';
 import { ChevronRight, ChevronDown, Folder, File } from 'lucide-react';
 
 export interface TreeNode {

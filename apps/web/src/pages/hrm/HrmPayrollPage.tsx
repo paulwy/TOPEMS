@@ -62,7 +62,6 @@ const HrmPayrollPage: React.FC = () => {
   // 加载数据
   useEffect(() => {
     loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadData = async () => {
@@ -380,7 +379,7 @@ const HrmPayrollPage: React.FC = () => {
         onClick: (row) => handlePay(row.id),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     []
   );
 

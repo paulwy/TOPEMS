@@ -4,12 +4,12 @@ import {
   Edit2,
   Trash2,
   Copy,
-  Search,
-  Grid3X3,
+  _Search,
+  _Grid3X3,
   LayoutDashboard,
   FolderOpen,
-  Check,
-  X,
+  _Check,
+  _X,
 } from 'lucide-react';
 import {
   Box,
@@ -17,16 +17,16 @@ import {
   Button,
   Card,
   CardContent,
-  CardHeader,
+  _CardHeader,
   CardActions,
   Chip,
-  Divider,
+  _Divider,
   TextField,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Menu,
+  _Menu,
   MenuItem,
   IconButton,
   Tooltip,
@@ -55,7 +55,7 @@ export const DashboardTemplateManager: React.FC<{
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
+  const [_showEditModal, setShowEditModal] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState<DashboardTemplate | null>(null);
   const [newTemplate, setNewTemplate] = useState({
     name: '',

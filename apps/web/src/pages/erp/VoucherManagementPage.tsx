@@ -100,7 +100,6 @@ const VoucherManagementPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, rowsPerPage, statusFilter, periodFilter, voucherTypeFilter, searchQuery]);
 
   const loadData = async () => {

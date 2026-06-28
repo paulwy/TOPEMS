@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import {
   Box,
   IconButton,
-  Paper,
+  _Paper,
   Typography,
   TextField,
   Fab,
@@ -88,9 +88,9 @@ const iconMap: Record<string, React.ReactNode> = {
 export const FloatingAIHelper: React.FC = () => {
   const navigate = useNavigate();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const isTablet = useMediaQuery(theme.breakpoints.down('md'));
-  const { recommendations, quickCommands: contextQuickCommands } = useAIContext();
+  const _isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const _isTablet = useMediaQuery(theme.breakpoints.down('md'));
+  const { recommendations, quickCommands: _contextQuickCommands } = useAIContext();
 
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);

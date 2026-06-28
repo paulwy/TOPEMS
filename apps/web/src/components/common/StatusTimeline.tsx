@@ -65,7 +65,7 @@ export const StatusTimeline: React.FC<StatusTimelineProps> = ({
   showIcons = true,
   dotSize,
 }) => {
-  const theme = useTheme();
+  const _theme = useTheme();
 
   if (orientation === 'horizontal') {
     return (

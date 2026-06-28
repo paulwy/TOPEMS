@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Box, Typography } from '@mui/material';
 
 // 货币符号映射
-const CURRENCY_SYMBOLS: Record<string, string> = {
+const _CURRENCY_SYMBOLS: Record<string, string> = {
   CNY: '¥',
   USD: '$',
   EUR: '€',

@@ -29,7 +29,7 @@ export const Grid: React.FC<React.PropsWithChildren<GridProps>> = ({
   md,
   lg,
   xl,
-  item = true,
+  _item = true,
   container = false,
   spacing = 0,
   size,

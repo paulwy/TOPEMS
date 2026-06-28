@@ -110,7 +110,6 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
       setError('无法开始录制，请重试');
       logger.error('Recording error:', err);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [maxDuration]);
 
   // Pause/Resume recording
@@ -135,7 +134,6 @@ const VideoCapture: React.FC<VideoCaptureProps> = ({
       }
     }
     setIsPaused(!isPaused);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPaused, maxDuration]);
 
   // Stop recording

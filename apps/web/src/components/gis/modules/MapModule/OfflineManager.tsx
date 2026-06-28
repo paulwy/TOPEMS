@@ -20,7 +20,7 @@ function tileKeyToString(key: TileKey): string {
   return `${key.source}:${key.z}:${key.x}:${key.y}`;
 }
 
-function parseTileKey(keyStr: string): TileKey {
+function _parseTileKey(keyStr: string): TileKey {
   const [source, z, x, y] = keyStr.split(':');
   return {
     source,
@@ -141,7 +141,6 @@ export function useOfflineManager(options: UseOfflineManagerOptions): UseOffline
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 计算瓦片数量
@@ -333,7 +332,7 @@ export function useOfflineManager(options: UseOfflineManagerOptions): UseOffline
         syncPendingItems();
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [initDB, isOnline]
   );
 

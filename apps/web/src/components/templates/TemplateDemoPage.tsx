@@ -332,7 +332,7 @@ interface TemplateDemoPageProps {
   onClose?: () => void;
 }
 
-const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
+const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ _onClose }) => {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [templateVariables, setTemplateVariables] = useState<Record<string, any>>({});
