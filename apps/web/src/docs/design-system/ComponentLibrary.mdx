@@ -1,0 +1,301 @@
+{/* ComponentLibrary.mdx — 组件库概览文档 */}
+import { Meta } from '@storybook/addon-docs';
+import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Stack, Chip, Divider } from '@mui/material';
+
+<Meta title="Design System/ComponentLibrary" />
+
+# 组件库
+
+TOPEMS 共享组件库包含 **22+** 个精心设计的企业级组件，分为 8 大类别。所有组件位于 `packages/shared-components` 中，支持 `sx` prop、TypeScript 类型安全和亮/暗色主题。
+
+import React from 'react';
+
+{/* 组件分类卡片 */}
+const CategorySection = ({ title, icon, description, components }) => (
+  <Box sx={{ mb: 4 }}>
+    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+      <Typography variant="h6">{icon} {title}</Typography>
+      <Chip label={`${components.length} 个组件`} size="small" variant="outlined" />
+    </Box>
+    <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>{description}</Typography>
+    <TableContainer>
+      <Table size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell sx={{ fontWeight: 'bold' }}>组件</TableCell>
+            <TableCell>说明</TableCell>
+            <TableCell sx={{ width: 160 }}>Storybook</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {components.map(comp => (
+            <TableRow key={comp.name} hover>
+              <TableCell>
+                <Typography variant="body2" fontWeight="bold" sx={{ fontFamily: 'monospace' }}>
+                  {comp.name}
+                </Typography>
+              </TableCell>
+              <TableCell>
+                <Typography variant="body2" color="text.secondary">{comp.description}</Typography>
+                {comp.highlights && (
+                  <Stack direction="row" spacing={0.5} sx={{ mt: 0.5 }}>
+                    {comp.highlights.map(h => (
+                      <Chip key={h} label={h} size="small" sx={{ fontSize: '0.625rem', height: 20 }} />
+                    ))}
+                  </Stack>
+                )}
+              </TableCell>
+              <TableCell>
+                <Chip
+                  label="查看 Story"
+                  size="small"
+                  clickable
+                  component="a"
+                  href={comp.storyLink}
+                  variant="outlined"
+                  color="primary"
+                />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  </Box>
+);
+
+---
+
+<CategorySection
+  title="数据展示"
+  icon="📊"
+  description="用于展示结构化数据的核心组件"
+  components={[
+    {
+      name: 'DataTable',
+      description: '高级数据表格，支持排序、筛选、分页、行展开、批量选择、高级筛选器和数据导出',
+      highlights: ['排序', '筛选', '分页', '行展开', '批量操作', '导出'],
+      storyLink: '/story/common-data-table--page',
+    },
+    {
+      name: 'StatusBadge',
+      description: '状态徽标组件，内置 9 种业务状态映射（员工、考勤、请假、薪资、绩效、客户、商机、项目、工作流），支持 3 种尺寸和 4 种变体',
+      highlights: ['9 种业务状态', '自动颜色', '多尺寸', '自定义映射'],
+      storyLink: '/story/common-status-badge--page',
+    },
+    {
+      name: 'OrgTree',
+      description: '组织架构树组件，支持部门树展示和选择，异步加载',
+      highlights: ['树形结构', '部门选择', '异步加载'],
+      storyLink: '/story/common-org-tree--page',
+    },
+    {
+      name: 'EmptyState',
+      description: '空状态组件，5 种预设变体（默认、列表、搜索、权限、错误）+ 自定义内容',
+      highlights: ['5 种预设', '自定义图标/文案', '操作按钮'],
+      storyLink: '/story/common-empty-state--page',
+    },
+  ]}
+/>
+
+<Divider sx={{ my: 3 }} />
+
+<CategorySection
+  title="数据录入"
+  icon="✏️"
+  description="表单输入与数据筛选组件"
+  components={[
+    {
+      name: 'FormField',
+      description: '统一表单字段组件，封装 TextField + 标签 + 错误处理 + 必填标记',
+      highlights: ['标签', '错误处理', '必填标记', 'sx 支持'],
+      storyLink: '/story/common-form-field--page',
+    },
+    {
+      name: 'FormSelect',
+      description: '统一表单下拉选择组件，支持选项分组、搜索、多选',
+      highlights: ['分组', '搜索', '多选'],
+      storyLink: '/story/common-form-select--page',
+    },
+    {
+      name: 'NumberField',
+      description: '数字输入字段，支持整数/小数精度控制、前缀后缀、千分位格式化',
+      highlights: ['精度控制', '千分位', '前缀/后缀'],
+      storyLink: '/story/common-number-field--page',
+    },
+    {
+      name: 'CurrencyField',
+      description: '货币输入字段，基于 NumberField，内置货币符号和精度',
+      storyLink: '/story/common-currency-field--page',
+    },
+    {
+      name: 'PercentField',
+      description: '百分比输入字段，自动处理 % 符号和精度',
+      storyLink: '/story/common-percent-field--page',
+    },
+    {
+      name: 'FilterBar',
+      description: '筛选栏组件，支持多条件组合筛选、快捷筛选、筛选重置',
+      highlights: ['多条件', '快捷筛选', '重置'],
+      storyLink: '/story/common-filter-bar--page',
+    },
+  ]}
+/>
+
+<Divider sx={{ my: 3 }} />
+
+<CategorySection
+  title="操作与交互"
+  icon="🖱️"
+  description="按钮、命令面板、分页等交互组件"
+  components={[
+    {
+      name: 'ActionButton',
+      description: '操作按钮组件，支持多种变体（contained、outlined、text）和尺寸（sm、md、lg），内置图标和加载状态',
+      highlights: ['多变体', '多尺寸', '图标', '加载态'],
+      storyLink: '/story/common-action-button--page',
+    },
+    {
+      name: 'CommandPalette',
+      description: '命令面板（Command + K），支持模糊搜索、命令分组、快捷键',
+      highlights: ['模糊搜索', '快捷键', '分组'],
+      storyLink: '/story/common-command-palette--page',
+    },
+    {
+      name: 'Pagination',
+      description: '分页组件，支持页码跳转、每页条数选择、总条数显示',
+      highlights: ['页码跳转', '条数选择'],
+      storyLink: '/story/common-pagination--page',
+    },
+    {
+      name: 'UserSelect',
+      description: '用户选择组件，支持搜索、部门过滤、多选',
+      highlights: ['搜索', '部门过滤', '多选'],
+      storyLink: '/story/common-user-select--page',
+    },
+  ]}
+/>
+
+<Divider sx={{ my: 3 }} />
+
+<CategorySection
+  title="反馈与状态"
+  icon="💬"
+  description="对话框、进度条、加载状态等反馈组件"
+  components={[
+    {
+      name: 'ConfirmDialog',
+      description: '确认对话框，7 种变体：默认确认、提示、信息、成功、警告、错误、自定义确认',
+      highlights: ['7 种变体', '自定义按钮', '自定义尺寸'],
+      storyLink: '/story/common-confirm-dialog--page',
+    },
+    {
+      name: 'Stepper',
+      description: '步骤条组件，支持横向/纵向布局、可点击步骤、状态标记',
+      highlights: ['横向/纵向', '可点击', '状态标记'],
+      storyLink: '/story/common-stepper--page',
+    },
+    {
+      name: 'ProgressBar',
+      description: '进度条组件，支持确定/不确定模式、颜色变体、标签显示',
+      highlights: ['确定/不确定', '颜色变体', '标签'],
+      storyLink: '/story/common-progress-bar--page',
+    },
+    {
+      name: 'LoadingSpinner',
+      description: '加载组件，包含 Spinner、LoadingOverlay 和 SkeletonLoader 三种形态',
+      highlights: ['Spinner', 'Overlay', 'Skeleton'],
+      storyLink: '/story/common-loading-spinner--page',
+    },
+  ]}
+/>
+
+<Divider sx={{ my: 3 }} />
+
+<CategorySection
+  title="导航与辅助"
+  icon="🧭"
+  description="页面导航和辅助信息组件"
+  components={[
+    {
+      name: 'PageContainer',
+      description: '页面容器组件，统一页面布局（标题、面包屑、操作区、内容区），支持标签页',
+      highlights: ['面包屑', '操作区', '标签页', '搜索栏'],
+      storyLink: '/story/common-page-container--page',
+    },
+    {
+      name: 'BackButton',
+      description: '返回按钮组件，支持自定义返回处理函数和路由集成',
+      storyLink: '/story/common-back-button--page',
+    },
+    {
+      name: 'RelativeTime',
+      description: '相对时间显示组件，自动将时间戳转换为"3分钟前"等友好格式',
+      highlights: ['自动格式化', '实时更新'],
+      storyLink: '/story/common-relative-time--page',
+    },
+  ]}
+/>
+
+---
+
+## 组件 API 规范
+
+所有共享组件遵循统一的 API 规范：
+
+<Box sx={{ p: 3, borderRadius: 2, backgroundColor: 'grey.50', mb: 3 }}>
+  <Stack spacing={1.5}>
+    <Typography variant="subtitle2" fontWeight="bold">标准 Props</Typography>
+    <TableContainer>
+      <Table size="small">
+        <TableBody>
+          <TableRow>
+            <TableCell sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>sx</TableCell>
+            <TableCell sx={{ fontFamily: 'monospace' }}>SxProps&lt;Theme&gt;</TableCell>
+            <TableCell>所有组件必须提供，禁止使用 any</TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>size</TableCell>
+            <TableCell sx={{ fontFamily: 'monospace' }}>'sm' | 'md' | 'lg'</TableCell>
+            <TableCell>可交互组件应提供（ComponentSize）</TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>disabled</TableCell>
+            <TableCell sx={{ fontFamily: 'monospace' }}>boolean</TableCell>
+            <TableCell>可交互组件应提供</TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>loading</TableCell>
+            <TableCell sx={{ fontFamily: 'monospace' }}>boolean</TableCell>
+            <TableCell>数据驱动组件应提供</TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell sx={{ fontFamily: 'monospace', fontWeight: 'bold' }}>children</TableCell>
+            <TableCell sx={{ fontFamily: 'monospace' }}>ReactNode</TableCell>
+            <TableCell>容器型组件应提供</TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </TableContainer>
+  </Stack>
+</Box>
+
+## 使用方式
+
+```tsx
+// 从 @topems/shared-components 导入
+import {
+  DataTable,
+  StatusBadge,
+  FormField,
+  ConfirmDialog,
+  ActionButton,
+  PageContainer,
+} from '@topems/shared-components';
+
+// 使用 sx prop 自定义样式
+<StatusBadge
+  status="active"
+  sx={{ mt: 1 }}
+/>
+```

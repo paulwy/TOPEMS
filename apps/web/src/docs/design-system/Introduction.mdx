@@ -1,0 +1,87 @@
+{/* Introduction.mdx — 设计系统概览 */}
+import { Meta } from '@storybook/addon-docs';
+import { Box, Typography, Paper, Stack, Chip } from '@mui/material';
+import { designTokens } from '@topems/tokens';
+
+<Meta title="Design System/Introduction" />
+
+# TOPEMS 设计系统
+
+## 概述
+
+TOPEMS 设计系统基于 **MUI v9** 构建，采用 CSS Variables 主题方案，为企业级应用提供一套完整的设计令牌（Design Tokens）、共享组件和页面模板。
+
+## 架构分层
+
+| 层级 | 包名 | 说明 |
+|------|------|------|
+| **令牌层** | `@topems/tokens` | 颜色、间距、排版、阴影、动效的单一数据源 |
+| **常量层** | `@topems/shared-constants` | 运行时颜色常量，从令牌派生 |
+| **类型层** | `@topems/shared-types` | UI 类型定义 |
+| **组件层** | `@topems/shared-components` | 22+ 共享组件（DataTable、FormField、StatusBadge 等） |
+| **Hooks 层** | `@topems/shared-hooks` | useCrud、useDebounce 等通用 Hooks |
+| **工具层** | `@topems/shared-utils` | 日期、数值、校验等工具函数 |
+| **模板层** | `apps/web/components/templates` | 16+ 页面模板 |
+| **图表层** | `apps/web/components/charts` | Bar、Line、Pie、Area、Radar 图表封装 |
+| **移动端** | `apps/web/components/mobile` | 12+ 移动端优化组件 |
+
+## 核心设计原则
+
+<Box sx={{ mt: 3, mb: 4 }}>
+  <Stack spacing={2}>
+    <Paper sx={{ p: 2, pl: 3, borderLeft: '4px solid', borderColor: 'primary.main' }}>
+      <Typography variant="subtitle1" fontWeight="bold">1. 单一数据源</Typography>
+      <Typography variant="body2" color="text.secondary">所有设计值源自 `packages/tokens/src/tokens.ts`，通过语义化令牌层（semanticTokens）映射到具体使用场景。</Typography>
+    </Paper>
+    <Paper sx={{ p: 2, pl: 3, borderLeft: '4px solid', borderColor: 'secondary.main' }}>
+      <Typography variant="subtitle1" fontWeight="bold">2. CSS Variables 运行时切换</Typography>
+      <Typography variant="body2" color="text.secondary">使用 <code>cssVariables: true</code> 模式，亮/暗色主题通过 CSS class 切换，无需 JS 重新渲染。</Typography>
+    </Paper>
+    <Paper sx={{ p: 2, pl: 3, borderLeft: '4px solid', borderColor: 'success.main' }}>
+      <Typography variant="subtitle1" fontWeight="bold">3. 类型安全</Typography>
+      <Typography variant="body2" color="text.secondary">完整 TypeScript 覆盖，启用严格空值检查，令牌类型自动推导。</Typography>
+    </Paper>
+    <Paper sx={{ p: 2, pl: 3, borderLeft: '4px solid', borderColor: 'warning.main' }}>
+      <Typography variant="subtitle1" fontWeight="bold">4. sx 优先</Typography>
+      <Typography variant="body2" color="text.secondary">以 <code>sx</code> prop 作为主要样式方案，保持与 MUI 生态的一致性。</Typography>
+    </Paper>
+    <Paper sx={{ p: 2, pl: 3, borderLeft: '4px solid', borderColor: 'info.main' }}>
+      <Typography variant="subtitle1" fontWeight="bold">5. 暗色模式一等公民</Typography>
+      <Typography variant="body2" color="text.secondary">所有组件通过 <code>theme.applyStyles('dark', ...)</code> 支持亮/暗色主题。</Typography>
+    </Paper>
+    <Paper sx={{ p: 2, pl: 3, borderLeft: '4px solid', borderColor: 'error.main' }}>
+      <Typography variant="subtitle1" fontWeight="bold">6. 移动端响应式</Typography>
+      <Typography variant="body2" color="text.secondary">提供专用移动端组件（MobileCard、SwipeAction 等）及响应式共享组件。</Typography>
+    </Paper>
+  </Stack>
+</Box>
+
+## 快速导航
+
+<Stack direction="row" flexWrap="wrap" spacing={1} useFlexGap sx={{ mt: 2 }}>
+  <Chip label="色彩系统" component="a" href="./design-system/ColorPalette--docs" clickable color="primary" size="small" />
+  <Chip label="排版系统" component="a" href="./design-system/Typography--docs" clickable color="primary" size="small" />
+  <Chip label="间距与布局" component="a" href="./design-system/Spacing--docs" clickable color="primary" size="small" />
+  <Chip label="组件库" component="a" href="./design-system/ComponentLibrary--docs" clickable color="secondary" size="small" />
+  <Chip label="页面模板" component="a" href="./design-system/PageTemplates--docs" clickable color="secondary" size="small" />
+  <Chip label="令牌可视化" component="a" href="/story/design-tokens--colors" clickable color="secondary" size="small" />
+  <Chip label="公共组件" component="a" href="/story/common--page" clickable variant="outlined" size="small" />
+  <Chip label="页面模板 Story" component="a" href="/story/templates--page" clickable variant="outlined" size="small" />
+  <Chip label="图表组件" component="a" href="/story/charts--page" clickable variant="outlined" size="small" />
+  <Chip label="移动端组件" component="a" href="/story/mobile--page" clickable variant="outlined" size="small" />
+</Stack>
+
+## 技术栈
+
+<Box sx={{ mt: 3 }}>
+  <Stack direction="row" flexWrap="wrap" spacing={1} useFlexGap>
+    <Chip label="React 19" size="small" variant="outlined" />
+    <Chip label="MUI v9" size="small" variant="outlined" />
+    <Chip label="TypeScript" size="small" variant="outlined" />
+    <Chip label="CSS Variables" size="small" variant="outlined" />
+    <Chip label="Vite" size="small" variant="outlined" />
+    <Chip label="Storybook 10" size="small" variant="outlined" />
+    <Chip label="Vitest" size="small" variant="outlined" />
+    <Chip label="Chromatic" size="small" variant="outlined" />
+  </Stack>
+</Box>

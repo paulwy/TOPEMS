@@ -1,0 +1,204 @@
+{/* PageTemplates.mdx — 页面模板概览文档 */}
+import { Meta } from '@storybook/addon-docs';
+import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Stack, Chip, Divider, Card, CardContent } from '@mui/material';
+
+<Meta title="Design System/PageTemplates" />
+
+# 页面模板
+
+TOPEMS 提供丰富的页面模板库，涵盖企业应用常见的页面类型。每个模板封装了完整的布局结构、搜索/筛选、数据加载和交互模式，开发者只需关注业务逻辑。
+
+import React from 'react';
+
+{/* 模板卡片 */}
+const TemplateCard = ({ name, description, features, storyLink, category }) => (
+  <Card variant="outlined" sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <CardContent sx={{ flex: 1 }}>
+      <Stack direction="row" spacing={1} sx={{ mb: 1, alignItems: 'center' }}>
+        <Chip label={category} size="small" color="primary" variant="outlined" sx={{ fontSize: '0.625rem', height: 20 }} />
+      </Stack>
+      <Typography variant="subtitle1" fontWeight="bold" sx={{ fontFamily: 'monospace', mb: 0.5 }}>
+        {name}
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>
+        {description}
+      </Typography>
+      <Stack direction="row" spacing={0.5} flexWrap="wrap" useFlexGap>
+        {features.map(f => (
+          <Chip key={f} label={f} size="small" sx={{ fontSize: '0.625rem', height: 20 }} />
+        ))}
+      </Stack>
+    </CardContent>
+    <Box sx={{ px: 2, pb: 2 }}>
+      <Chip
+        label="查看 Story"
+        size="small"
+        clickable
+        component="a"
+        href={storyLink}
+        variant="outlined"
+        color="primary"
+        fullWidth
+      />
+    </Box>
+  </Card>
+);
+
+---
+
+## 模板一览
+
+<Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }, gap: 2, mb: 4 }}>
+  <TemplateCard
+    name="ListPageTemplate"
+    category="数据管理"
+    description="列表页面模板，内置搜索、筛选、表格、分页、批量操作和新建/导出功能"
+    features={['搜索栏', '筛选器', '数据表格', '分页', '批量操作', '导出']}
+    storyLink="/story/templates-list-page-template--page"
+  />
+  <TemplateCard
+    name="DetailPageTemplate"
+    category="数据管理"
+    description="详情页面模板，支持标签页切换、基本信息展示、操作按钮和返回导航"
+    features={['标签页', '基本信息', '操作按钮', '返回导航', '编辑模式']}
+    storyLink="/story/templates-detail-page-template--page"
+  />
+  <TemplateCard
+    name="FormPageTemplate"
+    category="数据管理"
+    description="表单页面模板，支持多分组表单、验证、草稿保存、提交和取消"
+    features={['表单分组', '验证提示', '草稿保存', '提交/取消', '自适应布局']}
+    storyLink="/story/templates-form-page-template--page"
+  />
+  <TemplateCard
+    name="DashboardTemplate"
+    category="数据展示"
+    description="仪表盘模板，包含统计卡片组、图表区域和快捷操作入口"
+    features={['统计卡片', '图表区域', '快捷操作', '时间筛选', '自适应网格']}
+    storyLink="/story/templates-dashboard-template--page"
+  />
+  <TemplateCard
+    name="StatsPageTemplate"
+    category="数据展示"
+    description="统计页面模板，支持多维度统计数据展示、图表对比和趋势分析"
+    features={['多维统计', '图表对比', '趋势分析', '日期范围', '导出报表']}
+    storyLink="/story/templates-stats-page-template--page"
+  />
+  <TemplateCard
+    name="CardListTemplate"
+    category="数据展示"
+    description="卡片列表模板，以卡片形式展示数据，支持网格/列表切换和筛选"
+    features={['卡片视图', '列表切换', '筛选搜索', '虚拟滚动', '卡片操作']}
+    storyLink="/story/templates-card-list-template--page"
+  />
+  <TemplateCard
+    name="MasterDetailPageTemplate"
+    category="复合布局"
+    description="主从页面模板，左侧列表 + 右侧详情的主从联动布局"
+    features={['主从联动', '列表导航', '详情面板', '可调宽度', '响应式']}
+    storyLink="/story/templates-master-detail-page-template--page"
+  />
+  <TemplateCard
+    name="KanbanPageTemplate"
+    category="复合布局"
+    description="看板页面模板，支持拖拽排序、泳道分组、快速编辑和筛选"
+    features={['拖拽排序', '泳道分组', '快速编辑', '筛选', '计数统计']}
+    storyLink="/story/templates-kanban-page-template--page"
+  />
+  <TemplateCard
+    name="TreePageTemplate"
+    category="复合布局"
+    description="树形页面模板，支持无限层级树结构、搜索、拖拽排序和右键菜单"
+    features={['树形结构', '搜索', '拖拽排序', '右键菜单', '懒加载']}
+    storyLink="/story/templates-tree-page-template--page"
+  />
+  <TemplateCard
+    name="WizardPageTemplate"
+    category="流程向导"
+    description="向导页面模板，支持多步骤表单向导、步骤验证、进度指示和草稿恢复"
+    features={['多步骤', '步骤验证', '进度指示', '草稿恢复', '步骤跳转']}
+    storyLink="/story/templates-wizard-page-template--page"
+  />
+  <TemplateCard
+    name="TimelinePageTemplate"
+    category="流程向导"
+    description="时间线页面模板，展示按时间排序的事件流、操作记录和审计日志"
+    features={['时间线', '事件流', '筛选', '详情展开', '虚拟滚动']}
+    storyLink="/story/templates-timeline-page-template--page"
+  />
+  <TemplateCard
+    name="SettingsPageTemplate"
+    category="配置管理"
+    description="设置页面模板，支持分组设置项、即时保存/延迟保存、标签页切换"
+    features={['分组设置', '即时保存', '标签页', '开关/选择', '重置默认']}
+    storyLink="/story/templates-settings-page-template--page"
+  />
+  <TemplateCard
+    name="MarkdownEditorTemplate"
+    category="编辑器"
+    description="Markdown 编辑器模板，支持实时预览、工具栏、文件上传和全屏编辑"
+    features={['Markdown', '实时预览', '工具栏', '文件上传', '全屏编辑']}
+    storyLink="/story/templates-markdown-editor-template--page"
+  />
+  <TemplateCard
+    name="ReportDesignerTemplate"
+    category="编辑器"
+    description="报表设计器模板，支持拖拽式报表布局设计、数据源绑定和导出"
+    features={['拖拽设计', '数据源', '图表组件', '导出 PDF', '预览']}
+    storyLink="/story/templates-report-designer-template--page"
+  />
+  <TemplateCard
+    name="GisMapTemplate"
+    category="地图可视化"
+    description="GIS 地图页面模板，集成地图展示、标注、热力图和区域选择"
+    features={['地图展示', '标注', '热力图', '区域选择', '图层控制']}
+    storyLink="/story/templates-gis-map-template--page"
+  />
+</Box>
+
+---
+
+## 模板公共特性
+
+所有模板共享以下特性：
+
+<TableContainer>
+  <Table size="small">
+    <TableHead>
+      <TableRow>
+        <TableCell>特性</TableCell>
+        <TableCell>说明</TableCell>
+      </TableRow>
+    </TableHead>
+    <TableBody>
+      <TableRow>
+        <TableCell sx={{ fontWeight: 'bold' }}>统一布局</TableCell>
+        <TableCell>基于 PageContainer 封装，包含面包屑、标题、操作区</TableCell>
+      </TableRow>
+      <TableRow>
+        <TableCell sx={{ fontWeight: 'bold' }}>数据加载</TableCell>
+        <TableCell>内置 loading / error / empty 状态处理</TableCell>
+      </TableRow>
+      <TableRow>
+        <TableCell sx={{ fontWeight: 'bold' }}>响应式</TableCell>
+        <TableCell>基于 MUI breakpoints 自适应，支持 xs / sm / md / lg / xl</TableCell>
+      </TableRow>
+      <TableRow>
+        <TableCell sx={{ fontWeight: 'bold' }}>主题支持</TableCell>
+        <TableCell>通过 CSS Variables 支持亮/暗色主题切换</TableCell>
+      </TableRow>
+      <TableRow>
+        <TableCell sx={{ fontWeight: 'bold' }}>sx 可扩展</TableCell>
+        <TableCell>所有模板接受 sx prop 用于自定义样式</TableCell>
+      </TableRow>
+      <TableRow>
+        <TableCell sx={{ fontWeight: 'bold' }}>搜索与筛选</TableCell>
+        <TableCell>集成 FilterBar 和 QuickSearch 组件</TableCell>
+      </TableRow>
+      <TableRow>
+        <TableCell sx={{ fontWeight: 'bold' }}>类型安全</TableCell>
+        <TableCell>完整 TypeScript 类型定义，泛型支持</TableCell>
+      </TableRow>
+    </TableBody>
+  </Table>
+</TableContainer>
