@@ -11,31 +11,31 @@ import {
   XCircle,
   Clock,
   Minus,
-  _TrendingUp,
+  TrendingUp,
   Building2,
   FileText,
   User,
-  _Mail,
-  _Phone,
+  Mail,
+  Phone,
   Calendar,
   DollarSign,
-  _Target,
-  _Award,
+  Target,
+  Award,
   Star,
   Zap,
-  _Shield,
+  Shield,
   Lock,
-  _Unlock,
+  Unlock,
   Eye,
-  _EyeOff,
+  EyeOff,
   Heart,
   ThumbsUp,
-  _ThumbsDown,
+  ThumbsDown,
   Info,
-  _HelpCircle,
+  HelpCircle,
   AlertTriangle,
   Ban,
-  type _LucideIcon,
+  type LucideIcon,
 } from 'lucide-react';
 
 // ============ 类型定义 ============
@@ -63,7 +63,7 @@ export type StatusVariant = 'filled' | 'outlined' | 'soft';
 export type StatusSize = 'sm' | 'md' | 'lg';
 
 export type EmployeeStatus =
-  | 'employee_active'
+  | 'employeeactive'
   | 'employee_inactive'
   | 'employee_probation'
   | 'employee_pending';
@@ -87,7 +87,7 @@ export type PerformanceStatus =
   | 'performance_not_started'
   | 'performance_in_progress';
 export type CustomerStatus =
-  | 'customer_active'
+  | 'customeractive'
   | 'customer_inactive'
   | 'customer_blocked'
   | 'customer_potential';
@@ -100,7 +100,7 @@ export type OpportunityStatus =
   | 'opportunity_lost';
 export type ProjectStatus =
   | 'project_planning'
-  | 'project_active'
+  | 'projectactive'
   | 'project_on_hold'
   | 'project_completed'
   | 'project_cancelled';
@@ -303,7 +303,7 @@ export const DEFAULT_STATUS_MAP: StatusMapConfig = {
   },
 
   // HRM状态
-  employee_active: {
+  employeeactive: {
     label: '在职',
     color: 'success',
     icon: <User size={14} />,
@@ -325,7 +325,7 @@ export const DEFAULT_STATUS_MAP: StatusMapConfig = {
   },
 
   // 部门状态
-  department_active: {
+  departmentactive: {
     label: '启用',
     color: 'success',
     icon: <Building2 size={14} />,
@@ -440,7 +440,7 @@ export const DEFAULT_STATUS_MAP: StatusMapConfig = {
   },
 
   // CRM状态
-  customer_active: {
+  customeractive: {
     label: '活跃',
     color: 'success',
     icon: <Heart size={14} />,
@@ -499,7 +499,7 @@ export const DEFAULT_STATUS_MAP: StatusMapConfig = {
     color: 'default',
     icon: <FileText size={14} />,
   },
-  project_active: {
+  projectactive: {
     label: '进行中',
     color: 'success',
     icon: <Zap size={14} />,
@@ -785,7 +785,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
       variant={variant === 'outlined' ? 'outlined' : 'filled'}
       onClick={clickable && !disabled ? onClick : undefined}
       disabled={disabled}
-      sx={chipSx}
+      sx={chipSx as any}
     />
   );
 };

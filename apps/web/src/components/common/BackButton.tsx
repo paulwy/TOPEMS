@@ -16,14 +16,16 @@ export interface BackButtonProps {
   /** 变体：button 带文字 vs icon only */
   variant?: 'icon' | 'text' | 'outlined';
   /** 尺寸 */
-  size?: 'small' | 'medium' | 'large';
+  size?: 'sm' | 'md' | 'lg';
   /** 颜色 */
   color?: 'inherit' | 'primary' | 'secondary' | 'default';
   /** 自定义样式 */
-  sx?: any;
+  sx?: import('@mui/material/styles').SxProps<import('@mui/material/styles').Theme>;
   /** tooltip */
   tooltip?: string;
 }
+
+const muiSizeMap = { sm: 'small' as const, md: 'medium' as const, lg: 'large' as const };
 
 /**
  * 统一返回按钮组件
@@ -36,7 +38,7 @@ const BackButton: React.FC<BackButtonProps> = ({
   href,
   label = '返回',
   variant = 'icon',
-  size = 'medium',
+  size = 'md',
   color = 'inherit',
   sx,
   tooltip,
@@ -64,12 +66,12 @@ const BackButton: React.FC<BackButtonProps> = ({
       >
         <IconButton
           onClick={handleClick}
-          size={size}
+          size={muiSizeMap[size]}
           color={color}
           sx={sx}
           aria-label='返回'
         >
-          <ArrowLeft size={size === 'small' ? 18 : 22} />
+          <ArrowLeft size={size === 'sm' ? 18 : 22} />
         </IconButton>
       </Tooltip>
     );
@@ -79,9 +81,9 @@ const BackButton: React.FC<BackButtonProps> = ({
     <Button
       variant={variant === 'outlined' ? 'outlined' : 'text'}
       onClick={handleClick}
-      size={size}
+      size={muiSizeMap[size]}
       color={color === 'default' ? 'inherit' : color}
-      startIcon={<ArrowLeft size={size === 'small' ? 16 : 18} />}
+      startIcon={<ArrowLeft size={size === 'sm' ? 16 : 18} />}
       sx={sx}
     >
       {label}

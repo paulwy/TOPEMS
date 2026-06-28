@@ -86,12 +86,12 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
   shortcutModifier = ['ctrl', 'meta'],
   shortcutKey = 'k',
   placeholder = '搜索...',
-  _autoFocus = false,
+  autoFocus = false,
   width = 400,
   disabled = false,
   className,
 }) => {
-  const _theme = useTheme();
+  const theme = useTheme();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [history, setHistory] = useState<SearchHistoryItem[]>([]);
@@ -296,8 +296,10 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
             onFocus={() => setOpen(true)}
             disabled={disabled}
             fullWidth
-            inputProps={{
-              'aria-label': 'search',
+            slotProps={{
+              input: {
+                'aria-label': 'search' as const,
+              },
             }}
           />
           {query && (
@@ -493,7 +495,7 @@ const SearchIconWrapper = styled('div')(({ theme }) => ({
   marginRight: 8,
 }));
 
-const StyledInputBase = styled(InputBase)(({ _theme }) => ({
+const StyledInputBase = styled(InputBase)(({ theme }) => ({
   flex: 1,
   color: 'inherit',
   '& .MuiInputBase-input': {
@@ -530,7 +532,7 @@ const SuggestionsPaper = styled(Paper, {
   overflow: 'auto',
 }));
 
-const HistoryHeader = styled('div')(({ _theme }) => ({
+const HistoryHeader = styled('div')(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
@@ -568,7 +570,7 @@ const SuggestionItem = styled(ListItem, {
   },
 }));
 
-const EmptyState = styled('div')(({ _theme }) => ({
+const EmptyState = styled('div')(({ theme }) => ({
   padding: 24,
   textAlign: 'center',
   display: 'flex',

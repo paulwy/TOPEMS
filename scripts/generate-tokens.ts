@@ -337,6 +337,11 @@ function generateCSS(): string {
 // 4. Generate TypeScript constants
 // ---------------------------------------------------------------------------
 
+/** Quote object keys that are not valid JS identifiers (e.g. start with a digit). */
+function quoteKey(key: string): string {
+  return /^[0-9]/.test(key) ? `'${key}'` : key;
+}
+
 function generateTS(): string {
   const lines: string[] = [];
   lines.push(HEADER_TS);
@@ -492,7 +497,7 @@ function generateTS(): string {
   lines.push(`export const GREY = {`);
   const grey = tokens.colors.grey;
   for (const key of Object.keys(grey) as string[]) {
-    lines.push(`  ${key}: '${grey[key]}',`);
+    lines.push(`  ${quoteKey(key)}: '${grey[key]}',`);
   }
   lines.push(`} as const;`);
   lines.push('');
@@ -502,7 +507,7 @@ function generateTS(): string {
   lines.push(`export const SPACING = {`);
   const sp = tokens.spacing;
   for (const key of Object.keys(sp) as string[]) {
-    lines.push(`  ${key}: ${sp[key]},`);
+    lines.push(`  ${quoteKey(key)}: ${sp[key]},`);
   }
   lines.push(`} as const;`);
   lines.push('');
@@ -512,7 +517,7 @@ function generateTS(): string {
   lines.push(`export const RADIUS = {`);
   const r = tokens.borderRadius;
   for (const key of Object.keys(r) as string[]) {
-    lines.push(`  ${key}: ${r[key]},`);
+    lines.push(`  ${quoteKey(key)}: ${r[key]},`);
   }
   lines.push(`} as const;`);
   lines.push('');
@@ -523,13 +528,13 @@ function generateTS(): string {
   lines.push(`  light: {`);
   const s = tokens.shadows;
   for (const key of Object.keys(s) as string[]) {
-    lines.push(`    ${key}: '${s[key]}',`);
+    lines.push(`    ${quoteKey(key)}: '${s[key]}',`);
   }
   lines.push(`  },`);
   lines.push(`  dark: {`);
   const ds = tokens.darkShadows;
   for (const key of Object.keys(ds) as string[]) {
-    lines.push(`    ${key}: '${ds[key]}',`);
+    lines.push(`    ${quoteKey(key)}: '${ds[key]}',`);
   }
   lines.push(`  },`);
   lines.push(`} as const;`);
@@ -541,22 +546,22 @@ function generateTS(): string {
   lines.push(`  fontFamily: ${JSON.stringify(tokens.typography.fontFamily)},`);
   lines.push(`  fontSize: {`);
   for (const key of Object.keys(tokens.typography.fontSize) as string[]) {
-    lines.push(`    ${key}: '${tokens.typography.fontSize[key]}',`);
+    lines.push(`    ${quoteKey(key)}: '${tokens.typography.fontSize[key]}',`);
   }
   lines.push(`  },`);
   lines.push(`  fontWeight: {`);
   for (const key of Object.keys(tokens.typography.fontWeight) as string[]) {
-    lines.push(`    ${key}: ${tokens.typography.fontWeight[key]},`);
+    lines.push(`    ${quoteKey(key)}: ${tokens.typography.fontWeight[key]},`);
   }
   lines.push(`  },`);
   lines.push(`  lineHeight: {`);
   for (const key of Object.keys(tokens.typography.lineHeight) as string[]) {
-    lines.push(`    ${key}: ${tokens.typography.lineHeight[key]},`);
+    lines.push(`    ${quoteKey(key)}: ${tokens.typography.lineHeight[key]},`);
   }
   lines.push(`  },`);
   lines.push(`  letterSpacing: {`);
   for (const key of Object.keys(tokens.typography.letterSpacing) as string[]) {
-    lines.push(`    ${key}: '${tokens.typography.letterSpacing[key]}',`);
+    lines.push(`    ${quoteKey(key)}: '${tokens.typography.letterSpacing[key]}',`);
   }
   lines.push(`  },`);
   // Named type styles
@@ -567,7 +572,7 @@ function generateTS(): string {
     for (const prop of Object.keys(t) as string[]) {
       const val = t[prop];
       const valStr = typeof val === 'string' ? `'${val}'` : String(val);
-      lines.push(`    ${prop}: ${valStr},`);
+      lines.push(`    ${quoteKey(prop)}: ${valStr},`);
     }
     lines.push(`  },`);
   }
@@ -579,12 +584,12 @@ function generateTS(): string {
   lines.push(`export const MOTION = {`);
   lines.push(`  duration: {`);
   for (const key of Object.keys(tokens.motion.duration) as string[]) {
-    lines.push(`    ${key}: '${tokens.motion.duration[key]}',`);
+    lines.push(`    ${quoteKey(key)}: '${tokens.motion.duration[key]}',`);
   }
   lines.push(`  },`);
   lines.push(`  easing: {`);
   for (const key of Object.keys(tokens.motion.easing) as string[]) {
-    lines.push(`    ${key}: '${tokens.motion.easing[key]}',`);
+    lines.push(`    ${quoteKey(key)}: '${tokens.motion.easing[key]}',`);
   }
   lines.push(`  },`);
   lines.push(`} as const;`);
@@ -595,7 +600,7 @@ function generateTS(): string {
   lines.push(`export const BREAKPOINTS = {`);
   const bp = tokens.breakpoints.values;
   for (const key of Object.keys(bp) as string[]) {
-    lines.push(`  ${key}: ${bp[key]},`);
+    lines.push(`  ${quoteKey(key)}: ${bp[key]},`);
   }
   lines.push(`} as const;`);
   lines.push('');
@@ -604,7 +609,7 @@ function generateTS(): string {
   lines.push('// ========== Z-Index ==========');
   lines.push(`export const Z_INDEX = {`);
   for (const key of Object.keys(tokens.zIndex) as string[]) {
-    lines.push(`  ${key}: ${tokens.zIndex[key]},`);
+    lines.push(`  ${quoteKey(key)}: ${tokens.zIndex[key]},`);
   }
   lines.push(`} as const;`);
   lines.push('');
@@ -613,7 +618,7 @@ function generateTS(): string {
   lines.push('// ========== Module Gradients — synced with gradients.ts ==========');
   lines.push(`export const MODULE_GRADIENTS = {`);
   for (const key of Object.keys(gradients.modules) as string[]) {
-    lines.push(`  ${key}: '${gradients.modules[key]}',`);
+    lines.push(`  ${quoteKey(key)}: '${gradients.modules[key]}',`);
   }
   lines.push(`} as const;`);
   lines.push('');
@@ -625,13 +630,13 @@ function generateTS(): string {
     if (key === 'modules') continue;
     const val = gradients[key];
     if (typeof val === 'string') {
-      lines.push(`  ${key}: '${val}',`);
+      lines.push(`  ${quoteKey(key)}: '${val}',`);
     } else {
       // Expand nested objects (backgrounds, sections) into flat keys
       for (const subKey of Object.keys(val) as string[]) {
         const subVal = val[subKey];
         if (typeof subVal === 'string') {
-          lines.push(`  ${key}_${subKey}: '${subVal}',`);
+          lines.push(`  ${quoteKey(`${key}_${subKey}`)}: '${subVal}',`);
         }
       }
     }

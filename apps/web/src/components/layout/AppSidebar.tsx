@@ -308,23 +308,25 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                 bgcolor: 'background.default',
               },
             }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position='start'>
-                  <Search style={{ width: 14, height: 14, color: 'text.secondary' }} />
-                </InputAdornment>
-              ),
-              endAdornment: searchQuery && (
-                <InputAdornment position='end'>
-                  <IconButton
-                    size='small'
-                    onClick={() => setSearchQuery('')}
-                    edge='end'
-                  >
-                    <X style={{ width: 12, height: 12 }} />
-                  </IconButton>
-                </InputAdornment>
-              ),
+            slotProps={{
+              input: {
+                startAdornment: (
+                  <InputAdornment position='start'>
+                    <Search style={{ width: 14, height: 14, color: 'text.secondary' }} />
+                  </InputAdornment>
+                ),
+                endAdornment: searchQuery && (
+                  <InputAdornment position='end'>
+                    <IconButton
+                      size='small'
+                      onClick={() => setSearchQuery('')}
+                      edge='end'
+                    >
+                      <X style={{ width: 12, height: 12 }} />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              },
             }}
           />
 
@@ -381,8 +383,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
               <ListItemText
                 primary={item.label}
                 secondary={item.path}
-                primaryTypographyProps={{ fontSize: '0.875rem' }}
-                secondaryTypographyProps={{ fontSize: '0.75rem' }}
+                slotProps={{ primary: { sx: { fontSize: '0.875rem' } }, secondary: { sx: { fontSize: '0.75rem' } } }}
               />
             </ListItemButton>
           ))}
@@ -427,17 +428,6 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                     if (item.path) navigate(item.path);
                     setFavoritesAnchorEl(null);
                   }}
-                  secondaryAction={
-                    <IconButton
-                      size='small'
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleFavorite(item);
-                      }}
-                    >
-                      <BookmarkCheck style={{ width: 14, height: 14, color: 'warning.main' }} />
-                    </IconButton>
-                  }
                 >
                   <ListItemIcon sx={{ minWidth: 32 }}>
                     {item.icon ? (
@@ -448,8 +438,18 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                   </ListItemIcon>
                   <ListItemText
                     primary={item.label}
-                    primaryTypographyProps={{ fontSize: '0.875rem' }}
+                    slotProps={{ primary: { sx: { fontSize: '0.875rem' } } }}
                   />
+                  <IconButton
+                    size='small'
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleFavorite(item);
+                    }}
+                    sx={{ ml: 'auto', flexShrink: 0 }}
+                  >
+                    <BookmarkCheck style={{ width: 14, height: 14, color: 'warning.main' }} />
+                  </IconButton>
                 </ListItemButton>
               ))}
           </List>

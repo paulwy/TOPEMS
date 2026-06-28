@@ -6,11 +6,11 @@ import {
   IconButton,
   LinearProgress,
   List,
-  _ListItem,
+  ListItem,
   ListItemIcon,
   ListItemText,
   Chip,
-  _Button,
+  Button,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
@@ -78,7 +78,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
   height = 150,
   disabled = false,
   className,
-  _uploadText = '选择文件',
+  uploadText = '选择文件',
 }) => {
   const [files, setFiles] = useState<UploadFile[]>(
     value.map((url, index) => {
