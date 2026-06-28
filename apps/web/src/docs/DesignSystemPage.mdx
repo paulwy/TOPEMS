@@ -1,0 +1,378 @@
+{/* DesignSystemPage.mdx — TOPEMS Design System Documentation */}
+
+import { Meta } from '@storybook/addon-docs';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Paper from '@mui/material/Paper';
+import {
+  ColorScale,
+  StatusColorGroup,
+  SpacingDemo,
+  RadiusDemo,
+  ShadowDemo,
+  TypographyShowcase,
+  SurfaceHierarchy,
+  ModuleGradients,
+  DarkShadowComparison,
+  TokenTable,
+} from './DesignTokens';
+import { designTokens } from '../theme/tokens';
+
+<Meta title="Design System/Overview" />
+
+# TOPEMS Design System
+
+TOPEMS Design System 为整个 TOPEMS 平台提供统一的设计语言。所有设计令牌（Design Tokens）定义在 `apps/web/src/theme/tokens.ts` 中，模块渐变色定义在 `apps/web/src/theme/gradients.ts` 中。
+
+---
+
+## Color Palette
+
+### Primary Colors
+
+主色调蓝色用于核心交互元素（按钮、链接、选中态）。
+
+<ColorScale name="Primary" colors={{
+  '50': '#eff6ff',
+  '100': '#dbeafe',
+  '200': '#bfdbfe',
+  '300': '#93c5fd',
+  '400': '#60a5fa',
+  '500': '#3b82f6',
+  '600': '#2563eb',
+  '700': '#1d4ed8',
+  '800': '#1e40af',
+  '900': '#1e3a8a',
+  main: '#3b82f6',
+  light: '#60a5fa',
+  dark: '#2563eb',
+}} />
+
+### Secondary Colors
+
+次要色调紫色用于辅助元素、装饰和强调。
+
+<ColorScale name="Secondary" colors={{
+  '50': '#f5f3ff',
+  '100': '#ede9fe',
+  '200': '#ddd6fe',
+  '300': '#c4b5fd',
+  '400': '#a78bfa',
+  '500': '#8b5cf6',
+  '600': '#7c3aed',
+  '700': '#6d28d9',
+  '800': '#5b21b6',
+  '900': '#4c1d95',
+  main: '#8b5cf6',
+  light: '#a78bfa',
+  dark: '#7c3aed',
+}} />
+
+### Status Colors
+
+状态色用于反馈和提示信息。每个状态色提供 `light`、`main`、`dark` 三个变体。
+
+<StatusColorGroup name="Success" colors={{ main: '#22c55e', light: '#86efac', dark: '#16a34a' }} />
+<StatusColorGroup name="Warning" colors={{ main: '#f59e0b', light: '#fde68a', dark: '#d97706' }} />
+<StatusColorGroup name="Error" colors={{ main: '#ef4444', light: '#fca5a5', dark: '#dc2626' }} />
+<StatusColorGroup name="Info" colors={{ main: '#0ea5e9', light: '#7dd3fc', dark: '#0284c7' }} />
+
+### Background & Surface
+
+背景和表面层级定义了页面的视觉层次结构。
+
+<SurfaceHierarchy />
+
+**使用指南：**
+- `background.default`（#f8fafc）— 页面主背景
+- `background.paper`（#ffffff）— 卡片、对话框内容区
+- `surface.50` ~ `surface.200` — 分隔区域、嵌套表面
+- `border.default` / `border.light` / `border.dark` — 不同强度的边框
+
+### Module Accents
+
+每个 TOPEMS 模块有专属的渐变色，用于模块标识、导航高亮和品牌装饰。
+
+<ModuleGradients />
+
+---
+
+## Typography
+
+TOPEMS 使用 Inter + Noto Sans SC 字体组合，覆盖中英文场景。
+
+**Font Family:** `"Inter", "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`
+
+<TypographyShowcase />
+
+### Font Size Scale
+
+<TokenTable tokens={[
+  { name: 'xs', value: '0.75rem', type: '12px' },
+  { name: 'sm', value: '0.875rem', type: '14px' },
+  { name: 'base', value: '1rem', type: '16px' },
+  { name: 'lg', value: '1.125rem', type: '18px' },
+  { name: 'xl', value: '1.25rem', type: '20px' },
+  { name: '2xl', value: '1.5rem', type: '24px' },
+  { name: '3xl', value: '1.875rem', type: '30px' },
+  { name: '4xl', value: '2.25rem', type: '36px' },
+  { name: '5xl', value: '3rem', type: '48px' },
+  { name: '6xl', value: '3.75rem', type: '60px' },
+]} />
+
+### Font Weight
+
+<TokenTable tokens={[
+  { name: 'light', value: 300 },
+  { name: 'normal', value: 400 },
+  { name: 'medium', value: 500 },
+  { name: 'semibold', value: 600 },
+  { name: 'bold', value: 700 },
+  { name: 'extrabold', value: 800 },
+]} />
+
+---
+
+## Spacing
+
+间距系统基于 4px 基准网格，提供一致的留白和布局节奏。
+
+<SpacingDemo />
+
+**使用方式：** 在 MUI `sx` prop 中直接使用数字（已映射为 px），或通过 `designTokens.spacing` 获取值。
+
+```tsx
+<Box sx={{ p: 2 }}>  // 16px
+<Box sx={{ gap: 3 }}> // 24px
+<Box sx={{ mt: '2xl' }}> // 48px (需通过 theme token 使用)
+```
+
+---
+
+## Border Radius
+
+圆角系统定义了从无圆角到全圆角的完整范围。
+
+<RadiusDemo />
+
+**使用建议：**
+- `none` — 表格单元格、代码块
+- `sm` / `md` — 按钮、输入框
+- `lg` / `xl` — 卡片、对话框
+- `full` — 头像、标签、Pill 按钮
+
+---
+
+## Shadows
+
+阴影系统提供从微弱到强烈的层级深度表达。
+
+<ShadowDemo />
+
+### Dark Mode Shadows
+
+暗色模式下使用更高透明度的阴影以确保在深色背景上可见。
+
+<DarkShadowComparison />
+
+---
+
+## Icon System
+
+TOPEMS 使用 [lucide-react](https://lucide.dev/) 作为图标库，替代 MUI 内置图标。
+
+### Import Pattern
+
+```tsx
+import { User, Settings, Search } from 'lucide-react';
+```
+
+### Size Prop
+
+```tsx
+<Search size={16} />   // 小尺寸（表格、列表）
+<Search size={20} />   // 默认尺寸（按钮、输入框）
+<Search size={24} />   // 大尺寸（页面标题）
+```
+
+### Style Prop (替代 MUI sx)
+
+lucide-react 图标通过 `style` prop 控制样式，**不要使用 MUI 的 `sx` prop**。
+
+```tsx
+// 正确用法
+<Settings
+  size={20}
+  style={{ color: '#6b7280', cursor: 'pointer' }}
+/>
+
+// 错误用法 — sx 不生效
+<Settings sx={{ color: 'text.secondary' }} />
+```
+
+### Common Icons
+
+| 场景 | 图标 |
+|------|------|
+| 搜索 | `Search` |
+| 设置 | `Settings` |
+| 添加 | `Plus` |
+| 编辑 | `Pencil` / `Edit` |
+| 删除 | `Trash2` |
+| 下载 | `Download` |
+| 上传 | `Upload` |
+| 刷新 | `RefreshCw` |
+| 筛选 | `Filter` |
+| 导出 | `FileDown` |
+| 导入 | `FileUp` |
+| 通知 | `Bell` |
+| 用户 | `User` |
+| 关闭 | `X` |
+| 展开 | `ChevronDown` |
+| 折叠 | `ChevronRight` |
+
+---
+
+## Component Library
+
+TOPEMS 提供了丰富的通用组件库，按功能分类如下：
+
+### Common 通用组件
+
+| 组件 | 说明 | Story |
+|------|------|-------|
+| `StatusBadge` | 状态标签（支持颜色映射） | [查看](/?path=/story/components-common-statusbadge) |
+| `StatCard` | 统计数值卡片 | [查看](/?path=/story/components-common-statcard) |
+| `FilterBar` | 高级筛选栏 | [查看](/?path=/story/components-common-filterbar) |
+| `DataExport` | 数据导出按钮 | [查看](/?path=/story/components-common-dataexport) |
+| `QuickSearch` | 快速搜索 | [查看](/?path=/story/components-common-quicksearch) |
+| `FileUpload` | 文件上传 | [查看](/?path=/story/components-common-fileupload) |
+| `Dialog` | 对话框封装 | [查看](/?path=/story/components-common-dialog) |
+| `TreeView` | 树形控件 | [查看](/?path=/story/components-common-treeview) |
+| `UserSelect` | 用户选择器 | [查看](/?path=/story/components-common-userselect) |
+| `Timeline` | 时间线 | [查看](/?path=/story/components-common-timeline) |
+| `Avatar` | 用户头像 | [查看](/?path=/story/components-common-avatar) |
+| `TabPanel` | 标签页面板 | [查看](/?path=/story/components-common-tabpanel) |
+| `DescriptionList` | 描述列表 | [查看](/?path=/story/components-common-descriptionlist) |
+| `FormFieldGroup` | 表单字段组 | [查看](/?path=/story/components-common-formfieldgroup) |
+| `NumberFields` | 数字输入 | [查看](/?path=/story/components-common-numberfields) |
+| `LoadingSpinner` | 加载动画 | [查看](/?path=/story/components-common-loadingspinner) |
+| `RelativeTime` | 相对时间显示 | [查看](/?path=/story/components-common-relativetime) |
+
+### Page Templates 页面模板
+
+| 模板 | 说明 |
+|------|------|
+| `ListPageTemplate` | 列表页（搜索、筛选、表格、分页） |
+| `DetailPageTemplate` | 详情页（信息卡片、Tab 切换） |
+| `FormPageTemplate` | 表单页（验证、分组、布局） |
+| `DashboardTemplate` | 仪表盘（统计卡片、图表） |
+| `TreePageTemplate` | 树形页面（左侧树 + 右侧列表） |
+| `MasterDetailPageTemplate` | 主从页面（列表 + 详情） |
+| `KanbanPageTemplate` | 看板页面（拖拽卡片） |
+| `WizardPageTemplate` | 向导页面（步骤引导） |
+| `StatsPageTemplate` | 统计页面（指标卡片组） |
+| `ReportDesignerTemplate` | 报表设计器 |
+| `SettingsPageTemplate` | 设置页面（分组配置） |
+| `TimelinePageTemplate` | 时间线页面 |
+| `CardListTemplate` | 卡片列表页 |
+| `GisMapTemplate` | GIS 地图页 |
+| `MarkdownEditorTemplate` | Markdown 编辑器 |
+
+---
+
+## Motion & Transitions
+
+### Duration
+
+<TokenTable tokens={[
+  { name: 'instant', value: '0ms', type: '即时响应' },
+  { name: 'fast', value: '100ms', type: '微交互' },
+  { name: 'normal', value: '200ms', type: '标准过渡' },
+  { name: 'slow', value: '300ms', type: '展开/收起' },
+  { name: 'deliberate', value: '500ms', type: '刻意动画' },
+  { name: 'skeleton', value: '2000ms', type: '骨架屏闪烁' },
+]} />
+
+### Easing
+
+| 名称 | 值 | 使用场景 |
+|------|----|----------|
+| default | `cubic-bezier(0.4, 0, 0.2, 1)` | 标准过渡 |
+| decelerate | `cubic-bezier(0, 0, 0.2, 1)` | 进入动画 |
+| accelerate | `cubic-bezier(0.4, 0, 1, 1)` | 退出动画 |
+| sharp | `cubic-bezier(0.4, 0, 0.6, 1)` | 共享轴过渡 |
+
+---
+
+## Breakpoints
+
+<TokenTable tokens={[
+  { name: 'xs', value: 0, type: 'Mobile' },
+  { name: 'sm', value: 600, type: 'Mobile Landscape' },
+  { name: 'md', value: 900, type: 'Tablet' },
+  { name: 'lg', value: 1200, type: 'Desktop' },
+  { name: 'xl', value: 1536, type: 'Large Desktop' },
+]} />
+
+---
+
+## Z-Index Scale
+
+<TokenTable tokens={[
+  { name: 'mobileStepper', value: 1000, type: 'Mobile Stepper' },
+  { name: 'snackbar', value: 1100, type: 'Snackbar' },
+  { name: 'tooltip', value: 1200, type: 'Tooltip' },
+  { name: 'appBar', value: 1300, type: 'App Bar' },
+  { name: 'drawer', value: 1400, type: 'Drawer' },
+  { name: 'modal', value: 1500, type: 'Modal' },
+  { name: 'popover', value: 1600, type: 'Popover' },
+  { name: 'snackbarContent', value: 1700, type: 'Snackbar Content' },
+  { name: 'tooltipContent', value: 1800, type: 'Tooltip Content' },
+]} />
+
+---
+
+## Dark Mode
+
+TOPEMS 支持暗色模式切换，通过在根元素添加 `.dark` CSS class 激活。
+
+### 激活方式
+
+```tsx
+// 方式 1：通过 ThemeProvider 切换
+const [isDark, setIsDark] = useState(false);
+<ThemeProvider theme={isDark ? darkTheme : lightTheme}>
+  <App />
+</ThemeProvider>
+
+// 方式 2：通过 CSS class 切换
+document.documentElement.classList.toggle('dark');
+```
+
+### Token 切换规则
+
+暗色模式下，以下令牌会自动切换：
+
+| Token 类别 | Light Mode | Dark Mode |
+|-----------|-------------|-----------|
+| `background.default` | `#f8fafc` | `#0f172a` |
+| `background.paper` | `#ffffff` | `#1e293b` |
+| `text.primary` | `#1e293b` | `#f1f5f9` |
+| `text.secondary` | `#64748b` | `#94a3b8` |
+| `border.default` | `#e2e8f0` | `#334155` |
+| Shadows | 低透明度 | 高透明度 |
+| `surface.*` | 浅色系 | 深色系 |
+
+> 详细暗色模式 Shadow 对比见上方 [Shadows](#shadows) 章节。
+
+---
+
+## Token Files Reference
+
+| 文件 | 路径 | 说明 |
+|------|------|------|
+| Design Tokens | `apps/web/src/theme/tokens.ts` | 所有设计令牌定义 |
+| Gradients | `apps/web/src/theme/gradients.ts` | 渐变色定义（模块/背景/CTA） |
+| Theme | `apps/web/src/theme/theme.ts` | MUI Theme 对象 |
+| Storybook Theme | `apps/web/src/theme/storybook-theme.ts` | Storybook 专用主题 |

@@ -20,12 +20,16 @@
     "./Pagination": "./src/components/Pagination.tsx",
     "./RelativeTime": "./src/components/RelativeTime.tsx",
     "./BackButton": "./src/components/BackButton.tsx",
-    "./ConfirmDialog": "./src/components/ConfirmDialog.tsx"
+    "./ConfirmDialog": "./src/components/ConfirmDialog.tsx",
+    "./DataTable": "./src/components/DataTable.tsx",
+    "./PageContainer": "./src/components/PageContainer.tsx",
+    "./CommandPalette": "./src/components/CommandPalette.tsx"
   },
   "peerDependencies": {
     "@emotion/react": "^11.0.0",
     "@emotion/styled": "^11.0.0",
     "@mui/material": "^6.0.0 || ^9.0.0",
+    "@tanstack/react-table": "^8.0.0 || ^9.0.0",
     "lucide-react": "^0.300.0 || ^1.0.0",
     "react": "^18.0.0 || ^19.0.0"
   },
