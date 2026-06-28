@@ -14,7 +14,7 @@ import {
   Fade,
   ClickAwayListener,
 } from '@mui/material';
-import { styled, alpha, useTheme } from '@mui/material/styles';
+import { styled, alpha } from '@mui/material/styles';
 import { Search, Clock, X, ArrowRight, TrendingUp, Star } from 'lucide-react';
 
 /**
@@ -73,6 +73,56 @@ export interface QuickSearchProps {
 
 const STORAGE_KEY = 'quick-search-history';
 
+// styled() retained: custom isFocused prop requires shouldForwardProp
+const SearchWrapper = styled('div', {
+  shouldForwardProp: (prop) => prop !== 'isFocused',
+})<{ isFocused?: boolean }>(({ theme, isFocused }) => ({
+  display: 'flex',
+  alignItems: 'center',
+  backgroundColor: 'action.hover',
+  borderRadius: theme.shape.borderRadius,
+  border: `1px solid ${isFocused ? theme.palette.primary.main : 'transparent'}`,
+  padding: '4px 12px',
+  transition: 'all 0.2s',
+  '&:hover': {
+    backgroundColor: 'action.selected',
+  },
+}));
+
+// styled() retained: custom isOpen prop requires shouldForwardProp
+const SuggestionsPaper = styled(Paper, {
+  shouldForwardProp: (prop) => prop !== 'isOpen',
+})<{ isOpen?: boolean }>(({ theme, isOpen }) => ({
+  position: 'absolute',
+  top: '100%',
+  left: 0,
+  right: 0,
+  marginTop: 4,
+  zIndex: theme.zIndex.modal,
+  display: isOpen ? 'block' : 'none',
+  maxHeight: 400,
+  overflow: 'auto',
+}));
+
+// styled() retained: custom isHighlighted prop requires shouldForwardProp
+const SuggestionItem = styled(ListItem, {
+  shouldForwardProp: (prop) => prop !== 'isHighlighted',
+})<{ isHighlighted?: boolean }>(({ theme, isHighlighted }) => ({
+  cursor: 'pointer',
+  backgroundColor: isHighlighted
+    ? alpha(theme.palette.primary.main, 0.12)
+    : 'transparent',
+  '&:hover': {
+    backgroundColor: alpha(theme.palette.primary.main, 0.06),
+  },
+  '& .MuiListItemIcon-root': {
+    color: theme.palette.text.secondary,
+  },
+  '& .MuiListItemText-primary': {
+    fontSize: '0.875rem',
+  },
+}));
+
 /**
  * 快速搜索组件
  * 支持键盘快捷键触发、搜索历史和搜索建议功能
@@ -91,7 +141,6 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
   disabled = false,
   className,
 }) => {
-  const theme = useTheme();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [history, setHistory] = useState<SearchHistoryItem[]>([]);
@@ -274,20 +323,28 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
 
   return (
     <ClickAwayListener onClickAway={() => setOpen(false)}>
-      <Container
+      <Box
         ref={containerRef}
         className={className}
-        sx={{ width }}
+        sx={{ position: 'relative', width }}
       >
         {/* 搜索输入框 */}
         <SearchWrapper
           onClick={() => !disabled && setOpen(true)}
           isFocused={isOpen}
         >
-          <SearchIconWrapper>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'text.secondary',
+              mr: 1,
+            }}
+          >
             <Search size={20} />
-          </SearchIconWrapper>
-          <StyledInputBase
+          </Box>
+          <InputBase
             ref={inputRef}
             placeholder={placeholder}
             value={query}
@@ -299,6 +356,14 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
             slotProps={{
               input: {
                 'aria-label': 'search' as const,
+              },
+            }}
+            sx={{
+              flex: 1,
+              color: 'inherit',
+              '& .MuiInputBase-input': {
+                padding: 0,
+                fontSize: '0.875rem',
               },
             }}
           />
@@ -316,7 +381,18 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
             </IconButton>
           )}
           {enableShortcut && !query && (
-            <ShortcutHint>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.25,
+                p: '2px 6px',
+                bgcolor: 'grey.200',
+                borderRadius: 4,
+                fontSize: '0.75rem',
+                color: 'text.secondary',
+              }}
+            >
               <Box
                 component='span'
                 sx={{
@@ -328,7 +404,7 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
                 ⌘
               </Box>
               {shortcutKey.toUpperCase()}
-            </ShortcutHint>
+            </Box>
           )}
         </SearchWrapper>
 
@@ -342,7 +418,14 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
           >
             {showHistory && (
               <>
-                <HistoryHeader>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    p: '8px 12px',
+                  }}
+                >
                   <Typography
                     variant='body2'
                     color='text.secondary'
@@ -355,7 +438,7 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
                     onClick={handleClearHistory}
                     sx={{ cursor: 'pointer' }}
                   />
-                </HistoryHeader>
+                </Box>
                 <List disablePadding>
                   {history.slice(0, maxHistoryCount).map((item, index) => (
                     <SuggestionItem
@@ -378,7 +461,17 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
 
             {showFilteredSuggestions && (
               <>
-                <SectionTitle>建议</SectionTitle>
+                <Typography
+                  sx={{
+                    p: '8px 12px',
+                    fontSize: '0.75rem',
+                    color: 'text.secondary',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                  }}
+                >
+                  建议
+                </Typography>
                 <List disablePadding>
                   {filteredSuggestions.map((suggestion, index) => {
                     const itemIndex = showHistory ? history.length + index : index;
@@ -409,7 +502,17 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
 
             {showFilteredHistory && !showFilteredSuggestions && (
               <>
-                <SectionTitle>历史记录</SectionTitle>
+                <Typography
+                  sx={{
+                    p: '8px 12px',
+                    fontSize: '0.75rem',
+                    color: 'text.secondary',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.5px',
+                  }}
+                >
+                  历史记录
+                </Typography>
                 <List disablePadding>
                   {filteredHistory.map((item, index) => {
                     const itemIndex = showHistory ? history.length + index : index;
@@ -432,7 +535,15 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
             )}
 
             {query && !showFilteredSuggestions && !showFilteredHistory && (
-              <EmptyState>
+              <Box
+                sx={{
+                  p: 3,
+                  textAlign: 'center',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 0.5,
+                }}
+              >
                 <Typography
                   variant='body2'
                   color='text.secondary'
@@ -445,151 +556,36 @@ const QuickSearch: React.FC<QuickSearchProps> = ({
                 >
                   按 Enter 键搜索 "{query}"
                 </Typography>
-              </EmptyState>
+              </Box>
             )}
 
             {query && (
-              <SearchAction onClick={handleSearch}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  p: 1.5,
+                  borderTop: '1px solid',
+                  borderColor: 'divider',
+                  cursor: 'pointer',
+                  bgcolor: alpha('#000', 0.04),
+                  '&:hover': {
+                    bgcolor: alpha('#000', 0.08),
+                  },
+                }}
+                onClick={handleSearch}
+              >
                 <Search size={16} />
                 <Typography variant='body2'>搜索 "{query}"</Typography>
-              </SearchAction>
+              </Box>
             )}
           </SuggestionsPaper>
         </Fade>
-      </Container>
+      </Box>
     </ClickAwayListener>
   );
 };
-
-// 样式化组件
-const Container = styled(Box)({
-  position: 'relative',
-});
-
-const SearchWrapper = styled('div', {
-  shouldForwardProp: (prop) => prop !== 'isFocused',
-})<{ isFocused?: boolean }>(({ theme, isFocused }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  backgroundColor:
-    theme.palette.mode === 'dark'
-      ? alpha(theme.palette.common.white, 0.05)
-      : theme.palette.grey[100],
-  borderRadius: theme.shape.borderRadius,
-  border: `1px solid ${isFocused ? theme.palette.primary.main : 'transparent'}`,
-  padding: '4px 12px',
-  transition: 'all 0.2s',
-  '&:hover': {
-    backgroundColor:
-      theme.palette.mode === 'dark'
-        ? alpha(theme.palette.common.white, 0.08)
-        : theme.palette.grey[200],
-  },
-}));
-
-const SearchIconWrapper = styled('div')(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  color: theme.palette.text.secondary,
-  marginRight: 8,
-}));
-
-const StyledInputBase = styled(InputBase)(({ theme }) => ({
-  flex: 1,
-  color: 'inherit',
-  '& .MuiInputBase-input': {
-    padding: 0,
-    fontSize: '0.875rem',
-  },
-}));
-
-const ShortcutHint = styled('div')(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  gap: 2,
-  padding: '2px 6px',
-  backgroundColor:
-    theme.palette.mode === 'dark'
-      ? alpha(theme.palette.common.white, 0.1)
-      : theme.palette.grey[200],
-  borderRadius: 4,
-  fontSize: '0.75rem',
-  color: theme.palette.text.secondary,
-}));
-
-const SuggestionsPaper = styled(Paper, {
-  shouldForwardProp: (prop) => prop !== 'isOpen',
-})<{ isOpen?: boolean }>(({ theme, isOpen }) => ({
-  position: 'absolute',
-  top: '100%',
-  left: 0,
-  right: 0,
-  marginTop: 4,
-  zIndex: theme.zIndex.modal,
-  display: isOpen ? 'block' : 'none',
-  maxHeight: 400,
-  overflow: 'auto',
-}));
-
-const HistoryHeader = styled('div')(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'space-between',
-  padding: '8px 12px',
-}));
-
-const SectionTitle = styled(Typography)(({ theme }) => ({
-  padding: '8px 12px',
-  fontSize: '0.75rem',
-  color: theme.palette.text.secondary,
-  textTransform: 'uppercase',
-  letterSpacing: '0.5px',
-}));
-
-const SuggestionItem = styled(ListItem, {
-  shouldForwardProp: (prop) => prop !== 'isHighlighted',
-})<{ isHighlighted?: boolean }>(({ theme, isHighlighted }) => ({
-  cursor: 'pointer',
-  backgroundColor: isHighlighted
-    ? theme.palette.mode === 'dark'
-      ? alpha(theme.palette.primary.main, 0.2)
-      : `${theme.palette.primary.light}40`
-    : 'transparent',
-  '&:hover': {
-    backgroundColor:
-      theme.palette.mode === 'dark'
-        ? alpha(theme.palette.primary.main, 0.1)
-        : `${theme.palette.primary.light}20`,
-  },
-  '& .MuiListItemIcon-root': {
-    color: theme.palette.text.secondary,
-  },
-  '& .MuiListItemText-primary': {
-    fontSize: '0.875rem',
-  },
-}));
-
-const EmptyState = styled('div')(({ theme }) => ({
-  padding: 24,
-  textAlign: 'center',
-  display: 'flex',
-  flexDirection: 'column',
-  gap: 4,
-}));
-
-const SearchAction = styled('div')(({ theme }) => ({
-  display: 'flex',
-  alignItems: 'center',
-  gap: 8,
-  padding: 12,
-  borderTop: `1px solid ${theme.palette.divider}`,
-  cursor: 'pointer',
-  backgroundColor: `${theme.palette.primary.main}10`,
-  '&:hover': {
-    backgroundColor: `${theme.palette.primary.main}20`,
-  },
-}));
 
 export { QuickSearch };
 export default QuickSearch;

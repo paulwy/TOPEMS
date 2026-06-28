@@ -64,6 +64,39 @@ interface UploadFile {
   error?: string;
 }
 
+// styled() retained: dynamic custom props (isDragging, isDisabled) require shouldForwardProp
+const UploadArea = styled(Box, {
+  shouldForwardProp: (prop) => !['isDragging', 'isDisabled'].includes(prop as string),
+})<{
+  isDragging?: boolean;
+  isDisabled?: boolean;
+}>(({ theme, isDragging, isDisabled }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  border: `2px dashed ${
+    isDragging
+      ? theme.palette.primary.main
+      : isDisabled
+        ? theme.palette.grey[300]
+        : theme.palette.divider
+  }`,
+  borderRadius: theme.shape.borderRadius,
+  backgroundColor: isDragging
+    ? `${theme.palette.primary.light}20`
+    : isDisabled
+      ? theme.palette.grey[50]
+      : 'transparent',
+  cursor: isDisabled ? 'not-allowed' : 'pointer',
+  transition: 'all 0.2s',
+  color: isDisabled ? theme.palette.grey[400] : theme.palette.text.secondary,
+  '&:hover': {
+    borderColor: isDisabled ? theme.palette.grey[300] : theme.palette.primary.main,
+    backgroundColor: isDisabled ? 'transparent' : `${theme.palette.primary.light}10`,
+  },
+}));
+
 /**
  * 文件上传组件
  * 支持多文件上传、显示上传进度、删除和文件类型限制
@@ -374,9 +407,32 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
       {/* 文件列表 */}
       {files.length > 0 && (
-        <FileList>
+        <List
+          sx={{
+            mt: 1,
+            p: 0,
+            '& .MuiListItem-root': {
+              border: '1px solid',
+              borderColor: 'divider',
+              borderRadius: 8,
+              mb: 1,
+              p: '8px 12px',
+            },
+          }}
+        >
           {files.map((file) => (
-            <FileItem key={file.id}>
+            <ListItem
+              key={file.id}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                p: 1,
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 2,
+                mt: 1,
+              }}
+            >
               <ListItemIcon sx={{ minWidth: 40 }}>{getFileIcon(file.type)}</ListItemIcon>
               <ListItemText
                 primary={file.name}
@@ -450,67 +506,12 @@ const FileUpload: React.FC<FileUploadProps> = ({
                   <X size={16} />
                 </IconButton>
               </Box>
-            </FileItem>
+            </ListItem>
           ))}
-        </FileList>
+        </List>
       )}
     </Box>
   );
 };
-
-// 样式化组件
-const UploadArea = styled(Box, {
-  shouldForwardProp: (prop) => !['isDragging', 'isDisabled'].includes(prop as string),
-})<{
-  isDragging?: boolean;
-  isDisabled?: boolean;
-}>(({ theme, isDragging, isDisabled }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
-  border: `2px dashed ${
-    isDragging
-      ? theme.palette.primary.main
-      : isDisabled
-        ? theme.palette.grey[300]
-        : theme.palette.divider
-  }`,
-  borderRadius: theme.shape.borderRadius,
-  backgroundColor: isDragging
-    ? `${theme.palette.primary.light}20`
-    : isDisabled
-      ? theme.palette.grey[50]
-      : 'transparent',
-  cursor: isDisabled ? 'not-allowed' : 'pointer',
-  transition: 'all 0.2s',
-  color: isDisabled ? theme.palette.grey[400] : theme.palette.text.secondary,
-  '&:hover': {
-    borderColor: isDisabled ? theme.palette.grey[300] : theme.palette.primary.main,
-    backgroundColor: isDisabled ? 'transparent' : `${theme.palette.primary.light}10`,
-  },
-}));
-
-const FileList = styled(List)({
-  marginTop: 8,
-  padding: 0,
-  '& .MuiListItem-root': {
-    border: '1px solid',
-    borderColor: 'divider',
-    borderRadius: 8,
-    marginBottom: 8,
-    padding: '8px 12px',
-  },
-});
-
-const FileItem = styled(Box)({
-  display: 'flex',
-  alignItems: 'center',
-  padding: 8,
-  border: '1px solid',
-  borderColor: 'divider',
-  borderRadius: 8,
-  marginTop: 8,
-});
 
 export default FileUpload;
