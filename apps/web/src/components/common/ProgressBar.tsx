@@ -22,17 +22,17 @@ const _SOLID_COLORS = {
 
 // 尺寸配置
 const SIZE_CONFIG = {
-  small: {
+  sm: {
     linear: { height: 6, fontSize: '0.75rem' },
     circular: { size: 40, fontSize: '0.75rem' },
     segmented: { height: 8, fontSize: '0.75rem' },
   },
-  medium: {
+  md: {
     linear: { height: 10, fontSize: '0.875rem' },
     circular: { size: 60, fontSize: '0.875rem' },
     segmented: { height: 12, fontSize: '0.875rem' },
   },
-  large: {
+  lg: {
     linear: { height: 14, fontSize: '1rem' },
     circular: { size: 80, fontSize: '1rem' },
     segmented: { height: 16, fontSize: '1rem' },
@@ -59,7 +59,7 @@ const stripeAnimation = keyframes`
   }
 `;
 
-// 样式化组件
+// styled() retained: dynamic custom props require shouldForwardProp
 const GradientLinearProgress = styled(LinearProgress, {
   shouldForwardProp: (prop) =>
     prop !== 'gradientColor' && prop !== 'animated' && prop !== 'striped',
@@ -106,13 +106,6 @@ const _GradientCircularProgress = styled(CircularProgress, {
   }),
 }));
 
-const CircularContainer = styled(Box)({
-  position: 'relative',
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-});
-
 const _CircularValue = styled(Box)({
   position: 'absolute',
   display: 'flex',
@@ -120,12 +113,7 @@ const _CircularValue = styled(Box)({
   justifyContent: 'center',
 });
 
-const SegmentedContainer = styled(Box)({
-  display: 'flex',
-  gap: 4,
-  alignItems: 'center',
-});
-
+// styled() retained: dynamic custom props require shouldForwardProp
 const Segment = styled(Box, {
   shouldForwardProp: (prop) => prop !== 'filled' && prop !== 'gradientColor' && prop !== 'animated',
 })<{
@@ -152,10 +140,13 @@ export interface ProgressBarProps {
   showValue?: boolean;
   variant?: 'linear' | 'circular' | 'segmented';
   color?: 'primary' | 'success' | 'warning' | 'error' | 'gradient';
-  size?: 'small' | 'medium' | 'large';
+  size?: 'sm' | 'md' | 'lg';
   animated?: boolean;
   striped?: boolean;
   segments?: number; // 仅用于 segmented 变体
+
+  // TOPEMS 设计系统
+  sx?: import('@mui/material/styles').SxProps<import('@mui/material/styles').Theme>;
 }
 
 export default function ProgressBar({
@@ -165,10 +156,11 @@ export default function ProgressBar({
   showValue = false,
   variant = 'linear',
   color = 'primary',
-  size = 'medium',
+  size = 'md',
   animated = false,
   striped = false,
   segments = 10,
+  sx,
 }: ProgressBarProps) {
   // 计算百分比
   const percentage = Math.min(Math.max((value / max) * 100, 0), 100);
@@ -180,7 +172,7 @@ export default function ProgressBar({
 
   // 渲染线性进度条
   const renderLinear = () => (
-    <Box sx={{ width: '100%' }}>
+    <Box sx={{ width: '100%', ...sx }}>
       {(label || showValue) && (
         <Box
           sx={{
@@ -222,8 +214,15 @@ export default function ProgressBar({
 
   // 渲染圆形进度条
   const renderCircular = () => (
-    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <CircularContainer>
+    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', ...sx }}>
+      <Box
+        sx={{
+          position: 'relative',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <Box
           sx={{
             position: 'relative',
@@ -329,7 +328,7 @@ export default function ProgressBar({
             </Box>
           )}
         </Box>
-      </CircularContainer>
+      </Box>
       {label && (
         <Typography
           variant='body2'
@@ -347,7 +346,7 @@ export default function ProgressBar({
     const segmentArray = Array.from({ length: segments }, (_, i) => i);
 
     return (
-      <Box sx={{ width: '100%' }}>
+      <Box sx={{ width: '100%', ...sx }}>
         {(label || showValue) && (
           <Box
             sx={{
@@ -375,7 +374,7 @@ export default function ProgressBar({
             )}
           </Box>
         )}
-        <SegmentedContainer sx={{ height: sizeConfig.segmented.height }}>
+        <Box sx={{ display: 'flex', gap: 4, alignItems: 'center', height: sizeConfig.segmented.height }}>
           {segmentArray.map((index) => (
             <Segment
               key={index}
@@ -384,7 +383,7 @@ export default function ProgressBar({
               animated={animated && index < filledSegments}
             />
           ))}
-        </SegmentedContainer>
+        </Box>
       </Box>
     );
   };

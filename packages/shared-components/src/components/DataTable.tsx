@@ -2,14 +2,14 @@
  * Shared DataTable component
  * Extracted from apps/web with dependency decoupling.
  * Uses TanStack React Table - supports search, sort, filter, pagination, selection, export.
- * Enhanced features: column config persistence, row expansion, advanced filters.
+ * Enhanced features: column config persistence, row expansion, advanced filters, virtual scrolling.
  *
  * Decoupled from:
  * - @/store (useAppStore -> addNotification) -> replaced with onExportSuccess/onExportError props
  * - @/hooks/useDataTable (useExportData) -> inlined export logic
  * - @/utils -> removed
  */
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -364,7 +364,7 @@ function exportToExcel<TData extends RowData>(
 /**
  * Shared DataTable component
  * Supports search, sort, filter, pagination, selection, export.
- * Enhanced features: column config persistence, row expansion.
+ * Enhanced features: column config persistence, row expansion, virtual scrolling.
  *
  * @example
  * ```tsx
@@ -384,6 +384,8 @@ function exportToExcel<TData extends RowData>(
  *   columnConfigKey="user-list"
  *   enableRowExpansion
  *   expandedRowRender={renderExpandedRow}
+ *   enableVirtualization
+ *   rowHeight={48}
  * />
  * ```
  */
@@ -420,6 +422,8 @@ export function DataTable<TData, TValue>({
   columnConfigKey = 'default',
   enableRowExpansion = false,
   expandedRowRender,
+  enableVirtualization = false,
+  rowHeight,
   enableStickyHeader = false,
   showRowNumber = false,
   enableAdvancedFilter = false,
@@ -451,6 +455,11 @@ export function DataTable<TData, TValue>({
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set(selectedIds));
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
 
+  // Virtual scrolling state
+  const [scrollTop, setScrollTop] = useState(0);
+  const [containerHeight, setContainerHeight] = useState(0);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     if (selectedIds) {
       setSelectedKeys(new Set(selectedIds));
@@ -462,6 +471,38 @@ export function DataTable<TData, TValue>({
       saveColumnVisibility(columnConfigKey, columnVisibility);
     }
   }, [columnVisibility, persistColumnConfig, columnConfigKey]);
+
+  // Measure scroll container height with ResizeObserver
+  useEffect(() => {
+    if (!enableVirtualization || !rowHeight || !scrollContainerRef.current) return;
+
+    const container = scrollContainerRef.current;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const height = entry.contentRect.height;
+        if (height > 0) {
+          setContainerHeight(height);
+        }
+      }
+    });
+    observer.observe(container);
+    // Set initial height
+    if (container.clientHeight > 0) {
+      setContainerHeight(container.clientHeight);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [enableVirtualization, rowHeight]);
+
+  // Reset scroll position when data changes
+  useEffect(() => {
+    if (enableVirtualization && scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
+      setScrollTop(0);
+    }
+  }, [data, enableVirtualization]);
 
   const table = useReactTable({
     data,
@@ -643,6 +684,171 @@ export function DataTable<TData, TValue>({
     },
     [currentPageIndex, pageSize]
   );
+
+  // Virtual scrolling calculations
+  const isVirtualEnabled = enableVirtualization && !!rowHeight && containerHeight > 0;
+  const allRows = table.getRowModel().rows;
+  const totalHeight = isVirtualEnabled ? allRows.length * rowHeight : undefined;
+  const visibleStart = isVirtualEnabled
+    ? Math.max(0, Math.floor(scrollTop / rowHeight) - 3)
+    : 0;
+  const visibleEnd = isVirtualEnabled
+    ? Math.min(
+        visibleStart + Math.ceil(containerHeight / rowHeight) + 6,
+        allRows.length
+      )
+    : allRows.length;
+  const visibleRows = isVirtualEnabled
+    ? allRows.slice(visibleStart, visibleEnd)
+    : allRows;
+
+  const handleScroll = useCallback(
+    (e: React.UIEvent<HTMLDivElement>) => {
+      if (isVirtualEnabled) {
+        setScrollTop(e.currentTarget.scrollTop);
+      }
+    },
+    [isVirtualEnabled]
+  );
+
+  /**
+   * Render a single data row (used by both virtual and non-virtual modes)
+   */
+  const renderRow = (row: any, rowIndex: number) => {
+    const rowKey = getRowKey(row.original);
+    const isExpanded = expandedRows.has(rowKey);
+
+    return (
+      <React.Fragment key={row.id}>
+        <TableRow
+          hover={!!onRowClick}
+          tabIndex={onRowClick ? 0 : undefined}
+          onClick={onRowClick ? () => onRowClick(row.original) : undefined}
+          onKeyDown={
+            onRowClick
+              ? (e: React.KeyboardEvent) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onRowClick(row.original);
+                  }
+                }
+              : undefined
+          }
+          sx={{
+            cursor: onRowClick ? 'pointer' : 'default',
+            '&:hover': {
+              backgroundColor: onRowClick ? 'action.hover' : 'inherit',
+            },
+            '&:last-child td': { borderBottom: 0 },
+            bgcolor: striped && row.index % 2 === 0 ? 'action.hover' : 'inherit',
+            ...(compact && { fontSize: '0.875rem' }),
+          }}
+        >
+          {/* Selection column */}
+          {showSelection && (
+            <TableCell
+              padding='checkbox'
+              sx={{
+                position: 'sticky',
+                left: 0,
+                zIndex: 1,
+                bgcolor: 'inherit',
+                width: 40,
+              }}
+            >
+              <Checkbox
+                checked={
+                  selectionKey
+                    ? selectedIds.includes(String(row.original[selectionKey]))
+                    : selectedKeys.has(rowKey)
+                }
+                onChange={() => handleSelectRow(row.original)}
+                onClick={(e) => e.stopPropagation()}
+              />
+            </TableCell>
+          )}
+          {/* Row number column */}
+          {showRowNumber && (
+            <TableCell
+              sx={{
+                whiteSpace: 'nowrap',
+                fontSize: 14,
+                fontWeight: 500,
+                position: showSelection ? 'sticky' : 'relative',
+                left: showSelection ? 56 : 0,
+                zIndex: 1,
+                bgcolor: 'inherit',
+              }}
+            >
+              {renderRowNumber(rowIndex)}
+            </TableCell>
+          )}
+          {/* Expansion column */}
+          {enableRowExpansion && (
+            <TableCell
+              sx={{
+                whiteSpace: 'nowrap',
+                fontSize: 14,
+                position: showSelection || showRowNumber ? 'sticky' : 'relative',
+                left: (showSelection ? 56 : 0) + (showRowNumber ? 64 : 0),
+                zIndex: 1,
+                bgcolor: 'inherit',
+              }}
+            >
+              <IconButton
+                size='small'
+                aria-label={isExpanded ? '收起行' : '展开行'}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleRowExpand(row.original);
+                }}
+              >
+                {isExpanded ? (
+                  <ChevronUp style={{ width: 18, height: 18 }} />
+                ) : (
+                  <ChevronDown style={{ width: 18, height: 18 }} />
+                )}
+              </IconButton>
+            </TableCell>
+          )}
+          {/* Data columns */}
+          {row.getVisibleCells().map((cell: any) => (
+            <TableCell
+              key={cell.id}
+              sx={{
+                whiteSpace: 'nowrap',
+                fontSize: 14,
+                ...(compact && { py: 1 }),
+              }}
+            >
+              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+            </TableCell>
+          ))}
+        </TableRow>
+        {/* Expanded row */}
+        {enableRowExpansion && isExpanded && expandedRowRender && (
+          <TableRow key={`${row.id}-expanded`}>
+            <TableCell
+              colSpan={
+                columns.length +
+                (showSelection ? 1 : 0) +
+                (showRowNumber ? 1 : 0) +
+                (enableRowExpansion ? 1 : 0)
+              }
+              sx={{
+                padding: 2,
+                bgcolor: 'grey.50',
+                borderTop: '1px solid',
+                borderTopColor: 'divider',
+              }}
+            >
+              {expandedRowRender(row.original)}
+            </TableCell>
+          </TableRow>
+        )}
+      </React.Fragment>
+    );
+  };
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, ...sx }}>
@@ -830,9 +1036,9 @@ export function DataTable<TData, TValue>({
           >
             <span>{(column.columnDef.header as string) || column.id}</span>
             {column.getIsVisible() ? (
-              <Eye style={{ width: 16, height: 16, color: '#2e7d32' }} />
+              <Eye style={{ width: 16, height: 16 }} sx={{ color: 'success.main' }} />
             ) : (
-              <EyeOff style={{ width: 16, height: 16, color: 'rgba(0, 0, 0, 0.26)' }} />
+              <EyeOff style={{ width: 16, height: 16 }} sx={{ color: 'action.disabled' }} />
             )}
           </MenuItem>
         ))}
@@ -861,7 +1067,21 @@ export function DataTable<TData, TValue>({
           bgcolor: 'background.paper',
         }}
       >
-        <Box sx={{ overflowX: responsive ? 'auto' : 'hidden' }}>
+        <Box
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
+          sx={{
+            overflowX: responsive ? 'auto' : 'hidden',
+            ...(isVirtualEnabled && {
+              overflowY: 'auto',
+              maxHeight: containerHeight || 400,
+            }),
+          }}
+        >
+          {/* Virtual scrolling spacer for top */}
+          {isVirtualEnabled && (
+            <Box component="div" sx={{ height: visibleStart * rowHeight, width: '100%' }} />
+          )}
           <Table
             aria-label='数据表格'
             sx={{
@@ -999,141 +1219,10 @@ export function DataTable<TData, TValue>({
                     </Box>
                   </TableCell>
                 </TableRow>
-              ) : table.getRowModel().rows.length ? (
-                table.getRowModel().rows.map((row, rowIndex) => {
-                  const rowKey = getRowKey(row.original);
-                  const isExpanded = expandedRows.has(rowKey);
-
-                  return (
-                    <React.Fragment key={row.id}>
-                      <TableRow
-                        hover={!!onRowClick}
-                        tabIndex={onRowClick ? 0 : undefined}
-                        onClick={onRowClick ? () => onRowClick(row.original) : undefined}
-                        onKeyDown={
-                          onRowClick
-                            ? (e: React.KeyboardEvent) => {
-                                if (e.key === 'Enter' || e.key === ' ') {
-                                  e.preventDefault();
-                                  onRowClick(row.original);
-                                }
-                              }
-                            : undefined
-                        }
-                        sx={{
-                          cursor: onRowClick ? 'pointer' : 'default',
-                          '&:hover': {
-                            backgroundColor: onRowClick ? 'action.hover' : 'inherit',
-                          },
-                          '&:last-child td': { borderBottom: 0 },
-                          bgcolor: striped && row.index % 2 === 0 ? 'action.hover' : 'inherit',
-                          ...(compact && { fontSize: '0.875rem' }),
-                        }}
-                      >
-                        {/* Selection column */}
-                        {showSelection && (
-                          <TableCell
-                            padding='checkbox'
-                            sx={{
-                              position: 'sticky',
-                              left: 0,
-                              zIndex: 1,
-                              bgcolor: 'inherit',
-                              width: 40,
-                            }}
-                          >
-                            <Checkbox
-                              checked={
-                                selectionKey
-                                  ? selectedIds.includes(String(row.original[selectionKey]))
-                                  : selectedKeys.has(rowKey)
-                              }
-                              onChange={() => handleSelectRow(row.original)}
-                              onClick={(e) => e.stopPropagation()}
-                            />
-                          </TableCell>
-                        )}
-                        {/* Row number column */}
-                        {showRowNumber && (
-                          <TableCell
-                            sx={{
-                              whiteSpace: 'nowrap',
-                              fontSize: 14,
-                              fontWeight: 500,
-                              position: showSelection ? 'sticky' : 'relative',
-                              left: showSelection ? 56 : 0,
-                              zIndex: 1,
-                              bgcolor: 'inherit',
-                            }}
-                          >
-                            {renderRowNumber(rowIndex)}
-                          </TableCell>
-                        )}
-                        {/* Expansion column */}
-                        {enableRowExpansion && (
-                          <TableCell
-                            sx={{
-                              whiteSpace: 'nowrap',
-                              fontSize: 14,
-                              position: showSelection || showRowNumber ? 'sticky' : 'relative',
-                              left: (showSelection ? 56 : 0) + (showRowNumber ? 64 : 0),
-                              zIndex: 1,
-                              bgcolor: 'inherit',
-                            }}
-                          >
-                            <IconButton
-                              size='small'
-                              aria-label={isExpanded ? '收起行' : '展开行'}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleRowExpand(row.original);
-                              }}
-                            >
-                              {isExpanded ? (
-                                <ChevronUp style={{ width: 18, height: 18 }} />
-                              ) : (
-                                <ChevronDown style={{ width: 18, height: 18 }} />
-                              )}
-                            </IconButton>
-                          </TableCell>
-                        )}
-                        {/* Data columns */}
-                        {row.getVisibleCells().map((cell) => (
-                          <TableCell
-                            key={cell.id}
-                            sx={{
-                              whiteSpace: 'nowrap',
-                              fontSize: 14,
-                              ...(compact && { py: 1 }),
-                            }}
-                          >
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                      {/* Expanded row */}
-                      {enableRowExpansion && isExpanded && expandedRowRender && (
-                        <TableRow key={`${row.id}-expanded`}>
-                          <TableCell
-                            colSpan={
-                              columns.length +
-                              (showSelection ? 1 : 0) +
-                              (showRowNumber ? 1 : 0) +
-                              (enableRowExpansion ? 1 : 0)
-                            }
-                            sx={{
-                              padding: 2,
-                              bgcolor: 'grey.50',
-                              borderTop: '1px solid',
-                              borderTopColor: 'divider',
-                            }}
-                          >
-                            {expandedRowRender(row.original)}
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </React.Fragment>
-                  );
+              ) : allRows.length ? (
+                visibleRows.map((row, rowIndex) => {
+                  const actualRowIndex = isVirtualEnabled ? visibleStart + rowIndex : rowIndex;
+                  return renderRow(row, actualRowIndex);
                 })
               ) : (
                 <TableRow>
@@ -1157,6 +1246,16 @@ export function DataTable<TData, TValue>({
               )}
             </TableBody>
           </Table>
+          {/* Virtual scrolling spacer for bottom */}
+          {isVirtualEnabled && totalHeight != null && (
+            <Box
+              component="div"
+              sx={{
+                height: Math.max(0, totalHeight - visibleEnd * rowHeight),
+                width: '100%',
+              }}
+            />
+          )}
         </Box>
       </Box>
 

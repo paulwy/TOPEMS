@@ -9,7 +9,7 @@ import {
   Menu,
   MenuItem,
   Checkbox,
-  _FormControlLabel,
+  FormControlLabel,
   TextField,
   Dialog,
   DialogTitle,
@@ -22,7 +22,6 @@ import {
   Divider,
   Button,
 } from '@mui/material';
-import { styled } from '@mui/material/styles';
 import { Download, FileSpreadsheet, FileText, File, ChevronDown, Settings, X } from 'lucide-react';
 import * as XLSX from 'xlsx';
 
@@ -126,7 +125,7 @@ const DataExport: React.FC<DataExportProps> = ({
   buttonText = '导出',
   showFieldSelection = true,
   showFormatSelection = true,
-  _showSettingsDialog = true,
+  showSettingsDialog = true,
   disabled = false,
   className,
   beforeExport,
@@ -500,7 +499,22 @@ const DataExport: React.FC<DataExportProps> = ({
                 </Button>
               </Box>
             </Box>
-            <FieldList>
+            <List
+              sx={{
+                maxHeight: 250,
+                overflow: 'auto',
+                border: '1px solid',
+                borderColor: 'divider',
+                borderRadius: 2,
+                '& .MuiListItem-root': {
+                  borderBottom: '1px solid',
+                  borderColor: 'divider',
+                  '&:last-child': {
+                    borderBottom: 'none',
+                  },
+                },
+              }}
+            >
               {selectedFields.map((field) => (
                 <ListItem
                   key={field.key}
@@ -517,7 +531,7 @@ const DataExport: React.FC<DataExportProps> = ({
                   <ListItemText primary={field.title} />
                 </ListItem>
               ))}
-            </FieldList>
+            </List>
           </Box>
 
           {/* 数据预览 */}
@@ -545,21 +559,5 @@ const DataExport: React.FC<DataExportProps> = ({
     </Box>
   );
 };
-
-// 样式化组件
-const FieldList = styled(List)({
-  maxHeight: 250,
-  overflow: 'auto',
-  border: '1px solid',
-  borderColor: 'divider',
-  borderRadius: 8,
-  '& .MuiListItem-root': {
-    borderBottom: '1px solid',
-    borderColor: 'divider',
-    '&:last-child': {
-      borderBottom: 'none',
-    },
-  },
-});
 
 export default DataExport;

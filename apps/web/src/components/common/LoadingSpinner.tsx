@@ -1,17 +1,19 @@
 import React from 'react';
+import { Box, Typography } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { Loader2 } from 'lucide-react';
-import { useTheme } from '@mui/material/styles';
 
 interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg';
-  className?: string;
+  sx?: import('@mui/material/styles').SxProps<import('@mui/material/styles').Theme>;
 }
 
-export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ size = 'md', _className = '' }) => {
+export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ size = 'md', sx }) => {
   return (
-    <div
+    <Box
       role='status'
       aria-label='Loading'
+      sx={sx}
     >
       <Loader2
         sx={{
@@ -20,7 +22,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ size = 'md', _cl
           animation: 'spin 1s linear infinite',
         }}
       />
-    </div>
+    </Box>
   );
 };
 
@@ -31,50 +33,48 @@ interface LoadingOverlayProps {
 }
 
 export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ isLoading, children, message }) => {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
-
   if (!isLoading) return <>{children}</>;
 
   return (
-    <div style={{ position: 'relative' }}>
+    <Box sx={{ position: 'relative' }}>
       {children}
-      <div
-        style={{
+      <Box
+        sx={(theme) => ({
           position: 'absolute',
           inset: 0,
-          backgroundColor: isDark ? 'rgba(55, 65, 81, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+          backgroundColor: alpha(theme.palette.background.default, 0.8),
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 50,
-        }}
+        })}
       >
-        <div style={{ textAlign: 'center' }}>
+        <Box sx={{ textAlign: 'center' }}>
           <LoadingSpinner size='lg' />
           {message && (
-            <p
-              style={{
-                marginTop: '16px',
-                color: isDark ? 'grey.300' : 'text.secondary',
+            <Typography
+              sx={{
+                mt: 2,
+                color: 'text.secondary',
               }}
             >
               {message}
-            </p>
+            </Typography>
           )}
-        </div>
-      </div>
-    </div>
+        </Box>
+      </Box>
+    </Box>
   );
 };
 
-export const SkeletonLoader: React.FC<{ _className?: string }> = ({ _className = '' }) => {
+export const SkeletonLoader: React.FC<{ className?: string }> = ({ className = '' }) => {
   return (
-    <div
-      style={{
+    <Box
+      className={className}
+      sx={{
         animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        backgroundColor: 'grey.200',
-        borderRadius: '8px',
+        bgcolor: 'grey.200',
+        borderRadius: 2,
       }}
     />
   );

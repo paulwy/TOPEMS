@@ -65,6 +65,40 @@ interface ImageFile {
   progress?: number;
 }
 
+// styled() retained: dynamic custom props (isDragging, isDisabled, isFull) require shouldForwardProp
+const UploadArea = styled(Box, {
+  shouldForwardProp: (prop) => !['isDragging', 'isDisabled', 'isFull'].includes(prop as string),
+})<{
+  isDragging?: boolean;
+  isDisabled?: boolean;
+  isFull?: boolean;
+}>(({ theme, isDragging, isDisabled, isFull }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  border: `2px dashed ${
+    isDragging
+      ? theme.palette.primary.main
+      : isDisabled
+        ? theme.palette.grey[300]
+        : theme.palette.divider
+  }`,
+  borderRadius: theme.shape.borderRadius,
+  backgroundColor: isDragging
+    ? `${theme.palette.primary.light}20`
+    : isDisabled
+      ? theme.palette.grey[50]
+      : 'transparent',
+  cursor: isDisabled || isFull ? 'not-allowed' : 'pointer',
+  transition: 'all 0.2s',
+  color: isDisabled ? theme.palette.grey[400] : theme.palette.text.secondary,
+  '&:hover': {
+    borderColor: isDisabled ? theme.palette.grey[300] : theme.palette.primary.main,
+    backgroundColor: isDisabled || isFull ? 'transparent' : `${theme.palette.primary.light}10`,
+  },
+}));
+
 /**
  * 图片上传组件
  * 支持拖拽上传、预览、删除、多图上传和裁剪功能
@@ -113,7 +147,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   accept = 'image/*',
   maxSize = 5,
   cropEnabled = true,
-  _cropAspect = 1,
+  cropAspect = 1,
   height = 200,
   disabled = false,
   className,
@@ -297,13 +331,53 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   const renderImageGrid = () => (
     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 2 }}>
       {images.map((image) => (
-        <ImageItem key={image.id}>
+        <Box
+          key={image.id}
+          sx={{
+            position: 'relative',
+            width: 100,
+            height: 100,
+            borderRadius: 2,
+            overflow: 'hidden',
+            '& img': {
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+              cursor: 'pointer',
+            },
+            '&:hover .overlay': {
+              opacity: 1,
+            },
+          }}
+        >
           <img
             src={image.preview}
             alt=''
             onClick={() => setPreviewImage(image.preview)}
           />
-          <ImageOverlay>
+          <Box
+            className='overlay'
+            sx={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 0.5,
+              opacity: 0,
+              transition: 'opacity 0.2s',
+              '& .MuiIconButton-root': {
+                color: 'white',
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                },
+              },
+            }}
+          >
             <IconButton
               size='small'
               onClick={(e) => {
@@ -333,8 +407,8 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
             >
               <Trash2 size={16} />
             </IconButton>
-          </ImageOverlay>
-        </ImageItem>
+          </Box>
+        </Box>
       ))}
       {images.length < maxCount && renderUploadArea()}
     </Box>
@@ -398,7 +472,17 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
           </Box>
         </DialogTitle>
         <DialogContent>
-          <CropContainer>
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              minHeight: 300,
+              bgcolor: 'grey.100',
+              borderRadius: 2,
+              overflow: 'hidden',
+            }}
+          >
             {cropImage && (
               <img
                 src={cropImage}
@@ -411,7 +495,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
                 }}
               />
             )}
-          </CropContainer>
+          </Box>
           <Box sx={{ mt: 2 }}>
             <Typography
               variant='body2'
@@ -475,87 +559,5 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
     </Box>
   );
 };
-
-// 样式化组件
-const UploadArea = styled(Box, {
-  shouldForwardProp: (prop) => !['isDragging', 'isDisabled', 'isFull'].includes(prop as string),
-})<{
-  isDragging?: boolean;
-  isDisabled?: boolean;
-  isFull?: boolean;
-}>(({ theme, isDragging, isDisabled, isFull }) => ({
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  justifyContent: 'center',
-  border: `2px dashed ${
-    isDragging
-      ? theme.palette.primary.main
-      : isDisabled
-        ? theme.palette.grey[300]
-        : theme.palette.divider
-  }`,
-  borderRadius: theme.shape.borderRadius,
-  backgroundColor: isDragging
-    ? `${theme.palette.primary.light}20`
-    : isDisabled
-      ? theme.palette.grey[50]
-      : 'transparent',
-  cursor: isDisabled || isFull ? 'not-allowed' : 'pointer',
-  transition: 'all 0.2s',
-  color: isDisabled ? theme.palette.grey[400] : theme.palette.text.secondary,
-  '&:hover': {
-    borderColor: isDisabled ? theme.palette.grey[300] : theme.palette.primary.main,
-    backgroundColor: isDisabled || isFull ? 'transparent' : `${theme.palette.primary.light}10`,
-  },
-}));
-
-const ImageItem = styled(Box)({
-  position: 'relative',
-  width: 100,
-  height: 100,
-  borderRadius: 8,
-  overflow: 'hidden',
-  '& img': {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-    cursor: 'pointer',
-  },
-  '&:hover .overlay': {
-    opacity: 1,
-  },
-});
-
-const ImageOverlay = styled(Box)({
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
-  backgroundColor: 'rgba(0, 0, 0, 0.5)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: 4,
-  opacity: 0,
-  transition: 'opacity 0.2s',
-  '& .MuiIconButton-root': {
-    color: 'white',
-    '&:hover': {
-      backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    },
-  },
-});
-
-const CropContainer = styled(Box)({
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  minHeight: 300,
-  backgroundColor: 'grey.100',
-  borderRadius: 8,
-  overflow: 'hidden',
-});
 
 export default ImageUpload;
