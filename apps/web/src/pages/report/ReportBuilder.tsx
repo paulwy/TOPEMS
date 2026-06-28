@@ -49,7 +49,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
     endDate: '',
     selectedColumns: [] as string[],
   });
-  const [_filters, _setFilters] = useState<Record<string, string>>({});
+  const [filters, _setFilters] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
 
@@ -122,7 +122,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
             formData.startDate && formData.endDate
               ? { start_date: formData.startDate, end_date: formData.endDate }
               : undefined,
-          filters: Object.keys(_filters).length > 0 ? _filters : undefined,
+          filters: Object.keys(filters).length > 0 ? filters : undefined,
         },
       };
 

@@ -38,7 +38,7 @@ export interface FilePermission {
 
 export interface FileStats {
   total_files: number;
-  total_size: number;
+  totalsize: number;
   today_uploads: number;
   storage_used: number;
   storage_limit: number;
@@ -46,7 +46,7 @@ export interface FileStats {
 
 export interface ListFilesQuery {
   page?: number;
-  page_size?: number;
+  pagesize?: number;
   search?: string;
   category?: string;
   owner_id?: string;
@@ -56,7 +56,7 @@ export interface PagedResponse<T> {
   items: T[];
   total: number;
   page: number;
-  page_size: number;
+  pagesize: number;
 }
 
 export interface ShareInfo {
@@ -112,7 +112,7 @@ export const fileApi = {
   async list(params?: ListFilesQuery): Promise<ApiResponse<PagedResponse<FileMetadata>>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.pagesize) searchParams.set('pagesize', params.pagesize.toString());
     if (params?.search) searchParams.set('search', params.search);
     if (params?.category) searchParams.set('category', params.category);
     if (params?.owner_id) searchParams.set('owner_id', params.owner_id);

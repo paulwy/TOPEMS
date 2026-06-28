@@ -8,6 +8,8 @@ import reactHooksPlugin from 'eslint-plugin-react-hooks';
 import importPlugin from 'eslint-plugin-import';
 import unicorn from 'eslint-plugin-unicorn';
 import checkFile from 'eslint-plugin-check-file';
+import jsxA11y from 'eslint-plugin-jsx-a11y';
+import topemsDesign from './scripts/eslint-plugin-topems-design.cjs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -40,6 +42,8 @@ export default [
       import: importPlugin,
       unicorn,
       'check-file': checkFile,
+      'jsx-a11y': jsxA11y,
+      'topems-design': topemsDesign,
     },
     settings: {
       react: {
@@ -52,6 +56,35 @@ export default [
       },
     },
     rules: {
+      // jsx-a11y rules — WCAG AA compliance
+      'jsx-a11y/anchor-is-valid': 'warn',
+      'jsx-a11y/alt-text': 'warn',
+      'jsx-a11y/aria-props': 'warn',
+      'jsx-a11y/aria-proptypes': 'warn',
+      'jsx-a11y/aria-unsupported-elements': 'warn',
+      'jsx-a11y/heading-has-content': 'warn',
+      'jsx-a11y/html-has-lang': 'warn',
+      'jsx-a11y/img-redundant-alt': 'warn',
+      'jsx-a11y/label-has-associated-control': 'warn',
+      'jsx-a11y/no-access-key': 'error',
+      'jsx-a11y/no-autofocus': 'off', // MUI Dialog uses autoFocus
+      'jsx-a11y/no-distracting-elements': 'warn',
+      'jsx-a11y/no-interactive-element-to-noninteractive-role': 'error',
+      'jsx-a11y/no-noninteractive-element-interactions': ['warn', {
+        handlers: ['onClick', 'onMouseDown', 'onMouseUp', 'onKeyPress', 'onKeyDown', 'onKeyUp'],
+      }],
+      'jsx-a11y/no-noninteractive-tabindex': ['warn', { tags: [] }],
+      'jsx-a11y/no-redundant-roles': 'warn',
+      'jsx-a11y/no-static-element-interactions': ['warn', {
+        handlers: ['onClick', 'onMouseDown', 'onMouseUp', 'onKeyPress', 'onKeyDown', 'onKeyUp'],
+      }],
+      'jsx-a11y/role-has-required-aria-props': 'warn',
+      'jsx-a11y/role-supports-aria-props': 'warn',
+      'jsx-a11y/tabindex-no-positive': 'warn',
+      'jsx-a11y/click-events-have-key-events': ['warn', { allowList: ['link', 'button', 'listbox', 'option', 'tab', 'tabpanel'] }],
+
+      'topems-design/no-hardcoded-colors': 'warn',
+      'topems-design/no-hardcoded-spacing': 'off',
       'prettier/prettier': 'error',
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'off',

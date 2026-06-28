@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Package, X, ShoppingCart, CheckCircle } from 'lucide-react';
 import {
-  _Box,
+  Box,
   Card,
   CardContent,
   Typography,
@@ -302,19 +302,19 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
                 <Divider />
 
                 <div className='flex items-center justify-between'>
-                  <span style={{ color: 'grey.600' }}>下载量</span>
+                  <span style={{ color: 'var(--mui-palette-text-secondary)' }}>下载量</span>
                   <Typography sx={{ fontWeight: 'medium' }}>
                     {plugin.install_count?.toLocaleString() || 0}
                   </Typography>
                 </div>
 
                 <div className='flex items-center justify-between'>
-                  <span style={{ color: 'grey.600' }}>分类</span>
+                  <span style={{ color: 'var(--mui-palette-text-secondary)' }}>分类</span>
                   <Typography sx={{ fontWeight: 'medium' }}>{plugin.category}</Typography>
                 </div>
 
                 <div className='flex items-center justify-between'>
-                  <span style={{ color: 'grey.600' }}>作者</span>
+                  <span style={{ color: 'var(--mui-palette-text-secondary)' }}>作者</span>
                   <Typography sx={{ fontWeight: 'medium' }}>
                     {plugin.author_name || '未知'}
                   </Typography>

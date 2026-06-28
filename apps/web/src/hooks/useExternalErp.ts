@@ -5,7 +5,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNotification } from './useNotification';
-import { externalErpApi } from '../api/externalErp';
+import { externalErpApi } from '../api/external-erp';
 import type {
   // 连接配置
   ErpConnectionConfig,
@@ -18,7 +18,7 @@ import type {
 
   // 连接测试
   ConnectionTestRequest,
-} from '../types/externalErp';
+} from '../types/external-erp';
 
 // ============================================
 // 一、连接配置管理
@@ -31,7 +31,7 @@ export function useErpConnections(params?: {
   type?: string;
   status?: string;
   page?: number;
-  page_size?: number;
+  pagesize?: number;
 }) {
   return useQuery({
     queryKey: ['external-erp-connections', params],
@@ -309,7 +309,7 @@ export function useSyncLogs(params?: {
   start_date?: string;
   end_date?: string;
   page?: number;
-  page_size?: number;
+  pagesize?: number;
 }) {
   return useQuery({
     queryKey: ['external-erp-sync-logs', params],
@@ -359,7 +359,7 @@ export function useAccountMappings(
   connectionId: string,
   params?: {
     page?: number;
-    page_size?: number;
+    pagesize?: number;
   }
 ) {
   return useQuery({
@@ -458,7 +458,7 @@ export function useCustomerMappings(
   connectionId: string,
   params?: {
     page?: number;
-    page_size?: number;
+    pagesize?: number;
   }
 ) {
   return useQuery({
@@ -536,7 +536,7 @@ export function useSupplierMappings(
   connectionId: string,
   params?: {
     page?: number;
-    page_size?: number;
+    pagesize?: number;
   }
 ) {
   return useQuery({
@@ -615,7 +615,7 @@ export function usePreviewExternalAccounts(
   params?: {
     keyword?: string;
     page?: number;
-    page_size?: number;
+    pagesize?: number;
   }
 ) {
   return useQuery({
@@ -634,7 +634,7 @@ export function usePreviewExternalCustomers(
   params?: {
     keyword?: string;
     page?: number;
-    page_size?: number;
+    pagesize?: number;
   }
 ) {
   return useQuery({
@@ -653,7 +653,7 @@ export function usePreviewExternalSuppliers(
   params?: {
     keyword?: string;
     page?: number;
-    page_size?: number;
+    pagesize?: number;
   }
 ) {
   return useQuery({

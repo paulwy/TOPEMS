@@ -130,7 +130,7 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
       }}
     >
       <div style={{ padding: 16, borderBottom: '1px solid border.default' }}>
-        <h2 style={{ fontSize: 18, fontWeight: 600, color: 'grey.900', margin: 0 }}>通讯录</h2>
+        <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--mui-palette-text-primary)', margin: 0 }}>通讯录</h2>
       </div>
 
       {/* 类型筛选 */}

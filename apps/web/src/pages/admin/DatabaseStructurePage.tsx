@@ -130,7 +130,7 @@ const DatabaseStructurePage: React.FC = () => {
 
   const loadDbChanges = async () => {
     try {
-      const res = await dbStructureApi.listChanges({ page_size: 50 });
+      const res = await dbStructureApi.listChanges({ pagesize: 50 });
       if (res.success && res.data) {
         setDbChanges(res.data.items || []);
       }

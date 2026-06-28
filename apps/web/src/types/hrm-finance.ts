@@ -30,7 +30,7 @@ export interface EmployeeFinance {
   cost_center_id?: string; // 成本中心ID
   expense_account_id?: string; // 费用科目ID
   tax_id?: string; // 税务ID
-  tax_level?: string; // 税率级别
+  taxlevel?: string; // 税率级别
   payroll_bank_account: string; // 工资卡号
   salary_payment_status: SalaryPaymentStatus; // 工资发放状态
   annual_salary: number; // 年薪

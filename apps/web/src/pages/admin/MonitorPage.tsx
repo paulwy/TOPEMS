@@ -73,7 +73,7 @@ const MonitorPage: React.FC = () => {
       const [metricsRes, healthRes, alertsRes] = await Promise.all([
         monitorApi.getSystemMetrics(),
         monitorApi.getServiceHealth(),
-        monitorApi.listAlerts({ page_size: 20 }),
+        monitorApi.listAlerts({ pagesize: 20 }),
       ]);
       setSystemMetrics(metricsRes.data || null);
       setServiceHealth(healthRes.data || []);

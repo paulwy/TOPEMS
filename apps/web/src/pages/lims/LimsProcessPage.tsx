@@ -165,7 +165,7 @@ const LimsProcessPage: React.FC = () => {
     try {
       const params: any = {
         page: currentPage + 1,
-        page_size: pageSize,
+        pagesize: pageSize,
       };
       if (debouncedSearch) {
         params.search = debouncedSearch;

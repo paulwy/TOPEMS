@@ -55,23 +55,14 @@ export interface ModuleRoute {
 // Core Modules (Remote modules loaded via Module Federation)
 // ============================================================================
 
-// In static mode, CORE_MODULES is empty to avoid Module Federation imports
+import { getCoreModules } from './core-modules';
+
 const isStaticMode = import.meta.env.VITE_DEPLOYMENT_MODE === 'static';
 
-// CORE_MODULES is set dynamically after module initialization
-// In static mode, it's an empty array
-// In MF mode, it's loaded from core-modules.ts
 export let CORE_MODULES: ModuleConfig[] = [];
 
-// Initialize CORE_MODULES - call this after module load
 export function initializeCoreModules() {
-  if (isStaticMode) {
-    CORE_MODULES = [];
-  } else {
-    // In MF mode, we would load from core-modules
-    // But for now, set to empty to avoid errors
-    CORE_MODULES = [];
-  }
+  CORE_MODULES = isStaticMode ? [] : getCoreModules();
 }
 
 // ============================================================================

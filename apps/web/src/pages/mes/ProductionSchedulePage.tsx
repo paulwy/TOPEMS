@@ -85,7 +85,7 @@ const ProductionSchedulePage: React.FC = () => {
       setLoading(true);
       const params: any = {
         page: currentPage - 1,
-        page_size: pageSize,
+        pagesize: pageSize,
       };
       if (searchTerm) params.search = searchTerm;
       if (statusFilter !== 'all') params.status = statusFilter;

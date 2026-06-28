@@ -6,7 +6,7 @@ import {
   Chip,
   Skeleton,
   IconButton,
-  _Tooltip,
+  Tooltip,
   Menu,
   MenuItem,
   ListItemIcon,

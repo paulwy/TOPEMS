@@ -226,7 +226,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
         {activeTab === 'chat' && (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 2 }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <label style={{ fontSize: 14, fontWeight: 500, color: 'grey.700' }}>聊天室类型</label>
+              <label style={{ fontSize: 14, fontWeight: 500, color: 'var(--mui-palette-text-secondary)' }}>聊天室类型</label>
               <Box sx={{ display: 'flex', gap: 1 }}>
                 <Button
                   variant={chatRoomType === 'direct' ? 'contained' : 'outlined'}
@@ -257,7 +257,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
             />
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <label style={{ fontSize: 14, fontWeight: 500, color: 'grey.700' }}>添加成员</label>
+              <label style={{ fontSize: 14, fontWeight: 500, color: 'var(--mui-palette-text-secondary)' }}>添加成员</label>
               <Box sx={{ display: 'flex', gap: 1 }}>
                 <TextField
                   size='small'
@@ -358,7 +358,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
             />
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <label style={{ fontSize: 14, fontWeight: 500, color: 'grey.700' }}>添加成员</label>
+              <label style={{ fontSize: 14, fontWeight: 500, color: 'var(--mui-palette-text-secondary)' }}>添加成员</label>
               <Box sx={{ display: 'flex', gap: 1 }}>
                 <TextField
                   size='small'

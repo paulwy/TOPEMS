@@ -107,7 +107,7 @@ const MobileTaskListPage: React.FC = () => {
       try {
         const response = await mobileApi.listMobileTasks({
           page: currentPage.current,
-          page_size: pageSize,
+          pagesize: pageSize,
         });
         if (response.success && response.data) {
           const data = response.data as any;

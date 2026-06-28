@@ -57,7 +57,7 @@ const AnnouncementManagementPage: React.FC = () => {
     try {
       const res = await announcementApi.list({
         page: currentPage,
-        page_size: pageSize,
+        pagesize: pageSize,
         search: searchQuery,
       });
       if (res.success && res.data) {

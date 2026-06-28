@@ -58,7 +58,7 @@ export const spcApi = {
       usl: data.usl,
       lsl: data.lsl,
       target: data.target,
-      sample_size: data.sampleSize,
+      samplesize: data.sampleSize,
       sampling_frequency: data.samplingFrequency,
       status: data.status,
       description: data.description,

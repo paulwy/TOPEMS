@@ -35,7 +35,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, pluginCode }) =
   const navigate = useNavigate();
   const location = useLocation();
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
-  const { _installedPlugins, pluginHealth, isPluginInstalled, isPluginActive } = usePlugins();
+  const { installedPlugins, pluginHealth, isPluginInstalled, isPluginActive } = usePlugins();
   const { checkPermission, isSuperuser } = usePermission();
 
   const hasPermission = (permission?: string): boolean => {

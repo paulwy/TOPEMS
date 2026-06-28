@@ -5,7 +5,7 @@ import {
   MenuItem,
   FormControl,
   FormControlLabel,
-  _FormLabel,
+  FormLabel,
   Checkbox,
   Card,
   CardContent,

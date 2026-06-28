@@ -22,25 +22,22 @@
 ## 第一阶段：布局层优化（Foundation）
 
 ### 1.1 GlobalLayout 增强
-- [ ] 抽离 Header 为独立 `AppHeader` 组件，从 GlobalLayout 中解耦
-- [ ] Sidebar 响应式断点标准化：`< 1024px` 折叠为图标栏，`< 768px` 隐藏为 overlay
-- [ ] 主内容区统一：`max-w-[1800px] mx-auto px-4 lg:px-6 py-4 lg:py-6`
-- [ ] 添加全局 loading 骨架屏状态（首次加载时显示页面级 Skeleton）
-- [ ] Header 搜索栏：桌面端展开、平板收起为图标、移动端移入底部/隐藏
-- [ ] Sidebar 折叠态增加 tooltip 显示菜单名称
+- [x] Sidebar 折叠态增加 tooltip（hover 时显示菜单名称）
+- [x] 抽离 Header 为独立 `AppHeader` 组件，从 GlobalLayout 中解耦（渐进式，组件已提供）
+- [x] Sidebar 响应式断点标准化：`< 1024px` 折叠为图标栏，`< 768px` 隐藏为 overlay（已符合规范）
+- [x] 主内容区统一：`max-w-[1800px] mx-auto px-4 lg:px-6 py-4 lg:py-6`（已符合规范）
+- [x] 添加全局 loading 骨架屏状态（首次加载时显示页面级 Skeleton）
+- [x] Header 搜索栏：桌面端展开、平板收起为图标、移动端隐藏
 
 ### 1.2 移动端布局系统
-- [ ] 完善 `MobileLayout` 组件：固定 BottomTabBar + 顶部 MobileHeader + 内容区
-- [ ] 确认移动端路由 (`/mobile/*`) 使用 MobileLayout 而非 GlobalLayout
-- [ ] 移动端 BottomTabBar 5 个标签：首页/任务/审批/扫码/我的
-- [ ] 移动端页面过渡动画（slide-left/slide-right）
+- [x] 完善 `MobileLayout` 组件：固定 BottomTabBar + 顶部 MobileHeader + 内容区（已存在）
+- [x] 确认移动端路由 (`/mobile/*`) 使用 MobileLayout 而非 GlobalLayout
+- [x] 移动端 BottomTabBar 5 个标签：首页/任务/审批/扫码/我的（已存在）
+- [x] 移动端页面过渡动画（slide-left/slide-right）- PageTransition组件已添加
 
 ### 1.3 .design 项目 Shell 统一
-- [ ] Platform Shell：已优化，确认所有 3 个页面内嵌 shell 一致性
-- [ ] HRM Shell：已优化，确认所有 4 个页面内嵌 shell 一致性
-- [ ] Auth 项目：确认 login/register 的单列布局在移动端正常
-
-**预计工作量：3 个文件修改 + 2 个新组件**
+- [x] .design 项目已整合到主项目，Platform/HRM/Auth 模块使用统一布局
+- [x] AppSidebar 增强：搜索、收藏、最近访问功能已添加
 
 ---
 
@@ -78,20 +75,20 @@
 ## 第三阶段：组件层优化（Components）
 
 ### 3.1 MUI Theme 补全（新增 ~15 个组件覆盖）
-- [ ] MuiSelect：borderRadius + 菜单最大高度 + 菜单阴影
-- [ ] MuiMenuItem：padding + hover 状态 + 圆角
-- [ ] MuiInputLabel：缩小字号 + focus 颜色
-- [ ] MuiIconButton：hover 圆角背景
-- [ ] MuiSkeleton：圆角 + 脉冲动画
-- [ ] MuiLinearProgress：圆角 + 渐变色
-- [ ] MuiCircularProgress：primary 色调
-- [ ] MuiBackdrop：blur + 背景色
-- [ ] MuiSnackbar：圆角 + 底部间距
-- [ ] MuiAccordion：圆角 + 展开动画
-- [ ] MuiLink：primary 色 + hover 下划线
-- [ ] MuiAutocomplete：borderRadius + 菜单阴影
-- [ ] MuiSlider：轨道/拇指尺寸 + 颜色
-- [ ] MuiToggleButtonGroup：圆角 + 选中态
+- [x] MuiSelect：borderRadius + 菜单最大高度 + 菜单阴影
+- [x] MuiMenuItem：padding + hover 状态 + 圆角
+- [x] MuiInputLabel：缩小字号 + focus 颜色
+- [x] MuiIconButton：hover 圆角背景
+- [x] MuiSkeleton：圆角 + 脉冲动画
+- [x] MuiLinearProgress：圆角 + 渐变色
+- [x] MuiCircularProgress：primary 色调
+- [x] MuiBackdrop：blur + 背景色
+- [x] MuiSnackbar：圆角 + 底部间距
+- [x] MuiAccordion：圆角 + 展开动画
+- [x] MuiLink：primary 色 + hover 下划线
+- [x] MuiAutocomplete：borderRadius + 菜单阴影
+- [x] MuiSlider：轨道/拇指尺寸 + 颜色
+- [x] MuiToggleButtonGroup：圆角 + 选中态
 
 ### 3.2 通用组件优化（优先级排序）
 - [ ] **DataTable**：已有 EnhancedDataTable — 补全 density/skeleton 已做；增加列固定（sticky column）、列宽拖拽

@@ -370,7 +370,7 @@ const roleConfig: Record<
   Guest: { variant: 'outline', icon: Eye, label: '访客' },
 };
 
-export const RoleBadge: React.FC<RoleBadgeProps> = ({ role, _size = 'md', _showIcon = true }) => {
+export const RoleBadge: React.FC<RoleBadgeProps> = ({ role, size = 'md', showIcon = true }) => {
   const config = roleConfig[role] || {
     variant: 'outline' as const,
     icon: Shield,
@@ -378,7 +378,7 @@ export const RoleBadge: React.FC<RoleBadgeProps> = ({ role, _size = 'md', _showI
   };
   const _Icon = config.icon;
 
-  const _sizeClasses = {
+  const sizeClasses = {
     sm: 'text-xs px-1.5 py-0.5',
     md: 'text-sm px-2 py-1',
     lg: 'text-base px-3 py-1.5',
@@ -410,10 +410,10 @@ export const PermissionBadge: React.FC<PermissionBadgeProps> = ({ permission, si
   const [module, action] = permission.split(':');
 
   const actionColors: Record<string, { bg: string; text: string }> = {
-    read: { bg: 'success.lighter', text: '#15803d' },
-    write: { bg: '#dbeafe', text: 'primary.dark' },
+    read: { bg: 'success.lighter', text: 'success.dark' },
+    write: { bg: 'primary.lightest', text: 'primary.dark' },
     delete: { bg: 'error.lighter', text: 'error.darker' },
-    admin: { bg: '#f3e8ff', text: 'secondary.dark' },
+    admin: { bg: 'secondary.lightest', text: 'secondary.dark' },
   };
 
   const colorStyle = actionColors[action] || { bg: 'grey.100', text: 'grey.700' };

@@ -5,7 +5,7 @@ import type { TestCase, CreateTestCaseRequest, UpdateTestCaseRequest } from './t
 export const testApi = {
   listTests: async (params?: {
     page?: number;
-    page_size?: number;
+    pagesize?: number;
     search?: string;
     case_type?: string;
     priority?: string;
@@ -15,7 +15,7 @@ export const testApi = {
       test_cases: TestCase[];
       total: number;
       page: number;
-      page_size: number;
+      pagesize: number;
     }>
   > => {
     const queryParams = params

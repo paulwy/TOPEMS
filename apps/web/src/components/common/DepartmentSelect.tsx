@@ -4,7 +4,7 @@ import {
   TextField,
   Menu,
   MenuItem,
-  _ListItemIcon,
+  ListItemIcon,
   ListItemText,
   Chip,
   CircularProgress,
@@ -31,7 +31,7 @@ export interface DepartmentSelectProps {
   allowClear?: boolean;
 }
 
-const _TreeNode: React.FC<{
+const TreeNode: React.FC<{
   node: Department;
   selected: boolean;
   onClick: () => void;

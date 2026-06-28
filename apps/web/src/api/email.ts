@@ -92,7 +92,7 @@ export const getEmailLogs = async (
 ): Promise<ApiResponse<EmailLogListResponse>> => {
   const params = new URLSearchParams();
   params.append('page', page.toString());
-  params.append('page_size', pageSize.toString());
+  params.append('pagesize', pageSize.toString());
   if (status) {
     params.append('status', status);
   }

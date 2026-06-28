@@ -122,8 +122,8 @@ const HrmCompanyPage: React.FC = () => {
     async (companyId: string) => {
       try {
         const [deptResponse, empResponse] = await Promise.all([
-          departmentApi.list({ company_id: companyId, page_size: 100 }),
-          employeeApi.list({ page_size: 200 }),
+          departmentApi.list({ company_id: companyId, pagesize: 100 }),
+          employeeApi.list({ pagesize: 200 }),
         ]);
 
         const depts: Department[] =
@@ -537,7 +537,7 @@ const HrmCompanyPage: React.FC = () => {
   ) : null;
 
   useEffect(() => {
-    fetchCompanies({ page_size: 100 });
+    fetchCompanies({ pagesize: 100 });
   }, [fetchCompanies]);
 
   useEffect(() => {

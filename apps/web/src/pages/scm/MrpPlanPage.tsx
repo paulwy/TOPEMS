@@ -504,7 +504,7 @@ const MrpPlanPage: React.FC = () => {
                 <Box sx={{ p: 2, border: '1px solid #eee', borderRadius: 1 }}>
                   <Box sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>总物料项</Box>
                   <Box sx={{ fontSize: '1.5rem', fontWeight: 500 }}>
-                    {calculationResult.total_items}
+                    {calculationResult.totalitems}
                   </Box>
                 </Box>
                 <Box sx={{ p: 2, border: '1px solid #eee', borderRadius: 1 }}>

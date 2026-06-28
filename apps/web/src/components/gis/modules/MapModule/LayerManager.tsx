@@ -89,7 +89,7 @@ const LayerManager: React.FC<LayerManagerProps> = ({
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Layers
             size={20}
-            style={{ color: 'grey.700' }}
+            style={{ color: 'var(--mui-palette-text-secondary)' }}
           />
           <Typography
             variant='body2'

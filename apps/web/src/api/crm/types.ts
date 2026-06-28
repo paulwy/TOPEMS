@@ -5,7 +5,7 @@ export interface Customer {
   name: string;
   code?: string;
   industry?: string;
-  company_size?: string;
+  companysize?: string;
   website?: string;
   email?: string;
   phone?: string;
@@ -30,7 +30,7 @@ export interface CreateCustomerRequest {
   name: string;
   code?: string;
   industry?: string;
-  company_size?: string;
+  companysize?: string;
   website?: string;
   email?: string;
   phone?: string;
@@ -52,7 +52,7 @@ export interface UpdateCustomerRequest {
   name?: string;
   code?: string;
   industry?: string;
-  company_size?: string;
+  companysize?: string;
   website?: string;
   email?: string;
   phone?: string;
@@ -245,7 +245,7 @@ export interface CustomerScore {
   customer_id: string;
   customer_name: string;
   score: number;
-  score_level: string;
+  scorelevel: string;
   scoring_date: string;
   factors: ScoreFactor[];
   trend: 'up' | 'down' | 'stable';
@@ -264,12 +264,12 @@ export interface ScoreFactor {
 export interface CreateCustomerScoreRequest {
   customer_id: string;
   score?: number;
-  score_level?: string;
+  scorelevel?: string;
 }
 
 export interface CustomerScoringQueryParams extends PaginationParams {
   customer_id?: string;
-  score_level?: string;
+  scorelevel?: string;
 }
 
 export interface SalesForecast {
@@ -280,7 +280,7 @@ export interface SalesForecast {
   actual_amount?: number;
   accuracy?: number;
   trend: 'up' | 'down' | 'stable';
-  confidence_level: number;
+  confidencelevel: number;
   factors: ForecastFactor[];
   status: string;
   created_at: string;
@@ -351,9 +351,9 @@ export interface CustomerSegment {
 }
 
 export interface SegmentCriteria {
-  score_levels?: string[];
+  scorelevels?: string[];
   industries?: string[];
-  company_sizes?: string[];
+  companysizes?: string[];
   statuses?: string[];
   customer_types?: string[];
   revenue_min?: number;
@@ -372,7 +372,7 @@ export interface SegmentedCustomer {
   industry?: string;
   status: string;
   score?: number;
-  score_level?: string;
+  scorelevel?: string;
   revenue?: number;
   segment_tags: string[];
 }

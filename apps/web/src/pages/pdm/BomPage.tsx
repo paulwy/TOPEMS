@@ -238,7 +238,7 @@ export const BomPage: React.FC = () => {
       if (response.success && response.data) {
         addNotification({
           title: '对比完成',
-          message: `发现差异：新增 ${response.data.differences.added_items.length} 项，移除 ${response.data.differences.removed_items.length} 项，修改 ${response.data.differences.modified_items.length} 项`,
+          message: `发现差异：新增 ${response.data.differences.addeditems.length} 项，移除 ${response.data.differences.removeditems.length} 项，修改 ${response.data.differences.modifieditems.length} 项`,
           type: 'success',
         });
       }

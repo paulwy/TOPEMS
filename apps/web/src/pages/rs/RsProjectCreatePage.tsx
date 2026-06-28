@@ -53,7 +53,7 @@ const RsProjectCreatePage: React.FC = () => {
     start_date: '',
     end_date: '',
     budget: '',
-    risk_level: '中',
+    risklevel: '中',
     priority: 2,
   };
 
@@ -139,7 +139,7 @@ const RsProjectCreatePage: React.FC = () => {
       defaultExpanded: true,
       fields: [
         {
-          name: 'risk_level',
+          name: 'risklevel',
           label: '风险等级',
           type: 'select',
           options: riskLevels.map((level) => ({ label: level, value: level })),
@@ -204,7 +204,7 @@ const RsProjectCreatePage: React.FC = () => {
         start_date: formData.start_date as string,
         end_date: (formData.end_date as string) || undefined,
         budget: formData.budget ? Number(formData.budget) : undefined,
-        risk_level: formData.risk_level as string,
+        risklevel: formData.risklevel as string,
         priority: formData.priority as number,
         tags: tags.length > 0 ? tags : undefined,
       };

@@ -63,7 +63,7 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
       >
         <Box sx={{ overflowX: 'auto' }}>
           <table style={{ minWidth: '100%', borderCollapse: 'collapse' }}>
-            <thead style={{ backgroundColor: 'grey.50' }}>
+            <thead style={{ backgroundColor: 'var(--mui-palette-grey-50)' }}>
               <tr>
                 <th
                   style={{
@@ -133,7 +133,7 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
           <Box
             sx={{
               p: 2,
-              backgroundColor: 'grey.50',
+              backgroundColor: 'var(--mui-palette-grey-50)',
               fontSize: 14,
               color: '#475569',
               textAlign: 'center',

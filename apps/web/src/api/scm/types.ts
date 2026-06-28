@@ -224,7 +224,7 @@ export interface MrpSuggestionQueryParams extends PaginationParams {
 
 export interface MrpCalculationResult {
   plan_id: string;
-  total_items: number;
+  totalitems: number;
   total_suggestions: number;
   purchase_suggestions: number;
   production_suggestions: number;
@@ -310,8 +310,8 @@ export interface InspectionRecord {
   unit?: string;
   batch_no?: string;
   quantity: number;
-  sample_size?: number;
-  inspection_items?: string;
+  samplesize?: number;
+  inspectionitems?: string;
   inspection_method?: string;
   inspection_standard?: string;
   result: string;
@@ -327,8 +327,8 @@ export interface CreateInspectionRecordRequest {
   unit?: string;
   batch_no?: string;
   quantity: number;
-  sample_size?: number;
-  inspection_items?: string;
+  samplesize?: number;
+  inspectionitems?: string;
   inspection_method?: string;
   inspection_standard?: string;
   result: string;
@@ -342,8 +342,8 @@ export interface UpdateInspectionRecordRequest {
   unit?: string;
   batch_no?: string;
   quantity?: number;
-  sample_size?: number;
-  inspection_items?: string;
+  samplesize?: number;
+  inspectionitems?: string;
   inspection_method?: string;
   inspection_standard?: string;
   result?: string;
@@ -392,7 +392,7 @@ export interface AbcClassification {
   category: string;
   cumulative_value: number;
   cumulative_percentage: number;
-  abc_level: string;
+  abclevel: string;
   annual_usage_value: number;
   percentage_of_total: number;
 }
@@ -778,4 +778,266 @@ export interface AuditLogDetail {
     old_value: unknown;
     new_value: unknown;
   }>;
+}
+
+export interface PurchaseRequisition {
+  id: string;
+  requisition_no: string;
+  title: string;
+  applicant_id?: string;
+  applicant_name?: string;
+  department_id?: string;
+  department_name?: string;
+  request_date: string;
+  required_date?: string;
+  total_amount?: number;
+  currency?: string;
+  status: string;
+  priority?: string;
+  supplier_id?: string;
+  supplier_name?: string;
+  approval_status?: string;
+  approver?: string;
+  approved_at?: string;
+  remarks?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PurchaseRequisitionItem {
+  id: string;
+  requisition_id: string;
+  line_number: number;
+  product_code?: string;
+  product_name: string;
+  specification?: string;
+  unit?: string;
+  quantity: number;
+  unit_price?: number;
+  amount?: number;
+  remarks?: string;
+  created_at: string;
+}
+
+export interface CreatePurchaseRequisitionRequest {
+  requisition_no: string;
+  title: string;
+  applicant_id?: string;
+  department_id?: string;
+  request_date: string;
+  required_date?: string;
+  priority?: string;
+  supplier_id?: string;
+  remarks?: string;
+  items?: CreatePurchaseRequisitionItemRequest[];
+}
+
+export interface CreatePurchaseRequisitionItemRequest {
+  product_code?: string;
+  product_name: string;
+  specification?: string;
+  unit?: string;
+  quantity: number;
+  unit_price?: number;
+  remarks?: string;
+}
+
+export interface UpdatePurchaseRequisitionRequest {
+  title?: string;
+  required_date?: string;
+  priority?: string;
+  supplier_id?: string;
+  status?: string;
+  remarks?: string;
+  items?: CreatePurchaseRequisitionItemRequest[];
+}
+
+export interface PurchaseRequisitionQueryParams extends PaginationParams {
+  status?: string;
+  applicant_id?: string;
+  department_id?: string;
+  start_date?: string;
+  end_date?: string;
+}
+
+export interface PurchaseContract {
+  id: string;
+  contract_no: string;
+  title: string;
+  contract_type: string;
+  supplier_id: string;
+  supplier_name?: string;
+  sign_date?: string;
+  effective_date?: string;
+  expiry_date?: string;
+  total_amount?: number;
+  currency?: string;
+  payment_terms?: string;
+  delivery_terms?: string;
+  status: string;
+  approval_status?: string;
+  approver?: string;
+  approved_at?: string;
+  signed_by?: string;
+  contract_file?: string;
+  remarks?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PurchaseContractItem {
+  id: string;
+  contract_id: string;
+  line_number: number;
+  product_code?: string;
+  product_name: string;
+  specification?: string;
+  unit?: string;
+  quantity: number;
+  unit_price?: number;
+  amount?: number;
+  delivery_date?: string;
+  remarks?: string;
+  created_at: string;
+}
+
+export interface CreatePurchaseContractRequest {
+  contract_no: string;
+  title: string;
+  contract_type: string;
+  supplier_id: string;
+  sign_date?: string;
+  effective_date?: string;
+  expiry_date?: string;
+  total_amount?: number;
+  currency?: string;
+  payment_terms?: string;
+  delivery_terms?: string;
+  signed_by?: string;
+  remarks?: string;
+  items?: CreatePurchaseContractItemRequest[];
+}
+
+export interface CreatePurchaseContractItemRequest {
+  product_code?: string;
+  product_name: string;
+  specification?: string;
+  unit?: string;
+  quantity: number;
+  unit_price?: number;
+  delivery_date?: string;
+  remarks?: string;
+}
+
+export interface UpdatePurchaseContractRequest {
+  title?: string;
+  contract_type?: string;
+  supplier_id?: string;
+  sign_date?: string;
+  effective_date?: string;
+  expiry_date?: string;
+  total_amount?: number;
+  currency?: string;
+  payment_terms?: string;
+  delivery_terms?: string;
+  status?: string;
+  remarks?: string;
+  items?: CreatePurchaseContractItemRequest[];
+}
+
+export interface PurchaseContractQueryParams extends PaginationParams {
+  status?: string;
+  supplier_id?: string;
+  contract_type?: string;
+  start_date?: string;
+  end_date?: string;
+}
+
+export interface SupplierAdmission {
+  id: string;
+  admission_no: string;
+  supplier_name: string;
+  short_name?: string;
+  contact_person?: string;
+  contact_phone?: string;
+  contact_email?: string;
+  address?: string;
+  business_license?: string;
+  tax_registration?: string;
+  organization_code?: string;
+  legal_representative?: string;
+  registered_capital?: string;
+  established_date?: string;
+  business_scope?: string;
+  supplier_category?: string;
+  risk_level?: string;
+  status: string;
+  approval_status?: string;
+  approver?: string;
+  approved_at?: string;
+  applicant?: string;
+  application_date?: string;
+  audit_items?: SupplierAdmissionAuditItem[];
+  remarks?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SupplierAdmissionAuditItem {
+  id: string;
+  admission_id: string;
+  audit_item: string;
+  audit_result?: string;
+  auditor?: string;
+  audit_date?: string;
+  remarks?: string;
+  created_at: string;
+}
+
+export interface CreateSupplierAdmissionRequest {
+  admission_no: string;
+  supplier_name: string;
+  short_name?: string;
+  contact_person?: string;
+  contact_phone?: string;
+  contact_email?: string;
+  address?: string;
+  business_license?: string;
+  tax_registration?: string;
+  organization_code?: string;
+  legal_representative?: string;
+  registered_capital?: string;
+  established_date?: string;
+  business_scope?: string;
+  supplier_category?: string;
+  applicant?: string;
+  remarks?: string;
+}
+
+export interface UpdateSupplierAdmissionRequest {
+  supplier_name?: string;
+  short_name?: string;
+  contact_person?: string;
+  contact_phone?: string;
+  contact_email?: string;
+  address?: string;
+  business_license?: string;
+  tax_registration?: string;
+  organization_code?: string;
+  legal_representative?: string;
+  registered_capital?: string;
+  established_date?: string;
+  business_scope?: string;
+  supplier_category?: string;
+  risk_level?: string;
+  status?: string;
+  remarks?: string;
+}
+
+export interface SupplierAdmissionQueryParams extends PaginationParams {
+  status?: string;
+  approval_status?: string;
+  supplier_category?: string;
+  start_date?: string;
+  end_date?: string;
 }

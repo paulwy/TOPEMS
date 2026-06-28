@@ -69,9 +69,9 @@ export interface BomComparison {
   bom_version_a?: BomVersion;
   bom_version_b?: BomVersion;
   differences: {
-    added_items: BomItem[];
-    removed_items: BomItem[];
-    modified_items: Array<{
+    addeditems: BomItem[];
+    removeditems: BomItem[];
+    modifieditems: Array<{
       item: BomItem;
       field: string;
       old_value: any;

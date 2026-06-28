@@ -74,7 +74,7 @@ const PmProjectListPage: React.FC = () => {
           project_type: selectedType || undefined,
           status: selectedStatus || undefined,
           page,
-          page_size: pageSize,
+          pagesize: pageSize,
         });
         if (response.success && response.data) {
           setProjects(response.data.projects || []);

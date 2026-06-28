@@ -122,7 +122,7 @@ const ReportPage: React.FC = () => {
     description: '',
     category: '',
     report_type: 'rs_project_progress',
-    is_active: true,
+    isactive: true,
     data_source: {
       source_type: 'sql',
       query: '',
@@ -131,7 +131,7 @@ const ReportPage: React.FC = () => {
     layout_config: {
       layout_type: 'table',
       orientation: 'portrait',
-      paper_size: 'A4',
+      papersize: 'A4',
       margins: { top: 20, right: 20, bottom: 20, left: 20 },
       sections: {},
     },
@@ -148,7 +148,7 @@ const ReportPage: React.FC = () => {
       body_style: {},
     },
     columns: [],
-    output_format: 'pdf',
+    outputformat: 'pdf',
   });
 
   const mockReportTypes: ReportTypeInfo[] = [
@@ -390,13 +390,13 @@ const ReportPage: React.FC = () => {
       description: template.description || '',
       category: template.category,
       report_type: template.report_type,
-      is_active: template.is_active,
+      isactive: template.isactive,
       data_source: template.data_source,
       layout_config: template.layout_config,
       filter_config: template.filter_config,
       style_config: template.style_config,
       columns: template.columns,
-      output_format: template.output_format,
+      outputformat: template.outputformat,
     });
     setShowEditTemplateModal(true);
   };
@@ -408,7 +408,7 @@ const ReportPage: React.FC = () => {
       description: '',
       category: '',
       report_type: 'rs_project_progress',
-      is_active: true,
+      isactive: true,
       data_source: {
         source_type: 'sql',
         query: '',
@@ -417,7 +417,7 @@ const ReportPage: React.FC = () => {
       layout_config: {
         layout_type: 'table',
         orientation: 'portrait',
-        paper_size: 'A4',
+        papersize: 'A4',
         margins: { top: 20, right: 20, bottom: 20, left: 20 },
         sections: {},
       },
@@ -434,7 +434,7 @@ const ReportPage: React.FC = () => {
         body_style: {},
       },
       columns: [],
-      output_format: 'pdf',
+      outputformat: 'pdf',
     });
   };
 
@@ -1236,11 +1236,11 @@ const ReportPage: React.FC = () => {
                               }}
                             />
                             <Chip
-                              label={template.is_active ? '启用' : '禁用'}
+                              label={template.isactive ? '启用' : '禁用'}
                               size='small'
                               sx={{
-                                bgcolor: template.is_active ? 'success.light' : 'grey.100',
-                                color: template.is_active ? 'success.main' : 'grey.600',
+                                bgcolor: template.isactive ? 'success.light' : 'grey.100',
+                                color: template.isactive ? 'success.main' : 'grey.600',
                                 borderRadius: '50%',
                               }}
                             />
@@ -1260,7 +1260,7 @@ const ReportPage: React.FC = () => {
                             <span>编码: {template.code}</span>
                             <span>类型: {getReportTypeName(template.report_type)}</span>
                             <span>列数: {template.columns.length}</span>
-                            <span>输出格式: {template.output_format.toUpperCase()}</span>
+                            <span>输出格式: {template.outputformat.toUpperCase()}</span>
                           </Box>
                         </Box>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -1422,10 +1422,10 @@ const ReportPage: React.FC = () => {
               <FormControl fullWidth>
                 <InputLabel>输出格式</InputLabel>
                 <Select
-                  value={templateFormData.output_format}
+                  value={templateFormData.outputformat}
                   label='输出格式'
                   onChange={(e) =>
-                    setTemplateFormData({ ...templateFormData, output_format: e.target.value })
+                    setTemplateFormData({ ...templateFormData, outputformat: e.target.value })
                   }
                   fullWidth
                 >
@@ -1437,7 +1437,7 @@ const ReportPage: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2 }}>
                 <Typography>启用状态</Typography>
                 <Switch
-                  checked={selectedTemplate?.is_active ?? true}
+                  checked={selectedTemplate?.isactive ?? true}
                   disabled={!!selectedTemplate}
                 />
               </Box>

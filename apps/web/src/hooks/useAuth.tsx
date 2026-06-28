@@ -301,7 +301,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
         setState({
           user: mappedUser,
-          token: access_token,
+          token: accessToken,
           isAuthenticated: true,
           isLoading: false,
           roles,

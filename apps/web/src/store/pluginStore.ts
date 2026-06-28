@@ -344,7 +344,7 @@ export const usePluginStore = create<PluginState>()(
 
       isPluginActive: (code) => {
         const plugin = get().installedPlugins.find((p) => p.plugin_id === code);
-        return plugin?.is_active === true;
+        return plugin?.isactive === true;
       },
 
       isPluginSelected: (code) => {
@@ -433,7 +433,7 @@ export const usePluginStore = create<PluginState>()(
       },
 
       getActiveCount: () => {
-        return get().installedPlugins.filter((p) => p.is_active).length;
+        return get().installedPlugins.filter((p) => p.isactive).length;
       },
 
       refreshPlugins: () => {

@@ -10,7 +10,7 @@ import {
   Select,
   MenuItem,
   Box,
-  _InputAdornment,
+  InputAdornment,
   Button,
 } from '@mui/material';
 

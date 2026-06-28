@@ -61,7 +61,7 @@ const ReagentPage: React.FC = () => {
     unit: '',
     min_stock: undefined,
     storage_condition: '',
-    hazard_level: '',
+    hazardlevel: '',
     received_date: '',
     expiry_date: '',
     status: '正常',
@@ -250,7 +250,7 @@ const ReagentPage: React.FC = () => {
       unit: reagent.unit || '',
       min_stock: reagent.min_stock,
       storage_condition: reagent.storage_condition || '',
-      hazard_level: reagent.hazard_level || '',
+      hazardlevel: reagent.hazardlevel || '',
       received_date: reagent.received_date || '',
       expiry_date: reagent.expiry_date || '',
       status: reagent.status,
@@ -279,7 +279,7 @@ const ReagentPage: React.FC = () => {
       unit: '',
       min_stock: undefined,
       storage_condition: '',
-      hazard_level: '',
+      hazardlevel: '',
       received_date: '',
       expiry_date: '',
       status: '正常',
@@ -791,8 +791,8 @@ const ReagentPage: React.FC = () => {
               <TextField
                 fullWidth
                 label='危害等级'
-                value={formData.hazard_level}
-                onChange={(e) => setFormData({ ...formData, hazard_level: e.target.value })}
+                value={formData.hazardlevel}
+                onChange={(e) => setFormData({ ...formData, hazardlevel: e.target.value })}
                 placeholder='请输入危害等级'
               />
             </Box>
@@ -993,7 +993,7 @@ const ReagentPage: React.FC = () => {
                 >
                   危害等级
                 </Box>
-                <Box>{selectedReagent.hazard_level || '-'}</Box>
+                <Box>{selectedReagent.hazardlevel || '-'}</Box>
               </Box>
               <Box>
                 <Box

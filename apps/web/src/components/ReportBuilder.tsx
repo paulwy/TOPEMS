@@ -171,14 +171,14 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
           }}
         >
           <div>
-            <h3 style={{ fontSize: 20, fontWeight: 600, color: 'grey.900' }}>报表生成器</h3>
+            <h3 style={{ fontSize: 20, fontWeight: 600, color: 'var(--mui-palette-text-primary)' }}>报表生成器</h3>
             <p style={{ fontSize: 14, color: '#475569', marginTop: 4 }}>创建自定义报表</p>
           </div>
           <button
             onClick={onClose}
             style={{
               padding: 8,
-              color: 'grey.600',
+              color: 'var(--mui-palette-text-secondary)',
               backgroundColor: 'transparent',
               border: 'none',
               borderRadius: 8,
@@ -223,7 +223,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
               </div>
               <span style={{ marginLeft: 8, fontWeight: 500 }}>选择类型</span>
             </div>
-            <div style={{ flex: 1, height: 2, backgroundColor: 'grey.400' }}>
+            <div style={{ flex: 1, height: 2, backgroundColor: 'var(--mui-palette-divider)' }}>
               <div
                 style={{
                   height: '100%',
@@ -259,7 +259,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
               </div>
               <span style={{ marginLeft: 8, fontWeight: 500 }}>配置选项</span>
             </div>
-            <div style={{ flex: 1, height: 2, backgroundColor: 'grey.400' }}>
+            <div style={{ flex: 1, height: 2, backgroundColor: 'var(--mui-palette-divider)' }}>
               <div
                 style={{
                   height: '100%',
@@ -312,7 +312,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                   style={{
                     fontSize: 18,
                     fontWeight: 600,
-                    color: 'grey.900',
+                    color: 'var(--mui-palette-text-primary)',
                     marginBottom: 16,
                   }}
                 >
@@ -380,11 +380,11 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                                 />
                               </div>
                               <div>
-                                <p style={{ fontWeight: 500, color: 'grey.900' }}>{type.name}</p>
+                                <p style={{ fontWeight: 500, color: 'var(--mui-palette-text-primary)' }}>{type.name}</p>
                                 <p
                                   style={{
                                     fontSize: 14,
-                                    color: 'grey.600',
+                                    color: 'var(--mui-palette-text-secondary)',
                                     marginTop: 4,
                                   }}
                                 >
@@ -409,7 +409,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                   style={{
                     fontSize: 18,
                     fontWeight: 600,
-                    color: 'grey.900',
+                    color: 'var(--mui-palette-text-primary)',
                     marginBottom: 16,
                   }}
                 >
@@ -628,7 +628,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
 
           {step === 3 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-              <h4 style={{ fontSize: 18, fontWeight: 600, color: 'grey.900' }}>确认报表配置</h4>
+              <h4 style={{ fontSize: 18, fontWeight: 600, color: 'var(--mui-palette-text-primary)' }}>确认报表配置</h4>
 
               <div
                 style={{
@@ -641,23 +641,23 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                 }}
               >
                 <div>
-                  <p style={{ fontSize: 14, color: 'grey.600' }}>报表类型</p>
-                  <p style={{ fontWeight: 500, color: 'grey.900' }}>
+                  <p style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>报表类型</p>
+                  <p style={{ fontWeight: 500, color: 'var(--mui-palette-text-primary)' }}>
                     {reportTypes.find((t) => t.type === reportType)?.name}
                   </p>
                 </div>
                 <div>
-                  <p style={{ fontSize: 14, color: 'grey.600' }}>报表标题</p>
-                  <p style={{ fontWeight: 500, color: 'grey.900' }}>{title}</p>
+                  <p style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>报表标题</p>
+                  <p style={{ fontWeight: 500, color: 'var(--mui-palette-text-primary)' }}>{title}</p>
                 </div>
                 {description && (
                   <div>
-                    <p style={{ fontSize: 14, color: 'grey.600' }}>报表描述</p>
-                    <p style={{ fontWeight: 500, color: 'grey.900' }}>{description}</p>
+                    <p style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>报表描述</p>
+                    <p style={{ fontWeight: 500, color: 'var(--mui-palette-text-primary)' }}>{description}</p>
                   </div>
                 )}
                 <div>
-                  <p style={{ fontSize: 14, color: 'grey.600' }}>选择的列</p>
+                  <p style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>选择的列</p>
                   <div
                     style={{
                       display: 'flex',
@@ -684,8 +684,8 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                 </div>
                 {startDate && endDate && (
                   <div>
-                    <p style={{ fontSize: 14, color: 'grey.600' }}>日期范围</p>
-                    <p style={{ fontWeight: 500, color: 'grey.900' }}>
+                    <p style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>日期范围</p>
+                    <p style={{ fontWeight: 500, color: 'var(--mui-palette-text-primary)' }}>
                       {startDate} 至 {endDate}
                     </p>
                   </div>

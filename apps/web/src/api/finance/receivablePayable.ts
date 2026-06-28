@@ -19,7 +19,7 @@ export const receivablePayableApi = {
     start_date?: string;
     end_date?: string;
     page?: number;
-    page_size?: number;
+    pagesize?: number;
   }): Promise<ApiResponse<PaginatedResult<SalesInvoice>>> => {
     return createApiClient().get('/api/erp/receivables', { params });
   },
@@ -49,7 +49,7 @@ export const receivablePayableApi = {
     start_date?: string;
     end_date?: string;
     page?: number;
-    page_size?: number;
+    pagesize?: number;
   }): Promise<ApiResponse<PaginatedResult<PurchaseInvoice>>> => {
     return createApiClient().get('/api/erp/payables', { params });
   },
@@ -80,7 +80,7 @@ export const receivablePayableApi = {
     start_date?: string;
     end_date?: string;
     page?: number;
-    page_size?: number;
+    pagesize?: number;
   }): Promise<ApiResponse<PaginatedResult<CollectionRecord>>> => {
     return createApiClient().get('/api/finance/ar/collections', { params });
   },
@@ -94,7 +94,7 @@ export const receivablePayableApi = {
     start_date?: string;
     end_date?: string;
     page?: number;
-    page_size?: number;
+    pagesize?: number;
   }): Promise<ApiResponse<PaginatedResult<PaymentRecord>>> => {
     return createApiClient().get('/api/finance/ap/payments', { params });
   },

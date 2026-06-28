@@ -103,11 +103,11 @@ describe('ProductionDashboardPage', () => {
     vi.clearAllMocks();
     (productionOrderApi.list as vi.Mock).mockResolvedValue({
       success: true,
-      data: { orders: mockOrders, total: mockOrders.length, page: 1, page_size: 200 },
+      data: { orders: mockOrders, total: mockOrders.length, page: 1, pagesize: 200 },
     });
     (productionRecordApi.list as vi.Mock).mockResolvedValue({
       success: true,
-      data: { records: mockRecords, total: mockRecords.length, page: 1, page_size: 200 },
+      data: { records: mockRecords, total: mockRecords.length, page: 1, pagesize: 200 },
     });
     (workStationApi.list as vi.Mock).mockResolvedValue({
       success: true,
@@ -115,7 +115,7 @@ describe('ProductionDashboardPage', () => {
         workstations: mockWorkStations,
         total: mockWorkStations.length,
         page: 1,
-        page_size: 100,
+        pagesize: 100,
       },
     });
     (mesEquipmentApi.getStatistics as vi.Mock).mockResolvedValue({
@@ -134,11 +134,11 @@ describe('ProductionDashboardPage', () => {
     });
     (productionScheduleApi.list as vi.Mock).mockResolvedValue({
       success: true,
-      data: { schedules: mockSchedules, total: mockSchedules.length, page: 1, page_size: 50 },
+      data: { schedules: mockSchedules, total: mockSchedules.length, page: 1, pagesize: 50 },
     });
     (equipmentApi.list as vi.Mock).mockResolvedValue({
       success: true,
-      data: { equipments: mockEquipment, total: mockEquipment.length, page: 1, page_size: 200 },
+      data: { equipments: mockEquipment, total: mockEquipment.length, page: 1, pagesize: 200 },
     });
   });
 

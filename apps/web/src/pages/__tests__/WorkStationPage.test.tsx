@@ -53,7 +53,7 @@ describe('WorkStationPage', () => {
         workstations: mockWorkStations,
         total: mockWorkStations.length,
         page: 0,
-        page_size: 10,
+        pagesize: 10,
       },
     });
   });

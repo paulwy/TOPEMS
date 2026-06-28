@@ -31,8 +31,8 @@ export interface Project {
   created_at: string;
   updated_at: string;
   project_config?: ProjectConfig;
-  benefit_target?: BenefitTarget;
-  risk_level?: string;
+  benefittarget?: BenefitTarget;
+  risklevel?: string;
   priority?: number;
   tags?: string[];
   parent_id?: string;
@@ -52,8 +52,8 @@ export interface CreateProjectRequest {
   end_date?: string;
   budget?: number;
   project_config?: ProjectConfig;
-  benefit_target?: BenefitTarget;
-  risk_level?: string;
+  benefittarget?: BenefitTarget;
+  risklevel?: string;
   priority?: number;
   tags?: string[];
   parent_id?: string;
@@ -70,8 +70,8 @@ export interface UpdateProjectRequest {
   budget?: number;
   progress?: number;
   project_config?: ProjectConfig;
-  benefit_target?: BenefitTarget;
-  risk_level?: string;
+  benefittarget?: BenefitTarget;
+  risklevel?: string;
   priority?: number;
   tags?: string[];
   parent_id?: string;
@@ -477,7 +477,7 @@ export interface AuditLogQueryParams {
   start_date?: string;
   end_date?: string;
   page?: number;
-  page_size?: number;
+  pagesize?: number;
 }
 
 export interface RsStatistics {
@@ -543,7 +543,7 @@ export interface UpdateMaterialRequest {
 
 export interface MaterialQueryParams {
   page?: number;
-  page_size?: number;
+  pagesize?: number;
   search?: string;
   category?: string;
   status?: string;

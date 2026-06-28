@@ -279,7 +279,7 @@ const EhsHazardDetailPage: React.FC = () => {
       ),
     },
     {
-      accessorKey: 'risk_level',
+      accessorKey: 'risklevel',
       header: '风险等级',
       cell: ({ row }) => {
         const riskResult = calculateRiskLevel(

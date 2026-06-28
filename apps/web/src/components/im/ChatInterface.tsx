@@ -429,7 +429,7 @@ export const ChatInterface: React.FC = () => {
   ];
 
   return (
-    <div style={{ display: 'flex', height: '100vh', backgroundColor: 'grey.50' }}>
+    <div style={{ display: 'flex', height: '100vh', backgroundColor: 'var(--mui-palette-grey-50)' }}>
       <div
         style={{
           width: 320,
@@ -439,7 +439,7 @@ export const ChatInterface: React.FC = () => {
           flexDirection: 'column',
         }}
       >
-        <div style={{ padding: 16, borderBottom: '1px solid grey.200' }}>
+        <div style={{ padding: 16, borderBottom: '1px solid var(--mui-palette-divider)' }}>
           <div
             style={{
               display: 'flex',
@@ -499,7 +499,7 @@ export const ChatInterface: React.FC = () => {
           </div>
         </div>
 
-        <div style={{ display: 'flex', borderBottom: '1px solid grey.200' }}>
+        <div style={{ display: 'flex', borderBottom: '1px solid var(--mui-palette-divider)' }}>
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (

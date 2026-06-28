@@ -5,7 +5,7 @@ import type { Bug, CreateBugRequest, UpdateBugRequest } from './types';
 export const bugApi = {
   listBugs: async (params?: {
     page?: number;
-    page_size?: number;
+    pagesize?: number;
     search?: string;
     severity?: string;
     priority?: string;
@@ -16,7 +16,7 @@ export const bugApi = {
       bugs: Bug[];
       total: number;
       page: number;
-      page_size: number;
+      pagesize: number;
     }>
   > => {
     const queryParams = params

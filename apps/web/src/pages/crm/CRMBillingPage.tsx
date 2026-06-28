@@ -204,7 +204,7 @@ const CRMBillingPage: React.FC = () => {
           },
         },
         {
-          id: 'risk_level',
+          id: 'risklevel',
           label: '风险等级',
           width: 120,
           render: (row) => {

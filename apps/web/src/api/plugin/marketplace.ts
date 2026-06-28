@@ -60,7 +60,7 @@ export const marketplaceApi = {
     sort_by?: 'popular' | 'rating' | 'newest' | 'price';
     sort_order?: 'asc' | 'desc';
     page?: number;
-    page_size?: number;
+    pagesize?: number;
     is_free?: boolean;
   }): Promise<ApiResponse<PluginListResponse>> => {
     const response = await pluginAxios.get(`${MARKETPLACE_API}/list`, { params });
@@ -81,7 +81,7 @@ export const marketplaceApi = {
     code: string,
     params?: {
       page?: number;
-      page_size?: number;
+      pagesize?: number;
       sort_by?: 'date' | 'helpful' | 'rating';
       sort_order?: 'asc' | 'desc';
       rating_min?: number;

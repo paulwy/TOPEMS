@@ -118,7 +118,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 }}
               >
                 <Image style={{ width: 16, height: 16, color: 'text.secondary' }} />
-                <span style={{ fontSize: 14, color: 'grey.700' }}>图片</span>
+                <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>图片</span>
                 <input
                   ref={imageInputRef}
                   type='file'
@@ -138,7 +138,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                 }}
               >
                 <FileText style={{ width: 16, height: 16, color: 'text.secondary' }} />
-                <span style={{ fontSize: 14, color: 'grey.700' }}>文件</span>
+                <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>文件</span>
                 <input
                   ref={fileInputRef}
                   type='file'

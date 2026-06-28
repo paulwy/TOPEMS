@@ -44,7 +44,7 @@ const RsMaterialListPage: React.FC = () => {
       setError('');
       const params: Record<string, string> = {
         page: String(page + 1),
-        page_size: String(rowsPerPage),
+        pagesize: String(rowsPerPage),
       };
       if (searchTerm) params.search = searchTerm;
       if (categoryFilter) params.category = categoryFilter;

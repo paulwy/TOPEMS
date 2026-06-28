@@ -1,7 +1,7 @@
 import React from 'react';
 import { Skeleton, Box } from '@mui/material';
 
-export const MetricCardSkeleton: React.FC<{ _className?: string }> = ({ _className }) => (
+export const MetricCardSkeleton: React.FC<{ className?: string }> = ({ className }) => (
   <Box
     sx={{
       backgroundColor: 'white',
@@ -65,7 +65,7 @@ export const ChartCardSkeleton: React.FC<{
   </Box>
 );
 
-export const ModuleCardSkeleton: React.FC<{ _className?: string }> = ({ _className }) => (
+export const ModuleCardSkeleton: React.FC<{ className?: string }> = ({ className }) => (
   <Box
     sx={{
       backgroundColor: 'white',
@@ -114,7 +114,7 @@ export const ModuleCardSkeleton: React.FC<{ _className?: string }> = ({ _classNa
   </Box>
 );
 
-export const VisualizationCardSkeleton: React.FC<{ _className?: string }> = ({ _className }) => (
+export const VisualizationCardSkeleton: React.FC<{ className?: string }> = ({ className }) => (
   <Box
     sx={{
       backgroundColor: 'white',
@@ -153,7 +153,7 @@ export const VisualizationCardSkeleton: React.FC<{ _className?: string }> = ({ _
   </Box>
 );
 
-export const ActivityItemSkeleton: React.FC<{ _className?: string }> = ({ _className }) => (
+export const ActivityItemSkeleton: React.FC<{ className?: string }> = ({ className }) => (
   <Box
     sx={{
       display: 'flex',

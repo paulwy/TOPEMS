@@ -55,7 +55,7 @@ export interface Account {
   parent_id?: string; // 上级科目ID
   parent_code?: string; // 上级科目编码
   level: number; // 层级深度
-  has_children: boolean; // 是否有下级
+  haschildren: boolean; // 是否有下级
   children?: Account[]; // 子科目列表（用于树形结构）
 
   // 辅助核算
@@ -72,7 +72,7 @@ export interface Account {
 
   // 状态
   status: 'active' | 'disabled';
-  is_active?: boolean; // 是否启用（表单字段）
+  isactive?: boolean; // 是否启用（表单字段）
   is_detail?: boolean; // 是否明细科目
 
   // 描述
@@ -963,7 +963,7 @@ export interface VoucherTemplate {
  */
 export interface PaginationParams {
   page?: number;
-  page_size?: number;
+  pagesize?: number;
 }
 
 /**
@@ -973,7 +973,7 @@ export interface PaginatedResult<T> {
   items: T[];
   total: number;
   page: number;
-  page_size: number;
+  pagesize: number;
   total_pages: number;
 }
 

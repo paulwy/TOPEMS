@@ -94,7 +94,7 @@ const HrmOrganizationPage: React.FC = () => {
       const [companyRes, deptRes, empRes] = await Promise.all([
         companyApi.list(),
         departmentApi.list(),
-        employeeApi.list({ page_size: 500 }),
+        employeeApi.list({ pagesize: 500 }),
       ]);
 
       if (companyRes.code === 200 && companyRes.data) {
@@ -335,7 +335,7 @@ const HrmOrganizationPage: React.FC = () => {
     try {
       const companyDepts = departments.filter((d) => d.company_id === companyId);
       const deptIds = companyDepts.map((d) => d.id).join(',');
-      const response = await employeeApi.list({ page_size: 200 });
+      const response = await employeeApi.list({ pagesize: 200 });
       if (response.code === 200 && response.data) {
         const allEmps = (response.data as any).items || [];
         const filtered = allEmps.filter((e: Employee) => deptIds.includes(e.department_id || ''));
@@ -352,7 +352,7 @@ const HrmOrganizationPage: React.FC = () => {
 
   const fetchDeptEmployees = async (deptId: string) => {
     try {
-      const response = await employeeApi.list({ department_id: deptId, page_size: 100 });
+      const response = await employeeApi.list({ department_id: deptId, pagesize: 100 });
       if (response.code === 200 && response.data) {
         setEmployees((response.data as any).items || []);
       }

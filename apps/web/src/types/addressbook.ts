@@ -20,7 +20,7 @@ export interface AddressbookDetail extends AddressbookEntry {
 
 export interface AddressbookQueryParams {
   page?: number;
-  page_size?: number;
+  pagesize?: number;
   type?: 'EMPLOYEE' | 'DEPARTMENT' | 'COMPANY';
   department_id?: string;
   status?: string;
@@ -55,7 +55,7 @@ export interface PaginatedResponse<T> {
   items: T[];
   total: number;
   page: number;
-  page_size: number;
+  pagesize: number;
 }
 
 export interface ApiResponse<T = any> {

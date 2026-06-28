@@ -31,6 +31,9 @@ export interface EmptyStateProps {
 
   // 自定义
   children?: React.ReactNode;
+
+  // TOPEMS 设计系统
+  sx?: import('@mui/material/styles').SxProps<import('@mui/material/styles').Theme>;
 }
 
 // ============ EmptyState 组件 ============
@@ -46,10 +49,11 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
   align = 'center',
   compact = false,
   children,
+  sx,
 }) => {
   const resolvedAction =
     action || (actionLabel ? { label: actionLabel, onClick: onAction } : undefined);
-  const _theme = useTheme();
+  const theme = useTheme();
 
   return (
     <Box
@@ -63,6 +67,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         py: compact ? 4 : 8,
         px: compact ? 2 : 4,
         textAlign: align === 'center' ? 'center' : 'left',
+        ...sx,
       }}
     >
       {/* 图标 */}

@@ -73,7 +73,7 @@ const RsProjectDetailPage: React.FC = () => {
       const [projectRes, ganttRes, experimentsRes] = await Promise.all([
         rsApi.getProject(projectId),
         rsApi.getProjectGantt(projectId),
-        rsApi.listExperiments({ project_id: projectId, page_size: 100 }),
+        rsApi.listExperiments({ project_id: projectId, pagesize: 100 }),
       ]);
 
       if (projectRes.success && projectRes.data) {
@@ -387,7 +387,7 @@ const RsProjectDetailPage: React.FC = () => {
         subtitle: `编码: ${project.code} | 类型: ${project.project_type} | 负责人: ${project.leader}`,
         tags: [
           getStatusLabel(project.status),
-          `风险: ${project.risk_level || '-'}`,
+          `风险: ${project.risklevel || '-'}`,
           `预算: ${project.budget ? (project.budget / 10000).toFixed(1) : '-'}万元`,
         ],
         stats: [

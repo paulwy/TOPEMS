@@ -14,7 +14,7 @@ import {
   Select,
   MenuItem,
   FormControl,
-  _InputLabel,
+  InputLabel,
   Chip,
   Skeleton,
   Tooltip,
@@ -22,7 +22,7 @@ import {
   Tab,
   useTheme,
   useMediaQuery,
-  _Divider,
+  Divider,
   Button,
 } from '@mui/material';
 import { Search, RefreshCw, Download, Calendar } from 'lucide-react';

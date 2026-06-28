@@ -44,7 +44,7 @@ export interface Template {
   description?: string;
   content: string;
   variables: TemplateVariable[];
-  is_active: boolean;
+  isactive: boolean;
   is_system: boolean;
   is_public: boolean;
   ai_enabled: boolean;
@@ -64,7 +64,7 @@ export interface TemplateCategory {
   icon?: string;
   description?: string;
   template_count: number;
-  is_active: boolean;
+  isactive: boolean;
 }
 
 export interface CreateTemplateRequest {
@@ -76,7 +76,7 @@ export interface CreateTemplateRequest {
   description?: string;
   content: string;
   variables?: TemplateVariable[];
-  is_active?: boolean;
+  isactive?: boolean;
   is_public?: boolean;
   ai_enabled?: boolean;
   sort_order?: number;
@@ -88,12 +88,12 @@ export interface UpdateTemplateRequest extends Partial<CreateTemplateRequest> {
 
 export interface PaginationParams {
   page?: number;
-  page_size?: number;
+  pagesize?: number;
   search?: string;
   type?: TemplateType;
   category?: string;
   module?: string;
-  is_active?: boolean;
+  isactive?: boolean;
   is_public?: boolean;
 }
 
@@ -110,19 +110,19 @@ export interface PaginatedResult<T> {
   items: T[];
   total: number;
   page: number;
-  page_size: number;
+  pagesize: number;
 }
 
 export const templateApi = {
   async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<Template>>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.pagesize) searchParams.set('pagesize', params.pagesize.toString());
     if (params?.search) searchParams.set('search', params.search);
     if (params?.type) searchParams.set('type', params.type);
     if (params?.category) searchParams.set('category', params.category);
     if (params?.module) searchParams.set('module', params.module);
-    if (params?.is_active !== undefined) searchParams.set('is_active', String(params.is_active));
+    if (params?.isactive !== undefined) searchParams.set('isactive', String(params.isactive));
     if (params?.is_public !== undefined) searchParams.set('is_public', String(params.is_public));
 
     const queryString = searchParams.toString();
@@ -146,10 +146,10 @@ export const templateApi = {
   },
 
   async listCategories(
-    params?: Pick<PaginationParams, 'is_active' | 'type'>
+    params?: Pick<PaginationParams, 'isactive' | 'type'>
   ): Promise<ApiResponse<TemplateCategory[]>> {
     const searchParams = new URLSearchParams();
-    if (params?.is_active !== undefined) searchParams.set('is_active', String(params.is_active));
+    if (params?.isactive !== undefined) searchParams.set('isactive', String(params.isactive));
     if (params?.type) searchParams.set('type', params.type);
 
     const queryString = searchParams.toString();

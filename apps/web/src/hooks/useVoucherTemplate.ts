@@ -18,9 +18,9 @@ import type { VoucherTemplate, VoucherTemplateType } from '../types/finance';
 export function useVoucherTemplates(params?: {
   type?: VoucherTemplateType | VoucherTemplateType[];
   module?: string;
-  is_active?: boolean;
+  isactive?: boolean;
   page?: number;
-  page_size?: number;
+  pagesize?: number;
 }) {
   return useQuery({
     queryKey: ['voucher-templates', params],
@@ -355,9 +355,9 @@ export function useVoucherTemplateUsageStats(
  */
 export function useGenerationRules(params?: {
   source_module?: string;
-  is_active?: boolean;
+  isactive?: boolean;
   page?: number;
-  page_size?: number;
+  pagesize?: number;
 }) {
   return useQuery({
     queryKey: ['voucher-generation-rules', params],
@@ -381,7 +381,7 @@ export function useCreateGenerationRule() {
       template_id: string;
       condition?: string;
       priority?: number;
-      is_active?: boolean;
+      isactive?: boolean;
     }) => voucherTemplateApi.createGenerationRule(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['voucher-generation-rules'] });

@@ -36,7 +36,7 @@ export interface DashboardTemplate {
   preview_image?: string;
   category?: string;
   tags?: string[];
-  is_active?: boolean;
+  isactive?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -57,8 +57,11 @@ export interface Report {
   name: string;
   description?: string;
   report_type: string;
+  type?: string;
   config: ReportConfig;
   data_source?: string;
+  format?: string;
+  status?: 'draft' | 'published' | 'archived';
   created_by?: string;
   created_at: string;
   updated_at: string;
@@ -237,4 +240,150 @@ export interface SyncRecord {
   started_at: string;
   completed_at?: string;
   duration_ms?: number;
+}
+
+export interface DatasetField {
+  id: string;
+  name: string;
+  label: string;
+  type: 'string' | 'number' | 'date' | 'boolean' | 'datetime';
+  description?: string;
+  is_dimension?: boolean;
+  is_measure?: boolean;
+  aggregation?: 'sum' | 'avg' | 'count' | 'max' | 'min' | 'none';
+  format?: string;
+}
+
+export interface Dataset {
+  id: string;
+  name: string;
+  description?: string;
+  data_source_id: string;
+  data_source_name?: string;
+  sql_query?: string;
+  fields: DatasetField[];
+  status: 'draft' | 'published' | 'archived';
+  row_count?: number;
+  refresh_frequency?: string;
+  last_refresh?: string;
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DatasetQueryParams {
+  dataset_id: string;
+  fields?: string[];
+  filters?: Array<{
+    field: string;
+    operator: string;
+    value: string | number | boolean;
+  }>;
+  group_by?: string[];
+  order_by?: Array<{ field: string; direction: 'asc' | 'desc' }>;
+  limit?: number;
+  offset?: number;
+}
+
+export interface DatasetQueryResult {
+  columns: string[];
+  rows: Array<Record<string, unknown>>;
+  total: number;
+  execution_time?: number;
+}
+
+export interface ReportSchedule {
+  id: string;
+  report_id: string;
+  name: string;
+  cron_expression: string;
+  format: 'pdf' | 'excel' | 'csv' | 'word';
+  recipients: string[];
+  is_enabled: boolean;
+  last_run_at?: string;
+  next_run_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReportExportJob {
+  id: string;
+  report_id: string;
+  format: 'pdf' | 'excel' | 'csv' | 'word';
+  status: 'pending' | 'processing' | 'completed' | 'failed';
+  file_url?: string;
+  file_name?: string;
+  file_size?: number;
+  error_message?: string;
+  created_by?: string;
+  created_at: string;
+  completed_at?: string;
+}
+
+export interface DrillDownConfig {
+  enabled: boolean;
+  levels: Array<{
+    dimension: string;
+    label: string;
+  }>;
+}
+
+export interface ChartLinkConfig {
+  enabled: boolean;
+  links: Array<{
+    source_widget: string;
+    target_widget: string;
+    source_field: string;
+    target_field: string;
+    type: 'filter' | 'highlight';
+  }>;
+}
+
+export interface RowLevelPermission {
+  id: string;
+  name: string;
+  description?: string;
+  data_source_id: string;
+  table_name: string;
+  condition: string;
+  roles: string[];
+  users: string[];
+  is_enabled: boolean;
+  priority: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DataPermissionRule {
+  id: string;
+  name: string;
+  resource_type: 'dashboard' | 'dataset' | 'datasource' | 'report';
+  resource_id: string;
+  permission_type: 'view' | 'edit' | 'admin' | 'export';
+  role_ids: string[];
+  user_ids: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FilterConfig {
+  id: string;
+  type: 'date' | 'select' | 'input' | 'number' | 'date_range';
+  label: string;
+  field: string;
+  options?: Array<{ label: string; value: string | number }>;
+  default_value?: string | number | boolean;
+  placeholder?: string;
+  required?: boolean;
+}
+
+export interface PivotTableConfig {
+  rows: string[];
+  columns: string[];
+  values: Array<{
+    field: string;
+    aggregation: 'sum' | 'avg' | 'count' | 'max' | 'min';
+    label?: string;
+  }>;
+  filters?: FilterConfig[];
 }

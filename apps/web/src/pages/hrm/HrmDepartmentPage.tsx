@@ -139,7 +139,7 @@ const HrmDepartmentPage: React.FC = () => {
     try {
       const response = await employeeApi.list({
         department_id: deptId,
-        page_size: 100,
+        pagesize: 100,
       });
       if (response.code === 200 && response.data) {
         const data = response.data as PaginatedResult<Employee>;
@@ -559,7 +559,7 @@ const HrmDepartmentPage: React.FC = () => {
   // ============ 事件处理 ============
   const fetchCompanies = useCallback(async () => {
     try {
-      const response = await companyApi.list({ page_size: 100 });
+      const response = await companyApi.list({ pagesize: 100 });
       if (response.code === 200 && response.data) {
         const data = response.data as PaginatedResult<Company>;
         setCompanies(data.items || []);
@@ -570,7 +570,7 @@ const HrmDepartmentPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    fetchDepartments({ page_size: 1000 });
+    fetchDepartments({ pagesize: 1000 });
     fetchCompanies();
   }, [fetchDepartments, fetchCompanies]);
 

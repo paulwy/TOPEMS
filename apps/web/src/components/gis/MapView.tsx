@@ -137,7 +137,7 @@ const FitBoundsControl: React.FC<{
     >
       <Maximize2
         size={20}
-        style={{ color: 'grey.700' }}
+        style={{ color: 'var(--mui-palette-text-secondary)' }}
       />
     </IconButton>
   );
@@ -1600,7 +1600,7 @@ const MapView: React.FC<MapViewProps> = ({
         >
           <ZoomIn
             size={20}
-            style={{ color: 'grey.700' }}
+            style={{ color: 'var(--mui-palette-text-secondary)' }}
           />
         </IconButton>
         <IconButton
@@ -1618,7 +1618,7 @@ const MapView: React.FC<MapViewProps> = ({
         >
           <ZoomOut
             size={20}
-            style={{ color: 'grey.700' }}
+            style={{ color: 'var(--mui-palette-text-secondary)' }}
           />
         </IconButton>
         <FitBoundsControl
@@ -1654,7 +1654,7 @@ const MapView: React.FC<MapViewProps> = ({
           <MuiBox sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Layers
               size={20}
-              style={{ color: 'grey.700' }}
+              style={{ color: 'var(--mui-palette-text-secondary)' }}
             />
             <Typography
               variant='body2'

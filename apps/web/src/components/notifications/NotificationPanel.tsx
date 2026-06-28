@@ -163,7 +163,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
 
       {showSettings && <NotificationSettings />}
 
-      <div style={{ display: 'flex', borderBottom: '1px solid grey.200' }}>
+      <div style={{ display: 'flex', borderBottom: '1px solid var(--mui-palette-divider)' }}>
         <button
           onClick={() => setActiveTab('all')}
           style={{
@@ -297,7 +297,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
             <p style={{ fontSize: 14 }}>{activeTab === 'unread' ? '暂无未读通知' : '暂无通知'}</p>
           </div>
         ) : (
-          <div style={{ borderTop: '1px solid grey.100' }}>
+          <div style={{ borderTop: '1px solid var(--mui-palette-grey-100)' }}>
             {displayedNotifications.map((notification) => (
               <NotificationItem
                 key={notification.id}

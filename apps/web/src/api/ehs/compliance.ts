@@ -28,7 +28,7 @@ export const complianceApi = {
   ): Promise<ApiResponse<PaginatedResponse<EnvironmentalRegulation>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.category) queryParams.append('category', params.category);
     if (params?.regulation_type) queryParams.append('regulation_type', params.regulation_type);
@@ -73,7 +73,7 @@ export const complianceApi = {
   ): Promise<ApiResponse<PaginatedResponse<ComplianceAssessment>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.assessment_type) queryParams.append('assessment_type', params.assessment_type);
     if (params?.result) queryParams.append('result', params.result);
@@ -118,7 +118,7 @@ export const complianceApi = {
   ): Promise<ApiResponse<PaginatedResponse<DischargePermit>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.permit_type) queryParams.append('permit_type', params.permit_type);
     if (params?.permit_category) queryParams.append('permit_category', params.permit_category);
@@ -158,7 +158,7 @@ export const complianceApi = {
   ): Promise<ApiResponse<PaginatedResponse<EnvironmentalEvent>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.event_type) queryParams.append('event_type', params.event_type);
     if (params?.event_category) queryParams.append('event_category', params.event_category);

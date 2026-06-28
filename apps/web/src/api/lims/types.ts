@@ -47,7 +47,7 @@ export interface LifecycleStage {
   code: string;
   description?: string;
   order: number;
-  is_active: boolean;
+  isactive: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -183,7 +183,7 @@ export interface BatchOperationResult {
 
 export interface ListParams {
   page?: number;
-  page_size?: number;
+  pagesize?: number;
   search?: string;
   status?: string;
   project_id?: string;
@@ -194,7 +194,7 @@ export interface PaginatedResult<T> {
   items: T[];
   total: number;
   page: number;
-  page_size: number;
+  pagesize: number;
 }
 
 export interface Instrument {
@@ -300,7 +300,7 @@ export interface Reagent {
   unit: string;
   min_stock?: number;
   storage_condition?: string;
-  hazard_level?: string;
+  hazardlevel?: string;
   received_date?: string;
   expiry_date?: string;
   status: string;
@@ -326,7 +326,7 @@ export interface CreateReagentRequest {
   unit: string;
   min_stock?: number;
   storage_condition?: string;
-  hazard_level?: string;
+  hazardlevel?: string;
   received_date?: string;
   expiry_date?: string;
   status?: string;
@@ -374,7 +374,7 @@ export interface BarcodeType {
   code: string;
   format: string;
   description?: string;
-  is_active: boolean;
+  isactive: boolean;
   created_at: string;
 }
 
@@ -421,7 +421,7 @@ export interface PrintConfig {
   id: string;
   name: string;
   printer_type: string;
-  paper_size: string;
+  papersize: string;
   label_template?: string;
   is_default: boolean;
   config?: Record<string, any>;
@@ -561,7 +561,7 @@ export interface PtPlan {
   plan_no: string;
   plan_name: string;
   provider?: string;
-  test_item?: string;
+  testitem?: string;
   test_method?: string;
   plan_year?: string;
   sample_type?: string;
@@ -580,7 +580,7 @@ export interface PtPlan {
 export interface CreatePtPlanRequest {
   plan_name: string;
   provider?: string;
-  test_item?: string;
+  testitem?: string;
   test_method?: string;
   plan_year?: string;
   sample_type?: string;
@@ -596,7 +596,7 @@ export interface CreatePtPlanRequest {
 export interface UpdatePtPlanRequest {
   plan_name?: string;
   provider?: string;
-  test_item?: string;
+  testitem?: string;
   test_method?: string;
   plan_year?: string;
   sample_type?: string;
@@ -640,7 +640,7 @@ export interface PtResult {
   plan_no: string;
   sample_id: string;
   sample_code: string;
-  test_item: string;
+  testitem: string;
   test_result?: number;
   result_unit?: string;
   test_date?: string;
@@ -660,7 +660,7 @@ export interface PtResult {
 export interface CreatePtResultRequest {
   plan_id: string;
   sample_id: string;
-  test_item: string;
+  testitem: string;
   test_result?: number;
   result_unit?: string;
   test_date?: string;
@@ -677,7 +677,7 @@ export interface PtEvaluation {
   plan_no: string;
   sample_id: string;
   sample_code: string;
-  test_item: string;
+  testitem: string;
   test_result?: number;
   assigned_value?: number;
   standard_deviation?: number;
@@ -710,7 +710,7 @@ export interface PtCorrectiveAction {
   plan_id: string;
   plan_no: string;
   evaluation_id: string;
-  unsatisfactory_item: string;
+  unsatisfactoryitem: string;
   root_cause?: string;
   corrective_measures?: string;
   responsible_person?: string;
@@ -726,7 +726,7 @@ export interface PtCorrectiveAction {
 export interface CreatePtCorrectiveActionRequest {
   plan_id: string;
   evaluation_id: string;
-  unsatisfactory_item: string;
+  unsatisfactoryitem: string;
   root_cause?: string;
   corrective_measures?: string;
   responsible_person?: string;
@@ -749,7 +749,7 @@ export interface UncertaintyProject {
   project_name: string;
   method_id?: string;
   method_name?: string;
-  test_item?: string;
+  testitem?: string;
   measurand?: string;
   measurement_range?: string;
   unit?: string;
@@ -759,7 +759,7 @@ export interface UncertaintyProject {
   combined_uncertainty?: number;
   expanded_uncertainty?: number;
   coverage_factor?: number;
-  confidence_level?: number;
+  confidencelevel?: number;
   notes?: string;
   created_at?: string;
   updated_at?: string;
@@ -769,7 +769,7 @@ export interface CreateUncertaintyProjectRequest {
   project_name: string;
   method_id?: string;
   method_name?: string;
-  test_item?: string;
+  testitem?: string;
   measurand?: string;
   measurement_range?: string;
   unit?: string;
@@ -781,7 +781,7 @@ export interface UpdateUncertaintyProjectRequest {
   project_name?: string;
   method_id?: string;
   method_name?: string;
-  test_item?: string;
+  testitem?: string;
   measurand?: string;
   measurement_range?: string;
   unit?: string;
@@ -789,7 +789,7 @@ export interface UpdateUncertaintyProjectRequest {
   evaluator?: string;
   evaluation_date?: string;
   coverage_factor?: number;
-  confidence_level?: number;
+  confidencelevel?: number;
   notes?: string;
 }
 
@@ -994,8 +994,8 @@ export interface UpdateInstrumentDataRequest {
 }
 
 export interface TestItemResult {
-  test_item: string;
-  test_item_name?: string;
+  testitem: string;
+  testitem_name?: string;
   result?: string;
   numeric_result?: number;
   unit?: string;
@@ -1009,7 +1009,7 @@ export interface ParseResult {
   parsed_data?: Record<string, any>;
   quality_score?: number;
   error_msg?: string;
-  test_items?: TestItemResult[];
+  testitems?: TestItemResult[];
 }
 
 export interface ParseDataRequest {
@@ -1134,5 +1134,5 @@ export interface AuditLogQueryParams {
   start_date?: string;
   end_date?: string;
   page?: number;
-  page_size?: number;
+  pagesize?: number;
 }

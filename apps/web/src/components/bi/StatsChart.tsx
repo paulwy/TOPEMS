@@ -101,8 +101,8 @@ export const StatsChart: React.FC<StatsChartProps> = ({
             border: '1px solid border.default',
           }}
         >
-          <p style={{ fontWeight: 500, color: 'grey.900' }}>{payload[0].name}</p>
-          <p style={{ fontSize: '14px', color: 'grey.600' }}>{payload[0].value}</p>
+          <p style={{ fontWeight: 500, color: 'var(--mui-palette-text-primary)' }}>{payload[0].name}</p>
+          <p style={{ fontSize: '14px', color: 'var(--mui-palette-text-secondary)' }}>{payload[0].value}</p>
         </div>
       );
     }

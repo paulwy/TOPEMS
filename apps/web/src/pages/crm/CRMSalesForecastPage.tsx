@@ -84,7 +84,7 @@ const CRMSalesForecastPage: React.FC = () => {
       averageConfidence:
         forecasts.length > 0
           ? Math.round(
-              (forecasts.reduce((sum, f) => sum + f.confidence_level, 0) / forecasts.length) * 100
+              (forecasts.reduce((sum, f) => sum + f.confidencelevel, 0) / forecasts.length) * 100
             )
           : 0,
       completedCount: forecasts.filter((f) => f.status === 'completed').length,
@@ -148,7 +148,7 @@ const CRMSalesForecastPage: React.FC = () => {
         nameKey: 'name',
         data: forecasts.map((f) => ({
           name: f.period,
-          value: Math.round(f.confidence_level * 100),
+          value: Math.round(f.confidencelevel * 100),
         })),
         height: 288,
       },
@@ -175,7 +175,7 @@ const CRMSalesForecastPage: React.FC = () => {
           period: forecast.period,
           predicted: `¥${forecast.predicted_amount.toLocaleString()}`,
           actual: forecast.actual_amount ? `¥${forecast.actual_amount.toLocaleString()}` : '-',
-          confidence: `${Math.round(forecast.confidence_level * 100)}%`,
+          confidence: `${Math.round(forecast.confidencelevel * 100)}%`,
           trend: forecast.trend,
           status:
             forecast.status === 'completed'

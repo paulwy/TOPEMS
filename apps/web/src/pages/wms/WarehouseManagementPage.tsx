@@ -52,7 +52,7 @@ const WarehouseManagementPage: React.FC = () => {
       setLoading(true);
       const params: any = {
         page: currentPage,
-        page_size: pageSize,
+        pagesize: pageSize,
       };
       if (searchTerm) params.search = searchTerm;
       if (statusFilter !== 'all') params.status = statusFilter;

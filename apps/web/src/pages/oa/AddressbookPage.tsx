@@ -29,7 +29,7 @@ const AddressbookPage: React.FC = () => {
     try {
       const params: any = {
         page: currentPage,
-        page_size: 20,
+        pagesize: 20,
       };
 
       if (filterValues.type !== 'all') {

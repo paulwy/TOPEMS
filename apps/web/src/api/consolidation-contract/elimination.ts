@@ -16,7 +16,7 @@ export const eliminationRuleApiContract = {
       status: 'string? 状态',
       keyword: 'string? 关键字搜索',
       page: 'number? 页码',
-      page_size: 'number? 每页条数',
+      pagesize: 'number? 每页条数',
     },
     response: {
       code: 200,
@@ -39,7 +39,7 @@ export const eliminationRuleApiContract = {
         ],
         total: 'number',
         page: 'number',
-        page_size: 'number',
+        pagesize: 'number',
       },
     },
   },

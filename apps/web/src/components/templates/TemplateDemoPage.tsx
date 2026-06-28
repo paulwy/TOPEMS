@@ -107,7 +107,7 @@ const mockTemplates: Template[] = [
       },
       { key: 'creator', label: '创建人', type: 'user', required: true },
     ],
-    is_active: true,
+    isactive: true,
     is_system: false,
     is_public: true,
     ai_enabled: true,
@@ -194,7 +194,7 @@ const mockTemplates: Template[] = [
       { key: 'hr_assignee', label: 'HR审核人', type: 'user', required: true },
       { key: 'apply_time', label: '申请时间', type: 'date', required: true },
     ],
-    is_active: true,
+    isactive: true,
     is_system: false,
     is_public: true,
     ai_enabled: true,
@@ -267,7 +267,7 @@ const mockTemplates: Template[] = [
       { key: 'approver_name', label: '审批人', type: 'user', required: true },
       { key: 'submit_time', label: '提交时间', type: 'date', required: true },
     ],
-    is_active: true,
+    isactive: true,
     is_system: false,
     is_public: true,
     ai_enabled: false,
@@ -287,7 +287,7 @@ const mockCategories: TemplateCategory[] = [
     code: 'procurement',
     category_type: 'workflow',
     template_count: 1,
-    is_active: true,
+    isactive: true,
   },
   {
     id: 'cat2',
@@ -295,7 +295,7 @@ const mockCategories: TemplateCategory[] = [
     code: 'hr',
     category_type: 'workflow',
     template_count: 1,
-    is_active: true,
+    isactive: true,
   },
   {
     id: 'cat3',
@@ -303,7 +303,7 @@ const mockCategories: TemplateCategory[] = [
     code: 'finance',
     category_type: 'workflow',
     template_count: 1,
-    is_active: true,
+    isactive: true,
   },
 ];
 
@@ -332,7 +332,7 @@ interface TemplateDemoPageProps {
   onClose?: () => void;
 }
 
-const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ _onClose }) => {
+const TemplateDemoPage: React.FC<TemplateDemoPageProps> = ({ onClose }) => {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [templateVariables, setTemplateVariables] = useState<Record<string, any>>({});

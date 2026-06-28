@@ -31,7 +31,7 @@ const customerColumns = [
   { key: 'name', title: '客户名称' },
   { key: 'code', title: '客户代码' },
   { key: 'industry', title: '行业' },
-  { key: 'company_size', title: '公司规模' },
+  { key: 'companysize', title: '公司规模' },
   { key: 'customer_type', title: '客户类型' },
   { key: 'rating', title: '评级' },
   { key: 'phone', title: '电话' },
@@ -93,7 +93,7 @@ const CustomerManagementPage: React.FC = () => {
     name: '',
     code: '',
     industry: '',
-    company_size: '',
+    companysize: '',
     website: '',
     email: '',
     phone: '',
@@ -139,7 +139,7 @@ const CustomerManagementPage: React.FC = () => {
       setLoading(true);
       const params: any = {
         page: pagination.page + 1,
-        page_size: pagination.pageSize,
+        pagesize: pagination.pageSize,
       };
       if (searchTerm) params.search = searchTerm;
       if (statusFilter) params.status = statusFilter;
@@ -246,7 +246,7 @@ const CustomerManagementPage: React.FC = () => {
       name: customer.name,
       code: customer.code || '',
       industry: customer.industry || '',
-      company_size: customer.company_size || '',
+      companysize: customer.companysize || '',
       website: customer.website || '',
       email: customer.email || '',
       phone: customer.phone || '',
@@ -322,7 +322,7 @@ const CustomerManagementPage: React.FC = () => {
       name: '',
       code: '',
       industry: '',
-      company_size: '',
+      companysize: '',
       website: '',
       email: '',
       phone: '',
@@ -717,14 +717,14 @@ const CustomerManagementPage: React.FC = () => {
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
                   <FormSelect
-                    name='company_size'
+                    name='companysize'
                     label='公司规模'
-                    value={formData.company_size}
+                    value={formData.companysize}
                     options={companySizes.filter((c) => c.value !== undefined)}
                     onChange={(value) =>
                       setFormData((prev) => ({
                         ...prev,
-                        company_size: value as string,
+                        companysize: value as string,
                       }))
                     }
                     placeholder='请选择公司规模'

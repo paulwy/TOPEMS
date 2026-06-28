@@ -45,7 +45,7 @@ const SrmSupplierPage: React.FC = () => {
     email: '',
     address: '',
     category: '',
-    risk_level: 'medium',
+    risklevel: 'medium',
     status: 'active',
   });
   const addNotification = useAppStore((state) => state.addNotification);
@@ -144,9 +144,9 @@ const SrmSupplierPage: React.FC = () => {
       { id: 'contact_phone', label: '电话' },
       { id: 'category', label: '类别' },
       {
-        id: 'risk_level',
+        id: 'risklevel',
         label: '风险等级',
-        render: (row) => <RiskChip level={row.risk_level || 'medium'} />,
+        render: (row) => <RiskChip level={row.risklevel || 'medium'} />,
       },
       {
         id: 'status',
@@ -204,7 +204,7 @@ const SrmSupplierPage: React.FC = () => {
       email: '',
       address: '',
       category: '',
-      risk_level: 'medium',
+      risklevel: 'medium',
       status: 'active',
     });
     setShowCreateModal(true);
@@ -220,7 +220,7 @@ const SrmSupplierPage: React.FC = () => {
         email: formData.email,
         address: formData.address,
         category: formData.category || '',
-        risk_level: formData.risk_level || 'medium',
+        risklevel: formData.risklevel || 'medium',
         status: formData.status || 'active',
         legal_name: formData.name,
       });
@@ -244,7 +244,7 @@ const SrmSupplierPage: React.FC = () => {
       email: row.email,
       address: row.address,
       category: row.category,
-      risk_level: row.risk_level,
+      risklevel: row.risklevel,
       status: row.status === '启用' ? 'active' : 'inactive',
       legal_name: row.legal_name,
     });
@@ -262,7 +262,7 @@ const SrmSupplierPage: React.FC = () => {
         email: formData.email,
         address: formData.address,
         category: formData.category || '',
-        risk_level: formData.risk_level || 'medium',
+        risklevel: formData.risklevel || 'medium',
         status: formData.status || 'active',
         legal_name: formData.name,
       });
@@ -297,8 +297,8 @@ const SrmSupplierPage: React.FC = () => {
     return {
       total: suppliers.length,
       active: suppliers.filter((s) => s.status === '启用').length,
-      lowRisk: suppliers.filter((s) => s.risk_level === 'low').length,
-      highRisk: suppliers.filter((s) => s.risk_level === 'high').length,
+      lowRisk: suppliers.filter((s) => s.risklevel === 'low').length,
+      highRisk: suppliers.filter((s) => s.risklevel === 'high').length,
     };
   }, [suppliers]);
 
@@ -712,8 +712,8 @@ const SrmSupplierPage: React.FC = () => {
                 fullWidth
                 select
                 label='风险等级'
-                value={formData.risk_level}
-                onChange={(e) => setFormData({ ...formData, risk_level: e.target.value })}
+                value={formData.risklevel}
+                onChange={(e) => setFormData({ ...formData, risklevel: e.target.value })}
               >
                 <option value='low'>低风险</option>
                 <option value='medium'>中风险</option>
@@ -817,8 +817,8 @@ const SrmSupplierPage: React.FC = () => {
                 fullWidth
                 select
                 label='风险等级'
-                value={formData.risk_level}
-                onChange={(e) => setFormData({ ...formData, risk_level: e.target.value })}
+                value={formData.risklevel}
+                onChange={(e) => setFormData({ ...formData, risklevel: e.target.value })}
               >
                 <option value='low'>低风险</option>
                 <option value='medium'>中风险</option>

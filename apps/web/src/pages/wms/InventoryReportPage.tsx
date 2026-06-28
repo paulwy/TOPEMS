@@ -86,7 +86,7 @@ const InventoryReportPage: React.FC = () => {
 
   const fetchWarehouses = async () => {
     try {
-      const response = await wmsApi.warehouses.list({ page: 1, page_size: 100 });
+      const response = await wmsApi.warehouses.list({ page: 1, pagesize: 100 });
       if (response.success && response.data) {
         setWarehouses(response.data.items || []);
       }
@@ -349,7 +349,7 @@ const InventoryReportPage: React.FC = () => {
                 variant='h4'
                 sx={{ fontWeight: 700, color: 'error.dark' }}
               >
-                {statistics?.out_of_stock_items || 0}
+                {statistics?.out_of_stockitems || 0}
               </Typography>
               <Typography
                 variant='caption'
@@ -380,7 +380,7 @@ const InventoryReportPage: React.FC = () => {
                 variant='h4'
                 sx={{ fontWeight: 700, color: 'warning.dark' }}
               >
-                {statistics?.low_stock_items || 0}
+                {statistics?.low_stockitems || 0}
               </Typography>
               <Typography
                 variant='caption'
@@ -476,7 +476,7 @@ const InventoryReportPage: React.FC = () => {
                   variant='h5'
                   sx={{ fontWeight: 700 }}
                 >
-                  {statistics?.low_stock_items || 0}
+                  {statistics?.low_stockitems || 0}
                 </Typography>
                 <Typography
                   variant='body2'
@@ -496,7 +496,7 @@ const InventoryReportPage: React.FC = () => {
                   variant='h5'
                   sx={{ fontWeight: 700 }}
                 >
-                  {statistics?.out_of_stock_items || 0}
+                  {statistics?.out_of_stockitems || 0}
                 </Typography>
                 <Typography
                   variant='body2'
@@ -516,7 +516,7 @@ const InventoryReportPage: React.FC = () => {
                   variant='h5'
                   sx={{ fontWeight: 700 }}
                 >
-                  {statistics?.over_stock_items || 0}
+                  {statistics?.over_stockitems || 0}
                 </Typography>
                 <Typography
                   variant='body2'
@@ -536,7 +536,7 @@ const InventoryReportPage: React.FC = () => {
                   variant='h5'
                   sx={{ fontWeight: 700 }}
                 >
-                  {(statistics?.low_stock_items || 0) + (statistics?.out_of_stock_items || 0)}
+                  {(statistics?.low_stockitems || 0) + (statistics?.out_of_stockitems || 0)}
                 </Typography>
                 <Typography
                   variant='body2'

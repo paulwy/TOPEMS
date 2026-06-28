@@ -107,7 +107,7 @@ interface ValidationHintProps {
 
 export const ValidationHint: React.FC<ValidationHintProps> = ({ field, rules }) => {
   return (
-    <div style={{ fontSize: '12px', color: 'grey.600', marginTop: '4px' }}>
+    <div style={{ fontSize: '12px', color: 'var(--mui-palette-text-secondary)', marginTop: '4px' }}>
       <span style={{ fontWeight: 500 }}>{field}要求：</span>
       <ul
         style={{

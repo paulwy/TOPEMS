@@ -19,7 +19,7 @@ export const accountApi = {
     status?: string;
     keyword?: string;
     page?: number;
-    page_size?: number;
+    pagesize?: number;
   }): Promise<ApiResponse<PaginatedResult<Account>>> => {
     return createApiClient().get('/api/finance/accounts', { params });
   },

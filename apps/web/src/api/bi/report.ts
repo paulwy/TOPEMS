@@ -1,8 +1,13 @@
 import apiClient from '../client';
-import type { Report } from './types';
+import type { Report, ReportSchedule, ReportExportJob } from './types';
 
-export async function fetchReports() {
-  return await apiClient.bi.get('/api/analytics/report');
+export async function fetchReports(params?: {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  reportType?: string;
+}) {
+  return await apiClient.bi.get('/api/analytics/report', { params });
 }
 
 export async function fetchReport(id: string) {
@@ -19,4 +24,48 @@ export async function updateReport(id: string, data: Partial<Report>) {
 
 export async function deleteReport(id: string) {
   return await apiClient.bi.delete(`/api/analytics/report/${id}`);
+}
+
+export async function exportReport(id: string, format: 'pdf' | 'excel' | 'csv' | 'word') {
+  return await apiClient.bi.post(`/api/analytics/report/${id}/export`, { format });
+}
+
+export async function listExportJobs(reportId: string) {
+  return await apiClient.bi.get(`/api/analytics/report/${reportId}/exports`);
+}
+
+export async function getExportJob(jobId: string) {
+  return await apiClient.bi.get(`/api/analytics/report/exports/${jobId}`);
+}
+
+export async function downloadExport(jobId: string) {
+  return await apiClient.bi.get(`/api/analytics/report/exports/${jobId}/download`, {
+    responseType: 'blob',
+  });
+}
+
+export async function listSchedules(reportId: string) {
+  return await apiClient.bi.get(`/api/analytics/report/${reportId}/schedules`);
+}
+
+export async function createSchedule(reportId: string, data: Partial<ReportSchedule>) {
+  return await apiClient.bi.post(`/api/analytics/report/${reportId}/schedules`, data);
+}
+
+export async function updateSchedule(scheduleId: string, data: Partial<ReportSchedule>) {
+  return await apiClient.bi.put(`/api/analytics/report/schedules/${scheduleId}`, data);
+}
+
+export async function deleteSchedule(scheduleId: string) {
+  return await apiClient.bi.delete(`/api/analytics/report/schedules/${scheduleId}`);
+}
+
+export async function runSchedule(scheduleId: string) {
+  return await apiClient.bi.post(`/api/analytics/report/schedules/${scheduleId}/run`);
+}
+
+export async function toggleSchedule(scheduleId: string, enabled: boolean) {
+  return await apiClient.bi.post(`/api/analytics/report/schedules/${scheduleId}/toggle`, {
+    enabled,
+  });
 }

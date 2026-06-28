@@ -5,6 +5,7 @@ import { lazyWithRetry } from './utils';
 
 const lazy = lazyWithRetry;
 
+const BiIndexPage = lazy(() => import('../pages/bi/BiIndexPage'));
 const BIDashboardPage = lazy(() => import('../pages/bi/BIDashboardPage'));
 const BIAnalyticsPage = lazy(() => import('../pages/bi/BIAnalyticsPage'));
 const BIComparisonPage = lazy(() => import('../pages/bi/BIComparisonPage'));
@@ -13,14 +14,15 @@ const BIDataSourcePage = lazy(() => import('../pages/bi/BIDataSourcePage'));
 const BIVisualizationPage = lazy(() => import('../pages/bi/BIVisualizationPage'));
 const BIModuleDetailPage = lazy(() => import('../pages/bi/BIModuleDetailPage'));
 const Gispage = lazy(() => import('../pages/bi/Gispage'));
+const DatasetPage = lazy(() => import('../pages/bi/DatasetPage'));
+const ReportBuilderPage = lazy(() => import('../pages/bi/ReportBuilderPage'));
+const DataAnalysisPage = lazy(() => import('../pages/bi/DataAnalysisPage'));
+const BiPermissionPage = lazy(() => import('../pages/bi/BiPermissionPage'));
 
 export const biRoutes: RouteConfig[] = [
   {
     path: '/bi',
-    element: React.createElement(Navigate, {
-      to: '/bi/dashboard',
-      replace: true,
-    }),
+    element: BiIndexPage,
     requiredPermissions: ['bi:read'],
     module: 'bi',
     action: 'read',
@@ -40,6 +42,13 @@ export const biRoutes: RouteConfig[] = [
     action: 'read',
   },
   {
+    path: '/bi/analysis',
+    element: DataAnalysisPage,
+    requiredPermissions: ['bi:read'],
+    module: 'bi',
+    action: 'read',
+  },
+  {
     path: '/bi/comparison',
     element: BIComparisonPage,
     requiredPermissions: ['bi:read'],
@@ -48,7 +57,14 @@ export const biRoutes: RouteConfig[] = [
   },
   {
     path: '/bi/reports',
-    element: BIReportPage,
+    element: ReportBuilderPage,
+    requiredPermissions: ['bi:read'],
+    module: 'bi',
+    action: 'read',
+  },
+  {
+    path: '/bi/datasets',
+    element: DatasetPage,
     requiredPermissions: ['bi:read'],
     module: 'bi',
     action: 'read',
@@ -66,6 +82,13 @@ export const biRoutes: RouteConfig[] = [
     requiredPermissions: ['bi:read'],
     module: 'bi',
     action: 'read',
+  },
+  {
+    path: '/bi/permissions',
+    element: BiPermissionPage,
+    requiredPermissions: ['bi:admin'],
+    module: 'bi',
+    action: 'admin',
   },
   {
     path: '/bi/module/:moduleId',

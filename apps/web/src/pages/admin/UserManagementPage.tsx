@@ -84,7 +84,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
       const [usersRes, rolesRes] = await Promise.all([
         authApi.listUsers({
           page: currentPage,
-          page_size: pageSize,
+          pagesize: pageSize,
           search: debouncedSearch || undefined,
         }),
         authApi.listRoles(),
@@ -120,7 +120,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
     try {
       const res = await authApi.batchUpdateUsers({
         user_ids: selectedUserIds.map(String),
-        is_active: isActive,
+        isactive: isActive,
       });
       if (res.success) {
         addNotification({
@@ -374,10 +374,10 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
         ),
       },
       {
-        id: 'is_active',
+        id: 'isactive',
         label: '状态',
         render: (row) => {
-          const isActive = row.is_active !== false;
+          const isActive = row.isactive !== false;
           return (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               {isActive ? (
@@ -504,7 +504,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
       const res = await authApi.updateUser(selectedUser.id, {
         full_name: selectedUser.full_name || undefined,
         email: selectedUser.email,
-        is_active: selectedUser.is_active,
+        isactive: selectedUser.isactive,
       });
       if (res.success) {
         addNotification({
@@ -707,11 +707,11 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
                 <FormControlLabel
                   control={
                     <Checkbox
-                      checked={selectedUser.is_active}
+                      checked={selectedUser.isactive}
                       onChange={(e) =>
                         setSelectedUser({
                           ...selectedUser,
-                          is_active: e.target.checked,
+                          isactive: e.target.checked,
                         })
                       }
                     />

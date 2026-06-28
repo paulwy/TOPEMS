@@ -11,6 +11,7 @@ export default defineConfig({
       '@topems/shared-types': path.resolve(__dirname, '../../packages/shared-types/src'),
       '@topems/shared-utils': path.resolve(__dirname, '../../packages/shared-utils/src'),
       '@topems/shared-components': path.resolve(__dirname, '../../packages/shared-components/src'),
+      '@topems/shared-hooks': path.resolve(__dirname, '../../packages/shared-hooks/src'),
       'react-transition-group': path.resolve(__dirname, '../../node_modules/react-transition-group'),
       'react-transition-group/cjs': path.resolve(__dirname, '../../node_modules/react-transition-group/cjs'),
       'react-transition-group/TransitionGroupContext': path.resolve(__dirname, '../../node_modules/react-transition-group/cjs/TransitionGroupContext.js'),

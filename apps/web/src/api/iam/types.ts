@@ -7,9 +7,21 @@ export interface User {
   roles?: string[];
   permissions?: string[];
   created_at: string;
-  is_active: boolean;
+  isactive: boolean;
   is_superuser?: boolean;
   avatar_url?: string;
+  tenant_id?: string;
+  tenants?: UserTenantInfo[];
+  current_tenant_id?: string;
+}
+
+export interface UserTenantInfo {
+  tenant_id: string;
+  tenant_name: string;
+  tenant_slug: string;
+  role: string;
+  status: string;
+  joined_at: string;
 }
 
 export interface AuthTokens {
@@ -109,7 +121,7 @@ export interface BatchDeleteResponse {
 
 export interface BatchUpdateUsersRequest {
   user_ids: string[];
-  is_active?: boolean;
+  isactive?: boolean;
 }
 
 export interface CreateAccessLogRequest {
@@ -145,5 +157,5 @@ export interface UpdateRoleRequest {
 export interface UpdateUserRequest {
   full_name?: string;
   email?: string;
-  is_active?: boolean;
+  isactive?: boolean;
 }

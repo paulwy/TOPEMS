@@ -42,7 +42,7 @@ const LeaveManagementPage: React.FC = () => {
     items: [],
     total: 0,
     page: 1,
-    page_size: 10,
+    pagesize: 10,
   });
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -408,10 +408,10 @@ const LeaveManagementPage: React.FC = () => {
           loading={loading}
           pagination={{
             page: data.page - 1,
-            pageSize: data.page_size,
+            pageSize: data.pagesize,
             total: data.total,
             onPageChange: (page) => fetchLeaveRequests({ page: page + 1 }),
-            onPageSizeChange: (pageSize) => fetchLeaveRequests({ page_size: pageSize }),
+            onPageSizeChange: (pageSize) => fetchLeaveRequests({ pagesize: pageSize }),
           }}
           rowActions={rowActions}
           onRowClick={handleView}

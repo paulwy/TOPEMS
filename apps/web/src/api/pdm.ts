@@ -252,7 +252,7 @@ export interface ChangeOrder {
   description: string;
   reason: string;
   impact_analysis?: string;
-  affected_items?: string[];
+  affecteditems?: string[];
   remarks?: string;
   created_at: string;
   updated_at?: string;
@@ -269,7 +269,7 @@ export interface CreateChangeOrderRequest {
   description: string;
   reason: string;
   impact_analysis?: string;
-  affected_items?: string[];
+  affecteditems?: string[];
   remarks?: string;
 }
 
@@ -285,7 +285,7 @@ export interface UpdateChangeOrderRequest {
   description?: string;
   reason?: string;
   impact_analysis?: string;
-  affected_items?: string[];
+  affecteditems?: string[];
   remarks?: string;
 }
 

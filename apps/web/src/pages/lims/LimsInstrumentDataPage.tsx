@@ -172,7 +172,7 @@ const LimsInstrumentDataPage: React.FC = () => {
       setLoading(true);
       const response = await instrumentDataApi.listInstrumentData({
         page: dataPage + 1,
-        page_size: dataRowsPerPage,
+        pagesize: dataRowsPerPage,
         search: searchKeyword,
         status: statusFilter,
       });
@@ -192,7 +192,7 @@ const LimsInstrumentDataPage: React.FC = () => {
       setLoading(true);
       const response = await collectionTaskApi.listCollectionTasks({
         page: taskPage + 1,
-        page_size: taskRowsPerPage,
+        pagesize: taskRowsPerPage,
         search: searchKeyword,
         status: statusFilter,
       });
@@ -212,7 +212,7 @@ const LimsInstrumentDataPage: React.FC = () => {
       setLoading(true);
       const response = await parseRuleApi.listParseRules({
         page: rulePage + 1,
-        page_size: ruleRowsPerPage,
+        pagesize: ruleRowsPerPage,
         search: searchKeyword,
         status: statusFilter,
       });
@@ -1788,13 +1788,13 @@ const LimsInstrumentDataPage: React.FC = () => {
                           </Paper>
                         </Box>
                       )}
-                      {parseTestResult.test_items && parseTestResult.test_items.length > 0 && (
+                      {parseTestResult.testitems && parseTestResult.testitems.length > 0 && (
                         <Box>
                           <Typography
                             variant='subtitle2'
                             sx={{ mb: 1 }}
                           >
-                            检测项目 ({parseTestResult.test_items.length})
+                            检测项目 ({parseTestResult.testitems.length})
                           </Typography>
                           <TableContainer
                             component={Paper}
@@ -1810,9 +1810,9 @@ const LimsInstrumentDataPage: React.FC = () => {
                                 </TableRow>
                               </TableHead>
                               <TableBody>
-                                {parseTestResult.test_items.map((item, idx) => (
+                                {parseTestResult.testitems.map((item, idx) => (
                                   <TableRow key={idx}>
-                                    <TableCell>{item.test_item_name || item.test_item}</TableCell>
+                                    <TableCell>{item.testitem_name || item.testitem}</TableCell>
                                     <TableCell>
                                       {item.result || item.numeric_result || '-'}
                                     </TableCell>

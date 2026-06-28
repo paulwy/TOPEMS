@@ -31,7 +31,7 @@ import { useNavigate } from 'react-router-dom';
 import { navigationRegistry, type NavItem } from '@/lib/NavigationRegistry';
 import { renderIcon } from '@/lib/iconMapping';
 
-interface CommandPaletteProps {
+export interface CommandPaletteProps {
   open: boolean;
   onClose: () => void;
 }
@@ -297,24 +297,26 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
           variant='outlined'
           size='small'
           autoFocus
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position='start'>
-                <Search style={{ width: 18, height: 18, color: 'text.secondary' }} />
-              </InputAdornment>
-            ),
-            endAdornment: (
-              <InputAdornment position='end'>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                  <Chip
-                    icon={<Command style={{ width: 12, height: 12 }} />}
-                    label='K'
-                    size='small'
-                    sx={{ height: 20, fontSize: '0.7rem' }}
-                  />
-                </Box>
-              </InputAdornment>
-            ),
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position='start'>
+                  <Search style={{ width: 18, height: 18, color: 'text.secondary' }} />
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position='end'>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <Chip
+                      icon={<Command style={{ width: 12, height: 12 }} />}
+                      label='K'
+                      size='small'
+                      sx={{ height: 20, fontSize: '0.7rem' }}
+                    />
+                  </Box>
+                </InputAdornment>
+              ),
+            },
           }}
           sx={{
             '& .MuiOutlinedInput-root': {
@@ -393,8 +395,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
                       <ListItemText
                         primary={cmd.label}
                         secondary={cmd.description}
-                        primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 500 }}
-                        secondaryTypographyProps={{ fontSize: '0.75rem' }}
+                        slotProps={{ primary: { sx: { fontSize: '0.875rem', fontWeight: 500 } }, secondary: { sx: { fontSize: '0.75rem' } } }}
                       />
                       <ArrowRight
                         style={{

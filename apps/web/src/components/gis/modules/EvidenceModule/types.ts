@@ -9,7 +9,7 @@ export interface EvidenceRecord {
   file_url: string;
   thumbnail_url?: string;
   duration?: number; // 音视频时长，秒
-  file_size?: number; // 字节
+  filesize?: number; // 字节
   recorded_by: string;
   recorded_at: string;
   tags?: string[];

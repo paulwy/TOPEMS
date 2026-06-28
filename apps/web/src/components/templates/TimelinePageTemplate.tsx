@@ -13,11 +13,11 @@ import {
   Skeleton,
   useTheme,
   useMediaQuery,
-  _Divider,
+  Divider,
 } from '@mui/material';
 import {
-  _Plus,
-  _MoreHorizontal,
+  Plus,
+  MoreHorizontal,
   Calendar,
   Filter,
   Search,
@@ -131,9 +131,9 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
   showTimeRange = true,
   searchValue,
   onSearch,
-  _filterConfig,
-  _filters,
-  _onFilterChange,
+  filterConfig,
+  filters,
+  onFilterChange,
   timeRanges = [
     { id: 'today', label: '今天', start: new Date(), end: new Date() },
     {
@@ -155,7 +155,7 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
   actions = [],
   headerContent,
   footerContent,
-  _defaultGroupExpanded = true,
+  defaultGroupExpanded = true,
   ...props
 }) => {
   const theme = useTheme();

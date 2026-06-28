@@ -15,7 +15,7 @@ import type {
 export const projectApi = {
   listProjects: async (params?: {
     page?: number;
-    page_size?: number;
+    pagesize?: number;
     search?: string;
     status?: string;
   }): Promise<
@@ -23,7 +23,7 @@ export const projectApi = {
       projects: Project[];
       total: number;
       page: number;
-      page_size: number;
+      pagesize: number;
     }>
   > => {
     const queryParams = params

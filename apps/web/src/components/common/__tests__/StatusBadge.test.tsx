@@ -230,7 +230,7 @@ describe('StatusBadge', () => {
 
 describe('Typed Sub-components', () => {
   it('EmployeeStatusBadge renders correctly', () => {
-    render(<EmployeeStatusBadge status='employee_active' />);
+    render(<EmployeeStatusBadge status='employeeactive' />);
     expect(screen.getByText('在职')).toBeInTheDocument();
   });
 
@@ -255,7 +255,7 @@ describe('Typed Sub-components', () => {
   });
 
   it('CustomerStatusBadge renders correctly', () => {
-    render(<CustomerStatusBadge status='customer_active' />);
+    render(<CustomerStatusBadge status='customeractive' />);
     expect(screen.getByText('活跃')).toBeInTheDocument();
   });
 

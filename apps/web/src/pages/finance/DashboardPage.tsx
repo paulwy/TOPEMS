@@ -107,7 +107,7 @@ const FinanceDashboardPage: React.FC = () => {
 
   const loadRecentVouchers = useCallback(async () => {
     try {
-      const voucherRes = await voucherApi.list({ page: 1, page_size: 4 });
+      const voucherRes = await voucherApi.list({ page: 1, pagesize: 4 });
       if (voucherRes.success && voucherRes.data?.items) {
         const items = (voucherRes.data.items as Voucher[]).map((v) => ({
           id: v.id,

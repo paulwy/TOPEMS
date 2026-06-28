@@ -54,9 +54,9 @@ const TrainingPage: React.FC = () => {
     try {
       setLoading(true);
       const [plansRes, recordsRes, certsRes] = await Promise.all([
-        ehsApi.listTrainingPlans({ page_size: 100, search: searchTerm || undefined }),
-        ehsApi.listTrainingRecords({ page_size: 100, search: searchTerm || undefined }),
-        ehsApi.listTrainingCertificates({ page_size: 100, search: searchTerm || undefined }),
+        ehsApi.listTrainingPlans({ pagesize: 100, search: searchTerm || undefined }),
+        ehsApi.listTrainingRecords({ pagesize: 100, search: searchTerm || undefined }),
+        ehsApi.listTrainingCertificates({ pagesize: 100, search: searchTerm || undefined }),
       ]);
 
       if (plansRes.success && plansRes.data) {

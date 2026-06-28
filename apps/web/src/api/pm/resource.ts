@@ -63,7 +63,7 @@ export const expenseApi = {
       amount: number;
       currency?: string;
       incurred_date: string;
-      budget_item_id?: string;
+      budgetitem_id?: string;
       resource_id?: string;
       expense_ref_id?: string;
       approval_workflow_id?: string;

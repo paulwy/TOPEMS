@@ -18,7 +18,7 @@ export const consolidationReportApiContract = {
       status: 'string? 状态',
       approval_status: 'string? 审批状态',
       page: 'number? 页码',
-      page_size: 'number? 每页条数',
+      pagesize: 'number? 每页条数',
     },
     response: {
       code: 200,
@@ -150,7 +150,7 @@ export const consolidationReportApiContract = {
           line_no: 'number',
           item_code: 'string?',
           item_name: 'string',
-          item_level: 'number',
+          itemlevel: 'number',
           current_period: 'number',
           prior_period: 'number?',
           company_breakdown: 'Array?',

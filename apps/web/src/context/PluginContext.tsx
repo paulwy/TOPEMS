@@ -129,7 +129,7 @@ export const PluginProvider: React.FC<PluginProviderProps> = ({ children }) => {
   const isPluginActive = useCallback(
     (code: string) => {
       const plugin = installedPlugins.find((p) => p.plugin_code === code);
-      return plugin?.is_active ?? false;
+      return plugin?.isactive ?? false;
     },
     [installedPlugins]
   );

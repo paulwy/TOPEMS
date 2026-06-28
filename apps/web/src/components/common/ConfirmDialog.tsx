@@ -89,7 +89,7 @@ export interface ConfirmDialogConfig {
   /** 尺寸 */
   size?: DialogSize;
   /** 确认按钮是否禁用 */
-  confirmDisabled?: boolean;
+  disabled?: boolean;
   /** 是否可关闭 */
   closable?: boolean;
   /** 是否显示关闭按钮 */
@@ -200,7 +200,7 @@ export default function ConfirmDialog({
   confirmColor = 'primary',
   danger = false,
   size = 'md',
-  confirmDisabled = false,
+  disabled = false,
   closable = true,
   showCloseButton = false,
   draggable = false,
@@ -210,7 +210,7 @@ export default function ConfirmDialog({
   showTitle = true,
   showMessage = true,
   centered = true,
-  _closeOnBackdropClick = true,
+  closeOnBackdropClick = true,
   showSuccessIcon = false,
   sx,
 }: ConfirmDialogConfig) {
@@ -310,7 +310,7 @@ export default function ConfirmDialog({
     maxWidth: '95vw',
     transform: isDragging ? `translate(${position.x}px, ${position.y}px)` : undefined,
     cursor: draggable ? 'move' : 'default',
-    ...(sx?.paper || {}),
+    ...((sx as Record<string, unknown>)?.paper || {}),
   };
 
   return (
@@ -319,14 +319,15 @@ export default function ConfirmDialog({
       onClose={closable && !isLoading ? onClose : undefined}
       maxWidth={MAX_WIDTH_MAP[size]}
       PaperComponent={({ children: dialogChildren, ...paperProps }) => (
-        <div
+        <Box
+          component="div"
           ref={paperRef}
           onMouseDown={handleMouseDown}
           {...paperProps}
-          style={{ ...paperSx, ...((paperProps as Record<string, unknown>).sx as SxProps<Theme> || {}) }}
+          sx={{ ...paperSx, ...((paperProps as Record<string, unknown>).sx as SxProps<Theme> || {}) }}
         >
           {dialogChildren}
-        </div>
+        </Box>
       )}
       sx={{
         '& .MuiDialog-container': {
@@ -470,7 +471,7 @@ export default function ConfirmDialog({
                         : 'primary'
               }
               onClick={handleConfirm}
-              disabled={confirmDisabled || isLoading}
+              disabled={disabled || isLoading}
               sx={{
                 ...(danger
                   ? { bgcolor: 'error.dark', '&:hover': { bgcolor: 'error.darker' } }

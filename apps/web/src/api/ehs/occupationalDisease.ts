@@ -27,11 +27,11 @@ export const occupationalDiseaseApi = {
   ): Promise<ApiResponse<PaginatedResponse<HazardFactor>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.type) queryParams.append('type', params.type);
     if (params?.category) queryParams.append('category', params.category);
-    if (params?.hazard_level) queryParams.append('hazard_level', params.hazard_level);
+    if (params?.hazardlevel) queryParams.append('hazardlevel', params.hazardlevel);
     if (params?.status) queryParams.append('status', params.status);
 
     return apiClient.ehs.get<PaginatedResponse<HazardFactor>>(
@@ -65,7 +65,7 @@ export const occupationalDiseaseApi = {
   ): Promise<ApiResponse<PaginatedResponse<HazardDetectionRecord>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.factor_id) queryParams.append('factor_id', params.factor_id);
     if (params?.result) queryParams.append('result', params.result);
@@ -111,7 +111,7 @@ export const occupationalDiseaseApi = {
   ): Promise<ApiResponse<PaginatedResponse<OccupationalDiseaseCase>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.employee_id) queryParams.append('employee_id', params.employee_id);
     if (params?.disease_type) queryParams.append('disease_type', params.disease_type);
@@ -155,7 +155,7 @@ export const occupationalDiseaseApi = {
   ): Promise<ApiResponse<PaginatedResponse<ProtectionMeasure>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.category) queryParams.append('category', params.category);
     if (params?.factor_id) queryParams.append('factor_id', params.factor_id);

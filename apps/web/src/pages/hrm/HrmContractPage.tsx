@@ -111,7 +111,7 @@ export default function ContractManagementPage() {
     items: [],
     total: 0,
     page: 1,
-    page_size: 20,
+    pagesize: 20,
   });
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [searchText, setSearchText] = useState('');
@@ -188,7 +188,7 @@ export default function ContractManagementPage() {
     try {
       const params: Record<string, any> = {
         page: currentPage,
-        page_size: 20,
+        pagesize: 20,
       };
       if (statusFilter) {
         params.status = statusFilter;
@@ -197,7 +197,7 @@ export default function ContractManagementPage() {
         const result = await contractApi.getExpiring({
           days: 30,
           page: currentPage,
-          page_size: 20,
+          pagesize: 20,
         });
         if (result.code === 0 && result.data) {
           setData(result.data);
@@ -234,7 +234,7 @@ export default function ContractManagementPage() {
 
   const loadEmployees = async () => {
     try {
-      const result = await employeeApi.list({ page: 1, page_size: 100 });
+      const result = await employeeApi.list({ page: 1, pagesize: 100 });
       if (result.code === 0 && result.data) {
         setEmployees(result.data.items);
       }
@@ -778,7 +778,7 @@ export default function ContractManagementPage() {
             getRowId={(row) => row.id}
             pagination={{
               page: currentPage,
-              pageSize: data.page_size,
+              pageSize: data.pagesize,
               total: data.total,
               onPageChange: setCurrentPage,
             }}

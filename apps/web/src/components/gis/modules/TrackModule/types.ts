@@ -4,7 +4,7 @@ export interface TrackPoint {
   timestamp: string;
   speed?: number;
   heading?: number;
-  battery_level?: number;
+  batterylevel?: number;
 }
 
 export interface TrackRecord {

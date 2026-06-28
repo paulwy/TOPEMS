@@ -4,7 +4,7 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
-  _DialogActions,
+  DialogActions,
   Button,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';

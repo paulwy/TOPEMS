@@ -112,6 +112,7 @@
     "autoLayout": true,
     "deviceType": "desktop",
     "projectName": "TOPEMS HRM 人力资源管理",
-    "designLibrary": null
+    "designLibrary": null,
+    "showEdge": true
   }
 }

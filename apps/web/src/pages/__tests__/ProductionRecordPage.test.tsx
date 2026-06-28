@@ -57,7 +57,7 @@ describe('ProductionRecordPage', () => {
         records: mockRecords,
         total: mockRecords.length,
         page: 0,
-        page_size: 10,
+        pagesize: 10,
       },
     });
   });

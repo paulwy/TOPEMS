@@ -1,6 +1,5 @@
 import React from 'react';
 import { Loader2 } from 'lucide-react';
-import { useTheme } from '@mui/material/styles';
 
 interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg';
@@ -31,9 +30,6 @@ interface LoadingOverlayProps {
 }
 
 export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ isLoading, children, message }) => {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
-
   if (!isLoading) return <>{children}</>;
 
   return (
@@ -43,7 +39,8 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ isLoading, child
         style={{
           position: 'absolute',
           inset: 0,
-          backgroundColor: isDark ? 'rgba(55, 65, 81, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+          backgroundColor: 'var(--mui-palette-background-default)',
+          opacity: 0.8,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -56,7 +53,7 @@ export const LoadingOverlay: React.FC<LoadingOverlayProps> = ({ isLoading, child
             <p
               style={{
                 marginTop: '16px',
-                color: isDark ? 'grey.300' : 'text.secondary',
+                color: 'var(--mui-palette-text-secondary)',
               }}
             >
               {message}
@@ -73,7 +70,7 @@ export const SkeletonLoader: React.FC = () => {
     <div
       style={{
         animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-        backgroundColor: 'grey.200',
+        backgroundColor: 'var(--mui-palette-action-hover)',
         borderRadius: '8px',
       }}
     />

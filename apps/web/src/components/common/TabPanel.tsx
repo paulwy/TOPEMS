@@ -7,6 +7,9 @@ export interface TabPanelProps {
   value: number;
   loading?: boolean;
   emptyMessage?: string;
+
+  // TOPEMS 设计系统
+  sx?: import('@mui/material/styles').SxProps<import('@mui/material/styles').Theme>;
 }
 
 export const TabPanel: React.FC<TabPanelProps> = ({
@@ -15,6 +18,7 @@ export const TabPanel: React.FC<TabPanelProps> = ({
   index,
   loading,
   emptyMessage,
+  sx,
 }) => {
   if (value !== index) return null;
 
@@ -23,7 +27,10 @@ export const TabPanel: React.FC<TabPanelProps> = ({
       role='tabpanel'
       id={`tabpanel-${index}`}
       aria-labelledby={`tab-${index}`}
-      sx={{ pt: 3 }}
+      sx={{
+        pt: 3,
+        ...sx,
+      }}
     >
       {loading ? (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 4 }}>

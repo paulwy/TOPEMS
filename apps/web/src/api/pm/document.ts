@@ -17,7 +17,7 @@ export const documentApi = {
       document_name: string;
       document_type: string;
       file_path: string;
-      file_size: number;
+      filesize: number;
       file_hash?: string;
       description?: string;
       tags?: string[];

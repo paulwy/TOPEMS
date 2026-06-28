@@ -63,9 +63,9 @@ export interface DatabaseTable {
   table_name: string;
   table_comment: string;
   record_count: number;
-  data_size: string;
-  index_size: string;
-  total_size: string;
+  datasize: string;
+  indexsize: string;
+  totalsize: string;
   engine: string;
   collation: string;
   create_time: string;
@@ -88,7 +88,7 @@ export interface BackupRecord {
   id: string;
   backup_name: string;
   backup_type: 'full' | 'incremental';
-  file_size: string;
+  filesize: string;
   status: 'success' | 'failed' | 'running';
   created_at: string;
   created_by: string;
@@ -101,9 +101,9 @@ const mockTables: DatabaseTable[] = [
     table_name: 'sys_user',
     table_comment: '用户表',
     record_count: 1256,
-    data_size: '2.4 MB',
-    index_size: '896 KB',
-    total_size: '3.3 MB',
+    datasize: '2.4 MB',
+    indexsize: '896 KB',
+    totalsize: '3.3 MB',
     engine: 'InnoDB',
     collation: 'utf8mb4_general_ci',
     create_time: '2024-01-01 00:00:00',
@@ -115,9 +115,9 @@ const mockTables: DatabaseTable[] = [
     table_name: 'sys_role',
     table_comment: '角色表',
     record_count: 24,
-    data_size: '16 KB',
-    index_size: '32 KB',
-    total_size: '48 KB',
+    datasize: '16 KB',
+    indexsize: '32 KB',
+    totalsize: '48 KB',
     engine: 'InnoDB',
     collation: 'utf8mb4_general_ci',
     create_time: '2024-01-01 00:00:00',
@@ -129,9 +129,9 @@ const mockTables: DatabaseTable[] = [
     table_name: 'erp_voucher',
     table_comment: '会计凭证表',
     record_count: 8932,
-    data_size: '15.6 MB',
-    index_size: '4.2 MB',
-    total_size: '19.8 MB',
+    datasize: '15.6 MB',
+    indexsize: '4.2 MB',
+    totalsize: '19.8 MB',
     engine: 'InnoDB',
     collation: 'utf8mb4_general_ci',
     create_time: '2024-01-01 00:00:00',
@@ -140,12 +140,12 @@ const mockTables: DatabaseTable[] = [
   },
   {
     id: '4',
-    table_name: 'erp_voucher_item',
+    table_name: 'erp_voucheritem',
     table_comment: '凭证明细表',
     record_count: 45672,
-    data_size: '32.8 MB',
-    index_size: '8.5 MB',
-    total_size: '41.3 MB',
+    datasize: '32.8 MB',
+    indexsize: '8.5 MB',
+    totalsize: '41.3 MB',
     engine: 'InnoDB',
     collation: 'utf8mb4_general_ci',
     create_time: '2024-01-01 00:00:00',
@@ -157,9 +157,9 @@ const mockTables: DatabaseTable[] = [
     table_name: 'erp_accounting_subject',
     table_comment: '会计科目表',
     record_count: 156,
-    data_size: '128 KB',
-    index_size: '64 KB',
-    total_size: '192 KB',
+    datasize: '128 KB',
+    indexsize: '64 KB',
+    totalsize: '192 KB',
     engine: 'InnoDB',
     collation: 'utf8mb4_general_ci',
     create_time: '2024-01-01 00:00:00',
@@ -171,9 +171,9 @@ const mockTables: DatabaseTable[] = [
     table_name: 'erp_fixed_asset',
     table_comment: '固定资产表',
     record_count: 328,
-    data_size: '2.1 MB',
-    index_size: '512 KB',
-    total_size: '2.6 MB',
+    datasize: '2.1 MB',
+    indexsize: '512 KB',
+    totalsize: '2.6 MB',
     engine: 'InnoDB',
     collation: 'utf8mb4_general_ci',
     create_time: '2024-01-01 00:00:00',
@@ -185,9 +185,9 @@ const mockTables: DatabaseTable[] = [
     table_name: 'erp_bank_account',
     table_comment: '银行账户表',
     record_count: 42,
-    data_size: '64 KB',
-    index_size: '32 KB',
-    total_size: '96 KB',
+    datasize: '64 KB',
+    indexsize: '32 KB',
+    totalsize: '96 KB',
     engine: 'InnoDB',
     collation: 'utf8mb4_general_ci',
     create_time: '2024-01-01 00:00:00',
@@ -199,9 +199,9 @@ const mockTables: DatabaseTable[] = [
     table_name: 'erp_bank_transaction',
     table_comment: '银行交易表',
     record_count: 5621,
-    data_size: '8.3 MB',
-    index_size: '2.1 MB',
-    total_size: '10.4 MB',
+    datasize: '8.3 MB',
+    indexsize: '2.1 MB',
+    totalsize: '10.4 MB',
     engine: 'InnoDB',
     collation: 'utf8mb4_general_ci',
     create_time: '2024-01-01 00:00:00',
@@ -213,9 +213,9 @@ const mockTables: DatabaseTable[] = [
     table_name: 'sys_dict_type',
     table_comment: '字典类型表',
     record_count: 36,
-    data_size: '32 KB',
-    index_size: '16 KB',
-    total_size: '48 KB',
+    datasize: '32 KB',
+    indexsize: '16 KB',
+    totalsize: '48 KB',
     engine: 'InnoDB',
     collation: 'utf8mb4_general_ci',
     create_time: '2024-01-01 00:00:00',
@@ -224,12 +224,12 @@ const mockTables: DatabaseTable[] = [
   },
   {
     id: '10',
-    table_name: 'sys_dict_item',
+    table_name: 'sys_dictitem',
     table_comment: '字典项表',
     record_count: 258,
-    data_size: '256 KB',
-    index_size: '128 KB',
-    total_size: '384 KB',
+    datasize: '256 KB',
+    indexsize: '128 KB',
+    totalsize: '384 KB',
     engine: 'InnoDB',
     collation: 'utf8mb4_general_ci',
     create_time: '2024-01-01 00:00:00',
@@ -366,7 +366,7 @@ const mockBackups: BackupRecord[] = [
     id: '1',
     backup_name: 'backup_full_20240615_0200',
     backup_type: 'full',
-    file_size: '156.8 MB',
+    filesize: '156.8 MB',
     status: 'success',
     created_at: '2024-06-15 02:00:00',
     created_by: 'system',
@@ -376,7 +376,7 @@ const mockBackups: BackupRecord[] = [
     id: '2',
     backup_name: 'backup_incr_20240614_2000',
     backup_type: 'incremental',
-    file_size: '12.4 MB',
+    filesize: '12.4 MB',
     status: 'success',
     created_at: '2024-06-14 20:00:00',
     created_by: 'system',
@@ -386,7 +386,7 @@ const mockBackups: BackupRecord[] = [
     id: '3',
     backup_name: 'backup_incr_20240613_2000',
     backup_type: 'incremental',
-    file_size: '8.7 MB',
+    filesize: '8.7 MB',
     status: 'success',
     created_at: '2024-06-13 20:00:00',
     created_by: 'system',
@@ -396,7 +396,7 @@ const mockBackups: BackupRecord[] = [
     id: '4',
     backup_name: 'backup_full_20240601_0200',
     backup_type: 'full',
-    file_size: '142.3 MB',
+    filesize: '142.3 MB',
     status: 'success',
     created_at: '2024-06-01 02:00:00',
     created_by: 'system',
@@ -406,7 +406,7 @@ const mockBackups: BackupRecord[] = [
     id: '5',
     backup_name: 'backup_manual_20240520',
     backup_type: 'full',
-    file_size: '128.5 MB',
+    filesize: '128.5 MB',
     status: 'failed',
     created_at: '2024-05-20 14:30:00',
     created_by: '管理员',
@@ -504,7 +504,7 @@ const DatabaseManagementPage: React.FC = () => {
       id: Date.now().toString(),
       backup_name: `backup_manual_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}`,
       backup_type: 'full',
-      file_size: `${(Math.random() * 50 + 100).toFixed(1)} MB`,
+      filesize: `${(Math.random() * 50 + 100).toFixed(1)} MB`,
       status: 'success',
       created_at: new Date().toISOString().replace('T', ' ').slice(0, 19),
       created_by: '当前用户',
@@ -576,8 +576,8 @@ const DatabaseManagementPage: React.FC = () => {
   const stats = useMemo(() => {
     const totalRecords = tables.reduce((sum, t) => sum + t.record_count, 0);
     const totalSizeMB = tables.reduce((sum, t) => {
-      const size = parseFloat(t.total_size);
-      return sum + (t.total_size.includes('GB') ? size * 1024 : size);
+      const size = parseFloat(t.totalsize);
+      return sum + (t.totalsize.includes('GB') ? size * 1024 : size);
     }, 0);
     return {
       tableCount: tables.length,
@@ -887,11 +887,11 @@ const DatabaseManagementPage: React.FC = () => {
                             <TableCell align='right'>
                               {table.record_count.toLocaleString()}
                             </TableCell>
-                            <TableCell align='right'>{table.data_size}</TableCell>
-                            <TableCell align='right'>{table.index_size}</TableCell>
+                            <TableCell align='right'>{table.datasize}</TableCell>
+                            <TableCell align='right'>{table.indexsize}</TableCell>
                             <TableCell align='right'>
                               <Chip
-                                label={table.total_size}
+                                label={table.totalsize}
                                 size='small'
                                 color='primary'
                                 variant='outlined'
@@ -1057,7 +1057,7 @@ const DatabaseManagementPage: React.FC = () => {
                               variant='outlined'
                             />
                           </TableCell>
-                          <TableCell>{backup.file_size}</TableCell>
+                          <TableCell>{backup.filesize}</TableCell>
                           <TableCell>{getBackupStatusBadge(backup.status)}</TableCell>
                           <TableCell>{backup.created_by}</TableCell>
                           <TableCell>

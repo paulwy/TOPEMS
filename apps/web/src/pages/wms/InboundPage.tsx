@@ -97,7 +97,7 @@ const InboundPage: React.FC = () => {
       setLoading(true);
       const params: Record<string, unknown> = {
         page: currentPage,
-        page_size: pageSize,
+        pagesize: pageSize,
       };
       if (searchTerm) params.search = searchTerm;
       if (statusFilter) params.status = statusFilter;
@@ -122,7 +122,7 @@ const InboundPage: React.FC = () => {
 
   const fetchWarehouses = async () => {
     try {
-      const response = await wmsApi.warehouses.list({ page: 1, page_size: 100 });
+      const response = await wmsApi.warehouses.list({ page: 1, pagesize: 100 });
       if (response.success && response.data) {
         setWarehouses(response.data.items || []);
       }

@@ -3,8 +3,8 @@ import { Box, Paper, Typography, useTheme, type SxProps, type Theme } from '@mui
 import { ChevronRight } from 'lucide-react';
 
 export interface MobileCardProps {
-  title?: string;
-  subtitle?: string;
+  title?: React.ReactNode;
+  subtitle?: React.ReactNode;
   leftIcon?: React.ReactNode;
   rightContent?: React.ReactNode;
   showArrow?: boolean;

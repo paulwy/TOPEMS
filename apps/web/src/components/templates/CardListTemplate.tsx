@@ -203,7 +203,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
   cardConfig,
   loading = false,
   emptyState,
-  _search,
+  search,
   filters = [],
   filterValues = {},
   onFilterChange,

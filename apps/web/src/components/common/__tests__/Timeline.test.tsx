@@ -156,7 +156,7 @@ describe('Timeline', () => {
     const { rerender } = render(
       <Timeline
         items={mockItems}
-        size='small'
+        size='sm'
       />
     );
     expect(screen.getByText('提交申请')).toBeInTheDocument();
@@ -164,7 +164,7 @@ describe('Timeline', () => {
     rerender(
       <Timeline
         items={mockItems}
-        size='large'
+        size='lg'
       />
     );
     expect(screen.getByText('提交申请')).toBeInTheDocument();

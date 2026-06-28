@@ -197,7 +197,7 @@ const MailPage: React.FC = () => {
     try {
       const res = await emailApi.list({
         page: currentPage,
-        page_size: pageSize,
+        pagesize: pageSize,
         search: searchQuery || undefined,
         status: statusFilter || undefined,
         priority: priorityFilter || undefined,
@@ -222,7 +222,7 @@ const MailPage: React.FC = () => {
     try {
       const res = await templateApi.list({
         page: currentPage,
-        page_size: pageSize,
+        pagesize: pageSize,
         search: searchQuery || undefined,
         category: categoryFilter || undefined,
       });
@@ -574,7 +574,7 @@ const MailPage: React.FC = () => {
         approval_time: '2024-01-15 10:30',
         approval_comment: '同意报销',
         alert_type: '系统告警',
-        alert_level: '紧急',
+        alertlevel: '紧急',
         alert_time: '2024-01-15 10:30',
         alert_message: '磁盘空间不足',
         contract_name: '服务合同',

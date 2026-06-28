@@ -74,21 +74,21 @@ const HrmTrainingPage: React.FC = () => {
     try {
       switch (activeTab) {
         case 'plans': {
-          const planRes = await trainingPlanApi.list({ page_size: 100 });
+          const planRes = await trainingPlanApi.list({ pagesize: 100 });
           if (planRes.code === 200) {
             setPlans(planRes.data?.items || []);
           }
           break;
         }
         case 'courses': {
-          const courseRes = await trainingCourseApi.list({ page_size: 100 });
+          const courseRes = await trainingCourseApi.list({ pagesize: 100 });
           if (courseRes.code === 200) {
             setCourses(courseRes.data?.items || []);
           }
           break;
         }
         case 'records': {
-          const recordRes = await trainingRecordApi.list({ page_size: 100 });
+          const recordRes = await trainingRecordApi.list({ pagesize: 100 });
           if (recordRes.code === 200) {
             setRecords(recordRes.data?.items || []);
           }
@@ -105,7 +105,7 @@ const HrmTrainingPage: React.FC = () => {
 
   const loadEmployees = useCallback(async () => {
     try {
-      const res = await employeeApi.list({ page_size: 200 });
+      const res = await employeeApi.list({ pagesize: 200 });
       if (res.code === 200) {
         setEmployees(res.data?.items || []);
       }

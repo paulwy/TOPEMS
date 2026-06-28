@@ -13,6 +13,11 @@ import { wipApi } from './wip';
 import { processRouteApi } from './process';
 import { processFlowApi } from './processFlow';
 import { qualityApi } from './quality';
+import { workReportApi } from './workReport';
+import { workOrderApi } from './workOrder';
+import { teamApi } from './team';
+import { materialRequirementApi } from './materialRequirement';
+import { productionKanbanApi } from './productionKanban';
 
 export * from './types';
 
@@ -28,6 +33,11 @@ export { wipApi } from './wip';
 export { processRouteApi } from './process';
 export { processFlowApi } from './processFlow';
 export { qualityApi } from './quality';
+export { workReportApi } from './workReport';
+export { workOrderApi } from './workOrder';
+export { teamApi } from './team';
+export { materialRequirementApi } from './materialRequirement';
+export { productionKanbanApi } from './productionKanban';
 
 export const mesApi = {
   orders: productionOrderApi,
@@ -46,6 +56,11 @@ export const mesApi = {
   processRoutes: processRouteApi,
   processFlows: processFlowApi,
   quality: qualityApi,
+  workReports: workReportApi,
+  workOrders: workOrderApi,
+  teams: teamApi,
+  materialRequirements: materialRequirementApi,
+  kanban: productionKanbanApi,
 
   health: async (): Promise<ApiResponse<string>> => {
     return apiClient.mes.get('/health');

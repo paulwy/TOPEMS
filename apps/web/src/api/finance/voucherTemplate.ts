@@ -11,7 +11,7 @@ export const voucherTemplateApi = {
     applicable_module?: string;
     status?: string;
     page?: number;
-    page_size?: number;
+    pagesize?: number;
   }): Promise<ApiResponse<PaginatedResult<VoucherTemplate>>> => {
     return createApiClient().get('/api/finance/voucher-templates', {
       params,

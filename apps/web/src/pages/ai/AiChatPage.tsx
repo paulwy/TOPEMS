@@ -17,8 +17,16 @@ import {
   List,
   ListItem,
   ListItemText,
+  ListItemIcon,
   Tooltip,
   Pagination,
+  Avatar,
+  Slider,
+  Switch,
+  FormControlLabel,
+  Menu,
+  MenuItem,
+  Drawer,
 } from '@mui/material';
 import {
   Search,
@@ -34,6 +42,12 @@ import {
   X,
   AlertCircle,
   Zap,
+  Plus,
+  Settings,
+  Cpu,
+  Sparkles,
+  MoreHorizontal,
+  Layers,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { aiApi, type QAHistoryItem } from '../../api/ai';
@@ -52,6 +66,59 @@ interface ChatMessage {
   qa_id?: string;
   timestamp: Date;
 }
+
+interface Conversation {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+  message_count: number;
+}
+
+interface AIModel {
+  id: string;
+  name: string;
+  provider: string;
+}
+
+const AVAILABLE_MODELS: AIModel[] = [
+  { id: 'gpt-4', name: 'GPT-4', provider: 'OpenAI' },
+  { id: 'gpt-3.5-turbo', name: 'GPT-3.5 Turbo', provider: 'OpenAI' },
+  { id: 'claude-3-opus', name: 'Claude 3 Opus', provider: 'Anthropic' },
+  { id: 'ernie-4.0', name: '文心一言 4.0', provider: '百度' },
+  { id: 'qwen-max', name: '通义千问 Max', provider: '阿里' },
+];
+
+const mockConversations: Conversation[] = [
+  {
+    id: '1',
+    title: '库存管理流程咨询',
+    created_at: '2024-06-21 10:30',
+    updated_at: '2024-06-21 10:45',
+    message_count: 12,
+  },
+  {
+    id: '2',
+    title: '如何创建入库订单',
+    created_at: '2024-06-20 14:20',
+    updated_at: '2024-06-20 15:00',
+    message_count: 8,
+  },
+  {
+    id: '3',
+    title: '库存预警设置',
+    created_at: '2024-06-19 09:15',
+    updated_at: '2024-06-19 09:30',
+    message_count: 5,
+  },
+  {
+    id: '4',
+    title: '安全库存计算方法',
+    created_at: '2024-06-18 16:45',
+    updated_at: '2024-06-18 17:10',
+    message_count: 6,
+  },
+];
 
 const QUESTION_TYPE_LABELS: Record<string, string> = {
   Factual: '事实性问题',
@@ -79,7 +146,7 @@ export const AiChatPage: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'chat' | 'history'>('chat');
+  const [activeTab, setActiveTab] = useState<'conversations' | 'history'>('conversations');
   const [history, setHistory] = useState<QAHistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -92,6 +159,16 @@ export const AiChatPage: React.FC = () => {
   }>({ open: false, qaId: '', answer: '' });
   const [feedbackRating, setFeedbackRating] = useState(0);
   const [feedbackText, setFeedbackText] = useState('');
+
+  const [conversations, setConversations] = useState<Conversation[]>(mockConversations);
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  const [selectedModel, setSelectedModel] = useState<AIModel>(AVAILABLE_MODELS[0]);
+  const [modelMenuAnchor, setModelMenuAnchor] = useState<null | HTMLElement>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [temperature, setTemperature] = useState(0.7);
+  const [maxTokens, setMaxTokens] = useState(2048);
+  const [streamingEnabled, setStreamingEnabled] = useState(true);
+  const [useKnowledgeBase, setUseKnowledgeBase] = useState(true);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -109,7 +186,7 @@ export const AiChatPage: React.FC = () => {
       setHistoryLoading(true);
       const response = await aiApi.getQAHistory({
         page: currentPage,
-        page_size: 10,
+        pagesize: 10,
         query: searchQuery || undefined,
       });
 
@@ -134,6 +211,57 @@ export const AiChatPage: React.FC = () => {
       loadHistory();
     }
   }, [activeTab, currentPage, searchQuery, loadHistory]);
+
+  const handleNewConversation = useCallback(() => {
+    const newConv: Conversation = {
+      id: Date.now().toString(),
+      title: '新对话',
+      created_at: new Date().toLocaleString('zh-CN'),
+      updated_at: new Date().toLocaleString('zh-CN'),
+      message_count: 0,
+    };
+    setConversations((prev) => [newConv, ...prev]);
+    setCurrentConversationId(newConv.id);
+    setMessages([]);
+    addNotification({
+      title: '新对话',
+      message: '已创建新的对话',
+      type: 'success',
+    });
+  }, [addNotification]);
+
+  const handleSelectConversation = useCallback((conv: Conversation) => {
+    setCurrentConversationId(conv.id);
+    setActiveTab('conversations');
+    setMessages([
+      {
+        id: '1',
+        role: 'user',
+        content: conv.title,
+        timestamp: new Date(),
+      },
+      {
+        id: '2',
+        role: 'assistant',
+        content: '这是关于"' + conv.title + '"的对话内容。我可以帮助您解答相关问题。',
+        timestamp: new Date(),
+      },
+    ]);
+  }, []);
+
+  const handleDeleteConversation = useCallback((id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setConversations((prev) => prev.filter((c) => c.id !== id));
+    if (currentConversationId === id) {
+      setCurrentConversationId(null);
+      setMessages([]);
+    }
+    addNotification({
+      title: '删除成功',
+      message: '对话已删除',
+      type: 'success',
+    });
+  }, [currentConversationId, addNotification]);
 
   const handleSend = async () => {
     const question = inputValue.trim();
@@ -222,7 +350,7 @@ export const AiChatPage: React.FC = () => {
   const handleFollowUp = (question: string) => {
     setInputValue(question);
     inputRef.current?.focus();
-    setActiveTab('chat');
+    setActiveTab('conversations');
   };
 
   const handleFeedback = (qaId: string, answer: string) => {
@@ -306,7 +434,7 @@ export const AiChatPage: React.FC = () => {
         timestamp: new Date(item.created_at),
       },
     ]);
-    setActiveTab('chat');
+    setActiveTab('conversations');
   };
 
   const getConfidenceLevel = (confidence?: number) => {
@@ -389,17 +517,17 @@ export const AiChatPage: React.FC = () => {
 
           <Box sx={{ display: 'flex', borderBottom: '1px solid grey.200' }}>
             <Button
-              onClick={() => setActiveTab('chat')}
+              onClick={() => setActiveTab('conversations')}
               sx={{
                 flex: 1,
                 py: 2,
-                borderBottom: `2px solid ${activeTab === 'chat' ? 'primary.main' : 'transparent'}`,
-                color: activeTab === 'chat' ? 'primary.main' : 'text.secondary',
-                fontWeight: activeTab === 'chat' ? 600 : 400,
+                borderBottom: `2px solid ${activeTab === 'conversations' ? 'primary.main' : 'transparent'}`,
+                color: activeTab === 'conversations' ? 'primary.main' : 'text.secondary',
+                fontWeight: activeTab === 'conversations' ? 600 : 400,
               }}
             >
               <MessageSquare sx={{ width: 16, height: 16, mr: 1 }} />
-              对话
+              会话
             </Button>
             <Button
               onClick={() => setActiveTab('history')}
@@ -415,6 +543,19 @@ export const AiChatPage: React.FC = () => {
               历史记录
             </Button>
           </Box>
+
+          {activeTab === 'conversations' && (
+            <Box sx={{ p: 2, borderBottom: '1px solid grey.200' }}>
+              <Button
+                fullWidth
+                variant='contained'
+                startIcon={<Plus size={18} />}
+                onClick={handleNewConversation}
+              >
+                新建对话
+              </Button>
+            </Box>
+          )}
 
           {activeTab === 'history' && (
             <Box sx={{ p: 2, borderBottom: '1px solid grey.200' }}>
@@ -439,42 +580,50 @@ export const AiChatPage: React.FC = () => {
           )}
 
           <Box sx={{ flex: 1, overflowY: 'auto', p: 2 }}>
-            {activeTab === 'chat' ? (
-              <Box>
-                <Typography
-                  variant='caption'
-                  color='text.secondary'
-                  sx={{ mb: 2, display: 'block' }}
-                >
-                  💡 试试问这些问题
-                </Typography>
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  <Chip
-                    label='如何创建入库订单？'
-                    size='small'
-                    onClick={() => handleFollowUp('如何创建入库订单？')}
-                    sx={{ cursor: 'pointer' }}
-                  />
-                  <Chip
-                    label='库存预警如何设置？'
-                    size='small'
-                    onClick={() => handleFollowUp('库存预警如何设置？')}
-                    sx={{ cursor: 'pointer' }}
-                  />
-                  <Chip
-                    label='什么是安全库存？'
-                    size='small'
-                    onClick={() => handleFollowUp('什么是安全库存？')}
-                    sx={{ cursor: 'pointer' }}
-                  />
-                  <Chip
-                    label='库存盘点流程'
-                    size='small'
-                    onClick={() => handleFollowUp('库存盘点流程是什么？')}
-                    sx={{ cursor: 'pointer' }}
-                  />
-                </Box>
-              </Box>
+            {activeTab === 'conversations' ? (
+              <List disablePadding>
+                {conversations.map((conv) => (
+                  <ListItem
+                    key={conv.id}
+                    sx={{
+                      p: 2,
+                      mb: 1,
+                      borderRadius: 1,
+                      cursor: 'pointer',
+                      bgcolor: currentConversationId === conv.id ? 'primary.50' : 'transparent',
+                      border: '1px solid',
+                      borderColor: currentConversationId === conv.id ? 'primary.main' : 'grey.200',
+                      '&:hover': {
+                        backgroundColor: 'grey.50',
+                      },
+                    }}
+                    onClick={() => handleSelectConversation(conv)}
+                  >
+                    <ListItemIcon sx={{ minWidth: 36 }}>
+                      <MessageSquare size={18} style={{ color: currentConversationId === conv.id ? '#6366f1' : '#9ca3af' }} />
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={
+                        <Typography variant='body2' sx={{ fontWeight: 500 }} noWrap>
+                          {conv.title}
+                        </Typography>
+                      }
+                      secondary={
+                        <Typography variant='caption' color='text.secondary'>
+                          {conv.message_count} 条消息 · {conv.updated_at}
+                        </Typography>
+                      }
+                    />
+                    <IconButton
+                      size='small'
+                      onClick={(e) => handleDeleteConversation(conv.id, e)}
+                      sx={{ opacity: 0.6, '&:hover': { opacity: 1, color: 'error.main' } }}
+                    >
+                      <Trash2 size={14} />
+                    </IconButton>
+                  </ListItem>
+                ))}
+              </List>
             ) : historyLoading ? (
               <Box
                 sx={{
@@ -578,24 +727,79 @@ export const AiChatPage: React.FC = () => {
         </Box>
 
         <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-          {activeTab === 'chat' ? (
-            <>
-              <Box
-                sx={{
-                  p: 3,
-                  backgroundColor: 'white',
-                  borderBottom: '1px solid grey.200',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                }}
-              >
+            <Box
+              sx={{
+                p: 3,
+                backgroundColor: 'white',
+                borderBottom: '1px solid grey.200',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Typography
                   variant='h6'
                   sx={{ fontWeight: 600 }}
                 >
                   智能对话
                 </Typography>
+                <Chip
+                  icon={<Cpu size={14} />}
+                  label={selectedModel.name}
+                  size='small'
+                  variant='outlined'
+                  onClick={(e) => setModelMenuAnchor(e.currentTarget)}
+                  sx={{ cursor: 'pointer' }}
+                />
+                <Menu
+                  anchorEl={modelMenuAnchor}
+                  open={Boolean(modelMenuAnchor)}
+                  onClose={() => setModelMenuAnchor(null)}
+                >
+                  {AVAILABLE_MODELS.map((model) => (
+                    <MenuItem
+                      key={model.id}
+                      selected={selectedModel.id === model.id}
+                      onClick={() => {
+                        setSelectedModel(model);
+                        setModelMenuAnchor(null);
+                        addNotification({
+                          title: '模型已切换',
+                          message: `当前使用：${model.name}`,
+                          type: 'success',
+                        });
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                        <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                          {model.name}
+                        </Typography>
+                        <Typography variant='caption' color='text.secondary'>
+                          {model.provider}
+                        </Typography>
+                      </Box>
+                    </MenuItem>
+                  ))}
+                </Menu>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Tooltip title='对话设置'>
+                  <IconButton
+                    onClick={() => setSettingsOpen(true)}
+                    size='small'
+                  >
+                    <Settings size={18} />
+                  </IconButton>
+                </Tooltip>
+                <Button
+                  size='small'
+                  variant='text'
+                  startIcon={<Plus size={14} />}
+                  onClick={handleNewConversation}
+                >
+                  新对话
+                </Button>
                 <Button
                   size='small'
                   variant='text'
@@ -604,6 +808,7 @@ export const AiChatPage: React.FC = () => {
                   清空对话
                 </Button>
               </Box>
+            </Box>
 
               <Box
                 sx={{
@@ -943,43 +1148,114 @@ export const AiChatPage: React.FC = () => {
                   />
                 </Box>
               </Box>
-            </>
-          ) : (
-            <Box
-              sx={{
-                flex: 1,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: '#f5f7fa',
-              }}
-            >
-              <Box sx={{ textAlign: 'center' }}>
-                <MessageSquare
-                  sx={{
-                    width: 64,
-                    height: 64,
-                    color: 'grey.300',
-                    mx: 'auto',
-                    mb: 4,
-                  }}
-                />
-                <Typography
-                  variant='h6'
-                  sx={{ fontWeight: 600, mb: 2 }}
-                >
-                  选择历史记录查看详情
+        </Box>
+
+        <Drawer
+          anchor='right'
+          open={settingsOpen}
+          onClose={() => setSettingsOpen(false)}
+          sx={{ '& .MuiDrawer-paper': { width: 320 } }}
+        >
+          <Box sx={{ p: 3 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant='h6' sx={{ fontWeight: 600 }}>
+                对话设置
+              </Typography>
+              <IconButton
+                size='small'
+                onClick={() => setSettingsOpen(false)}
+              >
+                <X size={18} />
+              </IconButton>
+            </Box>
+            <Divider sx={{ mb: 3 }} />
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2 }}>
+                当前模型
+              </Typography>
+              <Chip
+                icon={<Cpu size={14} />}
+                label={`${selectedModel.name} (${selectedModel.provider})`}
+                color='primary'
+                variant='outlined'
+              />
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                  Temperature (温度)
                 </Typography>
-                <Typography
-                  variant='body2'
-                  color='text.secondary'
-                >
-                  从左侧列表选择一条历史记录，在对话界面查看完整内容
+                <Typography variant='body2' color='primary.main' sx={{ fontWeight: 600 }}>
+                  {temperature.toFixed(1)}
                 </Typography>
               </Box>
+              <Slider
+                value={temperature}
+                onChange={(_, v) => setTemperature(v as number)}
+                step={0.1}
+                min={0}
+                max={2}
+                valueLabelDisplay='auto'
+                size='small'
+              />
+              <Typography variant='caption' color='text.secondary'>
+                控制输出随机性，值越高越随机
+              </Typography>
             </Box>
-          )}
-        </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                  最大Token数
+                </Typography>
+                <Typography variant='body2' color='primary.main' sx={{ fontWeight: 600 }}>
+                  {maxTokens}
+                </Typography>
+              </Box>
+              <Slider
+                value={maxTokens}
+                onChange={(_, v) => setMaxTokens(v as number)}
+                step={128}
+                min={256}
+                max={8192}
+                valueLabelDisplay='auto'
+                size='small'
+              />
+            </Box>
+
+            <Box sx={{ mb: 2 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={streamingEnabled}
+                    onChange={(e) => setStreamingEnabled(e.target.checked)}
+                  />
+                }
+                label='流式输出'
+              />
+              <Typography variant='caption' color='text.secondary' sx={{ ml: 4, display: 'block' }}>
+                逐步返回响应，提升体验
+              </Typography>
+            </Box>
+
+            <Box sx={{ mb: 2 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={useKnowledgeBase}
+                    onChange={(e) => setUseKnowledgeBase(e.target.checked)}
+                  />
+                }
+                label='使用知识库'
+              />
+              <Typography variant='caption' color='text.secondary' sx={{ ml: 4, display: 'block' }}>
+                基于知识库内容回答问题
+              </Typography>
+            </Box>
+          </Box>
+        </Drawer>
 
         <Dialog
           open={feedbackDialog.open}

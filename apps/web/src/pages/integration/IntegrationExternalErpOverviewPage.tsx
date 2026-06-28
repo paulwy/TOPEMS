@@ -13,7 +13,7 @@ interface ErpConnection {
   sync_direction: string;
   sync_mode: string;
   status?: string;
-  is_active?: boolean;
+  isactive?: boolean;
   last_sync_at?: string;
 }
 
@@ -69,7 +69,7 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
     const stats = {
       total: connections.length,
       connected: connections.filter((c: ErpConnection) => c.status === 'connected').length,
-      active: connections.filter((c: ErpConnection) => c.is_active).length,
+      active: connections.filter((c: ErpConnection) => c.isactive).length,
       disconnected: connections.filter((c: ErpConnection) => c.status !== 'connected').length,
     };
     return stats;

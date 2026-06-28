@@ -98,7 +98,7 @@ export const NotificationList: React.FC<NotificationListProps> = ({ userId = 'cu
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <div style={{ padding: 16, borderBottom: '1px solid grey.200' }}>
+      <div style={{ padding: 16, borderBottom: '1px solid var(--mui-palette-divider)' }}>
         <div
           style={{
             display: 'flex',
@@ -181,7 +181,7 @@ export const NotificationList: React.FC<NotificationListProps> = ({ userId = 'cu
             <p>暂无通知</p>
           </div>
         ) : (
-          <div style={{ borderTop: '1px solid grey.100' }}>
+          <div style={{ borderTop: '1px solid var(--mui-palette-grey-100)' }}>
             {notifications.map((notification) => (
               <div
                 key={notification.id}

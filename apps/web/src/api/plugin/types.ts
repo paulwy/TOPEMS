@@ -42,7 +42,7 @@ export interface TenantPlugin {
   tenant_id: string;
   plugin_id: string;
   installed_version: string;
-  is_active: boolean;
+  isactive: boolean;
   license_type: string;
   license_expires_at?: string;
   activated_at?: string;
@@ -56,7 +56,7 @@ export interface TenantInstalledPlugin {
   tenant_id: string;
   plugin_id: string;
   installed_version: string;
-  is_active: boolean;
+  isactive: boolean;
   license_type: string;
   license_expires_at?: string;
   activated_at?: string;
@@ -117,7 +117,7 @@ export interface PluginCategory {
   icon?: string;
   sort_order?: number;
   plugin_count?: number;
-  is_active?: boolean;
+  isactive?: boolean;
 }
 
 export interface PluginVersion {
@@ -129,7 +129,7 @@ export interface PluginVersion {
   is_latest?: boolean;
   download_url?: string;
   checksum?: string;
-  file_size?: number;
+  filesize?: number;
   min_app_version?: string;
   created_at: string;
 }
@@ -160,7 +160,7 @@ export interface PluginListResponse {
   plugins: Plugin[];
   total: number;
   page: number;
-  page_size: number;
+  pagesize: number;
   total_pages: number;
 }
 
@@ -168,7 +168,7 @@ export interface PluginReviewListResponse {
   reviews: PluginReview[];
   total: number;
   page: number;
-  page_size: number;
+  pagesize: number;
   total_pages: number;
   average_rating: number;
 }

@@ -8,7 +8,7 @@ export const announcementApi = {
   ): Promise<ApiResponse<PaginatedResult<Announcement>>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.pagesize) searchParams.set('pagesize', params.pagesize.toString());
     if (params?.search) searchParams.set('search', params.search);
     if (params?.status) searchParams.set('status', params.status);
     if (params?.priority) searchParams.set('priority', params.priority);

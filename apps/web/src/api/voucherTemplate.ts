@@ -15,7 +15,7 @@ export interface VoucherGenerationRule {
   template_id: string;
   condition?: string;
   priority: number;
-  is_active: boolean;
+  isactive: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -31,9 +31,9 @@ export const voucherTemplateApi = {
   getTemplates: (params?: {
     type?: VoucherTemplateType | VoucherTemplateType[];
     module?: string;
-    is_active?: boolean;
+    isactive?: boolean;
     page?: number;
-    page_size?: number;
+    pagesize?: number;
   }) => apiClient.erp.get('/api/voucher/templates', { params }),
 
   /**
@@ -89,7 +89,7 @@ export const voucherTemplateApi = {
    */
   toggleTemplate: (templateId: string, isActive: boolean) =>
     apiClient.erp.put(`/api/voucher/templates/${templateId}/toggle`, {
-      is_active: isActive,
+      isactive: isActive,
     }),
 
   // ============================================
@@ -222,9 +222,9 @@ export const voucherTemplateApi = {
    */
   getGenerationRules: (params?: {
     source_module?: string;
-    is_active?: boolean;
+    isactive?: boolean;
     page?: number;
-    page_size?: number;
+    pagesize?: number;
   }) => apiClient.erp.get('/api/voucher/rules', { params }),
 
   /**
@@ -237,7 +237,7 @@ export const voucherTemplateApi = {
     template_id: string;
     condition?: string;
     priority?: number;
-    is_active?: boolean;
+    isactive?: boolean;
   }) => apiClient.erp.post('/api/voucher/rules', data),
 
   /**
@@ -256,7 +256,7 @@ export const voucherTemplateApi = {
    */
   toggleGenerationRule: (ruleId: string, isActive: boolean) =>
     apiClient.erp.put(`/api/voucher/rules/${ruleId}/toggle`, {
-      is_active: isActive,
+      isactive: isActive,
     }),
 
   // ============================================

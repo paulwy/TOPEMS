@@ -9,7 +9,7 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
-  _Box,
+  Box,
   Typography,
   Button,
 } from '@mui/material';

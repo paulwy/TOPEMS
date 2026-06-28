@@ -48,7 +48,7 @@ interface GetInvoiceListParams {
   start_date?: string;
   end_date?: string;
   page?: number;
-  page_size?: number;
+  pagesize?: number;
   keyword?: string;
 }
 
@@ -87,7 +87,7 @@ const FinanceInvoicePage: React.FC = () => {
         const response = await receivablePayableApi.listSalesInvoices({
           status: filterStatus || undefined,
           page: params?.page || pagination.page,
-          page_size: params?.page_size || pagination.pageSize,
+          pagesize: params?.pagesize || pagination.pageSize,
         });
 
         if (response.success && response.data) {
@@ -99,7 +99,7 @@ const FinanceInvoicePage: React.FC = () => {
           setInvoiceData(itemsWithTaxRate);
           setPagination({
             page: response.data.page || 1,
-            pageSize: response.data.page_size || 10,
+            pageSize: response.data.pagesize || 10,
             total: response.data.total || 0,
           });
         }
@@ -286,7 +286,7 @@ const FinanceInvoicePage: React.FC = () => {
 
   const handlePageSizeChange = (pageSize: number) => {
     setPagination((prev) => ({ ...prev, pageSize, page: 1 }));
-    fetchInvoiceList({ page_size: pageSize, page: 1 });
+    fetchInvoiceList({ pagesize: pageSize, page: 1 });
   };
 
   const handleSearch = () => {

@@ -1,0 +1,27 @@
+{
+  "name": "@topems/tokens",
+  "version": "1.0.0",
+  "description": "TOPEMS Design System Tokens",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./css": "./dist/tokens.css"
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc && node scripts/generate-css.cjs",
+    "clean": "rm -rf dist",
+    "dev": "tsc --watch"
+  },
+  "keywords": ["design-tokens", "topems", "theme"],
+  "author": "TOPEMS Team",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}

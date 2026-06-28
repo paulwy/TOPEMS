@@ -52,7 +52,7 @@ export interface RiskAssessment {
   assessor: string | null;
   severity: 'high' | 'medium' | 'low';
   likelihood: 'high' | 'medium' | 'low';
-  risk_level: string | null;
+  risklevel: string | null;
   recommendations: string | null;
   created_at: string;
 }
@@ -515,7 +515,7 @@ export interface CreateDrillRecordRequest {
 
 export interface ListQueryParams {
   page?: number;
-  page_size?: number;
+  pagesize?: number;
   search?: string;
   status?: string;
 }
@@ -524,7 +524,7 @@ export interface PaginatedResponse<T> {
   data: T[];
   total: number;
   page: number;
-  page_size: number;
+  pagesize: number;
   total_pages: number;
 }
 
@@ -534,7 +534,7 @@ export interface Risk {
   risk_no: string;
   name: string;
   category: string;
-  risk_level: 'high' | 'medium' | 'low' | 'extreme';
+  risklevel: 'high' | 'medium' | 'low' | 'extreme';
   description: string | null;
   location: string | null;
   likelihood: 'high' | 'medium' | 'low';
@@ -551,7 +551,7 @@ export interface Risk {
 export interface RiskLevelMatrix {
   likelihood: 'high' | 'medium' | 'low';
   severity: 'high' | 'medium' | 'low';
-  risk_level: 'high' | 'medium' | 'low' | 'extreme';
+  risklevel: 'high' | 'medium' | 'low' | 'extreme';
   risk_score: number;
 }
 
@@ -577,7 +577,7 @@ export interface RiskMgmtAssessment {
   assessor: string | null;
   likelihood: 'high' | 'medium' | 'low';
   severity: 'high' | 'medium' | 'low';
-  risk_level: 'high' | 'medium' | 'low' | 'extreme';
+  risklevel: 'high' | 'medium' | 'low' | 'extreme';
   risk_score: number;
   method: string | null;
   remarks: string | null;
@@ -637,7 +637,7 @@ export interface UpdateRiskControlMeasureRequest {
 }
 
 export interface RiskListQueryParams extends ListQueryParams {
-  risk_level?: string;
+  risklevel?: string;
   category?: string;
 }
 
@@ -942,7 +942,7 @@ export interface HealthCheckPlan {
   hospital: string | null;
   participants: string[] | null;
   hazard_factors: string[] | null;
-  check_items: string[] | null;
+  checkitems: string[] | null;
   status: 'draft' | 'published' | 'ongoing' | 'completed' | 'cancelled';
   created_by: string | null;
   created_at: string;
@@ -967,10 +967,10 @@ export interface HealthCheckRecord {
   check_type: string;
   check_date: string | null;
   hospital: string | null;
-  check_items: string[] | null;
+  checkitems: string[] | null;
   results: HealthCheckResultItem[];
   conclusion: string | null;
-  abnormal_items: string[] | null;
+  abnormalitems: string[] | null;
   suggestions: string | null;
   follow_up_required: boolean;
   status: 'pending' | 'completed' | 'abnormal' | 'follow_up';
@@ -1037,7 +1037,7 @@ export interface CreateHealthCheckPlanRequest {
   hospital?: string | null;
   participants?: string[] | null;
   hazard_factors?: string[] | null;
-  check_items?: string[] | null;
+  checkitems?: string[] | null;
   status?: 'draft' | 'published' | 'ongoing' | 'completed' | 'cancelled';
 }
 
@@ -1052,7 +1052,7 @@ export interface UpdateHealthCheckPlanRequest {
   hospital?: string | null;
   participants?: string[] | null;
   hazard_factors?: string[] | null;
-  check_items?: string[] | null;
+  checkitems?: string[] | null;
   status?: 'draft' | 'published' | 'ongoing' | 'completed' | 'cancelled';
 }
 
@@ -1063,10 +1063,10 @@ export interface CreateHealthCheckRecordRequest {
   check_type: string;
   check_date?: string | null;
   hospital?: string | null;
-  check_items?: string[] | null;
+  checkitems?: string[] | null;
   results?: HealthCheckResultItem[];
   conclusion?: string | null;
-  abnormal_items?: string[] | null;
+  abnormalitems?: string[] | null;
   suggestions?: string | null;
   follow_up_required?: boolean;
   status?: 'pending' | 'completed' | 'abnormal' | 'follow_up';
@@ -1077,10 +1077,10 @@ export interface UpdateHealthCheckRecordRequest {
   check_type?: string;
   check_date?: string | null;
   hospital?: string | null;
-  check_items?: string[] | null;
+  checkitems?: string[] | null;
   results?: HealthCheckResultItem[];
   conclusion?: string | null;
-  abnormal_items?: string[] | null;
+  abnormalitems?: string[] | null;
   suggestions?: string | null;
   follow_up_required?: boolean;
   status?: 'pending' | 'completed' | 'abnormal' | 'follow_up';
@@ -1145,7 +1145,7 @@ export interface HazardFactor {
   category: string;
   type: 'chemical' | 'physical' | 'biological' | 'ergonomic' | 'psychological';
   description: string | null;
-  hazard_level: 'high' | 'medium' | 'low';
+  hazardlevel: 'high' | 'medium' | 'low';
   exposure_limit: string | null;
   unit: string | null;
   protection_measures: string[] | null;
@@ -1223,7 +1223,7 @@ export interface CreateHazardFactorRequest {
   category: string;
   type: 'chemical' | 'physical' | 'biological' | 'ergonomic' | 'psychological';
   description?: string | null;
-  hazard_level?: 'high' | 'medium' | 'low';
+  hazardlevel?: 'high' | 'medium' | 'low';
   exposure_limit?: string | null;
   unit?: string | null;
   protection_measures?: string[] | null;
@@ -1236,7 +1236,7 @@ export interface UpdateHazardFactorRequest {
   category?: string;
   type?: 'chemical' | 'physical' | 'biological' | 'ergonomic' | 'psychological';
   description?: string | null;
-  hazard_level?: 'high' | 'medium' | 'low';
+  hazardlevel?: 'high' | 'medium' | 'low';
   exposure_limit?: string | null;
   unit?: string | null;
   protection_measures?: string[] | null;
@@ -1341,7 +1341,7 @@ export interface UpdateProtectionMeasureRequest {
 export interface HazardFactorListQueryParams extends ListQueryParams {
   type?: string;
   category?: string;
-  hazard_level?: string;
+  hazardlevel?: string;
 }
 
 export interface HazardDetectionRecordListQueryParams extends ListQueryParams {
@@ -1392,7 +1392,7 @@ export interface HazardousMaterialCategory {
   name: string;
   parent_id: string | null;
   description: string | null;
-  hazard_level: string | null;
+  hazardlevel: string | null;
   sort_order: number;
   created_at: string;
   updated_at: string;
@@ -1506,7 +1506,7 @@ export interface CreateHazardousMaterialCategoryRequest {
   name: string;
   parent_id?: string | null;
   description?: string | null;
-  hazard_level?: string | null;
+  hazardlevel?: string | null;
   sort_order?: number;
 }
 
@@ -1515,7 +1515,7 @@ export interface UpdateHazardousMaterialCategoryRequest {
   name?: string;
   parent_id?: string | null;
   description?: string | null;
-  hazard_level?: string | null;
+  hazardlevel?: string | null;
   sort_order?: number;
 }
 
@@ -1675,7 +1675,7 @@ export interface ComplianceAssessment {
   result: 'compliant' | 'partially_compliant' | 'non_compliant';
   score: number | null;
   findings: string | null;
-  non_compliance_items: string[] | null;
+  non_complianceitems: string[] | null;
   corrective_actions: string | null;
   status: 'draft' | 'in_progress' | 'completed' | 'approved';
   attachments: string[] | null;
@@ -1785,7 +1785,7 @@ export interface CreateComplianceAssessmentRequest {
   result?: 'compliant' | 'partially_compliant' | 'non_compliant';
   score?: number | null;
   findings?: string | null;
-  non_compliance_items?: string[] | null;
+  non_complianceitems?: string[] | null;
   corrective_actions?: string | null;
   attachments?: string[] | null;
   status?: 'draft' | 'in_progress' | 'completed' | 'approved';
@@ -1802,7 +1802,7 @@ export interface UpdateComplianceAssessmentRequest {
   result?: 'compliant' | 'partially_compliant' | 'non_compliant';
   score?: number | null;
   findings?: string | null;
-  non_compliance_items?: string[] | null;
+  non_complianceitems?: string[] | null;
   corrective_actions?: string | null;
   attachments?: string[] | null;
   status?: 'draft' | 'in_progress' | 'completed' | 'approved';
@@ -1985,7 +1985,7 @@ export interface SyncConfig {
   source_system: string;
   target_system: string;
   entity_type: string;
-  direction: 'bidirectional' | 'source_to_target' | 'target_to_source';
+  direction: 'bidirectional' | 'source_totarget' | 'target_to_source';
   schedule: string | null;
   enabled: boolean;
   last_sync_at: string | null;

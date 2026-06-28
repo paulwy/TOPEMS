@@ -87,7 +87,7 @@ const IntegrationEventsPage: React.FC = () => {
   // 表格列定义
   const columns: ColumnDef<IntegrationEvent>[] = [
     {
-      id: 'source_target',
+      id: 'sourcetarget',
       label: '集成路径',
       render: (row) => (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

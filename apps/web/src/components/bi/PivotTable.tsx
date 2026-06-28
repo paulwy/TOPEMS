@@ -383,7 +383,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
             {rows.map((row) => (
               <div key={row}>
-                <div style={{ fontSize: 12, color: 'grey.600', marginBottom: 4 }}>{row}</div>
+                <div style={{ fontSize: 12, color: 'var(--mui-palette-text-secondary)', marginBottom: 4 }}>{row}</div>
                 <select
                   style={{
                     padding: 4,
@@ -406,7 +406,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
             ))}
             {cols.map((col) => (
               <div key={col}>
-                <div style={{ fontSize: 12, color: 'grey.600', marginBottom: 4 }}>{col}</div>
+                <div style={{ fontSize: 12, color: 'var(--mui-palette-text-secondary)', marginBottom: 4 }}>{col}</div>
                 <select
                   style={{
                     padding: 4,
@@ -506,9 +506,9 @@ export const PivotTable: React.FC<PivotConfig> = ({
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                       {expandedRows.has(row as string) ? (
-                        <ChevronDown style={{ width: 14, height: 14, color: 'grey.600' }} />
+                        <ChevronDown sx={{ width: 14, height: 14, color: 'text.secondary' }} />
                       ) : (
-                        <ChevronUp style={{ width: 14, height: 14, color: 'grey.600' }} />
+                        <ChevronUp sx={{ width: 14, height: 14, color: 'text.secondary' }} />
                       )}
                       {row}
                       {sortConfig?.key === row && (
@@ -562,7 +562,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
                 </tr>
               </React.Fragment>
             ))}
-            <tr style={{ backgroundColor: 'grey.100' }}>
+            <tr style={{ backgroundColor: 'var(--mui-palette-grey-100)' }}>
               <td
                 style={{
                   padding: '12px 16px',

@@ -14,7 +14,7 @@ const contractSchema = z.object({
   contract_code: z.string().min(1, '合同编号不能为空'),
   contract_name: z.string().min(1, '合同名称不能为空'),
   contract_type: z.enum(['construction', 'service', 'purchase', 'sales']),
-  contract_category: z.enum(['main', 'supplement', 'service_level']),
+  contract_category: z.enum(['main', 'supplement', 'servicelevel']),
   party_a_name: z.string().optional(),
   party_b_name: z.string().optional(),
   amount: z.string().refine((val) => parseFloat(val) > 0, '合同金额必须大于0'),
@@ -40,7 +40,7 @@ const CONTRACT_TYPES = [
 const CONTRACT_CATEGORIES = [
   { value: 'main', label: '主合同' },
   { value: 'supplement', label: '补充协议' },
-  { value: 'service_level', label: '服务协议' },
+  { value: 'servicelevel', label: '服务协议' },
 ];
 
 const CURRENCIES = [

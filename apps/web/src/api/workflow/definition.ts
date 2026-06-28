@@ -70,4 +70,16 @@ export const workflowDefinitionApi = {
   deleteVersion: (workflowId: string, versionId: string) => {
     return apiClient.workflow.delete(`/api/flow/workflows/${workflowId}/versions/${versionId}`);
   },
+
+  exportWorkflow: (id: string) => {
+    return apiClient.workflow.get(`/api/flow/workflows/${id}/export`);
+  },
+
+  importWorkflow: (data: FormData) => {
+    return apiClient.workflow.post('/api/flow/workflows/import', data);
+  },
+
+  copyWorkflow: (id: string, data?: { name?: string }) => {
+    return apiClient.workflow.post(`/api/flow/workflows/${id}/copy`, data);
+  },
 };

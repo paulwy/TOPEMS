@@ -6,7 +6,7 @@ import {
   ListItem,
   ListItemButton,
   ListItemIcon,
-  _ListItemText,
+  ListItemText,
   Collapse,
   Divider,
   IconButton,
@@ -15,7 +15,7 @@ import {
 import {
   Home,
   Bell,
-  _ChevronDown,
+  ChevronDown,
   ChevronRight,
   X,
   Menu,

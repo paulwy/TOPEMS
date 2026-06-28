@@ -1,0 +1,2665 @@
+{
+  "timestamp": "2026-06-28T05:26:14.801Z",
+  "totalFiles": 538,
+  "summary": {
+    "hardcodedColors": {
+      "total": 1405,
+      "files": 109
+    },
+    "noResponsive": {
+      "total": 0,
+      "files": 0
+    },
+    "smallBorderRadius": {
+      "total": 1301,
+      "files": 293
+    },
+    "noPageContainer": {
+      "total": 0,
+      "files": 0
+    }
+  },
+  "qualityScore": "98.0",
+  "issues": {
+    "hardcodedColors": [
+      {
+        "file": "mes/ProductionDashboardPage.tsx",
+        "count": 48
+      },
+      {
+        "file": "common/StatCard.tsx",
+        "count": 48
+      },
+      {
+        "file": "lims/LimsInstrumentPage.tsx",
+        "count": 40
+      },
+      {
+        "file": "qms/QmsApqpPage.tsx",
+        "count": 37
+      },
+      {
+        "file": "dashboard/ModuleCard.tsx",
+        "count": 34
+      },
+      {
+        "file": "ehs/EhsIncidentReportPage.tsx",
+        "count": 30
+      },
+      {
+        "file": "finance/ConsolidationReportsPage.tsx",
+        "count": 26
+      },
+      {
+        "file": "dashboard/ServiceStatusMonitor.tsx",
+        "count": 26
+      },
+      {
+        "file": "bi/Gispage.tsx",
+        "count": 25
+      },
+      {
+        "file": "qms/QmsQualityControlPage.tsx",
+        "count": 24
+      },
+      {
+        "file": "shared/ForgotPasswordPage.tsx",
+        "count": 23
+      },
+      {
+        "file": "bi/MetricCard.tsx",
+        "count": 23
+      },
+      {
+        "file": "lims/LimsTaskDetailPage.tsx",
+        "count": 21
+      },
+      {
+        "file": "notification/NotificationProvider.tsx",
+        "count": 21
+      },
+      {
+        "file": "mes/EquipmentOEEPage.tsx",
+        "count": 20
+      },
+      {
+        "file": "ReportBuilder.tsx",
+        "count": 20
+      },
+      {
+        "file": "gis/MapView.tsx",
+        "count": 20
+      },
+      {
+        "file": "admin/PerformanceMonitorPage.tsx",
+        "count": 19
+      },
+      {
+        "file": "lims/LimsSampleDetailPage.tsx",
+        "count": 18
+      },
+      {
+        "file": "workflow/DashboardPage.tsx",
+        "count": 18
+      },
+      {
+        "file": "charts/chartTheme.ts",
+        "count": 18
+      },
+      {
+        "file": "srm/SrmFinancePage.tsx",
+        "count": 17
+      },
+      {
+        "file": "templates/TemplateAIHelper.tsx",
+        "count": 17
+      },
+      {
+        "file": "lims/LimsInstrumentMaintenancePage.tsx",
+        "count": 16
+      },
+      {
+        "file": "pm/PmContractDetailPage.tsx",
+        "count": 16
+      },
+      {
+        "file": "srm/SrmSupplierPage.tsx",
+        "count": 16
+      },
+      {
+        "file": "gis/modules/MapModule/MapView.tsx",
+        "count": 16
+      },
+      {
+        "file": "templates/MarkdownEditorTemplate.tsx",
+        "count": 16
+      },
+      {
+        "file": "monitor/MonitorDashboardPage.tsx",
+        "count": 15
+      },
+      {
+        "file": "pdm/PdmStatsPage.tsx",
+        "count": 15
+      },
+      {
+        "file": "dashboard/HybridDashboard.tsx",
+        "count": 15
+      },
+      {
+        "file": "monitor/MonitorAlertsPage.tsx",
+        "count": 14
+      },
+      {
+        "file": "monitor/MonitorMetricsPage.tsx",
+        "count": 14
+      },
+      {
+        "file": "qms/QmsInspectionPage.tsx",
+        "count": 14
+      },
+      {
+        "file": "qms/QmsNonconformancePage.tsx",
+        "count": 14
+      },
+      {
+        "file": "PermissionComponents.tsx",
+        "count": 14
+      },
+      {
+        "file": "export/ExportModal.tsx",
+        "count": 14
+      },
+      {
+        "file": "import-export/ImportModal.tsx",
+        "count": 14
+      },
+      {
+        "file": "BundleSizeMonitor.tsx",
+        "count": 13
+      },
+      {
+        "file": "ai/AIAnalyzer.tsx",
+        "count": 13
+      },
+      {
+        "file": "finance/ConsolidationScopePage.tsx",
+        "count": 12
+      },
+      {
+        "file": "lims/LimsSamplePage.tsx",
+        "count": 12
+      },
+      {
+        "file": "lims/LimsTaskPage.tsx",
+        "count": 12
+      },
+      {
+        "file": "oa/AdministrationDashboardPage.tsx",
+        "count": 12
+      },
+      {
+        "file": "qms/QmsAuditManagementPage.tsx",
+        "count": 12
+      },
+      {
+        "file": "bi/PivotTable.tsx",
+        "count": 12
+      },
+      {
+        "file": "templates/GisMapTemplate.tsx",
+        "count": 12
+      },
+      {
+        "file": "ehs/EhsHazardDetailPage.tsx",
+        "count": 11
+      },
+      {
+        "file": "lims/InstrumentPage.tsx",
+        "count": 11
+      },
+      {
+        "file": "mes/MaterialReturnPage.tsx",
+        "count": 11
+      },
+      {
+        "file": "mes/ProductionSchedulePage.tsx",
+        "count": 11
+      },
+      {
+        "file": "gis/DeviceTrackPanel.tsx",
+        "count": 11
+      },
+      {
+        "file": "admin/DatabaseStructurePage.tsx",
+        "count": 10
+      },
+      {
+        "file": "finance/FinanceReportsPage.tsx",
+        "count": 10
+      },
+      {
+        "file": "mes/MaterialIssuePage.tsx",
+        "count": 10
+      },
+      {
+        "file": "notification/NotificationArchivePage.tsx",
+        "count": 10
+      },
+      {
+        "file": "pm/PmProjectDetailPage.tsx",
+        "count": 10
+      },
+      {
+        "file": "wms/InventoryReportPage.tsx",
+        "count": 10
+      },
+      {
+        "file": "ReportViewer.tsx",
+        "count": 10
+      },
+      {
+        "file": "ai/DocumentManager.tsx",
+        "count": 10
+      },
+      {
+        "file": "import-export/ExportOptions.tsx",
+        "count": 10
+      },
+      {
+        "file": "lims/LimsProcessPage.tsx",
+        "count": 9
+      },
+      {
+        "file": "bi/ChartLibrary.tsx",
+        "count": 9
+      },
+      {
+        "file": "charts/AreaChart.tsx",
+        "count": 9
+      },
+      {
+        "file": "crm/CRMSalesForecastPage.tsx",
+        "count": 8
+      },
+      {
+        "file": "ehs/EhsAccidentPage.tsx",
+        "count": 8
+      },
+      {
+        "file": "ehs/EhsHazardPage.tsx",
+        "count": 8
+      },
+      {
+        "file": "lims/ReagentPage.tsx",
+        "count": 8
+      },
+      {
+        "file": "mes/ProductionOrderManagementPage.tsx",
+        "count": 8
+      },
+      {
+        "file": "pm/PmReportPage.tsx",
+        "count": 8
+      },
+      {
+        "file": "qms/QmsQualityCostPage.tsx",
+        "count": 8
+      },
+      {
+        "file": "qms/QmsStandardListPage.tsx",
+        "count": 8
+      },
+      {
+        "file": "srm/SrmOrderPage.tsx",
+        "count": 8
+      },
+      {
+        "file": "addressbook/ContactDetailModal.tsx",
+        "count": 8
+      },
+      {
+        "file": "bi/ChartAnnotations.tsx",
+        "count": 8
+      },
+      {
+        "file": "dashboard/DashboardQuickActions.tsx",
+        "count": 8
+      },
+      {
+        "file": "import-export/ImportPreview.tsx",
+        "count": 8
+      },
+      {
+        "file": "admin/AuditLogPage.tsx",
+        "count": 7
+      },
+      {
+        "file": "bi/BIDashboardPage.tsx",
+        "count": 7
+      },
+      {
+        "file": "finance/DashboardPage.tsx",
+        "count": 7
+      },
+      {
+        "file": "finance/VoucherDetailPage.tsx",
+        "count": 7
+      },
+      {
+        "file": "im/MailPage.tsx",
+        "count": 7
+      },
+      {
+        "file": "mes/MaterialBOMPage.tsx",
+        "count": 7
+      },
+      {
+        "file": "mes/TraceabilityDetailPage.tsx",
+        "count": 7
+      },
+      {
+        "file": "qms/QmsStandardDetailPage.tsx",
+        "count": 7
+      },
+      {
+        "file": "workflow/FlowInstanceDetailPage.tsx",
+        "count": 7
+      },
+      {
+        "file": "gis/Map3DView.tsx",
+        "count": 7
+      },
+      {
+        "file": "notifications/NotificationItem.tsx",
+        "count": 7
+      },
+      {
+        "file": "admin/ConfigDebugPage.tsx",
+        "count": 6
+      },
+      {
+        "file": "ai/AiChatPage.tsx",
+        "count": 6
+      },
+      {
+        "file": "ehs/EhsDrillPage.tsx",
+        "count": 6
+      },
+      {
+        "file": "hrm/HrmReportsPage.tsx",
+        "count": 6
+      },
+      {
+        "file": "lims/BarcodePage.tsx",
+        "count": 6
+      },
+      {
+        "file": "mes/EquipmentManagementPage.tsx",
+        "count": 6
+      },
+      {
+        "file": "pdm/PdmBatchPage.tsx",
+        "count": 6
+      },
+      {
+        "file": "shared/AIPage.tsx",
+        "count": 6
+      },
+      {
+        "file": "wms/InventoryPage.tsx",
+        "count": 6
+      },
+      {
+        "file": "workflow/FlowApprovalDetailPage.tsx",
+        "count": 6
+      },
+      {
+        "file": "ai/AISettingsModal.tsx",
+        "count": 6
+      },
+      {
+        "file": "bi/ChartCard.tsx",
+        "count": 6
+      },
+      {
+        "file": "charts/RadarChart.tsx",
+        "count": 6
+      },
+      {
+        "file": "common/AlertCard.tsx",
+        "count": 6
+      },
+      {
+        "file": "dashboard/RecentActivities.tsx",
+        "count": 6
+      },
+      {
+        "file": "ehs/EHSBadges.tsx",
+        "count": 6
+      },
+      {
+        "file": "gis/modules/EvidenceModule/EvidencePanel.tsx",
+        "count": 6
+      },
+      {
+        "file": "gis/modules/Map3DModule/Map3DView.tsx",
+        "count": 6
+      },
+      {
+        "file": "import-export/ExportPreview.tsx",
+        "count": 6
+      },
+      {
+        "file": "import-export/ImportProgress.tsx",
+        "count": 6
+      },
+      {
+        "file": "templates/PageHeader.tsx",
+        "count": 6
+      }
+    ],
+    "noResponsive": [],
+    "smallBorderRadius": [
+      {
+        "file": "mes/ProductionDashboardPage.tsx",
+        "count": 48,
+        "examples": []
+      },
+      {
+        "file": "common/StatCard.tsx",
+        "count": 48,
+        "examples": []
+      },
+      {
+        "file": "lims/LimsInstrumentPage.tsx",
+        "count": 40,
+        "examples": []
+      },
+      {
+        "file": "qms/QmsApqpPage.tsx",
+        "count": 37,
+        "examples": []
+      },
+      {
+        "file": "ehs/EhsIncidentReportPage.tsx",
+        "count": 30,
+        "examples": []
+      },
+      {
+        "file": "report/ReportPage.tsx",
+        "count": 30,
+        "examples": [
+          "borderRadius: 3",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "finance/ConsolidationReportsPage.tsx",
+        "count": 26,
+        "examples": []
+      },
+      {
+        "file": "dashboard/ServiceStatusMonitor.tsx",
+        "count": 26,
+        "examples": []
+      },
+      {
+        "file": "bi/Gispage.tsx",
+        "count": 25,
+        "examples": []
+      },
+      {
+        "file": "qms/QmsQualityControlPage.tsx",
+        "count": 24,
+        "examples": []
+      },
+      {
+        "file": "shared/ForgotPasswordPage.tsx",
+        "count": 23,
+        "examples": []
+      },
+      {
+        "file": "bi/MetricCard.tsx",
+        "count": 23,
+        "examples": []
+      },
+      {
+        "file": "erp/FinancialReportPage.tsx",
+        "count": 22,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 1",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "templates/ReportDesignerTemplate.tsx",
+        "count": 22,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "lims/LimsTaskDetailPage.tsx",
+        "count": 21,
+        "examples": []
+      },
+      {
+        "file": "mes/EquipmentOEEPage.tsx",
+        "count": 20,
+        "examples": []
+      },
+      {
+        "file": "mes/MobileWorkstationPage.tsx",
+        "count": 20,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "ReportBuilder.tsx",
+        "count": 20,
+        "examples": []
+      },
+      {
+        "file": "gis/MapView.tsx",
+        "count": 20,
+        "examples": []
+      },
+      {
+        "file": "gis/modules/MapModule/ToolPanel.tsx",
+        "count": 20,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "admin/PerformanceMonitorPage.tsx",
+        "count": 19,
+        "examples": []
+      },
+      {
+        "file": "notification/NotificationTemplatesPage.tsx",
+        "count": 19,
+        "examples": [
+          "borderRadius: 4",
+          "borderRadius: 4",
+          "borderRadius: 4"
+        ]
+      },
+      {
+        "file": "lims/LimsSampleDetailPage.tsx",
+        "count": 18,
+        "examples": []
+      },
+      {
+        "file": "workflow/DashboardPage.tsx",
+        "count": 18,
+        "examples": []
+      },
+      {
+        "file": "srm/SrmFinancePage.tsx",
+        "count": 17,
+        "examples": []
+      },
+      {
+        "file": "pm/PmContractDetailPage.tsx",
+        "count": 16,
+        "examples": []
+      },
+      {
+        "file": "srm/SrmSupplierPage.tsx",
+        "count": 16,
+        "examples": []
+      },
+      {
+        "file": "templates/MarkdownEditorTemplate.tsx",
+        "count": 16,
+        "examples": []
+      },
+      {
+        "file": "notification/NotificationCenter.tsx",
+        "count": 15,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "bi/BISkeleton.tsx",
+        "count": 15,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 1",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "dashboard/HybridDashboard.tsx",
+        "count": 15,
+        "examples": []
+      },
+      {
+        "file": "finance/FinanceBudgetDetailPage.tsx",
+        "count": 14,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "qms/QmsInspectionPage.tsx",
+        "count": 14,
+        "examples": []
+      },
+      {
+        "file": "qms/QmsNonconformancePage.tsx",
+        "count": 14,
+        "examples": []
+      },
+      {
+        "file": "export/ExportModal.tsx",
+        "count": 14,
+        "examples": []
+      },
+      {
+        "file": "templates/DashboardTemplate.tsx",
+        "count": 14,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 3",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "ai/AIAnalyzer.tsx",
+        "count": 13,
+        "examples": []
+      },
+      {
+        "file": "ai/FloatingAIHelper.tsx",
+        "count": 13,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "finance/FinanceVoucherPage.tsx",
+        "count": 12,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "lims/LimsSamplePage.tsx",
+        "count": 12,
+        "examples": []
+      },
+      {
+        "file": "lims/LimsTaskPage.tsx",
+        "count": 12,
+        "examples": []
+      },
+      {
+        "file": "oa/AdministrationDashboardPage.tsx",
+        "count": 12,
+        "examples": []
+      },
+      {
+        "file": "qms/QmsAuditManagementPage.tsx",
+        "count": 12,
+        "examples": []
+      },
+      {
+        "file": "shared/HelpCenterPage.tsx",
+        "count": 12,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 1",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "bi/PivotTable.tsx",
+        "count": 12,
+        "examples": []
+      },
+      {
+        "file": "templates/GisMapTemplate.tsx",
+        "count": 12,
+        "examples": []
+      },
+      {
+        "file": "ehs/EhsHazardDetailPage.tsx",
+        "count": 11,
+        "examples": []
+      },
+      {
+        "file": "erp/AuditLogPage.tsx",
+        "count": 11,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 1",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "lims/InstrumentPage.tsx",
+        "count": 11,
+        "examples": []
+      },
+      {
+        "file": "mes/MaterialReturnPage.tsx",
+        "count": 11,
+        "examples": []
+      },
+      {
+        "file": "mes/ProductionSchedulePage.tsx",
+        "count": 11,
+        "examples": []
+      },
+      {
+        "file": "report/ReportBuilder.tsx",
+        "count": 11,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "gis/DeviceTrackPanel.tsx",
+        "count": 11,
+        "examples": []
+      },
+      {
+        "file": "templates/KanbanPageTemplate.tsx",
+        "count": 11,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "admin/DatabaseStructurePage.tsx",
+        "count": 10,
+        "examples": []
+      },
+      {
+        "file": "crm/CustomerDetailPage.tsx",
+        "count": 10,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "erp/VoucherManagementPage.tsx",
+        "count": 10,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 1",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "finance/FinanceTaxPage.tsx",
+        "count": 10,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "mes/MaterialIssuePage.tsx",
+        "count": 10,
+        "examples": []
+      },
+      {
+        "file": "notification/NotificationArchivePage.tsx",
+        "count": 10,
+        "examples": []
+      },
+      {
+        "file": "pm/PmProjectDetailPage.tsx",
+        "count": 10,
+        "examples": []
+      },
+      {
+        "file": "wms/InventoryReportPage.tsx",
+        "count": 10,
+        "examples": []
+      },
+      {
+        "file": "ai/DocumentManager.tsx",
+        "count": 10,
+        "examples": []
+      },
+      {
+        "file": "export/EnhancedExportModal.tsx",
+        "count": 10,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "import-export/ExportOptions.tsx",
+        "count": 10,
+        "examples": []
+      },
+      {
+        "file": "templates/CardListTemplate.tsx",
+        "count": 10,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 1",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "erp/DatabaseManagementPage.tsx",
+        "count": 9,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 1",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "hrm/HrmPayrollPage.tsx",
+        "count": 9,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "lims/LimsProcessPage.tsx",
+        "count": 9,
+        "examples": []
+      },
+      {
+        "file": "pm/GanttChart.tsx",
+        "count": 9,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "templates/StatsPageTemplate.tsx",
+        "count": 9,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 1",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "bi/BIAnalyticsPage.tsx",
+        "count": 8,
+        "examples": [
+          "borderRadius: 3",
+          "borderRadius: 2",
+          "borderRadius: 3"
+        ]
+      },
+      {
+        "file": "ehs/EhsAccidentPage.tsx",
+        "count": 8,
+        "examples": []
+      },
+      {
+        "file": "ehs/EhsCheckPage.tsx",
+        "count": 8,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "ehs/EhsHazardPage.tsx",
+        "count": 8,
+        "examples": []
+      },
+      {
+        "file": "finance/FinanceReceivablePayablePage.tsx",
+        "count": 8,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "lims/ReagentPage.tsx",
+        "count": 8,
+        "examples": []
+      },
+      {
+        "file": "mes/ProductionOrderManagementPage.tsx",
+        "count": 8,
+        "examples": []
+      },
+      {
+        "file": "pm/PmReportPage.tsx",
+        "count": 8,
+        "examples": []
+      },
+      {
+        "file": "qms/QmsQualityCostPage.tsx",
+        "count": 8,
+        "examples": []
+      },
+      {
+        "file": "qms/QmsStandardListPage.tsx",
+        "count": 8,
+        "examples": []
+      },
+      {
+        "file": "report/ReportViewer.tsx",
+        "count": 8,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "srm/SrmOrderPage.tsx",
+        "count": 8,
+        "examples": []
+      },
+      {
+        "file": "bi/ChartAnnotations.tsx",
+        "count": 8,
+        "examples": []
+      },
+      {
+        "file": "dashboard/DashboardQuickActions.tsx",
+        "count": 8,
+        "examples": []
+      },
+      {
+        "file": "import-export/ImportPreview.tsx",
+        "count": 8,
+        "examples": []
+      },
+      {
+        "file": "templates/TimelinePageTemplate.tsx",
+        "count": 8,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "admin/AuditLogPage.tsx",
+        "count": 7,
+        "examples": []
+      },
+      {
+        "file": "bi/BIDashboardPage.tsx",
+        "count": 7,
+        "examples": []
+      },
+      {
+        "file": "docs/DocumentsPage.tsx",
+        "count": 7,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "finance/DashboardPage.tsx",
+        "count": 7,
+        "examples": []
+      },
+      {
+        "file": "finance/FinanceBudgetPage.tsx",
+        "count": 7,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "finance/VoucherDetailPage.tsx",
+        "count": 7,
+        "examples": []
+      },
+      {
+        "file": "hrm/HrmEmployeePage.tsx",
+        "count": 7,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "hrm/HrmRecruitmentPage.tsx",
+        "count": 7,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "im/MailPage.tsx",
+        "count": 7,
+        "examples": []
+      },
+      {
+        "file": "mes/MaterialBOMPage.tsx",
+        "count": 7,
+        "examples": []
+      },
+      {
+        "file": "plugin/PluginMarketplacePage.tsx",
+        "count": 7,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "shared/PluginMarketplacePage.tsx",
+        "count": 7,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "shared/ProfilePage.tsx",
+        "count": 7,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "workflow/FlowInstanceDetailPage.tsx",
+        "count": 7,
+        "examples": []
+      },
+      {
+        "file": "gis/Map3DView.tsx",
+        "count": 7,
+        "examples": []
+      },
+      {
+        "file": "templates/MasterDetailPageTemplate.tsx",
+        "count": 7,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 2",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "admin/ConfigDebugPage.tsx",
+        "count": 6,
+        "examples": []
+      },
+      {
+        "file": "ai/AiChatPage.tsx",
+        "count": 6,
+        "examples": []
+      },
+      {
+        "file": "ehs/EhsDrillPage.tsx",
+        "count": 6,
+        "examples": []
+      },
+      {
+        "file": "finance/FinanceCostPage.tsx",
+        "count": 6,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "lims/BarcodePage.tsx",
+        "count": 6,
+        "examples": []
+      },
+      {
+        "file": "lims/InspectionTaskPage.tsx",
+        "count": 6,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "mes/EquipmentManagementPage.tsx",
+        "count": 6,
+        "examples": []
+      },
+      {
+        "file": "pdm/PdmBatchPage.tsx",
+        "count": 6,
+        "examples": []
+      },
+      {
+        "file": "pdm/PdmProjectPage.tsx",
+        "count": 6,
+        "examples": [
+          "borderRadius: 3",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "shared/AIPage.tsx",
+        "count": 6,
+        "examples": []
+      },
+      {
+        "file": "wms/InboundPage.tsx",
+        "count": 6,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "wms/InventoryPage.tsx",
+        "count": 6,
+        "examples": []
+      },
+      {
+        "file": "wms/StockTakePage.tsx",
+        "count": 6,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "wms/SupplierDetailPage.tsx",
+        "count": 6,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "workflow/FlowApprovalDetailPage.tsx",
+        "count": 6,
+        "examples": []
+      },
+      {
+        "file": "bi/ChartCard.tsx",
+        "count": 6,
+        "examples": []
+      },
+      {
+        "file": "common/AlertCard.tsx",
+        "count": 6,
+        "examples": []
+      },
+      {
+        "file": "dashboard/RecentActivities.tsx",
+        "count": 6,
+        "examples": []
+      },
+      {
+        "file": "gis/modules/EvidenceModule/EvidencePanel.tsx",
+        "count": 6,
+        "examples": []
+      },
+      {
+        "file": "templates/DetailPageTemplate.tsx",
+        "count": 6,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "templates/PageHeader.tsx",
+        "count": 6,
+        "examples": []
+      },
+      {
+        "file": "templates/TemplateDemoPage.tsx",
+        "count": 6,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "crm/ContactDetailPage.tsx",
+        "count": 5,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "hrm/HrmCompanyPage.tsx",
+        "count": 5,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "hrm/HrmDepartmentPage.tsx",
+        "count": 5,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "integration/ExternalErpMappingPage.tsx",
+        "count": 5,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "integration/IntegrationExternalErpOverviewPage.tsx",
+        "count": 5,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "oa/ExpenseClaimPage.tsx",
+        "count": 5,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "qms/QmsEightDPage.tsx",
+        "count": 5,
+        "examples": [
+          "borderRadius: 3",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "wms/OutboundPage.tsx",
+        "count": 5,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "common/Pagination.tsx",
+        "count": 5,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "gis/HeatmapLayer.tsx",
+        "count": 5,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "templates/FormPageTemplate.tsx",
+        "count": 5,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "templates/TreePageTemplate.tsx",
+        "count": 5,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "admin/AccountManagementPage.tsx",
+        "count": 4,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "admin/SystemManagementPage.tsx",
+        "count": 4,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "crm/OpportunityDetailPage.tsx",
+        "count": 4,
+        "examples": [
+          "borderRadius: 5",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "docs/DocumentCenterPage.tsx",
+        "count": 4,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "ehs/CompliancePage.tsx",
+        "count": 4,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "ehs/HazardPage.tsx",
+        "count": 4,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "ehs/TrainingPage.tsx",
+        "count": 4,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "finance/FinanceInvoicePage.tsx",
+        "count": 4,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "finance/FinanceLedgerPage.tsx",
+        "count": 4,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "mes/ProcessFlowPage.tsx",
+        "count": 4,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "mes/WorkStationPage.tsx",
+        "count": 4,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "pdm/PdmFormulaPage.tsx",
+        "count": 4,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "pm/PmContractListPage.tsx",
+        "count": 4,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "pm/PmResourcePage.tsx",
+        "count": 4,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "qms/QmsFmeaPage.tsx",
+        "count": 4,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "qms/QmsSpcPage.tsx",
+        "count": 4,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "scm/MrpPlanPage.tsx",
+        "count": 4,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "wms/LocationPage.tsx",
+        "count": 4,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "wms/ReplenishmentPage.tsx",
+        "count": 4,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "wms/TransferPage.tsx",
+        "count": 4,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "workflow/FlowNotificationCenter.tsx",
+        "count": 4,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "EnhancedDataTable.tsx",
+        "count": 4,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "LoadingProvider.tsx",
+        "count": 4,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 3",
+          "borderRadius: 3"
+        ]
+      },
+      {
+        "file": "addressbook/AddressbookSidebar.tsx",
+        "count": 4,
+        "examples": [
+          "borderRadius: 4",
+          "borderRadius: 4",
+          "borderRadius: 6"
+        ]
+      },
+      {
+        "file": "common/CommandPalette.tsx",
+        "count": 4,
+        "examples": [
+          "borderRadius: 3",
+          "borderRadius: 4",
+          "borderRadius: 4"
+        ]
+      },
+      {
+        "file": "common/EmptyState.tsx",
+        "count": 4,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "common/ProgressBar.tsx",
+        "count": 4,
+        "examples": [
+          "borderRadius: 4",
+          "borderRadius: 4",
+          "borderRadius: 4"
+        ]
+      },
+      {
+        "file": "templates/SettingsPageTemplate.tsx",
+        "count": 4,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "bi/BIVisualizationPage.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "crm/CRMBillingPage.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "crm/CRMCustomerSegmentationPage.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "docs/DocsFileDetailPage.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "ehs/EhsPlanPage.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "ehs/EmergencyPage.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "ehs/EnvironmentPage.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "ehs/HealthManagementPage.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "finance/BudgetManagementPage.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "finance/FinanceAssetPage.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "lims/SampleReceivePage.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "mes/EquipmentDetailPage.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "mes/ProductionProcessPage.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "mes/ProductionRecordPage.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "pdm/BomPage.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "pdm/ChangePage.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "pdm/DocumentPage.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "pdm/MaterialPage.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "pdm/PdmProcessPage.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "pdm/PdmProductConfigPage.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "pdm/PdmStepPage.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "pdm/ProductPage.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "report/TemplateManagementPage.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "workflow/FlowMonitorPage.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "ai/AIDataCompleter.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "common/DataTable.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "common/PageContainer.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "dashboard/HeroSection.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 3",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "gis/modules/MapModule/MapControls.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "gis/modules/TrackModule/TrackPlayer.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "im/ContactList.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 4",
+          "borderRadius: 4",
+          "borderRadius: 4"
+        ]
+      },
+      {
+        "file": "im/MessageBubble.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 4",
+          "borderRadius: 4",
+          "borderRadius: 4"
+        ]
+      },
+      {
+        "file": "layout/MobileNav.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "layout/Sidebar.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "pm/ProjectReport.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "responsive/ResponsiveHeader.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "templates/TemplateSelector.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "templates/WizardPageTemplate.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "templates/dashboard/StatCardComponent.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 3",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "ui/LoadingFallback.tsx",
+        "count": 3,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "admin/PermissionManagementPage.tsx",
+        "count": 2,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "admin/PluginManagementPage.tsx",
+        "count": 2,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "admin/RoleManagementPage.tsx",
+        "count": 2,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "admin/UserManagementPage.tsx",
+        "count": 2,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "crm/CRMCustomerScoringPage.tsx",
+        "count": 2,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "crm/OpportunityManagementPage.tsx",
+        "count": 2,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "docs/KnowledgeBasePage.tsx",
+        "count": 2,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "erp/DictManagementPage.tsx",
+        "count": 2,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "finance/FinanceExpensePage.tsx",
+        "count": 2,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "finance/FinancePaymentPage.tsx",
+        "count": 2,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "finance/FinanceReceiptPage.tsx",
+        "count": 2,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "pdm/PdmBomPage.tsx",
+        "count": 2,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "rs/RsMilestonePage.tsx",
+        "count": 2,
+        "examples": [
+          "borderRadius: 4",
+          "borderRadius: 4"
+        ]
+      },
+      {
+        "file": "shared/DashboardPage.tsx",
+        "count": 2,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "ai/AIDocumentGenerator.tsx",
+        "count": 2,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "bi/DashboardEditor.tsx",
+        "count": 2,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "common/MuiStatCard.tsx",
+        "count": 2,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "dashboard/DashboardHeader.tsx",
+        "count": 2,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "dashboard/DashboardSections.tsx",
+        "count": 2,
+        "examples": [
+          "borderRadius: 3",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "dashboard/MobileMenu.tsx",
+        "count": 2,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "dashboard/ModuleStatsCard.tsx",
+        "count": 2,
+        "examples": [
+          "borderRadius: 3",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "dashboard/ServiceStatusCard.tsx",
+        "count": 2,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "gis/modules/HeatmapModule/HeatmapLayer.tsx",
+        "count": 2,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "gis/modules/MapModule/LayerManager.tsx",
+        "count": 2,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "import-export/ExportDropdown.tsx",
+        "count": 2,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "layout/AppSidebar.tsx",
+        "count": 2,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "layout/GlobalLayout.tsx",
+        "count": 2,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "layout/ServiceMonitor.tsx",
+        "count": 2,
+        "examples": [
+          "borderRadius: 2",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "notifications/NotificationSettings.tsx",
+        "count": 2,
+        "examples": [
+          "borderRadius: 4",
+          "borderRadius: 4"
+        ]
+      },
+      {
+        "file": "templates/TemplateEditor.tsx",
+        "count": 2,
+        "examples": [
+          "borderRadius: 1",
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "admin/CompanyStructurePage.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "admin/DictionaryManagementPage.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "admin/SystemSettingsPage.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "asset/EquipmentInspectionPage.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "asset/EquipmentMaintenancePage.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "asset/VoucherTemplatePage.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "crm/CRMRecommendationPage.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 3"
+        ]
+      },
+      {
+        "file": "crm/CRMSalesFunnelPage.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 3"
+        ]
+      },
+      {
+        "file": "crm/DashboardPage.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 4"
+        ]
+      },
+      {
+        "file": "finance/OpeningBalancePage.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "gis/GisFencePage.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "hrm/HrmAttendancePage.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "hrm/HrmContractDetailPage.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "hrm/HrmLeavePage.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "hrm/HrmOrganizationPage.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "hrm/HrmPositionPage.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "hrm/HrmTrainingPage.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "integration/ExternalErpConnectionsPage.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "integration/IntegrationEventsPage.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "lims/LimsInstrumentDataPage.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "mes/ProcessRoutePage.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "pm/PmProjectListPage.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 4"
+        ]
+      },
+      {
+        "file": "rs/RsBuildPage.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "rs/RsDeployPage.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "rs/RsSettingsPage.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "scm/ScmDeliveryAppointmentPage.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "shared/ModulesOverviewPage.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "srm/SrmPerformancePage.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "workflow/FlowVersionHistoryPage.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "WorkflowTableExample.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "addressbook/AddressbookFilters.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 6"
+        ]
+      },
+      {
+        "file": "ai/AICodeGenerator.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "ai/AISummarizer.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "ai/AITextOptimizer.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "bi/DashboardTemplateManager.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "charts/CustomTooltip.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 3"
+        ]
+      },
+      {
+        "file": "common/AdvancedFilter.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "common/AlertPanel.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "common/CommentList.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "common/DateRangeQuickSelect.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "common/FilterBar.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "common/FormFieldGroup.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "common/HelpButton.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "common/QuickSearch.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 4"
+        ]
+      },
+      {
+        "file": "export/ImportExportModal.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "gis/modules/EvidenceModule/AudioCapture.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 4"
+        ]
+      },
+      {
+        "file": "gis/modules/TrackModule/TrackPanel.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "im/ChatRoomItem.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 4"
+        ]
+      },
+      {
+        "file": "import-export/ImportButton.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "plugin/PluginCard.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "plugin/PluginDetailModal.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "pm/ProjectTemplateModal.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "templates/ListPageTemplate.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "templates/dashboard/CardGroupComponent.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "templates/dashboard/ChartCardComponent.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 2"
+        ]
+      },
+      {
+        "file": "templates/list/ListBatchActions.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "ui/Sidebar.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 1"
+        ]
+      },
+      {
+        "file": "workflow/WorkflowDesigner.tsx",
+        "count": 1,
+        "examples": [
+          "borderRadius: 1"
+        ]
+      }
+    ],
+    "noPageContainer": []
+  },
+  "recommendations": [
+    {
+      "priority": "P1",
+      "title": "硬编码色值替换",
+      "description": "将硬编码的hex/rgb颜色值替换为MUI主题变量",
+      "affectedFiles": 109,
+      "estimatedEffort": "11人天"
+    },
+    {
+      "priority": "P2",
+      "title": "borderRadius标准化",
+      "description": "统一使用theme.shape.borderRadius或标准md值(8px)",
+      "affectedFiles": 293,
+      "estimatedEffort": "15人天"
+    },
+    {
+      "priority": "P3",
+      "title": "PageContainer迁移",
+      "description": "将剩余页面迁移到PageContainer统一布局",
+      "affectedFiles": 0,
+      "estimatedEffort": "0人天"
+    }
+  ]
+}

@@ -435,7 +435,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${selectedType.code}_items.json`;
+    a.download = `${selectedType.code}items.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

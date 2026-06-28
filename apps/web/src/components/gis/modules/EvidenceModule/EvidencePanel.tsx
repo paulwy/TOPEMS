@@ -49,7 +49,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
         position,
         file_url: URL.createObjectURL(file),
         thumbnail_url: thumbnail,
-        file_size: file.size,
+        filesize: file.size,
         recorded_by: 'current-user',
         recorded_at: new Date().toISOString(),
       };
@@ -69,7 +69,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
         position,
         file_url: URL.createObjectURL(file),
         duration,
-        file_size: file.size,
+        filesize: file.size,
         recorded_by: 'current-user',
         recorded_at: new Date().toISOString(),
       };
@@ -90,7 +90,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
         file_url: URL.createObjectURL(file),
         thumbnail_url: thumbnail,
         duration,
-        file_size: file.size,
+        filesize: file.size,
         recorded_by: 'current-user',
         recorded_at: new Date().toISOString(),
       };
@@ -165,7 +165,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        bgcolor: 'white',
+        bgcolor: 'background.paper',
       }}
     >
       {/* Header */}
@@ -216,18 +216,18 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               alignItems: 'center',
               gap: 8,
               p: 16,
-              bgcolor: 'white',
+              bgcolor: 'background.paper',
               border: 1,
-              borderColor: 'grey.200',
+              borderColor: 'divider',
               borderRadius: 8,
-              '&:hover': { bgcolor: 'primary.light', borderColor: '#93c5fd' },
+              '&:hover': { bgcolor: 'primary.light', borderColor: 'primary.light' },
               textTransform: 'none',
             }}
           >
-            <Box sx={{ p: 12, bgcolor: '#dbeafe', borderRadius: '9999px' }}>
+            <Box sx={{ p: 12, bgcolor: 'primary.lightest', borderRadius: '9999px' }}>
               <Camera
                 size={24}
-                style={{ color: 'primary.dark' }}
+                sx={{ color: 'primary.dark' }}
               />
             </Box>
             <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'grey.700' }}>
@@ -243,11 +243,11 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               alignItems: 'center',
               gap: 8,
               p: 16,
-              bgcolor: 'white',
+              bgcolor: 'background.paper',
               border: 1,
-              borderColor: 'grey.200',
+              borderColor: 'divider',
               borderRadius: 8,
-              '&:hover': { bgcolor: 'success.light', borderColor: '#86efac' },
+              '&:hover': { bgcolor: 'success.light', borderColor: 'success.light' },
               textTransform: 'none',
             }}
           >
@@ -270,18 +270,18 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
               alignItems: 'center',
               gap: 8,
               p: 16,
-              bgcolor: 'white',
+              bgcolor: 'background.paper',
               border: 1,
-              borderColor: 'grey.200',
+              borderColor: 'divider',
               borderRadius: 8,
-              '&:hover': { bgcolor: 'secondary.light', borderColor: '#c4b5fd' },
+              '&:hover': { bgcolor: 'secondary.light', borderColor: 'secondary.light' },
               textTransform: 'none',
             }}
           >
-            <Box sx={{ p: 12, bgcolor: '#f3e8ff', borderRadius: '9999px' }}>
+            <Box sx={{ p: 12, bgcolor: 'secondary.lightest', borderRadius: '9999px' }}>
               <Video
                 size={24}
-                style={{ color: '#9333ea' }}
+                sx={{ color: 'secondary.dark' }}
               />
             </Box>
             <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'grey.700' }}>
@@ -373,28 +373,28 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
             onClick={() => setViewMode('grid')}
             sx={{
               borderRadius: 4,
-              bgcolor: viewMode === 'grid' ? 'white' : 'transparent',
+              bgcolor: viewMode === 'grid' ? 'background.paper' : 'transparent',
               boxShadow: viewMode === 'grid' ? 1 : 0,
-              '&:hover': { bgcolor: viewMode === 'grid' ? 'white' : 'grey.200' },
+              '&:hover': { bgcolor: viewMode === 'grid' ? 'background.paper' : 'action.hover' },
             }}
           >
             <Grid
               size={16}
-              style={{ color: 'text.secondary' }}
+              sx={{ color: 'text.secondary' }}
             />
           </IconButton>
           <IconButton
             onClick={() => setViewMode('list')}
             sx={{
               borderRadius: 4,
-              bgcolor: viewMode === 'list' ? 'white' : 'transparent',
+              bgcolor: viewMode === 'list' ? 'background.paper' : 'transparent',
               boxShadow: viewMode === 'list' ? 1 : 0,
-              '&:hover': { bgcolor: viewMode === 'list' ? 'white' : 'grey.200' },
+              '&:hover': { bgcolor: viewMode === 'list' ? 'background.paper' : 'action.hover' },
             }}
           >
             <List
               size={16}
-              style={{ color: 'text.secondary' }}
+              sx={{ color: 'text.secondary' }}
             />
           </IconButton>
         </Box>
@@ -415,7 +415,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
           >
             <Tag
               size={48}
-              style={{ color: 'grey.300', marginBottom: 12 }}
+              sx={{ color: 'action.disabled', mb: 1.5 }}
             />
             <Typography sx={{ fontSize: '0.875rem' }}>暂无取证记录</Typography>
           </Box>
@@ -588,7 +588,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
                   }}
                 >
                   <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
-                    {formatFileSize(record.file_size)}
+                    {formatFileSize(record.filesize)}
                   </Typography>
                   {record.duration && (
                     <Typography sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>

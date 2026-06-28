@@ -233,12 +233,12 @@ const PmProjectDetailPage: React.FC = () => {
             >
               <Typography sx={{ color: 'grey.500' }}>风险等级</Typography>
               <StatusBadge
-                status={project.risk_level || 'low'}
-                label={RISK_LABELS[project.risk_level || ''] || '未评估'}
+                status={project.risklevel || 'low'}
+                label={RISK_LABELS[project.risklevel || ''] || '未评估'}
                 color={
-                  project.risk_level === 'high'
+                  project.risklevel === 'high'
                     ? 'error'
-                    : project.risk_level === 'medium'
+                    : project.risklevel === 'medium'
                       ? 'warning'
                       : 'success'
                 }
@@ -1118,7 +1118,7 @@ const PmProjectDetailPage: React.FC = () => {
     return {
       title: project.name,
       subtitle: project.code,
-      tags: [STATUS_LABELS[statusKey], RISK_LABELS[project.risk_level || ''] || '未评估'],
+      tags: [STATUS_LABELS[statusKey], RISK_LABELS[project.risklevel || ''] || '未评估'],
       stats: [
         { label: '项目进度', value: `${project.progress}%` },
         { label: '阶段完成', value: `${completedPhases}/${phases.length}` },

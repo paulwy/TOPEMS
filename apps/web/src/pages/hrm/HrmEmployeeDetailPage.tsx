@@ -239,7 +239,7 @@ const HrmEmployeeDetailPage: React.FC = () => {
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>岗位等级</InputLabel>
-          <Typography sx={{ mt: 0.5 }}>{employee.job_level || '-'}</Typography>
+          <Typography sx={{ mt: 0.5 }}>{employee.joblevel || '-'}</Typography>
         </Box>
         <Box>
           <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>工作地点</InputLabel>

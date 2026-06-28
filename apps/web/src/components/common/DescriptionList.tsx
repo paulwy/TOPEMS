@@ -4,7 +4,7 @@ import {
   Typography,
   Tooltip,
   IconButton,
-  _Stack,
+  Stack,
   Divider,
   useTheme,
   useMediaQuery,
@@ -26,26 +26,26 @@ export interface DescriptionListProps {
   columns?: number | { xs?: number; sm?: number; md?: number; lg?: number };
   direction?: 'horizontal' | 'vertical';
   labelWidth?: number | string;
-  size?: 'small' | 'medium' | 'large';
+  size?: 'sm' | 'md' | 'lg';
   divider?: boolean;
-  sx?: any;
+  sx?: import('@mui/material/styles').SxProps<import('@mui/material/styles').Theme>;
   gap?: number;
 }
 
 const sizeConfig = {
-  small: {
+  sm: {
     labelVariant: 'caption' as const,
     valueVariant: 'body2' as const,
     labelColor: 'text.secondary',
     py: 0.75,
   },
-  medium: {
+  md: {
     labelVariant: 'body2' as const,
     valueVariant: 'body1' as const,
     labelColor: 'text.secondary',
     py: 1,
   },
-  large: {
+  lg: {
     labelVariant: 'body1' as const,
     valueVariant: 'h6' as const,
     labelColor: 'text.primary',
@@ -58,7 +58,7 @@ export const DescriptionList: React.FC<DescriptionListProps> = ({
   columns = 2,
   direction = 'horizontal',
   labelWidth,
-  size = 'medium',
+  size = 'md',
   divider = false,
   sx,
   gap = 3,

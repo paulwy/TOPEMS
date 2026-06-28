@@ -49,7 +49,7 @@ import {
   useUpdateSupplierMapping,
 } from '@/hooks/useExternalErp';
 import { EnhancedDataTable } from '@/components/EnhancedDataTable';
-import type { AccountMappingDirection } from '@/types/externalErp';
+import type { AccountMappingDirection } from '@/types/external-erp';
 import { PageContainer } from '@/components/common';
 
 // 映射类型配置
@@ -125,14 +125,14 @@ export default function ExternalErpMappingPage() {
     external_code: string;
     external_name: string;
     direction: AccountMappingDirection;
-    is_active: boolean;
+    isactive: boolean;
   }>({
     local_code: '',
     local_name: '',
     external_code: '',
     external_name: '',
     direction: 'bidirectional',
-    is_active: true,
+    isactive: true,
   });
 
   // 查询连接详情
@@ -232,10 +232,10 @@ export default function ExternalErpMappingPage() {
       {
         id: 'status',
         header: '状态',
-        accessorKey: 'is_active',
+        accessorKey: 'isactive',
         size: 80,
         cell: ({ row }: any) =>
-          row.is_active ? (
+          row.isactive ? (
             <Chip
               size='small'
               label='启用'
@@ -385,7 +385,7 @@ export default function ExternalErpMappingPage() {
       external_code: mapping[getExternalCodeField()] || '',
       external_name: mapping[getExternalNameField()] || '',
       direction: mapping.direction || 'bidirectional',
-      is_active: mapping.is_active ?? true,
+      isactive: mapping.isactive ?? true,
     });
     setShowEditDialog(true);
   };
@@ -400,7 +400,7 @@ export default function ExternalErpMappingPage() {
       external_code: editFormData.external_code,
       external_name: editFormData.external_name,
       direction: editFormData.direction,
-      is_active: editFormData.is_active,
+      isactive: editFormData.isactive,
     };
 
     switch (activeMappingType) {

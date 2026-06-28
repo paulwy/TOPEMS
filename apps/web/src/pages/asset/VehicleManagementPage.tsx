@@ -88,7 +88,7 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({ onNavigat
     try {
       const params: any = {
         page: currentPage,
-        page_size: pageSize,
+        pagesize: pageSize,
       };
       if (debouncedSearch) {
         params.search = debouncedSearch;

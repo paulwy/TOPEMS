@@ -91,7 +91,7 @@ const HrmEmployeePage: React.FC = () => {
     items: [],
     total: 0,
     page: 1,
-    page_size: 10,
+    pagesize: 10,
   });
 
   // 筛选状态
@@ -136,7 +136,7 @@ const HrmEmployeePage: React.FC = () => {
             items: responseData.items || [],
             total: responseData.total || 0,
             page: responseData.page || 1,
-            page_size: responseData.page_size || 10,
+            pagesize: responseData.pagesize || 10,
           });
           if (viewMode === 'tree') {
             setFilteredEmployees(responseData.items || []);
@@ -158,7 +158,7 @@ const HrmEmployeePage: React.FC = () => {
   // 获取部门列表
   const fetchDepartments = useCallback(async () => {
     try {
-      const response = await departmentApi.list({ page_size: 100 });
+      const response = await departmentApi.list({ pagesize: 100 });
       if (response.code === 200 && response.data) {
         const responseData = response.data as any;
         const depts = responseData.items || [];
@@ -172,7 +172,7 @@ const HrmEmployeePage: React.FC = () => {
   // 获取公司列表
   const fetchCompanies = useCallback(async () => {
     try {
-      const response = await companyApi.list({ page_size: 100 });
+      const response = await companyApi.list({ pagesize: 100 });
       if (response.code === 200 && response.data) {
         const responseData = response.data as any;
         setCompanies(responseData.items || []);
@@ -246,7 +246,7 @@ const HrmEmployeePage: React.FC = () => {
     } else {
       setLoading(true);
       employeeApi
-        .list({ ...params, page_size: 100 })
+        .list({ ...params, pagesize: 100 })
         .then((response) => {
           if (response.code === 200 && response.data) {
             const responseData = response.data as any;
@@ -277,7 +277,7 @@ const HrmEmployeePage: React.FC = () => {
     if (viewMode === 'list') {
       fetchEmployees();
     } else {
-      fetchEmployees({ page_size: 100 });
+      fetchEmployees({ pagesize: 100 });
     }
   }, [viewMode, fetchEmployees]);
 
@@ -372,7 +372,7 @@ const HrmEmployeePage: React.FC = () => {
         if (viewMode === 'list') {
           fetchEmployees();
         } else {
-          fetchEmployees({ page_size: 100 });
+          fetchEmployees({ pagesize: 100 });
         }
       } catch (error: unknown) {
         addNotification({
@@ -402,7 +402,7 @@ const HrmEmployeePage: React.FC = () => {
         if (viewMode === 'list') {
           fetchEmployees();
         } else {
-          fetchEmployees({ page_size: 100 });
+          fetchEmployees({ pagesize: 100 });
         }
       } catch (error: unknown) {
         addNotification({
@@ -1031,7 +1031,7 @@ const HrmEmployeePage: React.FC = () => {
           onRefresh={() => fetchEmployees()}
           pagination={{
             page: data.page,
-            pageSize: data.page_size,
+            pageSize: data.pagesize,
             total: data.total,
             onPageChange: (page) => fetchEmployees({ page }),
           }}

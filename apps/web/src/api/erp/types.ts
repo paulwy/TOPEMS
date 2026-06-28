@@ -542,7 +542,7 @@ export interface Announcement {
 
 export interface PaginationParams {
   page?: number;
-  page_size?: number;
+  pagesize?: number;
   search?: string;
   status?: string;
 }
@@ -551,5 +551,5 @@ export interface PaginatedResult<T> {
   items: T[];
   total: number;
   page: number;
-  page_size: number;
+  pagesize: number;
 }

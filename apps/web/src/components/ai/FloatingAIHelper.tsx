@@ -2,7 +2,7 @@ import React, { useState, useCallback } from 'react';
 import {
   Box,
   IconButton,
-  _Paper,
+  Paper,
   Typography,
   TextField,
   Fab,
@@ -328,7 +328,7 @@ export const FloatingAIHelper: React.FC = () => {
                   input: {
                     startAdornment: (
                       <InputAdornment position='start'>
-                        <Search style={{ width: 18, height: 18, color: 'grey.500' }} />
+                        <Search sx={{ width: 18, height: 18, color: 'text.secondary' }} />
                       </InputAdornment>
                     ),
                     endAdornment: (

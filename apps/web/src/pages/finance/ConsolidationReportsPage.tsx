@@ -482,7 +482,7 @@ export default function ConsolidationReportsPage() {
                             style={{
                               padding: '12px',
                               borderBottom: '1px solid',
-                              paddingLeft: `${(line.item_level ?? 0) * 16 + 12}px`,
+                              paddingLeft: `${(line.itemlevel ?? 0) * 16 + 12}px`,
                             }}
                           >
                             {line.item_name || '-'}

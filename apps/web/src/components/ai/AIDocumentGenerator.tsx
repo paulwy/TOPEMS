@@ -14,7 +14,7 @@ import { Sparkles, RefreshCw, Copy, Check } from 'lucide-react';
 
 import { AIGenerateModal } from './AIGenerateModal';
 import { useAIHelper } from '../../hooks/useAIHelper';
-import { AI_TEMPLATES, getAITemplatesList } from '../../config/aiTemplates';
+import { AI_TEMPLATES, getAITemplatesList } from '../../config/ai-templates';
 import type { AITemplate } from '@/types/ai';
 
 export interface AIDocumentGeneratorProps {

@@ -8,7 +8,7 @@ export const syncLogsApi = {
     start_date?: string;
     end_date?: string;
     page?: number;
-    page_size?: number;
+    pagesize?: number;
   }) =>
     apiClient.integration.get('/api/integration/external-erp/sync-logs', {
       params,

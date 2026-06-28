@@ -123,7 +123,7 @@ export function useAIHelper<T = any>(options: UseAIHelperOptions): UseAIHelperRe
       const operation = () =>
         aiApi.generate({
           variables: { prompt },
-          output_format: 'text',
+          outputformat: 'text',
           ...generateOptions,
         });
 
