@@ -173,7 +173,6 @@ export default function ConfirmDialog({
   showTitle = true,
   showMessage = true,
   centered = true,
-  closeOnBackdropClick = true,
   showSuccessIcon = false,
   sx,
 }: ConfirmDialogConfig) {
@@ -238,13 +237,6 @@ export default function ConfirmDialog({
     [isDragging],
   );
 
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent) => {
-      updatePaperPosition(e.clientX, e.clientY);
-    },
-    [updatePaperPosition],
-  );
-
   const handleMouseUp = useCallback(() => {
     setIsDragging(false);
   }, []);
@@ -294,8 +286,8 @@ export default function ConfirmDialog({
           {...paperProps}
           style={{
             ...paperSx,
-            ...(((paperProps as Record<string, unknown>).sx as SxProps<Theme>) || {}),
-          }}
+            ...(((paperProps as Record<string, unknown>).sx as Record<string, unknown>) || {}),
+          } as React.CSSProperties}
         >
           {dialogChildren}
         </div>
