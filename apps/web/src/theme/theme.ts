@@ -370,6 +370,328 @@ export const createCustomTheme = (mode: PaletteMode): Theme => {
           },
         },
       },
+      MuiAlert: {
+        styleOverrides: {
+          root: {
+            borderRadius: designTokens.borderRadius.md,
+            fontSize: designTokens.typography.fontSize.sm,
+          },
+          standardSuccess: {
+            backgroundColor: isDark ? 'rgba(34, 197, 94, 0.15)' : designTokens.colors.success[50],
+            color: isDark ? designTokens.colors.success[300] : designTokens.colors.success[800],
+          },
+          standardError: {
+            backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : designTokens.colors.error[50],
+            color: isDark ? designTokens.colors.error[300] : designTokens.colors.error[800],
+          },
+          standardWarning: {
+            backgroundColor: isDark ? 'rgba(245, 158, 11, 0.15)' : designTokens.colors.warning[50],
+            color: isDark ? designTokens.colors.warning[300] : designTokens.colors.warning[800],
+          },
+          standardInfo: {
+            backgroundColor: isDark ? 'rgba(59, 130, 246, 0.15)' : designTokens.colors.info[50],
+            color: isDark ? designTokens.colors.info[300] : designTokens.colors.info[800],
+          },
+        },
+      },
+      MuiAvatar: {
+        styleOverrides: {
+          root: {
+            fontSize: designTokens.typography.fontSize.md,
+            fontWeight: designTokens.typography.fontWeight.medium,
+          },
+        },
+      },
+      MuiBadge: {
+        styleOverrides: {
+          badge: {
+            fontSize: designTokens.typography.fontSize.xs,
+            fontWeight: designTokens.typography.fontWeight.semibold,
+            minWidth: 18,
+            height: 18,
+            borderRadius: 9,
+            padding: '0 5px',
+          },
+        },
+      },
+      MuiButtonGroup: {
+        styleOverrides: {
+          root: {
+            borderRadius: designTokens.borderRadius.md,
+          },
+        },
+      },
+      MuiDivider: {
+        styleOverrides: {
+          root: {
+            borderColor: designTokens.colors.border.default,
+          },
+        },
+      },
+      MuiIconButton: {
+        styleOverrides: {
+          root: {
+            borderRadius: designTokens.borderRadius.md,
+            transition: 'all 150ms ease',
+            '&:hover': {
+              backgroundColor: designTokens.colors.action.hover,
+            },
+          },
+          sizeSmall: {
+            padding: 6,
+          },
+          sizeMedium: {
+            padding: 8,
+          },
+        },
+      },
+      MuiLinearProgress: {
+        styleOverrides: {
+          root: {
+            borderRadius: designTokens.borderRadius.full,
+            height: 8,
+          },
+          bar: {
+            borderRadius: designTokens.borderRadius.full,
+          },
+        },
+      },
+      MuiMenuItem: {
+        styleOverrides: {
+          root: {
+            fontSize: designTokens.typography.fontSize.sm,
+            borderRadius: designTokens.borderRadius.sm,
+            margin: '2px 6px',
+            minHeight: 36,
+          },
+        },
+      },
+      MuiSkeleton: {
+        styleOverrides: {
+          root: {
+            borderRadius: designTokens.borderRadius.sm,
+          },
+          rounded: {
+            borderRadius: designTokens.borderRadius.md,
+          },
+          rectangular: {
+            borderRadius: designTokens.borderRadius.md,
+          },
+        },
+      },
+      MuiTypography: {
+        styleOverrides: {
+          root: {
+            wordBreak: 'break-word',
+          },
+        },
+        defaultProps: {
+          variantMapping: {
+            body1: 'div',
+            body2: 'div',
+          },
+        },
+      },
+      MuiStepLabel: {
+        styleOverrides: {
+          label: {
+            fontSize: designTokens.typography.fontSize.sm,
+            fontWeight: designTokens.typography.fontWeight.medium,
+          },
+        },
+      },
+      MuiInputBase: {
+        styleOverrides: {
+          root: {
+            fontSize: designTokens.typography.fontSize.sm,
+          },
+        },
+      },
+      MuiInputLabel: {
+        styleOverrides: {
+          root: {
+            fontSize: designTokens.typography.fontSize.sm,
+            fontWeight: designTokens.typography.fontWeight.medium,
+            color: designTokens.colors.text.secondary,
+          },
+          focused: {
+            color: designTokens.colors.primary.main,
+          },
+          shrink: {
+            fontSize: designTokens.typography.fontSize.sm,
+          },
+        },
+      },
+      MuiCircularProgress: {
+        styleOverrides: {
+          root: {
+            color: designTokens.colors.primary.main,
+          },
+        },
+      },
+      MuiBackdrop: {
+        styleOverrides: {
+          root: {
+            backgroundColor: isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.5)',
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
+          },
+        },
+      },
+      MuiSnackbar: {
+        styleOverrides: {
+          root: {
+            bottom: 24,
+          },
+        },
+      },
+      MuiAccordion: {
+        styleOverrides: {
+          root: {
+            borderRadius: designTokens.borderRadius.md,
+            boxShadow: 'none',
+            border: `1px solid ${designTokens.colors.border.default}`,
+            '&:before': {
+              display: 'none',
+            },
+            '&.Mui-expanded': {
+              margin: 0,
+            },
+          },
+        },
+      },
+      MuiAccordionSummary: {
+        styleOverrides: {
+          root: {
+            padding: '12px 20px',
+            minHeight: 48,
+            '&.Mui-expanded': {
+              minHeight: 48,
+            },
+          },
+          content: {
+            '&.Mui-expanded': {
+              margin: '12px 0',
+            },
+          },
+        },
+      },
+      MuiAccordionDetails: {
+        styleOverrides: {
+          root: {
+            padding: '16px 20px 20px',
+            borderTop: `1px solid ${designTokens.colors.border.default}`,
+          },
+        },
+      },
+      MuiLink: {
+        styleOverrides: {
+          root: {
+            color: designTokens.colors.primary.main,
+            textDecoration: 'none',
+            '&:hover': {
+              textDecoration: 'underline',
+            },
+          },
+        },
+      },
+      MuiSlider: {
+        styleOverrides: {
+          root: {
+            color: designTokens.colors.primary.main,
+            height: 4,
+            '&:hover': {
+              color: designTokens.colors.primary.dark,
+            },
+          },
+          thumb: {
+            width: 16,
+            height: 16,
+            boxShadow: designTokens.shadows.sm,
+          },
+          track: {
+            height: 4,
+            borderRadius: 2,
+          },
+          rail: {
+            height: 4,
+            borderRadius: 2,
+            opacity: 0.3,
+          },
+        },
+      },
+      MuiToggleButtonGroup: {
+        styleOverrides: {
+          root: {
+            borderRadius: designTokens.borderRadius.md,
+          },
+        },
+      },
+      MuiToggleButton: {
+        styleOverrides: {
+          root: {
+            textTransform: 'none',
+            fontSize: designTokens.typography.fontSize.sm,
+            fontWeight: designTokens.typography.fontWeight.medium,
+            '&.Mui-selected': {
+              backgroundColor: designTokens.colors.primary.main,
+              color: designTokens.colors.primary.contrastText,
+              '&:hover': {
+                backgroundColor: designTokens.colors.primary.dark,
+              },
+            },
+          },
+        },
+      },
+      MuiAutocomplete: {
+        styleOverrides: {
+          root: {
+            '& .MuiOutlinedInput-root': {
+              borderRadius: designTokens.borderRadius.md,
+            },
+          },
+          paper: {
+            borderRadius: designTokens.borderRadius.md,
+            boxShadow: designTokens.shadows.lg,
+          },
+          option: {
+            fontSize: designTokens.typography.fontSize.sm,
+            minHeight: 36,
+          },
+        },
+      },
+      MuiCardHeader: {
+        styleOverrides: {
+          root: {
+            padding: '16px 20px',
+          },
+          title: {
+            fontSize: designTokens.typography.fontSize.lg,
+            fontWeight: designTokens.typography.fontWeight.semibold,
+          },
+          subheader: {
+            fontSize: designTokens.typography.fontSize.sm,
+          },
+        },
+      },
+      MuiCardContent: {
+        styleOverrides: {
+          root: {
+            padding: '16px 20px',
+            '&:last-child': {
+              paddingBottom: '16px',
+            },
+          },
+        },
+      },
+      MuiCardActions: {
+        styleOverrides: {
+          root: {
+            padding: '12px 20px 16px',
+            gap: 8,
+          },
+        },
+      },
     },
   });
 };

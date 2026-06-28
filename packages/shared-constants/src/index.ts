@@ -6,12 +6,18 @@
 // 颜色常量
 export {
   COLORS,
+  DARK_COLORS,
   BACKGROUNDS,
+  DARK_BACKGROUNDS,
   TEXT,
+  DARK_TEXT,
   BORDERS,
+  DARK_BORDERS,
   STATUS_COLORS,
+  MODULE_GRADIENTS,
   GRADIENTS,
   SIDEBAR,
+  DARK_SIDEBAR,
   getStatusColorConfig,
   getStatusSxProps,
 } from './colors';

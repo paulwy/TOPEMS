@@ -182,8 +182,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
               color: isActive ? SIDEBAR.active.color : SIDEBAR.default.hover.color,
             },
             ...(isFocused && {
-              boxShadow: `0 0 0 2px ${COLORS.primary.rgb}`,
-              outline: `2px solid ${COLORS.primary.rgb}`,
+              boxShadow: `0 0 0 2px ${COLORS.primary.DEFAULT}`,
+              outline: `2px solid ${COLORS.primary.DEFAULT}`,
               outlineOffset: '2px',
             }),
             pl: depth * 1.5 + 1.5,
@@ -260,7 +260,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         flexDirection: 'column',
         height: '100%',
         bgcolor: SIDEBAR.default.bgcolor,
-        borderRight: `1px solid ${COLORS.secondary.rgb}`,
+        borderRight: `1px solid ${COLORS.secondary.DEFAULT}`,
         transition: 'all 0.3s',
         width: collapsed ? '4rem' : '16rem',
       }}
