@@ -1,7 +1,6 @@
 import type { Theme, ThemeOptions } from '@mui/material/styles';
 import { createTheme } from '@mui/material/styles';
-import type { PaletteMode } from '@mui/material';
-import { designTokens } from './tokens';
+import { designTokens, semanticTokens } from './tokens';
 import { gradients } from './gradients';
 
 // 扩展 Theme 接口以包含 gradients
@@ -14,12 +13,68 @@ declare module '@mui/material/styles' {
   }
 }
 
-const createBaseTheme = (mode: PaletteMode): ThemeOptions => {
-  const isDark = mode === 'dark';
+const lightShadows = [
+  designTokens.shadows.none,
+  designTokens.shadows.xs,
+  designTokens.shadows.sm,
+  designTokens.shadows.md,
+  designTokens.shadows.lg,
+  designTokens.shadows.xl,
+  designTokens.shadows['2xl'],
+  designTokens.shadows['3xl'],
+  designTokens.shadows.inner,
+  designTokens.shadows.sm,
+  designTokens.shadows.md,
+  designTokens.shadows.lg,
+  designTokens.shadows.xl,
+  designTokens.shadows['2xl'],
+  designTokens.shadows['3xl'],
+  designTokens.shadows.inner,
+  designTokens.shadows.sm,
+  designTokens.shadows.md,
+  designTokens.shadows.lg,
+  designTokens.shadows.xl,
+  designTokens.shadows['2xl'],
+  designTokens.shadows['3xl'],
+  designTokens.shadows.inner,
+  designTokens.shadows.sm,
+  designTokens.shadows.md,
+];
 
-  return {
+export const createCustomTheme = (): Theme => {
+  return createTheme({
+    cssVariables: {
+      colorSchemeSelector: 'class',
+    },
+    colorSchemes: {
+      light: {
+        palette: {
+          background: {
+            default: designTokens.colors.background.default,
+            paper: designTokens.colors.background.paper,
+          },
+          text: {
+            primary: designTokens.colors.text.primary,
+            secondary: designTokens.colors.text.secondary,
+          },
+          divider: designTokens.colors.border.default,
+        },
+      },
+      dark: {
+        palette: {
+          background: {
+            default: designTokens.colors.grey[900],
+            paper: designTokens.colors.grey[800],
+          },
+          text: {
+            primary: designTokens.colors.grey[100],
+            secondary: designTokens.colors.grey[400],
+          },
+          divider: designTokens.colors.grey[700],
+        },
+      },
+    },
     palette: {
-      mode,
       primary: {
         ...designTokens.colors.primary,
       },
@@ -39,15 +94,6 @@ const createBaseTheme = (mode: PaletteMode): ThemeOptions => {
         ...designTokens.colors.info,
       },
       grey: designTokens.colors.grey,
-      background: {
-        default: isDark ? designTokens.colors.grey[900] : designTokens.colors.background.default,
-        paper: isDark ? designTokens.colors.grey[800] : designTokens.colors.background.paper,
-      },
-      text: {
-        primary: isDark ? designTokens.colors.grey[100] : designTokens.colors.text.primary,
-        secondary: isDark ? designTokens.colors.grey[400] : designTokens.colors.text.secondary,
-      },
-      divider: isDark ? designTokens.colors.grey[700] : designTokens.colors.border.default,
     },
     typography: {
       fontFamily: designTokens.typography.fontFamily,
@@ -69,61 +115,7 @@ const createBaseTheme = (mode: PaletteMode): ThemeOptions => {
     },
     spacing: (factor: number) => `${factor * 8}px`,
     zIndex: designTokens.zIndex,
-    shadows: isDark
-      ? ([
-          designTokens.darkShadows.none,
-          designTokens.darkShadows.xs,
-          designTokens.darkShadows.sm,
-          designTokens.darkShadows.md,
-          designTokens.darkShadows.lg,
-          designTokens.darkShadows.xl,
-          designTokens.darkShadows['2xl'],
-          designTokens.darkShadows['3xl'],
-          designTokens.darkShadows.inner,
-          designTokens.darkShadows.sm,
-          designTokens.darkShadows.md,
-          designTokens.darkShadows.lg,
-          designTokens.darkShadows.xl,
-          designTokens.darkShadows['2xl'],
-          designTokens.darkShadows['3xl'],
-          designTokens.darkShadows.inner,
-          designTokens.darkShadows.sm,
-          designTokens.darkShadows.md,
-          designTokens.darkShadows.lg,
-          designTokens.darkShadows.xl,
-          designTokens.darkShadows['2xl'],
-          designTokens.darkShadows['3xl'],
-          designTokens.darkShadows.inner,
-          designTokens.darkShadows.sm,
-          designTokens.darkShadows.md,
-        ] as ThemeOptions['shadows'])
-      : ([
-          designTokens.shadows.none,
-          designTokens.shadows.xs,
-          designTokens.shadows.sm,
-          designTokens.shadows.md,
-          designTokens.shadows.lg,
-          designTokens.shadows.xl,
-          designTokens.shadows['2xl'],
-          designTokens.shadows['3xl'],
-          designTokens.shadows.inner,
-          designTokens.shadows.sm,
-          designTokens.shadows.md,
-          designTokens.shadows.lg,
-          designTokens.shadows.xl,
-          designTokens.shadows['2xl'],
-          designTokens.shadows['3xl'],
-          designTokens.shadows.inner,
-          designTokens.shadows.sm,
-          designTokens.shadows.md,
-          designTokens.shadows.lg,
-          designTokens.shadows.xl,
-          designTokens.shadows['2xl'],
-          designTokens.shadows['3xl'],
-          designTokens.shadows.inner,
-          designTokens.shadows.sm,
-          designTokens.shadows.md,
-        ] as ThemeOptions['shadows']),
+    shadows: lightShadows as ThemeOptions['shadows'],
     transitions: {
       duration: designTokens.transitions.duration,
       easing: designTokens.transitions.easing,
@@ -131,15 +123,6 @@ const createBaseTheme = (mode: PaletteMode): ThemeOptions => {
     breakpoints: {
       values: designTokens.breakpoints.values,
     },
-  };
-};
-
-export const createCustomTheme = (mode: PaletteMode): Theme => {
-  const baseTheme = createBaseTheme(mode);
-  const isDark = mode === 'dark';
-
-  return createTheme({
-    ...baseTheme,
     gradients,
     components: {
       MuiButton: {
@@ -181,38 +164,38 @@ export const createCustomTheme = (mode: PaletteMode): Theme => {
       MuiCard: {
         styleOverrides: {
           root: {
-            borderRadius: designTokens.borderRadius.lg,
-            boxShadow: designTokens.shadows.sm,
-            border: `1px solid ${designTokens.colors.border.default}`,
+            borderRadius: semanticTokens.radius.card,
+            boxShadow: semanticTokens.elevation.card,
+            border: semanticTokens.border.card,
           },
         },
       },
       MuiPaper: {
         styleOverrides: {
           root: {
-            borderRadius: designTokens.borderRadius.md,
+            borderRadius: semanticTokens.radius.default,
           },
         },
       },
       MuiDialog: {
         styleOverrides: {
           paper: {
-            borderRadius: designTokens.borderRadius.xl,
+            borderRadius: semanticTokens.radius.dialog,
           },
         },
       },
       MuiPopover: {
         styleOverrides: {
           paper: {
-            borderRadius: designTokens.borderRadius.lg,
-            boxShadow: designTokens.shadows.xl,
+            borderRadius: semanticTokens.radius.dialog,
+            boxShadow: semanticTokens.elevation.dialog,
           },
         },
       },
       MuiTooltip: {
         styleOverrides: {
           tooltip: {
-            borderRadius: designTokens.borderRadius.sm,
+            borderRadius: semanticTokens.radius.small,
             fontSize: designTokens.typography.fontSize.xs,
             padding: '8px 12px',
           },
@@ -221,7 +204,7 @@ export const createCustomTheme = (mode: PaletteMode): Theme => {
       MuiChip: {
         styleOverrides: {
           root: {
-            borderRadius: designTokens.borderRadius.md,
+            borderRadius: semanticTokens.radius.pill,
             fontSize: designTokens.typography.fontSize.xs,
             fontWeight: designTokens.typography.fontWeight.medium,
           },
@@ -248,20 +231,25 @@ export const createCustomTheme = (mode: PaletteMode): Theme => {
         styleOverrides: {
           root: {
             padding: '12px 16px',
-            borderBottom: `1px solid ${designTokens.colors.border.default}`,
+            borderBottom: semanticTokens.border.default,
           },
-          head: {
+          head: ({ theme }) => ({
             fontWeight: designTokens.typography.fontWeight.semibold,
-            backgroundColor: isDark ? designTokens.colors.grey[800] : designTokens.colors.grey[50],
-          },
+            backgroundColor: designTokens.colors.grey[50],
+            ...theme.applyStyles('dark', {
+              backgroundColor: designTokens.colors.grey[800],
+            }),
+          }),
         },
       },
       MuiTableHead: {
         styleOverrides: {
-          root: {
-            // In dark mode, use a slightly lighter background for table headers
-            backgroundColor: isDark ? designTokens.colors.grey[800] : designTokens.colors.grey[50],
-          },
+          root: ({ theme }) => ({
+            backgroundColor: designTokens.colors.grey[50],
+            ...theme.applyStyles('dark', {
+              backgroundColor: designTokens.colors.grey[800],
+            }),
+          }),
         },
       },
       MuiPagination: {
@@ -332,33 +320,36 @@ export const createCustomTheme = (mode: PaletteMode): Theme => {
       },
       MuiAppBar: {
         styleOverrides: {
-          root: {
+          root: ({ theme }) => ({
             height: 56,
             boxShadow: designTokens.shadows.sm,
-            backgroundColor: isDark
-              ? designTokens.colors.grey[800]
-              : designTokens.colors.background.paper,
-          },
+            backgroundColor: designTokens.colors.background.paper,
+            ...theme.applyStyles('dark', {
+              backgroundColor: designTokens.colors.grey[800],
+            }),
+          }),
         },
       },
       MuiListItemButton: {
         styleOverrides: {
-          root: {
+          root: ({ theme }) => ({
             borderRadius: designTokens.borderRadius.md,
             transition: 'all 150ms ease',
             '&.Mui-selected': {
-              backgroundColor: isDark
-                ? 'rgba(59, 130, 246, 0.15)'
-                : designTokens.colors.primary[50],
+              backgroundColor: designTokens.colors.primary[50],
               borderLeft: `3px solid ${designTokens.colors.primary.main}`,
               color: designTokens.colors.primary.main,
               '&:hover': {
-                backgroundColor: isDark
-                  ? 'rgba(59, 130, 246, 0.15)'
-                  : designTokens.colors.primary[50],
+                backgroundColor: designTokens.colors.primary[50],
               },
+              ...theme.applyStyles('dark', {
+                backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                '&:hover': {
+                  backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                },
+              }),
             },
-          },
+          }),
         },
       },
       MuiBreadcrumbs: {
@@ -376,28 +367,60 @@ export const createCustomTheme = (mode: PaletteMode): Theme => {
             borderRadius: designTokens.borderRadius.md,
             fontSize: designTokens.typography.fontSize.sm,
           },
-          standardSuccess: {
-            backgroundColor: isDark ? 'rgba(34, 197, 94, 0.15)' : designTokens.colors.success[50],
-            color: isDark ? designTokens.colors.success[300] : designTokens.colors.success[800],
-          },
-          standardError: {
-            backgroundColor: isDark ? 'rgba(239, 68, 68, 0.15)' : designTokens.colors.error[50],
-            color: isDark ? designTokens.colors.error[300] : designTokens.colors.error[800],
-          },
-          standardWarning: {
-            backgroundColor: isDark ? 'rgba(245, 158, 11, 0.15)' : designTokens.colors.warning[50],
-            color: isDark ? designTokens.colors.warning[300] : designTokens.colors.warning[800],
-          },
-          standardInfo: {
-            backgroundColor: isDark ? 'rgba(59, 130, 246, 0.15)' : designTokens.colors.info[50],
-            color: isDark ? designTokens.colors.info[300] : designTokens.colors.info[800],
-          },
+          colorSuccess: ({ theme }) => ({
+            '&.MuiAlert-standard': {
+              backgroundColor: designTokens.colors.success[50],
+              color: designTokens.colors.success[800],
+            },
+            ...theme.applyStyles('dark', {
+              '&.MuiAlert-standard': {
+                backgroundColor: 'rgba(34, 197, 94, 0.15)',
+                color: designTokens.colors.success[300],
+              },
+            }),
+          }),
+          colorError: ({ theme }) => ({
+            '&.MuiAlert-standard': {
+              backgroundColor: designTokens.colors.error[50],
+              color: designTokens.colors.error[800],
+            },
+            ...theme.applyStyles('dark', {
+              '&.MuiAlert-standard': {
+                backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                color: designTokens.colors.error[300],
+              },
+            }),
+          }),
+          colorWarning: ({ theme }) => ({
+            '&.MuiAlert-standard': {
+              backgroundColor: designTokens.colors.warning[50],
+              color: designTokens.colors.warning[800],
+            },
+            ...theme.applyStyles('dark', {
+              '&.MuiAlert-standard': {
+                backgroundColor: 'rgba(245, 158, 11, 0.15)',
+                color: designTokens.colors.warning[300],
+              },
+            }),
+          }),
+          colorInfo: ({ theme }) => ({
+            '&.MuiAlert-standard': {
+              backgroundColor: designTokens.colors.info[50],
+              color: designTokens.colors.info[800],
+            },
+            ...theme.applyStyles('dark', {
+              '&.MuiAlert-standard': {
+                backgroundColor: 'rgba(59, 130, 246, 0.15)',
+                color: designTokens.colors.info[300],
+              },
+            }),
+          }),
         },
       },
       MuiAvatar: {
         styleOverrides: {
           root: {
-            fontSize: designTokens.typography.fontSize.md,
+            fontSize: designTokens.typography.fontSize.base,
             fontWeight: designTokens.typography.fontWeight.medium,
           },
         },
@@ -513,12 +536,12 @@ export const createCustomTheme = (mode: PaletteMode): Theme => {
             fontSize: designTokens.typography.fontSize.sm,
             fontWeight: designTokens.typography.fontWeight.medium,
             color: designTokens.colors.text.secondary,
-          },
-          focused: {
-            color: designTokens.colors.primary.main,
-          },
-          shrink: {
-            fontSize: designTokens.typography.fontSize.sm,
+            '&.Mui-focused': {
+              color: designTokens.colors.primary.main,
+            },
+            '&.Mui-shrink': {
+              fontSize: designTokens.typography.fontSize.sm,
+            },
           },
         },
       },
@@ -531,11 +554,14 @@ export const createCustomTheme = (mode: PaletteMode): Theme => {
       },
       MuiBackdrop: {
         styleOverrides: {
-          root: {
-            backgroundColor: isDark ? 'rgba(0, 0, 0, 0.6)' : 'rgba(0, 0, 0, 0.5)',
+          root: ({ theme }) => ({
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
             backdropFilter: 'blur(4px)',
             WebkitBackdropFilter: 'blur(4px)',
-          },
+            ...theme.applyStyles('dark', {
+              backgroundColor: 'rgba(0, 0, 0, 0.6)',
+            }),
+          }),
         },
       },
       MuiSnackbar: {
@@ -550,7 +576,7 @@ export const createCustomTheme = (mode: PaletteMode): Theme => {
           root: {
             borderRadius: designTokens.borderRadius.md,
             boxShadow: 'none',
-            border: `1px solid ${designTokens.colors.border.default}`,
+            border: semanticTokens.border.card,
             '&:before': {
               display: 'none',
             },
@@ -580,7 +606,7 @@ export const createCustomTheme = (mode: PaletteMode): Theme => {
         styleOverrides: {
           root: {
             padding: '16px 20px 20px',
-            borderTop: `1px solid ${designTokens.colors.border.default}`,
+            borderTop: semanticTokens.border.default,
           },
         },
       },

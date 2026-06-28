@@ -4,8 +4,8 @@ import { createCustomTheme } from './theme';
 
 export { createCustomTheme } from './theme';
 
-// Create a light theme instance for Storybook (default)
-export const theme = createCustomTheme('light');
+// Create a single theme instance for Storybook (CSS Variables 模式下 light/dark 通过 class 切换，无需两个实例)
+export const theme = createCustomTheme();
 
-// Create a dark theme instance for Storybook dark mode stories
-export const darkTheme = createCustomTheme('dark');
+// Backward compatibility alias
+export const darkTheme = theme;

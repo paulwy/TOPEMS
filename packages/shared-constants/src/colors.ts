@@ -1,59 +1,54 @@
-/**
- * TOPEMS Design Tokens — Color Constants
- *
- * Single source of truth derived from apps/web/src/theme/tokens.ts
- * Provides both light and dark mode colors for runtime use outside of CSS/MUI.
- *
- * Usage:
- *   import { COLORS, DARK_COLORS, BACKGROUNDS, DARK_BACKGROUNDS } from "@topems/shared-constants";
- */
+// Derived from @topems/tokens — single source of truth: packages/tokens/src/tokens.ts
+import { designTokens } from '@topems/tokens';
+
+const { colors } = designTokens;
 
 // ========== Theme Colors (Light Mode) ==========
 export const COLORS = {
   primary: {
-    DEFAULT: '#3b82f6',
-    hover: '#2563eb',
-    light: '#60a5fa',
-    foreground: '#ffffff',
-    50: '#eff6ff',
-    100: '#dbeafe',
-    200: '#bfdbfe',
-    300: '#93c5fd',
-    400: '#60a5fa',
-    500: '#3b82f6',
-    600: '#2563eb',
-    700: '#1d4ed8',
-    800: '#1e40af',
-    900: '#1e3a8a',
+    DEFAULT: colors.primary.main,
+    hover: colors.primary.dark,
+    light: colors.primary.light,
+    foreground: colors.primary.contrastText,
+    50: colors.primary[50],
+    100: colors.primary[100],
+    200: colors.primary[200],
+    300: colors.primary[300],
+    400: colors.primary[400],
+    500: colors.primary[500],
+    600: colors.primary[600],
+    700: colors.primary[700],
+    800: colors.primary[800],
+    900: colors.primary[900],
   },
   secondary: {
-    DEFAULT: '#8b5cf6',
-    hover: '#7c3aed',
-    light: '#a78bfa',
-    foreground: '#ffffff',
+    DEFAULT: colors.secondary.main,
+    hover: colors.secondary.dark,
+    light: colors.secondary.light,
+    foreground: colors.secondary.contrastText,
   },
   success: {
-    DEFAULT: '#22c55e',
-    hover: '#16a34a',
-    light: '#86efac',
+    DEFAULT: colors.success.main,
+    hover: colors.success.dark,
+    light: colors.success.light,
     foreground: '#ffffff',
   },
   warning: {
-    DEFAULT: '#f59e0b',
-    hover: '#d97706',
-    light: '#fde68a',
+    DEFAULT: colors.warning.main,
+    hover: colors.warning.dark,
+    light: colors.warning.light,
     foreground: '#0f172a',
   },
   error: {
-    DEFAULT: '#ef4444',
-    hover: '#dc2626',
-    light: '#fca5a5',
+    DEFAULT: colors.error.main,
+    hover: colors.error.dark,
+    light: colors.error.light,
     foreground: '#ffffff',
   },
   info: {
-    DEFAULT: '#0ea5e9',
-    hover: '#0284c7',
-    light: '#7dd3fc',
+    DEFAULT: colors.info.main,
+    hover: colors.info.dark,
+    light: colors.info.light,
     foreground: '#ffffff',
   },
 } as const;
@@ -61,51 +56,51 @@ export const COLORS = {
 // ========== Theme Colors (Dark Mode) ==========
 export const DARK_COLORS = {
   primary: {
-    DEFAULT: '#60a5fa',
-    hover: '#3b82f6',
-    light: '#93c5fd',
+    DEFAULT: colors.primary.light,
+    hover: colors.primary.main,
+    light: colors.primary[300],
     foreground: '#0f172a',
   },
   secondary: {
-    DEFAULT: '#a78bfa',
-    hover: '#8b5cf6',
-    light: '#c4b5fd',
+    DEFAULT: colors.secondary.light,
+    hover: colors.secondary.main,
+    light: colors.secondary[300],
     foreground: '#0f172a',
   },
   success: {
-    DEFAULT: '#4ade80',
-    hover: '#22c55e',
-    light: '#bbf7d0',
+    DEFAULT: colors.success[400],
+    hover: colors.success.main,
+    light: colors.success[200],
     foreground: '#0f172a',
   },
   warning: {
-    DEFAULT: '#fbbf24',
-    hover: '#f59e0b',
-    light: '#fde68a',
+    DEFAULT: colors.warning[400],
+    hover: colors.warning.main,
+    light: colors.warning.light,
     foreground: '#0f172a',
   },
   error: {
-    DEFAULT: '#f87171',
-    hover: '#ef4444',
-    light: '#fecaca',
+    DEFAULT: colors.error[400],
+    hover: colors.error.main,
+    light: colors.error[100],
     foreground: '#ffffff',
   },
   info: {
-    DEFAULT: '#38bdf8',
-    hover: '#0ea5e9',
-    light: '#bae6fd',
+    DEFAULT: colors.info[400],
+    hover: colors.info.main,
+    light: colors.info[200],
     foreground: '#0f172a',
   },
 } as const;
 
 // ========== Background & Surface (Light) ==========
 export const BACKGROUNDS = {
-  background: '#f8fafc',
-  surface: '#ffffff',
-  surfaceLight: '#f1f5f9',
-  surfaceHover: '#e2e8f0',
-  card: '#ffffff',
-  cardHover: '#f1f5f9',
+  background: colors.background.default,
+  surface: colors.background.paper,
+  surfaceLight: colors.border.light,
+  surfaceHover: colors.action.active,
+  card: colors.background.paper,
+  cardHover: colors.border.light,
 } as const;
 
 // ========== Background & Surface (Dark) ==========
@@ -120,10 +115,10 @@ export const DARK_BACKGROUNDS = {
 
 // ========== Text Colors ==========
 export const TEXT = {
-  primary: '#1e293b',
-  secondary: '#64748b',
-  muted: '#94a3b8',
-  disabled: '#cbd5e1',
+  primary: colors.text.primary,
+  secondary: colors.text.secondary,
+  muted: colors.text.muted,
+  disabled: colors.text.disabled,
 } as const;
 
 export const DARK_TEXT = {
@@ -135,40 +130,40 @@ export const DARK_TEXT = {
 
 // ========== Border Colors ==========
 export const BORDERS = {
-  DEFAULT: '#e2e8f0',
-  light: '#f1f5f9',
-  input: '#e2e8f0',
-  ring: '#3b82f6',
+  DEFAULT: colors.border.default,
+  light: colors.border.light,
+  input: colors.border.default,
+  ring: colors.primary.main,
 } as const;
 
 export const DARK_BORDERS = {
   DEFAULT: '#334155',
   light: '#475569',
   input: '#334155',
-  ring: '#60a5fa',
+  ring: colors.primary.light,
 } as const;
 
-// ========== Status Colors (for badges, unchanged) ==========
+// ========== Status Colors (for badges) ==========
 export const STATUS_COLORS = {
   pending: {
-    bgcolor: '#f1f5f9',
+    bgcolor: colors.action.hover,
     color: '#475569',
   },
   inProgress: {
-    bgcolor: '#dbeafe',
-    color: '#1d4ed8',
+    bgcolor: colors.action.selected,
+    color: colors.primary[700],
   },
   completed: {
-    bgcolor: '#dcfce7',
-    color: '#15803d',
+    bgcolor: colors.success[100],
+    color: colors.success[700],
   },
   failed: {
-    bgcolor: '#fee2e2',
-    color: '#b91c1c',
+    bgcolor: colors.error[100],
+    color: colors.error[700],
   },
   warning: {
-    bgcolor: '#fef3c7',
-    color: '#b45309',
+    bgcolor: colors.warning[100],
+    color: colors.warning[700],
   },
 } as const;
 
@@ -191,35 +186,35 @@ export const MODULE_GRADIENTS = {
 
 // ========== Common Gradients ==========
 export const GRADIENTS = {
-  primary: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-  secondary: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
-  brand: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
-  text: 'linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6)',
-  success: 'linear-gradient(135deg, #22c55e, #16a34a)',
-  warning: 'linear-gradient(135deg, #f59e0b, #d97706)',
-  error: 'linear-gradient(135deg, #ef4444, #dc2626)',
-  info: 'linear-gradient(135deg, #0ea5e9, #0284c7)',
+  primary: `linear-gradient(135deg, ${colors.primary.main}, ${colors.primary.dark})`,
+  secondary: `linear-gradient(135deg, ${colors.secondary.main}, ${colors.secondary.dark})`,
+  brand: `linear-gradient(135deg, ${colors.primary.main}, ${colors.secondary.main})`,
+  text: `linear-gradient(135deg, ${colors.primary.light}, ${colors.secondary.light}, #f472b6)`,
+  success: `linear-gradient(135deg, ${colors.success.main}, ${colors.success.dark})`,
+  warning: `linear-gradient(135deg, ${colors.warning.main}, ${colors.warning.dark})`,
+  error: `linear-gradient(135deg, ${colors.error.main}, ${colors.error.dark})`,
+  info: `linear-gradient(135deg, ${colors.info.main}, ${colors.info.dark})`,
 } as const;
 
 // ========== Sidebar Colors ==========
 export const SIDEBAR = {
   active: {
-    color: '#3b82f6',
+    color: colors.primary.main,
     bgcolor: 'rgba(59, 130, 246, 0.08)',
   },
   default: {
-    color: '#64748b',
+    color: colors.text.secondary,
     bgcolor: 'transparent',
     hover: {
-      color: '#1e293b',
-      bgcolor: '#f1f5f9',
+      color: colors.text.primary,
+      bgcolor: colors.action.hover,
     },
   },
 } as const;
 
 export const DARK_SIDEBAR = {
   active: {
-    color: '#60a5fa',
+    color: colors.primary.light,
     bgcolor: 'rgba(96, 165, 250, 0.15)',
   },
   default: {

@@ -22,6 +22,9 @@ export {
   getStatusSxProps,
 } from './colors';
 
+// 设计令牌常量（从 @topems/tokens 派生）
+export { GREY, SPACING, RADIUS, SHADOWS, TYPOGRAPHY, MOTION, BREAKPOINTS, Z_INDEX } from './generated-constants';
+
 // 超时常量
 export {
   API_TIMEOUT,
