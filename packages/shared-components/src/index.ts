@@ -16,3 +16,5 @@ export { ProgressBar, type ProgressBarProps } from './components/ProgressBar';
 export { Stepper, type StepperProps, type StepItem } from './components/Stepper';
 export { default as Pagination, type PaginationConfig } from './components/Pagination';
 export { RelativeTime, type RelativeTimeProps } from './components/RelativeTime';
+export { BackButton, type BackButtonProps } from './components/BackButton';
+export { default as ConfirmDialog, AlertDialog, InfoDialog, SuccessDialog, WarningDialog, ErrorDialog, ConfirmationDialog, type ConfirmDialogConfig, type DialogType, type DialogButtonType, type DialogSize, type DialogButton } from './components/ConfirmDialog';
