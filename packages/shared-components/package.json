@@ -18,7 +18,9 @@
     "./ProgressBar": "./src/components/ProgressBar.tsx",
     "./Stepper": "./src/components/Stepper.tsx",
     "./Pagination": "./src/components/Pagination.tsx",
-    "./RelativeTime": "./src/components/RelativeTime.tsx"
+    "./RelativeTime": "./src/components/RelativeTime.tsx",
+    "./BackButton": "./src/components/BackButton.tsx",
+    "./ConfirmDialog": "./src/components/ConfirmDialog.tsx"
   },
   "peerDependencies": {
     "@emotion/react": "^11.0.0",
