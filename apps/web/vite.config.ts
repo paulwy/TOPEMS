@@ -90,11 +90,6 @@ const sharedDependencies = {
     requiredVersion: '^9.0.0',
     strictVersion: true,
   },
-  '@mui/icons-material': {
-    singleton: true,
-    requiredVersion: '^9.0.0',
-    strictVersion: true,
-  },
   '@emotion/react': {
     singleton: true,
     requiredVersion: '^11.0.0',

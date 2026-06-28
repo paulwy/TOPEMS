@@ -7,13 +7,24 @@
   "exports": {
     ".": "./src/index.ts",
     "./OrgTree": "./src/components/OrgTree.tsx",
-    "./UserSelect": "./src/components/UserSelect.tsx"
+    "./UserSelect": "./src/components/UserSelect.tsx",
+    "./StatusBadge": "./src/components/StatusBadge.tsx",
+    "./LoadingSpinner": "./src/components/LoadingSpinner.tsx",
+    "./EmptyState": "./src/components/EmptyState.tsx",
+    "./ActionButton": "./src/components/ActionButton.tsx",
+    "./FormField": "./src/components/FormField.tsx",
+    "./FormSelect": "./src/components/FormSelect.tsx",
+    "./FilterBar": "./src/components/FilterBar.tsx",
+    "./ProgressBar": "./src/components/ProgressBar.tsx",
+    "./Stepper": "./src/components/Stepper.tsx",
+    "./Pagination": "./src/components/Pagination.tsx",
+    "./RelativeTime": "./src/components/RelativeTime.tsx"
   },
   "peerDependencies": {
     "@emotion/react": "^11.0.0",
     "@emotion/styled": "^11.0.0",
-    "@mui/icons-material": "^6.0.0",
-    "@mui/material": "^6.0.0",
+    "@mui/material": "^6.0.0 || ^9.0.0",
+    "lucide-react": "^0.300.0 || ^1.0.0",
     "react": "^18.0.0 || ^19.0.0"
   },
   "dependencies": {
