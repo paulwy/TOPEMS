@@ -1,5 +1,10 @@
+/*
+ * TOPEMS Design Tokens — CSS Custom Properties
+ * Single source of truth synced from apps/web/src/theme/tokens.ts
+ * Light mode is default; dark mode activated via .dark class
+ */
 :root {
-  /* ===== Primary Color (Blue - from TOPEMS tokens.ts) ===== */
+  /* ===== Primary (Blue) — from tokens.ts primary.main/light/dark ===== */
   --color-primary: #3b82f6;
   --color-primary-hover: #2563eb;
   --color-primary-light: #60a5fa;
@@ -15,7 +20,7 @@
   --color-primary-900: #1e3a8a;
   --color-primary-foreground: #ffffff;
 
-  /* ===== Secondary Color (Violet - from TOPEMS tokens.ts) ===== */
+  /* ===== Secondary (Violet) — from tokens.ts secondary.main/light/dark ===== */
   --color-secondary: #8b5cf6;
   --color-secondary-hover: #7c3aed;
   --color-secondary-light: #a78bfa;
@@ -24,7 +29,7 @@
   --color-secondary-200: #ddd6fe;
   --color-secondary-foreground: #ffffff;
 
-  /* ===== State Colors ===== */
+  /* ===== State Colors — from tokens.ts success/warning/error/info ===== */
   --state-success: #22c55e;
   --state-success-hover: #16a34a;
   --state-success-light: #86efac;
@@ -50,33 +55,39 @@
   --color-card: #ffffff;
   --color-card-hover: #f1f5f9;
 
-  /* ===== Text ===== */
+  /* ===== Text — from tokens.ts text.* ===== */
   --color-text-primary: #1e293b;
   --color-text-secondary: #64748b;
   --color-text-muted: #94a3b8;
+  --color-text-disabled: #cbd5e1;
 
-  /* ===== Border & Input ===== */
+  /* ===== Border & Input — from tokens.ts border.* ===== */
   --color-border: #e2e8f0;
   --color-border-light: #f1f5f9;
   --color-input: #e2e8f0;
   --color-ring: #3b82f6;
 
-  /* ===== Radius ===== */
+  /* ===== Radius — from tokens.ts borderRadius (sm=6px, not 4px) ===== */
   --radius-none: 0;
-  --radius-sm: 4px;
+  --radius-xs: 4px;
+  --radius-sm: 6px;
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-3xl: 24px;
   --radius-full: 9999px;
 
-  /* ===== Shadow (static surfaces: border-first, alpha <= 0.05) ===== */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  /* ===== Shadow — from tokens.ts shadows (light mode) ===== */
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.08);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
   --shadow-float: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
 
-  /* ===== Typography ===== */
+  /* ===== Typography — from tokens.ts typography ===== */
   --font-sans: 'Inter', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'SF Mono', Monaco, 'Inconsolata', 'Fira Mono', 'Roboto Mono', monospace;
 
@@ -90,16 +101,18 @@
   --font-size-4xl: 2.25rem;
   --font-size-5xl: 3rem;
 
+  --font-weight-light: 300;
   --font-weight-normal: 400;
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
 
   --line-height-tight: 1.25;
   --line-height-normal: 1.5;
   --line-height-relaxed: 1.75;
 
-  /* ===== Spacing ===== */
+  /* ===== Spacing — from tokens.ts spacing ===== */
   --spacing-xs: 0.25rem;
   --spacing-sm: 0.5rem;
   --spacing-md: 1rem;
@@ -108,27 +121,27 @@
   --spacing-2xl: 3rem;
   --spacing-3xl: 4rem;
 
-  /* ===== Transition ===== */
-  --transition-fast: 150ms ease;
-  --transition-normal: 200ms ease;
-  --transition-slow: 300ms ease;
+  /* ===== Transition — from tokens.ts motion.duration ===== */
+  --transition-fast: 100ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* ===== Module Gradient Accents (from TOPEMS gradients.ts) ===== */
+  /* ===== Module Gradient Accents — synced with gradients.ts modules ===== */
   --gradient-primary: linear-gradient(135deg, #3b82f6, #2563eb);
   --gradient-secondary: linear-gradient(135deg, #8b5cf6, #7c3aed);
   --gradient-brand: linear-gradient(135deg, #3b82f6, #8b5cf6);
   --gradient-text: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6);
-  --gradient-module-hrm: linear-gradient(135deg, #3b82f6, #60a5fa);
-  --gradient-module-crm: linear-gradient(135deg, #22c55e, #4ade80);
-  --gradient-module-pm: linear-gradient(135deg, #f59e0b, #fbbf24);
-  --gradient-module-finance: linear-gradient(135deg, #6366f1, #818cf8);
-  --gradient-module-mes: linear-gradient(135deg, #14b8a6, #2dd4bf);
-  --gradient-module-bi: linear-gradient(135deg, #ec4899, #f472b6);
-  --gradient-module-scm: linear-gradient(135deg, #10b981, #34d399);
-  --gradient-module-im: linear-gradient(135deg, #f43f5e, #fb7185);
+  --gradient-module-hrm: linear-gradient(135deg, #22C55E 0%, #15803D 100%);
+  --gradient-module-crm: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%);
+  --gradient-module-pm: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+  --gradient-module-finance: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  --gradient-module-mes: linear-gradient(135deg, #EF4444 0%, #B91C1C 100%);
+  --gradient-module-bi: linear-gradient(135deg, #6366F1 0%, #4F46E5 100%);
+  --gradient-module-scm: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  --gradient-module-im: linear-gradient(135deg, #10B981 0%, #059669 100%);
 }
 
-/* ===== Dark Mode Variables ===== */
+/* ===== Dark Mode — activated via .dark class ===== */
 .dark {
   --color-primary: #60a5fa;
   --color-primary-hover: #3b82f6;
@@ -148,14 +161,18 @@
   --color-text-primary: #f8fafc;
   --color-text-secondary: #94a3b8;
   --color-text-muted: #64748b;
+  --color-text-disabled: #64748b;
 
   --color-border: #334155;
   --color-border-light: #475569;
   --color-input: #334155;
   --color-ring: #60a5fa;
 
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+  --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.25);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.25);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.35);
+  --shadow-2xl: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+  --shadow-float: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
 }

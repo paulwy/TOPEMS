@@ -1,136 +1,241 @@
 /**
- * 统一颜色常量
- * 使用纯 RGB 值，不依赖 CSS 变量
- * 使用方法：import { COLORS } from "@topems/shared-constants";
+ * TOPEMS Design Tokens — Color Constants
+ *
+ * Single source of truth derived from apps/web/src/theme/tokens.ts
+ * Provides both light and dark mode colors for runtime use outside of CSS/MUI.
+ *
+ * Usage:
+ *   import { COLORS, DARK_COLORS, BACKGROUNDS, DARK_BACKGROUNDS } from "@topems/shared-constants";
  */
 
-// ========== 主题颜色 ==========
+// ========== Theme Colors (Light Mode) ==========
 export const COLORS = {
   primary: {
-    DEFAULT: 'rgb(96, 165, 250)', // #60a5fa
-    hover: 'rgb(59, 130, 246)', // #3b82f6
-    foreground: 'rgb(255, 255, 255)', // #ffffff
-    rgb: 'rgb(96, 165, 250)', // #60a5fa
+    DEFAULT: '#3b82f6',
+    hover: '#2563eb',
+    light: '#60a5fa',
+    foreground: '#ffffff',
+    50: '#eff6ff',
+    100: '#dbeafe',
+    200: '#bfdbfe',
+    300: '#93c5fd',
+    400: '#60a5fa',
+    500: '#3b82f6',
+    600: '#2563eb',
+    700: '#1d4ed8',
+    800: '#1e40af',
+    900: '#1e3a8a',
   },
   secondary: {
-    DEFAULT: 'rgb(148, 163, 184)', // #94a3b8
-    hover: 'rgb(100, 116, 139)', // #64748b
-    foreground: 'rgb(255, 255, 255)', // #ffffff
-    rgb: 'rgb(148, 163, 184)', // #94a3b8
-  },
-  accent: {
-    DEFAULT: 'rgb(167, 139, 250)', // #a78bfa
-    hover: 'rgb(139, 92, 246)', // #8b5cf6
-    foreground: 'rgb(255, 255, 255)', // #ffffff
-    rgb: 'rgb(167, 139, 250)', // #a78bfa
+    DEFAULT: '#8b5cf6',
+    hover: '#7c3aed',
+    light: '#a78bfa',
+    foreground: '#ffffff',
   },
   success: {
-    DEFAULT: 'rgb(74, 222, 128)', // #4ade80
-    hover: 'rgb(34, 197, 94)', // #22c55e
-    foreground: 'rgb(255, 255, 255)', // #ffffff
-    rgb: 'rgb(74, 222, 128)', // #4ade80
+    DEFAULT: '#22c55e',
+    hover: '#16a34a',
+    light: '#86efac',
+    foreground: '#ffffff',
   },
   warning: {
-    DEFAULT: 'rgb(251, 191, 36)', // #fbbf24
-    hover: 'rgb(245, 158, 11)', // #f59e0b
-    foreground: 'rgb(0, 0, 0)', // #000000
-    rgb: 'rgb(251, 191, 36)', // #fbbf24
+    DEFAULT: '#f59e0b',
+    hover: '#d97706',
+    light: '#fde68a',
+    foreground: '#0f172a',
   },
   error: {
-    DEFAULT: 'rgb(248, 113, 113)', // #f87171
-    hover: 'rgb(239, 68, 68)', // #ef4444
-    foreground: 'rgb(255, 255, 255)', // #ffffff
-    rgb: 'rgb(248, 113, 113)', // #f87171
+    DEFAULT: '#ef4444',
+    hover: '#dc2626',
+    light: '#fca5a5',
+    foreground: '#ffffff',
   },
   info: {
-    DEFAULT: 'rgb(96, 165, 250)', // #60a5fa
-    foreground: 'rgb(255, 255, 255)', // #ffffff
-    rgb: 'rgb(96, 165, 250)', // #60a5fa
+    DEFAULT: '#0ea5e9',
+    hover: '#0284c7',
+    light: '#7dd3fc',
+    foreground: '#ffffff',
   },
 } as const;
 
-// ========== 背景和表面颜色 ==========
-export const BACKGROUNDS = {
-  background: 'rgb(17, 24, 39)', // #111827
-  surface: 'rgb(31, 41, 55)', // #1f2937
-  surfaceLight: 'rgb(55, 65, 81)', // #374151
-  surfaceHover: 'rgb(75, 85, 99)', // #4b5563
-  card: 'rgb(31, 41, 55)', // #1f2937
-  cardHover: 'rgb(55, 65, 81)', // #374151
-} as const;
-
-// ========== 文本颜色 ==========
-export const TEXT = {
-  primary: 'rgb(243, 244, 246)', // #f3f4f6
-  secondary: 'rgb(209, 213, 219)', // #d1d5db
-  muted: 'rgb(156, 163, 175)', // #9ca3af
-} as const;
-
-// ========== 边框颜色 ==========
-export const BORDERS = {
-  DEFAULT: 'rgb(55, 65, 81)', // #374151
-  light: 'rgb(75, 85, 99)', // #4b5563
-  input: 'rgb(75, 85, 99)', // #4b5563
-  ring: 'rgb(96, 165, 250)', // #60a5fa
-} as const;
-
-// ========== 状态颜色（用于状态徽章等） ==========
-export const STATUS_COLORS = {
-  // 待处理
-  pending: {
-    bgcolor: 'rgb(241, 245, 249)', // #f1f5f9
-    color: 'rgb(71, 85, 105)', // #475569
+// ========== Theme Colors (Dark Mode) ==========
+export const DARK_COLORS = {
+  primary: {
+    DEFAULT: '#60a5fa',
+    hover: '#3b82f6',
+    light: '#93c5fd',
+    foreground: '#0f172a',
   },
-  // 进行中
-  inProgress: {
-    bgcolor: 'rgb(219, 234, 254)', // #dbeafe
-    color: 'rgb(29, 78, 216)', // #1d4ed8
+  secondary: {
+    DEFAULT: '#a78bfa',
+    hover: '#8b5cf6',
+    light: '#c4b5fd',
+    foreground: '#0f172a',
   },
-  // 完成
-  completed: {
-    bgcolor: 'rgb(220, 252, 231)', // #dcfce7
-    color: 'rgb(21, 128, 61)', // #15803d
+  success: {
+    DEFAULT: '#4ade80',
+    hover: '#22c55e',
+    light: '#bbf7d0',
+    foreground: '#0f172a',
   },
-  // 失败
-  failed: {
-    bgcolor: 'rgb(254, 226, 226)', // #fee2e2
-    color: 'rgb(185, 28, 28)', // #b91c1c
-  },
-  // 警告
   warning: {
-    bgcolor: 'rgb(254, 243, 199)', // #fef3c7
-    color: 'rgb(180, 83, 9)', // #b45309
+    DEFAULT: '#fbbf24',
+    hover: '#f59e0b',
+    light: '#fde68a',
+    foreground: '#0f172a',
+  },
+  error: {
+    DEFAULT: '#f87171',
+    hover: '#ef4444',
+    light: '#fecaca',
+    foreground: '#ffffff',
+  },
+  info: {
+    DEFAULT: '#38bdf8',
+    hover: '#0ea5e9',
+    light: '#bae6fd',
+    foreground: '#0f172a',
   },
 } as const;
 
-// ========== 渐变色 ==========
-export const GRADIENTS = {
-  primary: 'linear-gradient(to right, rgb(96, 165, 250), rgb(167, 139, 250), rgb(244, 114, 182))',
-  hero: 'linear-gradient(to right, rgb(59, 130, 246), rgb(147, 51, 234))',
-  accent: 'linear-gradient(135deg, rgb(167, 139, 250), rgb(96, 165, 250))',
-  success: 'linear-gradient(135deg, rgb(74, 222, 128), rgb(34, 197, 94))',
+// ========== Background & Surface (Light) ==========
+export const BACKGROUNDS = {
+  background: '#f8fafc',
+  surface: '#ffffff',
+  surfaceLight: '#f1f5f9',
+  surfaceHover: '#e2e8f0',
+  card: '#ffffff',
+  cardHover: '#f1f5f9',
 } as const;
 
-// ========== 侧边栏颜色 ==========
+// ========== Background & Surface (Dark) ==========
+export const DARK_BACKGROUNDS = {
+  background: '#0f172a',
+  surface: '#1e293b',
+  surfaceLight: '#334155',
+  surfaceHover: '#475569',
+  card: '#1e293b',
+  cardHover: '#334155',
+} as const;
+
+// ========== Text Colors ==========
+export const TEXT = {
+  primary: '#1e293b',
+  secondary: '#64748b',
+  muted: '#94a3b8',
+  disabled: '#cbd5e1',
+} as const;
+
+export const DARK_TEXT = {
+  primary: '#f8fafc',
+  secondary: '#94a3b8',
+  muted: '#64748b',
+  disabled: '#64748b',
+} as const;
+
+// ========== Border Colors ==========
+export const BORDERS = {
+  DEFAULT: '#e2e8f0',
+  light: '#f1f5f9',
+  input: '#e2e8f0',
+  ring: '#3b82f6',
+} as const;
+
+export const DARK_BORDERS = {
+  DEFAULT: '#334155',
+  light: '#475569',
+  input: '#334155',
+  ring: '#60a5fa',
+} as const;
+
+// ========== Status Colors (for badges, unchanged) ==========
+export const STATUS_COLORS = {
+  pending: {
+    bgcolor: '#f1f5f9',
+    color: '#475569',
+  },
+  inProgress: {
+    bgcolor: '#dbeafe',
+    color: '#1d4ed8',
+  },
+  completed: {
+    bgcolor: '#dcfce7',
+    color: '#15803d',
+  },
+  failed: {
+    bgcolor: '#fee2e2',
+    color: '#b91c1c',
+  },
+  warning: {
+    bgcolor: '#fef3c7',
+    color: '#b45309',
+  },
+} as const;
+
+// ========== Module Gradients — synced with gradients.ts ==========
+export const MODULE_GRADIENTS = {
+  hrm: 'linear-gradient(135deg, #22C55E 0%, #15803D 100%)',
+  crm: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+  pm: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+  finance: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+  mes: 'linear-gradient(135deg, #EF4444 0%, #B91C1C 100%)',
+  scm: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+  wms: 'linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%)',
+  bi: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',
+  gis: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+  im: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+  ai: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+  qms: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+  flow: 'linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%)',
+} as const;
+
+// ========== Common Gradients ==========
+export const GRADIENTS = {
+  primary: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+  secondary: 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
+  brand: 'linear-gradient(135deg, #3b82f6, #8b5cf6)',
+  text: 'linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6)',
+  success: 'linear-gradient(135deg, #22c55e, #16a34a)',
+  warning: 'linear-gradient(135deg, #f59e0b, #d97706)',
+  error: 'linear-gradient(135deg, #ef4444, #dc2626)',
+  info: 'linear-gradient(135deg, #0ea5e9, #0284c7)',
+} as const;
+
+// ========== Sidebar Colors ==========
 export const SIDEBAR = {
   active: {
-    color: 'rgb(96, 165, 250)', // #60a5fa
-    bgcolor: 'rgb(239, 68, 68)', // 活动项背景色（红色）
+    color: '#3b82f6',
+    bgcolor: 'rgba(59, 130, 246, 0.08)',
   },
   default: {
-    color: 'rgb(209, 213, 219)', // #d1d5db
-    bgcolor: 'rgb(17, 24, 39)', // #111827
+    color: '#64748b',
+    bgcolor: 'transparent',
     hover: {
-      color: 'rgb(243, 244, 246)', // #f3f4f6
+      color: '#1e293b',
+      bgcolor: '#f1f5f9',
+    },
+  },
+} as const;
+
+export const DARK_SIDEBAR = {
+  active: {
+    color: '#60a5fa',
+    bgcolor: 'rgba(96, 165, 250, 0.15)',
+  },
+  default: {
+    color: '#94a3b8',
+    bgcolor: 'transparent',
+    hover: {
+      color: '#f8fafc',
       bgcolor: 'rgba(255, 255, 255, 0.05)',
     },
   },
 } as const;
 
-// ========== 辅助函数 ==========
+// ========== Helper Functions ==========
 
 /**
- * 获取状态颜色配置
+ * Get status color configuration for badges
  */
 export function getStatusColorConfig(status?: string): {
   bgcolor: string;
@@ -172,14 +277,13 @@ export function getStatusColorConfig(status?: string): {
   if (
     statusLower.includes('待') ||
     statusLower.includes('等待') ||
-    statusLower.includes('待处理') ||
     statusLower === 'pending' ||
     statusLower === 'waiting'
   ) {
     return STATUS_COLORS.pending;
   }
 
-  if (statusLower.includes('警告') || statusLower.includes('警告') || statusLower === 'warning') {
+  if (statusLower.includes('警告') || statusLower === 'warning') {
     return STATUS_COLORS.warning;
   }
 
@@ -187,7 +291,7 @@ export function getStatusColorConfig(status?: string): {
 }
 
 /**
- * 获取 MUI sx prop 格式的状态颜色
+ * Get MUI sx prop format status colors
  */
 export function getStatusSxProps(status?: string) {
   const config = getStatusColorConfig(status);
