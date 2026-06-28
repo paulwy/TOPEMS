@@ -1,56 +1,71 @@
 // BI Chart Color Palette
 // A cohesive, professional color scheme for business intelligence dashboards
 
+import { useTheme } from '@mui/material/styles';
+
+// ── Chart type enum for future MUI X Charts migration ──────────────────────
+
+export enum ChartType {
+  Bar = 'bar',
+  Line = 'line',
+  Pie = 'pie',
+  Area = 'area',
+  Radar = 'radar',
+  Scatter = 'scatter',
+  Composed = 'composed',
+}
+
+// ── Concrete hex color palette (safe for recharts / canvas) ───────────────
+
 export const BIChartColors = {
-  // Primary palette
-  primary: {
-    blue: 'primary.main',
-    cyan: '#06B6D4',
-    indigo: '#6366F1',
-  },
-  // Semantic colors
-  semantic: {
-    success: 'success.main',
-    warning: 'warning.main',
-    error: 'error.main',
-    info: '#0EA5E9',
-  },
-  // Neutral palette
-  neutral: {
-    slate: '#64748B',
-    slateLight: '#94A3B8',
-    slateDark: '#475569',
-    gray: 'grey.500',
-  },
-  // Chart series colors (up to 8 series)
   series: [
-    'primary.main', // Blue
-    'success.main', // Emerald
-    'warning.main', // Amber
-    'error.main', // Red
+    '#3b82f6', // Blue (primary.main)
+    '#22c55e', // Emerald (success.main)
+    '#f59e0b', // Amber (warning.main)
+    '#ef4444', // Red (error.main)
     '#8B5CF6', // Violet
     '#06B6D4', // Cyan
     '#EC4899', // Pink
     '#84CC16', // Lime
   ],
+  neutral: {
+    grid: '#E2E8F0',
+    gridDark: '#334155',
+    text: '#64748B',
+    textDark: '#94A3B8',
+    background: 'rgba(255, 255, 255, 0.95)',
+    backgroundDark: 'rgba(30, 41, 59, 0.95)',
+  },
+  // Primary palette (kept for backward-compatible reference)
+  primary: {
+    blue: '#3b82f6',
+    cyan: '#06B6D4',
+    indigo: '#6366F1',
+  },
+  // Semantic colors
+  semantic: {
+    success: '#22c55e',
+    warning: '#f59e0b',
+    error: '#ef4444',
+    info: '#0EA5E9',
+  },
   // Gradient definitions
   gradients: {
-    blue: ['primary.main', '#06B6D4'],
-    emerald: ['success.main', '#14B8A6'],
+    blue: ['#3b82f6', '#06B6D4'],
+    emerald: ['#22c55e', '#14B8A6'],
     violet: ['#8B5CF6', '#A855F7'],
     rose: ['#F43F5E', '#FB7185'],
-    amber: ['warning.main', '#FBBF24'],
+    amber: ['#f59e0b', '#FBBF24'],
   },
 } as const;
 
 export type ChartColor = (typeof BIChartColors.series)[number];
 
-// Get color by index (cycles through palette)
-export const getChartColor = (index: number): string => {
-  return BIChartColors.series[index % BIChartColors.series.length];
-};
+/** Get color by index (cycles through palette) */
+export const getChartColor = (index: number): string =>
+  BIChartColors.series[index % BIChartColors.series.length];
 
-// Get contrasting text color
+/** Get contrasting text color for a given hex background */
 export const getContrastingColor = (hexColor: string): string => {
   const r = parseInt(hexColor.slice(1, 3), 16);
   const g = parseInt(hexColor.slice(3, 5), 16);
@@ -59,9 +74,57 @@ export const getContrastingColor = (hexColor: string): string => {
   return luminance > 0.5 ? '#1E293B' : 'white';
 };
 
-// Create gradient ID for SVG
-export const createGradientId = (prefix: string, index: number): string => {
-  return `${prefix}-gradient-${index}`;
+/** Create gradient ID for SVG defs */
+export const createGradientId = (prefix: string, index: number): string =>
+  `${prefix}-gradient-${index}`;
+
+// ── Hook: dark-mode-aware chart theme resolved at runtime ──────────────────
+
+export interface ChartThemeColors {
+  /** Grid / axis line color */
+  gridColor: string;
+  /** Tick / label text color */
+  textColor: string;
+  /** Tooltip background */
+  tooltipBg: string;
+  /** Tooltip / card border color */
+  borderColor: string;
+  /** MUI primary, resolved to hex */
+  primary: string;
+  /** MUI secondary, resolved to hex */
+  secondary: string;
+  /** MUI success, resolved to hex */
+  success: string;
+  /** MUI warning, resolved to hex */
+  warning: string;
+  /** MUI error, resolved to hex */
+  error: string;
+  /** MUI info, resolved to hex */
+  info: string;
+}
+
+export const useChartTheme = (): ChartThemeColors => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
+  return {
+    gridColor: isDark
+      ? BIChartColors.neutral.gridDark
+      : BIChartColors.neutral.grid,
+    textColor: isDark
+      ? BIChartColors.neutral.textDark
+      : BIChartColors.neutral.text,
+    tooltipBg: isDark
+      ? BIChartColors.neutral.backgroundDark
+      : BIChartColors.neutral.background,
+    borderColor: isDark ? '#475569' : '#E2E8F0',
+    primary: theme.palette.primary.main,
+    secondary: theme.palette.secondary.main,
+    success: theme.palette.success.main,
+    warning: theme.palette.warning.main,
+    error: theme.palette.error.main,
+    info: theme.palette.info.main,
+  };
 };
 
 export default BIChartColors;

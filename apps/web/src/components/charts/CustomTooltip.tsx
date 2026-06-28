@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography } from '@mui/material';
+import { Box, Typography, useTheme } from '@mui/material';
 
 interface CustomTooltipProps {
   active?: boolean;
@@ -19,14 +19,24 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
   label,
   formatter,
 }) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
   if (!active || !payload || payload.length === 0) return null;
+
+  const bgColor = isDark ? 'rgba(30, 41, 59, 0.95)' : 'rgba(255, 255, 255, 0.95)';
+  const borderColor = isDark ? '#475569' : '#E2E8F0';
+  const labelColor = isDark ? '#94A3B8' : '#64748B';
+  const labelBorder = isDark ? '#334155' : '#E2E8F0';
+  const nameColor = isDark ? '#CBD5E1' : '#475569';
+  const valueColor = isDark ? '#F1F5F9' : '#1E293B';
 
   return (
     <Box
       sx={{
-        backgroundColor: 'rgba(255, 255, 255, 0.95)',
+        backgroundColor: bgColor,
         backdropFilter: 'blur(4px)',
-        border: '1px solid border.default',
+        border: `1px solid ${borderColor}`,
         borderRadius: 3,
         boxShadow: 10,
         px: 4,
@@ -39,10 +49,10 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
           sx={{
             fontSize: '0.75rem',
             fontWeight: 500,
-            color: 'grey.600',
+            color: labelColor,
             mb: 2,
             pb: 2,
-            borderBottom: '1px solid grey.100',
+            borderBottom: `1px solid ${labelBorder}`,
           }}
         >
           {label}
@@ -53,7 +63,9 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
           const [displayValue, displayName] = formatter
             ? formatter(entry.value, entry.name)
             : [
-                typeof entry.value === 'number' ? entry.value.toLocaleString() : entry.value,
+                typeof entry.value === 'number'
+                  ? entry.value.toLocaleString()
+                  : entry.value,
                 entry.name,
               ];
 
@@ -76,11 +88,17 @@ export const CustomTooltip: React.FC<CustomTooltipProps> = ({
                     backgroundColor: entry.color,
                   }}
                 />
-                <Typography sx={{ fontSize: '0.875rem', color: '#475569' }}>
+                <Typography sx={{ fontSize: '0.875rem', color: nameColor }}>
                   {displayName}
                 </Typography>
               </Box>
-              <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: 'grey.900' }}>
+              <Typography
+                sx={{
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  color: valueColor,
+                }}
+              >
                 {displayValue}
               </Typography>
             </Box>

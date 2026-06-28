@@ -1,4 +1,6 @@
 import React from 'react';
+import { useTheme } from '@mui/material/styles';
+import { useChartTheme } from './chartTheme';
 import {
   LineChart,
   Line,
@@ -6,7 +8,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  _Legend,
   ResponsiveContainer,
 } from 'recharts';
 
@@ -26,50 +27,49 @@ export const LineChartComponent: React.FC<LineChartProps> = ({
   xKey = 'name',
   yKey = 'value',
   yKeys,
-  color = 'primary.main',
+  color,
   height = 200,
 }) => {
-  const series = yKeys || [{ key: yKey, name: yKey, color }];
+  const theme = useTheme();
+  const chartTheme = useChartTheme();
+  const resolvedColor = color || chartTheme.primary;
+  const series = yKeys || [{ key: yKey, name: yKey, color: resolvedColor }];
 
   return (
     <div>
       {title && (
-        <h4 style={{ marginBottom: '16px', color: '#1e293b', fontWeight: 600 }}>{title}</h4>
+        <h4 style={{ marginBottom: 16, color: theme.palette.text.primary, fontWeight: 600 }}>
+          {title}
+        </h4>
       )}
-      <ResponsiveContainer
-        width='100%'
-        height={height}
-      >
+      <ResponsiveContainer width="100%" height={height}>
         <LineChart data={data}>
-          <CartesianGrid
-            strokeDasharray='3 3'
-            stroke='border.default'
-          />
-          <XAxis
-            dataKey={xKey}
-            tick={{ fill: 'grey.600', fontSize: 12 }}
-          />
-          <YAxis tick={{ fill: 'grey.600', fontSize: 12 }} />
+          <CartesianGrid strokeDasharray="3 3" stroke={chartTheme.gridColor} />
+          <XAxis dataKey={xKey} tick={{ fill: chartTheme.textColor, fontSize: 12 }} />
+          <YAxis tick={{ fill: chartTheme.textColor, fontSize: 12 }} />
           <Tooltip
             contentStyle={{
-              backgroundColor: 'white',
-              border: '1px solid border.default',
-              borderRadius: '8px',
-              padding: '12px',
+              backgroundColor: chartTheme.tooltipBg,
+              border: `1px solid ${chartTheme.borderColor}`,
+              borderRadius: 8,
+              padding: 12,
             }}
           />
-          {series.map((item) => (
-            <Line
-              key={item.key}
-              type='monotone'
-              dataKey={item.key}
-              name={item.name}
-              stroke={item.color || color}
-              strokeWidth={2}
-              dot={{ r: 4, fill: item.color || color }}
-              activeDot={{ r: 6, fill: item.color || color }}
-            />
-          ))}
+          {series.map((item) => {
+            const strokeColor = item.color || resolvedColor;
+            return (
+              <Line
+                key={item.key}
+                type="monotone"
+                dataKey={item.key}
+                name={item.name}
+                stroke={strokeColor}
+                strokeWidth={2}
+                dot={{ r: 4, fill: strokeColor }}
+                activeDot={{ r: 6, fill: strokeColor }}
+              />
+            );
+          })}
         </LineChart>
       </ResponsiveContainer>
     </div>
