@@ -163,7 +163,7 @@ export async function getTileCacheInfo(): Promise<{
  */
 export function createOfflineTileProvider(
   source: string,
-  getTile: (source: string, z: number, x: number, y: number) => Promise<string | null>
+  _getTile: (source: string, z: number, x: number, y: number) => Promise<string | null>
 ) {
   return function (tileCoord: [number, number, number]): string {
     const [z, x, y] = tileCoord;

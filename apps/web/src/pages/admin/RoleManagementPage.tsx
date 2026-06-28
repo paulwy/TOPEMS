@@ -43,7 +43,6 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate: _on
 
   useEffect(() => {
     loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadData = async () => {
@@ -319,7 +318,7 @@ const RoleManagementPage: React.FC<RoleManagementPageProps> = ({ onNavigate: _on
         confirmMessage: '确定要删除这个角色吗？删除后无法恢复。',
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     []
   );
 

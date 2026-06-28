@@ -56,7 +56,6 @@ const RsCodePage: React.FC = () => {
   useEffect(() => {
     loadProjects();
     loadRepos();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, languageFilter, page, rowsPerPage]);
 
   const loadProjects = async () => {
@@ -120,8 +119,8 @@ const RsCodePage: React.FC = () => {
 
   const handleCreateRepo = async () => {
     try {
-      const project = projects.find((p) => p.id === newRepoForm.project_id);
-      if (!project) {
+      const projectExists = projects.some((p) => p.id === newRepoForm.project_id);
+      if (!projectExists) {
         addNotification({
           type: 'error',
           title: '创建失败',

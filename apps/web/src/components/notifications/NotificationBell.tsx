@@ -16,13 +16,10 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNotificationClick
   const { user, isAuthenticated } = useAuth();
 
   const {
-    notifications: _,
     unreadCount,
-    loading: __,
-    error: ___,
     addNotification,
-    updateNotification: ____,
-    removeNotification: _____,
+    updateNotification,
+    removeNotification,
     fetchNotifications,
     fetchUnreadCount,
   } = useNotificationState(isAuthenticated);

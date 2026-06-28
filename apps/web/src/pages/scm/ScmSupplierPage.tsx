@@ -52,7 +52,6 @@ const ScmSupplierPage: React.FC = () => {
   useEffect(() => {
     loadSuppliers();
     loadSupplierPerformance();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, pageSize, searchTerm]);
 
   const loadSuppliers = async () => {

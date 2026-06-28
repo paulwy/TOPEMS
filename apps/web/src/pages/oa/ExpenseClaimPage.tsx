@@ -28,7 +28,7 @@ import React, { useState, useMemo } from 'react';
 import { Plus, Eye, Filter, CheckSquare, XCircle, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../../store';
-import { PageContainer } from '@/components/common';
+import { PageContainer, CurrencyField } from '@/components/common';
 
 interface ExpenseClaim {
   id: string;
@@ -597,21 +597,13 @@ const ExpenseClaimPage: React.FC = () => {
                 </Select>
               </FormControl>
             </Box>
-            <TextField
+            <CurrencyField
               fullWidth
               label='报销金额'
-              type='number'
-              slotProps={{
-                input: {
-                  startAdornment: <span style={{ marginRight: 8 }}>¥</span>,
-                  inputProps: { min: 0, step: '0.01' },
-                },
-              }}
-              value={formData.amount || ''}
-              onChange={(e) => setFormData({ ...formData, amount: Number(e.target.value) })}
+              value={formData.amount || 0}
+              onChange={(val) => setFormData({ ...formData, amount: val })}
               disabled={currentModalType !== 'create'}
               placeholder='请输入报销金额'
-              required
             />
             <TextField
               fullWidth

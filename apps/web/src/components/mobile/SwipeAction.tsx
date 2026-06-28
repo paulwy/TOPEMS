@@ -24,7 +24,7 @@ export const SwipeAction: React.FC<SwipeActionProps> = ({
   onOpen,
   onClose,
 }) => {
-  const theme = useTheme();
+  const _theme = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   const startXRef = useRef<number>(0);
   const [translateX, setTranslateX] = useState(0);

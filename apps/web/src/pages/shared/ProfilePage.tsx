@@ -380,7 +380,7 @@ const ProfilePage: React.FC = () => {
         });
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [notificationSettings, addNotification]
   );
 
@@ -392,7 +392,7 @@ const ProfilePage: React.FC = () => {
         path: string;
         icon: string;
       }[];
-      if (shortcuts.find((s) => s.id === shortcut.id)) {
+      if (shortcuts.some((s) => s.id === shortcut.id)) {
         newShortcuts = shortcuts.filter((s) => s.id !== shortcut.id);
         addNotification({
           title: '提示',

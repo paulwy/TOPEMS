@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import type { BoxProps } from '@mui/material';
 import {
   Box,
@@ -13,11 +13,11 @@ import {
   Skeleton,
   useTheme,
   useMediaQuery,
-  Divider,
+  _Divider,
 } from '@mui/material';
 import {
-  Plus,
-  MoreHorizontal,
+  _Plus,
+  _MoreHorizontal,
   Calendar,
   Filter,
   Search,
@@ -131,9 +131,9 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
   showTimeRange = true,
   searchValue,
   onSearch,
-  filterConfig,
-  filters,
-  onFilterChange,
+  _filterConfig,
+  _filters,
+  _onFilterChange,
   timeRanges = [
     { id: 'today', label: '今天', start: new Date(), end: new Date() },
     {
@@ -155,11 +155,11 @@ export const TimelinePageTemplate: React.FC<TimelinePageTemplateProps> = ({
   actions = [],
   headerContent,
   footerContent,
-  defaultGroupExpanded = true,
+  _defaultGroupExpanded = true,
   ...props
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const _isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const [searchInput, setSearchInput] = useState(searchValue || '');
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());

@@ -120,7 +120,6 @@ const CustomerManagementPage: React.FC = () => {
 
   useEffect(() => {
     loadCustomers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     searchTerm,
     statusFilter,
@@ -505,7 +504,7 @@ const CustomerManagementPage: React.FC = () => {
         confirmMessage: '确定要删除这个客户吗?',
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     []
   );
 

@@ -164,7 +164,6 @@ const MailPage: React.FC = () => {
     } else {
       loadTemplates();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
   useEffect(() => {
@@ -173,7 +172,6 @@ const MailPage: React.FC = () => {
     } else {
       loadTemplates();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, searchQuery, statusFilter, priorityFilter, categoryFilter]);
 
   const loadStats = async () => {

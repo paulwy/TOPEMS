@@ -16,7 +16,7 @@ export interface PivotConfig {
   onRefresh?: () => void;
 }
 
-const aggregators = {
+const _aggregators = {
   sum: (values: number[]) => values.reduce((a, b) => a + b, 0),
   count: (values: number[]) => values.length,
   avg: (values: number[]) => values.reduce((a, b) => a + b, 0) / values.length,

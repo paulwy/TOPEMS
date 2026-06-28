@@ -23,7 +23,7 @@ import {
   Scatter,
   ComposedChart,
   Brush,
-  ResponsiveContainer,
+  _ResponsiveContainer,
 } from 'recharts';
 
 export type ChartType =
@@ -126,8 +126,8 @@ const GaugeChart = ({
   const circumference = 270;
   const radius = 80;
   const strokeWidth = 12;
-  const startAngle = 135;
-  const endAngle = -135;
+  const _startAngle = 135;
+  const _endAngle = -135;
   const offset = circumference * ((100 - percentage) / 100);
 
   return (

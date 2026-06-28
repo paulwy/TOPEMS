@@ -54,7 +54,6 @@ const NotificationArchivePage: React.FC = () => {
 
   useEffect(() => {
     loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, debouncedSearch]);
 
   const loadData = async () => {

@@ -378,8 +378,8 @@ export const usePluginStore = create<PluginState>()(
         }
 
         if (activeCategory !== 'all') {
-          const moduleConfig = REMOTE_MODULES.find((m) => m.code === activeCategory);
-          if (moduleConfig) {
+          const isModuleCategory = REMOTE_MODULES.some((m) => m.code === activeCategory);
+          if (isModuleCategory) {
             result = result.filter((p) => p.code === activeCategory);
           } else {
             result = result.filter((p) => {

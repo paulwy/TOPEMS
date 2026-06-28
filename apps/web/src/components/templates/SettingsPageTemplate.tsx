@@ -30,14 +30,14 @@ import {
   CheckCircle,
   AlertCircle,
   X,
-  Edit2,
+  _Edit2,
   ChevronRight,
-  RefreshCw,
+  _RefreshCw,
   Settings,
-  User,
-  Bell,
-  Shield,
-  Palette,
+  _User,
+  _Bell,
+  _Shield,
+  _Palette,
 } from 'lucide-react';
 import type { BreadcrumbItem } from './PageHeader';
 import { PageHeader } from './PageHeader';
@@ -520,7 +520,7 @@ export const SettingsPageTemplate: React.FC<SettingsPageTemplateProps> = ({
         variant={isMobile ? 'scrollable' : 'standard'}
         scrollButtons={isMobile}
       >
-        {tabs.map((tab, index) => (
+        {tabs.map((tab, _index) => (
           <Tab
             key={tab.id}
             label={tab.label}

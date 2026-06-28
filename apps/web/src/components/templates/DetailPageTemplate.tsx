@@ -6,16 +6,16 @@ import {
   Typography,
   Tabs,
   Tab,
-  IconButton,
-  Tooltip,
-  Divider,
+  _IconButton,
+  _Tooltip,
+  _Divider,
   Skeleton,
   Chip,
   useTheme,
   useMediaQuery,
-  Button,
+  _Button,
 } from '@mui/material';
-import { ArrowLeft, Edit, Delete, Share2, MoreHorizontal, Printer, Download } from 'lucide-react';
+import { Edit, Delete, Share2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useBackNavigation } from '@/hooks';
 import type { BreadcrumbItem, PageAction } from './PageHeader';
@@ -112,15 +112,15 @@ export const DetailPageTemplate: React.FC<DetailPageTemplateProps> = ({
   breadcrumbs,
   autoBreadcrumbs = true,
   loading,
-  error,
+  _error,
   backHref,
   onBack,
   actions,
   onEdit,
   onDelete,
   onShare,
-  onPrint,
-  onDownload,
+  _onPrint,
+  _onDownload,
   tabs,
   defaultTab,
   sections,

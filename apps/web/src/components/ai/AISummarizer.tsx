@@ -58,7 +58,6 @@ export function AISummarizer({
       setCopied(false);
       handleSummarize();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const handleSummarize = async () => {

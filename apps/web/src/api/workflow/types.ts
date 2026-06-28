@@ -206,7 +206,7 @@ export interface RollbackRequest {
 }
 
 export interface ProcessApprovalRequest {
-  action: 'approve' | 'reject';
+  action: 'approve' | 'reject' | 'delegate';
   comment?: string;
   actor_id: string;
   actor_name?: string;

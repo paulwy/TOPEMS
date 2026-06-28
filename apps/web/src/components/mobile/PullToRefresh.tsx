@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Box, CircularProgress, Typography, useTheme } from '@mui/material';
 import { RefreshCw } from 'lucide-react';
 

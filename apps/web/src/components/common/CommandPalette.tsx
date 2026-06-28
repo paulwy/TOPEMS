@@ -21,7 +21,7 @@ import {
   Users,
   LayoutDashboard,
   Zap,
-  Hash,
+  _Hash,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 

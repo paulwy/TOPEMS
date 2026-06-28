@@ -7,7 +7,7 @@ import {
   IconButton,
   Tooltip,
   Paper,
-  Divider,
+  _Divider,
   Skeleton,
   TextField,
   Tabs,
@@ -20,15 +20,14 @@ import {
 import {
   ChevronRight,
   RefreshCw,
-  Plus,
-  Download,
-  Upload,
-  Filter,
+  _Plus,
+  _Download,
+  _Upload,
+  _Filter,
   MoreHorizontal,
 } from 'lucide-react';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAutoBreadcrumbs } from '@/hooks';
-import { navigationRegistry } from '@/lib/NavigationRegistry';
 import { BackButton } from '../common';
 
 export interface BreadcrumbItem {

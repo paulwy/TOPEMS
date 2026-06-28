@@ -12,7 +12,7 @@ export function WorkflowTableExample() {
   const [data, setData] = useState<Workflow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(null);
+  const [_selectedWorkflow, setSelectedWorkflow] = useState<Workflow | null>(null);
 
   useEffect(() => {
     loadWorkflows();

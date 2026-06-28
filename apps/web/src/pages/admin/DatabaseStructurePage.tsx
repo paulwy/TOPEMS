@@ -92,14 +92,12 @@ const DatabaseStructurePage: React.FC = () => {
   useEffect(() => {
     loadTables();
     loadDbChanges();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (selectedTable && activeTab === 'structure') {
       loadTableDetail(selectedTable.table_name);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTable?.table_name, activeTab]);
 
   const loadTables = async () => {

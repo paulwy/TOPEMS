@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { logger } from '@/utils/logger';
 import {
   Box,
   Button,
   IconButton,
   Typography,
-  Tabs,
-  Tab,
+  _Tabs,
+  _Tab,
   Avatar,
-  Badge,
+  _Badge,
   Tooltip,
   useTheme,
   useMediaQuery,
@@ -24,31 +23,28 @@ import {
   ShoppingCart,
   Bell,
   User,
-  X,
+  _X,
   Sun,
   Moon,
   Sparkles,
   LogOut,
-  ChevronRight,
+  _ChevronRight,
 } from 'lucide-react';
-import { lucideIcons, renderIcon } from '@/lib/iconMapping';
 
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { usePermission } from '../../hooks/usePermission';
 import { navigationRegistry, type NavItem } from '@/lib/NavigationRegistry';
-import type { TabItem } from '@/types/navigation';
 import { useAppStore } from '@/store';
 import { FloatingAIHelper } from '../ai/FloatingAIHelper';
-import { ModuleTabs } from './ModuleTabs';
 import { MobileNav } from './MobileNav';
 import { Sidebar as AIPluginSidebar } from './Sidebar';
 import { AppSidebar } from './AppSidebar';
 
 const SkipToContent = () => (
   <Box
-    component="a"
-    href="#main-content"
+    component='a'
+    href='#main-content'
     sx={{
       position: 'absolute',
       left: '-9999px',
@@ -84,8 +80,8 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
+  const _isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const _isTablet = useMediaQuery(theme.breakpoints.down('lg'));
   const { logout } = useAuth();
   const { checkPermission } = usePermission();
   const appTheme = useAppStore((state) => state.theme);
@@ -104,7 +100,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   }, [location.pathname]);
 
   // 从 NavigationRegistry 动态获取导航项（带权限过滤）
-  const [topNavItems, setTopNavItems] = useState<NavItem[]>(() => {
+  const [_topNavItems, setTopNavItems] = useState<NavItem[]>(() => {
     return navigationRegistry.getNavItemsByPermission(checkPermission);
   });
 
@@ -212,7 +208,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
           {isTabletOnly && (
             <IconButton
               onClick={() => setTabletDrawerOpen(true)}
-              aria-label="打开导航菜单"
+              aria-label='打开导航菜单'
               sx={{
                 width: 36,
                 height: 36,
@@ -308,7 +304,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
             <Tooltip title='AI 助手'>
               <IconButton
                 size='small'
-                aria-label="AI 助手"
+                aria-label='AI 助手'
                 onClick={() => navigate('/ai')}
                 sx={{
                   width: 36,
@@ -323,7 +319,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
             <Tooltip title='插件市场'>
               <IconButton
                 size='small'
-                aria-label="插件市场"
+                aria-label='插件市场'
                 onClick={() => navigate('/plugin/marketplace')}
                 sx={{
                   width: 36,
@@ -338,7 +334,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
             <Tooltip title='通知'>
               <IconButton
                 size='small'
-                aria-label="通知"
+                aria-label='通知'
                 sx={{ width: 36, height: 36 }}
               >
                 <Box sx={{ position: 'relative', display: 'inline-flex' }}>
@@ -359,7 +355,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
             </Tooltip>
             <Tooltip title={isDark ? '切换浅色模式' : '切换深色模式'}>
               <IconButton
-                aria-label="切换主题"
+                aria-label='切换主题'
                 onClick={toggleTheme}
                 sx={{ width: 36, height: 36, '&:hover': { bgcolor: 'action.hover' } }}
                 size='small'
@@ -374,7 +370,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
             <Tooltip title='用户菜单'>
               <IconButton
                 size='small'
-                aria-label="用户菜单"
+                aria-label='用户菜单'
                 onClick={handleUserMenuOpen}
               >
                 <Avatar
@@ -431,7 +427,7 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
 
         {/* 平板端抽屉侧边栏 - sm 到 <lg */}
         <Drawer
-          anchor="left"
+          anchor='left'
           open={tabletDrawerOpen}
           onClose={() => setTabletDrawerOpen(false)}
           sx={{

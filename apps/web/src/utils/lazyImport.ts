@@ -1,3 +1,8 @@
+/**
+ * NOTE: 当前未被任何组件直接导入（通过 utils/index.ts 的 export * 导出）。
+ * 项目中路由懒加载使用的是 routes/utils.ts 中的 lazyWithRetry。
+ * 保留作为基础设施工具，可在需要高级懒加载（重试、预加载等）时使用。
+ */
 import React, { type ComponentType, type LazyExoticComponent } from 'react';
 import { createLogger } from './logger';
 

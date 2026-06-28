@@ -13,9 +13,9 @@ import {
   Menu,
   MenuItem,
   Skeleton,
-  Chip,
+  _Chip,
   IconButton,
-  Tooltip,
+  _Tooltip,
   LinearProgress,
   Button,
 } from '@mui/material';
@@ -23,7 +23,7 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
-  Activity,
+  _Activity,
   Download,
   Maximize2,
   RefreshCw,
@@ -34,10 +34,10 @@ import {
   PieChart,
   AreaChart,
   MoreVertical,
-  Eye,
-  Target,
-  Award,
-  type LucideIcon,
+  _Eye,
+  _Target,
+  _Award,
+  type _LucideIcon,
 } from 'lucide-react';
 
 // ============ 类型定义 ============
@@ -293,7 +293,7 @@ export const Sparkline: React.FC<SparklineProps> = ({
   width = 80,
   height = 32,
   strokeWidth = 2,
-  isAnimated = false,
+  _isAnimated = false,
 }) => {
   if (!data || data.length < 2) return null;
 
@@ -377,12 +377,12 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
   animate = true,
   onClick,
   sx,
-  children,
+  _children,
 }) => {
   const [displayValue, setDisplayValue] = useState(
     animate && typeof value === 'number' ? 0 : value
   );
-  const [isHovered, setIsHovered] = useState(false);
+  const [isHovered, _setIsHovered] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -674,11 +674,11 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   onClick,
   sx,
   sparklineData,
-  target,
+  _target,
   targetProgress,
   showTargetProgress = false,
 }) => {
-  const [isHovered, setIsHovered] = useState(false);
+  const [_isHovered, _setIsHovered] = useState(false);
   const computedTrend = trend ?? (change !== undefined ? (change >= 0 ? 'up' : 'down') : null);
 
   const getSparklineColor = () => {

@@ -173,7 +173,6 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
 
   useEffect(() => {
     loadLogs();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [source, currentPage, filterStatus, filterAction, filterEntityType, startDate, endDate]);
 
   const getStatusBadge = (status: string) => {

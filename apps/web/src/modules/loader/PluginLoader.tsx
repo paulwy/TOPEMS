@@ -109,6 +109,7 @@ export const ModuleErrorFallback: React.FC<{ error?: Error }> = ({ error }) => (
   </Box>
 );
 
+/* eslint-disable @typescript-eslint/naming-convention */
 declare global {
   interface Window {
     System?: {
@@ -116,6 +117,7 @@ declare global {
     };
   }
 }
+/* eslint-enable @typescript-eslint/naming-convention */
 
 export class PluginLoader {
   private cache: Map<string, any> = new Map();

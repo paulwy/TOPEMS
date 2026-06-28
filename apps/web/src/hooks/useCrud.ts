@@ -139,7 +139,7 @@ export function useCrud<
         abortControllerRef.current = null;
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [api, basePath, page, pageSize, cacheTime, handleError]
   );
 

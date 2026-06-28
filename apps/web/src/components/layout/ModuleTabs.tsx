@@ -194,7 +194,7 @@ const LegacyModuleTabs: React.FC<LegacyModuleTabsProps> = ({ tabs, pluginCode, o
     tab: TabItem;
   } | null>(null);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  const tabsRef = useRef<HTMLDivElement>(null);
+  const _tabsRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // 同步外部tabs变化

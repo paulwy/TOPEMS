@@ -11,6 +11,9 @@ import {
   TextField,
   FormLabel,
   Button,
+  Paper,
+  Avatar,
+  Divider,
 } from '@mui/material';
 import {
   CheckCircle,
@@ -23,6 +26,10 @@ import {
   CheckCircle2,
   MessageSquare,
   Eye,
+  ArrowRightLeft,
+  UserPlus,
+  PlayCircle,
+  GitBranch,
 } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import type { Approval, ApprovalRecord } from '@/api/workflow';
@@ -47,12 +54,15 @@ const FlowApprovalDetailPage: React.FC = () => {
   const [approvalAction, setApprovalAction] = useState<'approve' | 'reject'>('approve');
   const [comment, setComment] = useState('');
   const [processing, setProcessing] = useState(false);
+  const [showDelegateModal, setShowDelegateModal] = useState(false);
+  const [delegateTarget, setDelegateTarget] = useState('');
+  const [delegateReason, setDelegateReason] = useState('');
+  const [delegateLoading, setDelegateLoading] = useState(false);
 
   useEffect(() => {
     if (id) {
       loadApprovalDetails();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const loadApprovalDetails = async () => {
@@ -134,6 +144,56 @@ const FlowApprovalDetailPage: React.FC = () => {
       apiLogger.error('处理审批失败:', err);
     } finally {
       setProcessing(false);
+    }
+  };
+
+  const handleDelegate = async () => {
+    if (!approval || !delegateTarget.trim()) {
+      addNotification({
+        title: '提示',
+        message: '请输入转办目标人员',
+        type: 'info',
+      });
+      return;
+    }
+
+    try {
+      setDelegateLoading(true);
+      const response = await workflowApi.processApproval(approval.id, {
+        action: 'delegate',
+        comment: delegateReason || undefined,
+        actor_id: user?.id || 'system-user-id',
+        actor_name: user?.fullName || user?.username || 'Current User',
+        delegate_to: delegateTarget,
+        delegate_to_name: delegateTarget,
+      });
+
+      if (response.success) {
+        addNotification({
+          title: '成功',
+          message: `已转办给 ${delegateTarget}`,
+          type: 'success',
+        });
+        setShowDelegateModal(false);
+        setDelegateTarget('');
+        setDelegateReason('');
+        loadApprovalDetails();
+      } else {
+        addNotification({
+          title: '失败',
+          message: response.message || '转办失败',
+          type: 'error',
+        });
+      }
+    } catch (err: unknown) {
+      addNotification({
+        title: '错误',
+        message: '转办操作失败',
+        type: 'error',
+      });
+      apiLogger.error('转办失败:', err);
+    } finally {
+      setDelegateLoading(false);
     }
   };
 
@@ -451,6 +511,294 @@ const FlowApprovalDetailPage: React.FC = () => {
           </Box>
         ),
       },
+      {
+        id: 'timeline',
+        label: '流程时间线',
+        icon: <GitBranch size={16} />,
+        content: (
+          <Box>
+            <Typography
+              variant='body2'
+              sx={{ color: 'grey.500', mb: 2 }}
+            >
+              完整流程审批轨迹追踪
+            </Typography>
+            {records.length === 0 ? (
+              <Box sx={{ textAlign: 'center', py: 6 }}>
+                <PlayCircle
+                  size={48}
+                  style={{
+                    color: 'grey.300',
+                    marginLeft: 'auto',
+                    marginRight: 'auto',
+                    marginBottom: 8,
+                  }}
+                />
+                <Typography sx={{ color: 'grey.500' }}>
+                  流程尚未开始处理
+                </Typography>
+              </Box>
+            ) : (
+              <Box sx={{ position: 'relative' }}>
+                {/* 时间线竖线 */}
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    left: 19,
+                    top: 0,
+                    bottom: 0,
+                    width: 2,
+                    bgcolor: 'grey.200',
+                  }}
+                />
+                <Stack spacing={3}>
+                  {/* 流程发起节点 */}
+                  <Box sx={{ display: 'flex', gap: 2, position: 'relative' }}>
+                    <Avatar
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        bgcolor: 'primary.main',
+                        zIndex: 1,
+                      }}
+                    >
+                      <PlayCircle size={20} />
+                    </Avatar>
+                    <Paper
+                      sx={{ flex: 1, p: 2, bgcolor: 'primary.50', border: 1, borderColor: 'primary.100' }}
+                    >
+                      <Typography
+                        variant='body2'
+                        sx={{ fontWeight: 600 }}
+                      >
+                        流程发起
+                      </Typography>
+                      <Typography
+                        variant='caption'
+                        sx={{ color: 'grey.500' }}
+                      >
+                        发起人: {approval?.assignee_id || '系统'}
+                      </Typography>
+                      <Typography
+                        variant='caption'
+                        sx={{ display: 'block', color: 'grey.400' }}
+                      >
+                        {approval?.created_at ? new Date(approval.created_at).toLocaleString() : ''}
+                      </Typography>
+                    </Paper>
+                  </Box>
+
+                  {/* 各审批步骤 */}
+                  {records.map((record, index) => {
+                    const isLast = index === records.length - 1;
+                    const isApproved = record.action === 'approve';
+                    return (
+                      <Box
+                        key={record.id}
+                        sx={{ display: 'flex', gap: 2, position: 'relative' }}
+                      >
+                        <Avatar
+                          sx={{
+                            width: 40,
+                            height: 40,
+                            bgcolor: isApproved ? 'success.main' : 'error.main',
+                            zIndex: 1,
+                          }}
+                        >
+                          {isApproved ? (
+                            <CheckCircle2 size={20} />
+                          ) : (
+                            <XCircle size={20} />
+                          )}
+                        </Avatar>
+                        <Paper
+                          sx={{
+                            flex: 1,
+                            p: 2,
+                            bgcolor: isApproved ? 'success.50' : 'error.50',
+                            border: 1,
+                            borderColor: isApproved ? 'success.100' : 'error.100',
+                          }}
+                        >
+                          <Stack
+                            direction='row'
+                            sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1 }}
+                          >
+                            <Typography
+                              variant='body2'
+                              sx={{ fontWeight: 600 }}
+                            >
+                              {isApproved ? '审批通过' : '审批拒绝'}
+                            </Typography>
+                            <Chip
+                              size='small'
+                              label={`步骤 ${index + 1}`}
+                              color={isApproved ? 'success' : 'error'}
+                              variant='outlined'
+                            />
+                          </Stack>
+                          <Stack
+                            direction='row'
+                            spacing={0.5}
+                            sx={{ alignItems: 'center', mb: 0.5 }}
+                          >
+                            <User size={14} style={{ color: 'grey.500' }} />
+                            <Typography
+                              variant='caption'
+                              sx={{ color: 'grey.600' }}
+                            >
+                              {record.actor_name || record.actor_id}
+                            </Typography>
+                          </Stack>
+                          <Stack
+                            direction='row'
+                            spacing={0.5}
+                            sx={{ alignItems: 'center', mb: 0.5 }}
+                          >
+                            <Clock size={14} style={{ color: 'grey.400' }} />
+                            <Typography
+                              variant='caption'
+                              sx={{ color: 'grey.500' }}
+                            >
+                              {new Date(record.created_at).toLocaleString()}
+                            </Typography>
+                          </Stack>
+                          {record.comment && (
+                            <Box
+                              sx={{
+                                mt: 1,
+                                p: 1,
+                                bgcolor: 'background.paper',
+                                borderRadius: 1,
+                                borderLeft: 2,
+                                borderColor: isApproved ? 'success.main' : 'error.main',
+                              }}
+                            >
+                              <Typography
+                                variant='caption'
+                                sx={{ color: 'grey.700', fontStyle: 'italic' }}
+                              >
+                                "{record.comment}"
+                              </Typography>
+                            </Box>
+                          )}
+                        </Paper>
+                      </Box>
+                    );
+                  })}
+
+                  {/* 当前待处理节点（如果还在进行中） */}
+                  {approval?.status === 'pending' && (
+                    <Box sx={{ display: 'flex', gap: 2, position: 'relative' }}>
+                      <Avatar
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          bgcolor: 'warning.main',
+                          zIndex: 1,
+                        }}
+                      >
+                        <Clock size={20} />
+                      </Avatar>
+                      <Paper
+                        sx={{
+                          flex: 1,
+                          p: 2,
+                          bgcolor: 'warning.50',
+                          border: 1,
+                          borderColor: 'warning.100',
+                          borderStyle: 'dashed',
+                        }}
+                      >
+                        <Typography
+                          variant='body2'
+                          sx={{ fontWeight: 600 }}
+                        >
+                          当前待审批
+                        </Typography>
+                        <Typography
+                          variant='caption'
+                          sx={{ color: 'grey.500' }}
+                        >
+                          审批人: {approval.assignee_id || 'N/A'}
+                        </Typography>
+                        {approval.timeout_at && (
+                          <Typography
+                            variant='caption'
+                            sx={{ display: 'block', color: 'warning.main', mt: 0.5 }}
+                          >
+                            超时时间: {new Date(approval.timeout_at).toLocaleString()}
+                          </Typography>
+                        )}
+                      </Paper>
+                    </Box>
+                  )}
+                </Stack>
+              </Box>
+            )}
+          </Box>
+        ),
+      },
+      {
+        id: 'formData',
+        label: '表单数据',
+        icon: <FileText size={16} />,
+        content: (
+          <Box>
+            <Typography
+              variant='body2'
+              sx={{ color: 'grey.500', mb: 2 }}
+            >
+              当前审批关联的表单数据
+            </Typography>
+            {(approval as any)?.form_data && Object.keys((approval as any).form_data).length > 0 ? (
+              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
+                {Object.entries((approval as any).form_data).map(([key, value]) => (
+                  <Box
+                    key={key}
+                    sx={{
+                      p: 2,
+                      bgcolor: 'grey.50',
+                      borderRadius: 1,
+                      border: 1,
+                      borderColor: 'divider',
+                    }}
+                  >
+                    <Typography
+                      variant='caption'
+                      sx={{ color: 'grey.500', fontWeight: 600, display: 'block', mb: 0.5 }}
+                    >
+                      {key}
+                    </Typography>
+                    <Typography variant='body2'>{String(value ?? '-')}</Typography>
+                  </Box>
+                ))}
+              </Box>
+            ) : (
+              <Box sx={{ textAlign: 'center', py: 6 }}>
+                <FileText
+                  size={48}
+                  style={{
+                    color: 'grey.300',
+                    marginLeft: 'auto',
+                    marginRight: 'auto',
+                    marginBottom: 8,
+                  }}
+                />
+                <Typography sx={{ color: 'grey.500' }}>
+                  暂无关联表单数据
+                </Typography>
+                <Typography
+                  variant='caption'
+                  sx={{ color: 'grey.400', display: 'block', mt: 0.5 }}
+                >
+                  表单数据将在流程发起后自动填充
+                </Typography>
+              </Box>
+            )}
+          </Box>
+        ),
+      },
     ];
   }, [approval, records]);
 
@@ -479,6 +827,28 @@ const FlowApprovalDetailPage: React.FC = () => {
         },
         variant: 'contained' as const,
         color: 'error' as const,
+      },
+      {
+        label: '转办',
+        icon: <ArrowRightLeft size={18} />,
+        onClick: () => {
+          setDelegateTarget('');
+          setDelegateReason('');
+          setShowDelegateModal(true);
+        },
+        variant: 'outlined' as const,
+        color: 'primary' as const,
+      },
+      {
+        label: '委派',
+        icon: <UserPlus size={18} />,
+        onClick: () => {
+          setDelegateTarget('');
+          setDelegateReason('');
+          setShowDelegateModal(true);
+        },
+        variant: 'outlined' as const,
+        color: 'info' as const,
       },
     ];
   }, [approval]);
@@ -572,6 +942,77 @@ const FlowApprovalDetailPage: React.FC = () => {
             }
           >
             {approvalAction === 'approve' ? '确认通过' : '确认拒绝'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* 转办/委派对话框 */}
+      <Dialog
+        open={showDelegateModal}
+        onClose={() => setShowDelegateModal(false)}
+        maxWidth='sm'
+        fullWidth
+      >
+        <DialogTitle>转办审批任务</DialogTitle>
+        <DialogContent>
+          <Typography
+            variant='body2'
+            sx={{ mb: 2 }}
+          >
+            将该审批任务转办给其他人员处理
+          </Typography>
+          {approval && (
+            <Typography
+              variant='body2'
+              sx={{ color: 'grey.600', mb: 1 }}
+            >
+              当前任务: {approval.task_name}
+            </Typography>
+          )}
+          <Stack spacing={2} sx={{ mt: 1 }}>
+            <TextField
+              size='small'
+              label='转办目标人员 *'
+              value={delegateTarget}
+              onChange={(e) => setDelegateTarget(e.target.value)}
+              placeholder='请输入目标人员姓名或ID'
+              fullWidth
+            />
+            <TextField
+              size='small'
+              label='转办原因'
+              value={delegateReason}
+              onChange={(e) => setDelegateReason(e.target.value)}
+              placeholder='请输入转办原因'
+              multiline
+              rows={3}
+              fullWidth
+            />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            color='inherit'
+            onClick={() => setShowDelegateModal(false)}
+          >
+            取消
+          </Button>
+          <Button
+            variant='contained'
+            onClick={handleDelegate}
+            disabled={delegateLoading || !delegateTarget.trim()}
+            startIcon={
+              delegateLoading ? (
+                <Loader2
+                  size={16}
+                  className='animate-spin'
+                />
+              ) : (
+                <ArrowRightLeft size={16} />
+              )
+            }
+          >
+            确认转办
           </Button>
         </DialogActions>
       </Dialog>

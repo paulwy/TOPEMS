@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Package, Star, X, ShoppingCart, CheckCircle, Shield } from 'lucide-react';
+import { Package, X, ShoppingCart, CheckCircle } from 'lucide-react';
 import {
-  Box,
+  _Box,
   Card,
   CardContent,
   Typography,

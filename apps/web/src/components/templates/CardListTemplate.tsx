@@ -3,7 +3,7 @@
  * 适用于任务卡片、设备卡片、订单卡片等场景
  */
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Box,
   Paper,
@@ -203,7 +203,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
   cardConfig,
   loading = false,
   emptyState,
-  search,
+  _search,
   filters = [],
   filterValues = {},
   onFilterChange,
@@ -227,7 +227,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
   fixedCardHeight,
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const _isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   // 内部状态
   const [internalViewMode, setInternalViewMode] = useState<'grid' | 'list'>('grid');

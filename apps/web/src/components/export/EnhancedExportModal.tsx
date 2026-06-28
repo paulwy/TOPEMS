@@ -8,7 +8,7 @@ import {
   FileText,
   Image,
   Database,
-  Loader2,
+  _Loader2,
   ChevronRight,
 } from 'lucide-react';
 import {

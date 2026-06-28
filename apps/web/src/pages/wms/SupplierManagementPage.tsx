@@ -51,7 +51,6 @@ const SupplierManagementPage: React.FC = () => {
 
   useEffect(() => {
     loadSuppliers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, pageSize, searchTerm, statusFilter]);
 
   const loadSuppliers = async () => {

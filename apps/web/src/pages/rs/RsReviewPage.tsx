@@ -61,7 +61,6 @@ const RsReviewPage: React.FC = () => {
 
   useEffect(() => {
     loadReviews();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, statusFilter, reviewerFilter, page, rowsPerPage]);
 
   const loadReviews = async () => {

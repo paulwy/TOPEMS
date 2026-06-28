@@ -6,11 +6,11 @@ import {
   IconButton,
   LinearProgress,
   List,
-  ListItem,
+  _ListItem,
   ListItemIcon,
   ListItemText,
   Chip,
-  Button,
+  _Button,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
@@ -78,7 +78,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
   height = 150,
   disabled = false,
   className,
-  uploadText = '选择文件',
+  _uploadText = '选择文件',
 }) => {
   const [files, setFiles] = useState<UploadFile[]>(
     value.map((url, index) => {
@@ -189,7 +189,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
       onChange?.(updatedFiles.filter((f) => f.url).map((f) => f.url!));
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [files, maxCount, maxSize, maxTotalSize, accept, onChange]
   );
 

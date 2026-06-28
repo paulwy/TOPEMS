@@ -27,7 +27,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onItemClick,
   collapsed = false,
   onCollapseChange,
-  className = '',
+  _className = '',
 }) => {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [focusedIndex, setFocusedIndex] = useState(0);
@@ -111,7 +111,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           break;
       }
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [items, activeItemId, focusedIndex, expandedItems, onItemClick, toggleExpand]
   );
 

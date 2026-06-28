@@ -61,7 +61,6 @@ const VoucherDetailPage: React.FC = () => {
     if (id) {
       loadVoucherDetail(id);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const loadVoucherDetail = async (voucherId: string) => {

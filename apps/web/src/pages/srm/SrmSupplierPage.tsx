@@ -154,7 +154,7 @@ const SrmSupplierPage: React.FC = () => {
         render: (row) => getStatusBadge(row.status),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [suppliers]
   );
 

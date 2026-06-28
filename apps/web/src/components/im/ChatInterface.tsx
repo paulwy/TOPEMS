@@ -83,7 +83,6 @@ export const ChatInterface: React.FC = () => {
     return () => {
       disconnect();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connect, disconnect]);
 
   useEffect(() => {
@@ -91,7 +90,6 @@ export const ChatInterface: React.FC = () => {
       loadMessages(selectedRoom.id);
       markAllMessagesRead(selectedRoom.id);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRoom]);
 
   useEffect(() => {

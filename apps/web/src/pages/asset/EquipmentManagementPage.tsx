@@ -69,7 +69,6 @@ const EquipmentManagementPage: React.FC = () => {
 
   useEffect(() => {
     loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, debouncedSearch, filterStatus]);
 
   const loadData = async () => {
@@ -323,7 +322,7 @@ const EquipmentManagementPage: React.FC = () => {
         render: (row) => getStatusBadge(row.status),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [employees]
   );
 
@@ -346,7 +345,7 @@ const EquipmentManagementPage: React.FC = () => {
         confirmMessage: '确定要删除这个设备吗？',
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     []
   );
 

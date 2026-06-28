@@ -7,7 +7,7 @@
  * - 地图渲染节流
  */
 
-import { useMemo, useCallback, useRef } from 'react';
+import { useMemo, useRef } from 'react';
 
 /**
  * 轨迹简化 - Douglas-Peucker 算法

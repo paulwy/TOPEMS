@@ -289,16 +289,16 @@ export class VoucherTemplateEngine {
     }
 
     // 计算金额
-    let debit_amount = 0;
-    let credit_amount = 0;
+    let debitAmount = 0;
+    let creditAmount = 0;
 
     if (rule.amount_rule_type === 'fixed' && rule.fixed_amount !== undefined) {
       const amount = rule.fixed_amount;
       if (rule.direction_rule_type === 'fixed') {
         if (rule.fixed_direction === 'debit') {
-          debit_amount = amount;
+          debitAmount = amount;
         } else {
-          credit_amount = amount;
+          creditAmount = amount;
         }
       }
     } else if (rule.amount_rule_type === 'field' && rule.amount_field) {
@@ -306,9 +306,9 @@ export class VoucherTemplateEngine {
       const amount = typeof rawAmount === 'number' ? rawAmount : Number(rawAmount) || 0;
       if (rule.direction_rule_type === 'fixed') {
         if (rule.fixed_direction === 'debit') {
-          debit_amount = amount;
+          debitAmount = amount;
         } else {
-          credit_amount = amount;
+          creditAmount = amount;
         }
       }
     } else if (rule.amount_rule_type === 'expression' && rule.amount_expression) {
@@ -317,9 +317,9 @@ export class VoucherTemplateEngine {
       if (rule.direction_rule_type === 'expression' && rule.direction_expression) {
         const direction = evaluator.evaluate(rule.direction_expression);
         if (direction === 'debit') {
-          debit_amount = amount;
+          debitAmount = amount;
         } else {
-          credit_amount = amount;
+          creditAmount = amount;
         }
       }
     }
@@ -363,8 +363,8 @@ export class VoucherTemplateEngine {
       account_id: account.id,
       account_code: account.code,
       account_name: account.name,
-      debit_amount,
-      credit_amount,
+      debit_amount: debitAmount,
+      credit_amount: creditAmount,
 
       company_id: dimensionValues.company,
       department_id: dimensionValues.department,

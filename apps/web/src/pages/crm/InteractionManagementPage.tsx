@@ -40,7 +40,6 @@ const InteractionManagementPage: React.FC = () => {
 
   useEffect(() => {
     loadInteractions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, statusFilter, typeFilter]);
 
   const loadInteractions = async () => {
@@ -258,7 +257,7 @@ const InteractionManagementPage: React.FC = () => {
         confirmMessage: '确定要删除这条交互记录吗?',
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     []
   );
 

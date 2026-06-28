@@ -4,11 +4,11 @@ import { Search, Calendar, MapPin } from 'lucide-react';
 import {
   Box,
   Typography,
-  Paper,
+  _Paper,
   TextField,
   IconButton,
-  Grid,
-  Divider,
+  _Grid,
+  _Divider,
   Button,
 } from '@mui/material';
 import type { DevicePoint } from '../../../../api/gis';

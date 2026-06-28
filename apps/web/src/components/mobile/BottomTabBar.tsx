@@ -1,6 +1,6 @@
 import React from 'react';
 import { BottomNavigation, BottomNavigationAction, Paper, useTheme, Badge } from '@mui/material';
-import { Home, ListTodo, ScanLine, CheckSquare, User, Bell } from 'lucide-react';
+import { Home, ListTodo, ScanLine, CheckSquare, User } from 'lucide-react';
 
 export interface TabItem {
   id: string;

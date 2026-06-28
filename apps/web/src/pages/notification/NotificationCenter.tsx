@@ -50,7 +50,6 @@ const NotificationCenter: React.FC = () => {
 
   useEffect(() => {
     fetchNotifications();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeFilter, page]);
 
   const fetchNotifications = async () => {

@@ -12,7 +12,7 @@ const GRADIENT_COLORS = {
 };
 
 // 实色配置（用于 MUI 组件的 color 属性）
-const SOLID_COLORS = {
+const _SOLID_COLORS = {
   primary: 'primary',
   success: 'success',
   warning: 'warning',
@@ -93,7 +93,7 @@ const GradientLinearProgress = styled(LinearProgress, {
   },
 }));
 
-const GradientCircularProgress = styled(CircularProgress, {
+const _GradientCircularProgress = styled(CircularProgress, {
   shouldForwardProp: (prop) => prop !== 'gradientColor',
 })<{ gradientColor?: string }>(({ gradientColor, theme }) => ({
   color: theme.palette.primary.main,
@@ -113,7 +113,7 @@ const CircularContainer = styled(Box)({
   justifyContent: 'center',
 });
 
-const CircularValue = styled(Box)({
+const _CircularValue = styled(Box)({
   position: 'absolute',
   display: 'flex',
   alignItems: 'center',

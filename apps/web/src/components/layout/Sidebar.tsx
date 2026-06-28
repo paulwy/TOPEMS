@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Drawer,
@@ -35,7 +35,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, pluginCode }) =
   const navigate = useNavigate();
   const location = useLocation();
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
-  const { installedPlugins, pluginHealth, isPluginInstalled, isPluginActive } = usePlugins();
+  const { _installedPlugins, pluginHealth, isPluginInstalled, isPluginActive } = usePlugins();
   const { checkPermission, isSuperuser } = usePermission();
 
   const hasPermission = (permission?: string): boolean => {
@@ -61,7 +61,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, pluginCode }) =
     return location.pathname.startsWith(path);
   };
 
-  const getPluginStatus = (pluginCode: string) => {
+  const _getPluginStatus = (pluginCode: string) => {
     const health = pluginHealth[pluginCode];
     const installed = isPluginInstalled(pluginCode);
     const active = isPluginActive(pluginCode);

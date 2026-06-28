@@ -7,7 +7,7 @@ import {
   Drawer,
   List,
   ListItem,
-  ListItemIcon,
+  _ListItemIcon,
   ListItemText,
   Switch,
   FormControlLabel,

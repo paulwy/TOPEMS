@@ -62,7 +62,6 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
   useEffect(() => {
     loadDocuments();
     loadStats();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadDocuments = async () => {
@@ -195,7 +194,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
     }
   };
 
-  const getStatusIcon = (status: string) => {
+  const _getStatusIcon = (status: string) => {
     switch (status) {
       case 'processed':
         return <CheckCircle style={{ width: 16, height: 16, color: 'green' }} />;

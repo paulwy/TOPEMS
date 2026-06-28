@@ -6,7 +6,7 @@ import {
   Typography,
   Badge,
   Tooltip,
-  Stack,
+  _Stack,
 } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
 
@@ -158,7 +158,7 @@ export const AvatarGroup: React.FC<AvatarGroupProps> = ({
   avatars,
   max = 5,
   size = 'md',
-  spacing = -8,
+  _spacing = -8,
   sx,
 }) => {
   const getAvatarSx = () => {
@@ -180,7 +180,10 @@ export const AvatarGroup: React.FC<AvatarGroupProps> = ({
   const avatarSize = getAvatarSx();
   return (
     // @ts-ignore MUI complex union type
-    <MuiAvatarGroup max={max} sx={{ '& .MuiAvatar-root': avatarSize, ...sx }}>
+    <MuiAvatarGroup
+      max={max}
+      sx={{ '& .MuiAvatar-root': avatarSize, ...sx }}
+    >
       {avatars.map((avatarProps, index) => (
         <Tooltip
           key={index}

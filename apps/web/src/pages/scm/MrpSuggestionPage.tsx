@@ -65,7 +65,6 @@ const MrpSuggestionPage: React.FC = () => {
 
   useEffect(() => {
     loadSuggestions();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, pageSize, selectedPlanId, filterType, filterStatus]);
 
   useEffect(() => {

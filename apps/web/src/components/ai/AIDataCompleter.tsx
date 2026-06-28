@@ -1,4 +1,4 @@
-import { Card, CardContent, FormControlLabel, Box, Typography, Button } from '@mui/material';
+import { Card, CardContent, Box, Typography, Button } from '@mui/material';
 import { useState, useEffect } from 'react';
 import { Sparkles, Check } from 'lucide-react';
 
@@ -57,7 +57,6 @@ export function AIDataCompleter({
       setSelectedFields(new Set());
       handleComplete();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
   const handleComplete = async () => {

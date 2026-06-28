@@ -20,24 +20,27 @@ export interface AppError {
   originalError?: unknown;
 }
 
-export class AppException extends Error {
+export class AppExceptionError extends Error {
   code: ErrorCode;
   details?: unknown;
   originalError?: unknown;
 
-  constructor(code: ErrorCode, message: string, details?: unknown, originalError?: unknown) {
-    super(message);
-    this.name = 'AppException';
-    this.code = code;
-    this.details = details;
-    this.originalError = originalError;
+  constructor(
+    message: string,
+    options: { code: ErrorCode; details?: unknown; originalError?: unknown; cause?: unknown }
+  ) {
+    super(message, options);
+    this.name = 'AppExceptionError';
+    this.code = options.code;
+    this.details = options.details;
+    this.originalError = options.originalError;
   }
 }
 
 export const handleApiError = (error: unknown): AppError => {
   logger.error('API error:', error);
 
-  if (error instanceof AppException) {
+  if (error instanceof AppExceptionError) {
     return {
       code: error.code,
       message: error.message,

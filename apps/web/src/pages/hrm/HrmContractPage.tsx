@@ -181,7 +181,6 @@ export default function ContractManagementPage() {
   useEffect(() => {
     loadData();
     loadEmployees();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, statusFilter, showExpiringOnly]);
 
   const loadData = async () => {
@@ -608,7 +607,7 @@ export default function ContractManagementPage() {
         ),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [employees]
   );
 
@@ -641,7 +640,7 @@ export default function ContractManagementPage() {
         onClick: (row) => handleDelete(row.id),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     []
   );
 

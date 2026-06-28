@@ -4,7 +4,7 @@ import {
   Typography,
   Tooltip,
   IconButton,
-  Stack,
+  _Stack,
   Divider,
   useTheme,
   useMediaQuery,

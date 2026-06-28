@@ -473,6 +473,14 @@ const registerDefaultModules = () => {
         order: 8,
         permission: 'erp:admin',
       },
+      {
+        code: 'erp-expense-claims',
+        label: '费用报销',
+        path: '/expense-claims',
+        icon: 'Receipt',
+        order: 9,
+        permission: 'erp:read',
+      },
     ],
     module_tabs: [
       {
@@ -528,6 +536,12 @@ const registerDefaultModules = () => {
         label: '数据库管理',
         path: '/erp/database',
         permission: 'erp:admin',
+      },
+      {
+        code: 'erp-expense-claims',
+        label: '费用报销',
+        path: '/expense-claims',
+        permission: 'erp:read',
       },
     ],
     module_card: {
@@ -740,6 +754,22 @@ const registerDefaultModules = () => {
         icon: 'Settings',
         path: '/rs/settings',
         order: 10,
+        permission: 'rs:read',
+      },
+      {
+        code: 'rs-formulas',
+        label: '配方管理',
+        path: '/rs/formulas',
+        icon: 'FlaskConical',
+        order: 11,
+        permission: 'rs:read',
+      },
+      {
+        code: 'rs-experiments',
+        label: '试验管理',
+        path: '/rs/experiments',
+        icon: 'TestTube',
+        order: 12,
         permission: 'rs:read',
       },
     ],
@@ -1084,6 +1114,22 @@ const registerDefaultModules = () => {
         order: 13,
         permission: 'finance:read',
       },
+      {
+        code: 'finance-receipts',
+        label: '收款管理',
+        icon: 'Download',
+        path: '/finance/receipts',
+        order: 14,
+        permission: 'finance:read',
+      },
+      {
+        code: 'finance-payments',
+        label: '付款管理',
+        icon: 'Upload',
+        path: '/finance/payments',
+        order: 15,
+        permission: 'finance:read',
+      },
     ],
     module_tabs: [
       {
@@ -1174,6 +1220,22 @@ const registerDefaultModules = () => {
         code: 'finance-opening-balance',
         label: '期初余额',
         path: '/finance/opening-balance',
+        permission: 'finance:read',
+      },
+      {
+        code: 'finance-receipts',
+        label: '收款管理',
+        path: '/finance/receipts',
+        icon: 'Download',
+        order: 14,
+        permission: 'finance:read',
+      },
+      {
+        code: 'finance-payments',
+        label: '付款管理',
+        path: '/finance/payments',
+        icon: 'Upload',
+        order: 15,
         permission: 'finance:read',
       },
     ],
@@ -1871,6 +1933,12 @@ const registerDefaultModules = () => {
         permission: 'hrm:read',
       },
       {
+        code: 'hrm-organization',
+        label: '组织架构',
+        path: '/hrm/organization',
+        permission: 'hrm:read',
+      },
+      {
         code: 'hrm-positions',
         label: '职位管理',
         path: '/hrm/positions',
@@ -1924,6 +1992,12 @@ const registerDefaultModules = () => {
         path: '/hrm/reports',
         permission: 'hrm:read',
       },
+      {
+        code: 'hrm-salary-adjustments',
+        label: '薪资调整',
+        path: '/hrm/salary-adjustments',
+        permission: 'hrm:read',
+      },
     ],
     module_card: {
       code: 'hrm',
@@ -1952,15 +2026,29 @@ const registerDefaultModules = () => {
     ],
     sidebar_nav: [
       {
+        code: 'im-chat',
+        label: '聊天',
+        icon: 'MessageCircle',
+        path: '/im/chat',
+        order: 0,
+        permission: 'im:read',
+      },
+      {
         code: 'im-mail',
         label: '邮件',
         icon: 'Mail',
         path: '/mail',
-        order: 0,
+        order: 1,
         permission: 'im:read',
       },
     ],
     module_tabs: [
+      {
+        code: 'im-chat',
+        label: '聊天',
+        path: '/im/chat',
+        permission: 'im:read',
+      },
       {
         code: 'im-mail',
         label: '邮件',
@@ -2228,6 +2316,24 @@ const registerDefaultModules = () => {
         code: 'iam-system',
         label: '系统管理',
         path: '/iam/system',
+        permission: 'iam:system_read',
+      },
+      {
+        code: 'iam-dictionaries',
+        label: '数据字典',
+        path: '/iam/dictionaries',
+        permission: 'iam:dictionaries_read',
+      },
+      {
+        code: 'iam-plugins',
+        label: '插件市场',
+        path: '/iam/plugins',
+        permission: 'iam:plugins_read',
+      },
+      {
+        code: 'iam-system-monitor',
+        label: '系统监控',
+        path: '/iam/system/monitor',
         permission: 'iam:system_read',
       },
     ],
@@ -3024,6 +3130,12 @@ const registerDefaultModules = () => {
         path: '/templates',
         permission: 'doc:admin',
       },
+      {
+        code: 'docs-help',
+        label: '帮助中心',
+        path: '/help',
+        permission: '',
+      },
     ],
     module_card: {
       code: 'docs',
@@ -3228,6 +3340,12 @@ const registerDefaultModules = () => {
         path: '/report/builder',
         permission: 'report:read',
       },
+      {
+        code: 'report-viewer',
+        label: '报表查看',
+        path: '/report/viewer',
+        permission: 'report:read',
+      },
     ],
     module_card: {
       code: 'report',
@@ -3390,7 +3508,7 @@ const registerDefaultModules = () => {
         code: 'integration-external-erp',
         label: '外部ERP',
         icon: 'Globe',
-        path: '/integration/external-erp',
+        path: '/integration/external-erp-overview',
         order: 6,
         permission: 'integration:read',
       },
@@ -3418,6 +3536,24 @@ const registerDefaultModules = () => {
         code: 'integration-events',
         label: '事件中心',
         path: '/integration/events',
+        permission: 'integration:read',
+      },
+      {
+        code: 'integration-wms-scm',
+        label: 'WMS-SCM',
+        path: '/integration/wms-scm',
+        permission: 'integration:read',
+      },
+      {
+        code: 'integration-rules',
+        label: '转换规则',
+        path: '/integration/rules',
+        permission: 'integration:read',
+      },
+      {
+        code: 'integration-external-erp',
+        label: '外部ERP',
+        path: '/integration/external-erp-overview',
         permission: 'integration:read',
       },
     ],
@@ -3572,7 +3708,7 @@ const registerDefaultModules = () => {
   // ============================================================
   // OA 行政综合（归属 ERP 模块）
   // ============================================================
-  navigationRegistry.register('erp', {
+  navigationRegistry.register('erp-oa', {
     top_nav: [
       {
         code: 'erp-oa',
@@ -3625,6 +3761,14 @@ const registerDefaultModules = () => {
         order: 4,
         permission: 'erp:admin',
       },
+      {
+        code: 'erp-oa-budget',
+        label: '预算管理',
+        path: '/budget',
+        icon: 'Calculator',
+        order: 5,
+        permission: 'erp:admin',
+      },
     ],
     module_tabs: [
       {
@@ -3655,6 +3799,12 @@ const registerDefaultModules = () => {
         code: 'erp-oa-office-supplies',
         label: '办公用品',
         path: '/office-supplies',
+        permission: 'erp:admin',
+      },
+      {
+        code: 'erp-oa-budget',
+        label: '预算管理',
+        path: '/budget',
         permission: 'erp:admin',
       },
     ],
@@ -3737,7 +3887,7 @@ const registerDefaultModules = () => {
         code: 'lims-instruments',
         label: '仪器管理',
         icon: 'Microscope',
-        path: '/lims/instruments',
+        path: '/lims/instruments-manage',
         order: 3,
         permission: 'lims:read',
         children: [
@@ -3795,7 +3945,7 @@ const registerDefaultModules = () => {
       {
         code: 'lims-instruments',
         label: '仪器管理',
-        path: '/lims/instruments',
+        path: '/lims/instruments-manage',
         permission: 'lims:read',
       },
       {

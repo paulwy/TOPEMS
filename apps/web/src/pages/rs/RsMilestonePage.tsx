@@ -54,7 +54,6 @@ const RsMilestonePage: React.FC = () => {
 
   useEffect(() => {
     loadMilestones();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, statusFilter, page, rowsPerPage]);
 
   const loadMilestones = async () => {

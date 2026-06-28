@@ -68,7 +68,6 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
 
   useEffect(() => {
     loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, debouncedSearch]);
 
   const loadData = async () => {
@@ -441,7 +440,7 @@ const UserManagementPage: React.FC<UserManagementPageProps> = ({ onNavigate: _on
         confirmMessage: '确定要删除这个用户吗？',
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     []
   );
 

@@ -74,7 +74,6 @@ const FinanceBudgetPage: React.FC = () => {
 
   useEffect(() => {
     loadBudgets();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadBudgets = async () => {

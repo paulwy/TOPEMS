@@ -36,7 +36,7 @@ export const AccessLogger: React.FC<AccessLoggerProps> = ({
   onLogError,
 }) => {
   const { user } = useAuth();
-  const [isLogging, setIsLogging] = useState(false);
+  const [_isLogging, setIsLogging] = useState(false);
 
   const logAccess = useCallback(
     async (success: boolean = true, errorMessage?: string) => {

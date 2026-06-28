@@ -69,7 +69,6 @@ const VoucherCreatePage: React.FC = () => {
   useEffect(() => {
     loadSubjects();
     initializeForm();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadSubjects = async () => {

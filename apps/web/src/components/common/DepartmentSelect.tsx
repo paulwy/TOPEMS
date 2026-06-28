@@ -4,13 +4,13 @@ import {
   TextField,
   Menu,
   MenuItem,
-  ListItemIcon,
+  _ListItemIcon,
   ListItemText,
   Chip,
   CircularProgress,
   Collapse,
 } from '@mui/material';
-import { Search, Building2, ChevronRight, ChevronDown, Check, X } from 'lucide-react';
+import { Search, Building2, ChevronRight, ChevronDown, Check } from 'lucide-react';
 
 export interface Department {
   id: string;
@@ -31,7 +31,7 @@ export interface DepartmentSelectProps {
   allowClear?: boolean;
 }
 
-const TreeNode: React.FC<{
+const _TreeNode: React.FC<{
   node: Department;
   selected: boolean;
   onClick: () => void;
@@ -200,7 +200,7 @@ export const DepartmentSelect: React.FC<DepartmentSelectProps> = ({
     (dept: Department) => {
       if (multiple) {
         const currentValue = (value as Department[]) || [];
-        const exists = currentValue.find((d) => d.id === dept.id);
+        const exists = currentValue.some((d) => d.id === dept.id);
         if (exists) {
           onChange(currentValue.filter((d) => d.id !== dept.id));
         } else {

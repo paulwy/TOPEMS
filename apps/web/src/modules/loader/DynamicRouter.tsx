@@ -6,8 +6,10 @@ import { moduleRegistry } from '../registry';
 import { eventBus, ModuleEvents } from './EventBus';
 import { logger } from '@/utils/logger';
 
+/* eslint-disable @typescript-eslint/naming-convention */
 declare const __webpack_share_scopes__: any;
 declare const __webpack_init_sharing__: (scope: string) => Promise<void>;
+/* eslint-enable @typescript-eslint/naming-convention */
 
 const remoteModuleCache: Map<string, any> = new Map();
 

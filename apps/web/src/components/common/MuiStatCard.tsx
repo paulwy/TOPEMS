@@ -3,7 +3,7 @@
  * 提供 StatCard、StatCardGroup 等统计展示组件
  * 支持丰富的交互和动画效果
  */
-import React, { useEffect, useState, useRef } from 'react';
+import React from 'react';
 import { Box, Typography, Card, CardContent, Skeleton, Tooltip, useTheme } from '@mui/material';
 import { TrendingUp, TrendingDown, Minus } from 'lucide-react';
 

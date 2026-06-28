@@ -174,24 +174,24 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   }, [state.isAuthenticated, updateLastActivity]);
 
   const refreshToken = useCallback(async () => {
-    const refresh_token = localStorage.getItem('refresh_token');
-    if (!refresh_token) {
+    const refreshTokenValue = localStorage.getItem('refresh_token');
+    if (!refreshTokenValue) {
       return false;
     }
 
     try {
-      const response = await authApi.refreshToken(refresh_token);
+      const response = await authApi.refreshToken(refreshTokenValue);
       if (response.success && response.data) {
-        const { access_token } = response.data;
-        localStorage.setItem('token', access_token);
-        apiClient.setAuthToken(access_token);
+        const { access_token: accessToken } = response.data;
+        localStorage.setItem('token', accessToken);
+        apiClient.setAuthToken(accessToken);
 
         // 从新 token 解析过期时间（与后端配置保持一致）
-        const newExpiry = parseTokenExpiryFromJWT(access_token);
+        const newExpiry = parseTokenExpiryFromJWT(accessToken);
         setTokenExpiry(newExpiry);
         localStorage.setItem('token_expiry', newExpiry.toString());
 
-        setState((prev) => ({ ...prev, token: access_token }));
+        setState((prev) => ({ ...prev, token: accessToken }));
         return true;
       }
     } catch (error: unknown) {
@@ -265,7 +265,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         clearInterval(refreshInterval);
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshToken]);
 
   const login = useCallback(async (credentials: LoginCredentials) => {
@@ -273,20 +272,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const response = await authApi.login(credentials);
 
       if (response.success && response.data) {
-        const { access_token, refresh_token, user } = response.data;
+        const { access_token: accessToken, refresh_token: refreshTokenValue, user } = response.data;
         // Transform user to unified format (camelCase + snake_case compatibility)
         const mappedUser = mapApiUserToUser(user);
 
-        localStorage.setItem('token', access_token);
-        if (refresh_token) {
-          localStorage.setItem('refresh_token', refresh_token);
+        localStorage.setItem('token', accessToken);
+        if (refreshTokenValue) {
+          localStorage.setItem('refresh_token', refreshTokenValue);
         }
         localStorage.setItem('user', JSON.stringify(mappedUser));
 
-        apiClient.setAuthToken(access_token);
+        apiClient.setAuthToken(accessToken);
 
         // 从 JWT token 解析过期时间（与后端配置保持一致）
-        const expiry = parseTokenExpiryFromJWT(access_token);
+        const expiry = parseTokenExpiryFromJWT(accessToken);
         setTokenExpiry(expiry);
         localStorage.setItem('token_expiry', expiry.toString());
 

@@ -103,7 +103,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   accept = 'image/*',
   maxSize = 5,
   cropEnabled = true,
-  cropAspect = 1,
+  _cropAspect = 1,
   height = 200,
   disabled = false,
   className,
@@ -121,7 +121,7 @@ const ImageUpload: React.FC<ImageUploadProps> = ({
   const [cropZoom, setCropZoom] = useState(1);
   const [cropRotation, setCropRotation] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const cropInputRef = useRef<HTMLInputElement>(null);
+  const _cropInputRef = useRef<HTMLInputElement>(null);
 
   /**
    * 生成唯一ID

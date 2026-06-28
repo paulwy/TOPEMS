@@ -16,7 +16,7 @@ import {
   useMediaQuery,
   Button,
 } from '@mui/material';
-import { Filter, X, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
+import { Filter, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
 
 // ============ 类型定义 ============
 
@@ -57,7 +57,7 @@ const FilterControl: React.FC<{
   onChange: (value: any, filter: FilterConfig) => void;
   dense?: boolean;
   variant?: 'standard' | 'outlined' | 'filled';
-}> = ({ filter, onChange, dense, variant }) => {
+}> = ({ filter, onChange, _dense, variant }) => {
   const handleChange = useCallback(
     (e: { target?: { value?: unknown } } | unknown) => {
       const value =
@@ -286,7 +286,10 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Filter style={{ width: 18, height: 18 }} aria-hidden="true" />
+          <Filter
+            style={{ width: 18, height: 18 }}
+            aria-hidden='true'
+          />
           <Typography
             variant='subtitle2'
             sx={{ fontWeight: 600 }}
@@ -299,7 +302,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               size='small'
               color='primary'
               sx={{ height: 20, fontSize: '0.75rem' }}
-              aria-live="polite"
+              aria-live='polite'
             />
           )}
         </Box>
@@ -320,7 +323,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               <IconButton
                 size='small'
                 onClick={handleReset}
-                aria-label="重置筛选"
+                aria-label='重置筛选'
               >
                 <RotateCcw style={{ width: 16, height: 16 }} />
               </IconButton>

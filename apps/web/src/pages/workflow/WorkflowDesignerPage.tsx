@@ -44,7 +44,6 @@ const WorkflowDesignerPage: React.FC = () => {
     if (workflowId) {
       loadWorkflow(workflowId);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workflowId]);
 
   const loadWorkflow = async (id: string) => {

@@ -101,7 +101,6 @@ export const useNotificationState = (enabled = true) => {
     if (!enabled) return;
     fetchNotifications();
     fetchUnreadCount();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled]);
 
   return {

@@ -138,3 +138,12 @@ export type {
   TrackPoint,
   GisMapTemplateProps,
 } from './GisMapTemplate';
+
+export { MasterDetailPageTemplate } from './MasterDetailPageTemplate';
+export type {
+  MasterColumn,
+  MasterRowAction,
+  SortConfig as MasterSortConfig,
+  PaginationConfig as MasterPaginationConfig,
+  MasterDetailPageTemplateProps,
+} from './MasterDetailPageTemplate';

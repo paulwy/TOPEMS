@@ -45,7 +45,6 @@ const SupplierDetailPage: React.FC = () => {
     if (id) {
       loadSupplier(id);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   const loadSupplier = async (supplierId: string) => {

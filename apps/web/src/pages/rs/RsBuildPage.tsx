@@ -46,7 +46,6 @@ const RsBuildPage: React.FC = () => {
 
   useEffect(() => {
     loadBuilds();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, statusFilter, projectFilter, page, rowsPerPage]);
 
   const loadBuilds = async () => {

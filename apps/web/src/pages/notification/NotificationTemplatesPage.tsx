@@ -57,7 +57,6 @@ const NotificationTemplatesPage: React.FC = () => {
 
   useEffect(() => {
     loadTemplates();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, selectedStatus, debouncedSearch]);
 
   const loadTemplates = async () => {
@@ -408,7 +407,7 @@ const NotificationTemplatesPage: React.FC = () => {
         confirmMessage: '确定要删除这个模板吗？',
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     []
   );
 

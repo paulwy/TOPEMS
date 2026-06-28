@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, Chip, Typography, Button } from '@mui/material';
+import { Chip } from '@mui/material';
 import type { ReactNode } from 'react';
 import React from 'react';
 import { usePermission } from '../hooks/usePermission';
@@ -363,21 +363,21 @@ const roleConfig: Record<
   Guest: { variant: 'outline', icon: Eye, label: '访客' },
 };
 
-export const RoleBadge: React.FC<RoleBadgeProps> = ({ role, size = 'md', showIcon = true }) => {
+export const RoleBadge: React.FC<RoleBadgeProps> = ({ role, _size = 'md', _showIcon = true }) => {
   const config = roleConfig[role] || {
     variant: 'outline' as const,
     icon: Shield,
     label: role,
   };
-  const Icon = config.icon;
+  const _Icon = config.icon;
 
-  const sizeClasses = {
+  const _sizeClasses = {
     sm: 'text-xs px-1.5 py-0.5',
     md: 'text-sm px-2 py-1',
     lg: 'text-base px-3 py-1.5',
   };
 
-  const iconSizes = {
+  const _iconSizes = {
     sm: 'w-3 h-3',
     md: 'w-4 h-4',
     lg: 'w-5 h-5',

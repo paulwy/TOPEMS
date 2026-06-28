@@ -50,7 +50,6 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
     } else {
       loadDepartments();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value.companyId, loadDepartments]);
 
   useEffect(() => {
@@ -60,7 +59,6 @@ const OrganizationFilter: React.FC<OrganizationFilterProps> = ({
     } else {
       loadEmployees();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value.departmentId, loadEmployees]);
 
   const filteredDepartments = useMemo(() => {

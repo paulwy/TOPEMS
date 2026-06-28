@@ -10,7 +10,7 @@ import {
   Eye,
   RefreshCw,
 } from 'lucide-react';
-import { DataExport, BackButton, PageContainer } from '@/components/common';
+import { DataExport, BackButton, PageContainer, CurrencyField } from '@/components/common';
 import { ListPageTemplate } from '@/components/templates';
 import type { ColumnDef, RowAction, FilterConfig } from '@/components/templates';
 import { MuiStatCard as StatCard, StatCardGroup } from '@/components';
@@ -402,7 +402,7 @@ const FinanceInvoicePage: React.FC = () => {
         onClick: (row: InvoiceListItem) => handleDelete(row.id),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     []
   );
 
@@ -607,15 +607,14 @@ const FinanceInvoicePage: React.FC = () => {
               direction='row'
               spacing={2}
             >
-              <TextField
+              <CurrencyField
                 label='金额 *'
-                type='number'
                 fullWidth
-                value={newInvoice.amount || ''}
-                onChange={(e) =>
+                value={newInvoice.amount || 0}
+                onChange={(val) =>
                   setNewInvoice({
                     ...newInvoice,
-                    amount: parseFloat(e.target.value) || 0,
+                    amount: val,
                   })
                 }
               />

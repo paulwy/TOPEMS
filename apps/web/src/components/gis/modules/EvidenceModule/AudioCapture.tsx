@@ -80,7 +80,6 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
       setError('无法访问麦克风，请确保已授予麦克风权限');
       logger.error('Audio capture error:', err);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [maxDuration]);
 
   // Pause/Resume recording
@@ -105,7 +104,6 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
       }
     }
     setIsPaused(!isPaused);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPaused, maxDuration]);
 
   // Stop recording

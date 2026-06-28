@@ -29,7 +29,7 @@ const StepIconContainer = styled('div')<{
   status: StepItem['status'];
   variant: StepperProps['variant'];
   active: boolean;
-}>(({ theme, status, variant, active }) => {
+}>(({ theme, status, variant, _active }) => {
   const getBackgroundColor = () => {
     if (status === 'completed') {
       return variant === 'gradient'

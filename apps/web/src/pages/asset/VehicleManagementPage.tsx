@@ -80,7 +80,6 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({ onNavigat
 
   useEffect(() => {
     loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, debouncedSearch, filterStatus]);
 
   const loadData = async () => {
@@ -374,7 +373,7 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({ onNavigat
         render: (row) => getVehicleStatusBadge(row.status),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [vehicles]
   );
 
@@ -409,7 +408,7 @@ const VehicleManagementPage: React.FC<VehicleManagementPageProps> = ({ onNavigat
         confirmMessage: '确定要删除这辆车吗？',
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     []
   );
 

@@ -26,7 +26,7 @@ import {
   type LucideProps,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { navigationRegistry, type ModuleCardConfig } from '@/lib/NavigationRegistry';
+import { navigationRegistry, type ModuleCardConfig } from '@/lib/navigationRegistry';
 import { gradients } from '@/theme';
 import { PageContainer } from '@/components/common/PageContainer';
 

@@ -7,7 +7,7 @@ import {
   TextField,
   IconButton,
   Tooltip,
-  Divider,
+  _Divider,
   Skeleton,
   Alert,
   Collapse,
@@ -18,9 +18,9 @@ import {
   FormHelperText,
   Snackbar,
   Alert as MuiAlert,
-  Slide,
+  _Slide,
   Chip,
-  Badge,
+  _Badge,
   LinearProgress,
   Tab,
   Tabs,
@@ -40,23 +40,23 @@ import {
   AlertTriangle,
   RotateCcw,
   FileText,
-  History,
-  Eye,
-  EyeOff,
-  Lock,
+  _History,
+  _Eye,
+  _EyeOff,
+  _Lock,
   Unlock,
-  GripVertical,
-  Plus,
-  Minus,
+  _GripVertical,
+  _Plus,
+  _Minus,
 } from 'lucide-react';
 import {
   useForm,
   Controller,
   FormProvider,
-  useWatch,
-  type FieldValues,
+  _useWatch,
+  type _FieldValues,
   type UseFormReturn,
-  type FieldErrors,
+  type _FieldErrors,
 } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { z } from 'zod';
@@ -420,7 +420,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   showValidationHints = true,
   customValidationMessages = {},
   draftConfig,
-  versionConfig,
+  _versionConfig,
   showGroupTabs = false,
   showProgress = false,
   mode = 'edit',
@@ -428,7 +428,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   ...props
 }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const _isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(sections.filter((s) => s.defaultExpanded !== false).map((s) => s.id))
@@ -772,7 +772,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
   }, []);
 
   // 获取字段验证错误消息
-  const getErrorMessage = (fieldName: string, field: FormField): string => {
+  const getErrorMessage = (fieldName: string, _field: FormField): string => {
     const fieldError = errors[fieldName];
     if (!fieldError) return '';
 

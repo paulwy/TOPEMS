@@ -51,7 +51,6 @@ const RsBugPage: React.FC = () => {
 
   useEffect(() => {
     loadBugs();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, severityFilter, priorityFilter, statusFilter, assigneeFilter, page, rowsPerPage]);
 
   const loadBugs = async () => {

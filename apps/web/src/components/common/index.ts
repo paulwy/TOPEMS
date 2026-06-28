@@ -170,3 +170,8 @@ export type { FilterOption, FilterConfig, FilterBarProps } from './FilterBar';
 // MuiStatCard - MUI风格统计卡片（从mui/迁移）
 export { StatCard as MuiStatCard, StatCardGroup } from './MuiStatCard';
 export type { StatCardProps as MuiStatCardProps, StatCardGroupProps } from './MuiStatCard';
+
+// ===== 数字输入组件 (shared-components re-export) =====
+export { NumberField, type NumberFieldProps } from './NumberFields';
+export { CurrencyField, type CurrencyFieldProps } from './NumberFields';
+export { PercentField, type PercentFieldProps } from './NumberFields';

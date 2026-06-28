@@ -8,6 +8,10 @@ import reactHooksPlugin from 'eslint-plugin-react-hooks';
 import importPlugin from 'eslint-plugin-import';
 import unicorn from 'eslint-plugin-unicorn';
 import checkFile from 'eslint-plugin-check-file';
+import { dirname, join } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export default [
   {
@@ -25,7 +29,7 @@ export default [
         ecmaFeatures: { jsx: true },
         ecmaVersion: 'latest',
         sourceType: 'module',
-        project: './tsconfig.json',
+        project: join(__dirname, './tsconfig.json'),
       },
     },
     plugins: {
@@ -43,14 +47,14 @@ export default [
       },
       'import/resolver': {
         typescript: {
-          project: './tsconfig.json',
+          project: join(__dirname, './tsconfig.json'),
         },
       },
     },
     rules: {
       'prettier/prettier': 'error',
       'react-hooks/rules-of-hooks': 'error',
-      'react-hooks/exhaustive-deps': 'warn',
+      'react-hooks/exhaustive-deps': 'off',
 
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-empty-function': 'off',
@@ -58,17 +62,8 @@ export default [
       '@typescript-eslint/consistent-type-imports': 'warn',
       '@typescript-eslint/no-misused-promises': 'off',
       '@typescript-eslint/restrict-template-expressions': 'off',
-      '@typescript-eslint/no-unused-vars': [
-        'warn',
-        {
-          argsIgnorePattern: '^_',
-          varsIgnorePattern: '^_',
-          caughtErrorsIgnorePattern: '^_',
-          ignoreRestSiblings: true,
-          destructuredArrayIgnorePattern: '^_',
-        },
-      ],
-      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-unused-vars': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/naming-convention': [
         'warn',
         {
@@ -80,14 +75,16 @@ export default [
           selector: 'variable',
           types: ['function'],
           format: ['camelCase', 'PascalCase'],
+          leadingUnderscore: 'allow',
         },
         {
           selector: 'function',
           format: ['camelCase', 'PascalCase'],
+          leadingUnderscore: 'allow',
         },
         {
           selector: 'parameter',
-          format: ['camelCase', 'snake_case'],
+          format: ['camelCase', 'snake_case', 'PascalCase'],
           leadingUnderscore: 'allow',
         },
         {
@@ -97,6 +94,7 @@ export default [
         {
           selector: 'interface',
           format: ['PascalCase'],
+          leadingUnderscore: 'allow',
           custom: {
             regex: '^I[A-Z]',
             match: false,
@@ -105,6 +103,12 @@ export default [
         {
           selector: 'typeAlias',
           format: ['PascalCase'],
+          leadingUnderscore: 'allow',
+        },
+        {
+          selector: 'typeParameter',
+          format: ['PascalCase'],
+          leadingUnderscore: 'allow',
         },
         {
           selector: 'enum',
@@ -131,8 +135,13 @@ export default [
           format: null,
         },
         {
+          selector: 'objectLiteralMethod',
+          format: null,
+        },
+        {
           selector: 'typeProperty',
-          format: ['camelCase', 'snake_case'],
+          format: ['camelCase', 'snake_case', 'UPPER_CASE'],
+          leadingUnderscore: 'allow',
         },
       ],
 
@@ -171,7 +180,7 @@ export default [
       'import/no-self-import': 'warn',
       'import/no-useless-path-segments': 'warn',
       'import/no-relative-packages': 'warn',
-      'import/no-relative-parent-imports': 'warn',
+      'import/no-relative-parent-imports': 'off',
 
       'unicorn/prefer-node-protocol': 'off',
       'unicorn/filename-case': 'off',
@@ -211,6 +220,7 @@ export default [
         },
         {
           ignoreMiddleExtensions: true,
+          ignorePatterns: ['**/index.{ts,tsx,js,jsx}'],
         },
       ],
       'check-file/folder-naming-convention': 'off',

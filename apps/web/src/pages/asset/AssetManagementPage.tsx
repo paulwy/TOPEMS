@@ -463,7 +463,7 @@ const AssetManagementPage: React.FC<AssetManagementPageProps> = ({ onNavigate })
         ),
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [employees]
   );
 

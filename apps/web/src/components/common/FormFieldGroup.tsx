@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Typography, Collapse, IconButton, Tooltip } from '@mui/material';
+import { Box, Typography, IconButton, Tooltip } from '@mui/material';
 import { ChevronDown, Info } from 'lucide-react';
 
 export interface FormFieldGroupProps {

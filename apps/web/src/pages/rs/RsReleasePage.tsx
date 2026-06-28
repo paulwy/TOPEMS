@@ -66,7 +66,6 @@ const RsReleasePage: React.FC = () => {
 
   useEffect(() => {
     loadReleases();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm, envFilter, statusFilter, page, rowsPerPage]);
 
   const loadReleases = async () => {

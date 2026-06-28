@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Box, Typography, Paper, IconButton, Button } from '@mui/material';
+import { Box, Typography, Paper, IconButton } from '@mui/material';
 import { ChevronRight, ChevronLeft, ZoomIn, ZoomOut } from 'lucide-react';
 import type { GanttPhase, GanttMilestone } from '@/api/pm';
 
