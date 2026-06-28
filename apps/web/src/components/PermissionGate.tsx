@@ -3,7 +3,14 @@ import type { ReactNode } from 'react';
 import React from 'react';
 import { usePermission } from '../hooks/usePermission';
 import { useRole } from '../hooks/useRole';
-import { Shield, User, Users, Crown, Eye, Loader2 } from 'lucide-react';
+import {
+  Shield,
+  User,
+  Users,
+  Crown,
+  Eye,
+  Loader2,
+} from 'lucide-react';
 
 interface PermissionGateProps {
   children: ReactNode;

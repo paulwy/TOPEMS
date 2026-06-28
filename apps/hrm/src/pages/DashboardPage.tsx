@@ -11,15 +11,17 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material';
-import {
-  People as PeopleIcon,
-  PersonAdd as PersonAddIcon,
-  School as SchoolIcon,
-  EmojiEvents as EmojiEventsIcon,
-  Assessment as AssessmentIcon,
-  Business as BusinessIcon,
-} from '@mui/icons-material';
+
+import { BarChart3, Building2, GraduationCap, Trophy, UserPlus, Users } from 'lucide-react';
+
 import { useHrmStore } from '../store/hrmStore';
+
+const AssessmentIcon = BarChart3;
+const PeopleIcon = Users;
+const BusinessIcon = Building2;
+const EmojiEventsIcon = Trophy;
+const PersonAddIcon = UserPlus;
+const SchoolIcon = GraduationCap;
 
 interface StatItem {
   id: string;
@@ -42,7 +44,7 @@ export const DashboardPage: React.FC = () => {
           id: 'total-employees',
           title: '员工总数',
           value: 256,
-          icon: <PeopleIcon fontSize="large" />,
+          icon: <PeopleIcon size={24} />,
           color: 'primary',
           change: '较上月 +12',
         },
@@ -50,7 +52,7 @@ export const DashboardPage: React.FC = () => {
           id: 'new-hires',
           title: '本月入职',
           value: 8,
-          icon: <PersonAddIcon fontSize="large" />,
+          icon: <PersonAddIcon size={24} />,
           color: 'success',
           change: '较上月 +3',
         },
@@ -58,7 +60,7 @@ export const DashboardPage: React.FC = () => {
           id: 'departments',
           title: '部门数量',
           value: 12,
-          icon: <BusinessIcon fontSize="large" />,
+          icon: <BusinessIcon size={24} />,
           color: 'info',
           change: '新增 1 个',
         },
@@ -66,7 +68,7 @@ export const DashboardPage: React.FC = () => {
           id: 'training',
           title: '培训课程',
           value: 23,
-          icon: <SchoolIcon fontSize="large" />,
+          icon: <SchoolIcon size={24} />,
           color: 'warning',
           change: '进行中 5',
         },
@@ -74,7 +76,7 @@ export const DashboardPage: React.FC = () => {
           id: 'performance',
           title: '绩效考核',
           value: 189,
-          icon: <EmojiEventsIcon fontSize="large" />,
+          icon: <EmojiEventsIcon size={24} />,
           color: 'error',
           change: '已完成 156',
         },
@@ -82,7 +84,7 @@ export const DashboardPage: React.FC = () => {
           id: 'reports',
           title: '本月报表',
           value: 14,
-          icon: <AssessmentIcon fontSize="large" />,
+          icon: <AssessmentIcon size={24} />,
           color: 'primary',
           change: '较上月 +2',
         },
@@ -117,7 +119,7 @@ export const DashboardPage: React.FC = () => {
         <>
           <Grid container spacing={3} sx={{ mb: 4 }}>
             {stats.map((stat) => (
-              <Grid item xs={12} sm={6} md={4} key={stat.id}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <Card
                   sx={{
                     height: '100%',
@@ -126,7 +128,7 @@ export const DashboardPage: React.FC = () => {
                   }}
                 >
                   <CardContent>
-                    <Stack direction="row" alignItems="center" spacing={2}>
+                    <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
                       <Box sx={{ color: `${stat.color}.main` }}>{stat.icon}</Box>
                       <Box sx={{ flexGrow: 1 }}>
                         <Typography variant="body2" color="text.secondary">
@@ -149,7 +151,7 @@ export const DashboardPage: React.FC = () => {
           </Grid>
 
           <Grid container spacing={3}>
-            <Grid item xs={12} md={8}>
+            <Grid size={{ xs: 12, md: 8 }}>
               <Paper sx={{ p: 3, height: 360 }}>
                 <Typography variant="h6" gutterBottom>
                   部门人数分布
@@ -167,7 +169,7 @@ export const DashboardPage: React.FC = () => {
                 </Box>
               </Paper>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Paper sx={{ p: 3, height: 360 }}>
                 <Typography variant="h6" gutterBottom>
                   员工状态分布

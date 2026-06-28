@@ -25,13 +25,15 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
-import {
-  Search as SearchIcon,
-  Refresh as RefreshIcon,
-  Warning as WarningIcon,
-  Inventory2 as InventoryIcon,
-} from '@mui/icons-material';
+
+import { AlertTriangle, Package, RefreshCw, Search } from 'lucide-react';
+
 import { inventoryApi, type InventoryItem, type PaginatedResult, type ListParams } from '../api/scm';
+
+const RefreshIcon = RefreshCw;
+const InventoryIcon = Package;
+const WarningIcon = AlertTriangle;
+const SearchIcon = Search;
 
 const getStatusColor = (
   status: string
@@ -136,11 +138,11 @@ export const InventoryPage: React.FC = () => {
       </Box>
 
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <InventoryIcon color="primary" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <InventoryIcon color="primary" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     SKU 总数
@@ -153,11 +155,11 @@ export const InventoryPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <InventoryIcon color="info" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <InventoryIcon color="info" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     当前页库存总量
@@ -170,11 +172,11 @@ export const InventoryPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <WarningIcon color="warning" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <WarningIcon color="warning" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     异常 SKU
@@ -187,11 +189,11 @@ export const InventoryPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <InventoryIcon color="success" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <InventoryIcon color="success" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     正常 SKU
@@ -207,16 +209,15 @@ export const InventoryPage: React.FC = () => {
       </Grid>
 
       <Paper sx={{ mb: 3, p: 2 }}>
-        <Stack direction="row" spacing={2} alignItems="center">
+        <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
           <TextField
             placeholder="搜索 SKU/名称..."
-            size="small"
+            
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            InputProps={{
-              startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />,
-            }}
+             
+            slotProps={{ input: { size: 'small', startAdornment: <SearchIcon style={{ color: '#9e9e9e', marginRight: 1, fontSize: 20 }}  />  }}}
             sx={{ minWidth: 300 }}
           />
           <FormControl size="small" sx={{ minWidth: 150 }}>

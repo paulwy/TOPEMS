@@ -29,7 +29,7 @@ export { apiClient } from '@/api/client';
 export { downloadBlob, createBaseAxiosClient } from '@/api/client';
 
 // Re-export react-query integration
-export { queryClient, QUERY_KEYS, CACHE_DURATIONS } from '@/lib/react-query';
+export { queryClient, QUERY_KEYS, CACHE_DURATIONS } from '@/lib/reactQuery';
 
 // Re-export hooks
 export {

@@ -21,15 +21,15 @@ import {
   Alert,
   Pagination,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Search as SearchIcon,
-  Refresh as RefreshIcon,
-} from '@mui/icons-material';
+
 import { useMesStore } from '../store/mesStore';
 import type { CreateProductionProcessRequest } from '../api';
+import { Pencil, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
+const AddIcon = Plus;
+const DeleteIcon = Trash2;
+const EditIcon = Pencil;
+const RefreshIcon = RefreshCw;
+const SearchIcon = Search;
 
 export const ProductionProcessPage: React.FC = () => {
   const {
@@ -104,11 +104,12 @@ export const ProductionProcessPage: React.FC = () => {
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <TextField
             placeholder="搜索工序名称..."
-            size="small"
+            
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            InputProps={{ startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} /> }}
+             
+            slotProps={{ input: { size: 'small', startAdornment: <SearchIcon style={{ color: '#9e9e9e', marginRight: 4, fontSize: 20 }}  />  }}}
             sx={{ minWidth: 300 }}
           />
           <Button variant="outlined" onClick={handleSearch}>搜索</Button>

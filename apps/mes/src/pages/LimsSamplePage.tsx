@@ -25,16 +25,16 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Search as SearchIcon,
-  Refresh as RefreshIcon,
-  Science as ScienceIcon,
-} from '@mui/icons-material';
+
 import { useMesStore } from '../store/mesStore';
 import type { CreateSampleRequest } from '../api';
+import { FlaskConical, Pencil, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
+const AddIcon = Plus;
+const DeleteIcon = Trash2;
+const EditIcon = Pencil;
+const RefreshIcon = RefreshCw;
+const ScienceIcon = FlaskConical;
+const SearchIcon = Search;
 
 const getStatusColor = (status: string): 'success' | 'default' | 'error' | 'warning' | 'info' => {
   switch (status) {
@@ -149,11 +149,12 @@ export const LimsSamplePage: React.FC = () => {
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <TextField
             placeholder="搜索样品名称、编号..."
-            size="small"
+            
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            InputProps={{ startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} /> }}
+             
+            slotProps={{ input: { size: 'small', startAdornment: <SearchIcon style={{ color: '#9e9e9e', marginRight: 4, fontSize: 20 }}  />  }}}
             sx={{ minWidth: 300 }}
           />
           <FormControl size="small" sx={{ minWidth: 150 }}>

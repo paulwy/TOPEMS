@@ -19,8 +19,11 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
-import { Search as SearchIcon, Refresh as RefreshIcon } from '@mui/icons-material';
+
 import { reportApi } from '../api/finance';
+import { RefreshCw, Search } from 'lucide-react';
+const RefreshIcon = RefreshCw;
+const SearchIcon = Search;
 
 interface LedgerRow {
   date: string;

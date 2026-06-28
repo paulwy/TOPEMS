@@ -21,8 +21,8 @@ export {
   checkPermissionBeforeRequest,
   withPermissionCheck,
   logPermissionAccess,
-} from './permission-interceptor';
-export type { PermissionError } from './permission-interceptor';
+} from './permissionInterceptor';
+export type { PermissionError } from './permissionInterceptor';
 
 // Domain modules - Business APIs
 export { authApi, iamApi } from './iam';

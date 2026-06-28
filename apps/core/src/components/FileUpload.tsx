@@ -12,26 +12,23 @@ import {
   Button,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import {
-  Upload as UploadFile,
-  FileDownload,
-  Close,
-  CheckCircle,
-  Error,
-  PlayArrow,
-  Pause,
-  InsertDriveFile,
-  Description,
-  Image,
-  TableChart,
-  PictureAsPdf,
-  Movie,
-  Audiotrack,
-  Archive,
-  TextSnippet,
-  CloudUpload,
-} from '@mui/icons-material';
+
 import { fileApi, formatFileSize, type FileItem } from '../api/file';
+import { Archive, CircleCheck, CircleX, CloudUpload, Download, FileText, Image, Music, Pause, Play, Table, Upload, Video, X } from 'lucide-react';
+const ImageIcon = Image;
+const ErrorIcon = CircleX;
+const Audiotrack = Music;
+const CheckCircle = CircleCheck;
+const Close = X;
+const Description = FileText;
+const FileDownload = Download;
+const InsertDriveFile = FileText;
+const Movie = Video;
+const PictureAsPdf = FileText;
+const PlayArrow = Play;
+const TableChart = Table;
+const TextSnippet = FileText;
+const UploadFile = Upload;
 
 export interface FileUploadProps {
   value?: string[];
@@ -63,7 +60,7 @@ interface UploadingFile {
 const generateId = () => `file-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
 const getFileIconComponent = (type: string) => {
-  if (type.startsWith('image/')) return <Image />;
+  if (type.startsWith('image/')) return <ImageIcon />;
   if (type.includes('pdf')) return <PictureAsPdf color="error" />;
   if (type.includes('word') || type.includes('document')) return <Description color="primary" />;
   if (type.includes('excel') || type.includes('spreadsheet')) return <TableChart color="success" />;
@@ -234,7 +231,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       case 'completed':
         return <CheckCircle fontSize="small" />;
       case 'error':
-        return <Error fontSize="small" />;
+        return <ErrorIcon fontSize="small" />;
       case 'paused':
         return <PlayArrow fontSize="small" />;
       default:
@@ -254,7 +251,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         isDisabled={disabled}
         sx={{ height }}
       >
-        <CloudUpload sx={{ fontSize: 48, color: isDragging ? 'primary.main' : 'text.secondary' }} />
+        <CloudUpload style={{ fontSize: 48, color: isDragging ? '#1976d2' : '#9e9e9e' }} />
         <Typography variant="body1" sx={{ mt: 1, fontWeight: 500 }}>
           {isDragging ? '松开以上传文件' : '拖拽文件到此处，或点击选择文件'}
         </Typography>

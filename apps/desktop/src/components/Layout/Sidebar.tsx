@@ -11,18 +11,7 @@ import {
   Typography,
   Divider,
 } from '@mui/material';
-import {
-  DashboardOutlined,
-  People,
-  PersonPinCircle,
-  CasesOutlined,
-  BarChart,
-  Settings,
-  ChevronLeft,
-  ChevronRight,
-  LightMode,
-  DarkMode,
-} from '@mui/icons-material';
+
 import { useNavigate, useLocation } from 'react-router-dom';
 import { routes } from '../../routes';
 import { useThemeStore } from '../../store/themeStore';

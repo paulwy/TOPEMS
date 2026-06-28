@@ -25,14 +25,14 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
-import {
-  Search as SearchIcon,
-  Refresh as RefreshIcon,
-  CheckCircle as CheckCircleIcon,
-  Send as SendIcon,
-} from '@mui/icons-material';
+
 import { useCrmStore } from '../store/crmStore';
 import type {  BillingItem, CreateBillingRequest } from '../api/crm';
+import { CircleCheck, RefreshCw, Search, Send } from 'lucide-react';
+const CheckCircleIcon = CircleCheck;
+const RefreshIcon = RefreshCw;
+const SearchIcon = Search;
+const SendIcon = Send;
 
 const STATUS_LABELS: Record<string, string> = {
   pending: '待回款',
@@ -217,13 +217,12 @@ export const BillingPage: React.FC = () => {
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <TextField
             placeholder="搜索发票号、客户..."
-            size="small"
+            
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            InputProps={{
-              startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />,
-            }}
+             
+            slotProps={{ input: { size: 'small', startAdornment: <SearchIcon style={{ color: '#9e9e9e', marginRight: 4, fontSize: 20 }}  />  }}}
             sx={{ minWidth: 300 }}
           />
           <FormControl size="small" sx={{ minWidth: 150 }}>
@@ -377,7 +376,7 @@ export const BillingPage: React.FC = () => {
               required
               value={newBilling.due_date}
               onChange={(e) => setNewBilling({ ...newBilling, due_date: e.target.value })}
-              InputLabelProps={{ shrink: true }}
+              slotProps={{ inputLabel: { shrink: true } }}
               fullWidth
             />
             <TextField
@@ -404,28 +403,36 @@ export const BillingPage: React.FC = () => {
                   label="项目名称"
                   value={item.name}
                   onChange={(e) => updateItem(index, { name: e.target.value })}
-                  size="small"
-                />
+                  
+                
+            slotProps={{ input: { size: 'small' } }}
+          />
                 <TextField
                   label="数量"
                   type="number"
                   value={item.quantity}
                   onChange={(e) => updateItem(index, { quantity: Number(e.target.value) })}
-                  size="small"
-                />
+                  
+                
+            slotProps={{ input: { size: 'small' } }}
+          />
                 <TextField
                   label="单价"
                   type="number"
                   value={item.unit_price}
                   onChange={(e) => updateItem(index, { unit_price: Number(e.target.value) })}
-                  size="small"
-                />
+                  
+                
+            slotProps={{ input: { size: 'small' } }}
+          />
                 <TextField
                   label="金额"
                   value={item.amount}
                   disabled
-                  size="small"
-                />
+                  
+                
+            slotProps={{ input: { size: 'small' } }}
+          />
                 <Button
                   color="error"
                   onClick={() => removeItem(index)}

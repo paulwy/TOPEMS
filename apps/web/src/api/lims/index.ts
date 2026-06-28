@@ -6,14 +6,14 @@ import { processApi, taskApi, recordApi } from './inspection';
 import { instrumentApi, maintenanceApi, instrumentDataApi } from './instrument';
 import { reagentApi } from './reagent';
 import { barcodeApi, rfidTagApi, printConfigApi } from './barcode';
-import { testMethodApi, methodCategoryApi, methodValidationApi } from './test-method';
+import { testMethodApi, methodCategoryApi, methodValidationApi } from './testMethod';
 import {
   ptPlanApi,
   ptSampleApi,
   ptResultApi,
   ptEvaluationApi,
   ptCorrectiveActionApi,
-} from './proficiency-testing';
+} from './proficiencyTesting';
 import {
   uncertaintyProjectApi,
   uncertaintySourceApi,
@@ -32,14 +32,14 @@ export { processApi, taskApi, recordApi } from './inspection';
 export { instrumentApi, maintenanceApi, instrumentDataApi } from './instrument';
 export { reagentApi } from './reagent';
 export { barcodeApi, rfidTagApi, printConfigApi } from './barcode';
-export { testMethodApi, methodCategoryApi, methodValidationApi } from './test-method';
+export { testMethodApi, methodCategoryApi, methodValidationApi } from './testMethod';
 export {
   ptPlanApi,
   ptSampleApi,
   ptResultApi,
   ptEvaluationApi,
   ptCorrectiveActionApi,
-} from './proficiency-testing';
+} from './proficiencyTesting';
 export {
   uncertaintyProjectApi,
   uncertaintySourceApi,

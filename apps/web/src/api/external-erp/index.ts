@@ -1,7 +1,7 @@
 import { connectionApi } from './connection';
 import { mappingApi } from './mapping';
 import { syncApi } from './sync';
-import { syncLogsApi } from './sync-logs';
+import { syncLogsApi } from './syncLogs';
 import { previewApi } from './preview';
 import { exportApi } from './export';
 
@@ -10,7 +10,7 @@ export * from './types';
 export { connectionApi } from './connection';
 export { mappingApi } from './mapping';
 export { syncApi } from './sync';
-export { syncLogsApi } from './sync-logs';
+export { syncLogsApi } from './syncLogs';
 export { previewApi } from './preview';
 export { exportApi } from './export';
 

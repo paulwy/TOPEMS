@@ -23,14 +23,16 @@ import {
   CardContent,
   Grid,
 } from '@mui/material';
-import {
-  Refresh as RefreshIcon,
-  Publish as PublishIcon,
-  Close as CloseIcon,
-  WorkOutline as WorkOutlineIcon,
-  PersonOutline as PersonOutlineIcon,
-} from '@mui/icons-material';
+
+import { Briefcase, RefreshCw, Send, User, X } from 'lucide-react';
+
 import { jobOpeningApi, candidateApi, type JobOpening, type Candidate } from '../api/hrm';
+
+const PublishIcon = Send;
+const RefreshIcon = RefreshCw;
+const PersonOutlineIcon = User;
+const CloseIcon = X;
+const WorkOutlineIcon = Briefcase;
 
 const getJobStatusColor = (
   status: string
@@ -209,11 +211,11 @@ export const RecruitmentPage: React.FC = () => {
       </Box>
 
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <WorkOutlineIcon color="primary" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <WorkOutlineIcon color="primary" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     职位总数
@@ -226,11 +228,11 @@ export const RecruitmentPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <WorkOutlineIcon color="success" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <WorkOutlineIcon color="success" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     招聘中
@@ -243,11 +245,11 @@ export const RecruitmentPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <PersonOutlineIcon color="info" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <PersonOutlineIcon color="info" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     候选人总数
@@ -260,11 +262,11 @@ export const RecruitmentPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <PersonOutlineIcon color="warning" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <PersonOutlineIcon color="warning" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     面试中
@@ -356,7 +358,7 @@ export const RecruitmentPage: React.FC = () => {
                               onClick={() => handlePublish(job.id)}
                               title="发布"
                             >
-                              <PublishIcon fontSize="small" />
+                              <PublishIcon size={16} />
                             </IconButton>
                           )}
                           {(job.status === 'open' || job.status === 'published') && (
@@ -366,7 +368,7 @@ export const RecruitmentPage: React.FC = () => {
                               onClick={() => handleClose(job.id)}
                               title="关闭"
                             >
-                              <CloseIcon fontSize="small" />
+                              <CloseIcon size={16} />
                             </IconButton>
                           )}
                         </TableCell>

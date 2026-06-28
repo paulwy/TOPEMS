@@ -18,9 +18,11 @@ import {
   TextField,
   Button,
 } from '@mui/material';
-import { Search as SearchIcon } from '@mui/icons-material';
+
 import { receivablePayableApi } from '../api/finance';
 import type { SalesInvoice, PurchaseInvoice, InvoiceStatus } from '../api/finance';
+import { Search } from 'lucide-react';
+const SearchIcon = Search;
 
 const statusLabel: Record<InvoiceStatus, { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }> = {
   draft: { label: '草稿', color: 'default' },
@@ -98,13 +100,12 @@ export const FinanceReceivablePayablePage: React.FC = () => {
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <TextField
             placeholder={tab === 0 ? '客户ID' : '供应商ID'}
-            size="small"
+            
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && load(1)}
-            InputProps={{
-              startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />,
-            }}
+             
+            slotProps={{ input: { size: 'small', startAdornment: <SearchIcon style={{ color: '#9e9e9e', marginRight: 1, fontSize: 20 }}  />  }}}
             sx={{ minWidth: 280 }}
           />
           <Button variant="outlined" onClick={() => load(1)}>

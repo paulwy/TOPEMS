@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { List, ListItem, ListItemButton, ListItemIcon, ListItemText, Collapse } from '@mui/material';
-import { Folder, FolderOpen, ChevronRight } from '@mui/icons-material';
+
 import type { Department } from '@topems/shared-types';
+import { ChevronRight, Folder, FolderOpen } from 'lucide-react';
 
 interface OrgTreeProps {
   departments: Department[];
@@ -40,7 +41,7 @@ const DepartmentItem: React.FC<{
           <ListItemText primary={department.name} />
           {hasChildren && (
             <ChevronRight
-              sx={{
+              style={{
                 transition: 'transform 0.2s',
                 transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
               }}

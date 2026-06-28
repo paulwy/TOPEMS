@@ -1,5 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { AlertTriangle, CheckCircle, Clock, Bell, BellOff, Mail, Smartphone } from 'lucide-react';
+import {
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+  Bell,
+  BellOff,
+  Mail,
+  Smartphone,
+} from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import type {

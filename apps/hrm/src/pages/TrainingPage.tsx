@@ -22,17 +22,19 @@ import {
   CardContent,
   Grid,
 } from '@mui/material';
-import {
-  Refresh as RefreshIcon,
-  School as SchoolIcon,
-  PersonAdd as PersonAddIcon,
-} from '@mui/icons-material';
+
+import { GraduationCap, RefreshCw, UserPlus } from 'lucide-react';
+
 import {
   trainingPlanApi,
   trainingCourseApi,
   type TrainingPlan,
   type TrainingCourse,
 } from '../api/hrm';
+
+const RefreshIcon = RefreshCw;
+const PersonAddIcon = UserPlus;
+const SchoolIcon = GraduationCap;
 
 const getStatusColor = (
   status: string
@@ -160,11 +162,11 @@ export const TrainingPage: React.FC = () => {
       </Box>
 
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <SchoolIcon color="primary" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <SchoolIcon color="primary" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     培训计划
@@ -177,11 +179,11 @@ export const TrainingPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <SchoolIcon color="success" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <SchoolIcon color="success" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     培训课程
@@ -194,11 +196,11 @@ export const TrainingPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <SchoolIcon color="info" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <SchoolIcon color="info" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     进行中课程
@@ -211,11 +213,11 @@ export const TrainingPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <PersonAddIcon color="warning" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <PersonAddIcon color="warning" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     报名总人次

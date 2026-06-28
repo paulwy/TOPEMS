@@ -22,15 +22,15 @@ import {
   Divider,
   Alert,
 } from '@mui/material';
-import {
-  PictureAsPdf,
-  GridOn,
-  Description,
-  Print,
-  FilterList,
-  ArrowBack,
-} from '@mui/icons-material';
+
 import type { ExportFormat } from '../api/report';
+import { ArrowLeft, FileText, Filter, Grid3X3, Printer } from 'lucide-react';
+const ArrowBack = ArrowLeft;
+const Description = FileText;
+const FilterList = Filter;
+const GridOn = Grid3X3;
+const PictureAsPdf = FileText;
+const Print = Printer;
 
 interface ReportViewerPageProps {
   reportId?: string;
@@ -181,14 +181,14 @@ export const ReportViewerPage: React.FC<ReportViewerPageProps> = ({ reportId, on
                 type="date"
                 value={dateRange.start}
                 onChange={(e) => setDateRange({ ...dateRange, start: e.target.value })}
-                InputLabelProps={{ shrink: true }}
+                slotProps={{ inputLabel: { shrink: true } }}
               />
               <TextField
                 label="结束日期"
                 type="date"
                 value={dateRange.end}
                 onChange={(e) => setDateRange({ ...dateRange, end: e.target.value })}
-                InputLabelProps={{ shrink: true }}
+                slotProps={{ inputLabel: { shrink: true } }}
               />
               <FormControl sx={{ minWidth: 150 }}>
                 <InputLabel>状态</InputLabel>

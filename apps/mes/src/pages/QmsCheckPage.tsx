@@ -25,14 +25,14 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Search as SearchIcon,
-  Refresh as RefreshIcon,
-  Verified as VerifiedIcon,
-} from '@mui/icons-material';
+
 import { useMesStore } from '../store/mesStore';
 import type { CreateQualityCheckRequest } from '../api';
+import { BadgeCheck, Plus, RefreshCw, Search } from 'lucide-react';
+const AddIcon = Plus;
+const RefreshIcon = RefreshCw;
+const SearchIcon = Search;
+const VerifiedIcon = BadgeCheck;
 
 const getStatusColor = (status: string): 'success' | 'default' | 'error' | 'warning' | 'info' => {
   switch (status) {
@@ -145,11 +145,12 @@ export const QmsCheckPage: React.FC = () => {
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <TextField
             placeholder="搜索检查单..."
-            size="small"
+            
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            InputProps={{ startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} /> }}
+             
+            slotProps={{ input: { size: 'small', startAdornment: <SearchIcon style={{ color: '#9e9e9e', marginRight: 4, fontSize: 20 }}  />  }}}
             sx={{ minWidth: 300 }}
           />
           <FormControl size="small" sx={{ minWidth: 150 }}>

@@ -5,14 +5,20 @@ import {
   Button, Stack, Pagination, CircularProgress, Alert, Card, CardContent,
   Grid, MenuItem, Select, FormControl, InputLabel,
 } from '@mui/material';
-import {
-  Search as SearchIcon, Refresh as RefreshIcon, CheckCircle as CheckCircleIcon,
-  Visibility as VisibilityIcon, Warning as WarningIcon, ErrorOutline as ErrorOutlineIcon,
-  AccessTime as AccessTimeIcon,
-} from '@mui/icons-material';
+
+import { AlertTriangle, CheckCircle, CircleAlert, Clock, Eye, RefreshCw, Search } from 'lucide-react';
+
 import {
   inventoryAlertApi, type InventoryAlert, type PaginatedResult, type ListParams,
 } from '../api/wms';
+
+const CheckCircleIcon = CheckCircle;
+const AccessTimeIcon = Clock;
+const SearchIcon = Search;
+const RefreshIcon = RefreshCw;
+const WarningIcon = AlertTriangle;
+const ErrorOutlineIcon = CircleAlert;
+const VisibilityIcon = Eye;
 
 const getAlertTypeColor = (type: string): 'default' | 'success' | 'warning' | 'error' | 'info' => {
   switch (type) {
@@ -143,11 +149,11 @@ export const InventoryAlertPage: React.FC = () => {
       </Box>
 
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <WarningIcon color="warning" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <WarningIcon color="warning" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">待处理预警</Typography>
                   <Typography variant="h4" sx={{ fontWeight: 600 }}>{pendingCount}</Typography>
@@ -156,11 +162,11 @@ export const InventoryAlertPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <AccessTimeIcon color="warning" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <AccessTimeIcon color="warning" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">低库存预警</Typography>
                   <Typography variant="h4" sx={{ fontWeight: 600 }}>{lowStockCount}</Typography>
@@ -169,11 +175,11 @@ export const InventoryAlertPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <ErrorOutlineIcon color="error" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <ErrorOutlineIcon color="error" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">过期预警</Typography>
                   <Typography variant="h4" sx={{ fontWeight: 600 }}>{expiredCount}</Typography>
@@ -182,11 +188,11 @@ export const InventoryAlertPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <CheckCircleIcon color="success" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <CheckCircleIcon color="success" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">已解决</Typography>
                   <Typography variant="h4" sx={{ fontWeight: 600 }}>
@@ -200,16 +206,15 @@ export const InventoryAlertPage: React.FC = () => {
       </Grid>
 
       <Paper sx={{ mb: 3, p: 2 }}>
-        <Stack direction="row" spacing={2} alignItems="center">
+        <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
           <TextField
             placeholder="搜索 SKU/产品名称..."
-            size="small"
+            
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            InputProps={{
-              startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />,
-            }}
+             
+            slotProps={{ input: { size: 'small', startAdornment: <SearchIcon style={{ color: '#9e9e9e', marginRight: 1, fontSize: 20 }}  />  }}}
             sx={{ minWidth: 280 }}
           />
           <FormControl size="small" sx={{ minWidth: 140 }}>
@@ -296,12 +301,12 @@ export const InventoryAlertPage: React.FC = () => {
                     <TableCell align="right">
                       {alert.status === 'pending' && (
                         <IconButton size="small" color="info" onClick={() => handleAcknowledge(alert.id)} title="确认">
-                          <VisibilityIcon fontSize="small" />
+                          <VisibilityIcon size={16} />
                         </IconButton>
                       )}
                       {alert.status !== 'resolved' && (
                         <IconButton size="small" color="success" onClick={() => handleResolve(alert.id)} title="解决">
-                          <CheckCircleIcon fontSize="small" />
+                          <CheckCircleIcon size={16} />
                         </IconButton>
                       )}
                     </TableCell>

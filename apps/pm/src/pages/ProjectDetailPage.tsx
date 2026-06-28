@@ -13,9 +13,11 @@ import {
   Divider,
   LinearProgress,
 } from '@mui/material';
-import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
+
 import { usePmStore } from '../store/pmStore';
 import type { Project } from '../api/pm';
+import { ArrowLeft } from 'lucide-react';
+const ArrowBackIcon = ArrowLeft;
 
 interface ProjectDetailPageProps {
   projectId?: string;
@@ -131,26 +133,26 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId,
       </Box>
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={8}>
+        <Grid size={{ xs: 12, md: 8 }}>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
               项目概览
             </Typography>
             <Divider sx={{ mb: 2 }} />
             <Grid container spacing={2}>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <Typography variant="body2" color="text.secondary">
                   负责人
                 </Typography>
                 <Typography variant="body1">{project.leader || '-'}</Typography>
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <Typography variant="body2" color="text.secondary">
                   优先级
                 </Typography>
                 <Typography variant="body1">{project.priority ?? '-'}</Typography>
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <Typography variant="body2" color="text.secondary">
                   开始日期
                 </Typography>
@@ -160,7 +162,7 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId,
                     : '-'}
                 </Typography>
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid size={{ xs: 12, md: 6 }}>
                 <Typography variant="body2" color="text.secondary">
                   结束日期
                 </Typography>
@@ -170,7 +172,7 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId,
                     : '-'}
                 </Typography>
               </Grid>
-              <Grid item xs={12}>
+              <Grid size={{ xs: 12 }}>
                 <Typography variant="body2" color="text.secondary">
                   描述
                 </Typography>
@@ -180,7 +182,7 @@ export const ProjectDetailPage: React.FC<ProjectDetailPageProps> = ({ projectId,
           </Paper>
         </Grid>
 
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card>
             <CardContent>
               <Typography variant="body2" color="text.secondary">

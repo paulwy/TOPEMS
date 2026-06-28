@@ -28,13 +28,9 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
-import {
-  Search as SearchIcon,
-  Refresh as RefreshIcon,
-  CheckCircle as CheckCircleIcon,
-  LocalShipping as LocalShippingIcon,
-  Inventory as OutboundIcon,
-} from '@mui/icons-material';
+
+import { Truck, ArrowRightLeft, RefreshCw, Search, CheckCircle } from 'lucide-react';
+
 import {
   inboundOrderApi,
   outboundOrderApi,
@@ -43,6 +39,12 @@ import {
   type PaginatedResult,
   type ListParams,
 } from '../api/wms';
+
+const LocalShippingIcon = Truck;
+const OutboundIcon = ArrowRightLeft;
+const RefreshIcon = RefreshCw;
+const SearchIcon = Search;
+const CheckCircleIcon = CheckCircle;
 
 const getStatusColor = (
   status: string
@@ -209,14 +211,14 @@ export const InOutBoundPage: React.FC = () => {
       </Paper>
 
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
                 {tab === 0 ? (
-                  <LocalShippingIcon color="primary" fontSize="large" />
+                  <LocalShippingIcon color="primary" size={24} />
                 ) : (
-                  <OutboundIcon color="primary" fontSize="large" />
+                  <OutboundIcon color="primary" size={24} />
                 )}
                 <Box>
                   <Typography variant="body2" color="text.secondary">
@@ -230,14 +232,14 @@ export const InOutBoundPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
                 {tab === 0 ? (
-                  <LocalShippingIcon color="warning" fontSize="large" />
+                  <LocalShippingIcon color="warning" size={24} />
                 ) : (
-                  <OutboundIcon color="warning" fontSize="large" />
+                  <OutboundIcon color="warning" size={24} />
                 )}
                 <Box>
                   <Typography variant="body2" color="text.secondary">
@@ -253,14 +255,14 @@ export const InOutBoundPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
                 {tab === 0 ? (
-                  <LocalShippingIcon color="info" fontSize="large" />
+                  <LocalShippingIcon color="info" size={24} />
                 ) : (
-                  <OutboundIcon color="info" fontSize="large" />
+                  <OutboundIcon color="info" size={24} />
                 )}
                 <Box>
                   <Typography variant="body2" color="text.secondary">
@@ -276,14 +278,14 @@ export const InOutBoundPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
                 {tab === 0 ? (
-                  <LocalShippingIcon color="success" fontSize="large" />
+                  <LocalShippingIcon color="success" size={24} />
                 ) : (
-                  <OutboundIcon color="success" fontSize="large" />
+                  <OutboundIcon color="success" size={24} />
                 )}
                 <Box>
                   <Typography variant="body2" color="text.secondary">
@@ -302,16 +304,15 @@ export const InOutBoundPage: React.FC = () => {
       </Grid>
 
       <Paper sx={{ mb: 3, p: 2 }}>
-        <Stack direction="row" spacing={2} alignItems="center">
+        <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
           <TextField
             placeholder="搜索单号..."
-            size="small"
+            
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            InputProps={{
-              startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />,
-            }}
+             
+            slotProps={{ input: { size: 'small', startAdornment: <SearchIcon style={{ color: '#9e9e9e', marginRight: 1, fontSize: 20 }}  />  }}}
             sx={{ minWidth: 300 }}
           />
           <FormControl size="small" sx={{ minWidth: 150 }}>
@@ -420,7 +421,7 @@ export const InOutBoundPage: React.FC = () => {
                             onClick={() => handleConfirmInbound(order.id)}
                             title="确认"
                           >
-                            <CheckCircleIcon fontSize="small" />
+                            <CheckCircleIcon size={16} />
                           </IconButton>
                         )}
                       </TableCell>
@@ -461,7 +462,7 @@ export const InOutBoundPage: React.FC = () => {
                           onClick={() => handleShipOutbound(order.id)}
                           title="发货"
                         >
-                          <LocalShippingIcon fontSize="small" />
+                          <LocalShippingIcon size={16} />
                         </IconButton>
                       )}
                     </TableCell>

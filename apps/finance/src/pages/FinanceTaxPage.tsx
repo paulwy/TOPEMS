@@ -16,8 +16,12 @@ import {
   Button,
   TextField,
 } from '@mui/material';
-import { Add as AddIcon, Refresh as RefreshIcon, Search as SearchIcon } from '@mui/icons-material';
+
 import { taxApi } from '../api/finance';
+import { Plus, RefreshCw, Search } from 'lucide-react';
+const AddIcon = Plus;
+const RefreshIcon = RefreshCw;
+const SearchIcon = Search;
 
 interface Declaration {
   id: string;
@@ -88,13 +92,12 @@ export const FinanceTaxPage: React.FC = () => {
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <TextField
             placeholder="期间 YYYY-MM"
-            size="small"
+            
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && load(1)}
-            InputProps={{
-              startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />,
-            }}
+             
+            slotProps={{ input: { size: 'small', startAdornment: <SearchIcon style={{ color: '#9e9e9e', marginRight: 1, fontSize: 20 }}  />  }}}
           />
           <Button variant="outlined" onClick={() => load(1)}>
             查询

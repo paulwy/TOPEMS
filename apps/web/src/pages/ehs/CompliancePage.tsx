@@ -18,7 +18,13 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
-import { Plus, FileCheck, ClipboardCheck, AlertTriangle, Shield } from 'lucide-react';
+import {
+  Plus,
+  FileCheck,
+  ClipboardCheck,
+  AlertTriangle,
+  Shield,
+} from 'lucide-react';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { ehsApi } from '@/api/ehs';
 import { PageContainer } from '@/components/common';

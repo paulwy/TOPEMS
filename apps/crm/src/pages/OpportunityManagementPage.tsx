@@ -25,16 +25,16 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Search as SearchIcon,
-  Refresh as RefreshIcon,
-  Visibility as VisibilityIcon,
-} from '@mui/icons-material';
+
 import { useCrmStore } from '../store/crmStore';
 import type { Opportunity, CreateOpportunityRequest, UpdateOpportunityRequest } from '../api/crm';
+import { Eye, Pencil, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
+const AddIcon = Plus;
+const DeleteIcon = Trash2;
+const EditIcon = Pencil;
+const RefreshIcon = RefreshCw;
+const SearchIcon = Search;
+const VisibilityIcon = Eye;
 
 const getStageColor = (stage: string): 'default' | 'primary' | 'success' | 'warning' | 'error' | 'info' => {
   switch (stage) {
@@ -203,13 +203,12 @@ export const OpportunityManagementPage: React.FC = () => {
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <TextField
             placeholder="搜索商机名称..."
-            size="small"
+            
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            InputProps={{
-              startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />,
-            }}
+             
+            slotProps={{ input: { size: 'small', startAdornment: <SearchIcon style={{ color: '#9e9e9e', marginRight: 4, fontSize: 20 }}  />  }}}
             sx={{ minWidth: 300 }}
           />
           <FormControl size="small" sx={{ minWidth: 150 }}>
@@ -370,7 +369,7 @@ export const OpportunityManagementPage: React.FC = () => {
               type="date"
               value={newOpportunity.close_date || ''}
               onChange={(e) => setNewOpportunity({ ...newOpportunity, close_date: e.target.value })}
-              InputLabelProps={{ shrink: true }}
+              slotProps={{ inputLabel: { shrink: true } }}
               fullWidth
             />
             <TextField

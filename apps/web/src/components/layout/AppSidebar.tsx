@@ -1,10 +1,41 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { Box, Paper, Typography, Button } from '@mui/material';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import {
+  Box,
+  Paper,
+  Typography,
+  Button,
+  Tooltip,
+  TextField,
+  InputAdornment,
+  IconButton,
+  Chip,
+  Divider,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Popover,
+  Avatar,
+  Badge as MuiBadge,
+} from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePermission } from '@/hooks/usePermission';
 import { navigationRegistry, type NavItem } from '@/lib/NavigationRegistry';
+import { useAppStore } from '@/store';
 
-import { ChevronLeft, Home } from 'lucide-react';
+import {
+  ChevronLeft,
+  Home,
+  Search,
+  Star,
+  Clock,
+  X,
+  Bookmark,
+  BookmarkCheck,
+  LogOut,
+  User,
+  Settings,
+} from 'lucide-react';
 import { renderIcon } from '@/lib/iconMapping';
 
 // ---- 从路径解析模块 code（与 GlobalLayout / useTopNav 一致） ----
@@ -43,6 +74,108 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const { checkPermission } = usePermission();
+
+  // ---- 增强功能：搜索、收藏、最近访问 ----
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchAnchorEl, setSearchAnchorEl] = useState<HTMLElement | null>(null);
+  const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  const [recentVisits, setRecentVisits] = useState<NavItem[]>([]);
+  const [favoritesAnchorEl, setFavoritesAnchorEl] = useState<HTMLElement | null>(null);
+
+  // 加载收藏和最近访问
+  useEffect(() => {
+    const savedFavorites = localStorage.getItem('sidebar-favorites');
+    if (savedFavorites) {
+      try {
+        setFavorites(new Set(JSON.parse(savedFavorites)));
+      } catch {
+        // ignore
+      }
+    }
+
+    const savedRecent = localStorage.getItem('sidebar-recent');
+    if (savedRecent) {
+      try {
+        const recentItems = JSON.parse(savedRecent) as NavItem[];
+        setRecentVisits(recentItems.slice(0, 5)); // 只保留最近5条
+      } catch {
+        // ignore
+      }
+    }
+  }, []);
+
+  // 记录访问历史
+  useEffect(() => {
+    if (location.pathname === '/dashboard') return; // 跳过首页
+
+    const pathSegments = location.pathname.split('/').filter(Boolean);
+    if (pathSegments.length < 2) return; // 只需要模块级路径
+
+    const module = pathSegments[0];
+    const sidebarItems = navigationRegistry.getSidebarNavItems(module);
+    const currentItem = sidebarItems.find(
+      (item) => item.path === location.pathname || location.pathname.startsWith(`${item.path}/`)
+    );
+
+    if (currentItem) {
+      setRecentVisits((prev) => {
+        const filtered = prev.filter((item) => item.path !== currentItem.path);
+        const updated = [currentItem, ...filtered].slice(0, 5);
+        localStorage.setItem('sidebar-recent', JSON.stringify(updated));
+        return updated;
+      });
+    }
+  }, [location.pathname]);
+
+  // 切换收藏
+  const toggleFavorite = useCallback((item: NavItem) => {
+    setFavorites((prev) => {
+      const next = new Set(prev);
+      if (next.has(item.path || item.code)) {
+        next.delete(item.path || item.code);
+      } else {
+        next.add(item.path || item.code);
+      }
+      localStorage.setItem('sidebar-favorites', JSON.stringify([...next]));
+      return next;
+    });
+  }, []);
+
+  const isFavorite = useCallback(
+    (item: NavItem) => favorites.has(item.path || item.code),
+    [favorites]
+  );
+
+  // 搜索功能
+  const allNavItems = useMemo(() => {
+    const items: NavItem[] = [];
+    const topItems = navigationRegistry.getNavItemsByPermission(() => true);
+
+    // 收集所有导航项
+    const collectItems = (navItems: NavItem[]) => {
+      navItems.forEach((item) => {
+        if (item.path) items.push(item);
+        if (item.children) collectItems(item.children);
+      });
+    };
+
+    topItems.forEach((item) => {
+      if (item.path) items.push(item);
+      if (item.children) collectItems(item.children);
+    });
+
+    return items;
+  }, []);
+
+  const filteredNavItems = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const query = searchQuery.toLowerCase();
+    return allNavItems.filter(
+      (item) =>
+        item.label.toLowerCase().includes(query) ||
+        (item.path && item.path.toLowerCase().includes(query))
+    );
+  }, [searchQuery, allNavItems]);
 
   // ---- 判断当前是否处于某个模块上下文 ----
   const currentModule = useMemo(() => {
@@ -106,11 +239,22 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     borderLeftColor: isActive ? 'primary.main' : 'transparent',
     bgcolor: isActive ? 'primary.50' : 'transparent',
     color: isActive ? 'primary.main' : 'text.secondary',
-    transition: 'all 150ms ease',
+    transition: (theme: any) => `all 200ms ${theme.transitions.easing.easeInOut}`,
     justifyContent: collapsed ? 'center' : 'flex-start',
+    position: 'relative' as const,
+    width: '100%',
     '&:hover': {
       bgcolor: isActive ? 'primary.50' : 'action.hover',
       color: 'text.primary',
+      transform: 'translateX(2px)',
+    },
+    '&:active': {
+      transform: 'translateX(1px) scale(0.99)',
+    },
+    '&:focus-visible': {
+      outline: '2px solid',
+      outlineColor: 'primary.main',
+      outlineOffset: -2,
     },
   });
 
@@ -121,7 +265,8 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
       elevation={0}
       sx={{
         width: collapsed ? 64 : 240,
-        transition: 'width 300ms ease',
+        transition: (theme) =>
+          `width 300ms ${theme.transitions.easing.sharp}, box-shadow 200ms ${theme.transitions.easing.easeInOut}`,
         height: forceVisible ? '100%' : 'calc(100vh - 56px)',
         position: forceVisible ? 'static' : 'sticky',
         top: forceVisible ? 'auto' : 56,
@@ -132,8 +277,185 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
         borderRight: '1px solid',
         borderColor: 'divider',
         boxShadow: 'none',
+        overflow: 'hidden',
       }}
     >
+      {/* ---- 增强功能：搜索、收藏、最近访问按钮 ---- */}
+      {!collapsed && (
+        <Box
+          sx={{
+            px: 1.5,
+            py: 1,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.5,
+            borderBottom: '1px solid',
+            borderColor: 'divider',
+          }}
+        >
+          {/* 搜索按钮 */}
+          <TextField
+            size='small'
+            placeholder='搜索菜单...'
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onFocus={(e) => setSearchAnchorEl(e.currentTarget)}
+            sx={{
+              flex: 1,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 1.5,
+                fontSize: '0.8125rem',
+                bgcolor: 'background.default',
+              },
+            }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position='start'>
+                  <Search style={{ width: 14, height: 14, color: 'text.secondary' }} />
+                </InputAdornment>
+              ),
+              endAdornment: searchQuery && (
+                <InputAdornment position='end'>
+                  <IconButton
+                    size='small'
+                    onClick={() => setSearchQuery('')}
+                    edge='end'
+                  >
+                    <X style={{ width: 12, height: 12 }} />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+
+          {/* 收藏按钮 */}
+          <Tooltip title={`收藏 (${favorites.size})`}>
+            <IconButton
+              size='small'
+              onClick={(e) => setFavoritesAnchorEl(e.currentTarget)}
+              sx={{
+                color: favorites.size > 0 ? 'warning.main' : 'text.secondary',
+              }}
+            >
+              {favorites.size > 0 ? (
+                <BookmarkCheck style={{ width: 16, height: 16 }} />
+              ) : (
+                <Bookmark style={{ width: 16, height: 16 }} />
+              )}
+            </IconButton>
+          </Tooltip>
+        </Box>
+      )}
+
+      {/* ---- 搜索结果弹窗 ---- */}
+      <Popover
+        open={Boolean(searchAnchorEl) && filteredNavItems.length > 0}
+        anchorEl={searchAnchorEl}
+        onClose={() => {
+          setSearchAnchorEl(null);
+          setSearchQuery('');
+        }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+        sx={{
+          '& .MuiPaper-root': {
+            width: 280,
+            maxHeight: 320,
+            mt: -0.5,
+          },
+        }}
+      >
+        <List dense>
+          {filteredNavItems.slice(0, 8).map((item, index) => (
+            <ListItemButton
+              key={item.code || index}
+              onClick={() => {
+                if (item.path) navigate(item.path);
+                setSearchAnchorEl(null);
+                setSearchQuery('');
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 32 }}>
+                {item.icon ? renderIcon(item.icon, 16) : <Star style={{ width: 16, height: 16 }} />}
+              </ListItemIcon>
+              <ListItemText
+                primary={item.label}
+                secondary={item.path}
+                primaryTypographyProps={{ fontSize: '0.875rem' }}
+                secondaryTypographyProps={{ fontSize: '0.75rem' }}
+              />
+            </ListItemButton>
+          ))}
+        </List>
+      </Popover>
+
+      {/* ---- 收藏弹窗 ---- */}
+      <Popover
+        open={Boolean(favoritesAnchorEl)}
+        anchorEl={favoritesAnchorEl}
+        onClose={() => setFavoritesAnchorEl(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+        sx={{
+          '& .MuiPaper-root': {
+            width: 260,
+            maxHeight: 320,
+            mt: -0.5,
+          },
+        }}
+      >
+        <Box sx={{ p: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+          <Typography sx={{ fontSize: '0.875rem', fontWeight: 600 }}>
+            我的收藏 ({favorites.size})
+          </Typography>
+        </Box>
+        {favorites.size === 0 ? (
+          <Box sx={{ p: 2, textAlign: 'center' }}>
+            <Typography sx={{ fontSize: '0.8125rem', color: 'text.secondary' }}>
+              暂无收藏，点击导航项上的星标添加
+            </Typography>
+          </Box>
+        ) : (
+          <List dense>
+            {allNavItems
+              .filter((item) => favorites.has(item.path || item.code))
+              .slice(0, 10)
+              .map((item, index) => (
+                <ListItemButton
+                  key={item.code || index}
+                  onClick={() => {
+                    if (item.path) navigate(item.path);
+                    setFavoritesAnchorEl(null);
+                  }}
+                  secondaryAction={
+                    <IconButton
+                      size='small'
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleFavorite(item);
+                      }}
+                    >
+                      <BookmarkCheck style={{ width: 14, height: 14, color: 'warning.main' }} />
+                    </IconButton>
+                  }
+                >
+                  <ListItemIcon sx={{ minWidth: 32 }}>
+                    {item.icon ? (
+                      renderIcon(item.icon, 16)
+                    ) : (
+                      <Star style={{ width: 16, height: 16 }} />
+                    )}
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={item.label}
+                    primaryTypographyProps={{ fontSize: '0.875rem' }}
+                  />
+                </ListItemButton>
+              ))}
+          </List>
+        )}
+      </Popover>
+
       {/* ---- 1. 导航菜单 ---- */}
       <Box
         sx={{
@@ -226,7 +548,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                       item.path === location.pathname ||
                       (item.path && location.pathname.startsWith(`${item.path}/`))
                     );
-                    return (
+                    const NavButton = (
                       <Box
                         component='button'
                         role='menuitem'
@@ -246,11 +568,57 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                           <Typography sx={{ width: 18, height: 18, fontSize: 18 }} />
                         )}
                         {!collapsed && (
-                          <Typography sx={{ fontSize: 14, fontWeight: isActive ? 600 : 500 }}>
-                            {item.label}
-                          </Typography>
+                          <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography sx={{ fontSize: 14, fontWeight: isActive ? 600 : 500 }}>
+                              {item.label}
+                            </Typography>
+                            {item.badge && (
+                              <Chip
+                                size='small'
+                                label={item.badge}
+                                sx={{
+                                  height: 16,
+                                  fontSize: '0.625rem',
+                                  fontWeight: 600,
+                                  bgcolor: 'error.main',
+                                  color: 'white',
+                                  '& .MuiChip-label': {
+                                    px: 0.5,
+                                  },
+                                }}
+                              />
+                            )}
+                          </Box>
+                        )}
+                        {collapsed && item.badge && (
+                          <MuiBadge
+                            badgeContent={item.badge}
+                            color='error'
+                            sx={{
+                              position: 'absolute',
+                              top: 4,
+                              right: 4,
+                              '& .MuiBadge-badge': {
+                                fontSize: '0.625rem',
+                                height: 14,
+                                minWidth: 14,
+                              },
+                            }}
+                          />
                         )}
                       </Box>
+                    );
+                    return collapsed ? (
+                      <Tooltip
+                        key={item.code || `${item.label}-${index}`}
+                        title={item.label}
+                        placement='right'
+                        arrow
+                      >
+                        {NavButton}
+                      </Tooltip>
+                    ) : (
+                      NavButton
                     );
                   })}
                 </Box>
@@ -282,7 +650,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                       item.path === location.pathname ||
                       (item.path && location.pathname.startsWith(`${item.path}/`))
                     );
-                    return (
+                    const NavButton = (
                       <Box
                         component='button'
                         role='menuitem'
@@ -302,11 +670,57 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                           <Typography sx={{ width: 18, height: 18, fontSize: 18 }} />
                         )}
                         {!collapsed && (
-                          <Typography sx={{ fontSize: 14, fontWeight: isActive ? 600 : 500 }}>
-                            {item.label}
-                          </Typography>
+                          <Box sx={{ flex: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography sx={{ fontSize: 14, fontWeight: isActive ? 600 : 500 }}>
+                              {item.label}
+                            </Typography>
+                            {item.badge && (
+                              <Chip
+                                size='small'
+                                label={item.badge}
+                                sx={{
+                                  height: 16,
+                                  fontSize: '0.625rem',
+                                  fontWeight: 600,
+                                  bgcolor: 'error.main',
+                                  color: 'white',
+                                  '& .MuiChip-label': {
+                                    px: 0.5,
+                                  },
+                                }}
+                              />
+                            )}
+                          </Box>
+                        )}
+                        {collapsed && item.badge && (
+                          <MuiBadge
+                            badgeContent={item.badge}
+                            color='error'
+                            sx={{
+                              position: 'absolute',
+                              top: 4,
+                              right: 4,
+                              '& .MuiBadge-badge': {
+                                fontSize: '0.625rem',
+                                height: 14,
+                                minWidth: 14,
+                              },
+                            }}
+                          />
                         )}
                       </Box>
+                    );
+                    return collapsed ? (
+                      <Tooltip
+                        key={item.code || `${item.label}-${index}`}
+                        title={item.label}
+                        placement='right'
+                        arrow
+                      >
+                        {NavButton}
+                      </Tooltip>
+                    ) : (
+                      NavButton
                     );
                   })}
                 </Box>
@@ -322,8 +736,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
               item.path === location.pathname ||
               (item.path && location.pathname.startsWith(`${item.path}/`))
             );
-
-            return (
+            const NavButton = (
               <Box
                 component='button'
                 role='menuitem'
@@ -361,44 +774,145 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                 )}
               </Box>
             );
+            return collapsed ? (
+              <Tooltip
+                key={item.code || `${item.label}-${index}`}
+                title={item.label}
+                placement='right'
+                arrow
+              >
+                {NavButton}
+              </Tooltip>
+            ) : (
+              NavButton
+            );
           })}
         </Box>
       </Box>
 
-      {/* ---- 3. 收起/展开按钮 ---- */}
+      {/* ---- 3. 底部用户信息区 + 收起按钮 ---- */}
       <Box
         sx={{
-          p: 1.5,
           borderTop: 1,
           borderColor: 'divider',
         }}
       >
-        <Button
-          onClick={onToggleCollapse}
-          sx={{
-            width: '100%',
-            px: collapsed ? 0 : 1.5,
-            py: 1,
-            borderRadius: 1,
-            justifyContent: collapsed ? 'center' : 'flex-start',
-            gap: 1,
-            color: 'text.secondary',
-            textTransform: 'none',
-            '&:hover': {
-              bgcolor: 'action.hover',
-            },
-          }}
-        >
-          <ChevronLeft
-            style={{
-              width: 14,
-              height: 14,
-              transform: collapsed ? 'rotate(180deg)' : 'rotate(0deg)',
-              transition: 'transform 300ms ease',
+        {/* 用户信息区 */}
+        {!collapsed ? (
+          <Box
+            sx={{
+              px: 1.5,
+              py: 1.5,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1.5,
             }}
-          />
-          {!collapsed && <Typography sx={{ fontSize: 13, fontWeight: 500 }}>收起菜单</Typography>}
-        </Button>
+          >
+            <Avatar
+              sx={{
+                width: 40,
+                height: 40,
+                fontSize: 16,
+                fontWeight: 600,
+                background: 'linear-gradient(135deg, primary.main, secondary.main)',
+              }}
+            >
+              陈
+            </Avatar>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography
+                sx={{
+                  fontSize: '0.875rem',
+                  fontWeight: 600,
+                  color: 'text.primary',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                陈管理员
+              </Typography>
+              <Typography
+                sx={{
+                  fontSize: '0.75rem',
+                  color: 'text.secondary',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                系统管理员
+              </Typography>
+            </Box>
+            <Tooltip title='设置'>
+              <IconButton
+                size='small'
+                onClick={() => navigate('/settings')}
+                sx={{ width: 32, height: 32 }}
+              >
+                <Settings style={{ width: 16, height: 16 }} />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              p: 1.5,
+              display: 'flex',
+              justifyContent: 'center',
+            }}
+          >
+            <Tooltip
+              title='陈管理员 - 系统管理员'
+              placement='right'
+            >
+              <Avatar
+                sx={{
+                  width: 36,
+                  height: 36,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  background: 'linear-gradient(135deg, primary.main, secondary.main)',
+                  cursor: 'pointer',
+                }}
+                onClick={() => navigate('/profile')}
+              >
+                陈
+              </Avatar>
+            </Tooltip>
+          </Box>
+        )}
+
+        {/* 收起/展开按钮 */}
+        <Box sx={{ px: 1, pb: 1, pt: 0 }}>
+          <Button
+            onClick={onToggleCollapse}
+            sx={{
+              width: '100%',
+              px: collapsed ? 0 : 1.5,
+              py: 0.75,
+              borderRadius: 1,
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              gap: 1,
+              color: 'text.secondary',
+              textTransform: 'none',
+              fontSize: '0.8125rem',
+              '&:hover': {
+                bgcolor: 'action.hover',
+              },
+            }}
+          >
+            <ChevronLeft
+              style={{
+                width: 14,
+                height: 14,
+                transform: collapsed ? 'rotate(180deg)' : 'rotate(0deg)',
+                transition: 'transform 300ms ease',
+              }}
+            />
+            {!collapsed && <Typography sx={{ fontSize: 13, fontWeight: 500 }}>收起菜单</Typography>}
+          </Button>
+        </Box>
       </Box>
     </Paper>
   );

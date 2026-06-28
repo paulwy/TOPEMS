@@ -1,1 +1,1 @@
-export * from '../../types/external-erp';
+export * from '../../types/externalErp';

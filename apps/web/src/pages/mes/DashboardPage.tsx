@@ -1,6 +1,12 @@
 import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Package, ClipboardList, AlertCircle, Factory, ArrowRight } from 'lucide-react';
+import {
+  Package,
+  ClipboardList,
+  AlertCircle,
+  Factory,
+  ArrowRight,
+} from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { useAppStore } from '@/store';
 import BarChartComponent from '../../components/charts/BarChart';

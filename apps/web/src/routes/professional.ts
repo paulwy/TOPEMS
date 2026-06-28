@@ -46,6 +46,7 @@ const LimsInstrumentMaintenancePage = lazy(
 const LimsInstrumentDataPage = lazy(() => import('../pages/lims/LimsInstrumentDataPage'));
 const SampleReceivePage = lazy(() => import('../pages/lims/SampleReceivePage'));
 const InspectionTaskPage = lazy(() => import('../pages/lims/InspectionTaskPage'));
+const InspectionResultPage = lazy(() => import('../pages/lims/InspectionResultPage'));
 
 const QmsStandardDetailPage = lazy(() => import('../pages/qms/QmsStandardDetailPage'));
 const QmsAuditManagementPage = lazy(() => import('../pages/qms/QmsAuditManagementPage'));
@@ -134,6 +135,13 @@ export const professionalRoutes: RouteConfig[] = [
   {
     path: '/lims/inspection-tasks',
     element: InspectionTaskPage,
+    requiredPermissions: ['lims:read'],
+    module: 'lims',
+    action: 'read',
+  },
+  {
+    path: '/lims/inspection-results',
+    element: InspectionResultPage,
     requiredPermissions: ['lims:read'],
     module: 'lims',
     action: 'read',

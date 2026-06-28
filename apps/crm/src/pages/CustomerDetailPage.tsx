@@ -12,9 +12,11 @@ import {
   Card,
   CardContent,
 } from '@mui/material';
-import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
+
 import { useCrmStore } from '../store/crmStore';
 import type { Customer, Opportunity, Interaction, Contact, BillingRecord } from '../api/crm';
+import { ArrowLeft } from 'lucide-react';
+const ArrowBackIcon = ArrowLeft;
 
 interface CustomerDetailPageProps {
   customerId?: string;
@@ -103,7 +105,7 @@ export const CustomerDetailPage: React.FC<CustomerDetailPageProps> = ({ customer
       </Box>
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid xs={12} md={4}>
+        <Grid>
           <Card>
             <CardContent>
               <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
@@ -144,7 +146,7 @@ export const CustomerDetailPage: React.FC<CustomerDetailPageProps> = ({ customer
           </Card>
         </Grid>
 
-        <Grid xs={12} md={4}>
+        <Grid>
           <Card>
             <CardContent>
               <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
@@ -177,7 +179,7 @@ export const CustomerDetailPage: React.FC<CustomerDetailPageProps> = ({ customer
           </Card>
         </Grid>
 
-        <Grid xs={12} md={4}>
+        <Grid>
           <Card>
             <CardContent>
               <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
@@ -210,7 +212,7 @@ export const CustomerDetailPage: React.FC<CustomerDetailPageProps> = ({ customer
       </Grid>
 
       <Grid container spacing={2}>
-        <Grid xs={12} md={6}>
+        <Grid>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
               联系人 ({customerContacts.length})
@@ -239,7 +241,7 @@ export const CustomerDetailPage: React.FC<CustomerDetailPageProps> = ({ customer
           </Paper>
         </Grid>
 
-        <Grid xs={12} md={6}>
+        <Grid>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
               销售机会 ({customerOpportunities.length})
@@ -273,7 +275,7 @@ export const CustomerDetailPage: React.FC<CustomerDetailPageProps> = ({ customer
           </Paper>
         </Grid>
 
-        <Grid xs={12} md={6}>
+        <Grid>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
               互动记录 ({customerInteractions.length})
@@ -307,7 +309,7 @@ export const CustomerDetailPage: React.FC<CustomerDetailPageProps> = ({ customer
           </Paper>
         </Grid>
 
-        <Grid xs={12} md={6}>
+        <Grid>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
               账单 ({customerBillings.length})

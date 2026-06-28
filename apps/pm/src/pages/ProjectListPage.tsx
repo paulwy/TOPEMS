@@ -27,16 +27,16 @@ import {
   Grid,
   LinearProgress,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Search as SearchIcon,
-  Refresh as RefreshIcon,
-  Visibility as VisibilityIcon,
-} from '@mui/icons-material';
+
 import { usePmStore } from '../store/pmStore';
 import type { CreateProjectRequest } from '../api/pm';
+import { Eye, Pencil, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
+const AddIcon = Plus;
+const DeleteIcon = Trash2;
+const EditIcon = Pencil;
+const RefreshIcon = RefreshCw;
+const SearchIcon = Search;
+const VisibilityIcon = Eye;
 
 const getStatusColor = (status: string): 'success' | 'default' | 'warning' | 'primary' | 'error' => {
   switch (status) {
@@ -184,21 +184,20 @@ export const ProjectListPage: React.FC = () => {
       </Box>
 
       <Paper sx={{ mb: 3, p: 2 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={6}>
+        <Grid container spacing={2} sx={{ alignItems: "center" }}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <TextField
               placeholder="搜索项目名称、编码..."
-              size="small"
+              
               value={searchKeyword}
               onChange={(e) => setSearchKeyword(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              InputProps={{
-                startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />,
-              }}
+               
+            slotProps={{ input: { size: 'small', startAdornment: <SearchIcon style={{ color: '#9e9e9e', marginRight: 1, fontSize: 20 }}  />  }}}
               fullWidth
             />
           </Grid>
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <FormControl size="small" fullWidth>
               <InputLabel>状态</InputLabel>
               <Select
@@ -215,7 +214,7 @@ export const ProjectListPage: React.FC = () => {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <Button variant="outlined" onClick={handleSearch} fullWidth>
               搜索
             </Button>

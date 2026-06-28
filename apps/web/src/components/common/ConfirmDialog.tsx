@@ -13,6 +13,8 @@ import {
   Box,
   Typography,
   Button,
+  type SxProps,
+  type Theme,
 } from '@mui/material';
 import {
   AlertCircle,
@@ -111,7 +113,7 @@ export interface ConfirmDialogConfig {
   /** 是否显示成功图标 */
   showSuccessIcon?: boolean;
   /** 自定义样式 */
-  sx?: any;
+  sx?: SxProps<Theme>;
 }
 
 // ============ 尺寸配置 ============
@@ -137,7 +139,7 @@ const MAX_WIDTH_MAP: Record<DialogSize, 'xs' | 'sm' | 'md' | 'lg' | 'xl'> = {
 const TYPE_CONFIG: Record<DialogType, { icon: LucideIcon; color: string; bgColor: string }> = {
   alert: { icon: AlertCircle, color: 'warning.main', bgColor: 'warning.light' },
   confirm: { icon: HelpCircle, color: 'primary.main', bgColor: 'primary.light' },
-  prompt: { icon: Info, color: 'info.main', bgColor: '#cffafe' },
+  prompt: { icon: Info, color: 'info.main', bgColor: 'info.light' },
   info: { icon: Info, color: 'primary.main', bgColor: 'primary.light' },
   success: { icon: CheckCircle, color: 'success.main', bgColor: 'success.lighter' },
   warning: { icon: AlertTriangle, color: 'warning.main', bgColor: 'warning.light' },
@@ -261,15 +263,22 @@ export default function ConfirmDialog({
     [draggable, position]
   );
 
-  const handleMouseMove = useCallback(
-    (e: React.MouseEvent) => {
+  const updatePaperPosition = useCallback(
+    (clientX: number, clientY: number) => {
       if (!isDragging) return;
       setPosition({
-        x: dragRef.current.startLeft + e.clientX - dragRef.current.startX,
-        y: dragRef.current.startTop + e.clientY - dragRef.current.startY,
+        x: dragRef.current.startLeft + clientX - dragRef.current.startX,
+        y: dragRef.current.startTop + clientY - dragRef.current.startY,
       });
     },
     [isDragging]
+  );
+
+  const handleMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      updatePaperPosition(e.clientX, e.clientY);
+    },
+    [updatePaperPosition]
   );
 
   const handleMouseUp = useCallback(() => {
@@ -278,7 +287,7 @@ export default function ConfirmDialog({
 
   React.useEffect(() => {
     if (isDragging) {
-      const onMouseMove = (e: MouseEvent) => handleMouseMove(e as unknown as React.MouseEvent);
+      const onMouseMove = (e: MouseEvent) => updatePaperPosition(e.clientX, e.clientY);
       const onMouseUp = () => handleMouseUp();
       document.addEventListener('mousemove', onMouseMove);
       document.addEventListener('mouseup', onMouseUp);
@@ -288,7 +297,7 @@ export default function ConfirmDialog({
       };
     }
     return;
-  }, [isDragging, handleMouseMove, handleMouseUp]);
+  }, [isDragging, updatePaperPosition, handleMouseUp]);
 
   React.useEffect(() => {
     if (!isOpen) {
@@ -314,7 +323,7 @@ export default function ConfirmDialog({
           ref={paperRef}
           onMouseDown={handleMouseDown}
           {...paperProps}
-          style={{ ...paperSx, ...(paperProps as any).sx }}
+          style={{ ...paperSx, ...((paperProps as Record<string, unknown>).sx as SxProps<Theme> || {}) }}
         >
           {dialogChildren}
         </div>

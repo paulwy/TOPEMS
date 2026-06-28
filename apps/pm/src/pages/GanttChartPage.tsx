@@ -13,8 +13,10 @@ import {
   TextField,
   Button,
 } from '@mui/material';
-import { Refresh as RefreshIcon } from '@mui/icons-material';
+
 import { ganttApi, type ProjectGanttResponse } from '../api/pm';
+import { RefreshCw } from 'lucide-react';
+const RefreshIcon = RefreshCw;
 
 export const GanttChartPage: React.FC = () => {
   const [projectId, setProjectId] = useState('');
@@ -75,8 +77,8 @@ export const GanttChartPage: React.FC = () => {
       </Box>
 
       <Paper sx={{ p: 2, mb: 3 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={8}>
+        <Grid container spacing={2} sx={{ alignItems: "center" }}>
+          <Grid size={{ xs: 12, md: 8 }}>
             <TextField
               label="项目 ID"
               size="small"
@@ -86,7 +88,7 @@ export const GanttChartPage: React.FC = () => {
               placeholder="请输入项目 ID"
             />
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Button
               variant="contained"
               startIcon={<RefreshIcon />}
@@ -113,7 +115,7 @@ export const GanttChartPage: React.FC = () => {
       ) : ganttData ? (
         <>
           <Grid container spacing={2} sx={{ mb: 3 }}>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Card>
                 <CardContent>
                   <Typography variant="body2" color="text.secondary">
@@ -125,7 +127,7 @@ export const GanttChartPage: React.FC = () => {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Card>
                 <CardContent>
                   <Typography variant="body2" color="text.secondary">
@@ -137,7 +139,7 @@ export const GanttChartPage: React.FC = () => {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Card>
                 <CardContent>
                   <Typography variant="body2" color="text.secondary">

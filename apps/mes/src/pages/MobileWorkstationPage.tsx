@@ -15,14 +15,14 @@ import {
   DialogActions,
   Stack,
 } from '@mui/material';
-import {
-  Smartphone as SmartphoneIcon,
-  PlayArrow as PlayArrowIcon,
-  QrCodeScanner as QrCodeScannerIcon,
-  CheckCircle as CheckCircleIcon,
-} from '@mui/icons-material';
+
 import { useMesStore } from '../store/mesStore';
 import type { WorkStation, CreateProductionRecordRequest } from '../api';
+import { CircleCheck, Play, QrCode, Smartphone } from 'lucide-react';
+const CheckCircleIcon = CircleCheck;
+const PlayArrowIcon = Play;
+const QrCodeScannerIcon = QrCode;
+const SmartphoneIcon = Smartphone;
 
 export const MobileWorkstationPage: React.FC = () => {
   const { workStations, productionRecords, loadWorkStations, loadProductionRecords, addProductionRecord } = useMesStore();

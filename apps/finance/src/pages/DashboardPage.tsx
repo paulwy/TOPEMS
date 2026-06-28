@@ -9,13 +9,15 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material';
-import {
-  AccountBalance as AccountBalanceIcon,
-  Receipt as ReceiptIcon,
-  TrendingUp as TrendingUpIcon,
-  Payment as PaymentIcon,
-} from '@mui/icons-material';
+
+import { CreditCard, Landmark, Receipt, TrendingUp } from 'lucide-react';
+
 import { useFinanceStore } from '../store/financeStore';
+
+const PaymentIcon = CreditCard;
+const TrendingUpIcon = TrendingUp;
+const AccountBalanceIcon = Landmark;
+const ReceiptIcon = Receipt;
 
 export const DashboardPage: React.FC = () => {
   const {
@@ -64,11 +66,11 @@ export const DashboardPage: React.FC = () => {
       )}
 
       <Grid container spacing={3}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <ReceiptIcon color="primary" fontSize="large" />
+                <ReceiptIcon color="primary" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     凭证总数
@@ -81,11 +83,11 @@ export const DashboardPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <TrendingUpIcon color="success" fontSize="large" />
+                <TrendingUpIcon color="success" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     收款合计
@@ -98,11 +100,11 @@ export const DashboardPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <PaymentIcon color="error" fontSize="large" />
+                <PaymentIcon color="error" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     付款合计
@@ -115,11 +117,11 @@ export const DashboardPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <AccountBalanceIcon color="info" fontSize="large" />
+                <AccountBalanceIcon color="info" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     净利润
@@ -138,7 +140,7 @@ export const DashboardPage: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" sx={{ mb: 2 }}>
               资产负债概览
@@ -179,7 +181,7 @@ export const DashboardPage: React.FC = () => {
           </Paper>
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" sx={{ mb: 2 }}>
               利润概览

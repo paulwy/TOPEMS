@@ -1,5 +1,11 @@
 import { useState } from 'react';
-import { Image, Download, FileImage, Copy, Check } from 'lucide-react';
+import {
+  Image,
+  Download,
+  FileImage,
+  Copy,
+  Check,
+} from 'lucide-react';
 import { Menu, MenuItem, Button } from '@mui/material';
 import { logger } from '@/utils/logger';
 

@@ -2,6 +2,7 @@ import React from 'react';
 import { Box, useTheme } from '@mui/material';
 import { BottomTabBar, type TabItem } from './BottomTabBar';
 import { MobileHeader, type MobileHeaderProps } from './MobileHeader';
+import { PageTransition } from './PageTransition';
 
 export interface MobileLayoutProps extends MobileHeaderProps {
   children: React.ReactNode;
@@ -10,6 +11,7 @@ export interface MobileLayoutProps extends MobileHeaderProps {
   tabs?: TabItem[];
   onTabChange?: (tabId: string) => void;
   bottomPadding?: boolean;
+  enableTransition?: boolean;
 }
 
 export const MobileLayout: React.FC<MobileLayoutProps> = ({
@@ -19,9 +21,12 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
   tabs,
   onTabChange,
   bottomPadding = true,
+  enableTransition = true,
   ...headerProps
 }) => {
   const theme = useTheme();
+
+  const content = enableTransition ? <PageTransition>{children}</PageTransition> : children;
 
   return (
     <Box
@@ -46,7 +51,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({
           WebkitOverflowScrolling: 'touch',
         }}
       >
-        {children}
+        {content}
       </Box>
 
       {showTabBar && tabs && tabs.length > 0 && (

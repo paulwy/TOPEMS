@@ -21,3 +21,5 @@ export type { SwipeActionProps, SwipeActionItem } from './SwipeAction';
 
 export { MobileButton } from './MobileButton';
 export type { MobileButtonProps } from './MobileButton';
+
+export { PageTransition } from './PageTransition';

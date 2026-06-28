@@ -3,7 +3,7 @@
  */
 
 import { useMutation, useQuery } from '@tanstack/react-query';
-import type { EmployeeFinance, PayrollRecord } from '@/types/hrm-finance';
+import type { EmployeeFinance, PayrollRecord } from '@/types/hrmFinance';
 import { apiClient } from '@/api/client';
 
 /**

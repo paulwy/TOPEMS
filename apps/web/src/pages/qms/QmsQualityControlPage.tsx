@@ -1,6 +1,15 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Shield, AlertCircle, CheckCircle, FileText, Plus, Edit, Trash2, Eye } from 'lucide-react';
+import {
+  Shield,
+  AlertCircle,
+  CheckCircle,
+  FileText,
+  Plus,
+  Edit,
+  Trash2,
+  Eye,
+} from 'lucide-react';
 import {
   Dialog,
   DialogTitle,

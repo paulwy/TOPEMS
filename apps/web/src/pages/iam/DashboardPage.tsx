@@ -1,6 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Shield, Activity, AlertTriangle, ArrowRight } from 'lucide-react';
+import {
+  Users,
+  Shield,
+  Activity,
+  AlertTriangle,
+  ArrowRight,
+} from 'lucide-react';
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction, RecentItem } from '@/components/templates';
 import { PageContainer } from '@/components/common';

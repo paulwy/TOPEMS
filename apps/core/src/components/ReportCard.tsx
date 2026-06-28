@@ -9,14 +9,13 @@ import {
   Box,
   Chip,
 } from '@mui/material';
-import {
-  AttachMoney,
-  People,
-  ShoppingCart,
-  Inventory,
-  PictureAsPdf,
-} from '@mui/icons-material';
+
 import type { Report, ReportCategory } from '../api/report';
+import { DollarSign, FileText, Package, ShoppingCart, Users } from 'lucide-react';
+const AttachMoney = DollarSign;
+const Inventory = Package;
+const People = Users;
+const PictureAsPdf = FileText;
 
 interface ReportCardProps {
   report: Report;

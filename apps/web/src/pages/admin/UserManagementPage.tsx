@@ -13,7 +13,14 @@ import {
   Button,
 } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, Edit, Trash2, Shield, UserPlus, UserMinus } from 'lucide-react';
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Shield,
+  UserPlus,
+  UserMinus,
+} from 'lucide-react';
 import { authApi, type User, type Role } from '@/api/iam';
 import { useAppStore } from '../../store';
 import { RoleBadge } from '@/components/PermissionGate';

@@ -24,14 +24,14 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Search as SearchIcon,
-  Refresh as RefreshIcon,
-  Assignment as AssignmentIcon,
-} from '@mui/icons-material';
+
 import { useMesStore } from '../store/mesStore';
 import type { CreateInspectionTaskRequest } from '../api';
+import { ClipboardList, Plus, RefreshCw, Search } from 'lucide-react';
+const AddIcon = Plus;
+const AssignmentIcon = ClipboardList;
+const RefreshIcon = RefreshCw;
+const SearchIcon = Search;
 
 const getStatusColor = (status: string): 'success' | 'default' | 'error' | 'warning' | 'info' => {
   switch (status) {
@@ -127,11 +127,12 @@ export const LimsTaskPage: React.FC = () => {
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <TextField
             placeholder="搜索任务..."
-            size="small"
+            
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            InputProps={{ startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} /> }}
+             
+            slotProps={{ input: { size: 'small', startAdornment: <SearchIcon style={{ color: '#9e9e9e', marginRight: 4, fontSize: 20 }}  />  }}}
             sx={{ minWidth: 300 }}
           />
           <FormControl size="small" sx={{ minWidth: 150 }}>

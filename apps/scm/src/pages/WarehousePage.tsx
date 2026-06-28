@@ -30,20 +30,22 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Search as SearchIcon,
-  Refresh as RefreshIcon,
-  Store as StoreIcon,
-} from '@mui/icons-material';
+
+import { Pencil, Plus, RefreshCw, Search, Store, Trash2 } from 'lucide-react';
+
 import {
   warehouseApi,
   type Warehouse,
   type PaginatedResult,
   type ListParams,
 } from '../api/wms';
+
+const AddIcon = Plus;
+const DeleteIcon = Trash2;
+const EditIcon = Pencil;
+const StoreIcon = Store;
+const SearchIcon = Search;
+const RefreshIcon = RefreshCw;
 
 const getStatusColor = (
   status: string
@@ -202,11 +204,11 @@ export const WarehousePage: React.FC = () => {
       </Box>
 
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <StoreIcon color="primary" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <StoreIcon color="primary" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     仓库总数
@@ -219,11 +221,11 @@ export const WarehousePage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <StoreIcon color="success" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <StoreIcon color="success" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     运营中
@@ -236,11 +238,11 @@ export const WarehousePage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <StoreIcon color="warning" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <StoreIcon color="warning" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     维护中
@@ -253,11 +255,11 @@ export const WarehousePage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <StoreIcon color="error" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <StoreIcon color="error" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     已停用/关闭
@@ -273,16 +275,15 @@ export const WarehousePage: React.FC = () => {
       </Grid>
 
       <Paper sx={{ mb: 3, p: 2 }}>
-        <Stack direction="row" spacing={2} alignItems="center">
+        <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
           <TextField
             placeholder="搜索仓库名称/编码..."
-            size="small"
+            
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            InputProps={{
-              startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />,
-            }}
+             
+            slotProps={{ input: { size: 'small', startAdornment: <SearchIcon style={{ color: '#9e9e9e', marginRight: 1, fontSize: 20 }}  />  }}}
             sx={{ minWidth: 300 }}
           />
           <FormControl size="small" sx={{ minWidth: 150 }}>
@@ -367,14 +368,14 @@ export const WarehousePage: React.FC = () => {
                           setEditDialogOpen(true);
                         }}
                       >
-                        <EditIcon fontSize="small" />
+                        <EditIcon size={16} />
                       </IconButton>
                       <IconButton
                         size="small"
                         color="error"
                         onClick={() => handleDelete(warehouse.id)}
                       >
-                        <DeleteIcon fontSize="small" />
+                        <DeleteIcon size={16} />
                       </IconButton>
                     </TableCell>
                   </TableRow>

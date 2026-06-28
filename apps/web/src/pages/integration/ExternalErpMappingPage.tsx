@@ -49,7 +49,7 @@ import {
   useUpdateSupplierMapping,
 } from '@/hooks/useExternalErp';
 import { EnhancedDataTable } from '@/components/EnhancedDataTable';
-import type { AccountMappingDirection } from '@/types/external-erp';
+import type { AccountMappingDirection } from '@/types/externalErp';
 import { PageContainer } from '@/components/common';
 
 // 映射类型配置

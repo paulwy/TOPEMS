@@ -28,14 +28,14 @@ import {
   Card,
   CardContent,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Delete as DeleteIcon,
-  Refresh as RefreshIcon,
-  Assessment as AssessmentIcon,
-} from '@mui/icons-material';
+
 import { usePmStore } from '../store/pmStore';
 import type { CreateReportRequest } from '../api/pm';
+import { BarChart3, Plus, RefreshCw, Trash2 } from 'lucide-react';
+const AddIcon = Plus;
+const AssessmentIcon = BarChart3;
+const DeleteIcon = Trash2;
+const RefreshIcon = RefreshCw;
 
 const getStatusColor = (status: string): 'success' | 'default' | 'warning' | 'primary' => {
   switch (status) {
@@ -182,7 +182,7 @@ export const ProjectReportPage: React.FC = () => {
       </Box>
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} md={4}>
+        <Grid size={{ xs: 12, md: 4 }}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -200,8 +200,8 @@ export const ProjectReportPage: React.FC = () => {
       </Grid>
 
       <Paper sx={{ mb: 3, p: 2 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={4}>
+        <Grid container spacing={2} sx={{ alignItems: "center" }}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <FormControl size="small" fullWidth>
               <InputLabel>报表类型</InputLabel>
               <Select
@@ -218,7 +218,7 @@ export const ProjectReportPage: React.FC = () => {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Button variant="outlined" onClick={handleSearch} fullWidth>
               搜索
             </Button>

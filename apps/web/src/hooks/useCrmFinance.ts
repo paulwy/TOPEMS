@@ -5,8 +5,8 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNotification } from './useNotification';
-import { crmFinanceApi } from '../api/crm-finance';
-import type { CustomerFinanceInfo, SalesInvoice, CollectionRecord } from '../api/crm-finance';
+import { crmFinanceApi } from '../api/crmFinance';
+import type { CustomerFinanceInfo, SalesInvoice, CollectionRecord } from '../api/crmFinance';
 
 // ============================================
 // 一、客户财务信息Hooks

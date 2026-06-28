@@ -18,8 +18,11 @@ import {
   CardContent,
   Divider,
 } from '@mui/material';
-import { Refresh as RefreshIcon, TrendingUp as TrendingUpIcon } from '@mui/icons-material';
+
 import { useCrmStore } from '../store/crmStore';
+import { RefreshCw, TrendingUp } from 'lucide-react';
+const RefreshIcon = RefreshCw;
+const TrendingUpIcon = TrendingUp;
 
 const getLevelColor = (level: string): 'default' | 'primary' | 'success' | 'warning' | 'error' => {
   switch (level) {
@@ -92,7 +95,7 @@ export const CustomerScoringPage: React.FC = () => {
       )}
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid xs={12} sm={6} md={3}>
+        <Grid>
           <Card>
             <CardContent>
               <Typography variant="body2" color="text.secondary">评分总数</Typography>
@@ -102,7 +105,7 @@ export const CustomerScoringPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid xs={12} sm={6} md={3}>
+        <Grid>
           <Card>
             <CardContent>
               <Typography variant="body2" color="text.secondary">A级客户</Typography>
@@ -112,7 +115,7 @@ export const CustomerScoringPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid xs={12} sm={6} md={3}>
+        <Grid>
           <Card>
             <CardContent>
               <Typography variant="body2" color="text.secondary">B级客户</Typography>
@@ -122,7 +125,7 @@ export const CustomerScoringPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid xs={12} sm={6} md={3}>
+        <Grid>
           <Card>
             <CardContent>
               <Typography variant="body2" color="text.secondary">平均分数</Typography>

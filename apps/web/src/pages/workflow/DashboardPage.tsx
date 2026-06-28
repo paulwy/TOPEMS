@@ -260,9 +260,19 @@ export const DashboardPage: React.FC = () => {
               key={process.name}
               onClick={() => navigate('/flow/statistics')}
               sx={{
-                bgcolor: process.status === 'critical' ? '#fef2f2' : process.status === 'warning' ? '#fffbeb' : '#f0fdf4',
+                bgcolor:
+                  process.status === 'critical'
+                    ? '#fef2f2'
+                    : process.status === 'warning'
+                      ? '#fffbeb'
+                      : '#f0fdf4',
                 border: 1,
-                borderColor: process.status === 'critical' ? '#fecaca' : process.status === 'warning' ? '#fde68a' : '#bbf7d0',
+                borderColor:
+                  process.status === 'critical'
+                    ? '#fecaca'
+                    : process.status === 'warning'
+                      ? '#fde68a'
+                      : '#bbf7d0',
                 borderRadius: 2,
                 p: 2,
                 cursor: 'pointer',
@@ -286,7 +296,12 @@ export const DashboardPage: React.FC = () => {
                 <Typography
                   variant='caption'
                   sx={{
-                    color: process.status === 'critical' ? '#dc2626' : process.status === 'warning' ? '#ca8a04' : '#16a34a',
+                    color:
+                      process.status === 'critical'
+                        ? '#dc2626'
+                        : process.status === 'warning'
+                          ? '#ca8a04'
+                          : '#16a34a',
                     fontWeight: 600,
                   }}
                 >

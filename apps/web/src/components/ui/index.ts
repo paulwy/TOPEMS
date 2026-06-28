@@ -7,5 +7,8 @@ export type { LazyImageProps } from './LazyImage';
 export { VirtualList } from './VirtualList';
 export type { VirtualListProps, VirtualListHandle } from './VirtualList';
 
-export { LoadingFallback, PageLoadingFallback } from './LoadingFallback';
+export { LoadingFallback, PageLoadingFallback, PageSkeleton } from './LoadingFallback';
 export type { LoadingFallbackProps } from './LoadingFallback';
+
+export { CommandPalette } from './CommandPalette';
+export type { CommandPaletteProps } from './CommandPalette';

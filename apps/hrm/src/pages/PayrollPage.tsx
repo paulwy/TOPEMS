@@ -26,14 +26,16 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  PlayArrow as PlayArrowIcon,
-  Payment as PaymentIcon,
-  Refresh as RefreshIcon,
-  AttachMoney as AttachMoneyIcon,
-} from '@mui/icons-material';
+
+import { CreditCard, DollarSign, Play, Plus, RefreshCw } from 'lucide-react';
+
 import { payrollApi, type PayrollRun } from '../api/hrm';
+
+const PaymentIcon = CreditCard;
+const AddIcon = Plus;
+const RefreshIcon = RefreshCw;
+const PlayArrowIcon = Play;
+const AttachMoneyIcon = DollarSign;
 
 const getStatusColor = (
   status: string
@@ -173,11 +175,11 @@ export const PayrollPage: React.FC = () => {
       </Box>
 
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <AttachMoneyIcon color="primary" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <AttachMoneyIcon color="primary" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     批次总数
@@ -190,11 +192,11 @@ export const PayrollPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <AttachMoneyIcon color="success" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <AttachMoneyIcon color="success" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     已发放
@@ -207,11 +209,11 @@ export const PayrollPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <AttachMoneyIcon color="warning" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <AttachMoneyIcon color="warning" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     待发放
@@ -224,11 +226,11 @@ export const PayrollPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <AttachMoneyIcon color="info" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <AttachMoneyIcon color="info" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     当前页总额
@@ -305,7 +307,7 @@ export const PayrollPage: React.FC = () => {
                           onClick={() => handleCalculate(run.id)}
                           title="计算薪资"
                         >
-                          <PlayArrowIcon fontSize="small" />
+                          <PlayArrowIcon size={16} />
                         </IconButton>
                       )}
                       {(run.status === 'calculating' || run.status === 'processing') && (
@@ -315,7 +317,7 @@ export const PayrollPage: React.FC = () => {
                           onClick={() => handlePay(run.id)}
                           title="发放薪资"
                         >
-                          <PaymentIcon fontSize="small" />
+                          <PaymentIcon size={16} />
                         </IconButton>
                       )}
                     </TableCell>

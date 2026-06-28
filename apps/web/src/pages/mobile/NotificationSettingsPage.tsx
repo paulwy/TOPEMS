@@ -1,6 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAppStore } from '../../store';
-import { Bell, MessageCircle, Mail, Smartphone, Clock, Shield } from 'lucide-react';
+import {
+  Bell,
+  MessageCircle,
+  Mail,
+  Smartphone,
+  Clock,
+  Shield,
+} from 'lucide-react';
 import {
   SettingsPageTemplate,
   type SettingSection,

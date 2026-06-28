@@ -23,18 +23,18 @@ import {
   FormGroup,
   FormControlLabel,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Shield as ShieldIcon,
-  Search as SearchIcon,
-  Refresh as RefreshIcon,
-  Key as KeyIcon,
-} from '@mui/icons-material';
+
 import type { Role, Permission } from '@topems/shared-types';
 import { useIamStore } from '../store/iamStore';
 import { iamApi } from '../api/iam';
+import { Key, Pencil, Plus, RefreshCw, Search, Shield, Trash2 } from 'lucide-react';
+const AddIcon = Plus;
+const DeleteIcon = Trash2;
+const EditIcon = Pencil;
+const KeyIcon = Key;
+const RefreshIcon = RefreshCw;
+const SearchIcon = Search;
+const ShieldIcon = Shield;
 
 export const RoleManagement: React.FC = () => {
   const {
@@ -200,11 +200,13 @@ export const RoleManagement: React.FC = () => {
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <TextField
             placeholder="搜索角色名称、编码..."
-            size="small"
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
-            InputProps={{
-              startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />,
+            slotProps={{
+              input: {
+                size: 'small',
+                startAdornment: <SearchIcon size={20} style={{ color: 'var(--mui-palette-text-secondary, #666)', marginRight: 1 * 4 }} />,
+              },
             }}
             sx={{ minWidth: 300 }}
           />
@@ -259,7 +261,7 @@ export const RoleManagement: React.FC = () => {
                             justifyContent: 'center',
                           }}
                         >
-                          <ShieldIcon sx={{ color: 'primary.main' }} />
+                          <ShieldIcon style={{ color: 'var(--mui-palette-primary-main, #1976d2)' }} />
                         </Box>
                         <Box>
                           <Typography variant="body2" sx={{ fontWeight: 500 }}>

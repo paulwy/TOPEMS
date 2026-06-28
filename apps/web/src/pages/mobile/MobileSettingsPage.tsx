@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAppStore } from '../../store';
-import { Smartphone, Shield, Bell, Battery, RefreshCw } from 'lucide-react';
+import {
+  Smartphone,
+  Shield,
+  Bell,
+  Battery,
+  RefreshCw,
+} from 'lucide-react';
 import {
   SettingsPageTemplate,
   type SettingSection,

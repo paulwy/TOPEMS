@@ -13,7 +13,16 @@ import {
   Button,
 } from '@mui/material';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { Key, Plus, Trash2, ChevronLeft, Shield, AlertCircle, RefreshCw, Edit } from 'lucide-react';
+import {
+  Key,
+  Plus,
+  Trash2,
+  ChevronLeft,
+  Shield,
+  AlertCircle,
+  RefreshCw,
+  Edit,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { authApi, type Permission } from '@/api/iam';
 import { useAppStore } from '../../store';

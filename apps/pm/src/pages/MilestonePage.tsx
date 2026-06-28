@@ -26,14 +26,14 @@ import {
   MenuItem,
   Grid,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Refresh as RefreshIcon,
-} from '@mui/icons-material';
+
 import { usePmStore } from '../store/pmStore';
 import type { CreateMilestoneRequest } from '../api/pm';
+import { Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
+const AddIcon = Plus;
+const DeleteIcon = Trash2;
+const EditIcon = Pencil;
+const RefreshIcon = RefreshCw;
 
 const getStatusColor = (status: string): 'success' | 'default' | 'warning' | 'primary' => {
   switch (status) {
@@ -179,8 +179,8 @@ export const MilestonePage: React.FC = () => {
       </Box>
 
       <Paper sx={{ mb: 3, p: 2 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={4}>
+        <Grid container spacing={2} sx={{ alignItems: "center" }}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <FormControl size="small" fullWidth>
               <InputLabel>状态</InputLabel>
               <Select
@@ -196,7 +196,7 @@ export const MilestonePage: React.FC = () => {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} md={4}>
+          <Grid size={{ xs: 12, md: 4 }}>
             <Button variant="outlined" onClick={handleSearch} fullWidth>
               搜索
             </Button>
@@ -330,7 +330,7 @@ export const MilestonePage: React.FC = () => {
                 setNewMilestone({ ...newMilestone, date: e.target.value })
               }
               fullWidth
-              InputLabelProps={{ shrink: true }}
+              slotProps={{ inputLabel: { shrink: true } }}
             />
             <TextField
               label="描述"

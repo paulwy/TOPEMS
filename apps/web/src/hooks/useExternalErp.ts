@@ -5,7 +5,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNotification } from './useNotification';
-import { externalErpApi } from '../api/external-erp';
+import { externalErpApi } from '../api/externalErp';
 import type {
   // 连接配置
   ErpConnectionConfig,
@@ -18,7 +18,7 @@ import type {
 
   // 连接测试
   ConnectionTestRequest,
-} from '../types/external-erp';
+} from '../types/externalErp';
 
 // ============================================
 // 一、连接配置管理

@@ -10,9 +10,10 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material';
-import { Search } from '@mui/icons-material';
+
 import { reportApi, type Report, type ReportCategory } from '../api/report';
 import { ReportCard } from '../components/ReportCard';
+import { Search } from 'lucide-react';
 
 const categories: { value: ReportCategory | 'all'; label: string }[] = [
   { value: 'all', label: '全部' },
@@ -75,11 +76,13 @@ export const ReportListPage: React.FC = () => {
         <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
           <TextField
             placeholder="搜索报表..."
-            size="small"
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
-            InputProps={{
-              startAdornment: <Search sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />,
+            slotProps={{
+              input: {
+                size: 'small',
+                startAdornment: <Search style={{ marginRight: 4, color: '#9e9e9e', fontSize: 20 }} />,
+              },
             }}
             sx={{ minWidth: 250 }}
           />
@@ -110,7 +113,7 @@ export const ReportListPage: React.FC = () => {
         ) : (
           <Grid container spacing={3}>
             {reports.map((report) => (
-              <Grid item xs={12} sm={6} md={4} lg={3} key={report.id}>
+              <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={report.id}>
                 <ReportCard report={report} onGenerate={handleGenerate} onView={handleView} />
               </Grid>
             ))}

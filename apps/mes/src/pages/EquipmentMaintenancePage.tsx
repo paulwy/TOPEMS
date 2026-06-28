@@ -27,13 +27,13 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Refresh as RefreshIcon,
-  Build as BuildIcon,
-} from '@mui/icons-material';
+
 import { useMesStore } from '../store/mesStore';
 import type { CreateMaintenanceRecord } from '../api';
+import { Plus, RefreshCw, Wrench } from 'lucide-react';
+const AddIcon = Plus;
+const BuildIcon = Wrench;
+const RefreshIcon = RefreshCw;
 
 const getStatusColor = (status: string): 'success' | 'default' | 'error' | 'warning' | 'info' => {
   switch (status) {
@@ -126,7 +126,7 @@ export const EquipmentMaintenancePage: React.FC = () => {
       </Box>
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Typography variant="body2" color="text.secondary">月度维护</Typography>
@@ -134,7 +134,7 @@ export const EquipmentMaintenancePage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Typography variant="body2" color="text.secondary">月度点检</Typography>
@@ -142,7 +142,7 @@ export const EquipmentMaintenancePage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Typography variant="body2" color="text.secondary">维护中设备</Typography>
@@ -150,7 +150,7 @@ export const EquipmentMaintenancePage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Typography variant="body2" color="text.secondary">待维修</Typography>

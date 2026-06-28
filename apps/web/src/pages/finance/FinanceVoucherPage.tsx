@@ -1121,9 +1121,7 @@ const FinanceVoucherPage: React.FC = () => {
                     label=''
                     sx={{ width: 150 }}
                     value={item.debit_amount || 0}
-                    onChange={(val) =>
-                      updateVoucherItem(index, 'debit_amount', val)
-                    }
+                    onChange={(val) => updateVoucherItem(index, 'debit_amount', val)}
                     placeholder='借方'
                   />
                   <CurrencyField
@@ -1131,9 +1129,7 @@ const FinanceVoucherPage: React.FC = () => {
                     label=''
                     sx={{ width: 150 }}
                     value={item.credit_amount || 0}
-                    onChange={(val) =>
-                      updateVoucherItem(index, 'credit_amount', val)
-                    }
+                    onChange={(val) => updateVoucherItem(index, 'credit_amount', val)}
                     placeholder='贷方'
                   />
                   <ActionButton

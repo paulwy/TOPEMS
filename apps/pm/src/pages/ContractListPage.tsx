@@ -26,15 +26,15 @@ import {
   MenuItem,
   Grid,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Refresh as RefreshIcon,
-  Visibility as VisibilityIcon,
-} from '@mui/icons-material';
+
 import { usePmStore } from '../store/pmStore';
 import type { CreateContractRequest } from '../api/pm';
+import { Eye, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react';
+const AddIcon = Plus;
+const DeleteIcon = Trash2;
+const EditIcon = Pencil;
+const RefreshIcon = RefreshCw;
+const VisibilityIcon = Eye;
 
 const getStatusColor = (status: string): 'success' | 'default' | 'warning' | 'primary' | 'error' => {
   switch (status) {
@@ -204,8 +204,8 @@ export const ContractListPage: React.FC = () => {
       </Box>
 
       <Paper sx={{ mb: 3, p: 2 }}>
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} md={3}>
+        <Grid container spacing={2} sx={{ alignItems: "center" }}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <FormControl size="small" fullWidth>
               <InputLabel>状态</InputLabel>
               <Select
@@ -221,7 +221,7 @@ export const ContractListPage: React.FC = () => {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <FormControl size="small" fullWidth>
               <InputLabel>类型</InputLabel>
               <Select
@@ -237,7 +237,7 @@ export const ContractListPage: React.FC = () => {
               </Select>
             </FormControl>
           </Grid>
-          <Grid item xs={12} md={3}>
+          <Grid size={{ xs: 12, md: 3 }}>
             <Button variant="outlined" onClick={handleSearch} fullWidth>
               搜索
             </Button>
@@ -395,7 +395,7 @@ export const ContractListPage: React.FC = () => {
               fullWidth
             />
             <Grid container spacing={2}>
-              <Grid item xs={6}>
+              <Grid size={{ xs: 6 }}>
                 <TextField
                   label="甲方"
                   value={newContract.party_a_name || ''}
@@ -408,7 +408,7 @@ export const ContractListPage: React.FC = () => {
                   fullWidth
                 />
               </Grid>
-              <Grid item xs={6}>
+              <Grid size={{ xs: 6 }}>
                 <TextField
                   label="乙方"
                   value={newContract.party_b_name || ''}

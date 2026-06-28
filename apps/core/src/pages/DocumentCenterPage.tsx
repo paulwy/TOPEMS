@@ -15,35 +15,29 @@ import {
   Tooltip,
   Alert,
 } from '@mui/material';
-import {
-  Folder,
-  FolderOpen,
-  Upload as UploadFile,
-  CreateNewFolder,
-  Delete,
-  Edit,
-  Share,
-  Download,
-  Visibility,
-  ChevronRight,
-  InsertDriveFile,
-  Description,
-  Image,
-  TableChart,
-  PictureAsPdf,
-  Movie,
-  Audiotrack,
-  Archive,
-  TextSnippet,
-  Search,
-  Refresh,
-  MoreVert,
-} from '@mui/icons-material';
+
 import { SimpleTreeView, TreeItem } from '@mui/x-tree-view';
 import dayjs from 'dayjs';
 import { fileApi, formatFileSize, type FileItem, type FolderItem } from '../api/file';
 import { FileUpload } from '../components/FileUpload';
 import { FileList, type ViewMode } from '../components/FileList';
+import { Archive, ChevronRight, Download, Eye, FileText, Folder, FolderOpen, FolderPlus, Image, MoreVertical, Music, Pencil, RefreshCw, Search, Share2, Table, Trash2, Upload, Video } from 'lucide-react';
+const ImageIcon = Image;
+const Audiotrack = Music;
+const CreateNewFolder = FolderPlus;
+const Delete = Trash2;
+const Description = FileText;
+const Edit = Pencil;
+const InsertDriveFile = FileText;
+const MoreVert = MoreVertical;
+const Movie = Video;
+const PictureAsPdf = FileText;
+const Refresh = RefreshCw;
+const Share = Share2;
+const TableChart = Table;
+const TextSnippet = FileText;
+const UploadFile = Upload;
+const Visibility = Eye;
 
 interface BreadcrumbItem {
   id: string | null;
@@ -51,7 +45,7 @@ interface BreadcrumbItem {
 }
 
 const getFileIconComponent = (mimeType: string) => {
-  if (mimeType.startsWith('image/')) return <Image color="primary" />;
+  if (mimeType.startsWith('image/')) return <ImageIcon color="primary" />;
   if (mimeType.includes('pdf')) return <PictureAsPdf color="error" />;
   if (mimeType.includes('word') || mimeType.includes('document')) return <Description color="primary" />;
   if (mimeType.includes('excel') || mimeType.includes('spreadsheet')) return <TableChart color="success" />;
@@ -210,7 +204,7 @@ export const DocumentCenterPage: React.FC = () => {
         itemId={folder.id}
         label={
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, py: 0.5 }}>
-            <Folder fontSize="small" sx={{ color: 'warning.main' }} />
+            <Folder fontSize="small" style={{ color: '#ed6c02' }} />
             <Typography variant="body2" noWrap>
               {folder.name}
             </Typography>
@@ -245,14 +239,18 @@ export const DocumentCenterPage: React.FC = () => {
           </Typography>
         </Box>
         <Box sx={{ flex: 1, maxWidth: 400, position: 'relative' }}>
-          <Search sx={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'text.secondary' }} fontSize="small" />
+          <Search style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: '#9e9e9e' }} fontSize="small" />
           <TextField
             fullWidth
-            size="small"
             placeholder="搜索文件..."
             value={searchQuery}
             onChange={(e) => handleSearch(e.target.value)}
-            InputProps={{ sx: { pl: 4 } }}
+            slotProps={{
+              input: {
+                size: 'small',
+                sx: { pl: 4 },
+              },
+            }}
           />
         </Box>
         <Box sx={{ display: 'flex', gap: 1 }}>
@@ -326,7 +324,7 @@ export const DocumentCenterPage: React.FC = () => {
               setBreadcrumbs([{ id: null, name: '全部文件' }]);
             }}
           >
-            <FolderOpen fontSize="small" sx={{ color: currentFolderId === null ? 'primary.main' : 'warning.main' }} />
+            <FolderOpen fontSize="small" style={{ color: currentFolderId === null ? '#1976d2' : '#ed6c02' }} />
             <Typography variant="body2" sx={{ fontWeight: currentFolderId === null ? 500 : 400 }}>
               全部文件
             </Typography>
@@ -368,7 +366,7 @@ export const DocumentCenterPage: React.FC = () => {
                       },
                     }}
                   >
-                    <Folder sx={{ fontSize: 36, color: 'warning.main', mx: 'auto', mb: 1 }} />
+                    <Folder style={{ fontSize: 36, color: '#ed6c02', margin: '0 auto 4px auto' }} />
                     <Typography variant="body2" noWrap sx={{ fontWeight: 500 }}>
                       {folder.name}
                     </Typography>

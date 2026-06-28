@@ -3,6 +3,9 @@
  *
  * 注意：部分组件已迁移到 templates 目录，并在原位置标记为 deprecated
  * 请优先使用 templates 目录下的新版本组件
+ *
+ * 标记为 [shared] 的组件已提升到 @topems/shared-components，
+ * 此处保留 re-export 以保持向后兼容
  */
 
 // DataTable - 已增强，整合了EnhancedDataTable的功能
@@ -29,11 +32,11 @@ export {
 } from './ConfirmDialog';
 export type { ConfirmDialogConfig } from './ConfirmDialog';
 
-// PaginationComponent - 保留原导出
+// [shared] PaginationComponent - 已提升到 @topems/shared-components
 export { default as PaginationComponent } from './Pagination';
 export type { PaginationConfig } from './Pagination';
 
-// ProgressBar - 保留原导出
+// [shared] ProgressBar - 已提升到 @topems/shared-components
 export { default as ProgressBar } from './ProgressBar';
 export type { ProgressBarProps } from './ProgressBar';
 
@@ -41,7 +44,7 @@ export type { ProgressBarProps } from './ProgressBar';
 export { default as TreeView } from './TreeView';
 export type { TreeNode, TreeViewProps } from './TreeView';
 
-// Stepper - 保留原导出
+// [shared] Stepper - 已提升到 @topems/shared-components
 export { default as Stepper } from './Stepper';
 export type { StepperProps, StepItem } from './Stepper';
 
@@ -49,11 +52,7 @@ export type { StepperProps, StepItem } from './Stepper';
 export { default as HelpButton } from './HelpButton';
 export type { HelpButtonProps } from './HelpButton';
 
-/**
- * @deprecated 已合并到 templates/DashboardTemplate.tsx
- * 请使用 DashboardTemplate 组件中的 StatCard 类型
- * 该组件将在未来版本中移除
- */
+// [shared] StatusBadge - 已提升到 @topems/shared-components
 export { default as StatusBadge } from './StatusBadge';
 export type { StatusBadgeProps } from './StatusBadge';
 
@@ -129,19 +128,19 @@ export { default as BackButton } from './BackButton';
 export type { BackButtonProps } from './BackButton';
 
 // ===== 统一表单组件 =====
-// FormField - 统一 TextField 包装
+// [shared] FormField - 已提升到 @topems/shared-components
 export { default as FormField } from './FormField';
 export type { FormFieldProps } from './FormField';
 
-// FormSelect - 统一 Select 包装
+// [shared] FormSelect - 已提升到 @topems/shared-components
 export { default as FormSelect } from './FormSelect';
 export type { FormSelectProps, FormSelectOption } from './FormSelect';
 
-// ActionButton - 统一按钮组件
+// [shared] ActionButton - 已提升到 @topems/shared-components
 export { default as ActionButton } from './ActionButton';
 export type { ActionButtonProps, ActionButtonVariant, ActionButtonSize } from './ActionButton';
 
-// LoadingSpinner - 加载状态组件
+// [shared] LoadingSpinner - 已提升到 @topems/shared-components
 export { default as LoadingSpinner } from './LoadingSpinner';
 // 注意：LoadingSpinnerProps 是 interface，会自动导出
 
@@ -153,7 +152,7 @@ export type { AdvancedFilterProps, FilterCondition } from './AdvancedFilter';
 export { default as PageContainer } from './PageContainer';
 export type { PageContainerProps } from './PageContainer';
 
-// EmptyState - 空状态组件
+// [shared] EmptyState - 已提升到 @topems/shared-components
 export {
   EmptyState,
   ListEmptyState,
@@ -163,7 +162,7 @@ export {
 } from './EmptyState';
 export type { EmptyStateProps, ErrorEmptyStateProps } from './EmptyState';
 
-// FilterBar - 筛选栏组件
+// [shared] FilterBar - 已提升到 @topems/shared-components
 export { FilterBar } from './FilterBar';
 export type { FilterOption, FilterConfig, FilterBarProps } from './FilterBar';
 

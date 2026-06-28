@@ -13,9 +13,11 @@ import {
   CardContent,
   LinearProgress,
 } from '@mui/material';
-import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
+
 import { useCrmStore } from '../store/crmStore';
 import type { Opportunity } from '../api/crm';
+import { ArrowLeft } from 'lucide-react';
+const ArrowBackIcon = ArrowLeft;
 
 interface OpportunityDetailPageProps {
   opportunityId?: string;
@@ -116,7 +118,7 @@ export const OpportunityDetailPage: React.FC<OpportunityDetailPageProps> = ({
       </Box>
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid xs={12} md={6}>
+        <Grid>
           <Card>
             <CardContent>
               <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
@@ -161,7 +163,7 @@ export const OpportunityDetailPage: React.FC<OpportunityDetailPageProps> = ({
           </Card>
         </Grid>
 
-        <Grid xs={12} md={6}>
+        <Grid>
           <Card>
             <CardContent>
               <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
@@ -198,7 +200,7 @@ export const OpportunityDetailPage: React.FC<OpportunityDetailPageProps> = ({
           </Card>
         </Grid>
 
-        <Grid xs={12}>
+        <Grid>
           <Paper sx={{ p: 2 }}>
             <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
               备注
@@ -209,7 +211,7 @@ export const OpportunityDetailPage: React.FC<OpportunityDetailPageProps> = ({
           </Paper>
         </Grid>
 
-        <Grid xs={12} md={6}>
+        <Grid>
           <Paper sx={{ p: 2 }}>
             <Typography variant="subtitle2" color="text.secondary" sx={{ mb: 1 }}>
               时间信息

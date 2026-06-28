@@ -675,9 +675,7 @@ const DocumentCenterPage: React.FC = () => {
             sx={{ alignItems: 'center' }}
           >
             <History size={20} />
-            <Typography>
-              版本历史 - {versionDoc?.name}
-            </Typography>
+            <Typography>版本历史 - {versionDoc?.name}</Typography>
           </Stack>
         </DialogTitle>
         <DialogContent dividers>
@@ -700,9 +698,7 @@ const DocumentCenterPage: React.FC = () => {
                   marginBottom: 8,
                 }}
               />
-              <Typography sx={{ color: 'grey.500' }}>
-                暂无版本历史记录
-              </Typography>
+              <Typography sx={{ color: 'grey.500' }}>暂无版本历史记录</Typography>
               <Typography
                 variant='caption'
                 sx={{ color: 'grey.400', display: 'block', mt: 0.5 }}
@@ -711,7 +707,10 @@ const DocumentCenterPage: React.FC = () => {
               </Typography>
             </Box>
           ) : (
-            <Stack spacing={2} sx={{ py: 1 }}>
+            <Stack
+              spacing={2}
+              sx={{ py: 1 }}
+            >
               {versions.map((ver, index) => (
                 <Box
                   key={ver.id}
@@ -795,7 +794,10 @@ const DocumentCenterPage: React.FC = () => {
                       spacing={0.5}
                       sx={{ alignItems: 'center' }}
                     >
-                      <User size={12} style={{ color: 'grey.400' }} />
+                      <User
+                        size={12}
+                        style={{ color: 'grey.400' }}
+                      />
                       <Typography
                         variant='caption'
                         sx={{ color: 'grey.500' }}
@@ -808,7 +810,10 @@ const DocumentCenterPage: React.FC = () => {
                       spacing={0.5}
                       sx={{ alignItems: 'center' }}
                     >
-                      <Clock size={12} style={{ color: 'grey.400' }} />
+                      <Clock
+                        size={12}
+                        style={{ color: 'grey.400' }}
+                      />
                       <Typography
                         variant='caption'
                         sx={{ color: 'grey.500' }}

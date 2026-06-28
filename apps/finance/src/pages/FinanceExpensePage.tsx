@@ -15,9 +15,12 @@ import {
   Alert,
   Button,
 } from '@mui/material';
-import { Add as AddIcon, Refresh as RefreshIcon } from '@mui/icons-material';
+
 import { expenseApi } from '../api/finance';
 import type { ExpenseReport } from '../api/finance';
+import { Plus, RefreshCw } from 'lucide-react';
+const AddIcon = Plus;
+const RefreshIcon = RefreshCw;
 
 const statusColor: Record<ExpenseReport['status'], 'default' | 'primary' | 'success' | 'warning' | 'error'> = {
   draft: 'default',
