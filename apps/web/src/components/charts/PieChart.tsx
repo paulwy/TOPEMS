@@ -1,4 +1,6 @@
 import React from 'react';
+import { useTheme } from '@mui/material/styles';
+import { useChartTheme } from './chartTheme';
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface PieChartProps {
@@ -6,36 +8,53 @@ interface PieChartProps {
   title?: string;
 }
 
-const COLORS = [
-  'primary.main',
-  'secondary.main',
-  'success.main',
-  'warning.main',
-  'error.main',
-  'info.main',
+const DEFAULT_COLORS = [
+  '#3b82f6', // Blue (primary)
+  '#22c55e', // Emerald (success)
+  '#f59e0b', // Amber (warning)
+  '#ef4444', // Red (error)
+  '#8B5CF6', // Violet
+  '#06B6D4', // Cyan
+  '#EC4899', // Pink
+  '#84CC16', // Lime
 ];
 
 export const PieChartComponent: React.FC<PieChartProps> = ({ data, title }) => {
+  const theme = useTheme();
+  const chartTheme = useChartTheme();
+
+  // Use MUI palette colors for the first slots, then fall back to defaults
+  const COLORS = [
+    chartTheme.primary,
+    chartTheme.secondary,
+    chartTheme.success,
+    chartTheme.warning,
+    chartTheme.error,
+    chartTheme.info,
+    ...DEFAULT_COLORS,
+  ];
+
   return (
     <div>
       {title && (
-        <h4 style={{ marginBottom: '16px', color: '#1e293b', fontWeight: 600 }}>{title}</h4>
+        <h4 style={{ marginBottom: 16, color: theme.palette.text.primary, fontWeight: 600 }}>
+          {title}
+        </h4>
       )}
-      <ResponsiveContainer
-        width='100%'
-        height={200}
-      >
+      <ResponsiveContainer width="100%" height={200}>
         <PieChart>
           <Pie
             data={data}
-            cx='50%'
-            cy='50%'
+            cx="50%"
+            cy="50%"
             innerRadius={40}
             outerRadius={80}
             paddingAngle={2}
-            dataKey='value'
-            label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
-            labelLine={{ stroke: 'grey.400' }}
+            dataKey="value"
+            label={({ name, percent }) =>
+              `${name} ${((percent || 0) * 100).toFixed(0)}%`
+            }
+            labelLine={{ stroke: chartTheme.gridColor }}
           >
             {data.map((entry, index) => (
               <Cell
@@ -46,10 +65,10 @@ export const PieChartComponent: React.FC<PieChartProps> = ({ data, title }) => {
           </Pie>
           <Tooltip
             contentStyle={{
-              backgroundColor: 'white',
-              border: '1px solid border.default',
-              borderRadius: '8px',
-              padding: '12px',
+              backgroundColor: chartTheme.tooltipBg,
+              border: `1px solid ${chartTheme.borderColor}`,
+              borderRadius: 8,
+              padding: 12,
             }}
           />
         </PieChart>
