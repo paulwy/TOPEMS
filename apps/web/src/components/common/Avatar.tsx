@@ -6,7 +6,7 @@ import {
   Typography,
   Badge,
   Tooltip,
-  _Stack,
+  Stack,
 } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
 
@@ -26,6 +26,7 @@ export interface CustomAvatarProps {
   badge?: number | string;
   badgeColor?: 'primary' | 'secondary' | 'error' | 'warning' | 'success' | 'info';
   onClick?: () => void;
+  disabled?: boolean;
   sx?: SxProps<Theme>;
   children?: React.ReactNode;
 }
@@ -73,6 +74,7 @@ export const Avatar: React.FC<CustomAvatarProps> = ({
   badge,
   badgeColor = 'error',
   onClick,
+  disabled = false,
   sx,
   children,
 }) => {
@@ -90,13 +92,14 @@ export const Avatar: React.FC<CustomAvatarProps> = ({
         bgcolor: bgColor || (src ? undefined : `${color || 'primary'}.light`),
         color: color || src ? undefined : `${color || 'primary'}.dark`,
         borderRadius: variant === 'square' ? 2 : variant === 'rounded' ? 2 : '50%',
-        cursor: onClick ? 'pointer' : 'default',
-        ...(onClick
+        cursor: disabled ? 'not-allowed' : onClick ? 'pointer' : 'default',
+        opacity: disabled ? 0.5 : 1,
+        ...(!disabled && onClick
           ? { '&:hover': { opacity: 0.85, transform: 'scale(1.05)' }, transition: 'all 0.2s' }
           : {}),
         ...sx,
       }}
-      onClick={onClick}
+      onClick={!disabled && onClick ? onClick : undefined}
     >
       {children ||
         (displayText && (
@@ -158,10 +161,10 @@ export const AvatarGroup: React.FC<AvatarGroupProps> = ({
   avatars,
   max = 5,
   size = 'md',
-  _spacing = -8,
+  spacing = -8,
   sx,
 }) => {
-  const getAvatarSx = () => {
+  const getAvatarSx = (): Record<string, string | number> => {
     switch (size) {
       case 'xs':
         return { width: 24, height: 24, fontSize: '0.625rem' };
@@ -178,11 +181,12 @@ export const AvatarGroup: React.FC<AvatarGroupProps> = ({
     }
   };
   const avatarSize = getAvatarSx();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const avatarGroupSx: any = { '& .MuiAvatar-root': avatarSize, ...sx };
   return (
-    // @ts-ignore MUI complex union type
     <MuiAvatarGroup
       max={max}
-      sx={{ '& .MuiAvatar-root': avatarSize, ...sx }}
+      sx={avatarGroupSx}
     >
       {avatars.map((avatarProps, index) => (
         <Tooltip

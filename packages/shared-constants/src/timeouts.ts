@@ -67,14 +67,18 @@ export const TOAST = {
  * 获取环境变量的超时配置
  */
 export function getTimeoutFromEnv(envKey: string, defaultValue: number): number {
-  if (typeof process !== 'undefined' && process.env) {
-    const envValue = process.env[envKey];
-    if (envValue) {
-      const parsed = parseInt(envValue, 10);
-      if (!isNaN(parsed)) {
-        return parsed;
+  try {
+    if (typeof process !== 'undefined' && process?.env) {
+      const envValue = process.env[envKey];
+      if (envValue) {
+        const parsed = parseInt(envValue, 10);
+        if (!isNaN(parsed)) {
+          return parsed;
+        }
       }
     }
+  } catch {
+    // process not available in browser
   }
   return defaultValue;
 }

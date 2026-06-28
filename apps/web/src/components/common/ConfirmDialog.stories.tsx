@@ -207,3 +207,58 @@ export const LargeSize: Story = {
     confirmLabel: '提交',
   },
 };
+
+// ============ Additional requested stories ============
+
+export const Destructive: Story = {
+  name: 'Destructive (Delete)',
+  args: {
+    isOpen: true,
+    title: '删除确认',
+    message: '确定要永久删除用户「张明」及其所有关联数据吗？此操作不可撤销。',
+    type: 'confirm',
+    danger: true,
+    confirmLabel: '永久删除',
+    cancelLabel: '取消',
+  },
+};
+
+export const AsyncAction: Story = {
+  name: 'Async Action (Loading)',
+  args: {
+    isOpen: true,
+    title: '提交审核',
+    message: '正在提交数据到服务器，请稍候...',
+    type: 'confirm',
+    confirmLabel: '提交',
+    onConfirm: async () => {
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+    },
+  },
+  play: async ({ canvas }) => {
+    // Auto-trigger confirm to showcase loading state
+    const confirmBtn = canvas.getByRole('button', { name: '提交' });
+    confirmBtn.click();
+  },
+};
+
+export const AlertDialog: Story = {
+  args: {
+    isOpen: true,
+    title: '版本更新通知',
+    message: '系统已升级到 v3.2.0，新增批量导入功能和性能优化。请查看更新日志了解详情。',
+    type: 'alert',
+    confirmLabel: '知道了',
+    showCloseButton: true,
+  },
+};
+
+export const ErrorDialog: Story = {
+  args: {
+    isOpen: true,
+    title: '操作失败',
+    message: '删除操作失败：该用户存在未处理的订单关联，请先解除关联后再删除。错误代码：ERR_CONSTRAINT_VIOLATION',
+    type: 'error',
+    confirmLabel: '知道了',
+  },
+};

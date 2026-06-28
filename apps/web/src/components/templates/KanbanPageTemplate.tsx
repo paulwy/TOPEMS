@@ -18,7 +18,7 @@ import {
   Plus,
   MoreHorizontal,
   GripVertical,
-  _Trash2,
+  Trash2,
   Edit,
   Archive,
   Filter,
@@ -135,18 +135,18 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
   loading,
   error,
   onCardMove,
-  _onCardDelete,
-  _onCardEdit,
-  _onCardArchive,
+  onCardDelete,
+  onCardEdit,
+  onCardArchive,
   showStats = true,
   showSearch = true,
   showFilter = true,
   showAddColumn = true,
   searchValue,
   onSearch,
-  _filterConfig,
-  _filters,
-  _onFilterChange,
+  filterConfig,
+  filters,
+  onFilterChange,
   stats,
   actions = [],
   headerContent,
@@ -227,7 +227,7 @@ export const KanbanPageTemplate: React.FC<KanbanPageTemplateProps> = ({
       if (!draggedCard) return;
 
       let sourceColumnId: string | null = null;
-      const _sourceIndex = -1;
+      let sourceIndex = -1;
 
       columns.forEach((col) => {
         const index = col.cards.findIndex((card) => card.id === draggedCard);

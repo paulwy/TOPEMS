@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 
 export function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState(value);
@@ -32,7 +32,7 @@ export function useDebouncedCallback<T extends (...args: Parameters<T>) => Retur
   delay: number
 ): (...args: Parameters<T>) => void {
   const callbackRef = useRef(callback);
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Update callback ref on each render to avoid stale closures
   useEffect(() => {

@@ -15,7 +15,7 @@ import {
   Tooltip,
   Checkbox,
   Skeleton,
-  _Chip,
+  Chip,
   Menu,
   MenuItem,
   ListItemIcon,
@@ -98,7 +98,7 @@ export function ListPageTemplate<T>({
   filtersValue,
   onFilterChange,
   actions,
-  _renderRowActions,
+  renderRowActions,
   rowActions,
   onRefresh,
   batchActions = [],
@@ -748,7 +748,7 @@ export function ListPageTemplate<T>({
                 <BackButton
                   onClick={backButton.onClick}
                   href={backButton.href}
-                  size='small'
+                  size='sm'
                   sx={{ bgcolor: 'action.hover' }}
                 />
               )}

@@ -35,7 +35,8 @@ export interface FilterConfig {
   options?: FilterOption[];
   value?: FilterValue;
   defaultValue?: FilterValue;
-  onChange?: (value: FilterValue, filter: FilterConfig) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  onChange?: (value: any, filter?: FilterConfig) => void;
   width?: number | string;
   /** 是否显示搜索框（用于multiselect） */
   searchable?: boolean;
@@ -50,6 +51,10 @@ export interface FilterBarProps {
   defaultExpanded?: boolean;
   dense?: boolean;
   variant?: 'standard' | 'outlined' | 'filled';
+
+  // TOPEMS 设计系统
+  sx?: import('@mui/material/styles').SxProps<import('@mui/material/styles').Theme>;
+  disabled?: boolean;
 }
 
 // ============ 单个筛选控件 ============
@@ -59,14 +64,15 @@ const FilterControl: React.FC<{
   onChange: (value: FilterValue, filter: FilterConfig) => void;
   dense?: boolean;
   variant?: 'standard' | 'outlined' | 'filled';
-}> = ({ filter, onChange, _dense, variant }) => {
+  disabled?: boolean;
+}> = ({ filter, onChange, dense: _dense, variant, disabled }) => {
   const handleChange = useCallback(
     (e: { target?: { value?: unknown } } | unknown) => {
       const value =
         'target' in (e as object)
           ? ((e as { target?: { value?: unknown } }).target?.value ?? e)
           : e;
-      onChange(value, filter);
+      onChange(value as FilterValue, filter);
     },
     [filter, onChange]
   );
@@ -75,11 +81,13 @@ const FilterControl: React.FC<{
     size: 'small' as const,
     variant: variant as 'outlined' | 'standard' | 'filled',
     fullWidth: true,
+    disabled,
   };
 
   const formControlProps = {
     variant: variant as 'outlined' | 'standard' | 'filled',
     fullWidth: true,
+    disabled,
   };
 
   const filterType = filter.type || 'text';
@@ -156,15 +164,16 @@ const FilterControl: React.FC<{
         />
       );
 
-    case 'dateRange':
+    case 'dateRange': {
+      const range = filter.value as { start: string; end: string } | undefined;
       return (
         <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
           <TextField
             {...textFieldProps}
             type='date'
             label='开始日期'
-            value={filter.value?.start ?? ''}
-            onChange={(e) => handleChange({ ...filter.value, start: e.target.value })}
+            value={range?.start ?? ''}
+            onChange={(e) => handleChange({ ...range, start: e.target.value } as FilterValue)}
             sx={{ width: filter.width || 140 }}
           />
           <Typography color='text.secondary'>至</Typography>
@@ -172,12 +181,13 @@ const FilterControl: React.FC<{
             {...textFieldProps}
             type='date'
             label='结束日期'
-            value={filter.value?.end ?? ''}
-            onChange={(e) => handleChange({ ...filter.value, end: e.target.value })}
+            value={range?.end ?? ''}
+            onChange={(e) => handleChange({ ...range, end: e.target.value } as FilterValue)}
             sx={{ width: filter.width || 140 }}
           />
         </Box>
       );
+    }
 
     case 'number':
       return (
@@ -217,6 +227,8 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   defaultExpanded = true,
   dense = false,
   variant = 'outlined',
+  sx,
+  disabled = false,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -276,6 +288,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         p: dense ? 1.5 : 2,
         borderRadius: 2,
         mb: 2,
+        ...sx,
       }}
     >
       {/* 头部 */}
@@ -316,7 +329,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               size='small'
               variant='contained'
               onClick={onSearch}
-              disabled={!hasActiveFilters}
+              disabled={disabled || !hasActiveFilters}
             >
               搜索
             </Button>
@@ -326,6 +339,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               <IconButton
                 size='small'
                 onClick={handleReset}
+                disabled={disabled}
                 aria-label='重置筛选'
               >
                 <RotateCcw style={{ width: 16, height: 16 }} />
@@ -336,6 +350,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             <IconButton
               size='small'
               onClick={() => setExpanded(!expanded)}
+              disabled={disabled}
               aria-label={expanded ? '收起筛选' : '展开筛选'}
               aria-expanded={expanded}
             >
@@ -366,6 +381,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               onChange={handleFilterChange}
               dense={dense}
               variant={variant}
+              disabled={disabled}
             />
           ))}
         </Box>

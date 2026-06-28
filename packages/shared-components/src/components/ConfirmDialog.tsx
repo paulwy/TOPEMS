@@ -279,9 +279,9 @@ export default function ConfirmDialog({
       open={isOpen}
       onClose={closable && !isLoading ? onClose : undefined}
       maxWidth={MAX_WIDTH_MAP[size]}
-      PaperComponent={({ children: dialogChildren, ...paperProps }) => (
+      PaperComponent={({ children: dialogChildren, ref: _paperComponentRef, ...paperProps }) => (
         <div
-          ref={paperRef}
+          ref={paperRef as React.RefObject<HTMLDivElement>}
           onMouseDown={handleMouseDown}
           {...paperProps}
           style={{

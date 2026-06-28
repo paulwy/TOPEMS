@@ -194,17 +194,17 @@ export const DARK_BORDERS = {
 
 // ========== Grey Scale ==========
 export const GREY = {
-  50: '#f9fafb',
-  100: '#f3f4f6',
-  200: '#e5e7eb',
-  300: '#d1d5db',
-  400: '#9ca3af',
-  500: '#6b7280',
-  600: '#4b5563',
-  700: '#374151',
-  800: '#1f2937',
-  900: '#111827',
-  950: '#030712',
+  '50': '#f9fafb',
+  '100': '#f3f4f6',
+  '200': '#e5e7eb',
+  '300': '#d1d5db',
+  '400': '#9ca3af',
+  '500': '#6b7280',
+  '600': '#4b5563',
+  '700': '#374151',
+  '800': '#1f2937',
+  '900': '#111827',
+  '950': '#030712',
 } as const;
 
 // ========== Spacing ==========
@@ -215,8 +215,8 @@ export const SPACING = {
   md: 16,
   lg: 24,
   xl: 32,
-  2xl: 48,
-  3xl: 64,
+  '2xl': 48,
+  '3xl': 64,
 } as const;
 
 // ========== Border Radius ==========
@@ -227,8 +227,8 @@ export const RADIUS = {
   md: 8,
   lg: 12,
   xl: 16,
-  2xl: 20,
-  3xl: 24,
+  '2xl': 20,
+  '3xl': 24,
   full: 9999,
 } as const;
 
@@ -241,9 +241,9 @@ export const SHADOWS = {
     md: '0 4px 6px -1px rgb(0 0 0 / 0.04), 0 2px 4px -1px rgb(0 0 0 / 0.02)',
     lg: '0 10px 15px -3px rgb(0 0 0 / 0.05)',
     xl: '0 20px 25px -5px rgb(0 0 0 / 0.08)',
-    2xl: '0 25px 50px -12px rgb(0 0 0 / 0.15)',
+    '2xl': '0 25px 50px -12px rgb(0 0 0 / 0.15)',
     float: '0 25px 50px -12px rgb(0 0 0 / 0.15)',
-    3xl: '0 35px 60px -15px rgb(0 0 0 / 0.2)',
+    '3xl': '0 35px 60px -15px rgb(0 0 0 / 0.2)',
     inner: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.05)',
   },
   dark: {
@@ -253,9 +253,9 @@ export const SHADOWS = {
     md: '0 4px 6px -1px rgb(0 0 0 / 0.25)',
     lg: '0 10px 15px -3px rgb(0 0 0 / 0.3)',
     xl: '0 20px 25px -5px rgb(0 0 0 / 0.35)',
-    2xl: '0 25px 50px -12px rgb(0 0 0 / 0.4)',
+    '2xl': '0 25px 50px -12px rgb(0 0 0 / 0.4)',
     float: '0 25px 50px -12px rgb(0 0 0 / 0.3)',
-    3xl: '0 35px 60px -15px rgb(0 0 0 / 0.45)',
+    '3xl': '0 35px 60px -15px rgb(0 0 0 / 0.45)',
     inner: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.15)',
   },
 } as const;
@@ -269,11 +269,11 @@ export const TYPOGRAPHY = {
     base: '1rem',
     lg: '1.125rem',
     xl: '1.25rem',
-    2xl: '1.5rem',
-    3xl: '1.875rem',
-    4xl: '2.25rem',
-    5xl: '3rem',
-    6xl: '3.75rem',
+    '2xl': '1.5rem',
+    '3xl': '1.875rem',
+    '4xl': '2.25rem',
+    '5xl': '3rem',
+    '6xl': '3.75rem',
   },
   fontWeight: {
     light: 300,

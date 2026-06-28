@@ -24,12 +24,14 @@ export class AppExceptionError extends Error {
   code: ErrorCode;
   details?: unknown;
   originalError?: unknown;
+  public cause?: unknown;
 
   constructor(
     message: string,
     options: { code: ErrorCode; details?: unknown; originalError?: unknown; cause?: unknown }
   ) {
-    super(message, options);
+    super(message);
+    this.cause = options.cause;
     this.name = 'AppExceptionError';
     this.code = options.code;
     this.details = options.details;

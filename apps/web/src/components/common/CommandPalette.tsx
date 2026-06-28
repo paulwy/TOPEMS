@@ -21,7 +21,7 @@ import {
   Users,
   LayoutDashboard,
   Zap,
-  _Hash,
+  Hash,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -50,6 +50,9 @@ export interface CommandPaletteProps {
   groups?: CommandGroup[];
   placeholder?: string;
   hotkey?: string;
+
+  // TOPEMS 设计系统
+  sx?: import('@mui/material/styles').SxProps<import('@mui/material/styles').Theme>;
 }
 
 const defaultIcons: Record<string, React.ReactNode> = {
@@ -79,6 +82,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   groups = [],
   placeholder = '搜索命令、页面或操作...',
   hotkey = 'Ctrl+K',
+  sx,
 }) => {
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -163,6 +167,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       onClose={onClose}
       maxWidth='sm'
       fullWidth
+      sx={sx}
       slotProps={{
         paper: {
           sx: {
@@ -189,7 +194,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       >
         <Search
           size={20}
-          sx={{ color: 'text.secondary', mr: 1 }}
+          style={{ color: '#64748b', marginRight: 8 }}
         />
         <InputBase
           inputRef={inputRef}
@@ -272,7 +277,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                       {item.href && (
                         <ArrowRight
                           size={14}
-                          sx={{ color: 'text.disabled', ml: 1 }}
+                          style={{ color: 'rgba(0, 0, 0, 0.38)', marginLeft: 8 }}
                         />
                       )}
                     </ListItemButton>
