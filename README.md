@@ -2,7 +2,7 @@
 
 > 统一身份认证与授权管理、文档管理、AI协作、流程自动化、数据分析、质量管理、供应链管理
 
-![Version](https://img.shields.io/badge/version-2.5.0-blue)
+![Version](https://img.shields.io/badge/version-2.6.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Rust](https://img.shields.io/badge/rust-1.76%2B-orange)
 ![React](https://img.shields.io/badge/react-19-blue)
@@ -94,7 +94,9 @@ topems/
 ├── lib/                          # Rust 共享库
 ├── packages/                     # TypeScript 共享包
 │   ├── shared-types/            # 类型定义
-│   └── shared-utils/            # 工具函数
+│   ├── shared-utils/            # 工具函数
+│   ├── shared-constants/        # 共享常量（颜色、数字等，由 tokens.ts 同步生成）
+│   └── shared-components/       # 共享业务组件（@topems/shared-components）
 ├── deploy/                       # 部署配置
 │   ├── systemd/                 # systemd 服务配置
 │   ├── monitoring/              # 监控配置 (Prometheus/Grafana)
@@ -755,6 +757,6 @@ MIT License
 
 ---
 
-**最后更新**: 2026-06-24
-**版本**: v2.5.0 (服务拆分版)
+**最后更新**: 2026-06-28
+**版本**: v2.6.0 (服务拆分版)
 **文档版本**: v2.0

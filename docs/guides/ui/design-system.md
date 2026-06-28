@@ -52,9 +52,46 @@ TOPEMS 采用 **MUI (Material UI)** 作为唯一的 UI 方案。本文档定义�
 
 | 技术 | 版本 | 用途 | 状态 |
 |------|------|------|------|
-| MUI | v9.x | 主 UI 组件库 | ✅ 唯一使用 |
+| MUI | v9.1.1 | 主 UI 组件库（全应用统一） | ✅ 唯一使用 |
 | Emotion | v11.x | CSS-in-JS (MUI 内置) | ✅ 使用中 |
-| Lucide React | v1.x | 图标库 | ✅ 使用中 |
+| Lucide React | v1.x | 图标库（全应用统一） | ✅ 使用中 |
+
+## Token Architecture（设计令牌架构）
+
+TOPEMS 采用三层令牌架构，确保设计值的单一数据源和跨平台一致性。
+
+```
+Layer 1 (Single Source of Truth)
+  apps/web/src/theme/tokens.ts        ← TypeScript 令牌定义（唯一真实来源）
+      │
+      ├── scripts/generate-tokens.ts   ← 自动同步脚本
+      │
+      ├──→ Layer 2
+      │    apps/web/src/index.css       ← CSS 自定义属性（由 generate-tokens.ts 从 tokens.ts 生成）
+      │
+      └──→ Layer 3
+           packages/shared-constants/src/colors.ts  ← TS 常量（由 generate-tokens.ts 从 tokens.ts 生成）
+```
+
+### 各层职责
+
+| 层级 | 文件 | 格式 | 消费者 |
+|------|------|------|--------|
+| Layer 1 | `apps/web/src/theme/tokens.ts` | TypeScript 对象 | Layer 2、Layer 3 的生成来源 |
+| Layer 2 | `apps/web/src/index.css` | CSS `:root` 自定义属性 | 前端组件（`var(--xxx)`） |
+| Layer 3 | `packages/shared-constants/src/colors.ts` | TypeScript `const` | 后端/跨应用运行时使用 |
+
+### 自动同步
+
+修改令牌时，只需编辑 `apps/web/src/theme/tokens.ts`，然后运行：
+
+```bash
+pnpm run generate-tokens
+# 或直接执行
+npx tsx scripts/generate-tokens.ts
+```
+
+该脚本会自动同步 Layer 2（CSS 变量）和 Layer 3（TS 常量），确保三层始终一致。
 
 ## 组件使用规范
 
@@ -290,6 +327,34 @@ import { Chip } from "@mui/material";
 </Box>
 ```
 
+### 模块配色系统
+
+每个业务模块拥有统一的渐变色标识，用于卡片、统计图、导航等视觉元素。
+
+| 模块 | 主色 | 渐变终点 | 用途 |
+|------|------|---------|------|
+| HRM（人力资源） | `#22C55E` (green) | `#15803D` | HRM 模块卡片、统计图 |
+| CRM（客户关系） | `#3B82F6` (blue) | `#1D4ED8` | CRM 模块卡片、统计图 |
+| PM（项目管理） | `#8B5CF6` (violet) | `#7C3AED` | PM 模块卡片、统计图 |
+| Finance（财务） | `#10B981` (emerald) | `#059669` | Finance 模块卡片、统计图 |
+| MES（制造执行） | `#EF4444` (red) | `#B91C1C` | MES 模块卡片、统计图 |
+| SCM（供应链） | `#F59E0B` (amber) | `#D97706` | SCM 模块卡片、统计图 |
+| BI（商业智能） | `#6366F1` (indigo) | `#4F46E5` | BI 模块卡片、统计图 |
+| IM（即时通讯） | `#10B981` (emerald) | `#059669` | IM 模块卡片、统计图 |
+
+```tsx
+// 使用模块渐变色
+<Box
+  sx={{
+    background: "linear-gradient(135deg, #22C55E, #15803D)",
+    borderRadius: 2,
+    p: 2,
+  }}
+>
+  <Typography sx={{ color: "white" }}>HRM 模块</Typography>
+</Box>
+```
+
 ## 间距系统
 
 ### MUI spacing
@@ -319,18 +384,135 @@ import { Chip } from "@mui/material";
 // var(--spacing-xl) = 2rem (32px)
 ```
 
-## 图标使用
+## 图标系统
+
+所有图标统一使用 `lucide-react`，不再使用 `@mui/icons-material`。
+
+### 基本使用
 
 ```tsx
-// ✅ 推荐：Lucide React 图标
 import { Search, Plus, Edit, Trash2 } from "lucide-react";
 
-// 使用方式
+// 使用 size prop 控制尺寸（单位为 px）
 <Search size={20} />
-<Plus style={{ width: 20, height: 20 }} />
+<Plus size={16} />
+```
 
-// ❌ 避免：Lucide 图标不支持 sx prop
-<Search sx={{ width: 20 }} />
+### 与 MUI 的区别
+
+| 特性 | MUI Icons | Lucide React |
+|------|-----------|-------------|
+| 导入路径 | `@mui/icons-material` | `lucide-react` |
+| 尺寸控制 | `fontSize="small"` | `size={20}` |
+| 样式控制 | 支持 `sx` prop | **不支持** `sx` prop，使用 `style` |
+| 颜色控制 | `color="primary"` | `style={{ color: "#3B82F6" }}` |
+
+### 重要：不支持 sx prop
+
+```tsx
+// ❌ 错误：Lucide 图标不支持 MUI sx prop
+<Search sx={{ width: 20, color: "primary.main" }} />
+
+// ✅ 正确：使用 style 属性
+<Search style={{ width: 20, height: 20, color: "#3B82F6" }} />
+
+// ✅ 正确：使用 size prop 控制尺寸
+<Search size={20} />
+```
+
+### 动态图标渲染
+
+当需要根据配置动态渲染图标时，使用别名模式：
+
+```tsx
+import { Search, Plus, Edit, Trash2, Settings, type LucideIcon } from "lucide-react";
+
+// 图标映射表
+const iconMap: Record<string, LucideIcon> = {
+  search: Search,
+  add: Plus,
+  edit: Edit,
+  delete: Trash2,
+  settings: Settings,
+};
+
+// 使用别名模式动态渲染
+const DynamicIcon = iconMap[iconName];
+if (DynamicIcon) {
+  return <DynamicIcon size={20} />;
+}
+```
+
+### 在 MUI IconButton 中使用
+
+```tsx
+import { IconButton } from "@mui/material";
+import { Edit, Trash2 } from "lucide-react";
+
+<IconButton onClick={handleEdit}>
+  <Edit size={18} />
+</IconButton>
+<IconButton onClick={handleDelete}>
+  <Trash2 size={18} />
+</IconButton>
+```
+
+## 共享组件库（@topems/shared-components）
+
+跨应用复用的业务组件库，从 `@topems/shared-components` 导入。
+
+### 已有组件（16 个）
+
+| 组件 | 用途 | 说明 |
+|------|------|------|
+| OrgTree | 组织架构树 | 支持懒加载、搜索、选择 |
+| UserSelect | 用户选择器 | 支持多选、搜索、部门筛选 |
+| NumberField | 数字输入框 | 支持精度、步长、范围限制 |
+| CurrencyField | 金额输入框 | 支持千分位、货币符号、精度 |
+| PercentField | 百分比输入框 | 支持精度、范围限制 |
+| StatusBadge | 状态标签 | 配色方案与模块主题联动 |
+| LoadingSpinner | 加载指示器 | 支持尺寸、颜色自定义 |
+| EmptyState | 空状态占位 | 支持图标、标题、描述、操作按钮 |
+| ActionButton | 操作按钮 | 封装常用按钮模式（新增、编辑、删除等） |
+| FormField | 表单字段容器 | 统一标签、校验、错误提示 |
+| FormSelect | 表单下拉选择 | 封装 FormControl + Select |
+| FilterBar | 筛选栏 | 支持多条件组合筛选 |
+| ProgressBar | 进度条 | 支持百分比、颜色、动画 |
+| Stepper | 步骤条 | 支持水平/垂直、状态指示 |
+| Pagination | 分页控件 | 支持页码、每页数量、总数 |
+| RelativeTime | 相对时间显示 | 自动格式化为"刚刚"、"5分钟前"等 |
+
+### 即将推出
+
+- BackButton - 返回导航按钮
+- ConfirmDialog - 确认弹窗
+
+### 使用示例
+
+```tsx
+import {
+  StatusBadge,
+  EmptyState,
+  LoadingSpinner,
+  UserSelect,
+} from "@topems/shared-components";
+
+// 状态标签
+<StatusBadge status="active" />
+
+// 空状态
+<EmptyState
+  title="暂无数据"
+  description="请先创建一条记录"
+  action={<Button>立即创建</Button>}
+/>
+
+// 用户选择
+<UserSelect
+  value={selectedUserId}
+  onChange={setSelectedUserId}
+  multiple
+/>
 ```
 
 ## 表单处理
@@ -788,6 +970,13 @@ const theme = useTheme();
 - [Emotion CSS-in-JS](https://emotion.sh/)
 
 ## 更新日志
+
+### 2026-06-28
+- 新增 Token Architecture 三层令牌架构文档（tokens.ts -> index.css -> colors.ts）
+- 图标系统全面更新为 lucide-react，新增动态图标渲染、sx prop 限制说明
+- 新增共享组件库 @topems/shared-components 文档（16 个组件）
+- 新增模块配色系统文档（8 个模块的统一渐变色映射）
+- MUI 版本更新为 v9.1.1（全应用统一）
 
 ### 2026-06-21
 - ✅ 完成从 Tailwind CSS + MUI 混合使用到纯 MUI 样式系统的迁移
