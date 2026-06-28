@@ -28,7 +28,8 @@
     "test": "pnpm --filter topems-portal test",
     "typecheck": "pnpm --filter topems-portal typecheck",
     "topems": "./scripts/topems.sh",
-    "install:all": "./scripts/install-deps.sh"
+    "install:all": "./scripts/install-deps.sh",
+    "generate:tokens": "tsx scripts/generate-tokens.ts"
   },
   "keywords": [
     "enterprise",
