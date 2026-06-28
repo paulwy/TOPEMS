@@ -1,66 +1,38 @@
 'use client';
 
 import * as React from 'react';
-import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
+import { ThemeProvider as MuiThemeProvider, useColorScheme } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
 import { useAppStore } from '@/store';
 import { createCustomTheme } from '@/theme';
+
+// 模块级别创建一次主题（CSS Variables 模式下无需根据 mode 重建）
+const theme = createCustomTheme();
 
 type ThemeProviderProps = {
   children: React.ReactNode;
 };
 
-export function ThemeProvider({ children }: ThemeProviderProps) {
-  const theme = useAppStore((state) => state.theme);
-
-  const [muiMode, setMuiMode] = React.useState<'light' | 'dark'>('light');
-
-  const getActiveTheme = (): 'light' | 'dark' => {
-    if (theme === 'system') {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    }
-    return theme;
-  };
+function ThemeSync({ children }: ThemeProviderProps) {
+  const storeTheme = useAppStore((state) => state.theme);
+  const { setMode } = useColorScheme();
 
   React.useEffect(() => {
-    const activeTheme = getActiveTheme();
-    setMuiMode(activeTheme);
-    updateDOM(activeTheme);
-
-    const handleSystemThemeChange = (e: MediaQueryListEvent) => {
-      if (theme === 'system') {
-        const newTheme = e.matches ? 'dark' : 'light';
-        setMuiMode(newTheme);
-        updateDOM(newTheme);
-      }
-    };
-
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    mediaQuery.addEventListener('change', handleSystemThemeChange);
-
-    return () => {
-      mediaQuery.removeEventListener('change', handleSystemThemeChange);
-    };
-  }, [theme]);
-
-  const updateDOM = (newTheme: 'light' | 'dark') => {
-    const root = window.document.documentElement;
-
-    if (newTheme === 'dark') {
-      root.classList.add('dark');
+    if (storeTheme === 'system') {
+      setMode('system');
     } else {
-      root.classList.remove('dark');
+      setMode(storeTheme);
     }
+  }, [storeTheme, setMode]);
 
-    root.setAttribute('data-theme', newTheme);
-  };
+  return <>{children}</>;
+}
 
-  const muiTheme = createCustomTheme(muiMode);
-
+export function ThemeProvider({ children }: ThemeProviderProps) {
   return (
-    <MuiThemeProvider theme={muiTheme}>
+    <MuiThemeProvider theme={theme} defaultMode="system" disableTransitionOnChange>
       <CssBaseline />
-      {children}
+      <ThemeSync>{children}</ThemeSync>
     </MuiThemeProvider>
   );
 }
