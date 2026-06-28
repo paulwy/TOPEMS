@@ -10,15 +10,15 @@ import {
   Alert,
   Chip,
 } from '@mui/material';
-import {
-  People as PeopleIcon,
-  TrendingUp as TrendingUpIcon,
-  MonetizationOn as MonetizationOnIcon,
-  Receipt as ReceiptIcon,
-  Event as EventIcon,
-  Assessment as AssessmentIcon,
-} from '@mui/icons-material';
+
 import { useCrmStore } from '../store/crmStore';
+import { BarChart3, CalendarDays, DollarSign, Receipt, TrendingUp, Users } from 'lucide-react';
+const AssessmentIcon = BarChart3;
+const EventIcon = CalendarDays;
+const MonetizationOnIcon = DollarSign;
+const PeopleIcon = Users;
+const ReceiptIcon = Receipt;
+const TrendingUpIcon = TrendingUp;
 
 interface StatCardProps {
   title: string;
@@ -98,7 +98,7 @@ export const DashboardPage: React.FC = () => {
       )}
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid xs={12} sm={6} md={3}>
+        <Grid>
           <StatCard
             title="客户总数"
             value={dashboardSummary?.total_customers ?? 0}
@@ -107,7 +107,7 @@ export const DashboardPage: React.FC = () => {
             suffix="个"
           />
         </Grid>
-        <Grid xs={12} sm={6} md={3}>
+        <Grid>
           <StatCard
             title="活跃客户"
             value={dashboardSummary?.active_customers ?? 0}
@@ -116,7 +116,7 @@ export const DashboardPage: React.FC = () => {
             suffix="个"
           />
         </Grid>
-        <Grid xs={12} sm={6} md={3}>
+        <Grid>
           <StatCard
             title="销售机会"
             value={dashboardSummary?.total_opportunities ?? 0}
@@ -125,7 +125,7 @@ export const DashboardPage: React.FC = () => {
             suffix="个"
           />
         </Grid>
-        <Grid xs={12} sm={6} md={3}>
+        <Grid>
           <StatCard
             title="管道价值"
             value={(dashboardSummary?.total_pipeline_value ?? 0).toLocaleString()}
@@ -137,7 +137,7 @@ export const DashboardPage: React.FC = () => {
       </Grid>
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid xs={12} sm={6} md={3}>
+        <Grid>
           <StatCard
             title="总收入"
             value={(dashboardSummary?.total_revenue ?? 0).toLocaleString()}
@@ -146,7 +146,7 @@ export const DashboardPage: React.FC = () => {
             suffix="元"
           />
         </Grid>
-        <Grid xs={12} sm={6} md={3}>
+        <Grid>
           <StatCard
             title="待回款"
             value={dashboardSummary?.pending_billing ?? 0}
@@ -155,7 +155,7 @@ export const DashboardPage: React.FC = () => {
             suffix="笔"
           />
         </Grid>
-        <Grid xs={12} sm={6} md={3}>
+        <Grid>
           <StatCard
             title="逾期账单"
             value={dashboardSummary?.overdue_billing ?? 0}
@@ -164,7 +164,7 @@ export const DashboardPage: React.FC = () => {
             suffix="笔"
           />
         </Grid>
-        <Grid xs={12} sm={6} md={3}>
+        <Grid>
           <StatCard
             title="近期互动"
             value={dashboardSummary?.recent_interactions ?? 0}
@@ -176,7 +176,7 @@ export const DashboardPage: React.FC = () => {
       </Grid>
 
       <Grid container spacing={2}>
-        <Grid xs={12} md={6}>
+        <Grid>
           <Paper sx={{ p: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <AssessmentIcon color="primary" />
@@ -222,7 +222,7 @@ export const DashboardPage: React.FC = () => {
           </Paper>
         </Grid>
 
-        <Grid xs={12} md={6}>
+        <Grid>
           <Paper sx={{ p: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <EventIcon color="primary" />

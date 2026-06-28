@@ -1,6 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAppStore } from '../../store';
-import { Barcode, Camera, Shield, Clock, Sparkles } from 'lucide-react';
+import {
+  Barcode,
+  Camera,
+  Shield,
+  Clock,
+  Sparkles,
+} from 'lucide-react';
 import {
   SettingsPageTemplate,
   type SettingSection,

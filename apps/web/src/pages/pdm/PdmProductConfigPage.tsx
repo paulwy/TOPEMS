@@ -17,7 +17,15 @@ import {
   FormControlLabel,
   Button,
 } from '@mui/material';
-import { Settings, Plus, Edit, Delete, Zap, Package, Shield } from 'lucide-react';
+import {
+  Settings,
+  Plus,
+  Edit,
+  Delete,
+  Zap,
+  Package,
+  Shield,
+} from 'lucide-react';
 import { pdmApi } from '@/api/pdm';
 import type { ProductConfig } from '@/api/pdm';
 import { useAppStore } from '@/store';

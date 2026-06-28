@@ -21,15 +21,15 @@ import {
   Alert,
   Pagination,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Search as SearchIcon,
-  Refresh as RefreshIcon,
-} from '@mui/icons-material';
+
 import { useCrmStore } from '../store/crmStore';
 import type { Contact, CreateContactRequest, UpdateContactRequest } from '../api/crm';
+import { Pencil, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
+const AddIcon = Plus;
+const DeleteIcon = Trash2;
+const EditIcon = Pencil;
+const RefreshIcon = RefreshCw;
+const SearchIcon = Search;
 
 export const ContactManagementPage: React.FC = () => {
   const {
@@ -159,13 +159,12 @@ export const ContactManagementPage: React.FC = () => {
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <TextField
             placeholder="搜索联系人姓名、邮箱..."
-            size="small"
+            
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            InputProps={{
-              startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />,
-            }}
+             
+            slotProps={{ input: { size: 'small', startAdornment: <SearchIcon style={{ color: '#9e9e9e', marginRight: 4, fontSize: 20 }}  />  }}}
             sx={{ minWidth: 300 }}
           />
           <Button variant="outlined" onClick={handleSearch}>

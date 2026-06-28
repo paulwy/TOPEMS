@@ -71,7 +71,7 @@ import {
   deleteDataSource,
   testDataSource,
   refreshDataSource,
-} from './data-source';
+} from './dataSource';
 
 import {
   listComparisons,
@@ -165,7 +165,7 @@ export {
   deleteDataSource,
   testDataSource,
   refreshDataSource,
-} from './data-source';
+} from './dataSource';
 
 export {
   listComparisons,

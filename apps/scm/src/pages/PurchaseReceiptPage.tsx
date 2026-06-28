@@ -30,20 +30,22 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Delete as DeleteIcon,
-  Search as SearchIcon,
-  Refresh as RefreshIcon,
-  CheckCircle as CheckCircleIcon,
-  LocalShipping as LocalShippingIcon,
-} from '@mui/icons-material';
+
+import { Truck, RefreshCw, Plus, Search, CheckCircle, Trash2 } from 'lucide-react';
+
 import {
   purchaseReceiptApi,
   type PurchaseReceipt,
   type PaginatedResult,
   type ListParams,
 } from '../api/scm';
+
+const LocalShippingIcon = Truck;
+const RefreshIcon = RefreshCw;
+const AddIcon = Plus;
+const SearchIcon = Search;
+const CheckCircleIcon = CheckCircle;
+const DeleteIcon = Trash2;
 
 const getStatusColor = (
   status: string
@@ -202,11 +204,11 @@ export const PurchaseReceiptPage: React.FC = () => {
       </Box>
 
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <LocalShippingIcon color="primary" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <LocalShippingIcon color="primary" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     入库单总数
@@ -219,11 +221,11 @@ export const PurchaseReceiptPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <LocalShippingIcon color="warning" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <LocalShippingIcon color="warning" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     待确认
@@ -236,11 +238,11 @@ export const PurchaseReceiptPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <LocalShippingIcon color="success" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <LocalShippingIcon color="success" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     已完成
@@ -253,11 +255,11 @@ export const PurchaseReceiptPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <LocalShippingIcon color="info" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <LocalShippingIcon color="info" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     本月入库金额
@@ -275,16 +277,15 @@ export const PurchaseReceiptPage: React.FC = () => {
       </Grid>
 
       <Paper sx={{ mb: 3, p: 2 }}>
-        <Stack direction="row" spacing={2} alignItems="center">
+        <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
           <TextField
             placeholder="搜索入库单号..."
-            size="small"
+            
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            InputProps={{
-              startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />,
-            }}
+             
+            slotProps={{ input: { size: 'small', startAdornment: <SearchIcon style={{ color: '#9e9e9e', marginRight: 1, fontSize: 20 }}  />  }}}
             sx={{ minWidth: 300 }}
           />
           <FormControl size="small" sx={{ minWidth: 150 }}>
@@ -375,7 +376,7 @@ export const PurchaseReceiptPage: React.FC = () => {
                           onClick={() => handleConfirm(receipt.id)}
                           title="确认"
                         >
-                          <CheckCircleIcon fontSize="small" />
+                          <CheckCircleIcon size={16} />
                         </IconButton>
                       )}
                       <IconButton
@@ -384,7 +385,7 @@ export const PurchaseReceiptPage: React.FC = () => {
                         onClick={() => handleDelete(receipt.id)}
                         title="删除"
                       >
-                        <DeleteIcon fontSize="small" />
+                        <DeleteIcon size={16} />
                       </IconButton>
                     </TableCell>
                   </TableRow>
@@ -442,7 +443,7 @@ export const PurchaseReceiptPage: React.FC = () => {
               value={newReceipt.receipt_date || ''}
               onChange={(e) => setNewReceipt({ ...newReceipt, receipt_date: e.target.value })}
               fullWidth
-              InputLabelProps={{ shrink: true }}
+              slotProps={{ inputLabel: { shrink: true } }}
             />
             <TextField
               label="总数量"

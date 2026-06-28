@@ -1,5 +1,5 @@
 import { Box, Card, CardContent, Typography, Paper } from '@mui/material';
-import { TrendingUp, People, AttachMoney, ShoppingCart } from '@mui/icons-material';
+
 
 const Dashboard = () => {
   const stats = [

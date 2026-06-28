@@ -15,9 +15,12 @@ import {
   Alert,
   Button,
 } from '@mui/material';
-import { Add as AddIcon, Refresh as RefreshIcon } from '@mui/icons-material';
+
 import { assetApi } from '../api/finance';
 import type { FixedAsset } from '../api/finance';
+import { Plus, RefreshCw } from 'lucide-react';
+const AddIcon = Plus;
+const RefreshIcon = RefreshCw;
 
 const statusColor: Record<FixedAsset['status'], 'default' | 'primary' | 'warning' | 'error'> = {
   in_use: 'primary',

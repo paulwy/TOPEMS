@@ -1,4 +1,4 @@
-import React, { Suspense, useEffect } from 'react';
+import React, { useEffect, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Box, Typography } from '@mui/material';
 import { AuthProvider, useAuth } from './hooks/useAuth';
@@ -77,6 +77,24 @@ const ProtectedRouteWrapper: React.FC<{
 
   if (hasOwnLayout) {
     // 使用简化包装，不添加 GlobalLayout
+    return (
+      <ProtectedRoute requiredPermissions={route.requiredPermissions || []}>
+        {route.module && route.action ? (
+          <ModuleGate
+            module={route.module}
+            action={route.action}
+          >
+            {children}
+          </ModuleGate>
+        ) : (
+          children
+        )}
+      </ProtectedRoute>
+    );
+  }
+
+  // 移动端路由使用 MobileLayout
+  if (route.module === 'mobile') {
     return (
       <ProtectedRoute requiredPermissions={route.requiredPermissions || []}>
         {route.module && route.action ? (

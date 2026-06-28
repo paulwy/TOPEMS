@@ -1,4 +1,15 @@
 import React, { useState, useMemo } from 'react';
+import { CircleCheck, Copy, Eye, FileText, Pencil, Plus, Search, ToggleLeft, ToggleRight, Trash2, X } from 'lucide-react';
+const Add = Plus;
+const Cancel = X;
+const CheckCircle = CircleCheck;
+const ContentCopy = Copy;
+const Delete = Trash2;
+const Description = FileText;
+const Edit = Pencil;
+const ToggleOff = ToggleLeft;
+const ToggleOn = ToggleRight;
+const Visibility = Eye;
 import {
   Box,
   Card,
@@ -28,19 +39,7 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
-import {
-  Search,
-  Visibility,
-  Edit,
-  ContentCopy,
-  Delete,
-  Add,
-  Description,
-  CheckCircle,
-  Cancel,
-  ToggleOn,
-  ToggleOff,
-} from '@mui/icons-material';
+
 
 interface FlowTemplate {
   id: string;
@@ -253,7 +252,7 @@ export const FlowTemplatePage: React.FC = () => {
     <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50', p: 3 }}>
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Stack direction="row" alignItems="center" spacing={2}>
+          <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
             <Box
               sx={{
                 width: 48,
@@ -265,7 +264,7 @@ export const FlowTemplatePage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <Description sx={{ color: 'primary.main' }} />
+              <Description style={{ color: '#1976d2' }} />
             </Box>
             <Box>
               <Typography variant="h5" sx={{ fontWeight: 700 }}>
@@ -306,9 +305,8 @@ export const FlowTemplatePage: React.FC = () => {
           </Tabs>
         </CardContent>
         <CardContent>
-          <Stack direction="row" alignItems="center" spacing={2}>
+          <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
             <TextField
-              size="small"
               placeholder="搜索模板名称..."
               value={searchTerm}
               onChange={(e) => {
@@ -317,7 +315,8 @@ export const FlowTemplatePage: React.FC = () => {
               }}
               slotProps={{
                 input: {
-                  startAdornment: <Search sx={{ mr: 1, color: 'text.disabled' }} />,
+                  size: 'small',
+                  startAdornment: <Search style={{ marginRight: 4, color: '#bdbdbd' }} />,
                 },
               }}
               sx={{ flex: 1, maxWidth: 300 }}
@@ -370,7 +369,7 @@ export const FlowTemplatePage: React.FC = () => {
                     }}
                   >
                     <TableCell>
-                      <Stack direction="row" alignItems="center" spacing={1}>
+                      <Stack direction="row" sx={{ alignItems: 'center' }} spacing={1}>
                         <Description fontSize="small" color="action" />
                         <Typography variant="body2" sx={{ fontWeight: 500 }}>
                           {template.name}

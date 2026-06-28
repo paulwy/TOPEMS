@@ -11,17 +11,17 @@ import {
   Chip,
   LinearProgress,
 } from '@mui/material';
-import {
-  Assignment as AssignmentIcon,
-  TrendingUp as TrendingUpIcon,
-  MonetizationOn as MonetizationOnIcon,
-  Flag as FlagIcon,
-  Warning as WarningIcon,
-  Description as DescriptionIcon,
-  Event as EventIcon,
-  Assessment as AssessmentIcon,
-} from '@mui/icons-material';
+
 import { usePmStore } from '../store/pmStore';
+import { AlertTriangle, BarChart3, CalendarDays, ClipboardList, DollarSign, FileText, Flag, TrendingUp } from 'lucide-react';
+const AssessmentIcon = BarChart3;
+const AssignmentIcon = ClipboardList;
+const DescriptionIcon = FileText;
+const EventIcon = CalendarDays;
+const FlagIcon = Flag;
+const MonetizationOnIcon = DollarSign;
+const TrendingUpIcon = TrendingUp;
+const WarningIcon = AlertTriangle;
 
 interface StatCardProps {
   title: string;
@@ -101,7 +101,7 @@ export const DashboardPage: React.FC = () => {
       )}
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="项目总数"
             value={dashboardSummary?.total_projects ?? 0}
@@ -110,7 +110,7 @@ export const DashboardPage: React.FC = () => {
             suffix="个"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="进行中项目"
             value={dashboardSummary?.active_projects ?? 0}
@@ -119,7 +119,7 @@ export const DashboardPage: React.FC = () => {
             suffix="个"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="已完成项目"
             value={dashboardSummary?.completed_projects ?? 0}
@@ -128,7 +128,7 @@ export const DashboardPage: React.FC = () => {
             suffix="个"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="待审批项目"
             value={dashboardSummary?.pending_projects ?? 0}
@@ -140,7 +140,7 @@ export const DashboardPage: React.FC = () => {
       </Grid>
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="任务总数"
             value={dashboardSummary?.total_tasks ?? 0}
@@ -149,7 +149,7 @@ export const DashboardPage: React.FC = () => {
             suffix="个"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="已完成任务"
             value={dashboardSummary?.completed_tasks ?? 0}
@@ -158,7 +158,7 @@ export const DashboardPage: React.FC = () => {
             suffix="个"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="逾期任务"
             value={dashboardSummary?.overdue_tasks ?? 0}
@@ -167,7 +167,7 @@ export const DashboardPage: React.FC = () => {
             suffix="个"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="高风险"
             value={dashboardSummary?.high_risks ?? 0}
@@ -179,7 +179,7 @@ export const DashboardPage: React.FC = () => {
       </Grid>
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="合同总数"
             value={dashboardSummary?.total_contracts ?? 0}
@@ -188,7 +188,7 @@ export const DashboardPage: React.FC = () => {
             suffix="份"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="进行中合同"
             value={dashboardSummary?.active_contracts ?? 0}
@@ -197,7 +197,7 @@ export const DashboardPage: React.FC = () => {
             suffix="份"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="里程碑"
             value={dashboardSummary?.total_milestones ?? 0}
@@ -206,7 +206,7 @@ export const DashboardPage: React.FC = () => {
             suffix="个"
           />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard
             title="即将到来里程碑"
             value={dashboardSummary?.upcoming_milestones ?? 0}
@@ -218,7 +218,7 @@ export const DashboardPage: React.FC = () => {
       </Grid>
 
       <Grid container spacing={2}>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <MonetizationOnIcon color="primary" />
@@ -259,7 +259,7 @@ export const DashboardPage: React.FC = () => {
           </Paper>
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <AssessmentIcon color="primary" />

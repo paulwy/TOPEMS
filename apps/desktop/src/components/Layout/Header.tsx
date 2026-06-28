@@ -1,5 +1,5 @@
 import { Toolbar, IconButton, Typography, Box } from '@mui/material';
-import { Menu, Notifications, Search, HelpOutlined } from '@mui/icons-material';
+
 import { useState } from 'react';
 
 interface HeaderProps {

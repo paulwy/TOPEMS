@@ -21,29 +21,29 @@ import {
   DialogActions,
   Button,
 } from '@mui/material';
+
 import {
-  InsertDriveFile,
-  Description,
-  Image,
-  TableChart,
-  PictureAsPdf,
-  Movie,
-  Audiotrack,
-  Archive,
-  TextSnippet,
-  MoreVert,
-  Visibility,
-  FileDownload,
-  Edit,
-  Delete,
-  Share,
-  Star,
-  StarBorder,
-  Folder,
-  ViewList,
-  ViewModule,
   Search,
-} from '@mui/icons-material';
+  Folder,
+  List as ViewListIcon,
+  LayoutGrid as ViewModuleIcon,
+  Eye as VisibilityIcon,
+  Download as FileDownloadIcon,
+  MoreVertical as MoreVertIcon,
+  Star as StarIcon,
+  StarOff as StarBorderIcon,
+  Pencil as EditIcon,
+  Share2 as ShareIcon,
+  Trash2 as DeleteIcon,
+  Image as ImageIcon,
+  FileText,
+  Table as TableIcon,
+  Archive as ArchiveIcon,
+  Film as FilmIcon,
+  Music as MusicIcon,
+  File,
+  FolderOpen,
+} from 'lucide-react';
 import dayjs from 'dayjs';
 import { formatFileSize, type FileItem, type FolderItem } from '../api/file';
 
@@ -70,23 +70,25 @@ export interface FileListProps {
   loading?: boolean;
 }
 
-const getFileIcon = (mimeType: string, size: 'small' | 'medium' | 'large' = 'medium') => {
-  const props = { fontSize: size };
+const sizeMap = { small: 16, medium: 20, large: 24 } as const;
 
-  if (mimeType.startsWith('image/')) return <Image color="primary" {...props} />;
-  if (mimeType.includes('pdf')) return <PictureAsPdf color="error" {...props} />;
+const getFileIcon = (mimeType: string, size: 'small' | 'medium' | 'large' = 'medium') => {
+  const iconSize = sizeMap[size];
+
+  if (mimeType.startsWith('image/')) return <ImageIcon size={iconSize} style={{ color: '#1976d2' }} />;
+  if (mimeType.includes('pdf')) return <FileText size={iconSize} style={{ color: '#d32f2f' }} />;
   if (mimeType.includes('word') || mimeType.includes('document'))
-    return <Description color="primary" {...props} />;
+    return <FileText size={iconSize} style={{ color: '#1976d2' }} />;
   if (mimeType.includes('excel') || mimeType.includes('spreadsheet'))
-    return <TableChart color="success" {...props} />;
+    return <TableIcon size={iconSize} style={{ color: '#2e7d32' }} />;
   if (mimeType.includes('powerpoint') || mimeType.includes('presentation'))
-    return <Description color="warning" {...props} />;
+    return <FileText size={iconSize} style={{ color: '#ed6c02' }} />;
   if (mimeType.includes('zip') || mimeType.includes('archive') || mimeType.includes('rar'))
-    return <Archive color="action" {...props} />;
-  if (mimeType.includes('video/')) return <Movie color="action" {...props} />;
-  if (mimeType.includes('audio/')) return <Audiotrack color="action" {...props} />;
-  if (mimeType.includes('text/')) return <TextSnippet color="action" {...props} />;
-  return <InsertDriveFile color="action" {...props} />;
+    return <ArchiveIcon size={iconSize} style={{ color: 'rgba(0, 0, 0, 0.54)' }} />;
+  if (mimeType.includes('video/')) return <FilmIcon size={iconSize} style={{ color: 'rgba(0, 0, 0, 0.54)' }} />;
+  if (mimeType.includes('audio/')) return <MusicIcon size={iconSize} style={{ color: 'rgba(0, 0, 0, 0.54)' }} />;
+  if (mimeType.includes('text/')) return <FileText size={iconSize} style={{ color: 'rgba(0, 0, 0, 0.54)' }} />;
+  return <File size={iconSize} style={{ color: 'rgba(0, 0, 0, 0.54)' }} />;
 };
 
 export const FileList: React.FC<FileListProps> = ({
@@ -179,23 +181,27 @@ export const FileList: React.FC<FileListProps> = ({
       {showSearch && (
         <Box sx={{ flex: 1, position: 'relative' }}>
           <Search
-            sx={{
+            size={16}
+            style={{
               position: 'absolute',
               left: 12,
               top: '50%',
               transform: 'translateY(-50%)',
-              color: 'text.secondary',
+              color: 'rgba(0, 0, 0, 0.54)',
             }}
-            fontSize="small"
           />
           <TextField
             fullWidth
-            size="small"
             placeholder="搜索文件..."
             value={searchValue}
             onChange={(e) => onSearchChange?.(e.target.value)}
             sx={{ pl: 4 }}
-            InputProps={{ sx: { pl: 4 } }}
+            slotProps={{
+              input: {
+                size: 'small',
+                sx: { pl: 4 },
+              },
+            }}
           />
         </Box>
       )}
@@ -206,7 +212,7 @@ export const FileList: React.FC<FileListProps> = ({
             color={viewMode === 'list' ? 'primary' : 'default'}
             onClick={() => onViewModeChange?.('list')}
           >
-            <ViewList fontSize="small" />
+            <ViewListIcon size={16} />
           </IconButton>
         </Tooltip>
         <Tooltip title="网格视图">
@@ -215,7 +221,7 @@ export const FileList: React.FC<FileListProps> = ({
             color={viewMode === 'grid' ? 'primary' : 'default'}
             onClick={() => onViewModeChange?.('grid')}
           >
-            <ViewModule fontSize="small" />
+            <ViewModuleIcon size={16} />
           </IconButton>
         </Tooltip>
       </Box>
@@ -225,7 +231,7 @@ export const FileList: React.FC<FileListProps> = ({
   const renderGridView = () => (
     <Grid container spacing={2}>
       {folders.map((folder) => (
-        <Grid item xs={6} sm={4} md={3} lg={2} key={`folder-${folder.id}`}>
+        <Grid size={{ xs: 6, sm: 4, md: 3, lg: 2 }} key={`folder-${folder.id}`}>
           <Box
             onClick={() => onFolderClick?.(folder)}
             sx={{
@@ -242,7 +248,7 @@ export const FileList: React.FC<FileListProps> = ({
               },
             }}
           >
-            <Folder sx={{ fontSize: 40, color: 'warning.main', mb: 1 }} />
+            <FolderOpen size={40} style={{ color: '#ed6c02', marginBottom: 4 }} />
             <Typography variant="body2" noWrap sx={{ fontWeight: 500 }}>
               {folder.name}
             </Typography>
@@ -253,7 +259,7 @@ export const FileList: React.FC<FileListProps> = ({
         </Grid>
       ))}
       {files.map((file) => (
-        <Grid item xs={6} sm={4} md={3} lg={2} key={file.id}>
+        <Grid size={{ xs: 6, sm: 4, md: 3, lg: 2 }} key={file.id}>
           <Box
             onClick={() => onFileClick?.(file)}
             sx={{
@@ -300,13 +306,13 @@ export const FileList: React.FC<FileListProps> = ({
               }}
             >
               <IconButton size="small" onClick={(e) => { e.stopPropagation(); onPreview?.(file); }} title="预览">
-                <Visibility fontSize="small" />
+                <VisibilityIcon size={16} />
               </IconButton>
               <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDownload?.(file); }} title="下载">
-                <FileDownload fontSize="small" />
+                <FileDownloadIcon size={16} />
               </IconButton>
               <IconButton size="small" onClick={(e) => handleMenuOpen(e, file)} title="更多">
-                <MoreVert fontSize="small" />
+                <MoreVertIcon size={16} />
               </IconButton>
             </Box>
           </Box>
@@ -329,7 +335,7 @@ export const FileList: React.FC<FileListProps> = ({
           }}
         >
           <ListItemIcon>
-            <Folder sx={{ color: 'warning.main' }} />
+            <Folder size={24} style={{ color: '#ed6c02' }} />
           </ListItemIcon>
           <ListItemText
             primary={folder.name}
@@ -375,20 +381,20 @@ export const FileList: React.FC<FileListProps> = ({
             {onToggleFavorite && (
               <IconButton size="small" onClick={(e) => { e.stopPropagation(); onToggleFavorite(file); }}>
                 {file.tags?.includes('favorite') ? (
-                  <Star fontSize="small" color="warning" />
+                  <StarIcon size={16} style={{ color: '#ed6c02' }} />
                 ) : (
-                  <StarBorder fontSize="small" />
+                  <StarBorderIcon size={16} />
                 )}
               </IconButton>
             )}
             <IconButton size="small" onClick={(e) => { e.stopPropagation(); onPreview?.(file); }} title="预览">
-              <Visibility fontSize="small" />
+              <VisibilityIcon size={16} />
             </IconButton>
             <IconButton size="small" onClick={(e) => { e.stopPropagation(); onDownload?.(file); }} title="下载">
-              <FileDownload fontSize="small" />
+              <FileDownloadIcon size={16} />
             </IconButton>
             <IconButton size="small" onClick={(e) => handleMenuOpen(e, file)} title="更多操作">
-              <MoreVert fontSize="small" />
+              <MoreVertIcon size={16} />
             </IconButton>
           </ListItemSecondaryAction>
         </ListItem>
@@ -405,7 +411,7 @@ export const FileList: React.FC<FileListProps> = ({
         </Box>
       ) : files.length === 0 && folders.length === 0 ? (
         <Box sx={{ p: 8, textAlign: 'center', bgcolor: 'background.paper', borderRadius: 1, border: '1px solid', borderColor: 'divider' }}>
-          <InsertDriveFile sx={{ fontSize: 48, color: 'text.disabled', mb: 2 }} />
+          <File size={48} style={{ color: 'rgba(0, 0, 0, 0.26)', marginBottom: 8 }} />
           <Typography color="text.secondary">暂无文件</Typography>
         </Box>
       ) : viewMode === 'grid' ? (
@@ -418,22 +424,22 @@ export const FileList: React.FC<FileListProps> = ({
         anchorEl={menuAnchorEl}
         open={Boolean(menuAnchorEl)}
         onClose={handleMenuClose}
-        PaperProps={{ sx: { minWidth: 160 } }}
+        slotProps={{ paper: { sx: { minWidth: 160 } } }}
       >
         <MenuItem onClick={() => { onPreview?.(menuFile!); handleMenuClose(); }}>
-          <Visibility fontSize="small" sx={{ mr: 1 }} /> 预览
+          <VisibilityIcon size={16} style={{ marginRight: 8 }} /> 预览
         </MenuItem>
         <MenuItem onClick={() => { onDownload?.(menuFile!); handleMenuClose(); }}>
-          <FileDownload fontSize="small" sx={{ mr: 1 }} /> 下载
+          <FileDownloadIcon size={16} style={{ marginRight: 8 }} /> 下载
         </MenuItem>
         <MenuItem onClick={handleRenameClick}>
-          <Edit fontSize="small" sx={{ mr: 1 }} /> 重命名
+          <EditIcon size={16} style={{ marginRight: 8 }} /> 重命名
         </MenuItem>
         <MenuItem onClick={() => { onShare?.(menuFile!); handleMenuClose(); }}>
-          <Share fontSize="small" sx={{ mr: 1 }} /> 分享
+          <ShareIcon size={16} style={{ marginRight: 8 }} /> 分享
         </MenuItem>
         <MenuItem onClick={handleDeleteClick} sx={{ color: 'error.main' }}>
-          <Delete fontSize="small" sx={{ mr: 1 }} /> 删除
+          <DeleteIcon size={16} style={{ marginRight: 8 }} /> 删除
         </MenuItem>
       </Menu>
 

@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { logger } from '@/utils/logger';
-import { Bell, CheckCircle, Archive, TrendingUp, Calendar } from 'lucide-react';
+import {
+  Bell,
+  CheckCircle,
+  Archive,
+  TrendingUp,
+  Calendar,
+} from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import type { NotificationStats } from '@/api/notification';
 import { getMyNotificationStats, notificationServiceApi } from '@/api/notification';

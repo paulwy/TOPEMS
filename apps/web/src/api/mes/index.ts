@@ -1,32 +1,32 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
-import { productionOrderApi } from './production-order';
-import { productionProcessApi } from './production-process';
-import { workStationApi } from './work-station';
-import { productionRecordApi } from './production-record';
+import { productionOrderApi } from './productionOrder';
+import { productionProcessApi } from './productionProcess';
+import { workStationApi } from './workStation';
+import { productionRecordApi } from './productionRecord';
 import { equipmentApi, mesEquipmentApi, equipmentOeeApi } from './equipment';
-import { productionScheduleApi } from './production-schedule';
+import { productionScheduleApi } from './productionSchedule';
 import { materialBomApi, materialIssueApi, materialReturnApi } from './material';
 import { traceabilityApi } from './traceability';
 import { wipApi } from './wip';
 import { processRouteApi } from './process';
-import { processFlowApi } from './process-flow';
+import { processFlowApi } from './processFlow';
 import { qualityApi } from './quality';
 
 export * from './types';
 
-export { productionOrderApi } from './production-order';
-export { productionProcessApi } from './production-process';
-export { workStationApi } from './work-station';
-export { productionRecordApi } from './production-record';
+export { productionOrderApi } from './productionOrder';
+export { productionProcessApi } from './productionProcess';
+export { workStationApi } from './workStation';
+export { productionRecordApi } from './productionRecord';
 export { equipmentApi, mesEquipmentApi, equipmentOeeApi } from './equipment';
-export { productionScheduleApi } from './production-schedule';
+export { productionScheduleApi } from './productionSchedule';
 export { materialBomApi, materialIssueApi, materialReturnApi } from './material';
 export { traceabilityApi } from './traceability';
 export { wipApi } from './wip';
 export { processRouteApi } from './process';
-export { processFlowApi } from './process-flow';
+export { processFlowApi } from './processFlow';
 export { qualityApi } from './quality';
 
 export const mesApi = {

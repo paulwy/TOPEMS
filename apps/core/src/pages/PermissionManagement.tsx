@@ -24,16 +24,16 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Delete as DeleteIcon,
-  Shield as ShieldIcon,
-  Search as SearchIcon,
-  Refresh as RefreshIcon,
-} from '@mui/icons-material';
+
 import type { Permission } from '@topems/shared-types';
 import { useIamStore } from '../store/iamStore';
 import { iamApi } from '../api/iam';
+import { Plus, RefreshCw, Search, Shield, Trash2 } from 'lucide-react';
+const AddIcon = Plus;
+const DeleteIcon = Trash2;
+const RefreshIcon = RefreshCw;
+const SearchIcon = Search;
+const ShieldIcon = Shield;
 
 const typeLabels: Record<string, string> = {
   menu: '菜单',
@@ -184,11 +184,13 @@ export const PermissionManagement: React.FC = () => {
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <TextField
             placeholder="搜索权限名称、权限码..."
-            size="small"
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
-            InputProps={{
-              startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />,
+            slotProps={{
+              input: {
+                size: 'small',
+                startAdornment: <SearchIcon size={20} style={{ color: 'var(--mui-palette-text-secondary, #666)', marginRight: 1 * 4 }} />,
+              },
             }}
             sx={{ minWidth: 300 }}
           />

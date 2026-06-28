@@ -19,8 +19,8 @@ import type {
   UpdateProcessFlowRequest,
   ProcessFlowStep,
   CapacityAnalysis,
-} from '@/api/mes/process-flow';
-import { processFlowApi } from '@/api/mes/process-flow';
+} from '@/api/mes/processFlow';
+import { processFlowApi } from '@/api/mes/processFlow';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
 import {

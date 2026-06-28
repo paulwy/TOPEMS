@@ -3884,6 +3884,14 @@ const registerDefaultModules = () => {
         permission: 'lims:read',
       },
       {
+        code: 'lims-inspection-results',
+        label: '检验结果',
+        icon: 'FileCheck',
+        path: '/lims/inspection-results',
+        order: 2.6,
+        permission: 'lims:read',
+      },
+      {
         code: 'lims-instruments',
         label: '仪器管理',
         icon: 'Microscope',
@@ -3940,6 +3948,12 @@ const registerDefaultModules = () => {
         code: 'lims-inspection-tasks',
         label: '检验任务',
         path: '/lims/inspection-tasks',
+        permission: 'lims:read',
+      },
+      {
+        code: 'lims-inspection-results',
+        label: '检验结果',
+        path: '/lims/inspection-results',
         permission: 'lims:read',
       },
       {

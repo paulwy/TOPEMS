@@ -21,14 +21,16 @@ import {
   CardContent,
   Grid,
 } from '@mui/material';
-import {
-  Search as SearchIcon,
-  Refresh as RefreshIcon,
-  Login as LoginIcon,
-  Logout as LogoutIcon,
-  AccessTime as AccessTimeIcon,
-} from '@mui/icons-material';
+
+import { Clock, LogIn, LogOut, RefreshCw, Search } from 'lucide-react';
+
 import { attendanceApi, type AttendanceRecord } from '../api/hrm';
+
+const LoginIcon = LogIn;
+const AccessTimeIcon = Clock;
+const SearchIcon = Search;
+const RefreshIcon = RefreshCw;
+const LogoutIcon = LogOut;
 
 const getStatusColor = (
   status: string
@@ -144,11 +146,11 @@ export const AttendancePage: React.FC = () => {
       </Box>
 
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <AccessTimeIcon color="primary" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <AccessTimeIcon color="primary" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     今日出勤
@@ -161,11 +163,11 @@ export const AttendancePage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <AccessTimeIcon color="warning" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <AccessTimeIcon color="warning" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     迟到人次
@@ -178,11 +180,11 @@ export const AttendancePage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <AccessTimeIcon color="error" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <AccessTimeIcon color="error" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     缺勤人次
@@ -195,11 +197,11 @@ export const AttendancePage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <AccessTimeIcon color="info" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <AccessTimeIcon color="info" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     请假人次
@@ -215,16 +217,15 @@ export const AttendancePage: React.FC = () => {
       </Grid>
 
       <Paper sx={{ mb: 3, p: 2 }}>
-        <Stack direction="row" spacing={2} alignItems="center">
+        <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
           <TextField
             placeholder="搜索员工..."
-            size="small"
+            
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && loadRecords(1)}
-            InputProps={{
-              startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />,
-            }}
+             
+            slotProps={{ input: { size: 'small', startAdornment: <SearchIcon style={{ color: 'text.secondary', marginRight: 4, fontSize: 20 }}  />  }}}
             sx={{ minWidth: 300 }}
           />
           <Button variant="outlined" onClick={() => loadRecords(1)}>

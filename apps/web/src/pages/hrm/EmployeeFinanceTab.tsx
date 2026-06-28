@@ -22,7 +22,14 @@ import {
   Typography,
   Button,
 } from '@mui/material';
-import { Banknote, DollarSign, Shield, Save, Edit2, X } from 'lucide-react';
+import {
+  Banknote,
+  DollarSign,
+  Shield,
+  Save,
+  Edit2,
+  X,
+} from 'lucide-react';
 
 interface EmployeeFinanceTabProps {
   employeeId: string;

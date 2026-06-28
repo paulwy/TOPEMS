@@ -15,9 +15,12 @@ import {
   Alert,
   Button,
 } from '@mui/material';
-import { Add as AddIcon, Refresh as RefreshIcon } from '@mui/icons-material';
+
 import { receivablePayableApi } from '../api/finance';
 import type { CollectionRecord } from '../api/finance';
+import { Plus, RefreshCw } from 'lucide-react';
+const AddIcon = Plus;
+const RefreshIcon = RefreshCw;
 
 const statusColor: Record<CollectionRecord['status'], 'default' | 'success' | 'error'> = {
   recorded: 'default',

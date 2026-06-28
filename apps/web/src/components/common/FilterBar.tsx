@@ -25,15 +25,17 @@ export interface FilterOption {
   value: string | number;
 }
 
+export type FilterValue = string | number | string[] | Date | { start: string; end: string } | undefined;
+
 export interface FilterConfig {
   id: string;
   label: string;
   type?: 'select' | 'multiselect' | 'date' | 'dateRange' | 'text' | 'number' | 'search';
   placeholder?: string;
   options?: FilterOption[];
-  value?: any;
-  defaultValue?: any;
-  onChange?: (value: any, filter: FilterConfig) => void;
+  value?: FilterValue;
+  defaultValue?: FilterValue;
+  onChange?: (value: FilterValue, filter: FilterConfig) => void;
   width?: number | string;
   /** 是否显示搜索框（用于multiselect） */
   searchable?: boolean;
@@ -41,7 +43,7 @@ export interface FilterConfig {
 
 export interface FilterBarProps {
   filters: FilterConfig[];
-  onFilterChange?: (filters: Record<string, any>) => void;
+  onFilterChange?: (filters: Record<string, FilterValue>) => void;
   onReset?: () => void;
   onSearch?: () => void;
   collapsible?: boolean;
@@ -54,7 +56,7 @@ export interface FilterBarProps {
 
 const FilterControl: React.FC<{
   filter: FilterConfig;
-  onChange: (value: any, filter: FilterConfig) => void;
+  onChange: (value: FilterValue, filter: FilterConfig) => void;
   dense?: boolean;
   variant?: 'standard' | 'outlined' | 'filled';
 }> = ({ filter, onChange, _dense, variant }) => {
@@ -71,12 +73,12 @@ const FilterControl: React.FC<{
 
   const textFieldProps = {
     size: 'small' as const,
-    variant: variant as any,
+    variant: variant as 'outlined' | 'standard' | 'filled',
     fullWidth: true,
   };
 
   const formControlProps = {
-    variant: variant as any,
+    variant: variant as 'outlined' | 'standard' | 'filled',
     fullWidth: true,
   };
 
@@ -122,12 +124,13 @@ const FilterControl: React.FC<{
             value={filter.value ?? filter.defaultValue ?? []}
             label={filter.label}
             onChange={handleChange}
-            renderValue={(selected) =>
-              (selected as any[])
-                .map((v) => filter.options?.find((o) => o.value === v)?.label)
-                .filter(Boolean)
-                .join(', ') || '全部'
-            }
+            renderValue={(selected: unknown) => {
+              const selectedArray = Array.isArray(selected) ? selected : [selected];
+              return selectedArray.map((val) => {
+                const option = filter.options?.find((o) => o.value === val);
+                return option?.label || String(val);
+              }).join(', ');
+            }}
           >
             {filter.options?.map((option) => (
               <MenuItem
@@ -219,8 +222,8 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const [expanded, setExpanded] = React.useState(defaultExpanded);
-  const [localFilters, setLocalFilters] = React.useState<Record<string, any>>(() => {
-    const initial: Record<string, any> = {};
+  const [localFilters, setLocalFilters] = React.useState<Record<string, FilterValue>>(() => {
+    const initial: Record<string, FilterValue> = {};
     filters.forEach((f) => {
       initial[f.id] = f.value ?? f.defaultValue;
     });
@@ -229,7 +232,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
   // 同步外部 filters 变化
   React.useEffect(() => {
-    const newFilters: Record<string, any> = {};
+    const newFilters: Record<string, FilterValue> = {};
     filters.forEach((f) => {
       newFilters[f.id] = f.value ?? f.defaultValue;
     });
@@ -238,7 +241,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
   // 筛选变化
   const handleFilterChange = useCallback(
-    (value: any, filter: FilterConfig) => {
+    (value: FilterValue, filter: FilterConfig) => {
       const newFilters = { ...localFilters, [filter.id]: value };
       setLocalFilters(newFilters);
       filter.onChange?.(value, filter);
@@ -249,7 +252,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
   // 重置
   const handleReset = useCallback(() => {
-    const resetFilters: Record<string, any> = {};
+    const resetFilters: Record<string, FilterValue> = {};
     filters.forEach((f) => {
       resetFilters[f.id] = f.defaultValue;
     });

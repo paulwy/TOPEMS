@@ -1,6 +1,6 @@
 import { useLocation } from 'react-router-dom';
 import { useMemo } from 'react';
-import { navigationRegistry, type NavItem } from '@/lib/navigationRegistry';
+import { navigationRegistry, type NavItem } from '@/lib/NavigationRegistry';
 
 export interface AutoBreadcrumbItem {
   label: string;

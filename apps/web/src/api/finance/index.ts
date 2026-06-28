@@ -1,16 +1,16 @@
 import { accountApi } from './account';
 import { voucherApi } from './voucher';
-import { receivablePayableApi } from './receivable-payable';
+import { receivablePayableApi } from './receivablePayable';
 import { reportApi } from './report';
-import { voucherTemplateApi } from './voucher-template';
+import { voucherTemplateApi } from './voucherTemplate';
 import { periodApi } from './period';
 import { counterpartyFinanceApi } from './counterparty';
 
 export { accountApi } from './account';
 export { voucherApi } from './voucher';
-export { receivablePayableApi } from './receivable-payable';
+export { receivablePayableApi } from './receivablePayable';
 export { reportApi } from './report';
-export { voucherTemplateApi } from './voucher-template';
+export { voucherTemplateApi } from './voucherTemplate';
 export { periodApi } from './period';
 export { counterpartyFinanceApi } from './counterparty';
 

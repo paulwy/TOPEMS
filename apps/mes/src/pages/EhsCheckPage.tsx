@@ -29,18 +29,18 @@ import {
   InputLabel,
   Stack,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Search as SearchIcon,
-  Refresh as RefreshIcon,
-  Security as SecurityIcon,
-  Warning as WarningIcon,
-  CheckCircle as CheckCircleIcon,
-} from '@mui/icons-material';
+
 import { useMesStore } from '../store/mesStore';
 import type { CreateSafetyCheckRequest, CreateInspectionPlanRequest } from '../api';
+import { AlertTriangle, CircleCheck, Pencil, Plus, RefreshCw, Search, ShieldCheck, Trash2 } from 'lucide-react';
+const AddIcon = Plus;
+const CheckCircleIcon = CircleCheck;
+const DeleteIcon = Trash2;
+const EditIcon = Pencil;
+const RefreshIcon = RefreshCw;
+const SearchIcon = Search;
+const SecurityIcon = ShieldCheck;
+const WarningIcon = AlertTriangle;
 
 const getCheckStatusColor = (status: string): 'success' | 'default' | 'error' | 'warning' | 'info' => {
   switch (status) {
@@ -207,7 +207,7 @@ export const EhsCheckPage: React.FC = () => {
       </Box>
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -215,12 +215,12 @@ export const EhsCheckPage: React.FC = () => {
                   <Typography variant="body2" color="text.secondary">检查总数</Typography>
                   <Typography variant="h4" sx={{ fontWeight: 600 }}>{ehsStatistics?.total_checks ?? 0}</Typography>
                 </Box>
-                <SecurityIcon sx={{ color: 'primary.main' }} />
+                <SecurityIcon style={{ color: 'var(--mui-palette-primary-main, #1976d2)' }} />
               </Box>
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -228,12 +228,12 @@ export const EhsCheckPage: React.FC = () => {
                   <Typography variant="body2" color="text.secondary">已完成</Typography>
                   <Typography variant="h4" sx={{ fontWeight: 600, color: 'success.main' }}>{ehsStatistics?.completed_checks ?? 0}</Typography>
                 </Box>
-                <CheckCircleIcon sx={{ color: 'success.main' }} />
+                <CheckCircleIcon style={{ color: 'var(--mui-palette-success-main, #2e7d32)' }} />
               </Box>
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -241,12 +241,12 @@ export const EhsCheckPage: React.FC = () => {
                   <Typography variant="body2" color="text.secondary">未通过</Typography>
                   <Typography variant="h4" sx={{ fontWeight: 600, color: 'error.main' }}>{ehsStatistics?.failed_checks ?? 0}</Typography>
                 </Box>
-                <WarningIcon sx={{ color: 'error.main' }} />
+                <WarningIcon style={{ color: 'var(--mui-palette-error-main, #d32f2f)' }} />
               </Box>
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -254,7 +254,7 @@ export const EhsCheckPage: React.FC = () => {
                   <Typography variant="body2" color="text.secondary">活动计划</Typography>
                   <Typography variant="h4" sx={{ fontWeight: 600, color: 'info.main' }}>{ehsStatistics?.active_plans ?? 0}</Typography>
                 </Box>
-                <SecurityIcon sx={{ color: 'info.main' }} />
+                <SecurityIcon style={{ color: 'var(--mui-palette-info-main, #0288d1)' }} />
               </Box>
             </CardContent>
           </Card>
@@ -288,11 +288,12 @@ export const EhsCheckPage: React.FC = () => {
             <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
               <TextField
                 placeholder="搜索检查单..."
-                size="small"
+                
                 value={searchKeyword}
                 onChange={(e) => setSearchKeyword(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearchChecks()}
-                InputProps={{ startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} /> }}
+                 
+            slotProps={{ input: { size: 'small', startAdornment: <SearchIcon style={{ color: '#9e9e9e', marginRight: 4, fontSize: 20 }}  />  }}}
                 sx={{ minWidth: 300 }}
               />
               <FormControl size="small" sx={{ minWidth: 150 }}>

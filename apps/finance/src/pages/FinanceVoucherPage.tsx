@@ -20,9 +20,13 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
-import { Add as AddIcon, Refresh as RefreshIcon, Search as SearchIcon } from '@mui/icons-material';
+
 import { voucherApi } from '../api/finance';
 import type { Voucher, VoucherStatus } from '../api/finance';
+import { Plus, RefreshCw, Search } from 'lucide-react';
+const AddIcon = Plus;
+const RefreshIcon = RefreshCw;
+const SearchIcon = Search;
 
 const statusLabel: Record<VoucherStatus, { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }> = {
   draft: { label: '草稿', color: 'default' },
@@ -103,13 +107,12 @@ export const FinanceVoucherPage: React.FC = () => {
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <TextField
             placeholder="搜索凭证号或摘要"
-            size="small"
+            
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && load(1)}
-            InputProps={{
-              startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />,
-            }}
+             
+            slotProps={{ input: { size: 'small', startAdornment: <SearchIcon style={{ color: '#9e9e9e', marginRight: 1, fontSize: 20 }}  />  }}}
             sx={{ minWidth: 300 }}
           />
           <FormControl size="small" sx={{ minWidth: 150 }}>

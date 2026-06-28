@@ -216,8 +216,7 @@ const MobileTaskListPage: React.FC = () => {
     loadTasks(true);
   };
 
-  const handleTaskClick = (_task: Task) => {
-  };
+  const handleTaskClick = (_task: Task) => {};
 
   const rightSwipeActions: SwipeActionItem[] = [
     {
@@ -225,16 +224,14 @@ const MobileTaskListPage: React.FC = () => {
       icon: <CheckSquare style={{ width: 20, height: 20 }} />,
       label: '完成',
       color: theme.palette.success.main,
-      onClick: () => {
-      },
+      onClick: () => {},
     },
     {
       id: 'delete',
       icon: <AlertCircle style={{ width: 20, height: 20 }} />,
       label: '删除',
       color: theme.palette.error.main,
-      onClick: () => {
-      },
+      onClick: () => {},
     },
   ];
 

@@ -1,4 +1,12 @@
 import React, { useState, useCallback } from 'react';
+import { ChevronRight, Eye, GitBranch, GitMerge, Play, RotateCcw, Save, Square, UserCheck, ZoomIn, ZoomOut } from 'lucide-react';
+const CallMerge = GitMerge;
+const CallSplit = GitBranch;
+const HowToReg = UserCheck;
+const PlayArrow = Play;
+const RestartAlt = RotateCcw;
+const Stop = Square;
+const Visibility = Eye;
 import {
   Box,
   Card,
@@ -12,19 +20,7 @@ import {
   Button,
   MenuItem,
 } from '@mui/material';
-import {
-  PlayArrow,
-  Stop,
-  HowToReg,
-  CallSplit,
-  CallMerge,
-  ChevronRight,
-  Save,
-  ZoomIn,
-  ZoomOut,
-  RestartAlt,
-  Visibility,
-} from '@mui/icons-material';
+
 
 interface FlowNode {
   id: string;
@@ -156,8 +152,8 @@ export const FlowDesignerPage: React.FC = () => {
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column', bgcolor: 'grey.50' }}>
       <Card sx={{ borderRadius: 0, borderBottom: 1, borderColor: 'divider' }}>
         <CardContent sx={{ p: 2 }}>
-          <Stack direction="row" alignItems="center" justifyContent="space-between">
-            <Stack direction="row" spacing={2} alignItems="center">
+          <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+            <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
               <Typography variant="h6" sx={{ fontWeight: 700 }}>
                 流程设计器
               </Typography>
@@ -244,7 +240,7 @@ export const FlowDesignerPage: React.FC = () => {
                         justifyContent: 'center',
                       }}
                     >
-                      <Icon sx={{ color: 'white', fontSize: 18 }} />
+                      <Icon style={{ color: 'white', fontSize: 18 }} />
                     </Box>
                     <Typography variant="body2">{nodeType.label}</Typography>
                   </Box>
@@ -382,10 +378,10 @@ export const FlowDesignerPage: React.FC = () => {
           anchor="right"
           open={showProperties}
           onClose={() => setShowProperties(false)}
-          PaperProps={{ sx: { width: 320 } }}
+          slotProps={{ paper: { sx: { width: 320 } } }}
         >
           <Box sx={{ p: 3 }}>
-            <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Stack direction="row" spacing={2} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
               <Typography variant="h6" sx={{ fontWeight: 600 }}>
                 属性配置
               </Typography>
@@ -416,30 +412,30 @@ export const FlowDesignerPage: React.FC = () => {
 
                 <TextField
                   fullWidth
-                  size="small"
                   label="节点名称"
                   value={selectedNode.label}
                   onChange={(e) => handleNodeLabelChange(e.target.value)}
+                  slotProps={{ input: { size: 'small' } }}
                 />
 
                 <TextField
                   fullWidth
-                  size="small"
                   label="节点描述"
                   multiline
                   rows={3}
                   defaultValue=""
+                  slotProps={{ input: { size: 'small' } }}
                 />
 
                 {selectedNode.type === 'approval' && (
                   <>
-                    <TextField fullWidth size="small" label="审批人" defaultValue="" />
+                    <TextField fullWidth label="审批人" defaultValue="" slotProps={{ input: { size: 'small' } }} />
                     <TextField
                       fullWidth
-                      size="small"
                       label="审批类型"
                       select
                       defaultValue="single"
+                      slotProps={{ input: { size: 'small' } }}
                     >
                       <MenuItem value="single">单人审批</MenuItem>
                       <MenuItem value="counter">会签审批</MenuItem>
@@ -447,10 +443,10 @@ export const FlowDesignerPage: React.FC = () => {
                     </TextField>
                     <TextField
                       fullWidth
-                      size="small"
                       label="超时时间（小时）"
                       type="number"
                       defaultValue={24}
+                      slotProps={{ input: { size: 'small' } }}
                     />
                   </>
                 )}
@@ -458,10 +454,10 @@ export const FlowDesignerPage: React.FC = () => {
                 {selectedNode.type === 'condition' && (
                   <TextField
                     fullWidth
-                    size="small"
                     label="条件表达式"
                     placeholder="例如: amount > 5000"
                     defaultValue=""
+                    slotProps={{ input: { size: 'small' } }}
                   />
                 )}
 

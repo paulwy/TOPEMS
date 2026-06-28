@@ -47,10 +47,10 @@ const fontSizeMap: Record<AvatarSize, string> = {
 };
 
 const statusColorMap: Record<AvatarStatus, string> = {
-  online: '#22c55e',
-  offline: '#9ca3af',
-  busy: '#ef4444',
-  away: '#f59e0b',
+  online: 'success.main',
+  offline: 'grey.400',
+  busy: 'error.main',
+  away: 'warning.main',
 };
 
 const getInitials = (name: string): string => {

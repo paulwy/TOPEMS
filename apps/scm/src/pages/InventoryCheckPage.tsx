@@ -30,21 +30,23 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Delete as DeleteIcon,
-  Search as SearchIcon,
-  Refresh as RefreshIcon,
-  PlayArrow as PlayArrowIcon,
-  CheckCircle as CheckCircleIcon,
-  FactCheck as FactCheckIcon,
-} from '@mui/icons-material';
+
+import { CheckCircle, ClipboardCheck, Play, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
+
 import {
   stockTakeApi,
   type StockTake,
   type PaginatedResult,
   type ListParams,
 } from '../api/wms';
+
+const AddIcon = Plus;
+const CheckCircleIcon = CheckCircle;
+const DeleteIcon = Trash2;
+const SearchIcon = Search;
+const RefreshIcon = RefreshCw;
+const PlayArrowIcon = Play;
+const FactCheckIcon = ClipboardCheck;
 
 const getStatusColor = (
   status: string
@@ -224,11 +226,11 @@ export const InventoryCheckPage: React.FC = () => {
       </Box>
 
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <FactCheckIcon color="primary" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <FactCheckIcon color="primary" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     盘点单总数
@@ -241,11 +243,11 @@ export const InventoryCheckPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <FactCheckIcon color="info" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <FactCheckIcon color="info" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     进行中
@@ -258,11 +260,11 @@ export const InventoryCheckPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <FactCheckIcon color="success" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <FactCheckIcon color="success" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     已完成
@@ -275,11 +277,11 @@ export const InventoryCheckPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <FactCheckIcon color="warning" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <FactCheckIcon color="warning" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     差异项
@@ -295,16 +297,15 @@ export const InventoryCheckPage: React.FC = () => {
       </Grid>
 
       <Paper sx={{ mb: 3, p: 2 }}>
-        <Stack direction="row" spacing={2} alignItems="center">
+        <Stack direction="row" spacing={2} sx={{ alignItems: 'center' }}>
           <TextField
             placeholder="搜索盘点单号..."
-            size="small"
+            
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            InputProps={{
-              startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />,
-            }}
+             
+            slotProps={{ input: { size: 'small', startAdornment: <SearchIcon style={{ color: '#9e9e9e', marginRight: 1, fontSize: 20 }}  />  }}}
             sx={{ minWidth: 300 }}
           />
           <FormControl size="small" sx={{ minWidth: 150 }}>
@@ -391,7 +392,7 @@ export const InventoryCheckPage: React.FC = () => {
                           onClick={() => handleStart(stockTake.id)}
                           title="启动"
                         >
-                          <PlayArrowIcon fontSize="small" />
+                          <PlayArrowIcon size={16} />
                         </IconButton>
                       )}
                       {stockTake.status === 'in_progress' && (
@@ -401,7 +402,7 @@ export const InventoryCheckPage: React.FC = () => {
                           onClick={() => handleComplete(stockTake.id)}
                           title="完成"
                         >
-                          <CheckCircleIcon fontSize="small" />
+                          <CheckCircleIcon size={16} />
                         </IconButton>
                       )}
                       <IconButton
@@ -410,7 +411,7 @@ export const InventoryCheckPage: React.FC = () => {
                         onClick={() => handleDelete(stockTake.id)}
                         title="删除"
                       >
-                        <DeleteIcon fontSize="small" />
+                        <DeleteIcon size={16} />
                       </IconButton>
                     </TableCell>
                   </TableRow>
@@ -475,7 +476,7 @@ export const InventoryCheckPage: React.FC = () => {
                 setNewStockTake({ ...newStockTake, planned_date: e.target.value })
               }
               fullWidth
-              InputLabelProps={{ shrink: true }}
+              slotProps={{ inputLabel: { shrink: true } }}
             />
           </Stack>
         </DialogContent>

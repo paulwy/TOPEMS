@@ -1,7 +1,14 @@
 import { Typography, Box, InputLabel, Chip, Card, CardContent, Paper } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import { Package, MapPin, CheckCircle, Factory, Truck, Boxes } from 'lucide-react';
+import {
+  Package,
+  MapPin,
+  CheckCircle,
+  Factory,
+  Truck,
+  Boxes,
+} from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { traceabilityApi } from '@/api/mes';

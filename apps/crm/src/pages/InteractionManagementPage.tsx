@@ -25,15 +25,15 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Search as SearchIcon,
-  Refresh as RefreshIcon,
-} from '@mui/icons-material';
+
 import { useCrmStore } from '../store/crmStore';
 import type { Interaction, CreateInteractionRequest, UpdateInteractionRequest } from '../api/crm';
+import { Pencil, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
+const AddIcon = Plus;
+const DeleteIcon = Trash2;
+const EditIcon = Pencil;
+const RefreshIcon = RefreshCw;
+const SearchIcon = Search;
 
 const TYPE_LABELS: Record<string, string> = {
   call: '电话',
@@ -194,13 +194,12 @@ export const InteractionManagementPage: React.FC = () => {
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <TextField
             placeholder="搜索主题、内容..."
-            size="small"
+            
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            InputProps={{
-              startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />,
-            }}
+             
+            slotProps={{ input: { size: 'small', startAdornment: <SearchIcon style={{ color: '#9e9e9e', marginRight: 4, fontSize: 20 }}  />  }}}
             sx={{ minWidth: 300 }}
           />
           <Button variant="outlined" onClick={handleSearch}>
@@ -345,7 +344,7 @@ export const InteractionManagementPage: React.FC = () => {
               type="datetime-local"
               value={newInteraction.scheduled_at || ''}
               onChange={(e) => setNewInteraction({ ...newInteraction, scheduled_at: e.target.value })}
-              InputLabelProps={{ shrink: true }}
+              slotProps={{ inputLabel: { shrink: true } }}
               fullWidth
             />
             <TextField
@@ -418,7 +417,7 @@ export const InteractionManagementPage: React.FC = () => {
                 onChange={(e) =>
                   setSelectedInteraction({ ...selectedInteraction, scheduled_at: e.target.value })
                 }
-                InputLabelProps={{ shrink: true }}
+                slotProps={{ inputLabel: { shrink: true } }}
                 fullWidth
               />
               <TextField
@@ -428,7 +427,7 @@ export const InteractionManagementPage: React.FC = () => {
                 onChange={(e) =>
                   setSelectedInteraction({ ...selectedInteraction, completed_at: e.target.value })
                 }
-                InputLabelProps={{ shrink: true }}
+                slotProps={{ inputLabel: { shrink: true } }}
                 fullWidth
               />
               <TextField

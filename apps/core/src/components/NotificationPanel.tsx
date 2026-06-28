@@ -16,21 +16,21 @@ import {
   CircularProgress,
   Tooltip,
 } from '@mui/material';
-import {
-  Refresh as RefreshIcon,
-  Settings as SettingsIcon,
-  DoneAll as DoneAllIcon,
-  Delete as DeleteIcon,
-  Info as InfoIcon,
-  Warning as WarningIcon,
-  Error as ErrorIcon,
-  CheckCircle as CheckCircleIcon,
-  Work as WorkIcon,
-  Message as MessageIcon,
-} from '@mui/icons-material';
+
 import dayjs from 'dayjs';
 import { useNotificationStore } from '../store/notificationStore';
 import type { NotificationType } from '../api/notification';
+import { AlertTriangle, Briefcase, CheckCheck, CircleCheck, CircleX, Info, MessageSquare, RefreshCw, Settings, Trash2 } from 'lucide-react';
+const CheckCircleIcon = CircleCheck;
+const DeleteIcon = Trash2;
+const DoneAllIcon = CheckCheck;
+const ErrorIcon = CircleX;
+const InfoIcon = Info;
+const MessageIcon = MessageSquare;
+const RefreshIcon = RefreshCw;
+const SettingsIcon = Settings;
+const WarningIcon = AlertTriangle;
+const WorkIcon = Briefcase;
 
 interface NotificationPanelProps {
   onClose: () => void;
@@ -185,7 +185,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose })
           borderColor: 'divider',
         }}
       >
-        <Typography variant="h6" fontWeight="medium">
+        <Typography variant="h6" sx={{ fontWeight: 500 }}>
           通知中心
         </Typography>
         <Box sx={{ display: 'flex', gap: 1 }}>
@@ -289,7 +289,7 @@ export const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose })
               color: 'text.secondary',
             }}
           >
-            <InfoIcon sx={{ fontSize: 48, mb: 2, opacity: 0.3 }} />
+            <InfoIcon style={{ fontSize: 48, marginBottom: 8, opacity: 0.3 }} />
             <Typography variant="body2">
               {activeTab === 'unread' ? '暂无未读通知' : '暂无通知'}
             </Typography>

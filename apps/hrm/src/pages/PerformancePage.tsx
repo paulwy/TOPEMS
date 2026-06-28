@@ -22,16 +22,18 @@ import {
   Grid,
   LinearProgress,
 } from '@mui/material';
-import {
-  CheckCircle as CheckCircleIcon,
-  Send as SendIcon,
-  Refresh as RefreshIcon,
-  EmojiEvents as EmojiEventsIcon,
-} from '@mui/icons-material';
+
+import { CheckCircle, RefreshCw, Send, Trophy } from 'lucide-react';
+
 import {
   performanceReviewApi,
   type PerformanceReview,
 } from '../api/hrm';
+
+const RefreshIcon = RefreshCw;
+const CheckCircleIcon = CheckCircle;
+const SendIcon = Send;
+const EmojiEventsIcon = Trophy;
 
 const getStatusColor = (
   status: string
@@ -148,11 +150,11 @@ export const PerformancePage: React.FC = () => {
       </Box>
 
       <Grid container spacing={3} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <EmojiEventsIcon color="primary" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <EmojiEventsIcon color="primary" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     考核总数
@@ -165,11 +167,11 @@ export const PerformancePage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <EmojiEventsIcon color="success" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <EmojiEventsIcon color="success" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     已通过
@@ -182,11 +184,11 @@ export const PerformancePage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <EmojiEventsIcon color="info" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <EmojiEventsIcon color="info" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     进行中
@@ -199,11 +201,11 @@ export const PerformancePage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
-              <Stack direction="row" alignItems="center" spacing={2}>
-                <EmojiEventsIcon color="warning" fontSize="large" />
+              <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
+                <EmojiEventsIcon color="warning" size={24} />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
                     平均评分
@@ -261,7 +263,7 @@ export const PerformancePage: React.FC = () => {
                       <TableCell>{review.self_rating || '-'}</TableCell>
                       <TableCell>{review.manager_rating || '-'}</TableCell>
                       <TableCell>
-                        <Stack direction="row" alignItems="center" spacing={1}>
+                        <Stack direction="row" sx={{ alignItems: 'center' }} spacing={1}>
                           <Box sx={{ width: 60 }}>
                             <LinearProgress
                               variant="determinate"
@@ -287,7 +289,7 @@ export const PerformancePage: React.FC = () => {
                             onClick={() => handleSubmit(review.id)}
                             title="提交"
                           >
-                            <SendIcon fontSize="small" />
+                            <SendIcon size={16} />
                           </IconButton>
                         )}
                         {(review.status === 'submitted' || review.status === 'in_progress') && (
@@ -297,7 +299,7 @@ export const PerformancePage: React.FC = () => {
                             onClick={() => handleApprove(review.id)}
                             title="审批"
                           >
-                            <CheckCircleIcon fontSize="small" />
+                            <CheckCircleIcon size={16} />
                           </IconButton>
                         )}
                       </TableCell>

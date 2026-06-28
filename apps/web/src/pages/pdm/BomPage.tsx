@@ -16,7 +16,15 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
-import { Plus, Edit, Delete, Package, GitCompare, CheckCircle, Archive } from 'lucide-react';
+import {
+  Plus,
+  Edit,
+  Delete,
+  Package,
+  GitCompare,
+  CheckCircle,
+  Archive,
+} from 'lucide-react';
 import { bomApi, type BomVersion, type BomItem, type CreateBomVersionRequest } from '@/api/pdm/bom';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';

@@ -3,7 +3,7 @@
  */
 
 import { useQuery } from '@tanstack/react-query';
-import type { ProjectFinance, ProjectBudgetItem } from '@/types/pm-finance';
+import type { ProjectFinance, ProjectBudgetItem } from '@/types/pmFinance';
 import { apiClient } from '@/api/client';
 
 /**

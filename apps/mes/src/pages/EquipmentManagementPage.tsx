@@ -28,16 +28,16 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Search as SearchIcon,
-  Refresh as RefreshIcon,
-  Build as BuildIcon,
-} from '@mui/icons-material';
+
 import { useMesStore } from '../store/mesStore';
 import type { CreateEquipmentRequest } from '../api';
+import { Pencil, Plus, RefreshCw, Search, Trash2, Wrench } from 'lucide-react';
+const AddIcon = Plus;
+const BuildIcon = Wrench;
+const DeleteIcon = Trash2;
+const EditIcon = Pencil;
+const RefreshIcon = RefreshCw;
+const SearchIcon = Search;
 
 const getStatusColor = (status: string): 'success' | 'default' | 'error' | 'warning' | 'info' => {
   switch (status) {
@@ -150,7 +150,7 @@ export const EquipmentManagementPage: React.FC = () => {
       </Box>
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Typography variant="body2" color="text.secondary">设备总数</Typography>
@@ -158,7 +158,7 @@ export const EquipmentManagementPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Typography variant="body2" color="text.secondary">使用中</Typography>
@@ -166,7 +166,7 @@ export const EquipmentManagementPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Typography variant="body2" color="text.secondary">维护中</Typography>
@@ -174,7 +174,7 @@ export const EquipmentManagementPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Card>
             <CardContent>
               <Typography variant="body2" color="text.secondary">已报废</Typography>
@@ -188,11 +188,12 @@ export const EquipmentManagementPage: React.FC = () => {
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <TextField
             placeholder="搜索设备编码、名称..."
-            size="small"
+            
             value={searchKeyword}
             onChange={(e) => setSearchKeyword(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-            InputProps={{ startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} /> }}
+             
+            slotProps={{ input: { size: 'small', startAdornment: <SearchIcon style={{ color: '#9e9e9e', marginRight: 4, fontSize: 20 }}  />  }}}
             sx={{ minWidth: 300 }}
           />
           <FormControl size="small" sx={{ minWidth: 150 }}>
@@ -290,7 +291,7 @@ export const EquipmentManagementPage: React.FC = () => {
             <TextField label="分类" value={newEquipment.category || ''} onChange={(e) => setNewEquipment({ ...newEquipment, category: e.target.value })} fullWidth />
             <TextField label="位置" value={newEquipment.location || ''} onChange={(e) => setNewEquipment({ ...newEquipment, location: e.target.value })} fullWidth />
             <TextField label="负责人" value={newEquipment.responsible_person || ''} onChange={(e) => setNewEquipment({ ...newEquipment, responsible_person: e.target.value })} fullWidth />
-            <TextField label="采购日期" type="date" value={newEquipment.purchase_date || ''} onChange={(e) => setNewEquipment({ ...newEquipment, purchase_date: e.target.value })} fullWidth InputLabelProps={{ shrink: true }} />
+            <TextField label="采购日期" type="date" value={newEquipment.purchase_date || ''} onChange={(e) => setNewEquipment({ ...newEquipment, purchase_date: e.target.value })} fullWidth slotProps={{ inputLabel: { shrink: true } }} />
           </Box>
         </DialogContent>
         <DialogActions>

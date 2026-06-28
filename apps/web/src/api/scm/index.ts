@@ -2,36 +2,36 @@ import apiClient from '../client';
 import type { ApiResponse } from '../client';
 
 import { supplierApi } from './supplier';
-import { purchaseOrderApi } from './purchase-order';
-import { purchaseItemApi } from './purchase-item';
-import { supplierEvaluationApi } from './supplier-evaluation';
-import { mrpPlanApi } from './mrp-plan';
-import { mrpSuggestionApi } from './mrp-suggestion';
-import { incomingInspectionApi } from './incoming-inspection';
-import { inspectionRecordApi } from './inspection-record';
-import { inventoryTurnoverApi } from './inventory-turnover';
-import { supplyChainDashboardApi } from './supply-chain-dashboard';
-import { priceComparisonApi } from './price-comparison';
-import { syncRecordApi } from './sync-record';
-import { auditLogApi } from './audit-log';
-import { deliveryAppointmentApi } from './delivery-appointment';
+import { purchaseOrderApi } from './purchaseOrder';
+import { purchaseItemApi } from './purchaseItem';
+import { supplierEvaluationApi } from './supplierEvaluation';
+import { mrpPlanApi } from './mrpPlan';
+import { mrpSuggestionApi } from './mrpSuggestion';
+import { incomingInspectionApi } from './incomingInspection';
+import { inspectionRecordApi } from './inspectionRecord';
+import { inventoryTurnoverApi } from './inventoryTurnover';
+import { supplyChainDashboardApi } from './supplyChainDashboard';
+import { priceComparisonApi } from './priceComparison';
+import { syncRecordApi } from './syncRecord';
+import { auditLogApi } from './auditLog';
+import { deliveryAppointmentApi } from './deliveryAppointment';
 
 export * from './types';
 
 export { supplierApi } from './supplier';
-export { purchaseOrderApi } from './purchase-order';
-export { purchaseItemApi } from './purchase-item';
-export { supplierEvaluationApi } from './supplier-evaluation';
-export { mrpPlanApi } from './mrp-plan';
-export { mrpSuggestionApi } from './mrp-suggestion';
-export { incomingInspectionApi } from './incoming-inspection';
-export { inspectionRecordApi } from './inspection-record';
-export { inventoryTurnoverApi } from './inventory-turnover';
-export { supplyChainDashboardApi } from './supply-chain-dashboard';
-export { priceComparisonApi } from './price-comparison';
-export { syncRecordApi } from './sync-record';
-export { auditLogApi } from './audit-log';
-export { deliveryAppointmentApi } from './delivery-appointment';
+export { purchaseOrderApi } from './purchaseOrder';
+export { purchaseItemApi } from './purchaseItem';
+export { supplierEvaluationApi } from './supplierEvaluation';
+export { mrpPlanApi } from './mrpPlan';
+export { mrpSuggestionApi } from './mrpSuggestion';
+export { incomingInspectionApi } from './incomingInspection';
+export { inspectionRecordApi } from './inspectionRecord';
+export { inventoryTurnoverApi } from './inventoryTurnover';
+export { supplyChainDashboardApi } from './supplyChainDashboard';
+export { priceComparisonApi } from './priceComparison';
+export { syncRecordApi } from './syncRecord';
+export { auditLogApi } from './auditLog';
+export { deliveryAppointmentApi } from './deliveryAppointment';
 
 export const scmApi = {
   suppliers: supplierApi,

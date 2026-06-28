@@ -1,4 +1,13 @@
 import React, { useState, useMemo } from 'react';
+import { Ban, BellRing, CircleCheck, Eye, Play, RefreshCw, RotateCcw, Search, X } from 'lucide-react';
+const Block = Ban;
+const Cancel = X;
+const CheckCircle = CircleCheck;
+const NotificationsActive = BellRing;
+const PlayArrow = Play;
+const Refresh = RefreshCw;
+const RotateLeft = RotateCcw;
+const Visibility = Eye;
 import {
   Box,
   Card,
@@ -27,17 +36,7 @@ import {
   Paper,
   Divider,
 } from '@mui/material';
-import {
-  Search,
-  Visibility,
-  NotificationsActive,
-  Block,
-  RotateLeft,
-  Refresh,
-  PlayArrow,
-  CheckCircle,
-  Cancel,
-} from '@mui/icons-material';
+
 
 interface FlowInstance {
   id: string;
@@ -289,7 +288,7 @@ export const FlowMonitorPage: React.FC = () => {
     <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50', p: 3 }}>
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Stack direction="row" alignItems="center" spacing={2}>
+          <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
             <Box
               sx={{
                 width: 48,
@@ -301,7 +300,7 @@ export const FlowMonitorPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <PlayArrow sx={{ color: 'primary.main' }} />
+              <PlayArrow style={{ color: '#1976d2' }} />
             </Box>
             <Box>
               <Typography variant="h5" sx={{ fontWeight: 700 }}>
@@ -354,15 +353,15 @@ export const FlowMonitorPage: React.FC = () => {
 
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Stack direction="row" alignItems="center" spacing={2}>
+          <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
             <TextField
-              size="small"
               placeholder="搜索实例ID或发起人..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               slotProps={{
                 input: {
-                  startAdornment: <Search sx={{ mr: 1, color: 'text.disabled' }} />,
+                  size: 'small',
+                  startAdornment: <Search style={{ marginRight: 4, color: '#bdbdbd' }} />,
                 },
               }}
               sx={{ flex: 1, maxWidth: 300 }}

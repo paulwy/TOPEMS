@@ -199,7 +199,7 @@ export interface StatusBadgeProps {
   disabled?: boolean;
 
   /** 自定义样式 */
-  sx?: any;
+  sx?: import('@mui/material').SxProps<import('@mui/material').Theme>;
 
   /** 使用Chip组件渲染（默认true） */
   useChip?: boolean;
@@ -605,7 +605,14 @@ const SIZE_CONFIG: Record<StatusSize, 'small' | 'medium'> = {
   lg: 'medium', // MUI Chip max size is medium; icon sizing handled below
 };
 
-const SIZE_STYLES: Record<StatusSize, any> = {
+interface SizeStyleConfig {
+  fontSize: string;
+  fontWeight: number;
+  height: number;
+  '& .MuiBox-root > svg'?: { fontSize: string };
+}
+
+const SIZE_STYLES: Record<StatusSize, SizeStyleConfig> = {
   sm: {
     height: 24,
     fontSize: '0.75rem',
@@ -625,21 +632,28 @@ const SIZE_STYLES: Record<StatusSize, any> = {
 
 // ============ 变体样式映射 ============
 
-const VARIANT_STYLES: Record<StatusVariant, any> = {
+interface VariantStyleResult {
+  sx: import('@mui/material').SxProps<import('@mui/material').Theme>;
+  bgcolor?: string;
+  color?: string;
+  borderColor?: string;
+}
+
+const VARIANT_STYLES: Record<StatusVariant, (color: StatusColor) => VariantStyleResult> = {
   filled: (color: StatusColor) => ({
     sx: {
       bgcolor: color === 'default' ? 'grey.400' : `${color}.main`,
-      color: color === 'default' ? '#fff' : '#fff',
+      color: 'common.white',
     },
   }),
-  outlined: {
-    variant: 'outlined',
-  },
+  outlined: () => ({
+    sx: {},
+  }),
   soft: (color: StatusColor) => ({
     sx: {
       bgcolor: `${color}.light`,
       color: `${color}.dark`,
-      border: 'none',
+      borderColor: 'none',
     },
   }),
 };
@@ -741,7 +755,7 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
   const chipSize = SIZE_CONFIG[size];
   const chipSx = {
     ...SIZE_STYLES[size],
-    ...(variant === 'soft' ? VARIANT_STYLES.soft(chipColor) : {}),
+    ...(variant === 'soft' ? VARIANT_STYLES.soft(chipColor).sx : {}),
     ...(clickable ? { cursor: 'pointer' } : {}),
     ...(disabled ? { opacity: 0.5, cursor: 'not-allowed' } : {}),
     ...sx,

@@ -11,17 +11,19 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material';
-import {
-  LocalShipping as LocalShippingIcon,
-  Business as BusinessIcon,
-  Inventory2 as InventoryIcon,
-  Store as StoreIcon,
-  RequestQuote as RequestQuoteIcon,
-  Warning as WarningIcon,
-  Assignment as AssignmentIcon,
-  Assessment as AssessmentIcon,
-} from '@mui/icons-material';
+
+import { Building2, ClipboardList, Truck, Package, Store, AlertTriangle, FileText, BarChart3 } from 'lucide-react';
+
 import { useScmStore } from '../store/scmStore';
+
+const BusinessIcon = Building2;
+const AssignmentIcon = ClipboardList;
+const LocalShippingIcon = Truck;
+const InventoryIcon = Package;
+const StoreIcon = Store;
+const WarningIcon = AlertTriangle;
+const RequestQuoteIcon = FileText;
+const AssessmentIcon = BarChart3;
 
 interface StatItem {
   id: string;
@@ -44,7 +46,7 @@ export const DashboardPage: React.FC = () => {
           id: 'suppliers',
           title: '供应商总数',
           value: 128,
-          icon: <BusinessIcon fontSize="large" />,
+          icon: <BusinessIcon size={24} />,
           color: 'primary',
           change: '本月新增 6 家',
         },
@@ -52,7 +54,7 @@ export const DashboardPage: React.FC = () => {
           id: 'purchase-orders',
           title: '采购订单',
           value: 56,
-          icon: <AssignmentIcon fontSize="large" />,
+          icon: <AssignmentIcon size={24} />,
           color: 'info',
           change: '待审核 12 单',
         },
@@ -60,7 +62,7 @@ export const DashboardPage: React.FC = () => {
           id: 'receipts',
           title: '入库单据',
           value: 42,
-          icon: <LocalShippingIcon fontSize="large" />,
+          icon: <LocalShippingIcon size={24} />,
           color: 'success',
           change: '本周完成 18 单',
         },
@@ -68,7 +70,7 @@ export const DashboardPage: React.FC = () => {
           id: 'inventory',
           title: '库存 SKU',
           value: 1834,
-          icon: <InventoryIcon fontSize="large" />,
+          icon: <InventoryIcon size={24} />,
           color: 'warning',
           change: '总价值 ¥2.3M',
         },
@@ -76,7 +78,7 @@ export const DashboardPage: React.FC = () => {
           id: 'warehouses',
           title: '仓库数量',
           value: 8,
-          icon: <StoreIcon fontSize="large" />,
+          icon: <StoreIcon size={24} />,
           color: 'primary',
           change: '覆盖 6 大区',
         },
@@ -84,7 +86,7 @@ export const DashboardPage: React.FC = () => {
           id: 'alerts',
           title: '库存预警',
           value: 14,
-          icon: <WarningIcon fontSize="large" />,
+          icon: <WarningIcon size={24} />,
           color: 'error',
           change: '需补货 9 项',
         },
@@ -92,7 +94,7 @@ export const DashboardPage: React.FC = () => {
           id: 'inquiries',
           title: '询价单',
           value: 23,
-          icon: <RequestQuoteIcon fontSize="large" />,
+          icon: <RequestQuoteIcon size={24} />,
           color: 'info',
           change: '进行中 11 单',
         },
@@ -100,7 +102,7 @@ export const DashboardPage: React.FC = () => {
           id: 'reports',
           title: '本月报表',
           value: 9,
-          icon: <AssessmentIcon fontSize="large" />,
+          icon: <AssessmentIcon size={24} />,
           color: 'success',
           change: '已生成 7 份',
         },
@@ -135,7 +137,7 @@ export const DashboardPage: React.FC = () => {
         <>
           <Grid container spacing={3} sx={{ mb: 4 }}>
             {stats.map((stat) => (
-              <Grid item xs={12} sm={6} md={3} key={stat.id}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <Card
                   sx={{
                     height: '100%',
@@ -144,7 +146,7 @@ export const DashboardPage: React.FC = () => {
                   }}
                 >
                   <CardContent>
-                    <Stack direction="row" alignItems="center" spacing={2}>
+                    <Stack direction="row" sx={{ alignItems: 'center' }} spacing={2}>
                       <Box sx={{ color: `${stat.color}.main` }}>{stat.icon}</Box>
                       <Box sx={{ flexGrow: 1 }}>
                         <Typography variant="body2" color="text.secondary">
@@ -167,7 +169,7 @@ export const DashboardPage: React.FC = () => {
           </Grid>
 
           <Grid container spacing={3}>
-            <Grid item xs={12} md={8}>
+            <Grid size={{ xs: 12, md: 8 }}>
               <Paper sx={{ p: 3, height: 360 }}>
                 <Typography variant="h6" gutterBottom>
                   采购金额月度趋势
@@ -185,7 +187,7 @@ export const DashboardPage: React.FC = () => {
                 </Box>
               </Paper>
             </Grid>
-            <Grid item xs={12} md={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Paper sx={{ p: 3, height: 360 }}>
                 <Typography variant="h6" gutterBottom>
                   库存预警分布

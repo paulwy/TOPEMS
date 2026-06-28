@@ -25,15 +25,17 @@ import {
   CircularProgress,
   Alert,
 } from '@mui/material';
-import {
-  Add as AddIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Search as SearchIcon,
-  Refresh as RefreshIcon,
-} from '@mui/icons-material';
+
+import { Pencil, Plus, RefreshCw, Search, Trash2 } from 'lucide-react';
+const AddIcon = Plus;
+const RefreshIcon = RefreshCw;
+const SearchIcon = Search;
+
 import { accountApi } from '../api/finance';
 import type { Account, AccountCategory } from '../api/finance';
+
+const DeleteIcon = Trash2;
+const EditIcon = Pencil;
 
 const categoryLabel: Record<AccountCategory, string> = {
   asset: '资产类',
@@ -145,13 +147,12 @@ export const FinanceAccountPage: React.FC = () => {
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
           <TextField
             placeholder="搜索科目编码或名称"
-            size="small"
+            
             value={keyword}
             onChange={(e) => setKeyword(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && load(1)}
-            InputProps={{
-              startAdornment: <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />,
-            }}
+             
+            slotProps={{ input: { size: 'small', startAdornment: <SearchIcon style={{ color: '#9e9e9e', marginRight: 1, fontSize: 20 }}  />  }}}
             sx={{ minWidth: 300 }}
           />
           <FormControl size="small" sx={{ minWidth: 150 }}>
@@ -229,10 +230,10 @@ export const FinanceAccountPage: React.FC = () => {
                     </TableCell>
                     <TableCell align="right">
                       <IconButton size="small" onClick={() => { setEditing(account); setEditOpen(true); }}>
-                        <EditIcon fontSize="small" />
+                        <EditIcon size={16} />
                       </IconButton>
                       <IconButton size="small" color="error" onClick={() => handleDelete(account.id)}>
-                        <DeleteIcon fontSize="small" />
+                        <DeleteIcon size={16} />
                       </IconButton>
                     </TableCell>
                   </TableRow>

@@ -146,4 +146,168 @@ export const PageLoadingFallback: React.FC<{ text?: string }> = ({ text = '页�
   </Box>
 );
 
+/**
+ * 页面级骨架屏组件
+ * 用于首次加载时显示页面的基本布局结构
+ */
+export const PageSkeleton: React.FC<{
+  showHeader?: boolean;
+  showSidebar?: boolean;
+  contentLines?: number;
+}> = ({ showHeader = true, showSidebar = true, contentLines = 6 }) => {
+  const SkeletonBox: React.FC<{ width?: string | number; height?: number; delay?: string }> = ({
+    width = '100%',
+    height = 20,
+    delay = '0s',
+  }) => (
+    <Box
+      sx={{
+        width,
+        height,
+        borderRadius: 1,
+        backgroundColor: 'grey.200',
+        animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        animationDelay: delay,
+      }}
+    />
+  );
+
+  return (
+    <Box
+      sx={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        bgcolor: 'background.default',
+      }}
+    >
+      {showHeader && (
+        <Box
+          sx={{
+            height: 64,
+            px: 3,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            borderBottom: 1,
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+          }}
+        >
+          <SkeletonBox
+            width={120}
+            height={24}
+          />
+          <Box sx={{ flex: 1 }} />
+          <SkeletonBox
+            width={80}
+            height={32}
+          />
+          <SkeletonBox
+            width={32}
+            height={32}
+          />
+        </Box>
+      )}
+
+      <Box sx={{ display: 'flex', flex: 1 }}>
+        {showSidebar && (
+          <Box
+            sx={{
+              width: 240,
+              borderRight: 1,
+              borderColor: 'divider',
+              p: 2,
+              bgcolor: 'background.paper',
+              display: { xs: 'none', md: 'block' },
+            }}
+          >
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              {[1, 2, 3, 4, 5].map((i) => (
+                <SkeletonBox
+                  key={i}
+                  width={i === 1 ? 60 : 100}
+                  height={36}
+                  delay={`${i * 0.1}s`}
+                />
+              ))}
+            </Box>
+          </Box>
+        )}
+
+        <Box
+          sx={{
+            flex: 1,
+            p: { xs: 2, sm: 3 },
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 3,
+          }}
+        >
+          {/* 统计卡片 */}
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' },
+              gap: 2,
+            }}
+          >
+            {[1, 2, 3, 4].map((i) => (
+              <Box
+                key={i}
+                sx={{
+                  p: 2,
+                  borderRadius: 2,
+                  bgcolor: 'background.paper',
+                  border: 1,
+                  borderColor: 'divider',
+                }}
+              >
+                <SkeletonBox
+                  width={80}
+                  height={16}
+                  delay={`${i * 0.05}s`}
+                />
+                <Box sx={{ mt: 1 }}>
+                  <SkeletonBox
+                    width={60}
+                    height={32}
+                    delay={`${i * 0.05 + 0.1}s`}
+                  />
+                </Box>
+              </Box>
+            ))}
+          </Box>
+
+          {/* 内容区域 */}
+          <Box
+            sx={{
+              p: 3,
+              borderRadius: 2,
+              bgcolor: 'background.paper',
+              border: 1,
+              borderColor: 'divider',
+            }}
+          >
+            <SkeletonBox
+              width={120}
+              height={24}
+            />
+            <Box sx={{ mt: 2, display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              {Array.from({ length: contentLines }).map((_, i) => (
+                <SkeletonBox
+                  key={i}
+                  width={i === contentLines - 1 ? '70%' : '100%'}
+                  height={16}
+                  delay={`${i * 0.05}s`}
+                />
+              ))}
+            </Box>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
+  );
+};
+
 export default LoadingFallback;

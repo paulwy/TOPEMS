@@ -5,7 +5,14 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Eye, EyeOff, Lock, User, Shield, Fingerprint } from 'lucide-react';
+import {
+  Eye,
+  EyeOff,
+  Lock,
+  User,
+  Shield,
+  Fingerprint,
+} from 'lucide-react';
 import { isDevelopment } from '../../config/runtime';
 import { useAppStore } from '../../store';
 

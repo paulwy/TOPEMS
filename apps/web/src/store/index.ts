@@ -80,8 +80,11 @@ interface AppState {
 
   // UI 状态
   sidebarOpen: boolean;
+  sidebarCollapsed: boolean;
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
+  toggleSidebarCollapsed: () => void;
+  setSidebarCollapsed: (collapsed: boolean) => void;
 }
 
 const defaultNotificationSettings: NotificationSettings = {
@@ -167,8 +170,11 @@ export const useAppStore = create<AppState>()(
 
       // UI 状态
       sidebarOpen: true,
+      sidebarCollapsed: false,
       toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
+      toggleSidebarCollapsed: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
+      setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
     }),
     {
       name: 'topems-app-storage',
@@ -177,6 +183,7 @@ export const useAppStore = create<AppState>()(
         theme: state.theme,
         user: state.user,
         sidebarOpen: state.sidebarOpen,
+        sidebarCollapsed: state.sidebarCollapsed,
         notificationSettings: state.notificationSettings,
         shortcuts: state.shortcuts,
       }),

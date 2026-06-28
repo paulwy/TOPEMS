@@ -6,7 +6,7 @@ import {
   Popover,
   Box,
 } from '@mui/material';
-import NotificationsIcon from '@mui/icons-material/Notifications';
+import { Bell as NotificationsIcon } from 'lucide-react';
 import NotificationPanel from './NotificationPanel';
 import { useNotificationStore } from '../store/notificationStore';
 

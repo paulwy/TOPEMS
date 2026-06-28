@@ -534,9 +534,7 @@ const FlowApprovalDetailPage: React.FC = () => {
                     marginBottom: 8,
                   }}
                 />
-                <Typography sx={{ color: 'grey.500' }}>
-                  流程尚未开始处理
-                </Typography>
+                <Typography sx={{ color: 'grey.500' }}>流程尚未开始处理</Typography>
               </Box>
             ) : (
               <Box sx={{ position: 'relative' }}>
@@ -565,7 +563,13 @@ const FlowApprovalDetailPage: React.FC = () => {
                       <PlayCircle size={20} />
                     </Avatar>
                     <Paper
-                      sx={{ flex: 1, p: 2, bgcolor: 'primary.50', border: 1, borderColor: 'primary.100' }}
+                      sx={{
+                        flex: 1,
+                        p: 2,
+                        bgcolor: 'primary.50',
+                        border: 1,
+                        borderColor: 'primary.100',
+                      }}
                     >
                       <Typography
                         variant='body2'
@@ -605,11 +609,7 @@ const FlowApprovalDetailPage: React.FC = () => {
                             zIndex: 1,
                           }}
                         >
-                          {isApproved ? (
-                            <CheckCircle2 size={20} />
-                          ) : (
-                            <XCircle size={20} />
-                          )}
+                          {isApproved ? <CheckCircle2 size={20} /> : <XCircle size={20} />}
                         </Avatar>
                         <Paper
                           sx={{
@@ -642,7 +642,10 @@ const FlowApprovalDetailPage: React.FC = () => {
                             spacing={0.5}
                             sx={{ alignItems: 'center', mb: 0.5 }}
                           >
-                            <User size={14} style={{ color: 'grey.500' }} />
+                            <User
+                              size={14}
+                              style={{ color: 'grey.500' }}
+                            />
                             <Typography
                               variant='caption'
                               sx={{ color: 'grey.600' }}
@@ -655,7 +658,10 @@ const FlowApprovalDetailPage: React.FC = () => {
                             spacing={0.5}
                             sx={{ alignItems: 'center', mb: 0.5 }}
                           >
-                            <Clock size={14} style={{ color: 'grey.400' }} />
+                            <Clock
+                              size={14}
+                              style={{ color: 'grey.400' }}
+                            />
                             <Typography
                               variant='caption'
                               sx={{ color: 'grey.500' }}
@@ -785,9 +791,7 @@ const FlowApprovalDetailPage: React.FC = () => {
                     marginBottom: 8,
                   }}
                 />
-                <Typography sx={{ color: 'grey.500' }}>
-                  暂无关联表单数据
-                </Typography>
+                <Typography sx={{ color: 'grey.500' }}>暂无关联表单数据</Typography>
                 <Typography
                   variant='caption'
                   sx={{ color: 'grey.400', display: 'block', mt: 0.5 }}
@@ -969,7 +973,10 @@ const FlowApprovalDetailPage: React.FC = () => {
               当前任务: {approval.task_name}
             </Typography>
           )}
-          <Stack spacing={2} sx={{ mt: 1 }}>
+          <Stack
+            spacing={2}
+            sx={{ mt: 1 }}
+          >
             <TextField
               size='small'
               label='转办目标人员 *'

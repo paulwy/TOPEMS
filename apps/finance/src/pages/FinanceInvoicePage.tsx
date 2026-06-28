@@ -17,9 +17,12 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
-import { Add as AddIcon, Refresh as RefreshIcon } from '@mui/icons-material';
+
 import { invoiceApi } from '../api/finance';
 import type { Invoice, InvoiceStatus } from '../api/finance';
+import { Plus, RefreshCw } from 'lucide-react';
+const AddIcon = Plus;
+const RefreshIcon = RefreshCw;
 
 const statusColor: Record<InvoiceStatus, 'default' | 'primary' | 'success' | 'warning' | 'error'> = {
   draft: 'default',

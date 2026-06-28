@@ -27,13 +27,13 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material';
-import {
-  Refresh as RefreshIcon,
-  AutoGraph as AutoGraphIcon,
-  Add as AddIcon,
-} from '@mui/icons-material';
+
 import { useCrmStore } from '../store/crmStore';
 import type { CreateSalesForecastRequest } from '../api/crm';
+import { Plus, RefreshCw, TrendingUp } from 'lucide-react';
+const AddIcon = Plus;
+const AutoGraphIcon = TrendingUp;
+const RefreshIcon = RefreshCw;
 
 const PERIOD_TYPES: Array<{ value: 'monthly' | 'quarterly' | 'yearly'; label: string }> = [
   { value: 'monthly', label: '月度' },
@@ -131,7 +131,7 @@ export const SalesForecastPage: React.FC = () => {
       )}
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid xs={12} sm={6} md={4}>
+        <Grid>
           <Card>
             <CardContent>
               <Typography variant="body2" color="text.secondary">预测总额</Typography>
@@ -141,7 +141,7 @@ export const SalesForecastPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid xs={12} sm={6} md={4}>
+        <Grid>
           <Card>
             <CardContent>
               <Typography variant="body2" color="text.secondary">实际金额</Typography>
@@ -151,7 +151,7 @@ export const SalesForecastPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid xs={12} sm={12} md={4}>
+        <Grid>
           <Card>
             <CardContent>
               <Typography variant="body2" color="text.secondary">平均置信度</Typography>

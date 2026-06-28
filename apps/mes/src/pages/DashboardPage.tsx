@@ -10,17 +10,17 @@ import {
   Alert,
   Chip,
 } from '@mui/material';
-import {
-  Factory as FactoryIcon,
-  Assignment as AssignmentIcon,
-  Build as BuildIcon,
-  Speed as SpeedIcon,
-  Science as ScienceIcon,
-  Verified as VerifiedIcon,
-  Warning as WarningIcon,
-  Security as SecurityIcon,
-} from '@mui/icons-material';
+
 import { useMesStore } from '../store/mesStore';
+import { AlertTriangle, BadgeCheck, ClipboardList, Factory, FlaskConical, Gauge, ShieldCheck, Wrench } from 'lucide-react';
+const AssignmentIcon = ClipboardList;
+const BuildIcon = Wrench;
+const FactoryIcon = Factory;
+const ScienceIcon = FlaskConical;
+const SecurityIcon = ShieldCheck;
+const SpeedIcon = Gauge;
+const VerifiedIcon = BadgeCheck;
+const WarningIcon = AlertTriangle;
 
 interface StatCardProps {
   title: string;
@@ -103,31 +103,31 @@ export const DashboardPage: React.FC = () => {
         MES 生产概览
       </Typography>
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard title="生产订单" value={mesDashboard?.total_orders ?? 0} icon={<AssignmentIcon />} color="primary" suffix="个" />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard title="进行中" value={mesDashboard?.in_progress_orders ?? 0} icon={<FactoryIcon />} color="warning" suffix="个" />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard title="工作站" value={mesDashboard?.active_workstations ?? 0} icon={<BuildIcon />} color="success" suffix="个" />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard title="设备使用" value={mesDashboard?.equipment_in_use ?? 0} icon={<SpeedIcon />} color="info" suffix="台" />
         </Grid>
       </Grid>
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard title="今日记录" value={mesDashboard?.today_records ?? 0} icon={<AssignmentIcon />} color="primary" suffix="条" />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard title="月度产量" value={(mesDashboard?.total_output ?? 0).toLocaleString()} icon={<FactoryIcon />} color="success" suffix="件" />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard title="合格率" value={mesDashboard?.quality_rate ?? 0} icon={<VerifiedIcon />} color="info" suffix="%" />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard title="设备维护" value={mesDashboard?.equipment_maintenance ?? 0} icon={<BuildIcon />} color="warning" suffix="台" />
         </Grid>
       </Grid>
@@ -136,22 +136,22 @@ export const DashboardPage: React.FC = () => {
         LIMS / QMS / EHS 概览
       </Typography>
       <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard title="样品总数" value={0} icon={<ScienceIcon />} color="primary" suffix="个" />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard title="待检任务" value={0} icon={<AssignmentIcon />} color="warning" suffix="个" />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard title="质量问题" value={0} icon={<WarningIcon />} color="error" suffix="个" />
         </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <StatCard title="安全检查" value={0} icon={<SecurityIcon />} color="success" suffix="次" />
         </Grid>
       </Grid>
 
       <Grid container spacing={2}>
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <AssignmentIcon color="primary" />
@@ -175,7 +175,7 @@ export const DashboardPage: React.FC = () => {
           </Paper>
         </Grid>
 
-        <Grid item xs={12} md={6}>
+        <Grid size={{ xs: 12, md: 6 }}>
           <Paper sx={{ p: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <FactoryIcon color="primary" />
