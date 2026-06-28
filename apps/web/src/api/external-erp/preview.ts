@@ -6,7 +6,7 @@ export const previewApi = {
     params?: {
       keyword?: string;
       page?: number;
-      page_size?: number;
+      pagesize?: number;
     }
   ) =>
     apiClient.integration.get(
@@ -19,7 +19,7 @@ export const previewApi = {
     params?: {
       keyword?: string;
       page?: number;
-      page_size?: number;
+      pagesize?: number;
     }
   ) =>
     apiClient.integration.get(
@@ -32,7 +32,7 @@ export const previewApi = {
     params?: {
       keyword?: string;
       page?: number;
-      page_size?: number;
+      pagesize?: number;
     }
   ) =>
     apiClient.integration.get(
@@ -46,7 +46,7 @@ export const previewApi = {
       period_from?: string;
       period_to?: string;
       page?: number;
-      page_size?: number;
+      pagesize?: number;
     }
   ) =>
     apiClient.integration.get(

@@ -378,7 +378,7 @@ export interface ApqpProject {
   target_date?: string;
   actual_end_date?: string;
   progress?: number;
-  risk_level?: string;
+  risklevel?: string;
   created_by?: string;
   created_at?: string;
   updated_at?: string;
@@ -411,7 +411,7 @@ export interface UpdateApqpProjectRequest {
   target_date?: string;
   actual_end_date?: string;
   progress?: number;
-  risk_level?: string;
+  risklevel?: string;
 }
 
 export interface ApqpPhase {
@@ -506,7 +506,7 @@ export interface PaginatedResponse<T> {
   actions?: T[];
   total: number;
   page: number;
-  page_size: number;
+  pagesize: number;
 }
 
 // QMS Statistics Types
@@ -555,7 +555,7 @@ export interface SpcChartBackend {
   ucl?: number;
   lcl?: number;
   cl?: number;
-  sample_size: number;
+  samplesize: number;
   sampling_frequency?: string;
   status: string;
   description?: string;
@@ -577,7 +577,7 @@ export interface CreateSpcChartRequestBackend {
   usl?: number;
   lsl?: number;
   target?: number;
-  sample_size: number;
+  samplesize: number;
   sampling_frequency?: string;
   status?: string;
   description?: string;
@@ -598,7 +598,7 @@ export interface UpdateSpcChartRequestBackend {
   ucl?: number;
   lcl?: number;
   cl?: number;
-  sample_size?: number;
+  samplesize?: number;
   sampling_frequency?: string;
   status?: string;
   description?: string;
@@ -1100,7 +1100,7 @@ export interface UpdateFmeaItemRequestBackend {
 }
 
 export interface FmeaStatisticsBackend {
-  total_items: number;
+  totalitems: number;
   high_risk_count: number;
   medium_risk_count: number;
   low_risk_count: number;

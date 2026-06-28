@@ -12,7 +12,7 @@ export interface FormFieldGroupProps {
   columns?: number;
   gap?: number;
   required?: boolean;
-  sx?: any;
+  sx?: import('@mui/material/styles').SxProps<import('@mui/material/styles').Theme>;
 }
 
 export const FormFieldGroup: React.FC<FormFieldGroupProps> = ({

@@ -135,7 +135,7 @@ const ProfilePage: React.FC = () => {
             role: res.data.role,
             roles: res.data.roles,
             permissions: res.data.permissions,
-            isActive: res.data.is_active,
+            isActive: res.data.isactive,
             isSuperuser: res.data.is_superuser,
           });
         }
@@ -274,7 +274,7 @@ const ProfilePage: React.FC = () => {
               role: res.data.role,
               roles: res.data.roles,
               permissions: res.data.permissions,
-              isActive: res.data.is_active,
+              isActive: res.data.isactive,
               isSuperuser: res.data.is_superuser,
             });
           }

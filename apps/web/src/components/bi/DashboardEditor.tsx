@@ -7,7 +7,7 @@ import {
   Eye,
   EyeOff,
   Trash2,
-  _GripVertical,
+  GripVertical,
   BarChart3,
   PieChart,
   LineChart,
@@ -357,7 +357,7 @@ export const DashboardEditor: React.FC<{
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <BackButton
               variant='text'
-              size='small'
+              size='sm'
               onClick={onCancel}
             />
             <TextField

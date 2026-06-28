@@ -2,7 +2,7 @@ import type { ApiResponse } from '../client';
 
 export interface PaginationParams {
   page?: number;
-  page_size?: number;
+  pagesize?: number;
   search?: string;
   status?: string;
 }
@@ -11,7 +11,7 @@ export interface PaginatedResult<T> {
   items: T[];
   total: number;
   page: number;
-  page_size: number;
+  pagesize: number;
 }
 
 export interface ProductionOrder {
@@ -230,7 +230,7 @@ export interface InspectionRecord {
   location?: string;
   temperature?: number;
   vibration?: number;
-  noise_level?: number;
+  noiselevel?: number;
   status: string;
   items?: Array<{
     name: string;
@@ -250,7 +250,7 @@ export interface CreateInspectionRecord {
   location?: string;
   temperature?: number;
   vibration?: number;
-  noise_level?: number;
+  noiselevel?: number;
   status: string;
   items?: Array<{
     name: string;
@@ -746,5 +746,246 @@ export interface WipStatistics {
     status: string;
     wip_count: number;
     quantity: number;
+  }>;
+}
+
+export interface WorkReport {
+  id: string;
+  report_no: string;
+  order_id: string;
+  order_number?: string;
+  process_id?: string;
+  process_name?: string;
+  work_station_id?: string;
+  work_station_name?: string;
+  team_id?: string;
+  team_name?: string;
+  worker_id?: string;
+  worker_name: string;
+  quantity_good: number;
+  quantity_bad: number;
+  quantity_total: number;
+  start_time: string;
+  end_time: string;
+  actual_duration?: number;
+  standard_duration?: number;
+  status: string;
+  report_type?: string;
+  remark?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateWorkReportRequest {
+  order_id: string;
+  process_id?: string;
+  work_station_id?: string;
+  team_id?: string;
+  worker_id?: string;
+  worker_name: string;
+  quantity_good: number;
+  quantity_bad?: number;
+  start_time: string;
+  end_time: string;
+  report_type?: string;
+  remark?: string;
+}
+
+export interface UpdateWorkReportRequest {
+  quantity_good?: number;
+  quantity_bad?: number;
+  start_time?: string;
+  end_time?: string;
+  status?: string;
+  remark?: string;
+}
+
+export interface WorkOrder {
+  id: string;
+  work_order_no: string;
+  order_id: string;
+  order_number?: string;
+  process_id?: string;
+  process_name?: string;
+  work_station_id?: string;
+  work_station_name?: string;
+  team_id?: string;
+  team_name?: string;
+  quantity: number;
+  completed_quantity?: number;
+  good_quantity?: number;
+  bad_quantity?: number;
+  planned_start_time?: string;
+  planned_end_time?: string;
+  actual_start_time?: string;
+  actual_end_time?: string;
+  priority?: string;
+  status: string;
+  remark?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateWorkOrderRequest {
+  order_id: string;
+  process_id?: string;
+  work_station_id?: string;
+  team_id?: string;
+  quantity: number;
+  planned_start_time?: string;
+  planned_end_time?: string;
+  priority?: string;
+  remark?: string;
+}
+
+export interface UpdateWorkOrderRequest {
+  work_station_id?: string;
+  team_id?: string;
+  quantity?: number;
+  planned_start_time?: string;
+  planned_end_time?: string;
+  actual_start_time?: string;
+  actual_end_time?: string;
+  priority?: string;
+  status?: string;
+  remark?: string;
+}
+
+export interface Team {
+  id: string;
+  team_code: string;
+  team_name: string;
+  team_type?: string;
+  work_station_id?: string;
+  work_station_name?: string;
+  leader_id?: string;
+  leader_name?: string;
+  member_count?: number;
+  status: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TeamMember {
+  id: string;
+  team_id: string;
+  employee_id: string;
+  employee_name: string;
+  employee_code?: string;
+  position?: string;
+  join_date?: string;
+  status: string;
+}
+
+export interface CreateTeamRequest {
+  team_code: string;
+  team_name: string;
+  team_type?: string;
+  work_station_id?: string;
+  leader_id?: string;
+  description?: string;
+  members?: Array<{
+    employee_id: string;
+    employee_name: string;
+    position?: string;
+  }>;
+}
+
+export interface UpdateTeamRequest {
+  team_name?: string;
+  team_type?: string;
+  work_station_id?: string;
+  leader_id?: string;
+  status?: string;
+  description?: string;
+}
+
+export interface MaterialRequirement {
+  id: string;
+  mrp_no: string;
+  order_id?: string;
+  order_number?: string;
+  product_code: string;
+  product_name: string;
+  material_code: string;
+  material_name: string;
+  specification?: string;
+  unit?: string;
+  required_quantity: number;
+  available_quantity?: number;
+  shortfall_quantity?: number;
+  required_date: string;
+  priority?: string;
+  status: string;
+  source_type?: string;
+  remark?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateMaterialRequirementRequest {
+  order_id?: string;
+  product_code: string;
+  product_name: string;
+  material_code: string;
+  material_name: string;
+  specification?: string;
+  unit?: string;
+  required_quantity: number;
+  required_date: string;
+  priority?: string;
+  source_type?: string;
+  remark?: string;
+}
+
+export interface UpdateMaterialRequirementRequest {
+  required_quantity?: number;
+  available_quantity?: number;
+  required_date?: string;
+  priority?: string;
+  status?: string;
+  remark?: string;
+}
+
+export interface ProductionKanbanData {
+  summary: {
+    total_orders: number;
+    in_progress_orders: number;
+    completed_orders: number;
+    today_output: number;
+    pass_rate: number;
+    oee: number;
+  };
+  order_progress: Array<{
+    order_id: string;
+    order_number: string;
+    product_name: string;
+    planned_quantity: number;
+    completed_quantity: number;
+    progress: number;
+    status: string;
+  }>;
+  workstation_status: Array<{
+    work_station_id: string;
+    work_station_name: string;
+    status: string;
+    current_order?: string;
+    current_product?: string;
+    output_today?: number;
+    operator?: string;
+  }>;
+  quality_trend: Array<{
+    date: string;
+    pass_rate: number;
+    total_quantity: number;
+    good_quantity: number;
+  }>;
+  equipment_status: Array<{
+    equipment_id: string;
+    equipment_name: string;
+    equipment_code: string;
+    status: string;
+    oee?: number;
   }>;
 }

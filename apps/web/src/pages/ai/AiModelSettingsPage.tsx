@@ -1,0 +1,769 @@
+import React, { useState } from 'react';
+import {
+  Box,
+  Typography,
+  Button,
+  Paper,
+  Tabs,
+  Tab,
+  Card,
+  CardContent,
+  Avatar,
+  Divider,
+  Chip,
+  IconButton,
+  Switch,
+  FormControlLabel,
+  Slider,
+  TextField,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+} from '@mui/material';
+import {
+  Settings,
+  BarChart3,
+  Cpu,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  Zap,
+  DollarSign,
+  Database,
+  RefreshCw,
+  Edit3,
+  Save,
+  TrendingUp,
+  Activity,
+  Layers,
+  Server,
+} from 'lucide-react';
+import { PageContainer, Grid } from '@/components/common';
+import LineChartComponent from '@/components/charts/LineChart';
+import BarChartComponent from '@/components/charts/BarChart';
+import PieChartComponent from '@/components/charts/PieChart';
+import { useAppStore } from '@/store';
+import { logger } from '@/utils/logger';
+
+type SettingsTab = 'models' | 'config' | 'usage' | 'api';
+
+interface AIModel {
+  id: string;
+  name: string;
+  provider: string;
+  type: 'chat' | 'embedding' | 'image' | 'audio';
+  description: string;
+  status: 'active' | 'inactive' | 'maintenance';
+  max_tokens: number;
+  capabilities: string[];
+  pricing: {
+    input_per_1k: number;
+    output_per_1k: number;
+  };
+  is_default: boolean;
+}
+
+const mockModels: AIModel[] = [
+  {
+    id: 'gpt-4',
+    name: 'GPT-4',
+    provider: 'OpenAI',
+    type: 'chat',
+    description: '最先进的大语言模型，适合复杂任务',
+    status: 'active',
+    max_tokens: 8192,
+    capabilities: ['对话', '推理', '代码', '分析'],
+    pricing: { input_per_1k: 0.03, output_per_1k: 0.06 },
+    is_default: true,
+  },
+  {
+    id: 'gpt-3.5-turbo',
+    name: 'GPT-3.5 Turbo',
+    provider: 'OpenAI',
+    type: 'chat',
+    description: '快速高效的聊天模型，性价比高',
+    status: 'active',
+    max_tokens: 16384,
+    capabilities: ['对话', '摘要', '翻译'],
+    pricing: { input_per_1k: 0.0015, output_per_1k: 0.002 },
+    is_default: false,
+  },
+  {
+    id: 'claude-3-opus',
+    name: 'Claude 3 Opus',
+    provider: 'Anthropic',
+    type: 'chat',
+    description: 'Anthropic最强大的模型，擅长写作和分析',
+    status: 'active',
+    max_tokens: 200000,
+    capabilities: ['对话', '写作', '分析', '长文本'],
+    pricing: { input_per_1k: 0.015, output_per_1k: 0.075 },
+    is_default: false,
+  },
+  {
+    id: 'ernie-4.0',
+    name: '文心一言 4.0',
+    provider: '百度',
+    type: 'chat',
+    description: '百度自研大模型，中文理解能力强',
+    status: 'active',
+    max_tokens: 8192,
+    capabilities: ['对话', '创作', '理解'],
+    pricing: { input_per_1k: 0.008, output_per_1k: 0.008 },
+    is_default: false,
+  },
+  {
+    id: 'qwen-max',
+    name: '通义千问 Max',
+    provider: '阿里',
+    type: 'chat',
+    description: '阿里达摩院大模型，支持多轮对话',
+    status: 'active',
+    max_tokens: 32768,
+    capabilities: ['对话', '创作', '代码'],
+    pricing: { input_per_1k: 0.004, output_per_1k: 0.008 },
+    is_default: false,
+  },
+  {
+    id: 'text-embedding-3-large',
+    name: 'Text Embedding 3 Large',
+    provider: 'OpenAI',
+    type: 'embedding',
+    description: '高质量文本向量化模型',
+    status: 'active',
+    max_tokens: 8192,
+    capabilities: ['向量化', '语义搜索'],
+    pricing: { input_per_1k: 0.00013, output_per_1k: 0 },
+    is_default: false,
+  },
+];
+
+const usageData = [
+  { date: '06-15', tokens: 45000, cost: 2.5, requests: 320 },
+  { date: '06-16', tokens: 58000, cost: 3.2, requests: 410 },
+  { date: '06-17', tokens: 52000, cost: 2.9, requests: 380 },
+  { date: '06-18', tokens: 67000, cost: 3.8, requests: 450 },
+  { date: '06-19', tokens: 72000, cost: 4.1, requests: 520 },
+  { date: '06-20', tokens: 61000, cost: 3.5, requests: 430 },
+  { date: '06-21', tokens: 80000, cost: 4.6, requests: 580 },
+];
+
+const modelUsageData = [
+  { name: 'GPT-4', value: 35 },
+  { name: 'GPT-3.5', value: 40 },
+  { name: 'Claude', value: 15 },
+  { name: '文心一言', value: 6 },
+  { name: '通义千问', value: 4 },
+];
+
+const getStatusConfig = (status: AIModel['status']) => {
+  const configs = {
+    active: { label: '运行中', color: 'success' as const, icon: <CheckCircle2 size={14} /> },
+    inactive: { label: '已停用', color: 'default' as const, icon: <Clock size={14} /> },
+    maintenance: { label: '维护中', color: 'warning' as const, icon: <AlertCircle size={14} /> },
+  };
+  return configs[status];
+};
+
+export const AiModelSettingsPage: React.FC = () => {
+  const addNotification = useAppStore((state) => state.addNotification);
+  const [activeTab, setActiveTab] = useState<SettingsTab>('models');
+  const [selectedModel, setSelectedModel] = useState<AIModel>(mockModels[0]);
+  const [temperature, setTemperature] = useState(0.7);
+  const [maxTokens, setMaxTokens] = useState(2048);
+  const [topP, setTopP] = useState(1);
+  const [systemPrompt, setSystemPrompt] = useState('你是一位专业的AI助手，请用中文回答用户的问题。回答要准确、简洁、有帮助。');
+  const [saving, setSaving] = useState(false);
+
+  const handleSaveConfig = () => {
+    setSaving(true);
+    setTimeout(() => {
+      setSaving(false);
+      addNotification({
+        title: '保存成功',
+        message: '模型配置已保存',
+        type: 'success',
+      });
+    }, 1000);
+  };
+
+  const totalUsage = {
+    tokens: usageData.reduce((sum, d) => sum + d.tokens, 0),
+    cost: usageData.reduce((sum, d) => sum + d.cost, 0),
+    requests: usageData.reduce((sum, d) => sum + d.requests, 0),
+  };
+
+  const tabConfig = [
+    { id: 'models' as SettingsTab, label: '模型列表', icon: <Cpu size={18} /> },
+    { id: 'config' as SettingsTab, label: '参数配置', icon: <Settings size={18} /> },
+    { id: 'usage' as SettingsTab, label: '用量统计', icon: <BarChart3 size={18} /> },
+    { id: 'api' as SettingsTab, label: 'API密钥', icon: <Database size={18} /> },
+  ];
+
+  return (
+    <PageContainer
+      title='模型设置'
+      subtitle='模型管理、配置和用量统计'
+      padding={false}
+      maxWidth={false}
+      headerProps={{
+        pageIcon: <Settings style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%)',
+      }}
+    >
+      <Box sx={{ p: 3 }}>
+        <Paper sx={{ borderRadius: 2, overflow: 'hidden' }}>
+          {/* 标签页 */}
+          <Box
+            sx={{
+              borderBottom: 1,
+              borderColor: 'divider',
+              px: 2,
+            }}
+          >
+            <Tabs
+              value={activeTab}
+              onChange={(_, v) => setActiveTab(v)}
+              sx={{ minHeight: 48 }}
+            >
+              {tabConfig.map((tab) => (
+                <Tab
+                  key={tab.id}
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      {tab.icon}
+                      {tab.label}
+                    </Box>
+                  }
+                  value={tab.id}
+                  sx={{ minHeight: 48, textTransform: 'none' }}
+                />
+              ))}
+            </Tabs>
+          </Box>
+
+          <Box sx={{ p: 3 }}>
+            {/* 模型列表 */}
+            {activeTab === 'models' && (
+              <Box>
+                <Grid container spacing={2}>
+                  {mockModels.map((model) => (
+                    <Grid item xs={12} md={6} lg={4} key={model.id}>
+                      <Card
+                        variant='outlined'
+                        sx={{
+                          borderRadius: 2,
+                          borderColor: selectedModel.id === model.id ? 'primary.main' : 'divider',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          '&:hover': {
+                            boxShadow: 2,
+                          },
+                        }}
+                        onClick={() => setSelectedModel(model)}
+                      >
+                        <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                            <Avatar
+                              sx={{
+                                width: 48,
+                                height: 48,
+                                bgcolor: model.type === 'chat' ? 'primary.50' : 'success.50',
+                                color: model.type === 'chat' ? 'primary.main' : 'success.main',
+                              }}
+                            >
+                              {model.type === 'chat' ? <Cpu size={24} /> : <Layers size={24} />}
+                            </Avatar>
+                            <Chip
+                              icon={getStatusConfig(model.status).icon}
+                              label={getStatusConfig(model.status).label}
+                              size='small'
+                              color={getStatusConfig(model.status).color}
+                              sx={{ height: 24 }}
+                            />
+                          </Box>
+
+                          <Box sx={{ mb: 1 }}>
+                            <Typography variant='subtitle1' sx={{ fontWeight: 600 }}>
+                              {model.name}
+                              {model.is_default && (
+                                <Chip
+                                  label='默认'
+                                  size='small'
+                                  color='primary'
+                                  sx={{ ml: 1, height: 20 }}
+                                />
+                              )}
+                            </Typography>
+                            <Typography variant='caption' color='text.secondary'>
+                              {model.provider}
+                            </Typography>
+                          </Box>
+
+                          <Typography
+                            variant='body2'
+                            color='text.secondary'
+                            sx={{ mb: 2, minHeight: 40 }}
+                          >
+                            {model.description}
+                          </Typography>
+
+                          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 2 }}>
+                            {model.capabilities.map((cap) => (
+                              <Chip
+                                key={cap}
+                                label={cap}
+                                size='small'
+                                variant='outlined'
+                                sx={{ fontSize: 11 }}
+                              />
+                            ))}
+                          </Box>
+
+                          <Divider sx={{ mb: 1.5 }} />
+
+                          <Grid container spacing={1}>
+                            <Grid item xs={6}>
+                              <Typography variant='caption' color='text.secondary'>
+                                最大Token
+                              </Typography>
+                              <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                                {model.max_tokens.toLocaleString()}
+                              </Typography>
+                            </Grid>
+                            <Grid item xs={6}>
+                              <Typography variant='caption' color='text.secondary'>
+                                输入价格
+                              </Typography>
+                              <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                                ${model.pricing.input_per_1k}/1K
+                              </Typography>
+                            </Grid>
+                          </Grid>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              </Box>
+            )}
+
+            {/* 参数配置 */}
+            {activeTab === 'config' && (
+              <Grid container spacing={3}>
+                <Grid item xs={12} md={8}>
+                  <Paper variant='outlined' sx={{ p: 3, borderRadius: 2 }}>
+                    <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+                      当前模型：{selectedModel.name}
+                    </Typography>
+                    <Divider sx={{ mb: 3 }} />
+
+                    <Box sx={{ mb: 3 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                        <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                          Temperature (温度)
+                        </Typography>
+                        <Typography variant='body2' color='primary.main' sx={{ fontWeight: 600 }}>
+                          {temperature.toFixed(1)}
+                        </Typography>
+                      </Box>
+                      <Slider
+                        value={temperature}
+                        onChange={(_, v) => setTemperature(v as number)}
+                        step={0.1}
+                        min={0}
+                        max={2}
+                        valueLabelDisplay='auto'
+                      />
+                      <Typography variant='caption' color='text.secondary'>
+                        控制输出随机性。值越高，输出越随机；值越低，输出越确定。
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ mb: 3 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                        <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                          最大生成长度 (Max Tokens)
+                        </Typography>
+                        <Typography variant='body2' color='primary.main' sx={{ fontWeight: 600 }}>
+                          {maxTokens}
+                        </Typography>
+                      </Box>
+                      <Slider
+                        value={maxTokens}
+                        onChange={(_, v) => setMaxTokens(v as number)}
+                        step={128}
+                        min={256}
+                        max={selectedModel.max_tokens}
+                        valueLabelDisplay='auto'
+                      />
+                      <Typography variant='caption' color='text.secondary'>
+                        限制模型生成的最大token数量。
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ mb: 3 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                        <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                          Top P
+                        </Typography>
+                        <Typography variant='body2' color='primary.main' sx={{ fontWeight: 600 }}>
+                          {topP.toFixed(1)}
+                        </Typography>
+                      </Box>
+                      <Slider
+                        value={topP}
+                        onChange={(_, v) => setTopP(v as number)}
+                        step={0.1}
+                        min={0}
+                        max={1}
+                        valueLabelDisplay='auto'
+                      />
+                      <Typography variant='caption' color='text.secondary'>
+                        控制词的多样性，值越小，输出越保守。
+                      </Typography>
+                    </Box>
+
+                    <Box sx={{ mb: 3 }}>
+                      <Typography variant='body2' sx={{ fontWeight: 500, mb: 1 }}>
+                        系统提示词 (System Prompt)
+                      </Typography>
+                      <TextField
+                        fullWidth
+                        multiline
+                        rows={4}
+                        value={systemPrompt}
+                        onChange={(e) => setSystemPrompt(e.target.value)}
+                        placeholder='输入系统提示词...'
+                      />
+                    </Box>
+
+                    <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                      <Button
+                        variant='outlined'
+                        startIcon={<RefreshCw size={16} />}
+                      >
+                        重置默认
+                      </Button>
+                      <Button
+                        variant='contained'
+                        startIcon={saving ? <RefreshCw size={16} className='animate-spin' /> : <Save size={16} />}
+                        onClick={handleSaveConfig}
+                        disabled={saving}
+                      >
+                        {saving ? '保存中...' : '保存配置'}
+                      </Button>
+                    </Box>
+                  </Paper>
+                </Grid>
+
+                <Grid item xs={12} md={4}>
+                  <Paper variant='outlined' sx={{ p: 3, borderRadius: 2 }}>
+                    <Typography variant='subtitle1' sx={{ fontWeight: 600, mb: 2 }}>
+                      其他设置
+                    </Typography>
+                    <Divider sx={{ mb: 2 }} />
+
+                    <List disablePadding>
+                      <ListItem sx={{ px: 0 }}>
+                        <ListItemIcon sx={{ minWidth: 36 }}>
+                          <Server size={18} />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary='流式输出'
+                          secondary='逐步返回响应结果'
+                        />
+                        <Switch defaultChecked />
+                      </ListItem>
+                      <ListItem sx={{ px: 0 }}>
+                        <ListItemIcon sx={{ minWidth: 36 }}>
+                          <Activity size={18} />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary='使用历史记录'
+                          secondary='保存对话历史用于改进'
+                        />
+                        <Switch defaultChecked />
+                      </ListItem>
+                      <ListItem sx={{ px: 0 }}>
+                        <ListItemIcon sx={{ minWidth: 36 }}>
+                          <Zap size={18} />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary='自动重试'
+                          secondary='请求失败时自动重试'
+                        />
+                        <Switch defaultChecked />
+                      </ListItem>
+                    </List>
+                  </Paper>
+                </Grid>
+              </Grid>
+            )}
+
+            {/* 用量统计 */}
+            {activeTab === 'usage' && (
+              <Box>
+                {/* 统计卡片 */}
+                <Grid container spacing={2} sx={{ mb: 3 }}>
+                  <Grid item xs={12} sm={4}>
+                    <Paper sx={{ p: 2.5, borderRadius: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Avatar sx={{ bgcolor: 'primary.50', color: 'primary.main' }}>
+                          <Zap size={22} />
+                        </Avatar>
+                        <Box>
+                          <Typography variant='h5' sx={{ fontWeight: 700 }}>
+                            {Math.round(totalUsage.tokens / 1000)}K
+                          </Typography>
+                          <Typography variant='body2' color='text.secondary'>
+                            总Token消耗
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Paper>
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <Paper sx={{ p: 2.5, borderRadius: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Avatar sx={{ bgcolor: 'success.50', color: 'success.main' }}>
+                          <TrendingUp size={22} />
+                        </Avatar>
+                        <Box>
+                          <Typography variant='h5' sx={{ fontWeight: 700 }}>
+                            {totalUsage.requests}
+                          </Typography>
+                          <Typography variant='body2' color='text.secondary'>
+                            总请求次数
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Paper>
+                  </Grid>
+                  <Grid item xs={12} sm={4}>
+                    <Paper sx={{ p: 2.5, borderRadius: 2 }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        <Avatar sx={{ bgcolor: 'warning.50', color: 'warning.main' }}>
+                          <DollarSign size={22} />
+                        </Avatar>
+                        <Box>
+                          <Typography variant='h5' sx={{ fontWeight: 700 }}>
+                            ${totalUsage.cost.toFixed(2)}
+                          </Typography>
+                          <Typography variant='body2' color='text.secondary'>
+                            总费用（预估）
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Paper>
+                  </Grid>
+                </Grid>
+
+                <Grid container spacing={3}>
+                  <Grid item xs={12} md={8}>
+                    <Paper variant='outlined' sx={{ p: 3, borderRadius: 2 }}>
+                      <Typography variant='subtitle1' sx={{ fontWeight: 600, mb: 2 }}>
+                        用量趋势（近7天）
+                      </Typography>
+                      <Box sx={{ height: 300 }}>
+                        <LineChartComponent
+                          data={usageData}
+                          xKey='date'
+                          yKey='tokens'
+                        />
+                      </Box>
+                    </Paper>
+                  </Grid>
+                  <Grid item xs={12} md={4}>
+                    <Paper variant='outlined' sx={{ p: 3, borderRadius: 2 }}>
+                      <Typography variant='subtitle1' sx={{ fontWeight: 600, mb: 2 }}>
+                        模型使用占比
+                      </Typography>
+                      <Box sx={{ height: 300 }}>
+                        <PieChartComponent data={modelUsageData} />
+                      </Box>
+                    </Paper>
+                  </Grid>
+                </Grid>
+
+                <Box sx={{ mt: 3 }}>
+                  <Paper variant='outlined' sx={{ borderRadius: 2, overflow: 'hidden' }}>
+                    <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+                      <Typography variant='subtitle1' sx={{ fontWeight: 600 }}>
+                        每日用量明细
+                      </Typography>
+                    </Box>
+                    <TableContainer>
+                      <Table size='small'>
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>日期</TableCell>
+                            <TableCell align='right'>请求次数</TableCell>
+                            <TableCell align='right'>Token消耗</TableCell>
+                            <TableCell align='right'>费用（预估）</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {usageData.map((row) => (
+                            <TableRow key={row.date}>
+                              <TableCell>{row.date}</TableCell>
+                              <TableCell align='right'>{row.requests}</TableCell>
+                              <TableCell align='right'>{row.tokens.toLocaleString()}</TableCell>
+                              <TableCell align='right'>${row.cost.toFixed(2)}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </Paper>
+                </Box>
+              </Box>
+            )}
+
+            {/* API密钥 */}
+            {activeTab === 'api' && (
+              <Box>
+                <Paper variant='outlined' sx={{ p: 3, borderRadius: 2, mb: 3 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Typography variant='subtitle1' sx={{ fontWeight: 600 }}>
+                      API 密钥管理
+                    </Typography>
+                    <Button
+                      variant='contained'
+                      startIcon={<Edit3 size={16} />}
+                      size='small'
+                    >
+                      新增密钥
+                    </Button>
+                  </Box>
+                  <Divider sx={{ mb: 2 }} />
+
+                  <TableContainer>
+                    <Table size='small'>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>名称</TableCell>
+                          <TableCell>密钥</TableCell>
+                          <TableCell>服务商</TableCell>
+                          <TableCell>状态</TableCell>
+                          <TableCell>创建时间</TableCell>
+                          <TableCell align='right'>操作</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 500 }}>生产环境密钥</TableCell>
+                          <TableCell>
+                            <code>sk-****************************</code>
+                          </TableCell>
+                          <TableCell>OpenAI</TableCell>
+                          <TableCell>
+                            <Chip
+                              label='启用'
+                              size='small'
+                              color='success'
+                              sx={{ height: 22 }}
+                            />
+                          </TableCell>
+                          <TableCell>2024-01-15</TableCell>
+                          <TableCell align='right'>
+                            <IconButton size='small'>
+                              <Edit3 size={16} />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 500 }}>备用密钥</TableCell>
+                          <TableCell>
+                            <code>sk-****************************</code>
+                          </TableCell>
+                          <TableCell>OpenAI</TableCell>
+                          <TableCell>
+                            <Chip
+                              label='启用'
+                              size='small'
+                              color='success'
+                              sx={{ height: 22 }}
+                            />
+                          </TableCell>
+                          <TableCell>2024-03-20</TableCell>
+                          <TableCell align='right'>
+                            <IconButton size='small'>
+                              <Edit3 size={16} />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 500 }}>文心一言密钥</TableCell>
+                          <TableCell>
+                            <code>xx-****************************</code>
+                          </TableCell>
+                          <TableCell>百度</TableCell>
+                          <TableCell>
+                            <Chip
+                              label='启用'
+                              size='small'
+                              color='success'
+                              sx={{ height: 22 }}
+                            />
+                          </TableCell>
+                          <TableCell>2024-02-10</TableCell>
+                          <TableCell align='right'>
+                            <IconButton size='small'>
+                              <Edit3 size={16} />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Paper>
+
+                <Paper variant='outlined' sx={{ p: 3, borderRadius: 2 }}>
+                  <Typography variant='subtitle1' sx={{ fontWeight: 600, mb: 2 }}>
+                    使用提示
+                  </Typography>
+                  <List disablePadding>
+                    <ListItem sx={{ px: 0, py: 1 }}>
+                      <ListItemIcon sx={{ minWidth: 32 }}>
+                        <AlertCircle size={16} style={{ color: '#f59e0b' }} />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={<Typography variant='body2'>请妥善保管API密钥，不要泄露给他人</Typography>}
+                      />
+                    </ListItem>
+                    <ListItem sx={{ px: 0, py: 1 }}>
+                      <ListItemIcon sx={{ minWidth: 32 }}>
+                        <AlertCircle size={16} style={{ color: '#f59e0b' }} />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={<Typography variant='body2'>建议定期轮换密钥以确保安全</Typography>}
+                      />
+                    </ListItem>
+                    <ListItem sx={{ px: 0, py: 1 }}>
+                      <ListItemIcon sx={{ minWidth: 32 }}>
+                        <AlertCircle size={16} style={{ color: '#f59e0b' }} />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={<Typography variant='body2'>可以为不同环境创建不同的密钥，便于管理和排查问题</Typography>}
+                      />
+                    </ListItem>
+                  </List>
+                </Paper>
+              </Box>
+            )}
+          </Box>
+        </Paper>
+      </Box>
+    </PageContainer>
+  );
+};
+
+export default AiModelSettingsPage;

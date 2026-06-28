@@ -68,7 +68,7 @@ const MeetingRoomManagementPage: React.FC = () => {
       const [roomsRes, bookingsRes] = await Promise.all([
         meetingRoomApi.list({
           page: currentPage,
-          page_size: pageSize,
+          pagesize: pageSize,
           search: searchQuery,
           status: statusFilter,
         }),

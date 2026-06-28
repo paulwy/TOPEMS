@@ -92,7 +92,7 @@ const LocationPage: React.FC = () => {
     volume: 0,
     weight_limit: 0,
     temperature_zone: '',
-    is_active: true,
+    isactive: true,
     barcode: '',
     rfid: '',
     sort_order: 0,
@@ -106,7 +106,7 @@ const LocationPage: React.FC = () => {
       setLoading(true);
       const params: any = {
         page: currentPage,
-        page_size: pageSize,
+        pagesize: pageSize,
       };
       if (searchTerm) params.search = searchTerm;
       if (statusFilter) params.status = statusFilter;
@@ -131,7 +131,7 @@ const LocationPage: React.FC = () => {
 
   const fetchWarehouses = async () => {
     try {
-      const response = await wmsApi.warehouses.list({ page: 1, page_size: 100 });
+      const response = await wmsApi.warehouses.list({ page: 1, pagesize: 100 });
       if (response.success && response.data) {
         setWarehouses(response.data.items || []);
       }
@@ -262,7 +262,7 @@ const LocationPage: React.FC = () => {
       weight_limit: item.weight_limit,
       status: item.status,
       temperature_zone: item.temperature_zone,
-      is_active: item.is_active,
+      isactive: item.isactive,
       barcode: item.barcode,
       rfid: item.rfid,
       sort_order: item.sort_order,
@@ -292,7 +292,7 @@ const LocationPage: React.FC = () => {
       volume: 0,
       weight_limit: 0,
       temperature_zone: '',
-      is_active: true,
+      isactive: true,
       barcode: '',
       rfid: '',
       sort_order: 0,

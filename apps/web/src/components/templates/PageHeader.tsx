@@ -7,7 +7,7 @@ import {
   IconButton,
   Tooltip,
   Paper,
-  _Divider,
+  Divider,
   Skeleton,
   TextField,
   Tabs,
@@ -20,10 +20,10 @@ import {
 import {
   ChevronRight,
   RefreshCw,
-  _Plus,
-  _Download,
-  _Upload,
-  _Filter,
+  Plus,
+  Download,
+  Upload,
+  Filter,
   MoreHorizontal,
 } from 'lucide-react';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
@@ -524,7 +524,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
               {/* 返回按钮 */}
               {backButton && backButton.visible !== false && (
                 <BackButton
-                  size='small'
+                  size='sm'
                   onClick={backButton.onClick}
                   href={backButton.href}
                 />

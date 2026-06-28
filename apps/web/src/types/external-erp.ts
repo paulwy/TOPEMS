@@ -72,7 +72,7 @@ export interface ErpConnectionConfig {
   company_mappings: CompanyMapping[]; // 公司映射关系
 
   // 状态
-  is_active: boolean;
+  isactive: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -140,7 +140,7 @@ export interface BaseMappingRule {
   id: string;
   name: string;
   description?: string;
-  is_active: boolean;
+  isactive: boolean;
   priority: number; // 优先级，数字越小优先级越高
   condition?: string; // 映射条件表达式
   created_at: string;

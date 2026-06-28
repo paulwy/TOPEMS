@@ -57,9 +57,9 @@ const CompliancePage: React.FC = () => {
     try {
       setLoading(true);
       const [regsRes, assessRes, permitsRes] = await Promise.all([
-        ehsApi.listEnvironmentalRegulations({ page_size: 100, search: searchTerm || undefined }),
-        ehsApi.listComplianceAssessments({ page_size: 100, search: searchTerm || undefined }),
-        ehsApi.listDischargePermits({ page_size: 100, search: searchTerm || undefined }),
+        ehsApi.listEnvironmentalRegulations({ pagesize: 100, search: searchTerm || undefined }),
+        ehsApi.listComplianceAssessments({ pagesize: 100, search: searchTerm || undefined }),
+        ehsApi.listDischargePermits({ pagesize: 100, search: searchTerm || undefined }),
       ]);
 
       if (regsRes.success && regsRes.data) {

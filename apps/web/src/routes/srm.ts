@@ -12,6 +12,9 @@ const SrmOrderPage = lazy(() => import('../pages/srm/SrmOrderPage'));
 const SrmContractPage = lazy(() => import('../pages/srm/SrmContractPage'));
 const SrmFinancePage = lazy(() => import('../pages/srm/SrmFinancePage'));
 const SrmPerformancePage = lazy(() => import('../pages/srm/SrmPerformancePage'));
+const SupplierPortalPage = lazy(() => import('../pages/srm/SupplierPortalPage'));
+const InquiryQuotationPage = lazy(() => import('../pages/srm/InquiryQuotationPage'));
+const BiddingPage = lazy(() => import('../pages/srm/BiddingPage'));
 const SupplierDetailPage = lazy(() => import('../pages/wms/SupplierDetailPage'));
 
 export const srmRoutes: RouteConfig[] = [
@@ -77,6 +80,27 @@ export const srmRoutes: RouteConfig[] = [
   {
     path: '/srm/performance',
     element: SrmPerformancePage,
+    requiredPermissions: ['srm:read'],
+    module: 'srm',
+    action: 'read',
+  },
+  {
+    path: '/srm/supplier-portal',
+    element: SupplierPortalPage,
+    requiredPermissions: ['srm:read'],
+    module: 'srm',
+    action: 'read',
+  },
+  {
+    path: '/srm/inquiry-quotation',
+    element: InquiryQuotationPage,
+    requiredPermissions: ['srm:read'],
+    module: 'srm',
+    action: 'read',
+  },
+  {
+    path: '/srm/bidding',
+    element: BiddingPage,
     requiredPermissions: ['srm:read'],
     module: 'srm',
     action: 'read',

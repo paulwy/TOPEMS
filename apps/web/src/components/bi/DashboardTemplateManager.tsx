@@ -4,12 +4,12 @@ import {
   Edit2,
   Trash2,
   Copy,
-  _Search,
-  _Grid3X3,
+  Search,
+  Grid3X3,
   LayoutDashboard,
   FolderOpen,
-  _Check,
-  _X,
+  Check,
+  X,
 } from 'lucide-react';
 import {
   Box,
@@ -17,16 +17,16 @@ import {
   Button,
   Card,
   CardContent,
-  _CardHeader,
+  CardHeader,
   CardActions,
   Chip,
-  _Divider,
+  Divider,
   TextField,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  _Menu,
+  Menu,
   MenuItem,
   IconButton,
   Tooltip,
@@ -62,7 +62,7 @@ export const DashboardTemplateManager: React.FC<{
     description: '',
     category: '通用',
     tags: [] as string[],
-    is_active: true,
+    isactive: true,
   });
 
   const categories = ['all', '通用', '销售', '财务', '运营', '市场'];
@@ -96,7 +96,7 @@ export const DashboardTemplateManager: React.FC<{
           description: '',
           category: '通用',
           tags: [],
-          is_active: true,
+          isactive: true,
         });
       }
     } catch (error: unknown) {
@@ -117,7 +117,7 @@ export const DashboardTemplateManager: React.FC<{
           description: '',
           category: '通用',
           tags: [],
-          is_active: true,
+          isactive: true,
         });
       }
     } catch (error: unknown) {
@@ -157,7 +157,7 @@ export const DashboardTemplateManager: React.FC<{
       description: template.description || '',
       category: template.category || '通用',
       tags: template.tags || [],
-      is_active: template.is_active || true,
+      isactive: template.isactive || true,
     });
     setShowEditModal(true);
   };
@@ -269,7 +269,7 @@ export const DashboardTemplateManager: React.FC<{
                 },
               }}
             >
-              {!template.is_active && (
+              {!template.isactive && (
                 <Box
                   sx={{
                     position: 'absolute',
@@ -277,7 +277,7 @@ export const DashboardTemplateManager: React.FC<{
                     left: 0,
                     right: 0,
                     height: 4,
-                    backgroundColor: '#E5E7EB',
+                    bgcolor: 'grey.300',
                   }}
                 />
               )}
@@ -288,14 +288,14 @@ export const DashboardTemplateManager: React.FC<{
                       width: 40,
                       height: 40,
                       borderRadius: 1,
-                      backgroundColor: template.is_active ? '#EEF2FF' : '#F3F4F6',
+                      bgcolor: template.isactive ? 'primary.lightest' : 'grey.100',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
                   >
                     <LayoutDashboard
-                      sx={{ color: template.is_active ? '#6366F1' : 'text.disabled' }}
+                      sx={{ color: template.isactive ? 'primary.main' : 'text.disabled' }}
                     />
                   </Box>
                   <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -306,7 +306,7 @@ export const DashboardTemplateManager: React.FC<{
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
-                        color: template.is_active ? 'text.primary' : 'text.disabled',
+                        color: template.isactive ? 'text.primary' : 'text.disabled',
                       }}
                     >
                       {template.name}
@@ -354,7 +354,7 @@ export const DashboardTemplateManager: React.FC<{
                     />
                   ))}
                 </Box>
-                {!template.is_active && (
+                {!template.isactive && (
                   <Typography
                     variant='caption'
                     sx={{ color: 'error' }}
@@ -368,7 +368,7 @@ export const DashboardTemplateManager: React.FC<{
                   <IconButton
                     size='small'
                     onClick={() => handleCreateDashboard(template.id)}
-                    disabled={!template.is_active}
+                    disabled={!template.isactive}
                   >
                     <Copy sx={{ width: 18, height: 18 }} />
                   </IconButton>
@@ -476,9 +476,9 @@ export const DashboardTemplateManager: React.FC<{
           <FormControlLabel
             control={
               <Switch
-                checked={newTemplate.is_active}
+                checked={newTemplate.isactive}
                 onChange={(e) =>
-                  setNewTemplate((prev) => ({ ...prev, is_active: e.target.checked }))
+                  setNewTemplate((prev) => ({ ...prev, isactive: e.target.checked }))
                 }
               />
             }

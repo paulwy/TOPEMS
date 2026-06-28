@@ -225,7 +225,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         srmApi.getStatistics(),
         limsApi.getStatistics(),
         rsApi.getStatistics(),
-        ehsApi.listHazards({ page: 1, page_size: 1000 }),
+        ehsApi.listHazards({ page: 1, pagesize: 1000 }),
       ]);
 
       const newModuleStats = {
@@ -342,7 +342,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     setTodosError(null);
     try {
       const [tasksRes] = await Promise.allSettled([
-        workflowApi.listApprovalTasks({ status: 'pending', page: 1, page_size: 10 }),
+        workflowApi.listApprovalTasks({ status: 'pending', page: 1, pagesize: 10 }),
       ]);
 
       if (tasksRes.status === 'fulfilled' && tasksRes.value.success && tasksRes.value.data?.items) {

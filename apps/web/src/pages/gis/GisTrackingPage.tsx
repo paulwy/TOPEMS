@@ -59,7 +59,7 @@ export const GisTrackingPage: React.FC = () => {
     try {
       setLoading(true);
       setError('');
-      const res = await gisApi.listDevicePoints({ page_size: 100 });
+      const res = await gisApi.listDevicePoints({ pagesize: 100 });
       if (res.success && res.data) {
         setDevices(res.data.data || []);
         if (res.data.data && res.data.data.length > 0 && !selectedDevice) {
@@ -80,7 +80,7 @@ export const GisTrackingPage: React.FC = () => {
       if (!deviceId) return;
       try {
         setTrackLoading(true);
-        const res = await gisApi.getDeviceTrack({ device_id: deviceId, page_size: 100 });
+        const res = await gisApi.getDeviceTrack({ device_id: deviceId, pagesize: 100 });
         if (res.success && res.data) {
           setTrackHistory(res.data.data || []);
         }

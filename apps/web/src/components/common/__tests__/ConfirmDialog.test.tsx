@@ -150,7 +150,7 @@ describe('ConfirmDialog', () => {
     expect(hasCloseButton).toBe(true);
   });
 
-  it('should disable confirm button when confirmDisabled is true', () => {
+  it('should disable confirm button when disabled is true', () => {
     render(
       <ConfirmDialog
         isOpen={true}
@@ -158,7 +158,7 @@ describe('ConfirmDialog', () => {
         title='Test'
         message='Test'
         onConfirm={vi.fn()}
-        confirmDisabled={true}
+        disabled={true}
       />
     );
     const confirmButton = screen.getByRole('button', { name: /确认/i });

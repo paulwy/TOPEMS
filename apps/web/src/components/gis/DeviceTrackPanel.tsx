@@ -24,10 +24,10 @@ import {
   InputLabel,
   IconButton,
   Slider,
-  _Chip,
+  Chip,
   Stack,
   Grid,
-  _Divider,
+  Divider,
   Button,
 } from '@mui/material';
 import type { DevicePoint, DeviceLocationRecord } from '../../api/gis';
@@ -100,7 +100,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
       const params: any = { device_id: selectedDevice };
       if (timeRange.start) params.start_time = timeRange.start;
       if (timeRange.end) params.end_time = timeRange.end;
-      params.page_size = MAX_TRACK_POINTS;
+      params.pagesize = MAX_TRACK_POINTS;
 
       const response = await gisApi.getDeviceTrack(params);
       if (response.success && response.data) {
@@ -289,9 +289,9 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
               disabled={trackData.length === 0}
               startIcon={isPlaying ? <Pause size={16} /> : <Play size={16} />}
               sx={{
-                bgcolor: isPlaying ? '#f97316' : 'success.dark',
+                bgcolor: isPlaying ? 'warning.main' : 'success.dark',
                 color: 'white',
-                '&:hover': { bgcolor: isPlaying ? '#ea580c' : 'success.dark' },
+                '&:hover': { bgcolor: isPlaying ? 'warning.dark' : 'success.dark' },
                 '&:disabled': { opacity: 0.5 },
                 textTransform: 'none',
               }}
@@ -363,7 +363,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                     </Box>
                     <Typography
                       variant='h6'
-                      sx={{ fontWeight: 600, color: '#1e3a8a' }}
+                      sx={{ fontWeight: 600, color: 'primary.dark' }}
                     >
                       {formatDistance(statistics.total_distance)}
                     </Typography>
@@ -385,7 +385,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                     </Box>
                     <Typography
                       variant='h6'
-                      sx={{ fontWeight: 600, color: '#166534' }}
+                      sx={{ fontWeight: 600, color: 'success.dark' }}
                     >
                       {formatSpeed(statistics.avg_speed)}
                     </Typography>
@@ -398,7 +398,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                         display: 'flex',
                         alignItems: 'center',
                         gap: 2,
-                        color: '#ea580c',
+                        color: 'warning.dark',
                         mb: 1,
                       }}
                     >
@@ -407,7 +407,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                     </Box>
                     <Typography
                       variant='h6'
-                      sx={{ fontWeight: 600, color: '#9a3412' }}
+                      sx={{ fontWeight: 600, color: 'error.dark' }}
                     >
                       {formatSpeed(statistics.max_speed)}
                     </Typography>
@@ -420,7 +420,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                         display: 'flex',
                         alignItems: 'center',
                         gap: 2,
-                        color: '#9333ea',
+                        color: 'secondary.dark',
                         mb: 1,
                       }}
                     >
@@ -429,7 +429,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                     </Box>
                     <Typography
                       variant='h6'
-                      sx={{ fontWeight: 600, color: '#6b21a8' }}
+                      sx={{ fontWeight: 600, color: 'secondary.dark' }}
                     >
                       {statistics.track_points}
                     </Typography>
@@ -574,7 +574,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                     </Typography>
                   </Grid>
                 )}
-                {currentPoint.battery_level !== undefined && (
+                {currentPoint.batterylevel !== undefined && (
                   <Grid size={6}>
                     <Typography
                       variant='body2'
@@ -591,14 +591,14 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                         style={{
                           display: 'inline',
                           color:
-                            currentPoint.battery_level > 50
+                            currentPoint.batterylevel > 50
                               ? 'success.dark'
-                              : currentPoint.battery_level > 20
+                              : currentPoint.batterylevel > 20
                                 ? 'warning.main'
                                 : 'error.main',
                         }}
                       />
-                      {currentPoint.battery_level}%
+                      {currentPoint.batterylevel}%
                     </Typography>
                   </Grid>
                 )}
@@ -631,7 +631,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                 />
                 <Polyline
                   positions={trackCoords.slice(currentIndex + 1)}
-                  color='#94A3B8'
+                  color='var(--mui-palette-text-disabled)'
                   weight={2}
                   opacity={0.4}
                   dashArray='5,5'
@@ -749,7 +749,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
         <Box sx={{ textAlign: 'center' }}>
           <Navigation
             size={48}
-            style={{ color: 'grey.300', margin: '0 auto 12px' }}
+            sx={{ color: 'action.disabled', margin: '0 auto 12px' }}
           />
           <Typography sx={{ color: 'text.secondary' }}>请选择一个设备查看轨迹</Typography>
           <FormControl

@@ -1037,11 +1037,11 @@ export const ProductionDashboardPage: React.FC = () => {
     try {
       const [orderRes, recordRes, workStationRes, equipmentStatsRes, scheduleRes] =
         await Promise.allSettled([
-          productionOrderApi.list({ page: 1, page_size: 200 }),
-          productionRecordApi.list({ page: 1, page_size: 200 }),
-          workStationApi.list({ page: 1, page_size: 100 }),
+          productionOrderApi.list({ page: 1, pagesize: 200 }),
+          productionRecordApi.list({ page: 1, pagesize: 200 }),
+          workStationApi.list({ page: 1, pagesize: 100 }),
           mesEquipmentApi.getStatistics(),
-          productionScheduleApi.list({ page: 1, page_size: 50 }),
+          productionScheduleApi.list({ page: 1, pagesize: 50 }),
         ]);
 
       const orderData =
@@ -1067,7 +1067,7 @@ export const ProductionDashboardPage: React.FC = () => {
       // 加载设备列表以获取状态分布
       const equipmentListData: Equipment[] = [];
       try {
-        const eqListRes = await equipmentApi.list({ page: 1, page_size: 200 });
+        const eqListRes = await equipmentApi.list({ page: 1, pagesize: 200 });
         if (eqListRes.success && eqListRes.data) {
           const list = (eqListRes.data as { equipments?: Equipment[] }).equipments || [];
           equipmentListData.push(...list);

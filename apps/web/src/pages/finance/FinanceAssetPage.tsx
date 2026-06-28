@@ -126,8 +126,8 @@ const FinanceAssetPage: React.FC = () => {
     const totalCount = assetData.length;
     const activeCount = assetData.filter((a) => a.status === 'active').length;
     const disabledCount = assetData.filter((a) => a.status === 'disabled').length;
-    const hasChildrenCount = assetData.filter((a) => a.has_children).length;
-    const leafCount = assetData.filter((a) => !a.has_children).length;
+    const hasChildrenCount = assetData.filter((a) => a.haschildren).length;
+    const leafCount = assetData.filter((a) => !a.haschildren).length;
 
     return [
       {
@@ -385,16 +385,16 @@ const FinanceAssetPage: React.FC = () => {
         ),
       },
       {
-        id: 'has_children',
+        id: 'haschildren',
         label: '是否有下级',
         render: (row: Account) => (
           <MuiBox
             sx={{
               fontWeight: 700,
-              color: row.has_children ? 'success.main' : 'text.secondary',
+              color: row.haschildren ? 'success.main' : 'text.secondary',
             }}
           >
-            {row.has_children ? '是' : '否'}
+            {row.haschildren ? '是' : '否'}
           </MuiBox>
         ),
       },
@@ -474,7 +474,7 @@ const FinanceAssetPage: React.FC = () => {
       { key: 'category', title: '科目类别' },
       { key: 'balance_direction', title: '余额方向' },
       { key: 'level', title: '层级' },
-      { key: 'has_children', title: '是否有下级' },
+      { key: 'haschildren', title: '是否有下级' },
       { key: 'status', title: '状态' },
     ],
     []

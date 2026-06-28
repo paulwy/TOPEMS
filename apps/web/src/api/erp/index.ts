@@ -1,8 +1,17 @@
 import apiClient from '../client';
 import type { ApiResponse } from '../client';
+import {
+  purchaseOrderApi,
+  salesOrderApi,
+  inventoryApi,
+  materialApi,
+  supplierApi,
+  customerApi,
+} from './core';
 
 export * from './types';
 export * from './utils';
+export * from './core';
 
 export { voucherApi } from './finance/voucher';
 export { receivableApi, payableApi } from './finance/receivablePayable';
@@ -18,6 +27,13 @@ export { vehicleApi, vehicleRequestApi } from './admin/vehicle';
 export { announcementApi } from './admin/announcement';
 
 export const erpApi = {
+  purchaseOrders: purchaseOrderApi,
+  salesOrders: salesOrderApi,
+  inventory: inventoryApi,
+  materials: materialApi,
+  suppliers: supplierApi,
+  customers: customerApi,
+
   async health(): Promise<ApiResponse<string>> {
     return apiClient.erp.get<string>('/health');
   },

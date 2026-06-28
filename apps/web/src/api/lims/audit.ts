@@ -28,7 +28,7 @@ export const auditLimsApi = {
   },
 
   exportAuditLogs: async (
-    params?: Omit<AuditLogQueryParams, 'page' | 'page_size'>
+    params?: Omit<AuditLogQueryParams, 'page' | 'pagesize'>
   ): Promise<Blob> => {
     let url = '/api/lims/audit-logs/export';
     if (params) {

@@ -21,7 +21,7 @@ const adaptToWorkflowNotification = (n: any): Notification => ({
 
 export const notificationApi = {
   list: async (_userId: string, params?: ListParams): Promise<ApiResponse<Notification[]>> => {
-    const response = await getNotifications(params?.page, params?.page_size);
+    const response = await getNotifications(params?.page, params?.pagesize);
     const adapted = (response.data?.notifications || []).map(adaptToWorkflowNotification);
     return { ...response, data: adapted as any };
   },
@@ -51,7 +51,7 @@ export const notificationApi = {
     _userId: string,
     params?: ListParams
   ): Promise<ApiResponse<Notification[]>> => {
-    const response = await getNotifications(params?.page, params?.page_size);
+    const response = await getNotifications(params?.page, params?.pagesize);
     const adapted = (response.data?.notifications || []).map(adaptToWorkflowNotification);
     return { ...response, data: adapted as any };
   },

@@ -206,7 +206,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       >
         <Search
           size={20}
-          style={{ color: 'rgba(0, 0, 0, 0.54)', marginRight: 4 }}
+          sx={{ color: 'text.secondary', mr: 0.5 }}
         />
         <InputBase
           inputRef={inputRef}
@@ -285,7 +285,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                       {item.href && (
                         <ArrowRight
                           size={14}
-                          style={{ color: 'rgba(0, 0, 0, 0.26)', marginLeft: 4 }}
+                          sx={{ color: 'action.disabled', ml: 0.5 }}
                         />
                       )}
                     </ListItemButton>

@@ -57,7 +57,7 @@ const WorkStationPage: React.FC = () => {
       setLoading(true);
       const params: any = {
         page: currentPage - 1,
-        page_size: pageSize,
+        pagesize: pageSize,
       };
       if (searchTerm) params.search = searchTerm;
       if (statusFilter) params.status = statusFilter;

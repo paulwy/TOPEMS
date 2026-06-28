@@ -68,7 +68,7 @@ const RsReviewPage: React.FC = () => {
       setLoading(true);
       const params: any = {
         page: page + 1,
-        page_size: rowsPerPage,
+        pagesize: rowsPerPage,
       };
       if (searchTerm) params.search = searchTerm;
       if (statusFilter) params.status = statusFilter;

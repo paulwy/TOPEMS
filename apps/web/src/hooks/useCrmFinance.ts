@@ -63,7 +63,7 @@ export function useSalesInvoices(params?: {
   start_date?: string;
   end_date?: string;
   page?: number;
-  page_size?: number;
+  pagesize?: number;
 }) {
   return useQuery({
     queryKey: ['crm-sales-invoices', params],
@@ -219,7 +219,7 @@ export function useCollectionRecords(params?: {
   end_date?: string;
   payment_method?: string;
   page?: number;
-  page_size?: number;
+  pagesize?: number;
 }) {
   return useQuery({
     queryKey: ['crm-collection-records', params],
@@ -360,7 +360,7 @@ export function useOverdueReceivables(params?: {
   customer_id?: string;
   min_overdue_days?: number;
   page?: number;
-  page_size?: number;
+  pagesize?: number;
 }) {
   return useQuery({
     queryKey: ['crm-overdue-receivables', params],

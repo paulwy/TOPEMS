@@ -73,7 +73,7 @@ const EquipmentInspectionPage: React.FC = () => {
     try {
       const params: any = {
         page: currentPage + 1,
-        page_size: pageSize,
+        pagesize: pageSize,
       };
       if (debouncedSearch) {
         params.search = debouncedSearch;
@@ -118,7 +118,7 @@ const EquipmentInspectionPage: React.FC = () => {
         location: newInspection.location,
         temperature: newInspection.temperature,
         vibration: newInspection.vibration,
-        noise_level: newInspection.noise_level,
+        noiselevel: newInspection.noiselevel,
         abnormalities: newInspection.abnormalities,
         remarks: newInspection.remarks,
       };
@@ -397,11 +397,11 @@ const EquipmentInspectionPage: React.FC = () => {
                   label='噪音 (dB)'
                   type='number'
                   slotProps={{ htmlInput: { step: '0.1' } }}
-                  value={newInspection.noise_level || ''}
+                  value={newInspection.noiselevel || ''}
                   onChange={(e) =>
                     setNewInspection({
                       ...newInspection,
-                      noise_level: Number(e.target.value),
+                      noiselevel: Number(e.target.value),
                     })
                   }
                   fullWidth

@@ -104,7 +104,7 @@ const FlowTemplatePage: React.FC = () => {
           name: `${workflow.name} (副本)`,
           description: workflow.description,
           definition: workflow.definition,
-          is_active: false,
+          isactive: false,
         });
         success('模板复制成功');
         loadData();

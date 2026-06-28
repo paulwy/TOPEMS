@@ -263,11 +263,24 @@ export default defineConfig({
             if (id.includes('clsx') || id.includes('lucide-react')) {
               return 'ui-vendor';
             }
+            // 大型库单独分割
+            if (id.includes('xlsx') || id.includes('xlsx-style')) {
+              return 'excel-vendor';
+            }
+            if (id.includes('docx-preview')) {
+              return 'docx-vendor';
+            }
+            if (id.includes('dompurify')) {
+              return 'sanitize-vendor';
+            }
+            if (id.includes('react-markdown') || id.includes('remark-gfm') || id.includes('react-syntax-highlighter')) {
+              return 'markdown-vendor';
+            }
           }
         },
       },
     },
-    chunkSizeWarningLimit: 500,
+    chunkSizeWarningLimit: 350,
     sourcemap: false,
     minify: 'terser',
     terserOptions: {

@@ -140,10 +140,10 @@ const CRMCustomerScoringPage: React.FC = () => {
 
   const gradeDistribution = useMemo(
     () => ({
-      A: scores.filter((s) => s.score_level === 'A').length,
-      B: scores.filter((s) => s.score_level === 'B').length,
-      C: scores.filter((s) => s.score_level === 'C').length,
-      D: scores.filter((s) => s.score_level === 'D').length,
+      A: scores.filter((s) => s.scorelevel === 'A').length,
+      B: scores.filter((s) => s.scorelevel === 'B').length,
+      C: scores.filter((s) => s.scorelevel === 'C').length,
+      D: scores.filter((s) => s.scorelevel === 'D').length,
     }),
     [scores]
   );
@@ -209,11 +209,11 @@ const CRMCustomerScoringPage: React.FC = () => {
       ),
     },
     {
-      id: 'score_level',
+      id: 'scorelevel',
       label: '客户等级',
       width: 100,
       align: 'center',
-      render: (row) => getGradeBadge(row.score_level),
+      render: (row) => getGradeBadge(row.scorelevel),
     },
     {
       id: 'trend',
@@ -455,7 +455,7 @@ const CRMCustomerScoringPage: React.FC = () => {
                     )}
                   </Box>
                   <Box sx={{ textAlign: 'center' }}>
-                    {getGradeBadge(selectedScore.score_level)}
+                    {getGradeBadge(selectedScore.scorelevel)}
                     <Typography
                       variant='body2'
                       sx={{ color: 'text.secondary', mt: 0.5 }}

@@ -39,7 +39,7 @@ const RsExperimentListPage: React.FC = () => {
       let response;
       const params = {
         page: page + 1,
-        page_size: rowsPerPage,
+        pagesize: rowsPerPage,
         search: searchTerm || undefined,
         status: statusFilter || undefined,
       };

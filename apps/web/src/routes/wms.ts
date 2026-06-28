@@ -18,6 +18,8 @@ const ReplenishmentPage = lazy(() => import('../pages/wms/ReplenishmentPage'));
 const InboundPage = lazy(() => import('../pages/wms/InboundPage'));
 const OutboundPage = lazy(() => import('../pages/wms/OutboundPage'));
 const InventoryReportPage = lazy(() => import('../pages/wms/InventoryReportPage'));
+const BatchManagementPage = lazy(() => import('../pages/wms/BatchManagementPage'));
+const SerialNumberPage = lazy(() => import('../pages/wms/SerialNumberPage'));
 
 export const wmsRoutes: RouteConfig[] = [
   {
@@ -110,6 +112,20 @@ export const wmsRoutes: RouteConfig[] = [
   {
     path: '/wms/reports',
     element: InventoryReportPage,
+    requiredPermissions: ['wms:read'],
+    module: 'wms',
+    action: 'read',
+  },
+  {
+    path: '/wms/batches',
+    element: BatchManagementPage,
+    requiredPermissions: ['wms:read'],
+    module: 'wms',
+    action: 'read',
+  },
+  {
+    path: '/wms/serial-numbers',
+    element: SerialNumberPage,
     requiredPermissions: ['wms:read'],
     module: 'wms',
     action: 'read',

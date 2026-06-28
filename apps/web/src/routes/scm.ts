@@ -13,6 +13,9 @@ const ScmEvaluationPage = lazy(() => import('../pages/scm/ScmEvaluationPage'));
 const ScmDeliveryAppointmentPage = lazy(() => import('../pages/scm/ScmDeliveryAppointmentPage'));
 const MrpPlanPage = lazy(() => import('../pages/scm/MrpPlanPage'));
 const MrpSuggestionPage = lazy(() => import('../pages/scm/MrpSuggestionPage'));
+const PurchaseRequisitionPage = lazy(() => import('../pages/scm/PurchaseRequisitionPage'));
+const PurchaseContractPage = lazy(() => import('../pages/scm/PurchaseContractPage'));
+const SupplierAdmissionPage = lazy(() => import('../pages/scm/SupplierAdmissionPage'));
 const SupplierDetailPage = lazy(() => import('../pages/wms/SupplierDetailPage'));
 
 export const scmRoutes: RouteConfig[] = [
@@ -78,6 +81,27 @@ export const scmRoutes: RouteConfig[] = [
   {
     path: '/scm/mrp-suggestion',
     element: MrpSuggestionPage,
+    requiredPermissions: ['scm:read'],
+    module: 'scm',
+    action: 'read',
+  },
+  {
+    path: '/scm/purchase-requisitions',
+    element: PurchaseRequisitionPage,
+    requiredPermissions: ['scm:read'],
+    module: 'scm',
+    action: 'read',
+  },
+  {
+    path: '/scm/purchase-contracts',
+    element: PurchaseContractPage,
+    requiredPermissions: ['scm:read'],
+    module: 'scm',
+    action: 'read',
+  },
+  {
+    path: '/scm/supplier-admissions',
+    element: SupplierAdmissionPage,
     requiredPermissions: ['scm:read'],
     module: 'scm',
     action: 'read',

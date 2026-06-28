@@ -51,7 +51,7 @@ interface UseOfflineTilesReturn {
 const SW_PATH = '/sw/offline-tiles-sw.js';
 
 export function useOfflineTiles(options: UseOfflineTilesOptions = {}): UseOfflineTilesReturn {
-  const { _tileDir = '/offline_tiles', sources = ['osm', 'amap'] } = options;
+  const { tileDir = '/offline_tiles', sources = ['osm', 'amap'] } = options;
 
   const [isSWReady, setIsSWReady] = useState(false);
   const [isRegistered, setIsRegistered] = useState(false);

@@ -77,7 +77,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
         description: template.description,
         content: template.content,
         variables: template.variables,
-        is_active: template.is_active,
+        isactive: template.isactive,
         is_public: template.is_public,
         ai_enabled: template.ai_enabled,
         sort_order: 0,
@@ -89,7 +89,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
         module: 'doc',
         content: '',
         variables: [],
-        is_active: true,
+        isactive: true,
         is_public: false,
         ai_enabled: false,
       });
@@ -512,8 +512,8 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Switch
                   size='small'
-                  checked={formData.is_active || false}
-                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                  checked={formData.isactive || false}
+                  onChange={(e) => setFormData({ ...formData, isactive: e.target.checked })}
                 />
                 <FormLabel component='legend'>启用状态</FormLabel>
               </Box>

@@ -29,7 +29,8 @@
     "typecheck": "pnpm --filter topems-portal typecheck",
     "topems": "./scripts/topems.sh",
     "install:all": "./scripts/install-deps.sh",
-    "generate:tokens": "tsx scripts/generate-tokens.ts"
+    "generate:tokens": "tsx scripts/generate-tokens.ts",
+    "check:design-system": "bash scripts/check-design-system.sh"
   },
   "keywords": [
     "enterprise",

@@ -93,7 +93,7 @@ export const MonitorAlertsPage: React.FC = () => {
     setLoading(true);
     try {
       const params: AlertQueryParams = {
-        page_size: 100,
+        pagesize: 100,
       };
       if (severityFilter !== 'all') {
         params.severity = severityFilter;

@@ -43,7 +43,7 @@ export interface Employee {
   department_id?: string;
   department_name?: string;
   position?: string;
-  job_level?: string;
+  joblevel?: string;
   work_location?: string;
   report_to_name?: string;
   email?: string;
@@ -201,7 +201,7 @@ export interface PayrollItem {
 
 export interface PayrollDetail {
   id: string;
-  payroll_item_id: string;
+  payrollitem_id: string;
   item_type: string;
   item_name: string;
   amount: number;
@@ -360,7 +360,7 @@ export interface SalaryAdjustment {
 
 export interface PaginationParams {
   page?: number;
-  page_size?: number;
+  pagesize?: number;
   search?: string;
   status?: string;
   employee_id?: string;
@@ -371,12 +371,12 @@ export interface PaginatedResult<T> {
   items: T[];
   total: number;
   page: number;
-  page_size: number;
+  pagesize: number;
 }
 
 export interface ListParams {
   page?: number;
-  page_size?: number;
+  pagesize?: number;
   [key: string]: string | number | undefined;
 }
 

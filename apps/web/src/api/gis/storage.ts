@@ -17,7 +17,7 @@ export const storageApi = {
   ): Promise<ApiResponse<PaginatedResponse<StorageLocation>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.status) queryParams.append('status', params.status);
 
@@ -40,7 +40,7 @@ export const storageApi = {
   ): Promise<ApiResponse<PaginatedResponse<StorageLocation>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
 
     return apiClient.gis.get<PaginatedResponse<StorageLocation>>(
       `/api/gis/warehouse-locations/map/${mapId}?${queryParams.toString()}`
@@ -69,7 +69,7 @@ export const storageApi = {
   ): Promise<ApiResponse<PaginatedResponse<EvidenceRecord>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
     if (params?.search) queryParams.append('search', params.search);
 
     const response = await apiClient.gis.get<any>(
@@ -91,7 +91,7 @@ export const storageApi = {
   ): Promise<ApiResponse<PaginatedResponse<EvidenceRecord>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
 
     return apiClient.gis.get<PaginatedResponse<EvidenceRecord>>(
       `/api/gis/location-photos/map/${mapId}?${queryParams.toString()}`

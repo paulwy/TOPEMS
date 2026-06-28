@@ -22,7 +22,7 @@ import {
   Info,
   X,
   RefreshCw,
-  _HelpCircle,
+  HelpCircle,
 } from 'lucide-react';
 
 // ============ 类型定义 ============

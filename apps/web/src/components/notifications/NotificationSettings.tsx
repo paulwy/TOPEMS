@@ -36,7 +36,7 @@ const NotificationSettings: React.FC = () => {
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Monitor style={{ width: 16, height: 16, color: 'text.secondary' }} />
-            <span style={{ fontSize: 14, color: 'grey.700' }}>桌面通知</span>
+            <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>桌面通知</span>
           </div>
           <button
             onClick={() => toggleSetting('enableDesktop')}
@@ -80,7 +80,7 @@ const NotificationSettings: React.FC = () => {
             ) : (
               <VolumeX style={{ width: 16, height: 16, color: 'text.secondary' }} />
             )}
-            <span style={{ fontSize: 14, color: 'grey.700' }}>声音提示</span>
+            <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>声音提示</span>
           </div>
           <button
             onClick={() => toggleSetting('enableSound')}
@@ -120,7 +120,7 @@ const NotificationSettings: React.FC = () => {
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Smartphone style={{ width: 16, height: 16, color: 'text.secondary' }} />
-            <span style={{ fontSize: 14, color: 'grey.700' }}>移动推送</span>
+            <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>移动推送</span>
           </div>
           <button
             onClick={() => toggleSetting('enableMobilePush')}
@@ -151,7 +151,7 @@ const NotificationSettings: React.FC = () => {
           </button>
         </div>
 
-        <div style={{ paddingTop: 12, borderTop: '1px solid grey.200' }}>
+        <div style={{ paddingTop: 12, borderTop: '1px solid var(--mui-palette-divider)' }}>
           <h5
             style={{
               fontSize: 12,
@@ -213,7 +213,7 @@ const NotificationSettings: React.FC = () => {
           </div>
         </div>
 
-        <div style={{ paddingTop: 12, borderTop: '1px solid grey.200' }}>
+        <div style={{ paddingTop: 12, borderTop: '1px solid var(--mui-palette-divider)' }}>
           <div
             style={{
               display: 'flex',
@@ -222,7 +222,7 @@ const NotificationSettings: React.FC = () => {
               marginBottom: 12,
             }}
           >
-            <span style={{ fontSize: 12, fontWeight: 500, color: 'grey.700' }}>免打扰时段</span>
+            <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--mui-palette-text-secondary)' }}>免打扰时段</span>
             <button
               onClick={toggleQuietHours}
               style={{

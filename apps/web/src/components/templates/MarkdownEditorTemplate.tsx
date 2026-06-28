@@ -41,16 +41,16 @@ import {
   Image,
   Table,
   Minus,
-  _AlignLeft,
-  _AlignCenter,
-  _AlignRight,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
   Save,
   Download,
   History,
   Eye,
-  _EyeOff,
+  EyeOff,
   Plus,
-  _Trash2,
+  Trash2,
   Copy,
   Check,
   AlertCircle,
@@ -303,9 +303,9 @@ export const MarkdownEditorTemplate: React.FC<MarkdownEditorTemplateProps> = ({
   enableVersionHistory = false,
   versions = [],
   onSaveVersion,
-  _enableFileUpload = true,
+  enableFileUpload = true,
   enableImageUpload = true,
-  _uploadConfig = {},
+  uploadConfig = {},
   toolbarActions = defaultToolbarActions,
   readOnly = false,
   showPreviewByDefault = false,
@@ -686,7 +686,7 @@ ${content
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
                     components={{
-                      code({ _node, className, children, ...props }) {
+                      code({ node, className, children, ...props }) {
                         const match = /language-(\w+)/.exec(className || '');
                         const isInline = (props as any).inline;
                         return !isInline && match ? (
@@ -701,7 +701,7 @@ ${content
                           <code
                             className={className}
                             style={{
-                              backgroundColor: '#f3f3f3',
+                              backgroundColor: 'var(--mui-palette-action-hover)',
                               padding: '0.2rem 0.4rem',
                               borderRadius: '4px',
                               fontFamily: 'monospace',
@@ -722,10 +722,10 @@ ${content
                       th: ({ children }) => (
                         <th
                           style={{
-                            border: '1px solid #ddd',
+                            border: '1px solid var(--mui-palette-divider)',
                             padding: '0.5rem',
                             textAlign: 'left',
-                            backgroundColor: '#f5f5f5',
+                            backgroundColor: 'var(--mui-palette-action-hover)',
                             fontWeight: 600,
                           }}
                         >
@@ -734,7 +734,7 @@ ${content
                       ),
                       td: ({ children }) => (
                         <td
-                          style={{ border: '1px solid #ddd', padding: '0.5rem', textAlign: 'left' }}
+                          style={{ border: '1px solid var(--mui-palette-divider)', padding: '0.5rem', textAlign: 'left' }}
                         >
                           {children}
                         </td>
@@ -742,10 +742,10 @@ ${content
                       blockquote: ({ children }) => (
                         <blockquote
                           style={{
-                            borderLeft: '4px solid #ddd',
+                            borderLeft: '4px solid var(--mui-palette-divider)',
                             margin: '1rem 0',
                             paddingLeft: '1rem',
-                            color: '#666',
+                            color: 'var(--mui-palette-text-secondary)',
                             fontStyle: 'italic',
                           }}
                         >
@@ -758,7 +758,7 @@ ${content
                             fontSize: '2rem',
                             fontWeight: 700,
                             margin: '1.5rem 0 1rem',
-                            borderBottom: '2px solid #eee',
+                            borderBottom: '2px solid var(--mui-palette-divider)',
                             paddingBottom: '0.5rem',
                           }}
                         >
@@ -771,7 +771,7 @@ ${content
                             fontSize: '1.5rem',
                             fontWeight: 600,
                             margin: '1.25rem 0 0.75rem',
-                            borderBottom: '1px solid #eee',
+                            borderBottom: '1px solid var(--mui-palette-divider)',
                             paddingBottom: '0.25rem',
                           }}
                         >
@@ -805,7 +805,7 @@ ${content
                       ),
                       hr: () => (
                         <hr
-                          style={{ border: 'none', borderTop: '1px solid #ddd', margin: '2rem 0' }}
+                          style={{ border: 'none', borderTop: '1px solid var(--mui-palette-divider)', margin: '2rem 0' }}
                         />
                       ),
                       strong: ({ children }) => (

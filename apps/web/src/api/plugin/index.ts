@@ -2,6 +2,7 @@ import type { ApiResponse } from '../client';
 
 import { marketplaceApi } from './marketplace';
 import { pluginApi } from './plugin';
+import { mockMarketplaceApi } from './mock';
 
 export * from './types';
 
@@ -15,14 +16,19 @@ export {
 
 export { marketplaceApi } from './marketplace';
 export { pluginApi } from './plugin';
+export { mockMarketplaceApi } from './mock';
 
-export const getMarketplaceSummary = marketplaceApi.getSummary;
-export const getPluginCategories = marketplaceApi.getCategories;
-export const listPlugins = marketplaceApi.listPlugins;
-export const getPlugin = marketplaceApi.getPlugin;
-export const getPluginVersions = marketplaceApi.getVersions;
-export const getPluginReviews = marketplaceApi.getReviews;
-export const submitPluginReview = marketplaceApi.submitReview;
+const USE_MOCK = true;
+
+const activeMarketplaceApi = USE_MOCK ? mockMarketplaceApi : marketplaceApi;
+
+export const getMarketplaceSummary = activeMarketplaceApi.getSummary;
+export const getPluginCategories = activeMarketplaceApi.getCategories;
+export const listPlugins = activeMarketplaceApi.listPlugins;
+export const getPlugin = activeMarketplaceApi.getPlugin;
+export const getPluginVersions = activeMarketplaceApi.getVersions;
+export const getPluginReviews = activeMarketplaceApi.getReviews;
+export const submitPluginReview = activeMarketplaceApi.submitReview;
 
 export const pluginApiAggregated = {
   marketplace: marketplaceApi,

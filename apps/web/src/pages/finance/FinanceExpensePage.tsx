@@ -413,7 +413,7 @@ const FinanceExpensePage: React.FC = () => {
         render: (row) => <Box sx={{ fontWeight: 700, color: 'success.main' }}>{row.level}</Box>,
       },
       {
-        id: 'has_children',
+        id: 'haschildren',
         label: '有下级',
         render: (row) => (
           <Box
@@ -424,7 +424,7 @@ const FinanceExpensePage: React.FC = () => {
               fontSize: '0.875rem',
             }}
           >
-            {row.has_children ? '是' : '否'}
+            {row.haschildren ? '是' : '否'}
           </Box>
         ),
       },
@@ -489,8 +489,8 @@ const FinanceExpensePage: React.FC = () => {
 
   const activeCount = expenses.filter((e) => e.status === 'active').length;
   const disabledCount = expenses.filter((e) => e.status === 'disabled').length;
-  const hasChildrenCount = expenses.filter((e) => e.has_children).length;
-  const leafCount = expenses.filter((e) => !e.has_children).length;
+  const hasChildrenCount = expenses.filter((e) => e.haschildren).length;
+  const leafCount = expenses.filter((e) => !e.haschildren).length;
 
   const expenseStatusData = useMemo(
     () => [
@@ -532,7 +532,7 @@ const FinanceExpensePage: React.FC = () => {
       icon: <XCircle size={20} />,
     },
     {
-      id: 'has_children',
+      id: 'haschildren',
       title: '上级科目',
       value: hasChildrenCount,
       color: 'primary',

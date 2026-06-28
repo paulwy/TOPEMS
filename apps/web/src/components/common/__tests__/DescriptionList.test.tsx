@@ -101,7 +101,7 @@ describe('DescriptionList', () => {
     const { rerender } = render(
       <DescriptionList
         items={defaultItems}
-        size='small'
+        size='sm'
       />
     );
     expect(screen.getByText('张三')).toBeInTheDocument();
@@ -109,7 +109,7 @@ describe('DescriptionList', () => {
     rerender(
       <DescriptionList
         items={defaultItems}
-        size='large'
+        size='lg'
       />
     );
     expect(screen.getByText('张三')).toBeInTheDocument();

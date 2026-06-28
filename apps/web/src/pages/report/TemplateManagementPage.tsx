@@ -330,14 +330,14 @@ const TemplateManagementPage: React.FC = () => {
                     <IconButton
                       onClick={() => handleToggleStatus(template.id)}
                       sx={{
-                        color: template.is_active ? 'success.main' : 'grey.400',
+                        color: template.isactive ? 'success.main' : 'grey.400',
                         '&:hover': {
-                          bgcolor: template.is_active ? 'success.light' : 'grey.200',
+                          bgcolor: template.isactive ? 'success.light' : 'grey.200',
                         },
                       }}
-                      title={template.is_active ? '已启用' : '已禁用'}
+                      title={template.isactive ? '已启用' : '已禁用'}
                     >
-                      {template.is_active ? (
+                      {template.isactive ? (
                         <ToggleRight sx={{ width: 20, height: 20 }} />
                       ) : (
                         <ToggleLeft sx={{ width: 20, height: 20 }} />
@@ -479,11 +479,11 @@ const TemplateManagementPage: React.FC = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Typography sx={{ fontWeight: 500 }}>{template.name}</Typography>
                       <Chip
-                        label={template.is_active ? '已启用' : '已禁用'}
+                        label={template.isactive ? '已启用' : '已禁用'}
                         size='small'
                         sx={{
-                          bgcolor: template.is_active ? 'success.100' : 'grey.100',
-                          color: template.is_active ? 'success.700' : 'grey.700',
+                          bgcolor: template.isactive ? 'success.100' : 'grey.100',
+                          color: template.isactive ? 'success.700' : 'grey.700',
                         }}
                       />
                     </Box>
@@ -502,10 +502,10 @@ const TemplateManagementPage: React.FC = () => {
                   <IconButton
                     onClick={() => handleToggleStatus(template.id)}
                     sx={{
-                      color: template.is_active ? 'success.main' : 'grey.400',
+                      color: template.isactive ? 'success.main' : 'grey.400',
                     }}
                   >
-                    {template.is_active ? (
+                    {template.isactive ? (
                       <ToggleRight sx={{ width: 20, height: 20 }} />
                     ) : (
                       <ToggleLeft sx={{ width: 20, height: 20 }} />
@@ -605,7 +605,7 @@ const TemplateFormModal: React.FC<TemplateFormModalProps> = ({
     description: template?.description || '',
     content: template?.content || '',
     variables: template?.variables || [],
-    is_active: template?.is_active ?? true,
+    isactive: template?.isactive ?? true,
   });
 
   const handleSubmit = (e: React.FormEvent) => {

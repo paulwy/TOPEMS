@@ -231,7 +231,7 @@ const PerformanceMonitor: React.FC = () => {
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Activity sx={{ width: 20, height: 20, color: 'primary.dark' }} />
-              <h3 style={{ fontWeight: 600, color: 'grey.900' }}>性能监控</h3>
+              <h3 style={{ fontWeight: 600, color: 'var(--mui-palette-text-primary)' }}>性能监控</h3>
             </div>
             <button
               onClick={() => setIsVisible(false)}
@@ -271,7 +271,7 @@ const PerformanceMonitor: React.FC = () => {
               >
                 {getPerformanceScore()}
               </div>
-              <div style={{ fontSize: '14px', color: 'grey.600', marginTop: '4px' }}>性能评分</div>
+              <div style={{ fontSize: '14px', color: 'var(--mui-palette-text-secondary)', marginTop: '4px' }}>性能评分</div>
             </div>
           </div>
 
@@ -344,7 +344,7 @@ const PerformanceMonitor: React.FC = () => {
                 }}
               />
               <div>
-                <div style={{ fontSize: '12px', color: 'grey.600' }}>帧率</div>
+                <div style={{ fontSize: '12px', color: 'var(--mui-palette-text-secondary)' }}>帧率</div>
                 <div
                   style={{
                     fontSize: '14px',
@@ -375,7 +375,7 @@ const PerformanceMonitor: React.FC = () => {
                 }}
               />
               <div>
-                <div style={{ fontSize: '12px', color: 'grey.600' }}>CPU</div>
+                <div style={{ fontSize: '12px', color: 'var(--mui-palette-text-secondary)' }}>CPU</div>
                 <div
                   style={{
                     fontSize: '14px',
@@ -406,7 +406,7 @@ const PerformanceMonitor: React.FC = () => {
                 }}
               />
               <div>
-                <div style={{ fontSize: '12px', color: 'grey.600' }}>网络延迟</div>
+                <div style={{ fontSize: '12px', color: 'var(--mui-palette-text-secondary)' }}>网络延迟</div>
                 <div
                   style={{
                     fontSize: '14px',
@@ -437,7 +437,7 @@ const PerformanceMonitor: React.FC = () => {
                 }}
               />
               <div>
-                <div style={{ fontSize: '12px', color: 'grey.600' }}>LCP</div>
+                <div style={{ fontSize: '12px', color: 'var(--mui-palette-text-secondary)' }}>LCP</div>
                 <div
                   style={{
                     fontSize: '14px',
@@ -471,8 +471,8 @@ const PerformanceMonitor: React.FC = () => {
                 marginBottom: '8px',
               }}
             >
-              <History sx={{ width: 16, height: 16, color: 'grey.600' }} />
-              <span style={{ fontSize: '12px', color: 'grey.600' }}>实时趋势</span>
+              <History sx={{ width: 16, height: 16, color: 'text.secondary' }} />
+              <span style={{ fontSize: '12px', color: 'var(--mui-palette-text-secondary)' }}>实时趋势</span>
             </div>
             <div
               style={{
@@ -552,7 +552,7 @@ const PerformanceMonitor: React.FC = () => {
                 gridTemplateColumns: 'repeat(3, 1fr)',
                 gap: '8px',
                 fontSize: '12px',
-                color: 'grey.600',
+                color: 'text.secondary',
               }}
             >
               <div>

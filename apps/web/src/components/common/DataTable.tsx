@@ -4,7 +4,7 @@
  * 使用TanStack React Table，支持搜索、排序、筛选、分页、选择、导出等功能
  * 增强特性：列配置持久化、行展开功能、虚拟滚动支持、高级筛选、Excel导出
  */
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import {
   Box,
   Typography,
@@ -19,7 +19,7 @@ import {
   TableHead,
   TableRow,
   Checkbox,
-  _Tooltip,
+  Tooltip,
   Skeleton,
   Dialog,
   DialogContent,
@@ -39,7 +39,7 @@ import {
   Eye,
   EyeOff,
   RefreshCw,
-  _MoreVertical,
+  MoreVertical,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
@@ -141,8 +141,8 @@ export interface DataTableProps<TData, TValue> {
   /** 行点击回调 */
   onRowClick?: (row: TData) => void;
 
-  /** 选择变化回调（selectionKey存在时传入string[]，否则传入Set<string>） */
-  onSelectionChange?: (keys: Set<string> | string[]) => void;
+  /** 选择变化回调，始终传入 string[] */
+  onSelectionChange?: (selectedRows: string[]) => void;
 
   /** 是否显示刷新按钮 */
   showRefresh?: boolean;
@@ -166,7 +166,7 @@ export interface DataTableProps<TData, TValue> {
   extraActions?: React.ReactNode;
 
   /** 自定义样式 */
-  sx?: any;
+  sx?: import('@mui/material/styles').SxProps<import('@mui/material/styles').Theme>;
 
   /** 是否启用列配置持久化（存储到localStorage） */
   persistColumnConfig?: boolean;
@@ -207,11 +207,11 @@ export interface DataTableProps<TData, TValue> {
   /** 空状态自定义内容 */
   emptyState?: React.ReactNode;
 
-  /** 选择key */
-  selectionKey?: keyof TData;
-
-  /** 已选中的id列表（受控） */
+  /** @deprecated 使用 selectedRows 代替。保留用于向后兼容。 */
   selectedIds?: string[];
+
+  /** 已选中的行ID列表（受控） */
+  selectedRows?: string[];
 }
 
 /**
@@ -283,7 +283,7 @@ export function DataTable<TData, TValue>({
   searchKey,
   searchPlaceholder = '搜索...',
   showSearch = true,
-  _showFilters = true,
+  showFilters = true,
   showExport = true,
   showSelection = false,
   showCreate = false,
@@ -299,7 +299,7 @@ export function DataTable<TData, TValue>({
   onPageSizeChange,
   onRowClick,
   onSelectionChange,
-  _showRefresh = false,
+  showRefresh = false,
   onRefresh,
   loading = false,
   responsive = true,
@@ -312,17 +312,17 @@ export function DataTable<TData, TValue>({
   columnConfigKey = 'default',
   enableRowExpansion = false,
   expandedRowRender,
-  _enableVirtualization = false,
-  _rowHeight = 52,
+  enableVirtualization = false,
+  rowHeight = 52,
   enableStickyHeader = false,
   showRowNumber = false,
   enableAdvancedFilter = false,
   advancedFilters = [],
   striped = true,
   compact = false,
-  _emptyState,
-  selectionKey,
+  emptyState: _emptyState,
   selectedIds = [],
+  selectedRows,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -339,17 +339,15 @@ export function DataTable<TData, TValue>({
   );
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(new Set(selectedIds));
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
+  // Unified selection state - prefer selectedRows, fall back to selectedIds for backward compat
+  const effectiveSelectedIds = selectedRows ?? selectedIds ?? [];
+  const [internalSelected, setInternalSelected] = React.useState<string[]>([]);
+  const isSelected = showSelection ? (effectiveSelectedIds.length > 0 ? effectiveSelectedIds : internalSelected) : [];
   const addNotification = useAppStore((state) => state.addNotification);
 
   const { exportToCSV, exportToExcel } = useExportData(columns);
-
-  useEffect(() => {
-    if (selectedIds) {
-      setSelectedKeys(new Set(selectedIds));
-    }
-  }, [selectedIds]);
 
   useEffect(() => {
     if (persistColumnConfig) {
@@ -403,62 +401,29 @@ export function DataTable<TData, TValue>({
     [searchKey, table]
   );
 
-  const handleSelectionChange = useCallback(
-    (keys: Set<string>) => {
-      setSelectedKeys(keys);
-      onSelectionChange?.(keys);
-    },
-    [onSelectionChange]
-  );
-
-  const handleSelectAll = useCallback(() => {
-    const filteredRows = table.getFilteredRowModel().rows;
-    if (selectionKey && onSelectionChange) {
-      if (selectedIds.length === filteredRows.length && filteredRows.length > 0) {
-        onSelectionChange([]);
-      } else {
-        const allIds = filteredRows.map((row) => String(row.original[selectionKey]));
-        onSelectionChange(allIds);
-      }
+  const handleSelectAll = React.useCallback(() => {
+    const allIds = data.map(row => getRowKey(row));
+    const newSelected = isSelected.length === allIds.length ? [] : allIds;
+    if (effectiveSelectedIds.length > 0 && onSelectionChange) {
+      onSelectionChange(newSelected);
     } else {
-      if (selectedKeys.size === filteredRows.length && filteredRows.length > 0) {
-        handleSelectionChange(new Set());
-      } else {
-        const allKeys = new Set(filteredRows.map((row) => getRowKey(row.original)));
-        handleSelectionChange(allKeys);
-      }
+      setInternalSelected(newSelected);
+      onSelectionChange?.(newSelected);
     }
-  }, [
-    selectedKeys,
-    table,
-    getRowKey,
-    handleSelectionChange,
-    selectedIds,
-    selectionKey,
-    onSelectionChange,
-  ]);
+  }, [data, isSelected, effectiveSelectedIds, onSelectionChange]);
 
-  const handleSelectRow = useCallback(
-    (row: TData) => {
-      if (selectionKey && onSelectionChange) {
-        const id = String(row[selectionKey]);
-        const newSelected = selectedIds.includes(id)
-          ? selectedIds.filter((selectedId) => selectedId !== id)
-          : [...selectedIds, id];
-        onSelectionChange(newSelected);
-      } else {
-        const key = getRowKey(row);
-        const newKeys = new Set(selectedKeys);
-        if (newKeys.has(key)) {
-          newKeys.delete(key);
-        } else {
-          newKeys.add(key);
-        }
-        handleSelectionChange(newKeys);
-      }
-    },
-    [selectedKeys, getRowKey, handleSelectionChange, selectedIds, selectionKey, onSelectionChange]
-  );
+  const handleSelectRow = React.useCallback((row: TData) => {
+    const key = getRowKey(row);
+    const newSelected = isSelected.includes(key)
+      ? isSelected.filter(s => s !== key)
+      : [...isSelected, key];
+    if (effectiveSelectedIds.length > 0 && onSelectionChange) {
+      onSelectionChange(newSelected);
+    } else {
+      setInternalSelected(newSelected);
+      onSelectionChange?.(newSelected);
+    }
+  }, [isSelected, effectiveSelectedIds, onSelectionChange, getRowKey]);
 
   const handleRowExpand = useCallback(
     (row: TData) => {
@@ -516,11 +481,9 @@ export function DataTable<TData, TValue>({
     }
   }, [exportToExcel, table, exportFileName, addNotification]);
 
-  const hasSelected = selectedIds.length > 0 || selectedKeys.size > 0;
+  const hasSelected = isSelected.length > 0;
   const isAllSelected =
-    hasSelected &&
-    (selectedIds.length === table.getFilteredRowModel().rows.length ||
-      selectedKeys.size === table.getFilteredRowModel().rows.length);
+    hasSelected && isSelected.length === table.getFilteredRowModel().rows.length;
 
   const currentPageIndex = currentPage;
   const totalRecords =
@@ -561,15 +524,15 @@ export function DataTable<TData, TValue>({
                 placeholder={searchPlaceholder}
                 value={localSearch}
                 onChange={(event) => handleSearch(event.target.value)}
-                aria-label={searchPlaceholder || '搜索'}
                 sx={{ width: '100%', maxWidth: 320 }}
                 slotProps={{
                   input: {
-                    startAdornment: (
-                      <Search sx={{ width: 16, height: 16, mr: 1, color: 'text.secondary' }} />
-                    ),
+                  startAdornment: (
+                    <Search sx={{ width: 16, height: 16, mr: 1, color: 'text.secondary' }} />
+                  ),
                   },
                 }}
+
               />
             )}
 
@@ -673,7 +636,7 @@ export function DataTable<TData, TValue>({
               <span style={{ fontSize: '0.875rem', color: 'primary.dark' }}>
                 已选择{' '}
                 <Chip
-                  label={selectedIds.length > 0 ? selectedIds.length : selectedKeys.size}
+                  label={isSelected.length}
                   size='small'
                   color='primary'
                   sx={{ mx: 0.5 }}
@@ -681,17 +644,11 @@ export function DataTable<TData, TValue>({
                 条记录
               </span>
             </Box>
-            {(onSelectionChange || (selectionKey && onSelectionChange)) && (
+            {onSelectionChange && (
               <Button
                 variant='outlined'
                 size='small'
-                onClick={() => {
-                  if (selectionKey && onSelectionChange) {
-                    onSelectionChange([]);
-                  } else {
-                    onSelectionChange?.(new Set());
-                  }
-                }}
+                onClick={() => onSelectionChange([])}
               >
                 取消选择
               </Button>
@@ -753,7 +710,6 @@ export function DataTable<TData, TValue>({
       >
         <Box sx={{ overflowX: responsive ? 'auto' : 'hidden' }}>
           <Table
-            aria-label='数据表格'
             sx={{
               minWidth: 640,
               ...(enableStickyHeader && {
@@ -775,7 +731,6 @@ export function DataTable<TData, TValue>({
                   {/* 选择列 */}
                   {showSelection && (
                     <TableCell
-                      scope='col'
                       padding='checkbox'
                       sx={{
                         position: 'sticky',
@@ -787,7 +742,7 @@ export function DataTable<TData, TValue>({
                     >
                       <Checkbox
                         checked={isAllSelected}
-                        onChange={(_e) => handleSelectAll()}
+                        onChange={(e) => handleSelectAll()}
                         indeterminate={hasSelected && !isAllSelected}
                       />
                     </TableCell>
@@ -795,7 +750,6 @@ export function DataTable<TData, TValue>({
                   {/* 行号列 */}
                   {showRowNumber && (
                     <TableCell
-                      scope='col'
                       sx={{
                         whiteSpace: 'nowrap',
                         fontWeight: 600,
@@ -815,7 +769,6 @@ export function DataTable<TData, TValue>({
                   {/* 展开列 */}
                   {enableRowExpansion && (
                     <TableCell
-                      scope='col'
                       sx={{
                         whiteSpace: 'nowrap',
                         fontWeight: 600,
@@ -836,7 +789,6 @@ export function DataTable<TData, TValue>({
                   {headerGroup.headers.map((header) => (
                     <TableCell
                       key={header.id}
-                      scope='col'
                       sx={{
                         whiteSpace: 'nowrap',
                         fontWeight: 600,
@@ -898,19 +850,7 @@ export function DataTable<TData, TValue>({
                     <>
                       <TableRow
                         key={row.id}
-                        hover={!!onRowClick}
-                        tabIndex={onRowClick ? 0 : undefined}
-                        onClick={onRowClick ? () => onRowClick(row.original) : undefined}
-                        onKeyDown={
-                          onRowClick
-                            ? (e: React.KeyboardEvent) => {
-                                if (e.key === 'Enter' || e.key === ' ') {
-                                  e.preventDefault();
-                                  onRowClick(row.original);
-                                }
-                              }
-                            : undefined
-                        }
+                        onClick={() => onRowClick?.(row.original)}
                         sx={{
                           cursor: onRowClick ? 'pointer' : 'default',
                           '&:hover': {
@@ -934,11 +874,7 @@ export function DataTable<TData, TValue>({
                             }}
                           >
                             <Checkbox
-                              checked={
-                                selectionKey
-                                  ? selectedIds.includes(String(row.original[selectionKey]))
-                                  : selectedKeys.has(rowKey)
-                              }
+                              checked={isSelected.includes(rowKey)}
                               onChange={() => handleSelectRow(row.original)}
                               onClick={(e) => e.stopPropagation()}
                             />
@@ -974,7 +910,6 @@ export function DataTable<TData, TValue>({
                           >
                             <IconButton
                               size='small'
-                              aria-label={isExpanded ? '收起行' : '展开行'}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleRowExpand(row.original);
@@ -1073,19 +1008,18 @@ export function DataTable<TData, TValue>({
             }}
           >
             {/* 选择信息 */}
-            {showSelection && selectedKeys.size > 0 && (
+            {showSelection && isSelected.length > 0 && (
               <Typography
                 variant='body2'
                 color='text.secondary'
               >
-                已选择 {selectedKeys.size} 条记录
+                已选择 {isSelected.length} 条记录
               </Typography>
             )}
             {/* 总数信息 */}
             <Typography
               variant='body2'
               color='text.secondary'
-              aria-live='polite'
             >
               共 {totalRecords} 条记录
             </Typography>
@@ -1103,7 +1037,6 @@ export function DataTable<TData, TValue>({
                   value={pageSize}
                   onChange={(e) => onPageSizeChange(Number(e.target.value))}
                   sx={{ minWidth: 70, height: 32 }}
-                  aria-label='每页显示条数'
                 >
                   <MenuItem value={10}>10</MenuItem>
                   <MenuItem value={20}>20</MenuItem>
@@ -1127,7 +1060,6 @@ export function DataTable<TData, TValue>({
               上一页
             </Button>
             <IconButton
-              aria-label='上一页'
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
               sx={{ display: { xs: 'flex', sm: 'none' } }}
@@ -1154,7 +1086,6 @@ export function DataTable<TData, TValue>({
               下一页
             </Button>
             <IconButton
-              aria-label='下一页'
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
               sx={{ display: { xs: 'flex', sm: 'none' } }}

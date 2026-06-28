@@ -108,7 +108,7 @@ const VoucherManagementPage: React.FC = () => {
       const [voucherResult, subjectResult] = await Promise.all([
         voucherApi.list({
           page: page + 1,
-          page_size: rowsPerPage,
+          pagesize: rowsPerPage,
           search: searchQuery || undefined,
           status: statusFilter || undefined,
           period: periodFilter || undefined,

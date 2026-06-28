@@ -4,11 +4,11 @@ import { Search, Calendar, MapPin } from 'lucide-react';
 import {
   Box,
   Typography,
-  _Paper,
+  Paper,
   TextField,
   IconButton,
-  _Grid,
-  _Divider,
+  Grid,
+  Divider,
   Button,
 } from '@mui/material';
 import type { DevicePoint } from '../../../../api/gis';
@@ -36,7 +36,7 @@ const generateMockTrack = (device: DevicePoint): TrackRecord => {
       timestamp: new Date(Date.now() - (numPoints - i) * 60000).toISOString(),
       speed: 20 + Math.random() * 40,
       heading: Math.random() * 360,
-      battery_level: 100 - Math.floor((i / numPoints) * 100),
+      batterylevel: 100 - Math.floor((i / numPoints) * 100),
     };
     points.push(point);
   }
@@ -364,12 +364,12 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                       {currentTrack.points.slice(0, 50).map((point, index) => (
                         <tr
                           key={index}
-                          style={{ borderBottom: '1px solid grey.100' }}
+                          style={{ borderBottom: '1px solid var(--mui-palette-grey-100)' }}
                         >
                           <td style={{ padding: '8px 12px', color: 'text.secondary' }}>
                             {index + 1}
                           </td>
-                          <td style={{ padding: '8px 12px', color: 'grey.700' }}>
+                          <td style={{ padding: '8px 12px', color: 'var(--mui-palette-text-secondary)' }}>
                             {new Date(point.timestamp).toLocaleTimeString()}
                           </td>
                           <td
@@ -382,7 +382,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                           >
                             {point.position[0].toFixed(5)}, {point.position[1].toFixed(5)}
                           </td>
-                          <td style={{ padding: '8px 12px', color: 'grey.700' }}>
+                          <td style={{ padding: '8px 12px', color: 'var(--mui-palette-text-secondary)' }}>
                             {point.speed?.toFixed(1) || '-'} km/h
                           </td>
                         </tr>
@@ -418,7 +418,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
               <Box sx={{ textAlign: 'center' }}>
                 <Calendar
                   size={48}
-                  style={{ color: 'grey.300', margin: '0 auto 12px' }}
+                  sx={{ color: 'action.disabled', margin: '0 auto 12px' }}
                 />
                 <Typography sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
                   从左侧列表选择设备以查看轨迹

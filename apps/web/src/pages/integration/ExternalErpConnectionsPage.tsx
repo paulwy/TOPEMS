@@ -93,7 +93,7 @@ interface ErpConnection {
   sync_direction: string;
   sync_mode: string;
   timeout?: number;
-  is_active?: boolean;
+  isactive?: boolean;
   status?: string;
   last_sync_at?: string;
 }

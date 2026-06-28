@@ -49,7 +49,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
               marginBottom: '16px',
             }}
           ></div>
-          <p style={{ color: 'grey.600' }}>加载中...</p>
+          <p style={{ color: 'var(--mui-palette-text-secondary)' }}>加载中...</p>
         </div>
       </div>
     );
@@ -90,7 +90,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
             </Typography>
             <Typography
               variant='body2'
-              sx={{ color: 'grey.600', mb: 3 }}
+              sx={{ color: 'var(--mui-palette-text-secondary)', mb: 3 }}
             >
               您没有访问此页面的权限。请联系管理员获取相应权限。
             </Typography>
@@ -141,7 +141,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
             </Typography>
             <Typography
               variant='body2'
-              sx={{ color: 'grey.600', mb: 3 }}
+              sx={{ color: 'var(--mui-palette-text-secondary)', mb: 3 }}
             >
               您没有访问此页面的角色权限。请联系管理员分配相应角色。
             </Typography>

@@ -211,7 +211,7 @@ const FlowVersionHistoryPage: React.FC = () => {
   };
 
   const handleDeleteVersion = async (version: WorkflowVersion) => {
-    if (!id || version.is_active) {
+    if (!id || version.isactive) {
       addNotification({
         title: '提示',
         message: '无法删除当前激活的版本',
@@ -320,10 +320,10 @@ const FlowVersionHistoryPage: React.FC = () => {
                   key={version.id}
                   sx={{
                     border: 1,
-                    borderColor: version.is_active ? 'secondary.main' : 'divider',
+                    borderColor: version.isactive ? 'secondary.main' : 'divider',
                     borderRadius: 1,
                     p: 2,
-                    bgcolor: version.is_active ? 'secondary.50' : 'transparent',
+                    bgcolor: version.isactive ? 'secondary.50' : 'transparent',
                   }}
                 >
                   <Stack
@@ -343,14 +343,14 @@ const FlowVersionHistoryPage: React.FC = () => {
                           width: 40,
                           height: 40,
                           borderRadius: '50%',
-                          bgcolor: version.is_active ? 'secondary.main' : 'grey.100',
-                          color: version.is_active ? 'white' : 'grey.600',
+                          bgcolor: version.isactive ? 'secondary.main' : 'grey.100',
+                          color: version.isactive ? 'white' : 'grey.600',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                         }}
                       >
-                        {version.is_active ? (
+                        {version.isactive ? (
                           <CheckCircle size={20} />
                         ) : (
                           <Typography
@@ -373,7 +373,7 @@ const FlowVersionHistoryPage: React.FC = () => {
                           >
                             v{version.version}
                           </Typography>
-                          {version.is_active && (
+                          {version.isactive && (
                             <Chip
                               label='当前版本'
                               size='small'
@@ -427,7 +427,7 @@ const FlowVersionHistoryPage: React.FC = () => {
                       direction='row'
                       spacing={1}
                     >
-                      {!version.is_active && (
+                      {!version.isactive && (
                         <>
                           <Tooltip title='回滚到此版本'>
                             <IconButton
@@ -455,11 +455,11 @@ const FlowVersionHistoryPage: React.FC = () => {
                       <Button
                         size='small'
                         onClick={() => handleActivateVersion(version)}
-                        disabled={version.is_active}
-                        variant={version.is_active ? 'outlined' : 'contained'}
-                        sx={version.is_active ? {} : { bgcolor: 'secondary.main' }}
+                        disabled={version.isactive}
+                        variant={version.isactive ? 'outlined' : 'contained'}
+                        sx={version.isactive ? {} : { bgcolor: 'secondary.main' }}
                       >
-                        {version.is_active ? '已激活' : '激活'}
+                        {version.isactive ? '已激活' : '激活'}
                       </Button>
                     </Stack>
                   </Stack>

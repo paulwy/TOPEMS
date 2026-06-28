@@ -78,10 +78,10 @@ export function WorkflowTableExample() {
         cell: ({ row }) => <Box sx={{ textAlign: 'left' }}>{row.getValue('description')}</Box>,
       },
       {
-        accessorKey: 'is_active',
+        accessorKey: 'isactive',
         header: () => <Box sx={{ textAlign: 'left' }}>状态</Box>,
         cell: ({ row }) => {
-          const isActive = row.getValue('is_active') as boolean;
+          const isActive = row.getValue('isactive') as boolean;
           return (
             <Box sx={{ textAlign: 'left' }}>
               <Chip

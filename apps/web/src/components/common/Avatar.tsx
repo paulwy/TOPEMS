@@ -183,8 +183,9 @@ export const AvatarGroup: React.FC<AvatarGroupProps> = ({
   const avatarSize = getAvatarSx();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const avatarGroupSx: any = { '& .MuiAvatar-root': avatarSize, ...sx };
+  const AvatarGroupComponent = MuiAvatarGroup as React.ComponentType<any>;
   return (
-    <MuiAvatarGroup
+    <AvatarGroupComponent
       max={max}
       sx={avatarGroupSx}
     >
@@ -199,7 +200,7 @@ export const AvatarGroup: React.FC<AvatarGroupProps> = ({
           />
         </Tooltip>
       ))}
-    </MuiAvatarGroup>
+    </AvatarGroupComponent>
   );
 };
 

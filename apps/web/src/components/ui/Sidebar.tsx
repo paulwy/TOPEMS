@@ -27,7 +27,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onItemClick,
   collapsed = false,
   onCollapseChange,
-  _className = '',
+  className = '',
 }) => {
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [focusedIndex, setFocusedIndex] = useState(0);

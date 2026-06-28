@@ -35,7 +35,7 @@ export interface ErpConnection {
   sync_mode: SyncMode;
   sync_interval?: number;
   status: ErpConnectionStatus;
-  is_active: boolean;
+  isactive: boolean;
   last_sync_at?: string;
   created_at: string;
   updated_at: string;
@@ -62,7 +62,7 @@ export interface UpdateErpConnectionRequest {
   sync_direction?: SyncDirection;
   sync_mode?: SyncMode;
   sync_interval?: number;
-  is_active?: boolean;
+  isactive?: boolean;
 }
 
 export interface TestConnectionRequest {
@@ -95,7 +95,7 @@ export interface LimsQmsSync {
   inspection_notes?: string;
   synced: boolean;
   sync_status: string;
-  sync_error?: string;
+  syncerror?: string;
   last_synced_at?: string;
   created_at: string;
   updated_at: string;
@@ -117,7 +117,7 @@ export interface MesErpSync {
   quantity?: number;
   synced: boolean;
   sync_status: string;
-  sync_error?: string;
+  syncerror?: string;
   last_synced_at?: string;
   created_at: string;
   updated_at: string;
@@ -139,7 +139,7 @@ export interface WmsScmSync {
   unit?: string;
   synced: boolean;
   sync_status: string;
-  sync_error?: string;
+  syncerror?: string;
   last_synced_at?: string;
   created_at: string;
   updated_at: string;
@@ -283,7 +283,7 @@ export interface ErpMapping {
   external_code: string;
   external_name: string;
   direction: MappingDirection;
-  is_active: boolean;
+  isactive: boolean;
   priority: number;
   condition?: string;
   created_at: string;
@@ -309,7 +309,7 @@ export interface UpdateErpMappingRequest {
   external_code?: string;
   external_name?: string;
   direction?: MappingDirection;
-  is_active?: boolean;
+  isactive?: boolean;
   priority?: number;
   condition?: string;
 }

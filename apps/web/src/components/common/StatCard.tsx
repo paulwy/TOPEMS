@@ -13,9 +13,9 @@ import {
   Menu,
   MenuItem,
   Skeleton,
-  _Chip,
+  Chip,
   IconButton,
-  _Tooltip,
+  Tooltip,
   LinearProgress,
   Button,
 } from '@mui/material';
@@ -23,7 +23,7 @@ import {
   TrendingUp,
   TrendingDown,
   Minus,
-  _Activity,
+  Activity,
   Download,
   Maximize2,
   RefreshCw,
@@ -34,10 +34,10 @@ import {
   PieChart,
   AreaChart,
   MoreVertical,
-  _Eye,
-  _Target,
-  _Award,
-  type _LucideIcon,
+  Eye,
+  Target,
+  Award,
+  type LucideIcon,
 } from 'lucide-react';
 
 // ============ 类型定义 ============
@@ -206,68 +206,68 @@ const COLOR_MAP: Record<string, { bg: string; gradient: string; light: string; m
   green: {
     bg: 'success.main',
     gradient: 'linear-gradient(135deg, success.main, success.dark)',
-    light: '#DCFCE7',
+    light: 'success.lightest',
     main: 'success.main',
   },
   purple: {
-    bg: '#8B5CF6',
+    bg: 'secondary.main',
     gradient: 'linear-gradient(135deg, #8B5CF6, #7C3AED)',
-    light: '#EDE9FE',
-    main: '#8B5CF6',
+    light: 'secondary.lightest',
+    main: 'secondary.main',
   },
   blue: {
     bg: 'primary.main',
     gradient: 'linear-gradient(135deg, #3B82F6, #2563EB)',
-    light: '#DBEAFE',
+    light: 'primary.lightest',
     main: 'primary.main',
   },
   orange: {
     bg: 'warning.main',
     gradient: 'linear-gradient(135deg, #F59E0B, #D97706)',
-    light: '#FEF3C7',
+    light: 'warning.lightest',
     main: 'warning.main',
   },
   red: {
     bg: 'error.main',
     gradient: 'linear-gradient(135deg, error.main, #DC2626)',
-    light: '#FEE2E2',
+    light: 'error.lightest',
     main: 'error.main',
   },
   cyan: {
-    bg: '#06B6D4',
+    bg: 'info.main',
     gradient: 'linear-gradient(135deg, #06B6D4, #0891B2)',
-    light: '#CFFAFE',
-    main: '#06B6D4',
+    light: 'info.lightest',
+    main: 'info.main',
   },
   primary: {
-    bg: '#1976d2',
+    bg: 'primary.main',
     gradient: 'linear-gradient(135deg, #1976d2, #1565c0)',
-    light: '#E3F2FD',
-    main: '#1976d2',
+    light: 'primary.lightest',
+    main: 'primary.main',
   },
   success: {
-    bg: '#388e3c',
+    bg: 'success.main',
     gradient: 'linear-gradient(135deg, #388e3c, success.dark)',
-    light: '#E8F5E9',
-    main: '#388e3c',
+    light: 'success.lightest',
+    main: 'success.main',
   },
   warning: {
-    bg: '#f57c00',
+    bg: 'warning.main',
     gradient: 'linear-gradient(135deg, #f57c00, #ef6c00)',
-    light: '#FFF3E0',
-    main: '#f57c00',
+    light: 'warning.lightest',
+    main: 'warning.main',
   },
   error: {
-    bg: '#d32f2f',
+    bg: 'error.main',
     gradient: 'linear-gradient(135deg, #d32f2f, #c62828)',
-    light: '#FFEBEE',
-    main: '#d32f2f',
+    light: 'error.lightest',
+    main: 'error.main',
   },
   info: {
-    bg: '#0288d1',
+    bg: 'info.main',
     gradient: 'linear-gradient(135deg, #0288d1, #0277bd)',
-    light: '#E1F5FE',
-    main: '#0288d1',
+    light: 'info.lightest',
+    main: 'info.main',
   },
 };
 
@@ -293,7 +293,7 @@ export const Sparkline: React.FC<SparklineProps> = ({
   width = 80,
   height = 32,
   strokeWidth = 2,
-  _isAnimated = false,
+  isAnimated = false,
 }) => {
   if (!data || data.length < 2) return null;
 
@@ -377,7 +377,7 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
   animate = true,
   onClick,
   sx,
-  _children,
+  children,
 }) => {
   const [displayValue, setDisplayValue] = useState(
     animate && typeof value === 'number' ? 0 : value
@@ -443,16 +443,16 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
 
   const getTrendColor = () => {
     if (!computedTrend || computedTrend === 'neutral' || computedTrend === 'stable') {
-      return '#64748B';
+      return 'text.secondary';
     }
     return computedTrend === 'up' ? 'success.main' : 'error.main';
   };
 
   const getTrendBgColor = () => {
     if (!computedTrend || computedTrend === 'neutral' || computedTrend === 'stable') {
-      return '#F1F5F9';
+      return 'action.hover';
     }
-    return computedTrend === 'up' ? '#DCFCE7' : '#FEE2E2';
+    return computedTrend === 'up' ? 'success.lightest' : 'error.lightest';
   };
 
   const colorInfo = COLOR_MAP[color] || COLOR_MAP.blue;
@@ -674,7 +674,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   onClick,
   sx,
   sparklineData,
-  _target,
+  target,
   targetProgress,
   showTargetProgress = false,
 }) => {
@@ -683,7 +683,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
 
   const getSparklineColor = () => {
     if (!computedTrend || computedTrend === 'neutral' || computedTrend === 'stable') {
-      return '#64748B';
+      return 'text.secondary';
     }
     return computedTrend === 'up' ? 'success.main' : 'error.main';
   };

@@ -56,7 +56,7 @@ interface AccountFormData {
   balance_direction: BalanceDirection;
   parent_id?: string;
   is_detail: boolean;
-  is_active: boolean;
+  isactive: boolean;
   description?: string;
 }
 
@@ -236,14 +236,14 @@ export default function AccountManagementPage() {
       ),
     },
     {
-      id: 'is_active',
+      id: 'isactive',
       label: '状态',
       render: (row) => (
         <Chip
           size='small'
-          variant={row.is_active ? 'filled' : 'outlined'}
-          color={row.is_active ? 'success' : 'default'}
-          label={row.is_active ? '启用' : '停用'}
+          variant={row.isactive ? 'filled' : 'outlined'}
+          color={row.isactive ? 'success' : 'default'}
+          label={row.isactive ? '启用' : '停用'}
         />
       ),
     },
@@ -297,7 +297,7 @@ export default function AccountManagementPage() {
       total: accounts.length,
       detail: accounts.filter((a: Account) => a.is_detail).length,
       summary: accounts.filter((a: Account) => !a.is_detail).length,
-      inactive: accounts.filter((a: Account) => !a.is_active).length,
+      inactive: accounts.filter((a: Account) => !a.isactive).length,
     };
   }, [accountsData]);
 
@@ -509,7 +509,7 @@ function AccountForm({ account, accounts, onSubmit, onCancel, isLoading }: Accou
     balance_direction: account?.balance_direction || 'debit',
     parent_id: account?.parent_id,
     is_detail: account?.is_detail ?? true,
-    is_active: account?.is_active ?? true,
+    isactive: account?.isactive ?? true,
     description: account?.description || '',
   });
 
@@ -639,12 +639,12 @@ function AccountForm({ account, accounts, onSubmit, onCancel, isLoading }: Accou
         >
           <InputLabel>状态</InputLabel>
           <Select
-            value={formData.is_active ? 'active' : 'inactive'}
+            value={formData.isactive ? 'active' : 'inactive'}
             label='状态'
             onChange={(e) =>
               setFormData({
                 ...formData,
-                is_active: e.target.value === 'active',
+                isactive: e.target.value === 'active',
               })
             }
           >

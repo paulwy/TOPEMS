@@ -9,7 +9,7 @@ import {
   ChevronDown,
   ChevronUp,
   Bug,
-  _Wifi,
+  Wifi,
   FileX,
   Layers,
 } from 'lucide-react';
@@ -779,12 +779,12 @@ export const lazyWithErrorBoundary = <P extends object>(
   options?: ErrorBoundaryOptions
 ): React.LazyExoticComponent<React.ComponentType<P>> => {
   const {
-    _level = 'module',
-    _fallback,
-    _onError,
-    _onReport,
-    _showDetails,
-    _enableRetry,
+    level = 'module',
+    fallback,
+    onError,
+    onReport,
+    showDetails,
+    enableRetry,
   } = options || {};
 
   return React.lazy(() =>

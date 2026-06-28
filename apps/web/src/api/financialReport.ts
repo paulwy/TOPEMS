@@ -14,7 +14,7 @@ export interface ConsolidationEntity {
   entity_type: 'holding' | 'subsidiary' | 'associate' | 'joint_venture';
   ownership_percentage: number;
   currency_code?: string;
-  is_active: boolean;
+  isactive: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -31,7 +31,7 @@ export interface ReportSubscription {
     email?: string;
   }[];
   format: 'pdf' | 'xlsx';
-  is_active: boolean;
+  isactive: boolean;
   last_run_at?: string;
   next_run_at?: string;
   created_by?: string;
@@ -72,7 +72,7 @@ export const financialReportApi = {
     end_period: string;
     currency_code?: string;
     page?: number;
-    page_size?: number;
+    pagesize?: number;
   }) => apiClient.erp.get('/api/reports/balance-sheet/history', { params }),
 
   // -------- 利润表 --------
@@ -103,7 +103,7 @@ export const financialReportApi = {
     end_period: string;
     currency_code?: string;
     page?: number;
-    page_size?: number;
+    pagesize?: number;
   }) => apiClient.erp.get('/api/reports/income-statement/history', { params }),
 
   // -------- 现金流量表 --------
@@ -134,7 +134,7 @@ export const financialReportApi = {
     end_period: string;
     currency_code?: string;
     page?: number;
-    page_size?: number;
+    pagesize?: number;
   }) => apiClient.erp.get('/api/reports/cash-flow/history', { params }),
 
   // ============================================
@@ -206,7 +206,7 @@ export const financialReportApi = {
     account_code: string;
     period?: string;
     page?: number;
-    page_size?: number;
+    pagesize?: number;
   }) => apiClient.erp.get('/api/reports/item-vouchers', { params }),
 
   // ============================================
@@ -295,7 +295,7 @@ export const financialReportApi = {
     parent_id?: string;
     include_disabled?: boolean;
     page?: number;
-    page_size?: number;
+    pagesize?: number;
   }) => apiClient.erp.get('/api/reports/consolidated/entities', { params }),
 
   /**
@@ -329,7 +329,7 @@ export const financialReportApi = {
     consolidation_id: string;
     period: string;
     page?: number;
-    page_size?: number;
+    pagesize?: number;
   }) => apiClient.erp.get('/api/reports/consolidated/elims', { params }),
 
   /**
@@ -406,9 +406,9 @@ export const financialReportApi = {
    */
   getReportSubscriptions: (params?: {
     report_type?: string;
-    is_active?: boolean;
+    isactive?: boolean;
     page?: number;
-    page_size?: number;
+    pagesize?: number;
   }) => apiClient.erp.get('/api/reports/subscriptions', { params }),
 
   /**
@@ -425,7 +425,7 @@ export const financialReportApi = {
       email?: string;
     }[];
     format: 'pdf' | 'xlsx';
-    is_active?: boolean;
+    isactive?: boolean;
   }) => apiClient.erp.post('/api/reports/subscriptions', data),
 
   /**
@@ -453,7 +453,7 @@ export const financialReportApi = {
     subscriptionId: string,
     params?: {
       page?: number;
-      page_size?: number;
+      pagesize?: number;
     }
   ) =>
     apiClient.erp.get(`/api/reports/subscriptions/${subscriptionId}/history`, {

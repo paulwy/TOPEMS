@@ -902,7 +902,7 @@ const QmsApqpPage: React.FC = () => {
                   >
                     风险等级
                   </Typography>
-                  <Box sx={{ mt: 0.5 }}>{getRiskLevelBadge(selectedProject.risk_level)}</Box>
+                  <Box sx={{ mt: 0.5 }}>{getRiskLevelBadge(selectedProject.risklevel)}</Box>
                 </Box>
               </Box>
 

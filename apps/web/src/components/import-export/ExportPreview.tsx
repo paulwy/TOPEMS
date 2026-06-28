@@ -123,7 +123,7 @@ export const ExportPreview: React.FC<ExportPreviewProps> = ({
           >
             <div style={{ overflowX: 'auto' }}>
               <table style={{ minWidth: '100%', borderCollapse: 'collapse' }}>
-                <thead style={{ backgroundColor: 'grey.50' }}>
+                <thead style={{ backgroundColor: 'var(--mui-palette-grey-50)' }}>
                   <tr>
                     {columns.map((col) => (
                       <th
@@ -166,7 +166,7 @@ export const ExportPreview: React.FC<ExportPreviewProps> = ({
               <div
                 style={{
                   padding: '8px 16px',
-                  backgroundColor: 'grey.50',
+                  backgroundColor: 'var(--mui-palette-grey-50)',
                   fontSize: 14,
                   color: '#475569',
                   textAlign: 'center',

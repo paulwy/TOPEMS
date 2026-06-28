@@ -94,7 +94,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
             }}
           >
             <div>
-              <h3 style={{ fontSize: '20px', fontWeight: 600, color: 'grey.900' }}>
+              <h3 style={{ fontSize: '20px', fontWeight: 600, color: 'var(--mui-palette-text-primary)' }}>
                 {report.config.title}
               </h3>
               {report.config.description && (
@@ -155,7 +155,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
             }}
           >
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead style={{ backgroundColor: 'grey.50' }}>
+              <thead style={{ backgroundColor: 'var(--mui-palette-grey-50)' }}>
                 <tr>
                   <th
                     style={{
@@ -263,7 +263,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
           style={{
             padding: '16px',
             borderTop: '1px solid border.default',
-            backgroundColor: 'grey.50',
+            backgroundColor: 'var(--mui-palette-grey-50)',
           }}
         >
           <div

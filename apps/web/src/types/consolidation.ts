@@ -227,7 +227,7 @@ export interface ConsolidationReportLine {
   line_no: number; // 行号
   item_code?: string; // 项目编码
   item_name: string; // 项目名称
-  item_level: number; // 层级（用于分组）
+  itemlevel: number; // 层级（用于分组）
 
   // 金额列（支持多列用于对比）
   current_period: number; // 本期金额
@@ -303,7 +303,7 @@ export interface ConsolidationScopeQueryParams {
   status?: ConsolidationScopeStatus;
   consolidation_method?: string;
   page?: number;
-  page_size?: number;
+  pagesize?: number;
 }
 
 /**
@@ -315,7 +315,7 @@ export interface EliminationRuleQueryParams {
   status?: EliminationRuleStatus;
   keyword?: string;
   page?: number;
-  page_size?: number;
+  pagesize?: number;
 }
 
 /**
@@ -330,7 +330,7 @@ export interface InternalTransactionQueryParams {
   period_from?: string;
   period_to?: string;
   page?: number;
-  page_size?: number;
+  pagesize?: number;
 }
 
 /**
@@ -344,7 +344,7 @@ export interface ConsolidationReportQueryParams {
   status?: ConsolidationReportStatus;
   approval_status?: string;
   page?: number;
-  page_size?: number;
+  pagesize?: number;
 }
 
 // ============================================
@@ -487,5 +487,5 @@ export interface CompanyRelationQueryParams {
   status?: 'active' | 'inactive';
   keyword?: string;
   page?: number;
-  page_size?: number;
+  pagesize?: number;
 }

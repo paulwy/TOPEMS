@@ -12,7 +12,7 @@ interface MapControlsProps {
 }
 
 const MapControls: React.FC<MapControlsProps> = ({
-  _zoom,
+  zoom,
   onZoomIn,
   onZoomOut,
   bounds,
@@ -33,32 +33,32 @@ const MapControls: React.FC<MapControlsProps> = ({
         onClick={onZoomIn}
         sx={{
           p: 2,
-          bgcolor: 'white',
+          bgcolor: 'background.paper',
           borderRadius: 2,
           boxShadow: 2,
-          '&:hover': { bgcolor: 'grey.50' },
+          '&:hover': { bgcolor: 'action.hover' },
         }}
         title='放大'
       >
         <ZoomIn
           size={20}
-          style={{ color: 'grey.700' }}
+          sx={{ color: 'text.secondary' }}
         />
       </IconButton>
       <IconButton
         onClick={onZoomOut}
         sx={{
           p: 2,
-          bgcolor: 'white',
+          bgcolor: 'background.paper',
           borderRadius: 2,
           boxShadow: 2,
-          '&:hover': { bgcolor: 'grey.50' },
+          '&:hover': { bgcolor: 'action.hover' },
         }}
         title='缩小'
       >
         <ZoomOut
           size={20}
-          style={{ color: 'grey.700' }}
+          sx={{ color: 'text.secondary' }}
         />
       </IconButton>
       {bounds && bounds.length >= 2 && (
@@ -66,16 +66,16 @@ const MapControls: React.FC<MapControlsProps> = ({
           onClick={onFitBounds}
           sx={{
             p: 2,
-            bgcolor: 'white',
+            bgcolor: 'background.paper',
             borderRadius: 2,
             boxShadow: 2,
-            '&:hover': { bgcolor: 'grey.50' },
+            '&:hover': { bgcolor: 'action.hover' },
           }}
           title='缩放到所有标记'
         >
           <Maximize2
             size={20}
-            style={{ color: 'grey.700' }}
+            sx={{ color: 'text.secondary' }}
           />
         </IconButton>
       )}

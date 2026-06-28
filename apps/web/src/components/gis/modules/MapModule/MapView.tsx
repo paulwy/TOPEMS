@@ -126,8 +126,8 @@ const MeasureTooltip: React.FC<{
   <div
     style={{
       position: 'absolute',
-      backgroundColor: 'grey.800',
-      color: 'white',
+      backgroundColor: 'var(--mui-palette-grey-800)',
+      color: 'var(--mui-palette-common-white)',
       fontSize: '0.75rem',
       padding: '0.25rem 0.5rem',
       borderRadius: '0.25rem',
@@ -240,7 +240,7 @@ const DetailsPanel: React.FC<{
             >
               设备类型
             </div>
-            <div style={{ color: 'grey.700' }}>{selectedItem.device_type}</div>
+            <div style={{ color: 'var(--mui-palette-text-secondary)' }}>{selectedItem.device_type}</div>
           </div>
         )}
         {'location_type' in selectedItem && (
@@ -254,7 +254,7 @@ const DetailsPanel: React.FC<{
             >
               位置类型
             </div>
-            <div style={{ color: 'grey.700' }}>{selectedItem.location_type}</div>
+            <div style={{ color: 'var(--mui-palette-text-secondary)' }}>{selectedItem.location_type}</div>
           </div>
         )}
         {'status' in selectedItem && (
@@ -292,7 +292,7 @@ const DetailsPanel: React.FC<{
             >
               容量
             </div>
-            <div style={{ color: 'grey.700' }}>{selectedItem.capacity}</div>
+            <div style={{ color: 'var(--mui-palette-text-secondary)' }}>{selectedItem.capacity}</div>
           </div>
         )}
         {'current_usage' in selectedItem && selectedItem.current_usage !== undefined && (
@@ -306,7 +306,7 @@ const DetailsPanel: React.FC<{
             >
               当前用量
             </div>
-            <div style={{ color: 'grey.700' }}>{selectedItem.current_usage}</div>
+            <div style={{ color: 'var(--mui-palette-text-secondary)' }}>{selectedItem.current_usage}</div>
           </div>
         )}
         {'description' in selectedItem && selectedItem.description && (
@@ -342,7 +342,7 @@ const DetailsPanel: React.FC<{
           </div>
           <div
             style={{
-              color: 'grey.700',
+              color: 'var(--mui-palette-text-secondary)',
               fontSize: '0.875rem',
               fontFamily: 'monospace',
             }}
@@ -366,7 +366,7 @@ const MapView: React.FC<MapViewProps> = ({
   const [mapCenter] = useState<[number, number]>([39.9, 116.4]); // 北京
   const [zoom, setZoom] = useState(10); // 在离线瓦片范围内
   const [selectedItem, setSelectedItem] = useState<DevicePoint | StorageLocation | null>(null);
-  const [_showDetailsPanel, setShowDetailsPanel] = useState(false);
+  const [showDetailsPanel, setShowDetailsPanel] = useState(false);
   const [showLayerPanel, setShowLayerPanel] = useState(true);
   const [visibleLayers, setVisibleLayers] = useState({
     devices: true,
@@ -1047,7 +1047,7 @@ const MapView: React.FC<MapViewProps> = ({
             padding: '0.5rem 1rem',
           }}
         >
-          <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'grey.700' }}>
+          <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--mui-palette-text-secondary)' }}>
             {measureResult}
           </span>
         </div>

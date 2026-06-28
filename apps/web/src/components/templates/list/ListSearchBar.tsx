@@ -15,7 +15,7 @@ import {
   IconButton,
 } from '@mui/material';
 import { Search, RefreshCw } from 'lucide-react';
-import type { FilterConfig } from '../../common/FilterBar';
+import type { FilterConfig, FilterValue } from '../../common/FilterBar';
 
 interface ListSearchBarProps {
   searchable?: boolean;
@@ -40,19 +40,22 @@ export const ListSearchBar: React.FC<ListSearchBarProps> = ({
   onRefresh,
 }) => {
   const renderFilter = (filter: FilterConfig) => {
+    const filterValue = filter.value || (filter.type === 'multiselect' ? [] : '');
     const commonProps = {
       size: 'small' as const,
       label: filter.label,
-      value: filter.value || (filter.type === 'multiselect' ? [] : ''),
+      value: filterValue,
       onChange: (e: { target: { value: unknown } }) => {
-        filter.onChange?.(e.target.value, filter);
-        onFilterChange?.({ [filter.id]: e.target.value });
+        const val = e.target.value as FilterValue;
+        filter.onChange?.(val, filter);
+        onFilterChange?.({ [filter.id]: val });
       },
       sx: { minWidth: 150 },
     };
 
     switch (filter.type) {
-      case 'multiselect':
+      case 'multiselect': {
+        const selectedArr = Array.isArray(filterValue) ? filterValue : [];
         return (
           <FormControl
             key={filter.id}
@@ -63,21 +66,25 @@ export const ListSearchBar: React.FC<ListSearchBarProps> = ({
             <Select
               {...commonProps}
               multiple
+              value={selectedArr}
               input={<OutlinedInput label={filter.label} />}
-              renderValue={(selected) => (
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {selected.map((value: unknown) => {
-                    const option = filter.options?.find((opt) => opt.value === value);
-                    return (
-                      <Chip
-                        key={String(value)}
-                        label={option?.label || String(value)}
-                        size='small'
-                      />
-                    );
-                  })}
-                </Box>
-              )}
+              renderValue={(selected) => {
+                const arr = Array.isArray(selected) ? selected : [];
+                return (
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {arr.map((value: unknown) => {
+                      const option = filter.options?.find((opt) => opt.value === value);
+                      return (
+                        <Chip
+                          key={String(value)}
+                          label={option?.label || String(value)}
+                          size='small'
+                        />
+                      );
+                    })}
+                  </Box>
+                );
+              }}
             >
               {filter.searchable && (
                 <TextField
@@ -100,13 +107,14 @@ export const ListSearchBar: React.FC<ListSearchBarProps> = ({
                   key={option.value}
                   value={option.value}
                 >
-                  <Checkbox checked={commonProps.value.includes(option.value)} />
+                  <Checkbox checked={selectedArr.some((v: string | number) => v === option.value)} />
                   <ListItemText primary={option.label} />
                 </MenuItem>
               ))}
             </Select>
           </FormControl>
         );
+      }
 
       case 'text':
         return (

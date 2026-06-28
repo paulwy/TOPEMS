@@ -79,7 +79,7 @@ const EhsHazardPage: React.FC = () => {
   const loadIssues = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await ehsApi.listSafetyIssues({ page_size: 100 });
+      const response = await ehsApi.listSafetyIssues({ pagesize: 100 });
       if (response.success && response.data) {
         const issuesData = Array.isArray(response.data) ? response.data : response.data.data || [];
         const adapted = issuesData.map((item: SafetyIssue) => ({

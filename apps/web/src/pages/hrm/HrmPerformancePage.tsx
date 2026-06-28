@@ -73,9 +73,9 @@ const HrmPerformancePage: React.FC = () => {
     setLoading(true);
     try {
       const [reviewsRes, goalsRes, employeesRes] = await Promise.all([
-        performanceReviewApi.list({ page_size: 100 }),
-        performanceGoalApi.list({ page_size: 100 }),
-        employeeApi.list({ page_size: 100 }),
+        performanceReviewApi.list({ pagesize: 100 }),
+        performanceGoalApi.list({ pagesize: 100 }),
+        employeeApi.list({ pagesize: 100 }),
       ]);
 
       const employeeMap: Record<string, Employee> = {};

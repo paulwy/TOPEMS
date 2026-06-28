@@ -19,7 +19,7 @@ export const internalTransactionApiContract = {
       period_from: 'string? 期间起(YYYY-MM)',
       period_to: 'string? 期间止(YYYY-MM)',
       page: 'number? 页码',
-      page_size: 'number? 每页条数',
+      pagesize: 'number? 每页条数',
     },
     response: {
       code: 200,

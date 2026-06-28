@@ -127,7 +127,7 @@ export const GisFencePage: React.FC = () => {
     try {
       setLoading(true);
       setError('');
-      const res = await gisApi.listMapMarkers({ page_size: 50 });
+      const res = await gisApi.listMapMarkers({ pagesize: 50 });
       if (res.success && res.data) {
         setMapMarkers(res.data.data || []);
       }

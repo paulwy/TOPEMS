@@ -178,7 +178,7 @@ export const adaptSpcChartToFrontend = (backend: SpcChartBackend): SpcChart => (
   ucl: backend.ucl,
   lcl: backend.lcl,
   cl: backend.cl,
-  sampleSize: backend.sample_size,
+  sampleSize: backend.samplesize,
   samplingFrequency: backend.sampling_frequency,
   status: backend.status,
   description: backend.description,
@@ -202,7 +202,7 @@ export const adaptSpcChartToBackend = (
   usl: frontend.usl,
   lsl: frontend.lsl,
   target: frontend.target,
-  sample_size: frontend.sampleSize,
+  samplesize: frontend.sampleSize,
   sampling_frequency: frontend.samplingFrequency,
   status: frontend.status,
   description: frontend.description,
@@ -448,7 +448,7 @@ export const adaptFmeaItemToBackend = (
 });
 
 export const adaptFmeaStatisticsToFrontend = (backend: FmeaStatisticsBackend): FmeaStatistics => ({
-  totalItems: backend.total_items,
+  totalItems: backend.totalitems,
   highRiskCount: backend.high_risk_count,
   mediumRiskCount: backend.medium_risk_count,
   lowRiskCount: backend.low_risk_count,

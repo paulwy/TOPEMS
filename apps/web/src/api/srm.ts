@@ -15,7 +15,7 @@ export interface Supplier {
   email?: string;
   website?: string;
   credit_rating?: string;
-  risk_level: string;
+  risklevel: string;
   created_at: string;
   updated_at: string;
 }
@@ -33,7 +33,7 @@ export interface CreateSupplierRequest {
   email?: string;
   website?: string;
   credit_rating?: string;
-  risk_level: string;
+  risklevel: string;
 }
 
 export interface SupplierEvaluation {
@@ -202,7 +202,7 @@ export interface ScoringDimension {
   min_score: number;
   max_score: number;
   description?: string;
-  is_active: boolean;
+  isactive: boolean;
   sort_order: number;
   created_at: string;
   updated_at: string;
@@ -215,7 +215,7 @@ export interface CreateScoringDimensionRequest {
   min_score: number;
   max_score: number;
   description?: string;
-  is_active: boolean;
+  isactive: boolean;
   sort_order: number;
 }
 
@@ -247,7 +247,7 @@ export interface ScoreLevelDefinitions {
 
 export interface PerformanceReportParams {
   page?: number;
-  page_size?: number;
+  pagesize?: number;
   search?: string;
   category?: string;
   status?: string;
@@ -317,6 +317,159 @@ export interface SupplierComparisonResponse {
   comparison_date: string;
   best_supplier?: string;
   worst_supplier?: string;
+}
+
+// Supplier Portal types
+export interface SupplierPortalStats {
+  total_orders: number;
+  pending_orders: number;
+  completed_orders: number;
+  total_amount: number;
+  pending_invoices: number;
+  paid_invoices: number;
+  pending_deliveries: number;
+  on_time_delivery_rate: number;
+  quality_score: number;
+}
+
+// Inquiry & Quotation types
+export interface Inquiry {
+  id: string;
+  inquiry_no: string;
+  title: string;
+  description?: string;
+  category?: string;
+  urgency?: string;
+  status: string;
+  published_at?: string;
+  deadline?: string;
+  creator?: string;
+  department?: string;
+  quotation_count?: number;
+  items?: InquiryItem[];
+  remarks?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InquiryItem {
+  id: string;
+  sku: string;
+  material_name: string;
+  specification?: string;
+  quantity: number;
+  unit?: string;
+  expected_price?: number;
+  remark?: string;
+}
+
+export interface CreateInquiryRequest {
+  inquiry_no: string;
+  title: string;
+  description?: string;
+  category?: string;
+  urgency?: string;
+  deadline?: string;
+  items?: InquiryItem[];
+  remarks?: string;
+}
+
+export interface Quotation {
+  id: string;
+  quotation_no: string;
+  inquiry_id: string;
+  inquiry_no?: string;
+  supplier_id: string;
+  supplier_name?: string;
+  title: string;
+  total_amount: number;
+  currency: string;
+  valid_until?: string;
+  delivery_time?: string;
+  payment_terms?: string;
+  status: string;
+  items?: QuotationItem[];
+  remarks?: string;
+  submitted_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface QuotationItem {
+  id: string;
+  sku: string;
+  material_name: string;
+  specification?: string;
+  quantity: number;
+  unit?: string;
+  unit_price: number;
+  subtotal: number;
+  delivery_time?: string;
+  remark?: string;
+}
+
+export interface CreateQuotationRequest {
+  inquiry_id: string;
+  supplier_id: string;
+  title: string;
+  total_amount: number;
+  currency: string;
+  valid_until?: string;
+  delivery_time?: string;
+  payment_terms?: string;
+  items?: QuotationItem[];
+  remarks?: string;
+}
+
+// Bidding types
+export interface Bidding {
+  id: string;
+  bidding_no: string;
+  title: string;
+  description?: string;
+  category?: string;
+  bidding_type?: string;
+  status: string;
+  budget_amount?: number;
+  currency: string;
+  publish_date?: string;
+  bid_deadline?: string;
+  open_date?: string;
+  winner_supplier_id?: string;
+  winner_supplier_name?: string;
+  winner_amount?: number;
+  supplier_count?: number;
+  creator?: string;
+  department?: string;
+  items?: BiddingItem[];
+  remarks?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BiddingItem {
+  id: string;
+  sku: string;
+  material_name: string;
+  specification?: string;
+  quantity: number;
+  unit?: string;
+  estimated_price?: number;
+  remark?: string;
+}
+
+export interface CreateBiddingRequest {
+  bidding_no: string;
+  title: string;
+  description?: string;
+  category?: string;
+  bidding_type?: string;
+  budget_amount?: number;
+  currency: string;
+  bid_deadline?: string;
+  open_date?: string;
+  items?: BiddingItem[];
+  remarks?: string;
 }
 
 export const srmApi = {
@@ -450,7 +603,7 @@ export const srmApi = {
       performances: SupplierPerformance[];
       total: number;
       page: number;
-      page_size: number;
+      pagesize: number;
     }>
   > => {
     const query = new URLSearchParams(params as Record<string, string>).toString();
@@ -493,5 +646,97 @@ export const srmApi = {
 
   health: async (): Promise<ApiResponse<string>> => {
     return apiClient.srm.get<string>('/health');
+  },
+
+  // Supplier Portal
+  getSupplierPortalStats: async (supplierId: string): Promise<ApiResponse<SupplierPortalStats>> => {
+    return apiClient.srm.get(`/api/srm/supplier-portal/${supplierId}/stats`);
+  },
+  getSupplierPortalOrders: async (supplierId: string): Promise<ApiResponse<PurchaseOrder[]>> => {
+    return apiClient.srm.get(`/api/srm/supplier-portal/${supplierId}/orders`);
+  },
+  getSupplierPortalInvoices: async (supplierId: string): Promise<ApiResponse<any[]>> => {
+    return apiClient.srm.get(`/api/srm/supplier-portal/${supplierId}/invoices`);
+  },
+  getSupplierPortalDeliveries: async (supplierId: string): Promise<ApiResponse<any[]>> => {
+    return apiClient.srm.get(`/api/srm/supplier-portal/${supplierId}/deliveries`);
+  },
+  getSupplierPortalAnnouncements: async (): Promise<ApiResponse<any[]>> => {
+    return apiClient.srm.get('/api/srm/supplier-portal/announcements');
+  },
+
+  // Inquiry & Quotation
+  listInquiries: async (params?: any): Promise<ApiResponse<{ items: Inquiry[]; total: number }>> => {
+    return apiClient.srm.get('/api/srm/inquiries', { params });
+  },
+  getInquiry: async (id: string): Promise<ApiResponse<Inquiry>> => {
+    return apiClient.srm.get(`/api/srm/inquiries/${id}`);
+  },
+  createInquiry: async (data: CreateInquiryRequest): Promise<ApiResponse<Inquiry>> => {
+    return apiClient.srm.post('/api/srm/inquiries', data);
+  },
+  updateInquiry: async (id: string, data: any): Promise<ApiResponse<Inquiry>> => {
+    return apiClient.srm.put(`/api/srm/inquiries/${id}`, data);
+  },
+  deleteInquiry: async (id: string): Promise<ApiResponse<boolean>> => {
+    return apiClient.srm.delete(`/api/srm/inquiries/${id}`);
+  },
+  publishInquiry: async (id: string): Promise<ApiResponse<Inquiry>> => {
+    return apiClient.srm.post(`/api/srm/inquiries/${id}/publish`);
+  },
+  closeInquiry: async (id: string): Promise<ApiResponse<Inquiry>> => {
+    return apiClient.srm.post(`/api/srm/inquiries/${id}/close`);
+  },
+
+  listQuotations: async (inquiryId?: string): Promise<ApiResponse<Quotation[]>> => {
+    const url = inquiryId ? `/api/srm/quotations?inquiry_id=${inquiryId}` : '/api/srm/quotations';
+    return apiClient.srm.get(url);
+  },
+  getQuotation: async (id: string): Promise<ApiResponse<Quotation>> => {
+    return apiClient.srm.get(`/api/srm/quotations/${id}`);
+  },
+  createQuotation: async (data: CreateQuotationRequest): Promise<ApiResponse<Quotation>> => {
+    return apiClient.srm.post('/api/srm/quotations', data);
+  },
+  updateQuotation: async (id: string, data: any): Promise<ApiResponse<Quotation>> => {
+    return apiClient.srm.put(`/api/srm/quotations/${id}`, data);
+  },
+  awardQuotation: async (id: string): Promise<ApiResponse<Quotation>> => {
+    return apiClient.srm.post(`/api/srm/quotations/${id}/award`);
+  },
+  rejectQuotation: async (id: string): Promise<ApiResponse<Quotation>> => {
+    return apiClient.srm.post(`/api/srm/quotations/${id}/reject`);
+  },
+
+  // Bidding
+  listBiddings: async (params?: any): Promise<ApiResponse<{ items: Bidding[]; total: number }>> => {
+    return apiClient.srm.get('/api/srm/biddings', { params });
+  },
+  getBidding: async (id: string): Promise<ApiResponse<Bidding>> => {
+    return apiClient.srm.get(`/api/srm/biddings/${id}`);
+  },
+  createBidding: async (data: CreateBiddingRequest): Promise<ApiResponse<Bidding>> => {
+    return apiClient.srm.post('/api/srm/biddings', data);
+  },
+  updateBidding: async (id: string, data: any): Promise<ApiResponse<Bidding>> => {
+    return apiClient.srm.put(`/api/srm/biddings/${id}`, data);
+  },
+  deleteBidding: async (id: string): Promise<ApiResponse<boolean>> => {
+    return apiClient.srm.delete(`/api/srm/biddings/${id}`);
+  },
+  publishBidding: async (id: string): Promise<ApiResponse<Bidding>> => {
+    return apiClient.srm.post(`/api/srm/biddings/${id}/publish`);
+  },
+  openBidding: async (id: string): Promise<ApiResponse<Bidding>> => {
+    return apiClient.srm.post(`/api/srm/biddings/${id}/open`);
+  },
+  evaluateBidding: async (id: string): Promise<ApiResponse<Bidding>> => {
+    return apiClient.srm.post(`/api/srm/biddings/${id}/evaluate`);
+  },
+  awardBidding: async (id: string, supplierId: string): Promise<ApiResponse<Bidding>> => {
+    return apiClient.srm.post(`/api/srm/biddings/${id}/award`, { supplier_id: supplierId });
+  },
+  listBiddingSuppliers: async (biddingId: string): Promise<ApiResponse<any[]>> => {
+    return apiClient.srm.get(`/api/srm/biddings/${biddingId}/suppliers`);
   },
 };

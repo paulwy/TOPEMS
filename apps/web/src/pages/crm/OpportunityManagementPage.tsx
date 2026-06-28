@@ -68,7 +68,7 @@ const OpportunityManagementPage: React.FC = () => {
       setLoading(true);
       const params: any = {
         page: pagination.page + 1,
-        page_size: pagination.pageSize,
+        pagesize: pagination.pageSize,
       };
       if (searchTerm) params.search = searchTerm;
       if (stageFilter) params.stage = stageFilter;

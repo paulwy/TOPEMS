@@ -23,7 +23,7 @@ import {
   Scatter,
   ComposedChart,
   Brush,
-  _ResponsiveContainer,
+  ResponsiveContainer,
 } from 'recharts';
 
 export type ChartType =
@@ -93,11 +93,11 @@ const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: any[] 
           minWidth: '120px',
         }}
       >
-        <p style={{ fontWeight: 600, color: 'grey.900', marginBottom: '8px' }}>{payload[0].name}</p>
+        <p style={{ fontWeight: 600, color: 'var(--mui-palette-text-primary)', marginBottom: '8px' }}>{payload[0].name}</p>
         {payload.map((item, index) => (
           <p
             key={index}
-            style={{ fontSize: '14px', color: 'grey.600', margin: '4px 0' }}
+            style={{ fontSize: '14px', color: 'var(--mui-palette-text-secondary)', margin: '4px 0' }}
           >
             <span style={{ color: item.color || 'primary.light' }}>●</span>
             {item.dataKey}: {item.value}

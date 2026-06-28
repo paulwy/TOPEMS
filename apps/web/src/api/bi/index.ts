@@ -92,6 +92,59 @@ import {
   retrySync,
 } from './sync';
 
+import {
+  listDatasets,
+  getDataset,
+  createDataset,
+  updateDataset,
+  deleteDataset,
+  queryDataset,
+  testSqlQuery,
+  publishDataset,
+  refreshDataset,
+  getDatasetPreview,
+} from './dataset';
+
+import {
+  listRowLevelPermissions,
+  getRowLevelPermission,
+  createRowLevelPermission,
+  updateRowLevelPermission,
+  deleteRowLevelPermission,
+  testRowLevelPermission,
+  listDataPermissions,
+  createDataPermission,
+  updateDataPermission,
+  deleteDataPermission,
+  checkPermission,
+} from './permission';
+
+import {
+  getDrillDownConfig,
+  updateDrillDownConfig,
+  executeDrillDown,
+  getChartLinkConfig,
+  updateChartLinkConfig,
+  getChartAnnotations,
+  createChartAnnotation,
+  deleteChartAnnotation,
+  exportChart,
+  getFullscreenChart,
+} from './visualization';
+
+import {
+  exportReport,
+  listExportJobs,
+  getExportJob,
+  downloadExport,
+  listSchedules,
+  createSchedule,
+  updateSchedule,
+  deleteSchedule,
+  runSchedule,
+  toggleSchedule,
+} from './report';
+
 export * from './types';
 
 export {
@@ -121,7 +174,63 @@ export {
   fetchWidgetData,
 } from './widget';
 
-export { fetchReports, fetchReport, createReport, updateReport, deleteReport } from './report';
+export {
+  fetchReports,
+  fetchReport,
+  createReport,
+  updateReport,
+  deleteReport,
+  exportReport,
+  listExportJobs,
+  getExportJob,
+  downloadExport,
+  listSchedules,
+  createSchedule,
+  updateSchedule,
+  deleteSchedule,
+  runSchedule,
+  toggleSchedule,
+} from './report';
+
+export {
+  listDatasets,
+  getDataset,
+  createDataset,
+  updateDataset,
+  deleteDataset,
+  queryDataset,
+  testSqlQuery,
+  publishDataset,
+  refreshDataset,
+  getDatasetPreview,
+} from './dataset';
+
+export {
+  listRowLevelPermissions,
+  getRowLevelPermission,
+  createRowLevelPermission,
+  updateRowLevelPermission,
+  deleteRowLevelPermission,
+  testRowLevelPermission,
+  listDataPermissions,
+  createDataPermission,
+  updateDataPermission,
+  deleteDataPermission,
+  checkPermission,
+} from './permission';
+
+export {
+  getDrillDownConfig,
+  updateDrillDownConfig,
+  executeDrillDown,
+  getChartLinkConfig,
+  updateChartLinkConfig,
+  getChartAnnotations,
+  createChartAnnotation,
+  deleteChartAnnotation,
+  exportChart,
+  getFullscreenChart,
+} from './visualization';
 
 export {
   fetchSummaryDashboard,
@@ -264,6 +373,47 @@ export const biApi = {
   updateSyncRecord,
   deleteSyncRecord,
   retrySync,
+  listDatasets,
+  getDataset,
+  createDataset,
+  updateDataset,
+  deleteDataset,
+  queryDataset,
+  testSqlQuery,
+  publishDataset,
+  refreshDataset,
+  getDatasetPreview,
+  listRowLevelPermissions,
+  getRowLevelPermission,
+  createRowLevelPermission,
+  updateRowLevelPermission,
+  deleteRowLevelPermission,
+  testRowLevelPermission,
+  listDataPermissions,
+  createDataPermission,
+  updateDataPermission,
+  deleteDataPermission,
+  checkPermission,
+  getDrillDownConfig,
+  updateDrillDownConfig,
+  executeDrillDown,
+  getChartLinkConfig,
+  updateChartLinkConfig,
+  getChartAnnotations,
+  createChartAnnotation,
+  deleteChartAnnotation,
+  exportChart,
+  getFullscreenChart,
+  exportReport,
+  listExportJobs,
+  getExportJob,
+  downloadExport,
+  listSchedules,
+  createSchedule,
+  updateSchedule,
+  deleteSchedule,
+  runSchedule,
+  toggleSchedule,
 };
 
 export default apiClient.bi;

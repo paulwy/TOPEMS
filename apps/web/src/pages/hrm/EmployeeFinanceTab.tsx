@@ -688,11 +688,11 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
                   sx={{ mt: 0.5 }}
                 >
                   <Select
-                    value={editData.tax_level?.toString() || '0'}
+                    value={editData.taxlevel?.toString() || '0'}
                     onChange={(e) =>
                       setEditData({
                         ...editData,
-                        tax_level: parseInt(e.target.value),
+                        taxlevel: parseInt(e.target.value),
                       })
                     }
                   >
@@ -704,7 +704,7 @@ export const EmployeeFinanceTab: React.FC<EmployeeFinanceTabProps> = ({
                 </FormControl>
               ) : (
                 <Typography sx={{ mt: 0.5, fontWeight: 500 }}>
-                  {financeInfo?.tax_level ? `${financeInfo.tax_level}孩扣除` : '无扣除'}
+                  {financeInfo?.taxlevel ? `${financeInfo.taxlevel}孩扣除` : '无扣除'}
                 </Typography>
               )}
             </Box>

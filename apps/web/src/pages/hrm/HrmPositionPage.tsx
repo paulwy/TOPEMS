@@ -31,7 +31,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
     items: [],
     total: 0,
     page: 1,
-    page_size: 10,
+    pagesize: 10,
   });
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
@@ -55,10 +55,10 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
           items: data.items || [],
           total: data.total || 0,
           page: data.page || 1,
-          page_size: data.page_size || 10,
+          pagesize: data.pagesize || 10,
         });
       } else {
-        setData({ items: [], total: 0, page: 1, page_size: 10 });
+        setData({ items: [], total: 0, page: 1, pagesize: 10 });
       }
     } catch (error: unknown) {
       addNotification({
@@ -66,7 +66,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
         message: (error as { message?: string }).message || '获取岗位列表失败',
         type: 'error',
       });
-      setData({ items: [], total: 0, page: 1, page_size: 10 });
+      setData({ items: [], total: 0, page: 1, pagesize: 10 });
     } finally {
       setLoading(false);
     }
@@ -381,7 +381,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
           rowActions={rowActions}
           pagination={{
             page: data.page - 1,
-            pageSize: data.page_size,
+            pageSize: data.pagesize,
             total: data.total,
             onPageChange: (page: number) => fetchPositions({ page: page + 1 }),
           }}

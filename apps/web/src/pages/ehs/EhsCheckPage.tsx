@@ -94,7 +94,7 @@ const EhsCheckPage: React.FC = () => {
   const loadPlans = async () => {
     try {
       setLoading(true);
-      const response = await ehsApi.listInspectionPlans({ page_size: 100 });
+      const response = await ehsApi.listInspectionPlans({ pagesize: 100 });
       if (response.success && response.data) {
         const plansData = Array.isArray(response.data) ? response.data : response.data.data || [];
         const adapted = plansData.map((item: InspectionPlan) => ({
@@ -117,7 +117,7 @@ const EhsCheckPage: React.FC = () => {
   const loadRecords = async () => {
     try {
       setLoading(true);
-      const response = await ehsApi.listInspectionRecords({ page_size: 100 });
+      const response = await ehsApi.listInspectionRecords({ pagesize: 100 });
       if (response.success && response.data) {
         const recordsData = Array.isArray(response.data) ? response.data : response.data.data || [];
         const adapted = recordsData.map((item: InspectionRecord) => ({

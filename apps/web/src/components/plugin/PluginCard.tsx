@@ -1,59 +1,233 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Package,
-  Star,
   Download,
   CheckCircle,
-  _AlertCircle,
   ShoppingCart,
   ExternalLink,
+  Loader2,
+  Star,
 } from 'lucide-react';
-import { Card, CardContent, Typography, Button, Chip } from '@mui/material';
+import { Card, CardContent, Typography, Button, Chip, Box } from '@mui/material';
 import type { Plugin } from '@/api/plugin';
 import { usePluginStore } from '@/store/pluginStore';
 import { useAppStore } from '@/store';
-import { Loading } from '@/components/ui/Loading';
+import { PluginRating } from './PluginRating';
 
 interface PluginCardProps {
   plugin: Plugin;
   healthStatus?: boolean;
   onViewDetails?: () => void;
+  variant?: 'grid' | 'list';
 }
 
-export const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, onViewDetails }) => {
-  const { isPluginInstalled, installPlugin, loading } = usePluginStore();
+export const PluginCard: React.FC<PluginCardProps> = ({
+  plugin,
+  healthStatus,
+  onViewDetails,
+  variant = 'grid',
+}) => {
+  const { installPlugin, isPluginInstalled } = usePluginStore();
   const addNotification = useAppStore((state) => state.addNotification);
+  const [isInstalling, setIsInstalling] = useState(false);
   const installed = isPluginInstalled(plugin.code);
 
   const handleInstall = async () => {
-    const success = await installPlugin(plugin.code);
-    if (success) {
-      addNotification({
-        title: '安装成功',
-        message: `${plugin.name} 插件已安装`,
-        type: 'success',
-      });
-    } else {
+    setIsInstalling(true);
+    try {
+      const success = await installPlugin(plugin.code);
+      if (success) {
+        addNotification({
+          title: '安装成功',
+          message: `${plugin.name} 插件已安装`,
+          type: 'success',
+        });
+      } else {
+        addNotification({
+          title: '安装失败',
+          message: '无法安装插件，请稍后重试',
+          type: 'error',
+        });
+      }
+    } catch (error: unknown) {
+      const err = error as { message?: string };
       addNotification({
         title: '安装失败',
-        message: '请稍后重试',
+        message: err.message || '无法安装插件',
         type: 'error',
       });
+    } finally {
+      setIsInstalling(false);
     }
   };
 
+  if (variant === 'list') {
+    return (
+      <Card
+        sx={{
+          '&:hover': { boxShadow: 3 },
+          transition: 'box-shadow 0.3s ease',
+          borderRadius: 2,
+        }}
+      >
+        <CardContent>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+            <Box
+              sx={{
+                width: 56,
+                height: 56,
+                borderRadius: 2,
+                flexShrink: 0,
+                background: 'linear-gradient(135deg, primary.light 0%, primary.main 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Package sx={{ width: 28, height: 28, color: 'white' }} />
+            </Box>
+
+            <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+                <Typography
+                  variant='h6'
+                  sx={{ fontWeight: 'bold' }}
+                >
+                  {plugin.name}
+                </Typography>
+                <Chip
+                  label={`v${plugin.version}`}
+                  size='small'
+                  variant='outlined'
+                />
+                {healthStatus !== undefined && (
+                  <Box
+                    sx={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: '50%',
+                      bgcolor: healthStatus ? 'success.main' : 'error.main',
+                    }}
+                  />
+                )}
+                {plugin.is_featured && (
+                  <Chip
+                    icon={<Star sx={{ width: 12, height: 12 }} />}
+                    label='精选'
+                    size='small'
+                    color='warning'
+                  />
+                )}
+              </Box>
+              <Typography
+                variant='body2'
+                color='textSecondary'
+                sx={{ mb: 2 }}
+              >
+                {plugin.description || '暂无描述'}
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                {plugin.tags?.slice(0, 5).map((tag) => (
+                  <Chip
+                    key={tag}
+                    label={tag}
+                    size='small'
+                    variant='outlined'
+                    sx={{ fontSize: 11 }}
+                  />
+                ))}
+              </Box>
+            </Box>
+
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'flex-end' }}>
+              <PluginRating
+                value={plugin.rating || 0}
+                count={plugin.rating_count}
+              />
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Download sx={{ width: 16, height: 16, color: 'grey.400' }} />
+                <Typography
+                  variant='body2'
+                  color='textSecondary'
+                >
+                  {plugin.install_count?.toLocaleString() || 0}
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', gap: 2, minWidth: 200 }}>
+                <Button
+                  variant='outlined'
+                  size='small'
+                  onClick={onViewDetails}
+                  startIcon={<ExternalLink sx={{ width: 16, height: 16 }} />}
+                >
+                  详情
+                </Button>
+                {installed ? (
+                  <Button
+                    variant='contained'
+                    size='small'
+                    disabled
+                    startIcon={<CheckCircle sx={{ width: 16, height: 16 }} />}
+                  >
+                    已安装
+                  </Button>
+                ) : (
+                  <Button
+                    variant='contained'
+                    size='small'
+                    onClick={handleInstall}
+                    disabled={isInstalling}
+                    startIcon={
+                      isInstalling ? (
+                        <Loader2
+                          sx={{ width: 16, height: 16, animation: 'spin 1s linear infinite' }}
+                        />
+                      ) : (
+                        <ShoppingCart sx={{ width: 16, height: 16 }} />
+                      )
+                    }
+                  >
+                    {isInstalling ? '安装中...' : plugin.is_free ? '免费安装' : '购买'}
+                  </Button>
+                )}
+              </Box>
+            </Box>
+          </Box>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card
-      className='h-full flex flex-col hover:shadow-lg transition-shadow duration-300'
-      sx={{ borderRadius: 2 }}
+      sx={{
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        '&:hover': { boxShadow: 4 },
+        transition: 'box-shadow 0.3s ease',
+        borderRadius: 2,
+      }}
     >
-      <CardContent className='flex flex-col h-full'>
-        <div className='flex items-start justify-between mb-3'>
-          <div className='flex items-center gap-2'>
-            <div className='w-12 h-12 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center'>
-              <Package className='w-6 h-6 text-white' />
-            </div>
-            <div>
+      <CardContent sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+        <Box
+          sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 3 }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box
+              sx={{
+                width: 48,
+                height: 48,
+                borderRadius: 2,
+                background: 'linear-gradient(135deg, primary.light 0%, primary.main 100%)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Package sx={{ width: 24, height: 24, color: 'white' }} />
+            </Box>
+            <Box>
               <Typography
                 variant='h6'
                 sx={{ fontWeight: 'bold' }}
@@ -66,24 +240,40 @@ export const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, on
               >
                 v{plugin.version}
               </Typography>
-            </div>
-          </div>
+            </Box>
+          </Box>
           {healthStatus !== undefined && (
-            <div
-              className={`w-3 h-3 rounded-full ${healthStatus ? 'bg-green-500' : 'bg-red-500'}`}
+            <Box
+              sx={{
+                width: 12,
+                height: 12,
+                borderRadius: '50%',
+                bgcolor: healthStatus ? 'success.main' : 'error.main',
+              }}
             />
           )}
-        </div>
+        </Box>
+
+        {plugin.is_featured && (
+          <Box sx={{ mb: 2 }}>
+            <Chip
+              icon={<Star sx={{ width: 12, height: 12 }} />}
+              label='精选推荐'
+              size='small'
+              color='warning'
+            />
+          </Box>
+        )}
 
         <Typography
           variant='body2'
           color='textSecondary'
-          className='mb-3 flex-grow'
+          sx={{ mb: 3, flexGrow: 1 }}
         >
           {plugin.description || '暂无描述'}
         </Typography>
 
-        <div className='flex flex-wrap gap-1 mb-3'>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 3 }}>
           {plugin.tags?.slice(0, 3).map((tag) => (
             <Chip
               key={tag}
@@ -93,42 +283,31 @@ export const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, on
               sx={{ fontSize: 10 }}
             />
           ))}
-        </div>
+        </Box>
 
-        <div className='flex items-center justify-between mb-3'>
-          <div className='flex items-center gap-1'>
-            <Star className='w-4 h-4 text-yellow-500 fill-yellow-500' />
-            <Typography
-              variant='body2'
-              sx={{ fontWeight: 'medium' }}
-            >
-              {plugin.rating || 0}
-            </Typography>
-            <Typography
-              variant='body2'
-              color='textSecondary'
-            >
-              ({plugin.rating_count || 0})
-            </Typography>
-          </div>
-          <div className='flex items-center gap-1'>
-            <Download className='w-4 h-4 text-gray-400' />
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
+          <PluginRating
+            value={plugin.rating || 0}
+            count={plugin.rating_count}
+          />
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Download sx={{ width: 16, height: 16, color: 'grey.400' }} />
             <Typography
               variant='body2'
               color='textSecondary'
             >
               {plugin.install_count?.toLocaleString() || 0}
             </Typography>
-          </div>
-        </div>
+          </Box>
+        </Box>
 
-        <div className='flex gap-2'>
+        <Box sx={{ display: 'flex', gap: 2 }}>
           <Button
             variant='outlined'
             size='small'
             fullWidth
             onClick={onViewDetails}
-            startIcon={<ExternalLink className='w-4 h-4' />}
+            startIcon={<ExternalLink sx={{ width: 16, height: 16 }} />}
           >
             详情
           </Button>
@@ -138,7 +317,7 @@ export const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, on
               size='small'
               fullWidth
               disabled
-              startIcon={<CheckCircle className='w-4 h-4' />}
+              startIcon={<CheckCircle sx={{ width: 16, height: 16 }} />}
             >
               已安装
             </Button>
@@ -148,16 +327,22 @@ export const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, on
               size='small'
               fullWidth
               onClick={handleInstall}
-              disabled={loading}
+              disabled={isInstalling}
               startIcon={
-                loading ? <Loading className='w-4 h-4' /> : <ShoppingCart className='w-4 h-4' />
+                isInstalling ? (
+                  <Loader2 sx={{ width: 16, height: 16, animation: 'spin 1s linear infinite' }} />
+                ) : (
+                  <ShoppingCart sx={{ width: 16, height: 16 }} />
+                )
               }
             >
-              {plugin.is_free ? '免费安装' : '购买'}
+              {isInstalling ? '安装中...' : plugin.is_free ? '免费安装' : '购买'}
             </Button>
           )}
-        </div>
+        </Box>
       </CardContent>
     </Card>
   );
 };
+
+export default PluginCard;

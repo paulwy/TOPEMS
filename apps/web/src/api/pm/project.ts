@@ -14,13 +14,13 @@ export const projectApi = {
     project_type?: string;
     status?: string;
     page?: number;
-    page_size?: number;
+    pagesize?: number;
   }) => {
     const query = new URLSearchParams();
     if (params?.project_type) query.set('project_type', params.project_type);
     if (params?.status) query.set('status', params.status);
     if (params?.page) query.set('page', params.page.toString());
-    if (params?.page_size) query.set('page_size', params.page_size.toString());
+    if (params?.pagesize) query.set('pagesize', params.pagesize.toString());
     return apiClient.pm.get(`/api/pm/projects?${query.toString()}`);
   },
 

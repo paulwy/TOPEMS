@@ -131,7 +131,7 @@ const OutboundPage: React.FC = () => {
       setLoading(true);
       const params: Record<string, unknown> = {
         page: currentPage,
-        page_size: pageSize,
+        pagesize: pageSize,
       };
       if (searchTerm) params.search = searchTerm;
       if (statusFilter) params.status = statusFilter;
@@ -159,7 +159,7 @@ const OutboundPage: React.FC = () => {
       setWavePicksLoading(true);
       const params: Record<string, unknown> = {
         page: wavePicksPage,
-        page_size: pageSize,
+        pagesize: pageSize,
       };
 
       const response = await wmsApi.wavePicks.list(params as any);
@@ -176,7 +176,7 @@ const OutboundPage: React.FC = () => {
 
   const fetchWarehouses = async () => {
     try {
-      const response = await wmsApi.warehouses.list({ page: 1, page_size: 100 });
+      const response = await wmsApi.warehouses.list({ page: 1, pagesize: 100 });
       if (response.success && response.data) {
         setWarehouses(response.data.items || []);
       }
@@ -427,7 +427,7 @@ const OutboundPage: React.FC = () => {
       },
       { id: 'wave_type', label: '波次类型' },
       { id: 'total_orders', label: '订单数' },
-      { id: 'total_items', label: '物料项数' },
+      { id: 'totalitems', label: '物料项数' },
       { id: 'total_quantity', label: '总数量' },
       {
         id: 'status',

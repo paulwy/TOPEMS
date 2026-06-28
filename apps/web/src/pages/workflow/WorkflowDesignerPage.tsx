@@ -60,7 +60,7 @@ const WorkflowDesignerPage: React.FC = () => {
         // Convert workflow definition to nodes and edges
         if (wf.definition && wf.definition.nodes) {
           const approvalNodes = wf.definition.nodes as any[];
-          const startNode = approvalNodes.find((n) => n.node_id === wf.definition.start_node);
+          const startNode = approvalNodes.find((n) => n.node_id === wf.definition.startnode);
           const convertedNodes = approvalNodes.map((node, index) => ({
             id: node.node_id,
             type: index === 0 ? 'start' : node.approvers?.length > 1 ? 'approval' : 'task',
@@ -71,7 +71,7 @@ const WorkflowDesignerPage: React.FC = () => {
             approvers: node.approvers || [],
           }));
           const convertedEdges = approvalNodes.flatMap((node) =>
-            (node.next_nodes || []).map((targetId: string) => ({
+            (node.nextnodes || []).map((targetId: string) => ({
               id: `edge-${node.node_id}-${targetId}`,
               source: node.node_id,
               target: targetId,
@@ -119,7 +119,7 @@ const WorkflowDesignerPage: React.FC = () => {
         timeout_hours: 24,
         auto_action: undefined,
         notification_users: undefined,
-        next_nodes: edges.filter((e) => e.source === node.id).map((e) => e.target),
+        nextnodes: edges.filter((e) => e.source === node.id).map((e) => e.target),
       }));
 
     const startNode = nodes.find((n) => n.type === 'start');
@@ -128,8 +128,8 @@ const WorkflowDesignerPage: React.FC = () => {
     return {
       version: '1.0',
       nodes: approvalNodes,
-      start_node: startNode?.id || '',
-      end_nodes: endNodes,
+      startnode: startNode?.id || '',
+      endnodes: endNodes,
       timeout_action: 'reject',
     };
   };
@@ -176,7 +176,7 @@ const WorkflowDesignerPage: React.FC = () => {
           name: formData.name,
           description: formData.description,
           definition,
-          is_active: true,
+          isactive: true,
         };
         const response = await workflowApi.createWorkflow(createData);
         if (response.success && response.data) {

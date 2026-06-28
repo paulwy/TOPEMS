@@ -142,7 +142,7 @@ const MobileHomePage: React.FC = () => {
       const [statsResponse, tasksResponse, approvalsResponse] = await Promise.all([
         mobileApi.getDashboardStats(),
         mobileApi.listMobileTasks(),
-        approvalTaskApi.listApprovalTasks({ page_size: 100 }),
+        approvalTaskApi.listApprovalTasks({ pagesize: 100 }),
       ]);
 
       const dashboardStats =

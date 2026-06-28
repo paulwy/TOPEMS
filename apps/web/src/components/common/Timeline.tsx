@@ -18,8 +18,8 @@ export interface TimelineProps {
   items: TimelineItem[];
   orientation?: 'vertical' | 'horizontal';
   variant?: 'outlined' | 'filled' | 'soft';
-  size?: 'small' | 'medium' | 'large';
-  sx?: any;
+  size?: 'sm' | 'md' | 'lg';
+  sx?: import('@mui/material/styles').SxProps<import('@mui/material/styles').Theme>;
   onItemClick?: (item: TimelineItem) => void;
 }
 
@@ -42,21 +42,21 @@ const statusColor: Record<string, string> = {
 };
 
 const sizeConfig = {
-  small: {
+  sm: {
     iconSize: 20,
     spacing: 2,
     titleVariant: 'body2' as const,
     descVariant: 'caption' as const,
     dotSize: 8,
   },
-  medium: {
+  md: {
     iconSize: 28,
     spacing: 3,
     titleVariant: 'body1' as const,
     descVariant: 'body2' as const,
     dotSize: 12,
   },
-  large: {
+  lg: {
     iconSize: 36,
     spacing: 4,
     titleVariant: 'h6' as const,
@@ -69,7 +69,7 @@ export const Timeline: React.FC<TimelineProps> = ({
   items,
   orientation = 'vertical',
   variant = 'filled',
-  size = 'medium',
+  size = 'md',
   sx,
   onItemClick,
 }) => {

@@ -64,7 +64,7 @@ export async function safeRequest<T>(
 
 export interface PaginatedRequestParams {
   page?: number;
-  page_size?: number;
+  pagesize?: number;
   search?: string;
   [key: string]: unknown;
 }
@@ -75,9 +75,9 @@ export interface PaginatedRequestParams {
 export async function paginatedRequest<T>(
   requestFn: (
     _params: PaginatedRequestParams
-  ) => Promise<ApiResponse<{ items: T[]; total: number; page: number; page_size: number }>>,
+  ) => Promise<ApiResponse<{ items: T[]; total: number; page: number; pagesize: number }>>,
   params: PaginatedRequestParams = {}
-): Promise<{ items: T[]; total: number; page: number; page_size: number }> {
+): Promise<{ items: T[]; total: number; page: number; pagesize: number }> {
   const response = await requestFn(params);
 
   if (!response.success) {
@@ -90,6 +90,6 @@ export async function paginatedRequest<T>(
     items: T[];
     total: number;
     page: number;
-    page_size: number;
+    pagesize: number;
   };
 }

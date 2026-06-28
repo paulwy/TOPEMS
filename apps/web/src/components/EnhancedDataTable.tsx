@@ -15,8 +15,8 @@ import {
   Menu,
   MenuItem,
   MenuList,
-  _ListItemIcon,
-  _ListItemText,
+  ListItemIcon,
+  ListItemText,
   Divider,
   CircularProgress,
   Button,
@@ -68,7 +68,7 @@ export interface EnhancedDataTableProps<TData extends RowData, TValue> {
   totalItems?: number;
   pageSize?: number;
   onPageChange?: (_page: number) => void;
-  onPageSizeChange?: (_size: number) => void;
+  onPageSizeChange?: (size: number) => void;
   currentPage?: number;
   responsive?: boolean;
   onRefresh?: () => void;
@@ -106,7 +106,7 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
   onPageChange,
   onPageSizeChange,
   currentPage = 0,
-  _responsive = true,
+  responsive = true,
   onRefresh,
   enableSelection = false,
   selectedIds = [],
@@ -290,14 +290,14 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
             {searchKey && (
               <Box sx={{ position: 'relative', width: '100%', maxWidth: 320 }}>
                 <Search
-                  style={{
+                  sx={{
                     position: 'absolute',
                     left: 12,
                     top: '50%',
                     transform: 'translateY(-50%)',
                     width: 16,
                     height: 16,
-                    color: 'rgba(0,0,0,0.25)',
+                    color: 'action.disabled',
                   }}
                 />
                 <TextField
@@ -480,10 +480,10 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
                           {flexRender(header.column.columnDef.header, header.getContext())}
                           {header.column.getCanSort() && (
                             <ChevronDown
-                              style={{
+                              sx={{
                                 width: 12,
                                 height: 12,
-                                color: 'rgba(0,0,0,0.25)',
+                                color: 'action.disabled',
                               }}
                             />
                           )}

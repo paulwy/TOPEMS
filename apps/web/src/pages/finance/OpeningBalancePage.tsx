@@ -449,11 +449,11 @@ export default function OpeningBalancePage() {
                           variant='body2'
                           color='text.secondary'
                         >
-                          {account.has_children ? '明细科目' : '明细'}
+                          {account.haschildren ? '明细科目' : '明细'}
                         </Typography>
                       </TableCell>
                       <TableCell align='right'>
-                        {account.has_children ? (
+                        {account.haschildren ? (
                           <Typography
                             variant='body2'
                             color='text.secondary'

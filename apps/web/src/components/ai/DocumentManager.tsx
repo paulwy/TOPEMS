@@ -236,11 +236,11 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
       case 'processed':
         return { bg: 'success.light', text: 'success.dark' };
       case 'pending':
-        return { bg: 'white3e0', text: '#f57c00' };
+        return { bg: 'warning.lightest', text: 'warning.dark' };
       case 'partial':
-        return { bg: 'white3e0', text: '#ef6c00' };
+        return { bg: 'warning.lightest', text: 'warning.dark' };
       default:
-        return { bg: '#ffebee', text: '#c62828' };
+        return { bg: 'error.lightest', text: 'error.dark' };
     }
   };
 
@@ -432,10 +432,10 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
                           sx={{
                             p: 1,
                             borderRadius: 1,
-                            backgroundColor: '#f3e5f5',
+                            bgcolor: 'secondary.lightest',
                           }}
                         >
-                          <FileText style={{ width: 20, height: 20, color: '#7b1fa2' }} />
+                          <FileText sx={{ width: 20, height: 20, color: 'secondary.main' }} />
                         </Box>
                         <Box>
                           <Box
@@ -466,7 +466,7 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
                             color='text.secondary'
                             sx={{ mt: 0.5 }}
                           >
-                            {doc.filename} • {formatFileSize(doc.file_size)}
+                            {doc.filename} • {formatFileSize(doc.filesize)}
                           </Typography>
                           {doc.description && (
                             <Typography
@@ -515,13 +515,13 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
                 <Card>
                   <CardContent sx={{ p: 4, textAlign: 'center' }}>
                     <FileText
-                      style={{
-                        width: 48,
-                        height: 48,
-                        color: '#ccc',
-                        margin: '0 auto 16px',
-                      }}
-                    />
+                  sx={{
+                    width: 48,
+                    height: 48,
+                    color: 'action.disabled',
+                    margin: '0 auto 16px',
+                  }}
+                />
                     <Typography
                       variant='h6'
                       sx={{ mb: 1 }}
@@ -630,10 +630,10 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
             {searchQuery && searchResults.length === 0 && !searching && (
               <Box sx={{ textAlign: 'center', py: 4 }}>
                 <Search
-                  style={{
+                  sx={{
                     width: 48,
                     height: 48,
-                    color: '#ccc',
+                    color: 'action.disabled',
                     margin: '0 auto 16px',
                   }}
                 />
@@ -649,10 +649,10 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
             {!searchQuery && (
               <Box sx={{ textAlign: 'center', py: 4 }}>
                 <Search
-                  style={{
+                  sx={{
                     width: 48,
                     height: 48,
-                    color: '#ccc',
+                    color: 'action.disabled',
                     margin: '0 auto 16px',
                   }}
                 />
@@ -712,11 +712,11 @@ export const DocumentManager: React.FC<DocumentManagerProps> = ({ className }) =
                 }}
               >
                 <Upload
-                  style={{
+                  sx={{
                     width: 48,
                     height: 48,
-                    color: '#999',
-                    marginBottom: 12,
+                    color: 'action.disabled',
+                    mb: 1.5,
                   }}
                 />
                 <Typography

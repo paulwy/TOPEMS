@@ -12,7 +12,7 @@ import type {
 export const experimentApi = {
   listExperiments: async (params?: {
     page?: number;
-    page_size?: number;
+    pagesize?: number;
     search?: string;
     status?: string;
     project_id?: string;
@@ -22,7 +22,7 @@ export const experimentApi = {
       experiments: Experiment[];
       total: number;
       page: number;
-      page_size: number;
+      pagesize: number;
     }>
   > => {
     const queryParams = params
@@ -61,7 +61,7 @@ export const experimentApi = {
 
   listLabExperiments: async (params?: {
     page?: number;
-    page_size?: number;
+    pagesize?: number;
     search?: string;
     status?: string;
   }): Promise<
@@ -69,7 +69,7 @@ export const experimentApi = {
       experiments: Experiment[];
       total: number;
       page: number;
-      page_size: number;
+      pagesize: number;
     }>
   > => {
     const queryParams = params
@@ -87,7 +87,7 @@ export const experimentApi = {
 
   listPilotExperiments: async (params?: {
     page?: number;
-    page_size?: number;
+    pagesize?: number;
     search?: string;
     status?: string;
   }): Promise<
@@ -95,7 +95,7 @@ export const experimentApi = {
       experiments: Experiment[];
       total: number;
       page: number;
-      page_size: number;
+      pagesize: number;
     }>
   > => {
     const queryParams = params
@@ -113,7 +113,7 @@ export const experimentApi = {
 
   listScaleupExperiments: async (params?: {
     page?: number;
-    page_size?: number;
+    pagesize?: number;
     search?: string;
     status?: string;
   }): Promise<
@@ -121,7 +121,7 @@ export const experimentApi = {
       experiments: Experiment[];
       total: number;
       page: number;
-      page_size: number;
+      pagesize: number;
     }>
   > => {
     const queryParams = params

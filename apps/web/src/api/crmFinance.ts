@@ -13,7 +13,7 @@ export interface PaginatedResponse<T> {
   items: T[];
   total: number;
   page?: number;
-  page_size?: number;
+  pagesize?: number;
 }
 
 export interface CustomerFinanceInfo {
@@ -32,7 +32,7 @@ export interface CustomerFinanceInfo {
   total_received: number;
   last_transaction_date?: string;
   payment_terms: string;
-  risk_level: 'low' | 'medium' | 'high';
+  risklevel: 'low' | 'medium' | 'high';
   status: string;
   bank_name?: string;
   bank_account?: string;
@@ -101,7 +101,7 @@ export const crmFinanceApi = {
     start_date?: string;
     end_date?: string;
     page?: number;
-    page_size?: number;
+    pagesize?: number;
   }) => {
     const response = await apiClient.crm.get<{ data: PaginatedResponse<SalesInvoice> }>(
       '/api/crm/invoices',
@@ -172,7 +172,7 @@ export const crmFinanceApi = {
     end_date?: string;
     payment_method?: string;
     page?: number;
-    page_size?: number;
+    pagesize?: number;
   }) => {
     const response = await apiClient.crm.get<{ data: PaginatedResponse<CollectionRecord> }>(
       '/api/crm/collections',
@@ -240,7 +240,7 @@ export const crmFinanceApi = {
     customer_id?: string;
     min_overdue_days?: number;
     page?: number;
-    page_size?: number;
+    pagesize?: number;
   }) => {
     const response = await apiClient.crm.get('/api/crm/reports/overdue-receivables', {
       params,

@@ -114,7 +114,7 @@ const FinancePaymentPage: React.FC = () => {
     try {
       const response = await financeApi.receivablePayable.listPayments({
         page: 1,
-        page_size: 100,
+        pagesize: 100,
       });
       if (response.success && response.data) {
         const payments = response.data.items.map(mapPaymentRecordToPayment);

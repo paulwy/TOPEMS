@@ -31,7 +31,7 @@ const NODE_ICONS: Record<NodeType, string> = {
 interface WorkflowDesignerProps {
   initialNodes?: NodeData[];
   initialEdges?: EdgeData[];
-  onSave?: (_nodes: NodeData[], _edges: EdgeData[]) => void;
+  onSave?: (nodes: NodeData[], _edges: EdgeData[]) => void;
 }
 
 export const WorkflowDesigner: React.FC<WorkflowDesignerProps> = ({

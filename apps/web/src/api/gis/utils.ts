@@ -10,7 +10,7 @@ export function adaptResponse<T>(
     data,
     total,
     page: (response.page as number) || 1,
-    pageSize: (response.pageSize as number) || (response.page_size as number) || data.length,
+    pageSize: (response.pageSize as number) || (response.pagesize as number) || data.length,
     totalPages: (response.totalPages as number) || (response.total_pages as number) || 1,
   };
 }

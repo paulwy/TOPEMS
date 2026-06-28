@@ -19,6 +19,12 @@ const VoucherManagementPage = lazy(() => import('../pages/erp/VoucherManagementP
 const AuditLogPage = lazy(() => import('../pages/erp/AuditLogPage'));
 const DictManagementPage = lazy(() => import('../pages/erp/DictManagementPage'));
 const DatabaseManagementPage = lazy(() => import('../pages/erp/DatabaseManagementPage'));
+const PurchaseOrderPage = lazy(() => import('../pages/erp/PurchaseOrderPage'));
+const SalesOrderPage = lazy(() => import('../pages/erp/SalesOrderPage'));
+const InventoryManagementPage = lazy(() => import('../pages/erp/InventoryManagementPage'));
+const MaterialManagementPage = lazy(() => import('../pages/erp/MaterialManagementPage'));
+const SupplierManagementPage = lazy(() => import('../pages/erp/SupplierManagementPage'));
+const CustomerManagementPage = lazy(() => import('../pages/erp/CustomerManagementPage'));
 
 export const erpRoutes: RouteConfig[] = [
   {
@@ -174,5 +180,47 @@ export const erpRoutes: RouteConfig[] = [
     requiredPermissions: ['erp:admin'],
     module: 'erp',
     action: 'admin',
+  },
+  {
+    path: '/erp/purchase-orders',
+    element: PurchaseOrderPage,
+    requiredPermissions: ['erp:read'],
+    module: 'erp',
+    action: 'read',
+  },
+  {
+    path: '/erp/sales-orders',
+    element: SalesOrderPage,
+    requiredPermissions: ['erp:read'],
+    module: 'erp',
+    action: 'read',
+  },
+  {
+    path: '/erp/inventory',
+    element: InventoryManagementPage,
+    requiredPermissions: ['erp:read'],
+    module: 'erp',
+    action: 'read',
+  },
+  {
+    path: '/erp/materials',
+    element: MaterialManagementPage,
+    requiredPermissions: ['erp:read'],
+    module: 'erp',
+    action: 'read',
+  },
+  {
+    path: '/erp/suppliers',
+    element: SupplierManagementPage,
+    requiredPermissions: ['erp:read'],
+    module: 'erp',
+    action: 'read',
+  },
+  {
+    path: '/erp/customers',
+    element: CustomerManagementPage,
+    requiredPermissions: ['erp:read'],
+    module: 'erp',
+    action: 'read',
   },
 ];

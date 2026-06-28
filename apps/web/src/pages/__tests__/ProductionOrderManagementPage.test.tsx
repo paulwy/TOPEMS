@@ -62,7 +62,7 @@ describe('ProductionOrderManagementPage', () => {
         orders: mockOrders,
         total: mockOrders.length,
         page: 0,
-        page_size: 10,
+        pagesize: 10,
       },
     });
   });

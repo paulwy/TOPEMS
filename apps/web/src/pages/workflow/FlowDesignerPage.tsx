@@ -95,7 +95,7 @@ const FlowDesignerPage: React.FC = () => {
         if (definition?.nodes) {
           const approvalNodes = definition.nodes;
           const convertedEdges: FlowEdge[] = approvalNodes.flatMap((node) =>
-            (node.next_nodes || []).map((targetId: string) => ({
+            (node.nextnodes || []).map((targetId: string) => ({
               id: `edge-${node.node_id}-${targetId}`,
               source: node.node_id,
               target: targetId,
@@ -156,7 +156,7 @@ const FlowDesignerPage: React.FC = () => {
           timeout_hours: node.config?.timeout_hours || 24,
           auto_action: undefined,
           notification_users: undefined,
-          next_nodes: edges.filter((e) => e.source === node.id).map((e) => e.target),
+          nextnodes: edges.filter((e) => e.source === node.id).map((e) => e.target),
         }));
 
       const startNodeId = nodes.find((n) => n.type === 'start')?.id || '';
@@ -164,8 +164,8 @@ const FlowDesignerPage: React.FC = () => {
       const definition: WorkflowDefinition = {
         version: workflow?.definition?.version || '1.0',
         nodes: approvalNodes,
-        start_node: startNodeId,
-        end_nodes: nodes.filter((n) => n.type === 'end').map((n) => n.id),
+        startnode: startNodeId,
+        endnodes: nodes.filter((n) => n.type === 'end').map((n) => n.id),
         timeout_action: 'reject',
       };
 
@@ -176,7 +176,7 @@ const FlowDesignerPage: React.FC = () => {
         await workflowApi.createWorkflow({
           name: '新流程',
           definition,
-          is_active: false,
+          isactive: false,
         });
         success('流程创建成功');
       }

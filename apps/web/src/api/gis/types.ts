@@ -1,6 +1,6 @@
 export interface ListQueryParams {
   page?: number;
-  page_size?: number;
+  pagesize?: number;
   search?: string;
   status?: string;
 }
@@ -52,7 +52,7 @@ export interface DeviceLocationRecord {
   accuracy?: number;
   speed?: number;
   heading?: number;
-  battery_level?: number;
+  batterylevel?: number;
   created_at: string;
 }
 
@@ -61,7 +61,7 @@ export interface TrackQueryParams {
   start_time?: string;
   end_time?: string;
   page?: number;
-  page_size?: number;
+  pagesize?: number;
 }
 
 export interface CreateDevicePointRequest {

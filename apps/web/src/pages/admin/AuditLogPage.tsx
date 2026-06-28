@@ -77,7 +77,7 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
       const api = source === 'lims' ? auditLimsApi : auditRsApi;
       const params: Record<string, unknown> = {
         page: currentPage,
-        page_size: pageSize,
+        pagesize: pageSize,
       };
       if (filterStatus !== 'all') {
         params.status = filterStatus;

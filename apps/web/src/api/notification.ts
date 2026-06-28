@@ -99,7 +99,7 @@ export interface UpdateTemplateRequest extends Partial<CreateTemplateRequest> {
 
 export interface NotificationListQuery {
   page?: number;
-  page_size?: number;
+  pagesize?: number;
   notification_type?: NotificationTypeEnum;
 }
 
@@ -107,7 +107,7 @@ export interface NotificationListResponse<T = Notification> {
   notifications: T[];
   total: number;
   page: number;
-  page_size: number;
+  pagesize: number;
   unread_count: number;
 }
 
@@ -128,7 +128,7 @@ export const getNotifications = async (
   try {
     const params: Record<string, any> = {
       page,
-      page_size: pageSize,
+      pagesize: pageSize,
     };
 
     if (notificationType) {
@@ -153,7 +153,7 @@ export const getNotifications = async (
           notifications: [],
           total: 0,
           page,
-          page_size: pageSize,
+          pagesize: pageSize,
           unread_count: 0,
         },
         message: 'Unauthorized',
@@ -226,7 +226,7 @@ export const getArchivedNotifications = async (
 ): Promise<ApiResponse<NotificationListResponse<ArchivedNotification>>> => {
   const params = {
     page,
-    page_size: pageSize,
+    pagesize: pageSize,
   };
   const response = await apiClient.notification.get<NotificationListResponse<ArchivedNotification>>(
     '/api/notifications/archived',
@@ -274,7 +274,7 @@ export interface NotificationTemplateListResponse {
   templates: NotificationTemplate[];
   total: number;
   page: number;
-  page_size: number;
+  pagesize: number;
 }
 
 export const getTemplates = async (
@@ -285,7 +285,7 @@ export const getTemplates = async (
 ): Promise<ApiResponse<NotificationTemplateListResponse>> => {
   const params: Record<string, any> = {
     page,
-    page_size: pageSize,
+    pagesize: pageSize,
   };
   if (status) {
     params.status = status;

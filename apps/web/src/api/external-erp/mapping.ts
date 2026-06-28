@@ -13,7 +13,7 @@ export const mappingApi = {
     configId: string,
     params?: {
       page?: number;
-      page_size?: number;
+      pagesize?: number;
     }
   ) =>
     apiClient.integration.get(
@@ -48,7 +48,7 @@ export const mappingApi = {
     configId: string,
     params?: {
       page?: number;
-      page_size?: number;
+      pagesize?: number;
     }
   ) =>
     apiClient.integration.get(
@@ -81,7 +81,7 @@ export const mappingApi = {
     configId: string,
     params?: {
       page?: number;
-      page_size?: number;
+      pagesize?: number;
     }
   ) =>
     apiClient.integration.get(
@@ -114,7 +114,7 @@ export const mappingApi = {
     configId: string,
     params?: {
       page?: number;
-      page_size?: number;
+      pagesize?: number;
     }
   ) =>
     apiClient.integration.get(
@@ -143,7 +143,7 @@ export const mappingApi = {
     configId: string,
     params?: {
       page?: number;
-      page_size?: number;
+      pagesize?: number;
     }
   ) =>
     apiClient.integration.get(
@@ -176,7 +176,7 @@ export const mappingApi = {
     configId: string,
     params?: {
       page?: number;
-      page_size?: number;
+      pagesize?: number;
     }
   ) =>
     apiClient.integration.get(

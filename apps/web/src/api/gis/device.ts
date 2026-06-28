@@ -16,7 +16,7 @@ export const deviceApi = {
   ): Promise<ApiResponse<PaginatedResponse<DevicePoint>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.status) queryParams.append('status', params.status);
 
@@ -51,7 +51,7 @@ export const deviceApi = {
   ): Promise<ApiResponse<PaginatedResponse<DevicePoint>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
 
     return apiClient.gis.get<PaginatedResponse<DevicePoint>>(
       `/api/gis/device-locations/map/${mapId}?${queryParams.toString()}`
@@ -81,7 +81,7 @@ export const deviceApi = {
     if (params.start_time) queryParams.append('start_time', params.start_time);
     if (params.end_time) queryParams.append('end_time', params.end_time);
     if (params.page) queryParams.append('page', params.page.toString());
-    if (params.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params.pagesize) queryParams.append('pagesize', params.pagesize.toString());
 
     return apiClient.gis.get<PaginatedResponse<DeviceLocationRecord>>(
       `/api/gis/device-tracks?${queryParams.toString()}`

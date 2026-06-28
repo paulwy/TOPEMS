@@ -69,7 +69,7 @@ const EhsAccidentPage: React.FC = () => {
   const loadAccidents = async () => {
     try {
       setLoading(true);
-      const response = await ehsApi.listAccidents({ page_size: 100 });
+      const response = await ehsApi.listAccidents({ pagesize: 100 });
       if (response.success && response.data) {
         const data = response.data as any;
         const accidentsData = Array.isArray(data) ? data : data.data || [];

@@ -58,7 +58,7 @@ const RsBugPage: React.FC = () => {
       setLoading(true);
       const params: any = {
         page: page + 1,
-        page_size: rowsPerPage,
+        pagesize: rowsPerPage,
       };
       if (searchTerm) params.search = searchTerm;
       if (severityFilter) params.severity = severityFilter;

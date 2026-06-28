@@ -397,7 +397,7 @@ const EquipmentMaintenanceDetailPage: React.FC = () => {
                     </Typography>
                   </Box>
                 )}
-                {record.noise_level !== undefined && (
+                {record.noiselevel !== undefined && (
                   <Box>
                     <InputLabel sx={{ fontSize: 11, color: 'text.secondary' }}>
                       噪音 (dB)
@@ -406,7 +406,7 @@ const EquipmentMaintenanceDetailPage: React.FC = () => {
                       variant='body2'
                       sx={{ fontWeight: 500 }}
                     >
-                      {record.noise_level}
+                      {record.noiselevel}
                     </Typography>
                   </Box>
                 )}

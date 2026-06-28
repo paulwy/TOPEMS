@@ -23,7 +23,7 @@ export const useImportExport = ({ apiEndpoint }: UseImportExportOptions) => {
       formData.append('file', file);
       formData.append('entity_type', entityType);
       formData.append('import_mode', importMode);
-      formData.append('skip_errors', String(skipErrors));
+      formData.append('skiperrors', String(skipErrors));
 
       const response = await fetch(`${apiEndpoint}/import`, {
         method: 'POST',
@@ -62,7 +62,7 @@ export const useImportExport = ({ apiEndpoint }: UseImportExportOptions) => {
         },
         body: JSON.stringify({
           entity_type: entityType,
-          file_format: fileFormat,
+          fileformat: fileFormat,
           columns,
           filters,
         }),

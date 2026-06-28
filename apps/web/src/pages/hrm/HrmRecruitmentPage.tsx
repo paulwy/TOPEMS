@@ -105,11 +105,11 @@ const HrmRecruitmentPage: React.FC = () => {
     try {
       // 并行加载所有数据，但添加错误处理
       const results = await Promise.allSettled([
-        jobOpeningApi.list({ page_size: 100 }),
-        candidateApi.list({ page_size: 100 }),
-        interviewApi.list({ page_size: 100 }),
-        departmentApi.list({ page_size: 100 }),
-        positionApi.list({ page_size: 100 }),
+        jobOpeningApi.list({ pagesize: 100 }),
+        candidateApi.list({ pagesize: 100 }),
+        interviewApi.list({ pagesize: 100 }),
+        departmentApi.list({ pagesize: 100 }),
+        positionApi.list({ pagesize: 100 }),
       ]);
 
       // 处理每个结果

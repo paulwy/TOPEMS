@@ -106,7 +106,7 @@ export default function VoucherTemplatePage() {
     try {
       await toggleTemplate.mutateAsync({
         templateId: template.id,
-        isActive: !template.is_active,
+        isActive: !template.isactive,
       });
     } catch (error: unknown) {
       logger.error('Toggle template failed:', error);
@@ -339,8 +339,8 @@ export default function VoucherTemplatePage() {
                       </Typography>
                       <Chip
                         size='small'
-                        variant={template.is_active ? 'filled' : 'outlined'}
-                        label={template.is_active ? '启用' : '禁用'}
+                        variant={template.isactive ? 'filled' : 'outlined'}
+                        label={template.isactive ? '启用' : '禁用'}
                       />
                     </Box>
                     {template.is_default && (
@@ -395,7 +395,7 @@ export default function VoucherTemplatePage() {
                       size='small'
                       onClick={() => handleToggle(template)}
                     >
-                      {template.is_active ? (
+                      {template.isactive ? (
                         <X sx={{ width: 16, height: 16, color: 'grey.500' }} />
                       ) : (
                         <Check sx={{ width: 16, height: 16, color: 'green.600' }} />

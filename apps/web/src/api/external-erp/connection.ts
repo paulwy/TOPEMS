@@ -12,7 +12,7 @@ export const connectionApi = {
     type?: string;
     status?: string;
     page?: number;
-    page_size?: number;
+    pagesize?: number;
   }) =>
     apiClient.integration.get('/api/integration/external-erp/connections', {
       params,

@@ -4,7 +4,7 @@ import {
   Typography,
   TextField,
   IconButton,
-  _InputAdornment,
+  InputAdornment,
   FormControl,
   InputLabel,
   Alert,
@@ -688,7 +688,7 @@ interface AIToolsPanelProps {
   onClose?: () => void;
 }
 
-export const AIToolsPanel: React.FC<AIToolsPanelProps> = ({ defaultTool, _onClose }) => {
+export const AIToolsPanel: React.FC<AIToolsPanelProps> = ({ defaultTool, onClose }) => {
   const [activeTab, setActiveTab] = useState(defaultTool || 'json');
 
   const tools = [

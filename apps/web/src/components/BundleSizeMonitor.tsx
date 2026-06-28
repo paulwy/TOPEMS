@@ -2,9 +2,9 @@ import React, { useEffect, useState, useCallback } from 'react';
 import {
   Package,
   HardDrive,
-  _TrendingUp,
+  TrendingUp,
   AlertTriangle,
-  _CheckCircle,
+  CheckCircle,
   BarChart3,
   X,
   ChevronDown,

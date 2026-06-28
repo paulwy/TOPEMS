@@ -13,6 +13,9 @@ export interface User {
   isActive: boolean;
   isSuperuser?: boolean;
   avatar?: string;
+  department?: string;
+  position?: string;
+  phone?: string;
 }
 
 // 通知类型

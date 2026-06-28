@@ -13,7 +13,7 @@ export const accountingSubjectApi = {
   async list(params?: PaginationParams): Promise<ApiResponse<PaginatedResult<AccountingSubject>>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.pagesize) searchParams.set('pagesize', params.pagesize.toString());
     if (params?.search) searchParams.set('search', params.search);
     if (params?.status) searchParams.set('status', params.status);
 
@@ -47,7 +47,7 @@ export const openingBalanceApi = {
   ): Promise<ApiResponse<PaginatedResult<OpeningBalance>>> {
     const searchParams = new URLSearchParams();
     if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.page_size) searchParams.set('page_size', params.page_size.toString());
+    if (params?.pagesize) searchParams.set('pagesize', params.pagesize.toString());
     if (params?.search) searchParams.set('search', params.search);
     if (params?.period) searchParams.set('period', params.period);
     if (params?.company_id) searchParams.set('company_id', params.company_id);

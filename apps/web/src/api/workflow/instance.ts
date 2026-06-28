@@ -41,4 +41,40 @@ export const instanceApi = {
   delete: (id: string) => {
     return apiClient.workflow.delete(`/api/flow/instances/${id}`);
   },
+
+  activateInstance: (id: string) => {
+    return apiClient.workflow.post(`/api/flow/instances/${id}/activate`);
+  },
+
+  deleteInstance: (id: string) => {
+    return apiClient.workflow.delete(`/api/flow/instances/${id}`);
+  },
+
+  terminateInstance: (id: string, data?: { reason?: string }) => {
+    return apiClient.workflow.post(`/api/flow/instances/${id}/terminate`, data);
+  },
+
+  getInstanceVariables: (id: string) => {
+    return apiClient.workflow.get(`/api/flow/instances/${id}/variables`);
+  },
+
+  setInstanceVariables: (id: string, data: Record<string, unknown>) => {
+    return apiClient.workflow.post(`/api/flow/instances/${id}/variables`, data);
+  },
+
+  getInstanceTasks: (id: string, params?: ListParams) => {
+    return apiClient.workflow.get(`/api/flow/instances/${id}/tasks`, { params });
+  },
+
+  getInstanceHistory: (id: string) => {
+    return apiClient.workflow.get(`/api/flow/instances/${id}/history`);
+  },
+
+  getInstanceLogs: (id: string, params?: ListParams) => {
+    return apiClient.workflow.get(`/api/flow/instances/${id}/logs`, { params });
+  },
+
+  getInstanceDiagram: (id: string) => {
+    return apiClient.workflow.get(`/api/flow/instances/${id}/diagram`);
+  },
 };

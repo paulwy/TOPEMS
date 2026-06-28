@@ -19,7 +19,7 @@ export const environmentApi = {
   ): Promise<ApiResponse<PaginatedResponse<EnvironmentMonitor>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.status) queryParams.append('status', params.status);
     if (params?.monitor_type) queryParams.append('monitor_type', params.monitor_type);
@@ -55,7 +55,7 @@ export const environmentApi = {
   ): Promise<ApiResponse<PaginatedResponse<EnvironmentIndicator>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.status) queryParams.append('status', params.status);
 
@@ -69,7 +69,7 @@ export const environmentApi = {
   ): Promise<ApiResponse<PaginatedResponse<EnvironmentMonitorRecord>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
     if (params?.search) queryParams.append('search', params.search);
     if (params?.monitor_id) queryParams.append('monitor_id', params.monitor_id);
     if (params?.monitor_type) queryParams.append('monitor_type', params.monitor_type);

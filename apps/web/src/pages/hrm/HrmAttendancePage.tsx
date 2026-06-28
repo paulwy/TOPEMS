@@ -55,12 +55,12 @@ const HrmAttendancePage: React.FC = () => {
     setLoading(true);
     try {
       if (activeTab === 'records') {
-        const res = await attendanceApi.list({ date: selectedDate, page_size: 100 });
+        const res = await attendanceApi.list({ date: selectedDate, pagesize: 100 });
         if (res.code === 200) {
           setRecords(res.data?.items || []);
         }
       } else if (activeTab === 'leaves') {
-        const res = await leaveApi.list({ page_size: 100 });
+        const res = await leaveApi.list({ pagesize: 100 });
         if (res.code === 200) {
           setLeaves(res.data?.items || []);
         }

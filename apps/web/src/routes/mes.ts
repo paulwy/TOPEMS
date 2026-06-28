@@ -29,6 +29,12 @@ const EquipmentMaintenanceDetailPage = lazy(
 const ProcessRoutePage = lazy(() => import('../pages/mes/ProcessRoutePage'));
 const ProcessFlowPage = lazy(() => import('../pages/mes/ProcessFlowPage'));
 const MesQualityPage = lazy(() => import('../pages/mes/MesQualityPage'));
+const WorkReportPage = lazy(() => import('../pages/mes/WorkReportPage'));
+const QualityInspectionPage = lazy(() => import('../pages/mes/QualityInspectionPage'));
+const MaterialRequirementPage = lazy(() => import('../pages/mes/MaterialRequirementPage'));
+const ProductionKanbanPage = lazy(() => import('../pages/mes/ProductionKanbanPage'));
+const WorkOrderPage = lazy(() => import('../pages/mes/WorkOrderPage'));
+const TeamManagementPage = lazy(() => import('../pages/mes/TeamManagementPage'));
 
 export const mesRoutes: RouteConfig[] = [
   {
@@ -170,6 +176,48 @@ export const mesRoutes: RouteConfig[] = [
   {
     path: '/mes/equipment-maintenance/:id',
     element: EquipmentMaintenanceDetailPage,
+    requiredPermissions: ['mes:read'],
+    module: 'mes',
+    action: 'read',
+  },
+  {
+    path: '/mes/work-reports',
+    element: WorkReportPage,
+    requiredPermissions: ['mes:read'],
+    module: 'mes',
+    action: 'read',
+  },
+  {
+    path: '/mes/quality-inspection',
+    element: QualityInspectionPage,
+    requiredPermissions: ['mes:read'],
+    module: 'mes',
+    action: 'read',
+  },
+  {
+    path: '/mes/material-requirements',
+    element: MaterialRequirementPage,
+    requiredPermissions: ['mes:read'],
+    module: 'mes',
+    action: 'read',
+  },
+  {
+    path: '/mes/production-kanban',
+    element: ProductionKanbanPage,
+    requiredPermissions: ['mes:read'],
+    module: 'mes',
+    action: 'read',
+  },
+  {
+    path: '/mes/work-orders',
+    element: WorkOrderPage,
+    requiredPermissions: ['mes:read'],
+    module: 'mes',
+    action: 'read',
+  },
+  {
+    path: '/mes/teams',
+    element: TeamManagementPage,
     requiredPermissions: ['mes:read'],
     module: 'mes',
     action: 'read',

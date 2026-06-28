@@ -215,9 +215,9 @@ export interface StockTake {
   status: string;
   planned_date?: string;
   actual_date?: string;
-  total_items?: number;
-  counted_items?: number;
-  discrepancy_items?: number;
+  totalitems?: number;
+  counteditems?: number;
+  discrepancyitems?: number;
   total_quantity?: number;
   counted_quantity?: number;
   discrepancy_quantity?: number;
@@ -272,7 +272,7 @@ export interface CreateStockTakeRequest {
 }
 
 export interface CreateStockTakeItemRequest {
-  inventory_item_id: string;
+  inventoryitem_id: string;
   expected_quantity: number;
   actual_quantity?: number;
   remarks?: string;
@@ -287,7 +287,7 @@ export interface CountItemRequest {
 
 export interface PaginationParams {
   page?: number;
-  page_size?: number;
+  pagesize?: number;
   search?: string;
   status?: string;
   warehouse_id?: string;
@@ -297,7 +297,7 @@ export interface PaginatedResponse<T> {
   items: T[];
   total: number;
   page: number;
-  page_size: number;
+  pagesize: number;
 }
 
 export interface Warehouse {
@@ -345,10 +345,10 @@ export interface InventoryAlertRule {
   max_quantity?: number;
   reorder_point?: number;
   expiry_days?: number;
-  alert_level: string;
+  alertlevel: string;
   notification_channels?: string[];
   recipients?: string[];
-  is_active: boolean;
+  isactive: boolean;
   description?: string;
   created_at: string;
   updated_at: string;
@@ -364,10 +364,10 @@ export interface CreateInventoryAlertRuleRequest {
   max_quantity?: number;
   reorder_point?: number;
   expiry_days?: number;
-  alert_level: string;
+  alertlevel: string;
   notification_channels?: string[];
   recipients?: string[];
-  is_active?: boolean;
+  isactive?: boolean;
   description?: string;
 }
 
@@ -381,10 +381,10 @@ export interface UpdateInventoryAlertRuleRequest {
   max_quantity?: number;
   reorder_point?: number;
   expiry_days?: number;
-  alert_level?: string;
+  alertlevel?: string;
   notification_channels?: string[];
   recipients?: string[];
-  is_active?: boolean;
+  isactive?: boolean;
   description?: string;
 }
 
@@ -393,7 +393,7 @@ export interface InventoryAlertRecord {
   rule_id: string;
   rule_name?: string;
   alert_type: string;
-  alert_level: string;
+  alertlevel: string;
   warehouse_id?: string;
   warehouse_name?: string;
   sku?: string;
@@ -426,7 +426,7 @@ export interface InventoryAlertStatistics {
 
 export interface AlertPaginationParams extends PaginationParams {
   alert_type?: string;
-  alert_level?: string;
+  alertlevel?: string;
   status?: string;
   warehouse_id?: string;
 }
@@ -527,8 +527,8 @@ export interface ReplenishmentStatistics {
   in_progress_orders: number;
   completed_orders: number;
   total_cost?: number;
-  low_stock_items: number;
-  safety_stock_items: number;
+  low_stockitems: number;
+  safety_stockitems: number;
 }
 
 export interface CreateReplenishmentOrderRequest {
@@ -582,7 +582,7 @@ export interface Location {
   current_weight?: number;
   status: string;
   temperature_zone?: string;
-  is_active: boolean;
+  isactive: boolean;
   barcode?: string;
   rfid?: string;
   sort_order?: number;
@@ -606,7 +606,7 @@ export interface CreateLocationRequest {
   volume?: number;
   weight_limit?: number;
   temperature_zone?: string;
-  is_active?: boolean;
+  isactive?: boolean;
   barcode?: string;
   rfid?: string;
   sort_order?: number;
@@ -627,7 +627,7 @@ export interface UpdateLocationRequest {
   weight_limit?: number;
   status?: string;
   temperature_zone?: string;
-  is_active?: boolean;
+  isactive?: boolean;
   barcode?: string;
   rfid?: string;
   sort_order?: number;
@@ -649,7 +649,7 @@ export interface LocationPaginationParams extends PaginationParams {
   location_type?: string;
   storage_type?: string;
   status?: string;
-  is_active?: boolean;
+  isactive?: boolean;
 }
 
 export interface TransferOrder {
@@ -746,7 +746,7 @@ export interface SyncRecord {
   end_time?: string;
   duration_seconds?: number;
   error_message?: string;
-  data_size?: number;
+  datasize?: number;
   created_by?: string;
   created_at: string;
   updated_at: string;
@@ -815,13 +815,13 @@ export interface AuditLogPaginationParams extends PaginationParams {
 export interface InventoryStatistics {
   total_quantity: number;
   total_value: number;
-  total_items: number;
+  totalitems: number;
   total_sku_count: number;
   warehouse_count: number;
   location_count: number;
-  low_stock_items: number;
-  out_of_stock_items: number;
-  over_stock_items?: number;
+  low_stockitems: number;
+  out_of_stockitems: number;
+  over_stockitems?: number;
   average_turnover_days?: number;
   turnover_rate?: number;
 }
@@ -867,10 +867,10 @@ export interface WavePick {
   status: string;
   priority?: string;
   total_orders: number;
-  total_items: number;
+  totalitems: number;
   total_quantity: number;
   picked_orders?: number;
-  picked_items?: number;
+  pickeditems?: number;
   picked_quantity?: number;
   picker_id?: string;
   picker_name?: string;
@@ -919,4 +919,161 @@ export interface CreateWavePickRequest {
 export interface AssignWavePickRequest {
   picker_id: string;
   picker_name?: string;
+}
+
+export interface Batch {
+  id: string;
+  batch_no: string;
+  sku: string;
+  material_name: string;
+  specification?: string;
+  unit?: string;
+  quantity: number;
+  available_quantity: number;
+  warehouse_id: string;
+  warehouse_name?: string;
+  location_id?: string;
+  location_code?: string;
+  supplier_id?: string;
+  supplier_name?: string;
+  production_date?: string;
+  expiry_date?: string;
+  receipt_date?: string;
+  quality_status: string;
+  status: string;
+  manufacture_date?: string;
+  shelf_life_days?: number;
+  remaining_days?: number;
+  unit_price?: number;
+  total_value?: number;
+  remark?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateBatchRequest {
+  batch_no: string;
+  sku: string;
+  material_name: string;
+  specification?: string;
+  unit?: string;
+  quantity: number;
+  warehouse_id: string;
+  location_id?: string;
+  supplier_id?: string;
+  production_date?: string;
+  expiry_date?: string;
+  receipt_date?: string;
+  quality_status?: string;
+  manufacture_date?: string;
+  shelf_life_days?: number;
+  unit_price?: number;
+  remark?: string;
+}
+
+export interface UpdateBatchRequest {
+  quantity?: number;
+  location_id?: string;
+  quality_status?: string;
+  status?: string;
+  expiry_date?: string;
+  remark?: string;
+}
+
+export interface BatchQueryParams extends PaginationParams {
+  warehouse_id?: string;
+  sku?: string;
+  batch_no?: string;
+  supplier_id?: string;
+  quality_status?: string;
+  status?: string;
+  expiry_warning?: boolean;
+  expired?: boolean;
+}
+
+export interface BatchStatistics {
+  total_batches: number;
+  total_quantity: number;
+  total_value: number;
+  expiring_soon_count: number;
+  expired_count: number;
+  quality_pending_count: number;
+}
+
+export interface SerialNumber {
+  id: string;
+  serial_no: string;
+  sku: string;
+  material_name: string;
+  specification?: string;
+  unit?: string;
+  warehouse_id: string;
+  warehouse_name?: string;
+  location_id?: string;
+  location_code?: string;
+  supplier_id?: string;
+  supplier_name?: string;
+  batch_no?: string;
+  production_date?: string;
+  expiry_date?: string;
+  quality_status: string;
+  status: string;
+  warranty_start_date?: string;
+  warranty_end_date?: string;
+  inbound_order_no?: string;
+  outbound_order_no?: string;
+  current_owner?: string;
+  unit_price?: number;
+  remark?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateSerialNumberRequest {
+  serial_no: string;
+  sku: string;
+  material_name: string;
+  specification?: string;
+  unit?: string;
+  warehouse_id: string;
+  location_id?: string;
+  supplier_id?: string;
+  batch_no?: string;
+  production_date?: string;
+  expiry_date?: string;
+  quality_status?: string;
+  warranty_start_date?: string;
+  warranty_end_date?: string;
+  unit_price?: number;
+  remark?: string;
+}
+
+export interface UpdateSerialNumberRequest {
+  location_id?: string;
+  quality_status?: string;
+  status?: string;
+  warranty_start_date?: string;
+  warranty_end_date?: string;
+  current_owner?: string;
+  remark?: string;
+}
+
+export interface SerialNumberQueryParams extends PaginationParams {
+  warehouse_id?: string;
+  sku?: string;
+  serial_no?: string;
+  supplier_id?: string;
+  batch_no?: string;
+  quality_status?: string;
+  status?: string;
+  expiry_warning?: boolean;
+  warranty_warning?: boolean;
+}
+
+export interface SerialNumberStatistics {
+  total_serials: number;
+  in_stock_count: number;
+  out_stock_count: number;
+  quality_pending_count: number;
+  warranty_expiring_soon_count: number;
 }

@@ -106,7 +106,7 @@ const KnowledgeBasePage: React.FC = () => {
     try {
       const params: any = {
         page: currentPage,
-        page_size: 20,
+        pagesize: 20,
       };
 
       if (searchQuery) {
@@ -330,7 +330,7 @@ const KnowledgeBasePage: React.FC = () => {
     },
     meta: [
       {
-        field: 'file_size',
+        field: 'filesize',
         label: '大小',
         icon: <FileText size={14} />,
         format: (value: number) => formatFileSize(value),
@@ -604,7 +604,7 @@ const KnowledgeBasePage: React.FC = () => {
                     文件大小
                   </Typography>
                   <Typography variant='body1'>
-                    {formatFileSize(selectedDocument.file_size)}
+                    {formatFileSize(selectedDocument.filesize)}
                   </Typography>
                 </Box>
                 <Box>

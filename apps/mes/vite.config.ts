@@ -13,6 +13,16 @@ export default defineConfig({
 
       remotes: {},
       shared: {
+        'react': {
+          singleton: true,
+          requiredVersion: '^19.0.0',
+          strictVersion: true,
+        },
+        'react-dom': {
+          singleton: true,
+          requiredVersion: '^19.0.0',
+          strictVersion: true,
+        },
         'react-router-dom': {
           singleton: true,
           requiredVersion: '^7.0.0',
@@ -20,7 +30,7 @@ export default defineConfig({
         },
         '@mui/material': {
           singleton: true,
-          requiredVersion: '^6.0.0',
+          requiredVersion: '^9.0.0',
           strictVersion: true,
         },
         '@emotion/react': {
@@ -33,26 +43,46 @@ export default defineConfig({
           requiredVersion: '^11.0.0',
           strictVersion: true,
         },
-        axios: {
+        'axios': {
           singleton: true,
           requiredVersion: '^1.0.0',
           strictVersion: true,
         },
-        zustand: {
+        'zustand': {
           singleton: true,
           strictVersion: true,
         },
-        i18next: {
+        'i18next': {
           singleton: true,
           strictVersion: true,
         },
-        dayjs: {
+        'react-i18next': {
+          singleton: true,
+          strictVersion: true,
+        },
+        'dayjs': {
           singleton: true,
           requiredVersion: '^1.11.0',
           strictVersion: true,
         },
+        'clsx': {
+          singleton: true,
+          requiredVersion: '^2.0.0',
+          strictVersion: true,
+        },
+        'lucide-react': {
+          singleton: true,
+          requiredVersion: '^1.0.0',
+          strictVersion: true,
+        },
+        'zod': {
+          singleton: true,
+          requiredVersion: '^4.0.0',
+          strictVersion: true,
+        },
       },
       exposes: {
+        './bootstrap': './src/bootstrap.tsx',
         './api/mes': './src/api/mes.ts',
         './api/lims': './src/api/lims.ts',
         './api/qms': './src/api/qms.ts',

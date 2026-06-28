@@ -148,7 +148,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-      <div style={{ padding: 12, borderBottom: '1px solid grey.200' }}>
+      <div style={{ padding: 12, borderBottom: '1px solid var(--mui-palette-divider)' }}>
         <div style={{ position: 'relative' }}>
           <Search
             style={{
@@ -182,7 +182,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
         </div>
       </div>
 
-      <div style={{ display: 'flex', borderBottom: '1px solid grey.200' }}>
+      <div style={{ display: 'flex', borderBottom: '1px solid var(--mui-palette-divider)' }}>
         <button
           onClick={() => setActiveTab('all')}
           style={{
@@ -550,7 +550,7 @@ export const ContactList: React.FC<ContactListProps> = ({ onSelectContact }) => 
       </div>
 
       {activeTab === 'groups' && (
-        <div style={{ padding: 12, borderTop: '1px solid grey.200' }}>
+        <div style={{ padding: 12, borderTop: '1px solid var(--mui-palette-divider)' }}>
           <button
             onClick={() => setShowAddModal(true)}
             style={{

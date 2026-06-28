@@ -8,6 +8,8 @@ import { transferApi } from './transfer';
 import { smartReplenishmentApi } from './replenishment';
 import { syncRecordApi, syncApi } from './sync';
 import { auditLogApi } from './audit';
+import { batchApi } from './batch';
+import { serialNumberApi } from './serialNumber';
 
 export * from './types';
 
@@ -41,6 +43,12 @@ export * from './sync';
 export { auditLogApi } from './audit';
 export * from './audit';
 
+export { batchApi } from './batch';
+export * from './batch';
+
+export { serialNumberApi } from './serialNumber';
+export * from './serialNumber';
+
 export const wmsApi = {
   inventory: inventoryApi,
   inboundOrders: inboundOrderApi,
@@ -56,6 +64,8 @@ export const wmsApi = {
   auditLogs: auditLogApi,
   inventoryStats: inventoryStatsApi,
   wavePicks: wavePickApi,
+  batches: batchApi,
+  serialNumbers: serialNumberApi,
 };
 
 export default wmsApi;

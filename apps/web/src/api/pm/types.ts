@@ -11,8 +11,8 @@ export interface Project {
   budget?: number;
   progress: number;
   project_config?: Record<string, unknown>;
-  benefit_target?: Record<string, unknown>;
-  risk_level?: string;
+  benefittarget?: Record<string, unknown>;
+  risklevel?: string;
   priority?: number;
   tags?: string[];
   parent_id?: string;
@@ -44,8 +44,8 @@ export interface CreateProjectRequest {
   end_date?: string;
   budget?: number;
   project_config?: Record<string, unknown>;
-  benefit_target?: Record<string, unknown>;
-  risk_level?: string;
+  benefittarget?: Record<string, unknown>;
+  risklevel?: string;
   priority?: number;
   tags?: string[];
   parent_id?: string;
@@ -62,8 +62,8 @@ export interface UpdateProjectRequest {
   budget?: number;
   progress?: number;
   project_config?: Record<string, unknown>;
-  benefit_target?: Record<string, unknown>;
-  risk_level?: string;
+  benefittarget?: Record<string, unknown>;
+  risklevel?: string;
   priority?: number;
   tags?: string[];
   parent_id?: string;
@@ -141,7 +141,7 @@ export interface ProjectExpense {
   incurred_date: string;
   reported_date?: string;
   paid_date?: string;
-  budget_item_id?: string;
+  budgetitem_id?: string;
   resource_id?: string;
   expense_ref_id?: string;
   status?: string;
@@ -354,7 +354,7 @@ export interface ContractTemplate {
   contract_type: string;
   description?: string;
   content: Record<string, unknown>;
-  is_active: boolean;
+  isactive: boolean;
   created_by?: string;
   created_at: string;
   updated_at: string;
@@ -575,7 +575,7 @@ export interface ProjectDocument {
   document_name: string;
   document_type: string;
   file_path: string;
-  file_size: number;
+  filesize: number;
   file_hash?: string;
   version: number;
   status?: string;
@@ -630,7 +630,7 @@ export interface ReportTemplate {
   template_name: string;
   report_type: string;
   content: Record<string, any>;
-  is_active: boolean;
+  isactive: boolean;
   created_by?: string;
   created_at: string;
   updated_at: string;

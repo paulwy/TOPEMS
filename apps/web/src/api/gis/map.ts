@@ -22,7 +22,7 @@ export const mapApi = {
   ): Promise<ApiResponse<PaginatedResponse<FactoryMap>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
     if (params?.search) queryParams.append('search', params.search);
 
     const response = await apiClient.gis.get<any>(
@@ -58,7 +58,7 @@ export const mapApi = {
   ): Promise<ApiResponse<PaginatedResponse<MapMarker>>> => {
     const queryParams = new URLSearchParams();
     if (params?.page) queryParams.append('page', params.page.toString());
-    if (params?.page_size) queryParams.append('page_size', params.page_size.toString());
+    if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
     if (params?.search) queryParams.append('search', params.search);
 
     const response = await apiClient.gis.get<any>(`/api/gis/map-markers?${queryParams.toString()}`);

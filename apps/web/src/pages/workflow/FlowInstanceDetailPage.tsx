@@ -191,7 +191,7 @@ const FlowInstanceDetailPage: React.FC = () => {
                 >
                   当前节点
                 </Typography>
-                <Typography variant='body2'>{instance.current_node || 'N/A'}</Typography>
+                <Typography variant='body2'>{instance.currentnode || 'N/A'}</Typography>
               </Box>
               <Box>
                 <Typography

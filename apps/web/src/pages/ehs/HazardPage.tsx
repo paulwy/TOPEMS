@@ -54,7 +54,7 @@ const HazardPage: React.FC = () => {
     try {
       setLoading(true);
       const response = await ehsApi.listHazards({
-        page_size: 100,
+        pagesize: 100,
         search: searchTerm || undefined,
       });
       if (response.success && response.data) {
@@ -183,7 +183,7 @@ const HazardPage: React.FC = () => {
         render: (row) => getSeverityBadge(row.severity),
       },
       {
-        id: 'risk_level',
+        id: 'risklevel',
         label: '风险等级',
         render: (row) => {
           const risk = getRiskLevel(row);
@@ -792,7 +792,7 @@ const HazardPage: React.FC = () => {
                           >
                             风险等级
                           </Typography>
-                          <Typography variant='body2'>{assessment.risk_level || '-'}</Typography>
+                          <Typography variant='body2'>{assessment.risklevel || '-'}</Typography>
                         </Box>
                       </Box>
                     ))}

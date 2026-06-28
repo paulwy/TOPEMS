@@ -97,7 +97,7 @@ const FinanceReceiptPage: React.FC = () => {
     try {
       const response = await financeApi.receivablePayable.listCollections({
         page: 1,
-        page_size: 100,
+        pagesize: 100,
       });
       if (response.success && response.data) {
         const receipts = response.data.items.map(mapCollectionRecordToReceipt);

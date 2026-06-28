@@ -62,7 +62,7 @@ const FlowWorkflowPage: React.FC = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    is_active: true,
+    isactive: true,
   });
 
   useEffect(() => {
@@ -74,7 +74,7 @@ const FlowWorkflowPage: React.FC = () => {
       setLoading(true);
       const params: any = {};
       if (statusFilter !== 'all') {
-        params.is_active = statusFilter === 'active';
+        params.isactive = statusFilter === 'active';
       }
 
       const response = await workflowApi.listWorkflows(params);
@@ -112,7 +112,7 @@ const FlowWorkflowPage: React.FC = () => {
       const response = await workflowApi.createWorkflow({
         name: formData.name,
         description: formData.description,
-        is_active: formData.is_active,
+        isactive: formData.isactive,
       });
 
       if (response.success && response.data) {
@@ -122,7 +122,7 @@ const FlowWorkflowPage: React.FC = () => {
           type: 'success',
         });
         setShowCreateDialog(false);
-        setFormData({ name: '', description: '', is_active: true });
+        setFormData({ name: '', description: '', isactive: true });
         loadWorkflows();
         navigate(`/flow/definitions`);
       } else {
@@ -176,12 +176,12 @@ const FlowWorkflowPage: React.FC = () => {
   const handleToggleActive = async (workflow: Workflow) => {
     try {
       const response = await workflowApi.updateWorkflow(workflow.id, {
-        is_active: !workflow.is_active,
+        isactive: !workflow.isactive,
       });
       if (response.success) {
         addNotification({
           title: '成功',
-          message: `工作流已${workflow.is_active ? '停用' : '启用'}`,
+          message: `工作流已${workflow.isactive ? '停用' : '启用'}`,
           type: 'success',
         });
         loadWorkflows();
@@ -227,13 +227,13 @@ const FlowWorkflowPage: React.FC = () => {
         ),
       },
       {
-        accessorKey: 'is_active',
+        accessorKey: 'isactive',
         header: '状态',
         cell: ({ row }) => (
           <Chip
             size='small'
-            color={row.original.is_active ? 'success' : 'default'}
-            label={row.original.is_active ? '已启用' : '已停用'}
+            color={row.original.isactive ? 'success' : 'default'}
+            label={row.original.isactive ? '已启用' : '已停用'}
           />
         ),
       },
@@ -284,12 +284,12 @@ const FlowWorkflowPage: React.FC = () => {
               </IconButton>
             </Tooltip>
 
-            <Tooltip title={row.original.is_active ? '停用' : '启用'}>
+            <Tooltip title={row.original.isactive ? '停用' : '启用'}>
               <IconButton
                 size='small'
                 onClick={() => handleToggleActive(row.original)}
               >
-                {row.original.is_active ? (
+                {row.original.isactive ? (
                   <Pause sx={{ width: 16, height: 16 }} />
                 ) : (
                   <Play sx={{ width: 16, height: 16 }} />
@@ -316,8 +316,8 @@ const FlowWorkflowPage: React.FC = () => {
 
   const stats = {
     total: workflows.length,
-    active: workflows.filter((w) => w.is_active).length,
-    inactive: workflows.filter((w) => !w.is_active).length,
+    active: workflows.filter((w) => w.isactive).length,
+    inactive: workflows.filter((w) => !w.isactive).length,
   };
 
   const headerActions = useMemo(
@@ -537,8 +537,8 @@ const FlowWorkflowPage: React.FC = () => {
             <FormControlLabel
               control={
                 <Switch
-                  checked={formData.is_active}
-                  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                  checked={formData.isactive}
+                  onChange={(e) => setFormData({ ...formData, isactive: e.target.checked })}
                 />
               }
               label='启用工作流'

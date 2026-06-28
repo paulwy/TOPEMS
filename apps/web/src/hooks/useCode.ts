@@ -59,7 +59,7 @@ export interface CodeRule {
   module: ModuleType; // 所属模块
   prefix: string; // 前缀
   include_date: boolean; // 是否包含日期
-  date_format: 'YYYY' | 'YYYYMM' | 'YYYYMMDD';
+  dateformat: 'YYYY' | 'YYYYMM' | 'YYYYMMDD';
   sequence_length: number; // 流水号长度
   sequence_start: number; // 起始值
   separator: string; // 分隔符
@@ -308,7 +308,7 @@ export class CodeGenerator {
   constructor(rule: Partial<CodeRule> = {}) {
     this.prefix = rule.prefix || '';
     this.includeDate = rule.include_date ?? true;
-    this.dateFormat = rule.date_format || 'YYYYMMDD';
+    this.dateFormat = rule.dateformat || 'YYYYMMDD';
     this.sequenceLength = rule.sequence_length || 4;
     this.separator = rule.separator || '';
     this.currentSequence = rule.sequence_start || 1;
@@ -381,16 +381,16 @@ export class CodeGenerator {
     if (rule.include_date) {
       // 检查日期部分
       const dateRegex =
-        rule.date_format === 'YYYY'
+        rule.dateformat === 'YYYY'
           ? /^\d{4}$/
-          : rule.date_format === 'YYYYMM'
+          : rule.dateformat === 'YYYYMM'
             ? /^\d{6}$/
             : /^\d{8}$/;
 
       const remaining = code.substring(parts.join(rule.separator || '').length);
       const datePart = remaining.substring(
         0,
-        rule.date_format === 'YYYY' ? 4 : rule.date_format === 'YYYYMM' ? 6 : 8
+        rule.dateformat === 'YYYY' ? 4 : rule.dateformat === 'YYYYMM' ? 6 : 8
       );
 
       if (!dateRegex.test(datePart)) {
@@ -416,7 +416,7 @@ export const CODE_RULES: Record<EntityType, Partial<CodeRule>> = {
   company: {
     prefix: 'C',
     include_date: true,
-    date_format: 'YYYYMMDD',
+    dateformat: 'YYYYMMDD',
     sequence_length: 3,
     separator: '',
   },
@@ -441,21 +441,21 @@ export const CODE_RULES: Record<EntityType, Partial<CodeRule>> = {
   candidate: {
     prefix: 'CA',
     include_date: true,
-    date_format: 'YYYYMMDD',
+    dateformat: 'YYYYMMDD',
     sequence_length: 4,
     separator: '',
   },
   customer: {
     prefix: 'CU',
     include_date: true,
-    date_format: 'YYYYMMDD',
+    dateformat: 'YYYYMMDD',
     sequence_length: 4,
     separator: '',
   },
   supplier: {
     prefix: 'SU',
     include_date: true,
-    date_format: 'YYYYMMDD',
+    dateformat: 'YYYYMMDD',
     sequence_length: 4,
     separator: '',
   },
@@ -468,14 +468,14 @@ export const CODE_RULES: Record<EntityType, Partial<CodeRule>> = {
   project: {
     prefix: 'PRJ',
     include_date: true,
-    date_format: 'YYYYMM',
+    dateformat: 'YYYYMM',
     sequence_length: 4,
     separator: '',
   },
   contract: {
     prefix: 'CT',
     include_date: true,
-    date_format: 'YYYYMMDD',
+    dateformat: 'YYYYMMDD',
     sequence_length: 4,
     separator: '',
   },
@@ -500,14 +500,14 @@ export const CODE_RULES: Record<EntityType, Partial<CodeRule>> = {
   invoice: {
     prefix: 'INV',
     include_date: true,
-    date_format: 'YYYYMMDD',
+    dateformat: 'YYYYMMDD',
     sequence_length: 4,
     separator: '',
   },
   asset: {
     prefix: 'FA',
     include_date: true,
-    date_format: 'YYYYMMDD',
+    dateformat: 'YYYYMMDD',
     sequence_length: 4,
     separator: '',
   },

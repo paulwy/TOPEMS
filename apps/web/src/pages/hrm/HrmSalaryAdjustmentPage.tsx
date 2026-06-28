@@ -17,7 +17,7 @@ const HrmSalaryAdjustmentPage: React.FC = () => {
   const loadAdjustments = useCallback(async () => {
     try {
       setLoading(true);
-      const res = await salaryAdjustmentApi.list({ page: 1, page_size: 50 });
+      const res = await salaryAdjustmentApi.list({ page: 1, pagesize: 50 });
       if (res.success && res.data) {
         setAdjustments(res.data.items || []);
       }

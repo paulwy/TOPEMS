@@ -73,7 +73,7 @@ const HrmEmployeeEditPage: React.FC = () => {
 
   const loadDepartments = async () => {
     try {
-      const res = await departmentApi.list({ page_size: 100 });
+      const res = await departmentApi.list({ pagesize: 100 });
       if (res.code === 200 && res.data) {
         setDepartments(res.data.items || []);
       }
@@ -84,7 +84,7 @@ const HrmEmployeeEditPage: React.FC = () => {
 
   const loadPositions = async () => {
     try {
-      const res = await positionApi.list({ page_size: 100 });
+      const res = await positionApi.list({ pagesize: 100 });
       if (res.code === 200 && res.data) {
         setPositions(res.data.items || []);
       }

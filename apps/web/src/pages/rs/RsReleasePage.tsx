@@ -73,7 +73,7 @@ const RsReleasePage: React.FC = () => {
       setLoading(true);
       const params: any = {
         page: page + 1,
-        page_size: rowsPerPage,
+        pagesize: rowsPerPage,
       };
       if (searchTerm) params.search = searchTerm;
       if (envFilter) params.env = envFilter;

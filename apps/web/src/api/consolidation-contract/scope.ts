@@ -15,7 +15,7 @@ export const consolidationScopeApiContract = {
       status: 'string? 状态筛选',
       consolidation_method: 'string? 合并方法',
       page: 'number? 页码(默认1)',
-      page_size: 'number? 每页条数(默认20)',
+      pagesize: 'number? 每页条数(默认20)',
     },
     response: {
       code: 200,
@@ -35,7 +35,7 @@ export const consolidationScopeApiContract = {
         ],
         total: 'number',
         page: 'number',
-        page_size: 'number',
+        pagesize: 'number',
         total_pages: 'number',
       },
     },

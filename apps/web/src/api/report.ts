@@ -42,7 +42,7 @@ export interface DataSourceConfig {
 export interface LayoutConfig {
   layout_type: string;
   orientation: string;
-  paper_size: string;
+  papersize: string;
   margins: Record<string, any>;
   sections: Record<string, any>;
 }
@@ -74,8 +74,8 @@ export interface ReportTemplate {
   filter_config: FilterConfig;
   style_config: StyleConfig;
   columns: Record<string, any>[];
-  output_format: string;
-  is_active: boolean;
+  outputformat: string;
+  isactive: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -86,13 +86,13 @@ export interface CreateTemplateRequest {
   description?: string;
   category: string;
   report_type: ReportType;
-  is_active: boolean;
+  isactive: boolean;
   data_source: DataSourceConfig;
   layout_config: LayoutConfig;
   filter_config: FilterConfig;
   style_config: StyleConfig;
   columns: Record<string, any>[];
-  output_format: string;
+  outputformat: string;
 }
 
 export interface UpdateTemplateRequest {
@@ -105,8 +105,8 @@ export interface UpdateTemplateRequest {
   filter_config?: FilterConfig;
   style_config?: StyleConfig;
   columns?: Record<string, any>[];
-  output_format?: string;
-  is_active?: boolean;
+  outputformat?: string;
+  isactive?: boolean;
 }
 
 export interface CreateReportFromTemplateRequest {

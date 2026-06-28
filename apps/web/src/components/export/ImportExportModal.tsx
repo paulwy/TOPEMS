@@ -1,8 +1,8 @@
 import {
-  _Card,
-  _CardContent,
-  _CardHeader,
-  _Chip,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
   Typography,
   Dialog,
   DialogContent,

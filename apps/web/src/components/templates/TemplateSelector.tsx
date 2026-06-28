@@ -28,7 +28,7 @@ import type {
   Template,
   TemplateType,
   TemplateCategory,
-  _RenderTemplateResponse,
+  RenderTemplateResponse,
 } from '../../api/template';
 import { templateApi } from '../../api/template';
 import { apiLogger } from '@/utils/logger';
@@ -87,8 +87,8 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
         type: templateType,
         category: selectedCategory,
         search: searchQuery || undefined,
-        is_active: true,
-        page_size: 50,
+        isactive: true,
+        pagesize: 50,
       });
       if (response.success && response.data) {
         setTemplates(response.data.items);
@@ -275,7 +275,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                             size='small'
                             icon={<Sparkles style={{ width: 12, height: 12 }} />}
                             label='AI'
-                            sx={{ bgcolor: 'warning.light', color: '#b45309' }}
+                            sx={{ bgcolor: 'warning.light', color: 'warning.dark' }}
                           />
                         )}
                       </Box>
@@ -395,7 +395,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                               size='small'
                               icon={<Sparkles style={{ width: 12, height: 12 }} />}
                               label='AI 辅助'
-                              sx={{ bgcolor: 'warning.light', color: '#b45309' }}
+                              sx={{ bgcolor: 'warning.light', color: 'warning.dark' }}
                             />
                           )}
                         </Box>

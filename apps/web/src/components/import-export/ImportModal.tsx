@@ -276,7 +276,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                       <p style={{ color: '#475569', margin: '8px 0 0' }}>
                         点击选择文件 或 拖拽文件到此处
                       </p>
-                      <p style={{ fontSize: 14, color: 'grey.600', marginTop: 4 }}>
+                      <p style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)', marginTop: 4 }}>
                         支持 .xlsx, .csv 格式
                       </p>
                     </>

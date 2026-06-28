@@ -51,7 +51,7 @@ describe('MaterialBOMPage', () => {
         boms: mockBOMs,
         total: mockBOMs.length,
         page: 0,
-        page_size: 10,
+        pagesize: 10,
       },
     });
   });

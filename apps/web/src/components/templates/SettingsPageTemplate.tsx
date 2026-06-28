@@ -30,14 +30,14 @@ import {
   CheckCircle,
   AlertCircle,
   X,
-  _Edit2,
+  Edit2,
   ChevronRight,
-  _RefreshCw,
+  RefreshCw,
   Settings,
-  _User,
-  _Bell,
-  _Shield,
-  _Palette,
+  User,
+  Bell,
+  Shield,
+  Palette,
 } from 'lucide-react';
 import type { BreadcrumbItem } from './PageHeader';
 import { PageHeader } from './PageHeader';

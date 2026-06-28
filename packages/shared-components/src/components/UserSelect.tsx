@@ -31,7 +31,7 @@ export const UserSelect: React.FC<UserSelectProps> = ({
         <li {...props} key={user.id}>
           <div>
             <div>{user.realName}</div>
-            <div style={{ fontSize: '0.8rem', color: '#666' }}>{user.email}</div>
+            <div style={{ fontSize: '0.8rem', color: 'var(--mui-palette-text-secondary)' }}>{user.email}</div>
           </div>
         </li>
       )}

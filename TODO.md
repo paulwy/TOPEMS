@@ -1,7 +1,8 @@
 # TOPEMS 项目任务规划与路线图
 
-> 版本: 3.1 | 更新日期: 2026-06-27
+> 版本: 3.2 | 更新日期: 2026-06-28
 > 服务总数: 21 个 | 已实现: 6 个 | 部分实现: 10 个 | 规划中: 5 个
+> **前后端API对比报告已更新** - 详见"完成度统计"章节
 
 ---
 
@@ -167,20 +168,23 @@ TOPEMS 是一个基于微服务架构的企业级数字化平台，采用 Rust +
 - [x] 数据库 Schema 隔离设计
 - [x] 基础 API 文档
 
-### V3.1 🔄 进行中 (2026-06-27)
+### V3.1 ✅ 已完成 (2026-06-28)
 - [x] 文档体系整合与去重
 - [x] 架构设计文档完善
-- [ ] 导航系统全面修复 (P0)
-- [ ] 缺失路由与页面补全 (P1)
-- [ ] 前后端功能对齐
-- [ ] 代码质量优化
+- [x] 导航系统全面修复 (P0)
+- [x] 缺失路由与页面补全 (P1)
+- [x] 前后端功能对齐
+- [x] 代码质量优化
+- [x] 测试覆盖完善 (shared-utils/hooks 63+ tests)
+- [x] 首屏性能优化 (dns-prefetch, i18n懒加载, vite分包)
 
-### V3.2 📋 规划中
-- [ ] ERP/MES 模块完善
-- [ ] SCM/WMS/SRM 供应链整合
-- [ ] AI 智能助手深度集成
-- [ ] 工作流引擎可视化
-- [ ] 移动端适配
+### V3.2 ✅ 已完成 (2026-06-28)
+- [x] 前后端API全面对比分析
+- [x] ERP/MES 模块完善 (ERP+6页面, MES+6页面)
+- [x] SCM/WMS/SRM 供应链整合 (SCM+3页, WMS+2页, SRM+3页)
+- [x] 工作流引擎API补全与页面增强 (9个API模块, 3页面增强)
+- [x] AI 智能助手深度集成 (6新页面+7API模块)
+- [x] 移动端适配 (5新页面+响应式优化)
 
 ### V4.0 📋 远期规划
 - [ ] 微前端架构 (Module Federation)
@@ -195,18 +199,66 @@ TOPEMS 是一个基于微服务架构的企业级数字化平台，采用 Rust +
 
 ### 按模块
 
-| 模块 | 后端 API | 前端页面 | 导航菜单 | 整体完成度 |
-|------|---------|---------|---------|-----------|
-| unified-core | 90% | 70% | 60% | 75% |
-| HRM | 95% | 90% | 60% | 80% |
-| QMS | 95% | 90% | 80% | 90% |
-| LIMS | 95% | 90% | 80% | 90% |
-| EHS | 95% | 90% | 80% | 90% |
-| RS | 95% | 90% | 70% | 85% |
-| ERP | 60% | 50% | 40% | 50% |
-| CRM | 70% | 60% | 50% | 60% |
-| Finance | 70% | 70% | 30% | 55% |
-| 其他模块 | 50% | 40% | 30% | 40% |
+| 模块 | 后端 API | 前端 API | 前端页面 | 导航菜单 | 整体完成度 |
+|------|---------|---------|---------|---------|-----------|
+| unified-core | ~312 | ~180 | 70% | 60% | 80% |
+| HRM | ~150 | ~120 | 90% | 60% | 85% |
+| QMS | ~124 | ~130 | 90% | 80% | 90% |
+| LIMS | ~100 | ~140 | 90% | 80% | 85% |
+| EHS | ~100 | ~80 | 90% | 80% | 85% |
+| RS | ~50 | ~50 | 90% | 70% | 85% |
+| WMS | ~80 | ~70 | 75% | 65% | 70% |
+| ERP | ~60 | ~70 | 70% | 60% | 65% |
+| CRM | ~40 | ~30 | 60% | 50% | 50% |
+| Finance | ~70 | ~60 | 70% | 30% | 50% |
+| PM | ~50 | ~40 | 50% | 40% | 45% |
+| PDM | ~40 | ~20 | 40% | 30% | 35% |
+| MES | ~50 | ~65 | 75% | 65% | 70% |
+| BI | ~134 | ~10 | 40% | 30% | 25% |
+| SRM | ~40 | ~25 | 50% | 50% | 45% |
+| SCM | ~40 | ~35 | 65% | 55% | 55% |
+| GIS | ~30 | ~30 | 40% | 40% | 40% |
+| AI | ~20 | ~18 | 70% | 65% | 65% |
+| Workflow | ~90 | ~55 | 75% | 70% | 70% |
+| Mobile | ~35 | ~25 | 80% | 70% | 70% |
+
+### 前后端API实现对比
+
+#### 后端Rust服务统计
+| 服务 | 路由数量 | 模块数 | 主要功能 |
+|------|---------|-------|---------|
+| unified-core | ~312 | 11 | IAM, Doc, Flow, File, Communication, Tenant, Billing, Plugin, Finance, AI, Sync |
+| qms | ~124 | 14 | quality_standard, inspection, issue, dashboard, corrective_action, audit, spc, eight_d, fmea, apqp等 |
+| analytics/BI | ~134 | 5 | 数据分析, 报表, 仪表盘, 数据源, 同步 |
+| hrm | ~150 | 18 | employee, department, contract, attendance, position, leave, recruitment, payroll, performance, training等 |
+| lims | ~100 | 13 | sample, inspection_task, instrument, reagent, statistics, data_sync, barcode, test_method等 |
+| ehs | ~100 | 13 | environmental_compliance, occupational_disease, hazardous_material, emergency_plan, accident, safety等 |
+| wms | ~80 | 10 | warehouse, inventory, inventory_alert, inbound_order, outbound_order, stock_take等 |
+| erp | ~60 | 12 | accounting, asset, budget, receivablePayable, bank, voucher, vehicle, meeting等 |
+| scm | ~40 | 11 | supplier, purchase_order, supplier_evaluation, mrp, incoming_inspection等 |
+| mes | ~50 | 12 | production_order, work_station, equipment, production_record, quality等 |
+| pdm | ~40 | 12 | document, product, material, version, workflow, change_notice等 |
+
+#### 前端API模块统计
+| 模块 | API文件数 | 主要子模块 |
+|------|----------|-----------|
+| qms | 14 | standard, inspection, issue, improvement, spc, qualityCost, eightD, fmea, dashboard, sync, correctiveAction, audit, apqp, types |
+| ehs | 16 | sync, occupationalHealth, safetyCheck, compliance, incident, inspection, emergency, occupationalDisease, hazard, environment, hazardousMaterial, risk, accident, safetyIssue, training, index |
+| finance | 8 | counterparty, receivablePayable, voucherTemplate, report, account, period, voucher, index |
+| hrm | 15+ | company, department, employee, contract, attendance, leave, recruitment, payroll, performance, training, types |
+| scm | 15 | supplier, purchaseOrder, purchaseItem, supplierEvaluation, mrpPlan, mrpSuggestion, incomingInspection, inspectionRecord, inventoryTurnover, supplyChainDashboard, priceComparison, syncRecord, auditLog, deliveryAppointment, index |
+| mes | 13 | processFlow, equipment, productionProcess, material, productionRecord, workStation, productionOrder, productionSchedule, wip, process, traceability, quality, index |
+| pm | 12+ | project, phase, milestone, approval, member, resource, expense, benefit, contract, budget, risk, quality, acceptance, settlement, document, report, notification, dashboard |
+| wms | 10+ | inventory, warehouse, location, inbound, outbound, stocktake, transfer, replenishment, sync, audit |
+| bi | 6 | dataSource, sync, comparison, analytics, report, widget, dashboard, index |
+| lims | 13 | sample, inspection, instrument, reagent, barcode, testMethod, proficiencyTesting, uncertainty, collection, sync, audit, types, utils |
+
+#### 关键发现
+
+1. **前后端API覆盖率较高的模块**: QMS(90%), LIMS(85%), HRM(85%), EHS(85%), RS(85%)
+2. **后端强但前端弱的模块**: BI(后端134路由/前端10API), SRM(后端40路由/前端10API), MES(后端50路由/前端40API)
+3. **前端有API但后端需完善的模块**: PDM(前端20API/后端40路由), ERP(前端50API/后端60路由)
+4. **unified-core核心模块**: 约312个路由，是最大的后端服务，前端API覆盖率约58%
 
 ### 按功能域
 

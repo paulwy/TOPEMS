@@ -73,7 +73,7 @@ describe('EquipmentManagementPage', () => {
         items: mockAssets,
         total: mockAssets.length,
         page: 1,
-        page_size: 20,
+        pagesize: 20,
       },
     });
     (employeeApi.list as vi.Mock).mockResolvedValue({

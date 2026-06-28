@@ -365,7 +365,7 @@ const FlowMonitorPage: React.FC = () => {
                       <td>{String(instance.id)}</td>
                       <td>{String(instance.data?.name || instance.workflow_id || '-')}</td>
                       <td>{String(instance.data?.applicant || instance.initiator_id || '-')}</td>
-                      <td>{instance.current_node || '-'}</td>
+                      <td>{instance.currentnode || '-'}</td>
                       <td>
                         <Chip
                           size='small'

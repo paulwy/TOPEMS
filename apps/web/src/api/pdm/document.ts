@@ -10,7 +10,7 @@ export interface PdmDocument {
   current_version: string;
   version_count: number;
   status: 'draft' | 'review' | 'approved' | 'published' | 'archived';
-  file_size?: number;
+  filesize?: number;
   file_type?: string;
   uploader_id?: string;
   uploader_name?: string;
@@ -39,7 +39,7 @@ export interface DocumentVersion {
   description?: string;
   status: 'draft' | 'review' | 'approved' | 'published';
   file_url?: string;
-  file_size?: number;
+  filesize?: number;
   file_type?: string;
   changes: string[];
   created_by: string;
@@ -68,14 +68,14 @@ export interface DocumentSearchParams {
   date_from?: string;
   date_to?: string;
   page?: number;
-  page_size?: number;
+  pagesize?: number;
 }
 
 export interface DocumentSearchResult {
   documents: PdmDocument[];
   total: number;
   page: number;
-  page_size: number;
+  pagesize: number;
 }
 
 export const documentApi = {

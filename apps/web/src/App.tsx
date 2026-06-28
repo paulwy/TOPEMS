@@ -43,6 +43,7 @@ import {
   mobileRoutes,
   pdmRoutes,
   srmRoutes,
+  tenantRoutes,
   type RouteConfig,
 } from './routes';
 
@@ -229,6 +230,7 @@ const AppContent: React.FC = () => {
         {renderRoutes(mobileRoutes)}
         {renderRoutes(pdmRoutes)}
         {renderRoutes(srmRoutes)}
+        {renderRoutes(tenantRoutes)}
         {renderRoutes(imRoutes)}
 
         {/* Core module routes - only load via Module Federation when not in static mode */}

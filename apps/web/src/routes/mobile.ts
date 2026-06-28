@@ -6,6 +6,11 @@ import { lazyWithRetry } from './utils';
 const lazy = lazyWithRetry;
 
 const MobileHomePage = lazy(() => import('../pages/mobile/MobileHomePage'));
+const MobileWorkbenchPage = lazy(() => import('../pages/mobile/MobileWorkbenchPage'));
+const MobileAttendancePage = lazy(() => import('../pages/mobile/MobileAttendancePage'));
+const MobileInventoryPage = lazy(() => import('../pages/mobile/MobileInventoryPage'));
+const MobileQualityPage = lazy(() => import('../pages/mobile/MobileQualityPage'));
+const MobileProductionPage = lazy(() => import('../pages/mobile/MobileProductionPage'));
 const MobileTaskListPage = lazy(() => import('../pages/mobile/MobileTaskListPage'));
 const MobileScanPage = lazy(() => import('../pages/mobile/MobileScanPage'));
 const MobileApprovalPage = lazy(() => import('../pages/mobile/MobileApprovalPage'));
@@ -29,6 +34,41 @@ export const mobileRoutes: RouteConfig[] = [
   {
     path: '/mobile/home',
     element: MobileHomePage,
+    requiredPermissions: ['mobile:read'],
+    module: 'mobile',
+    action: 'read',
+  },
+  {
+    path: '/mobile/workbench',
+    element: MobileWorkbenchPage,
+    requiredPermissions: ['mobile:read'],
+    module: 'mobile',
+    action: 'read',
+  },
+  {
+    path: '/mobile/attendance',
+    element: MobileAttendancePage,
+    requiredPermissions: ['mobile:read'],
+    module: 'mobile',
+    action: 'read',
+  },
+  {
+    path: '/mobile/inventory',
+    element: MobileInventoryPage,
+    requiredPermissions: ['mobile:read'],
+    module: 'mobile',
+    action: 'read',
+  },
+  {
+    path: '/mobile/quality',
+    element: MobileQualityPage,
+    requiredPermissions: ['mobile:read'],
+    module: 'mobile',
+    action: 'read',
+  },
+  {
+    path: '/mobile/production',
+    element: MobileProductionPage,
     requiredPermissions: ['mobile:read'],
     module: 'mobile',
     action: 'read',

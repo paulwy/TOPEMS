@@ -13,10 +13,10 @@ export interface RelativeTimeProps {
 
 export const RelativeTime: React.FC<RelativeTimeProps> = ({
   date,
-  _format = 'YYYY-MM-DD HH:mm:ss',
+  format = 'YYYY-MM-DD HH:mm:ss',
   updateInterval = 60000,
   showAbsolute = false,
-  _absoluteFormat = 'YYYY-MM-DD HH:mm:ss',
+  absoluteFormat = 'YYYY-MM-DD HH:mm:ss',
   sx,
 }) => {
   const [relativeTime, setRelativeTime] = useState('');
