@@ -45,6 +45,10 @@ export interface PageContainerProps {
   description?: string;
   /** 透传给 PageHeader 的其他属性 */
   headerProps?: Omit<PageHeaderProps, 'title' | 'subtitle' | 'description'>;
+  /** 头部操作按钮（兼容旧版API，会透传给 headerProps.actions） */
+  headerActions?: React.ReactNode;
+  /** 头部内容（兼容旧版API，会透传给 headerProps.children） */
+  headerContent?: React.ReactNode;
   /**
    * 内容区域最大宽度
    * @default 'xl'
@@ -80,6 +84,8 @@ export const PageContainer: React.FC<PageContainerProps> = ({
   subtitle,
   description,
   headerProps,
+  headerActions,
+  headerContent,
   maxWidth = 'xl',
   padding = true,
   paper = false,
@@ -89,10 +95,15 @@ export const PageContainer: React.FC<PageContainerProps> = ({
   sx,
   contentSx,
 }) => {
+  const mergedHeaderProps = {
+    ...headerProps,
+    ...(headerActions && { customToolbar: headerActions }),
+    ...(headerContent && { children: headerContent }),
+  };
   const theme = useTheme();
   const _isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const hasHeader = Boolean(title || headerProps);
+  const hasHeader = Boolean(title || mergedHeaderProps);
 
   const ContentWrapper = paper ? Paper : Box;
   const contentWrapperProps = paper
@@ -123,7 +134,7 @@ export const PageContainer: React.FC<PageContainerProps> = ({
           subtitle={subtitle}
           description={description}
           loading={loading}
-          {...headerProps}
+          {...mergedHeaderProps}
         />
       )}
 
