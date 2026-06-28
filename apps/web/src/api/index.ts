@@ -60,3 +60,6 @@ export * as financeApi from './finance';
 
 // Plugin system
 export * as pluginApi from './plugin';
+
+// Low-code platform
+export * as lowcodeApi from './lowcode';

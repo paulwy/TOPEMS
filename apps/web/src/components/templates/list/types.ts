@@ -164,12 +164,26 @@ export interface ListPageTemplateProps<T = any> extends BoxProps {
     onPageChange: (page: number) => void;
     onPageSizeChange?: (pageSize: number) => void;
   };
+  /** 当前页码（兼容旧版API，优先使用 pagination） */
+  page?: number;
+  /** 每页条数（兼容旧版API，优先使用 pagination） */
+  pageSize?: number;
+  /** 总条数（兼容旧版API，优先使用 pagination） */
+  total?: number;
+  /** 页码变化回调（兼容旧版API，优先使用 pagination） */
+  onPageChange?: (page: number) => void;
+  /** 每页条数变化回调（兼容旧版API，优先使用 pagination） */
+  onPageSizeChange?: (pageSize: number) => void;
 
   // 搜索
   searchable?: boolean;
   searchPlaceholder?: string;
   searchValue?: string;
   onSearch?: (value: string) => void;
+  /** 搜索值变化回调（兼容旧版API，与 onSearch 作用相同） */
+  onSearchChange?: (value: string) => void;
+  /** 自定义筛选内容（兼容旧版API，会渲染在 headerContent 中） */
+  filterContent?: React.ReactNode;
   /** 全局搜索配置 - 支持搜索多个字段 */
   globalSearch?: {
     fields: string[];

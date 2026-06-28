@@ -221,11 +221,7 @@ const PluginDetailPage: React.FC = () => {
           container
           spacing={4}
         >
-          <Grid
-            item
-            xs={12}
-            md={8}
-          >
+          <Grid size={{ xs: 12, md: 8 }}>
             <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 3, mb: 4 }}>
               <Box
                 sx={{
@@ -618,11 +614,7 @@ const PluginDetailPage: React.FC = () => {
             )}
           </Grid>
 
-          <Grid
-            item
-            xs={12}
-            md={4}
-          >
+          <Grid size={{ xs: 12, md: 4 }}>
             <Box sx={{ position: 'sticky', top: 24 }}>
               <Card sx={{ mb: 3 }}>
                 <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>

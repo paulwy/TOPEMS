@@ -177,11 +177,7 @@ const PluginUploadPage: React.FC = () => {
                 container
                 spacing={3}
               >
-                <Grid
-                  item
-                  xs={12}
-                  md={6}
-                >
+                <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     fullWidth
                     label='插件名称'
@@ -192,11 +188,7 @@ const PluginUploadPage: React.FC = () => {
                     required
                   />
                 </Grid>
-                <Grid
-                  item
-                  xs={12}
-                  md={6}
-                >
+                <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     fullWidth
                     label='插件代码'
@@ -205,20 +197,18 @@ const PluginUploadPage: React.FC = () => {
                     error={!!errors.code}
                     helperText={errors.code || '唯一标识符，只能包含小写字母、数字和连字符'}
                     required
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position='start'>
-                          <Package sx={{ width: 18, height: 18, color: 'grey.500' }} />
-                        </InputAdornment>
-                      ),
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position='start'>
+                            <Package sx={{ width: 18, height: 18, color: 'grey.500' }} />
+                          </InputAdornment>
+                        ),
+                      },
                     }}
                   />
                 </Grid>
-                <Grid
-                  item
-                  xs={12}
-                  md={6}
-                >
+                <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     fullWidth
                     label='版本号'
@@ -227,20 +217,18 @@ const PluginUploadPage: React.FC = () => {
                     error={!!errors.version}
                     helperText={errors.version || '遵循语义化版本规范，如 1.0.0'}
                     required
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position='start'>
-                          <Tag sx={{ width: 18, height: 18, color: 'grey.500' }} />
-                        </InputAdornment>
-                      ),
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position='start'>
+                            <Tag sx={{ width: 18, height: 18, color: 'grey.500' }} />
+                          </InputAdornment>
+                        ),
+                      },
                     }}
                   />
                 </Grid>
-                <Grid
-                  item
-                  xs={12}
-                  md={6}
-                >
+                <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     fullWidth
                     select
@@ -261,10 +249,7 @@ const PluginUploadPage: React.FC = () => {
                     ))}
                   </TextField>
                 </Grid>
-                <Grid
-                  item
-                  xs={12}
-                >
+                <Grid size={{ xs: 12 }}>
                   <TextField
                     fullWidth
                     label='插件描述'
@@ -275,43 +260,39 @@ const PluginUploadPage: React.FC = () => {
                     required
                     multiline
                     rows={4}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment
-                          position='start'
-                          sx={{ alignSelf: 'flex-start', mt: 1 }}
-                        >
-                          <FileText sx={{ width: 18, height: 18, color: 'grey.500' }} />
-                        </InputAdornment>
-                      ),
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment
+                            position='start'
+                            sx={{ alignSelf: 'flex-start', mt: 1 }}
+                          >
+                            <FileText sx={{ width: 18, height: 18, color: 'grey.500' }} />
+                          </InputAdornment>
+                        ),
+                      },
                     }}
                   />
                 </Grid>
-                <Grid
-                  item
-                  xs={12}
-                  md={6}
-                >
+                <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     fullWidth
                     label='标签'
                     value={formData.tags}
                     onChange={(e) => handleChange('tags', e.target.value)}
                     helperText='多个标签用逗号分隔'
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position='start'>
-                          <Tag sx={{ width: 18, height: 18, color: 'grey.500' }} />
-                        </InputAdornment>
-                      ),
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position='start'>
+                            <Tag sx={{ width: 18, height: 18, color: 'grey.500' }} />
+                          </InputAdornment>
+                        ),
+                      },
                     }}
                   />
                 </Grid>
-                <Grid
-                  item
-                  xs={12}
-                  md={6}
-                >
+                <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     fullWidth
                     select
@@ -340,11 +321,7 @@ const PluginUploadPage: React.FC = () => {
                 container
                 spacing={3}
               >
-                <Grid
-                  item
-                  xs={12}
-                  md={6}
-                >
+                <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     fullWidth
                     label='作者名称'
@@ -355,11 +332,7 @@ const PluginUploadPage: React.FC = () => {
                     required
                   />
                 </Grid>
-                <Grid
-                  item
-                  xs={12}
-                  md={6}
-                >
+                <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     fullWidth
                     label='官方网站'
@@ -368,11 +341,7 @@ const PluginUploadPage: React.FC = () => {
                     helperText='可选，插件的官方网站地址'
                   />
                 </Grid>
-                <Grid
-                  item
-                  xs={12}
-                  md={6}
-                >
+                <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     fullWidth
                     label='许可证'
@@ -381,11 +350,7 @@ const PluginUploadPage: React.FC = () => {
                     helperText='如 MIT, Apache-2.0, GPL 等'
                   />
                 </Grid>
-                <Grid
-                  item
-                  xs={12}
-                  md={6}
-                >
+                <Grid size={{ xs: 12, md: 6 }}>
                   <TextField
                     fullWidth
                     label='最低应用版本'
@@ -394,11 +359,7 @@ const PluginUploadPage: React.FC = () => {
                     helperText='插件需要的最低 TOPEMS 版本'
                   />
                 </Grid>
-                <Grid
-                  item
-                  xs={12}
-                  md={6}
-                >
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     <FormControlLabel
                       control={
@@ -418,20 +379,19 @@ const PluginUploadPage: React.FC = () => {
                       value={formData.price}
                       onChange={(e) => handleChange('price', e.target.value)}
                       sx={{ mt: 2 }}
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position='start'>
-                            <DollarSign sx={{ width: 18, height: 18, color: 'grey.500' }} />
-                          </InputAdornment>
-                        ),
+                      slotProps={{
+                        input: {
+                          startAdornment: (
+                            <InputAdornment position='start'>
+                              <DollarSign sx={{ width: 18, height: 18, color: 'grey.500' }} />
+                            </InputAdornment>
+                          ),
+                        },
                       }}
                     />
                   )}
                 </Grid>
-                <Grid
-                  item
-                  xs={12}
-                >
+                <Grid size={{ xs: 12 }}>
                   <TextField
                     fullWidth
                     label='版本更新说明'
@@ -459,11 +419,7 @@ const PluginUploadPage: React.FC = () => {
                 container
                 spacing={3}
               >
-                <Grid
-                  item
-                  xs={12}
-                  md={6}
-                >
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Card
                     variant='outlined'
                     sx={{
@@ -502,11 +458,7 @@ const PluginUploadPage: React.FC = () => {
                     插件包需要包含 plugin.json 配置文件
                   </Alert>
                 </Grid>
-                <Grid
-                  item
-                  xs={12}
-                  md={6}
-                >
+                <Grid size={{ xs: 12, md: 6 }}>
                   <Card
                     variant='outlined'
                     sx={{

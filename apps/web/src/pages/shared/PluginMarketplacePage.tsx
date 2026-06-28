@@ -234,10 +234,12 @@ const PluginMarketplacePage: React.FC = () => {
                   color: 'rgba(255,255,255,0.6)',
                 },
               }}
-              InputProps={{
-                startAdornment: (
-                  <Search sx={{ color: 'rgba(255,255,255,0.6)', mr: 1, width: 24, height: 24 }} />
-                ),
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <Search sx={{ color: 'rgba(255,255,255,0.6)', mr: 1, width: 24, height: 24 }} />
+                  ),
+                },
               }}
             />
           </Box>

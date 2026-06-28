@@ -26,4 +26,5 @@ export { mobileRoutes } from './mobile';
 export { pdmRoutes } from './pdm';
 export { srmRoutes } from './srm';
 export { tenantRoutes } from './tenant';
+export { lowcodeRoutes } from './lowcode';
 export { type RouteConfig, lazyWithRetry } from './utils';

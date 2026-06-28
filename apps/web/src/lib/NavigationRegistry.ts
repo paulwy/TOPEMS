@@ -4959,6 +4959,118 @@ const registerDefaultModules = () => {
       source: 'core',
     },
   });
+
+  navigationRegistry.register('lowcode', {
+    top_nav: [
+      {
+        code: 'lowcode',
+        label: '低代码平台',
+        icon: 'Blocks',
+        path: '/lowcode',
+        group: 'core',
+        order: 31,
+        permission: 'lowcode:read',
+      },
+    ],
+    sidebar_nav: [
+      {
+        code: 'lowcode-overview',
+        label: '概览仪表盘',
+        icon: 'LayoutDashboard',
+        path: '/lowcode/overview',
+        order: 0,
+        permission: 'lowcode:read',
+      },
+      {
+        code: 'lowcode-apps',
+        label: '应用管理',
+        icon: 'AppWindow',
+        path: '/lowcode/apps',
+        order: 1,
+        permission: 'lowcode:read',
+      },
+      {
+        code: 'lowcode-models',
+        label: '数据模型',
+        icon: 'Database',
+        path: '/lowcode/models',
+        order: 2,
+        permission: 'lowcode:read',
+      },
+      {
+        code: 'lowcode-forms',
+        label: '表单设计',
+        icon: 'FileText',
+        path: '/lowcode/forms',
+        order: 3,
+        permission: 'lowcode:read',
+      },
+      {
+        code: 'lowcode-pages',
+        label: '页面设计',
+        icon: 'Layout',
+        path: '/lowcode/pages',
+        order: 4,
+        permission: 'lowcode:read',
+      },
+      {
+        code: 'lowcode-datasources',
+        label: '数据源',
+        icon: 'HardDrive',
+        path: '/lowcode/datasources',
+        order: 5,
+        permission: 'lowcode:read',
+      },
+    ],
+    module_tabs: [
+      {
+        code: 'lowcode-overview',
+        label: '概览',
+        path: '/lowcode/overview',
+        permission: 'lowcode:read',
+      },
+      {
+        code: 'lowcode-apps',
+        label: '应用',
+        path: '/lowcode/apps',
+        permission: 'lowcode:read',
+      },
+      {
+        code: 'lowcode-models',
+        label: '数据模型',
+        path: '/lowcode/models',
+        permission: 'lowcode:read',
+      },
+      {
+        code: 'lowcode-forms',
+        label: '表单',
+        path: '/lowcode/forms',
+        permission: 'lowcode:read',
+      },
+      {
+        code: 'lowcode-pages',
+        label: '页面',
+        path: '/lowcode/pages',
+        permission: 'lowcode:read',
+      },
+      {
+        code: 'lowcode-datasources',
+        label: '数据源',
+        path: '/lowcode/datasources',
+        permission: 'lowcode:read',
+      },
+    ],
+    module_card: {
+      code: 'lowcode',
+      name: '低代码平台',
+      icon: 'Blocks',
+      path: '/lowcode/overview',
+      status: 'beta',
+      order: 31,
+      permission: 'lowcode:read',
+      source: 'core',
+    },
+  });
 };
 
 registerDefaultModules();

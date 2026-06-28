@@ -89,10 +89,17 @@ export function ListPageTemplate<T>({
   defaultSortOrder = 'asc',
   onSort,
   pagination,
+  // 兼容旧版扁平化分页属性
+  page,
+  pageSize,
+  total,
+  onPageChange,
+  onPageSizeChange,
   searchable,
   searchPlaceholder = '搜索...',
   searchValue,
   onSearch,
+  onSearchChange,
   globalSearch,
   filters,
   filtersValue,
@@ -106,6 +113,7 @@ export function ListPageTemplate<T>({
   emptyMessage = '暂无数据',
   emptyIcon,
   headerContent,
+  filterContent,
   footerContent,
   // 新增属性
   expandable,
@@ -122,6 +130,29 @@ export function ListPageTemplate<T>({
   // 排除自定义属性的剩余props
   ...props
 }: ListPageTemplateProps<T>) {
+  // 兼容旧版扁平化分页属性
+  const resolvedPagination = pagination || (page !== undefined && pageSize !== undefined && total !== undefined
+    ? {
+        page,
+        pageSize,
+        total,
+        onPageChange: onPageChange || (() => {}),
+        onPageSizeChange,
+      }
+    : undefined);
+
+  // 兼容旧版 onSearchChange
+  const resolvedOnSearch = onSearch || onSearchChange;
+
+  // 兼容旧版 filterContent
+  const resolvedHeaderContent = filterContent
+    ? (
+        <>
+          {headerContent}
+          {filterContent}
+        </>
+      )
+    : headerContent;
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -232,9 +263,9 @@ export function ListPageTemplate<T>({
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const value = event.target.value;
       setSearchInput(value);
-      onSearch?.(value);
+      resolvedOnSearch?.(value);
     },
-    [onSearch]
+    [resolvedOnSearch]
   );
 
   // 处理行操作菜单
@@ -557,7 +588,7 @@ export function ListPageTemplate<T>({
                   bgcolor: 'inherit',
                 }}
               >
-                {pagination ? pagination.page * pagination.pageSize + index + 1 : index + 1}
+                {resolvedPagination ? resolvedPagination.page * resolvedPagination.pageSize + index + 1 : index + 1}
               </TableCell>
             )}
             {expandable && (
@@ -671,16 +702,16 @@ export function ListPageTemplate<T>({
 
   // 渲染分页
   const renderPagination = () => {
-    if (!pagination) return null;
+    if (!resolvedPagination) return null;
 
     return (
       <TablePagination
         component='div'
-        count={pagination.total}
-        page={pagination.page}
-        onPageChange={(_, page) => pagination.onPageChange(page)}
-        rowsPerPage={pagination.pageSize}
-        onRowsPerPageChange={(e) => pagination.onPageSizeChange?.(Number(e.target.value))}
+        count={resolvedPagination.total}
+        page={resolvedPagination.page}
+        onPageChange={(_, page) => resolvedPagination.onPageChange(page)}
+        rowsPerPage={resolvedPagination.pageSize}
+        onRowsPerPageChange={(e) => resolvedPagination.onPageSizeChange?.(Number(e.target.value))}
         rowsPerPageOptions={[10, 20, 50, 100]}
         labelRowsPerPage='每页行数'
         labelDisplayedRows={({ from, to, count }) => `${from}-${to} 共 ${count} 条`}
@@ -847,7 +878,7 @@ export function ListPageTemplate<T>({
       />
 
       {/* 自定义头部内容 */}
-      {headerContent}
+      {resolvedHeaderContent}
 
       {/* 表格 */}
       <TableContainer
