@@ -1,8 +1,59 @@
 # TOPEMS 待办事项
 
-> 最后更新：2026-06-28
+> 最后更新：2026-06-29
 
-## 当前阶段：V5.0.0 - 已完成 ✅
+## 当前阶段：V6.0.0 - 架构优化与设计系统升级 🚧
+
+> 目标：简化架构、统一规范、提升可维护性。基于全量代码库深度分析，分四阶段实施。
+
+### Phase 0：紧急止血（1天）⚡
+
+| 事项 | 优先级 | 状态 | 说明 |
+|---|---|---|---|
+| .env 密码泄露处理 | P0 | ✅ | 已替换 .env.example 中的真实密码为占位符 |
+| MIME 错误修复（tokens + core-modules） | P0 | ✅ | Vite alias + 移除 MF 远程导入 |
+| 废弃服务目录清理 | P0 | ✅ | 删除 4 个废弃目录（84 个文件）：bi.deprecated/manufacturing/quality-assurance/config-center |
+
+### Phase 1：架构简化（2周）🔧
+
+**目标：消除最严重的架构冗余，降低维护成本**
+
+| 事项 | 优先级 | 状态 | 说明 |
+|---|---|---|---|
+| 导航系统统一（NavigationRegistry 唯一真相源） | P0 | ✅ | sidebar_nav + module_tabs 从 Registry 派生，29 模块已注册 |
+| Token 四重去重（packages/tokens 为唯一源） | P0 | ✅ | 移除 780+ 行重复代码，gradients 迁移到 tokens 包 |
+| MUI v9 CSS Variables 启用 | P0 | ✅ | cssVarPrefix 改为 topems，137 处变量引用统一 |
+| Module Federation 移除 + DynamicRouter 简化 | P1 | ✅ | 净减少 298 行代码，MIME 错误彻底解决 |
+| useAppStore 上帝对象拆分 | P1 | ✅ | 拆分为 authStore/themeStore/notificationStore/uiStore/shortcutsStore/workflowStore |
+
+### Phase 2：规范统一（4周）📋
+
+**目标：建立统一的开发规范，减少技术债务**
+
+| 事项 | 优先级 | 状态 | 说明 |
+|---|---|---|---|
+| API 路由前缀统一 + 权限命名规范 | P1 | ✅ | /api/v1/{service}/{resource} 格式，API 客户端已支持版本前缀 |
+| 数据库迁移统一（sqlx migrations） | P1 | ✅ | scm/wms 内联 init_db 已移除，迁移到 sqlx migrations |
+| ESLint warning 分阶段清零 | P1 | ✅ | 修复 naming-convention 数字属性名规则 + unicorn/custom-error-definition |
+| 硬编码颜色自动化替换 | P1 | ✅ | COLORS 常量定义完善，支持 theme token 替换 |
+| 样式范式统一规范 | P2 | ✅ | styled() 仅用于需要 shouldForwardProp 的动态自定义 props 场景，其余使用 sx prop |
+| 页面治理（Dashboard 整合 + 废弃清理） | P2 | ✅ | shared/DashboardPage.tsx 已作为统一工作台入口，删除 7 个 .bak 废弃文件 |
+
+### Phase 3：能力提升（8周）🚀
+
+**目标：提升系统质量和开发体验**
+
+| 事项 | 优先级 | 状态 | 说明 |
+|---|---|---|---|
+| 多租户行级隔离完善 | P1 | ✅ | QMS 25 张表 + EHS 39 张表添加 tenant_id 字段和索引，lib 层添加 RLS 中间件支持 |
+| unified-core 边界重构 | P1 | ⏳ | Finance/Doc/AI 移出 core，core 保留 6 基础模块 |
+| 事件驱动架构深化 | P2 | ✅ | 添加 RabbitMQ 发布者/订阅者实现（lapin），支持 Topic Exchange 和消息确认 |
+| 测试体系建设 | P2 | ✅ | 53 个测试文件（287 用例）运行成功，覆盖率阈值配置完成 |
+| CI/CD 流水线完善 + 质量门禁 | P2 | ✅ | 添加覆盖率门禁（statements≥60%, branches≥50%, functions≥60%, lines≥60%）和 Bundle size 监控 |
+
+---
+
+## V5.0.0 - 已完成 ✅
 
 ---
 

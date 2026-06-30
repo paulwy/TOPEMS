@@ -8,7 +8,19 @@ import { useAppStore } from '@/store';
 
 vi.mock('@/api/ehs');
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn(),
+  useAppStore: vi.fn((selector?: any) =>
+    selector ? selector({
+      addNotification: mockAddNotification,
+      notifications: [],
+      user: null,
+      theme: 'light',
+    }) : {
+      addNotification: mockAddNotification,
+      notifications: [],
+      user: null,
+      theme: 'light',
+    }
+  ),
 }));
 
 const mockAddNotification = vi.fn();
@@ -37,16 +49,23 @@ const mockDrills = [
 describe('EhsDrillPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.useFakeTimers();
-    (useAppStore as vi.Mock).mockImplementation(() => mockAddNotification);
+    (useAppStore as vi.Mock).mockImplementation((selector?: any) =>
+      selector ? selector({
+        addNotification: mockAddNotification,
+        notifications: [],
+        user: null,
+        theme: 'light',
+      }) : {
+        addNotification: mockAddNotification,
+        notifications: [],
+        user: null,
+        theme: 'light',
+      }
+    );
     (ehsApi.listDrills as vi.Mock).mockResolvedValue({
       success: true,
       data: mockDrills,
     });
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
   });
 
   it('should render loading state initially', async () => {

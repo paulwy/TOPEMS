@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography, Paper, Button } from '@mui/material';
+import { Info } from 'lucide-react';
 
 // ============ 类型定义 ============
 
@@ -68,8 +69,8 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
       <Box
         aria-hidden='true'
         sx={{
-          width: compact ? 64 : 80,
-          height: compact ? 64 : 80,
+          width: 64,
+          height: 64,
           borderRadius: '50%',
           bgcolor: 'action.hover',
           display: 'flex',
@@ -83,7 +84,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
         ) : icon ? (
           <Box sx={{ color: 'text.secondary' }}>{icon}</Box>
         ) : (
-          <Typography variant={compact ? 'h4' : 'h3'}>📋</Typography>
+          <Info size={compact ? 24 : 32} sx={{ color: 'text.secondary' }} />
         )}
       </Box>
 

@@ -1,5 +1,5 @@
 // Derived from @topems/tokens — single source of truth: packages/tokens/src/tokens.ts
-import { designTokens } from '@topems/tokens';
+import { designTokens, gradients } from '@topems/tokens';
 
 const { colors } = designTokens;
 
@@ -167,33 +167,19 @@ export const STATUS_COLORS = {
   },
 } as const;
 
-// ========== Module Gradients — synced with gradients.ts ==========
-export const MODULE_GRADIENTS = {
-  hrm: 'linear-gradient(135deg, #22C55E 0%, #15803D 100%)',
-  crm: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
-  pm: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
-  finance: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-  mes: 'linear-gradient(135deg, #EF4444 0%, #B91C1C 100%)',
-  scm: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
-  wms: 'linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%)',
-  bi: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',
-  gis: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-  im: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
-  ai: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
-  qms: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
-  flow: 'linear-gradient(135deg, #0EA5E9 0%, #0284C7 100%)',
-} as const;
+// ========== Module Gradients — from @topems/tokens ==========
+export const MODULE_GRADIENTS = gradients.modules;
 
 // ========== Common Gradients ==========
 export const GRADIENTS = {
-  primary: `linear-gradient(135deg, ${colors.primary.main}, ${colors.primary.dark})`,
-  secondary: `linear-gradient(135deg, ${colors.secondary.main}, ${colors.secondary.dark})`,
-  brand: `linear-gradient(135deg, ${colors.primary.main}, ${colors.secondary.main})`,
-  text: `linear-gradient(135deg, ${colors.primary.light}, ${colors.secondary.light}, #f472b6)`,
-  success: `linear-gradient(135deg, ${colors.success.main}, ${colors.success.dark})`,
-  warning: `linear-gradient(135deg, ${colors.warning.main}, ${colors.warning.dark})`,
-  error: `linear-gradient(135deg, ${colors.error.main}, ${colors.error.dark})`,
-  info: `linear-gradient(135deg, ${colors.info.main}, ${colors.info.dark})`,
+  primary: gradients.primary,
+  secondary: gradients.secondary,
+  brand: gradients.brand,
+  text: gradients.text,
+  success: gradients.success,
+  warning: gradients.warning,
+  error: gradients.error,
+  info: gradients.info,
 } as const;
 
 // ========== Sidebar Colors ==========

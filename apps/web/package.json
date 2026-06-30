@@ -49,6 +49,7 @@
     "@topems/shared-hooks": "workspace:*",
     "@topems/shared-types": "workspace:*",
     "@topems/shared-utils": "workspace:*",
+    "@topems/tokens": "workspace:*",
     "@types/leaflet": "^1.9.21",
     "@types/node": "^25.9.2",
     "@types/three": "^0.184.1",

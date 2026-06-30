@@ -1,6 +1,10 @@
 //! Safety handlers - Inspection plans, items, and records
 
-use axum::{extract::State, routing::{delete, get}, Json, Router};
+use axum::{
+    extract::State,
+    routing::{delete, get},
+    Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use topems_shared::ApiResponse;
 
@@ -9,11 +13,27 @@ use crate::AppState;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/api/ehs/checks/plans", get(list_plans).post(create_plan))
-        .route("/api/ehs/checks/plans/{id}", get(get_plan).put(update_plan).delete(delete_plan))
-        .route("/api/ehs/checks/plans/{plan_id}/items", get(list_plan_items).post(create_plan_item))
-        .route("/api/ehs/checks/plans/{plan_id}/items/{item_id}", delete(delete_plan_item))
-        .route("/api/ehs/checks/records", get(list_records).post(create_record))
-        .route("/api/ehs/checks/records/{id}", get(get_record).put(update_record).delete(delete_record))
+        .route(
+            "/api/ehs/checks/plans/{id}",
+            get(get_plan).put(update_plan).delete(delete_plan),
+        )
+        .route(
+            "/api/ehs/checks/plans/{plan_id}/items",
+            get(list_plan_items).post(create_plan_item),
+        )
+        .route(
+            "/api/ehs/checks/plans/{plan_id}/items/{item_id}",
+            delete(delete_plan_item),
+        )
+        .route(
+            "/api/ehs/checks/records",
+            get(list_records).post(create_record),
+        )
+        .route(
+            "/api/ehs/checks/records/{id}",
+            get(get_record).put(update_record).delete(delete_record),
+        )
+        .route("/api/ehs/checks", get(list_plans))
 }
 
 #[derive(Debug, Deserialize)]
@@ -147,7 +167,10 @@ pub async fn list_plans(
     State(_state): State<crate::AppState>,
 ) -> Json<ApiResponse<Vec<InspectionPlan>>> {
     tracing::info!("Listing inspection plans");
-    Json(ApiResponse::success(Vec::<InspectionPlan>::new(), "获取检查计划列表成功"))
+    Json(ApiResponse::success(
+        Vec::<InspectionPlan>::new(),
+        "获取检查计划列表成功",
+    ))
 }
 
 pub async fn create_plan(
@@ -158,7 +181,10 @@ pub async fn create_plan(
     Json(ApiResponse::success(
         InspectionPlan {
             id: uuid::Uuid::new_v4().to_string(),
-            plan_no: format!("IP-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+            plan_no: format!(
+                "IP-{}",
+                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+            ),
             title: req.title,
             description: req.description,
             inspection_type: req.inspection_type,
@@ -283,7 +309,10 @@ pub async fn create_plan_item(
         InspectionItem {
             id: uuid::Uuid::new_v4().to_string(),
             plan_id,
-            item_no: format!("IT-{}", uuid::Uuid::new_v4().to_string()[..6].to_uppercase()),
+            item_no: format!(
+                "IT-{}",
+                uuid::Uuid::new_v4().to_string()[..6].to_uppercase()
+            ),
             title: req.title,
             description: req.description,
             category: req.category,
@@ -306,7 +335,10 @@ pub async fn list_records(
     State(_state): State<crate::AppState>,
 ) -> Json<ApiResponse<Vec<InspectionRecord>>> {
     tracing::info!("Listing inspection records");
-    Json(ApiResponse::success(Vec::<InspectionRecord>::new(), "获取检查记录列表成功"))
+    Json(ApiResponse::success(
+        Vec::<InspectionRecord>::new(),
+        "获取检查记录列表成功",
+    ))
 }
 
 pub async fn create_record(
@@ -314,20 +346,28 @@ pub async fn create_record(
     Json(req): Json<CreateInspectionRecordRequest>,
 ) -> Json<ApiResponse<InspectionRecord>> {
     tracing::info!("Creating inspection record: {:?}", req);
-    let result = req.items.iter().all(|i| i.result == "pass") 
+    let result = req
+        .items
+        .iter()
+        .all(|i| i.result == "pass")
         .then(|| "合格".to_string())
         .unwrap_or_else(|| "不合格".to_string());
-    
+
     Json(ApiResponse::success(
         InspectionRecord {
             id: uuid::Uuid::new_v4().to_string(),
-            record_no: format!("IR-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+            record_no: format!(
+                "IR-{}",
+                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+            ),
             plan_id: req.plan_id,
             title: req.title,
             inspection_type: req.inspection_type,
             location: req.location,
             inspector: req.inspector,
-            inspected_at: req.inspected_at.or_else(|| Some(chrono::Utc::now().to_rfc3339())),
+            inspected_at: req
+                .inspected_at
+                .or_else(|| Some(chrono::Utc::now().to_rfc3339())),
             result: Some(result),
             issues: req.issues,
             attachments: None,

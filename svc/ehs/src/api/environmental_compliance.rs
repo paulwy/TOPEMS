@@ -8,19 +8,72 @@ use crate::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/ehs/environmental-compliance/regulations", get(list_regulations).post(create_regulation))
-        .route("/api/ehs/environmental-compliance/regulations/categories", get(list_regulation_categories))
-        .route("/api/ehs/environmental-compliance/regulations/{id}", get(get_regulation).put(update_regulation).delete(delete_regulation))
-        .route("/api/ehs/environmental-compliance/evaluations", get(list_evaluations).post(create_evaluation))
-        .route("/api/ehs/environmental-compliance/evaluations/{id}", get(get_evaluation).put(update_evaluation).delete(delete_evaluation))
-        .route("/api/ehs/environmental-compliance/monitoring", get(list_monitor_records).post(create_monitor_record))
-        .route("/api/ehs/environmental-compliance/monitoring/types", get(list_monitor_types))
-        .route("/api/ehs/environmental-compliance/monitoring/{id}", get(get_monitor_record).delete(delete_monitor_record))
-        .route("/api/ehs/environmental-compliance/permits", get(list_permits).post(create_permit))
-        .route("/api/ehs/environmental-compliance/permits/{id}", get(get_permit).put(update_permit).delete(delete_permit))
-        .route("/api/ehs/environmental-compliance/incidents", get(list_incidents).post(create_incident))
-        .route("/api/ehs/environmental-compliance/incidents/{id}", get(get_incident).put(update_incident).delete(delete_incident))
-        .route("/api/ehs/environmental-compliance/statistics", get(get_compliance_statistics))
+        .route(
+            "/api/ehs/environmental-compliance/regulations",
+            get(list_regulations).post(create_regulation),
+        )
+        .route(
+            "/api/ehs/environmental-compliance/regulations/categories",
+            get(list_regulation_categories),
+        )
+        .route(
+            "/api/ehs/environmental-compliance/regulations/{id}",
+            get(get_regulation)
+                .put(update_regulation)
+                .delete(delete_regulation),
+        )
+        .route(
+            "/api/ehs/environmental-compliance/evaluations",
+            get(list_evaluations).post(create_evaluation),
+        )
+        .route(
+            "/api/ehs/environmental-compliance/evaluations/{id}",
+            get(get_evaluation)
+                .put(update_evaluation)
+                .delete(delete_evaluation),
+        )
+        .route(
+            "/api/ehs/environmental-compliance/monitoring",
+            get(list_monitor_records).post(create_monitor_record),
+        )
+        .route(
+            "/api/ehs/environmental-compliance/monitoring/types",
+            get(list_monitor_types),
+        )
+        .route(
+            "/api/ehs/environmental-compliance/monitoring/{id}",
+            get(get_monitor_record).delete(delete_monitor_record),
+        )
+        .route(
+            "/api/ehs/environmental-compliance/permits",
+            get(list_permits).post(create_permit),
+        )
+        .route(
+            "/api/ehs/environmental-compliance/permits/{id}",
+            get(get_permit).put(update_permit).delete(delete_permit),
+        )
+        .route(
+            "/api/ehs/environmental-compliance/incidents",
+            get(list_incidents).post(create_incident),
+        )
+        .route(
+            "/api/ehs/environmental-compliance/incidents/{id}",
+            get(get_incident)
+                .put(update_incident)
+                .delete(delete_incident),
+        )
+        .route(
+            "/api/ehs/environmental-compliance/statistics",
+            get(get_compliance_statistics),
+        )
+        .route(
+            "/api/ehs/environmental-compliance/assessments",
+            get(list_evaluations).post(create_evaluation),
+        )
+        .route(
+            "/api/ehs/environmental-compliance/events",
+            get(list_incidents).post(create_incident),
+        )
 }
 
 #[derive(Debug, Deserialize)]
@@ -300,7 +353,10 @@ pub async fn list_regulations(
     State(_state): State<crate::AppState>,
 ) -> Json<ApiResponse<Vec<EnvironmentalRegulation>>> {
     tracing::info!("Listing environmental regulations");
-    Json(ApiResponse::success(Vec::<EnvironmentalRegulation>::new(), "获取环保法规列表成功"))
+    Json(ApiResponse::success(
+        Vec::<EnvironmentalRegulation>::new(),
+        "获取环保法规列表成功",
+    ))
 }
 
 pub async fn create_regulation(
@@ -311,7 +367,10 @@ pub async fn create_regulation(
     Json(ApiResponse::success(
         EnvironmentalRegulation {
             id: uuid::Uuid::new_v4().to_string(),
-            reg_no: format!("ER-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+            reg_no: format!(
+                "ER-{}",
+                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+            ),
             title: req.title,
             category: req.category,
             regulation_type: req.regulation_type,
@@ -350,7 +409,9 @@ pub async fn get_regulation(
             expiry_date: None,
             status: "active".to_string(),
             content: Some("为保护和改善环境，防治污染和其他公害...".to_string()),
-            applicability: Some("适用于中华人民共和国领域和中华人民共和国管辖的其他海域".to_string()),
+            applicability: Some(
+                "适用于中华人民共和国领域和中华人民共和国管辖的其他海域".to_string(),
+            ),
             related_files: None,
             version: Some("2014修订版".to_string()),
             remarks: None,
@@ -371,7 +432,9 @@ pub async fn update_regulation(
         EnvironmentalRegulation {
             id,
             reg_no: "ER-2024001".to_string(),
-            title: req.title.unwrap_or_else(|| "中华人民共和国环境保护法".to_string()),
+            title: req
+                .title
+                .unwrap_or_else(|| "中华人民共和国环境保护法".to_string()),
             category: req.category.unwrap_or_else(|| "law".to_string()),
             regulation_type: req.regulation_type,
             issuing_authority: req.issuing_authority,
@@ -403,7 +466,10 @@ pub async fn list_evaluations(
     State(_state): State<crate::AppState>,
 ) -> Json<ApiResponse<Vec<ComplianceEvaluation>>> {
     tracing::info!("Listing compliance evaluations");
-    Json(ApiResponse::success(Vec::<ComplianceEvaluation>::new(), "获取合规性评价列表成功"))
+    Json(ApiResponse::success(
+        Vec::<ComplianceEvaluation>::new(),
+        "获取合规性评价列表成功",
+    ))
 }
 
 pub async fn create_evaluation(
@@ -414,7 +480,10 @@ pub async fn create_evaluation(
     Json(ApiResponse::success(
         ComplianceEvaluation {
             id: uuid::Uuid::new_v4().to_string(),
-            eval_no: format!("CE-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+            eval_no: format!(
+                "CE-{}",
+                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+            ),
             title: req.title,
             eval_type: req.eval_type,
             eval_period: req.eval_period,
@@ -470,9 +539,16 @@ pub async fn update_evaluation(
     Json(req): Json<UpdateEvaluationRequest>,
 ) -> Json<ApiResponse<ComplianceEvaluation>> {
     tracing::info!("Updating compliance evaluation {}: {:?}", id, req);
-    let status = req.status.clone().unwrap_or_else(|| "completed".to_string());
-    let evaluated_at = if status == "completed" { Some(chrono::Utc::now().to_rfc3339()) } else { None };
-    
+    let status = req
+        .status
+        .clone()
+        .unwrap_or_else(|| "completed".to_string());
+    let evaluated_at = if status == "completed" {
+        Some(chrono::Utc::now().to_rfc3339())
+    } else {
+        None
+    };
+
     Json(ApiResponse::success(
         ComplianceEvaluation {
             id,
@@ -509,7 +585,10 @@ pub async fn list_monitor_records(
     State(_state): State<crate::AppState>,
 ) -> Json<ApiResponse<Vec<EnvironmentMonitor>>> {
     tracing::info!("Listing environment monitor records");
-    Json(ApiResponse::success(Vec::<EnvironmentMonitor>::new(), "获取环境监测记录列表成功"))
+    Json(ApiResponse::success(
+        Vec::<EnvironmentMonitor>::new(),
+        "获取环境监测记录列表成功",
+    ))
 }
 
 pub async fn create_monitor_record(
@@ -520,7 +599,10 @@ pub async fn create_monitor_record(
     Json(ApiResponse::success(
         EnvironmentMonitor {
             id: uuid::Uuid::new_v4().to_string(),
-            record_no: format!("EM-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+            record_no: format!(
+                "EM-{}",
+                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+            ),
             monitor_type: req.monitor_type,
             monitor_point: req.monitor_point,
             monitor_date: req.monitor_date,
@@ -588,7 +670,10 @@ pub async fn list_permits(
     State(_state): State<crate::AppState>,
 ) -> Json<ApiResponse<Vec<DischargePermit>>> {
     tracing::info!("Listing discharge permits");
-    Json(ApiResponse::success(Vec::<DischargePermit>::new(), "获取排污许可列表成功"))
+    Json(ApiResponse::success(
+        Vec::<DischargePermit>::new(),
+        "获取排污许可列表成功",
+    ))
 }
 
 pub async fn create_permit(
@@ -599,7 +684,10 @@ pub async fn create_permit(
     Json(ApiResponse::success(
         DischargePermit {
             id: uuid::Uuid::new_v4().to_string(),
-            permit_no: format!("DP-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+            permit_no: format!(
+                "DP-{}",
+                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+            ),
             permit_type: req.permit_type,
             permit_name: req.permit_name,
             issuing_authority: req.issuing_authority,
@@ -637,7 +725,11 @@ pub async fn get_permit(
             valid_from: Some("2024-01-01".to_string()),
             valid_to: Some("2028-12-31".to_string()),
             status: "valid".to_string(),
-            pollutant_list: Some(vec!["COD".to_string(), "氨氮".to_string(), "SS".to_string()]),
+            pollutant_list: Some(vec![
+                "COD".to_string(),
+                "氨氮".to_string(),
+                "SS".to_string(),
+            ]),
             discharge_standard: Some("《污水综合排放标准》一级".to_string()),
             total_amount_limit: Some("COD: 50吨/年".to_string()),
             discharge_location: Some("厂区废水总排口".to_string()),
@@ -694,7 +786,10 @@ pub async fn list_incidents(
     State(_state): State<crate::AppState>,
 ) -> Json<ApiResponse<Vec<EnvironmentIncident>>> {
     tracing::info!("Listing environment incidents");
-    Json(ApiResponse::success(Vec::<EnvironmentIncident>::new(), "获取环境事件列表成功"))
+    Json(ApiResponse::success(
+        Vec::<EnvironmentIncident>::new(),
+        "获取环境事件列表成功",
+    ))
 }
 
 pub async fn create_incident(
@@ -705,7 +800,10 @@ pub async fn create_incident(
     Json(ApiResponse::success(
         EnvironmentIncident {
             id: uuid::Uuid::new_v4().to_string(),
-            incident_no: format!("EI-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+            incident_no: format!(
+                "EI-{}",
+                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+            ),
             title: req.title,
             incident_type: req.incident_type,
             level: req.level,
@@ -771,9 +869,16 @@ pub async fn update_incident(
     Json(req): Json<UpdateIncidentRequest>,
 ) -> Json<ApiResponse<EnvironmentIncident>> {
     tracing::info!("Updating environment incident {}: {:?}", id, req);
-    let status = req.status.clone().unwrap_or_else(|| "investigating".to_string());
-    let closed_at = if status == "closed" { Some(chrono::Utc::now().to_rfc3339()) } else { None };
-    
+    let status = req
+        .status
+        .clone()
+        .unwrap_or_else(|| "investigating".to_string());
+    let closed_at = if status == "closed" {
+        Some(chrono::Utc::now().to_rfc3339())
+    } else {
+        None
+    };
+
     Json(ApiResponse::success(
         EnvironmentIncident {
             id,

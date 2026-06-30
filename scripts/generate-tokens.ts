@@ -1,11 +1,12 @@
 /**
  * @fileoverview Token Generator
  *
- * Reads the single source of truth (`apps/web/src/theme/tokens.ts` + `gradients.ts`)
- * and generates two downstream artifacts:
+ * Reads the single source of truth (`packages/tokens/src/tokens.ts` + `gradients.ts`)
+ * and generates CSS custom properties:
  *
- *   1. CSS custom properties  → `apps/web/src/theme/generated-tokens.css`
- *   2. TypeScript constants   → `packages/shared-constants/src/generated-colors.ts`
+ *   - CSS custom properties  → `apps/web/src/theme/generated-tokens.css`
+ *
+ * TypeScript constants are imported directly from @topems/tokens at runtime.
  *
  * The script is idempotent: re-running it always produces identical output.
  *
@@ -21,10 +22,9 @@ import * as path from 'node:path';
 // ---------------------------------------------------------------------------
 
 const ROOT = path.resolve(__dirname, '..');
-const TOKENS_SRC = path.join(ROOT, 'apps/web/src/theme/tokens.ts');
-const GRADIENTS_SRC = path.join(ROOT, 'apps/web/src/theme/gradients.ts');
+const TOKENS_SRC = path.join(ROOT, 'packages/tokens/src/tokens.ts');
+const GRADIENTS_SRC = path.join(ROOT, 'packages/tokens/src/gradients.ts');
 const CSS_OUT = path.join(ROOT, 'apps/web/src/theme/generated-tokens.css');
-const TS_OUT = path.join(ROOT, 'packages/shared-constants/src/generated-colors.ts');
 
 // ---------------------------------------------------------------------------
 // 1. Parse tokens.ts  –  extract the `designTokens` object literal
@@ -656,16 +656,11 @@ function main() {
   console.log('[generate-tokens] Reading gradients from:', GRADIENTS_SRC);
 
   const css = generateCSS();
-  const ts = generateTS();
 
   ensureDir(CSS_OUT);
-  ensureDir(TS_OUT);
 
   fs.writeFileSync(CSS_OUT, css, 'utf-8');
   console.log(`[generate-tokens] Wrote CSS → ${CSS_OUT}`);
-
-  fs.writeFileSync(TS_OUT, ts, 'utf-8');
-  console.log(`[generate-tokens] Wrote TS  → ${TS_OUT}`);
 
   console.log('[generate-tokens] Done.');
 }

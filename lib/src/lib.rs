@@ -17,6 +17,7 @@ pub mod hrm;
 pub mod logging;
 pub mod messaging;
 pub mod migration;
+pub mod metrics;
 pub mod monitoring;
 pub mod notification;
 pub mod ollama_client;
@@ -27,6 +28,7 @@ pub mod rate_limit;
 pub mod redis;
 pub mod repository;
 pub mod response;
+pub mod rls;
 pub mod schema;
 pub mod security;
 pub mod service_bootstrap;
@@ -145,8 +147,11 @@ pub use service_bootstrap::{
     ServiceBootstrap,
 };
 pub use service_client::{
-    create_hrm_client, create_iam_client, BaseServiceClient, Company, Department, Employee,
-    HrmServiceClient, IamServiceClient, ServiceClientError, ServiceClientResult, User,
+    create_hrm_client, create_iam_client, create_notification_client, create_generic_client,
+    BaseServiceClient, Company, Department, Employee,
+    HrmServiceClient, IamServiceClient, NotificationSvcClient,
+    GenericServiceClient,
+    ServiceClientError, ServiceClientResult, User,
 };
 pub use service_discovery::{
     LocalServiceRegistry, PortalServiceAggregator, ServiceCategory, ServiceDiscoveryClient,

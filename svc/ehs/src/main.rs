@@ -16,23 +16,19 @@
 
 mod api;
 mod models;
-mod services;
 mod plugin;
+mod services;
 mod shared;
 
 use std::net::SocketAddr;
 
-use axum::{
-    extract::State,
-    routing::get,
-    Json, Router,
-};
+use axum::{extract::State, routing::get, Json, Router};
 use axum_prometheus::PrometheusMetricLayer;
 use sqlx::PgPool;
 
 use topems_shared::{
-    auth_middleware, create_cors_layer, get_api_info_handler, init_logging, simple_health_check,
-    ApiResponse, AuthState, ServiceHealth, SimpleHealthConfig,
+    auth_middleware, create_cors_layer, get_api_info_handler, init_telemetry, simple_health_check,
+    telemetry_middleware, ApiResponse, AuthState, ServiceHealth, SimpleHealthConfig,
 };
 
 pub use shared::*;
@@ -54,7 +50,7 @@ impl axum::extract::FromRef<AppState> for AuthState {
 async fn main() {
     _ = dotenv::dotenv();
 
-    init_logging("topems-ehs");
+    let _telemetry_guard = init_telemetry("topems-ehs");
 
     tracing::info!("🚀 TOPEMS EHS Service starting...");
 
@@ -100,7 +96,10 @@ async fn main() {
         .route("/api/plugins/health", get(plugin::plugin_health_check))
         .route("/api", get(|| get_api_info_handler("ehs-service")))
         .route("/api/info", get(|| get_api_info_handler("ehs-service")))
-        .route("/metrics", get(move || async move { metric_handle.render() }));
+        .route(
+            "/metrics",
+            get(move || async move { metric_handle.render() }),
+        );
 
     let protected_routes = Router::new()
         .merge(api::create_api_routes())
@@ -113,6 +112,7 @@ async fn main() {
     let app = Router::new()
         .merge(public_routes)
         .merge(protected_routes)
+        .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(cors)
         .layer(prometheus_layer)
         .with_state(state);

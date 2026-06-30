@@ -1,6 +1,10 @@
 //! Emergency plan management - Plan CRUD, categories, versions, supplies, and approval workflow
 
-use axum::{extract::State, routing::{delete, get, post}, Json, Router};
+use axum::{
+    extract::State,
+    routing::{delete, get, post},
+    Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use topems_shared::ApiResponse;
 
@@ -8,14 +12,36 @@ use crate::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/ehs/emergency-plans", get(list_plans).post(create_plan))
-        .route("/api/ehs/emergency-plans/categories", get(list_plan_categories))
-        .route("/api/ehs/emergency-plans/{id}", get(get_plan).put(update_plan).delete(delete_plan))
-        .route("/api/ehs/emergency-plans/{id}/supplies", get(list_plan_supplies).post(add_plan_supply))
-        .route("/api/ehs/emergency-plans/{id}/supplies/{supply_id}", delete(delete_plan_supply))
-        .route("/api/ehs/emergency-plans/{id}/versions", get(list_plan_versions).post(create_new_version))
-        .route("/api/ehs/emergency-plans/{id}/submit-approval", post(submit_plan_approval))
+        .route(
+            "/api/ehs/emergency-plans",
+            get(list_plans).post(create_plan),
+        )
+        .route(
+            "/api/ehs/emergency-plans/categories",
+            get(list_plan_categories),
+        )
+        .route(
+            "/api/ehs/emergency-plans/{id}",
+            get(get_plan).put(update_plan).delete(delete_plan),
+        )
+        .route(
+            "/api/ehs/emergency-plans/{id}/supplies",
+            get(list_plan_supplies).post(add_plan_supply),
+        )
+        .route(
+            "/api/ehs/emergency-plans/{id}/supplies/{supply_id}",
+            delete(delete_plan_supply),
+        )
+        .route(
+            "/api/ehs/emergency-plans/{id}/versions",
+            get(list_plan_versions).post(create_new_version),
+        )
+        .route(
+            "/api/ehs/emergency-plans/{id}/submit-approval",
+            post(submit_plan_approval),
+        )
         .route("/api/ehs/emergency-plans/{id}/approve", post(approve_plan))
+        .route("/api/ehs/plans", get(list_plans).post(create_plan))
 }
 
 #[derive(Debug, Deserialize)]
@@ -153,7 +179,10 @@ pub async fn list_plans(
     State(_state): State<crate::AppState>,
 ) -> Json<ApiResponse<Vec<EmergencyPlan>>> {
     tracing::info!("Listing emergency plans");
-    Json(ApiResponse::success(Vec::<EmergencyPlan>::new(), "获取应急预案列表成功"))
+    Json(ApiResponse::success(
+        Vec::<EmergencyPlan>::new(),
+        "获取应急预案列表成功",
+    ))
 }
 
 pub async fn create_plan(
@@ -164,7 +193,10 @@ pub async fn create_plan(
     Json(ApiResponse::success(
         EmergencyPlan {
             id: uuid::Uuid::new_v4().to_string(),
-            plan_no: format!("EP-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+            plan_no: format!(
+                "EP-{}",
+                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+            ),
             title: req.title,
             description: req.description,
             category: req.category,
@@ -243,17 +275,15 @@ pub async fn get_plan(
                     created_at: Some(chrono::Utc::now().to_rfc3339()),
                 },
             ],
-            versions: vec![
-                PlanVersion {
-                    id: "ver-001".to_string(),
-                    plan_id: id.clone(),
-                    version: "1.0".to_string(),
-                    change_description: Some("初始版本".to_string()),
-                    changed_by: Some("李主任".to_string()),
-                    changed_at: Some(chrono::Utc::now().to_rfc3339()),
-                    content: Some("初始版本内容...".to_string()),
-                },
-            ],
+            versions: vec![PlanVersion {
+                id: "ver-001".to_string(),
+                plan_id: id.clone(),
+                version: "1.0".to_string(),
+                change_description: Some("初始版本".to_string()),
+                changed_by: Some("李主任".to_string()),
+                changed_at: Some(chrono::Utc::now().to_rfc3339()),
+                content: Some("初始版本内容...".to_string()),
+            }],
             approvals: vec![
                 PlanApproval {
                     id: "appr-001".to_string(),
@@ -327,7 +357,10 @@ pub async fn list_plan_supplies(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<PlanSupply>>> {
     tracing::info!("Listing supplies for plan: {}", id);
-    Json(ApiResponse::success(Vec::<PlanSupply>::new(), "获取应急物资清单成功"))
+    Json(ApiResponse::success(
+        Vec::<PlanSupply>::new(),
+        "获取应急物资清单成功",
+    ))
 }
 
 pub async fn add_plan_supply(
@@ -420,7 +453,10 @@ pub async fn list_plan_versions(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<PlanVersion>>> {
     tracing::info!("Listing versions for plan: {}", id);
-    Json(ApiResponse::success(Vec::<PlanVersion>::new(), "获取预案版本列表成功"))
+    Json(ApiResponse::success(
+        Vec::<PlanVersion>::new(),
+        "获取预案版本列表成功",
+    ))
 }
 
 pub async fn create_new_version(
@@ -437,7 +473,10 @@ pub async fn create_new_version(
             change_description: Some("更新应急预案内容".to_string()),
             changed_by: Some("李主任".to_string()),
             changed_at: Some(chrono::Utc::now().to_rfc3339()),
-            content: req.get("content").and_then(|v| v.as_str()).map(|s| s.to_string()),
+            content: req
+                .get("content")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
         },
         "新版本创建成功",
     ))

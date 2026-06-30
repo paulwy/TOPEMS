@@ -235,6 +235,9 @@ impl From<crate::event::EventError> for TopemsError {
                 TopemsError::Internal("事件发布超时".to_string())
             }
             crate::event::EventError::ConfigError(msg) => TopemsError::ConfigLoad(msg),
+            crate::event::EventError::ConnectionError(msg) => TopemsError::NetworkRequest(msg),
+            crate::event::EventError::SubscribeError(msg) => TopemsError::NetworkRequest(msg),
+            crate::event::EventError::PublishError(msg) => TopemsError::NetworkRequest(msg),
         }
     }
 }

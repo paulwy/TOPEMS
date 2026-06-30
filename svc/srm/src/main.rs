@@ -30,7 +30,8 @@ use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
 use topems_shared::{
     auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
-    create_database_pool, init_logging, ApiResponse, AuthState, DatabaseConfig, ServiceHealth,
+    create_database_pool, init_telemetry, telemetry_middleware, ApiResponse, AuthState,
+    DatabaseConfig, ServiceHealth,
 };
 
 static START_TIME: std::sync::OnceLock<Instant> = std::sync::OnceLock::new();
@@ -67,7 +68,7 @@ impl FromRef<AppState> for sqlx::PgPool {
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
 
-    init_logging("topems-srm");
+    let _telemetry_guard = init_telemetry("topems-srm");
     START_TIME.get_or_init(Instant::now);
 
     env::set_var("SEARCH_PATH", "srm, shared, public");
@@ -143,6 +144,7 @@ async fn main() -> Result<()> {
         .merge(health_router)
         .merge(protected_routes)
         .merge(create_api_info_router("topems-srm"))
+        .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(cors)
         .layer(prometheus_layer);
 

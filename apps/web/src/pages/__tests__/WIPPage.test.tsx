@@ -20,15 +20,24 @@ vi.mock('@/api/mes', () => ({
 }));
 
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn(),
+  useAppStore: vi.fn((selector?: any) =>
+    selector ? selector({
+      addNotification: vi.fn(),
+      notifications: [],
+      user: null,
+      theme: 'light',
+    }) : {
+      addNotification: vi.fn(),
+      notifications: [],
+      user: null,
+      theme: 'light',
+    }
+  ),
 }));
 
 describe('WIPPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (useAppStore as vi.Mock).mockReturnValue({
-      addNotification: vi.fn(),
-    });
   });
 
   it('should render without crashing', () => {

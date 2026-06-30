@@ -5,8 +5,8 @@ import {
   StepLabel,
   Box,
   Typography,
-  styled,
   keyframes,
+  useTheme,
 } from '@mui/material';
 import type { StepIconProps } from '@mui/material';
 import { Check, AlertCircle } from 'lucide-react';
@@ -23,55 +23,6 @@ const pulse = keyframes`
     box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
   }
 `;
-
-// 自定义步骤图标容器
-const StepIconContainer = styled('div')<{
-  status: StepItem['status'];
-  variant: StepperProps['variant'];
-  active: boolean;
-}>(({ theme, status, variant }) => {
-  const getBackgroundColor = () => {
-    if (status === 'completed') {
-      return variant === 'gradient'
-        ? 'linear-gradient(135deg, primary.main, primary.dark)'
-        : theme.palette.success.main;
-    }
-    if (status === 'error') {
-      return theme.palette.error.main;
-    }
-    if (status === 'active') {
-      return variant === 'gradient'
-        ? 'linear-gradient(135deg, primary.main, primary.dark)'
-        : theme.palette.primary.main;
-    }
-    return variant === 'outlined' ? 'transparent' : theme.palette.grey[300];
-  };
-
-  const getBorderColor = () => {
-    if (status === 'completed') return theme.palette.success.main;
-    if (status === 'error') return theme.palette.error.main;
-    if (status === 'active') return theme.palette.primary.main;
-    return theme.palette.grey[400];
-  };
-
-  return {
-    width: 40,
-    height: 40,
-    borderRadius: '50%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: getBackgroundColor(),
-    border: variant === 'outlined' ? `2px solid ${getBorderColor()}` : 'none',
-    color: status === 'pending' ? theme.palette.text.disabled : theme.palette.common.white,
-    transition: 'all 0.3s ease',
-    animation: status === 'active' ? `${pulse} 2s infinite` : 'none',
-    '& svg': {
-      width: 20,
-      height: 20,
-    },
-  };
-});
 
 // 步骤项接口
 export interface StepItem {
@@ -99,7 +50,33 @@ const CustomStepIcon: React.FC<
     variant: StepperProps['variant'];
     customIcon?: React.ReactNode;
   }
-> = ({ status, variant, customIcon, active }) => {
+> = ({ status, variant, customIcon, active: _active }) => {
+  const theme = useTheme();
+
+  const getBackgroundColor = () => {
+    if (status === 'completed') {
+      return variant === 'gradient'
+        ? 'linear-gradient(135deg, primary.main, primary.dark)'
+        : theme.palette.success.main;
+    }
+    if (status === 'error') {
+      return theme.palette.error.main;
+    }
+    if (status === 'active') {
+      return variant === 'gradient'
+        ? 'linear-gradient(135deg, primary.main, primary.dark)'
+        : theme.palette.primary.main;
+    }
+    return variant === 'outlined' ? 'transparent' : theme.palette.grey[300];
+  };
+
+  const getBorderColor = () => {
+    if (status === 'completed') return theme.palette.success.main;
+    if (status === 'error') return theme.palette.error.main;
+    if (status === 'active') return theme.palette.primary.main;
+    return theme.palette.grey[400];
+  };
+
   const renderIcon = () => {
     if (customIcon && status !== 'completed' && status !== 'error') {
       return customIcon;
@@ -114,13 +91,28 @@ const CustomStepIcon: React.FC<
   };
 
   return (
-    <StepIconContainer
-      status={status}
-      variant={variant}
-      active={active ?? false}
+    <Box
+      component='div'
+      sx={{
+        width: 40,
+        height: 40,
+        borderRadius: '50%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: getBackgroundColor(),
+        border: variant === 'outlined' ? `2px solid ${getBorderColor()}` : 'none',
+        color: status === 'pending' ? theme.palette.text.disabled : theme.palette.common.white,
+        transition: 'all 0.3s ease',
+        animation: status === 'active' ? `${pulse} 2s infinite` : 'none',
+        '& svg': {
+          width: 20,
+          height: 20,
+        },
+      }}
     >
       {renderIcon()}
-    </StepIconContainer>
+    </Box>
   );
 };
 

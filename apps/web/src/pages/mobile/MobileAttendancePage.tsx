@@ -64,116 +64,21 @@ const MobileAttendancePage: React.FC = () => {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const mockStats: AttendanceStats = {
-        today_status: 'checked_in',
-        today_check_in: '08:55',
-        today_check_out: undefined,
-        work_days_this_month: 18,
-        late_days_this_month: 1,
-        early_leave_days: 0,
-        absent_days: 0,
-        total_work_hours: 144.5,
-      };
+      const [statsRes, recordsRes, leavesRes] = await Promise.all([
+        mobileApi.getAttendanceStats(),
+        mobileApi.listAttendanceRecords({ page: 1, pagesize: 20 }),
+        mobileApi.listLeaveApplications({ page: 1, pagesize: 20 }),
+      ]);
 
-      const mockRecords: AttendanceRecord[] = [
-        {
-          id: '1',
-          user_id: user?.id || '',
-          user_name: user?.fullName || '',
-          date: '2024-06-28',
-          check_in_time: '08:55',
-          check_out_time: undefined,
-          work_hours: undefined,
-          status: 'normal',
-          type: 'check_in',
-          created_at: '2024-06-28T08:55:00Z',
-        },
-        {
-          id: '2',
-          user_id: user?.id || '',
-          user_name: user?.fullName || '',
-          date: '2024-06-27',
-          check_in_time: '08:48',
-          check_out_time: '18:05',
-          work_hours: 9.28,
-          status: 'normal',
-          type: 'check_out',
-          created_at: '2024-06-27T18:05:00Z',
-        },
-        {
-          id: '3',
-          user_id: user?.id || '',
-          user_name: user?.fullName || '',
-          date: '2024-06-26',
-          check_in_time: '09:15',
-          check_out_time: '18:00',
-          work_hours: 8.75,
-          status: 'late',
-          type: 'check_out',
-          created_at: '2024-06-26T18:00:00Z',
-        },
-        {
-          id: '4',
-          user_id: user?.id || '',
-          user_name: user?.fullName || '',
-          date: '2024-06-25',
-          check_in_time: '08:50',
-          check_out_time: '18:10',
-          work_hours: 9.33,
-          status: 'normal',
-          type: 'check_out',
-          created_at: '2024-06-25T18:10:00Z',
-        },
-        {
-          id: '5',
-          user_id: user?.id || '',
-          user_name: user?.fullName || '',
-          date: '2024-06-24',
-          check_in_time: '08:52',
-          check_out_time: '17:30',
-          work_hours: 8.63,
-          status: 'early_leave',
-          type: 'check_out',
-          created_at: '2024-06-24T17:30:00Z',
-        },
-      ];
-
-      const mockLeaves: LeaveApplication[] = [
-        {
-          id: '1',
-          user_id: user?.id || '',
-          user_name: user?.fullName || '',
-          leave_type: 'annual',
-          start_date: '2024-07-01',
-          end_date: '2024-07-03',
-          days: 3,
-          reason: '年假休息',
-          status: 'pending',
-          created_at: '2024-06-25T10:00:00Z',
-        },
-        {
-          id: '2',
-          user_id: user?.id || '',
-          user_name: user?.fullName || '',
-          leave_type: 'sick',
-          start_date: '2024-06-15',
-          end_date: '2024-06-16',
-          days: 2,
-          reason: '身体不适',
-          status: 'approved',
-          created_at: '2024-06-14T09:00:00Z',
-        },
-      ];
-
-      setAttendanceStats(mockStats);
-      setRecords(mockRecords);
-      setLeaves(mockLeaves);
+      setAttendanceStats(statsRes.data ?? null);
+      setRecords(recordsRes.data?.items || []);
+      setLeaves(leavesRes.data?.items || []);
     } catch (err) {
       apiLogger.error('加载考勤数据失败:', err);
     } finally {
       setLoading(false);
     }
-  }, [user?.id, user?.fullName]);
+  }, []);
 
   useEffect(() => {
     loadData();
@@ -191,11 +96,11 @@ const MobileAttendancePage: React.FC = () => {
     if (attendanceStats?.today_status !== 'not_checked_in') return;
     setCheckingIn(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const result = await mobileApi.checkIn({ lat: 0, lng: 0 });
       const newStats: AttendanceStats = {
         ...attendanceStats!,
         today_status: 'checked_in',
-        today_check_in: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
+        today_check_in: result.data?.check_in_time,
       };
       setAttendanceStats(newStats);
       addNotification({
@@ -203,6 +108,7 @@ const MobileAttendancePage: React.FC = () => {
         message: '上班打卡成功，祝您工作顺利！',
         type: 'success',
       });
+      loadData();
     } catch (err) {
       apiLogger.error('打卡失败:', err);
       addNotification({
@@ -219,11 +125,11 @@ const MobileAttendancePage: React.FC = () => {
     if (attendanceStats?.today_status !== 'checked_in') return;
     setCheckingIn(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const result = await mobileApi.checkOut({ lat: 0, lng: 0 });
       const newStats: AttendanceStats = {
         ...attendanceStats!,
         today_status: 'checked_out',
-        today_check_out: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
+        today_check_out: result.data?.check_out_time,
       };
       setAttendanceStats(newStats);
       addNotification({
@@ -231,6 +137,7 @@ const MobileAttendancePage: React.FC = () => {
         message: '下班打卡成功，辛苦了！',
         type: 'success',
       });
+      loadData();
     } catch (err) {
       apiLogger.error('打卡失败:', err);
       addNotification({
@@ -254,23 +161,12 @@ const MobileAttendancePage: React.FC = () => {
     }
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      const newLeave: LeaveApplication = {
-        id: Date.now().toString(),
-        user_id: user?.id || '',
-        user_name: user?.fullName || '',
+      await mobileApi.applyLeave({
         leave_type: leaveForm.leave_type,
         start_date: leaveForm.start_date,
         end_date: leaveForm.end_date,
-        days: Math.ceil(
-          (new Date(leaveForm.end_date).getTime() - new Date(leaveForm.start_date).getTime()) /
-            (1000 * 60 * 60 * 24)
-        ) + 1,
         reason: leaveForm.reason,
-        status: 'pending',
-        created_at: new Date().toISOString(),
-      };
-      setLeaves((prev) => [newLeave, ...prev]);
+      });
       setLeaveDialogOpen(false);
       setLeaveForm({
         leave_type: 'annual',
@@ -283,6 +179,7 @@ const MobileAttendancePage: React.FC = () => {
         message: '请假申请已提交，请等待审批',
         type: 'success',
       });
+      loadData();
     } catch (err) {
       apiLogger.error('提交请假申请失败:', err);
       addNotification({

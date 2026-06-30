@@ -91,7 +91,6 @@ trap cleanup EXIT
 step_header 1 "Token generation"
 
 TOKEN_CSS="$ROOT_DIR/apps/web/src/theme/generated-tokens.css"
-TOKEN_TS="$ROOT_DIR/packages/shared-constants/src/generated-colors.ts"
 
 if [[ "$FIX_MODE" == true ]]; then
   if pnpm --dir "$ROOT_DIR" generate:tokens 2>&1; then
@@ -101,24 +100,17 @@ if [[ "$FIX_MODE" == true ]]; then
   fi
 fi
 
-# Verify generated files exist and are non-empty
+# Verify generated file exists and is non-empty
 css_ok=true
-ts_ok=true
 
 if [[ ! -f "$TOKEN_CSS" ]] || [[ ! -s "$TOKEN_CSS" ]]; then
   css_ok=false
 fi
 
-if [[ ! -f "$TOKEN_TS" ]] || [[ ! -s "$TOKEN_TS" ]]; then
-  ts_ok=false
-fi
-
-if $css_ok && $ts_ok; then
+if $css_ok; then
   pass
 else
-  msg=""
-  $css_ok || msg+="generated-tokens.css is missing or empty. "
-  $ts_ok  || msg+="generated-colors.ts is missing or empty. "
+  msg="generated-tokens.css is missing or empty. "
   msg+="Run: pnpm generate:tokens"
   fail "$msg"
 fi
@@ -206,29 +198,30 @@ fi
 
 step_header 4 "Token consistency"
 
-TOKENS_SRC="$ROOT_DIR/apps/web/src/theme/tokens.ts"
+TOKENS_SRC="$ROOT_DIR/packages/tokens/src/tokens.ts"
+GRADIENTS_SRC="$ROOT_DIR/packages/tokens/src/gradients.ts"
 
 token_consistent=true
 
-# Check that the source-of-truth file exists
+# Check that the source-of-truth files exist
 if [[ ! -f "$TOKENS_SRC" ]]; then
-  fail "Source tokens file not found: apps/web/src/theme/tokens.ts"
+  fail "Source tokens file not found: packages/tokens/src/tokens.ts"
+  token_consistent=false
+elif [[ ! -f "$GRADIENTS_SRC" ]]; then
+  fail "Source gradients file not found: packages/tokens/src/gradients.ts"
   token_consistent=false
 else
   # Re-generate tokens into a temp location and compare with committed files
   tmp_css=$(mktemp /tmp/topems-token-check-css.XXXXXX)
-  tmp_ts=$(mktemp /tmp/topems-token-check-ts.XXXXXX)
-  TMPDIR_CLEANUP="$tmp_css $tmp_ts"
+  TMPDIR_CLEANUP="$tmp_css"
 
   # Save current generated files
   cp "$TOKEN_CSS" "$tmp_css"
-  cp "$TOKEN_TS" "$tmp_ts"
 
   # Regenerate
   if (cd "$ROOT_DIR" && pnpm generate:tokens >/dev/null 2>&1); then
     # Compare newly generated with previously saved
-    if diff -q "$TOKEN_CSS" "$tmp_css" >/dev/null 2>&1 && \
-       diff -q "$TOKEN_TS" "$tmp_ts" >/dev/null 2>&1; then
+    if diff -q "$TOKEN_CSS" "$tmp_css" >/dev/null 2>&1; then
       : # identical - consistent
     else
       echo "    ${YELLOW}WARNING${RESET} Generated tokens differ from previous version."
@@ -237,28 +230,29 @@ else
     fi
     # Restore original files so we don't leave dirty state
     cp "$tmp_css" "$TOKEN_CSS"
-    cp "$tmp_ts" "$TOKEN_TS"
   else
     echo "    ${YELLOW}WARNING${RESET} Could not regenerate tokens for comparison."
   fi
 
-  # Check that no hand-written color constants shadow generated ones
-  manual_color_files=(
-    "packages/shared-constants/src/colors.ts"
-  )
+  # Check that shared-constants properly imports from @topems/tokens
+  shared_constants_colors="$ROOT_DIR/packages/shared-constants/src/colors.ts"
+  shared_constants_generated="$ROOT_DIR/packages/shared-constants/src/generated-constants.ts"
 
-  for f in "${manual_color_files[@]}"; do
-    filepath="$ROOT_DIR/$f"
-    if [[ -f "$filepath" ]]; then
-      # Check if it's just a re-export from generated-colors (acceptable)
-      if grep -q "generated-colors" "$filepath" 2>/dev/null; then
-        : # re-export is fine
-      else
-        echo "    ${YELLOW}WARNING${RESET} Manual color file still exists: $f"
-        echo "    It should re-export from generated-colors.ts or be removed."
-      fi
+  if [[ -f "$shared_constants_colors" ]]; then
+    if grep -q "@topems/tokens" "$shared_constants_colors" 2>/dev/null; then
+      : # imports from tokens, good
+    else
+      echo "    ${YELLOW}WARNING${RESET} colors.ts does not import from @topems/tokens"
     fi
-  done
+  fi
+
+  if [[ -f "$shared_constants_generated" ]]; then
+    if grep -q "@topems/tokens" "$shared_constants_generated" 2>/dev/null; then
+      : # imports from tokens, good
+    else
+      echo "    ${YELLOW}WARNING${RESET} generated-constants.ts does not import from @topems/tokens"
+    fi
+  fi
 
   if $token_consistent; then
     pass

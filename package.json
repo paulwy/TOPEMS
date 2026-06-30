@@ -40,7 +40,6 @@
   ],
   "author": "TOPEMS Team",
   "license": "MIT",
-  "packageManager": "yarn@4.5.0",
   "dependencies": {
     "@mui/system": "^9.1.2",
     "@react-leaflet/core": "^3.0.0",

@@ -21,25 +21,25 @@ use sqlx::{postgres::PgPoolOptions, PgPool, Row};
 use uuid::Uuid;
 
 use topems_shared::{
-    auth_middleware, build_health_response, create_cors_layer,
-    init_logging, ApiResponse, AuthState, ServiceHealth,
+    auth_middleware, build_health_response, create_cors_layer, init_telemetry,
+    telemetry_middleware, ApiResponse, AuthState, ServiceHealth,
 };
 
-mod plugin;
 mod conversion_rules;
-mod rule_engine;
 mod event_bus;
-mod retry_handler;
-mod qms_lims_ehs;
-mod sync_retry;
 mod mes_erp_sync;
 mod mes_qms_integration;
+mod plugin;
+mod qms_lims_ehs;
+mod retry_handler;
+mod rule_engine;
+mod sync_retry;
 
 use conversion_rules::{
-    ConversionExecution, ConversionRule, CreateConversionRuleRequest, ExecuteConversionRequest,
-    ExecuteConversionResponse, UpdateConversionRuleRequest, get_predefined_rules,
-    init_conversion_rules_table, insert_conversion_rule, list_conversion_rules,
-    get_rule_executions, RuleStatus, TriggerType,
+    get_predefined_rules, get_rule_executions, init_conversion_rules_table, insert_conversion_rule,
+    list_conversion_rules, ConversionExecution, ConversionRule, CreateConversionRuleRequest,
+    ExecuteConversionRequest, ExecuteConversionResponse, RuleStatus, TriggerType,
+    UpdateConversionRuleRequest,
 };
 
 use mes_erp_sync::MesErpSyncService;
@@ -183,7 +183,7 @@ impl FromRef<AppState> for PgPool {
 async fn main() {
     dotenvy::dotenv().ok();
 
-    init_logging("topems-integration");
+    let _telemetry_guard = init_telemetry("topems-integration");
 
     tracing::info!("🚀 TOPEMS Integration Service starting...");
 
@@ -208,9 +208,10 @@ async fn main() {
         }
     };
 
-    let lims_url =
-        std::env::var("QUALITY_ASSURANCE_URL").unwrap_or_else(|_| "http://localhost:8052".to_string());
-    let qms_url = std::env::var("QUALITY_ASSURANCE_URL").unwrap_or_else(|_| "http://localhost:8052".to_string());
+    let lims_url = std::env::var("QUALITY_ASSURANCE_URL")
+        .unwrap_or_else(|_| "http://localhost:8052".to_string());
+    let qms_url = std::env::var("QUALITY_ASSURANCE_URL")
+        .unwrap_or_else(|_| "http://localhost:8052".to_string());
     let mes_url = std::env::var("MES_URL").unwrap_or_else(|_| "http://localhost:8030".to_string());
     let erp_url = std::env::var("ERP_URL").unwrap_or_else(|_| "http://localhost:8010".to_string());
     let wms_url = std::env::var("WMS_URL").unwrap_or_else(|_| "http://localhost:8042".to_string());
@@ -244,19 +245,31 @@ async fn main() {
         .route("/api/integration/lims-qms", get(list_lims_qms_sync))
         .route("/api/integration/lims-qms", post(create_lims_qms_sync))
         .route("/api/integration/lims-qms/{id}", get(get_lims_qms_sync))
-        .route(
-            "/api/integration/lims-qms/{id}/sync",
-            post(sync_lims_qms),
-        )
+        .route("/api/integration/lims-qms/{id}/sync", post(sync_lims_qms))
         .route("/api/integration/mes-erp", get(list_mes_erp_sync))
         .route("/api/integration/mes-erp", post(create_mes_erp_sync))
         .route("/api/integration/mes-erp/{id}", get(get_mes_erp_sync))
         .route("/api/integration/mes-erp/{id}/sync", post(sync_mes_erp))
-        .route("/api/integration/mes-erp/sync/erp-to-mes", post(sync_erp_order_to_mes))
-        .route("/api/integration/mes-erp/sync/mes-to-erp", post(sync_mes_progress_to_erp))
-        .route("/api/integration/mes-erp/{id}/retry", post(retry_mes_erp_sync))
-        .route("/api/integration/mes-erp/{id}/logs", get(get_mes_erp_sync_logs))
-        .route("/api/integration/mes-erp/records", get(list_mes_erp_sync_records))
+        .route(
+            "/api/integration/mes-erp/sync/erp-to-mes",
+            post(sync_erp_order_to_mes),
+        )
+        .route(
+            "/api/integration/mes-erp/sync/mes-to-erp",
+            post(sync_mes_progress_to_erp),
+        )
+        .route(
+            "/api/integration/mes-erp/{id}/retry",
+            post(retry_mes_erp_sync),
+        )
+        .route(
+            "/api/integration/mes-erp/{id}/logs",
+            get(get_mes_erp_sync_logs),
+        )
+        .route(
+            "/api/integration/mes-erp/records",
+            get(list_mes_erp_sync_records),
+        )
         .route("/api/integration/wms-scm", get(list_wms_scm_sync))
         .route("/api/integration/wms-scm", post(create_wms_scm_sync))
         .route("/api/integration/wms-scm/{id}", get(get_wms_scm_sync))
@@ -265,21 +278,54 @@ async fn main() {
         .route("/api/integration/mes-qms", get(list_mes_qms_sync_api))
         .route("/api/integration/mes-qms/{id}", get(get_mes_qms_sync_api))
         .route("/api/integration/mes-qms/stats", get(get_mes_qms_stats_api))
-        .route("/api/integration/mes-qms/trigger-inspection", post(trigger_qms_inspection_api))
-        .route("/api/integration/mes-qms/sync-result", post(sync_quality_result_api))
-        .route("/api/integration/mes-qms/sync-trace", post(sync_trace_chain_api))
-        .route("/api/integration/mes-qms/defect-handling", post(defect_handling_api))
-        .route("/api/integration/mes-qms/{id}/retry", post(retry_mes_qms_sync_api))
+        .route(
+            "/api/integration/mes-qms/trigger-inspection",
+            post(trigger_qms_inspection_api),
+        )
+        .route(
+            "/api/integration/mes-qms/sync-result",
+            post(sync_quality_result_api),
+        )
+        .route(
+            "/api/integration/mes-qms/sync-trace",
+            post(sync_trace_chain_api),
+        )
+        .route(
+            "/api/integration/mes-qms/defect-handling",
+            post(defect_handling_api),
+        )
+        .route(
+            "/api/integration/mes-qms/{id}/retry",
+            post(retry_mes_qms_sync_api),
+        )
         // 转换规则 API
         .route("/api/integration/rules", get(list_conversion_rules_api))
         .route("/api/integration/rules", post(create_conversion_rule_api))
         .route("/api/integration/rules/{id}", get(get_conversion_rule_api))
-        .route("/api/integration/rules/{id}", put(update_conversion_rule_api))
-        .route("/api/integration/rules/{id}", delete(delete_conversion_rule_api))
-        .route("/api/integration/rules/{id}/executions", get(get_rule_executions_api))
-        .route("/api/integration/rules/{id}/execute", post(execute_conversion_rule_api))
-        .route("/api/integration/rules/{id}/enable", post(enable_conversion_rule_api))
-        .route("/api/integration/rules/{id}/disable", post(disable_conversion_rule_api))
+        .route(
+            "/api/integration/rules/{id}",
+            put(update_conversion_rule_api),
+        )
+        .route(
+            "/api/integration/rules/{id}",
+            delete(delete_conversion_rule_api),
+        )
+        .route(
+            "/api/integration/rules/{id}/executions",
+            get(get_rule_executions_api),
+        )
+        .route(
+            "/api/integration/rules/{id}/execute",
+            post(execute_conversion_rule_api),
+        )
+        .route(
+            "/api/integration/rules/{id}/enable",
+            post(enable_conversion_rule_api),
+        )
+        .route(
+            "/api/integration/rules/{id}/disable",
+            post(disable_conversion_rule_api),
+        )
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
@@ -289,6 +335,7 @@ async fn main() {
     let app = Router::new()
         .merge(public_routes)
         .merge(protected_routes)
+        .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(cors);
 
     let port = std::env::var("SERVER_PORT")
@@ -933,12 +980,20 @@ async fn sync_wms_scm(
 
 // ==================== Conversion Rules API ====================
 
-async fn list_conversion_rules_api(State(state): State<AppState>) -> Json<ApiResponse<Vec<ConversionRule>>> {
+async fn list_conversion_rules_api(
+    State(state): State<AppState>,
+) -> Json<ApiResponse<Vec<ConversionRule>>> {
     match list_conversion_rules(&state.pool).await {
-        Ok(rules) => Json(ApiResponse::success(rules, "Conversion rules retrieved successfully")),
+        Ok(rules) => Json(ApiResponse::success(
+            rules,
+            "Conversion rules retrieved successfully",
+        )),
         Err(e) => {
             tracing::error!("Failed to fetch conversion rules: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to fetch conversion rules: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to fetch conversion rules: {}", e),
+            ))
         }
     }
 }
@@ -947,18 +1002,19 @@ async fn get_conversion_rule_api(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ConversionRule>> {
-    match sqlx::query_as::<_, ConversionRule>(
-        "SELECT * FROM conversion_rules WHERE id = $1",
-    )
-    .bind(id)
-    .fetch_one(&state.pool)
-    .await
+    match sqlx::query_as::<_, ConversionRule>("SELECT * FROM conversion_rules WHERE id = $1")
+        .bind(id)
+        .fetch_one(&state.pool)
+        .await
     {
         Ok(rule) => Json(ApiResponse::success(rule, "Conversion rule found")),
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "Conversion rule not found")),
         Err(e) => {
             tracing::error!("Failed to fetch conversion rule: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to fetch conversion rule: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to fetch conversion rule: {}", e),
+            ))
         }
     }
 }
@@ -969,7 +1025,7 @@ async fn create_conversion_rule_api(
 ) -> Json<ApiResponse<ConversionRule>> {
     let id = Uuid::new_v4();
     let now = Utc::now();
-    
+
     let rule = ConversionRule {
         id,
         code: req.code,
@@ -981,7 +1037,8 @@ async fn create_conversion_rule_api(
         target_entity: req.target_entity,
         trigger_type: req.trigger_type,
         trigger_condition: req.trigger_condition,
-        field_mappings: serde_json::to_value(&req.field_mappings).unwrap_or(serde_json::Value::Array(vec![])),
+        field_mappings: serde_json::to_value(&req.field_mappings)
+            .unwrap_or(serde_json::Value::Array(vec![])),
         transform_script: req.transform_script,
         status: RuleStatus::Draft,
         priority: req.priority.unwrap_or(100),
@@ -992,12 +1049,18 @@ async fn create_conversion_rule_api(
         created_at: now,
         updated_at: now,
     };
-    
+
     match insert_conversion_rule(&state.pool, &rule).await {
-        Ok(_) => Json(ApiResponse::success(rule, "Conversion rule created successfully")),
+        Ok(_) => Json(ApiResponse::success(
+            rule,
+            "Conversion rule created successfully",
+        )),
         Err(e) => {
             tracing::error!("Failed to create conversion rule: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to create conversion rule: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to create conversion rule: {}", e),
+            ))
         }
     }
 }
@@ -1008,7 +1071,7 @@ async fn update_conversion_rule_api(
     Json(req): Json<UpdateConversionRuleRequest>,
 ) -> Json<ApiResponse<ConversionRule>> {
     let now = Utc::now();
-    
+
     let row = sqlx::query(
         "UPDATE conversion_rules SET name = COALESCE($1, name), description = COALESCE($2, description), trigger_type = COALESCE($3, trigger_type), trigger_condition = COALESCE($4, trigger_condition), field_mappings = COALESCE($5, field_mappings), transform_script = COALESCE($6, transform_script), status = COALESCE($7, status), priority = COALESCE($8, priority), is_enabled = COALESCE($9, is_enabled), max_retries = COALESCE($10, max_retries), retry_interval_secs = COALESCE($11, retry_interval_secs), stop_on_failure = COALESCE($12, stop_on_failure), updated_at = $13 WHERE id = $14 RETURNING id, code, name, description, source_system, source_entity, target_system, target_entity, trigger_type, trigger_condition, field_mappings, transform_script, status, priority, is_enabled, max_retries, retry_interval_secs, stop_on_failure, created_at::TEXT, updated_at::TEXT"
     )
@@ -1028,34 +1091,40 @@ async fn update_conversion_rule_api(
     .bind(id)
     .fetch_one(&state.pool)
     .await;
-    
+
     match row {
-        Ok(r) => Json(ApiResponse::success(ConversionRule {
-            id: r.get("id"),
-            code: r.get("code"),
-            name: r.get("name"),
-            description: r.get("description"),
-            source_system: r.get("source_system"),
-            source_entity: r.get("source_entity"),
-            target_system: r.get("target_system"),
-            target_entity: r.get("target_entity"),
-            trigger_type: TriggerType::from_str(r.get::<String, _>("trigger_type").as_str()),
-            trigger_condition: r.get("trigger_condition"),
-            field_mappings: r.get("field_mappings"),
-            transform_script: r.get("transform_script"),
-            status: RuleStatus::from_str(r.get::<String, _>("status").as_str()),
-            priority: r.get("priority"),
-            is_enabled: r.get("is_enabled"),
-            max_retries: r.get("max_retries"),
-            retry_interval_secs: r.get("retry_interval_secs"),
-            stop_on_failure: r.get("stop_on_failure"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "Conversion rule updated successfully")),
+        Ok(r) => Json(ApiResponse::success(
+            ConversionRule {
+                id: r.get("id"),
+                code: r.get("code"),
+                name: r.get("name"),
+                description: r.get("description"),
+                source_system: r.get("source_system"),
+                source_entity: r.get("source_entity"),
+                target_system: r.get("target_system"),
+                target_entity: r.get("target_entity"),
+                trigger_type: TriggerType::from_str(r.get::<String, _>("trigger_type").as_str()),
+                trigger_condition: r.get("trigger_condition"),
+                field_mappings: r.get("field_mappings"),
+                transform_script: r.get("transform_script"),
+                status: RuleStatus::from_str(r.get::<String, _>("status").as_str()),
+                priority: r.get("priority"),
+                is_enabled: r.get("is_enabled"),
+                max_retries: r.get("max_retries"),
+                retry_interval_secs: r.get("retry_interval_secs"),
+                stop_on_failure: r.get("stop_on_failure"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "Conversion rule updated successfully",
+        )),
         Err(sqlx::Error::RowNotFound) => Json(ApiResponse::error(404, "Conversion rule not found")),
         Err(e) => {
             tracing::error!("Failed to update conversion rule: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to update conversion rule: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to update conversion rule: {}", e),
+            ))
         }
     }
 }
@@ -1073,12 +1142,18 @@ async fn delete_conversion_rule_api(
             if result.rows_affected() == 0 {
                 Json(ApiResponse::error(404, "Conversion rule not found"))
             } else {
-                Json(ApiResponse::success((), "Conversion rule deleted successfully"))
+                Json(ApiResponse::success(
+                    (),
+                    "Conversion rule deleted successfully",
+                ))
             }
         }
         Err(e) => {
             tracing::error!("Failed to delete conversion rule: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to delete conversion rule: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to delete conversion rule: {}", e),
+            ))
         }
     }
 }
@@ -1088,10 +1163,16 @@ async fn get_rule_executions_api(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<ConversionExecution>>> {
     match get_rule_executions(&state.pool, id, 100).await {
-        Ok(executions) => Json(ApiResponse::success(executions, "Rule executions retrieved successfully")),
+        Ok(executions) => Json(ApiResponse::success(
+            executions,
+            "Rule executions retrieved successfully",
+        )),
         Err(e) => {
             tracing::error!("Failed to fetch rule executions: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to fetch rule executions: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to fetch rule executions: {}", e),
+            ))
         }
     }
 }
@@ -1101,30 +1182,32 @@ async fn execute_conversion_rule_api(
     Path(id): Path<Uuid>,
     Json(req): Json<ExecuteConversionRequest>,
 ) -> Json<ApiResponse<ExecuteConversionResponse>> {
-    let rule = match sqlx::query_as::<_, ConversionRule>(
-        "SELECT * FROM conversion_rules WHERE id = $1",
-    )
-    .bind(id)
-    .fetch_one(&state.pool)
-    .await
-    {
-        Ok(r) => r,
-        Err(sqlx::Error::RowNotFound) => {
-            return Json(ApiResponse::error(404, "Conversion rule not found"))
-        }
-        Err(e) => {
-            tracing::error!("Failed to fetch rule: {}", e);
-            return Json(ApiResponse::error(500, &format!("Failed to fetch rule: {}", e)));
-        }
-    };
-    
+    let rule =
+        match sqlx::query_as::<_, ConversionRule>("SELECT * FROM conversion_rules WHERE id = $1")
+            .bind(id)
+            .fetch_one(&state.pool)
+            .await
+        {
+            Ok(r) => r,
+            Err(sqlx::Error::RowNotFound) => {
+                return Json(ApiResponse::error(404, "Conversion rule not found"))
+            }
+            Err(e) => {
+                tracing::error!("Failed to fetch rule: {}", e);
+                return Json(ApiResponse::error(
+                    500,
+                    &format!("Failed to fetch rule: {}", e),
+                ));
+            }
+        };
+
     if !rule.is_enabled {
         return Json(ApiResponse::error(400, "Conversion rule is not enabled"));
     }
-    
+
     let execution_id = Uuid::new_v4();
     let now = Utc::now();
-    
+
     let _ = sqlx::query(
         "INSERT INTO conversion_executions (id, rule_id, rule_code, source_record_id, source_data, status, created_at)
          VALUES ($1, $2, $3, $4, $5, $6, $7)",
@@ -1138,7 +1221,7 @@ async fn execute_conversion_rule_api(
     .bind(now)
     .execute(&state.pool)
     .await;
-    
+
     let response = ExecuteConversionResponse {
         execution_id,
         success: true,
@@ -1147,7 +1230,7 @@ async fn execute_conversion_rule_api(
         message: "Conversion executed successfully".to_string(),
         error_message: None,
     };
-    
+
     let _ = sqlx::query(
         "UPDATE conversion_executions SET status = $1, completed_at = $2, target_record_id = $3, target_data = $4
          WHERE id = $5",
@@ -1159,8 +1242,11 @@ async fn execute_conversion_rule_api(
     .bind(execution_id)
     .execute(&state.pool)
     .await;
-    
-    Json(ApiResponse::success(response, "Conversion executed successfully"))
+
+    Json(ApiResponse::success(
+        response,
+        "Conversion executed successfully",
+    ))
 }
 
 async fn enable_conversion_rule_api(
@@ -1214,15 +1300,24 @@ async fn list_mes_qms_sync_api(
     let sync_type = query.get("sync_type").map(|s| s.as_str());
     let direction = query.get("direction").map(|s| s.as_str());
     let status = query.get("status").map(|s| s.as_str());
-    let limit = query.get("limit")
+    let limit = query
+        .get("limit")
         .and_then(|s| s.parse::<i64>().ok())
         .unwrap_or(100);
 
-    match mes_qms_integration::list_mes_qms_sync(&state.pool, sync_type, direction, status, limit).await {
-        Ok(syncs) => Json(ApiResponse::success(syncs, "MES↔QMS sync records retrieved successfully")),
+    match mes_qms_integration::list_mes_qms_sync(&state.pool, sync_type, direction, status, limit)
+        .await
+    {
+        Ok(syncs) => Json(ApiResponse::success(
+            syncs,
+            "MES↔QMS sync records retrieved successfully",
+        )),
         Err(e) => {
             tracing::error!("Failed to fetch MES↔QMS syncs: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to fetch MES↔QMS syncs: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to fetch MES↔QMS syncs: {}", e),
+            ))
         }
     }
 }
@@ -1236,7 +1331,10 @@ async fn get_mes_qms_sync_api(
         Ok(None) => Json(ApiResponse::error(404, "MES↔QMS sync not found")),
         Err(e) => {
             tracing::error!("Failed to fetch MES↔QMS sync: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to fetch MES↔QMS sync: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to fetch MES↔QMS sync: {}", e),
+            ))
         }
     }
 }
@@ -1245,10 +1343,16 @@ async fn get_mes_qms_stats_api(
     State(state): State<AppState>,
 ) -> Json<ApiResponse<mes_qms_integration::SyncStats>> {
     match mes_qms_integration::get_mes_qms_sync_stats(&state.pool).await {
-        Ok(stats) => Json(ApiResponse::success(stats, "MES↔QMS sync stats retrieved successfully")),
+        Ok(stats) => Json(ApiResponse::success(
+            stats,
+            "MES↔QMS sync stats retrieved successfully",
+        )),
         Err(e) => {
             tracing::error!("Failed to fetch MES↔QMS stats: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to fetch MES↔QMS stats: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to fetch MES↔QMS stats: {}", e),
+            ))
         }
     }
 }
@@ -1262,11 +1366,19 @@ async fn trigger_qms_inspection_api(
         &state.mes_url,
         &state.qms_url,
         &req,
-    ).await {
-        Ok(sync) => Json(ApiResponse::success(sync, "QMS inspection triggered successfully")),
+    )
+    .await
+    {
+        Ok(sync) => Json(ApiResponse::success(
+            sync,
+            "QMS inspection triggered successfully",
+        )),
         Err(e) => {
             tracing::error!("Failed to trigger QMS inspection: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to trigger QMS inspection: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to trigger QMS inspection: {}", e),
+            ))
         }
     }
 }
@@ -1280,11 +1392,19 @@ async fn sync_quality_result_api(
         &state.mes_url,
         &state.qms_url,
         &req,
-    ).await {
-        Ok(sync) => Json(ApiResponse::success(sync, "Quality result synced to MES successfully")),
+    )
+    .await
+    {
+        Ok(sync) => Json(ApiResponse::success(
+            sync,
+            "Quality result synced to MES successfully",
+        )),
         Err(e) => {
             tracing::error!("Failed to sync quality result to MES: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to sync quality result to MES: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to sync quality result to MES: {}", e),
+            ))
         }
     }
 }
@@ -1298,11 +1418,19 @@ async fn sync_trace_chain_api(
         &state.mes_url,
         &state.qms_url,
         &req,
-    ).await {
-        Ok(sync) => Json(ApiResponse::success(sync, "Trace chain data synced successfully")),
+    )
+    .await
+    {
+        Ok(sync) => Json(ApiResponse::success(
+            sync,
+            "Trace chain data synced successfully",
+        )),
         Err(e) => {
             tracing::error!("Failed to sync trace chain data: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to sync trace chain data: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to sync trace chain data: {}", e),
+            ))
         }
     }
 }
@@ -1316,11 +1444,19 @@ async fn defect_handling_api(
         &state.mes_url,
         &state.qms_url,
         &req,
-    ).await {
-        Ok(sync) => Json(ApiResponse::success(sync, "Defect handling processed successfully")),
+    )
+    .await
+    {
+        Ok(sync) => Json(ApiResponse::success(
+            sync,
+            "Defect handling processed successfully",
+        )),
         Err(e) => {
             tracing::error!("Failed to process defect handling: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to process defect handling: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to process defect handling: {}", e),
+            ))
         }
     }
 }
@@ -1329,16 +1465,19 @@ async fn retry_mes_qms_sync_api(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<mes_qms_integration::MesQmsSync>> {
-    match mes_qms_integration::retry_failed_sync(
-        &state.pool,
-        &state.mes_url,
-        &state.qms_url,
-        id,
-    ).await {
-        Ok(sync) => Json(ApiResponse::success(sync, "MES↔QMS sync retried successfully")),
+    match mes_qms_integration::retry_failed_sync(&state.pool, &state.mes_url, &state.qms_url, id)
+        .await
+    {
+        Ok(sync) => Json(ApiResponse::success(
+            sync,
+            "MES↔QMS sync retried successfully",
+        )),
         Err(e) => {
             tracing::error!("Failed to retry MES↔QMS sync: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to retry MES↔QMS sync: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to retry MES↔QMS sync: {}", e),
+            ))
         }
     }
 }
@@ -1362,11 +1501,18 @@ async fn sync_erp_order_to_mes(
     let erp_order_id = match Uuid::parse_str(&req.erp_order_id) {
         Ok(id) => id,
         Err(e) => {
-            return Json(ApiResponse::error(400, &format!("Invalid ERP order ID: {}", e)));
+            return Json(ApiResponse::error(
+                400,
+                &format!("Invalid ERP order ID: {}", e),
+            ));
         }
     };
 
-    match state.mes_erp_sync_service.sync_erp_to_mes(erp_order_id).await {
+    match state
+        .mes_erp_sync_service
+        .sync_erp_to_mes(erp_order_id)
+        .await
+    {
         Ok(result) => Json(ApiResponse::success(result, "ERP→MES 同步成功")),
         Err(e) => {
             tracing::error!("ERP→MES sync failed: {}", e);
@@ -1382,15 +1528,25 @@ async fn sync_mes_progress_to_erp(
     let mes_order_id = match Uuid::parse_str(&req.mes_order_id) {
         Ok(id) => id,
         Err(e) => {
-            return Json(ApiResponse::error(400, &format!("Invalid MES order ID: {}", e)));
+            return Json(ApiResponse::error(
+                400,
+                &format!("Invalid MES order ID: {}", e),
+            ));
         }
     };
 
-    match state.mes_erp_sync_service.sync_mes_progress_to_erp(mes_order_id).await {
+    match state
+        .mes_erp_sync_service
+        .sync_mes_progress_to_erp(mes_order_id)
+        .await
+    {
         Ok(result) => Json(ApiResponse::success(result, "MES→ERP 进度同步成功")),
         Err(e) => {
             tracing::error!("MES→ERP progress sync failed: {}", e);
-            Json(ApiResponse::error(500, &format!("MES→ERP 进度同步失败: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("MES→ERP 进度同步失败: {}", e),
+            ))
         }
     }
 }
@@ -1403,7 +1559,10 @@ async fn retry_mes_erp_sync(
         Ok(result) => Json(ApiResponse::success(result, "MES↔ERP 同步重试成功")),
         Err(e) => {
             tracing::error!("MES↔ERP sync retry failed: {}", e);
-            Json(ApiResponse::error(500, &format!("MES↔ERP 同步重试失败: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("MES↔ERP 同步重试失败: {}", e),
+            ))
         }
     }
 }
@@ -1427,14 +1586,20 @@ async fn list_mes_erp_sync_records(
 ) -> Json<ApiResponse<Vec<mes_erp_sync::MesErpSyncRecord>>> {
     let direction = query.get("direction").map(|s| s.as_str());
     let status = query.get("status").map(|s| s.as_str());
-    let limit = query.get("limit")
+    let limit = query
+        .get("limit")
         .and_then(|s| s.parse::<i64>().ok())
         .unwrap_or(100);
-    let offset = query.get("offset")
+    let offset = query
+        .get("offset")
         .and_then(|s| s.parse::<i64>().ok())
         .unwrap_or(0);
 
-    match state.mes_erp_sync_service.list_sync_records(direction, status, limit, offset).await {
+    match state
+        .mes_erp_sync_service
+        .list_sync_records(direction, status, limit, offset)
+        .await
+    {
         Ok(records) => Json(ApiResponse::success(records, "同步记录获取成功")),
         Err(e) => {
             tracing::error!("Failed to fetch sync records: {}", e);

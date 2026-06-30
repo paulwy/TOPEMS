@@ -1,0 +1,133 @@
+# TOPEMS Observability Stack - Docker Compose
+# 可观测性技术栈：Prometheus + Grafana + Jaeger + Loki + Alertmanager
+# 使用方式：docker compose -f docker-compose.observability.yml up -d
+
+services:
+  # ================================================
+  # Prometheus - 指标收集与存储
+  # ================================================
+  prometheus:
+    image: prom/prometheus:v2.51.0
+    container_name: topems-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=30d'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+    restart: unless-stopped
+    networks:
+      - topems-observability
+
+  # ================================================
+  # Grafana - 可视化仪表盘
+  # ================================================
+  grafana:
+    image: grafana/grafana:10.4.0
+    container_name: topems-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=topems_admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-piechart-panel,grafana-clock-panel
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+      - loki
+    networks:
+      - topems-observability
+
+  # ================================================
+  # Jaeger - 分布式链路追踪
+  # ================================================
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    container_name: topems-jaeger
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      - "4318:4318"
+      - "9411:9411"
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - COLLECTOR_ZIPKIN_HOST_PORT=:9411
+      - SPAN_STORAGE_TYPE=memory
+      - MEMORY_MAX_TRACES=10000
+      - JAEGER_DISABLED=false
+    restart: unless-stopped
+    networks:
+      - topems-observability
+
+  # ================================================
+  # Loki - 日志聚合
+  # ================================================
+  loki:
+    image: grafana/loki:2.9.4
+    container_name: topems-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki-data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    restart: unless-stopped
+    networks:
+      - topems-observability
+
+  # ================================================
+  # Alertmanager - 告警管理
+  # ================================================
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    container_name: topems-alertmanager
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./docker/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager-data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+    restart: unless-stopped
+    networks:
+      - topems-observability
+
+  # ================================================
+  # Node Exporter - 主机指标（可选）
+  # ================================================
+  node-exporter:
+    image: prom/node-exporter:v1.7.0
+    container_name: topems-node-exporter
+    ports:
+      - "9100:9100"
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    restart: unless-stopped
+    networks:
+      - topems-observability
+
+volumes:
+  prometheus-data:
+  grafana-data:
+  loki-data:
+  alertmanager-data:
+
+networks:
+  topems-observability:
+    driver: bridge

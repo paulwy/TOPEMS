@@ -1,5 +1,6 @@
 // 页面模板组件
 // 用于统一页面布局和样式
+// 核心8种模板：dashboard, list, detail, form, tree, stats, settings, kanban
 
 export { PageHeader } from './PageHeader';
 export type { BreadcrumbItem, PageAction, PageHeaderProps } from './PageHeader';
@@ -147,3 +148,16 @@ export type {
   PaginationConfig as MasterPaginationConfig,
   MasterDetailPageTemplateProps,
 } from './MasterDetailPageTemplate';
+
+export {
+  TEMPLATE_CLASSIFICATIONS,
+  CORE_8_TEMPLATES,
+  getTemplateByType,
+  getTemplatesByCategory,
+  getHighFrequencyTemplates,
+  recommendTemplate,
+};
+export type {
+  PageTemplateType,
+  TemplateClassification,
+} from './classification';

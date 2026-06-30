@@ -34,12 +34,12 @@
     "react": "^18.0.0 || ^19.0.0"
   },
   "dependencies": {
-    "@topems/shared-types": "^1.0.0",
-    "@topems/shared-utils": "^1.0.0"
+    "@topems/shared-types": "workspace:*",
+    "@topems/shared-utils": "workspace:*"
   },
   "devDependencies": {
     "@types/react": "^19.2.3",
     "@types/react-dom": "^19.2.3",
-    "typescript": "^5.0.0"
+    "typescript": "^6.0.3"
   }
 }

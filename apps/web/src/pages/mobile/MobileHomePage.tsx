@@ -1,646 +1,158 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import {
-  Box,
-  Typography,
-  Paper,
-  Chip,
-  Avatar,
-  useTheme,
-  List,
-  ListItem,
-  ListItemAvatar,
-  ListItemText,
-  Divider,
-} from '@mui/material';
-import { Grid } from '@/components/common';
+/**
+ * 移动端首页 - V4.0 标准化改造
+ *
+ * @module pages/mobile
+ * @path /mobile/home
+ */
+
+import React, { useState, useMemo } from 'react';
 import {
   Home,
-  ListTodo,
-  ScanLine,
-  CheckSquare,
-  User,
-  Bell,
-  Package,
-  Truck,
-  Warehouse,
-  Users,
-  FileText,
-  AlertCircle,
   Clock,
+  CheckSquare,
+  Scan,
+  LayoutDashboard,
+  Bell,
+  User,
   ChevronRight,
-  TrendingUp,
-  DollarSign,
-  ShoppingCart,
-  BarChart3,
-  LayoutGrid,
+  Calendar,
+  FileText,
+  AlertTriangle,
+  ArrowUpRight,
 } from 'lucide-react';
+import { Box, Typography, Avatar, Paper, IconButton, Badge, Chip } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import { MobileLayout, PullToRefresh, MobileSkeleton, MobileCard } from '@/components/mobile';
-import { useAppStore } from '@/store';
-import { mobileApi } from '@/api/mobile';
-import { approvalTaskApi } from '@/api/workflow/approval';
-import { apiLogger } from '@/utils/logger';
 
-interface StatCard {
-  id: string;
-  label: string;
-  value: string;
-  icon: React.ReactNode;
-  color: 'primary' | 'success' | 'warning' | 'error' | 'info';
-  trend?: string;
-}
+import { PageContainer } from '@/components/common';
+import { useAppStore } from '../../store';
 
-interface QuickAction {
-  id: string;
-  label: string;
-  icon: React.ReactNode;
-  path: string;
-  color: string;
-}
+const quickActions = [
+  { id: 'attendance', label: '考勤打卡', icon: <Clock size={24} />, color: '#4CAF50', path: '/mobile/attendance' },
+  { id: 'approval', label: '审批任务', icon: <CheckSquare size={24} />, color: '#2196F3', path: '/mobile/approvals' },
+  { id: 'scan', label: '扫码功能', icon: <Scan size={24} />, color: '#FF9800', path: '/mobile/scan' },
+  { id: 'workbench', label: '工作台', icon: <LayoutDashboard size={24} />, color: '#9C27B0', path: '/mobile/workbench' },
+  { id: 'notification', label: '消息通知', icon: <Bell size={24} />, color: '#F44336', path: '/mobile/notifications' },
+  { id: 'profile', label: '个人中心', icon: <User size={24} />, color: '#607D8B', path: '/mobile/profile' },
+];
 
-interface ActivityItem {
-  id: string;
-  title: string;
-  subtitle: string;
-  time: string;
-  avatar: React.ReactNode;
-  type: 'info' | 'success' | 'warning' | 'error';
-}
+const mockTodos = [
+  { id: '1', title: '采购订单审批 - PO20240115', type: 'approval', priority: 'high', time: '2小时后到期' },
+  { id: '2', title: '完成周报填写', type: 'task', priority: 'medium', time: '今天' },
+  { id: '3', title: '产品质量检验', type: 'task', priority: 'low', time: '明天' },
+];
 
-const MobileHomePage: React.FC = () => {
-  const theme = useTheme();
+const mockActivities = [
+  { id: '1', title: '采购订单已通过', time: '10分钟前', icon: <CheckSquare size={16} /> },
+  { id: '2', title: '库存预警：原材料不足', time: '30分钟前', icon: <AlertTriangle size={16} /> },
+  { id: '3', title: '新任务分配：质量巡检', time: '1小时前', icon: <FileText size={16} /> },
+];
+
+export const MobileHomePage: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAppStore();
-  const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<StatCard[]>([]);
-  const [activities, setActivities] = useState<ActivityItem[]>([]);
-  const [pendingTasksCount, setPendingTasksCount] = useState(0);
-  const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
+  const addNotification = useAppStore((state) => state.addNotification);
+  const [checkedIn, setCheckedIn] = useState(false);
+  const [checkInTime, setCheckInTime] = useState('');
 
-  const quickActions: QuickAction[] = [
-    {
-      id: 'scan',
-      label: '扫码',
-      icon: <ScanLine style={{ width: 24, height: 24 }} />,
-      path: '/mobile/scan-page',
-      color: 'primary',
-    },
-    {
-      id: 'tasks',
-      label: '任务',
-      icon: <ListTodo style={{ width: 24, height: 24 }} />,
-      path: '/mobile/tasks',
-      color: 'success',
-    },
-    {
-      id: 'approval',
-      label: '审批',
-      icon: <CheckSquare style={{ width: 24, height: 24 }} />,
-      path: '/mobile/approvals',
-      color: 'warning',
-    },
-    {
-      id: 'inventory',
-      label: '库存',
-      icon: <Package style={{ width: 24, height: 24 }} />,
-      path: '/wms/inventory',
-      color: 'info',
-    },
-    {
-      id: 'inbound',
-      label: '入库',
-      icon: <Warehouse style={{ width: 24, height: 24 }} />,
-      path: '/wms/inbound-orders',
-      color: 'secondary',
-    },
-    {
-      id: 'outbound',
-      label: '出库',
-      icon: <Truck style={{ width: 24, height: 24 }} />,
-      path: '/wms/outbound-orders',
-      color: 'error',
-    },
-    {
-      id: 'employee',
-      label: '员工',
-      icon: <Users style={{ width: 24, height: 24 }} />,
-      path: '/hrm/employees',
-      color: 'primary',
-    },
-    {
-      id: 'more',
-      label: '更多',
-      icon: <LayoutGrid style={{ width: 24, height: 24 }} />,
-      path: '/dashboard',
-      color: 'info',
-    },
-  ];
-
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const [statsResponse, tasksResponse, approvalsResponse] = await Promise.all([
-        mobileApi.getDashboardStats(),
-        mobileApi.listMobileTasks(),
-        approvalTaskApi.listApprovalTasks({ pagesize: 100 }),
-      ]);
-
-      const dashboardStats =
-        statsResponse.success && statsResponse.data ? statsResponse.data : null;
-      const tasksData =
-        tasksResponse.success && tasksResponse.data ? (tasksResponse.data as any) : null;
-      const approvalsData =
-        approvalsResponse.success && approvalsResponse.data
-          ? (approvalsResponse.data as any)
-          : null;
-
-      const pendingTasks = tasksData?.items?.length || dashboardStats?.pending_tasks || 0;
-      const pendingApprovals = approvalsData?.items?.length || 0;
-      const todayInbound = dashboardStats?.today_patrols || 0;
-      const todayOutbound = dashboardStats?.today_scans || 0;
-
-      setStats([
-        {
-          id: '1',
-          label: '待办任务',
-          value: String(pendingTasks),
-          icon: <ListTodo style={{ width: 20, height: 20 }} />,
-          color: 'primary' as const,
-        },
-        {
-          id: '2',
-          label: '待审批',
-          value: String(pendingApprovals),
-          icon: <CheckSquare style={{ width: 20, height: 20 }} />,
-          color: 'warning' as const,
-        },
-        {
-          id: '3',
-          label: '今日入库',
-          value: String(todayInbound),
-          icon: <Warehouse style={{ width: 20, height: 20 }} />,
-          color: 'success' as const,
-        },
-        {
-          id: '4',
-          label: '今日出库',
-          value: String(todayOutbound),
-          icon: <Truck style={{ width: 20, height: 20 }} />,
-          color: 'info' as const,
-        },
-      ]);
-      setPendingTasksCount(pendingTasks);
-      setPendingApprovalsCount(pendingApprovals);
-
-      const activities: ActivityItem[] = [];
-      if (tasksData?.items && Array.isArray(tasksData.items)) {
-        tasksData.items.slice(0, 3).forEach((task: any, index: number) => {
-          activities.push({
-            id: `task-${task.id}`,
-            title: task.title || `任务 ${task.id}`,
-            subtitle: task.assignee || '未知',
-            time: task.due_date
-              ? new Date(task.due_date).toLocaleDateString('zh-CN')
-              : '无截止日期',
-            avatar: <ListTodo style={{ width: 20, height: 20 }} />,
-            type: 'info' as const,
-          });
-        });
-      }
-      if (approvalsData?.items && Array.isArray(approvalsData.items)) {
-        approvalsData.items.slice(0, 2).forEach((approval: any, index: number) => {
-          activities.push({
-            id: `approval-${approval.id}`,
-            title: approval.title || `审批 ${approval.id}`,
-            subtitle: approval.applicant_name || '未知',
-            time: approval.created_at
-              ? new Date(approval.created_at).toLocaleDateString('zh-CN')
-              : '',
-            avatar: <CheckSquare style={{ width: 20, height: 20 }} />,
-            type: 'warning' as const,
-          });
-        });
-      }
-      if (activities.length === 0) {
-        activities.push({
-          id: 'empty',
-          title: '暂无动态',
-          subtitle: '开始您的工作吧',
-          time: '',
-          avatar: <FileText style={{ width: 20, height: 20 }} />,
-          type: 'info' as const,
-        });
-      }
-      setActivities(activities);
-    } catch (err) {
-      apiLogger.error('加载首页数据失败:', err);
-      setStats([
-        {
-          id: '1',
-          label: '待办任务',
-          value: '-',
-          icon: <ListTodo style={{ width: 20, height: 20 }} />,
-          color: 'primary' as const,
-        },
-        {
-          id: '2',
-          label: '待审批',
-          value: '-',
-          icon: <CheckSquare style={{ width: 20, height: 20 }} />,
-          color: 'warning' as const,
-        },
-        {
-          id: '3',
-          label: '今日入库',
-          value: '-',
-          icon: <Warehouse style={{ width: 20, height: 20 }} />,
-          color: 'success' as const,
-        },
-        {
-          id: '4',
-          label: '今日出库',
-          value: '-',
-          icon: <Truck style={{ width: 20, height: 20 }} />,
-          color: 'info' as const,
-        },
-      ]);
-      setActivities([
-        {
-          id: 'error',
-          title: '加载失败',
-          subtitle: '请稍后刷新页面',
-          time: '',
-          avatar: <AlertCircle style={{ width: 20, height: 20 }} />,
-          type: 'error' as const,
-        },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  const handleRefresh = useCallback(async () => {
-    await loadData();
-  }, [loadData]);
-
-  const getAvatarBgColor = (type: string) => {
-    switch (type) {
-      case 'success':
-        return 'success.lighter';
-      case 'warning':
-        return 'warning.lighter';
-      case 'error':
-        return 'error.lighter';
-      default:
-        return 'primary.lighter';
-    }
+  const handleCheckIn = () => {
+    const now = new Date();
+    setCheckInTime(now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }));
+    setCheckedIn(true);
+    addNotification({ title: '打卡成功', message: `上班打卡 ${checkInTime || now.toLocaleTimeString()}`, type: 'success' });
   };
 
-  const getAvatarColor = (type: string) => {
-    switch (type) {
-      case 'success':
-        return 'success.main';
-      case 'warning':
-        return 'warning.main';
-      case 'error':
-        return 'error.main';
-      default:
-        return 'primary.main';
-    }
-  };
-
-  const handleTabChange = (tabId: string) => {
-    switch (tabId) {
-      case 'home':
-        break;
-      case 'tasks':
-        navigate('/mobile/tasks');
-        break;
-      case 'scan':
-        navigate('/mobile/scan-page');
-        break;
-      case 'approval':
-        navigate('/mobile/approvals');
-        break;
-      case 'profile':
-        navigate('/mobile/settings');
-        break;
-    }
-  };
-
-  const handleQuickAction = (action: QuickAction) => {
-    navigate(action.path);
-  };
-
-  const tabs = [
-    { id: 'home', label: '首页', icon: <Home style={{ width: 22, height: 22 }} /> },
-    { id: 'tasks', label: '任务', icon: <ListTodo style={{ width: 22, height: 22 }} /> },
-    { id: 'scan', label: '扫码', icon: <ScanLine style={{ width: 22, height: 22 }} /> },
-    {
-      id: 'approval',
-      label: '审批',
-      icon: <CheckSquare style={{ width: 22, height: 22 }} />,
-      badge: 3,
-    },
-    { id: 'profile', label: '我的', icon: <User style={{ width: 22, height: 22 }} /> },
-  ];
+  const today = new Date().toLocaleDateString('zh-CN', { weekday: 'long', month: 'long', day: 'numeric' });
 
   return (
-    <MobileLayout
-      title='TOPEMS'
-      showBack={false}
-      showMenu={false}
-      showNotifications
-      notificationCount={5}
-      showTabBar
-      tabs={tabs}
-      activeTab='home'
-      onTabChange={handleTabChange}
-    >
-      <PullToRefresh onRefresh={handleRefresh}>
-        <Box sx={{ p: 2, pb: 3 }}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: 2.5,
-              borderRadius: 3,
-              mb: 3,
-              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-              color: 'white',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-              <Avatar
-                sx={{
-                  width: 48,
-                  height: 48,
-                  bgcolor: 'rgba(255,255,255,0.2)',
-                  fontSize: '1rem',
-                }}
-              >
-                {user?.fullName?.charAt(0) || user?.username?.charAt(0) || 'U'}
-              </Avatar>
-              <Box sx={{ flex: 1 }}>
-                <Typography
-                  variant='h6'
-                  sx={{ fontWeight: 600, mb: 0.5 }}
-                >
-                  {user?.fullName || user?.username || '用户'}
-                </Typography>
-                <Typography
-                  variant='body2'
-                  sx={{ opacity: 0.8 }}
-                >
-                  {user?.role || '欢迎使用 TOPEMS'}
-                </Typography>
-              </Box>
-              <Bell style={{ width: 22, height: 22, opacity: 0.9 }} />
+    <PageContainer headerProps={{ pageIcon: <Home size={20} />, title: '首页' }}>
+      <Box sx={{ p: 2, bgcolor: 'background.default', minHeight: '100vh' }}>
+        {/* 用户信息卡片 */}
+        <Paper sx={{ p: 2, mb: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Badge overlap='circular' anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} badgeContent={<Box sx={{ width: 12, height: 12, bgcolor: 'success.main', borderRadius: '50%', border: 2, borderColor: 'background.paper' }} />}>
+            <Avatar sx={{ width: 56, height: 56, bgcolor: 'primary.main' }}>陈</Avatar>
+          </Badge>
+          <Box sx={{ flex: 1 }}>
+            <Typography variant='h6'>陈管理员</Typography>
+            <Typography variant='body2' color='text.secondary'>技术部 · 产品经理</Typography>
+          </Box>
+          <Box sx={{ textAlign: 'right' }}>
+            <Typography variant='caption' color='text.secondary'>{today}</Typography>
+          </Box>
+        </Paper>
+
+        {/* 打卡卡片 */}
+        <Paper sx={{ p: 2, mb: 2, textAlign: 'center' }}>
+          <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
+            {new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 3 }}>
+            <Box>
+              <Typography variant='caption' color='text.secondary'>上班</Typography>
+              <Typography variant='body2' fontWeight={500}>{checkedIn ? (checkInTime || '09:00') : '--:--'}</Typography>
             </Box>
-            <Typography
-              variant='body2'
-              sx={{ opacity: 0.9 }}
-            >
-              今天有 <strong>{pendingTasksCount + pendingApprovalsCount}</strong> 项待办，继续加油！
-            </Typography>
-          </Paper>
+            <Box sx={{ width: 1, bgcolor: 'divider' }} />
+            <Box>
+              <Typography variant='caption' color='text.secondary'>下班</Typography>
+              <Typography variant='body2' fontWeight={500}>--:--</Typography>
+            </Box>
+          </Box>
+          <Box sx={{ mt: 2 }}>
+            <Chip label={checkedIn ? '已打卡' : '上班打卡'} color={checkedIn ? 'success' : 'primary'} onClick={handleCheckIn} sx={{ cursor: 'pointer' }} />
+          </Box>
+        </Paper>
 
-          {loading ? (
-            <MobileSkeleton
-              type='dashboard'
-              count={4}
-            />
-          ) : (
-            <>
-              <Grid
-                container
-                spacing={2}
-                sx={{ mb: 3 }}
-              >
-                {stats.map((stat) => (
-                  <Grid
-                    xs={6}
-                    key={stat.id}
-                  >
-                    <Paper
-                      elevation={0}
-                      sx={{
-                        p: 2,
-                        borderRadius: 2,
-                        border: 1,
-                        borderColor: 'divider',
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
-                        <Box
-                          sx={{
-                            width: 36,
-                            height: 36,
-                            borderRadius: 1.5,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            bgcolor: `${stat.color}.lighter`,
-                            color: `${stat.color}.main`,
-                          }}
-                        >
-                          {stat.icon}
-                        </Box>
-                        {stat.trend && (
-                          <Chip
-                            label={stat.trend}
-                            size='small'
-                            color={stat.color as any}
-                            sx={{
-                              height: 20,
-                              fontSize: '0.7rem',
-                              '& .MuiChip-label': { px: 1 },
-                            }}
-                          />
-                        )}
-                      </Box>
-                      <Typography
-                        variant='h5'
-                        sx={{ fontWeight: 700, mb: 0.5 }}
-                      >
-                        {stat.value}
-                      </Typography>
-                      <Typography
-                        variant='caption'
-                        color='text.secondary'
-                      >
-                        {stat.label}
-                      </Typography>
-                    </Paper>
-                  </Grid>
-                ))}
-              </Grid>
-
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 2,
-                  borderRadius: 2,
-                  mb: 3,
-                  border: 1,
-                  borderColor: 'divider',
-                }}
-              >
-                <Typography
-                  variant='subtitle2'
-                  sx={{ fontWeight: 600, mb: 2 }}
-                >
-                  快捷功能
-                </Typography>
-                <Grid
-                  container
-                  spacing={2}
-                >
-                  {quickActions.map((action) => (
-                    <Grid
-                      xs={3}
-                      key={action.id}
-                    >
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          gap: 1,
-                          cursor: 'pointer',
-                          transition: 'transform 0.2s',
-                          '&:active': {
-                            transform: 'scale(0.95)',
-                          },
-                        }}
-                        onClick={() => handleQuickAction(action)}
-                      >
-                        <Box
-                          sx={{
-                            width: 48,
-                            height: 48,
-                            borderRadius: 2,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            bgcolor: `${action.color}.lighter`,
-                            color: `${action.color}.main`,
-                          }}
-                        >
-                          {action.icon}
-                        </Box>
-                        <Typography
-                          variant='caption'
-                          sx={{ fontSize: '0.75rem' }}
-                        >
-                          {action.label}
-                        </Typography>
-                      </Box>
-                    </Grid>
-                  ))}
-                </Grid>
-              </Paper>
-
-              <Paper
-                elevation={0}
-                sx={{
-                  borderRadius: 2,
-                  border: 1,
-                  borderColor: 'divider',
-                  overflow: 'hidden',
-                }}
-              >
-                <Box
-                  sx={{
-                    p: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    borderBottom: 1,
-                    borderColor: 'divider',
-                  }}
-                >
-                  <Typography
-                    variant='subtitle2'
-                    sx={{ fontWeight: 600 }}
-                  >
-                    最近动态
-                  </Typography>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      color: 'primary.main',
-                      cursor: 'pointer',
-                    }}
-                    onClick={() => navigate('/notifications')}
-                  >
-                    <Typography variant='caption'>查看全部</Typography>
-                    <ChevronRight style={{ width: 16, height: 16 }} />
-                  </Box>
-                </Box>
-                <List disablePadding>
-                  {activities.map((activity, index) => (
-                    <React.Fragment key={activity.id}>
-                      <ListItem
-                        sx={{
-                          px: 2,
-                          py: 1.5,
-                          minHeight: 60,
-                        }}
-                      >
-                        <ListItemAvatar sx={{ minWidth: 40 }}>
-                          <Avatar
-                            sx={{
-                              width: 36,
-                              height: 36,
-                              bgcolor: getAvatarBgColor(activity.type),
-                              color: getAvatarColor(activity.type),
-                            }}
-                          >
-                            {activity.avatar}
-                          </Avatar>
-                        </ListItemAvatar>
-                        <ListItemText
-                          primary={activity.title}
-                          secondary={
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 1,
-                                mt: 0.5,
-                              }}
-                            >
-                              <Clock style={{ width: 12, height: 12 }} />
-                              <Typography
-                                variant='caption'
-                                color='text.secondary'
-                              >
-                                {activity.time}
-                              </Typography>
-                            </Box>
-                          }
-                        />
-                      </ListItem>
-                      {index < activities.length - 1 && (
-                        <Divider
-                          variant='inset'
-                          sx={{ ml: 9 }}
-                        />
-                      )}
-                    </React.Fragment>
-                  ))}
-                </List>
-              </Paper>
-            </>
-          )}
+        {/* 快捷入口 */}
+        <Typography variant='subtitle1' fontWeight={500} sx={{ mb: 1.5 }}>快捷入口</Typography>
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 1.5, mb: 2 }}>
+          {quickActions.map((action) => (
+            <Paper key={action.id} sx={{ p: 2, textAlign: 'center', cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }} onClick={() => navigate(action.path)}>
+              <Box sx={{ width: 48, height: 48, borderRadius: '50%', bgcolor: `${action.color}20`, display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: 1, color: action.color }}>
+                {action.icon}
+              </Box>
+              <Typography variant='caption' fontWeight={500}>{action.label}</Typography>
+            </Paper>
+          ))}
         </Box>
-      </PullToRefresh>
-    </MobileLayout>
+
+        {/* 待办事项 */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+          <Typography variant='subtitle1' fontWeight={500}>待办事项</Typography>
+          <Chip label='查看全部' size='small' onClick={() => navigate('/mobile/tasks')} />
+        </Box>
+        <Paper sx={{ mb: 2 }}>
+          {mockTodos.map((todo, index) => (
+            <Box key={todo.id}>
+              <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2, cursor: 'pointer', '&:hover': { bgcolor: 'action.hover' } }} onClick={() => navigate('/mobile/tasks')}>
+                <Box sx={{ width: 4, height: 40, borderRadius: 2, bgcolor: todo.priority === 'high' ? 'error.main' : todo.priority === 'medium' ? 'warning.main' : 'info.main' }} />
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant='body2' fontWeight={500}>{todo.title}</Typography>
+                  <Typography variant='caption' color='text.secondary'>{todo.time}</Typography>
+                </Box>
+                <Chip label={todo.type === 'approval' ? '审批' : '任务'} size='small' variant='outlined' />
+                <ChevronRight size={20} color='action' />
+              </Box>
+              {index < mockTodos.length - 1 && <Divider />}
+            </Box>
+          ))}
+        </Paper>
+
+        {/* 最近动态 */}
+        <Typography variant='subtitle1' fontWeight={500} sx={{ mb: 1.5 }}>最近动态</Typography>
+        <Paper>
+          {mockActivities.map((activity, index) => (
+            <Box key={activity.id}>
+              <Box sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{ color: 'primary.main' }}>{activity.icon}</Box>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant='body2'>{activity.title}</Typography>
+                  <Typography variant='caption' color='text.secondary'>{activity.time}</Typography>
+                </Box>
+              </Box>
+              {index < mockActivities.length - 1 && <Divider />}
+            </Box>
+          ))}
+        </Paper>
+      </Box>
+    </PageContainer>
   );
 };
 

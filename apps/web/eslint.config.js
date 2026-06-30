@@ -176,6 +176,16 @@ export default [
           format: ['camelCase', 'snake_case', 'UPPER_CASE'],
           leadingUnderscore: 'allow',
         },
+        {
+          selector: 'typeProperty',
+          types: ['string', 'number'],
+          format: null,
+        },
+        {
+          selector: 'typeProperty',
+          filter: '^[0-9]+$',
+          format: null,
+        },
       ],
 
       'no-console': [

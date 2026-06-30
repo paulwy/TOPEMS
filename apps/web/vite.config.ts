@@ -1,7 +1,6 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import { federation } from '@module-federation/vite';
 import viteCompression from 'vite-plugin-compression';
 import { visualizer } from 'rollup-plugin-visualizer';
 
@@ -21,29 +20,6 @@ const REMOTE_MODULES = [
   { name: 'topems_scm', port: 3007, description: 'Supply Chain' },
   { name: 'topems_bi', port: 3008, description: 'Business Intelligence' },
 ];
-
-const getRemoteEntryUrl = (moduleName: string): string | undefined => {
-  if (DEPLOYMENT_MODE === 'static') {
-    return undefined;
-  }
-  const envKey = `VITE_${moduleName.toUpperCase()}_REMOTE_ENTRY`;
-  const defaultUrls: Record<string, string> = REMOTE_MODULES.reduce((acc, module) => {
-    acc[module.name] = `http://localhost:${module.port}/remoteEntry.js`;
-    return acc;
-  }, {} as Record<string, string>);
-  return env[envKey] || defaultUrls[moduleName] || undefined;
-};
-
-const buildRemotesConfig = () => {
-  const remotes: Record<string, string | undefined> = {};
-  REMOTE_MODULES.forEach((module) => {
-    const url = getRemoteEntryUrl(module.name);
-    if (url) {
-      remotes[module.name] = url;
-    }
-  });
-  return remotes;
-};
 
 const createServiceProxyConfig = (serviceName: string, target: string, skipRewrite = false) => ({
   target,
@@ -67,78 +43,6 @@ const createServiceProxyConfig = (serviceName: string, target: string, skipRewri
   }
 });
 
-const enableMF = DEPLOYMENT_MODE !== 'static';
-
-const sharedDependencies = {
-  'react': {
-    singleton: true,
-    requiredVersion: '^19.0.0',
-    strictVersion: true,
-  },
-  'react-dom': {
-    singleton: true,
-    requiredVersion: '^19.0.0',
-    strictVersion: true,
-  },
-  'react-router-dom': {
-    singleton: true,
-    requiredVersion: '^7.0.0',
-    strictVersion: true,
-  },
-  '@mui/material': {
-    singleton: true,
-    requiredVersion: '^9.0.0',
-    strictVersion: true,
-  },
-  '@emotion/react': {
-    singleton: true,
-    requiredVersion: '^11.0.0',
-    strictVersion: true,
-  },
-  '@emotion/styled': {
-    singleton: true,
-    requiredVersion: '^11.0.0',
-    strictVersion: true,
-  },
-  'zustand': {
-    singleton: true,
-    strictVersion: true,
-  },
-  'i18next': {
-    singleton: true,
-    strictVersion: true,
-  },
-  'react-i18next': {
-    singleton: true,
-    strictVersion: true,
-  },
-  'axios': {
-    singleton: true,
-    requiredVersion: '^1.0.0',
-    strictVersion: true,
-  },
-  'dayjs': {
-    singleton: true,
-    requiredVersion: '^1.11.0',
-    strictVersion: true,
-  },
-  'clsx': {
-    singleton: true,
-    requiredVersion: '^2.0.0',
-    strictVersion: true,
-  },
-  'lucide-react': {
-    singleton: true,
-    requiredVersion: '^1.0.0',
-    strictVersion: true,
-  },
-  'zod': {
-    singleton: true,
-    requiredVersion: '^4.0.0',
-    strictVersion: true,
-  },
-};
-
 const plugins = [react(), viteCompression({
   algorithm: 'gzip',
   threshold: 10240,
@@ -148,33 +52,6 @@ const plugins = [react(), viteCompression({
   threshold: 10240,
   verbose: false,
 })];
-
-if (enableMF) {
-  plugins.push(
-    federation({
-      name: 'topems_portal',
-      filename: 'remoteEntry.js',
-      exposes: {
-        './PluginLoader': './src/lib/plugin-loader.ts',
-        './PluginRuntime': './src/lib/plugin-runtime.ts',
-        './hooks/usePluginStore': './src/store/pluginStore.ts',
-        './api/plugin': './src/api/plugin.ts',
-        './routes/plugin': './src/routes/plugin.ts',
-        './config/plugins': './src/config/plugins.config.ts',
-      },
-      remotes: buildRemotesConfig(),
-      shared: sharedDependencies,
-      extraOptions: {
-        automaticAsyncBoundary: true,
-        experimental: {
-          optimizeDeps: true,
-        },
-      },
-    })
-  );
-}
-
-const remoteModuleNames = REMOTE_MODULES.map((m) => m.name);
 
 export default defineConfig({
   plugins,
@@ -186,6 +63,7 @@ export default defineConfig({
       '@topems/shared-components': path.resolve(__dirname, '../../packages/shared-components/src'),
       '@topems/shared-hooks': path.resolve(__dirname, '../../packages/shared-hooks/src'),
       '@topems/shared-constants': path.resolve(__dirname, '../../packages/shared-constants/src'),
+      '@topems/tokens': path.resolve(__dirname, '../../packages/tokens/src'),
       'react-transition-group': path.resolve(__dirname, '../../node_modules/react-transition-group'),
       'react-transition-group/cjs': path.resolve(__dirname, '../../node_modules/react-transition-group/cjs'),
       'react-transition-group/TransitionGroupContext': path.resolve(__dirname, '../../node_modules/react-transition-group/cjs/TransitionGroupContext.js'),
@@ -206,10 +84,6 @@ export default defineConfig({
         }),
       ],
       output: {
-        external: DEPLOYMENT_MODE === 'static' ? [
-          ...remoteModuleNames,
-          ...remoteModuleNames.map((name) => new RegExp(`^${name}\\/.*`)),
-        ] : [],
         manualChunks(id) {
           if (id.includes('node_modules')) {
             if (id.includes('react-dom') || id.includes('react/')) {

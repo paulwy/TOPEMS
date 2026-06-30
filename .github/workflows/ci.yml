@@ -264,6 +264,65 @@ jobs:
           path: apps/web/coverage/
           retention-days: 7
 
+      - name: Check coverage thresholds
+        run: |
+          COVERAGE_JSON=$(cat apps/web/coverage/coverage-summary.json)
+          STATEMENTS=$(echo "$COVERAGE_JSON" | jq -r '.total.statements.pct')
+          BRANCHES=$(echo "$COVERAGE_JSON" | jq -r '.total.branches.pct')
+          FUNCTIONS=$(echo "$COVERAGE_JSON" | jq -r '.total.functions.pct')
+          LINES=$(echo "$COVERAGE_JSON" | jq -r '.total.lines.pct')
+          
+          echo "## Coverage Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Coverage | Threshold | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|----------|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+          
+          CHECKS_PASSED=true
+          
+          if (( $(echo "$STATEMENTS >= 60" | bc -l) )); then
+            echo "| Statements | $STATEMENTS% | 60% | ✅ |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Statements | $STATEMENTS% | 60% | ❌ |" >> $GITHUB_STEP_SUMMARY
+            CHECKS_PASSED=false
+          fi
+          
+          if (( $(echo "$BRANCHES >= 50" | bc -l) )); then
+            echo "| Branches | $BRANCHES% | 50% | ✅ |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Branches | $BRANCHES% | 50% | ❌ |" >> $GITHUB_STEP_SUMMARY
+            CHECKS_PASSED=false
+          fi
+          
+          if (( $(echo "$FUNCTIONS >= 60" | bc -l) )); then
+            echo "| Functions | $FUNCTIONS% | 60% | ✅ |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Functions | $FUNCTIONS% | 60% | ❌ |" >> $GITHUB_STEP_SUMMARY
+            CHECKS_PASSED=false
+          fi
+          
+          if (( $(echo "$LINES >= 60" | bc -l) )); then
+            echo "| Lines | $LINES% | 60% | ✅ |" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "| Lines | $LINES% | 60% | ❌ |" >> $GITHUB_STEP_SUMMARY
+            CHECKS_PASSED=false
+          fi
+          
+          if [ "$CHECKS_PASSED" = false ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "❌ **Coverage thresholds not met!**" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
+
+      - name: Build and check bundle size
+        run: |
+          pnpm --filter topems-portal build
+          BUILD_SIZE=$(du -sh dist | cut -f1)
+          echo "## Bundle Size Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Build Size | $BUILD_SIZE |" >> $GITHUB_STEP_SUMMARY
+
       - name: Generate test summary
         if: always()
         run: |

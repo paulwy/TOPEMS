@@ -27,7 +27,7 @@ service_groups:
     - name: unified-core
       port: 8000
       env_var: CORE_PORT
-      description: 统一核心服务 (IAM + Doc + Flow + File + Communication + AI)
+      description: 统一核心服务 (IAM + Flow + File + Communication)
       status: implemented
       dependencies: []
       service_dir: unified-core
@@ -40,6 +40,30 @@ service_groups:
       description: 企业资源计划
       status: implemented
       dependencies: [unified-core]
+
+    - name: finance
+      port: 8011
+      env_var: FINANCE_PORT
+      description: 财务管理服务
+      status: implemented
+      dependencies: [unified-core, erp]
+      service_dir: finance
+
+    - name: doc
+      port: 8012
+      env_var: DOC_PORT
+      description: 文档管理服务
+      status: implemented
+      dependencies: [unified-core]
+      service_dir: doc
+
+    - name: ai
+      port: 8013
+      env_var: AI_PORT
+      description: AI智能服务
+      status: implemented
+      dependencies: [unified-core]
+      service_dir: ai
 
   # 协同办公服务 (8020-8029)
   collaboration:
@@ -170,14 +194,6 @@ service_groups:
       status: implemented
       dependencies: [unified-core]
 
-    - name: ai
-      port: 8064
-      env_var: AI_PORT
-      description: AI智能服务
-      status: implemented
-      dependencies: [unified-core]
-      service_dir: ai
-
   # 基础设施服务 (8070-8079)
   infrastructure:
     - name: mobile
@@ -239,12 +255,6 @@ virtual_services:
     description: 即时通讯 (由 unified-core 提供)
     provider: unified-core
 
-  - name: doc
-    port: 8000
-    env_var: DOC_PORT
-    description: 文档管理 (由 unified-core 提供)
-    provider: unified-core
-
 # 特殊端口配置
 special_ports:
   api_gateway:
@@ -286,6 +296,9 @@ module_groups:
 
   erp:
     - erp
+    - finance
+    - doc
+    - ai
 
   collaboration:
     - hrm
@@ -321,6 +334,9 @@ module_groups:
   all:
     - unified-core
     - erp
+    - finance
+    - doc
+    - ai
     - hrm
     - pm
     - crm

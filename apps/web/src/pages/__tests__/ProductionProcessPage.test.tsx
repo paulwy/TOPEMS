@@ -18,7 +18,19 @@ vi.mock('@/api/mes', () => ({
 }));
 
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn(),
+  useAppStore: vi.fn((selector?: any) =>
+    selector ? selector({
+      addNotification: mockAddNotification,
+      notifications: [],
+      user: null,
+      theme: 'light',
+    }) : {
+      addNotification: mockAddNotification,
+      notifications: [],
+      user: null,
+      theme: 'light',
+    }
+  ),
 }));
 
 const mockAddNotification = vi.fn();
@@ -53,9 +65,19 @@ const mockProcesses = [
 describe('ProductionProcessPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (useAppStore as vi.Mock).mockReturnValue({
-      addNotification: mockAddNotification,
-    });
+    (useAppStore as vi.Mock).mockImplementation((selector?: any) =>
+      selector ? selector({
+        addNotification: mockAddNotification,
+        notifications: [],
+        user: null,
+        theme: 'light',
+      }) : {
+        addNotification: mockAddNotification,
+        notifications: [],
+        user: null,
+        theme: 'light',
+      }
+    );
     (mesApi.processes.list as vi.Mock).mockResolvedValue({
       success: true,
       data: {

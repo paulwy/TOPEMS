@@ -177,19 +177,52 @@ pub async fn upload_media(
     let mut file_size = 0i64;
     let mut mime_type = String::new();
     let mut description: Option<String> = None;
+    let mut has_file = false;
 
-    while let Some(field) = multipart.next_field().await.unwrap() {
-        let name = field.name().unwrap_or("");
+    loop {
+        match multipart.next_field().await {
+            Ok(Some(field)) => {
+                let name = field.name().unwrap_or("").to_string();
 
-        if name == "file" {
-            file_name = field.file_name().unwrap_or("unknown").to_string();
-            let content_type = field.content_type().unwrap_or_default().to_string();
-            let bytes = field.bytes().await.unwrap();
-            file_size = bytes.len() as i64;
-            mime_type = content_type;
-        } else if name == "description" {
-            description = Some(field.text().await.unwrap());
+                if name == "file" {
+                    file_name = field.file_name().unwrap_or("unknown").to_string();
+                    let content_type = field.content_type().unwrap_or_default().to_string();
+                    match field.bytes().await {
+                        Ok(bytes) => {
+                            file_size = bytes.len() as i64;
+                            mime_type = content_type;
+                            has_file = true;
+                        }
+                        Err(e) => {
+                            tracing::error!("读取文件失败: {}", e);
+                            return (
+                                StatusCode::BAD_REQUEST,
+                                Json(ApiResponse::error(400, "读取文件失败")),
+                            );
+                        }
+                    }
+                } else if name == "description" {
+                    if let Ok(text) = field.text().await {
+                        description = Some(text);
+                    }
+                }
+            }
+            Ok(None) => break,
+            Err(e) => {
+                tracing::error!("解析上传数据失败: {}", e);
+                return (
+                    StatusCode::BAD_REQUEST,
+                    Json(ApiResponse::error(400, "解析上传数据失败")),
+                );
+            }
         }
+    }
+
+    if !has_file {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(ApiResponse::error(400, "请上传文件")),
+        );
     }
 
     let media_id = Uuid::new_v4();

@@ -1,0 +1,32 @@
+code: finance
+name: 财务管理服务
+version: 1.0.0
+description: 财务管理服务 - 科目管理、凭证处理、账簿查询、财务报表
+author: TOPEMS
+category: Finance
+plugin_type: service
+
+runtime:
+  port: 8070
+  health_endpoint: /health
+  base_path: /api/finance
+
+permissions:
+  - code: finance:read
+    name: 财务查询
+    description: 查询财务数据
+  - code: finance:write
+    name: 财务录入
+    description: 录入财务凭证
+  - code: finance:approve
+    name: 财务审批
+    description: 审批财务单据
+  - code: finance:post
+    name: 财务过账
+    description: 凭证过账处理
+  - code: finance:report
+    name: 报表查看
+    description: 查看财务报表
+  - code: finance:admin
+    name: 财务管理
+    description: 财务管理权限

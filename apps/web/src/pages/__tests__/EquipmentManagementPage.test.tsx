@@ -22,19 +22,23 @@ vi.mock('@/api/hrm', () => ({
   },
 }));
 
-// Use a shared object so the mock implementation in beforeEach can update the reference
-const storeMock: { addNotification: ReturnType<typeof vi.fn> | undefined } = {
-  addNotification: undefined,
-};
-
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn((selector?: (state: any) => unknown) => {
-    if (selector && storeMock.addNotification) {
-      return selector({ addNotification: storeMock.addNotification });
+  useAppStore: vi.fn((selector?: any) =>
+    selector ? selector({
+      addNotification: mockAddNotification,
+      notifications: [],
+      user: null,
+      theme: 'light',
+    }) : {
+      addNotification: mockAddNotification,
+      notifications: [],
+      user: null,
+      theme: 'light',
     }
-    return { addNotification: storeMock.addNotification };
-  }),
+  ),
 }));
+
+const mockAddNotification = vi.fn();
 
 const renderWithProviders = (ui: React.ReactElement) => {
   return render(<BrowserRouter>{ui}</BrowserRouter>);
@@ -66,7 +70,19 @@ const mockEmployees = [
 describe('EquipmentManagementPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    storeMock.addNotification = vi.fn();
+    (useAppStore as vi.Mock).mockImplementation((selector?: any) =>
+      selector ? selector({
+        addNotification: mockAddNotification,
+        notifications: [],
+        user: null,
+        theme: 'light',
+      }) : {
+        addNotification: mockAddNotification,
+        notifications: [],
+        user: null,
+        theme: 'light',
+      }
+    );
     (assetApi.list as vi.Mock).mockResolvedValue({
       success: true,
       data: {
@@ -154,7 +170,7 @@ describe('EquipmentManagementPage', () => {
     await waitFor(() => {
       expect(assetApi.create).toHaveBeenCalled();
     });
-    expect(storeMock.addNotification).toHaveBeenCalledWith(
+    expect(mockAddNotification).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'success' })
     );
   });
@@ -163,7 +179,7 @@ describe('EquipmentManagementPage', () => {
     (assetApi.list as vi.Mock).mockRejectedValue(new Error('Network error'));
     renderWithProviders(<EquipmentManagementPage />);
     await waitFor(() => {
-      expect(storeMock.addNotification).toHaveBeenCalledWith(
+      expect(mockAddNotification).toHaveBeenCalledWith(
         expect.objectContaining({ type: 'error' })
       );
     });

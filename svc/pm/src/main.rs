@@ -8,8 +8,8 @@ use axum_prometheus::PrometheusMetricLayer;
 use prometheus::{default_registry, Gauge};
 use topems_shared::{
     auth_middleware, build_health_response, create_api_info_router, create_cors_layer,
-    create_database_pool, init_logging, test_database_connection, AuthState, DatabaseConfig,
-    Result, ServiceHealth,
+    create_database_pool, init_logging, init_telemetry, telemetry_middleware,
+    test_database_connection, AuthState, DatabaseConfig, Result, ServiceHealth,
 };
 use utoipa::OpenApi;
 
@@ -17,7 +17,7 @@ use utoipa::OpenApi;
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
 
-    init_logging("topems-pm");
+    let _telemetry_guard = init_telemetry("topems-pm");
 
     // 设置search_path环境变量（供lib使用）
     std::env::set_var("SEARCH_PATH", "pm, shared, public");
@@ -75,6 +75,7 @@ async fn main() -> Result<()> {
         .merge(public_routes)
         .merge(protected_routes)
         .merge(create_api_info_router("topems-pm"))
+        .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(prometheus_layer)
         .layer(cors);
 

@@ -18,8 +18,8 @@ mod shared;
 
 pub mod api;
 pub mod models;
-pub mod services;
 pub mod plugin;
+pub mod services;
 
 use std::net::SocketAddr;
 
@@ -32,9 +32,9 @@ use axum_prometheus::PrometheusMetricLayer;
 use sqlx::PgPool;
 
 use topems_shared::{
-    auth_middleware, create_cors_layer, create_database_pool, get_api_info_handler,
-    init_logging, simple_health_check, ApiResponse, AuthState, DatabaseConfig, ServiceHealth,
-    SimpleHealthConfig,
+    auth_middleware, create_cors_layer, create_database_pool, get_api_info_handler, init_telemetry,
+    simple_health_check, telemetry_middleware, ApiResponse, AuthState, DatabaseConfig,
+    ServiceHealth, SimpleHealthConfig,
 };
 
 pub use shared::*;
@@ -60,13 +60,14 @@ impl axum::extract::FromRef<AppState> for AuthState {
 async fn main() {
     _ = dotenv::dotenv();
 
-    init_logging("topems-lims");
+    let _telemetry_guard = init_telemetry("topems-lims");
 
     tracing::info!("🚀 TOPEMS LIMS Service starting...");
 
     let db_config = DatabaseConfig {
-        url: std::env::var("DATABASE_URL")
-            .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string()),
+        url: std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+            "postgres://topems:topems_secret@localhost:5432/topems".to_string()
+        }),
         max_connections: 20,
         min_connections: Some(5),
         connect_timeout: Some(30),
@@ -111,7 +112,10 @@ async fn main() {
         .route("/api/plugins/health", get(plugin::plugin_health_check))
         .route("/api", get(|| get_api_info_handler("lims-service")))
         .route("/api/info", get(|| get_api_info_handler("lims-service")))
-        .route("/metrics", get(move || async move { metric_handle.render() }));
+        .route(
+            "/metrics",
+            get(move || async move { metric_handle.render() }),
+        );
 
     let protected_routes = Router::new()
         .merge(api::create_api_routes())
@@ -125,6 +129,7 @@ async fn main() {
     let app = Router::new()
         .merge(public_routes)
         .merge(protected_routes)
+        .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(cors)
         .layer(prometheus_layer)
         .with_state(state);

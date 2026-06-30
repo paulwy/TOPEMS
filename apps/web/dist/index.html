@@ -2,38 +2,57 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="TOPEMS - 企业数字化平台" />
+    <meta name="theme-color" content="#1976d2" />
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- DNS 预取 - 提前解析后端 API 域名 -->
+    <link rel="dns-prefetch" href="//localhost" />
+    
+    <!-- 预连接 - 提前建立 TCP/TLS 连接 -->
+    <link rel="preconnect" href="http://localhost:8000" crossorigin />
+    
+    <!-- 预加载关键资源 -->
+    <link rel="preload" href="data:application/octet-stream;base64,aW1wb3J0IFJlYWN0IGZyb20gJ3JlYWN0JzsKaW1wb3J0IFJlYWN0RE9NIGZyb20gJ3JlYWN0LWRvbS9jbGllbnQnOwppbXBvcnQgeyBRdWVyeUNsaWVudFByb3ZpZGVyIH0gZnJvbSAnQHRhbnN0YWNrL3JlYWN0LXF1ZXJ5JzsKaW1wb3J0IEFwcCBmcm9tICcuL0FwcCc7CmltcG9ydCAnLi9pbmRleC5jc3MnOwppbXBvcnQgJy4vaTE4bic7CmltcG9ydCB7IGNyZWF0ZVBlcm1pc3Npb25JbnRlcmNlcHRvciB9IGZyb20gJy4vYXBpL3Blcm1pc3Npb25JbnRlcmNlcHRvcic7CmltcG9ydCB7IHF1ZXJ5Q2xpZW50IH0gZnJvbSAnLi9saWIvcmVhY3RRdWVyeSc7CmltcG9ydCB7IGxvZ2dlciB9IGZyb20gJ0AvdXRpbHMvbG9nZ2VyJzsKaW1wb3J0IHsgYXBwbHlTZWN1cml0eUhlYWRlcnMgfSBmcm9tICdAL2NvbmZpZy9zZWN1cml0eSc7CgovLyDlkIzmraXmiafooYzlronlhajnm7jlhbPnmoTliJ3lp4vljJYKYXBwbHlTZWN1cml0eUhlYWRlcnMoKTsKY3JlYXRlUGVybWlzc2lvbkludGVyY2VwdG9yKCk7CgovLyDlu7bov5/liJ3lp4vljJbkuovku7bnm5HlkKzlmajvvIzlh4/lsJHpppblsY/pmLvloZ4KaWYgKHR5cGVvZiB3aW5kb3cgIT09ICd1bmRlZmluZWQnKSB7CiAgd2luZG93LmFkZEV2ZW50TGlzdGVuZXIoJ3Blcm1pc3Npb24tZGVuaWVkJywgKGV2ZW50OiBFdmVudCkgPT4gewogICAgY29uc3QgY3VzdG9tRXZlbnQgPSBldmVudCBhcyBDdXN0b21FdmVudDsKICAgIGxvZ2dlci53YXJuKCdQZXJtaXNzaW9uIGRlbmllZDonLCBjdXN0b21FdmVudC5kZXRhaWwpOwogIH0pOwp9CgovLyDkvb/nlKggcmVxdWVzdElkbGVDYWxsYmFjayDlu7bov5/miafooYzpnZ7lhbPplK7liJ3lp4vljJYKY29uc3QgcGVyZm9ybURlZmVycmVkSW5pdCA9ICgpID0+IHsKICAvLyDpooTliqDovb3lj6/og73pnIDopoHnmoTnu4Tku7YKICBpbXBvcnQoJy4vcGFnZXMvc2hhcmVkL0Rhc2hib2FyZFBhZ2UnKS5jYXRjaCgoKSA9PiB7CiAgICAvLyDlv73nlaXpooTliqDovb3plJnor68KICB9KTsKfTsKCmlmICgncmVxdWVzdElkbGVDYWxsYmFjaycgaW4gd2luZG93KSB7CiAgKHdpbmRvdyBhcyBhbnkpLnJlcXVlc3RJZGxlQ2FsbGJhY2socGVyZm9ybURlZmVycmVkSW5pdCwgeyB0aW1lb3V0OiAzMDAwIH0pOwp9IGVsc2UgewogIHNldFRpbWVvdXQocGVyZm9ybURlZmVycmVkSW5pdCwgMTAwMCk7Cn0KClJlYWN0RE9NLmNyZWF0ZVJvb3QoZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoJ3Jvb3QnKSEpLnJlbmRlcigKICA8UmVhY3QuU3RyaWN0TW9kZT4KICAgIDxRdWVyeUNsaWVudFByb3ZpZGVyIGNsaWVudD17cXVlcnlDbGllbnR9PgogICAgICA8QXBwIC8+CiAgICA8L1F1ZXJ5Q2xpZW50UHJvdmlkZXI+CiAgPC9SZWFjdC5TdHJpY3RNb2RlPgopOwo=" as="script" />
+    
+    <!-- 预加载字体（如果有自定义字体） -->
+    <!-- <link rel="preload" href="/fonts/main.woff2" as="font" type="font/woff2" crossorigin /> -->
+    
     <title>TOPEMS - 企业数字化平台</title>
-    <script type="module" crossorigin src="/assets/index-BApNqz5B.js"></script>
-    <link rel="modulepreload" crossorigin href="/assets/rolldown-runtime-qUQf3S7B.js">
-    <link rel="modulepreload" crossorigin href="/assets/data-vendor-Bhow6wjo.js">
-    <link rel="modulepreload" crossorigin href="/assets/mui-lab-DkHYs__p.js">
-    <link rel="modulepreload" crossorigin href="/assets/mui-material-C_vy5Iwp.js">
-    <link rel="modulepreload" crossorigin href="/assets/map-vendor-CXXSiL-b.js">
-    <link rel="modulepreload" crossorigin href="/assets/react-vendor-D2O5ESGD.js">
-    <link rel="modulepreload" crossorigin href="/assets/network-vendor-C_yYJr-j.js">
-    <link rel="modulepreload" crossorigin href="/assets/client-DnFapodp.js">
-    <link rel="modulepreload" crossorigin href="/assets/iam-DGWCMJTu.js">
-    <link rel="modulepreload" crossorigin href="/assets/state-vendor-CJ7rY8rb.js">
-    <link rel="modulepreload" crossorigin href="/assets/store-BhAXrV-h.js">
-    <link rel="modulepreload" crossorigin href="/assets/notification-CcHti_NK.js">
-    <link rel="modulepreload" crossorigin href="/assets/useAuth-TwcYzkuc.js">
-    <link rel="modulepreload" crossorigin href="/assets/useWebSocket-BCu4gsAe.js">
-    <link rel="modulepreload" crossorigin href="/assets/hooks-7jnHddEM.js">
-    <link rel="modulepreload" crossorigin href="/assets/date-vendor-DrKpSbkJ.js">
-    <link rel="modulepreload" crossorigin href="/assets/router-vendor-DQedxx4y.js">
-    <link rel="modulepreload" crossorigin href="/assets/PageHeader-C1hqfwDO.js">
-    <link rel="modulepreload" crossorigin href="/assets/form-vendor-BR8fhZOE.js">
-    <link rel="modulepreload" crossorigin href="/assets/validation-vendor-CrH1HXdP.js">
-    <link rel="modulepreload" crossorigin href="/assets/i18n-vendor-D8E1CAXk.js">
+    <script type="module" crossorigin src="/assets/index-DwT6mkTK.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/rolldown-runtime-Drmzmwim.js">
+    <link rel="modulepreload" crossorigin href="/assets/data-vendor-CrEy0fYJ.js">
+    <link rel="modulepreload" crossorigin href="/assets/markdown-vendor-CuXcOlCQ.js">
+    <link rel="modulepreload" crossorigin href="/assets/mui-lab-BzAZusEe.js">
+    <link rel="modulepreload" crossorigin href="/assets/mui-material-DX-HKkxB.js">
+    <link rel="modulepreload" crossorigin href="/assets/map-vendor-C-EC5rVY.js">
+    <link rel="modulepreload" crossorigin href="/assets/react-vendor-BuAYISPN.js">
+    <link rel="modulepreload" crossorigin href="/assets/network-vendor-ofEvssIa.js">
+    <link rel="modulepreload" crossorigin href="/assets/sanitize-vendor-C_oYuzHy.js">
+    <link rel="modulepreload" crossorigin href="/assets/client-C_Aa_L3V.js">
+    <link rel="modulepreload" crossorigin href="/assets/iam-CQy8_G-d.js">
+    <link rel="modulepreload" crossorigin href="/assets/useAuth-CMxlK7jl.js">
+    <link rel="modulepreload" crossorigin href="/assets/state-vendor-B_BRX-9d.js">
+    <link rel="modulepreload" crossorigin href="/assets/bi-BCYjpGca.js">
+    <link rel="modulepreload" crossorigin href="/assets/store-Dnj3KFZJ.js">
+    <link rel="modulepreload" crossorigin href="/assets/erp-C69zAm-I.js">
+    <link rel="modulepreload" crossorigin href="/assets/useNotification-DzNAR67G.js">
+    <link rel="modulepreload" crossorigin href="/assets/notification-DG4IPddD.js">
+    <link rel="modulepreload" crossorigin href="/assets/useWebSocket-lpuR-n3M.js">
+    <link rel="modulepreload" crossorigin href="/assets/hooks-BURBi38f.js">
+    <link rel="modulepreload" crossorigin href="/assets/LoadingSpinner-DfCevbqR.js">
+    <link rel="modulepreload" crossorigin href="/assets/date-vendor-HRoIW1v1.js">
+    <link rel="modulepreload" crossorigin href="/assets/src-9aj4kdhe.js">
+    <link rel="modulepreload" crossorigin href="/assets/PageHeader-sEE21LpQ.js">
+    <link rel="modulepreload" crossorigin href="/assets/form-vendor-BsHmMGw0.js">
+    <link rel="modulepreload" crossorigin href="/assets/validation-vendor-BVBOSFZj.js">
+    <link rel="modulepreload" crossorigin href="/assets/i18n-vendor-C5IEaSOX.js">
     <link rel="stylesheet" crossorigin href="/assets/map-vendor-pHtA4NE-.css">
     <link rel="stylesheet" crossorigin href="/assets/index-CC3wM-kE.css">
   </head>
   <body>
     <div id="root"></div>
-    <!-- In static mode, we don't need to preload remote modules -->
-    <!-- <script type="module" src="/src/preload-remotes.ts"></script> -->
   </body>
 </html>

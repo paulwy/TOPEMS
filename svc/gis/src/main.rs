@@ -25,13 +25,13 @@ use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
 use std::env;
 use std::io::BufReader;
-use uuid::Uuid;
 use utoipa::OpenApi;
+use uuid::Uuid;
 
 use topems_shared::auth::Claims;
 use topems_shared::{
-    auth_middleware, check_http_health, create_api_info_router, create_cors_layer, init_logging,
-    ApiResponse, AuthState, DependencyHealth, HealthStatus, ServiceHealth,
+    auth_middleware, check_http_health, create_api_info_router, create_cors_layer, init_telemetry,
+    telemetry_middleware, ApiResponse, AuthState, DependencyHealth, HealthStatus, ServiceHealth,
 };
 
 mod api;
@@ -470,7 +470,10 @@ async fn list_device_locations(
     axum::extract::Query(params): axum::extract::Query<std::collections::HashMap<String, String>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page: i64 = params.get("page").and_then(|s| s.parse().ok()).unwrap_or(1);
-    let page_size: i64 = params.get("page_size").and_then(|s| s.parse().ok()).unwrap_or(20);
+    let page_size: i64 = params
+        .get("page_size")
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(20);
     let search = params.get("search").cloned().unwrap_or_default();
     let status = params.get("status").cloned();
 
@@ -691,7 +694,10 @@ async fn list_pipelines(
     axum::extract::Query(params): axum::extract::Query<std::collections::HashMap<String, String>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page: i64 = params.get("page").and_then(|s| s.parse().ok()).unwrap_or(1);
-    let page_size: i64 = params.get("page_size").and_then(|s| s.parse().ok()).unwrap_or(20);
+    let page_size: i64 = params
+        .get("page_size")
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(20);
     let search = params.get("search").cloned().unwrap_or_default();
     let status = params.get("status").cloned();
 
@@ -903,7 +909,10 @@ async fn list_warehouse_locations(
     axum::extract::Query(params): axum::extract::Query<std::collections::HashMap<String, String>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     let page: i64 = params.get("page").and_then(|s| s.parse().ok()).unwrap_or(1);
-    let page_size: i64 = params.get("page_size").and_then(|s| s.parse().ok()).unwrap_or(20);
+    let page_size: i64 = params
+        .get("page_size")
+        .and_then(|s| s.parse().ok())
+        .unwrap_or(20);
     let search = params.get("search").cloned().unwrap_or_default();
 
     let offset = (page - 1) * page_size;
@@ -2007,7 +2016,7 @@ async fn search_locations(
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
 
-    init_logging("topems-gis");
+    let _telemetry_guard = init_telemetry("topems-gis");
 
     let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
     let custom_gauge = Gauge::new(
@@ -2112,7 +2121,10 @@ async fn main() -> Result<()> {
             axum::routing::get(list_business_locations_by_type),
         )
         .route("/api/gis/map-markers", axum::routing::get(list_map_markers))
-        .route("/api/gis/geojson/export", axum::routing::get(export_geojson))
+        .route(
+            "/api/gis/geojson/export",
+            axum::routing::get(export_geojson),
+        )
         .route("/api/gis/search", axum::routing::get(search_locations))
         // 新增 GIS API 路由
         .route("/api/gis/maps", axum::routing::get(api::map::list_maps))
@@ -2355,6 +2367,7 @@ async fn main() -> Result<()> {
         .merge(protected_api)
         .merge(create_api_info_router("topems-gis"))
         .with_state(state)
+        .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(prometheus_layer)
         .layer(cors);
 

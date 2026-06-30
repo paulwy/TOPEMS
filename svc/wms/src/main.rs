@@ -26,18 +26,18 @@ use utoipa::OpenApi;
 
 use topems_shared::{
     auth_middleware, check_http_health, create_api_info_router, create_cors_layer,
-    create_database_pool, init_logging, ApiResponse, AuthState, DatabaseConfig, DependencyHealth,
-    HealthStatus, ServiceHealth, SystemMetrics,
+    create_database_pool, init_telemetry, telemetry_middleware, ApiResponse, AuthState,
+    DatabaseConfig, DependencyHealth, HealthStatus, ServiceHealth, SystemMetrics,
 };
 
-use api::ApiState;
 use api::plugin::{auto_register_to_core, get_plugin_info, plugin_health_check};
+use api::ApiState;
 
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
 
-    init_logging("topems-wms");
+    let _telemetry_guard = init_telemetry("topems-wms");
 
     // 设置search_path环境变量（供lib使用）
     env::set_var("SEARCH_PATH", "wms, shared, public");
@@ -107,6 +107,7 @@ async fn main() -> Result<()> {
         .merge(health_router)
         .merge(protected_routes)
         .merge(create_api_info_router("topems-wms"))
+        .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(prometheus_layer)
         .layer(cors)
         .with_state(api_state.clone());
@@ -273,16 +274,6 @@ async fn check_iam_health() -> DependencyHealth {
     }
 }
 
-async fn init_db(pool: &sqlx::PgPool) -> Result<()> {
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_inventory_material_code ON wms.inventory(material_code)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_inventory_warehouse_id ON wms.inventory(warehouse_id)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_inventory_quality_status ON wms.inventory(quality_status)")
-        .execute(pool)
-        .await?;
-
+async fn init_db(_pool: &sqlx::PgPool) -> Result<()> {
     Ok(())
 }

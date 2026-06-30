@@ -1,6 +1,10 @@
 //! Emergency drill management - Drill plans, records, evaluation, rectification, and statistics
 
-use axum::{extract::State, routing::{get, post, put}, Json, Router};
+use axum::{
+    extract::State,
+    routing::{get, post, put},
+    Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use topems_shared::ApiResponse;
 
@@ -8,15 +12,41 @@ use crate::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/ehs/drills/plans", get(list_drill_plans).post(create_drill_plan))
-        .route("/api/ehs/drills/plans/{id}", get(get_drill_plan).put(update_drill_plan).delete(delete_drill_plan))
-        .route("/api/ehs/drills/records", get(list_drill_records).post(create_drill_record))
-        .route("/api/ehs/drills/records/{id}", get(get_drill_record).put(update_drill_record).delete(delete_drill_record))
-        .route("/api/ehs/drills/records/{id}/evaluation", post(create_drill_evaluation))
-        .route("/api/ehs/drills/records/{id}/problems", get(list_drill_problems).post(create_drill_problem))
-        .route("/api/ehs/drills/records/{id}/problems/{problem_id}", put(update_drill_problem))
+        .route(
+            "/api/ehs/drills/plans",
+            get(list_drill_plans).post(create_drill_plan),
+        )
+        .route(
+            "/api/ehs/drills/plans/{id}",
+            get(get_drill_plan)
+                .put(update_drill_plan)
+                .delete(delete_drill_plan),
+        )
+        .route(
+            "/api/ehs/drills/records",
+            get(list_drill_records).post(create_drill_record),
+        )
+        .route(
+            "/api/ehs/drills/records/{id}",
+            get(get_drill_record)
+                .put(update_drill_record)
+                .delete(delete_drill_record),
+        )
+        .route(
+            "/api/ehs/drills/records/{id}/evaluation",
+            post(create_drill_evaluation),
+        )
+        .route(
+            "/api/ehs/drills/records/{id}/problems",
+            get(list_drill_problems).post(create_drill_problem),
+        )
+        .route(
+            "/api/ehs/drills/records/{id}/problems/{problem_id}",
+            put(update_drill_problem),
+        )
         .route("/api/ehs/drills/types", get(list_drill_types))
         .route("/api/ehs/drills/statistics", get(get_drill_statistics))
+        .route("/api/ehs/drills", get(list_drill_plans))
 }
 
 #[derive(Debug, Deserialize)]
@@ -220,7 +250,10 @@ pub async fn list_drill_plans(
     State(_state): State<crate::AppState>,
 ) -> Json<ApiResponse<Vec<DrillPlan>>> {
     tracing::info!("Listing drill plans");
-    Json(ApiResponse::success(Vec::<DrillPlan>::new(), "获取演练计划列表成功"))
+    Json(ApiResponse::success(
+        Vec::<DrillPlan>::new(),
+        "获取演练计划列表成功",
+    ))
 }
 
 pub async fn create_drill_plan(
@@ -231,7 +264,10 @@ pub async fn create_drill_plan(
     Json(ApiResponse::success(
         DrillPlan {
             id: uuid::Uuid::new_v4().to_string(),
-            plan_no: format!("DP-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+            plan_no: format!(
+                "DP-{}",
+                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+            ),
             title: req.title,
             description: req.description,
             drill_type: req.drill_type,
@@ -287,7 +323,9 @@ pub async fn update_drill_plan(
         DrillPlan {
             id,
             plan_no: "DP-2024001".to_string(),
-            title: req.title.unwrap_or_else(|| "2024年度火灾应急演练计划".to_string()),
+            title: req
+                .title
+                .unwrap_or_else(|| "2024年度火灾应急演练计划".to_string()),
             description: req.description,
             drill_type: req.drill_type.unwrap_or_else(|| "fire".to_string()),
             plan_date: req.plan_date,
@@ -317,7 +355,10 @@ pub async fn list_drill_records(
     State(_state): State<crate::AppState>,
 ) -> Json<ApiResponse<Vec<DrillRecord>>> {
     tracing::info!("Listing drill records");
-    Json(ApiResponse::success(Vec::<DrillRecord>::new(), "获取演练记录列表成功"))
+    Json(ApiResponse::success(
+        Vec::<DrillRecord>::new(),
+        "获取演练记录列表成功",
+    ))
 }
 
 pub async fn create_drill_record(
@@ -328,7 +369,10 @@ pub async fn create_drill_record(
     Json(ApiResponse::success(
         DrillRecord {
             id: uuid::Uuid::new_v4().to_string(),
-            record_no: format!("DR-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+            record_no: format!(
+                "DR-{}",
+                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+            ),
             plan_id: req.plan_id,
             title: req.title,
             drill_type: req.drill_type,
@@ -393,24 +437,22 @@ pub async fn get_drill_record(
                 evaluated_at: Some(chrono::Utc::now().to_rfc3339()),
                 created_at: Some(chrono::Utc::now().to_rfc3339()),
             }),
-            problems: vec![
-                DrillProblem {
-                    id: "prob-001".to_string(),
-                    drill_id: id.clone(),
-                    description: "部分员工对疏散路线不熟悉".to_string(),
-                    category: Some("training".to_string()),
-                    severity: Some("medium".to_string()),
-                    responsible_person: Some("培训主管".to_string()),
-                    deadline: Some("2024-07-01".to_string()),
-                    status: "in_progress".to_string(),
-                    rectification_measures: Some("组织专项培训，重新演练疏散路线".to_string()),
-                    rectified_at: None,
-                    verifier: None,
-                    verified_at: None,
-                    created_at: Some(chrono::Utc::now().to_rfc3339()),
-                    updated_at: Some(chrono::Utc::now().to_rfc3339()),
-                },
-            ],
+            problems: vec![DrillProblem {
+                id: "prob-001".to_string(),
+                drill_id: id.clone(),
+                description: "部分员工对疏散路线不熟悉".to_string(),
+                category: Some("training".to_string()),
+                severity: Some("medium".to_string()),
+                responsible_person: Some("培训主管".to_string()),
+                deadline: Some("2024-07-01".to_string()),
+                status: "in_progress".to_string(),
+                rectification_measures: Some("组织专项培训，重新演练疏散路线".to_string()),
+                rectified_at: None,
+                verifier: None,
+                verified_at: None,
+                created_at: Some(chrono::Utc::now().to_rfc3339()),
+                updated_at: Some(chrono::Utc::now().to_rfc3339()),
+            }],
         },
         "获取演练详情成功",
     ))
@@ -427,7 +469,9 @@ pub async fn update_drill_record(
             id,
             record_no: "DR-2024001".to_string(),
             plan_id: Some("plan-001".to_string()),
-            title: req.title.unwrap_or_else(|| "2024年度火灾应急演练".to_string()),
+            title: req
+                .title
+                .unwrap_or_else(|| "2024年度火灾应急演练".to_string()),
             drill_type: req.drill_type.unwrap_or_else(|| "fire".to_string()),
             location: req.location.unwrap_or_else(|| "生产厂区".to_string()),
             started_at: req.started_at,
@@ -486,7 +530,10 @@ pub async fn list_drill_problems(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<DrillProblem>>> {
     tracing::info!("Listing drill problems for: {}", id);
-    Json(ApiResponse::success(Vec::<DrillProblem>::new(), "获取问题列表成功"))
+    Json(ApiResponse::success(
+        Vec::<DrillProblem>::new(),
+        "获取问题列表成功",
+    ))
 }
 
 pub async fn create_drill_problem(
@@ -522,15 +569,28 @@ pub async fn update_drill_problem(
     Json(req): Json<UpdateDrillProblemRequest>,
 ) -> Json<ApiResponse<DrillProblem>> {
     tracing::info!("Updating drill problem {}: {:?}", problem_id, req);
-    let status = req.status.clone().unwrap_or_else(|| "in_progress".to_string());
-    let rectified_at = if status == "rectified" { Some(chrono::Utc::now().to_rfc3339()) } else { None };
-    let verified_at = if status == "verified" { Some(chrono::Utc::now().to_rfc3339()) } else { None };
-    
+    let status = req
+        .status
+        .clone()
+        .unwrap_or_else(|| "in_progress".to_string());
+    let rectified_at = if status == "rectified" {
+        Some(chrono::Utc::now().to_rfc3339())
+    } else {
+        None
+    };
+    let verified_at = if status == "verified" {
+        Some(chrono::Utc::now().to_rfc3339())
+    } else {
+        None
+    };
+
     Json(ApiResponse::success(
         DrillProblem {
             id: problem_id,
             drill_id: "drill-001".to_string(),
-            description: req.description.unwrap_or_else(|| "演练问题描述".to_string()),
+            description: req
+                .description
+                .unwrap_or_else(|| "演练问题描述".to_string()),
             category: req.category,
             severity: req.severity,
             responsible_person: req.responsible_person,

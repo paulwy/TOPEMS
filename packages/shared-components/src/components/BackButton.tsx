@@ -16,15 +16,29 @@ type NavigateFn = (to: string | number) => void;
 
 /**
  * Safely obtain react-router-dom's useNavigate at module level.
- * Works in bundled environments (webpack / vite) where `require` is shimmed.
+ * Uses dynamic import so it works in ESM environments where `require` is unavailable.
  * If react-router-dom is not installed this is simply `null`.
  */
 let _useNavigate: (() => NavigateFn) | null = null;
+let _useNavigateLoaded = false;
 try {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  _useNavigate = require('react-router-dom')?.useNavigate ?? null;
+  // Dynamic import for react-router-dom (optional dependency)
+  import('react-router-dom').then((mod) => {
+    if (mod.useNavigate) {
+      _useNavigate = () => {
+        const navigate = mod.useNavigate();
+        return (to: string | number) => {
+          // NavigateFunction has multiple overloads; use type assertion
+          (navigate as (to: string | number) => void)(to);
+        };
+      };
+    }
+    _useNavigateLoaded = true;
+  }).catch(() => {
+    /* react-router-dom is not installed – that is fine */
+  });
 } catch {
-  /* react-router-dom is not installed – that is fine */
+  /* ignore */
 }
 
 // ============ Error boundary for missing Router context ============
@@ -116,6 +130,10 @@ function renderButton(
 // ============ Inner: router-aware ============
 
 function _BackButtonRouter(props: BackButtonProps) {
+  // Dynamic import may not have resolved yet – fall back gracefully
+  if (!_useNavigateLoaded || !_useNavigate) {
+    return <_BackButtonFallback {...props} />;
+  }
   const navigate = _useNavigate!();
 
   const handleClick = useCallback(() => {

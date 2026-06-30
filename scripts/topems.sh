@@ -37,6 +37,9 @@ load_services_config() {
 iam         svc/unified-core       unified-core-service        8000
 pm          svc/pm                 topems-pm                   8023
 erp         svc/erp                topems-erp                  8010
+finance     svc/finance            topems-finance              8011
+doc         svc/doc                topems-doc                  8012
+ai          svc/ai                 topems-ai                   8013
 hrm         svc/hrm                topems-hrm                  8020
 crm         svc/crm                topems-crm                  8029
 mes         svc/mes                topems-mes                  8030
@@ -52,7 +55,6 @@ bi          svc/analytics          bi-service                  8060
 report      svc/report             topems-report               8061
 monitor     svc/monitor            topems-monitor              8062
 portal      svc/portal             topems-portal               8063
-ai          svc/ai                 topems-ai                   8064
 mobile      svc/mobile             topems-mobile               8070
 gis         svc/gis                topems-gis                  8071
 integration svc/integration        topems-integration          8072
@@ -295,6 +297,9 @@ start_service() {
         iam) env_cmd="env CORE_PORT=$port" ;;
         pm) env_cmd="env PM_PORT=$port" ;;
         erp) env_cmd="env ERP_PORT=$port" ;;
+        finance) env_cmd="env FINANCE_PORT=$port" ;;
+        doc) env_cmd="env DOC_PORT=$port" ;;
+        ai) env_cmd="env AI_PORT=$port" ;;
         mes) env_cmd="env MES_PORT=$port" ;;
         pdm) env_cmd="env PDM_PORT=$port" ;;
         qms) env_cmd="env QMS_PORT=$port" ;;
@@ -302,7 +307,6 @@ start_service() {
         ehs) env_cmd="env EHS_PORT=$port" ;;
         bi) env_cmd="env BI_PORT=$port" ;;
         report) env_cmd="env REPORT_PORT=$port" ;;
-        ai) env_cmd="env AI_PORT=$port" ;;
         *) env_cmd="env SERVER_PORT=$port" ;;
     esac
     $env_cmd nohup "$executable_path" > "/tmp/topems-${service_name}.log" 2>&1 &
