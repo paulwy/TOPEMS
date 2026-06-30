@@ -1,6 +1,10 @@
 //! Hazardous material management - Materials, inventory, MSDS, and warehouse records
 
-use axum::{extract::State, routing::{get, post}, Json, Router};
+use axum::{
+    extract::State,
+    routing::{get, post},
+    Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use topems_shared::ApiResponse;
 
@@ -8,16 +12,57 @@ use crate::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/ehs/hazardous-materials", get(list_materials).post(create_material))
-        .route("/api/ehs/hazardous-materials/categories", get(list_material_categories))
-        .route("/api/ehs/hazardous-materials/statistics", get(get_material_statistics))
-        .route("/api/ehs/hazardous-materials/{id}", get(get_material).put(update_material).delete(delete_material))
-        .route("/api/ehs/hazardous-materials/{id}/stocks", get(list_material_stocks))
-        .route("/api/ehs/hazardous-materials/{id}/msds", get(get_material_msds).put(update_material_msds))
-        .route("/api/ehs/hazardous-materials/stock-records", get(list_stock_records))
-        .route("/api/ehs/hazardous-materials/stock-records/stock-in", post(create_stock_in))
-        .route("/api/ehs/hazardous-materials/stock-records/stock-out", post(create_stock_out))
-        .route("/api/ehs/hazardous-materials/stock-records/{id}", get(get_stock_record))
+        .route(
+            "/api/ehs/hazardous-materials",
+            get(list_materials).post(create_material),
+        )
+        .route(
+            "/api/ehs/hazardous-materials/categories",
+            get(list_material_categories),
+        )
+        .route(
+            "/api/ehs/hazardous-materials/statistics",
+            get(get_material_statistics),
+        )
+        .route(
+            "/api/ehs/hazardous-materials/{id}",
+            get(get_material)
+                .put(update_material)
+                .delete(delete_material),
+        )
+        .route(
+            "/api/ehs/hazardous-materials/{id}/stocks",
+            get(list_material_stocks),
+        )
+        .route(
+            "/api/ehs/hazardous-materials/{id}/msds",
+            get(get_material_msds).put(update_material_msds),
+        )
+        .route(
+            "/api/ehs/hazardous-materials/stock-records",
+            get(list_stock_records),
+        )
+        .route(
+            "/api/ehs/hazardous-materials/stock-records/stock-in",
+            post(create_stock_in),
+        )
+        .route(
+            "/api/ehs/hazardous-materials/stock-records/stock-out",
+            post(create_stock_out),
+        )
+        .route(
+            "/api/ehs/hazardous-materials/stock-records/{id}",
+            get(get_stock_record),
+        )
+        .route(
+            "/api/ehs/hazardous-materials/inventory",
+            get(list_materials).post(create_material),
+        )
+        .route(
+            "/api/ehs/hazardous-materials/movements",
+            get(list_stock_records),
+        )
+        .route("/api/ehs/hazardous-materials/msds", get(list_materials))
 }
 
 #[derive(Debug, Deserialize)]
@@ -222,7 +267,10 @@ pub async fn list_materials(
     State(_state): State<crate::AppState>,
 ) -> Json<ApiResponse<Vec<HazardousMaterial>>> {
     tracing::info!("Listing hazardous materials");
-    Json(ApiResponse::success(Vec::<HazardousMaterial>::new(), "获取危险品列表成功"))
+    Json(ApiResponse::success(
+        Vec::<HazardousMaterial>::new(),
+        "获取危险品列表成功",
+    ))
 }
 
 pub async fn create_material(
@@ -233,7 +281,10 @@ pub async fn create_material(
     Json(ApiResponse::success(
         HazardousMaterial {
             id: uuid::Uuid::new_v4().to_string(),
-            material_no: format!("HM-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+            material_no: format!(
+                "HM-{}",
+                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+            ),
             name: req.name,
             alias: req.alias,
             english_name: req.english_name,
@@ -335,7 +386,9 @@ pub async fn get_material(
                 version: Some("V1.0".to_string()),
                 ingredients: Some("硫酸 98%".to_string()),
                 hazard_identification: Some("腐蚀性，强氧化性".to_string()),
-                first_aid_measures: Some("皮肤接触：立即脱去污染的衣着，用大量流动清水冲洗至少15分钟...".to_string()),
+                first_aid_measures: Some(
+                    "皮肤接触：立即脱去污染的衣着，用大量流动清水冲洗至少15分钟...".to_string(),
+                ),
                 fire_fighting_measures: Some("消防人员必须穿全身耐酸碱消防服...".to_string()),
                 accidental_release_measures: Some("迅速撤离泄漏污染区人员至安全区...".to_string()),
                 handling_and_storage: Some("密闭操作，注意通风...".to_string()),
@@ -406,14 +459,20 @@ pub async fn list_material_stocks(
     axum::extract::Path(id): axum::extract::Path<String>,
 ) -> Json<ApiResponse<Vec<MaterialStock>>> {
     tracing::info!("Listing stocks for material: {}", id);
-    Json(ApiResponse::success(Vec::<MaterialStock>::new(), "获取库存列表成功"))
+    Json(ApiResponse::success(
+        Vec::<MaterialStock>::new(),
+        "获取库存列表成功",
+    ))
 }
 
 pub async fn list_stock_records(
     State(_state): State<crate::AppState>,
 ) -> Json<ApiResponse<Vec<StockRecord>>> {
     tracing::info!("Listing stock records");
-    Json(ApiResponse::success(Vec::<StockRecord>::new(), "获取出入库记录列表成功"))
+    Json(ApiResponse::success(
+        Vec::<StockRecord>::new(),
+        "获取出入库记录列表成功",
+    ))
 }
 
 pub async fn create_stock_in(
@@ -424,7 +483,10 @@ pub async fn create_stock_in(
     Json(ApiResponse::success(
         StockRecord {
             id: uuid::Uuid::new_v4().to_string(),
-            record_no: format!("SI-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+            record_no: format!(
+                "SI-{}",
+                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+            ),
             material_id: req.material_id,
             material_name: "浓硫酸".to_string(),
             record_type: "in".to_string(),
@@ -452,7 +514,10 @@ pub async fn create_stock_out(
     Json(ApiResponse::success(
         StockRecord {
             id: uuid::Uuid::new_v4().to_string(),
-            record_no: format!("SO-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+            record_no: format!(
+                "SO-{}",
+                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+            ),
             material_id: req.material_id,
             material_name: "浓硫酸".to_string(),
             record_type: "out".to_string(),
@@ -513,7 +578,9 @@ pub async fn get_material_msds(
             version: Some("V1.0".to_string()),
             ingredients: Some("硫酸 98%".to_string()),
             hazard_identification: Some("腐蚀性，强氧化性".to_string()),
-            first_aid_measures: Some("皮肤接触：立即脱去污染的衣着，用大量流动清水冲洗至少15分钟...".to_string()),
+            first_aid_measures: Some(
+                "皮肤接触：立即脱去污染的衣着，用大量流动清水冲洗至少15分钟...".to_string(),
+            ),
             fire_fighting_measures: Some("消防人员必须穿全身耐酸碱消防服...".to_string()),
             accidental_release_measures: Some("迅速撤离泄漏污染区人员至安全区...".to_string()),
             handling_and_storage: Some("密闭操作，注意通风...".to_string()),

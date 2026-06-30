@@ -1,125 +1,12 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import { federation } from '@module-federation/vite';
+
+// NOTE: Module Federation removed (V6.0.0) — running as single monorepo app
 
 export default defineConfig({
   plugins: [
     react(),
-    federation({
-      name: 'topems_core',
-      filename: 'remoteEntry.js',
-      dts: false,
-
-      remotes: {},
-      shared: {
-        'react': {
-          singleton: true,
-          requiredVersion: '^19.0.0',
-          strictVersion: true,
-        },
-        'react-dom': {
-          singleton: true,
-          requiredVersion: '^19.0.0',
-          strictVersion: true,
-        },
-        'react-router-dom': {
-          singleton: true,
-          requiredVersion: '^7.0.0',
-          strictVersion: true,
-        },
-        '@mui/material': {
-          singleton: true,
-          requiredVersion: '^9.0.0',
-          strictVersion: true,
-        },
-        '@emotion/react': {
-          singleton: true,
-          requiredVersion: '^11.0.0',
-          strictVersion: true,
-        },
-        '@emotion/styled': {
-          singleton: true,
-          requiredVersion: '^11.0.0',
-          strictVersion: true,
-        },
-        'axios': {
-          singleton: true,
-          requiredVersion: '^1.0.0',
-          strictVersion: true,
-        },
-        'zustand': {
-          singleton: true,
-          strictVersion: true,
-        },
-        'i18next': {
-          singleton: true,
-          strictVersion: true,
-        },
-        'react-i18next': {
-          singleton: true,
-          strictVersion: true,
-        },
-        'dayjs': {
-          singleton: true,
-          requiredVersion: '^1.11.0',
-          strictVersion: true,
-        },
-        'clsx': {
-          singleton: true,
-          requiredVersion: '^2.0.0',
-          strictVersion: true,
-        },
-        'lucide-react': {
-          singleton: true,
-          requiredVersion: '^1.0.0',
-          strictVersion: true,
-        },
-        'zod': {
-          singleton: true,
-          requiredVersion: '^4.0.0',
-          strictVersion: true,
-        },
-      },
-      exposes: {
-        './bootstrap': './src/bootstrap.tsx',
-        './api/auth': './src/api/auth.ts',
-        './api/org': './src/api/org.ts',
-        './api/workflow': './src/api/workflow.ts',
-        './api/iam': './src/api/iam.ts',
-        './api/file': './src/api/file.ts',
-        './api/notification': './src/api/notification.ts',
-        './api/report': './src/api/report.ts',
-        './api': './src/api/index.ts',
-        './components/UserSelect': './src/components/UserSelect',
-        './components/OrgTree': './src/components/OrgTree',
-        './components/FileUpload': './src/components/FileUpload',
-        './components/FileList': './src/components/FileList',
-        './components/ReportCard': './src/components/ReportCard',
-        './components/NotificationBell': './src/components/NotificationBell',
-        './components/NotificationPanel': './src/components/NotificationPanel',
-        './components': './src/components/index.ts',
-        './hooks/usePermission': './src/hooks/usePermission.ts',
-        './hooks': './src/hooks/index.ts',
-        './store/authStore': './src/store/authStore.ts',
-        './store/orgStore': './src/store/orgStore.ts',
-        './store/iamStore': './src/store/iamStore.ts',
-        './store/notificationStore': './src/store/notificationStore.ts',
-        './store': './src/store/index.ts',
-        './pages/UserManagement': './src/pages/UserManagement',
-        './pages/RoleManagement': './src/pages/RoleManagement',
-        './pages/PermissionManagement': './src/pages/PermissionManagement',
-        './pages/OrgChart': './src/pages/OrgChart',
-        './pages/FlowDesignerPage': './src/pages/FlowDesignerPage',
-        './pages/FlowMonitorPage': './src/pages/FlowMonitorPage',
-        './pages/FlowTemplatePage': './src/pages/FlowTemplatePage',
-        './pages/DocumentCenterPage': './src/pages/DocumentCenterPage',
-        './pages/ReportListPage': './src/pages/ReportListPage',
-        './pages/ReportViewerPage': './src/pages/ReportViewerPage',
-        './pages': './src/pages/index.ts',
-        './App': './src/App.tsx',
-      },
-    }),
   ],
   resolve: {
     alias: {

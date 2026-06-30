@@ -8,7 +8,19 @@ import { useAppStore } from '@/store';
 
 vi.mock('@/api/qms');
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn(),
+  useAppStore: vi.fn((selector?: any) =>
+    selector ? selector({
+      addNotification: mockAddNotification,
+      notifications: [],
+      user: null,
+      theme: 'light',
+    }) : {
+      addNotification: mockAddNotification,
+      notifications: [],
+      user: null,
+      theme: 'light',
+    }
+  ),
 }));
 
 const mockAddNotification = vi.fn();
@@ -31,7 +43,19 @@ const mockControls = [
 describe('QmsQualityControlPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (useAppStore as vi.Mock).mockReturnValue(mockAddNotification);
+    (useAppStore as vi.Mock).mockImplementation((selector?: any) =>
+      selector ? selector({
+        addNotification: mockAddNotification,
+        notifications: [],
+        user: null,
+        theme: 'light',
+      }) : {
+        addNotification: mockAddNotification,
+        notifications: [],
+        user: null,
+        theme: 'light',
+      }
+    );
     (qmsApi.listControls as vi.Mock).mockResolvedValue({
       success: true,
       data: mockControls,

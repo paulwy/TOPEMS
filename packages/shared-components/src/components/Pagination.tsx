@@ -1,4 +1,5 @@
 import { Box, Typography, Select, MenuItem, FormControl, Button } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material/styles';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react';
 
 export interface PaginationConfig {
@@ -11,6 +12,8 @@ export interface PaginationConfig {
   pageSizeOptions?: number[];
   showTotal?: boolean;
   totalItems?: number;
+  sx?: SxProps<Theme>;
+  disabled?: boolean;
 }
 
 export default function PaginationComponent({
@@ -23,6 +26,8 @@ export default function PaginationComponent({
   pageSizeOptions = [10, 20, 50, 100],
   showTotal = true,
   totalItems,
+  sx,
+  disabled = false,
 }: PaginationConfig) {
   const startItem = totalItems ? (page - 1) * pageSize + 1 : (page - 1) * pageSize + 1;
   const endItem = totalItems ? Math.min(page * pageSize, totalItems) : page * pageSize;
@@ -48,7 +53,7 @@ export default function PaginationComponent({
   };
 
   return (
-    <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 4 }}>
+    <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 4, ...sx, opacity: disabled ? 0.5 : 1, pointerEvents: disabled ? 'none' as const : 'auto' as const }}>
       {showTotal && totalItems && (
         <Typography sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>
           显示 {startItem}-{endItem} / 共 {totalItems} 条
@@ -57,12 +62,13 @@ export default function PaginationComponent({
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Button
           onClick={() => onChange(1)}
-          disabled={page === 1}
+          disabled={page === 1 || disabled}
           sx={{
             p: 2,
             borderRadius: 2,
             color: 'text.secondary',
-            '&:hover': { backgroundColor: 'grey.100' },
+            cursor: page === 1 || disabled ? 'not-allowed' : 'pointer',
+            '&:hover': { backgroundColor: 'action.hover' },
             '&:disabled': {
               opacity: 0.5,
               cursor: 'not-allowed',
@@ -74,12 +80,13 @@ export default function PaginationComponent({
         </Button>
         <Button
           onClick={() => onChange(page - 1)}
-          disabled={page === 1}
+          disabled={page === 1 || disabled}
           sx={{
             p: 2,
             borderRadius: 2,
             color: 'text.secondary',
-            '&:hover': { backgroundColor: 'grey.100' },
+            cursor: page === 1 || disabled ? 'not-allowed' : 'pointer',
+            '&:hover': { backgroundColor: 'action.hover' },
             '&:disabled': {
               opacity: 0.5,
               cursor: 'not-allowed',
@@ -101,6 +108,7 @@ export default function PaginationComponent({
             <Button
               key={index}
               onClick={() => onChange(pageNum as number)}
+              disabled={disabled}
               sx={{
                 minWidth: 32,
                 height: 32,
@@ -108,10 +116,11 @@ export default function PaginationComponent({
                 borderRadius: 2,
                 fontSize: '0.875rem',
                 fontWeight: 500,
-                backgroundColor: page === pageNum ? 'primary.dark' : 'transparent',
-                color: page === pageNum ? 'white' : 'text.secondary',
+                cursor: disabled ? 'not-allowed' : 'pointer',
+                backgroundColor: page === pageNum ? 'primary.main' : 'transparent',
+                color: page === pageNum ? 'primary.contrastText' : 'text.secondary',
                 '&:hover': {
-                  backgroundColor: page === pageNum ? 'primary.dark' : 'grey.100',
+                  backgroundColor: page === pageNum ? 'primary.main' : 'action.hover',
                 },
               }}
             >
@@ -121,12 +130,13 @@ export default function PaginationComponent({
         )}
         <Button
           onClick={() => onChange(page + 1)}
-          disabled={page === total}
+          disabled={page === total || disabled}
           sx={{
             p: 2,
             borderRadius: 2,
             color: 'text.secondary',
-            '&:hover': { backgroundColor: 'grey.100' },
+            cursor: page === total || disabled ? 'not-allowed' : 'pointer',
+            '&:hover': { backgroundColor: 'action.hover' },
             '&:disabled': {
               opacity: 0.5,
               cursor: 'not-allowed',
@@ -138,12 +148,13 @@ export default function PaginationComponent({
         </Button>
         <Button
           onClick={() => onChange(total)}
-          disabled={page === total}
+          disabled={page === total || disabled}
           sx={{
             p: 2,
             borderRadius: 2,
             color: 'text.secondary',
-            '&:hover': { backgroundColor: 'grey.100' },
+            cursor: page === total || disabled ? 'not-allowed' : 'pointer',
+            '&:hover': { backgroundColor: 'action.hover' },
             '&:disabled': {
               opacity: 0.5,
               cursor: 'not-allowed',
@@ -161,6 +172,7 @@ export default function PaginationComponent({
             <Select
               value={pageSize}
               onChange={(e) => onPageSizeChange(Number(e.target.value))}
+              disabled={disabled}
               sx={{
                 height: 32,
                 fontSize: '0.875rem',

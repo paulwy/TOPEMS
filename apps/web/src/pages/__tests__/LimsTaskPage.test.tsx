@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import LimsTaskPage from '../lims/LimsTaskPage';
@@ -8,7 +8,19 @@ import { useAppStore } from '@/store';
 
 vi.mock('@/api/lims');
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn(),
+  useAppStore: vi.fn((selector?: any) =>
+    selector ? selector({
+      addNotification: mockAddNotification,
+      notifications: [],
+      user: null,
+      theme: 'light',
+    }) : {
+      addNotification: mockAddNotification,
+      notifications: [],
+      user: null,
+      theme: 'light',
+    }
+  ),
 }));
 
 const mockAddNotification = vi.fn();
@@ -34,16 +46,23 @@ const mockTasks = [
 describe('LimsTaskPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.useFakeTimers();
-    (useAppStore as vi.Mock).mockImplementation(() => mockAddNotification);
+    (useAppStore as vi.Mock).mockImplementation((selector?: any) =>
+      selector ? selector({
+        addNotification: mockAddNotification,
+        notifications: [],
+        user: null,
+        theme: 'light',
+      }) : {
+        addNotification: mockAddNotification,
+        notifications: [],
+        user: null,
+        theme: 'light',
+      }
+    );
     (limsApi.listTasks as vi.Mock).mockResolvedValue({
       success: true,
       data: mockTasks,
     });
-  });
-
-  afterEach(() => {
-    vi.useRealTimers();
   });
 
   it('should render loading state initially', async () => {

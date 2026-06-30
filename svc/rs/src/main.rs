@@ -15,8 +15,9 @@ use std::time::Instant;
 
 use topems_shared::{
     auth_middleware, check_http_health, config::enhanced::DatabaseConfig, create_api_info_router,
-    create_cors_layer, create_database_pool, init_logging, test_database_connection, ApiResponse,
-    AuthState, Config, DependencyHealth, HealthStatus, Result, ServiceHealth, SystemMetrics,
+    create_cors_layer, create_database_pool, init_telemetry, telemetry_middleware,
+    test_database_connection, ApiResponse, AuthState, Config, DependencyHealth, HealthStatus,
+    Result, ServiceHealth, SystemMetrics,
 };
 use utoipa::OpenApi;
 
@@ -24,7 +25,7 @@ use utoipa::OpenApi;
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
 
-    init_logging("topems-rs");
+    let _telemetry_guard = init_telemetry("topems-rs");
 
     let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
     let custom_gauge = Gauge::new(
@@ -126,6 +127,7 @@ async fn main() -> Result<()> {
         .merge(public_routes)
         .merge(protected_routes)
         .merge(create_api_info_router("topems-rs"))
+        .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(prometheus_layer)
         .layer(cors)
         .with_state(api_state.clone());

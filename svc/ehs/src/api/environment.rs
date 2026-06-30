@@ -8,7 +8,18 @@ use crate::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/ehs/environment", get(list_records).post(create_record))
+        .route(
+            "/api/ehs/environment",
+            get(list_records).post(create_record),
+        )
+        .route(
+            "/api/ehs/environment/monitors",
+            get(list_records).post(create_record),
+        )
+        .route(
+            "/api/ehs/environment/records",
+            get(list_records).post(create_record),
+        )
 }
 
 #[derive(Debug, Deserialize)]
@@ -33,7 +44,10 @@ pub async fn list_records(
     State(_state): State<crate::AppState>,
 ) -> Json<ApiResponse<Vec<EnvironmentRecord>>> {
     tracing::info!("Listing environment records");
-    Json(ApiResponse::success(Vec::<EnvironmentRecord>::new(), "获取环境记录列表成功"))
+    Json(ApiResponse::success(
+        Vec::<EnvironmentRecord>::new(),
+        "获取环境记录列表成功",
+    ))
 }
 
 pub async fn create_record(
@@ -44,7 +58,10 @@ pub async fn create_record(
     Json(ApiResponse::success(
         EnvironmentRecord {
             id: uuid::Uuid::new_v4().to_string(),
-            record_no: format!("ENV-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+            record_no: format!(
+                "ENV-{}",
+                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+            ),
             monitor_type: Some("废气".to_string()),
             monitor_point: Some("排放口A".to_string()),
             data: serde_json::json!({"pm25": 35, "so2": 0.02}),

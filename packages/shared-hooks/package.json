@@ -2,8 +2,11 @@
   "name": "@topems/shared-hooks",
   "version": "1.0.0",
   "description": "Shared React hooks for TOPEMS",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "build": "tsc",
     "clean": "rm -rf dist"

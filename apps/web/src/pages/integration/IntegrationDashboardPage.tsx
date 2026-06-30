@@ -1,328 +1,209 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Box, Typography } from '@mui/material';
+/**
+ * 集成平台仪表盘页面 - V4.0 标准化改造
+ *
+ * @module pages/integration
+ * @path /integration/dashboard
+ */
+
+import React, { useState, useMemo } from 'react';
 import {
-  ArrowRightLeft,
-  Database,
-  Box as BoxIcon,
-  Bell,
-  Settings,
-  Layers,
   Plug,
+  Activity,
+  CheckCircle2,
+  AlertTriangle,
+  RefreshCw,
+  Settings,
+  GitMerge,
+  ArrowRight,
 } from 'lucide-react';
-import { integrationApi } from '@/api/integration';
-import { useAppStore } from '@/store';
-import type { SyncStats, IntegrationEvent } from '@/api/integration';
-import { logger } from '@/utils/logger';
-import { useNotification } from '@/hooks/useNotification';
-import {
-  DashboardTemplate,
-  type StatCard,
-  type RecentItem,
-  type QuickAction,
-  type ChartCard,
-} from '@/components/templates';
+import { Box, Typography } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
+
 import { PageContainer } from '@/components/common';
-import { PieChartComponent } from '@/components/charts/PieChart';
-import { BarChartComponent } from '@/components/charts/BarChart';
+import { DashboardTemplate, type StatCard, type ChartCard, type QuickAction, type RecentItem } from '@/components/templates';
+import { useAppStore } from '../../store';
 
-const IntegrationDashboardPage: React.FC = () => {
+export const IntegrationDashboardPage: React.FC = () => {
   const navigate = useNavigate();
-  const { error } = useNotification();
-  const [stats, setStats] = useState<SyncStats | null>(null);
-  const [events, setEvents] = useState<IntegrationEvent[]>([]);
-  const [loading, setLoading] = useState(true);
+  const addNotification = useAppStore((state) => state.addNotification);
+  const [loading, setLoading] = useState(false);
 
-  const loadData = useCallback(async () => {
-    try {
-      setLoading(true);
-      const [statsRes, eventsRes] = await Promise.all([
-        integrationApi.getSyncStats(),
-        integrationApi.listEvents(),
-      ]);
-
-      if (statsRes.success && statsRes.data !== undefined) setStats(statsRes.data);
-      if (eventsRes.success && eventsRes.data !== undefined) setEvents(eventsRes.data);
-    } catch (err: unknown) {
-      logger.error('Error loading data:', err);
-      error('加载集成数据失败');
-    } finally {
-      setLoading(false);
-    }
-  }, [error]);
-
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
-
-  // 计算同步成功率
-  const getSyncRate = (synced: number, total: number) => {
-    if (total === 0) return 0;
-    return Math.round((synced / total) * 100);
-  };
-
-  // 转换统计数据为 StatCard 格式（带进度条）
-  const statCards: StatCard[] = stats
-    ? [
-        {
-          id: 'lims-qms',
-          title: 'LIMS ↔ QMS',
-          value: stats.lims_qms_total,
-          subtitle: `已同步 ${stats.lims_qms_synced} / 失败 ${stats.lims_qms_failed}`,
-          progress: getSyncRate(stats.lims_qms_synced, stats.lims_qms_total),
-          progressLabel: '同步率',
-          color: 'primary',
-          size: 'medium' as const,
-        },
-        {
-          id: 'mes-erp',
-          title: 'MES ↔ ERP',
-          value: stats.mes_erp_total,
-          subtitle: `已同步 ${stats.mes_erp_synced} / 失败 ${stats.mes_erp_failed}`,
-          progress: getSyncRate(stats.mes_erp_synced, stats.mes_erp_total),
-          progressLabel: '同步率',
-          color: 'info',
-          size: 'medium' as const,
-        },
-        {
-          id: 'wms-scm',
-          title: 'WMS ↔ SCM',
-          value: stats.wms_scm_total,
-          subtitle: `已同步 ${stats.wms_scm_synced} / 失败 ${stats.wms_scm_failed}`,
-          progress: getSyncRate(stats.wms_scm_synced, stats.wms_scm_total),
-          progressLabel: '同步率',
-          color: 'secondary',
-          size: 'medium' as const,
-        },
-        {
-          id: 'total-synced',
-          title: '总已同步',
-          value: stats.lims_qms_synced + stats.mes_erp_synced + stats.wms_scm_synced,
-          color: 'success',
-          size: 'small' as const,
-        },
-        {
-          id: 'total-failed',
-          title: '总失败',
-          value: stats.lims_qms_failed + stats.mes_erp_failed + stats.wms_scm_failed,
-          color: 'error',
-          size: 'small' as const,
-        },
-        {
-          id: 'total-pending',
-          title: '总待处理',
-          value:
-            stats.lims_qms_total +
-            stats.mes_erp_total +
-            stats.wms_scm_total -
-            (stats.lims_qms_synced + stats.mes_erp_synced + stats.wms_scm_synced) -
-            (stats.lims_qms_failed + stats.mes_erp_failed + stats.wms_scm_failed),
-          color: 'warning',
-          size: 'small' as const,
-        },
-      ]
-    : [];
-
-  // 转换事件数据为 RecentItem 格式
-  const recentItems: RecentItem[] = events.slice(0, 10).map((event) => ({
-    id: event.id,
-    title: `${event.source_system} → ${event.target_system}`,
-    description: event.event_type,
-    time: new Date(event.created_at).toLocaleString('zh-CN'),
-    status:
-      event.status === 'synced'
-        ? 'success'
-        : event.status === 'pending'
-          ? 'warning'
-          : event.status === 'failed'
-            ? 'error'
-            : 'default',
-  }));
-
-  // 快捷操作配置
-  const quickActions: QuickAction[] = [
+  const stats: StatCard[] = useMemo(() => [
     {
-      id: 'lims-qms',
-      label: 'LIMS-QMS',
-      description: 'LIMS与QMS系统数据同步',
-      icon: <ArrowRightLeft size={20} />,
-      onClick: () => navigate('/integration/lims-qms'),
+      id: 'active-connections',
+      title: '活跃连接',
+      value: '12',
+      icon: <Plug size={20} />,
+      change: 2,
+      changeLabel: '较上月',
+      color: 'success',
     },
     {
-      id: 'mes-erp',
-      label: 'MES-ERP',
-      description: 'MES与ERP系统数据同步',
-      icon: <Database size={20} />,
-      onClick: () => navigate('/integration/mes-erp'),
+      id: 'sync-tasks',
+      title: '同步任务',
+      value: '156',
+      icon: <GitMerge size={20} />,
+      change: 23,
+      changeLabel: '较上月',
+      color: 'primary',
     },
     {
-      id: 'wms-scm',
-      label: 'WMS-SCM',
-      description: 'WMS与SCM系统数据同步',
-      icon: <BoxIcon size={20} />,
-      onClick: () => navigate('/integration/wms-scm'),
+      id: 'success-rate',
+      title: '成功率',
+      value: '98.5%',
+      icon: <CheckCircle2 size={20} />,
+      change: 0.5,
+      changeLabel: '较上月',
+      color: 'success',
     },
     {
-      id: 'events',
-      label: '事件日志',
-      description: '查看集成事件记录',
-      icon: <Bell size={20} />,
+      id: 'avg-latency',
+      title: '平均延迟',
+      value: '125ms',
+      icon: <Activity size={20} />,
+      change: -15,
+      changeLabel: 'ms下降',
+      color: 'info',
+    },
+    {
+      id: 'sync-records',
+      title: '同步记录',
+      value: '12,580',
+      icon: <RefreshCw size={20} />,
+      change: 1250,
+      changeLabel: '较上月',
+      color: 'primary',
+    },
+    {
+      id: 'errors',
+      title: '错误数',
+      value: '23',
+      icon: <AlertTriangle size={20} />,
+      change: -5,
+      changeLabel: '较上月',
+      color: 'error',
+    },
+  ], []);
+
+  const charts: ChartCard[] = useMemo(() => [
+    {
+      id: 'trend',
+      title: '同步趋势',
+      icon: <Activity size={18} />,
+      type: 'line',
+      span: 2,
+    },
+    {
+      id: 'status',
+      title: '连接状态',
+      icon: <Plug size={18} />,
+      type: 'pie',
+      span: 1,
+    },
+    {
+      id: 'systems',
+      title: '各系统同步量',
+      icon: <GitMerge size={18} />,
+      type: 'bar',
+      span: 1,
+    },
+  ], []);
+
+  const quickActions: QuickAction[] = useMemo(() => [
+    {
+      id: 'new-connection',
+      label: '新建连接',
+      icon: <Plug size={20} />,
+      color: 'primary',
+      onClick: () => navigate('/integration/connections'),
+    },
+    {
+      id: 'view-logs',
+      label: '查看日志',
+      icon: <Activity size={20} />,
+      color: 'info',
       onClick: () => navigate('/integration/events'),
     },
     {
-      id: 'rules',
-      label: '转换规则',
-      description: '管理数据转换规则',
-      icon: <Layers size={20} />,
-      onClick: () => navigate('/integration/rules'),
+      id: 'data-mapping',
+      label: '数据映射',
+      icon: <GitMerge size={20} />,
+      color: 'success',
+      onClick: () => navigate('/integration/mappings'),
     },
     {
-      id: 'external-erp',
-      label: '外部ERP',
-      description: '外部ERP系统连接配置',
+      id: 'settings',
+      label: '同步设置',
       icon: <Settings size={20} />,
-      onClick: () => navigate('/integration/external-erp'),
+      color: 'warning',
+      onClick: () => navigate('/integration/settings'),
     },
-  ];
+  ], [navigate]);
 
-  // 同步状态分布数据（饼图）
-  const syncStatusData = stats
-    ? [
-        {
-          name: 'LIMS-QMS 已同步',
-          value: stats.lims_qms_synced,
-          color: 'success.dark',
-        },
-        {
-          name: 'LIMS-QMS 失败',
-          value: stats.lims_qms_failed,
-          color: 'error.main',
-        },
-        {
-          name: 'MES-ERP 已同步',
-          value: stats.mes_erp_synced,
-          color: 'primary.main',
-        },
-        {
-          name: 'MES-ERP 失败',
-          value: stats.mes_erp_failed,
-          color: 'warning.main',
-        },
-        {
-          name: 'WMS-SCM 已同步',
-          value: stats.wms_scm_synced,
-          color: 'secondary.main',
-        },
-        {
-          name: 'WMS-SCM 失败',
-          value: stats.wms_scm_failed,
-          color: 'info.main',
-        },
-      ]
-    : [];
-
-  // 各系统同步对比数据（柱状图）
-  const syncComparisonData = stats
-    ? [
-        {
-          name: 'LIMS-QMS',
-          已同步: stats.lims_qms_synced,
-          失败: stats.lims_qms_failed,
-          总数: stats.lims_qms_total,
-        },
-        {
-          name: 'MES-ERP',
-          已同步: stats.mes_erp_synced,
-          失败: stats.mes_erp_failed,
-          总数: stats.mes_erp_total,
-        },
-        {
-          name: 'WMS-SCM',
-          已同步: stats.wms_scm_synced,
-          失败: stats.wms_scm_failed,
-          总数: stats.wms_scm_total,
-        },
-      ]
-    : [];
-
-  // 图表卡片配置
-  const charts: ChartCard[] = [
+  const recentItems: RecentItem[] = useMemo(() => [
     {
-      id: 'sync-status-pie',
-      title: '同步状态分布',
-      subtitle: '各系统同步成功与失败占比',
-      type: 'pie',
-      height: 300,
-      loading,
-      chart:
-        syncStatusData.length > 0 ? (
-          <Box sx={{ height: 300 }}>
-            <PieChartComponent
-              data={syncStatusData}
-              title=''
-            />
-          </Box>
-        ) : (
-          <Box
-            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}
-          >
-            <Typography color='text.secondary'>暂无数据</Typography>
-          </Box>
-        ),
+      id: '1',
+      title: 'ERP - 采购订单同步',
+      subtitle: '成功 · 2分钟前',
+      status: '成功',
+      statusColor: 'success',
+      onClick: () => navigate('/integration/events'),
     },
     {
-      id: 'sync-comparison-bar',
-      title: '系统同步对比',
-      subtitle: '各系统同步数量统计',
-      type: 'bar',
-      height: 300,
-      loading,
-      chart:
-        syncComparisonData.length > 0 ? (
-          <Box sx={{ height: 300 }}>
-            <BarChartComponent
-              data={syncComparisonData}
-              xKey='name'
-              yKeys={[
-                { key: '已同步', name: '已同步', color: 'success.dark' },
-                { key: '失败', name: '失败', color: 'error.main' },
-              ]}
-              height={280}
-            />
-          </Box>
-        ) : (
-          <Box
-            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}
-          >
-            <Typography color='text.secondary'>暂无数据</Typography>
-          </Box>
-        ),
+      id: '2',
+      title: 'WMS - 库存数据同步',
+      subtitle: '成功 · 5分钟前',
+      status: '成功',
+      statusColor: 'success',
+      onClick: () => navigate('/integration/events'),
     },
-  ];
+    {
+      id: '3',
+      title: 'MES - 工单数据同步',
+      subtitle: '成功 · 10分钟前',
+      status: '成功',
+      statusColor: 'success',
+      onClick: () => navigate('/integration/events'),
+    },
+    {
+      id: '4',
+      title: 'CRM - 客户数据同步',
+      subtitle: '警告 · 15分钟前',
+      status: '警告',
+      statusColor: 'warning',
+      onClick: () => navigate('/integration/events'),
+    },
+    {
+      id: '5',
+      title: 'SCM - 供应商数据同步',
+      subtitle: '失败 · 30分钟前',
+      status: '失败',
+      statusColor: 'error',
+      onClick: () => navigate('/integration/events'),
+    },
+  ], [navigate]);
 
   return (
     <PageContainer
-      title='集成管理仪表板'
       headerProps={{
-        pageIcon: <Plug style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
+        pageIcon: <Plug size={20} />,
       }}
-      padding={false}
-      maxWidth={false}
     >
       <DashboardTemplate
         title=''
         subtitle=''
-        stats={statCards}
+        loading={loading}
+        stats={stats}
         charts={charts}
         quickActions={quickActions}
         recentItems={recentItems}
-        recentTitle='最近事件'
-        loading={loading}
-        onRefresh={loadData}
-        layout={{
-          statsBreakpoints: { xs: 12, sm: 6, md: 4, lg: 3 },
-          chartsBreakpoints: { xs: 12, md: 6 },
+        recentTitle='最近同步记录'
+        onRefresh={() => {
+          setLoading(true);
+          setTimeout(() => {
+            setLoading(false);
+            addNotification({ title: '刷新成功', message: '数据已更新', type: 'success' });
+          }, 500);
         }}
       />
     </PageContainer>

@@ -8,18 +8,76 @@ use crate::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/ehs/occupational-disease/factors", get(list_hazard_factors).post(create_hazard_factor))
-        .route("/api/ehs/occupational-disease/factors/{id}", get(get_hazard_factor).put(update_hazard_factor).delete(delete_hazard_factor))
-        .route("/api/ehs/occupational-disease/detections", get(list_detection_records).post(create_detection_record))
-        .route("/api/ehs/occupational-disease/detections/{id}", get(get_detection_record).delete(delete_detection_record))
-        .route("/api/ehs/occupational-disease/cases", get(list_disease_cases).post(create_disease_case))
-        .route("/api/ehs/occupational-disease/cases/{id}", get(get_disease_case).put(update_disease_case).delete(delete_disease_case))
-        .route("/api/ehs/occupational-disease/protection-measures", get(list_protection_measures).post(create_protection_measure))
-        .route("/api/ehs/occupational-disease/protection-measures/{id}", get(get_protection_measure).put(update_protection_measure).delete(delete_protection_measure))
-        .route("/api/ehs/occupational-disease/trainings", get(list_health_trainings).post(create_health_training))
-        .route("/api/ehs/occupational-disease/trainings/{id}", get(get_health_training).delete(delete_health_training))
-        .route("/api/ehs/occupational-disease/factor-types", get(list_factor_types))
-        .route("/api/ehs/occupational-disease/statistics", get(get_disease_statistics))
+        .route(
+            "/api/ehs/occupational-disease/factors",
+            get(list_hazard_factors).post(create_hazard_factor),
+        )
+        .route(
+            "/api/ehs/occupational-disease/factors/{id}",
+            get(get_hazard_factor)
+                .put(update_hazard_factor)
+                .delete(delete_hazard_factor),
+        )
+        .route(
+            "/api/ehs/occupational-disease/detections",
+            get(list_detection_records).post(create_detection_record),
+        )
+        .route(
+            "/api/ehs/occupational-disease/detections/{id}",
+            get(get_detection_record).delete(delete_detection_record),
+        )
+        .route(
+            "/api/ehs/occupational-disease/cases",
+            get(list_disease_cases).post(create_disease_case),
+        )
+        .route(
+            "/api/ehs/occupational-disease/cases/{id}",
+            get(get_disease_case)
+                .put(update_disease_case)
+                .delete(delete_disease_case),
+        )
+        .route(
+            "/api/ehs/occupational-disease/protection-measures",
+            get(list_protection_measures).post(create_protection_measure),
+        )
+        .route(
+            "/api/ehs/occupational-disease/protection-measures/{id}",
+            get(get_protection_measure)
+                .put(update_protection_measure)
+                .delete(delete_protection_measure),
+        )
+        .route(
+            "/api/ehs/occupational-disease/trainings",
+            get(list_health_trainings).post(create_health_training),
+        )
+        .route(
+            "/api/ehs/occupational-disease/trainings/{id}",
+            get(get_health_training).delete(delete_health_training),
+        )
+        .route(
+            "/api/ehs/occupational-disease/factor-types",
+            get(list_factor_types),
+        )
+        .route(
+            "/api/ehs/occupational-disease/statistics",
+            get(get_disease_statistics),
+        )
+        .route(
+            "/api/ehs/occupational-diseases/factors",
+            get(list_hazard_factors).post(create_hazard_factor),
+        )
+        .route(
+            "/api/ehs/occupational-diseases/detection-records",
+            get(list_detection_records).post(create_detection_record),
+        )
+        .route(
+            "/api/ehs/occupational-diseases/cases",
+            get(list_disease_cases).post(create_disease_case),
+        )
+        .route(
+            "/api/ehs/occupational-diseases/protection-measures",
+            get(list_protection_measures).post(create_protection_measure),
+        )
 }
 
 #[derive(Debug, Deserialize)]
@@ -257,7 +315,10 @@ pub async fn list_hazard_factors(
     State(_state): State<crate::AppState>,
 ) -> Json<ApiResponse<Vec<HazardFactor>>> {
     tracing::info!("Listing hazard factors");
-    Json(ApiResponse::success(Vec::<HazardFactor>::new(), "获取危害因素列表成功"))
+    Json(ApiResponse::success(
+        Vec::<HazardFactor>::new(),
+        "获取危害因素列表成功",
+    ))
 }
 
 pub async fn create_hazard_factor(
@@ -268,7 +329,10 @@ pub async fn create_hazard_factor(
     Json(ApiResponse::success(
         HazardFactor {
             id: uuid::Uuid::new_v4().to_string(),
-            factor_no: format!("HF-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+            factor_no: format!(
+                "HF-{}",
+                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+            ),
             name: req.name,
             factor_type: req.factor_type,
             category: req.category,
@@ -357,7 +421,10 @@ pub async fn list_detection_records(
     State(_state): State<crate::AppState>,
 ) -> Json<ApiResponse<Vec<DetectionRecord>>> {
     tracing::info!("Listing detection records");
-    Json(ApiResponse::success(Vec::<DetectionRecord>::new(), "获取检测记录列表成功"))
+    Json(ApiResponse::success(
+        Vec::<DetectionRecord>::new(),
+        "获取检测记录列表成功",
+    ))
 }
 
 pub async fn create_detection_record(
@@ -368,7 +435,10 @@ pub async fn create_detection_record(
     Json(ApiResponse::success(
         DetectionRecord {
             id: uuid::Uuid::new_v4().to_string(),
-            record_no: format!("DR-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+            record_no: format!(
+                "DR-{}",
+                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+            ),
             factor_id: req.factor_id,
             factor_name: req.factor_name,
             factor_type: req.factor_type,
@@ -434,7 +504,10 @@ pub async fn list_disease_cases(
     State(_state): State<crate::AppState>,
 ) -> Json<ApiResponse<Vec<DiseaseCase>>> {
     tracing::info!("Listing disease cases");
-    Json(ApiResponse::success(Vec::<DiseaseCase>::new(), "获取职业病案例列表成功"))
+    Json(ApiResponse::success(
+        Vec::<DiseaseCase>::new(),
+        "获取职业病案例列表成功",
+    ))
 }
 
 pub async fn create_disease_case(
@@ -445,7 +518,10 @@ pub async fn create_disease_case(
     Json(ApiResponse::success(
         DiseaseCase {
             id: uuid::Uuid::new_v4().to_string(),
-            case_no: format!("DC-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+            case_no: format!(
+                "DC-{}",
+                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+            ),
             employee_id: req.employee_id,
             employee_name: req.employee_name,
             department: req.department,
@@ -510,8 +586,12 @@ pub async fn update_disease_case(
 ) -> Json<ApiResponse<DiseaseCase>> {
     tracing::info!("Updating disease case {}: {:?}", id, req);
     let status = req.status.clone().unwrap_or_else(|| "active".to_string());
-    let closed_at = if status == "closed" { Some(chrono::Utc::now().to_rfc3339()) } else { None };
-    
+    let closed_at = if status == "closed" {
+        Some(chrono::Utc::now().to_rfc3339())
+    } else {
+        None
+    };
+
     Json(ApiResponse::success(
         DiseaseCase {
             id,
@@ -552,7 +632,10 @@ pub async fn list_protection_measures(
     State(_state): State<crate::AppState>,
 ) -> Json<ApiResponse<Vec<ProtectionMeasure>>> {
     tracing::info!("Listing protection measures");
-    Json(ApiResponse::success(Vec::<ProtectionMeasure>::new(), "获取防护措施列表成功"))
+    Json(ApiResponse::success(
+        Vec::<ProtectionMeasure>::new(),
+        "获取防护措施列表成功",
+    ))
 }
 
 pub async fn create_protection_measure(
@@ -563,7 +646,10 @@ pub async fn create_protection_measure(
     Json(ApiResponse::success(
         ProtectionMeasure {
             id: uuid::Uuid::new_v4().to_string(),
-            measure_no: format!("PM-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+            measure_no: format!(
+                "PM-{}",
+                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+            ),
             title: req.title,
             measure_type: req.measure_type,
             description: req.description,
@@ -625,11 +711,21 @@ pub async fn update_protection_measure(
             related_factors: Some(vec!["噪声".to_string()]),
             related_positions: Some(vec!["冲压工".to_string(), "操作工".to_string()]),
             implementation_date: Some("2024-01-01".to_string()),
-            status: req.get("status").and_then(|v| v.as_str()).unwrap_or("active").to_string(),
+            status: req
+                .get("status")
+                .and_then(|v| v.as_str())
+                .unwrap_or("active")
+                .to_string(),
             responsible_person: Some("张安全".to_string()),
-            effectiveness: req.get("effectiveness").and_then(|v| v.as_str()).map(|s| s.to_string()),
+            effectiveness: req
+                .get("effectiveness")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
             inspection_date: None,
-            remarks: req.get("remarks").and_then(|v| v.as_str()).map(|s| s.to_string()),
+            remarks: req
+                .get("remarks")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
             created_at: Some(chrono::Utc::now().to_rfc3339()),
             updated_at: Some(chrono::Utc::now().to_rfc3339()),
         },
@@ -649,7 +745,10 @@ pub async fn list_health_trainings(
     State(_state): State<crate::AppState>,
 ) -> Json<ApiResponse<Vec<HealthTraining>>> {
     tracing::info!("Listing health trainings");
-    Json(ApiResponse::success(Vec::<HealthTraining>::new(), "获取职业健康培训列表成功"))
+    Json(ApiResponse::success(
+        Vec::<HealthTraining>::new(),
+        "获取职业健康培训列表成功",
+    ))
 }
 
 pub async fn create_health_training(
@@ -660,7 +759,10 @@ pub async fn create_health_training(
     Json(ApiResponse::success(
         HealthTraining {
             id: uuid::Uuid::new_v4().to_string(),
-            training_no: format!("HT-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+            training_no: format!(
+                "HT-{}",
+                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+            ),
             title: req.title,
             training_type: req.training_type,
             content: req.content,

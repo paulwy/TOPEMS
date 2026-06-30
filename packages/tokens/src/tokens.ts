@@ -521,7 +521,117 @@ export const semanticTokens = {
     selected: designTokens.colors.action.selected,
     /** 禁用态底色 */
     disabled: designTokens.colors.action.disabledBackground,
+    /** 暗色模式下的表格条纹背景 */
+    tableStripe: 'rgba(255, 255, 255, 0.03)',
+    /** 暗色模式下的 hover 背景 */
+    hoverDark: 'rgba(255, 255, 255, 0.08)',
+    /** 暗色模式下的 selected 背景 */
+    selectedDark: 'rgba(59, 130, 246, 0.15)',
   },
+  /** Dashboard 组件语义 Token */
+  dashboard: {
+    /** 统计卡片 */
+    statCard: {
+      padding: '20px',
+      gap: '12px',
+      iconSize: 40,
+      iconBgRadius: '12px',
+      valueFontSize: '28px',
+      labelFontSize: '14px',
+      trendFontSize: '12px',
+    },
+    /** 图表卡片 */
+    chartCard: {
+      padding: '20px',
+      headerGap: '12px',
+      chartHeight: 200,
+      chartHeightLg: 300,
+    },
+    /** 快捷操作按钮 */
+    quickAction: {
+      gap: '12px',
+      iconSize: 24,
+    },
+    /** 最近活动列表 */
+    recentItem: {
+      padding: '10px 0',
+      gap: '12px',
+      timestampFontSize: '12px',
+    },
+  },
+
+  /** 侧边栏组件语义 Token */
+  sidebar: {
+    width: 240,
+    collapsedWidth: 64,
+    itemHeight: 40,
+    itemGap: 2,
+    groupTitle: {
+      fontSize: 12,
+      fontWeight: 600 as const,
+      color: designTokens.colors.text.secondary,
+      textTransform: 'uppercase' as const,
+      letterSpacing: '0.5px',
+    },
+    header: {
+      height: 56,
+      padding: '12px 16px',
+      gap: '12px',
+    },
+    badge: {
+      size: 16,
+      fontSize: '0.625rem',
+      fontWeight: 600 as const,
+    },
+    activeIndicator: {
+      width: 3,
+      color: designTokens.colors.primary.main,
+      bgColor: designTokens.colors.primary[50],
+      bgColorDark: 'rgba(59, 130, 246, 0.15)',
+    },
+  },
+
+  /** 空状态组件语义 Token */
+  emptyState: {
+    padding: '48px 24px',
+    iconSize: 64,
+    titleFontSize: '16px',
+    descriptionFontSize: '14px',
+    actionGap: '12px',
+    mutedColor: designTokens.colors.text.muted,
+  },
+
+  /** 表格组件语义 Token */
+  table: {
+    cellPadding: '12px 16px',
+    headerBgColor: designTokens.colors.grey[50],
+    headerBgColorDark: designTokens.colors.grey[800],
+    headerFontWeight: designTokens.typography.fontWeight.semibold,
+    rowHoverBg: designTokens.colors.action.hover,
+    rowSelectedBg: designTokens.colors.action.selected,
+    stripeBg: designTokens.colors.grey[50],
+    stripeBgDark: 'rgba(255, 255, 255, 0.03)',
+    denseCellPadding: '8px 16px',
+  },
+
+  /** 页面布局语义 Token */
+  layout: {
+    header: {
+      height: 56,
+      padding: '0 24px',
+      gap: '16px',
+    },
+    content: {
+      maxWidth: 1440,
+      padding: '24px',
+      gap: '24px',
+    },
+    breadcrumb: {
+      fontSize: designTokens.typography.fontSize.sm,
+      gap: 8,
+    },
+  },
+
 } as const;
 
 export type SemanticTokens = typeof semanticTokens;

@@ -22,8 +22,8 @@ use std::time::Instant;
 
 use topems_shared::{
     auth_middleware, check_http_health, create_api_info_router, create_cors_layer,
-    create_database_pool, init_logging, ApiResponse, AuthState, DatabaseConfig, DependencyHealth,
-    HealthStatus, ServiceHealth, SystemMetrics,
+    create_database_pool, init_telemetry, telemetry_middleware, ApiResponse, AuthState,
+    DatabaseConfig, DependencyHealth, HealthStatus, ServiceHealth, SystemMetrics,
 };
 
 mod api;
@@ -36,7 +36,7 @@ use api::ApiState;
 async fn main() -> Result<()> {
     dotenv::dotenv().ok();
 
-    init_logging("topems-monitor");
+    let _telemetry_guard = init_telemetry("topems-monitor");
 
     env::set_var("SEARCH_PATH", "monitor, shared, public");
 
@@ -101,6 +101,7 @@ async fn main() -> Result<()> {
         .merge(health_router)
         .merge(protected_routes)
         .merge(create_api_info_router("topems-monitor"))
+        .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(prometheus_layer)
         .layer(cors)
         .with_state(api_state.clone());

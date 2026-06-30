@@ -2,7 +2,7 @@
 
 ## 概述
 
-TOPEMS 是一个基于微服务架构的企业级数字化平台，提供统一的身份认证、文档管理、AI 协作、流程自动化等功能。系统采用 Rust 后端 + React 前端的现代化技术栈，支持企业级部署和扩展。
+TOPEMS 是一个基于微服务架构的企业级数字化平台，提供统一的身份认证、流程自动化、文件管理、协同通讯等功能。系统采用 Rust 后端 + React 前端的现代化技术栈，支持企业级部署和扩展。
 
 平台采用 **插件化架构** 和 **微前端** 设计理念，支持按需加载业务模块，具备高度的可扩展性和灵活性。
 
@@ -47,7 +47,7 @@ TOPEMS 是一个基于微服务架构的企业级数字化平台，提供统一�
                               │
 ┌─────────────────────────────┴───────────────────────────────┐
 │                    unified-core (Port 8000)                  │
-│          IAM • DOC • FLOW • FILE • MAIL • IM • NOTIFY       │
+│          IAM • FLOW • FILE • COMMUNICATION                    │
 │          ┌─────────────────────────────────────────┐        │
 │          │  NavigationRegistry • PluginManager     │        │
 │          │  EventBus • ServiceRegistry             │        │
@@ -61,7 +61,7 @@ TOPEMS 是一个基于微服务架构的企业级数字化平台，提供统一�
 │  MES(8030) │ PDM(8031) │ SCM(8040) │ WMS(8041) │ SRM(8042) │
 │  QMS(8050) │ LIMS(8051)│ EHS(8052) │ RS(8053)             │
 │  BI(8060)  │ Report(8061) │ Monitor(8062) │ Portal(8063)   │
-│  AI(8064)  │ Mobile(8070) │ GIS(8071) │ Integration(8072) │
+│  Doc(8012) │ AI(8013)  │ Mobile(8070) │ GIS(8071) │ Integration(8072) │
 └─────────────────────────────┬───────────────────────────────┘
                               │
 ┌─────────────────────────────┴───────────────────────────────┐
@@ -106,9 +106,11 @@ TOPEMS 是一个基于微服务架构的企业级数字化平台，提供统一�
 | 服务 | 端口 | 业务域 | 说明 | API 前缀 | 状态 |
 |------|------|--------|------|----------|------|
 | **核心服务** | | | | | |
-| unified-core | 8000 | Core | 含 IAM/Doc/Flow/File/Mail/IM/Notify | /api/iam/, /api/doc/... | ✅ 核心 |
+| unified-core | 8000 | Core | 含 IAM/Flow/File/Communication | /api/iam/, /api/flow/... | ✅ 核心 |
 | **经营管理 (8010-8019)** | | | | | |
 | erp | 8010 | ERP | 企业资源计划 | /api/erp/ | 🔶 部分实现 |
+| doc | 8012 | ERP | 文档管理服务 | /api/doc/ | ✅ 已实现 |
+| ai | 8013 | ERP | AI 智能服务 | /api/ai/ | 🔶 部分实现 |
 | **协同办公 (8020-8029)** | | | | | |
 | hrm | 8020 | Collab | 人力资源管理 | /api/hrm/ | ✅ 已实现 |
 | pm | 8023 | Collab | 项目管理 | /api/pm/ | 🔶 部分实现 |
@@ -130,7 +132,6 @@ TOPEMS 是一个基于微服务架构的企业级数字化平台，提供统一�
 | report | 8061 | BI | 报表服务 | /api/report/ | 🔶 部分实现 |
 | monitor | 8062 | BI | 系统监控 | /api/monitor/ | 🔶 部分实现 |
 | portal | 8063 | BI | 企业门户 | /api/portal/ | 📋 规划中 |
-| ai | 8064 | BI | AI 智能服务 | /api/ai/ | 🔶 部分实现 |
 | **基础设施 (8070-8079)** | | | | | |
 | mobile | 8070 | Infra | 移动服务 | /api/mobile/ | 📋 规划中 |
 | gis | 8071 | Infra | 地理信息服务 | /api/gis/ | 📋 规划中 |
@@ -187,7 +188,7 @@ qms (8050) ←→ lims (8051) ←→ ehs (8052) ←→ rs (8053)
 scm (8040) ←→ wms (8041) ←→ srm (8042)
 mes (8030) ←→ pdm (8031)
 bi (8060) ←→ report (8061) ←→ monitor (8062)
-ai (8064) ←→ doc (知识库) ←→ flow (智能审批)
+ai (8013) ←→ doc (8012) ←→ flow (智能审批)
 ```
 
 ## 前端架构
@@ -279,9 +280,10 @@ ai (8064) ←→ doc (知识库) ←→ flow (智能审批)
 | public | 共享 | 全局配置、公共表、扩展 |
 | unified_core | unified-core | 核心服务公共表 |
 | iam | unified-core | 用户、角色、权限 |
-| doc | unified-core | 文档、知识库 |
 | flow | unified-core | 流程定义、实例 |
 | notification | unified-core | 通知、消息 |
+| core_doc | doc | 文档管理 |
+| core_ai | ai | AI 智能服务 |
 | plugin_erp | erp | 财务、采购、销售 |
 | plugin_hrm | hrm | 员工、考勤、绩效 |
 | plugin_qms | qms | 质量标准、检验 |
@@ -420,9 +422,9 @@ cp .env.example .env
 - [微前端架构](../guides/ui/module-federation-architecture.md) - 微前端架构设计
 
 ---
-**版本**: 3.1.0  
-**最后更新**: 2026-06-27  
-**服务总数**: 21 个  
-**已实现服务**: 5 个 (unified-core, hrm, qms, lims, ehs, rs)  
+**版本**: 3.2.0  
+**最后更新**: 2026-06-29  
+**服务总数**: 21 个 (Doc/AI 已独立 - Phase 8)  
+**已实现服务**: 7 个 (unified-core, hrm, qms, lims, ehs, rs, doc)  
 **部分实现**: 10 个  
-**规划中**: 6 个
+**规划中**: 4 个

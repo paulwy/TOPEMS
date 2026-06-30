@@ -21,4 +21,13 @@ pub enum EventError {
 
     #[error("配置错误: {0}")]
     ConfigError(String),
+
+    #[error("连接错误: {0}")]
+    ConnectionError(String),
+
+    #[error("订阅错误: {0}")]
+    SubscribeError(String),
+
+    #[error("发布错误: {0}")]
+    PublishError(String),
 }

@@ -8,7 +8,19 @@ import { useAppStore } from '@/store';
 
 vi.mock('@/api/bi');
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn(),
+  useAppStore: vi.fn((selector?: any) =>
+    selector ? selector({
+      addNotification: mockAddNotification,
+      notifications: [],
+      user: null,
+      theme: 'light',
+    }) : {
+      addNotification: mockAddNotification,
+      notifications: [],
+      user: null,
+      theme: 'light',
+    }
+  ),
 }));
 
 const mockAddNotification = vi.fn();
@@ -29,9 +41,19 @@ const mockComparisons = [
 describe('BIComparisonPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-
-    (useAppStore as vi.Mock).mockImplementation(() => mockAddNotification);
-
+    (useAppStore as vi.Mock).mockImplementation((selector?: any) =>
+      selector ? selector({
+        addNotification: mockAddNotification,
+        notifications: [],
+        user: null,
+        theme: 'light',
+      }) : {
+        addNotification: mockAddNotification,
+        notifications: [],
+        user: null,
+        theme: 'light',
+      }
+    );
     (biApi.listComparisons as vi.Mock).mockResolvedValue({
       success: true,
       data: mockComparisons,

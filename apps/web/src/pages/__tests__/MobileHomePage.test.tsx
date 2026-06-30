@@ -6,7 +6,19 @@ import { MobileHomePage } from '../mobile/MobileHomePage';
 import { useAppStore } from '@/store';
 
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn(),
+  useAppStore: vi.fn((selector?: any) =>
+    selector ? selector({
+      user: mockUser,
+      addNotification: vi.fn(),
+      notifications: [],
+      theme: 'light',
+    }) : {
+      user: mockUser,
+      addNotification: vi.fn(),
+      notifications: [],
+      theme: 'light',
+    }
+  ),
 }));
 
 const renderWithProviders = (ui: React.ReactElement) => {
@@ -23,11 +35,6 @@ const mockUser = {
 describe('MobileHomePage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-
-    (useAppStore as vi.Mock).mockImplementation(() => ({
-      user: mockUser,
-      addNotification: vi.fn(),
-    }));
   });
 
   it('should render page title', async () => {

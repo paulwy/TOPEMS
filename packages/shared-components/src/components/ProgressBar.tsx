@@ -1,5 +1,4 @@
-import { Box, Typography, LinearProgress, keyframes } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { Box, Typography, LinearProgress, keyframes, useTheme } from '@mui/material';
 
 // 渐变颜色配置
 const GRADIENT_COLORS = {
@@ -49,72 +48,6 @@ const stripeAnimation = keyframes`
   }
 `;
 
-// 样式化组件
-const GradientLinearProgress = styled(LinearProgress, {
-  shouldForwardProp: (prop) =>
-    prop !== 'gradientColor' && prop !== 'animated' && prop !== 'striped',
-})<{
-  gradientColor?: string;
-  animated?: boolean;
-  striped?: boolean;
-}>(({ gradientColor, animated, striped, theme }) => ({
-  height: '100%',
-  borderRadius: 4,
-  backgroundColor: theme.palette.grey[200],
-  '& .MuiLinearProgress-bar': {
-    borderRadius: 4,
-    background: gradientColor || theme.palette.primary.main,
-    backgroundSize: animated ? '200% 200%' : '100% 100%',
-    animation: animated ? `${flowAnimation} 3s linear infinite` : 'none',
-    ...(striped && {
-      backgroundImage: `linear-gradient(
-        45deg,
-        rgba(255, 255, 255, 0.15) 25%,
-        transparent 25%,
-        transparent 50%,
-        rgba(255, 255, 255, 0.15) 50%,
-        rgba(255, 255, 255, 0.15) 75%,
-        transparent 75%,
-        transparent
-      )`,
-      backgroundSize: '1rem 1rem',
-      animation: `${stripeAnimation} 1s linear infinite`,
-    }),
-  },
-}));
-
-const CircularContainer = styled(Box)({
-  position: 'relative',
-  display: 'inline-flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-});
-
-const SegmentedContainer = styled(Box)({
-  display: 'flex',
-  gap: 4,
-  alignItems: 'center',
-});
-
-const Segment = styled(Box, {
-  shouldForwardProp: (prop) => prop !== 'filled' && prop !== 'gradientColor' && prop !== 'animated',
-})<{
-  filled?: boolean;
-  gradientColor?: string;
-  animated?: boolean;
-}>(({ filled, gradientColor, animated, theme }) => ({
-  flex: 1,
-  height: '100%',
-  borderRadius: 4,
-  backgroundColor: filled ? 'transparent' : theme.palette.grey[200],
-  transition: 'all 0.3s ease',
-  ...(filled && {
-    background: gradientColor || theme.palette.primary.main,
-    backgroundSize: animated ? '200% 200%' : '100% 100%',
-    animation: animated ? `${flowAnimation} 3s linear infinite` : 'none',
-  }),
-}));
-
 export interface ProgressBarProps {
   value: number; // 0-100
   max?: number;
@@ -140,6 +73,8 @@ export default function ProgressBar({
   striped = false,
   segments = 10,
 }: ProgressBarProps) {
+  const theme = useTheme();
+
   // 计算百分比
   const percentage = Math.min(Math.max((value / max) * 100, 0), 100);
   const displayValue = Math.round(percentage);
@@ -179,12 +114,34 @@ export default function ProgressBar({
         </Box>
       )}
       <Box sx={{ height: sizeConfig.linear.height, borderRadius: 1 }}>
-        <GradientLinearProgress
+        <LinearProgress
           variant='determinate'
           value={percentage}
-          gradientColor={gradientColor}
-          animated={animated}
-          striped={striped}
+          sx={{
+            height: '100%',
+            borderRadius: 4,
+            backgroundColor: theme.palette.grey[200],
+            '& .MuiLinearProgress-bar': {
+              borderRadius: 4,
+              background: gradientColor || theme.palette.primary.main,
+              backgroundSize: animated ? '200% 200%' : '100% 100%',
+              animation: animated ? `${flowAnimation} 3s linear infinite` : 'none',
+              ...(striped && {
+                backgroundImage: `linear-gradient(
+                  45deg,
+                  rgba(255, 255, 255, 0.15) 25%,
+                  transparent 25%,
+                  transparent 50%,
+                  rgba(255, 255, 255, 0.15) 50%,
+                  rgba(255, 255, 255, 0.15) 75%,
+                  transparent 75%,
+                  transparent
+                )`,
+                backgroundSize: '1rem 1rem',
+                animation: `${stripeAnimation} 1s linear infinite`,
+              }),
+            },
+          }}
         />
       </Box>
     </Box>
@@ -193,7 +150,14 @@ export default function ProgressBar({
   // 渲染圆形进度条
   const renderCircular = () => (
     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <CircularContainer>
+      <Box
+        sx={{
+          position: 'relative',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
         <Box
           sx={{
             position: 'relative',
@@ -299,7 +263,7 @@ export default function ProgressBar({
             </Box>
           )}
         </Box>
-      </CircularContainer>
+      </Box>
       {label && (
         <Typography
           variant='body2'
@@ -345,16 +309,35 @@ export default function ProgressBar({
             )}
           </Box>
         )}
-        <SegmentedContainer sx={{ height: sizeConfig.segmented.height }}>
-          {segmentArray.map((index) => (
-            <Segment
-              key={index}
-              filled={index < filledSegments}
-              gradientColor={gradientColor}
-              animated={animated && index < filledSegments}
-            />
-          ))}
-        </SegmentedContainer>
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 0.5,
+            alignItems: 'center',
+            height: sizeConfig.segmented.height,
+          }}
+        >
+          {segmentArray.map((index) => {
+            const isFilled = index < filledSegments;
+            return (
+              <Box
+                key={index}
+                sx={{
+                  flex: 1,
+                  height: '100%',
+                  borderRadius: 4,
+                  backgroundColor: isFilled ? 'transparent' : theme.palette.grey[200],
+                  transition: 'all 0.3s ease',
+                  ...(isFilled && {
+                    background: gradientColor || theme.palette.primary.main,
+                    backgroundSize: animated ? '200% 200%' : '100% 100%',
+                    animation: animated ? `${flowAnimation} 3s linear infinite` : 'none',
+                  }),
+                }}
+              />
+            );
+          })}
+        </Box>
       </Box>
     );
   };

@@ -8,8 +8,46 @@ use crate::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/ehs/training", get(list_trainings).post(create_training))
-        .route("/api/ehs/training/{id}", get(get_training))
+        .route(
+            "/api/ehs/training",
+            get(list_trainings).post(create_training),
+        )
+        .route(
+            "/api/ehs/training/{id}",
+            get(get_training)
+                .put(update_training)
+                .delete(delete_training),
+        )
+        .route(
+            "/api/ehs/training/plans",
+            get(list_training_plans).post(create_training_plan),
+        )
+        .route(
+            "/api/ehs/training/plans/{id}",
+            get(get_training_plan)
+                .put(update_training_plan)
+                .delete(delete_training_plan),
+        )
+        .route(
+            "/api/ehs/training/records",
+            get(list_training_records).post(create_training_record),
+        )
+        .route(
+            "/api/ehs/training/records/{id}",
+            get(get_training_record)
+                .put(update_training_record)
+                .delete(delete_training_record),
+        )
+        .route(
+            "/api/ehs/training/certificates",
+            get(list_certificates).post(create_certificate),
+        )
+        .route(
+            "/api/ehs/training/certificates/{id}",
+            get(get_certificate)
+                .put(update_certificate)
+                .delete(delete_certificate),
+        )
 }
 
 #[derive(Debug, Deserialize)]
@@ -32,11 +70,52 @@ pub struct Training {
     pub status: String,
 }
 
+#[derive(Debug, Serialize)]
+pub struct TrainingPlan {
+    pub id: String,
+    pub plan_no: String,
+    pub title: String,
+    pub description: Option<String>,
+    pub training_type: Option<String>,
+    pub planned_date: Option<String>,
+    pub trainer: Option<String>,
+    pub status: String,
+    pub created_at: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct TrainingRecord {
+    pub id: String,
+    pub record_no: String,
+    pub training_title: String,
+    pub trainer: Option<String>,
+    pub training_date: Option<String>,
+    pub duration_hours: Option<i32>,
+    pub participants: Option<i32>,
+    pub pass_count: Option<i32>,
+    pub status: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct TrainingCertificate {
+    pub id: String,
+    pub certificate_no: String,
+    pub employee_name: String,
+    pub training_title: String,
+    pub issue_date: Option<String>,
+    pub expiry_date: Option<String>,
+    pub certificate_type: Option<String>,
+    pub status: String,
+}
+
 pub async fn list_trainings(
     State(_state): State<crate::AppState>,
 ) -> Json<ApiResponse<Vec<Training>>> {
     tracing::info!("Listing trainings");
-    Json(ApiResponse::success(Vec::<Training>::new(), "获取培训列表成功"))
+    Json(ApiResponse::success(
+        Vec::<Training>::new(),
+        "获取培训列表成功",
+    ))
 }
 
 pub async fn create_training(
@@ -47,7 +126,10 @@ pub async fn create_training(
     Json(ApiResponse::success(
         Training {
             id: uuid::Uuid::new_v4().to_string(),
-            training_no: format!("TRN-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+            training_no: format!(
+                "TRN-{}",
+                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+            ),
             title: "安全培训".to_string(),
             content: None,
             trainer: None,
@@ -79,4 +161,398 @@ pub async fn get_training(
         },
         "获取培训成功",
     ))
+}
+
+pub async fn update_training(
+    State(_state): State<crate::AppState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<serde_json::Value>,
+) -> Json<ApiResponse<Training>> {
+    tracing::info!("Updating training {}: {:?}", id, req);
+    Json(ApiResponse::success(
+        Training {
+            id,
+            training_no: "TRN-001".to_string(),
+            title: req
+                .get("title")
+                .and_then(|v| v.as_str())
+                .unwrap_or("安全培训")
+                .to_string(),
+            content: req
+                .get("content")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            trainer: req
+                .get("trainer")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            training_type: req
+                .get("training_type")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            duration_hours: req
+                .get("duration_hours")
+                .and_then(|v| v.as_i64())
+                .map(|v| v as i32),
+            scheduled_at: None,
+            status: req
+                .get("status")
+                .and_then(|v| v.as_str())
+                .unwrap_or("scheduled")
+                .to_string(),
+        },
+        "培训更新成功",
+    ))
+}
+
+pub async fn delete_training(
+    State(_state): State<crate::AppState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<()>> {
+    tracing::info!("Deleting training: {}", id);
+    Json(ApiResponse::success((), "培训删除成功"))
+}
+
+pub async fn list_training_plans(
+    State(_state): State<crate::AppState>,
+) -> Json<ApiResponse<Vec<TrainingPlan>>> {
+    tracing::info!("Listing training plans");
+    Json(ApiResponse::success(
+        Vec::<TrainingPlan>::new(),
+        "获取培训计划列表成功",
+    ))
+}
+
+pub async fn create_training_plan(
+    State(_state): State<crate::AppState>,
+    Json(req): Json<serde_json::Value>,
+) -> Json<ApiResponse<TrainingPlan>> {
+    tracing::info!("Creating training plan: {:?}", req);
+    Json(ApiResponse::success(
+        TrainingPlan {
+            id: uuid::Uuid::new_v4().to_string(),
+            plan_no: format!(
+                "TPL-{}",
+                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+            ),
+            title: req
+                .get("title")
+                .and_then(|v| v.as_str())
+                .unwrap_or("新培训计划")
+                .to_string(),
+            description: req
+                .get("description")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            training_type: req
+                .get("training_type")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            planned_date: None,
+            trainer: req
+                .get("trainer")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            status: "draft".to_string(),
+            created_at: chrono::Utc::now().to_rfc3339(),
+        },
+        "培训计划创建成功",
+    ))
+}
+
+pub async fn get_training_plan(
+    State(_state): State<crate::AppState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<TrainingPlan>> {
+    tracing::info!("Getting training plan: {}", id);
+    Json(ApiResponse::success(
+        TrainingPlan {
+            id,
+            plan_no: "TPL-001".to_string(),
+            title: "年度安全培训计划".to_string(),
+            description: Some("2024年度全员安全培训计划".to_string()),
+            training_type: Some("安全培训".to_string()),
+            planned_date: Some("2024-03-15T09:00:00Z".to_string()),
+            trainer: Some("安全主管A".to_string()),
+            status: "active".to_string(),
+            created_at: "2024-01-01T00:00:00Z".to_string(),
+        },
+        "获取培训计划成功",
+    ))
+}
+
+pub async fn update_training_plan(
+    State(_state): State<crate::AppState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<serde_json::Value>,
+) -> Json<ApiResponse<TrainingPlan>> {
+    tracing::info!("Updating training plan {}: {:?}", id, req);
+    Json(ApiResponse::success(
+        TrainingPlan {
+            id,
+            plan_no: "TPL-001".to_string(),
+            title: req
+                .get("title")
+                .and_then(|v| v.as_str())
+                .unwrap_or("培训计划")
+                .to_string(),
+            description: req
+                .get("description")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            training_type: req
+                .get("training_type")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            planned_date: None,
+            trainer: req
+                .get("trainer")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            status: req
+                .get("status")
+                .and_then(|v| v.as_str())
+                .unwrap_or("draft")
+                .to_string(),
+            created_at: "2024-01-01T00:00:00Z".to_string(),
+        },
+        "培训计划更新成功",
+    ))
+}
+
+pub async fn delete_training_plan(
+    State(_state): State<crate::AppState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<()>> {
+    tracing::info!("Deleting training plan: {}", id);
+    Json(ApiResponse::success((), "培训计划删除成功"))
+}
+
+pub async fn list_training_records(
+    State(_state): State<crate::AppState>,
+) -> Json<ApiResponse<Vec<TrainingRecord>>> {
+    tracing::info!("Listing training records");
+    Json(ApiResponse::success(
+        Vec::<TrainingRecord>::new(),
+        "获取培训记录列表成功",
+    ))
+}
+
+pub async fn create_training_record(
+    State(_state): State<crate::AppState>,
+    Json(req): Json<serde_json::Value>,
+) -> Json<ApiResponse<TrainingRecord>> {
+    tracing::info!("Creating training record: {:?}", req);
+    Json(ApiResponse::success(
+        TrainingRecord {
+            id: uuid::Uuid::new_v4().to_string(),
+            record_no: format!(
+                "TRC-{}",
+                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+            ),
+            training_title: req
+                .get("training_title")
+                .and_then(|v| v.as_str())
+                .unwrap_or("安全培训")
+                .to_string(),
+            trainer: req
+                .get("trainer")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            training_date: None,
+            duration_hours: req
+                .get("duration_hours")
+                .and_then(|v| v.as_i64())
+                .map(|v| v as i32),
+            participants: req
+                .get("participants")
+                .and_then(|v| v.as_i64())
+                .map(|v| v as i32),
+            pass_count: req
+                .get("pass_count")
+                .and_then(|v| v.as_i64())
+                .map(|v| v as i32),
+            status: "completed".to_string(),
+        },
+        "培训记录创建成功",
+    ))
+}
+
+pub async fn get_training_record(
+    State(_state): State<crate::AppState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<TrainingRecord>> {
+    tracing::info!("Getting training record: {}", id);
+    Json(ApiResponse::success(
+        TrainingRecord {
+            id,
+            record_no: "TRC-001".to_string(),
+            training_title: "消防安全培训".to_string(),
+            trainer: Some("安全主管A".to_string()),
+            training_date: Some("2024-03-15T09:00:00Z".to_string()),
+            duration_hours: Some(4),
+            participants: Some(50),
+            pass_count: Some(48),
+            status: "completed".to_string(),
+        },
+        "获取培训记录成功",
+    ))
+}
+
+pub async fn update_training_record(
+    State(_state): State<crate::AppState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<serde_json::Value>,
+) -> Json<ApiResponse<TrainingRecord>> {
+    tracing::info!("Updating training record {}: {:?}", id, req);
+    Json(ApiResponse::success(
+        TrainingRecord {
+            id,
+            record_no: "TRC-001".to_string(),
+            training_title: req
+                .get("training_title")
+                .and_then(|v| v.as_str())
+                .unwrap_or("安全培训")
+                .to_string(),
+            trainer: req
+                .get("trainer")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            training_date: None,
+            duration_hours: req
+                .get("duration_hours")
+                .and_then(|v| v.as_i64())
+                .map(|v| v as i32),
+            participants: req
+                .get("participants")
+                .and_then(|v| v.as_i64())
+                .map(|v| v as i32),
+            pass_count: req
+                .get("pass_count")
+                .and_then(|v| v.as_i64())
+                .map(|v| v as i32),
+            status: req
+                .get("status")
+                .and_then(|v| v.as_str())
+                .unwrap_or("completed")
+                .to_string(),
+        },
+        "培训记录更新成功",
+    ))
+}
+
+pub async fn delete_training_record(
+    State(_state): State<crate::AppState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<()>> {
+    tracing::info!("Deleting training record: {}", id);
+    Json(ApiResponse::success((), "培训记录删除成功"))
+}
+
+pub async fn list_certificates(
+    State(_state): State<crate::AppState>,
+) -> Json<ApiResponse<Vec<TrainingCertificate>>> {
+    tracing::info!("Listing training certificates");
+    Json(ApiResponse::success(
+        Vec::<TrainingCertificate>::new(),
+        "获取证书列表成功",
+    ))
+}
+
+pub async fn create_certificate(
+    State(_state): State<crate::AppState>,
+    Json(req): Json<serde_json::Value>,
+) -> Json<ApiResponse<TrainingCertificate>> {
+    tracing::info!("Creating certificate: {:?}", req);
+    Json(ApiResponse::success(
+        TrainingCertificate {
+            id: uuid::Uuid::new_v4().to_string(),
+            certificate_no: format!(
+                "CERT-{}",
+                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+            ),
+            employee_name: req
+                .get("employee_name")
+                .and_then(|v| v.as_str())
+                .unwrap_or("员工")
+                .to_string(),
+            training_title: req
+                .get("training_title")
+                .and_then(|v| v.as_str())
+                .unwrap_or("安全培训")
+                .to_string(),
+            issue_date: None,
+            expiry_date: None,
+            certificate_type: req
+                .get("certificate_type")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            status: "active".to_string(),
+        },
+        "证书创建成功",
+    ))
+}
+
+pub async fn get_certificate(
+    State(_state): State<crate::AppState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<TrainingCertificate>> {
+    tracing::info!("Getting certificate: {}", id);
+    Json(ApiResponse::success(
+        TrainingCertificate {
+            id,
+            certificate_no: "CERT-001".to_string(),
+            employee_name: "张三".to_string(),
+            training_title: "消防安全培训".to_string(),
+            issue_date: Some("2024-03-15T00:00:00Z".to_string()),
+            expiry_date: Some("2027-03-15T00:00:00Z".to_string()),
+            certificate_type: Some("安全操作证".to_string()),
+            status: "active".to_string(),
+        },
+        "获取证书成功",
+    ))
+}
+
+pub async fn update_certificate(
+    State(_state): State<crate::AppState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+    Json(req): Json<serde_json::Value>,
+) -> Json<ApiResponse<TrainingCertificate>> {
+    tracing::info!("Updating certificate {}: {:?}", id, req);
+    Json(ApiResponse::success(
+        TrainingCertificate {
+            id,
+            certificate_no: "CERT-001".to_string(),
+            employee_name: req
+                .get("employee_name")
+                .and_then(|v| v.as_str())
+                .unwrap_or("员工")
+                .to_string(),
+            training_title: req
+                .get("training_title")
+                .and_then(|v| v.as_str())
+                .unwrap_or("安全培训")
+                .to_string(),
+            issue_date: None,
+            expiry_date: None,
+            certificate_type: req
+                .get("certificate_type")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string()),
+            status: req
+                .get("status")
+                .and_then(|v| v.as_str())
+                .unwrap_or("active")
+                .to_string(),
+        },
+        "证书更新成功",
+    ))
+}
+
+pub async fn delete_certificate(
+    State(_state): State<crate::AppState>,
+    axum::extract::Path(id): axum::extract::Path<String>,
+) -> Json<ApiResponse<()>> {
+    tracing::info!("Deleting certificate: {}", id);
+    Json(ApiResponse::success((), "证书删除成功"))
 }

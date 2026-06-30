@@ -2,14 +2,15 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": "..",
     "declaration": true,
     "declarationMap": true,
+    "ignoreDeprecations": "6.0",
     "baseUrl": ".",
     "paths": {
       "@topems/tokens": ["../tokens/src"]
     }
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "../tokens/src/**/*"],
   "exclude": ["node_modules", "dist"]
 }

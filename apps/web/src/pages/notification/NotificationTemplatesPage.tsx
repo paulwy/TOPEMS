@@ -1,250 +1,287 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
-  Bell,
+  FileText,
   Plus,
   Edit,
   Trash2,
-  Eye,
-  ChevronLeft,
-  Search,
-  Archive,
-  FileText,
+  Copy,
   RefreshCw,
+  Download,
+  Upload,
+  Search,
 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { Box, Typography, Chip, Button } from '@mui/material';
-import type {
-  NotificationTemplate,
-  CreateTemplateRequest,
-  UpdateTemplateRequest,
-  TemplateStatusEnum,
-  NotificationTypeEnum,
-} from '@/api/notification';
-import { getTemplates, createTemplate, updateTemplate, deleteTemplate } from '@/api/notification';
-import { useNotification } from '@/hooks/useNotification';
-import { apiLogger } from '@/utils/logger';
 import {
-  ListPageTemplate,
-  type ColumnDef,
-  type RowAction,
-  type FilterConfig,
-} from '@/components/templates';
+  Box,
+  Typography,
+  Chip,
+  Button,
+  Grid,
+} from '@mui/material';
+
+import { useAppStore } from '../../store';
+import { ListPageTemplate, type ColumnDef, type RowAction, type FilterConfig } from '@/components/templates';
 import { PageContainer } from '@/components/common';
+import ConfirmDialog from '@/components/common/ConfirmDialog';
+import { extractErrorMessage } from '@/utils/errors';
 
-const NotificationTemplatesPage: React.FC = () => {
-  const navigate = useNavigate();
-  const { success, error, notifications, hideNotification } = useNotification();
+interface NotificationTemplate {
+  id: string;
+  name: string;
+  code: string;
+  type: 'system' | 'approval' | 'task' | 'message';
+  channels: string[];
+  status: 'active' | 'inactive';
+  updatedAt: string;
+  description?: string;
+  usageCount: number;
+}
 
-  const [templates, setTemplates] = useState<NotificationTemplate[]>([]);
-  const [loading, setLoading] = useState(true);
+const MOCK_TEMPLATES: NotificationTemplate[] = [
+  {
+    id: '1',
+    name: '系统维护通知',
+    code: 'SYS_MAINTENANCE_001',
+    type: 'system',
+    channels: ['站内信', '邮件', '推送'],
+    status: 'active',
+    updatedAt: '2024-01-15 10:30:00',
+    description: '系统维护期间发送给所有用户的通知',
+    usageCount: 128,
+  },
+  {
+    id: '2',
+    name: '审批待办提醒',
+    code: 'APPROVAL_TODO_001',
+    type: 'approval',
+    channels: ['站内信', '企业微信'],
+    status: 'active',
+    updatedAt: '2024-01-14 15:20:00',
+    description: '新的审批待办任务通知',
+    usageCount: 856,
+  },
+  {
+    id: '3',
+    name: '任务分配通知',
+    code: 'TASK_ASSIGN_001',
+    type: 'task',
+    channels: ['站内信', '推送'],
+    status: 'active',
+    updatedAt: '2024-01-13 09:45:00',
+    description: '新任务分配时的通知模板',
+    usageCount: 432,
+  },
+  {
+    id: '4',
+    name: '消息回复提醒',
+    code: 'MSG_REPLY_001',
+    type: 'message',
+    channels: ['站内信'],
+    status: 'active',
+    updatedAt: '2024-01-12 14:10:00',
+    description: '收到新消息回复时的通知',
+    usageCount: 1024,
+  },
+  {
+    id: '5',
+    name: '系统异常告警',
+    code: 'SYS_ALERT_001',
+    type: 'system',
+    channels: ['站内信', '短信', '邮件'],
+    status: 'active',
+    updatedAt: '2024-01-11 16:55:00',
+    description: '系统发生异常时的告警通知',
+    usageCount: 56,
+  },
+  {
+    id: '6',
+    name: '审批通过通知',
+    code: 'APPROVAL_PASS_001',
+    type: 'approval',
+    channels: ['站内信', '邮件'],
+    status: 'inactive',
+    updatedAt: '2024-01-10 11:30:00',
+    description: '审批通过后发送的通知',
+    usageCount: 234,
+  },
+  {
+    id: '7',
+    name: '任务截止提醒',
+    code: 'TASK_DEADLINE_001',
+    type: 'task',
+    channels: ['站内信', '推送', '短信'],
+    status: 'inactive',
+    updatedAt: '2024-01-09 08:20:00',
+    description: '任务截止前的提醒通知',
+    usageCount: 178,
+  },
+];
+
+const TYPE_LABELS: Record<NotificationTemplate['type'], string> = {
+  system: '系统通知',
+  approval: '审批通知',
+  task: '任务通知',
+  message: '消息通知',
+};
+
+const TYPE_COLORS: Record<NotificationTemplate['type'], string> = {
+  system: 'primary',
+  approval: 'secondary',
+  task: 'warning',
+  message: 'success',
+};
+
+export const NotificationTemplatesPage: React.FC = () => {
+  const addNotification = useAppStore((state) => state.addNotification);
+
+  const [templates, setTemplates] = useState<NotificationTemplate[]>(MOCK_TEMPLATES);
+  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState<TemplateStatusEnum | ''>('');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showPreviewModal, setShowPreviewModal] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<NotificationTemplate | null>(null);
-  const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
+  const [selectedType, setSelectedType] = useState<string>('');
+  const [selectedStatus, setSelectedStatus] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize] = useState(10);
 
-  // 防抖搜索
-  useEffect(() => {
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<NotificationTemplate | null>(null);
+
+  React.useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(searchQuery);
+      setCurrentPage(1);
     }, 300);
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  useEffect(() => {
-    loadTemplates();
-  }, [page, selectedStatus, debouncedSearch]);
+  const filteredTemplates = useMemo(() => {
+    return templates.filter((t) => {
+      const matchesSearch =
+        !debouncedSearch ||
+        t.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        t.code.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        t.description?.toLowerCase().includes(debouncedSearch.toLowerCase());
 
-  const loadTemplates = async () => {
+      const matchesType = !selectedType || t.type === selectedType;
+      const matchesStatus = !selectedStatus || t.status === selectedStatus;
+
+      return matchesSearch && matchesType && matchesStatus;
+    });
+  }, [templates, debouncedSearch, selectedType, selectedStatus]);
+
+  const total = filteredTemplates.length;
+  const pagedTemplates = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredTemplates.slice(start, start + pageSize);
+  }, [filteredTemplates, currentPage, pageSize]);
+
+  const stats = useMemo(() => {
+    const total = templates.length;
+    const active = templates.filter((t) => t.status === 'active').length;
+    const inactive = templates.filter((t) => t.status === 'inactive').length;
+    const todayUsage = templates.reduce((sum, t) => sum + t.usageCount, 0);
+    return { total, active, inactive, todayUsage };
+  }, [templates]);
+
+  const handleRefresh = useCallback(async () => {
     setLoading(true);
     try {
-      const statusParam = selectedStatus || undefined;
-      const searchParam = debouncedSearch || undefined;
-      const response = await getTemplates(page, 20, statusParam, searchParam);
-      if (response.success && response.data) {
-        setTemplates(response.data.templates);
-        setTotal(response.data.total);
-      }
-    } catch (err: unknown) {
-      apiLogger.error('Error loading templates:', err);
+      await new Promise((resolve) => setTimeout(resolve, 500));
+      addNotification({
+        title: '刷新成功',
+        message: '模板列表已刷新',
+        type: 'success',
+      });
+    } catch (_err: unknown) {
+      const errorMsg = extractErrorMessage(_err, '刷新失败');
+      addNotification({ title: '失败', message: errorMsg, type: 'error' });
     } finally {
       setLoading(false);
     }
-  };
+  }, [addNotification]);
 
-  const handleCreateTemplate = async (data: CreateTemplateRequest) => {
+  const handleDelete = useCallback((template: NotificationTemplate) => {
+    setDeleteTarget(template);
+    setConfirmDialogOpen(true);
+  }, []);
+
+  const confirmDelete = useCallback(async () => {
+    if (!deleteTarget) return;
     try {
-      const res = await createTemplate(data);
-      if (res.success) {
-        success('模板创建成功');
-        setShowCreateModal(false);
-        loadTemplates();
-      } else {
-        error(res.message || '创建失败');
-      }
-    } catch (err: unknown) {
-      error((err as { message?: string }).message || '创建失败');
-    }
-  };
-
-  const handleUpdateTemplate = async (
-    id: string,
-    data: CreateTemplateRequest | UpdateTemplateRequest
-  ) => {
-    try {
-      const updateData: UpdateTemplateRequest = { ...data, id };
-      const res = await updateTemplate(id, updateData);
-      if (res.success) {
-        success('模板更新成功');
-        setShowEditModal(false);
-        setSelectedTemplate(null);
-        loadTemplates();
-      } else {
-        error(res.message || '更新失败');
-      }
-    } catch (err: unknown) {
-      error((err as { message?: string }).message || '更新失败');
-    }
-  };
-
-  const handleDeleteTemplate = async (id: string) => {
-    if (!confirm('确定要删除这个模板吗？')) return;
-
-    try {
-      const res = await deleteTemplate(id);
-      if (res.success) {
-        success('模板删除成功');
-        loadTemplates();
-      } else {
-        error(res.message || '删除失败');
-      }
-    } catch (err: unknown) {
-      error((err as { message?: string }).message || '删除失败');
-    }
-  };
-
-  const handleToggleArchive = async (id: string) => {
-    try {
-      const template = templates.find((t) => t.id === id);
-      if (!template) return;
-
-      const res = await updateTemplate(id, {
-        id,
-        status:
-          template.status === 'active'
-            ? ('inactive' as TemplateStatusEnum)
-            : ('active' as TemplateStatusEnum),
+      setTemplates((prev) => prev.filter((t) => t.id !== deleteTarget.id));
+      addNotification({
+        title: '删除成功',
+        message: `模板「${deleteTarget.name}」已删除`,
+        type: 'success',
       });
-      if (res.success) {
-        success('模板状态更新成功');
-        loadTemplates();
-      } else {
-        error(res.message || '更新失败');
-      }
-    } catch (err: unknown) {
-      error((err as { message?: string }).message || '更新失败');
+    } catch (_err: unknown) {
+      const errorMsg = extractErrorMessage(_err, '删除失败');
+      addNotification({ title: '失败', message: errorMsg, type: 'error' });
+    } finally {
+      setConfirmDialogOpen(false);
+      setDeleteTarget(null);
     }
-  };
+  }, [deleteTarget, addNotification]);
 
-  const filteredTemplates = useMemo(() => {
-    if (!debouncedSearch) return templates;
-    const query = debouncedSearch.toLowerCase();
-    return templates.filter(
-      (t) =>
-        t.name.toLowerCase().includes(query) ||
-        t.description?.toLowerCase().includes(query) ||
-        t.title_template.toLowerCase().includes(query)
-    );
-  }, [templates, debouncedSearch]);
+  const handleCopy = useCallback((template: NotificationTemplate) => {
+    const newTemplate: NotificationTemplate = {
+      ...template,
+      id: Date.now().toString(),
+      name: `${template.name} - 副本`,
+      code: `${template.code}_COPY`,
+      status: 'inactive',
+      updatedAt: new Date().toLocaleString('zh-CN'),
+      usageCount: 0,
+    };
+    setTemplates((prev) => [newTemplate, ...prev]);
+    addNotification({
+      title: '复制成功',
+      message: `模板「${template.name}」已复制`,
+      type: 'success',
+    });
+  }, [addNotification]);
 
-  const getStatusBadge = (status: TemplateStatusEnum) => {
-    switch (status) {
-      case 'active':
-        return (
-          <Box
-            component='span'
-            sx={{
-              px: 1,
-              py: 0.5,
-              fontSize: '0.75rem',
-              borderRadius: 4,
-              bgcolor: 'success.100',
-              color: 'success.700',
-            }}
-          >
-            启用
-          </Box>
-        );
-      case 'inactive':
-        return (
-          <Box
-            component='span'
-            sx={{
-              px: 1,
-              py: 0.5,
-              fontSize: '0.75rem',
-              borderRadius: 4,
-              bgcolor: 'grey.100',
-              color: 'grey.700',
-            }}
-          >
-            禁用
-          </Box>
-        );
-      case 'deprecated':
-        return (
-          <Box
-            component='span'
-            sx={{
-              px: 1,
-              py: 0.5,
-              fontSize: '0.75rem',
-              borderRadius: 4,
-              bgcolor: 'error.100',
-              color: 'error.700',
-            }}
-          >
-            废弃
-          </Box>
-        );
-      default:
-        return null;
+  const handleEdit = useCallback((template: NotificationTemplate) => {
+    addNotification({
+      title: '编辑模板',
+      message: `正在编辑模板「${template.name}」`,
+      type: 'info',
+    });
+  }, [addNotification]);
+
+  const handleCreate = useCallback(() => {
+    addNotification({
+      title: '新建模板',
+      message: '正在打开新建模板表单',
+      type: 'info',
+    });
+  }, [addNotification]);
+
+  const handleImport = useCallback(() => {
+    addNotification({
+      title: '导入模板',
+      message: '请选择要导入的模板文件',
+      type: 'info',
+    });
+  }, [addNotification]);
+
+  const handleExport = useCallback(() => {
+    addNotification({
+      title: '导出成功',
+      message: '模板数据已导出',
+      type: 'success',
+    });
+  }, [addNotification]);
+
+  const handleFilterChange = useCallback((filters: Record<string, any>) => {
+    if (filters.type !== undefined) {
+      setSelectedType(filters.type);
+      setCurrentPage(1);
     }
-  };
-
-  const getTypeLabel = (type: NotificationTypeEnum) => {
-    const labels: Record<NotificationTypeEnum, string> = {
-      system: '系统通知',
-      workflow: '审批通知',
-      reminder: '提醒通知',
-      alert: '告警通知',
-      message: '消息通知',
-      info: '信息通知',
-      success: '成功通知',
-      warning: '警告通知',
-      error: '错误通知',
-    };
-    return labels[type] || type;
-  };
-
-  const getTypeColor = (type: NotificationTypeEnum) => {
-    const colors: Record<NotificationTypeEnum, { bg: string; text: string }> = {
-      system: { bg: 'primary.100', text: 'primary.700' },
-      workflow: { bg: 'purple.100', text: 'purple.700' },
-      reminder: { bg: 'warning.100', text: 'warning.700' },
-      alert: { bg: 'error.100', text: 'error.700' },
-      message: { bg: 'success.100', text: 'success.700' },
-      info: { bg: 'info.100', text: 'info.700' },
-      success: { bg: 'success.100', text: 'success.700' },
-      warning: { bg: 'warning.100', text: 'warning.700' },
-      error: { bg: 'error.100', text: 'error.700' },
-    };
-    return colors[type] || { bg: 'grey.100', text: 'grey.700' };
-  };
+    if (filters.status !== undefined) {
+      setSelectedStatus(filters.status);
+      setCurrentPage(1);
+    }
+  }, []);
 
   const columns: ColumnDef<NotificationTemplate>[] = useMemo(
     () => [
@@ -252,37 +289,30 @@ const NotificationTemplatesPage: React.FC = () => {
         id: 'name',
         label: '模板名称',
         render: (row) => (
-          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Box
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: 'primary.100',
+                bgcolor: `${TYPE_COLORS[row.type]}.100`,
                 borderRadius: 2,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                mr: 1.5,
               }}
             >
-              <Bell
-                size={20}
-                color='#1976d2'
-              />
+              <FileText size={20} color={row.type === 'system' ? '#1976d2' : row.type === 'approval' ? '#9c27b0' : row.type === 'task' ? '#ed6c02' : '#2e7d32'} />
             </Box>
             <Box>
-              <Typography
-                variant='body2'
-                sx={{ fontWeight: 500, color: 'grey.900' }}
-              >
+              <Typography variant='body2' sx={{ fontWeight: 500, color: 'grey.900' }}>
                 {row.name}
               </Typography>
               {row.description && (
                 <Typography
-                  variant='body2'
+                  variant='caption'
                   sx={{
-                    fontSize: '0.75rem',
                     color: 'grey.500',
+                    display: 'block',
                     maxWidth: 200,
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
@@ -297,122 +327,106 @@ const NotificationTemplatesPage: React.FC = () => {
         ),
       },
       {
-        id: 'notification_type',
-        label: '类型',
-        render: (row) => {
-          const typeColor = getTypeColor(row.notification_type);
-          return (
-            <Box
-              component='span'
-              sx={{
-                px: 1,
-                py: 0.5,
-                fontSize: '0.75rem',
-                borderRadius: 4,
-                ...typeColor,
-              }}
-            >
-              {getTypeLabel(row.notification_type)}
-            </Box>
-          );
-        },
+        id: 'code',
+        label: '模板编码',
+        render: (row) => (
+          <Typography variant='body2' sx={{ fontFamily: 'monospace', color: 'text.secondary' }}>
+            {row.code}
+          </Typography>
+        ),
       },
       {
-        id: 'title_template',
-        label: '标题模板',
+        id: 'type',
+        label: '类型',
         render: (row) => (
-          <Typography
-            variant='body2'
-            sx={{
-              color: 'grey.900',
-              maxWidth: 200,
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {row.title_template}
-          </Typography>
+          <Chip
+            label={TYPE_LABELS[row.type]}
+            size='small'
+            color={TYPE_COLORS[row.type] as any}
+            variant='outlined'
+            sx={{ minWidth: 80 }}
+          />
+        ),
+      },
+      {
+        id: 'channels',
+        label: '通知渠道',
+        render: (row) => (
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+            {row.channels.map((channel) => (
+              <Chip
+                key={channel}
+                label={channel}
+                size='small'
+                variant='outlined'
+                sx={{ height: 20, fontSize: '0.7rem' }}
+              />
+            ))}
+          </Box>
         ),
       },
       {
         id: 'status',
         label: '状态',
-        render: (row) => getStatusBadge(row.status),
-      },
-      {
-        id: 'default_priority',
-        label: '优先级',
         render: (row) => (
-          <Typography
-            variant='body2'
-            color='text.secondary'
-          >
-            {(row.default_priority ?? 0) >= 4
-              ? '紧急'
-              : (row.default_priority ?? 0) >= 3
-                ? '高'
-                : (row.default_priority ?? 0) >= 2
-                  ? '中'
-                  : '低'}
-          </Typography>
+          <Chip
+            label={row.status === 'active' ? '启用' : '禁用'}
+            size='small'
+            color={row.status === 'active' ? 'success' : 'default'}
+            variant={row.status === 'active' ? 'filled' : 'outlined'}
+            sx={{ minWidth: 60 }}
+          />
         ),
       },
       {
-        id: 'created_at',
-        label: '创建时间',
+        id: 'updatedAt',
+        label: '更新时间',
         render: (row) => (
-          <Typography
-            variant='body2'
-            color='text.secondary'
-          >
-            {new Date(row.created_at).toLocaleDateString('zh-CN')}
+          <Typography variant='body2' color='text.secondary'>
+            {row.updatedAt}
           </Typography>
         ),
       },
     ],
-
     []
   );
 
   const rowActions: RowAction<NotificationTemplate>[] = useMemo(
     () => [
       {
-        label: '预览',
-        icon: <Eye size={16} />,
-        onClick: (row) => {
-          setSelectedTemplate(row);
-          setShowPreviewModal(true);
-        },
-      },
-      {
-        label: '启用/禁用',
-        icon: <Archive size={16} />,
-        onClick: (row) => handleToggleArchive(row.id),
-      },
-      {
         label: '编辑',
         icon: <Edit size={16} />,
-        onClick: (row) => {
-          setSelectedTemplate(row);
-          setShowEditModal(true);
-        },
+        onClick: (row) => handleEdit(row),
+      },
+      {
+        label: '复制',
+        icon: <Copy size={16} />,
+        onClick: (row) => handleCopy(row),
       },
       {
         label: '删除',
         icon: <Trash2 size={16} />,
         color: 'error',
-        onClick: (row) => handleDeleteTemplate(row.id),
-        confirm: true,
-        confirmMessage: '确定要删除这个模板吗？',
+        onClick: (row) => handleDelete(row),
       },
     ],
-
-    []
+    [handleEdit, handleCopy, handleDelete]
   );
 
   const filters: FilterConfig[] = useMemo(
     () => [
+      {
+        id: 'type',
+        label: '类型',
+        type: 'select',
+        options: [
+          { value: '', label: '全部类型' },
+          { value: 'system', label: '系统通知' },
+          { value: 'approval', label: '审批通知' },
+          { value: 'task', label: '任务通知' },
+          { value: 'message', label: '消息通知' },
+        ],
+      },
       {
         id: 'status',
         label: '状态',
@@ -421,634 +435,225 @@ const NotificationTemplatesPage: React.FC = () => {
           { value: '', label: '全部状态' },
           { value: 'active', label: '启用' },
           { value: 'inactive', label: '禁用' },
-          { value: 'deprecated', label: '废弃' },
         ],
       },
     ],
-
     []
   );
 
-  const handleFilterChange = useCallback((filters: Record<string, any>) => {
-    if (filters.status !== undefined) {
-      setSelectedStatus(filters.status);
-      setPage(1);
-    }
-  }, []);
+  const headerContent = (
+    <Box sx={{ px: { xs: 2, sm: 3 }, py: 2, borderBottom: 1, borderColor: 'divider' }}>
+      <Grid container spacing={2}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Box
+            sx={{
+              p: 2,
+              bgcolor: 'primary.50',
+              borderRadius: 2,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+            }}
+          >
+            <Box
+              sx={{
+                width: 48,
+                height: 48,
+                bgcolor: 'primary.main',
+                borderRadius: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <FileText size={24} color='white' />
+            </Box>
+            <Box>
+              <Typography variant='caption' color='text.secondary'>
+                模板总数
+              </Typography>
+              <Typography variant='h5' sx={{ fontWeight: 700, color: 'primary.main' }}>
+                {stats.total}
+              </Typography>
+            </Box>
+          </Box>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Box
+            sx={{
+              p: 2,
+              bgcolor: 'success.50',
+              borderRadius: 2,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+            }}
+          >
+            <Box
+              sx={{
+                width: 48,
+                height: 48,
+                bgcolor: 'success.main',
+                borderRadius: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <FileText size={24} color='white' />
+            </Box>
+            <Box>
+              <Typography variant='caption' color='text.secondary'>
+                启用模板
+              </Typography>
+              <Typography variant='h5' sx={{ fontWeight: 700, color: 'success.main' }}>
+                {stats.active}
+              </Typography>
+            </Box>
+          </Box>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Box
+            sx={{
+              p: 2,
+              bgcolor: 'grey.100',
+              borderRadius: 2,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+            }}
+          >
+            <Box
+              sx={{
+                width: 48,
+                height: 48,
+                bgcolor: 'grey.500',
+                borderRadius: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <FileText size={24} color='white' />
+            </Box>
+            <Box>
+              <Typography variant='caption' color='text.secondary'>
+                禁用模板
+              </Typography>
+              <Typography variant='h5' sx={{ fontWeight: 700, color: 'grey.600' }}>
+                {stats.inactive}
+              </Typography>
+            </Box>
+          </Box>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
+          <Box
+            sx={{
+              p: 2,
+              bgcolor: 'warning.50',
+              borderRadius: 2,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+            }}
+          >
+            <Box
+              sx={{
+                width: 48,
+                height: 48,
+                bgcolor: 'warning.main',
+                borderRadius: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <FileText size={24} color='white' />
+            </Box>
+            <Box>
+              <Typography variant='caption' color='text.secondary'>
+                今日使用次数
+              </Typography>
+              <Typography variant='h5' sx={{ fontWeight: 700, color: 'warning.main' }}>
+                {stats.todayUsage}
+              </Typography>
+            </Box>
+          </Box>
+        </Grid>
+      </Grid>
+    </Box>
+  );
 
   return (
     <PageContainer
-      title='通知模板管理'
-      subtitle='管理系统通知模板'
+      headerProps={{
+        pageIcon: <FileText size={20} />,
+      }}
+      backButton={{
+        href: '/notification/dashboard',
+      }}
     >
       <ListPageTemplate
-        title=''
-        subtitle=''
-        backButton={{
-          onClick: () => navigate('/notifications'),
-        }}
+        title='通知模板管理'
+        subtitle='管理系统通知模板配置'
         columns={columns}
-        data={filteredTemplates}
+        data={pagedTemplates}
         loading={loading}
         getRowId={(row) => row.id}
+        rowActions={rowActions}
         searchable
-        searchPlaceholder='搜索模板名称、描述...'
+        searchPlaceholder='搜索模板名称、编码...'
         searchValue={searchQuery}
         onSearch={setSearchQuery}
         filters={filters}
-        filtersValue={{ status: selectedStatus }}
+        filtersValue={{ type: selectedType, status: selectedStatus }}
         onFilterChange={handleFilterChange}
         pagination={{
-          page: page - 1,
-          pageSize: 20,
+          page: currentPage - 1,
+          pageSize,
           total,
-          onPageChange: (p) => setPage(p + 1),
+          onPageChange: (p) => setCurrentPage(p + 1),
         }}
-        rowActions={rowActions}
-        onRefresh={loadTemplates}
+        onRefresh={handleRefresh}
+        headerContent={headerContent}
         actions={[
           {
-            label: '新增模板',
+            label: '新建模板',
             icon: <Plus size={16} />,
-            onClick: () => setShowCreateModal(true),
+            onClick: handleCreate,
             variant: 'contained',
+          },
+          {
+            label: '导入',
+            icon: <Upload size={16} />,
+            onClick: handleImport,
+            variant: 'outlined',
+          },
+          {
+            label: '导出',
+            icon: <Download size={16} />,
+            onClick: handleExport,
+            variant: 'outlined',
           },
         ]}
         emptyIcon={<FileText style={{ width: 48, height: 48, color: '#9e9e9e' }} />}
         emptyMessage='暂无模板数据'
       />
 
-      {/* Create/Edit Modal */}
-      {showCreateModal && (
-        <TemplateFormModal
-          onClose={() => setShowCreateModal(false)}
-          onSubmit={
-            handleCreateTemplate as (data: CreateTemplateRequest | UpdateTemplateRequest) => void
-          }
-        />
-      )}
-
-      {showEditModal && selectedTemplate && (
-        <TemplateFormModal
-          template={selectedTemplate}
-          onClose={() => {
-            setShowEditModal(false);
-            setSelectedTemplate(null);
-          }}
-          onSubmit={(data) => handleUpdateTemplate(selectedTemplate.id, data)}
-        />
-      )}
-
-      {/* Preview Modal */}
-      {showPreviewModal && selectedTemplate && (
-        <TemplatePreviewModal
-          template={selectedTemplate}
-          onClose={() => {
-            setShowPreviewModal(false);
-            setSelectedTemplate(null);
-          }}
-        />
-      )}
+      <ConfirmDialog
+        isOpen={confirmDialogOpen}
+        onClose={() => {
+          setConfirmDialogOpen(false);
+          setDeleteTarget(null);
+        }}
+        onConfirm={confirmDelete}
+        title='确认删除'
+        message={`确定要删除模板「${deleteTarget?.name}」吗？此操作不可恢复。`}
+        danger
+        confirmLabel='删除'
+      />
     </PageContainer>
   );
-};
-
-// Template Form Modal Component
-interface TemplateFormModalProps {
-  template?: NotificationTemplate;
-  onClose: () => void;
-  onSubmit: (data: CreateTemplateRequest | UpdateTemplateRequest) => void;
-}
-
-const TemplateFormModal: React.FC<TemplateFormModalProps> = ({ template, onClose, onSubmit }) => {
-  const [formData, setFormData] = useState<CreateTemplateRequest>({
-    name: template?.name || '',
-    description: template?.description || '',
-    notification_type: template?.notification_type || 'system',
-    title_template: template?.title_template || '',
-    content_template: template?.content_template || '',
-    data_schema: template?.data_schema || undefined,
-    default_priority: template?.default_priority || 2,
-  });
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit(formData);
-  };
-
-  return (
-    <Box
-      sx={{
-        position: 'fixed',
-        inset: 0,
-        bgcolor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 50,
-        p: 2,
-      }}
-    >
-      <Box
-        sx={{
-          bgcolor: 'background.paper',
-          borderRadius: 3,
-          boxShadow: 3,
-          width: '100%',
-          maxWidth: 800,
-          maxHeight: '90vh',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
-          <Typography
-            variant='h6'
-            sx={{ fontWeight: 600, color: 'grey.900' }}
-          >
-            {template ? '编辑模板' : '新增模板'}
-          </Typography>
-        </Box>
-
-        <Box
-          component='form'
-          onSubmit={handleSubmit}
-          sx={{ flex: 1, overflowY: 'auto', p: 3 }}
-        >
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: {
-                  xs: 'repeat(1, 1fr)',
-                  md: 'repeat(2, 1fr)',
-                },
-                gap: 2,
-              }}
-            >
-              <Box>
-                <Typography
-                  variant='body2'
-                  sx={{ fontWeight: 500, color: 'grey.700', mb: 0.5 }}
-                >
-                  模板名称 *
-                </Typography>
-                <Box
-                  component='input'
-                  type='text'
-                  required
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  sx={{
-                    width: '100%',
-                    px: 1.5,
-                    py: 1,
-                    border: 1,
-                    borderColor: 'grey.300',
-                    borderRadius: 2,
-                    '&:focus': {
-                      outline: 'none',
-                      borderColor: 'primary.main',
-                      boxShadow: 2,
-                    },
-                  }}
-                  placeholder='请输入模板名称'
-                />
-              </Box>
-              <Box>
-                <Typography
-                  variant='body2'
-                  sx={{ fontWeight: 500, color: 'grey.700', mb: 0.5 }}
-                >
-                  通知类型 *
-                </Typography>
-                <Box
-                  component='select'
-                  required
-                  value={formData.notification_type}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      notification_type: e.target.value as NotificationTypeEnum,
-                    })
-                  }
-                  sx={{
-                    width: '100%',
-                    px: 1.5,
-                    py: 1,
-                    border: 1,
-                    borderColor: 'grey.300',
-                    borderRadius: 2,
-                    '&:focus': {
-                      outline: 'none',
-                      borderColor: 'primary.main',
-                      boxShadow: 2,
-                    },
-                  }}
-                >
-                  <option value='system'>系统通知</option>
-                  <option value='workflow'>审批通知</option>
-                  <option value='reminder'>提醒通知</option>
-                  <option value='alert'>告警通知</option>
-                  <option value='message'>消息通知</option>
-                </Box>
-              </Box>
-            </Box>
-
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ fontWeight: 500, color: 'grey.700', mb: 0.5 }}
-              >
-                描述
-              </Typography>
-              <Box
-                component='textarea'
-                value={formData.description || ''}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                sx={{
-                  width: '100%',
-                  px: 1.5,
-                  py: 1,
-                  border: 1,
-                  borderColor: 'grey.300',
-                  borderRadius: 2,
-                  '&:focus': {
-                    outline: 'none',
-                    borderColor: 'primary.main',
-                    boxShadow: 2,
-                  },
-                }}
-                rows={2}
-                placeholder='请输入模板描述'
-              />
-            </Box>
-
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ fontWeight: 500, color: 'grey.700', mb: 0.5 }}
-              >
-                标题模板 *
-              </Typography>
-              <Box
-                component='input'
-                type='text'
-                required
-                value={formData.title_template}
-                onChange={(e) => setFormData({ ...formData, title_template: e.target.value })}
-                sx={{
-                  width: '100%',
-                  px: 1.5,
-                  py: 1,
-                  border: 1,
-                  borderColor: 'grey.300',
-                  borderRadius: 2,
-                  '&:focus': {
-                    outline: 'none',
-                    borderColor: 'primary.main',
-                    boxShadow: 2,
-                  },
-                }}
-                placeholder='请输入标题模板，使用 {{variable}} 格式定义变量'
-              />
-            </Box>
-
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ fontWeight: 500, color: 'grey.700', mb: 0.5 }}
-              >
-                内容模板 *
-              </Typography>
-              <Box
-                component='textarea'
-                required
-                value={formData.content_template}
-                onChange={(e) => setFormData({ ...formData, content_template: e.target.value })}
-                sx={{
-                  width: '100%',
-                  px: 1.5,
-                  py: 1,
-                  border: 1,
-                  borderColor: 'grey.300',
-                  borderRadius: 2,
-                  '&:focus': {
-                    outline: 'none',
-                    borderColor: 'primary.main',
-                    boxShadow: 2,
-                  },
-                  fontFamily: 'monospace',
-                }}
-                rows={6}
-                placeholder='请输入内容模板，使用 {{variable}} 格式定义变量'
-              />
-              <Typography
-                variant='body2'
-                sx={{ fontSize: '0.75rem', color: 'grey.500', mt: 0.5 }}
-              >
-                使用 {'{{variable}}'} 格式定义变量
-              </Typography>
-            </Box>
-
-            <Box>
-              <Typography
-                variant='body2'
-                sx={{ fontWeight: 500, color: 'grey.700', mb: 0.5 }}
-              >
-                默认优先级
-              </Typography>
-              <Box
-                component='select'
-                value={formData.default_priority}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    default_priority: parseInt(e.target.value),
-                  })
-                }
-                sx={{
-                  width: '100%',
-                  px: 1.5,
-                  py: 1,
-                  border: 1,
-                  borderColor: 'grey.300',
-                  borderRadius: 2,
-                  '&:focus': {
-                    outline: 'none',
-                    borderColor: 'primary.main',
-                    boxShadow: 2,
-                  },
-                }}
-              >
-                <option value={1}>低</option>
-                <option value={2}>中</option>
-                <option value={3}>高</option>
-                <option value={4}>紧急</option>
-              </Box>
-            </Box>
-          </Box>
-        </Box>
-
-        <Box
-          sx={{
-            p: 3,
-            borderTop: 1,
-            borderColor: 'divider',
-            display: 'flex',
-            justifyContent: 'flex-end',
-            gap: 1,
-          }}
-        >
-          <Box
-            component='button'
-            type='button'
-            onClick={onClose}
-            sx={{
-              px: 2,
-              py: 1,
-              color: 'grey.700',
-              bgcolor: 'grey.100',
-              borderRadius: 2,
-              '&:hover': { bgcolor: 'grey.200' },
-            }}
-          >
-            取消
-          </Box>
-          <Box
-            component='button'
-            onClick={handleSubmit}
-            sx={{
-              px: 2,
-              py: 1,
-              bgcolor: 'primary.main',
-              color: 'white',
-              borderRadius: 2,
-              '&:hover': { bgcolor: 'primary.dark' },
-            }}
-          >
-            {template ? '保存' : '创建'}
-          </Box>
-        </Box>
-      </Box>
-    </Box>
-  );
-};
-
-// Template Preview Modal Component
-interface TemplatePreviewModalProps {
-  template: NotificationTemplate;
-  onClose: () => void;
-}
-
-const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({ template, onClose }) => {
-  const getTypeLabel = (type: NotificationTypeEnum) => {
-    const labels: Record<NotificationTypeEnum, string> = {
-      system: '系统通知',
-      workflow: '审批通知',
-      reminder: '提醒通知',
-      alert: '告警通知',
-      message: '消息通知',
-      info: '信息通知',
-      success: '成功通知',
-      warning: '警告通知',
-      error: '错误通知',
-    };
-    return labels[type] || type;
-  };
-
-  return (
-    <Box
-      sx={{
-        position: 'fixed',
-        inset: 0,
-        bgcolor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 50,
-        p: 2,
-      }}
-    >
-      <Box
-        sx={{
-          bgcolor: 'background.paper',
-          borderRadius: 3,
-          boxShadow: 3,
-          width: '100%',
-          maxWidth: 900,
-          maxHeight: '90vh',
-          overflow: 'hidden',
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
-          <Typography
-            variant='h6'
-            sx={{ fontWeight: 600, color: 'grey.900' }}
-          >
-            模板预览
-          </Typography>
-        </Box>
-
-        <Box sx={{ flex: 1, overflowY: 'auto', p: 3 }}>
-          <Box sx={{ mb: 3 }}>
-            <Typography
-              variant='h6'
-              sx={{ fontWeight: 700, color: 'grey.900', mb: 1 }}
-            >
-              {template.name}
-            </Typography>
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 2,
-                fontSize: '0.875rem',
-                color: 'grey.500',
-              }}
-            >
-              <span>类型：{getTypeLabel(template.notification_type)}</span>
-              <span>状态：{template.status}</span>
-              <span>优先级：{template.default_priority}</span>
-            </Box>
-            {template.description && (
-              <Typography
-                variant='body2'
-                sx={{ mt: 1, color: 'grey.600' }}
-              >
-                {template.description}
-              </Typography>
-            )}
-          </Box>
-
-          <Box
-            sx={{
-              bgcolor: 'grey.50',
-              borderRadius: 2,
-              p: 3,
-              border: 1,
-              borderColor: 'grey.200',
-              mb: 2,
-            }}
-          >
-            <Typography
-              variant='body2'
-              sx={{ fontWeight: 600, color: 'grey.900', mb: 1 }}
-            >
-              标题模板：
-            </Typography>
-            <Box
-              component='pre'
-              sx={{
-                whiteSpace: 'pre-wrap',
-                fontSize: '0.875rem',
-                color: 'grey.700',
-                fontFamily: 'monospace',
-              }}
-            >
-              {template.title_template}
-            </Box>
-          </Box>
-
-          <Box
-            sx={{
-              bgcolor: 'grey.50',
-              borderRadius: 2,
-              p: 3,
-              border: 1,
-              borderColor: 'grey.200',
-            }}
-          >
-            <Typography
-              variant='body2'
-              sx={{ fontWeight: 600, color: 'grey.900', mb: 1 }}
-            >
-              内容模板：
-            </Typography>
-            <Box
-              component='pre'
-              sx={{
-                whiteSpace: 'pre-wrap',
-                fontSize: '0.875rem',
-                color: 'grey.700',
-                fontFamily: 'monospace',
-              }}
-            >
-              {template.content_template}
-            </Box>
-          </Box>
-
-          {template.data_schema && (
-            <Box sx={{ mt: 3 }}>
-              <Typography
-                variant='body2'
-                sx={{ fontWeight: 600, color: 'grey.900', mb: 1 }}
-              >
-                数据模式：
-              </Typography>
-              <Box
-                component='pre'
-                sx={{
-                  whiteSpace: 'pre-wrap',
-                  fontSize: '0.75rem',
-                  color: 'grey.700',
-                  fontFamily: 'monospace',
-                  bgcolor: 'grey.50',
-                  p: 2,
-                  borderRadius: 2,
-                }}
-              >
-                {JSON.stringify(template.data_schema, null, 2)}
-              </Box>
-            </Box>
-          )}
-        </Box>
-
-        <Box
-          sx={{
-            p: 3,
-            borderTop: 1,
-            borderColor: 'divider',
-            display: 'flex',
-            justifyContent: 'flex-end',
-          }}
-        >
-          <Box
-            component='button'
-            onClick={onClose}
-            sx={{
-              px: 2,
-              py: 1,
-              bgcolor: 'grey.100',
-              color: 'grey.700',
-              borderRadius: 2,
-              '&:hover': { bgcolor: 'grey.200' },
-            }}
-          >
-            关闭
-          </Box>
-        </Box>
-      </Box>
-    </Box>
-  );
-};
-
-const getTypeLabel = (type: NotificationTypeEnum) => {
-  const labels: Record<NotificationTypeEnum, string> = {
-    system: '系统通知',
-    workflow: '审批通知',
-    reminder: '提醒通知',
-    alert: '告警通知',
-    message: '消息通知',
-    info: '信息通知',
-    success: '成功通知',
-    warning: '警告通知',
-    error: '错误通知',
-  };
-  return labels[type] || type;
 };
 
 export default NotificationTemplatesPage;

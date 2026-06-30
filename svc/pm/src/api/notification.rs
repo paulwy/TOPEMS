@@ -17,6 +17,15 @@ use crate::models::notification::{
 pub fn create_routes(pool: PgPool) -> Router {
     Router::new()
         .route(
+            "/api/pm/notifications",
+            get(list_notifications).post(create_notification),
+        )
+        .route(
+            "/api/pm/notifications/{id}",
+            get(get_notification).put(update_notification),
+        )
+        .route("/api/pm/notifications/{id}/read", post(mark_as_read))
+        .route(
             "/api/pm/projects/{project_id}/notifications",
             get(get_project_notifications).post(create_notification),
         )
@@ -32,6 +41,25 @@ pub fn create_routes(pool: PgPool) -> Router {
         .route("/api/pm/notification-settings/{id}", put(update_setting))
         .route("/api/pm/notification-types", get(list_notification_types))
         .with_state(pool)
+}
+
+async fn list_notifications(State(pool): State<PgPool>) -> Json<ApiResponse<Vec<Notification>>> {
+    let notifications = sqlx::query_as::<_, Notification>(
+        "SELECT * FROM plugin_pm.notifications ORDER BY created_at DESC LIMIT 100",
+    )
+    .fetch_all(&pool)
+    .await;
+
+    match notifications {
+        Ok(n) => Json(ApiResponse::success(n, "获取通知列表成功")),
+        Err(e) => {
+            tracing::error!("获取通知列表失败: {}", e);
+            Json(ApiResponse::error(
+                StatusCode::INTERNAL_SERVER_ERROR.as_u16(),
+                "获取通知列表失败",
+            ))
+        }
+    }
 }
 
 async fn get_project_notifications(

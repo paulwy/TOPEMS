@@ -21,6 +21,9 @@ resources:
   
   # Management services
   - services/erp.yaml
+  - services/finance.yaml
+  - services/doc.yaml
+  - services/ai.yaml
   - services/hrm.yaml
   - services/pm.yaml
   - services/crm.yaml
@@ -45,7 +48,6 @@ resources:
   - services/report.yaml
   - services/monitor.yaml
   - services/portal.yaml
-  - services/ai.yaml
   
   # Infrastructure services
   - services/mobile.yaml
@@ -76,6 +78,12 @@ images:
   
   # Management services
   - name: topems/erp
+    newTag: latest
+  - name: topems/finance
+    newTag: latest
+  - name: topems/doc
+    newTag: latest
+  - name: topems/ai
     newTag: latest
   - name: topems/hrm
     newTag: latest
@@ -116,8 +124,6 @@ images:
   - name: topems/monitor
     newTag: latest
   - name: topems/portal
-    newTag: latest
-  - name: topems/ai
     newTag: latest
   
   # Infrastructure services

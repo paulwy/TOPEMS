@@ -20,6 +20,8 @@ import { Filter, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
 
 // ============ 类型定义 ============
 
+export type FilterValue = string | number | string[] | Date | { start: string; end: string } | undefined;
+
 export interface FilterOption {
   label: string;
   value: string | number;
@@ -48,6 +50,8 @@ export interface FilterBarProps {
   defaultExpanded?: boolean;
   dense?: boolean;
   variant?: 'standard' | 'outlined' | 'filled';
+  sx?: import('@mui/material/styles').SxProps<import('@mui/material/styles').Theme>;
+  disabled?: boolean;
 }
 
 // ============ 单个筛选控件 ============
@@ -57,7 +61,8 @@ const FilterControl: React.FC<{
   onChange: (value: any, filter: FilterConfig) => void;
   dense?: boolean;
   variant?: 'standard' | 'outlined' | 'filled';
-}> = ({ filter, onChange, variant }) => {
+  disabled?: boolean;
+}> = ({ filter, onChange, variant, disabled }) => {
   const handleChange = useCallback(
     (e: { target?: { value?: unknown } } | unknown) => {
       const value =
@@ -70,18 +75,16 @@ const FilterControl: React.FC<{
   );
 
   const textFieldProps = {
-    variant: variant as any,
+    size: 'small' as const,
+    variant: variant as 'outlined' | 'standard' | 'filled',
     fullWidth: true,
-    slotProps: {
-      input: {
-        size: 'small' as const,
-      },
-    },
+    disabled,
   };
 
   const formControlProps = {
     variant: variant as any,
     fullWidth: true,
+    disabled,
   };
 
   const filterType = filter.type || 'text';
@@ -218,6 +221,8 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   defaultExpanded = true,
   dense = false,
   variant = 'outlined',
+  sx,
+  disabled = false,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -277,6 +282,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         p: dense ? 1.5 : 2,
         borderRadius: 2,
         mb: 2,
+        ...sx,
       }}
     >
       {/* 头部 */}
@@ -317,7 +323,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               size='small'
               variant='contained'
               onClick={onSearch}
-              disabled={!hasActiveFilters}
+              disabled={disabled || !hasActiveFilters}
             >
               搜索
             </Button>
@@ -327,6 +333,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               <IconButton
                 size='small'
                 onClick={handleReset}
+                disabled={disabled}
                 aria-label='重置筛选'
               >
                 <RotateCcw style={{ width: 16, height: 16 }} />
@@ -337,6 +344,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             <IconButton
               size='small'
               onClick={() => setExpanded(!expanded)}
+              disabled={disabled}
               aria-label={expanded ? '收起筛选' : '展开筛选'}
               aria-expanded={expanded}
             >
@@ -367,6 +375,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               onChange={handleFilterChange}
               dense={dense}
               variant={variant}
+              disabled={disabled}
             />
           ))}
         </Box>

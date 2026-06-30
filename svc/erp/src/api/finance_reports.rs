@@ -135,6 +135,23 @@ pub struct CategorySummary {
     pub amount: f64,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+pub struct AgingAnalysisItem {
+    pub period: String,
+    pub receivables: f64,
+    pub payables: f64,
+    pub description: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct MonthlyTrendItem {
+    pub month: String,
+    pub revenue: f64,
+    pub expense: f64,
+    pub profit: f64,
+    pub voucher_count: i64,
+}
+
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/api/erp/reports/balance-sheet", get(balance_sheet))
@@ -148,6 +165,8 @@ pub fn create_routes() -> Router<ApiState> {
         .route("/api/erp/reports/employee-summary", get(employee_summary))
         .route("/api/erp/reports/voucher-trend", get(voucher_trend))
         .route("/api/erp/reports/category-summary", get(category_summary))
+        .route("/api/erp/reports/aging-analysis", get(aging_analysis))
+        .route("/api/erp/reports/monthly-trend", get(monthly_trend))
 }
 
 async fn balance_sheet(
@@ -545,11 +564,12 @@ async fn voucher_summary(
         }
     };
 
-    let count_result =
-        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_erp.financial_vouchers WHERE period = $1")
-            .bind(&period)
-            .fetch_one(&state.db)
-            .await;
+    let count_result = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM plugin_erp.financial_vouchers WHERE period = $1",
+    )
+    .bind(&period)
+    .fetch_one(&state.db)
+    .await;
 
     let total = count_result.unwrap_or(0);
 
@@ -903,4 +923,146 @@ async fn category_summary(
     };
 
     Json(ApiResponse::success(summary, "获取科目汇总报表成功"))
+}
+
+async fn aging_analysis(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<ReportParams>,
+) -> Json<ApiResponse<Vec<AgingAnalysisItem>>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::ReportRead).await {
+        return e;
+    }
+
+    let _period = params.period.unwrap_or_else(|| {
+        let now = Utc::now();
+        format!("{}-{:02}", now.year(), now.month())
+    });
+
+    let result = sqlx::query(
+        r#"
+        SELECT 
+            'current' as period,
+            COALESCE(SUM(CASE WHEN r.status = 'pending' THEN r.amount ELSE 0 END), 0.0) as receivables,
+            COALESCE(SUM(CASE WHEN p.status = 'pending' THEN p.amount ELSE 0 END), 0.0) as payables,
+            '30天以内' as description
+        FROM plugin_erp.receivables r
+        CROSS JOIN plugin_erp.payables p
+        WHERE r.due_date >= NOW() - INTERVAL '30 days'
+          AND p.due_date >= NOW() - INTERVAL '30 days'
+        UNION ALL
+        SELECT 
+            '30_60' as period,
+            COALESCE(SUM(CASE WHEN r.status = 'pending' THEN r.amount ELSE 0 END), 0.0) as receivables,
+            COALESCE(SUM(CASE WHEN p.status = 'pending' THEN p.amount ELSE 0 END), 0.0) as payables,
+            '30-60天' as description
+        FROM plugin_erp.receivables r
+        CROSS JOIN plugin_erp.payables p
+        WHERE r.due_date < NOW() - INTERVAL '30 days' AND r.due_date >= NOW() - INTERVAL '60 days'
+          AND p.due_date < NOW() - INTERVAL '30 days' AND p.due_date >= NOW() - INTERVAL '60 days'
+        UNION ALL
+        SELECT 
+            '60_90' as period,
+            COALESCE(SUM(CASE WHEN r.status = 'pending' THEN r.amount ELSE 0 END), 0.0) as receivables,
+            COALESCE(SUM(CASE WHEN p.status = 'pending' THEN p.amount ELSE 0 END), 0.0) as payables,
+            '60-90天' as description
+        FROM plugin_erp.receivables r
+        CROSS JOIN plugin_erp.payables p
+        WHERE r.due_date < NOW() - INTERVAL '60 days' AND r.due_date >= NOW() - INTERVAL '90 days'
+          AND p.due_date < NOW() - INTERVAL '60 days' AND p.due_date >= NOW() - INTERVAL '90 days'
+        UNION ALL
+        SELECT 
+            'over_90' as period,
+            COALESCE(SUM(CASE WHEN r.status = 'pending' THEN r.amount ELSE 0 END), 0.0) as receivables,
+            COALESCE(SUM(CASE WHEN p.status = 'pending' THEN p.amount ELSE 0 END), 0.0) as payables,
+            '90天以上' as description
+        FROM plugin_erp.receivables r
+        CROSS JOIN plugin_erp.payables p
+        WHERE r.due_date < NOW() - INTERVAL '90 days'
+          AND p.due_date < NOW() - INTERVAL '90 days'
+        "#,
+    )
+    .fetch_all(&state.db)
+    .await;
+
+    let analysis = match result {
+        Ok(rows) => {
+            let mut items = Vec::new();
+            for row in rows {
+                items.push(AgingAnalysisItem {
+                    period: row.try_get("period").unwrap_or_default(),
+                    receivables: row.try_get("receivables").unwrap_or(0.0),
+                    payables: row.try_get("payables").unwrap_or(0.0),
+                    description: row.try_get("description").unwrap_or_default(),
+                });
+            }
+            items
+        }
+        Err(e) => {
+            tracing::error!("获取账龄分析报表失败: {}", e);
+            return Json(ApiResponse::error(500, "获取账龄分析报表失败"));
+        }
+    };
+
+    Json(ApiResponse::success(analysis, "获取账龄分析报表成功"))
+}
+
+async fn monthly_trend(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<ReportParams>,
+) -> Json<ApiResponse<Vec<MonthlyTrendItem>>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::ReportRead).await {
+        return e;
+    }
+
+    let limit = params
+        .project_id
+        .as_ref()
+        .and_then(|p| p.parse::<i64>().ok())
+        .unwrap_or(12);
+
+    let result = sqlx::query(
+        r#"
+        SELECT 
+            v.period as month,
+            COALESCE(SUM(CASE WHEN s.code LIKE '5%' AND vi.credit_amount > 0 THEN vi.credit_amount ELSE 0 END), 0.0) as revenue,
+            COALESCE(SUM(CASE WHEN s.code LIKE '5%' AND vi.debit_amount > 0 THEN vi.debit_amount ELSE 0 END), 0.0) as expense,
+            COALESCE(SUM(CASE WHEN s.code LIKE '5%' AND vi.credit_amount > 0 THEN vi.credit_amount ELSE 0 END) - SUM(CASE WHEN s.code LIKE '5%' AND vi.debit_amount > 0 THEN vi.debit_amount ELSE 0 END), 0.0) as profit,
+            COUNT(DISTINCT v.id) as voucher_count
+        FROM plugin_erp.financial_vouchers v
+        LEFT JOIN plugin_erp.voucher_items vi ON vi.voucher_id = v.id
+        LEFT JOIN plugin_erp.accounting_subjects s ON vi.subject_code = s.code
+        WHERE v.status = 'posted'
+          AND s.code LIKE '5%'
+        GROUP BY v.period
+        ORDER BY v.period DESC
+        LIMIT $1
+        "#,
+    )
+    .bind(limit)
+    .fetch_all(&state.db)
+    .await;
+
+    let trend = match result {
+        Ok(rows) => {
+            let mut items = Vec::new();
+            for row in rows {
+                items.push(MonthlyTrendItem {
+                    month: row.try_get("month").unwrap_or_default(),
+                    revenue: row.try_get("revenue").unwrap_or(0.0),
+                    expense: row.try_get("expense").unwrap_or(0.0),
+                    profit: row.try_get("profit").unwrap_or(0.0),
+                    voucher_count: row.try_get("voucher_count").unwrap_or(0),
+                });
+            }
+            items
+        }
+        Err(e) => {
+            tracing::error!("获取月度趋势报表失败: {}", e);
+            return Json(ApiResponse::error(500, "获取月度趋势报表失败"));
+        }
+    };
+
+    Json(ApiResponse::success(trend, "获取月度趋势报表成功"))
 }

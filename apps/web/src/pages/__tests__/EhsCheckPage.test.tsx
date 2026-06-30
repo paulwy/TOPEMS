@@ -10,12 +10,19 @@ vi.mock('@/api/ehs');
 const mockAddNotificationFn = vi.fn();
 
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn((selector?: (state: any) => unknown) => {
-    if (selector) {
-      return selector({ addNotification: mockAddNotificationFn });
+  useAppStore: vi.fn((selector?: any) =>
+    selector ? selector({
+      addNotification: mockAddNotificationFn,
+      notifications: [],
+      user: null,
+      theme: 'light',
+    }) : {
+      addNotification: mockAddNotificationFn,
+      notifications: [],
+      user: null,
+      theme: 'light',
     }
-    return { addNotification: mockAddNotificationFn };
-  }),
+  ),
 }));
 
 const mockAddNotification = mockAddNotificationFn;
@@ -54,12 +61,19 @@ const mockRecords = [
 describe('EhsCheckPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    (useAppStore as vi.Mock).mockImplementation((selector?: (state: any) => unknown) => {
-      if (selector) {
-        return selector({ addNotification: mockAddNotificationFn });
+    (useAppStore as vi.Mock).mockImplementation((selector?: any) =>
+      selector ? selector({
+        addNotification: mockAddNotificationFn,
+        notifications: [],
+        user: null,
+        theme: 'light',
+      }) : {
+        addNotification: mockAddNotificationFn,
+        notifications: [],
+        user: null,
+        theme: 'light',
       }
-      return { addNotification: mockAddNotificationFn };
-    });
+    );
     (ehsApi.listInspectionPlans as vi.Mock).mockResolvedValue({
       success: true,
       data: mockPlans,

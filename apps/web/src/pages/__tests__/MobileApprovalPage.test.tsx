@@ -6,7 +6,19 @@ import MobileApprovalPage from '../mobile/MobileApprovalPage';
 import { useAppStore } from '@/store';
 
 vi.mock('@/store', () => ({
-  useAppStore: vi.fn(),
+  useAppStore: vi.fn((selector?: any) =>
+    selector ? selector({
+      user: mockUser,
+      addNotification: mockAddNotification,
+      notifications: [],
+      theme: 'light',
+    }) : {
+      user: mockUser,
+      addNotification: mockAddNotification,
+      notifications: [],
+      theme: 'light',
+    }
+  ),
 }));
 
 const mockAddNotification = vi.fn();
@@ -23,11 +35,6 @@ const mockUser = {
 describe('MobileApprovalPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-
-    (useAppStore as vi.Mock).mockImplementation(() => ({
-      user: mockUser,
-      addNotification: mockAddNotification,
-    }));
   });
 
   it('should render page title', async () => {

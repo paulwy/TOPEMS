@@ -7,6 +7,7 @@ pub mod error;
 pub mod event_types;
 pub mod monitor;
 pub mod publisher;
+pub mod rabbitmq;
 pub mod subscriber;
 
 pub use dead_letter_queue::{DeadLetter, DeadLetterQueue};
@@ -23,4 +24,5 @@ pub use event_types::{
 };
 pub use monitor::{EventMetrics, EventMonitor, EventTrace, TraceStatus};
 pub use publisher::EventPublisher;
+pub use rabbitmq::{RabbitMqPublisher, RabbitMqSubscriber};
 pub use subscriber::EventSubscriber;

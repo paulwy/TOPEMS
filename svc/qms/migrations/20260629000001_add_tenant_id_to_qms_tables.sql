@@ -1,0 +1,41 @@
+BEGIN;
+
+ALTER TABLE qa_quality_inspections ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE qa_inspection_results ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE qa_inspection_audits ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE qa_quality_issues ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE qa_standards ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE qa_standard_revisions ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE qa_qms_sync_records ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE qa_corrective_actions ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE qa_corrective_action_items ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE qa_audit_plans ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE qa_audit_tasks ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE qa_audit_findings ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE qa_spc_charts ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE qa_spc_data_points ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE qa_quality_costs ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE qa_eightd_reports ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE qa_eightd_audit_logs ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE qa_fmea_analyses ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE qa_fmea_items ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE qa_alert_rules ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE qa_alert_messages ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE qa_apqp_projects ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE qa_apqp_phases ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE qa_apqp_tasks ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE qa_apqp_risks ADD COLUMN IF NOT EXISTS tenant_id UUID;
+ALTER TABLE qa_apqp_approvals ADD COLUMN IF NOT EXISTS tenant_id UUID;
+
+CREATE INDEX IF NOT EXISTS idx_qa_inspections_tenant ON qa_quality_inspections(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_qa_issues_tenant ON qa_quality_issues(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_qa_standards_tenant ON qa_standards(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_qa_actions_tenant ON qa_corrective_actions(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_qa_audit_plans_tenant ON qa_audit_plans(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_qa_spc_charts_tenant ON qa_spc_charts(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_qa_eightd_tenant ON qa_eightd_reports(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_qa_fmea_tenant ON qa_fmea_analyses(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_qa_alert_rules_tenant ON qa_alert_rules(tenant_id);
+CREATE INDEX IF NOT EXISTS idx_qa_apqp_projects_tenant ON qa_apqp_projects(tenant_id);
+
+COMMIT;

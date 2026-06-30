@@ -49,16 +49,33 @@ pub async fn upload_geodata(
     let mut format = String::new();
     let mut data_type = String::new();
 
-    while let Some(field) = multipart.next_field().await.unwrap() {
-        let field_name = field.name().unwrap_or("");
-        if field_name == "file" {
-            file_data = field.bytes().await.unwrap().to_vec();
-        } else if field_name == "name" {
-            name = field.text().await.unwrap();
-        } else if field_name == "format" {
-            format = field.text().await.unwrap();
-        } else if field_name == "data_type" {
-            data_type = field.text().await.unwrap();
+    loop {
+        match multipart.next_field().await {
+            Ok(Some(field)) => {
+                let field_name = field.name().unwrap_or("").to_string();
+                if field_name == "file" {
+                    match field.bytes().await {
+                        Ok(bytes) => file_data = bytes.to_vec(),
+                        Err(e) => {
+                            return Json(ApiResponse::error(400, &format!("读取文件失败: {}", e)))
+                        }
+                    }
+                } else if field_name == "name" {
+                    if let Ok(text) = field.text().await {
+                        name = text;
+                    }
+                } else if field_name == "format" {
+                    if let Ok(text) = field.text().await {
+                        format = text;
+                    }
+                } else if field_name == "data_type" {
+                    if let Ok(text) = field.text().await {
+                        data_type = text;
+                    }
+                }
+            }
+            Ok(None) => break,
+            Err(e) => return Json(ApiResponse::error(400, &format!("解析上传数据失败: {}", e))),
         }
     }
 

@@ -1,6 +1,10 @@
 //! Occupational health records - Physical exams, health plans, contraindications, and follow-up
 
-use axum::{extract::State, routing::{get, put}, Json, Router};
+use axum::{
+    extract::State,
+    routing::{get, put},
+    Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use topems_shared::ApiResponse;
 
@@ -8,17 +12,66 @@ use crate::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/ehs/occupational-health/exam-plans", get(list_exam_plans).post(create_exam_plan))
-        .route("/api/ehs/occupational-health/exam-plans/{id}", get(get_exam_plan).put(update_exam_plan).delete(delete_exam_plan))
-        .route("/api/ehs/occupational-health/exam-records", get(list_exam_records).post(create_exam_record))
-        .route("/api/ehs/occupational-health/exam-records/{id}", get(get_exam_record).put(update_exam_record).delete(delete_exam_record))
-        .route("/api/ehs/occupational-health/archives/{employee_id}", get(get_health_archive))
-        .route("/api/ehs/occupational-health/contraindications", get(list_contraindications).post(create_contraindication))
-        .route("/api/ehs/occupational-health/contraindications/{id}", put(update_contraindication).delete(delete_contraindication))
-        .route("/api/ehs/occupational-health/abnormalities", get(list_abnormalities))
-        .route("/api/ehs/occupational-health/abnormalities/{id}", put(update_abnormality))
-        .route("/api/ehs/occupational-health/exam-types", get(list_exam_types))
-        .route("/api/ehs/occupational-health/statistics", get(get_health_statistics))
+        .route(
+            "/api/ehs/occupational-health/exam-plans",
+            get(list_exam_plans).post(create_exam_plan),
+        )
+        .route(
+            "/api/ehs/occupational-health/exam-plans/{id}",
+            get(get_exam_plan)
+                .put(update_exam_plan)
+                .delete(delete_exam_plan),
+        )
+        .route(
+            "/api/ehs/occupational-health/exam-records",
+            get(list_exam_records).post(create_exam_record),
+        )
+        .route(
+            "/api/ehs/occupational-health/exam-records/{id}",
+            get(get_exam_record)
+                .put(update_exam_record)
+                .delete(delete_exam_record),
+        )
+        .route(
+            "/api/ehs/occupational-health/archives/{employee_id}",
+            get(get_health_archive),
+        )
+        .route(
+            "/api/ehs/occupational-health/contraindications",
+            get(list_contraindications).post(create_contraindication),
+        )
+        .route(
+            "/api/ehs/occupational-health/contraindications/{id}",
+            put(update_contraindication).delete(delete_contraindication),
+        )
+        .route(
+            "/api/ehs/occupational-health/abnormalities",
+            get(list_abnormalities),
+        )
+        .route(
+            "/api/ehs/occupational-health/abnormalities/{id}",
+            put(update_abnormality),
+        )
+        .route(
+            "/api/ehs/occupational-health/exam-types",
+            get(list_exam_types),
+        )
+        .route(
+            "/api/ehs/occupational-health/statistics",
+            get(get_health_statistics),
+        )
+        .route(
+            "/api/ehs/occupational-health/check-plans",
+            get(list_exam_plans).post(create_exam_plan),
+        )
+        .route(
+            "/api/ehs/occupational-health/check-records",
+            get(list_exam_records).post(create_exam_record),
+        )
+        .route(
+            "/api/ehs/occupational-health/records",
+            get(list_exam_records).post(create_exam_record),
+        )
 }
 
 #[derive(Debug, Deserialize)]
@@ -262,7 +315,10 @@ pub async fn list_exam_plans(
     State(_state): State<crate::AppState>,
 ) -> Json<ApiResponse<Vec<HealthExamPlan>>> {
     tracing::info!("Listing health exam plans");
-    Json(ApiResponse::success(Vec::<HealthExamPlan>::new(), "获取体检计划列表成功"))
+    Json(ApiResponse::success(
+        Vec::<HealthExamPlan>::new(),
+        "获取体检计划列表成功",
+    ))
 }
 
 pub async fn create_exam_plan(
@@ -273,7 +329,10 @@ pub async fn create_exam_plan(
     Json(ApiResponse::success(
         HealthExamPlan {
             id: uuid::Uuid::new_v4().to_string(),
-            plan_no: format!("HEP-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+            plan_no: format!(
+                "HEP-{}",
+                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+            ),
             title: req.title,
             description: req.description,
             exam_type: req.exam_type,
@@ -327,7 +386,9 @@ pub async fn update_exam_plan(
         HealthExamPlan {
             id,
             plan_no: "HEP-2024001".to_string(),
-            title: req.title.unwrap_or_else(|| "2024年度职业健康体检".to_string()),
+            title: req
+                .title
+                .unwrap_or_else(|| "2024年度职业健康体检".to_string()),
             description: req.description,
             exam_type: req.exam_type.unwrap_or_else(|| "annual".to_string()),
             plan_date: req.plan_date,
@@ -356,7 +417,10 @@ pub async fn list_exam_records(
     State(_state): State<crate::AppState>,
 ) -> Json<ApiResponse<Vec<HealthExamRecord>>> {
     tracing::info!("Listing health exam records");
-    Json(ApiResponse::success(Vec::<HealthExamRecord>::new(), "获取体检记录列表成功"))
+    Json(ApiResponse::success(
+        Vec::<HealthExamRecord>::new(),
+        "获取体检记录列表成功",
+    ))
 }
 
 pub async fn create_exam_record(
@@ -367,7 +431,10 @@ pub async fn create_exam_record(
     Json(ApiResponse::success(
         HealthExamRecord {
             id: uuid::Uuid::new_v4().to_string(),
-            record_no: format!("HER-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+            record_no: format!(
+                "HER-{}",
+                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+            ),
             plan_id: req.plan_id,
             employee_id: req.employee_id,
             employee_name: req.employee_name,
@@ -517,7 +584,10 @@ pub async fn list_contraindications(
     State(_state): State<crate::AppState>,
 ) -> Json<ApiResponse<Vec<Contraindication>>> {
     tracing::info!("Listing contraindications");
-    Json(ApiResponse::success(Vec::<Contraindication>::new(), "获取职业禁忌症列表成功"))
+    Json(ApiResponse::success(
+        Vec::<Contraindication>::new(),
+        "获取职业禁忌症列表成功",
+    ))
 }
 
 pub async fn create_contraindication(
@@ -561,7 +631,9 @@ pub async fn update_contraindication(
             employee_name: "张三".to_string(),
             department: Some("生产部".to_string()),
             position: Some("操作工".to_string()),
-            contraindication_type: req.contraindication_type.unwrap_or_else(|| "hearing".to_string()),
+            contraindication_type: req
+                .contraindication_type
+                .unwrap_or_else(|| "hearing".to_string()),
             description: req.description,
             diagnosed_at: Some("2024-01-15".to_string()),
             hospital: Some("市职业病防治院".to_string()),
@@ -589,7 +661,10 @@ pub async fn list_abnormalities(
     State(_state): State<crate::AppState>,
 ) -> Json<ApiResponse<Vec<HealthAbnormality>>> {
     tracing::info!("Listing health abnormalities");
-    Json(ApiResponse::success(Vec::<HealthAbnormality>::new(), "获取体检异常列表成功"))
+    Json(ApiResponse::success(
+        Vec::<HealthAbnormality>::new(),
+        "获取体检异常列表成功",
+    ))
 }
 
 pub async fn update_abnormality(

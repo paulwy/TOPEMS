@@ -6,7 +6,9 @@ mod plugin;
 mod services;
 
 // 分析 API handlers
-use crate::api::{AnalysisApi, DocumentApi, EmbeddingApi, MultimodalApi, QaApi, RecommendationApi, VectorApi};
+use crate::api::{
+    AnalysisApi, DocumentApi, EmbeddingApi, MultimodalApi, QaApi, RecommendationApi, VectorApi,
+};
 use crate::services::document::DocumentQAConfig;
 
 use axum::{
@@ -28,13 +30,14 @@ use uuid::Uuid;
 use walkdir::WalkDir;
 
 use services::{
-    AnalysisConfig, AnalysisService, Database, DocumentService, MultimodalService, QAConfig, QAService, RecommendationService, VectorService,
-};
-use topems_shared::{
-    auth_middleware, check_http_health, create_api_info_router, create_cors_layer, init_logging,
-    ApiResponse, AuthState, DependencyHealth, HealthStatus, ServiceHealth,
+    AnalysisConfig, AnalysisService, Database, DocumentService, MultimodalService, QAConfig,
+    QAService, RecommendationService, VectorService,
 };
 use topems_shared::ai_client::{AIModelConfig, AIProviderType};
+use topems_shared::{
+    auth_middleware, check_http_health, create_api_info_router, create_cors_layer, init_telemetry,
+    telemetry_middleware, ApiResponse, AuthState, DependencyHealth, HealthStatus, ServiceHealth,
+};
 
 // AI 生成请求
 #[derive(Debug, Serialize, Deserialize)]
@@ -683,7 +686,7 @@ async fn vector_search(query: &str, top_k: usize) -> Vec<(VectorEmbedding, f64)>
 }
 
 async fn home() -> &'static str {
-    "TOPEMS-AI 智能知识库服务 API\n\n📚 知识库功能\n✅ AI API 已配置，使用真实 AI\n\n配置说明：\n- 设置 OPENAI_API_KEY 启用真实 AI\n- 可选：OPENAI_BASE_URL（自定义 API 地址）、OPENAI_MODEL（模型名称）\n\n示例：\n- OpenAI: OPENAI_API_KEY=sk-xxx\n- 阿里云/通义千问: OPENAI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1, OPENAI_API_KEY=sk-xxx\n- Ollama: OPENAI_BASE_URL=http://localhost:11434/v1, OPENAI_API_KEY=ollama\n\n🔗 数据连接器框架\n支持的连接器类型：\n- Database (Postgres/Mysql/Sqlite/SqlServer)\n- API (RESTful)\n- File (文件系统)\n- MessageQueue (消息队列)\n- CloudStorage (云存储)\n\nAPI 端点：\n- GET  /api/v1/connectors - 列出连接器\n- GET  /api/v1/connectors/get?id=xxx - 获取连接器详情\n- POST /api/v1/connectors/create - 创建连接器\n- POST /api/v1/connectors/update?id=xxx - 更新连接器\n- POST /api/v1/connectors/delete?id=xxx - 删除连接器\n- GET  /api/v1/connectors/test?id=xxx - 测试连接\n- POST /api/v1/connectors/query - 执行数据查询\n\n📊 向量库功能\n- POST /api/v1/vectors/index - 索引所有文档\n- GET  /api/v1/vectors/stats - 获取向量统计\n- POST /api/v1/vectors/search - 向量搜索\n- POST /api/v1/vectors/clear - 清空向量库"
+    "TOPEMS-AI 智能知识库服务 API\n\nPublic Endpoints:\n  GET  /              - API documentation\n  GET  /health        - Health check\n  GET  /api/plugins/info     - Plugin info\n  GET  /api/plugins/health   - Plugin health\n  GET  /api/ai/health/detailed - Detailed health\n  GET  /api/ai/metrics       - Metrics\n  POST /api/ai/search        - AI search\n  GET  /api/info            - API info\n\nProtected Endpoints (require JWT token):\n\nChat & Generation:\n  POST /api/ai/chat          - Chat with AI\n  POST /api/ai/generate      - Generate content\n  POST /api/ai/validate     - Data validation\n  POST /api/ai/complete     - Data completion\n  POST /api/ai/summarize    - Text summarization\n  GET  /api/ai/templates    - List AI templates\n\nDocuments:\n  GET  /api/ai/documents              - List documents\n  POST /api/ai/documents/upload        - Upload document\n  GET  /api/ai/documents/{id}         - Get document\n  DELETE /api/ai/documents/{id}       - Delete document\n  POST /api/ai/documents/{id}/process - Process document\n  POST /api/ai/documents/{id}/extract - Extract from document\n  POST /api/ai/documents/{id}/summarize - Summarize document\n  POST /api/ai/documents/{id}/key-points - Extract key points\n  POST /api/ai/documents/qa           - Document Q&A\n\nVectors:\n  GET  /api/ai/vectors/stats         - Vector stats\n  POST /api/ai/vectors/search        - Vector search\n  POST /api/ai/vectors/store         - Store vector\n  POST /api/ai/vectors/batch-store  - Batch store vectors\n  GET  /api/ai/vectors/{id}         - Get vector\n  DELETE /api/ai/vectors/{id}       - Delete vector\n  POST /api/ai/vectors/clear        - Clear all vectors\n  POST /api/ai/vectors/hybrid-search - Hybrid search\n  POST /api/ai/embedding/generate   - Generate embeddings\n\nQA (Question Answering):\n  POST /api/ai/qa/ask              - Ask question\n  POST /api/ai/qa/ask-with-context - Ask with context\n  POST /api/ai/qa/ask-structured   - Structured response\n  POST /api/ai/qa/ask-conversation - Conversational Q&A\n  POST /api/ai/qa/classify         - Classify question\n  GET  /api/ai/qa/history          - Q&A history\n  DELETE /api/ai/qa/history/{id}   - Delete history item\n  POST /api/ai/qa/feedback         - Submit feedback\n\nAnalysis:\n  POST /api/ai/analysis/sentiment   - Sentiment analysis\n  POST /api/ai/analysis/classify    - Text classification\n  POST /api/ai/analysis/entities    - Extract entities\n  POST /api/ai/analysis/keywords    - Extract keywords\n  GET  /api/ai/analysis/history     - Analysis history\n\nConnectors:\n  GET  /api/ai/connectors          - List connectors\n  GET  /api/ai/connectors/get      - Get connector\n  POST /api/ai/connectors/create   - Create connector\n  POST /api/ai/connectors/update   - Update connector\n  POST /api/ai/connectors/delete   - Delete connector\n  GET  /api/ai/connectors/test     - Test connector\n  POST /api/ai/connectors/query    - Query data\n\nRecommendation:\n  POST /api/ai/recommend           - General recommendations\n  POST /api/ai/recommend/documents - Document recommendations\n  POST /api/ai/recommend/opportunities - Opportunity recommendations\n  POST /api/ai/recommend/knowledge - Knowledge recommendations\n  POST /api/ai/profile/get         - Get user profile\n  POST /api/ai/profile/update      - Update user profile\n\nMultimodal:\n  POST /api/ai/multimodal/image/analyze   - Analyze image\n  POST /api/ai/multimodal/image/caption   - Generate caption\n  POST /api/ai/multimodal/image/objects   - Detect objects\n  POST /api/ai/multimodal/image/text      - Extract text from image\n  POST /api/ai/multimodal/image/describe  - Describe image\n  POST /api/ai/multimodal/video/analyze   - Analyze video\n  POST /api/ai/multimodal/video/summary   - Summarize video\n\nAgent:\n  POST /api/ai/agent/execute       - Execute agent task\n  GET  /api/ai/agent/status/{id}  - Get task status\n"
 }
 
 async fn health() -> Json<ApiResponse<String>> {
@@ -1574,15 +1577,15 @@ struct AiSearchResponse {
 
 async fn ai_search(Json(req): Json<AiSearchRequest>) -> Json<ApiResponse<AiSearchResponse>> {
     let start_time = std::time::Instant::now();
-    
+
     let limit = req.limit.unwrap_or(10);
     let search_results = vector_search(&req.query, limit).await;
-    
+
     let mut documents: Vec<AiSearchDocument> = Vec::new();
-    
+
     if let Some(docs_arc) = DOCUMENTS.get() {
         let docs = docs_arc.lock().unwrap();
-        
+
         for (vec, _similarity) in search_results {
             if let Some(doc) = docs.iter().find(|d| d.id == vec.document_id) {
                 documents.push(AiSearchDocument {
@@ -1605,10 +1608,10 @@ async fn ai_search(Json(req): Json<AiSearchRequest>) -> Json<ApiResponse<AiSearc
             }
         }
     }
-    
+
     let query_time_ms = start_time.elapsed().as_millis() as u64;
     let total = documents.len();
-    
+
     Json(ApiResponse::success(
         AiSearchResponse {
             documents,
@@ -1684,7 +1687,7 @@ async fn call_ai_api(
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     dotenv::dotenv().ok();
 
-    init_logging("topems-ai");
+    let _telemetry_guard = init_telemetry("topems-ai");
 
     let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
     let custom_gauge = Gauge::new(
@@ -1768,39 +1771,46 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             api_key: api_key.clone(),
             model: model.clone(),
         };
-        
+
         if std::env::var("FILE_SERVICE_URL").is_ok() {
             tracing::info!("🔗 连接 File 服务: {}", file_service_url);
             DocumentService::with_file_client(vector_service.clone(), &file_service_url)
                 .with_qa_config(qa_config)
         } else {
             tracing::warn!("⚠️ FILE_SERVICE_URL 未设置，DocumentService 将以兼容模式运行");
-            DocumentService::new(vector_service.clone())
-                .with_qa_config(qa_config)
+            DocumentService::new(vector_service.clone()).with_qa_config(qa_config)
         }
     };
 
     // 创建 QA 和 Analysis 服务（使用统一 AI 客户端）
     let chat_model_config = AIModelConfig {
-        provider: if use_ollama { AIProviderType::Ollama } else { AIProviderType::OpenAI },
+        provider: if use_ollama {
+            AIProviderType::Ollama
+        } else {
+            AIProviderType::OpenAI
+        },
         model_name: model.clone(),
         base_url: base_url.clone(),
         api_key: api_key.clone(),
         ..Default::default()
     };
-    
+
     let embedding_model_config = AIModelConfig {
-        provider: if use_ollama { AIProviderType::Ollama } else { AIProviderType::OpenAI },
+        provider: if use_ollama {
+            AIProviderType::Ollama
+        } else {
+            AIProviderType::OpenAI
+        },
         model_name: embedding_model.clone(),
-        base_url: if use_ollama { 
-            base_url.clone().replace("/v1", "/api") 
-        } else { 
-            base_url.clone() 
+        base_url: if use_ollama {
+            base_url.clone().replace("/v1", "/api")
+        } else {
+            base_url.clone()
         },
         api_key: api_key.clone(),
         ..Default::default()
     };
-    
+
     let qa_config = QAConfig {
         chat_model: chat_model_config,
         embedding_model: embedding_model_config,
@@ -1843,7 +1853,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let agent_service = crate::services::AgentService::new(qa_service.clone());
 
     // 创建推荐服务
-    let recommendation_service = RecommendationService::new(vector_service.db().clone(), qa_service.clone());
+    let recommendation_service =
+        RecommendationService::new(vector_service.db().clone(), qa_service.clone());
 
     // 创建多模态服务
     let multimodal_service = MultimodalService::new(qa_service.clone());
@@ -1894,8 +1905,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api/ai/documents/{id}", delete(DocumentApi::delete))
         .route("/api/ai/documents/{id}/process", post(DocumentApi::process))
         .route("/api/ai/documents/{id}/extract", post(DocumentApi::extract))
-        .route("/api/ai/documents/{id}/summarize", post(DocumentApi::summarize))
-        .route("/api/ai/documents/{id}/key-points", post(DocumentApi::extract_key_points))
+        .route(
+            "/api/ai/documents/{id}/summarize",
+            post(DocumentApi::summarize),
+        )
+        .route(
+            "/api/ai/documents/{id}/key-points",
+            post(DocumentApi::extract_key_points),
+        )
         .route("/api/ai/documents/qa", post(DocumentApi::document_qa))
         // 向量检索 API - 使用 VectorApi 模块
         .route("/api/ai/vectors/stats", get(VectorApi::stats))
@@ -1918,7 +1935,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api/ai/qa/classify", post(QaApi::classify))
         .route("/api/ai/qa/history", get(QaApi::history))
         .route("/api/ai/qa/history/{id}", delete(QaApi::delete_history))
-        .route("/api/ai/qa/history/batch-delete", post(QaApi::batch_delete_history))
+        .route(
+            "/api/ai/qa/history/batch-delete",
+            post(QaApi::batch_delete_history),
+        )
         .route("/api/ai/qa/feedback", post(QaApi::feedback))
         // 数据连接器 API
         .route("/api/ai/connectors", get(list_connectors))
@@ -1963,11 +1983,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let recommendation_router = Router::new()
         .route("/api/ai/recommend", post(RecommendationApi::recommend))
-        .route("/api/ai/recommend/documents", post(RecommendationApi::recommend_documents))
-        .route("/api/ai/recommend/opportunities", post(RecommendationApi::recommend_opportunities))
-        .route("/api/ai/recommend/knowledge", post(RecommendationApi::recommend_knowledge))
-        .route("/api/ai/profile/get", post(RecommendationApi::get_user_profile))
-        .route("/api/ai/profile/update", post(RecommendationApi::update_user_profile))
+        .route(
+            "/api/ai/recommend/documents",
+            post(RecommendationApi::recommend_documents),
+        )
+        .route(
+            "/api/ai/recommend/opportunities",
+            post(RecommendationApi::recommend_opportunities),
+        )
+        .route(
+            "/api/ai/recommend/knowledge",
+            post(RecommendationApi::recommend_knowledge),
+        )
+        .route(
+            "/api/ai/profile/get",
+            post(RecommendationApi::get_user_profile),
+        )
+        .route(
+            "/api/ai/profile/update",
+            post(RecommendationApi::update_user_profile),
+        )
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
@@ -1975,13 +2010,34 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_state(app_state.clone());
 
     let multimodal_router = Router::new()
-        .route("/api/ai/multimodal/image/analyze", post(MultimodalApi::analyze_image))
-        .route("/api/ai/multimodal/image/caption", post(MultimodalApi::generate_caption))
-        .route("/api/ai/multimodal/image/objects", post(MultimodalApi::detect_objects))
-        .route("/api/ai/multimodal/image/text", post(MultimodalApi::extract_text))
-        .route("/api/ai/multimodal/image/describe", post(MultimodalApi::describe_image))
-        .route("/api/ai/multimodal/video/analyze", post(MultimodalApi::analyze_video))
-        .route("/api/ai/multimodal/video/summary", post(MultimodalApi::summarize_video))
+        .route(
+            "/api/ai/multimodal/image/analyze",
+            post(MultimodalApi::analyze_image),
+        )
+        .route(
+            "/api/ai/multimodal/image/caption",
+            post(MultimodalApi::generate_caption),
+        )
+        .route(
+            "/api/ai/multimodal/image/objects",
+            post(MultimodalApi::detect_objects),
+        )
+        .route(
+            "/api/ai/multimodal/image/text",
+            post(MultimodalApi::extract_text),
+        )
+        .route(
+            "/api/ai/multimodal/image/describe",
+            post(MultimodalApi::describe_image),
+        )
+        .route(
+            "/api/ai/multimodal/video/analyze",
+            post(MultimodalApi::analyze_video),
+        )
+        .route(
+            "/api/ai/multimodal/video/summary",
+            post(MultimodalApi::summarize_video),
+        )
         .layer(axum::middleware::from_fn_with_state(
             app_state.auth_state.clone(),
             auth_middleware,
@@ -1996,6 +2052,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .merge(recommendation_router)
         .merge(multimodal_router)
         .merge(create_api_info_router("topems-ai"))
+        .layer(axum::middleware::from_fn(telemetry_middleware))
         .layer(prometheus_layer)
         .layer(cors)
         .layer(DefaultBodyLimit::max(500 * 1024 * 1024));
@@ -2003,9 +2060,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let port = std::env::var("SERVER_PORT")
         .or_else(|_| std::env::var("PORT"))
         .or_else(|_| std::env::var("AI_PORT"))
-        .unwrap_or_else(|_| "8064".to_string())
+        .unwrap_or_else(|_| "8013".to_string())
         .parse()
-        .unwrap_or(8064);
+        .unwrap_or(8013);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], port));
     tracing::info!("✅ TOPEMS-AI 服务运行在 http://{}", addr);

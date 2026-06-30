@@ -1036,9 +1036,9 @@ export function DataTable<TData, TValue>({
           >
             <span>{(column.columnDef.header as string) || column.id}</span>
             {column.getIsVisible() ? (
-              <Eye style={{ width: 16, height: 16 }} sx={{ color: 'success.main' }} />
+              <Eye style={{ width: 16, height: 16, color: 'var(--mui-palette-success-main)' }} />
             ) : (
-              <EyeOff style={{ width: 16, height: 16 }} sx={{ color: 'action.disabled' }} />
+              <EyeOff style={{ width: 16, height: 16, color: 'var(--mui-palette-action-disabled)' }} />
             )}
           </MenuItem>
         ))}
