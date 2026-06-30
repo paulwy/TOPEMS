@@ -612,7 +612,6 @@ export const IamBankAccountsPage: React.FC = () => {
         ]}
         onRefresh={loadData}
         emptyMessage='暂无银行账号'
-        stats={stats}
       />
 
       {/* 创建账号对话框 */}

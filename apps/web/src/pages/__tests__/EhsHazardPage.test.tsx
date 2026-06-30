@@ -68,19 +68,25 @@ describe('EhsHazardPage', () => {
   });
 
   it('should render loading state initially', async () => {
-    renderWithProviders(<EhsHazardPage />);
+    await act(async () => {
+      renderWithProviders(<EhsHazardPage />);
+    });
     expect(screen.getByRole('status')).toBeInTheDocument();
   });
 
   it('should render page title', async () => {
-    renderWithProviders(<EhsHazardPage />);
+    await act(async () => {
+      renderWithProviders(<EhsHazardPage />);
+    });
     await waitFor(() => {
       expect(screen.getByText('隐患管理')).toBeInTheDocument();
     });
   });
 
   it('should render hazard table', async () => {
-    renderWithProviders(<EhsHazardPage />);
+    await act(async () => {
+      renderWithProviders(<EhsHazardPage />);
+    });
     await waitFor(() => {
       expect(screen.getByText('HZ-2024-001')).toBeInTheDocument();
       expect(screen.getByText('配电箱门未关闭')).toBeInTheDocument();
@@ -88,7 +94,9 @@ describe('EhsHazardPage', () => {
   });
 
   it('should handle search', async () => {
-    renderWithProviders(<EhsHazardPage />);
+    await act(async () => {
+      renderWithProviders(<EhsHazardPage />);
+    });
     await waitFor(() => {
       const searchInput = screen.getByPlaceholderText(/搜索隐患名称或编号/);
       fireEvent.change(searchInput, { target: { value: '配电' } });
@@ -101,7 +109,9 @@ describe('EhsHazardPage', () => {
       data: {},
     });
 
-    renderWithProviders(<EhsHazardPage />);
+    await act(async () => {
+      renderWithProviders(<EhsHazardPage />);
+    });
 
     await waitFor(() => {
       const addButton = screen.getByRole('button', { name: /上报隐患/i });
@@ -126,7 +136,9 @@ describe('EhsHazardPage', () => {
 
   it('should handle API error', async () => {
     (ehsApi.listSafetyIssues as vi.Mock).mockRejectedValue(new Error('Network error'));
-    renderWithProviders(<EhsHazardPage />);
+    await act(async () => {
+      renderWithProviders(<EhsHazardPage />);
+    });
 
     await waitFor(() => {
       expect(mockAddNotification).toHaveBeenCalled();

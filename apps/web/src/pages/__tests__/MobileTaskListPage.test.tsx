@@ -40,7 +40,7 @@ describe('MobileTaskListPage', () => {
   it('should render page title', async () => {
     renderWithProviders(<MobileTaskListPage />);
     await waitFor(() => {
-      expect(screen.getByText('任务列表')).toBeInTheDocument();
+      expect(screen.getByText('我的任务')).toBeInTheDocument();
     });
   });
 });

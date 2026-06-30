@@ -21,13 +21,17 @@ const NotificationTemplatesPage = lazyWithRetry(
   () => import('../../pages/notification/NotificationTemplatesPage'),
   'NotificationTemplatesPage'
 );
-const NotificationStatisticsPage = lazyWithRetry(
-  () => import('../../pages/notification/NotificationStatisticsPage'),
-  'NotificationStatisticsPage'
+const NotificationStatsPage = lazyWithRetry(
+  () => import('../../pages/notification/NotificationStatsPage'),
+  'NotificationStatsPage'
 );
 const NotificationSettingsPage = lazyWithRetry(
   () => import('../../pages/notification/NotificationSettingsPage'),
   'NotificationSettingsPage'
+);
+const NotificationCenter = lazyWithRetry(
+  () => import('../../pages/notification/NotificationCenter'),
+  'NotificationCenter'
 );
 
 export const notificationModuleConfig: RouteModuleConfig = {
@@ -102,6 +106,22 @@ export const notificationModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['notification:read'],
     },
     {
+      path: '/notification/center',
+      element: NotificationCenter,
+      module: 'notification',
+      code: 'notification-center',
+      title: '通知中心',
+      template: 'list',
+      group: 'messages',
+      requiredPermissions: ['notification:read'],
+      nav: {
+        label: '通知中心',
+        icon: 'Bell',
+        order: 3,
+        group: 'messages',
+      },
+    },
+    {
       path: '/notification/templates',
       element: NotificationTemplatesPage,
       module: 'notification',
@@ -119,7 +139,7 @@ export const notificationModuleConfig: RouteModuleConfig = {
     },
     {
       path: '/notification/statistics',
-      element: NotificationStatisticsPage,
+      element: NotificationStatsPage,
       module: 'notification',
       code: 'notification-statistics',
       title: '发送统计',

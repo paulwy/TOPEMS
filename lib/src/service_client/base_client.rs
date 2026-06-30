@@ -1,12 +1,15 @@
 use super::error::{ServiceClientError, ServiceClientResult};
 use reqwest::{Client, RequestBuilder};
 use serde::{de::DeserializeOwned, Serialize};
+use std::collections::HashMap;
 use std::time::Duration;
 
 #[derive(Clone)]
 pub struct BaseServiceClient {
     client: Client,
     base_url: String,
+    auth_token: Option<String>,
+    custom_headers: HashMap<String, String>,
 }
 
 impl BaseServiceClient {
@@ -26,7 +29,12 @@ impl BaseServiceClient {
             .build()
             .map_err(ServiceClientError::HttpRequestError)?;
 
-        Ok(Self { client, base_url })
+        Ok(Self { 
+            client, 
+            base_url,
+            auth_token: None,
+            custom_headers: HashMap::new(),
+        })
     }
 
     fn build_url(&self, path: &str) -> String {
@@ -46,6 +54,12 @@ impl BaseServiceClient {
     ) -> ServiceClientResult<T> {
         let url = self.build_url(path);
         let request = self.client.post(&url).json(body);
+        self.execute_request(request).await
+    }
+
+    pub async fn post_without_body<T: DeserializeOwned>(&self, path: &str) -> ServiceClientResult<T> {
+        let url = self.build_url(path);
+        let request = self.client.post(&url);
         self.execute_request(request).await
     }
 
@@ -69,7 +83,8 @@ impl BaseServiceClient {
         &self,
         request: RequestBuilder,
     ) -> ServiceClientResult<T> {
-        let response = request
+        let response = self
+            .apply_headers(request)
             .send()
             .await
             .map_err(ServiceClientError::HttpRequestError)?;
@@ -119,5 +134,31 @@ impl BaseServiceClient {
         }
 
         Ok(())
+    }
+
+    pub fn set_auth_token(&mut self, token: impl Into<String>) {
+        self.auth_token = Some(token.into());
+    }
+
+    pub fn add_header(&mut self, key: impl Into<String>, value: impl Into<String>) {
+        self.custom_headers.insert(key.into(), value.into());
+    }
+
+    pub fn base_url(&self) -> &str {
+        &self.base_url
+    }
+
+    fn apply_headers(&self, request: RequestBuilder) -> RequestBuilder {
+        let mut request = request;
+        
+        if let Some(token) = &self.auth_token {
+            request = request.bearer_auth(token);
+        }
+        
+        for (key, value) in &self.custom_headers {
+            request = request.header(key, value);
+        }
+        
+        request
     }
 }

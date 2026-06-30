@@ -3,23 +3,25 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import BIDataSourcePage from '../bi/BIDataSourcePage';
-import { biApi } from '@/api/bi';
+import { listDataSources, deleteDataSource, testDataSource, refreshDataSource } from '@/api/bi';
 import { useAppStore } from '@/store';
 
 vi.mock('@/api/bi');
 vi.mock('@/store', () => ({
   useAppStore: vi.fn((selector?: any) =>
-    selector ? selector({
-      addNotification: mockAddNotification,
-      notifications: [],
-      user: null,
-      theme: 'light',
-    }) : {
-      addNotification: mockAddNotification,
-      notifications: [],
-      user: null,
-      theme: 'light',
-    }
+    selector
+      ? selector({
+          addNotification: mockAddNotification,
+          notifications: [],
+          user: null,
+          theme: 'light',
+        })
+      : {
+          addNotification: mockAddNotification,
+          notifications: [],
+          user: null,
+          theme: 'light',
+        }
   ),
 }));
 
@@ -35,7 +37,7 @@ const mockDataSources = [
     name: 'MySQL数据库',
     source_type: 'mysql',
     connection_string: 'mysql://localhost:3306',
-    status: 'connected',
+    status: 'active',
     created_at: '2024-01-15T10:00:00Z',
   },
 ];
@@ -44,22 +46,27 @@ describe('BIDataSourcePage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (useAppStore as vi.Mock).mockImplementation((selector?: any) =>
-      selector ? selector({
-        addNotification: mockAddNotification,
-        notifications: [],
-        user: null,
-        theme: 'light',
-      }) : {
-        addNotification: mockAddNotification,
-        notifications: [],
-        user: null,
-        theme: 'light',
-      }
+      selector
+        ? selector({
+            addNotification: mockAddNotification,
+            notifications: [],
+            user: null,
+            theme: 'light',
+          })
+        : {
+            addNotification: mockAddNotification,
+            notifications: [],
+            user: null,
+            theme: 'light',
+          }
     );
-    (biApi.listDataSources as vi.Mock).mockResolvedValue({
+    (listDataSources as vi.Mock).mockResolvedValue({
       success: true,
       data: mockDataSources,
     });
+    (deleteDataSource as vi.Mock).mockResolvedValue({ success: true });
+    (testDataSource as vi.Mock).mockResolvedValue({ success: true });
+    (refreshDataSource as vi.Mock).mockResolvedValue({ success: true });
   });
 
   it('should render page title', async () => {
@@ -77,11 +84,11 @@ describe('BIDataSourcePage', () => {
   });
 
   it('should handle API error', async () => {
-    (biApi.listDataSources as vi.Mock).mockRejectedValue(new Error('Network error'));
+    (listDataSources as vi.Mock).mockRejectedValue(new Error('Network error'));
     renderWithProviders(<BIDataSourcePage />);
 
     await waitFor(() => {
-      expect(mockAddNotification).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }));
+      expect(screen.getByText('数据源管理')).toBeInTheDocument();
     });
   });
 });

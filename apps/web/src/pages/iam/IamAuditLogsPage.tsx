@@ -27,15 +27,7 @@ import {
   Stack,
 } from '@mui/material';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import {
-  FileText,
-  Eye,
-  Download,
-  User,
-  Clock,
-  Activity,
-  X,
-} from 'lucide-react';
+import { FileText, Eye, Download, User, Clock, Activity, X } from 'lucide-react';
 
 import { authApi, type AccessLog } from '@/api/iam';
 import { useAppStore } from '../../store';
@@ -250,9 +242,27 @@ export const IamAuditLogsPage: React.FC = () => {
     const successCount = logs.filter((l) => l.success).length;
     const failCount = logs.filter((l) => !l.success).length;
     return [
-      { id: 'total', title: '日志总数', value: total, icon: <FileText size={20} />, color: 'primary' as const },
-      { id: 'success', title: '成功', value: successCount, icon: <Activity size={20} />, color: 'success' as const },
-      { id: 'failed', title: '失败', value: failCount, icon: <X size={20} />, color: 'error' as const },
+      {
+        id: 'total',
+        title: '日志总数',
+        value: total,
+        icon: <FileText size={20} />,
+        color: 'primary' as const,
+      },
+      {
+        id: 'success',
+        title: '成功',
+        value: successCount,
+        icon: <Activity size={20} />,
+        color: 'success' as const,
+      },
+      {
+        id: 'failed',
+        title: '失败',
+        value: failCount,
+        icon: <X size={20} />,
+        color: 'error' as const,
+      },
     ];
   }, [logs, total]);
 
@@ -264,8 +274,14 @@ export const IamAuditLogsPage: React.FC = () => {
         label: '时间',
         render: (row) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Clock size={14} color='text.disabled' />
-            <Typography variant='body2' color='text.secondary'>
+            <Clock
+              size={14}
+              color='text.disabled'
+            />
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               {new Date(row.created_at).toLocaleString('zh-CN')}
             </Typography>
           </Box>
@@ -287,9 +303,15 @@ export const IamAuditLogsPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <User size={14} color='primary.main' />
+              <User
+                size={14}
+                color='primary.main'
+              />
             </Box>
-            <Typography variant='body2' sx={{ fontWeight: 500 }}>
+            <Typography
+              variant='body2'
+              sx={{ fontWeight: 500 }}
+            >
               {row.username}
             </Typography>
           </Box>
@@ -313,7 +335,12 @@ export const IamAuditLogsPage: React.FC = () => {
           <Typography variant='body2'>
             {formatResource(row.resource)}
             {row.resource_id && (
-              <Typography component='span' variant='caption' color='text.secondary' sx={{ ml: 1 }}>
+              <Typography
+                component='span'
+                variant='caption'
+                color='text.secondary'
+                sx={{ ml: 1 }}
+              >
                 ({row.resource_id})
               </Typography>
             )}
@@ -324,7 +351,10 @@ export const IamAuditLogsPage: React.FC = () => {
         id: 'ip_address',
         label: 'IP地址',
         render: (row) => (
-          <Typography variant='body2' color='text.secondary'>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             {row.ip_address || '-'}
           </Typography>
         ),
@@ -410,7 +440,7 @@ export const IamAuditLogsPage: React.FC = () => {
         columns={columns}
         data={filteredLogs}
         loading={loading}
-        error={error}
+        error={error || undefined}
         searchable
         searchPlaceholder='搜索用户名、操作、资源、IP地址...'
         searchValue={searchQuery}
@@ -437,7 +467,6 @@ export const IamAuditLogsPage: React.FC = () => {
         ]}
         onRefresh={loadData}
         emptyMessage='暂无审计日志'
-        stats={stats}
       />
 
       {/* 详情弹窗 */}
@@ -447,9 +476,14 @@ export const IamAuditLogsPage: React.FC = () => {
         maxWidth='md'
         fullWidth
       >
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <DialogTitle
+          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+        >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Activity size={24} color='primary.main' />
+            <Activity
+              size={24}
+              color='primary.main'
+            />
             <Typography variant='h6'>审计日志详情</Typography>
           </Box>
           <IconButton onClick={() => setSelectedLog(null)}>
@@ -458,96 +492,180 @@ export const IamAuditLogsPage: React.FC = () => {
         </DialogTitle>
         <DialogContent>
           {selectedLog && (
-            <Stack spacing={3} sx={{ pt: 1 }}>
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
+            <Stack
+              spacing={3}
+              sx={{ pt: 1 }}
+            >
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                <Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>
                   <Paper sx={{ p: 2 }}>
-                    <Typography variant='subtitle2' color='text.secondary' gutterBottom>
+                    <Typography
+                      variant='subtitle2'
+                      color='text.secondary'
+                      gutterBottom
+                    >
                       基本信息
                     </Typography>
                     <Stack spacing={1.5}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography variant='body2' color='text.secondary'>日志ID</Typography>
-                        <Typography variant='body2' sx={{ fontWeight: 500 }}>{selectedLog.id}</Typography>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          日志ID
+                        </Typography>
+                        <Typography
+                          variant='body2'
+                          sx={{ fontWeight: 500 }}
+                        >
+                          {selectedLog.id}
+                        </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography variant='body2' color='text.secondary'>操作时间</Typography>
-                        <Typography variant='body2'>{new Date(selectedLog.created_at).toLocaleString('zh-CN')}</Typography>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          操作时间
+                        </Typography>
+                        <Typography variant='body2'>
+                          {new Date(selectedLog.created_at).toLocaleString('zh-CN')}
+                        </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography variant='body2' color='text.secondary'>操作类型</Typography>
-                        <Chip size='small' label={formatAction(selectedLog.action)} variant='outlined' />
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          操作类型
+                        </Typography>
+                        <Chip
+                          size='small'
+                          label={formatAction(selectedLog.action)}
+                          variant='outlined'
+                        />
                       </Box>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography variant='body2' color='text.secondary'>操作状态</Typography>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          操作状态
+                        </Typography>
                         {getStatusBadge(selectedLog.success)}
                       </Box>
                     </Stack>
                   </Paper>
-                </Grid>
-                <Grid item xs={12} md={6}>
+                </Box>
+                <Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>
                   <Paper sx={{ p: 2 }}>
-                    <Typography variant='subtitle2' color='text.secondary' gutterBottom>
+                    <Typography
+                      variant='subtitle2'
+                      color='text.secondary'
+                      gutterBottom
+                    >
                       用户信息
                     </Typography>
                     <Stack spacing={1.5}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography variant='body2' color='text.secondary'>用户ID</Typography>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          用户ID
+                        </Typography>
                         <Typography variant='body2'>{selectedLog.user_id}</Typography>
                       </Box>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography variant='body2' color='text.secondary'>用户名</Typography>
-                        <Typography variant='body2' sx={{ fontWeight: 500 }}>{selectedLog.username}</Typography>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          用户名
+                        </Typography>
+                        <Typography
+                          variant='body2'
+                          sx={{ fontWeight: 500 }}
+                        >
+                          {selectedLog.username}
+                        </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography variant='body2' color='text.secondary'>IP地址</Typography>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          IP地址
+                        </Typography>
                         <Typography variant='body2'>{selectedLog.ip_address || '-'}</Typography>
                       </Box>
                     </Stack>
                   </Paper>
-                </Grid>
-                <Grid item xs={12}>
-                  <Paper sx={{ p: 2 }}>
-                    <Typography variant='subtitle2' color='text.secondary' gutterBottom>
-                      资源信息
+                </Box>
+              </Box>
+              <Paper sx={{ p: 2 }}>
+                <Typography
+                  variant='subtitle2'
+                  color='text.secondary'
+                  gutterBottom
+                >
+                  资源信息
+                </Typography>
+                <Stack spacing={1.5}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      资源类型
                     </Typography>
-                    <Stack spacing={1.5}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography variant='body2' color='text.secondary'>资源类型</Typography>
-                        <Typography variant='body2'>{formatResource(selectedLog.resource)}</Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography variant='body2' color='text.secondary'>资源ID</Typography>
-                        <Typography variant='body2'>{selectedLog.resource_id || '-'}</Typography>
-                      </Box>
-                    </Stack>
-                  </Paper>
-                </Grid>
-                {selectedLog.error_message && (
-                  <Grid item xs={12}>
-                    <Paper sx={{ p: 2, bgcolor: 'error.light' }}>
-                      <Typography variant='subtitle2' color='error.main' gutterBottom>
-                        错误信息
-                      </Typography>
-                      <Typography variant='body2' color='error.main'>
-                        {selectedLog.error_message}
-                      </Typography>
-                    </Paper>
-                  </Grid>
-                )}
-                {selectedLog.user_agent && (
-                  <Grid item xs={12}>
-                    <Paper sx={{ p: 2 }}>
-                      <Typography variant='subtitle2' color='text.secondary' gutterBottom>
-                        User Agent
-                      </Typography>
-                      <Typography variant='body2' sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
-                        {selectedLog.user_agent}
-                      </Typography>
-                    </Paper>
-                  </Grid>
-                )}
-              </Grid>
+                    <Typography variant='body2'>{formatResource(selectedLog.resource)}</Typography>
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
+                      资源ID
+                    </Typography>
+                    <Typography variant='body2'>{selectedLog.resource_id || '-'}</Typography>
+                  </Box>
+                </Stack>
+              </Paper>
+              {selectedLog.error_message && (
+                <Paper sx={{ p: 2, bgcolor: 'error.light' }}>
+                  <Typography
+                    variant='subtitle2'
+                    color='error.main'
+                    gutterBottom
+                  >
+                    错误信息
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    color='error.main'
+                  >
+                    {selectedLog.error_message}
+                  </Typography>
+                </Paper>
+              )}
+              {selectedLog.user_agent && (
+                <Paper sx={{ p: 2 }}>
+                  <Typography
+                    variant='subtitle2'
+                    color='text.secondary'
+                    gutterBottom
+                  >
+                    User Agent
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
+                  >
+                    {selectedLog.user_agent}
+                  </Typography>
+                </Paper>
+              )}
             </Stack>
           )}
         </DialogContent>

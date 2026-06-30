@@ -174,7 +174,7 @@ export const IntegrationEventsPage: React.FC = () => {
         filters={filters} filtersValue={{ type: typeFilter, status: statusFilter }} onFilterChange={(f) => { if (typeof f.type === 'string') setTypeFilter(f.type); if (typeof f.status === 'string') setStatusFilter(f.status); setPage(1); }}
         pagination={{ page, pageSize, total: filteredEvents.length, onPageChange: setPage }}
         actions={[{ label: '刷新', icon: <RefreshCw size={16} />, onClick: loadData, variant: 'outlined' }]}
-        onRefresh={loadData} emptyMessage='暂无事件记录' stats={stats}
+        onRefresh={loadData} emptyMessage='暂无事件记录'
       />
       <ConfirmDialog isOpen={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)} onConfirm={() => { confirmDialogConfig?.onConfirm(); setConfirmDialogOpen(false); }} title={confirmDialogConfig?.title || ''} message={confirmDialogConfig?.message || ''} danger={confirmDialogConfig?.danger} />
     </PageContainer>

@@ -102,8 +102,8 @@ async fn create_template(
     Json(req): Json<CreateTemplateRequest>,
 ) -> Json<ApiResponse<Template>> {
     let service = TemplateService::new(Arc::new(state.pool.clone()));
-    let created_by = Uuid::parse_str(&claims.sub).unwrap_or_else(|_| Uuid::nil());
-    match service.create_template(req, created_by).await {
+    let created_by = claims.username.clone();
+    match service.create_template(req, &created_by).await {
         Ok(template) => Json(ApiResponse::success(template, "创建成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }
@@ -164,8 +164,8 @@ async fn create_folder(
     Json(req): Json<CreateFolderRequest>,
 ) -> Json<ApiResponse<Folder>> {
     let service = FolderService::new(Arc::new(state.pool.clone()));
-    let owner_id = Uuid::parse_str(&claims.sub).unwrap_or_else(|_| Uuid::nil());
-    match service.create_folder(req, owner_id).await {
+    let created_by = claims.username.clone();
+    match service.create_folder(req, &created_by).await {
         Ok(folder) => Json(ApiResponse::success(folder, "创建成功")),
         Err(e) => Json(ApiResponse::error(500, &e.to_string())),
     }

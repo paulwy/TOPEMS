@@ -20,7 +20,8 @@ import {
 } from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePermission } from '@/hooks/usePermission';
-import { navigationRegistry, type NavItem } from '@/lib/NavigationRegistry';
+import { navigationRegistryV2 } from '@/lib/navigation';
+import type { NavItem } from '@/lib/navigation/types';
 import { useAppStore } from '@/store';
 
 import {
@@ -50,12 +51,10 @@ const PLATFORM_ROOT_PATHS = new Set(['dashboard', 'login', 'register', 'settings
 
 function isPlatformPath(pathname: string): boolean {
   const mod = getModuleFromPath(pathname);
-  if (!mod) return true; // "/" 或无路径段 → 平台级
-  // 已知的平台级路由
+  if (!mod) return true;
   if (PLATFORM_ROOT_PATHS.has(mod)) return true;
-  // 是否在注册的模块中
-  const allPluginCodes = navigationRegistry.getAllPluginCodes();
-  return !allPluginCodes.includes(mod);
+  const allModuleCodes = navigationRegistryV2.getAllModuleCodes();
+  return !allModuleCodes.includes(mod);
 }
 
 // ---- Props ----
@@ -79,7 +78,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [searchAnchorEl, setSearchAnchorEl] = useState<HTMLElement | null>(null);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
-  const [recentVisits, setRecentVisits] = useState<NavItem[]>([]);
+  const [recentVisits, setRecentVisits] = useState<Array<NavItem>>([]);
   const [favoritesAnchorEl, setFavoritesAnchorEl] = useState<HTMLElement | null>(null);
 
   // 加载收藏和最近访问
@@ -112,7 +111,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
     if (pathSegments.length < 2) return; // 只需要模块级路径
 
     const module = pathSegments[0];
-    const sidebarItems = navigationRegistry.getSidebarNavItems(module);
+    const sidebarItems = navigationRegistryV2.getSidebarNavItems(module);
     const currentItem = sidebarItems.find(
       (item) => item.path === location.pathname || location.pathname.startsWith(`${item.path}/`)
     );
@@ -149,7 +148,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   // 搜索功能
   const allNavItems = useMemo(() => {
     const items: NavItem[] = [];
-    const topItems = navigationRegistry.getNavItemsByPermission(() => true);
+    const topItems = navigationRegistryV2.getTopNavItems(() => true);
 
     // 收集所有导航项
     const collectItems = (navItems: NavItem[]) => {
@@ -185,10 +184,10 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
 
   const moduleName = useMemo(() => {
     if (!currentModule) return '';
-    const card = navigationRegistry.getModuleCard(currentModule);
-    if (card) return card.name;
+    const module = navigationRegistryV2.getModule(currentModule);
+    if (module) return module.name;
     // fallback: 从 top_nav 中查找
-    const topItems = navigationRegistry.getNavItemsByPermission(() => true);
+    const topItems = navigationRegistryV2.getTopNavItems(() => true);
     const found = topItems.find((item) => item.code === currentModule);
     return found?.label || currentModule;
   }, [currentModule]);
@@ -198,25 +197,44 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   const [pluginNavItems, setPluginNavItems] = useState<NavItem[]>([]);
 
   const updateGroupedNavItems = () => {
-    const grouped = navigationRegistry.getNavItemsGroupedBySource(checkPermission);
-    setCoreNavItems(grouped.core);
-    setPluginNavItems(grouped.plugin);
+    const coreModules = navigationRegistryV2.getCoreModules(checkPermission);
+    const businessModules = navigationRegistryV2.getBusinessModules(checkPermission);
+    const coreItems: NavItem[] = coreModules.map((m) => ({
+      code: m.code,
+      label: m.name,
+      icon: m.icon,
+      path: m.path,
+      permission: m.permission,
+      order: m.order,
+      moduleCode: m.code,
+      moduleName: m.name,
+    }));
+    const pluginItems: NavItem[] = businessModules.map((m) => ({
+      code: m.code,
+      label: m.name,
+      icon: m.icon,
+      path: m.path,
+      permission: m.permission,
+      order: m.order,
+      moduleCode: m.code,
+      moduleName: m.name,
+    }));
+    setCoreNavItems(coreItems);
+    setPluginNavItems(pluginItems);
   };
 
   useEffect(() => {
     updateGroupedNavItems();
-    navigationRegistry.emitter.on('navigationUpdated', updateGroupedNavItems);
+    navigationRegistryV2.emitter.on('navigationUpdated', updateGroupedNavItems);
     return () => {
-      navigationRegistry.emitter.off('navigationUpdated', updateGroupedNavItems);
+      navigationRegistryV2.emitter.off('navigationUpdated', updateGroupedNavItems);
     };
   }, [checkPermission]);
 
   // ---- 模块级导航项（带权限过滤） ----
   const moduleNavItems = useMemo<NavItem[]>(() => {
     if (!currentModule) return [];
-    const allItems = navigationRegistry.getSidebarNavItems(currentModule);
-    // 按权限过滤
-    return allItems.filter((item) => !item.permission || checkPermission(item.permission));
+    return navigationRegistryV2.getSidebarNavItems(currentModule, checkPermission);
   }, [currentModule, checkPermission]);
 
   // ---- 最终渲染的导航项 ----

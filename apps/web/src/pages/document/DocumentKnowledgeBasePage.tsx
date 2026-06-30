@@ -1,19 +1,6 @@
-import {
-  Box,
-  Typography,
-  Chip,
-  Stack,
-} from '@mui/material';
+import { Box, Typography, Chip, Stack } from '@mui/material';
 import React, { useState, useMemo, useCallback } from 'react';
-import {
-  BookOpen,
-  FolderOpen,
-  FileText,
-  Eye,
-  User,
-  Calendar,
-  BarChart3,
-} from 'lucide-react';
+import { BookOpen, FolderOpen, FileText, Eye, User, Calendar, BarChart3 } from 'lucide-react';
 
 import { useAppStore } from '../../store';
 import {
@@ -253,7 +240,10 @@ export const DocumentKnowledgeBasePage: React.FC = () => {
                 bgcolor: 'grey.50',
               }}
             >
-              <FileText size={14} style={{ color: '#6B7280' }} />
+              <FileText
+                size={14}
+                style={{ color: '#6B7280' }}
+              />
             </Box>
           ),
         })),
@@ -268,14 +258,9 @@ export const DocumentKnowledgeBasePage: React.FC = () => {
     return treeData
       .map((node) => {
         const categoryDocs = MOCK_DOCS.filter(
-          (d) =>
-            d.categoryId === node.id &&
-            d.title.toLowerCase().includes(search)
+          (d) => d.categoryId === node.id && d.title.toLowerCase().includes(search)
         );
-        if (
-          node.name.toLowerCase().includes(search) ||
-          categoryDocs.length > 0
-        ) {
+        if (node.name.toLowerCase().includes(search) || categoryDocs.length > 0) {
           return node;
         }
         return null;
@@ -330,9 +315,15 @@ export const DocumentKnowledgeBasePage: React.FC = () => {
                 bgcolor: 'primary.50',
               }}
             >
-              <FileText size={16} style={{ color: '#3b82f6' }} />
+              <FileText
+                size={16}
+                style={{ color: '#3b82f6' }}
+              />
             </Box>
-            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+            <Typography
+              variant='body2'
+              sx={{ fontWeight: 500 }}
+            >
               {row.title}
             </Typography>
           </Box>
@@ -343,9 +334,19 @@ export const DocumentKnowledgeBasePage: React.FC = () => {
         label: '作者',
         width: 120,
         render: (row) => (
-          <Stack direction="row" spacing={0.5} alignItems="center">
-            <User size={14} style={{ color: '#6B7280' }} />
-            <Typography variant="body2" color="text.secondary">
+          <Stack
+            direction='row'
+            spacing={0.5}
+            sx={{ alignItems: 'center' }}
+          >
+            <User
+              size={14}
+              style={{ color: '#6B7280' }}
+            />
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               {row.author}
             </Typography>
           </Stack>
@@ -356,9 +357,19 @@ export const DocumentKnowledgeBasePage: React.FC = () => {
         label: '更新时间',
         width: 140,
         render: (row) => (
-          <Stack direction="row" spacing={0.5} alignItems="center">
-            <Calendar size={14} style={{ color: '#6B7280' }} />
-            <Typography variant="body2" color="text.secondary">
+          <Stack
+            direction='row'
+            spacing={0.5}
+            sx={{ alignItems: 'center' }}
+          >
+            <Calendar
+              size={14}
+              style={{ color: '#6B7280' }}
+            />
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               {row.updatedAt}
             </Typography>
           </Stack>
@@ -369,9 +380,19 @@ export const DocumentKnowledgeBasePage: React.FC = () => {
         label: '阅读量',
         width: 100,
         render: (row) => (
-          <Stack direction="row" spacing={0.5} alignItems="center">
-            <BarChart3 size={14} style={{ color: '#6B7280' }} />
-            <Typography variant="body2" color="text.secondary">
+          <Stack
+            direction='row'
+            spacing={0.5}
+            sx={{ alignItems: 'center' }}
+          >
+            <BarChart3
+              size={14}
+              style={{ color: '#6B7280' }}
+            />
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               {row.views.toLocaleString()}
             </Typography>
           </Stack>
@@ -383,10 +404,10 @@ export const DocumentKnowledgeBasePage: React.FC = () => {
         width: 100,
         render: (row) => (
           <Chip
-            size="small"
+            size='small'
             label={STATUS_LABELS[row.status]}
             color={STATUS_COLORS[row.status] as any}
-            variant="outlined"
+            variant='outlined'
             sx={{ fontWeight: 500 }}
           />
         ),
@@ -400,8 +421,11 @@ export const DocumentKnowledgeBasePage: React.FC = () => {
       if (!node || !selectedCategory) {
         return (
           <Box sx={{ textAlign: 'center', py: 8 }}>
-            <BookOpen size={48} style={{ color: 'text.disabled', margin: '0 auto 16px' }} />
-            <Typography color="text.secondary">选择一个分类查看知识库文档</Typography>
+            <BookOpen
+              size={48}
+              style={{ color: 'text.disabled', margin: '0 auto 16px' }}
+            />
+            <Typography color='text.secondary'>选择一个分类查看知识库文档</Typography>
           </Box>
         );
       }
@@ -409,7 +433,11 @@ export const DocumentKnowledgeBasePage: React.FC = () => {
       return (
         <Box>
           <Box sx={{ mb: 3, pb: 2, borderBottom: 1, borderColor: 'divider' }}>
-            <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 1 }}>
+            <Stack
+              direction='row'
+              spacing={1}
+              sx={{ alignItems: 'center', mb: 1 }}
+            >
               <Box
                 sx={{
                   width: 36,
@@ -424,29 +452,39 @@ export const DocumentKnowledgeBasePage: React.FC = () => {
                 <FolderOpen sx={{ width: 20, height: 20, color: selectedCategory.color }} />
               </Box>
               <Box>
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                <Typography
+                  variant='h6'
+                  sx={{ fontWeight: 600 }}
+                >
                   {selectedCategory.name}
                 </Typography>
                 {selectedCategory.description && (
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     {selectedCategory.description}
                   </Typography>
                 )}
               </Box>
             </Stack>
-            <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
+            <Stack
+              direction='row'
+              spacing={2}
+              sx={{ mt: 2 }}
+            >
               <Chip
-                size="small"
+                size='small'
                 label={`文档总数: ${categoryDocs.length}`}
                 sx={{ bgcolor: 'primary.50', color: 'primary.main' }}
               />
               <Chip
-                size="small"
+                size='small'
                 label={`已发布: ${categoryDocs.filter((d) => d.status === 'published').length}`}
                 sx={{ bgcolor: 'success.50', color: 'success.main' }}
               />
               <Chip
-                size="small"
+                size='small'
                 label={`总阅读量: ${categoryDocs.reduce((sum, d) => sum + d.views, 0).toLocaleString()}`}
                 sx={{ bgcolor: 'info.50', color: 'info.main' }}
               />
@@ -454,13 +492,13 @@ export const DocumentKnowledgeBasePage: React.FC = () => {
           </Box>
 
           <ListPageTemplate
-            title=""
-            subtitle=""
+            title=''
+            subtitle=''
             columns={columns}
             data={categoryDocs}
             loading={loading}
             searchable
-            searchPlaceholder="搜索文档标题..."
+            searchPlaceholder='搜索文档标题...'
             onRowClick={(doc) => {
               addNotification({
                 title: '打开文档',
@@ -475,7 +513,7 @@ export const DocumentKnowledgeBasePage: React.FC = () => {
                 type: 'success',
               });
             }}
-            emptyMessage="暂无文档"
+            emptyMessage='暂无文档'
           />
         </Box>
       );
@@ -493,11 +531,11 @@ export const DocumentKnowledgeBasePage: React.FC = () => {
       }}
     >
       <TreePageTemplate
-        title=""
-        subtitle=""
+        title=''
+        subtitle=''
         data={filteredTreeData}
         loading={loading}
-        searchPlaceholder="搜索知识库分类、文档..."
+        searchPlaceholder='搜索知识库分类、文档...'
         onSearch={setSearchQuery}
         onSelect={handleSelectNode}
         selectedId={selectedNode?.id}

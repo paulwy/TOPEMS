@@ -17,6 +17,7 @@ alerting:
 # Load alert rules
 rule_files:
   - /opt/topems/config/alerts.yml
+  - /opt/topems/config/slo-sli.yml
 
 # Scrape configurations
 scrape_configs:

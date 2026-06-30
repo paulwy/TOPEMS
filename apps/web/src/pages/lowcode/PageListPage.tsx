@@ -25,18 +25,8 @@ import {
   MenuItem as SelectMenuItem,
   Grid,
 } from '@mui/material';
-import {
-  Plus,
-  Search,
-  MoreVertical,
-  Edit,
-  Trash2,
-  Copy,
-  Eye,
-  Send,
-  Layout,
-} from 'lucide-react';
-import PageContainer from '@topems/shared-components/PageContainer';
+import { Plus, Search, MoreVertical, Edit, Trash2, Copy, Eye, Send, Layout } from 'lucide-react';
+import PageContainer from '@/components/common/PageContainer';
 import { lowcodeApi } from '@/api';
 import type { PageSchema, ListParams } from '@/api/lowcode';
 
@@ -169,18 +159,21 @@ const PageListPage: React.FC = () => {
   };
 
   return (
-    <PageContainer title="页面管理" subtitle="可视化搭建业务页面">
+    <PageContainer
+      title='页面管理'
+      subtitle='可视化搭建业务页面'
+    >
       <Box sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
         <TextField
-          size="small"
-          placeholder="搜索页面..."
+          size='small'
+          placeholder='搜索页面...'
           value={searchKeyword}
           onChange={(e) => setSearchKeyword(e.target.value)}
           sx={{ width: 280 }}
           slotProps={{
             input: {
               startAdornment: (
-                <InputAdornment position="start">
+                <InputAdornment position='start'>
                   <Search size={18} />
                 </InputAdornment>
               ),
@@ -188,33 +181,46 @@ const PageListPage: React.FC = () => {
           }}
         />
 
-        <FormControl size="small" sx={{ width: 140 }}>
+        <FormControl
+          size='small'
+          sx={{ width: 140 }}
+        >
           <InputLabel>状态</InputLabel>
           <Select
             value={statusFilter}
-            label="状态"
+            label='状态'
             onChange={(e) => {
               setStatusFilter(e.target.value);
               setPage(1);
             }}
           >
-            <SelectMenuItem value="all">全部</SelectMenuItem>
-            <SelectMenuItem value="draft">草稿</SelectMenuItem>
-            <SelectMenuItem value="published">已发布</SelectMenuItem>
-            <SelectMenuItem value="archived">已归档</SelectMenuItem>
+            <SelectMenuItem value='all'>全部</SelectMenuItem>
+            <SelectMenuItem value='draft'>草稿</SelectMenuItem>
+            <SelectMenuItem value='published'>已发布</SelectMenuItem>
+            <SelectMenuItem value='archived'>已归档</SelectMenuItem>
           </Select>
         </FormControl>
 
         <Box sx={{ flex: 1 }} />
 
-        <Button variant="contained" startIcon={<Plus size={18} />} onClick={handleCreate}>
+        <Button
+          variant='contained'
+          startIcon={<Plus size={18} />}
+          onClick={handleCreate}
+        >
           新建页面
         </Button>
       </Box>
 
-      <Grid container spacing={2.5}>
+      <Grid
+        container
+        spacing={2.5}
+      >
         {pages.map((pageItem) => (
-          <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={pageItem.id}>
+          <Grid
+            size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
+            key={pageItem.id}
+          >
             <Card
               elevation={0}
               sx={{
@@ -228,9 +234,24 @@ const PageListPage: React.FC = () => {
                 },
               }}
             >
-              <CardActionArea onClick={() => handleEdit(pageItem)}>
+              <Box
+                onClick={() => handleEdit(pageItem)}
+                sx={{
+                  cursor: 'pointer',
+                  '&:hover': {
+                    backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                  },
+                  '&:active': {
+                    backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                  },
+                }}
+              >
                 <CardContent sx={{ p: 2.5 }}>
-                  <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start', mb: 2 }}>
+                  <Stack
+                    direction='row'
+                    spacing={2}
+                    sx={{ alignItems: 'flex-start', mb: 2 }}
+                  >
                     <Avatar
                       sx={{
                         bgcolor: 'secondary.lighter',
@@ -242,20 +263,27 @@ const PageListPage: React.FC = () => {
                       <Layout size={22} />
                     </Avatar>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600 }} noWrap>
+                      <Typography
+                        variant='subtitle1'
+                        sx={{ fontWeight: 600 }}
+                        noWrap
+                      >
                         {pageItem.name}
                       </Typography>
                       <Chip
                         label={getStatusLabel(pageItem.status)}
-                        size="small"
+                        size='small'
                         color={getStatusColor(pageItem.status) as any}
-                        variant="outlined"
+                        variant='outlined'
                         sx={{ mt: 0.5 }}
                       />
                     </Box>
                     <IconButton
-                      size="small"
-                      onClick={(e) => handleMenuOpen(e, pageItem)}
+                      size='small'
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleMenuOpen(e, pageItem);
+                      }}
                       sx={{ mt: -0.5, mr: -0.5 }}
                     >
                       <MoreVertical size={18} />
@@ -263,8 +291,8 @@ const PageListPage: React.FC = () => {
                   </Stack>
 
                   <Typography
-                    variant="body2"
-                    color="text.secondary"
+                    variant='body2'
+                    color='text.secondary'
                     sx={{
                       mb: 2,
                       display: '-webkit-box',
@@ -278,20 +306,26 @@ const PageListPage: React.FC = () => {
                   </Typography>
 
                   <Stack
-                    direction="row"
+                    direction='row'
                     spacing={1}
                     sx={{ pt: 1.5, borderTop: 1, borderColor: 'divider' }}
                   >
-                    <Typography variant="caption" color="text.disabled">
+                    <Typography
+                      variant='caption'
+                      color='text.disabled'
+                    >
                       {pageItem.components.length} 个组件
                     </Typography>
                     <Box sx={{ flex: 1 }} />
-                    <Typography variant="caption" color="text.disabled">
+                    <Typography
+                      variant='caption'
+                      color='text.disabled'
+                    >
                       {formatDate(pageItem.updatedAt)}
                     </Typography>
                   </Stack>
                 </CardContent>
-              </CardActionArea>
+              </Box>
             </Card>
           </Grid>
         ))}
@@ -308,15 +342,28 @@ const PageListPage: React.FC = () => {
           }}
         >
           <Avatar sx={{ width: 64, height: 64, bgcolor: 'grey.100' }}>
-            <Layout size={32} color="grey" />
+            <Layout
+              size={32}
+              color='grey'
+            />
           </Avatar>
-          <Typography variant="h6" color="text.secondary">
+          <Typography
+            variant='h6'
+            color='text.secondary'
+          >
             暂无页面
           </Typography>
-          <Typography variant="body2" color="text.disabled">
+          <Typography
+            variant='body2'
+            color='text.disabled'
+          >
             点击上方按钮创建您的第一个页面
           </Typography>
-          <Button variant="contained" startIcon={<Plus size={18} />} onClick={handleCreate}>
+          <Button
+            variant='contained'
+            startIcon={<Plus size={18} />}
+            onClick={handleCreate}
+          >
             新建页面
           </Button>
         </Box>
@@ -330,37 +377,62 @@ const PageListPage: React.FC = () => {
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
       >
         <MenuItem onClick={() => menuAnchor && handleEdit(menuAnchor.page)}>
-          <Edit size={16} style={{ marginRight: 8 }} /> 编辑
+          <Edit
+            size={16}
+            style={{ marginRight: 8 }}
+          />{' '}
+          编辑
         </MenuItem>
         <MenuItem onClick={() => menuAnchor && handlePreview(menuAnchor.page)}>
-          <Eye size={16} style={{ marginRight: 8 }} /> 预览
+          <Eye
+            size={16}
+            style={{ marginRight: 8 }}
+          />{' '}
+          预览
         </MenuItem>
         <MenuItem onClick={() => menuAnchor && handleCopy(menuAnchor.page)}>
-          <Copy size={16} style={{ marginRight: 8 }} /> 复制
+          <Copy
+            size={16}
+            style={{ marginRight: 8 }}
+          />{' '}
+          复制
         </MenuItem>
         {menuAnchor?.page.status !== 'published' && (
           <MenuItem onClick={() => menuAnchor && handlePublish(menuAnchor.page)}>
-            <Send size={16} style={{ marginRight: 8 }} /> 发布
+            <Send
+              size={16}
+              style={{ marginRight: 8 }}
+            />{' '}
+            发布
           </MenuItem>
         )}
         <MenuItem
           sx={{ color: 'error.main' }}
           onClick={() => menuAnchor && setDeleteDialog(menuAnchor.page)}
         >
-          <Trash2 size={16} style={{ marginRight: 8 }} /> 删除
+          <Trash2
+            size={16}
+            style={{ marginRight: 8 }}
+          />{' '}
+          删除
         </MenuItem>
       </Menu>
 
-      <Dialog open={!!deleteDialog} onClose={() => setDeleteDialog(null)}>
+      <Dialog
+        open={!!deleteDialog}
+        onClose={() => setDeleteDialog(null)}
+      >
         <DialogTitle>确认删除</DialogTitle>
         <DialogContent>
-          <Typography>
-            确定要删除页面「{deleteDialog?.name}」吗？此操作不可恢复。
-          </Typography>
+          <Typography>确定要删除页面「{deleteDialog?.name}」吗？此操作不可恢复。</Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDeleteDialog(null)}>取消</Button>
-          <Button color="error" variant="contained" onClick={handleDelete}>
+          <Button
+            color='error'
+            variant='contained'
+            onClick={handleDelete}
+          >
             删除
           </Button>
         </DialogActions>

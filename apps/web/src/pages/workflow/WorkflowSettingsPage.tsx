@@ -32,16 +32,7 @@ import {
   InputLabel,
 } from '@mui/material';
 import React, { useState, useCallback, useMemo } from 'react';
-import {
-  Settings,
-  CheckSquare,
-  Bell,
-  FileText,
-  Shield,
-  Plug,
-  Save,
-  RotateCcw,
-} from 'lucide-react';
+import { Settings, CheckSquare, Bell, FileText, Shield, Plug, Save, RotateCcw } from 'lucide-react';
 
 import { useAppStore } from '../../store';
 import { PageContainer } from '@/components/common';
@@ -199,10 +190,17 @@ export const WorkflowSettingsPage: React.FC = () => {
   const renderGeneralSettings = () => (
     <Stack spacing={3}>
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 1 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 1 }}
+        >
           基础参数
         </Typography>
-        <Typography variant='body2' color='text.secondary' sx={{ mb: 3 }}>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+          sx={{ mb: 3 }}
+        >
           配置工作流系统的基础参数
         </Typography>
         <Stack spacing={2}>
@@ -228,7 +226,7 @@ export const WorkflowSettingsPage: React.FC = () => {
               }}
               size='small'
               select
-              SelectProps={{ native: true }}
+              slotProps={{ select: { native: true } }}
             >
               <option value='low'>低</option>
               <option value='medium'>中</option>
@@ -236,7 +234,10 @@ export const WorkflowSettingsPage: React.FC = () => {
               <option value='urgent'>紧急</option>
             </TextField>
           </Box>
-          <FormControl fullWidth size='small'>
+          <FormControl
+            fullWidth
+            size='small'
+          >
             <InputLabel>编号规则</InputLabel>
             <Select
               value={generalSettings.numberingRule}
@@ -258,7 +259,10 @@ export const WorkflowSettingsPage: React.FC = () => {
       <Divider />
 
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           流程控制
         </Typography>
         <Stack spacing={2}>
@@ -273,8 +277,18 @@ export const WorkflowSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>自动启动流程</Typography>
-              <Typography variant='caption' color='text.secondary'>满足条件时自动发起流程</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                自动启动流程
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                满足条件时自动发起流程
+              </Typography>
             </Box>
             <Switch
               checked={generalSettings.autoStartEnabled}
@@ -295,8 +309,18 @@ export const WorkflowSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>草稿自动保存</Typography>
-              <Typography variant='caption' color='text.secondary'>自动保存表单草稿</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                草稿自动保存
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                自动保存表单草稿
+              </Typography>
             </Box>
             <Switch
               checked={generalSettings.draftAutoSave}
@@ -347,8 +371,18 @@ export const WorkflowSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>版本控制</Typography>
-              <Typography variant='caption' color='text.secondary'>启用流程定义版本管理</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                版本控制
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                启用流程定义版本管理
+              </Typography>
             </Box>
             <Switch
               checked={generalSettings.enableVersionControl}
@@ -366,20 +400,33 @@ export const WorkflowSettingsPage: React.FC = () => {
   const renderApprovalSettings = () => (
     <Stack spacing={3}>
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 1 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 1 }}
+        >
           审批策略
         </Typography>
-        <Typography variant='body2' color='text.secondary' sx={{ mb: 3 }}>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+          sx={{ mb: 3 }}
+        >
           配置默认审批策略和规则
         </Typography>
         <Stack spacing={2}>
-          <FormControl fullWidth size='small'>
+          <FormControl
+            fullWidth
+            size='small'
+          >
             <InputLabel>默认审批策略</InputLabel>
             <Select
               value={approvalSettings.defaultApprovalStrategy}
               label='默认审批策略'
               onChange={(e) => {
-                setApprovalSettings({ ...approvalSettings, defaultApprovalStrategy: e.target.value });
+                setApprovalSettings({
+                  ...approvalSettings,
+                  defaultApprovalStrategy: e.target.value,
+                });
                 markUnsaved();
               }}
             >
@@ -400,8 +447,18 @@ export const WorkflowSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>自动审批</Typography>
-              <Typography variant='caption' color='text.secondary'>超时未处理自动通过</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                自动审批
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                超时未处理自动通过
+              </Typography>
             </Box>
             <Switch
               checked={approvalSettings.enableAutoApprove}
@@ -433,7 +490,10 @@ export const WorkflowSettingsPage: React.FC = () => {
       <Divider />
 
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           超时设置
         </Typography>
         <Stack spacing={2}>
@@ -447,7 +507,12 @@ export const WorkflowSettingsPage: React.FC = () => {
               borderRadius: 1,
             }}
           >
-            <Typography variant='body2' sx={{ fontWeight: 500 }}>启用超时处理</Typography>
+            <Typography
+              variant='body2'
+              sx={{ fontWeight: 500 }}
+            >
+              启用超时处理
+            </Typography>
             <Switch
               checked={approvalSettings.timeoutEnabled}
               onChange={(e) => {
@@ -471,7 +536,11 @@ export const WorkflowSettingsPage: React.FC = () => {
             size='small'
             disabled={!approvalSettings.timeoutEnabled}
           />
-          <FormControl fullWidth size='small' disabled={!approvalSettings.timeoutEnabled}>
+          <FormControl
+            fullWidth
+            size='small'
+            disabled={!approvalSettings.timeoutEnabled}
+          >
             <InputLabel>超时处理方式</InputLabel>
             <Select
               value={approvalSettings.timeoutAction}
@@ -493,7 +562,10 @@ export const WorkflowSettingsPage: React.FC = () => {
       <Divider />
 
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           转交规则
         </Typography>
         <Stack spacing={2}>
@@ -508,8 +580,18 @@ export const WorkflowSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>允许转交</Typography>
-              <Typography variant='caption' color='text.secondary'>审批人可将任务转交给他人</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                允许转交
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                审批人可将任务转交给他人
+              </Typography>
             </Box>
             <Switch
               checked={approvalSettings.enableTransfer}
@@ -546,8 +628,18 @@ export const WorkflowSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>允许委托</Typography>
-              <Typography variant='caption' color='text.secondary'>审批人可委托他人代审批</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                允许委托
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                审批人可委托他人代审批
+              </Typography>
             </Box>
             <Switch
               checked={approvalSettings.enableDelegate}
@@ -588,10 +680,17 @@ export const WorkflowSettingsPage: React.FC = () => {
   const renderNotificationSettings = () => (
     <Stack spacing={3}>
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 1 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 1 }}
+        >
           通知渠道
         </Typography>
-        <Typography variant='body2' color='text.secondary' sx={{ mb: 3 }}>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+          sx={{ mb: 3 }}
+        >
           配置工作流通知的发送渠道
         </Typography>
         <Stack spacing={2}>
@@ -606,8 +705,18 @@ export const WorkflowSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>邮件通知</Typography>
-              <Typography variant='caption' color='text.secondary'>通过邮件发送审批通知</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                邮件通知
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                通过邮件发送审批通知
+              </Typography>
             </Box>
             <Switch
               checked={notificationSettings.emailEnabled}
@@ -631,8 +740,18 @@ export const WorkflowSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>短信通知</Typography>
-              <Typography variant='caption' color='text.secondary'>通过短信发送紧急通知</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                短信通知
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                通过短信发送紧急通知
+              </Typography>
             </Box>
             <Switch
               checked={notificationSettings.smsEnabled}
@@ -656,8 +775,18 @@ export const WorkflowSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>站内推送</Typography>
-              <Typography variant='caption' color='text.secondary'>在系统内推送实时消息</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                站内推送
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                在系统内推送实时消息
+              </Typography>
             </Box>
             <Switch
               checked={notificationSettings.pushEnabled}
@@ -681,8 +810,18 @@ export const WorkflowSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>企业微信</Typography>
-              <Typography variant='caption' color='text.secondary'>通过企业微信发送通知</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                企业微信
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                通过企业微信发送通知
+              </Typography>
             </Box>
             <Switch
               checked={notificationSettings.wechatEnabled}
@@ -701,7 +840,10 @@ export const WorkflowSettingsPage: React.FC = () => {
       <Divider />
 
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           通知场景
         </Typography>
         <Stack spacing={2}>
@@ -799,10 +941,16 @@ export const WorkflowSettingsPage: React.FC = () => {
       <Divider />
 
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           消息模板
         </Typography>
-        <FormControl fullWidth size='small'>
+        <FormControl
+          fullWidth
+          size='small'
+        >
           <InputLabel>默认消息模板</InputLabel>
           <Select
             value={notificationSettings.defaultTemplate}
@@ -827,10 +975,17 @@ export const WorkflowSettingsPage: React.FC = () => {
   const renderFormSettings = () => (
     <Stack spacing={3}>
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 1 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 1 }}
+        >
           表单字段
         </Typography>
-        <Typography variant='body2' color='text.secondary' sx={{ mb: 3 }}>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+          sx={{ mb: 3 }}
+        >
           配置表单字段相关设置
         </Typography>
         <Stack spacing={2}>
@@ -845,8 +1000,18 @@ export const WorkflowSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>字段校验</Typography>
-              <Typography variant='caption' color='text.secondary'>启用表单字段数据校验</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                字段校验
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                启用表单字段数据校验
+              </Typography>
             </Box>
             <Switch
               checked={formSettings.enableFieldValidation}
@@ -867,8 +1032,18 @@ export const WorkflowSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>富文本编辑</Typography>
-              <Typography variant='caption' color='text.secondary'>启用富文本编辑器</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                富文本编辑
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                启用富文本编辑器
+              </Typography>
             </Box>
             <Switch
               checked={formSettings.enableRichText}
@@ -889,8 +1064,18 @@ export const WorkflowSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>电子签名</Typography>
-              <Typography variant='caption' color='text.secondary'>启用手写签名功能</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                电子签名
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                启用手写签名功能
+              </Typography>
             </Box>
             <Switch
               checked={formSettings.enableSignature}
@@ -906,7 +1091,10 @@ export const WorkflowSettingsPage: React.FC = () => {
       <Divider />
 
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           附件设置
         </Typography>
         <Stack spacing={2}>
@@ -920,7 +1108,12 @@ export const WorkflowSettingsPage: React.FC = () => {
               borderRadius: 1,
             }}
           >
-            <Typography variant='body2' sx={{ fontWeight: 500 }}>允许上传附件</Typography>
+            <Typography
+              variant='body2'
+              sx={{ fontWeight: 500 }}
+            >
+              允许上传附件
+            </Typography>
             <Switch
               checked={formSettings.enableAttachment}
               onChange={(e) => {
@@ -965,7 +1158,10 @@ export const WorkflowSettingsPage: React.FC = () => {
       <Divider />
 
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           数据校验
         </Typography>
         <Stack spacing={2}>
@@ -980,8 +1176,18 @@ export const WorkflowSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>表单版本管理</Typography>
-              <Typography variant='caption' color='text.secondary'>记录表单数据修改历史</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                表单版本管理
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                记录表单数据修改历史
+              </Typography>
             </Box>
             <Switch
               checked={formSettings.enableFormVersion}
@@ -1018,10 +1224,17 @@ export const WorkflowSettingsPage: React.FC = () => {
   const renderPermissionSettings = () => (
     <Stack spacing={3}>
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 1 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 1 }}
+        >
           流程权限
         </Typography>
-        <Typography variant='body2' color='text.secondary' sx={{ mb: 3 }}>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+          sx={{ mb: 3 }}
+        >
           配置工作流权限控制方式
         </Typography>
         <Stack spacing={2}>
@@ -1036,8 +1249,18 @@ export const WorkflowSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>基于角色的权限</Typography>
-              <Typography variant='caption' color='text.secondary'>使用系统角色控制流程访问</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                基于角色的权限
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                使用系统角色控制流程访问
+              </Typography>
             </Box>
             <Switch
               checked={permissionSettings.enableRoleBased}
@@ -1061,8 +1284,18 @@ export const WorkflowSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>基于部门的权限</Typography>
-              <Typography variant='caption' color='text.secondary'>使用组织架构控制流程访问</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                基于部门的权限
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                使用组织架构控制流程访问
+              </Typography>
             </Box>
             <Switch
               checked={permissionSettings.enableDeptBased}
@@ -1086,8 +1319,18 @@ export const WorkflowSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>管理员编辑所有流程</Typography>
-              <Typography variant='caption' color='text.secondary'>管理员可编辑所有流程定义</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                管理员编辑所有流程
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                管理员可编辑所有流程定义
+              </Typography>
             </Box>
             <Switch
               checked={permissionSettings.adminCanEditAll}
@@ -1106,7 +1349,10 @@ export const WorkflowSettingsPage: React.FC = () => {
       <Divider />
 
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           审批规则
         </Typography>
         <Stack spacing={2}>
@@ -1121,8 +1367,18 @@ export const WorkflowSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>允许自己审批</Typography>
-              <Typography variant='caption' color='text.secondary'>发起人可以审批自己发起的流程</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                允许自己审批
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                发起人可以审批自己发起的流程
+              </Typography>
             </Box>
             <Switch
               checked={permissionSettings.allowSelfApproval}
@@ -1146,8 +1402,18 @@ export const WorkflowSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>查看所有流程实例</Typography>
-              <Typography variant='caption' color='text.secondary'>管理员可查看所有流程实例</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                查看所有流程实例
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                管理员可查看所有流程实例
+              </Typography>
             </Box>
             <Switch
               checked={permissionSettings.allowViewAllInstances}
@@ -1188,7 +1454,10 @@ export const WorkflowSettingsPage: React.FC = () => {
       <Divider />
 
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           管理员配置
         </Typography>
         <TextField
@@ -1212,10 +1481,17 @@ export const WorkflowSettingsPage: React.FC = () => {
   const renderIntegrationSettings = () => (
     <Stack spacing={3}>
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 1 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 1 }}
+        >
           回调配置
         </Typography>
-        <Typography variant='body2' color='text.secondary' sx={{ mb: 3 }}>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+          sx={{ mb: 3 }}
+        >
           配置系统回调和 Webhook
         </Typography>
         <Stack spacing={2}>
@@ -1230,8 +1506,18 @@ export const WorkflowSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>启用回调</Typography>
-              <Typography variant='caption' color='text.secondary'>流程状态变更时回调外部系统</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                启用回调
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                流程状态变更时回调外部系统
+              </Typography>
             </Box>
             <Switch
               checked={integrationSettings.enableCallback}
@@ -1281,7 +1567,10 @@ export const WorkflowSettingsPage: React.FC = () => {
       <Divider />
 
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           Webhook
         </Typography>
         <Stack spacing={2}>
@@ -1296,8 +1585,18 @@ export const WorkflowSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>启用 Webhook</Typography>
-              <Typography variant='caption' color='text.secondary'>接收外部系统触发的流程</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                启用 Webhook
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                接收外部系统触发的流程
+              </Typography>
             </Box>
             <Switch
               checked={integrationSettings.enableWebhook}
@@ -1332,7 +1631,10 @@ export const WorkflowSettingsPage: React.FC = () => {
       <Divider />
 
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           外部系统
         </Typography>
         <Stack spacing={2}>
@@ -1346,7 +1648,12 @@ export const WorkflowSettingsPage: React.FC = () => {
               borderRadius: 1,
             }}
           >
-            <Typography variant='body2' sx={{ fontWeight: 500 }}>ERP 系统同步</Typography>
+            <Typography
+              variant='body2'
+              sx={{ fontWeight: 500 }}
+            >
+              ERP 系统同步
+            </Typography>
             <Switch
               checked={integrationSettings.enableErpSync}
               onChange={(e) => {
@@ -1358,7 +1665,11 @@ export const WorkflowSettingsPage: React.FC = () => {
               }}
             />
           </Box>
-          <FormControl fullWidth size='small' disabled={!integrationSettings.enableErpSync}>
+          <FormControl
+            fullWidth
+            size='small'
+            disabled={!integrationSettings.enableErpSync}
+          >
             <InputLabel>ERP 系统类型</InputLabel>
             <Select
               value={integrationSettings.erpSystem}
@@ -1385,7 +1696,10 @@ export const WorkflowSettingsPage: React.FC = () => {
       <Divider />
 
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           API 访问
         </Typography>
         <Stack spacing={2}>
@@ -1400,8 +1714,18 @@ export const WorkflowSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>启用 API 访问</Typography>
-              <Typography variant='caption' color='text.secondary'>允许通过 API 操作工作流</Typography>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
+                启用 API 访问
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                允许通过 API 操作工作流
+              </Typography>
             </Box>
             <Switch
               checked={integrationSettings.enableApiAccess}
@@ -1452,7 +1776,15 @@ export const WorkflowSettingsPage: React.FC = () => {
       default:
         return renderGeneralSettings();
     }
-  }, [activeGroup, generalSettings, approvalSettings, notificationSettings, formSettings, permissionSettings, integrationSettings]);
+  }, [
+    activeGroup,
+    generalSettings,
+    approvalSettings,
+    notificationSettings,
+    formSettings,
+    permissionSettings,
+    integrationSettings,
+  ]);
 
   const currentGroup = SETTING_GROUPS.find((g) => g.id === activeGroup);
 
@@ -1539,10 +1871,16 @@ export const WorkflowSettingsPage: React.FC = () => {
 
           <Box sx={{ p: 4 }}>
             <Box sx={{ mb: 3 }}>
-              <Typography variant='h5' sx={{ fontWeight: 600, mb: 0.5 }}>
+              <Typography
+                variant='h5'
+                sx={{ fontWeight: 600, mb: 0.5 }}
+              >
                 {currentGroup?.label}
               </Typography>
-              <Typography variant='body2' color='text.secondary'>
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
                 {currentGroup?.description}
               </Typography>
             </Box>
@@ -1561,7 +1899,10 @@ export const WorkflowSettingsPage: React.FC = () => {
               }}
             >
               {hasUnsavedChanges && (
-                <Typography variant='body2' color='warning.main'>
+                <Typography
+                  variant='body2'
+                  color='warning.main'
+                >
                   有未保存的更改
                 </Typography>
               )}

@@ -758,7 +758,7 @@ export const MonitorLogsPage: React.FC = () => {
         columns={columns}
         data={filteredLogs}
         loading={loading}
-        error={error}
+        error={error || undefined}
         searchable
         searchPlaceholder="搜索日志内容、服务名、Trace ID..."
         searchValue={searchQuery}
@@ -779,7 +779,7 @@ export const MonitorLogsPage: React.FC = () => {
         }}
         selectable
         selectedIds={selectedIds}
-        onSelectionChange={setSelectedIds}
+        onSelectionChange={(ids) => setSelectedIds(ids as string[])}
         batchActions={[
           { label: '批量删除', icon: <X size={16} />, color: 'error' as const, onClick: handleBatchDelete, confirm: true },
         ]}
@@ -799,7 +799,6 @@ export const MonitorLogsPage: React.FC = () => {
         ]}
         onRefresh={loadData}
         emptyMessage="暂无日志数据"
-        stats={stats}
         headerContent={headerContent}
       />
 
@@ -822,8 +821,8 @@ export const MonitorLogsPage: React.FC = () => {
         <DialogContent>
           {selectedLog && (
             <Stack spacing={3} sx={{ pt: 1 }}>
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                <Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>
                   <Paper sx={{ p: 2 }}>
                     <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                       基本信息
@@ -847,8 +846,8 @@ export const MonitorLogsPage: React.FC = () => {
                       </Box>
                     </Stack>
                   </Paper>
-                </Grid>
-                <Grid item xs={12} md={6}>
+                </Box>
+                <Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>
                   <Paper sx={{ p: 2 }}>
                     <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                       服务信息
@@ -898,8 +897,8 @@ export const MonitorLogsPage: React.FC = () => {
                       </Box>
                     </Stack>
                   </Paper>
-                </Grid>
-                <Grid item xs={12}>
+                </Box>
+                <Box sx={{ width: '100%' }}>
                   <Paper sx={{ p: 2, bgcolor: selectedLog.level === 'error' ? 'error.light' : 'grey.50' }}>
                     <Typography variant="subtitle2" color="text.secondary" gutterBottom>
                       日志内容
@@ -916,8 +915,8 @@ export const MonitorLogsPage: React.FC = () => {
                       {selectedLog.message}
                     </Typography>
                   </Paper>
-                </Grid>
-              </Grid>
+                </Box>
+              </Box>
             </Stack>
           )}
         </DialogContent>
@@ -952,14 +951,14 @@ export const MonitorLogsPage: React.FC = () => {
       </Dialog>
 
       <ConfirmDialog
-        open={confirmOpen}
+        isOpen={confirmOpen}
         title="确认删除"
         message={`确定要删除选中的 ${selectedIds.length} 条日志吗？此操作不可撤销。`}
-        confirmText="删除"
-        cancelText="取消"
-        confirmColor="error"
+        confirmLabel="删除"
+        cancelLabel="取消"
+        danger
         onConfirm={confirmBatchDelete}
-        onCancel={() => setConfirmOpen(false)}
+        onClose={() => setConfirmOpen(false)}
       />
     </PageContainer>
   );

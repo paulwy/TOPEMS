@@ -91,14 +91,18 @@ describe('BIDashboardPage', () => {
   });
 
   it('should render page title', async () => {
-    renderWithProviders(<BIDashboardPage />);
+    await act(async () => {
+      renderWithProviders(<BIDashboardPage />);
+    });
     await waitFor(() => {
       expect(screen.getByText('自定义仪表盘')).toBeInTheDocument();
     });
   });
 
   it('should render dashboard list', async () => {
-    renderWithProviders(<BIDashboardPage />);
+    await act(async () => {
+      renderWithProviders(<BIDashboardPage />);
+    });
     await waitFor(() => {
       expect(screen.getByText('销售仪表盘')).toBeInTheDocument();
       expect(screen.getByText('生产监控仪表盘')).toBeInTheDocument();
@@ -106,7 +110,9 @@ describe('BIDashboardPage', () => {
   });
 
   it('should switch to templates tab', async () => {
-    renderWithProviders(<BIDashboardPage />);
+    await act(async () => {
+      renderWithProviders(<BIDashboardPage />);
+    });
     await waitFor(() => {
       const templatesTab = screen.getByText('模板');
       fireEvent.click(templatesTab);
@@ -117,7 +123,9 @@ describe('BIDashboardPage', () => {
   });
 
   it('should handle search', async () => {
-    renderWithProviders(<BIDashboardPage />);
+    await act(async () => {
+      renderWithProviders(<BIDashboardPage />);
+    });
     await waitFor(() => {
       const searchInput = screen.getByPlaceholderText(/搜索/);
       fireEvent.change(searchInput, { target: { value: '销售' } });
@@ -126,7 +134,9 @@ describe('BIDashboardPage', () => {
 
   it('should handle API error', async () => {
     (fetchDashboards as vi.Mock).mockRejectedValue(new Error('Network error'));
-    renderWithProviders(<BIDashboardPage />);
+    await act(async () => {
+      renderWithProviders(<BIDashboardPage />);
+    });
 
     await waitFor(() => {
       expect(screen.getByText('自定义仪表盘')).toBeInTheDocument();

@@ -9,29 +9,9 @@ const DocumentListPage = lazyWithRetry(
   () => import('../../pages/document/DocumentListPage'),
   'DocumentListPage'
 );
-const DocumentRecentPage = lazyWithRetry(
-  () => import('../../pages/document/DocumentRecentPage'),
-  'DocumentRecentPage'
-);
-const DocumentFavoritesPage = lazyWithRetry(
-  () => import('../../pages/document/DocumentFavoritesPage'),
-  'DocumentFavoritesPage'
-);
-const DocumentDetailPage = lazyWithRetry(
-  () => import('../../pages/document/DocumentDetailPage'),
-  'DocumentDetailPage'
-);
 const DocumentKnowledgeBasePage = lazyWithRetry(
   () => import('../../pages/document/DocumentKnowledgeBasePage'),
   'DocumentKnowledgeBasePage'
-);
-const DocumentTemplatesPage = lazyWithRetry(
-  () => import('../../pages/document/DocumentTemplatesPage'),
-  'DocumentTemplatesPage'
-);
-const DocumentSettingsPage = lazyWithRetry(
-  () => import('../../pages/document/DocumentSettingsPage'),
-  'DocumentSettingsPage'
 );
 
 export const documentModuleConfig: RouteModuleConfig = {
@@ -42,7 +22,7 @@ export const documentModuleConfig: RouteModuleConfig = {
   source: 'core',
   status: 'online',
   order: 4,
-  description: '文档管理、知识库、模板管理',
+  description: '文档管理、知识库',
   permission: 'document:read',
   routes: [
     {
@@ -80,48 +60,6 @@ export const documentModuleConfig: RouteModuleConfig = {
       },
     },
     {
-      path: '/document/recent',
-      element: DocumentRecentPage,
-      module: 'document',
-      code: 'document-recent',
-      title: '最近访问',
-      template: 'list',
-      group: 'documents',
-      requiredPermissions: ['document:read'],
-      nav: {
-        label: '最近访问',
-        icon: 'Clock',
-        order: 2,
-        group: 'documents',
-      },
-    },
-    {
-      path: '/document/favorites',
-      element: DocumentFavoritesPage,
-      module: 'document',
-      code: 'document-favorites',
-      title: '我的收藏',
-      template: 'list',
-      group: 'documents',
-      requiredPermissions: ['document:read'],
-      nav: {
-        label: '我的收藏',
-        icon: 'Star',
-        order: 3,
-        group: 'documents',
-      },
-    },
-    {
-      path: '/document/:id',
-      element: DocumentDetailPage,
-      module: 'document',
-      code: 'document-detail',
-      title: '文档详情',
-      template: 'detail',
-      group: 'documents',
-      requiredPermissions: ['document:read'],
-    },
-    {
       path: '/document/knowledge-base',
       element: DocumentKnowledgeBasePage,
       module: 'document',
@@ -136,38 +74,6 @@ export const documentModuleConfig: RouteModuleConfig = {
         order: 1,
         group: 'knowledge',
         showInTabs: true,
-      },
-    },
-    {
-      path: '/document/templates',
-      element: DocumentTemplatesPage,
-      module: 'document',
-      code: 'document-templates',
-      title: '文档模板',
-      template: 'list',
-      group: 'templates',
-      requiredPermissions: ['document:read'],
-      nav: {
-        label: '文档模板',
-        icon: 'Layers',
-        order: 1,
-        group: 'templates',
-      },
-    },
-    {
-      path: '/document/settings',
-      element: DocumentSettingsPage,
-      module: 'document',
-      code: 'document-settings',
-      title: '文档设置',
-      template: 'settings',
-      group: 'settings',
-      requiredPermissions: ['document:read'],
-      nav: {
-        label: '文档设置',
-        icon: 'Settings',
-        order: 1,
-        group: 'settings',
       },
     },
   ],

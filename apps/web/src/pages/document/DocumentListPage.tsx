@@ -1,11 +1,4 @@
-import {
-  Box,
-  Typography,
-  Chip,
-  IconButton,
-  Tooltip,
-  Stack,
-} from '@mui/material';
+import { Box, Typography, Chip, IconButton, Tooltip, Stack } from '@mui/material';
 import React, { useState, useMemo, useCallback } from 'react';
 import {
   FolderOpen,
@@ -157,17 +150,47 @@ const getFileIcon = (type: string) => {
   const color = TYPE_COLORS[type] || '#6B7280';
   switch (type) {
     case 'pdf':
-      return <FileText size={20} style={{ color }} />;
+      return (
+        <FileText
+          size={20}
+          style={{ color }}
+        />
+      );
     case 'word':
-      return <File size={20} style={{ color }} />;
+      return (
+        <File
+          size={20}
+          style={{ color }}
+        />
+      );
     case 'excel':
-      return <FileSpreadsheet size={20} style={{ color }} />;
+      return (
+        <FileSpreadsheet
+          size={20}
+          style={{ color }}
+        />
+      );
     case 'ppt':
-      return <File size={20} style={{ color }} />;
+      return (
+        <File
+          size={20}
+          style={{ color }}
+        />
+      );
     case 'image':
-      return <Image size={20} style={{ color }} />;
+      return (
+        <Image
+          size={20}
+          style={{ color }}
+        />
+      );
     default:
-      return <File size={20} style={{ color }} />;
+      return (
+        <File
+          size={20}
+          style={{ color }}
+        />
+      );
   }
 };
 
@@ -347,10 +370,16 @@ export const DocumentListPage: React.FC = () => {
               {getFileIcon(row.type)}
             </Box>
             <Box>
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
                 {row.name}
               </Typography>
-              <Typography variant="caption" color="text.secondary">
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 {CATEGORY_LABELS[row.category]}
               </Typography>
             </Box>
@@ -363,7 +392,7 @@ export const DocumentListPage: React.FC = () => {
         width: 100,
         render: (row) => (
           <Chip
-            size="small"
+            size='small'
             label={TYPE_LABELS[row.type]}
             sx={{
               bgcolor: `${TYPE_COLORS[row.type]}15`,
@@ -378,7 +407,10 @@ export const DocumentListPage: React.FC = () => {
         label: '大小',
         width: 100,
         render: (row) => (
-          <Typography variant="body2" color="text.secondary">
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             {row.size}
           </Typography>
         ),
@@ -388,9 +420,19 @@ export const DocumentListPage: React.FC = () => {
         label: '所在文件夹',
         width: 140,
         render: (row) => (
-          <Stack direction="row" spacing={0.5} alignItems="center">
-            <FolderOpen size={14} style={{ color: '#6B7280' }} />
-            <Typography variant="body2" color="text.secondary">
+          <Stack
+            direction='row'
+            spacing={0.5}
+            sx={{ alignItems: 'center' }}
+          >
+            <FolderOpen
+              size={14}
+              style={{ color: '#6B7280' }}
+            />
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               {row.folder}
             </Typography>
           </Stack>
@@ -401,7 +443,10 @@ export const DocumentListPage: React.FC = () => {
         label: '修改时间',
         width: 160,
         render: (row) => (
-          <Typography variant="body2" color="text.secondary">
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             {row.updatedAt}
           </Typography>
         ),
@@ -413,9 +458,9 @@ export const DocumentListPage: React.FC = () => {
         width: 160,
         render: (row) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, justifyContent: 'flex-end' }}>
-            <Tooltip title="打开">
+            <Tooltip title='打开'>
               <IconButton
-                size="small"
+                size='small'
                 onClick={(e) => {
                   e.stopPropagation();
                   handleOpen(row);
@@ -424,9 +469,9 @@ export const DocumentListPage: React.FC = () => {
                 <Eye size={16} />
               </IconButton>
             </Tooltip>
-            <Tooltip title="下载">
+            <Tooltip title='下载'>
               <IconButton
-                size="small"
+                size='small'
                 onClick={(e) => {
                   e.stopPropagation();
                   handleDownload(row);
@@ -435,9 +480,9 @@ export const DocumentListPage: React.FC = () => {
                 <Download size={16} />
               </IconButton>
             </Tooltip>
-            <Tooltip title="分享">
+            <Tooltip title='分享'>
               <IconButton
-                size="small"
+                size='small'
                 onClick={(e) => {
                   e.stopPropagation();
                   handleShare(row);
@@ -446,10 +491,10 @@ export const DocumentListPage: React.FC = () => {
                 <Share2 size={16} />
               </IconButton>
             </Tooltip>
-            <Tooltip title="删除">
+            <Tooltip title='删除'>
               <IconButton
-                size="small"
-                color="error"
+                size='small'
+                color='error'
                 onClick={(e) => {
                   e.stopPropagation();
                   handleDelete(row);
@@ -475,30 +520,32 @@ export const DocumentListPage: React.FC = () => {
       }}
     >
       <ListPageTemplate
-        title="文档列表"
-        subtitle="管理您的所有文档"
+        title='文档列表'
+        subtitle='管理您的所有文档'
         columns={columns}
         data={paginatedDocuments}
         loading={loading}
         searchable
-        searchPlaceholder="搜索文档名称..."
+        searchPlaceholder='搜索文档名称...'
         searchValue={searchQuery}
         onSearch={setSearchQuery}
         filters={filters}
         filtersValue={{ type: typeFilter, category: categoryFilter }}
-        onFilterChange={(id, value) => {
-          if (id === 'type') {
-            setTypeFilter(value as string);
-          } else if (id === 'category') {
-            setCategoryFilter(value as string);
+        onFilterChange={(filters) => {
+          if (filters.type !== undefined) {
+            setTypeFilter(filters.type as string);
+          }
+          if (filters.category !== undefined) {
+            setCategoryFilter(filters.category as string);
           }
           setCurrentPage(1);
         }}
-        pagination
-        page={currentPage}
-        pageSize={pageSize}
-        total={total}
-        onPageChange={setCurrentPage}
+        pagination={{
+          page: currentPage - 1,
+          pageSize,
+          total,
+          onPageChange: setCurrentPage,
+        }}
         onRowClick={handleOpen}
         actions={[
           {
@@ -533,7 +580,7 @@ export const DocumentListPage: React.FC = () => {
           },
         ]}
         onRefresh={handleRefresh}
-        emptyMessage="暂无文档"
+        emptyMessage='暂无文档'
       />
 
       <ConfirmDialog

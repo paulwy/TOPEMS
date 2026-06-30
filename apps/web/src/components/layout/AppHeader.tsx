@@ -35,7 +35,8 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppStore } from '@/store';
-import { navigationRegistry, type NavItem } from '@/lib/NavigationRegistry';
+import { navigationRegistryV2 } from '@/lib/navigation';
+import type { NavItem } from '@/lib/navigation/types';
 
 export interface AppHeaderProps {
   tabletDrawerOpen?: boolean;
@@ -162,7 +163,8 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   ];
 
   const breadcrumbItems = useMemo<NavItem[]>(() => {
-    const hierarchy = navigationRegistry.getNavHierarchy(location.pathname);
+    if (!navigationRegistryV2) return [];
+    const hierarchy = navigationRegistryV2.getNavHierarchy(location.pathname);
     return hierarchy;
   }, [location.pathname]);
 

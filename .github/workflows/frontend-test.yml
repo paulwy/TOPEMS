@@ -90,13 +90,28 @@ jobs:
 
       # 步骤10：生成测试覆盖率报告
       - name: 生成测试覆盖率报告
-        if: success()
         run: |
           echo "=== 生成测试覆盖率报告 ==="
-          pnpm --filter topems-portal test:coverage
+          pnpm --filter topems-portal test:coverage -- --reporter=json
           echo "=== 覆盖率报告生成完成 ==="
 
-      # 步骤11：上传覆盖率报告为构建产物
+      # 步骤11：检查覆盖率门槛
+      - name: 检查覆盖率门槛
+        run: |
+          echo "=== 检查覆盖率门槛 ==="
+          COVERAGE=$(cat apps/web/coverage/coverage-final.json | jq '.total.lines.pct')
+          COVERAGE_PERCENT=$(echo "$COVERAGE" | cut -d'.' -f1)
+          echo "当前测试覆盖率: ${COVERAGE_PERCENT}%"
+          
+          MIN_COVERAGE=60
+          if [ "$COVERAGE_PERCENT" -lt "$MIN_COVERAGE" ]; then
+            echo "❌ 测试覆盖率 ${COVERAGE_PERCENT}% 低于门槛 ${MIN_COVERAGE}%"
+            exit 1
+          else
+            echo "✅ 测试覆盖率 ${COVERAGE_PERCENT}% 达到门槛要求"
+          fi
+
+      # 步骤12：上传覆盖率报告为构建产物
       - name: 上传覆盖率报告
         if: always()
         uses: actions/upload-artifact@v4
@@ -105,7 +120,7 @@ jobs:
           path: apps/web/coverage/
           retention-days: 7
 
-      # 步骤12：生成检查结果总结
+      # 步骤13：生成检查结果总结
       - name: 生成检查结果总结
         if: always()
         run: |

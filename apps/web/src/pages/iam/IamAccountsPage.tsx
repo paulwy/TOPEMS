@@ -29,14 +29,7 @@ import {
   Switch,
 } from '@mui/material';
 import React, { useState, useMemo, useCallback } from 'react';
-import {
-  UserCircle,
-  Plus,
-  Edit,
-  Trash2,
-  RefreshCw,
-  Building2,
-} from 'lucide-react';
+import { UserCircle, Plus, Edit, Trash2, RefreshCw, Building2 } from 'lucide-react';
 
 import { useAppStore } from '../../store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
@@ -359,9 +352,27 @@ export const IamAccountsPage: React.FC = () => {
     const activeCount = accounts.filter((a) => a.status === 'active').length;
     const adminCount = accounts.filter((a) => a.account_type === 'admin').length;
     return [
-      { id: 'total', title: '账号总数', value: total, icon: <UserCircle size={20} />, color: 'primary' as const },
-      { id: 'active', title: '正常账号', value: activeCount, icon: <Building2 size={20} />, color: 'success' as const },
-      { id: 'admin', title: '管理员', value: adminCount, icon: <UserCircle size={20} />, color: 'warning' as const },
+      {
+        id: 'total',
+        title: '账号总数',
+        value: total,
+        icon: <UserCircle size={20} />,
+        color: 'primary' as const,
+      },
+      {
+        id: 'active',
+        title: '正常账号',
+        value: activeCount,
+        icon: <Building2 size={20} />,
+        color: 'success' as const,
+      },
+      {
+        id: 'admin',
+        title: '管理员',
+        value: adminCount,
+        icon: <UserCircle size={20} />,
+        color: 'warning' as const,
+      },
     ];
   }, [accounts]);
 
@@ -384,13 +395,22 @@ export const IamAccountsPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <UserCircle size={20} color='primary.main' />
+              <UserCircle
+                size={20}
+                color='primary.main'
+              />
             </Box>
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
                 {row.username}
               </Typography>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 {row.department}
               </Typography>
             </Box>
@@ -405,14 +425,24 @@ export const IamAccountsPage: React.FC = () => {
             label: row.account_type,
             color: 'default' as const,
           };
-          return <Chip size='small' color={config.color} label={config.label} variant='outlined' />;
+          return (
+            <Chip
+              size='small'
+              color={config.color}
+              label={config.label}
+              variant='outlined'
+            />
+          );
         },
       },
       {
         id: 'email',
         label: '邮箱',
         render: (row) => (
-          <Typography variant='body2' color='text.secondary'>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             {row.email}
           </Typography>
         ),
@@ -421,7 +451,10 @@ export const IamAccountsPage: React.FC = () => {
         id: 'phone',
         label: '手机号',
         render: (row) => (
-          <Typography variant='body2' color='text.secondary'>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             {row.phone}
           </Typography>
         ),
@@ -458,7 +491,10 @@ export const IamAccountsPage: React.FC = () => {
         id: 'last_login',
         label: '最后登录',
         render: (row) => (
-          <Typography variant='body2' color='text.secondary'>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             {row.last_login_at || '-'}
           </Typography>
         ),
@@ -469,7 +505,11 @@ export const IamAccountsPage: React.FC = () => {
         align: 'right',
         render: (row) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, justifyContent: 'flex-end' }}>
-            <Button size='small' onClick={() => handleEdit(row)} startIcon={<Edit size={14} />}>
+            <Button
+              size='small'
+              onClick={() => handleEdit(row)}
+              startIcon={<Edit size={14} />}
+            >
               编辑
             </Button>
             <Button
@@ -579,7 +619,6 @@ export const IamAccountsPage: React.FC = () => {
         ]}
         onRefresh={loadData}
         emptyMessage='暂无账号'
-        stats={stats}
       />
 
       {/* 创建账号对话框 */}
@@ -590,9 +629,15 @@ export const IamAccountsPage: React.FC = () => {
         fullWidth
       >
         <DialogTitle>新增账号</DialogTitle>
-        <Box component='form' onSubmit={handleCreate}>
+        <Box
+          component='form'
+          onSubmit={handleCreate}
+        >
           <DialogContent>
-            <Stack spacing={2} sx={{ pt: 1 }}>
+            <Stack
+              spacing={2}
+              sx={{ pt: 1 }}
+            >
               <TextField
                 fullWidth
                 label='账号名 *'
@@ -601,7 +646,10 @@ export const IamAccountsPage: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                 size='small'
               />
-              <FormControl size='small' fullWidth>
+              <FormControl
+                size='small'
+                fullWidth
+              >
                 <InputLabel>账号类型</InputLabel>
                 <Select
                   value={formData.account_type}
@@ -609,7 +657,10 @@ export const IamAccountsPage: React.FC = () => {
                   onChange={(e) => setFormData({ ...formData, account_type: e.target.value })}
                 >
                   {Object.entries(ACCOUNT_TYPE_CONFIG).map(([value, config]) => (
-                    <MenuItem key={value} value={value}>
+                    <MenuItem
+                      key={value}
+                      value={value}
+                    >
                       {config.label}
                     </MenuItem>
                   ))}
@@ -640,7 +691,10 @@ export const IamAccountsPage: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Typography variant='body2'>状态</Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography variant='body2' color='text.secondary'>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     {formData.status === 'active' ? '启用' : '禁用'}
                   </Typography>
                   <Switch
@@ -654,10 +708,16 @@ export const IamAccountsPage: React.FC = () => {
             </Stack>
           </DialogContent>
           <DialogActions>
-            <Button variant='outlined' onClick={() => setShowCreateModal(false)}>
+            <Button
+              variant='outlined'
+              onClick={() => setShowCreateModal(false)}
+            >
               取消
             </Button>
-            <Button type='submit' variant='contained'>
+            <Button
+              type='submit'
+              variant='contained'
+            >
               创建
             </Button>
           </DialogActions>
@@ -672,9 +732,15 @@ export const IamAccountsPage: React.FC = () => {
         fullWidth
       >
         <DialogTitle>编辑账号</DialogTitle>
-        <Box component='form' onSubmit={handleUpdate}>
+        <Box
+          component='form'
+          onSubmit={handleUpdate}
+        >
           <DialogContent>
-            <Stack spacing={2} sx={{ pt: 1 }}>
+            <Stack
+              spacing={2}
+              sx={{ pt: 1 }}
+            >
               <TextField
                 fullWidth
                 label='账号名 *'
@@ -683,7 +749,10 @@ export const IamAccountsPage: React.FC = () => {
                 onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                 size='small'
               />
-              <FormControl size='small' fullWidth>
+              <FormControl
+                size='small'
+                fullWidth
+              >
                 <InputLabel>账号类型</InputLabel>
                 <Select
                   value={formData.account_type}
@@ -691,7 +760,10 @@ export const IamAccountsPage: React.FC = () => {
                   onChange={(e) => setFormData({ ...formData, account_type: e.target.value })}
                 >
                   {Object.entries(ACCOUNT_TYPE_CONFIG).map(([value, config]) => (
-                    <MenuItem key={value} value={value}>
+                    <MenuItem
+                      key={value}
+                      value={value}
+                    >
                       {config.label}
                     </MenuItem>
                   ))}
@@ -722,10 +794,19 @@ export const IamAccountsPage: React.FC = () => {
             </Stack>
           </DialogContent>
           <DialogActions>
-            <Button variant='outlined' onClick={() => { setShowEditModal(false); setEditingAccount(null); }}>
+            <Button
+              variant='outlined'
+              onClick={() => {
+                setShowEditModal(false);
+                setEditingAccount(null);
+              }}
+            >
               取消
             </Button>
-            <Button type='submit' variant='contained'>
+            <Button
+              type='submit'
+              variant='contained'
+            >
               保存
             </Button>
           </DialogActions>

@@ -1,6 +1,7 @@
 import { useLocation } from 'react-router-dom';
 import { useMemo } from 'react';
-import { navigationRegistry, type NavItem } from '@/lib/NavigationRegistry';
+import { navigationRegistryV2 } from '@/lib/navigation';
+import type { NavItem } from '@/lib/navigation/types';
 
 export interface AutoBreadcrumbItem {
   label: string;
@@ -329,11 +330,11 @@ function findPluralParentPath(singularPath: string, allNavItems: NavItem[]): Nav
 }
 
 function findNavItemByPath(path: string, items: NavItem[]): NavItem | undefined {
-  return navigationRegistry.findNavItemByPath(path);
+  return navigationRegistryV2.findNavItemByPath(path);
 }
 
 function findItemHierarchy(path: string, allNavItems: NavItem[]): AutoBreadcrumbItem[] {
-  const navHierarchy = navigationRegistry.getNavHierarchy(path);
+  const navHierarchy = navigationRegistryV2.getNavHierarchy(path);
   return navHierarchy.map((item) => ({
     label: item.label,
     href: item.path,
@@ -373,7 +374,18 @@ function matchDynamicRoute(routePath: string, currentPath: string): DynamicMatch
 }
 
 function getAllNavItemsWithHierarchy(): NavItem[] {
-  return navigationRegistry.getAllNavItemsWithHierarchy();
+  const allItems: NavItem[] = [];
+  const topItems = navigationRegistryV2.getTopNavItems(() => true);
+  
+  const collectItems = (items: NavItem[]) => {
+    items.forEach((item) => {
+      allItems.push(item);
+      if (item.children) collectItems(item.children);
+    });
+  };
+  
+  collectItems(topItems);
+  return allItems;
 }
 
 function generateSmartFallbackBreadcrumbs(

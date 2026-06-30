@@ -18,7 +18,6 @@ import {
   FormSelect,
   StatusBadge,
   Dialog,
-  PageContainer,
 } from '@/components/common';
 
 interface PositionManagementPageProps {}
@@ -94,6 +93,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
   useEffect(() => {
     fetchPositions();
     fetchDepartments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleAdd = () => {
@@ -365,15 +365,12 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
   );
 
   return (
-    <PageContainer
-      title='岗位管理'
-      subtitle='管理企业岗位信息、薪资范围'
-    >
+    <Box sx={{ minHeight: '100vh', bgcolor: 'grey.50' }}>
       {/* 列表页模板 */}
       <Box sx={{ maxWidth: 1280, mx: 'auto', px: 3, py: 3 }}>
         <ListPageTemplate
-          title=''
-          subtitle=''
+          title='岗位管理'
+          subtitle='管理企业岗位信息、薪资范围'
           breadcrumbs={[{ label: '人力资源', href: '/hrm' }, { label: '岗位管理' }]}
           columns={columns}
           data={data.items}
@@ -455,7 +452,10 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
         maxWidth='sm'
         fullWidth
         cancelButton={{ label: '取消' }}
-        confirmButton={{ label: '创建', onClick: () => handleCreate(new Event('submit') as any) }}
+        confirmButton={{
+          label: '创建',
+          onClick: () => handleCreate({ preventDefault: () => {} } as React.FormEvent),
+        }}
       >
         <DialogContent>
           <form onSubmit={handleCreate}>
@@ -596,7 +596,10 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
             setSelectedPosition(null);
           },
         }}
-        confirmButton={{ label: '保存', onClick: () => handleUpdate(new Event('submit') as any) }}
+        confirmButton={{
+          label: '保存',
+          onClick: () => handleUpdate({ preventDefault: () => {} } as React.FormEvent),
+        }}
       >
         {selectedPosition && (
           <form onSubmit={handleUpdate}>
@@ -875,7 +878,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
           )}
         </DialogContent>
       </Dialog>
-    </PageContainer>
+    </Box>
   );
 };
 

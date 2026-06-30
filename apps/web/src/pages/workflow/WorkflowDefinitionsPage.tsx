@@ -31,7 +31,10 @@ import ConfirmDialog from '@/components/common/ConfirmDialog';
 /**
  * 流程状态配置
  */
-const STATUS_CONFIG: Record<string, { label: string; color: 'success' | 'warning' | 'default' | 'error' }> = {
+const STATUS_CONFIG: Record<
+  string,
+  { label: string; color: 'success' | 'warning' | 'default' | 'error' }
+> = {
   active: { label: '已发布', color: 'success' },
   draft: { label: '草稿', color: 'default' },
   archived: { label: '已归档', color: 'warning' },
@@ -41,7 +44,10 @@ const STATUS_CONFIG: Record<string, { label: string; color: 'success' | 'warning
 /**
  * 流程类型配置
  */
-const CATEGORY_CONFIG: Record<string, { label: string; color: 'primary' | 'success' | 'info' | 'warning' | 'default' }> = {
+const CATEGORY_CONFIG: Record<
+  string,
+  { label: string; color: 'primary' | 'success' | 'info' | 'warning' | 'default' }
+> = {
   approval: { label: '审批流', color: 'primary' },
   business: { label: '业务流', color: 'success' },
   notification: { label: '通知流', color: 'info' },
@@ -213,9 +219,27 @@ export const WorkflowDefinitionsPage: React.FC = () => {
     const activeCount = definitions.filter((d) => d.status === 'active').length;
     const totalInstances = definitions.reduce((sum, d) => sum + d.instance_count, 0);
     return [
-      { id: 'total', title: '流程总数', value: total, icon: <Layers size={20} />, color: 'primary' as const },
-      { id: 'active', title: '已发布', value: activeCount, icon: <FileCode size={20} />, color: 'success' as const },
-      { id: 'instances', title: '总实例数', value: totalInstances.toLocaleString(), icon: <Play size={20} />, color: 'info' as const },
+      {
+        id: 'total',
+        title: '流程总数',
+        value: total,
+        icon: <Layers size={20} />,
+        color: 'primary' as const,
+      },
+      {
+        id: 'active',
+        title: '已发布',
+        value: activeCount,
+        icon: <FileCode size={20} />,
+        color: 'success' as const,
+      },
+      {
+        id: 'instances',
+        title: '总实例数',
+        value: totalInstances.toLocaleString(),
+        icon: <Play size={20} />,
+        color: 'info' as const,
+      },
     ];
   }, [definitions]);
 
@@ -237,13 +261,22 @@ export const WorkflowDefinitionsPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <FileCode size={18} color='primary.main' />
+              <FileCode
+                size={18}
+                color='primary.main'
+              />
             </Box>
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
                 {row.name}
               </Typography>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 {row.code}
               </Typography>
             </Box>
@@ -258,14 +291,24 @@ export const WorkflowDefinitionsPage: React.FC = () => {
             label: row.category,
             color: 'default' as const,
           };
-          return <Chip size='small' color={config.color} label={config.label} variant='outlined' />;
+          return (
+            <Chip
+              size='small'
+              color={config.color}
+              label={config.label}
+              variant='outlined'
+            />
+          );
         },
       },
       {
         id: 'version',
         label: '版本',
         render: (row) => (
-          <Typography variant='body2' sx={{ fontFamily: 'monospace' }}>
+          <Typography
+            variant='body2'
+            sx={{ fontFamily: 'monospace' }}
+          >
             {row.version}
           </Typography>
         ),
@@ -274,7 +317,10 @@ export const WorkflowDefinitionsPage: React.FC = () => {
         id: 'node_count',
         label: '节点数',
         render: (row) => (
-          <Typography variant='body2' color='text.secondary'>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             {row.node_count} 个节点
           </Typography>
         ),
@@ -283,7 +329,10 @@ export const WorkflowDefinitionsPage: React.FC = () => {
         id: 'instance_count',
         label: '实例数',
         render: (row) => (
-          <Typography variant='body2' sx={{ fontFamily: 'monospace' }}>
+          <Typography
+            variant='body2'
+            sx={{ fontFamily: 'monospace' }}
+          >
             {row.instance_count.toLocaleString()}
           </Typography>
         ),
@@ -296,7 +345,13 @@ export const WorkflowDefinitionsPage: React.FC = () => {
             label: row.status,
             color: 'default' as const,
           };
-          return <Chip size='small' color={config.color} label={config.label} />;
+          return (
+            <Chip
+              size='small'
+              color={config.color}
+              label={config.label}
+            />
+          );
         },
       },
       {
@@ -304,8 +359,14 @@ export const WorkflowDefinitionsPage: React.FC = () => {
         label: '更新时间',
         render: (row) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Clock size={14} color='action' />
-            <Typography variant='body2' color='text.secondary'>
+            <Clock
+              size={14}
+              color='action'
+            />
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               {row.updated_at}
             </Typography>
           </Box>
@@ -465,7 +526,6 @@ export const WorkflowDefinitionsPage: React.FC = () => {
         ]}
         onRefresh={loadData}
         emptyMessage='暂无流程定义'
-        stats={stats}
       />
 
       <ConfirmDialog

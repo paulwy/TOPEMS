@@ -26,7 +26,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/core/users',
         name: '用户管理',
-        component: () => import('topems_core/pages/UserManagement'),
+        component: () => import(/* @vite-ignore */ 'topems_core/pages/UserManagement'),
         componentPath: './pages/UserManagement',
         icon: 'Users',
         permissions: ['core:user:view'],
@@ -34,7 +34,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/core/roles',
         name: '角色管理',
-        component: () => import('topems_core/pages/RoleManagement'),
+        component: () => import(/* @vite-ignore */ 'topems_core/pages/RoleManagement'),
         componentPath: './pages/RoleManagement',
         icon: 'Shield',
         permissions: ['core:role:view'],
@@ -42,7 +42,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/core/permissions',
         name: '权限管理',
-        component: () => import('topems_core/pages/PermissionManagement'),
+        component: () => import(/* @vite-ignore */ 'topems_core/pages/PermissionManagement'),
         componentPath: './pages/PermissionManagement',
         icon: 'Key',
         permissions: ['core:permission:view'],
@@ -50,7 +50,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/core/org',
         name: '组织架构',
-        component: () => import('topems_core/pages/OrgChart'),
+        component: () => import(/* @vite-ignore */ 'topems_core/pages/OrgChart'),
         componentPath: './pages/OrgChart',
         icon: 'Building2',
         permissions: ['core:org:view'],
@@ -58,7 +58,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/core/workflow/designer',
         name: '流程设计',
-        component: () => import('topems_core/pages/FlowDesignerPage'),
+        component: () => import(/* @vite-ignore */ 'topems_core/pages/FlowDesignerPage'),
         componentPath: './pages/FlowDesignerPage',
         icon: 'Workflow',
         permissions: ['core:workflow:design'],
@@ -66,7 +66,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/core/workflow/monitor',
         name: '流程监控',
-        component: () => import('topems_core/pages/FlowMonitorPage'),
+        component: () => import(/* @vite-ignore */ 'topems_core/pages/FlowMonitorPage'),
         componentPath: './pages/FlowMonitorPage',
         icon: 'Activity',
         permissions: ['core:workflow:monitor'],
@@ -74,7 +74,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/core/workflow/templates',
         name: '流程模板',
-        component: () => import('topems_core/pages/FlowTemplatePage'),
+        component: () => import(/* @vite-ignore */ 'topems_core/pages/FlowTemplatePage'),
         componentPath: './pages/FlowTemplatePage',
         icon: 'FileText',
         permissions: ['core:workflow:view'],
@@ -82,7 +82,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/core/documents',
         name: '文档中心',
-        component: () => import('topems_core/pages/DocumentCenterPage'),
+        component: () => import(/* @vite-ignore */ 'topems_core/pages/DocumentCenterPage'),
         componentPath: './pages/DocumentCenterPage',
         icon: 'FolderOpen',
         permissions: ['core:doc:view'],
@@ -90,7 +90,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/core/reports',
         name: '报表列表',
-        component: () => import('topems_core/pages/ReportListPage'),
+        component: () => import(/* @vite-ignore */ 'topems_core/pages/ReportListPage'),
         componentPath: './pages/ReportListPage',
         icon: 'BarChart3',
         permissions: ['core:report:view'],
@@ -112,7 +112,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/hrm/dashboard',
         name: 'HR仪表盘',
-        component: () => import('topems_hrm/pages/DashboardPage'),
+        component: () => import(/* @vite-ignore */ 'topems_hrm/pages/DashboardPage'),
         componentPath: './pages/DashboardPage',
         icon: 'LayoutDashboard',
         permissions: ['hrm:dashboard:view'],
@@ -120,7 +120,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/hrm/attendance',
         name: '考勤管理',
-        component: () => import('topems_hrm/pages/AttendancePage'),
+        component: () => import(/* @vite-ignore */ 'topems_hrm/pages/AttendancePage'),
         componentPath: './pages/AttendancePage',
         icon: 'Calendar',
         permissions: ['hrm:attendance:view'],
@@ -128,7 +128,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/hrm/payroll',
         name: '薪资管理',
-        component: () => import('topems_hrm/pages/PayrollPage'),
+        component: () => import(/* @vite-ignore */ 'topems_hrm/pages/PayrollPage'),
         componentPath: './pages/PayrollPage',
         icon: 'Wallet',
         permissions: ['hrm:payroll:view'],
@@ -136,7 +136,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/hrm/performance',
         name: '绩效管理',
-        component: () => import('topems_hrm/pages/PerformancePage'),
+        component: () => import(/* @vite-ignore */ 'topems_hrm/pages/PerformancePage'),
         componentPath: './pages/PerformancePage',
         icon: 'TrendingUp',
         permissions: ['hrm:performance:view'],
@@ -144,7 +144,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/hrm/training',
         name: '培训管理',
-        component: () => import('topems_hrm/pages/TrainingPage'),
+        component: () => import(/* @vite-ignore */ 'topems_hrm/pages/TrainingPage'),
         componentPath: './pages/TrainingPage',
         icon: 'GraduationCap',
         permissions: ['hrm:training:view'],
@@ -152,7 +152,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/hrm/recruitment',
         name: '招聘管理',
-        component: () => import('topems_hrm/pages/RecruitmentPage'),
+        component: () => import(/* @vite-ignore */ 'topems_hrm/pages/RecruitmentPage'),
         componentPath: './pages/RecruitmentPage',
         icon: 'UserPlus',
         permissions: ['hrm:recruitment:view'],
@@ -174,7 +174,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/crm/dashboard',
         name: 'CRM仪表盘',
-        component: () => import('topems_crm/pages/DashboardPage'),
+        component: () => import(/* @vite-ignore */ 'topems_crm/pages/DashboardPage'),
         componentPath: './pages/DashboardPage',
         icon: 'LayoutDashboard',
         permissions: ['crm:dashboard:view'],
@@ -182,7 +182,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/crm/customers',
         name: '客户管理',
-        component: () => import('topems_crm/pages/CustomerManagementPage'),
+        component: () => import(/* @vite-ignore */ 'topems_crm/pages/CustomerManagementPage'),
         componentPath: './pages/CustomerManagementPage',
         icon: 'Users',
         permissions: ['crm:customer:view'],
@@ -190,7 +190,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/crm/contacts',
         name: '联系人管理',
-        component: () => import('topems_crm/pages/ContactManagementPage'),
+        component: () => import(/* @vite-ignore */ 'topems_crm/pages/ContactManagementPage'),
         componentPath: './pages/ContactManagementPage',
         icon: 'User',
         permissions: ['crm:contact:view'],
@@ -198,7 +198,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/crm/opportunities',
         name: '商机管理',
-        component: () => import('topems_crm/pages/OpportunityManagementPage'),
+        component: () => import(/* @vite-ignore */ 'topems_crm/pages/OpportunityManagementPage'),
         componentPath: './pages/OpportunityManagementPage',
         icon: 'Target',
         permissions: ['crm:opportunity:view'],
@@ -206,7 +206,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/crm/scoring',
         name: '客户评分',
-        component: () => import('topems_crm/pages/CustomerScoringPage'),
+        component: () => import(/* @vite-ignore */ 'topems_crm/pages/CustomerScoringPage'),
         componentPath: './pages/CustomerScoringPage',
         icon: 'Star',
         permissions: ['crm:scoring:view'],
@@ -214,7 +214,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/crm/forecast',
         name: '销售预测',
-        component: () => import('topems_crm/pages/SalesForecastPage'),
+        component: () => import(/* @vite-ignore */ 'topems_crm/pages/SalesForecastPage'),
         componentPath: './pages/SalesForecastPage',
         icon: 'TrendingUp',
         permissions: ['crm:forecast:view'],
@@ -222,7 +222,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/crm/interactions',
         name: '互动记录',
-        component: () => import('topems_crm/pages/InteractionManagementPage'),
+        component: () => import(/* @vite-ignore */ 'topems_crm/pages/InteractionManagementPage'),
         componentPath: './pages/InteractionManagementPage',
         icon: 'MessageSquare',
         permissions: ['crm:interaction:view'],
@@ -230,7 +230,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/crm/billing',
         name: '账单管理',
-        component: () => import('topems_crm/pages/BillingPage'),
+        component: () => import(/* @vite-ignore */ 'topems_crm/pages/BillingPage'),
         componentPath: './pages/BillingPage',
         icon: 'FileText',
         permissions: ['crm:billing:view'],
@@ -252,7 +252,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/finance/dashboard',
         name: '财务仪表盘',
-        component: () => import('topems_finance/pages/DashboardPage'),
+        component: () => import(/* @vite-ignore */ 'topems_finance/pages/DashboardPage'),
         componentPath: './pages/DashboardPage',
         icon: 'LayoutDashboard',
         permissions: ['finance:dashboard:view'],
@@ -260,7 +260,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/finance/accounts',
         name: '科目管理',
-        component: () => import('topems_finance/pages/FinanceAccountPage'),
+        component: () => import(/* @vite-ignore */ 'topems_finance/pages/FinanceAccountPage'),
         componentPath: './pages/FinanceAccountPage',
         icon: 'BookOpen',
         permissions: ['finance:account:view'],
@@ -268,7 +268,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/finance/vouchers',
         name: '凭证管理',
-        component: () => import('topems_finance/pages/FinanceVoucherPage'),
+        component: () => import(/* @vite-ignore */ 'topems_finance/pages/FinanceVoucherPage'),
         componentPath: './pages/FinanceVoucherPage',
         icon: 'Receipt',
         permissions: ['finance:voucher:view'],
@@ -276,7 +276,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/finance/ledger',
         name: '账簿管理',
-        component: () => import('topems_finance/pages/FinanceLedgerPage'),
+        component: () => import(/* @vite-ignore */ 'topems_finance/pages/FinanceLedgerPage'),
         componentPath: './pages/FinanceLedgerPage',
         icon: 'Book',
         permissions: ['finance:ledger:view'],
@@ -284,7 +284,8 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/finance/receivable-payable',
         name: '应收应付',
-        component: () => import('topems_finance/pages/FinanceReceivablePayablePage'),
+        component: () =>
+          import(/* @vite-ignore */ 'topems_finance/pages/FinanceReceivablePayablePage'),
         componentPath: './pages/FinanceReceivablePayablePage',
         icon: 'ArrowLeftRight',
         permissions: ['finance:rp:view'],
@@ -292,7 +293,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/finance/receipts',
         name: '收款管理',
-        component: () => import('topems_finance/pages/FinanceReceiptPage'),
+        component: () => import(/* @vite-ignore */ 'topems_finance/pages/FinanceReceiptPage'),
         componentPath: './pages/FinanceReceiptPage',
         icon: 'ArrowDownLeft',
         permissions: ['finance:receipt:view'],
@@ -300,7 +301,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/finance/payments',
         name: '付款管理',
-        component: () => import('topems_finance/pages/FinancePaymentPage'),
+        component: () => import(/* @vite-ignore */ 'topems_finance/pages/FinancePaymentPage'),
         componentPath: './pages/FinancePaymentPage',
         icon: 'ArrowUpRight',
         permissions: ['finance:payment:view'],
@@ -308,7 +309,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/finance/reports',
         name: '财务报表',
-        component: () => import('topems_finance/pages/FinanceReportsPage'),
+        component: () => import(/* @vite-ignore */ 'topems_finance/pages/FinanceReportsPage'),
         componentPath: './pages/FinanceReportsPage',
         icon: 'BarChart3',
         permissions: ['finance:report:view'],
@@ -316,7 +317,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/finance/financial-reports',
         name: '三大报表',
-        component: () => import('topems_finance/pages/FinancialReportsPage'),
+        component: () => import(/* @vite-ignore */ 'topems_finance/pages/FinancialReportsPage'),
         componentPath: './pages/FinancialReportsPage',
         icon: 'PieChart',
         permissions: ['finance:freport:view'],
@@ -324,7 +325,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/finance/budget',
         name: '预算管理',
-        component: () => import('topems_finance/pages/FinanceBudgetPage'),
+        component: () => import(/* @vite-ignore */ 'topems_finance/pages/FinanceBudgetPage'),
         componentPath: './pages/FinanceBudgetPage',
         icon: 'Calculator',
         permissions: ['finance:budget:view'],
@@ -332,7 +333,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/finance/expense',
         name: '费用管理',
-        component: () => import('topems_finance/pages/FinanceExpensePage'),
+        component: () => import(/* @vite-ignore */ 'topems_finance/pages/FinanceExpensePage'),
         componentPath: './pages/FinanceExpensePage',
         icon: 'CreditCard',
         permissions: ['finance:expense:view'],
@@ -340,7 +341,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/finance/invoice',
         name: '发票管理',
-        component: () => import('topems_finance/pages/FinanceInvoicePage'),
+        component: () => import(/* @vite-ignore */ 'topems_finance/pages/FinanceInvoicePage'),
         componentPath: './pages/FinanceInvoicePage',
         icon: 'FileText',
         permissions: ['finance:invoice:view'],
@@ -348,7 +349,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/finance/tax',
         name: '税务管理',
-        component: () => import('topems_finance/pages/FinanceTaxPage'),
+        component: () => import(/* @vite-ignore */ 'topems_finance/pages/FinanceTaxPage'),
         componentPath: './pages/FinanceTaxPage',
         icon: 'Landmark',
         permissions: ['finance:tax:view'],
@@ -356,7 +357,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/finance/assets',
         name: '资产管理',
-        component: () => import('topems_finance/pages/FinanceAssetPage'),
+        component: () => import(/* @vite-ignore */ 'topems_finance/pages/FinanceAssetPage'),
         componentPath: './pages/FinanceAssetPage',
         icon: 'Package',
         permissions: ['finance:asset:view'],
@@ -364,7 +365,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/finance/cost',
         name: '成本管理',
-        component: () => import('topems_finance/pages/FinanceCostPage'),
+        component: () => import(/* @vite-ignore */ 'topems_finance/pages/FinanceCostPage'),
         componentPath: './pages/FinanceCostPage',
         icon: 'DollarSign',
         permissions: ['finance:cost:view'],
@@ -386,7 +387,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/pm/dashboard',
         name: '项目仪表盘',
-        component: () => import('topems_pm/pages/DashboardPage'),
+        component: () => import(/* @vite-ignore */ 'topems_pm/pages/DashboardPage'),
         componentPath: './pages/DashboardPage',
         icon: 'LayoutDashboard',
         permissions: ['pm:dashboard:view'],
@@ -394,7 +395,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/pm/projects',
         name: '项目列表',
-        component: () => import('topems_pm/pages/ProjectListPage'),
+        component: () => import(/* @vite-ignore */ 'topems_pm/pages/ProjectListPage'),
         componentPath: './pages/ProjectListPage',
         icon: 'ListTodo',
         permissions: ['pm:project:view'],
@@ -402,7 +403,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/pm/tasks',
         name: '任务管理',
-        component: () => import('topems_pm/pages/ProjectTaskPage'),
+        component: () => import(/* @vite-ignore */ 'topems_pm/pages/ProjectTaskPage'),
         componentPath: './pages/ProjectTaskPage',
         icon: 'CheckSquare',
         permissions: ['pm:task:view'],
@@ -410,7 +411,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/pm/gantt',
         name: '甘特图',
-        component: () => import('topems_pm/pages/GanttChartPage'),
+        component: () => import(/* @vite-ignore */ 'topems_pm/pages/GanttChartPage'),
         componentPath: './pages/GanttChartPage',
         icon: 'BarChart',
         permissions: ['pm:gantt:view'],
@@ -418,7 +419,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/pm/milestones',
         name: '里程碑',
-        component: () => import('topems_pm/pages/MilestonePage'),
+        component: () => import(/* @vite-ignore */ 'topems_pm/pages/MilestonePage'),
         componentPath: './pages/MilestonePage',
         icon: 'Flag',
         permissions: ['pm:milestone:view'],
@@ -426,7 +427,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/pm/risks',
         name: '风险管理',
-        component: () => import('topems_pm/pages/RiskManagementPage'),
+        component: () => import(/* @vite-ignore */ 'topems_pm/pages/RiskManagementPage'),
         componentPath: './pages/RiskManagementPage',
         icon: 'AlertTriangle',
         permissions: ['pm:risk:view'],
@@ -434,7 +435,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/pm/contracts',
         name: '合同管理',
-        component: () => import('topems_pm/pages/ContractListPage'),
+        component: () => import(/* @vite-ignore */ 'topems_pm/pages/ContractListPage'),
         componentPath: './pages/ContractListPage',
         icon: 'FileText',
         permissions: ['pm:contract:view'],
@@ -442,7 +443,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/pm/reports',
         name: '项目报表',
-        component: () => import('topems_pm/pages/ProjectReportPage'),
+        component: () => import(/* @vite-ignore */ 'topems_pm/pages/ProjectReportPage'),
         componentPath: './pages/ProjectReportPage',
         icon: 'BarChart3',
         permissions: ['pm:report:view'],
@@ -464,7 +465,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/mes/dashboard',
         name: 'MES仪表盘',
-        component: () => import('topems_mes/pages/DashboardPage'),
+        component: () => import(/* @vite-ignore */ 'topems_mes/pages/DashboardPage'),
         componentPath: './pages/DashboardPage',
         icon: 'LayoutDashboard',
         permissions: ['mes:dashboard:view'],
@@ -472,7 +473,8 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/mes/production-orders',
         name: '生产订单',
-        component: () => import('topems_mes/pages/ProductionOrderManagementPage'),
+        component: () =>
+          import(/* @vite-ignore */ 'topems_mes/pages/ProductionOrderManagementPage'),
         componentPath: './pages/ProductionOrderManagementPage',
         icon: 'ClipboardList',
         permissions: ['mes:order:view'],
@@ -480,7 +482,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/mes/production-process',
         name: '生产流程',
-        component: () => import('topems_mes/pages/ProductionProcessPage'),
+        component: () => import(/* @vite-ignore */ 'topems_mes/pages/ProductionProcessPage'),
         componentPath: './pages/ProductionProcessPage',
         icon: 'GitBranch',
         permissions: ['mes:process:view'],
@@ -488,7 +490,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/mes/production-records',
         name: '生产记录',
-        component: () => import('topems_mes/pages/ProductionRecordPage'),
+        component: () => import(/* @vite-ignore */ 'topems_mes/pages/ProductionRecordPage'),
         componentPath: './pages/ProductionRecordPage',
         icon: 'FileText',
         permissions: ['mes:record:view'],
@@ -496,7 +498,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/mes/workstations',
         name: '工作站',
-        component: () => import('topems_mes/pages/WorkStationPage'),
+        component: () => import(/* @vite-ignore */ 'topems_mes/pages/WorkStationPage'),
         componentPath: './pages/WorkStationPage',
         icon: 'Monitor',
         permissions: ['mes:workstation:view'],
@@ -504,7 +506,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/mes/mobile-workstation',
         name: '移动工位',
-        component: () => import('topems_mes/pages/MobileWorkstationPage'),
+        component: () => import(/* @vite-ignore */ 'topems_mes/pages/MobileWorkstationPage'),
         componentPath: './pages/MobileWorkstationPage',
         icon: 'Smartphone',
         permissions: ['mes:mobile:view'],
@@ -512,7 +514,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/mes/equipment',
         name: '设备管理',
-        component: () => import('topems_mes/pages/EquipmentManagementPage'),
+        component: () => import(/* @vite-ignore */ 'topems_mes/pages/EquipmentManagementPage'),
         componentPath: './pages/EquipmentManagementPage',
         icon: 'Settings',
         permissions: ['mes:equipment:view'],
@@ -520,7 +522,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/mes/maintenance',
         name: '设备维护',
-        component: () => import('topems_mes/pages/EquipmentMaintenancePage'),
+        component: () => import(/* @vite-ignore */ 'topems_mes/pages/EquipmentMaintenancePage'),
         componentPath: './pages/EquipmentMaintenancePage',
         icon: 'Wrench',
         permissions: ['mes:maintenance:view'],
@@ -528,7 +530,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/mes/lims/samples',
         name: '样品管理',
-        component: () => import('topems_mes/pages/LimsSamplePage'),
+        component: () => import(/* @vite-ignore */ 'topems_mes/pages/LimsSamplePage'),
         componentPath: './pages/LimsSamplePage',
         icon: 'FlaskConical',
         permissions: ['mes:lims:sample:view'],
@@ -536,7 +538,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/mes/lims/tasks',
         name: '检验任务',
-        component: () => import('topems_mes/pages/LimsTaskPage'),
+        component: () => import(/* @vite-ignore */ 'topems_mes/pages/LimsTaskPage'),
         componentPath: './pages/LimsTaskPage',
         icon: 'ClipboardCheck',
         permissions: ['mes:lims:task:view'],
@@ -544,7 +546,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/mes/qms/check',
         name: '质量检验',
-        component: () => import('topems_mes/pages/QmsCheckPage'),
+        component: () => import(/* @vite-ignore */ 'topems_mes/pages/QmsCheckPage'),
         componentPath: './pages/QmsCheckPage',
         icon: 'BadgeCheck',
         permissions: ['mes:qms:check:view'],
@@ -552,7 +554,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/mes/ehs/check',
         name: 'EHS检查',
-        component: () => import('topems_mes/pages/EhsCheckPage'),
+        component: () => import(/* @vite-ignore */ 'topems_mes/pages/EhsCheckPage'),
         componentPath: './pages/EhsCheckPage',
         icon: 'ShieldAlert',
         permissions: ['mes:ehs:check:view'],
@@ -574,7 +576,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/scm/dashboard',
         name: 'SCM仪表盘',
-        component: () => import('topems_scm/pages/DashboardPage'),
+        component: () => import(/* @vite-ignore */ 'topems_scm/pages/DashboardPage'),
         componentPath: './pages/DashboardPage',
         icon: 'LayoutDashboard',
         permissions: ['scm:dashboard:view'],
@@ -582,7 +584,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/scm/suppliers',
         name: '供应商管理',
-        component: () => import('topems_scm/pages/SupplierManagementPage'),
+        component: () => import(/* @vite-ignore */ 'topems_scm/pages/SupplierManagementPage'),
         componentPath: './pages/SupplierManagementPage',
         icon: 'Building',
         permissions: ['scm:supplier:view'],
@@ -590,7 +592,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/scm/purchase-orders',
         name: '采购订单',
-        component: () => import('topems_scm/pages/PurchaseOrderPage'),
+        component: () => import(/* @vite-ignore */ 'topems_scm/pages/PurchaseOrderPage'),
         componentPath: './pages/PurchaseOrderPage',
         icon: 'ShoppingCart',
         permissions: ['scm:po:view'],
@@ -598,7 +600,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/scm/purchase-receipts',
         name: '采购入库',
-        component: () => import('topems_scm/pages/PurchaseReceiptPage'),
+        component: () => import(/* @vite-ignore */ 'topems_scm/pages/PurchaseReceiptPage'),
         componentPath: './pages/PurchaseReceiptPage',
         icon: 'Package',
         permissions: ['scm:receipt:view'],
@@ -606,7 +608,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/scm/inventory',
         name: '库存管理',
-        component: () => import('topems_scm/pages/InventoryPage'),
+        component: () => import(/* @vite-ignore */ 'topems_scm/pages/InventoryPage'),
         componentPath: './pages/InventoryPage',
         icon: 'Boxes',
         permissions: ['scm:inventory:view'],
@@ -614,7 +616,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/scm/warehouses',
         name: '仓库管理',
-        component: () => import('topems_scm/pages/WarehousePage'),
+        component: () => import(/* @vite-ignore */ 'topems_scm/pages/WarehousePage'),
         componentPath: './pages/WarehousePage',
         icon: 'Warehouse',
         permissions: ['scm:warehouse:view'],
@@ -622,7 +624,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/scm/in-out-bound',
         name: '出入库管理',
-        component: () => import('topems_scm/pages/InOutBoundPage'),
+        component: () => import(/* @vite-ignore */ 'topems_scm/pages/InOutBoundPage'),
         componentPath: './pages/InOutBoundPage',
         icon: 'ArrowLeftRight',
         permissions: ['scm:iob:view'],
@@ -630,7 +632,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/scm/inventory-check',
         name: '库存盘点',
-        component: () => import('topems_scm/pages/InventoryCheckPage'),
+        component: () => import(/* @vite-ignore */ 'topems_scm/pages/InventoryCheckPage'),
         componentPath: './pages/InventoryCheckPage',
         icon: 'ClipboardList',
         permissions: ['scm:check:view'],
@@ -638,7 +640,7 @@ export const CORE_MODULES_CONFIG: ModuleConfig[] = [
       {
         path: '/scm/inventory-alert',
         name: '库存预警',
-        component: () => import('topems_scm/pages/InventoryAlertPage'),
+        component: () => import(/* @vite-ignore */ 'topems_scm/pages/InventoryAlertPage'),
         componentPath: './pages/InventoryAlertPage',
         icon: 'AlertTriangle',
         permissions: ['scm:alert:view'],

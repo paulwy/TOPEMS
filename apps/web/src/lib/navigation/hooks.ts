@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { navigationRegistryV2 } from '../NavigationRegistryV2';
-import type { NavItem, ModuleNavConfig, ModuleCardConfig, NavGroup } from '../types';
+import { navigationRegistryV2 } from './NavigationRegistryV2';
+import type { NavItem, ModuleNavConfig, ModuleCardConfig, NavGroup } from './types';
 import { useLocation } from 'react-router-dom';
 
 export function useNavigation() {

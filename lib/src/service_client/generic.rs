@@ -85,6 +85,10 @@ impl GenericServiceClient {
     pub async fn delete<T: serde::de::DeserializeOwned>(&self, path: &str) -> ServiceClientResult<T> {
         self.base_client.delete(path).await
     }
+
+    pub async fn post_without_body<T: serde::de::DeserializeOwned>(&self, path: &str) -> ServiceClientResult<T> {
+        self.base_client.post_without_body(path).await
+    }
 }
 
 #[macro_export]
@@ -137,15 +141,21 @@ macro_rules! define_service_client {
                     $(, $body_param: $body_type)?
                 ) -> $crate::service_client::error::ServiceClientResult<$return_type> {
                     let path = format!($path_template $(, $param_name)*);
-                    $crate::define_service_client!(@call $http_method, self.base, path $(, $body_param )?)
+                    $crate::define_service_client!(
+                        @dispatch $http_method,
+                        self.base,
+                        path
+                        $(, $body_param)*
+                    )
                 }
             )*
         }
     };
 
-    (@call get, $base:expr, $path:expr) => { $base.get(&$path).await };
-    (@call delete, $base:expr, $path:expr) => { $base.delete(&$path).await };
-    (@call post, $base:expr, $path:expr, $body:expr) => { $base.post(&$path, $body).await };
-    (@call put, $base:expr, $path:expr, $body:expr) => { $base.put(&$path, $body).await };
-    (@call patch, $base:expr, $path:expr, $body:expr) => { $base.patch(&$path, $body).await };
+    (@dispatch get, $base:expr, $path:expr) => { $base.get(&$path).await };
+    (@dispatch delete, $base:expr, $path:expr) => { $base.delete(&$path).await };
+    (@dispatch post, $base:expr, $path:expr) => { $base.post_without_body(&$path).await };
+    (@dispatch post, $base:expr, $path:expr, $body:expr) => { $base.post(&$path, $body).await };
+    (@dispatch put, $base:expr, $path:expr, $body:expr) => { $base.put(&$path, $body).await };
+    (@dispatch patch, $base:expr, $path:expr, $body:expr) => { $base.put(&$path, $body).await };
 }

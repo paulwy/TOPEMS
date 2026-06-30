@@ -66,19 +66,25 @@ describe('LimsTaskPage', () => {
   });
 
   it('should render loading state initially', async () => {
-    renderWithProviders(<LimsTaskPage />);
+    await act(async () => {
+      renderWithProviders(<LimsTaskPage />);
+    });
     expect(screen.getByRole('status')).toBeInTheDocument();
   });
 
   it('should render page title', async () => {
-    renderWithProviders(<LimsTaskPage />);
+    await act(async () => {
+      renderWithProviders(<LimsTaskPage />);
+    });
     await waitFor(() => {
       expect(screen.getByText('检验任务')).toBeInTheDocument();
     });
   });
 
   it('should render task table', async () => {
-    renderWithProviders(<LimsTaskPage />);
+    await act(async () => {
+      renderWithProviders(<LimsTaskPage />);
+    });
     await waitFor(() => {
       expect(screen.getByText('TASK-2024-001')).toBeInTheDocument();
       expect(screen.getByText('土壤样本A')).toBeInTheDocument();
@@ -86,7 +92,9 @@ describe('LimsTaskPage', () => {
   });
 
   it('should handle search', async () => {
-    renderWithProviders(<LimsTaskPage />);
+    await act(async () => {
+      renderWithProviders(<LimsTaskPage />);
+    });
     await waitFor(() => {
       const searchInput = screen.getByPlaceholderText(/搜索/);
       fireEvent.change(searchInput, { target: { value: '土壤' } });
@@ -99,7 +107,9 @@ describe('LimsTaskPage', () => {
       data: {},
     });
 
-    renderWithProviders(<LimsTaskPage />);
+    await act(async () => {
+      renderWithProviders(<LimsTaskPage />);
+    });
 
     await waitFor(() => {
       const addButton = screen.getByRole('button', { name: /新增/i });
@@ -119,7 +129,9 @@ describe('LimsTaskPage', () => {
 
   it('should handle API error', async () => {
     (limsApi.listTasks as vi.Mock).mockRejectedValue(new Error('Network error'));
-    renderWithProviders(<LimsTaskPage />);
+    await act(async () => {
+      renderWithProviders(<LimsTaskPage />);
+    });
 
     await waitFor(() => {
       expect(mockAddNotification).toHaveBeenCalled();

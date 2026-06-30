@@ -29,7 +29,7 @@ use api::mobile_approval::{
     approve_task, get_approval_by_id, get_approval_stats, get_approved_approvals,
     get_pending_approvals, get_rejected_approvals, reject_task, transfer_task,
 };
-use api::notification::{get_notifications, get_unread_count, mark_all_read};
+use api::notification::{get_notifications, get_unread_count, mark_all_read, mark_read};
 use api::offline::{get_offline_status, sync_offline_data};
 use api::offline_sync::{
     get_offline_status as get_offline_sync_status, get_sync_history, get_sync_policy,
@@ -55,6 +55,7 @@ use api::task::{
     create_task, delete_task, get_all_tasks, get_task, update_task, update_task_status,
 };
 use api::user::{get_profile, update_profile, upload_avatar};
+use api::workbench::get_workbench_data;
 use db::repository::*;
 use models::*;
 
@@ -282,6 +283,11 @@ async fn main() -> anyhow::Result<()> {
         .merge(create_routes());
 
     let protected_routes = Router::new()
+        // Workbench Routes
+        .route(
+            "/api/mobile/workbench",
+            axum::routing::get(get_workbench_data),
+        )
         // Stats Routes
         .route(
             "/api/mobile/stats/dashboard",
@@ -319,6 +325,10 @@ async fn main() -> anyhow::Result<()> {
         .route(
             "/api/mobile/notifications/read-all",
             axum::routing::put(mark_all_read),
+        )
+        .route(
+            "/api/mobile/notifications/:id/read",
+            axum::routing::put(mark_read),
         )
         // Scan Routes
         .route(

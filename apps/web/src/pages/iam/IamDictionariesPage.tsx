@@ -211,12 +211,15 @@ export const IamDictionariesPage: React.FC = () => {
    */
   const treeData = useMemo((): TreeNode[] => {
     // 按分类分组
-    const grouped = dictTypes.reduce((acc, type) => {
-      const category = type.category || 'custom';
-      if (!acc[category]) acc[category] = [];
-      acc[category].push(type);
-      return acc;
-    }, {} as Record<string, DictType[]>);
+    const grouped = dictTypes.reduce(
+      (acc, type) => {
+        const category = type.category || 'custom';
+        if (!acc[category]) acc[category] = [];
+        acc[category].push(type);
+        return acc;
+      },
+      {} as Record<string, DictType[]>
+    );
 
     return Object.entries(grouped)
       .sort(([a], [b]) => a.localeCompare(b))
@@ -308,15 +311,12 @@ export const IamDictionariesPage: React.FC = () => {
   /**
    * 树节点选择处理
    */
-  const handleSelectNode = useCallback(
-    (node: TreeNode | null) => {
-      setSelectedNode(node);
-      if (node && node.type === 'item' && node.data) {
-        setSelectedType(node.data as DictType);
-      }
-    },
-    []
-  );
+  const handleSelectNode = useCallback((node: TreeNode | null) => {
+    setSelectedNode(node);
+    if (node && node.type === 'item' && node.data) {
+      setSelectedType(node.data as DictType);
+    }
+  }, []);
 
   /**
    * 行操作按钮
@@ -711,7 +711,10 @@ export const IamDictionariesPage: React.FC = () => {
         label: '排序',
         width: 60,
         render: (item) => (
-          <Typography variant='body2' color='text.secondary'>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             {item.sort_order}
           </Typography>
         ),
@@ -720,7 +723,10 @@ export const IamDictionariesPage: React.FC = () => {
         id: 'code',
         label: '编码',
         render: (item) => (
-          <Typography variant='body2' sx={{ fontFamily: 'monospace' }}>
+          <Typography
+            variant='body2'
+            sx={{ fontFamily: 'monospace' }}
+          >
             {item.code}
           </Typography>
         ),
@@ -734,7 +740,10 @@ export const IamDictionariesPage: React.FC = () => {
         id: 'value',
         label: '值',
         render: (item) => (
-          <Typography variant='body2' color='text.secondary'>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             {item.value || '-'}
           </Typography>
         ),
@@ -808,7 +817,10 @@ export const IamDictionariesPage: React.FC = () => {
       if (!node || node.type === 'folder' || !selectedType) {
         return (
           <Box sx={{ textAlign: 'center', py: 8 }}>
-            <Book size={48} style={{ color: 'text.disabled', margin: '0 auto 16px' }} />
+            <Book
+              size={48}
+              style={{ color: 'text.disabled', margin: '0 auto 16px' }}
+            />
             <Typography color='text.secondary'>选择一个字典类型查看字典项</Typography>
           </Box>
         );
@@ -820,10 +832,17 @@ export const IamDictionariesPage: React.FC = () => {
         <Box>
           {/* 字典类型信息头部 */}
           <Box sx={{ mb: 3, pb: 2, borderBottom: 1, borderColor: 'divider' }}>
-            <Typography variant='h6' sx={{ fontWeight: 600, mb: 0.5 }}>
+            <Typography
+              variant='h6'
+              sx={{ fontWeight: 600, mb: 0.5 }}
+            >
               {dictType.name}
             </Typography>
-            <Stack direction='row' spacing={1} sx={{ alignItems: 'center' }}>
+            <Stack
+              direction='row'
+              spacing={1}
+              sx={{ alignItems: 'center' }}
+            >
               <Chip
                 size='small'
                 label={CATEGORY_LABELS[dictType.category] || dictType.category}
@@ -833,7 +852,10 @@ export const IamDictionariesPage: React.FC = () => {
                   color: CATEGORY_COLORS[dictType.category],
                 }}
               />
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 编码: {dictType.code}
               </Typography>
               {dictType.status === 'active' ? (
@@ -855,7 +877,11 @@ export const IamDictionariesPage: React.FC = () => {
               )}
             </Stack>
             {dictType.description && (
-              <Typography variant='body2' color='text.secondary' sx={{ mt: 1 }}>
+              <Typography
+                variant='body2'
+                color='text.secondary'
+                sx={{ mt: 1 }}
+              >
                 {dictType.description}
               </Typography>
             )}
@@ -929,7 +955,6 @@ export const IamDictionariesPage: React.FC = () => {
         subtitle=''
         data={filteredTreeData}
         loading={loading}
-        error={error}
         searchPlaceholder='搜索字典类型名称、编码...'
         filterOptions={filterOptions}
         filterValue={categoryFilter}
@@ -964,9 +989,15 @@ export const IamDictionariesPage: React.FC = () => {
         fullWidth
       >
         <DialogTitle>{editingType ? '编辑字典类型' : '新增字典类型'}</DialogTitle>
-        <Box component='form' onSubmit={editingType ? handleUpdateType : handleCreateType}>
+        <Box
+          component='form'
+          onSubmit={editingType ? handleUpdateType : handleCreateType}
+        >
           <DialogContent>
-            <Stack spacing={2} sx={{ pt: 1 }}>
+            <Stack
+              spacing={2}
+              sx={{ pt: 1 }}
+            >
               <TextField
                 fullWidth
                 label='编码 *'
@@ -998,7 +1029,10 @@ export const IamDictionariesPage: React.FC = () => {
                 placeholder='如: 状态类型'
                 size='small'
               />
-              <FormControl size='small' fullWidth>
+              <FormControl
+                size='small'
+                fullWidth
+              >
                 <InputLabel>分类</InputLabel>
                 <Select
                   value={editingType?.category || newType.category || 'business'}
@@ -1035,7 +1069,10 @@ export const IamDictionariesPage: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Typography variant='body2'>状态</Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography variant='body2' color='text.secondary'>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     {(editingType?.status || newType.status) === 'active' ? '启用' : '禁用'}
                   </Typography>
                   <Switch
@@ -1054,10 +1091,19 @@ export const IamDictionariesPage: React.FC = () => {
             </Stack>
           </DialogContent>
           <DialogActions>
-            <Button variant='outlined' onClick={() => { setShowTypeModal(false); setEditingType(null); }}>
+            <Button
+              variant='outlined'
+              onClick={() => {
+                setShowTypeModal(false);
+                setEditingType(null);
+              }}
+            >
               取消
             </Button>
-            <Button type='submit' variant='contained'>
+            <Button
+              type='submit'
+              variant='contained'
+            >
               {editingType ? '保存' : '创建'}
             </Button>
           </DialogActions>
@@ -1072,9 +1118,15 @@ export const IamDictionariesPage: React.FC = () => {
         fullWidth
       >
         <DialogTitle>{editingItem ? '编辑字典项' : '新增字典项'}</DialogTitle>
-        <Box component='form' onSubmit={editingItem ? handleUpdateItem : handleCreateItem}>
+        <Box
+          component='form'
+          onSubmit={editingItem ? handleUpdateItem : handleCreateItem}
+        >
           <DialogContent>
-            <Stack spacing={2} sx={{ pt: 1 }}>
+            <Stack
+              spacing={2}
+              sx={{ pt: 1 }}
+            >
               <TextField
                 fullWidth
                 label='编码 *'
@@ -1135,10 +1187,15 @@ export const IamDictionariesPage: React.FC = () => {
                 size='small'
               />
               {editingItem && (
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box
+                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                >
                   <Typography variant='body2'>状态</Typography>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography variant='body2' color='text.secondary'>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                    >
                       {editingItem.status === 'active' ? '启用' : '禁用'}
                     </Typography>
                     <Switch
@@ -1156,10 +1213,19 @@ export const IamDictionariesPage: React.FC = () => {
             </Stack>
           </DialogContent>
           <DialogActions>
-            <Button variant='outlined' onClick={() => { setShowItemModal(false); setEditingItem(null); }}>
+            <Button
+              variant='outlined'
+              onClick={() => {
+                setShowItemModal(false);
+                setEditingItem(null);
+              }}
+            >
               取消
             </Button>
-            <Button type='submit' variant='contained'>
+            <Button
+              type='submit'
+              variant='contained'
+            >
               {editingItem ? '保存' : '创建'}
             </Button>
           </DialogActions>
@@ -1175,15 +1241,24 @@ export const IamDictionariesPage: React.FC = () => {
       >
         <DialogTitle>导出字典项</DialogTitle>
         <DialogContent>
-          <Typography variant='body2' color='text.secondary'>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             将当前字典类型的所有字典项导出为 JSON 文件。
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button variant='outlined' onClick={() => setShowExportModal(false)}>
+          <Button
+            variant='outlined'
+            onClick={() => setShowExportModal(false)}
+          >
             取消
           </Button>
-          <Button variant='contained' onClick={handleExport}>
+          <Button
+            variant='contained'
+            onClick={handleExport}
+          >
             确认导出
           </Button>
         </DialogActions>
@@ -1197,10 +1272,16 @@ export const IamDictionariesPage: React.FC = () => {
         fullWidth
       >
         <DialogTitle>导入字典项</DialogTitle>
-        <Box component='form' onSubmit={handleImport}>
+        <Box
+          component='form'
+          onSubmit={handleImport}
+        >
           <DialogContent>
             <Box sx={{ pt: 1 }}>
-              <Typography variant='body2' sx={{ mb: 1 }}>
+              <Typography
+                variant='body2'
+                sx={{ mb: 1 }}
+              >
                 选择 JSON 文件
               </Typography>
               <input
@@ -1212,10 +1293,18 @@ export const IamDictionariesPage: React.FC = () => {
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button variant='outlined' type='button' onClick={() => setShowImportModal(false)}>
+            <Button
+              variant='outlined'
+              type='button'
+              onClick={() => setShowImportModal(false)}
+            >
               取消
             </Button>
-            <Button type='submit' variant='contained' disabled={!importFile}>
+            <Button
+              type='submit'
+              variant='contained'
+              disabled={!importFile}
+            >
               确认导入
             </Button>
           </DialogActions>

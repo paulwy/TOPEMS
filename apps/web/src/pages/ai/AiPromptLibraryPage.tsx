@@ -406,7 +406,19 @@ export const AiPromptLibraryPage: React.FC = () => {
                           },
                         }}
                       >
-                        <CardActionArea sx={{ height: '100%' }}>
+                        <Box
+                          onClick={() => handleUsePrompt(prompt)}
+                          sx={{
+                            height: '100%',
+                            cursor: 'pointer',
+                            '&:hover': {
+                              backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                            },
+                            '&:active': {
+                              backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                            },
+                          }}
+                        >
                           <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
                               <Avatar
@@ -509,7 +521,7 @@ export const AiPromptLibraryPage: React.FC = () => {
                               </Box>
                             </Box>
                           </CardContent>
-                        </CardActionArea>
+                        </Box>
                       </Card>
                     </Grid>
                   ))}

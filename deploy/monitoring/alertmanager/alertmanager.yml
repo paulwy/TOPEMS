@@ -82,12 +82,27 @@ receivers:
         send_resolved: true
         max_alerts: 100
 
+  # 飞书 Webhook 接收器
+  - name: 'feishu-webhook-receiver'
+    webhook_configs:
+      - url: '{{ .Env.FEISHU_WEBHOOK_URL }}'
+        send_resolved: true
+        max_alerts: 100
+        http_config:
+          follow_redirects: true
+        headers:
+          Content-Type: 'application/json'
+
   # P0 紧急接收器 - 所有渠道立即通知
   - name: 'p0-critical-receiver'
     webhook_configs:
-      - url: 'http://topems-portal:8080/webhook/feishu'
+      - url: '{{ .Env.FEISHU_WEBHOOK_URL }}'
         send_resolved: true
         max_alerts: 10
+        http_config:
+          follow_redirects: true
+        headers:
+          Content-Type: 'application/json'
       - url: 'http://topems-portal:8080/webhook/alertmanager'
         send_resolved: true
         max_alerts: 10
@@ -117,9 +132,13 @@ receivers:
   # P1 重要接收器
   - name: 'p1-important-receiver'
     webhook_configs:
-      - url: 'http://topems-portal:8080/webhook/feishu'
+      - url: '{{ .Env.FEISHU_WEBHOOK_URL }}'
         send_resolved: true
         max_alerts: 20
+        http_config:
+          follow_redirects: true
+        headers:
+          Content-Type: 'application/json'
       - url: 'http://topems-portal:8080/webhook/alertmanager'
         send_resolved: true
         max_alerts: 20

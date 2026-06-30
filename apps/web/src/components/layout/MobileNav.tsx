@@ -50,7 +50,8 @@ import {
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePermission } from '../../hooks/usePermission';
-import { navigationRegistry, type NavItem } from '../../lib/NavigationRegistry';
+import { navigationRegistryV2 } from '../../lib/navigation';
+import type { NavItem } from '../../lib/navigation/types';
 
 const iconMap: Record<string, React.ReactNode> = {
   Home: <Home style={{ width: 20, height: 20 }} />,
@@ -98,16 +99,16 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
   const [navItems, setNavItems] = useState<NavItem[]>([]);
 
   useEffect(() => {
-    const topNavItems = navigationRegistry.getNavItemsByPermission(checkPermission);
+    const topNavItems = navigationRegistryV2.getTopNavItems(checkPermission);
     setNavItems(topNavItems);
 
     const handleUpdate = () => {
-      setNavItems(navigationRegistry.getNavItemsByPermission(checkPermission));
+      setNavItems(navigationRegistryV2.getTopNavItems(checkPermission));
     };
 
-    navigationRegistry.emitter.on('navigationUpdated', handleUpdate);
+    navigationRegistryV2.emitter.on('navigationUpdated', handleUpdate);
     return function cleanup() {
-      navigationRegistry.emitter.off('navigationUpdated', handleUpdate);
+      navigationRegistryV2.emitter.off('navigationUpdated', handleUpdate);
     };
   }, [checkPermission]);
 

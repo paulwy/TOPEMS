@@ -198,7 +198,7 @@ export const IntegrationConnectionsPage: React.FC = () => {
         filters={filters} filtersValue={{ type: typeFilter, status: statusFilter }} onFilterChange={(f) => { if (typeof f.type === 'string') setTypeFilter(f.type); if (typeof f.status === 'string') setStatusFilter(f.status); setPage(1); }}
         pagination={{ page, pageSize, total: filteredConnections.length, onPageChange: setPage }}
         actions={[{ label: '刷新', icon: <RefreshCw size={16} />, onClick: loadData, variant: 'outlined' }, { label: '新建连接', icon: <Plus size={16} />, onClick: () => {}, variant: 'contained' }]}
-        onRefresh={loadData} emptyMessage='暂无连接' stats={stats}
+        onRefresh={loadData} emptyMessage='暂无连接'
       />
       <ConfirmDialog isOpen={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)} onConfirm={() => { confirmDialogConfig?.onConfirm(); setConfirmDialogOpen(false); }} title={confirmDialogConfig?.title || ''} message={confirmDialogConfig?.message || ''} danger={confirmDialogConfig?.danger} />
     </PageContainer>

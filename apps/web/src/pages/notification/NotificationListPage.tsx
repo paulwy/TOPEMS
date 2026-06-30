@@ -1,14 +1,4 @@
-import {
-  Box,
-  Typography,
-  Chip,
-  IconButton,
-  Tabs,
-  Tab,
-  Grid,
-  Paper,
-  Avatar,
-} from '@mui/material';
+import { Box, Typography, Chip, IconButton, Tabs, Tab, Grid, Paper, Avatar } from '@mui/material';
 import React, { useState, useMemo, useCallback } from 'react';
 import {
   Bell,
@@ -57,6 +47,13 @@ const TYPE_COLORS: Record<NotificationType, 'primary' | 'success' | 'warning' | 
   approval: 'warning',
   task: 'success',
   message: 'info',
+};
+
+const TYPE_BG_COLORS: Record<NotificationType, { bg: string; color: string }> = {
+  system: { bg: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' },
+  approval: { bg: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' },
+  task: { bg: 'rgba(34, 197, 94, 0.1)', color: '#22c55e' },
+  message: { bg: 'rgba(14, 165, 233, 0.1)', color: '#0ea5e9' },
 };
 
 const TYPE_ICONS: Record<NotificationType, React.ReactNode> = {
@@ -217,8 +214,7 @@ export const NotificationListPage: React.FC = () => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
-        (n) =>
-          n.title.toLowerCase().includes(query) || n.content.toLowerCase().includes(query)
+        (n) => n.title.toLowerCase().includes(query) || n.content.toLowerCase().includes(query)
       );
     }
 
@@ -231,9 +227,7 @@ export const NotificationListPage: React.FC = () => {
     }
 
     if (importantFilter !== 'all') {
-      result = result.filter((n) =>
-        importantFilter === 'important' ? n.important : !n.important
-      );
+      result = result.filter((n) => (importantFilter === 'important' ? n.important : !n.important));
     }
 
     return result;
@@ -253,54 +247,82 @@ export const NotificationListPage: React.FC = () => {
     const weekAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
     const weekCount = notifications.filter((n) => new Date(n.createdAt) >= weekAgo).length;
     const readCount = notifications.filter((n) => n.status === 'read').length;
-    const readRate = notifications.length > 0 ? Math.round((readCount / notifications.length) * 100) : 0;
+    const readRate =
+      notifications.length > 0 ? Math.round((readCount / notifications.length) * 100) : 0;
 
     return [
-      { id: 'unread', title: '未读数', value: unreadCount, icon: <Bell size={20} />, color: 'primary' as const },
-      { id: 'today', title: '今日通知', value: todayCount, icon: <Calendar size={20} />, color: 'success' as const },
-      { id: 'week', title: '本周通知', value: weekCount, icon: <Mail size={20} />, color: 'warning' as const },
-      { id: 'readRate', title: '已读率', value: `${readRate}%`, icon: <Check size={20} />, color: 'info' as const },
+      {
+        id: 'unread',
+        title: '未读数',
+        value: unreadCount,
+        icon: <Bell size={20} />,
+        color: 'primary' as const,
+      },
+      {
+        id: 'today',
+        title: '今日通知',
+        value: todayCount,
+        icon: <Calendar size={20} />,
+        color: 'success' as const,
+      },
+      {
+        id: 'week',
+        title: '本周通知',
+        value: weekCount,
+        icon: <Mail size={20} />,
+        color: 'warning' as const,
+      },
+      {
+        id: 'readRate',
+        title: '已读率',
+        value: `${readRate}%`,
+        icon: <Check size={20} />,
+        color: 'info' as const,
+      },
     ];
   }, [notifications]);
 
-  const handleMarkAsRead = useCallback((row: NotificationItem) => {
-    setNotifications((prev) =>
-      prev.map((n) =>
-        n.id === row.id ? { ...n, status: 'read' as const } : n
-      )
-    );
-    addNotification({
-      title: '操作成功',
-      message: '通知已标记为已读',
-      type: 'success',
-    });
-  }, [addNotification]);
+  const handleMarkAsRead = useCallback(
+    (row: NotificationItem) => {
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === row.id ? { ...n, status: 'read' as const } : n))
+      );
+      addNotification({
+        title: '操作成功',
+        message: '通知已标记为已读',
+        type: 'success',
+      });
+    },
+    [addNotification]
+  );
 
-  const handleMarkAsUnread = useCallback((row: NotificationItem) => {
-    setNotifications((prev) =>
-      prev.map((n) =>
-        n.id === row.id ? { ...n, status: 'unread' as const } : n
-      )
-    );
-    addNotification({
-      title: '操作成功',
-      message: '通知已标记为未读',
-      type: 'success',
-    });
-  }, [addNotification]);
+  const handleMarkAsUnread = useCallback(
+    (row: NotificationItem) => {
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === row.id ? { ...n, status: 'unread' as const } : n))
+      );
+      addNotification({
+        title: '操作成功',
+        message: '通知已标记为未读',
+        type: 'success',
+      });
+    },
+    [addNotification]
+  );
 
-  const handleToggleImportant = useCallback((row: NotificationItem) => {
-    setNotifications((prev) =>
-      prev.map((n) =>
-        n.id === row.id ? { ...n, important: !n.important } : n
-      )
-    );
-    addNotification({
-      title: '操作成功',
-      message: row.important ? '已取消重要标记' : '已标记为重要',
-      type: 'success',
-    });
-  }, [addNotification]);
+  const handleToggleImportant = useCallback(
+    (row: NotificationItem) => {
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === row.id ? { ...n, important: !n.important } : n))
+      );
+      addNotification({
+        title: '操作成功',
+        message: row.important ? '已取消重要标记' : '已标记为重要',
+        type: 'success',
+      });
+    },
+    [addNotification]
+  );
 
   const handleDeleteClick = useCallback((row: NotificationItem) => {
     setDeleteTarget(row);
@@ -404,11 +426,11 @@ export const NotificationListPage: React.FC = () => {
                 width: 32,
                 height: 32,
                 borderRadius: '50%',
-                bgcolor: `${TYPE_COLORS[row.type]}.light',
+                bgcolor: TYPE_BG_COLORS[row.type].bg,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: `${TYPE_COLORS[row.type]}.main',
+                color: TYPE_BG_COLORS[row.type].color,
                 flexShrink: 0,
               }}
             >
@@ -441,7 +463,11 @@ export const NotificationListPage: React.FC = () => {
               </Typography>
             </Box>
             {row.important && (
-              <Star size={14} color='#f59e0b' fill='#f59e0b' />
+              <Star
+                size={14}
+                color='#f59e0b'
+                fill='#f59e0b'
+              />
             )}
           </Box>
         ),
@@ -464,7 +490,10 @@ export const NotificationListPage: React.FC = () => {
         label: '发送时间',
         width: 160,
         render: (row) => (
-          <Typography variant='body2' color='text.secondary'>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             {new Date(row.createdAt).toLocaleString('zh-CN')}
           </Typography>
         ),
@@ -504,7 +533,14 @@ export const NotificationListPage: React.FC = () => {
               title={row.important ? '取消重要' : '标记重要'}
               color={row.important ? 'warning' : 'default'}
             >
-              {row.important ? <Star size={16} fill='currentColor' /> : <StarOff size={16} />}
+              {row.important ? (
+                <Star
+                  size={16}
+                  fill='currentColor'
+                />
+              ) : (
+                <StarOff size={16} />
+              )}
             </IconButton>
             <IconButton
               size='small'
@@ -590,9 +626,12 @@ export const NotificationListPage: React.FC = () => {
     ];
     return (
       <Box sx={{ mb: 2 }}>
-        <Grid container spacing={2} sx={{ mb: 2 }}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 2 }}>
           {stats.map((stat) => (
-            <Grid item xs={6} sm={3} key={stat.id}>
+            <Box
+              key={stat.id}
+              sx={{ flex: 1, minWidth: { xs: '50%', sm: 'calc(25% - 8px)' } }}
+            >
               <Paper sx={{ p: 2, borderRadius: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Avatar
@@ -606,22 +645,34 @@ export const NotificationListPage: React.FC = () => {
                     {stat.icon}
                   </Avatar>
                   <Box>
-                    <Typography variant='caption' color='text.secondary'>
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                    >
                       {stat.title}
                     </Typography>
-                    <Typography variant='h6' sx={{ fontWeight: 600 }}>
+                    <Typography
+                      variant='h6'
+                      sx={{ fontWeight: 600 }}
+                    >
                       {stat.value}
                     </Typography>
                   </Box>
                 </Box>
               </Paper>
-            </Grid>
+            </Box>
           ))}
-        </Grid>
+        </Box>
         <Box sx={{ borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
-          <Tabs value={activeTab} onChange={handleTabChange}>
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+          >
             {tabs.map((tab) => (
-              <Tab key={tab.key} label={tab.label} />
+              <Tab
+                key={tab.key}
+                label={tab.label}
+              />
             ))}
           </Tabs>
         </Box>
@@ -644,7 +695,7 @@ export const NotificationListPage: React.FC = () => {
         columns={columns}
         data={paginatedData}
         loading={loading}
-        error={error}
+        error={error || undefined}
         searchable
         searchPlaceholder='搜索标题、内容...'
         searchValue={searchQuery}
@@ -714,13 +765,13 @@ export const NotificationListPage: React.FC = () => {
           },
         ]}
         onRefresh={() => {
-            setNotifications(generateMockData());
-            addNotification({
-              title: '刷新成功',
-              message: '通知列表已刷新',
-              type: 'success',
-            });
-          }}
+          setNotifications(generateMockData());
+          addNotification({
+            title: '刷新成功',
+            message: '通知列表已刷新',
+            type: 'success',
+          });
+        }}
         emptyMessage='暂无通知'
         headerContent={headerContent}
         getRowId={(row) => row.id}
@@ -733,11 +784,17 @@ export const NotificationListPage: React.FC = () => {
         title='删除通知'
         message={
           <Box>
-            <AlertCircle size={48} color='error.main' style={{ marginBottom: 16 }} />
-            <Typography variant='body1'>
-              确定要删除这条通知吗？
-            </Typography>
-            <Typography variant='body2' color='text.secondary' sx={{ mt: 1 }}>
+            <AlertCircle
+              size={48}
+              color='error.main'
+              style={{ marginBottom: 16 }}
+            />
+            <Typography variant='body1'>确定要删除这条通知吗？</Typography>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{ mt: 1 }}
+            >
               {deleteTarget?.title}
             </Typography>
           </Box>
@@ -755,11 +812,19 @@ export const NotificationListPage: React.FC = () => {
         title='批量删除'
         message={
           <Box>
-            <AlertCircle size={48} color='error.main' style={{ marginBottom: 16 }} />
+            <AlertCircle
+              size={48}
+              color='error.main'
+              style={{ marginBottom: 16 }}
+            />
             <Typography variant='body1'>
               确定要删除选中的 {selectedIds.length} 条通知吗？
             </Typography>
-            <Typography variant='body2' color='text.secondary' sx={{ mt: 1 }}>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{ mt: 1 }}
+            >
               此操作不可恢复
             </Typography>
           </Box>

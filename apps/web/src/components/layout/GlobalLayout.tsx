@@ -3,7 +3,8 @@ import { Box, Typography, useTheme, useMediaQuery, Drawer } from '@mui/material'
 
 import { useLocation, useNavigate } from 'react-router-dom';
 import { usePermission } from '../../hooks/usePermission';
-import { navigationRegistry, type NavItem } from '@/lib/NavigationRegistry';
+import { navigationRegistryV2 } from '@/lib/navigation';
+import type { NavItem } from '@/lib/navigation/types';
 import { useAppStore } from '@/store';
 import { FloatingAIHelper } from '../ai/FloatingAIHelper';
 import { MobileNav } from './MobileNav';
@@ -67,16 +68,16 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   }, [location.pathname]);
 
   const [_topNavItems, setTopNavItems] = useState<NavItem[]>(() => {
-    return navigationRegistry.getNavItemsByPermission(checkPermission);
+    return navigationRegistryV2.getTopNavItems(checkPermission);
   });
 
   useEffect(() => {
     const updateNavItems = () => {
-      setTopNavItems(navigationRegistry.getNavItemsByPermission(checkPermission));
+      setTopNavItems(navigationRegistryV2.getTopNavItems(checkPermission));
     };
-    navigationRegistry.emitter.on('navigationUpdated', updateNavItems);
+    navigationRegistryV2.emitter.on('navigationUpdated', updateNavItems);
     return function cleanup() {
-      navigationRegistry.emitter.off('navigationUpdated', updateNavItems);
+      navigationRegistryV2.emitter.off('navigationUpdated', updateNavItems);
     };
   }, [checkPermission]);
 

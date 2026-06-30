@@ -68,19 +68,25 @@ describe('EhsAccidentPage', () => {
   });
 
   it('should render loading state initially', async () => {
-    renderWithProviders(<EhsAccidentPage />);
+    await act(async () => {
+      renderWithProviders(<EhsAccidentPage />);
+    });
     expect(screen.getByRole('status')).toBeInTheDocument();
   });
 
   it('should render page title', async () => {
-    renderWithProviders(<EhsAccidentPage />);
+    await act(async () => {
+      renderWithProviders(<EhsAccidentPage />);
+    });
     await waitFor(() => {
       expect(screen.getByText('事故记录')).toBeInTheDocument();
     });
   });
 
   it('should render accident table', async () => {
-    renderWithProviders(<EhsAccidentPage />);
+    await act(async () => {
+      renderWithProviders(<EhsAccidentPage />);
+    });
     await waitFor(() => {
       expect(screen.getByText('AC-2024-001')).toBeInTheDocument();
       expect(screen.getByText('车间设备故障事故')).toBeInTheDocument();
@@ -88,7 +94,9 @@ describe('EhsAccidentPage', () => {
   });
 
   it('should handle search', async () => {
-    renderWithProviders(<EhsAccidentPage />);
+    await act(async () => {
+      renderWithProviders(<EhsAccidentPage />);
+    });
     await waitFor(() => {
       const searchInput = screen.getByPlaceholderText(/搜索事故编号、标题或地点/);
       fireEvent.change(searchInput, { target: { value: 'B区' } });
@@ -101,7 +109,9 @@ describe('EhsAccidentPage', () => {
       data: {},
     });
 
-    renderWithProviders(<EhsAccidentPage />);
+    await act(async () => {
+      renderWithProviders(<EhsAccidentPage />);
+    });
 
     await waitFor(() => {
       const addButton = screen.getByText(/事故上报/);
@@ -126,7 +136,9 @@ describe('EhsAccidentPage', () => {
 
   it('should handle API error', async () => {
     (ehsApi.listAccidents as vi.Mock).mockRejectedValue(new Error('Network error'));
-    renderWithProviders(<EhsAccidentPage />);
+    await act(async () => {
+      renderWithProviders(<EhsAccidentPage />);
+    });
 
     await waitFor(() => {
       expect(mockAddNotification).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }));

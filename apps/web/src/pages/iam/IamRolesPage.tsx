@@ -24,15 +24,7 @@ import {
   Chip,
 } from '@mui/material';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import {
-  Shield,
-  Plus,
-  Trash2,
-  Edit,
-  Key,
-  CheckCircle,
-  UserCheck,
-} from 'lucide-react';
+import { Shield, Plus, Trash2, Edit, Key, CheckCircle, UserCheck } from 'lucide-react';
 
 import { authApi, type Role, type Permission } from '@/api/iam';
 import { SERVICES } from '@/utils/apiPath';
@@ -127,20 +119,23 @@ export const IamRolesPage: React.FC = () => {
   /**
    * 加载角色的权限列表
    */
-  const loadRolePermissions = useCallback(async (roleId: string) => {
-    try {
-      const res = await authApi.getRolePermissions(roleId);
-      if (res.success && res.data) {
-        setRolePermissions(res.data);
+  const loadRolePermissions = useCallback(
+    async (roleId: string) => {
+      try {
+        const res = await authApi.getRolePermissions(roleId);
+        if (res.success && res.data) {
+          setRolePermissions(res.data);
+        }
+      } catch {
+        addNotification({
+          title: '加载失败',
+          message: '加载角色权限失败',
+          type: 'error',
+        });
       }
-    } catch {
-      addNotification({
-        title: '加载失败',
-        message: '加载角色权限失败',
-        type: 'error',
-      });
-    }
-  }, [addNotification]);
+    },
+    [addNotification]
+  );
 
   /**
    * 创建角色
@@ -364,14 +359,23 @@ export const IamRolesPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <Shield size={20} color='primary.main' />
+              <Shield
+                size={20}
+                color='primary.main'
+              />
             </Box>
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
                 {row.name}
               </Typography>
               {row.description && (
-                <Typography variant='caption' color='text.secondary'>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   {row.description}
                 </Typography>
               )}
@@ -383,10 +387,11 @@ export const IamRolesPage: React.FC = () => {
         id: 'created_at',
         label: '创建时间',
         render: (row) => (
-          <Typography variant='body2' color='text.secondary'>
-            {row.created_at
-              ? new Date(row.created_at).toLocaleString('zh-CN')
-              : '-'}
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
+            {row.created_at ? new Date(row.created_at).toLocaleString('zh-CN') : '-'}
           </Typography>
         ),
       },
@@ -429,8 +434,7 @@ export const IamRolesPage: React.FC = () => {
     const query = searchQuery.toLowerCase();
     return roles.filter(
       (role) =>
-        role.name.toLowerCase().includes(query) ||
-        role.description?.toLowerCase().includes(query)
+        role.name.toLowerCase().includes(query) || role.description?.toLowerCase().includes(query)
     );
   }, [roles, searchQuery]);
 
@@ -441,10 +445,6 @@ export const IamRolesPage: React.FC = () => {
       headerProps={{
         pageIcon: <UserCheck size={20} />,
       }}
-      // V4.0: 返回按钮指向模块首页
-      backButton={{
-        href: '/iam/dashboard',
-      }}
     >
       {/*
        * V4.0 规范：ListPageTemplate 完整配置
@@ -453,7 +453,7 @@ export const IamRolesPage: React.FC = () => {
         columns={columns}
         data={filteredRoles}
         loading={loading}
-        error={error}
+        error={error || undefined}
         rowActions={rowActions}
         searchable
         searchPlaceholder='搜索角色名称或描述...'
@@ -508,7 +508,10 @@ export const IamRolesPage: React.FC = () => {
             >
               取消
             </Button>
-            <Button type='submit' variant='contained'>
+            <Button
+              type='submit'
+              variant='contained'
+            >
               创建
             </Button>
           </DialogActions>
@@ -531,9 +534,7 @@ export const IamRolesPage: React.FC = () => {
                   label='角色名称 *'
                   required
                   value={selectedRole.name}
-                  onChange={(e) =>
-                    setSelectedRole({ ...selectedRole, name: e.target.value })
-                  }
+                  onChange={(e) => setSelectedRole({ ...selectedRole, name: e.target.value })}
                   placeholder='例如：管理员，普通用户'
                   fullWidth
                 />
@@ -562,7 +563,10 @@ export const IamRolesPage: React.FC = () => {
               >
                 取消
               </Button>
-              <Button type='submit' variant='contained'>
+              <Button
+                type='submit'
+                variant='contained'
+              >
                 保存
               </Button>
             </DialogActions>
@@ -599,12 +603,25 @@ export const IamRolesPage: React.FC = () => {
                   <Box sx={{ flex: 1 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Typography sx={{ fontWeight: 500 }}>{perm.name}</Typography>
-                      {hasPermission && <CheckCircle size={16} color='success.dark' />}
+                      {hasPermission && (
+                        <CheckCircle
+                          size={16}
+                          color='success.dark'
+                        />
+                      )}
                     </Box>
-                    <Typography variant='body2' color='text.secondary' sx={{ mt: 0.5 }}>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                      sx={{ mt: 0.5 }}
+                    >
                       {perm.description}
                     </Typography>
-                    <Stack direction='row' spacing={1} sx={{ mt: 1 }}>
+                    <Stack
+                      direction='row'
+                      spacing={1}
+                      sx={{ mt: 1 }}
+                    >
                       <Chip
                         label={perm.category}
                         size='small'
@@ -635,9 +652,7 @@ export const IamRolesPage: React.FC = () => {
                     <Button
                       variant='outlined'
                       size='small'
-                      onClick={() =>
-                        selectedRole && handleAddPermission(selectedRole.id, perm.id)
-                      }
+                      onClick={() => selectedRole && handleAddPermission(selectedRole.id, perm.id)}
                     >
                       添加
                     </Button>

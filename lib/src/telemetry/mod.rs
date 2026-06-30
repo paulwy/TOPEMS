@@ -1,6 +1,8 @@
+pub mod business_spans;
 pub mod config;
 pub mod middleware;
 
+pub use business_spans::*;
 pub use config::*;
 pub use middleware::*;
 
@@ -128,6 +130,17 @@ where
 {
     match log_format {
         LogFormat::Json => {
+            let subscriber = Registry::default()
+                .with(env_filter)
+                .with(layer)
+                .with(
+                    tracing_subscriber::fmt::layer()
+                        .event_format(crate::logging::JsonEventFormatter::new()),
+                );
+            tracing::subscriber::set_global_default(subscriber)
+                .expect("Failed to set global subscriber");
+        }
+        LogFormat::File => {
             let subscriber = Registry::default()
                 .with(env_filter)
                 .with(layer)

@@ -333,6 +333,23 @@ pub fn init_logging(service_name: &str) {
                 )
                 .init();
         }
+        LogFormat::File => {
+            let log_dir = std::env::var("LOG_DIR").unwrap_or_else(|_| "./logs".to_string());
+            std::fs::create_dir_all(&log_dir).unwrap_or_default();
+            
+            let _log_file = format!("{}/{}.log", log_dir, service_name);
+            let file_appender = tracing_appender::rolling::hourly(&log_dir, service_name);
+            let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
+
+            tracing_subscriber::registry()
+                .with(env_filter)
+                .with(
+                    tracing_subscriber::fmt::layer()
+                        .with_writer(non_blocking)
+                        .event_format(JsonEventFormatter::new()),
+                )
+                .init();
+        }
         LogFormat::Text => {
             tracing_subscriber::registry()
                 .with(env_filter)

@@ -1,4 +1,5 @@
 use chrono::Utc;
+use opentelemetry::trace::TraceContextExt;
 use serde_json::json;
 use std::collections::HashMap;
 use tracing::{Event, Level, Subscriber};
@@ -9,6 +10,7 @@ use tracing_subscriber::registry::LookupSpan;
 pub enum LogFormat {
     Text,
     Json,
+    File,
 }
 
 impl LogFormat {
@@ -19,6 +21,7 @@ impl LogFormat {
             .as_str()
         {
             "json" => LogFormat::Json,
+            "file" => LogFormat::File,
             _ => LogFormat::Text,
         }
     }
@@ -64,6 +67,28 @@ where
             .and_then(|v| v.as_str().map(String::from))
             .unwrap_or_default();
 
+        let ctx = opentelemetry::Context::current();
+        let span = ctx.span();
+        let span_context = span.span_context();
+
+        let trace_id = if span_context.is_valid() {
+            span_context.trace_id().to_string()
+        } else {
+            String::new()
+        };
+
+        let span_id = if span_context.is_valid() {
+            span_context.span_id().to_string()
+        } else {
+            String::new()
+        };
+
+        let trace_flags = if span_context.is_valid() {
+            format!("{:?}", span_context.trace_flags())
+        } else {
+            String::new()
+        };
+
         let log_entry = json!({
             "timestamp": Utc::now().to_rfc3339(),
             "level": format_level(metadata.level()),
@@ -72,6 +97,9 @@ where
             "module": metadata.module_path(),
             "file": metadata.file(),
             "line": metadata.line(),
+            "trace_id": trace_id,
+            "span_id": span_id,
+            "trace_flags": trace_flags,
             "fields": fields,
         });
 

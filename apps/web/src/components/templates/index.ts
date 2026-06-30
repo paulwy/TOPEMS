@@ -156,8 +156,5 @@ export {
   getTemplatesByCategory,
   getHighFrequencyTemplates,
   recommendTemplate,
-};
-export type {
-  PageTemplateType,
-  TemplateClassification,
 } from './classification';
+export type { PageTemplateType, TemplateClassification } from './classification';

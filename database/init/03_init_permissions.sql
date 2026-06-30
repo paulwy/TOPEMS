@@ -137,6 +137,47 @@ INSERT INTO core_permissions (code, name, description, resource, action, level) 
 ('erp:admin', '企业资源-管理', '完整管理企业资源模块', 'erp', 'admin', 4)
 ON CONFLICT (code) DO NOTHING;
 
+-- Finance 财务管理模块权限
+INSERT INTO core_permissions (code, name, description, resource, action, level) VALUES
+('finance:read', '财务管理-只读', '查看财务数据', 'finance', 'read', 1),
+('finance:write', '财务管理-写入', '创建和修改财务数据', 'finance', 'write', 2),
+('finance:delete', '财务管理-删除', '删除财务数据', 'finance', 'delete', 3),
+('finance:admin', '财务管理-管理', '完整管理财务管理模块', 'finance', 'admin', 4),
+('finance:voucher:read', '财务凭证-只读', '查看凭证', 'finance', 'voucher_read', 1),
+('finance:voucher:create', '财务凭证-创建', '创建凭证', 'finance', 'voucher_create', 2),
+('finance:voucher:update', '财务凭证-更新', '更新凭证', 'finance', 'voucher_update', 2),
+('finance:voucher:delete', '财务凭证-删除', '删除凭证', 'finance', 'voucher_delete', 3),
+('finance:account:read', '账户管理-只读', '查看账户', 'finance', 'account_read', 1),
+('finance:account:write', '账户管理-写入', '创建和修改账户', 'finance', 'account_write', 2),
+('finance:counterparty:read', '往来单位-只读', '查看往来单位', 'finance', 'counterparty_read', 1),
+('finance:counterparty:write', '往来单位-写入', '创建和修改往来单位', 'finance', 'counterparty_write', 2),
+('finance:receivable:read', '应收账款-只读', '查看应收账款', 'finance', 'receivable_read', 1),
+('finance:receivable:write', '应收账款-写入', '创建和修改应收账款', 'finance', 'receivable_write', 2),
+('finance:payable:read', '应付账款-只读', '查看应付账款', 'finance', 'payable_read', 1),
+('finance:payable:write', '应付账款-写入', '创建和修改应付账款', 'finance', 'payable_write', 2),
+('finance:period:read', '会计期间-只读', '查看会计期间', 'finance', 'period_read', 1),
+('finance:period:write', '会计期间-写入', '创建和修改会计期间', 'finance', 'period_write', 2),
+('finance:budget:read', '预算管理-只读', '查看预算', 'finance', 'budget_read', 1),
+('finance:budget:write', '预算管理-写入', '创建和修改预算', 'finance', 'budget_write', 2),
+('finance:budget:approve', '预算管理-审批', '审批预算', 'finance', 'budget_approve', 3),
+('finance:tax:read', '税务管理-只读', '查看税务数据', 'finance', 'tax_read', 1),
+('finance:tax:write', '税务管理-写入', '创建和修改税务数据', 'finance', 'tax_write', 2),
+('finance:cost:read', '成本管理-只读', '查看成本数据', 'finance', 'cost_read', 1),
+('finance:cost:write', '成本管理-写入', '创建和修改成本数据', 'finance', 'cost_write', 2),
+('finance:template:read', '凭证模板-只读', '查看凭证模板', 'finance', 'template_read', 1),
+('finance:template:write', '凭证模板-写入', '创建和修改凭证模板', 'finance', 'template_write', 2),
+('finance:report:read', '财务报表-只读', '查看财务报表', 'finance', 'report_read', 1),
+('finance:report:write', '财务报表-写入', '创建和修改财务报表', 'finance', 'report_write', 2),
+('finance:analysis:read', '财务分析-只读', '查看财务分析', 'finance', 'analysis_read', 1),
+('finance:cash:read', '现金流分析-只读', '查看现金流分析', 'finance', 'cash_read', 1),
+('finance:dictionary:read', '数据字典-只读', '查看数据字典', 'finance', 'dictionary_read', 1),
+('finance:dictionary:write', '数据字典-写入', '创建和修改数据字典', 'finance', 'dictionary_write', 2),
+('finance:workflow:read', '流程配置-只读', '查看流程配置', 'finance', 'workflow_read', 1),
+('finance:workflow:write', '流程配置-写入', '创建和修改流程配置', 'finance', 'workflow_write', 2),
+('finance:integration:read', '系统集成-只读', '查看系统集成', 'finance', 'integration_read', 1),
+('finance:integration:write', '系统集成-写入', '配置系统集成', 'finance', 'integration_write', 2)
+ON CONFLICT (code) DO NOTHING;
+
 -- PM 模块权限
 INSERT INTO core_permissions (code, name, description, resource, action, level) VALUES
 ('pm:read', '项目管理-只读', '查看项目信息', 'pm', 'read', 1),
@@ -316,7 +357,7 @@ FROM core_roles r, core_permissions p
 WHERE r.name = 'superadmin'
 ON CONFLICT DO NOTHING;
 
--- 管理员：IAM读写 + 基础设施 + 系统设置
+-- 管理员：IAM读写 + 基础设施 + 系统设置 + 财务管理
 INSERT INTO core_role_permissions (role_id, permission_id)
 SELECT r.id, p.id 
 FROM core_roles r, core_permissions p 
@@ -329,6 +370,7 @@ AND (
     OR p.code LIKE 'im:%'
     OR p.code LIKE 'integration:%'
     OR p.code LIKE 'system:%'
+    OR p.code LIKE 'finance:%'
     OR p.resource IN ('dashboard', 'hrm', 'erp', 'pm', 'rs', 'scm', 'crm', 'ai', 'gis', 'qms', 'ehs', 'mes', 'wms', 'workflow')
 )
 ON CONFLICT DO NOTHING;

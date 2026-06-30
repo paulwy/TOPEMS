@@ -325,8 +325,8 @@ export const NotificationSettingsPage: React.FC = () => {
               }}
             />
           </Box>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+            <Box sx={{ flex: 1, minWidth: { xs: '100%', sm: 'calc(50% - 8px)' } }}>
               <TextField
                 fullWidth
                 label='开始时间'
@@ -338,10 +338,10 @@ export const NotificationSettingsPage: React.FC = () => {
                 }}
                 size='small'
                 disabled={!generalSettings.doNotDisturbEnabled}
-                InputLabelProps={{ shrink: true }}
+                slotProps={{ inputLabel: { shrink: true } }}
               />
-            </Grid>
-            <Grid item xs={12} sm={6}>
+            </Box>
+            <Box sx={{ flex: 1, minWidth: { xs: '100%', sm: 'calc(50% - 8px)' } }}>
               <TextField
                 fullWidth
                 label='结束时间'
@@ -353,10 +353,10 @@ export const NotificationSettingsPage: React.FC = () => {
                 }}
                 size='small'
                 disabled={!generalSettings.doNotDisturbEnabled}
-                InputLabelProps={{ shrink: true }}
+                slotProps={{ inputLabel: { shrink: true } }}
               />
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
         </Stack>
       </Box>
     </Stack>
@@ -1207,8 +1207,8 @@ export const NotificationSettingsPage: React.FC = () => {
               }}
             />
           </Box>
-          <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+            <Box sx={{ flex: 1, minWidth: { xs: '100%', sm: 'calc(50% - 8px)' } }}>
               <TextField
                 fullWidth
                 type='number'
@@ -1225,8 +1225,8 @@ export const NotificationSettingsPage: React.FC = () => {
                 disabled={!advancedSettings.rateLimitEnabled}
                 helperText='每分钟最多发送条数'
               />
-            </Grid>
-            <Grid item xs={12} sm={6}>
+            </Box>
+            <Box sx={{ flex: 1, minWidth: { xs: '100%', sm: 'calc(50% - 8px)' } }}>
               <TextField
                 fullWidth
                 type='number'
@@ -1243,8 +1243,8 @@ export const NotificationSettingsPage: React.FC = () => {
                 disabled={!advancedSettings.rateLimitEnabled}
                 helperText='每小时最多发送条数'
               />
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
         </Stack>
       </Box>
 
@@ -1344,9 +1344,9 @@ export const NotificationSettingsPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <Settings size={20} />,
-      }}
-      backButton={{
-        href: '/notification/dashboard',
+        backButton: {
+          href: '/notification/dashboard',
+        },
       }}
     >
       <Paper sx={{ borderRadius: 2, overflow: 'hidden' }}>

@@ -22,7 +22,6 @@ import {
   UserCheck,
   Key,
   Building2,
-  Sitemap,
   UserCircle,
   CreditCard,
   Building,
@@ -37,6 +36,7 @@ import {
   Check,
   FolderTree,
   ArrowRight,
+  Network,
 } from 'lucide-react';
 import { PageContainer } from '@/components/common';
 import SidebarNavGroup from '@/lib/navigation/components/SidebarNavGroup';
@@ -51,7 +51,7 @@ const iconMap: Record<string, React.ReactNode> = {
   UserCheck: <UserCheck size={20} />,
   Key: <Key size={20} />,
   Building2: <Building2 size={20} />,
-  Sitemap: <Sitemap size={20} />,
+  Network: <Network size={20} />,
   UserCircle: <UserCircle size={20} />,
   CreditCard: <CreditCard size={20} />,
   Building: <Building size={20} />,
@@ -85,7 +85,11 @@ const V4DemoPage: React.FC = () => {
 
   const stats = [
     { label: '导航项总数', value: allNavItems.length, color: 'primary' },
-    { label: '侧边栏显示', value: allNavItems.filter((i) => i.showInSidebar).length, color: 'success' },
+    {
+      label: '侧边栏显示',
+      value: allNavItems.filter((i) => i.showInSidebar).length,
+      color: 'success',
+    },
     { label: 'Tab显示', value: allNavItems.filter((i) => i.showInTabs).length, color: 'info' },
     { label: '分组数', value: Object.keys(sidebarGrouped).length, color: 'warning' },
   ];
@@ -104,11 +108,19 @@ const V4DemoPage: React.FC = () => {
         pageGradient: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
       }}
     >
-      <Alert severity='info' sx={{ mb: 3 }}>
-        本页面展示 V4.0 架构重整后的导航系统效果，包括侧边栏分组、面包屑自动生成、路由-导航联动等特性。
+      <Alert
+        severity='info'
+        sx={{ mb: 3 }}
+      >
+        本页面展示 V4.0
+        架构重整后的导航系统效果，包括侧边栏分组、面包屑自动生成、路由-导航联动等特性。
       </Alert>
 
-      <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)} sx={{ mb: 3 }}>
+      <Tabs
+        value={activeTab}
+        onChange={(_, v) => setActiveTab(v)}
+        sx={{ mb: 3 }}
+      >
         <Tab label='侧边栏分组效果' />
         <Tab label='面包屑层级' />
         <Tab label='导航数据结构' />
@@ -116,14 +128,23 @@ const V4DemoPage: React.FC = () => {
       </Tabs>
 
       {activeTab === 0 && (
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={4}>
-            <Paper elevation={0} sx={{ borderRadius: 2, border: 1, borderColor: 'divider' }}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+          <Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(33.333% - 8px)' } }}>
+            <Paper
+              elevation={0}
+              sx={{ borderRadius: 2, border: 1, borderColor: 'divider' }}
+            >
               <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-                <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
+                <Typography
+                  variant='subtitle2'
+                  sx={{ fontWeight: 600 }}
+                >
                   IAM 模块侧边栏
                 </Typography>
-                <Typography variant='caption' color='text.secondary'>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   5大标准分组
                 </Typography>
               </Box>
@@ -131,33 +152,51 @@ const V4DemoPage: React.FC = () => {
                 <SidebarNavGroup grouped={sidebarGrouped} />
               </Box>
             </Paper>
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={8}>
-            <Grid container spacing={2} sx={{ mb: 3 }}>
+          <Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(66.666% - 8px)' } }}>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
               {stats.map((stat, i) => (
-                <Grid item xs={6} sm={3} key={i}>
-                  <Paper elevation={0} sx={{ p: 2, borderRadius: 2, border: 1, borderColor: 'divider' }}>
-                    <Typography variant='h4' sx={{ fontWeight: 700 }}>
+                <Box
+                  key={i}
+                  sx={{ flex: 1, minWidth: { xs: '50%', sm: 'calc(25% - 8px)' } }}
+                >
+                  <Paper
+                    elevation={0}
+                    sx={{ p: 2, borderRadius: 2, border: 1, borderColor: 'divider' }}
+                  >
+                    <Typography
+                      variant='h4'
+                      sx={{ fontWeight: 700 }}
+                    >
                       {stat.value}
                     </Typography>
-                    <Typography variant='caption' color='text.secondary'>
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                    >
                       {stat.label}
                     </Typography>
                   </Paper>
-                </Grid>
+                </Box>
               ))}
-            </Grid>
+            </Box>
 
-            <Paper elevation={0} sx={{ p: 3, borderRadius: 2, border: 1, borderColor: 'divider' }}>
-              <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2 }}>
+            <Paper
+              elevation={0}
+              sx={{ p: 3, borderRadius: 2, border: 1, borderColor: 'divider' }}
+            >
+              <Typography
+                variant='subtitle2'
+                sx={{ fontWeight: 600, mb: 2 }}
+              >
                 点击侧边栏菜单项查看效果
               </Typography>
               <List>
                 {allNavItems.slice(0, 8).map((item) => (
                   <ListItem
                     key={item.code}
-                    button
+                    component='button'
                     onClick={() => setSelectedPath(item.path)}
                     sx={{
                       borderRadius: 1,
@@ -165,17 +204,23 @@ const V4DemoPage: React.FC = () => {
                       bgcolor: selectedPath === item.path ? 'action.selected' : 'transparent',
                     }}
                   >
-                    <Box sx={{ mr: 2, color: selectedPath === item.path ? 'primary.main' : 'inherit' }}>
+                    <Box
+                      sx={{ mr: 2, color: selectedPath === item.path ? 'primary.main' : 'inherit' }}
+                    >
                       {renderIcon(item.icon)}
                     </Box>
                     <ListItemText
-                      primary={item.label}
-                      secondary={item.path}
-                      primaryTypographyProps={{
-                        fontWeight: selectedPath === item.path ? 600 : 400,
-                        color: selectedPath === item.path ? 'primary.main' : 'text.primary',
-                      }}
-                      secondaryTypographyProps={{ fontSize: '0.75rem' }}
+                      primary={
+                        <Typography
+                          sx={{
+                            fontWeight: selectedPath === item.path ? 600 : 400,
+                            color: selectedPath === item.path ? 'primary.main' : 'text.primary',
+                          }}
+                        >
+                          {item.label}
+                        </Typography>
+                      }
+                      secondary={<Typography sx={{ fontSize: '0.75rem' }}>{item.path}</Typography>}
                     />
                     <Chip
                       label={item.group || 'other'}
@@ -187,21 +232,42 @@ const V4DemoPage: React.FC = () => {
                 ))}
               </List>
             </Paper>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       )}
 
       {activeTab === 1 && (
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <Paper elevation={0} sx={{ p: 3, borderRadius: 2, border: 1, borderColor: 'divider' }}>
-              <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2 }}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+          <Box sx={{ width: '100%' }}>
+            <Paper
+              elevation={0}
+              sx={{ p: 3, borderRadius: 2, border: 1, borderColor: 'divider' }}
+            >
+              <Typography
+                variant='subtitle2'
+                sx={{ fontWeight: 600, mb: 2 }}
+              >
                 面包屑层级自动生成
               </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3, p: 2, bgcolor: 'background.default', borderRadius: 1 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1,
+                  mb: 3,
+                  p: 2,
+                  bgcolor: 'background.default',
+                  borderRadius: 1,
+                }}
+              >
                 {navHierarchy.map((item, index) => (
                   <React.Fragment key={item.code}>
-                    {index > 0 && <ArrowRight size={14} color='text.disabled' />}
+                    {index > 0 && (
+                      <ArrowRight
+                        size={14}
+                        color='text.disabled'
+                      />
+                    )}
                     <Chip
                       label={item.label}
                       size='small'
@@ -211,49 +277,127 @@ const V4DemoPage: React.FC = () => {
                   </React.Fragment>
                 ))}
               </Box>
-              <Typography variant='body2' color='text.secondary'>
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
                 当前路径: <code>{selectedPath}</code>
               </Typography>
             </Paper>
-          </Grid>
+          </Box>
 
-          <Grid item xs={12}>
-            <Paper elevation={0} sx={{ p: 3, borderRadius: 2, border: 1, borderColor: 'divider' }}>
-              <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2 }}>
+          <Box sx={{ width: '100%' }}>
+            <Paper
+              elevation={0}
+              sx={{ p: 3, borderRadius: 2, border: 1, borderColor: 'divider' }}
+            >
+              <Typography
+                variant='subtitle2'
+                sx={{ fontWeight: 600, mb: 2 }}
+              >
                 模块信息
               </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={6} sm={4} md={3}>
-                  <Typography variant='caption' color='text.secondary'>模块编码</Typography>
-                  <Typography variant='body2' sx={{ fontFamily: 'monospace' }}>{moduleInfo?.code}</Typography>
-                </Grid>
-                <Grid item xs={6} sm={4} md={3}>
-                  <Typography variant='caption' color='text.secondary'>模块名称</Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                <Box
+                  sx={{
+                    flex: 1,
+                    minWidth: { xs: '50%', sm: 'calc(33.333% - 8px)', md: 'calc(25% - 8px)' },
+                  }}
+                >
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    模块编码
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    sx={{ fontFamily: 'monospace' }}
+                  >
+                    {moduleInfo?.code}
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    flex: 1,
+                    minWidth: { xs: '50%', sm: 'calc(33.333% - 8px)', md: 'calc(25% - 8px)' },
+                  }}
+                >
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    模块名称
+                  </Typography>
                   <Typography variant='body2'>{moduleInfo?.name}</Typography>
-                </Grid>
-                <Grid item xs={6} sm={4} md={3}>
-                  <Typography variant='caption' color='text.secondary'>模块来源</Typography>
-                  <Chip label={moduleInfo?.source} size='small' color={moduleInfo?.source === 'core' ? 'primary' : 'default'} />
-                </Grid>
-                <Grid item xs={6} sm={4} md={3}>
-                  <Typography variant='caption' color='text.secondary'>入口路径</Typography>
-                  <Typography variant='body2' sx={{ fontFamily: 'monospace' }}>{moduleInfo?.path}</Typography>
-                </Grid>
-              </Grid>
+                </Box>
+                <Box
+                  sx={{
+                    flex: 1,
+                    minWidth: { xs: '50%', sm: 'calc(33.333% - 8px)', md: 'calc(25% - 8px)' },
+                  }}
+                >
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    模块来源
+                  </Typography>
+                  <Chip
+                    label={moduleInfo?.source}
+                    size='small'
+                    color={moduleInfo?.source === 'core' ? 'primary' : 'default'}
+                  />
+                </Box>
+                <Box
+                  sx={{
+                    flex: 1,
+                    minWidth: { xs: '50%', sm: 'calc(33.333% - 8px)', md: 'calc(25% - 8px)' },
+                  }}
+                >
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
+                    入口路径
+                  </Typography>
+                  <Typography
+                    variant='body2'
+                    sx={{ fontFamily: 'monospace' }}
+                  >
+                    {moduleInfo?.path}
+                  </Typography>
+                </Box>
+              </Box>
             </Paper>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       )}
 
       {activeTab === 2 && (
-        <Grid container spacing={3}>
-          <Grid item xs={12} md={6}>
-            <Paper elevation={0} sx={{ p: 3, borderRadius: 2, border: 1, borderColor: 'divider' }}>
-              <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2 }}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+          <Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>
+            <Paper
+              elevation={0}
+              sx={{ p: 3, borderRadius: 2, border: 1, borderColor: 'divider' }}
+            >
+              <Typography
+                variant='subtitle2'
+                sx={{ fontWeight: 600, mb: 2 }}
+              >
                 NavItemConfig 数据结构
               </Typography>
-              <Box component='pre' sx={{ bgcolor: 'grey.50', p: 2, borderRadius: 1, fontSize: '0.75rem', overflowX: 'auto' }}>
-{`{
+              <Box
+                component='pre'
+                sx={{
+                  bgcolor: 'grey.50',
+                  p: 2,
+                  borderRadius: 1,
+                  fontSize: '0.75rem',
+                  overflowX: 'auto',
+                }}
+              >
+                {`{
   code: 'iam-users',
   label: '用户管理',
   icon: 'Users',
@@ -270,26 +414,33 @@ const V4DemoPage: React.FC = () => {
 }`}
               </Box>
             </Paper>
-          </Grid>
+          </Box>
 
-          <Grid item xs={12} md={6}>
-            <Paper elevation={0} sx={{ p: 3, borderRadius: 2, border: 1, borderColor: 'divider' }}>
-              <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2 }}>
+          <Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>
+            <Paper
+              elevation={0}
+              sx={{ p: 3, borderRadius: 2, border: 1, borderColor: 'divider' }}
+            >
+              <Typography
+                variant='subtitle2'
+                sx={{ fontWeight: 600, mb: 2 }}
+              >
                 5大标准分组
               </Typography>
               <List>
-                {(Object.entries(NAV_GROUPS) as [NavGroup, typeof NAV_GROUPS[NavGroup]][]).map(
+                {(Object.entries(NAV_GROUPS) as [NavGroup, (typeof NAV_GROUPS)[NavGroup]][]).map(
                   ([key, group]) => (
-                    <ListItem key={key} divider>
-                      <Box sx={{ mr: 2 }}>
-                        {renderIcon(group.icon)}
-                      </Box>
+                    <ListItem
+                      key={key}
+                      divider
+                    >
+                      <Box sx={{ mr: 2 }}>{renderIcon(group.icon)}</Box>
                       <ListItemText
                         primary={group.label}
                         secondary={`order: ${group.order} | key: ${key}`}
                       />
                       <Chip
-                        label={(sidebarGrouped[key] || []).length + ' 项'}
+                        label={`${(sidebarGrouped[key] || []).length} 项`}
                         size='small'
                         color='primary'
                         variant='outlined'
@@ -299,45 +450,100 @@ const V4DemoPage: React.FC = () => {
                 )}
               </List>
             </Paper>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       )}
 
       {activeTab === 3 && (
-        <Grid container spacing={3}>
-          <Grid item xs={12}>
-            <Paper elevation={0} sx={{ p: 3, borderRadius: 2, border: 1, borderColor: 'divider' }}>
-              <Typography variant='subtitle2' sx={{ fontWeight: 600, mb: 2 }}>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
+          <Box sx={{ width: '100%' }}>
+            <Paper
+              elevation={0}
+              sx={{ p: 3, borderRadius: 2, border: 1, borderColor: 'divider' }}
+            >
+              <Typography
+                variant='subtitle2'
+                sx={{ fontWeight: 600, mb: 2 }}
+              >
                 8大核心页面模板
               </Typography>
-              <Grid container spacing={2}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                 {[
-                  { name: 'DashboardTemplate', desc: '仪表盘/看板', icon: 'LayoutDashboard', color: 'primary' },
+                  {
+                    name: 'DashboardTemplate',
+                    desc: '仪表盘/看板',
+                    icon: 'LayoutDashboard',
+                    color: 'primary',
+                  },
                   { name: 'ListPageTemplate', desc: '列表页/CRUD', icon: 'List', color: 'success' },
-                  { name: 'DetailPageTemplate', desc: '详情页/查看', icon: 'FileText', color: 'info' },
-                  { name: 'FormPageTemplate', desc: '表单页/新增编辑', icon: 'FormInput', color: 'warning' },
-                  { name: 'TreePageTemplate', desc: '树形结构/层级', icon: 'FolderTree', color: 'secondary' },
-                  { name: 'StatsPageTemplate', desc: '统计分析/报表', icon: 'BarChart3', color: 'error' },
-                  { name: 'SettingsPageTemplate', desc: '设置/配置', icon: 'Settings', color: 'default' },
-                  { name: 'KanbanPageTemplate', desc: '看板/任务板', icon: 'LayoutGrid', color: 'info' },
+                  {
+                    name: 'DetailPageTemplate',
+                    desc: '详情页/查看',
+                    icon: 'FileText',
+                    color: 'info',
+                  },
+                  {
+                    name: 'FormPageTemplate',
+                    desc: '表单页/新增编辑',
+                    icon: 'FormInput',
+                    color: 'warning',
+                  },
+                  {
+                    name: 'TreePageTemplate',
+                    desc: '树形结构/层级',
+                    icon: 'FolderTree',
+                    color: 'secondary',
+                  },
+                  {
+                    name: 'StatsPageTemplate',
+                    desc: '统计分析/报表',
+                    icon: 'BarChart3',
+                    color: 'error',
+                  },
+                  {
+                    name: 'SettingsPageTemplate',
+                    desc: '设置/配置',
+                    icon: 'Settings',
+                    color: 'default',
+                  },
+                  {
+                    name: 'KanbanPageTemplate',
+                    desc: '看板/任务板',
+                    icon: 'LayoutGrid',
+                    color: 'info',
+                  },
                 ].map((template, i) => (
-                  <Grid item xs={12} sm={6} md={3} key={i}>
-                    <Card elevation={0} sx={{ border: 1, borderColor: 'divider', borderRadius: 2 }}>
+                  <Box
+                    key={i}
+                    sx={{ flex: 1, minWidth: { xs: '100%', sm: '50%', md: 'calc(25% - 8px)' } }}
+                  >
+                    <Card
+                      elevation={0}
+                      sx={{ border: 1, borderColor: 'divider', borderRadius: 2 }}
+                    >
                       <CardContent>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                          <Chip label={template.name} size='small' color={template.color as any} variant='outlined' />
+                          <Chip
+                            label={template.name}
+                            size='small'
+                            color={template.color as any}
+                            variant='outlined'
+                          />
                         </Box>
-                        <Typography variant='body2' color='text.secondary'>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
                           {template.desc}
                         </Typography>
                       </CardContent>
                     </Card>
-                  </Grid>
+                  </Box>
                 ))}
-              </Grid>
+              </Box>
             </Paper>
-          </Grid>
-        </Grid>
+          </Box>
+        </Box>
       )}
     </PageContainer>
   );

@@ -26,7 +26,7 @@ import {
   type LucideProps,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { navigationRegistry, type ModuleCardConfig } from '@/lib/NavigationRegistry';
+import { navigationRegistryV2, type ModuleCardConfig } from '@/lib/navigation';
 import { gradients } from '@/theme';
 import { PageContainer } from '@/components/common/PageContainer';
 
@@ -301,14 +301,14 @@ const ModulesOverviewPage: React.FC = () => {
   /* Fetch module cards and listen for registry updates */
   useEffect(() => {
     const loadCards = () => {
-      setAllCards(navigationRegistry.getModuleCards());
+      setAllCards(navigationRegistryV2.getModuleCards());
     };
 
     loadCards();
 
-    navigationRegistry.emitter.on('navigationUpdated', loadCards);
+    navigationRegistryV2.emitter.on('navigationUpdated', loadCards);
     return () => {
-      navigationRegistry.emitter.off('navigationUpdated', loadCards);
+      navigationRegistryV2.emitter.off('navigationUpdated', loadCards);
     };
   }, []);
 

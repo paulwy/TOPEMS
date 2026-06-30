@@ -44,6 +44,7 @@ import {
   pdmRoutes,
   srmRoutes,
   tenantRoutes,
+  legacyRedirects,
   type RouteConfig,
 } from './routes';
 
@@ -232,6 +233,14 @@ const AppContent: React.FC = () => {
         {renderRoutes(srmRoutes)}
         {renderRoutes(tenantRoutes)}
         {renderRoutes(imRoutes)}
+
+        {legacyRedirects.map((redirect) => (
+          <Route
+            key={redirect.path}
+            path={redirect.path}
+            element={redirect.element}
+          />
+        ))}
 
         {/* Core module routes - only load via Module Federation when not in static mode */}
         {!IS_STATIC_MODE && (

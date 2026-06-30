@@ -443,8 +443,8 @@ export const NotificationTemplatesPage: React.FC = () => {
 
   const headerContent = (
     <Box sx={{ px: { xs: 2, sm: 3 }, py: 2, borderBottom: 1, borderColor: 'divider' }}>
-      <Grid container spacing={2}>
-        <Grid item xs={12} sm={6} md={3}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+        <Box sx={{ flex: 1, minWidth: { xs: '100%', sm: '50%', md: 'calc(25% - 8px)' } }}>
           <Box
             sx={{
               p: 2,
@@ -477,8 +477,8 @@ export const NotificationTemplatesPage: React.FC = () => {
               </Typography>
             </Box>
           </Box>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        </Box>
+        <Box sx={{ flex: 1, minWidth: { xs: '100%', sm: '50%', md: 'calc(25% - 8px)' } }}>
           <Box
             sx={{
               p: 2,
@@ -511,8 +511,8 @@ export const NotificationTemplatesPage: React.FC = () => {
               </Typography>
             </Box>
           </Box>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        </Box>
+        <Box sx={{ flex: 1, minWidth: { xs: '100%', sm: '50%', md: 'calc(25% - 8px)' } }}>
           <Box
             sx={{
               p: 2,
@@ -545,8 +545,8 @@ export const NotificationTemplatesPage: React.FC = () => {
               </Typography>
             </Box>
           </Box>
-        </Grid>
-        <Grid item xs={12} sm={6} md={3}>
+        </Box>
+        <Box sx={{ flex: 1, minWidth: { xs: '100%', sm: '50%', md: 'calc(25% - 8px)' } }}>
           <Box
             sx={{
               p: 2,
@@ -579,8 +579,8 @@ export const NotificationTemplatesPage: React.FC = () => {
               </Typography>
             </Box>
           </Box>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
     </Box>
   );
 
@@ -588,9 +588,9 @@ export const NotificationTemplatesPage: React.FC = () => {
     <PageContainer
       headerProps={{
         pageIcon: <FileText size={20} />,
-      }}
-      backButton={{
-        href: '/notification/dashboard',
+        backButton: {
+          href: '/notification/dashboard',
+        },
       }}
     >
       <ListPageTemplate

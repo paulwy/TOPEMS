@@ -26,9 +26,9 @@ use utoipa::OpenApi;
 use api::ApiState;
 use topems_shared::{
     check_http_health, create_api_info_router, create_cors_layer, create_database_pool,
-    create_hrm_client, init_telemetry, ApiResponse, AuthState, Claims, DatabaseConfig,
-    DependencyHealth, FieldEncryptionService, HealthStatus, KeyManager, NotificationServiceClient, ServiceHealth, SystemMetrics,
-    telemetry_middleware, verify_jwt_token,
+    create_hrm_client, init_telemetry, telemetry_middleware, verify_jwt_token, ApiResponse,
+    AuthState, Claims, DatabaseConfig, DependencyHealth, FieldEncryptionService, HealthStatus,
+    KeyManager, NotificationServiceClient, ServiceHealth, SystemMetrics,
 };
 
 lazy_static::lazy_static! {
@@ -71,8 +71,9 @@ async fn main() -> Result<()> {
     let _telemetry_guard = init_telemetry("topems-erp");
 
     let db_config = DatabaseConfig {
-        url: env::var("DATABASE_URL")
-            .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string()),
+        url: env::var("DATABASE_URL").unwrap_or_else(|_| {
+            "postgres://topems:topems_secret@localhost:5432/topems".to_string()
+        }),
         max_connections: 20,
         min_connections: Some(5),
         connect_timeout: Some(30),
@@ -382,9 +383,7 @@ fn init_encryption_service() -> FieldEncryptionService {
     let master_key = env::var("ENCRYPTION_MASTER_KEY").unwrap_or_else(|_| {
         "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef".to_string()
     });
-    let key_bytes = hex::decode(&master_key).unwrap_or_else(|_| {
-        vec![0x42; 32]
-    });
+    let key_bytes = hex::decode(&master_key).unwrap_or_else(|_| vec![0x42; 32]);
     let mut key_array = [0u8; 32];
     key_array.copy_from_slice(&key_bytes[..32]);
     let key_manager = KeyManager::new(&key_array);
@@ -392,16 +391,17 @@ fn init_encryption_service() -> FieldEncryptionService {
 }
 
 // ==================== ERP 认证中间件 ====================
-// 支持两种认证模式：
+// 支持三种认证模式：
 // 1. X-User-Id header 模式（通过 unified-core 代理访问）
 // 2. Authorization header 模式（直连模式）
+// 3. 开发模式（环境变量 DEVELOPMENT_MODE=true 时跳过认证）
 
 async fn erp_auth_middleware(
     State(auth_state): State<AuthState>,
     req: Request<Body>,
     next: Next,
 ) -> Response {
-    let path = req.uri().path();
+    let path = req.uri().path().to_string();
 
     // 公开路径不需要认证
     let public_paths = [
@@ -412,7 +412,7 @@ async fn erp_auth_middleware(
         "/api/plugins/info",
         "/api/plugins/health",
     ];
-    if public_paths.contains(&path) {
+    if public_paths.contains(&path.as_str()) {
         return next.run(req).await;
     }
 
@@ -421,7 +421,6 @@ async fn erp_auth_middleware(
     // 模式 1: 检查 X-User-Id header（代理模式）
     if let Some(user_id) = parts.headers.get("X-User-Id") {
         if let Ok(user_id_str) = user_id.to_str() {
-            // 创建简化的 Claims 用于代理模式
             let claims = Claims {
                 sub: user_id_str.to_string(),
                 username: user_id_str.to_string(),
@@ -433,12 +432,37 @@ async fn erp_auth_middleware(
                 iat: 0,
                 email: None,
                 department: None,
-                tenant_id: parts.headers.get("X-Tenant-Id").and_then(|h| h.to_str().ok()).map(|s| s.to_string()),
+                tenant_id: parts
+                    .headers
+                    .get("X-Tenant-Id")
+                    .and_then(|h| h.to_str().ok())
+                    .map(|s| s.to_string()),
             };
             parts.extensions.insert(claims);
             let req = Request::from_parts(parts, body);
             return next.run(req).await;
         }
+    }
+
+    // 模式 3: 开发模式（跳过认证）
+    if std::env::var("DEVELOPMENT_MODE").unwrap_or_default() == "true" {
+        tracing::info!("开发模式：跳过认证，路径: {}", parts.uri.path());
+        let claims = Claims {
+            sub: "dev_user".to_string(),
+            username: "dev_user".to_string(),
+            role: "admin".to_string(),
+            roles: vec!["admin".to_string(), "user".to_string()],
+            permissions: vec!["finance:read".to_string(), "finance:write".to_string()],
+            is_superuser: true,
+            exp: 0,
+            iat: 0,
+            email: Some("dev@example.com".to_string()),
+            department: None,
+            tenant_id: None,
+        };
+        parts.extensions.insert(claims);
+        let req = Request::from_parts(parts, body);
+        return next.run(req).await;
     }
 
     // 模式 2: 检查 Authorization header（直连模式）
@@ -450,7 +474,8 @@ async fn erp_auth_middleware(
     let token = match auth_header {
         Some(header) if header.starts_with("Bearer ") => &header[7..],
         _ => {
-            return topems_shared::response::api_error::<()>(401, "未授权：缺少有效的认证令牌").into_response();
+            return topems_shared::response::api_error::<()>(401, "未授权：缺少有效的认证令牌")
+                .into_response();
         }
     };
 
@@ -462,7 +487,8 @@ async fn erp_auth_middleware(
         }
         Err(e) => {
             tracing::error!("Token verification failed: {}", e);
-            topems_shared::response::api_error::<()>(401, &format!("认证失败：{}", e)).into_response()
+            topems_shared::response::api_error::<()>(401, &format!("认证失败：{}", e))
+                .into_response()
         }
     }
 }

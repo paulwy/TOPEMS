@@ -28,16 +28,7 @@ import {
   Stack,
 } from '@mui/material';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import {
-  Plus,
-  Edit,
-  Trash2,
-  Shield,
-  UserPlus,
-  UserMinus,
-  Users,
-  Search,
-} from 'lucide-react';
+import { Plus, Edit, Trash2, Shield, UserPlus, UserMinus, Users, Search } from 'lucide-react';
 
 import { authApi, type User, type Role } from '@/api/iam';
 import { SERVICES } from '@/utils/apiPath';
@@ -175,10 +166,16 @@ export const IamUsersPage: React.FC = () => {
               {row.username?.charAt(0)?.toUpperCase() || 'U'}
             </Avatar>
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
                 {row.full_name || row.username}
               </Typography>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 {row.email}
               </Typography>
             </Box>
@@ -189,8 +186,15 @@ export const IamUsersPage: React.FC = () => {
         id: 'role',
         label: '角色',
         render: (row) => (
-          <Stack direction='row' spacing={0.5} alignItems='center'>
-            <RoleBadge role={row.role || 'user'} size='sm' />
+          <Stack
+            direction='row'
+            spacing={0.5}
+            sx={{ alignItems: 'center' }}
+          >
+            <RoleBadge
+              role={row.role || 'user'}
+              size='sm'
+            />
             {row.roles && row.roles.length > 1 && (
               <Chip
                 label={`+${row.roles.length - 1}`}
@@ -206,7 +210,10 @@ export const IamUsersPage: React.FC = () => {
         id: 'permissions',
         label: '权限数',
         render: (row) => (
-          <Typography variant='body2' color='text.secondary'>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             {row.permissions?.length || 0} 个
           </Typography>
         ),
@@ -231,10 +238,11 @@ export const IamUsersPage: React.FC = () => {
         id: 'created_at',
         label: '创建时间',
         render: (row) => (
-          <Typography variant='body2' color='text.secondary'>
-            {row.created_at
-              ? new Date(row.created_at).toLocaleDateString('zh-CN')
-              : '-'}
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
+            {row.created_at ? new Date(row.created_at).toLocaleDateString('zh-CN') : '-'}
           </Typography>
         ),
       },
@@ -403,20 +411,23 @@ export const IamUsersPage: React.FC = () => {
     setShowRolesModal(true);
   }, []);
 
-  const loadUserRoles = useCallback(async (userId: string) => {
-    try {
-      const res = await authApi.getUserRoles(userId);
-      if (res.success && res.data) {
-        setUserRoles(res.data);
+  const loadUserRoles = useCallback(
+    async (userId: string) => {
+      try {
+        const res = await authApi.getUserRoles(userId);
+        if (res.success && res.data) {
+          setUserRoles(res.data);
+        }
+      } catch {
+        addNotification({
+          title: '加载失败',
+          message: '加载用户角色失败',
+          type: 'error',
+        });
       }
-    } catch {
-      addNotification({
-        title: '加载失败',
-        message: '加载用户角色失败',
-        type: 'error',
-      });
-    }
-  }, [addNotification]);
+    },
+    [addNotification]
+  );
 
   const handleAddRoleToUser = useCallback(
     async (userId: string, roleId: string) => {
@@ -573,10 +584,6 @@ export const IamUsersPage: React.FC = () => {
       headerProps={{
         pageIcon: <Users size={20} />,
       }}
-      // V4.0 规范：返回按钮指向模块首页
-      backButton={{
-        href: '/iam/dashboard',
-      }}
     >
       {/*
        * V4.0 规范：ListPageTemplate 完整配置
@@ -698,7 +705,10 @@ export const IamUsersPage: React.FC = () => {
             >
               取消
             </Button>
-            <Button type='submit' variant='contained'>
+            <Button
+              type='submit'
+              variant='contained'
+            >
               创建
             </Button>
           </DialogActions>
@@ -773,7 +783,10 @@ export const IamUsersPage: React.FC = () => {
               >
                 取消
               </Button>
-              <Button type='submit' variant='contained'>
+              <Button
+                type='submit'
+                variant='contained'
+              >
                 保存
               </Button>
             </DialogActions>
@@ -793,12 +806,18 @@ export const IamUsersPage: React.FC = () => {
         </DialogTitle>
         <DialogContent>
           <Box sx={{ py: 2 }}>
-            <Typography variant='subtitle2' sx={{ mb: 2, fontWeight: 600 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ mb: 2, fontWeight: 600 }}
+            >
               已有角色
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mb: 3 }}>
               {userRoles.length === 0 ? (
-                <Typography variant='body2' color='text.secondary'>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
                   暂无分配角色
                 </Typography>
               ) : (
@@ -817,7 +836,10 @@ export const IamUsersPage: React.FC = () => {
                     }}
                   >
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Shield size={16} color='success.dark' />
+                      <Shield
+                        size={16}
+                        color='success.dark'
+                      />
                       <Typography sx={{ fontWeight: 500, color: 'success.main' }}>
                         {role.name}
                       </Typography>
@@ -836,7 +858,10 @@ export const IamUsersPage: React.FC = () => {
                 ))
               )}
             </Box>
-            <Typography variant='subtitle2' sx={{ mb: 2, fontWeight: 600 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ mb: 2, fontWeight: 600 }}
+            >
               可用角色
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -855,11 +880,17 @@ export const IamUsersPage: React.FC = () => {
                     }}
                   >
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Shield size={16} color='#9e9e9e' />
+                      <Shield
+                        size={16}
+                        color='#9e9e9e'
+                      />
                       <Box>
                         <Typography sx={{ fontWeight: 500 }}>{role.name}</Typography>
                         {role.description && (
-                          <Typography variant='caption' color='text.secondary'>
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                          >
                             - {role.description}
                           </Typography>
                         )}
@@ -867,9 +898,7 @@ export const IamUsersPage: React.FC = () => {
                     </Box>
                     <IconButton
                       size='small'
-                      onClick={() =>
-                        selectedUser && handleAddRoleToUser(selectedUser.id, role.id)
-                      }
+                      onClick={() => selectedUser && handleAddRoleToUser(selectedUser.id, role.id)}
                       title='添加角色'
                     >
                       <UserPlus size={16} />
@@ -880,7 +909,10 @@ export const IamUsersPage: React.FC = () => {
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button variant='contained' onClick={() => setShowRolesModal(false)}>
+          <Button
+            variant='contained'
+            onClick={() => setShowRolesModal(false)}
+          >
             关闭
           </Button>
         </DialogActions>

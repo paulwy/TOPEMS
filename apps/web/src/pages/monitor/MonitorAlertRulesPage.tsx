@@ -474,12 +474,12 @@ export const MonitorAlertRulesPage: React.FC = () => {
         render: (row) => (
           <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
             {row.channels.slice(0, 3).map((channel) => {
-              const config = CHANNEL_CONFIG[channel] || { label: channel, icon: <Bell size={14} /> };
+              const config = CHANNEL_CONFIG[channel] || { label: channel, icon: <Bell size={14} /> as React.ReactElement };
               return (
                 <Chip
                   key={channel}
                   size='small'
-                  icon={config.icon}
+                  icon={config.icon as React.ReactElement}
                   label={config.label}
                   variant='outlined'
                   sx={{ height: 24, '& .MuiChip-icon': { ml: 0.5 } }}
@@ -714,7 +714,6 @@ export const MonitorAlertRulesPage: React.FC = () => {
         ]}
         onRefresh={loadData}
         emptyMessage='暂无告警规则'
-        stats={stats}
       />
 
       <ConfirmDialog
