@@ -15,7 +15,7 @@ impl DocumentService {
     pub async fn list_documents(&self) -> Result<Vec<Document>> {
         sqlx::query_as!(
             Document,
-            r#"SELECT * FROM core_doc_documents ORDER BY created_at DESC"#
+            r#"SELECT * FROM doc.documents ORDER BY created_at DESC"#
         )
         .fetch_all(&*self.pool)
         .await
@@ -24,7 +24,7 @@ impl DocumentService {
     pub async fn get_document(&self, document_id: Uuid) -> Result<Option<Document>> {
         sqlx::query_as!(
             Document,
-            r#"SELECT * FROM core_doc_documents WHERE id = $1"#,
+            r#"SELECT * FROM doc.documents WHERE id = $1"#,
             document_id
         )
         .fetch_optional(&*self.pool)
@@ -41,7 +41,7 @@ impl DocumentService {
         sqlx::query_as!(
             Document,
             r#"
-            INSERT INTO core_doc_documents (id, title, folder_id, template_id, content, content_type, status, tags, description, created_by)
+            INSERT INTO doc.documents (id, title, folder_id, template_id, content, content_type, status, tags, description, created_by)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             RETURNING *
             "#,
@@ -69,7 +69,7 @@ impl DocumentService {
         sqlx::query_as!(
             Document,
             r#"
-            UPDATE core_doc_documents
+            UPDATE doc.documents
             SET title = COALESCE($2, title),
                 folder_id = COALESCE($3, folder_id),
                 content = COALESCE($4, content),
@@ -91,25 +91,26 @@ impl DocumentService {
     }
 
     pub async fn delete_document(&self, document_id: Uuid) -> Result<bool> {
-        let result = sqlx::query!(
-            r#"DELETE FROM core_doc_documents WHERE id = $1"#,
-            document_id
-        )
-        .execute(&*self.pool)
-        .await?;
+        let result = sqlx::query!(r#"DELETE FROM doc.documents WHERE id = $1"#, document_id)
+            .execute(&*self.pool)
+            .await?;
         Ok(result.rows_affected() > 0)
     }
 }
 
 pub async fn init_database(pool: &PgPool) -> Result<()> {
+    sqlx::query(r#"CREATE SCHEMA IF NOT EXISTS doc;"#)
+        .execute(pool)
+        .await?;
+
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_doc_documents (
+        CREATE TABLE IF NOT EXISTS doc.documents (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID,
             title VARCHAR(500) NOT NULL,
-            folder_id UUID REFERENCES core_doc_folders(id),
-            template_id UUID REFERENCES core_doc_templates(id),
+            folder_id UUID REFERENCES doc.folders(id),
+            template_id UUID REFERENCES doc.templates(id),
             content TEXT,
             content_type VARCHAR(50) DEFAULT 'html',
             status VARCHAR(50) DEFAULT 'draft',
@@ -135,10 +136,10 @@ pub async fn init_database(pool: &PgPool) -> Result<()> {
 
     sqlx::query(
         r#"
-        CREATE TABLE IF NOT EXISTS core_doc_document_versions (
+        CREATE TABLE IF NOT EXISTS doc.document_versions (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tenant_id UUID,
-            document_id UUID NOT NULL REFERENCES core_doc_documents(id) ON DELETE CASCADE,
+            document_id UUID NOT NULL REFERENCES doc.documents(id) ON DELETE CASCADE,
             version INTEGER NOT NULL,
             content TEXT,
             content_type VARCHAR(50) DEFAULT 'html',

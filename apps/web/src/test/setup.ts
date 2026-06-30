@@ -8,7 +8,6 @@
 
 import { vi } from 'vitest';
 
-// 默认的 store 状态
 export const defaultStoreState = {
   user: null,
   theme: 'light' as const,
@@ -23,7 +22,6 @@ export const defaultStoreState = {
   toggleSidebar: vi.fn(),
 };
 
-// Mock API 配置
 export const mockApiResponse = <T>(data: T) => ({
   success: true,
   data,
@@ -38,7 +36,6 @@ export const mockApiError = (message: string, code = 500) => ({
   code,
 });
 
-// Mock 配置辅助函数
 export const createMockStore = (overrides = {}) => ({
   ...defaultStoreState,
   ...overrides,
@@ -64,27 +61,23 @@ export const setupApiMocks = (
   });
 };
 
-// 移除 fake timers（这是导致测试超时的主要原因）
 export const disableFakeTimers = () => {
   vi.useRealTimers();
 };
 
-// 在 beforeEach 中使用这个
 export const createBeforeEach = (storeState = defaultStoreState) => {
   return () => {
     vi.clearAllMocks();
-    vi.useRealTimers(); // 使用真实计时器，避免异步超时
+    vi.useRealTimers();
   };
 };
 
-// 在 afterEach 中使用这个
 export const createAfterEach = () => {
   return () => {
     vi.resetAllMocks();
   };
 };
 
-// 常用的测试数据
 export const mockPaginatedResponse = <T>(items: T[], total = 100) => ({
   success: true,
   data: {
@@ -96,11 +89,9 @@ export const mockPaginatedResponse = <T>(items: T[], total = 100) => ({
   },
 });
 
-// 等待辅助函数
 export const waitForLoading = () =>
   new Promise(resolve => setTimeout(resolve, 100));
 
-// 测试 wrapper
 export const createTestWrapper = (ui: React.ReactElement) => {
   const { render } = require('@testing-library/react');
   const { BrowserRouter } = require('react-router-dom');

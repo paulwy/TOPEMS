@@ -22,6 +22,14 @@ class ResizeObserver {
 
 window.ResizeObserver = ResizeObserver;
 
+class IntersectionObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+window.IntersectionObserver = IntersectionObserver;
+
 global.CSS = {
   supports: vi.fn().mockReturnValue(true),
   escape: vi.fn().mockImplementation((str) => str),

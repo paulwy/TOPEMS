@@ -8,7 +8,7 @@
     "packages/*"
   ],
   "scripts": {
-    "prepare": "husky",
+    "prepare": "husky && node scripts/patch-react-transition-group.js",
     "dev": "./scripts/start-local.sh",
     "dev:web": "pnpm --filter topems-portal dev",
     "dev:core": "pnpm --filter topems-core dev",

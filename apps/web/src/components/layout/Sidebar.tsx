@@ -22,7 +22,8 @@ import {
 import * as LucideIcons from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePlugins } from '../../context/PluginContext';
-import { navigationRegistry, type NavItem } from '../../lib/NavigationRegistry';
+import { navigationRegistryV2 } from '../../lib/navigation';
+import type { NavItem } from '../../lib/navigation/types';
 import { usePermission } from '../../hooks/usePermission';
 
 interface SidebarProps {
@@ -197,7 +198,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, pluginCode }) =
 
   const renderPluginSidebar = () => {
     if (!pluginCode) return null;
-    const sidebarItems = navigationRegistry.getSidebarNavItems(pluginCode);
+    const sidebarItems = navigationRegistryV2.getSidebarNavItems(pluginCode, hasPermission);
     if (!sidebarItems.length) return null;
 
     return (
@@ -206,14 +207,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ open, onClose, pluginCode }) =
   };
 
   const renderAllPluginsSidebar = () => {
-    const pluginCodes = navigationRegistry.getAllPluginCodes();
+    const pluginCodes = navigationRegistryV2.getAllModuleCodes();
     return pluginCodes.map((code) => {
-      const card = navigationRegistry.getModuleCard(code);
+      const card = navigationRegistryV2.getModule(code);
       if (!card) return null;
       if (card.status !== 'online') return null;
       if (!hasPermission(card.permission)) return null;
 
-      const sidebarItems = navigationRegistry.getSidebarNavItems(code);
+      const sidebarItems = navigationRegistryV2.getSidebarNavItems(code, hasPermission);
       if (!sidebarItems.length) return null;
 
       const isExpanded = expandedItems.has(code);

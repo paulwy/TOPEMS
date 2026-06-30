@@ -1,6 +1,6 @@
 //! TOPEMS Unified Core Platform
 //!
-//! Unified service for: IAM + Doc + Flow + File + Communication + AI
+//! Unified service for: IAM + Flow + File + Communication + Tenant + Billing + Plugin + Sync
 //!
 //! This is the core platform that must be included in any TOPEMS product.
 
@@ -98,7 +98,9 @@ async fn main() {
 
     // Initialize OpenTelemetry tracing
     tracing::info!("🚀 TOPEMS Unified Core Platform starting...");
-    tracing::info!("📦 Contains: IAM + Flow + File + Communication");
+    tracing::info!(
+        "📦 Contains: IAM + Flow + File + Communication + Tenant + Billing + Plugin + Sync"
+    );
 
     let database_url = std::env::var("DATABASE_URL")
         .unwrap_or_else(|_| "postgres://topems:topems_secret@localhost:5432/topems".to_string());
@@ -143,10 +145,6 @@ async fn main() {
     modules::plugin::init_database(&pool)
         .await
         .expect("Failed to init plugin database");
-    modules::finance::service::FinanceService::new(std::sync::Arc::new(pool.clone()))
-        .init()
-        .await
-        .expect("Failed to init finance database");
 
     let auth_state = AuthState::from_env();
     let health_config = SimpleHealthConfig::new("topems-unified-core").with_db(pool.clone());
@@ -1286,111 +1284,6 @@ async fn main() {
             require_permission("plugin:write"),
         ));
 
-    // ----- Finance Routes -----
-    let finance_read_routes = Router::new()
-        .route(
-            "/api/core/finance/accounts",
-            get(modules::finance::handlers::list_accounts),
-        )
-        .route(
-            "/api/core/finance/accounts/{id}",
-            get(modules::finance::handlers::get_account),
-        )
-        .route(
-            "/api/core/finance/vouchers",
-            get(modules::finance::handlers::list_vouchers),
-        )
-        .route(
-            "/api/core/finance/vouchers/{id}",
-            get(modules::finance::handlers::get_voucher),
-        )
-        .route(
-            "/api/core/finance/ledger",
-            get(modules::finance::handlers::get_ledger),
-        )
-        .route(
-            "/api/core/finance/trial-balance/{period}",
-            get(modules::finance::handlers::get_trial_balance),
-        )
-        .route(
-            "/api/core/finance/balance-sheet/{period}",
-            get(modules::finance::handlers::get_balance_sheet),
-        )
-        .route(
-            "/api/core/finance/income-statement/{period}",
-            get(modules::finance::handlers::get_income_statement),
-        )
-        .route(
-            "/api/core/finance/aux-accounts",
-            get(modules::finance::handlers::list_aux_accounts),
-        )
-        .route(
-            "/api/core/finance/aux-ledger",
-            get(modules::finance::handlers::get_aux_ledger),
-        )
-        .route(
-            "/api/core/finance/aux-balance",
-            get(modules::finance::handlers::get_aux_balance),
-        )
-        .route(
-            "/api/core/finance/cash-flow/{period}",
-            get(modules::finance::handlers::get_cash_flow),
-        )
-        .route(
-            "/api/core/finance/periods/{year}/{month}/open",
-            get(modules::finance::handlers::open_period),
-        )
-        .route(
-            "/api/core/finance/periods/{year}/{month}/close",
-            get(modules::finance::handlers::close_period),
-        )
-        .layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            require_permission("finance:read"),
-        ));
-
-    let finance_write_routes = Router::new()
-        .route(
-            "/api/core/finance/accounts",
-            post(modules::finance::handlers::create_account),
-        )
-        .route(
-            "/api/core/finance/vouchers",
-            post(modules::finance::handlers::create_voucher),
-        )
-        .route(
-            "/api/core/finance/vouchers/{id}/submit",
-            post(modules::finance::handlers::submit_voucher),
-        )
-        .route(
-            "/api/core/finance/vouchers/{id}/approve",
-            post(modules::finance::handlers::approve_voucher),
-        )
-        .route(
-            "/api/core/finance/vouchers/{id}/post",
-            post(modules::finance::handlers::post_voucher),
-        )
-        .route(
-            "/api/core/finance/aux-accounts",
-            post(modules::finance::handlers::create_aux_account),
-        )
-        .route(
-            "/api/core/finance/vouchers/batch/submit",
-            post(modules::finance::handlers::batch_submit_vouchers),
-        )
-        .route(
-            "/api/core/finance/vouchers/batch/approve",
-            post(modules::finance::handlers::batch_approve_vouchers),
-        )
-        .route(
-            "/api/core/finance/vouchers/batch/post",
-            post(modules::finance::handlers::batch_post_vouchers),
-        )
-        .layer(axum::middleware::from_fn_with_state(
-            state.clone(),
-            require_permission("finance:write"),
-        ));
-
     // ----- Sync Routes -----
     let sync_read_routes = Router::new()
         .route(
@@ -1467,8 +1360,6 @@ async fn main() {
         .merge(billing_write_routes)
         .merge(plugin_read_routes)
         .merge(plugin_write_routes)
-        .merge(finance_read_routes)
-        .merge(finance_write_routes)
         .merge(sync_read_routes)
         .merge(sync_write_routes)
         .merge(health_routes)
@@ -1641,7 +1532,10 @@ async fn detailed_health(State(state): State<AppState>) -> Json<ApiResponse<serd
             "flow": "active",
             "file": "active",
             "communication": "active",
-            "finance": "active"
+            "tenant": "active",
+            "billing": "active",
+            "plugin": "active",
+            "sync": "active"
         },
         "status": if db_status == "healthy" { "healthy" } else { "unhealthy" },
         "timestamp": chrono::Utc::now().to_rfc3339(),

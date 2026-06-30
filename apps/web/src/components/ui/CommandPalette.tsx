@@ -28,7 +28,8 @@ import {
   Clock,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { navigationRegistry, type NavItem } from '@/lib/NavigationRegistry';
+import { navigationRegistryV2 } from '@/lib/navigation';
+import type { NavItem } from '@/lib/navigation/types';
 import { renderIcon } from '@/lib/iconMapping';
 
 export interface CommandPaletteProps {
@@ -55,7 +56,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
   // 获取所有页面导航项
   const allNavItems = useMemo<NavItem[]>(() => {
     const items: NavItem[] = [];
-    const topItems = navigationRegistry.getNavItemsByPermission(() => true);
+    const topItems = navigationRegistryV2.getTopNavItems(() => true);
 
     const collectItems = (navItems: NavItem[]) => {
       navItems.forEach((item) => {

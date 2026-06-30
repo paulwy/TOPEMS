@@ -64,19 +64,25 @@ describe('LimsInstrumentPage', () => {
   });
 
   it('should render loading state initially', async () => {
-    renderWithProviders(<LimsInstrumentPage />);
+    await act(async () => {
+      renderWithProviders(<LimsInstrumentPage />);
+    });
     expect(screen.getByRole('status')).toBeInTheDocument();
   });
 
   it('should render page title', async () => {
-    renderWithProviders(<LimsInstrumentPage />);
+    await act(async () => {
+      renderWithProviders(<LimsInstrumentPage />);
+    });
     await waitFor(() => {
       expect(screen.getByText('仪器设备')).toBeInTheDocument();
     });
   });
 
   it('should render instrument table', async () => {
-    renderWithProviders(<LimsInstrumentPage />);
+    await act(async () => {
+      renderWithProviders(<LimsInstrumentPage />);
+    });
     await waitFor(() => {
       expect(screen.getByText('INS-2024-001')).toBeInTheDocument();
       expect(screen.getByText('气相色谱仪')).toBeInTheDocument();
@@ -84,7 +90,9 @@ describe('LimsInstrumentPage', () => {
   });
 
   it('should handle search', async () => {
-    renderWithProviders(<LimsInstrumentPage />);
+    await act(async () => {
+      renderWithProviders(<LimsInstrumentPage />);
+    });
     await waitFor(() => {
       const searchInput = screen.getByPlaceholderText(/搜索/);
       fireEvent.change(searchInput, { target: { value: '气相' } });
@@ -97,7 +105,9 @@ describe('LimsInstrumentPage', () => {
       data: {},
     });
 
-    renderWithProviders(<LimsInstrumentPage />);
+    await act(async () => {
+      renderWithProviders(<LimsInstrumentPage />);
+    });
 
     await waitFor(() => {
       const addButton = screen.getByRole('button', { name: /新增/i });
@@ -127,7 +137,9 @@ describe('LimsInstrumentPage', () => {
 
   it('should handle API error', async () => {
     (limsApi.listInstruments as vi.Mock).mockRejectedValue(new Error('Network error'));
-    renderWithProviders(<LimsInstrumentPage />);
+    await act(async () => {
+      renderWithProviders(<LimsInstrumentPage />);
+    });
 
     await waitFor(() => {
       expect(mockAddNotification).toHaveBeenCalled();

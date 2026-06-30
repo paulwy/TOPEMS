@@ -230,7 +230,7 @@ export const WorkflowStatisticsPage: React.FC = () => {
         <XAxis type="number" unit="h" />
         <YAxis dataKey="name" type="category" width={100} />
         <Tooltip
-          formatter={(value: number) => [`${value} 小时`, '平均停留时间']}
+          formatter={(value) => [`${value} 小时`, '平均停留时间'] as [string, string]}
           contentStyle={{
             borderRadius: 8,
             padding: 12,
@@ -294,7 +294,7 @@ export const WorkflowStatisticsPage: React.FC = () => {
             <XAxis dataKey="name" />
             <YAxis unit="h" />
             <Tooltip
-              formatter={(value: number) => [`${value} 小时`, '平均耗时']}
+              formatter={(value) => [`${value} 小时`, '平均耗时'] as [string, string]}
               contentStyle={{
                 borderRadius: 8,
                 padding: 12,
@@ -337,7 +337,7 @@ export const WorkflowStatisticsPage: React.FC = () => {
   );
 
   const headerContent = (
-    <Stack direction="row" spacing={1} alignItems="center">
+    <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
       <Button
         size="small"
         variant="outlined"

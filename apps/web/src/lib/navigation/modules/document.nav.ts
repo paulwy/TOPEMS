@@ -1,0 +1,48 @@
+import type { ModuleNavConfig } from '../types';
+
+export const documentNavConfig: ModuleNavConfig = {
+  code: 'document',
+  name: '文档中心',
+  icon: 'FileText',
+  path: '/document',
+  permission: 'document:read',
+  source: 'core',
+  status: 'online',
+  order: 4,
+  description: '文档管理、知识库',
+  navItems: [
+    {
+      code: 'document-dashboard',
+      label: '仪表盘',
+      icon: 'LayoutDashboard',
+      path: '/document/dashboard',
+      permission: 'document:read',
+      order: 0,
+      group: 'overview',
+      showInTabs: true,
+      description: '文档数据概览',
+    },
+    {
+      code: 'document-list',
+      label: '文档列表',
+      icon: 'FolderOpen',
+      path: '/document/list',
+      permission: 'document:read',
+      order: 1,
+      group: 'documents',
+      showInTabs: true,
+      description: '文档列表管理',
+    },
+    {
+      code: 'document-knowledge-base',
+      label: '知识库',
+      icon: 'BookOpen',
+      path: '/document/knowledge-base',
+      permission: 'document:read',
+      order: 1,
+      group: 'knowledge',
+      showInTabs: true,
+      description: '知识库管理',
+    },
+  ],
+};

@@ -31,7 +31,10 @@ import { PageContainer, ConfirmDialog } from '@/components/common';
 /**
  * 实例状态配置
  */
-const STATUS_CONFIG: Record<string, { label: string; color: 'primary' | 'success' | 'error' | 'warning' | 'default' }> = {
+const STATUS_CONFIG: Record<
+  string,
+  { label: string; color: 'primary' | 'success' | 'error' | 'warning' | 'default' }
+> = {
   running: { label: '运行中', color: 'primary' },
   completed: { label: '已完成', color: 'success' },
   cancelled: { label: '已取消', color: 'error' },
@@ -41,7 +44,10 @@ const STATUS_CONFIG: Record<string, { label: string; color: 'primary' | 'success
 /**
  * 流程类型配置
  */
-const TYPE_CONFIG: Record<string, { label: string; color: 'primary' | 'success' | 'info' | 'warning' }> = {
+const TYPE_CONFIG: Record<
+  string,
+  { label: string; color: 'primary' | 'success' | 'info' | 'warning' }
+> = {
   approval: { label: '审批流', color: 'primary' },
   business: { label: '业务流', color: 'success' },
   notification: { label: '通知流', color: 'info' },
@@ -208,7 +214,9 @@ export const WorkflowInstancesPage: React.FC = () => {
           try {
             setInstances((prev) =>
               prev.map((item) =>
-                item.id === instance.id ? { ...item, status: 'suspended', current_node: '已挂起' } : item
+                item.id === instance.id
+                  ? { ...item, status: 'suspended', current_node: '已挂起' }
+                  : item
               )
             );
             addNotification({
@@ -239,7 +247,9 @@ export const WorkflowInstancesPage: React.FC = () => {
           try {
             setInstances((prev) =>
               prev.map((item) =>
-                item.id === instance.id ? { ...item, status: 'cancelled', current_node: '已取消' } : item
+                item.id === instance.id
+                  ? { ...item, status: 'cancelled', current_node: '已取消' }
+                  : item
               )
             );
             addNotification({
@@ -281,9 +291,10 @@ export const WorkflowInstancesPage: React.FC = () => {
       const today = new Date().toDateString();
       return new Date(i.started_at).toDateString() === today;
     }).length;
-    const avgDuration = instances.length > 0
-      ? Math.round(instances.reduce((sum, i) => sum + (i.duration || 0), 0) / instances.length)
-      : 0;
+    const avgDuration =
+      instances.length > 0
+        ? Math.round(instances.reduce((sum, i) => sum + (i.duration || 0), 0) / instances.length)
+        : 0;
 
     const formatDuration = (seconds: number) => {
       if (seconds < 60) return `${seconds}秒`;
@@ -292,10 +303,34 @@ export const WorkflowInstancesPage: React.FC = () => {
     };
 
     return [
-      { id: 'running', title: '运行中', value: runningCount, icon: <Activity size={20} />, color: 'primary' as const },
-      { id: 'completed', title: '已完成', value: completedCount, icon: <CheckCircle size={20} />, color: 'success' as const },
-      { id: 'today', title: '今日发起', value: todayCount, icon: <Calendar size={20} />, color: 'info' as const },
-      { id: 'avgDuration', title: '平均耗时', value: formatDuration(avgDuration), icon: <Timer size={20} />, color: 'warning' as const },
+      {
+        id: 'running',
+        title: '运行中',
+        value: runningCount,
+        icon: <Activity size={20} />,
+        color: 'primary' as const,
+      },
+      {
+        id: 'completed',
+        title: '已完成',
+        value: completedCount,
+        icon: <CheckCircle size={20} />,
+        color: 'success' as const,
+      },
+      {
+        id: 'today',
+        title: '今日发起',
+        value: todayCount,
+        icon: <Calendar size={20} />,
+        color: 'info' as const,
+      },
+      {
+        id: 'avgDuration',
+        title: '平均耗时',
+        value: formatDuration(avgDuration),
+        icon: <Timer size={20} />,
+        color: 'warning' as const,
+      },
     ];
   }, [instances]);
 
@@ -317,13 +352,22 @@ export const WorkflowInstancesPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <PlaySquare size={18} color="primary.main" />
+              <PlaySquare
+                size={18}
+                color='primary.main'
+              />
             </Box>
             <Box>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 600 }}
+              >
                 {row.workflow_name}
               </Typography>
-              <Typography variant="caption" color="text.secondary">
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 {row.workflow_code}
               </Typography>
             </Box>
@@ -337,10 +381,10 @@ export const WorkflowInstancesPage: React.FC = () => {
           const typeConfig = TYPE_CONFIG[row.workflow_type];
           return (
             <Chip
-              size="small"
+              size='small'
               label={typeConfig?.label || row.workflow_type}
               color={typeConfig?.color || 'default'}
-              variant="outlined"
+              variant='outlined'
             />
           );
         },
@@ -351,11 +395,17 @@ export const WorkflowInstancesPage: React.FC = () => {
         render: (row) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Avatar
-              sx={{ width: 24, height: 24, fontSize: '0.75rem', bgcolor: 'primary.light', color: 'primary.main' }}
+              sx={{
+                width: 24,
+                height: 24,
+                fontSize: '0.75rem',
+                bgcolor: 'primary.light',
+                color: 'primary.main',
+              }}
             >
               {row.initiator_name.charAt(0)}
             </Avatar>
-            <Typography variant="body2">{row.initiator_name}</Typography>
+            <Typography variant='body2'>{row.initiator_name}</Typography>
           </Box>
         ),
       },
@@ -364,8 +414,14 @@ export const WorkflowInstancesPage: React.FC = () => {
         label: '当前节点',
         render: (row) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <GitBranch size={14} color="text.disabled" />
-            <Typography variant="body2" color="text.secondary">
+            <GitBranch
+              size={14}
+              color='text.disabled'
+            />
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               {row.current_node}
             </Typography>
           </Box>
@@ -378,7 +434,7 @@ export const WorkflowInstancesPage: React.FC = () => {
           const statusConfig = STATUS_CONFIG[row.status];
           return (
             <Chip
-              size="small"
+              size='small'
               label={statusConfig?.label || row.status}
               color={statusConfig?.color || 'default'}
             />
@@ -390,8 +446,14 @@ export const WorkflowInstancesPage: React.FC = () => {
         label: '发起时间',
         render: (row) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Clock size={14} color="text.disabled" />
-            <Typography variant="body2" color="text.secondary">
+            <Clock
+              size={14}
+              color='text.disabled'
+            />
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               {row.started_at}
             </Typography>
           </Box>
@@ -407,7 +469,7 @@ export const WorkflowInstancesPage: React.FC = () => {
               size={16}
               style={{ cursor: 'pointer', color: 'var(--mui-palette-text-secondary)' }}
               onClick={() => handleViewDetail(row)}
-              title="查看详情"
+              aria-label='查看详情'
             />
             {row.status === 'running' && (
               <>
@@ -415,13 +477,13 @@ export const WorkflowInstancesPage: React.FC = () => {
                   size={16}
                   style={{ cursor: 'pointer', color: 'var(--mui-palette-warning-main)' }}
                   onClick={() => handleSuspend(row)}
-                  title="挂起"
+                  aria-label='挂起'
                 />
                 <XCircle
                   size={16}
                   style={{ cursor: 'pointer', color: 'var(--mui-palette-error-main)' }}
                   onClick={() => handleCancel(row)}
-                  title="取消"
+                  aria-label='取消'
                 />
               </>
             )}
@@ -429,7 +491,7 @@ export const WorkflowInstancesPage: React.FC = () => {
               size={16}
               style={{ cursor: 'pointer', color: 'var(--mui-palette-text-secondary)' }}
               onClick={() => handleViewDiagram(row)}
-              title="查看流程图"
+              aria-label='查看流程图'
             />
           </Box>
         ),
@@ -492,13 +554,13 @@ export const WorkflowInstancesPage: React.FC = () => {
       }}
     >
       <ListPageTemplate
-        title=""
-        subtitle=""
+        title=''
+        subtitle=''
         columns={columns}
         data={filteredInstances}
         loading={loading}
         searchable
-        searchPlaceholder="搜索流程名称、发起人..."
+        searchPlaceholder='搜索流程名称、发起人...'
         searchValue={searchQuery}
         onSearch={setSearchQuery}
         filters={filterOptions}
@@ -514,8 +576,7 @@ export const WorkflowInstancesPage: React.FC = () => {
           onPageChange: handlePageChange,
         }}
         onRefresh={loadData}
-        emptyMessage="暂无流程实例"
-        stats={stats}
+        emptyMessage='暂无流程实例'
       />
 
       <ConfirmDialog

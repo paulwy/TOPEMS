@@ -474,3 +474,115 @@ pub struct UpdatePayableRequest {
     pub paid_amount: Option<f64>,
     pub payment_schedule: Option<serde_json::Value>,
 }
+
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+pub struct CollectionRecord {
+    pub id: Uuid,
+    pub collection_no: String,
+    pub customer_id: Option<Uuid>,
+    pub customer_name: Option<String>,
+    pub amount: f64,
+    pub collection_date: Option<DateTime<Utc>>,
+    pub invoice_ids: Option<serde_json::Value>,
+    pub bank_account_id: Option<Uuid>,
+    pub bank_account_no: Option<String>,
+    pub bank_name: Option<String>,
+    pub voucher_id: Option<Uuid>,
+    pub voucher_no: Option<String>,
+    pub status: String,
+    pub created_at: DateTime<Utc>,
+    pub created_by: Option<Uuid>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct CreateCollectionRequest {
+    pub collection_no: Option<String>,
+    #[serde(default, with = "option_uuid")]
+    pub customer_id: Option<Uuid>,
+    pub customer_name: Option<String>,
+    pub amount: f64,
+    pub collection_date: Option<DateTime<Utc>>,
+    pub invoice_ids: Option<Vec<String>>,
+    #[serde(default, with = "option_uuid")]
+    pub bank_account_id: Option<Uuid>,
+    pub bank_account_no: Option<String>,
+    pub bank_name: Option<String>,
+    pub remark: Option<String>,
+}
+
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+pub struct PaymentRecord {
+    pub id: Uuid,
+    pub payment_no: String,
+    pub supplier_id: Option<Uuid>,
+    pub supplier_name: Option<String>,
+    pub amount: f64,
+    pub payment_date: Option<DateTime<Utc>>,
+    pub invoice_ids: Option<serde_json::Value>,
+    pub bank_account_id: Option<Uuid>,
+    pub bank_account_no: Option<String>,
+    pub bank_name: Option<String>,
+    pub voucher_id: Option<Uuid>,
+    pub voucher_no: Option<String>,
+    pub status: String,
+    pub created_at: DateTime<Utc>,
+    pub created_by: Option<Uuid>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct CreatePaymentRequest {
+    pub payment_no: Option<String>,
+    #[serde(default, with = "option_uuid")]
+    pub supplier_id: Option<Uuid>,
+    pub supplier_name: Option<String>,
+    pub amount: f64,
+    pub payment_date: Option<DateTime<Utc>>,
+    pub invoice_ids: Option<Vec<String>>,
+    #[serde(default, with = "option_uuid")]
+    pub bank_account_id: Option<Uuid>,
+    pub bank_account_no: Option<String>,
+    pub bank_name: Option<String>,
+    pub remark: Option<String>,
+}
+
+#[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
+pub struct VoucherTemplate {
+    pub id: Uuid,
+    pub code: String,
+    pub name: String,
+    pub r#type: String,
+    pub description: Option<String>,
+    pub applicable_modules: Option<serde_json::Value>,
+    pub applicable_companies: Option<serde_json::Value>,
+    pub condition: Option<String>,
+    pub entries: Option<serde_json::Value>,
+    pub status: String,
+    pub is_default: bool,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub created_by: Option<Uuid>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct CreateVoucherTemplateRequest {
+    pub code: String,
+    pub name: String,
+    pub r#type: String,
+    pub description: Option<String>,
+    pub applicable_modules: Option<Vec<String>>,
+    pub applicable_companies: Option<Vec<String>>,
+    pub condition: Option<String>,
+    pub entries: Vec<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize, ToSchema)]
+pub struct UpdateVoucherTemplateRequest {
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub applicable_modules: Option<Vec<String>>,
+    pub applicable_companies: Option<Vec<String>>,
+    pub condition: Option<String>,
+    pub entries: Option<Vec<serde_json::Value>>,
+    pub status: Option<String>,
+    pub is_default: Option<bool>,
+}

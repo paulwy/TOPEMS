@@ -91,7 +91,8 @@ export interface RouteModuleConfig {
     | 'crm'
     | 'quality'
     | 'project'
-    | 'gis';
+    | 'gis'
+    | 'enterprise';
   status?: 'online' | 'beta' | 'plan' | 'new';
   order?: number;
   description?: string;

@@ -182,10 +182,34 @@ export const IntegrationMappingsPage: React.FC = () => {
     const transformCount = mappings.filter((m) => m.type === 'transform').length;
 
     return [
-      { id: 'total', title: '映射规则', value: mappings.length, icon: <GitMerge size={20} />, color: 'primary' as const },
-      { id: 'active', title: '启用中', value: activeCount, icon: <Play size={20} />, color: 'success' as const },
-      { id: 'field', title: '字段映射', value: fieldCount, icon: <ArrowRight size={20} />, color: 'info' as const },
-      { id: 'transform', title: '数据转换', value: transformCount, icon: <Copy size={20} />, color: 'warning' as const },
+      {
+        id: 'total',
+        title: '映射规则',
+        value: mappings.length,
+        icon: <GitMerge size={20} />,
+        color: 'primary' as const,
+      },
+      {
+        id: 'active',
+        title: '启用中',
+        value: activeCount,
+        icon: <Play size={20} />,
+        color: 'success' as const,
+      },
+      {
+        id: 'field',
+        title: '字段映射',
+        value: fieldCount,
+        icon: <ArrowRight size={20} />,
+        color: 'info' as const,
+      },
+      {
+        id: 'transform',
+        title: '数据转换',
+        value: transformCount,
+        icon: <Copy size={20} />,
+        color: 'warning' as const,
+      },
     ];
   }, [mappings]);
 
@@ -308,10 +332,16 @@ export const IntegrationMappingsPage: React.FC = () => {
         minWidth: 180,
         render: (row) => (
           <Box>
-            <Typography variant='body2' fontWeight={500}>
+            <Typography
+              variant='body2'
+              sx={{ fontWeight: 500 }}
+            >
               {row.name}
             </Typography>
-            <Typography variant='caption' color='text.secondary'>
+            <Typography
+              variant='caption'
+              color='text.secondary'
+            >
               {row.description}
             </Typography>
           </Box>
@@ -334,7 +364,10 @@ export const IntegrationMappingsPage: React.FC = () => {
         label: '源表',
         width: 120,
         render: (row) => (
-          <Typography variant='body2' color='text.secondary'>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             {row.source}
           </Typography>
         ),
@@ -344,7 +377,10 @@ export const IntegrationMappingsPage: React.FC = () => {
         label: '目标表',
         width: 120,
         render: (row) => (
-          <Typography variant='body2' color='text.secondary'>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             {row.target}
           </Typography>
         ),
@@ -355,7 +391,10 @@ export const IntegrationMappingsPage: React.FC = () => {
         width: 80,
         align: 'center',
         render: (row) => (
-          <Typography variant='body2' fontWeight={500}>
+          <Typography
+            variant='body2'
+            sx={{ fontWeight: 500 }}
+          >
             {row.fieldCount}
           </Typography>
         ),
@@ -378,7 +417,10 @@ export const IntegrationMappingsPage: React.FC = () => {
         label: '最后同步',
         width: 150,
         render: (row) => (
-          <Typography variant='body2' color='text.secondary'>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             {row.lastSyncTime}
           </Typography>
         ),
@@ -424,117 +466,101 @@ export const IntegrationMappingsPage: React.FC = () => {
 
   return (
     <PageContainer
-      headerProps={{
-        title: '数据映射',
-        subTitle: '管理数据映射规则和转换逻辑',
-      }}
+      title='数据映射'
+      subtitle='管理数据映射规则和转换逻辑'
     >
       <ListPageTemplate
         columns={columns}
         data={filteredMappings}
         loading={loading}
-        searchProps={{
-          placeholder: '搜索映射名称、源表、目标表...',
-          value: searchQuery,
-          onChange: (e) => setSearchQuery(e.target.value),
+        searchable
+        searchPlaceholder='搜索映射名称、源表、目标表...'
+        searchValue={searchQuery}
+        onSearch={setSearchQuery}
+        filters={[
+          {
+            id: 'type',
+            label: '类型',
+            type: 'select',
+            options: [
+              { label: '全部', value: 'all' },
+              { label: '字段映射', value: 'field' },
+              { label: '数据转换', value: 'transform' },
+              { label: '数据过滤', value: 'filter' },
+              { label: '数据验证', value: 'validate' },
+            ],
+          },
+          {
+            id: 'status',
+            label: '状态',
+            type: 'select',
+            options: [
+              { label: '全部', value: 'all' },
+              { label: '启用', value: 'active' },
+              { label: '停用', value: 'inactive' },
+              { label: '草稿', value: 'draft' },
+            ],
+          },
+        ]}
+        filtersValue={{ type: typeFilter, status: statusFilter }}
+        onFilterChange={(f) => {
+          if (typeof f.type === 'string') setTypeFilter(f.type);
+          if (typeof f.status === 'string') setStatusFilter(f.status);
         }}
-        filterProps={
-          <>
-            <TextField
-              select
-              size='small'
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              SelectProps={{ native: true }}
-              sx={{ minWidth: 120 }}
-            >
-              <option value='all'>全部类型</option>
-              <option value='field'>字段映射</option>
-              <option value='transform'>数据转换</option>
-              <option value='filter'>数据过滤</option>
-              <option value='validate'>数据验证</option>
-            </TextField>
-            <TextField
-              select
-              size='small'
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              SelectProps={{ native: true }}
-              sx={{ minWidth: 100 }}
-            >
-              <option value='all'>全部状态</option>
-              <option value='active'>启用</option>
-              <option value='inactive'>停用</option>
-              <option value='draft'>草稿</option>
-            </TextField>
-          </>
-        }
-        stats={stats}
         selectedIds={selectedIds}
-        onSelectionChange={setSelectedIds}
-        actions={
-          <>
-            <Button
-              variant='outlined'
-              startIcon={<Upload size={16} />}
-              onClick={() =>
-                addNotification({
-                  title: '导入映射',
-                  message: '导入映射规则功能',
-                  type: 'info',
-                })
-              }
-            >
-              导入
-            </Button>
-            <Button
-              variant='outlined'
-              startIcon={<Download size={16} />}
-              onClick={handleExport}
-            >
-              导出
-            </Button>
-            <Button
-              variant='contained'
-              startIcon={<Plus size={16} />}
-              onClick={() =>
-                addNotification({
-                  title: '新建映射',
-                  message: '创建新映射规则',
-                  type: 'info',
-                })
-              }
-            >
-              新建映射
-            </Button>
-          </>
-        }
+        onSelectionChange={(ids) => setSelectedIds(ids as string[])}
+        actions={[
+          {
+            label: '导入',
+            icon: <Upload size={16} />,
+            onClick: () =>
+              addNotification({
+                title: '导入映射',
+                message: '导入映射规则功能',
+                type: 'info',
+              }),
+            variant: 'outlined',
+          },
+          {
+            label: '导出',
+            icon: <Download size={16} />,
+            onClick: handleExport,
+            variant: 'outlined',
+          },
+          {
+            label: '新建',
+            icon: <Plus size={16} />,
+            onClick: () =>
+              addNotification({
+                title: '新建映射',
+                message: '创建新映射规则',
+                type: 'info',
+              }),
+            variant: 'contained',
+          },
+        ]}
         emptyMessage='暂无映射规则，请点击新建创建'
       />
 
       <ConfirmDialog
-        open={deleteDialogOpen}
+        isOpen={deleteDialogOpen}
         title='删除映射规则'
         message='确定要删除这条映射规则吗？此操作不可恢复。'
-        confirmText='删除'
-        confirmColor='error'
-        loading={actionLoading}
+        confirmLabel='删除'
         onConfirm={() => {
           const mapping = mappings.find((m) => selectedIds.includes(m.id) || false);
           if (mapping) handleDelete(mapping);
         }}
-        onCancel={() => setDeleteDialogOpen(false)}
+        onClose={() => setDeleteDialogOpen(false)}
       />
 
       <ConfirmDialog
-        open={batchDeleteDialogOpen}
+        isOpen={batchDeleteDialogOpen}
         title='批量删除映射规则'
         message={`确定要删除选中的 ${selectedIds.length} 条映射规则吗？此操作不可恢复。`}
-        confirmText='删除'
-        confirmColor='error'
-        loading={actionLoading}
+        confirmLabel='删除'
         onConfirm={handleBatchDelete}
-        onCancel={() => setBatchDeleteDialogOpen(false)}
+        onClose={() => setBatchDeleteDialogOpen(false)}
       />
     </PageContainer>
   );

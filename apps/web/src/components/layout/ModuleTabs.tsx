@@ -12,7 +12,8 @@ import {
 } from '@mui/material';
 import { Pin, PinOff, X, GripVertical, ChevronLeft, ChevronRight, Home } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { navigationRegistry, type NavItem } from '../../lib/NavigationRegistry';
+import { navigationRegistryV2 } from '../../lib/navigation';
+import type { NavItem } from '../../lib/navigation/types';
 
 // ─── Legacy Types (kept for backward compatibility) ─────────────────────────
 
@@ -175,7 +176,7 @@ const LegacyModuleTabs: React.FC<LegacyModuleTabsProps> = ({ tabs, pluginCode, o
 
   useEffect(() => {
     if (pluginCode) {
-      const registryTabs = navigationRegistry.getModuleTabs(pluginCode);
+      const registryTabs = navigationRegistryV2.getModuleTabs(pluginCode);
       if (registryTabs) {
         setLocalTabs(
           registryTabs.map((tab: NavItem) => ({
@@ -542,12 +543,10 @@ export const ModuleTabs: React.FC<ModuleTabsProps> = ({
       return items;
     }
 
-    // 优先级 2：从 navigationRegistry 获取
     if (pluginCode) {
-      const registryTabs = navigationRegistry.getModuleTabs(pluginCode);
-      const sidebarItems = navigationRegistry.getSidebarNavItems(pluginCode);
+      const registryTabs = navigationRegistryV2.getModuleTabs(pluginCode);
+      const sidebarItems = navigationRegistryV2.getSidebarNavItems(pluginCode);
 
-      // 合并并按 path 去重
       const pathMap = new Map<string, ModuleTabItem>();
 
       const addItems = (navItems: NavItem[] | undefined) => {
@@ -565,7 +564,6 @@ export const ModuleTabs: React.FC<ModuleTabsProps> = ({
       addItems(registryTabs);
       addItems(sidebarItems);
 
-      // 按 order 排序（使用 sidebar 的顺序作为主顺序）
       const orderedPaths = new Set<string>();
       if (sidebarItems) sidebarItems.forEach((item) => orderedPaths.add(item.path));
       if (registryTabs) registryTabs.forEach((item) => orderedPaths.add(item.path));

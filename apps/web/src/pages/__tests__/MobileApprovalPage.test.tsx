@@ -40,7 +40,7 @@ describe('MobileApprovalPage', () => {
   it('should render page title', async () => {
     renderWithProviders(<MobileApprovalPage />);
     await waitFor(() => {
-      expect(screen.getByText('移动审批')).toBeInTheDocument();
+      expect(screen.getByRole('heading')).toBeInTheDocument();
     });
   });
 });

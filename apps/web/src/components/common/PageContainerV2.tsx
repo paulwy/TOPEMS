@@ -53,28 +53,28 @@ export const PageContainer: React.FC<PageContainerProps> = ({
   const currentNavItem = useCurrentNavItem();
   const navHierarchy = useNavHierarchy();
 
-  const autoTitle = useMemo(() => {
-    if (!autoTitle) return undefined;
+  const computedTitle = useMemo(() => {
+    if (!autoTitle) return;
     if (currentNavItem) return currentNavItem.label;
     const route = findRouteByPath(location.pathname);
     return route?.title;
   }, [autoTitle, currentNavItem, location.pathname]);
 
-  const title = propTitle || autoTitle || '';
+  const title = propTitle || computedTitle || '';
 
   const breadcrumbs = useMemo(() => {
-    if (!autoBreadcrumbs) return undefined;
+    if (!autoBreadcrumbs) return;
     if (navHierarchy.length > 0) {
       return navHierarchy.map((item) => ({
         label: item.label,
         href: item.path,
       }));
     }
-    return undefined;
+    return;
   }, [autoBreadcrumbs, navHierarchy]);
 
   const backButtonConfig = useMemo(() => {
-    if (backButton === false || !backButton) return undefined;
+    if (backButton === false || !backButton) return;
     if (backButton === true) {
       const parentItem = navHierarchy[navHierarchy.length - 2];
       return {
@@ -88,8 +88,10 @@ export const PageContainer: React.FC<PageContainerProps> = ({
     };
   }, [backButton, navHierarchy]);
 
+  const headerTitle = (headerProps as any)?.title;
   const mergedHeaderProps: PageHeaderProps = {
-    ...headerProps,
+    title: headerTitle || title || '',
+    ...(headerProps as any),
     ...(headerActions && { customToolbar: headerActions }),
     ...(headerContent && { children: headerContent }),
     ...(actions && { actions }),
@@ -127,7 +129,6 @@ export const PageContainer: React.FC<PageContainerProps> = ({
     >
       {hasHeader && (
         <PageHeader
-          title={title || ''}
           subtitle={subtitle}
           description={description}
           loading={loading}
@@ -145,8 +146,16 @@ export const PageContainer: React.FC<PageContainerProps> = ({
       >
         {loading ? (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <Skeleton variant='rectangular' height={200} sx={{ borderRadius: 1 }} />
-            <Skeleton variant='rectangular' height={300} sx={{ borderRadius: 1 }} />
+            <Skeleton
+              variant='rectangular'
+              height={200}
+              sx={{ borderRadius: 1 }}
+            />
+            <Skeleton
+              variant='rectangular'
+              height={300}
+              sx={{ borderRadius: 1 }}
+            />
           </Box>
         ) : (
           <ContentWrapper {...contentWrapperProps}>{children}</ContentWrapper>

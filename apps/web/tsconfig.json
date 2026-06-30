@@ -36,6 +36,6 @@
     "types": ["vitest/globals", "node", "react", "react-dom"]
   },
   "include": ["src", "src/@types/**/*.d.ts"],
-  "exclude": ["node_modules", "dist", "src/**/*.stories.ts", "src/**/*.stories.tsx", "src/**/__tests__/**", "src/**/*.test.ts", "src/**/*.test.tsx", "src/__tests__/**"],
+  "exclude": ["node_modules", "dist", "src/**/*.stories.ts", "src/**/*.stories.tsx", "src/**/__tests__/**", "src/**/*.test.ts", "src/**/*.test.tsx", "src/__tests__/**", "src/test/**"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

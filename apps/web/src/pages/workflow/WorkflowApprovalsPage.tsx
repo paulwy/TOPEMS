@@ -199,11 +199,11 @@ const STATUS_COLORS: Record<ApprovalStatus, 'warning' | 'success' | 'error'> = {
 };
 
 const WORKFLOW_TYPE_COLORS: Record<string, string> = {
-  '采购管理': '#3b82f6',
-  '人事管理': '#10b981',
-  '财务管理': '#f59e0b',
-  '法务管理': '#8b5cf6',
-  'IT管理': '#06b6d4',
+  采购管理: '#3b82f6',
+  人事管理: '#10b981',
+  财务管理: '#f59e0b',
+  法务管理: '#8b5cf6',
+  IT管理: '#06b6d4',
 };
 
 export const WorkflowApprovalsPage: React.FC = () => {
@@ -411,7 +411,11 @@ export const WorkflowApprovalsPage: React.FC = () => {
         label: '流程标题',
         minWidth: 240,
         render: (row) => (
-          <Stack direction='row' spacing={1.5} sx={{ alignItems: 'center' }}>
+          <Stack
+            direction='row'
+            spacing={1.5}
+            sx={{ alignItems: 'center' }}
+          >
             <Avatar
               sx={{
                 width: 36,
@@ -419,7 +423,10 @@ export const WorkflowApprovalsPage: React.FC = () => {
                 bgcolor: 'primary.light',
               }}
             >
-              <GitBranch size={18} color='primary.main' />
+              <GitBranch
+                size={18}
+                color='primary.main'
+              />
             </Avatar>
             <Box sx={{ minWidth: 0 }}>
               <Typography
@@ -466,9 +473,19 @@ export const WorkflowApprovalsPage: React.FC = () => {
         label: '发起人',
         width: 120,
         render: (row) => (
-          <Stack direction='row' spacing={0.5} sx={{ alignItems: 'center' }}>
-            <User size={14} style={{ color: '#9ca3af' }} />
-            <Typography variant='body2' color='text.secondary'>
+          <Stack
+            direction='row'
+            spacing={0.5}
+            sx={{ alignItems: 'center' }}
+          >
+            <User
+              size={14}
+              style={{ color: '#9ca3af' }}
+            />
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               {row.initiator}
             </Typography>
           </Stack>
@@ -479,9 +496,19 @@ export const WorkflowApprovalsPage: React.FC = () => {
         label: '接收时间',
         width: 160,
         render: (row) => (
-          <Stack direction='row' spacing={0.5} sx={{ alignItems: 'center' }}>
-            <Clock size={14} style={{ color: '#9ca3af' }} />
-            <Typography variant='body2' color='text.secondary'>
+          <Stack
+            direction='row'
+            spacing={0.5}
+            sx={{ alignItems: 'center' }}
+          >
+            <Clock
+              size={14}
+              style={{ color: '#9ca3af' }}
+            />
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               {new Date(row.receivedAt).toLocaleString('zh-CN')}
             </Typography>
           </Stack>
@@ -558,7 +585,15 @@ export const WorkflowApprovalsPage: React.FC = () => {
         ),
       },
     ],
-    [getPriorityChip, getStatusChip, handleApprove, handleRejectClick, handleViewDetail, handleTransfer, actionLoading]
+    [
+      getPriorityChip,
+      getStatusChip,
+      handleApprove,
+      handleRejectClick,
+      handleViewDetail,
+      handleTransfer,
+      actionLoading,
+    ]
   );
 
   const filterOptions = useMemo(
@@ -620,10 +655,22 @@ export const WorkflowApprovalsPage: React.FC = () => {
             },
           }}
         >
-          <Tab label='待我审批' value='pending' />
-          <Tab label='我已审批' value='approved' />
-          <Tab label='我发起的' value='initiated' />
-          <Tab label='抄送我的' value='cc' />
+          <Tab
+            label='待我审批'
+            value='pending'
+          />
+          <Tab
+            label='我已审批'
+            value='approved'
+          />
+          <Tab
+            label='我发起的'
+            value='initiated'
+          />
+          <Tab
+            label='抄送我的'
+            value='cc'
+          />
         </Tabs>
       </Box>
     ),
@@ -649,7 +696,11 @@ export const WorkflowApprovalsPage: React.FC = () => {
             }}
           >
             <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-              <Stack direction='row' spacing={1.5} sx={{ alignItems: 'center' }}>
+              <Stack
+                direction='row'
+                spacing={1.5}
+                sx={{ alignItems: 'center' }}
+              >
                 <Box
                   sx={{
                     width: 40,
@@ -665,10 +716,16 @@ export const WorkflowApprovalsPage: React.FC = () => {
                   {item.icon}
                 </Box>
                 <Box>
-                  <Typography variant='h4' sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                  <Typography
+                    variant='h4'
+                    sx={{ fontWeight: 700, lineHeight: 1.2 }}
+                  >
                     {item.value}
                   </Typography>
-                  <Typography variant='body2' color='text.secondary'>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     {item.title}
                   </Typography>
                 </Box>
@@ -729,13 +786,20 @@ export const WorkflowApprovalsPage: React.FC = () => {
         onClose={() => !actionLoading && setRejectDialogOpen(false)}
         onConfirm={handleRejectConfirm}
         title='驳回审批'
+        message={`确定要驳回「${selectedTask?.title}」的审批吗？`}
         confirmLabel='确认驳回'
         cancelLabel='取消'
         danger
         type='warning'
       >
-        <Stack spacing={2} sx={{ mt: 2 }}>
-          <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+        <Stack
+          spacing={2}
+          sx={{ mt: 2 }}
+        >
+          <Typography
+            variant='body2'
+            sx={{ color: 'text.secondary' }}
+          >
             确定要驳回「{selectedTask?.title}」的审批吗？
           </Typography>
           <TextField

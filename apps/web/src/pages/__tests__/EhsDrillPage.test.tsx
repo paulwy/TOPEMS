@@ -69,19 +69,25 @@ describe('EhsDrillPage', () => {
   });
 
   it('should render loading state initially', async () => {
-    renderWithProviders(<EhsDrillPage />);
+    await act(async () => {
+      renderWithProviders(<EhsDrillPage />);
+    });
     expect(screen.getByRole('status')).toBeInTheDocument();
   });
 
   it('should render page title', async () => {
-    renderWithProviders(<EhsDrillPage />);
+    await act(async () => {
+      renderWithProviders(<EhsDrillPage />);
+    });
     await waitFor(() => {
       expect(screen.getByText('演练记录')).toBeInTheDocument();
     });
   });
 
   it('should render drill table', async () => {
-    renderWithProviders(<EhsDrillPage />);
+    await act(async () => {
+      renderWithProviders(<EhsDrillPage />);
+    });
     await waitFor(() => {
       expect(screen.getByText('DR-2024-001')).toBeInTheDocument();
       expect(screen.getByText('火灾逃生演练')).toBeInTheDocument();
@@ -89,7 +95,9 @@ describe('EhsDrillPage', () => {
   });
 
   it('should handle search', async () => {
-    renderWithProviders(<EhsDrillPage />);
+    await act(async () => {
+      renderWithProviders(<EhsDrillPage />);
+    });
     await waitFor(() => {
       const searchInput = screen.getByPlaceholderText(/搜索演练名称或编号/);
       fireEvent.change(searchInput, { target: { value: '火灾' } });
@@ -102,7 +110,9 @@ describe('EhsDrillPage', () => {
       data: {},
     });
 
-    renderWithProviders(<EhsDrillPage />);
+    await act(async () => {
+      renderWithProviders(<EhsDrillPage />);
+    });
 
     await waitFor(() => {
       const addButton = screen.getByRole('button', { name: /新增演练/i });
@@ -132,7 +142,9 @@ describe('EhsDrillPage', () => {
 
   it('should handle API error', async () => {
     (ehsApi.listDrills as vi.Mock).mockRejectedValue(new Error('Network error'));
-    renderWithProviders(<EhsDrillPage />);
+    await act(async () => {
+      renderWithProviders(<EhsDrillPage />);
+    });
 
     await waitFor(() => {
       expect(mockAddNotification).toHaveBeenCalled();

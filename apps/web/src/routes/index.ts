@@ -27,4 +27,5 @@ export { pdmRoutes } from './pdm';
 export { srmRoutes } from './srm';
 export { tenantRoutes } from './tenant';
 export { lowcodeRoutes } from './lowcode';
+export { legacyRedirects } from './compatibility';
 export { type RouteConfig, lazyWithRetry } from './utils';

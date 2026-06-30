@@ -131,28 +131,30 @@ export function ListPageTemplate<T>({
   ...props
 }: ListPageTemplateProps<T>) {
   // 兼容旧版扁平化分页属性
-  const resolvedPagination = pagination || (page !== undefined && pageSize !== undefined && total !== undefined
-    ? {
-        page,
-        pageSize,
-        total,
-        onPageChange: onPageChange || (() => {}),
-        onPageSizeChange,
-      }
-    : undefined);
+  const resolvedPagination =
+    pagination ||
+    (page !== undefined && pageSize !== undefined && total !== undefined
+      ? {
+          page,
+          pageSize,
+          total,
+          onPageChange: onPageChange || (() => {}),
+          onPageSizeChange,
+        }
+      : undefined);
 
   // 兼容旧版 onSearchChange
   const resolvedOnSearch = onSearch || onSearchChange;
 
   // 兼容旧版 filterContent
-  const resolvedHeaderContent = filterContent
-    ? (
-        <>
-          {headerContent}
-          {filterContent}
-        </>
-      )
-    : headerContent;
+  const resolvedHeaderContent = filterContent ? (
+    <>
+      {headerContent}
+      {filterContent}
+    </>
+  ) : (
+    headerContent
+  );
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -553,7 +555,7 @@ export function ListPageTemplate<T>({
             selected={isSelected}
             onClick={() => onRowClick?.(row)}
             sx={{
-              '&:nth-child(even)': striped ? { bgcolor: 'action.hover' } : {},
+              '&:nth-of-type(even)': striped ? { bgcolor: 'action.hover' } : {},
               '&:hover': { bgcolor: 'primary.50' },
               '&.Mui-selected': { bgcolor: 'primary.50' },
               cursor: onRowClick ? 'pointer' : 'default',
@@ -588,7 +590,9 @@ export function ListPageTemplate<T>({
                   bgcolor: 'inherit',
                 }}
               >
-                {resolvedPagination ? resolvedPagination.page * resolvedPagination.pageSize + index + 1 : index + 1}
+                {resolvedPagination
+                  ? resolvedPagination.page * resolvedPagination.pageSize + index + 1
+                  : index + 1}
               </TableCell>
             )}
             {expandable && (

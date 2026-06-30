@@ -399,7 +399,7 @@ export const MonitorMetricsPage: React.FC = () => {
             <XAxis dataKey="name" tick={{ fontSize: 12 }} />
             <YAxis />
             <Tooltip
-              formatter={(value: number) => [`${value} 次`, '请求量']}
+              formatter={(value) => [`${value} 次`, '请求量'] as [string, string]}
               contentStyle={{
                 borderRadius: 8,
                 padding: 12,
@@ -443,7 +443,7 @@ export const MonitorMetricsPage: React.FC = () => {
   ], [cpuTrendData, memoryTrendData, diskIOData, networkData, apiRequestData, responseTimeData, handleRefresh]);
 
   const headerContent = (
-    <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
+    <Stack direction="row" spacing={2} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
       <Button
         size="small"
         variant="outlined"
@@ -509,7 +509,7 @@ export const MonitorMetricsPage: React.FC = () => {
             key={tab.value}
             value={tab.value}
             label={
-              <Stack direction="row" spacing={1} alignItems="center">
+              <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                 {tab.icon}
                 <span>{tab.label}</span>
               </Stack>

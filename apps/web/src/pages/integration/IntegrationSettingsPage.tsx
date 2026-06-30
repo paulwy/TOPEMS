@@ -16,7 +16,7 @@ import {
   Switch,
   FormControlLabel,
   Divider,
-  Grid,
+  InputAdornment,
   Chip,
   IconButton,
   Alert,
@@ -36,7 +36,7 @@ import {
 } from 'lucide-react';
 
 import { PageContainer, ConfirmDialog } from '@/components/common';
-import { SettingsPageTemplate, type SettingsSection } from '@/components/templates';
+import { SettingsPageTemplate, type SettingSection } from '@/components/templates';
 import { useAppStore } from '../../store';
 import { extractErrorMessage } from '@/utils/errors';
 
@@ -165,7 +165,7 @@ export const IntegrationSettingsPage: React.FC = () => {
     }
   }, [addNotification]);
 
-  const generalSection: SettingsSection = {
+  const generalSection = {
     title: '全局同步设置',
     icon: <RefreshCw size={20} />,
     children: (
@@ -182,7 +182,11 @@ export const IntegrationSettingsPage: React.FC = () => {
             }
             label='启用自动同步'
           />
-          <Typography variant='caption' color='text.secondary' sx={{ ml: 6 }}>
+          <Typography
+            variant='caption'
+            color='text.secondary'
+            sx={{ ml: 6 }}
+          >
             开启后系统将按设定间隔自动执行数据同步任务
           </Typography>
         </Box>
@@ -199,7 +203,9 @@ export const IntegrationSettingsPage: React.FC = () => {
                 syncInterval: parseInt(e.target.value) || 15,
               }))
             }
-            InputProps={{ endAdornment: <Typography color='text.secondary'>分钟</Typography> }}
+            slotProps={{
+              input: { endAdornment: <Typography color='text.secondary'>分钟</Typography> },
+            }}
             sx={{ width: 150 }}
           />
           <TextField
@@ -229,7 +235,9 @@ export const IntegrationSettingsPage: React.FC = () => {
                 defaultTimeout: (parseInt(e.target.value) || 30) * 1000,
               }))
             }
-            InputProps={{ endAdornment: <Typography color='text.secondary'>秒</Typography> }}
+            slotProps={{
+              input: { endAdornment: <Typography color='text.secondary'>秒</Typography> },
+            }}
             sx={{ width: 150 }}
           />
           <TextField
@@ -243,7 +251,9 @@ export const IntegrationSettingsPage: React.FC = () => {
                 logRetentionDays: parseInt(e.target.value) || 30,
               }))
             }
-            InputProps={{ endAdornment: <Typography color='text.secondary'>天</Typography> }}
+            slotProps={{
+              input: { endAdornment: <Typography color='text.secondary'>天</Typography> },
+            }}
             sx={{ width: 150 }}
           />
         </Box>
@@ -279,7 +289,10 @@ export const IntegrationSettingsPage: React.FC = () => {
         <Divider />
 
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-          <Button variant='outlined' onClick={() => setGlobalSettings(MOCK_CONFIGS[0] && globalSettings)}>
+          <Button
+            variant='outlined'
+            onClick={() => setGlobalSettings(MOCK_CONFIGS[0] && globalSettings)}
+          >
             重置
           </Button>
           <Button
@@ -295,7 +308,7 @@ export const IntegrationSettingsPage: React.FC = () => {
     ),
   };
 
-  const notificationSection: SettingsSection = {
+  const notificationSection = {
     title: '通知设置',
     icon: <Bell size={20} />,
     children: (
@@ -361,17 +374,30 @@ export const IntegrationSettingsPage: React.FC = () => {
     ),
   };
 
-  const connectionsSection: SettingsSection = {
+  const connectionsSection = {
     title: '系统连接配置',
     icon: <Globe size={20} />,
     children: (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {configs.map((config) => (
-          <Card key={config.id} variant='outlined'>
+          <Card
+            key={config.id}
+            variant='outlined'
+          >
             <CardContent>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  mb: 2,
+                }}
+              >
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Typography variant='subtitle1' fontWeight={500}>
+                  <Typography
+                    variant='subtitle1'
+                    sx={{ fontWeight: 500 }}
+                  >
                     {config.name}
                   </Typography>
                   <Chip
@@ -402,24 +428,26 @@ export const IntegrationSettingsPage: React.FC = () => {
                 </Box>
               </Box>
 
-              <Grid container spacing={2}>
-                <Grid item xs={12} md={6}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                <Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>
                   <TextField
                     fullWidth
                     size='small'
                     label='API端点'
                     value={config.endpoint}
                     disabled
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position='start'>
-                          <Globe size={14} />
-                        </InputAdornment>
-                      ),
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position='start'>
+                            <Globe size={14} />
+                          </InputAdornment>
+                        ),
+                      },
                     }}
                   />
-                </Grid>
-                <Grid item xs={12} md={6}>
+                </Box>
+                <Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>
                   <TextField
                     fullWidth
                     size='small'
@@ -428,52 +456,58 @@ export const IntegrationSettingsPage: React.FC = () => {
                       config.authType === 'apikey'
                         ? 'API Key'
                         : config.authType === 'oauth2'
-                        ? 'OAuth 2.0'
-                        : 'Basic Auth'
+                          ? 'OAuth 2.0'
+                          : 'Basic Auth'
                     }
                     disabled
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position='start'>
-                          <Key size={14} />
-                        </InputAdornment>
-                      ),
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position='start'>
+                            <Key size={14} />
+                          </InputAdornment>
+                        ),
+                      },
                     }}
                   />
-                </Grid>
-                <Grid item xs={6} md={3}>
+                </Box>
+                <Box sx={{ flex: 1, minWidth: { xs: '50%', md: 'calc(25% - 12px)' } }}>
                   <TextField
                     fullWidth
                     size='small'
                     label='重试次数'
                     value={config.retryCount}
                     disabled
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position='start'>
-                          <RefreshCw size={14} />
-                        </InputAdornment>
-                      ),
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position='start'>
+                            <RefreshCw size={14} />
+                          </InputAdornment>
+                        ),
+                      },
                     }}
                   />
-                </Grid>
-                <Grid item xs={6} md={3}>
+                </Box>
+                <Box sx={{ flex: 1, minWidth: { xs: '50%', md: 'calc(25% - 12px)' } }}>
                   <TextField
                     fullWidth
                     size='small'
                     label='超时时间'
                     value={`${config.timeout / 1000}s`}
                     disabled
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position='start'>
-                          <Clock size={14} />
-                        </InputAdornment>
-                      ),
+                    slotProps={{
+                      input: {
+                        startAdornment: (
+                          <InputAdornment position='start'>
+                            <Clock size={14} />
+                          </InputAdornment>
+                        ),
+                      },
                     }}
                   />
-                </Grid>
-              </Grid>
+                </Box>
+              </Box>
             </CardContent>
           </Card>
         ))}
@@ -496,20 +530,68 @@ export const IntegrationSettingsPage: React.FC = () => {
     ),
   };
 
-  const sections = [generalSection, notificationSection, connectionsSection];
-
   return (
     <PageContainer
-      headerProps={{
-        title: '集成设置',
-        subTitle: '配置集成平台全局设置和系统连接',
-      }}
+      title='集成设置'
+      subtitle='配置集成平台全局设置和系统连接'
     >
-      <Alert severity='info' sx={{ mb: 3 }}>
+      <Alert
+        severity='info'
+        sx={{ mb: 3 }}
+      >
         集成平台负责管理系统间的数据同步和API集成。请确保各子系统连接配置正确，并定期检查同步任务的执行状态。
       </Alert>
 
-      <SettingsPageTemplate sections={sections} />
+      <Card
+        variant='outlined'
+        sx={{ mb: 3 }}
+      >
+        <CardContent>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+            <RefreshCw size={20} />
+            <Typography
+              variant='subtitle1'
+              sx={{ fontWeight: 600 }}
+            >
+              全局同步设置
+            </Typography>
+          </Box>
+          {generalSection.children}
+        </CardContent>
+      </Card>
+
+      <Card
+        variant='outlined'
+        sx={{ mb: 3 }}
+      >
+        <CardContent>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+            <Bell size={20} />
+            <Typography
+              variant='subtitle1'
+              sx={{ fontWeight: 600 }}
+            >
+              通知设置
+            </Typography>
+          </Box>
+          {notificationSection.children}
+        </CardContent>
+      </Card>
+
+      <Card variant='outlined'>
+        <CardContent>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
+            <Globe size={20} />
+            <Typography
+              variant='subtitle1'
+              sx={{ fontWeight: 600 }}
+            >
+              系统连接配置
+            </Typography>
+          </Box>
+          {connectionsSection.children}
+        </CardContent>
+      </Card>
     </PageContainer>
   );
 };

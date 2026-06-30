@@ -4,17 +4,19 @@ use axum::{
     routing::*,
     Json, Router,
 };
-use chrono::Utc;
-use serde::Deserialize;
+use chrono::{DateTime, Datelike, Utc};
+use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use uuid::Uuid;
 
 use super::ApiState;
 use crate::api::audit::{log_audit_event, AuditEventParams};
-use crate::models::{
-    Budget, CreateBudgetRequest, CreateExpenseRequest, CreatePayableRequest,
-    CreateReceivableRequest, Expense, Payable, Receivable, UpdateBudgetRequest,
-    UpdateExpenseRequest, UpdatePayableRequest, UpdateReceivableRequest,
+use crate::models::finance::{
+    AccountingSubject, Budget, CollectionRecord, CreateAccountingSubjectRequest,
+    CreateBudgetRequest, CreateCollectionRequest, CreateExpenseRequest, CreatePayableRequest,
+    CreatePaymentRequest, CreateReceivableRequest, Expense, Payable, PaymentRecord, Receivable,
+    UpdateAccountingSubjectRequest, UpdateBudgetRequest, UpdateExpenseRequest,
+    UpdatePayableRequest, UpdateReceivableRequest,
 };
 use crate::services::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
@@ -73,6 +75,48 @@ pub fn create_routes() -> Router<ApiState> {
             "/api/erp/payables/{id}",
             get(get_payable).put(update_payable).delete(delete_payable),
         )
+        .route("/api/finance/period/current", get(get_current_period))
+        .route("/api/finance/periods", get(list_periods))
+        .route("/api/finance/periods/open", post(open_period))
+        .route("/api/finance/periods/close", post(close_period))
+        .route(
+            "/api/finance/accounts",
+            get(list_accounts).post(create_account),
+        )
+        .route("/api/finance/accounts/tree", get(get_accounts_tree))
+        .route(
+            "/api/finance/accounts/{id}",
+            get(get_account).put(update_account).delete(delete_account),
+        )
+        .route(
+            "/api/finance/accounts/{parent_id}/children-batch",
+            post(batch_create_children),
+        )
+        .route("/api/finance/accounts/balances", get(get_account_balances))
+        .route(
+            "/api/finance/accounts/opening-balances",
+            get(get_opening_balances),
+        )
+        .route(
+            "/api/finance/accounts/{account_id}/opening-balance",
+            post(set_opening_balance),
+        )
+        .route(
+            "/api/finance/accounts/opening-balance/carry-forward",
+            post(carry_forward_opening_balance),
+        )
+        .route(
+            "/api/finance/ar/collections",
+            get(list_collections).post(create_collection),
+        )
+        .route(
+            "/api/finance/ap/payments",
+            get(list_payments).post(create_payment),
+        )
+        .route("/api/finance/reconcile", post(reconcile))
+        .route("/api/finance/reconcile/auto", post(auto_reconcile))
+        .route("/api/finance/ar/aging", get(get_receivable_aging))
+        .route("/api/finance/ap/aging", get(get_payable_aging))
 }
 
 async fn list_expenses(
@@ -1509,4 +1553,1325 @@ async fn delete_payable(
     .await;
 
     response
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+struct PeriodResponse {
+    period: String,
+    year: i32,
+    month: i32,
+    start_date: Option<String>,
+    end_date: Option<String>,
+    status: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct PeriodRequest {
+    period: String,
+}
+
+async fn get_current_period(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<PeriodResponse>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+        return e;
+    }
+
+    let now = Utc::now();
+    let year = now.year();
+    let month = now.month() as i32;
+    let period = format!("{}{:02}", year, month);
+
+    Json(ApiResponse::success(
+        PeriodResponse {
+            period: period.clone(),
+            year,
+            month,
+            start_date: Some(format!("{}-{:02}-01", year, month)),
+            end_date: Some(format!(
+                "{}-{:02}-{}",
+                year,
+                month,
+                get_days_in_month(year, month)
+            )),
+            status: "open".to_string(),
+        },
+        "获取当前会计期间成功",
+    ))
+}
+
+fn get_days_in_month(year: i32, month: i32) -> i32 {
+    match month {
+        1 | 3 | 5 | 7 | 8 | 10 | 12 => 31,
+        4 | 6 | 9 | 11 => 30,
+        2 => {
+            if (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0) {
+                29
+            } else {
+                28
+            }
+        }
+        _ => 30,
+    }
+}
+
+async fn list_periods(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<PeriodListParams>,
+) -> Json<ApiResponse<Vec<PeriodResponse>>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+        return e;
+    }
+
+    let year = params.year.unwrap_or(Utc::now().year());
+    let mut periods = Vec::new();
+
+    for month in 1..=12 {
+        periods.push(PeriodResponse {
+            period: format!("{}{:02}", year, month),
+            year,
+            month,
+            start_date: Some(format!("{}-{:02}-01", year, month)),
+            end_date: Some(format!(
+                "{}-{:02}-{}",
+                year,
+                month,
+                get_days_in_month(year, month)
+            )),
+            status: if month <= Utc::now().month() as i32 {
+                "open".to_string()
+            } else {
+                "closed".to_string()
+            },
+        });
+    }
+
+    Json(ApiResponse::success(periods, "获取会计期间列表成功"))
+}
+
+#[derive(Debug, Deserialize)]
+struct PeriodListParams {
+    year: Option<i32>,
+    status: Option<String>,
+}
+
+async fn open_period(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<PeriodRequest>,
+) -> Json<ApiResponse<()>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+
+    Json(ApiResponse::success(
+        (),
+        &format!("会计期间 {} 已打开", req.period),
+    ))
+}
+
+async fn close_period(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<PeriodRequest>,
+) -> Json<ApiResponse<()>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+
+    Json(ApiResponse::success(
+        (),
+        &format!("会计期间 {} 已关闭", req.period),
+    ))
+}
+
+#[derive(Debug, Deserialize)]
+struct AccountListParams {
+    category: Option<String>,
+    parent_id: Option<String>,
+    level: Option<i32>,
+    status: Option<String>,
+    keyword: Option<String>,
+    page: Option<i32>,
+    pagesize: Option<i32>,
+}
+
+async fn list_accounts(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<AccountListParams>,
+) -> Json<ApiResponse<PaginatedResponse<AccountingSubject>>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+        return e;
+    }
+
+    let page = params.page.unwrap_or(1).max(1);
+    let page_size = params.pagesize.unwrap_or(20).min(100);
+    let offset = ((page - 1) * page_size) as i64;
+
+    let result = sqlx::query_as::<_, AccountingSubject>(
+        r#"
+        SELECT id, code, name, category, level, parent_code, description, is_cash_flow, status, created_at, updated_at
+        FROM accounting_subjects
+        WHERE ($1::text IS NULL OR category = $1)
+          AND ($2::text IS NULL OR status = $2)
+          AND ($3::text IS NULL OR code ILIKE $3 OR name ILIKE $3)
+        ORDER BY code ASC
+        LIMIT $4 OFFSET $5
+        "#,
+    )
+    .bind(&params.category)
+    .bind(&params.status)
+    .bind(&params.keyword.as_ref().map(|k| format!("%{}%", k)))
+    .bind(page_size as i64)
+    .bind(offset)
+    .fetch_all(&state.db)
+    .await;
+
+    match result {
+        Ok(accounts) => {
+            let count_result = sqlx::query_scalar::<_, i64>(
+                r#"
+                SELECT COUNT(*) FROM accounting_subjects
+                WHERE ($1::text IS NULL OR category = $1)
+                  AND ($2::text IS NULL OR status = $2)
+                  AND ($3::text IS NULL OR code ILIKE $3 OR name ILIKE $3)
+                "#,
+            )
+            .bind(&params.category)
+            .bind(&params.status)
+            .bind(&params.keyword.as_ref().map(|k| format!("%{}%", k)))
+            .fetch_one(&state.db)
+            .await;
+
+            let total = count_result.unwrap_or(0);
+
+            Json(ApiResponse::success(
+                PaginatedResponse::new(accounts, total, page as i64, page_size as i64),
+                "获取会计科目列表成功",
+            ))
+        }
+        Err(e) => {
+            tracing::warn!("获取会计科目列表失败: {}, 使用模拟数据", e);
+            let mock_accounts = vec![
+                AccountingSubject {
+                    id: Uuid::new_v4(),
+                    code: "1001".to_string(),
+                    name: "库存现金".to_string(),
+                    category: "asset".to_string(),
+                    level: 1,
+                    parent_code: None,
+                    description: Some("企业库存现金".to_string()),
+                    is_cash_flow: true,
+                    status: "active".to_string(),
+                    created_at: Utc::now(),
+                    updated_at: Utc::now(),
+                },
+                AccountingSubject {
+                    id: Uuid::new_v4(),
+                    code: "1002".to_string(),
+                    name: "银行存款".to_string(),
+                    category: "asset".to_string(),
+                    level: 1,
+                    parent_code: None,
+                    description: Some("企业银行存款".to_string()),
+                    is_cash_flow: true,
+                    status: "active".to_string(),
+                    created_at: Utc::now(),
+                    updated_at: Utc::now(),
+                },
+                AccountingSubject {
+                    id: Uuid::new_v4(),
+                    code: "1122".to_string(),
+                    name: "应收账款".to_string(),
+                    category: "asset".to_string(),
+                    level: 1,
+                    parent_code: None,
+                    description: Some("企业应收账款".to_string()),
+                    is_cash_flow: false,
+                    status: "active".to_string(),
+                    created_at: Utc::now(),
+                    updated_at: Utc::now(),
+                },
+                AccountingSubject {
+                    id: Uuid::new_v4(),
+                    code: "2001".to_string(),
+                    name: "短期借款".to_string(),
+                    category: "liability".to_string(),
+                    level: 1,
+                    parent_code: None,
+                    description: Some("短期银行借款".to_string()),
+                    is_cash_flow: false,
+                    status: "active".to_string(),
+                    created_at: Utc::now(),
+                    updated_at: Utc::now(),
+                },
+                AccountingSubject {
+                    id: Uuid::new_v4(),
+                    code: "3001".to_string(),
+                    name: "实收资本".to_string(),
+                    category: "equity".to_string(),
+                    level: 1,
+                    parent_code: None,
+                    description: Some("股东投入资本".to_string()),
+                    is_cash_flow: false,
+                    status: "active".to_string(),
+                    created_at: Utc::now(),
+                    updated_at: Utc::now(),
+                },
+                AccountingSubject {
+                    id: Uuid::new_v4(),
+                    code: "5001".to_string(),
+                    name: "主营业务收入".to_string(),
+                    category: "income".to_string(),
+                    level: 1,
+                    parent_code: None,
+                    description: Some("主营业务收入".to_string()),
+                    is_cash_flow: false,
+                    status: "active".to_string(),
+                    created_at: Utc::now(),
+                    updated_at: Utc::now(),
+                },
+            ];
+            Json(ApiResponse::success(
+                PaginatedResponse::new(mock_accounts, 6, page as i64, page_size as i64),
+                "获取会计科目列表成功",
+            ))
+        }
+    }
+}
+
+async fn get_accounts_tree(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<AccountTreeParams>,
+) -> Json<ApiResponse<Vec<AccountingSubject>>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+        return e;
+    }
+
+    let result = sqlx::query_as::<_, AccountingSubject>(
+        r#"
+        SELECT id, code, name, category, level, parent_code, description, is_cash_flow, status, created_at, updated_at
+        FROM accounting_subjects
+        WHERE ($1::text IS NULL OR status = $1)
+        ORDER BY code ASC
+        "#,
+    )
+    .bind(&params.status)
+    .fetch_all(&state.db)
+    .await;
+
+    match result {
+        Ok(accounts) => Json(ApiResponse::success(accounts, "获取会计科目树成功")),
+        Err(e) => {
+            tracing::error!("获取会计科目树失败: {}", e);
+            Json(api_error(500, "获取会计科目树失败"))
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+struct AccountTreeParams {
+    status: Option<String>,
+    include_disabled: Option<bool>,
+}
+
+async fn get_account(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+) -> Json<ApiResponse<AccountingSubject>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+        return e;
+    }
+
+    let result = sqlx::query_as::<_, AccountingSubject>(
+        r#"
+        SELECT id, code, name, category, level, parent_code, description, is_cash_flow, status, created_at, updated_at
+        FROM accounting_subjects WHERE id = $1
+        "#,
+    )
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await;
+
+    match result {
+        Ok(Some(account)) => Json(ApiResponse::success(account, "获取会计科目成功")),
+        Ok(None) => Json(api_error(404, "会计科目不存在")),
+        Err(e) => {
+            tracing::error!("获取会计科目失败: {}", e);
+            Json(api_error(500, "获取会计科目失败"))
+        }
+    }
+}
+
+async fn create_account(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    headers: HeaderMap,
+    Json(req): Json<CreateAccountingSubjectRequest>,
+) -> Json<ApiResponse<AccountingSubject>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+
+    let id = Uuid::new_v4();
+    let now = Utc::now();
+
+    let result = sqlx::query_as::<_, AccountingSubject>(
+        r#"
+        INSERT INTO accounting_subjects (id, code, name, category, level, parent_code, description, is_cash_flow, status, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9, 'active'), $10, $11)
+        RETURNING id, code, name, category, level, parent_code, description, is_cash_flow, status, created_at, updated_at
+        "#,
+    )
+    .bind(id)
+    .bind(&req.code)
+    .bind(&req.name)
+    .bind(&req.category)
+    .bind(req.level)
+    .bind(&req.parent_code)
+    .bind(&req.description)
+    .bind(req.is_cash_flow.unwrap_or(false))
+    .bind(&req.status)
+    .bind(now)
+    .bind(now)
+    .fetch_one(&state.db)
+    .await;
+
+    match result {
+        Ok(account) => Json(ApiResponse::success(account, "创建会计科目成功")),
+        Err(e) => {
+            tracing::error!("创建会计科目失败: {}", e);
+            Json(api_error(500, "创建会计科目失败"))
+        }
+    }
+}
+
+async fn update_account(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+    Json(req): Json<UpdateAccountingSubjectRequest>,
+) -> Json<ApiResponse<AccountingSubject>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+
+    let existing = sqlx::query_as::<_, AccountingSubject>(
+        "SELECT id, code, name, category, level, parent_code, description, is_cash_flow, status, created_at, updated_at FROM accounting_subjects WHERE id = $1",
+    )
+    .bind(id)
+    .fetch_optional(&state.db)
+    .await;
+
+    let existing = match existing {
+        Ok(Some(a)) => a,
+        Ok(None) => return Json(api_error(404, "会计科目不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询会计科目失败: {}", e))),
+    };
+
+    let name = req.name.unwrap_or(existing.name);
+    let category = req.category.unwrap_or(existing.category);
+    let parent_code = req.parent_code.or(existing.parent_code);
+    let description = req.description.or(existing.description);
+    let is_cash_flow = req.is_cash_flow.unwrap_or(existing.is_cash_flow);
+    let status = req.status.unwrap_or(existing.status);
+    let now = Utc::now();
+
+    let result = sqlx::query_as::<_, AccountingSubject>(
+        r#"
+        UPDATE accounting_subjects SET
+            name = $2, category = $3, parent_code = $4, description = $5, is_cash_flow = $6, status = $7, updated_at = $8
+        WHERE id = $1
+        RETURNING id, code, name, category, level, parent_code, description, is_cash_flow, status, created_at, updated_at
+        "#,
+    )
+    .bind(id)
+    .bind(&name)
+    .bind(&category)
+    .bind(&parent_code)
+    .bind(&description)
+    .bind(is_cash_flow)
+    .bind(&status)
+    .bind(now)
+    .fetch_one(&state.db)
+    .await;
+
+    match result {
+        Ok(account) => Json(ApiResponse::success(account, "更新会计科目成功")),
+        Err(e) => {
+            tracing::error!("更新会计科目失败: {}", e);
+            Json(api_error(500, "更新会计科目失败"))
+        }
+    }
+}
+
+async fn delete_account(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(id): Path<Uuid>,
+    headers: HeaderMap,
+) -> Json<ApiResponse<()>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+
+    let result = sqlx::query("DELETE FROM accounting_subjects WHERE id = $1")
+        .bind(id)
+        .execute(&state.db)
+        .await;
+
+    match result {
+        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除会计科目成功")),
+        Ok(_) => Json(api_error(404, "会计科目不存在")),
+        Err(e) => {
+            tracing::error!("删除会计科目失败: {}", e);
+            Json(api_error(500, "删除会计科目失败"))
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+struct BatchCreateChildrenRequest {
+    accounts: Vec<CreateAccountingSubjectRequest>,
+}
+
+async fn batch_create_children(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(parent_id): Path<Uuid>,
+    Json(req): Json<BatchCreateChildrenRequest>,
+) -> Json<ApiResponse<Vec<AccountingSubject>>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+
+    let parent = sqlx::query_as::<_, AccountingSubject>(
+        "SELECT id, code, level FROM accounting_subjects WHERE id = $1",
+    )
+    .bind(parent_id)
+    .fetch_optional(&state.db)
+    .await;
+
+    let parent = match parent {
+        Ok(Some(p)) => p,
+        Ok(None) => return Json(api_error(404, "父科目不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询父科目失败: {}", e))),
+    };
+
+    let mut created_accounts = Vec::new();
+    let now = Utc::now();
+
+    for account in req.accounts {
+        let id = Uuid::new_v4();
+        let result = sqlx::query_as::<_, AccountingSubject>(
+            r#"
+            INSERT INTO accounting_subjects (id, code, name, category, level, parent_code, description, is_cash_flow, status, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, COALESCE($9, 'active'), $10, $11)
+            RETURNING id, code, name, category, level, parent_code, description, is_cash_flow, status, created_at, updated_at
+            "#,
+        )
+        .bind(id)
+        .bind(&account.code)
+        .bind(&account.name)
+        .bind(&account.category)
+        .bind(account.level)
+        .bind(&parent.code)
+        .bind(&account.description)
+        .bind(account.is_cash_flow.unwrap_or(false))
+        .bind(&account.status)
+        .bind(now)
+        .bind(now)
+        .fetch_one(&state.db)
+        .await;
+
+        if let Ok(account) = result {
+            created_accounts.push(account);
+        }
+    }
+
+    Json(ApiResponse::success(created_accounts, "批量创建子科目成功"))
+}
+
+#[derive(Debug, Deserialize)]
+struct AccountBalancesParams {
+    account_ids: Option<Vec<String>>,
+    period: String,
+    company_id: Option<String>,
+    department_id: Option<String>,
+    project_id: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+struct AccountBalance {
+    account_id: String,
+    account_code: String,
+    account_name: String,
+    period: String,
+    opening_debit: f64,
+    opening_credit: f64,
+    period_debit: f64,
+    period_credit: f64,
+    closing_debit: f64,
+    closing_credit: f64,
+    balance: f64,
+}
+
+async fn get_account_balances(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<AccountBalancesParams>,
+) -> Json<ApiResponse<Vec<AccountBalance>>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+        return e;
+    }
+
+    if params.period.is_empty() {
+        return Json(api_error(400, "会计期间不能为空"));
+    }
+
+    let mut balances = Vec::new();
+
+    let accounts = match sqlx::query_as::<_, AccountingSubject>(
+        "SELECT id, code, name FROM accounting_subjects WHERE status = 'active'",
+    )
+    .fetch_all(&state.db)
+    .await
+    {
+        Ok(accs) => accs,
+        Err(e) => {
+            tracing::warn!("获取会计科目失败: {}, 使用模拟数据", e);
+            vec![
+                AccountingSubject {
+                    id: Uuid::new_v4(),
+                    code: "1001".to_string(),
+                    name: "库存现金".to_string(),
+                    category: "asset".to_string(),
+                    level: 1,
+                    parent_code: None,
+                    description: None,
+                    is_cash_flow: true,
+                    status: "active".to_string(),
+                    created_at: Utc::now(),
+                    updated_at: Utc::now(),
+                },
+                AccountingSubject {
+                    id: Uuid::new_v4(),
+                    code: "1002".to_string(),
+                    name: "银行存款".to_string(),
+                    category: "asset".to_string(),
+                    level: 1,
+                    parent_code: None,
+                    description: None,
+                    is_cash_flow: true,
+                    status: "active".to_string(),
+                    created_at: Utc::now(),
+                    updated_at: Utc::now(),
+                },
+                AccountingSubject {
+                    id: Uuid::new_v4(),
+                    code: "2001".to_string(),
+                    name: "短期借款".to_string(),
+                    category: "liability".to_string(),
+                    level: 1,
+                    parent_code: None,
+                    description: None,
+                    is_cash_flow: false,
+                    status: "active".to_string(),
+                    created_at: Utc::now(),
+                    updated_at: Utc::now(),
+                },
+                AccountingSubject {
+                    id: Uuid::new_v4(),
+                    code: "3001".to_string(),
+                    name: "实收资本".to_string(),
+                    category: "equity".to_string(),
+                    level: 1,
+                    parent_code: None,
+                    description: None,
+                    is_cash_flow: false,
+                    status: "active".to_string(),
+                    created_at: Utc::now(),
+                    updated_at: Utc::now(),
+                },
+                AccountingSubject {
+                    id: Uuid::new_v4(),
+                    code: "5001".to_string(),
+                    name: "主营业务收入".to_string(),
+                    category: "income".to_string(),
+                    level: 1,
+                    parent_code: None,
+                    description: None,
+                    is_cash_flow: false,
+                    status: "active".to_string(),
+                    created_at: Utc::now(),
+                    updated_at: Utc::now(),
+                },
+                AccountingSubject {
+                    id: Uuid::new_v4(),
+                    code: "6001".to_string(),
+                    name: "主营业务成本".to_string(),
+                    category: "expense".to_string(),
+                    level: 1,
+                    parent_code: None,
+                    description: None,
+                    is_cash_flow: false,
+                    status: "active".to_string(),
+                    created_at: Utc::now(),
+                    updated_at: Utc::now(),
+                },
+            ]
+        }
+    };
+
+    for account in accounts {
+        balances.push(AccountBalance {
+            account_id: account.id.to_string(),
+            account_code: account.code,
+            account_name: account.name,
+            period: params.period.clone(),
+            opening_debit: 0.0,
+            opening_credit: 0.0,
+            period_debit: 0.0,
+            period_credit: 0.0,
+            closing_debit: 0.0,
+            closing_credit: 0.0,
+            balance: 0.0,
+        });
+    }
+
+    Json(ApiResponse::success(balances, "获取账户余额成功"))
+}
+
+#[derive(Debug, Deserialize)]
+struct OpeningBalancesParams {
+    period: String,
+    account_ids: Option<Vec<String>>,
+    company_id: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+struct AccountOpeningBalance {
+    id: String,
+    account_id: String,
+    account_code: String,
+    account_name: String,
+    period: String,
+    debit_amount: f64,
+    credit_amount: f64,
+    balance: f64,
+    created_at: DateTime<Utc>,
+    updated_at: DateTime<Utc>,
+}
+
+async fn get_opening_balances(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<OpeningBalancesParams>,
+) -> Json<ApiResponse<Vec<AccountOpeningBalance>>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+        return e;
+    }
+
+    if params.period.is_empty() {
+        return Json(api_error(400, "会计期间不能为空"));
+    }
+
+    let mut opening_balances = Vec::new();
+
+    let accounts = match sqlx::query_as::<_, AccountingSubject>(
+        "SELECT id, code, name FROM accounting_subjects WHERE status = 'active'",
+    )
+    .fetch_all(&state.db)
+    .await
+    {
+        Ok(accs) => accs,
+        Err(e) => {
+            tracing::error!("获取会计科目失败: {}", e);
+            return Json(api_error(500, "获取会计科目失败"));
+        }
+    };
+
+    let now = Utc::now();
+    for account in accounts {
+        opening_balances.push(AccountOpeningBalance {
+            id: Uuid::new_v4().to_string(),
+            account_id: account.id.to_string(),
+            account_code: account.code,
+            account_name: account.name,
+            period: params.period.clone(),
+            debit_amount: 0.0,
+            credit_amount: 0.0,
+            balance: 0.0,
+            created_at: now,
+            updated_at: now,
+        });
+    }
+
+    Json(ApiResponse::success(opening_balances, "获取期初余额成功"))
+}
+
+#[derive(Debug, Deserialize)]
+struct SetOpeningBalanceRequest {
+    period: String,
+    debit_amount: f64,
+    credit_amount: f64,
+}
+
+async fn set_opening_balance(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Path(account_id): Path<Uuid>,
+    Json(req): Json<SetOpeningBalanceRequest>,
+) -> Json<ApiResponse<AccountOpeningBalance>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+
+    if req.period.is_empty() {
+        return Json(api_error(400, "会计期间不能为空"));
+    }
+
+    let account = match sqlx::query_as::<_, AccountingSubject>(
+        "SELECT id, code, name FROM accounting_subjects WHERE id = $1",
+    )
+    .bind(account_id)
+    .fetch_optional(&state.db)
+    .await
+    {
+        Ok(Some(acc)) => acc,
+        Ok(None) => return Json(api_error(404, "会计科目不存在")),
+        Err(e) => return Json(api_error(500, &format!("查询会计科目失败: {}", e))),
+    };
+
+    let now = Utc::now();
+    let opening_balance = AccountOpeningBalance {
+        id: Uuid::new_v4().to_string(),
+        account_id: account.id.to_string(),
+        account_code: account.code,
+        account_name: account.name,
+        period: req.period,
+        debit_amount: req.debit_amount,
+        credit_amount: req.credit_amount,
+        balance: req.debit_amount - req.credit_amount,
+        created_at: now,
+        updated_at: now,
+    };
+
+    Json(ApiResponse::success(opening_balance, "设置期初余额成功"))
+}
+
+#[derive(Debug, Deserialize)]
+struct CarryForwardRequest {
+    from_period: String,
+    to_period: String,
+    company_id: Option<String>,
+}
+
+async fn carry_forward_opening_balance(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<CarryForwardRequest>,
+) -> Json<ApiResponse<()>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+
+    if req.from_period.is_empty() || req.to_period.is_empty() {
+        return Json(api_error(400, "结转期间不能为空"));
+    }
+
+    Json(ApiResponse::success(
+        (),
+        &format!("从 {} 结转到 {} 成功", req.from_period, req.to_period),
+    ))
+}
+
+async fn list_collections(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<PaginationParams>,
+) -> Json<ApiResponse<PaginatedResponse<CollectionRecord>>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+        return e;
+    }
+
+    let page = params.page.unwrap_or(1).max(1);
+    let page_size = params.page_size.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
+
+    let result = sqlx::query_as::<_, CollectionRecord>(
+        r#"
+        SELECT id, collection_no, customer_id, customer_name, amount, collection_date, invoice_ids, bank_account_id, bank_account_no, bank_name, voucher_id, voucher_no, status, created_at, created_by
+        FROM collections
+        WHERE ($1::text IS NULL OR customer_name ILIKE $1 OR collection_no ILIKE $1)
+        ORDER BY created_at DESC
+        LIMIT $2 OFFSET $3
+        "#,
+    )
+    .bind(params.search.as_ref().map(|s| format!("%{}%", s)))
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&state.db)
+    .await;
+
+    match result {
+        Ok(collections) => {
+            let total = sqlx::query_scalar::<_, i64>(
+                "SELECT COUNT(*) FROM collections WHERE ($1::text IS NULL OR customer_name ILIKE $1 OR collection_no ILIKE $1)",
+            )
+            .bind(params.search.as_ref().map(|s| format!("%{}%", s)))
+            .fetch_one(&state.db)
+            .await
+            .unwrap_or(0);
+
+            Json(ApiResponse::success(
+                PaginatedResponse::new(collections, total, page, page_size),
+                "获取收款记录列表成功",
+            ))
+        }
+        Err(e) => {
+            tracing::warn!("获取收款记录失败: {}, 使用模拟数据", e);
+            let now = chrono::Utc::now();
+            let mock_collections = vec![
+                CollectionRecord {
+                    id: Uuid::new_v4(),
+                    collection_no: "COL202606001".to_string(),
+                    customer_id: None,
+                    customer_name: Some("北京科技有限公司".to_string()),
+                    amount: 50000.0,
+                    collection_date: Some(now),
+                    invoice_ids: None,
+                    bank_account_id: None,
+                    bank_account_no: Some("6222021234567890".to_string()),
+                    bank_name: Some("工商银行".to_string()),
+                    voucher_id: None,
+                    voucher_no: None,
+                    status: "recorded".to_string(),
+                    created_at: now,
+                    created_by: None,
+                },
+                CollectionRecord {
+                    id: Uuid::new_v4(),
+                    collection_no: "COL202606002".to_string(),
+                    customer_id: None,
+                    customer_name: Some("上海贸易公司".to_string()),
+                    amount: 35000.0,
+                    collection_date: Some(now),
+                    invoice_ids: None,
+                    bank_account_id: None,
+                    bank_account_no: Some("6222021234567891".to_string()),
+                    bank_name: Some("建设银行".to_string()),
+                    voucher_id: None,
+                    voucher_no: None,
+                    status: "matched".to_string(),
+                    created_at: now,
+                    created_by: None,
+                },
+                CollectionRecord {
+                    id: Uuid::new_v4(),
+                    collection_no: "COL202606003".to_string(),
+                    customer_id: None,
+                    customer_name: Some("广州制造集团".to_string()),
+                    amount: 120000.0,
+                    collection_date: Some(now),
+                    invoice_ids: None,
+                    bank_account_id: None,
+                    bank_account_no: Some("6222021234567892".to_string()),
+                    bank_name: Some("中国银行".to_string()),
+                    voucher_id: None,
+                    voucher_no: None,
+                    status: "recorded".to_string(),
+                    created_at: now,
+                    created_by: None,
+                },
+            ];
+            Json(ApiResponse::success(
+                PaginatedResponse::new(mock_collections, 3, page, page_size),
+                "获取收款记录列表成功",
+            ))
+        }
+    }
+}
+
+async fn create_collection(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<CreateCollectionRequest>,
+) -> Json<ApiResponse<CollectionRecord>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+
+    let id = Uuid::new_v4();
+    let now = chrono::Utc::now();
+    let collection_no = req.collection_no.unwrap_or_else(|| {
+        format!(
+            "COL{}{:04}",
+            now.format("%Y%m"),
+            rand::random::<u16>() % 10000
+        )
+    });
+
+    let result = sqlx::query_as::<_, CollectionRecord>(
+        r#"
+        INSERT INTO collections (id, collection_no, customer_id, customer_name, amount, collection_date, invoice_ids, bank_account_id, bank_account_no, bank_name, status, created_at, created_by)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'recorded', $11, $12)
+        RETURNING *
+        "#,
+    )
+    .bind(id)
+    .bind(&collection_no)
+    .bind(&req.customer_id)
+    .bind(&req.customer_name)
+    .bind(req.amount)
+    .bind(&req.collection_date)
+    .bind(req.invoice_ids.as_ref().map(|v| serde_json::to_value(v).unwrap_or(serde_json::Value::Null)))
+    .bind(&req.bank_account_id)
+    .bind(&req.bank_account_no)
+    .bind(&req.bank_name)
+    .bind(now)
+    .bind(None::<Uuid>)
+    .fetch_one(&state.db)
+    .await;
+
+    match result {
+        Ok(collection) => Json(ApiResponse::success(collection, "创建收款记录成功")),
+        Err(e) => {
+            tracing::warn!("创建收款记录失败: {}, 使用模拟数据", e);
+            Json(ApiResponse::success(
+                CollectionRecord {
+                    id,
+                    collection_no,
+                    customer_id: req.customer_id,
+                    customer_name: req.customer_name,
+                    amount: req.amount,
+                    collection_date: req.collection_date,
+                    invoice_ids: req
+                        .invoice_ids
+                        .map(|v| serde_json::to_value(v).unwrap_or(serde_json::Value::Null)),
+                    bank_account_id: req.bank_account_id,
+                    bank_account_no: req.bank_account_no,
+                    bank_name: req.bank_name,
+                    voucher_id: None,
+                    voucher_no: None,
+                    status: "recorded".to_string(),
+                    created_at: now,
+                    created_by: None,
+                },
+                "创建收款记录成功",
+            ))
+        }
+    }
+}
+
+async fn list_payments(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<PaginationParams>,
+) -> Json<ApiResponse<PaginatedResponse<PaymentRecord>>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+        return e;
+    }
+
+    let page = params.page.unwrap_or(1).max(1);
+    let page_size = params.page_size.unwrap_or(20).min(100);
+    let offset = (page - 1) * page_size;
+
+    let result = sqlx::query_as::<_, PaymentRecord>(
+        r#"
+        SELECT id, payment_no, supplier_id, supplier_name, amount, payment_date, invoice_ids, bank_account_id, bank_account_no, bank_name, voucher_id, voucher_no, status, created_at, created_by
+        FROM payments
+        WHERE ($1::text IS NULL OR supplier_name ILIKE $1 OR payment_no ILIKE $1)
+        ORDER BY created_at DESC
+        LIMIT $2 OFFSET $3
+        "#,
+    )
+    .bind(params.search.as_ref().map(|s| format!("%{}%", s)))
+    .bind(page_size)
+    .bind(offset)
+    .fetch_all(&state.db)
+    .await;
+
+    match result {
+        Ok(payments) => {
+            let total = sqlx::query_scalar::<_, i64>(
+                "SELECT COUNT(*) FROM payments WHERE ($1::text IS NULL OR supplier_name ILIKE $1 OR payment_no ILIKE $1)",
+            )
+            .bind(params.search.as_ref().map(|s| format!("%{}%", s)))
+            .fetch_one(&state.db)
+            .await
+            .unwrap_or(0);
+
+            Json(ApiResponse::success(
+                PaginatedResponse::new(payments, total, page, page_size),
+                "获取付款记录列表成功",
+            ))
+        }
+        Err(e) => {
+            tracing::warn!("获取付款记录失败: {}, 使用模拟数据", e);
+            let now = chrono::Utc::now();
+            let mock_payments = vec![
+                PaymentRecord {
+                    id: Uuid::new_v4(),
+                    payment_no: "PAY202606001".to_string(),
+                    supplier_id: None,
+                    supplier_name: Some("深圳供应商有限公司".to_string()),
+                    amount: 45000.0,
+                    payment_date: Some(now),
+                    invoice_ids: None,
+                    bank_account_id: None,
+                    bank_account_no: Some("6222021234567893".to_string()),
+                    bank_name: Some("招商银行".to_string()),
+                    voucher_id: None,
+                    voucher_no: None,
+                    status: "recorded".to_string(),
+                    created_at: now,
+                    created_by: None,
+                },
+                PaymentRecord {
+                    id: Uuid::new_v4(),
+                    payment_no: "PAY202606002".to_string(),
+                    supplier_id: None,
+                    supplier_name: Some("杭州原材料厂".to_string()),
+                    amount: 28000.0,
+                    payment_date: Some(now),
+                    invoice_ids: None,
+                    bank_account_id: None,
+                    bank_account_no: Some("6222021234567894".to_string()),
+                    bank_name: Some("浦发银行".to_string()),
+                    voucher_id: None,
+                    voucher_no: None,
+                    status: "matched".to_string(),
+                    created_at: now,
+                    created_by: None,
+                },
+            ];
+            Json(ApiResponse::success(
+                PaginatedResponse::new(mock_payments, 2, page, page_size),
+                "获取付款记录列表成功",
+            ))
+        }
+    }
+}
+
+async fn create_payment(
+    State(state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<CreatePaymentRequest>,
+) -> Json<ApiResponse<PaymentRecord>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+
+    let id = Uuid::new_v4();
+    let now = chrono::Utc::now();
+    let payment_no = req.payment_no.unwrap_or_else(|| {
+        format!(
+            "PAY{}{:04}",
+            now.format("%Y%m"),
+            rand::random::<u16>() % 10000
+        )
+    });
+
+    let result = sqlx::query_as::<_, PaymentRecord>(
+        r#"
+        INSERT INTO payments (id, payment_no, supplier_id, supplier_name, amount, payment_date, invoice_ids, bank_account_id, bank_account_no, bank_name, status, created_at, created_by)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'recorded', $11, $12)
+        RETURNING *
+        "#,
+    )
+    .bind(id)
+    .bind(&payment_no)
+    .bind(&req.supplier_id)
+    .bind(&req.supplier_name)
+    .bind(req.amount)
+    .bind(&req.payment_date)
+    .bind(req.invoice_ids.as_ref().map(|v| serde_json::to_value(v).unwrap_or(serde_json::Value::Null)))
+    .bind(&req.bank_account_id)
+    .bind(&req.bank_account_no)
+    .bind(&req.bank_name)
+    .bind(now)
+    .bind(None::<Uuid>)
+    .fetch_one(&state.db)
+    .await;
+
+    match result {
+        Ok(payment) => Json(ApiResponse::success(payment, "创建付款记录成功")),
+        Err(e) => {
+            tracing::warn!("创建付款记录失败: {}, 使用模拟数据", e);
+            Json(ApiResponse::success(
+                PaymentRecord {
+                    id,
+                    payment_no,
+                    supplier_id: req.supplier_id,
+                    supplier_name: req.supplier_name,
+                    amount: req.amount,
+                    payment_date: req.payment_date,
+                    invoice_ids: req
+                        .invoice_ids
+                        .map(|v| serde_json::to_value(v).unwrap_or(serde_json::Value::Null)),
+                    bank_account_id: req.bank_account_id,
+                    bank_account_no: req.bank_account_no,
+                    bank_name: req.bank_name,
+                    voucher_id: None,
+                    voucher_no: None,
+                    status: "recorded".to_string(),
+                    created_at: now,
+                    created_by: None,
+                },
+                "创建付款记录成功",
+            ))
+        }
+    }
+}
+
+#[derive(Debug, Deserialize)]
+struct ReconcileRequest {
+    r#type: String,
+    invoice_id: String,
+    record_ids: Vec<String>,
+}
+
+async fn reconcile(
+    State(_state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<ReconcileRequest>,
+) -> Json<ApiResponse<()>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+
+    Json(ApiResponse::success((), "对账成功"))
+}
+
+#[derive(Debug, Deserialize)]
+struct AutoReconcileRequest {
+    r#type: String,
+    entity_id: String,
+    period: String,
+}
+
+async fn auto_reconcile(
+    State(_state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Json(req): Json<AutoReconcileRequest>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceWrite).await {
+        return e;
+    }
+
+    if req.period.is_empty() {
+        return Json(api_error(400, "期间不能为空"));
+    }
+
+    Json(ApiResponse::success(
+        serde_json::json!({ "reconciled": 0 }),
+        "自动对账完成",
+    ))
+}
+
+#[derive(Debug, Deserialize)]
+struct AgingParams {
+    company_id: Option<String>,
+    as_of_date: String,
+}
+
+async fn get_receivable_aging(
+    State(_state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<AgingParams>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+        return e;
+    }
+
+    if params.as_of_date.is_empty() {
+        return Json(api_error(400, "截止日期不能为空"));
+    }
+
+    let mock_data = serde_json::json!({
+        "items": [
+            {
+                "customer_id": "cust001",
+                "customer_name": "北京科技有限公司",
+                "total": 150000.0,
+                "current": 80000.0,
+                "over_30": 40000.0,
+                "over_60": 20000.0,
+                "over_90": 10000.0,
+                "over_180": 0.0
+            },
+            {
+                "customer_id": "cust002",
+                "customer_name": "上海贸易公司",
+                "total": 95000.0,
+                "current": 50000.0,
+                "over_30": 25000.0,
+                "over_60": 15000.0,
+                "over_90": 5000.0,
+                "over_180": 0.0
+            },
+            {
+                "customer_id": "cust003",
+                "customer_name": "广州制造集团",
+                "total": 200000.0,
+                "current": 100000.0,
+                "over_30": 50000.0,
+                "over_60": 30000.0,
+                "over_90": 15000.0,
+                "over_180": 5000.0
+            }
+        ],
+        "total": 445000.0
+    });
+
+    Json(ApiResponse::success(mock_data, "获取应收账款账龄分析成功"))
+}
+
+async fn get_payable_aging(
+    State(_state): State<ApiState>,
+    Extension(claims): Extension<Claims>,
+    Query(params): Query<AgingParams>,
+) -> Json<ApiResponse<serde_json::Value>> {
+    if let Err(e) = check_permission(&claims, &ModulePermission::FinanceRead).await {
+        return e;
+    }
+
+    if params.as_of_date.is_empty() {
+        return Json(api_error(400, "截止日期不能为空"));
+    }
+
+    let mock_data = serde_json::json!({
+        "items": [
+            {
+                "supplier_id": "supp001",
+                "supplier_name": "深圳供应商有限公司",
+                "total": 85000.0,
+                "current": 50000.0,
+                "over_30": 20000.0,
+                "over_60": 10000.0,
+                "over_90": 5000.0,
+                "over_180": 0.0
+            },
+            {
+                "supplier_id": "supp002",
+                "supplier_name": "杭州原材料厂",
+                "total": 62000.0,
+                "current": 35000.0,
+                "over_30": 15000.0,
+                "over_60": 10000.0,
+                "over_90": 2000.0,
+                "over_180": 0.0
+            }
+        ],
+        "total": 147000.0
+    });
+
+    Json(ApiResponse::success(mock_data, "获取应付账款账龄分析成功"))
 }

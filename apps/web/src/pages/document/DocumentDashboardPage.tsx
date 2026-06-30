@@ -9,7 +9,7 @@ import {
   FileSpreadsheet,
   Upload,
   FolderPlus,
-  FileTemplate,
+  FileType,
   Trash2,
   ArrowRight,
 } from 'lucide-react';
@@ -137,8 +137,8 @@ export const DocumentDashboardPage: React.FC = () => {
       chart: (
         <LineChartComponent
           data={lineData}
-          xKey="name"
-          yKey="uploads"
+          xKey='name'
+          yKey='uploads'
           height={260}
         />
       ),
@@ -213,7 +213,7 @@ export const DocumentDashboardPage: React.FC = () => {
     {
       id: 'document-template',
       label: '文档模板',
-      icon: <FileTemplate size={18} />,
+      icon: <FileType size={18} />,
       onClick: () => {
         addNotification({
           title: '提示',
@@ -238,7 +238,7 @@ export const DocumentDashboardPage: React.FC = () => {
 
   return (
     <PageContainer
-      title="仪表盘"
+      title='仪表盘'
       subtitle={`${getGreeting()}，文档管理中心`}
       headerProps={{
         pageIcon: <FileText style={{ width: 20, height: 20 }} />,
@@ -248,14 +248,14 @@ export const DocumentDashboardPage: React.FC = () => {
       maxWidth={false}
     >
       <DashboardTemplate
-        title=""
-        subtitle=""
+        title=''
+        subtitle=''
         stats={stats}
         charts={charts}
         recentItems={recentItems}
-        recentTitle="最近文档"
+        recentTitle='最近文档'
         quickActions={quickActions}
-        quickActionsTitle="快捷操作"
+        quickActionsTitle='快捷操作'
         loading={loading}
       />
     </PageContainer>

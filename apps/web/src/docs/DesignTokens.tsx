@@ -1,4 +1,3 @@
-{/* DesignTokens.tsx — Reusable helper components for Design System Storybook docs */}
 import React from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -6,6 +5,10 @@ import Paper from '@mui/material/Paper';
 import Chip from '@mui/material/Chip';
 import { designTokens } from '../theme/tokens';
 import { gradients } from '../theme/gradients';
+
+{
+  /* DesignTokens.tsx — Reusable helper components for Design System Storybook docs */
+}
 
 // ─── Color Swatch ────────────────────────────────────────────────────────────
 
@@ -35,10 +38,20 @@ export function ColorSwatch({ color, label, darkText = false }: ColorSwatchProps
           borderColor: 'divider',
         }}
       />
-      <Typography variant="caption" sx={{ fontWeight: 500, color: darkText ? '#fff' : 'text.primary' }}>
+      <Typography
+        variant='caption'
+        sx={{ fontWeight: 500, color: darkText ? '#fff' : 'text.primary' }}
+      >
         {label}
       </Typography>
-      <Typography variant="caption" sx={{ color: darkText ? 'rgba(255,255,255,0.7)' : 'text.secondary', fontFamily: 'monospace', fontSize: '0.65rem' }}>
+      <Typography
+        variant='caption'
+        sx={{
+          color: darkText ? 'rgba(255,255,255,0.7)' : 'text.secondary',
+          fontFamily: 'monospace',
+          fontSize: '0.65rem',
+        }}
+      >
         {color}
       </Typography>
     </Box>
@@ -59,7 +72,10 @@ export function ColorScale({ name, colors, skipKeys = [] }: ColorScaleProps) {
   const entries = Object.entries(colors).filter(([key]) => !skipKeys.includes(key));
   return (
     <Box sx={{ mb: 4 }}>
-      <Typography variant="h6" sx={{ mb: 2 }}>
+      <Typography
+        variant='h6'
+        sx={{ mb: 2 }}
+      >
         {name}
       </Typography>
       <Box
@@ -70,7 +86,11 @@ export function ColorScale({ name, colors, skipKeys = [] }: ColorScaleProps) {
         }}
       >
         {entries.map(([key, value]) => (
-          <ColorSwatch key={key} color={value} label={key} />
+          <ColorSwatch
+            key={key}
+            color={value}
+            label={key}
+          />
         ))}
       </Box>
     </Box>
@@ -110,10 +130,16 @@ export function StatusColorGroup({ name, colors }: StatusColorGroupProps) {
             borderColor: 'divider',
           }}
         />
-        <Typography variant="caption" sx={{ fontFamily: 'monospace', fontSize: '0.6rem' }}>
+        <Typography
+          variant='caption'
+          sx={{ fontFamily: 'monospace', fontSize: '0.6rem' }}
+        >
           light
         </Typography>
-        <Typography variant="caption" sx={{ fontFamily: 'monospace', fontSize: '0.6rem', color: 'text.secondary' }}>
+        <Typography
+          variant='caption'
+          sx={{ fontFamily: 'monospace', fontSize: '0.6rem', color: 'text.secondary' }}
+        >
           {colors.light}
         </Typography>
       </Box>
@@ -134,10 +160,16 @@ export function StatusColorGroup({ name, colors }: StatusColorGroupProps) {
             backgroundColor: colors.main,
           }}
         />
-        <Typography variant="caption" sx={{ fontFamily: 'monospace', fontSize: '0.6rem' }}>
+        <Typography
+          variant='caption'
+          sx={{ fontFamily: 'monospace', fontSize: '0.6rem' }}
+        >
           main
         </Typography>
-        <Typography variant="caption" sx={{ fontFamily: 'monospace', fontSize: '0.6rem', color: 'text.secondary' }}>
+        <Typography
+          variant='caption'
+          sx={{ fontFamily: 'monospace', fontSize: '0.6rem', color: 'text.secondary' }}
+        >
           {colors.main}
         </Typography>
       </Box>
@@ -160,15 +192,21 @@ export function StatusColorGroup({ name, colors }: StatusColorGroupProps) {
             borderColor: 'divider',
           }}
         />
-        <Typography variant="caption" sx={{ fontFamily: 'monospace', fontSize: '0.6rem' }}>
+        <Typography
+          variant='caption'
+          sx={{ fontFamily: 'monospace', fontSize: '0.6rem' }}
+        >
           dark
         </Typography>
-        <Typography variant="caption" sx={{ fontFamily: 'monospace', fontSize: '0.6rem', color: 'text.secondary' }}>
+        <Typography
+          variant='caption'
+          sx={{ fontFamily: 'monospace', fontSize: '0.6rem', color: 'text.secondary' }}
+        >
           {colors.dark}
         </Typography>
       </Box>
       <Box sx={{ ml: 1, pb: 1 }}>
-        <Typography variant="subtitle2">{name}</Typography>
+        <Typography variant='subtitle2'>{name}</Typography>
       </Box>
     </Box>
   );
@@ -181,15 +219,18 @@ export function SpacingDemo() {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
       {spacingEntries.map(([key, value]) => (
-        <Box key={key} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box
+          key={key}
+          sx={{ display: 'flex', alignItems: 'center', gap: 2 }}
+        >
           <Typography
-            variant="caption"
+            variant='caption'
             sx={{ width: 48, fontFamily: 'monospace', fontWeight: 500, flexShrink: 0 }}
           >
             {key}
           </Typography>
           <Typography
-            variant="caption"
+            variant='caption'
             sx={{ width: 36, fontFamily: 'monospace', color: 'text.secondary', flexShrink: 0 }}
           >
             {value as number}px
@@ -200,7 +241,7 @@ export function SpacingDemo() {
               height: 24,
               backgroundColor: 'primary.main',
               borderRadius: 1,
-              minWidth: value as number > 0 ? 4 : 0,
+              minWidth: (value as number) > 0 ? 4 : 0,
               opacity: 0.8,
             }}
           />
@@ -217,15 +258,18 @@ export function RadiusDemo() {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       {radiusEntries.map(([key, value]) => (
-        <Box key={key} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+        <Box
+          key={key}
+          sx={{ display: 'flex', alignItems: 'center', gap: 2 }}
+        >
           <Typography
-            variant="caption"
+            variant='caption'
             sx={{ width: 48, fontFamily: 'monospace', fontWeight: 500, flexShrink: 0 }}
           >
             {key}
           </Typography>
           <Typography
-            variant="caption"
+            variant='caption'
             sx={{ width: 48, fontFamily: 'monospace', color: 'text.secondary', flexShrink: 0 }}
           >
             {(value as number) >= 9999 ? 'full' : `${value}px`}
@@ -254,7 +298,10 @@ export function ShadowDemo() {
   return (
     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 3 }}>
       {shadowEntries.map(([key, value]) => (
-        <Box key={key} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+        <Box
+          key={key}
+          sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}
+        >
           <Paper
             elevation={0}
             sx={{
@@ -270,11 +317,17 @@ export function ShadowDemo() {
               borderColor: 'divider',
             }}
           >
-            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            <Typography
+              variant='caption'
+              sx={{ color: 'text.secondary' }}
+            >
               {key}
             </Typography>
           </Paper>
-          <Typography variant="caption" sx={{ fontFamily: 'monospace', fontSize: '0.65rem', color: 'text.secondary' }}>
+          <Typography
+            variant='caption'
+            sx={{ fontFamily: 'monospace', fontSize: '0.65rem', color: 'text.secondary' }}
+          >
             {value as string}
           </Typography>
         </Box>
@@ -315,33 +368,42 @@ export function TypographyShowcase() {
           }}
         >
           <Typography
-            variant="caption"
-            sx={{ width: 80, flexShrink: 0, fontFamily: 'monospace', fontWeight: 600, color: 'primary.main' }}
+            variant='caption'
+            sx={{
+              width: 80,
+              flexShrink: 0,
+              fontFamily: 'monospace',
+              fontWeight: 600,
+              color: 'primary.main',
+            }}
           >
             {variant}
           </Typography>
           <Box sx={{ flex: 1 }}>
-            <Typography variant={variant as any} sx={{ ...(props as any), textTransform: (props as any).textTransform ?? undefined }}>
+            <Typography
+              variant={variant as any}
+              sx={{ ...(props as any), textTransform: (props as any).textTransform ?? undefined }}
+            >
               {label} — The quick brown fox jumps over the lazy dog
             </Typography>
           </Box>
           <Box sx={{ flexShrink: 0, display: 'flex', gap: 1 }}>
             <Chip
               label={`${(props as any).fontSize}`}
-              size="small"
-              variant="outlined"
+              size='small'
+              variant='outlined'
               sx={{ fontFamily: 'monospace', fontSize: '0.65rem' }}
             />
             <Chip
               label={`w${(props as any).fontWeight}`}
-              size="small"
-              variant="outlined"
+              size='small'
+              variant='outlined'
               sx={{ fontFamily: 'monospace', fontSize: '0.65rem' }}
             />
             <Chip
               label={`lh${(props as any).lineHeight}`}
-              size="small"
-              variant="outlined"
+              size='small'
+              variant='outlined'
               sx={{ fontFamily: 'monospace', fontSize: '0.65rem' }}
             />
           </Box>
@@ -355,8 +417,16 @@ export function TypographyShowcase() {
 
 export function SurfaceHierarchy() {
   const surfaces = [
-    { name: 'Background Default', color: designTokens.colors.background.default, token: 'background.default' },
-    { name: 'Background Paper', color: designTokens.colors.background.paper, token: 'background.paper' },
+    {
+      name: 'Background Default',
+      color: designTokens.colors.background.default,
+      token: 'background.default',
+    },
+    {
+      name: 'Background Paper',
+      color: designTokens.colors.background.paper,
+      token: 'background.paper',
+    },
     { name: 'Surface 50', color: designTokens.colors.surface[50], token: 'surface.50' },
     { name: 'Surface 100', color: designTokens.colors.surface[100], token: 'surface.100' },
     { name: 'Surface 200', color: designTokens.colors.surface[200], token: 'surface.200' },
@@ -392,10 +462,16 @@ export function SurfaceHierarchy() {
               borderColor: 'divider',
             }}
           />
-          <Typography variant="caption" sx={{ fontWeight: 500, textAlign: 'center', fontSize: '0.65rem' }}>
+          <Typography
+            variant='caption'
+            sx={{ fontWeight: 500, textAlign: 'center', fontSize: '0.65rem' }}
+          >
             {s.name}
           </Typography>
-          <Typography variant="caption" sx={{ fontFamily: 'monospace', fontSize: '0.6rem', color: 'text.secondary' }}>
+          <Typography
+            variant='caption'
+            sx={{ fontFamily: 'monospace', fontSize: '0.6rem', color: 'text.secondary' }}
+          >
             {s.color}
           </Typography>
         </Box>
@@ -411,7 +487,16 @@ export function ModuleGradients() {
   return (
     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
       {modules.map(([key, gradient]) => (
-        <Box key={key} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5, width: 100 }}>
+        <Box
+          key={key}
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: 0.5,
+            width: 100,
+          }}
+        >
           <Box
             sx={{
               width: 80,
@@ -421,10 +506,22 @@ export function ModuleGradients() {
               boxShadow: 1,
             }}
           />
-          <Typography variant="caption" sx={{ fontWeight: 600, textTransform: 'uppercase', fontSize: '0.7rem' }}>
+          <Typography
+            variant='caption'
+            sx={{ fontWeight: 600, textTransform: 'uppercase', fontSize: '0.7rem' }}
+          >
             {key}
           </Typography>
-          <Typography variant="caption" sx={{ fontFamily: 'monospace', fontSize: '0.55rem', color: 'text.secondary', textAlign: 'center', lineHeight: 1.2 }}>
+          <Typography
+            variant='caption'
+            sx={{
+              fontFamily: 'monospace',
+              fontSize: '0.55rem',
+              color: 'text.secondary',
+              textAlign: 'center',
+              lineHeight: 1.2,
+            }}
+          >
             {gradient as string}
           </Typography>
         </Box>
@@ -444,7 +541,7 @@ interface TokenRowProps {
 export function TokenTable({ tokens }: { tokens: TokenRowProps[] }) {
   return (
     <Box
-      component="table"
+      component='table'
       sx={{
         width: '100%',
         borderCollapse: 'collapse',
@@ -466,7 +563,7 @@ export function TokenTable({ tokens }: { tokens: TokenRowProps[] }) {
         '& td': {
           fontSize: '0.875rem',
         },
-        '& td:nth-child(2)': {
+        '& td:nth-of-type(2)': {
           fontFamily: 'monospace',
           fontSize: '0.8rem',
           color: 'primary.dark',
@@ -503,12 +600,18 @@ export function DarkShadowComparison() {
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       <Box sx={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
         <Box sx={{ flex: 1, minWidth: 280 }}>
-          <Typography variant="subtitle2" sx={{ mb: 2, textAlign: 'center' }}>
+          <Typography
+            variant='subtitle2'
+            sx={{ mb: 2, textAlign: 'center' }}
+          >
             Light Mode
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center' }}>
             {lightEntries.map(([key, value]) => (
-              <Box key={key} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+              <Box
+                key={key}
+                sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}
+              >
                 <Box
                   sx={{
                     width: 80,
@@ -520,7 +623,10 @@ export function DarkShadowComparison() {
                     borderColor: '#e5e7eb',
                   }}
                 />
-                <Typography variant="caption" sx={{ fontSize: '0.65rem', fontFamily: 'monospace' }}>
+                <Typography
+                  variant='caption'
+                  sx={{ fontSize: '0.65rem', fontFamily: 'monospace' }}
+                >
                   {key}
                 </Typography>
               </Box>
@@ -528,12 +634,18 @@ export function DarkShadowComparison() {
           </Box>
         </Box>
         <Box sx={{ flex: 1, minWidth: 280 }}>
-          <Typography variant="subtitle2" sx={{ mb: 2, textAlign: 'center' }}>
+          <Typography
+            variant='subtitle2'
+            sx={{ mb: 2, textAlign: 'center' }}
+          >
             Dark Mode
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center' }}>
             {darkEntries.map(([key, value]) => (
-              <Box key={key} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+              <Box
+                key={key}
+                sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}
+              >
                 <Box
                   sx={{
                     width: 80,
@@ -545,7 +657,10 @@ export function DarkShadowComparison() {
                     borderColor: '#374151',
                   }}
                 />
-                <Typography variant="caption" sx={{ fontSize: '0.65rem', fontFamily: 'monospace' }}>
+                <Typography
+                  variant='caption'
+                  sx={{ fontSize: '0.65rem', fontFamily: 'monospace' }}
+                >
                   {key}
                 </Typography>
               </Box>

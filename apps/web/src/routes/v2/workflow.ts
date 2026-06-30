@@ -13,17 +13,17 @@ const WorkflowInstancesPage = lazyWithRetry(
   () => import('../../pages/workflow/WorkflowInstancesPage'),
   'WorkflowInstancesPage'
 );
-const WorkflowInstanceDetailPage = lazyWithRetry(
-  () => import('../../pages/workflow/WorkflowInstanceDetailPage'),
-  'WorkflowInstanceDetailPage'
+const FlowInstanceDetailPage = lazyWithRetry(
+  () => import('../../pages/workflow/FlowInstanceDetailPage'),
+  'FlowInstanceDetailPage'
 );
 const WorkflowApprovalsPage = lazyWithRetry(
   () => import('../../pages/workflow/WorkflowApprovalsPage'),
   'WorkflowApprovalsPage'
 );
-const WorkflowApprovalDetailPage = lazyWithRetry(
-  () => import('../../pages/workflow/WorkflowApprovalDetailPage'),
-  'WorkflowApprovalDetailPage'
+const FlowApprovalDetailPage = lazyWithRetry(
+  () => import('../../pages/workflow/FlowApprovalDetailPage'),
+  'FlowApprovalDetailPage'
 );
 const WorkflowMonitorPage = lazyWithRetry(
   () => import('../../pages/workflow/WorkflowMonitorPage'),
@@ -33,9 +33,9 @@ const WorkflowStatisticsPage = lazyWithRetry(
   () => import('../../pages/workflow/WorkflowStatisticsPage'),
   'WorkflowStatisticsPage'
 );
-const WorkflowTemplatesPage = lazyWithRetry(
-  () => import('../../pages/workflow/WorkflowTemplatesPage'),
-  'WorkflowTemplatesPage'
+const FlowTemplatePage = lazyWithRetry(
+  () => import('../../pages/workflow/FlowTemplatePage'),
+  'FlowTemplatePage'
 );
 const WorkflowSettingsPage = lazyWithRetry(
   () => import('../../pages/workflow/WorkflowSettingsPage'),
@@ -44,6 +44,46 @@ const WorkflowSettingsPage = lazyWithRetry(
 const WorkflowDesignerPage = lazyWithRetry(
   () => import('../../pages/workflow/WorkflowDesignerPage'),
   'WorkflowDesignerPage'
+);
+const FlowDesignerPage = lazyWithRetry(
+  () => import('../../pages/workflow/FlowDesignerPage'),
+  'FlowDesignerPage'
+);
+const FlowDefinitionPage = lazyWithRetry(
+  () => import('../../pages/workflow/FlowDefinitionPage'),
+  'FlowDefinitionPage'
+);
+const FlowApprovalPage = lazyWithRetry(
+  () => import('../../pages/workflow/FlowApprovalPage'),
+  'FlowApprovalPage'
+);
+const FlowInstanceListPage = lazyWithRetry(
+  () => import('../../pages/workflow/FlowInstanceListPage'),
+  'FlowInstanceListPage'
+);
+const FlowMonitorPage = lazyWithRetry(
+  () => import('../../pages/workflow/FlowMonitorPage'),
+  'FlowMonitorPage'
+);
+const FlowVersionHistoryPage = lazyWithRetry(
+  () => import('../../pages/workflow/FlowVersionHistoryPage'),
+  'FlowVersionHistoryPage'
+);
+const FlowWorkflowPage = lazyWithRetry(
+  () => import('../../pages/workflow/FlowWorkflowPage'),
+  'FlowWorkflowPage'
+);
+const FlowSettingsPage = lazyWithRetry(
+  () => import('../../pages/workflow/FlowSettingsPage'),
+  'FlowSettingsPage'
+);
+const FlowStatisticsPage = lazyWithRetry(
+  () => import('../../pages/workflow/FlowStatisticsPage'),
+  'FlowStatisticsPage'
+);
+const FlowNotificationCenter = lazyWithRetry(
+  () => import('../../pages/workflow/FlowNotificationCenter'),
+  'FlowNotificationCenter'
 );
 
 export const workflowModuleConfig: RouteModuleConfig = {
@@ -126,20 +166,13 @@ export const workflowModuleConfig: RouteModuleConfig = {
     },
     {
       path: '/workflow/instances/:id',
-      element: WorkflowInstanceDetailPage,
+      element: FlowInstanceDetailPage,
       module: 'workflow',
       code: 'workflow-instance-detail',
       title: '实例详情',
       template: 'detail',
       group: 'runtime',
       requiredPermissions: ['workflow:instance:read'],
-      nav: {
-        label: '实例详情',
-        icon: 'FileText',
-        order: 2,
-        group: 'runtime',
-        showInBreadcrumb: true,
-      },
     },
     {
       path: '/workflow/approvals',
@@ -160,20 +193,13 @@ export const workflowModuleConfig: RouteModuleConfig = {
     },
     {
       path: '/workflow/approvals/:id',
-      element: WorkflowApprovalDetailPage,
+      element: FlowApprovalDetailPage,
       module: 'workflow',
       code: 'workflow-approval-detail',
       title: '审批详情',
       template: 'detail',
       group: 'tasks',
       requiredPermissions: ['workflow:approval:read'],
-      nav: {
-        label: '审批详情',
-        icon: 'FileCheck',
-        order: 2,
-        group: 'tasks',
-        showInBreadcrumb: true,
-      },
     },
     {
       path: '/workflow/monitor',
@@ -209,7 +235,7 @@ export const workflowModuleConfig: RouteModuleConfig = {
     },
     {
       path: '/workflow/templates',
-      element: WorkflowTemplatesPage,
+      element: FlowTemplatePage,
       module: 'workflow',
       code: 'workflow-templates',
       title: '流程模板',
@@ -238,6 +264,112 @@ export const workflowModuleConfig: RouteModuleConfig = {
         order: 2,
         group: 'settings',
       },
+    },
+    {
+      path: '/workflow/flow-definition',
+      element: FlowDefinitionPage,
+      module: 'workflow',
+      code: 'workflow-flow-definition',
+      title: '流程定义详情',
+      template: 'detail',
+      group: 'design',
+      requiredPermissions: ['workflow:definition:read'],
+    },
+    {
+      path: '/workflow/flow-instance-list',
+      element: FlowInstanceListPage,
+      module: 'workflow',
+      code: 'workflow-flow-instance-list',
+      title: '流程实例列表',
+      template: 'list',
+      group: 'runtime',
+      requiredPermissions: ['workflow:instance:read'],
+    },
+    {
+      path: '/workflow/flow-monitor',
+      element: FlowMonitorPage,
+      module: 'workflow',
+      code: 'workflow-flow-monitor',
+      title: '流程监控详情',
+      template: 'stats',
+      group: 'analytics',
+      requiredPermissions: ['workflow:monitor:read'],
+    },
+    {
+      path: '/workflow/flow-approval',
+      element: FlowApprovalPage,
+      module: 'workflow',
+      code: 'workflow-flow-approval',
+      title: '流程审批',
+      template: 'form',
+      group: 'tasks',
+      requiredPermissions: ['workflow:approval:update'],
+    },
+    {
+      path: '/workflow/version-history',
+      element: FlowVersionHistoryPage,
+      module: 'workflow',
+      code: 'workflow-version-history',
+      title: '版本历史',
+      template: 'list',
+      group: 'design',
+      requiredPermissions: ['workflow:definition:read'],
+    },
+    {
+      path: '/workflow/flow-workflow',
+      element: FlowWorkflowPage,
+      module: 'workflow',
+      code: 'workflow-flow-workflow',
+      title: '流程工作流',
+      template: 'list',
+      group: 'design',
+      requiredPermissions: ['workflow:definition:read'],
+    },
+    {
+      path: '/workflow/flow-settings',
+      element: FlowSettingsPage,
+      module: 'workflow',
+      code: 'workflow-flow-settings',
+      title: '流程设置',
+      template: 'settings',
+      group: 'settings',
+      requiredPermissions: ['workflow:admin'],
+    },
+    {
+      path: '/workflow/flow-statistics',
+      element: FlowStatisticsPage,
+      module: 'workflow',
+      code: 'workflow-flow-statistics',
+      title: '流程统计',
+      template: 'stats',
+      group: 'analytics',
+      requiredPermissions: ['workflow:statistics:read'],
+    },
+    {
+      path: '/workflow/notification-center',
+      element: FlowNotificationCenter,
+      module: 'workflow',
+      code: 'workflow-notification-center',
+      title: '通知中心',
+      template: 'list',
+      group: 'tasks',
+      requiredPermissions: ['workflow:notification:read'],
+      nav: {
+        label: '通知中心',
+        icon: 'Bell',
+        order: 2,
+        group: 'tasks',
+      },
+    },
+    {
+      path: '/workflow/flow-designer',
+      element: FlowDesignerPage,
+      module: 'workflow',
+      code: 'workflow-flow-designer',
+      title: '流程设计',
+      template: 'form',
+      group: 'design',
+      requiredPermissions: ['workflow:definition:write'],
     },
   ],
 };

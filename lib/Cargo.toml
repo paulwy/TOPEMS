@@ -57,6 +57,8 @@ opentelemetry-stdout = { version = "0.2", features = ["trace"] }
 opentelemetry-jaeger = { version = "0.20", features = ["rt-tokio"] }
 opentelemetry-semantic-conventions = "0.13"
 tracing-opentelemetry = "0.22"
+prometheus = "0.13"
+tracing-appender = "0.2"
 
 [dev-dependencies]
 tokio-test.workspace = true

@@ -5,11 +5,11 @@ import {
   ListItem,
   ListItemButton,
   ListItemIcon,
-  ListItemText,
   Collapse,
   Divider,
   Tooltip,
   Badge,
+  Typography,
 } from '@mui/material';
 import {
   ChevronDown,
@@ -62,8 +62,7 @@ function NavItemComponent({
     if (item.children) {
       return item.children.some(
         (child) =>
-          child.path === location.pathname ||
-          location.pathname.startsWith(`${child.path}/`)
+          child.path === location.pathname || location.pathname.startsWith(`${child.path}/`)
       );
     }
     return false;
@@ -82,7 +81,10 @@ function NavItemComponent({
 
   if (collapsed) {
     return (
-      <Tooltip title={item.label} placement="right">
+      <Tooltip
+        title={item.label}
+        placement='right'
+      >
         <ListItemButton
           onClick={handleClick}
           sx={{
@@ -103,7 +105,10 @@ function NavItemComponent({
             }}
           >
             {item.badge ? (
-              <Badge badgeContent={item.badge} color={item.badgeColor || 'primary'}>
+              <Badge
+                badgeContent={item.badge}
+                color={item.badgeColor || 'primary'}
+              >
                 {getIcon(item.icon)}
               </Badge>
             ) : (
@@ -135,21 +140,26 @@ function NavItemComponent({
           }}
         >
           {item.badge ? (
-            <Badge badgeContent={item.badge} color={item.badgeColor || 'primary'}>
+            <Badge
+              badgeContent={item.badge}
+              color={item.badgeColor || 'primary'}
+            >
               {getIcon(item.icon)}
             </Badge>
           ) : (
             getIcon(item.icon)
           )}
         </ListItemIcon>
-        <ListItemText
-          primary={item.label}
-          primaryTypographyProps={{
+        <Typography
+          variant='body2'
+          sx={{
             fontSize: '0.875rem',
             fontWeight: active ? 600 : 400,
             color: active ? 'primary.main' : 'text.primary',
           }}
-        />
+        >
+          {item.label}
+        </Typography>
         {hasChildren && (
           <Box sx={{ ml: 1, color: 'text.secondary' }}>
             {open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
@@ -157,9 +167,16 @@ function NavItemComponent({
         )}
       </ListItemButton>
       {hasChildren && (
-        <Collapse in={open} timeout="auto" unmountOnExit>
-          <List component="div" disablePadding>
-            {item.children.map((child) => (
+        <Collapse
+          in={open}
+          timeout='auto'
+          unmountOnExit
+        >
+          <List
+            component='div'
+            disablePadding
+          >
+            {(item.children || []).map((child) => (
               <NavItemComponent
                 key={child.code}
                 item={child}
@@ -174,10 +191,7 @@ function NavItemComponent({
   );
 }
 
-export default function SidebarNavGroup({
-  grouped,
-  collapsed,
-}: SidebarNavGroupProps) {
+export default function SidebarNavGroup({ grouped, collapsed }: SidebarNavGroupProps) {
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
     new Set(Object.keys(NAV_GROUPS))
   );
@@ -230,16 +244,18 @@ export default function SidebarNavGroup({
                 >
                   <GroupIcon size={16} />
                 </ListItemIcon>
-                <ListItemText
-                  primary={groupInfo.label}
-                  primaryTypographyProps={{
+                <Typography
+                  variant='caption'
+                  sx={{
                     fontSize: '0.75rem',
                     fontWeight: 600,
                     color: 'text.secondary',
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
                   }}
-                />
+                >
+                  {groupInfo.label}
+                </Typography>
                 <Box sx={{ color: 'text.secondary' }}>
                   {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                 </Box>
@@ -248,14 +264,24 @@ export default function SidebarNavGroup({
             {collapsed ? (
               <List sx={{ py: 0 }}>
                 {items.slice(0, 1).map((item) => (
-                  <NavItemComponent key={item.code} item={item} collapsed={collapsed} />
+                  <NavItemComponent
+                    key={item.code}
+                    item={item}
+                    collapsed={collapsed}
+                  />
                 ))}
               </List>
             ) : (
-              <Collapse in={isExpanded} timeout="auto">
+              <Collapse
+                in={isExpanded}
+                timeout='auto'
+              >
                 <List sx={{ py: 0 }}>
                   {items.map((item) => (
-                    <NavItemComponent key={item.code} item={item} />
+                    <NavItemComponent
+                      key={item.code}
+                      item={item}
+                    />
                   ))}
                 </List>
               </Collapse>

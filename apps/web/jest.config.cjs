@@ -13,15 +13,26 @@ module.exports = {
   ],
   coverageDirectory: 'coverage',
   coverageReporters: ['text', 'lcov', 'html', 'json'],
-  // 暂时移除覆盖率阈值，后续可逐步提升
-  // coverageThreshold: {
-  //   global: {
-  //     branches: 70,
-  //     functions: 70,
-  //     lines: 70,
-  //     statements: 70,
-  //   },
-  // },
+  coverageThreshold: {
+    global: {
+      branches: 50,
+      functions: 60,
+      lines: 60,
+      statements: 60,
+    },
+    './src/components/**': {
+      branches: 40,
+      functions: 50,
+      lines: 50,
+      statements: 50,
+    },
+    './src/pages/**': {
+      branches: 30,
+      functions: 40,
+      lines: 40,
+      statements: 40,
+    },
+  },
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',

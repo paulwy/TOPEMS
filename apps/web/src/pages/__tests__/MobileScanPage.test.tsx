@@ -40,7 +40,8 @@ describe('MobileScanPage', () => {
   it('should render page title', async () => {
     renderWithProviders(<MobileScanPage />);
     await waitFor(() => {
-      expect(screen.getByText('扫码')).toBeInTheDocument();
+      const titles = screen.getAllByText('扫码');
+      expect(titles.length).toBeGreaterThan(0);
     });
   });
 });

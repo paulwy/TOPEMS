@@ -46,7 +46,7 @@
 | 事项 | 优先级 | 状态 | 说明 |
 |---|---|---|---|
 | 多租户行级隔离完善 | P1 | ✅ | QMS 25 张表 + EHS 39 张表添加 tenant_id 字段和索引，lib 层添加 RLS 中间件支持 |
-| unified-core 边界重构 | P1 | ⏳ | Finance/Doc/AI 移出 core，core 保留 6 基础模块 |
+| unified-core 边界重构 | P1 | ✅ | Finance/Doc/AI 移出 core，core 保留 8 基础模块（IAM/Flow/File/Communication/Tenant/Billing/Plugin/Sync） |
 | 事件驱动架构深化 | P2 | ✅ | 添加 RabbitMQ 发布者/订阅者实现（lapin），支持 Topic Exchange 和消息确认 |
 | 测试体系建设 | P2 | ✅ | 53 个测试文件（287 用例）运行成功，覆盖率阈值配置完成 |
 | CI/CD 流水线完善 + 质量门禁 | P2 | ✅ | 添加覆盖率门禁（statements≥60%, branches≥50%, functions≥60%, lines≥60%）和 Bundle size 监控 |

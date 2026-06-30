@@ -26,6 +26,7 @@ import {
   Tab,
   Paper,
   Avatar,
+  FormControlLabel,
 } from '@mui/material';
 import {
   Bell,
@@ -310,7 +311,7 @@ export const MobileNotificationPage: React.FC = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                 <Typography
                   variant='body2'
-                  fontWeight={row.isRead ? 400 : 600}
+                  sx={{ fontWeight: row.isRead ? 400 : 600 }}
                   color={row.isRead ? 'text.secondary' : 'text.primary'}
                   noWrap
                 >
@@ -401,10 +402,8 @@ export const MobileNotificationPage: React.FC = () => {
 
   return (
     <PageContainer
-      headerProps={{
-        title: '消息通知',
-        subTitle: `${unreadCount} 条未读消息`,
-      }}
+      title='消息通知'
+      subtitle={`${unreadCount} 条未读消息`}
     >
       {/* Mobile Notification Settings */}
       <Paper variant='outlined' sx={{ p: 2, mb: 2 }}>
@@ -494,7 +493,7 @@ export const MobileNotificationPage: React.FC = () => {
             }}
           >
             <Box sx={{ color: `${stat.color}.main`, mb: 0.5 }}>{stat.icon}</Box>
-            <Typography variant='h6' fontWeight={600}>
+            <Typography variant='h6' sx={{ fontWeight: 600 }}>
               {stat.value}
             </Typography>
             <Typography variant='caption' color='text.secondary'>
@@ -511,12 +510,14 @@ export const MobileNotificationPage: React.FC = () => {
           placeholder='搜索通知...'
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position='start'>
-                <Search size={16} />
-              </InputAdornment>
-            ),
+          slotProps={{
+            input: {
+              startAdornment: (
+                <InputAdornment position='start'>
+                  <Search size={16} />
+                </InputAdornment>
+              ),
+            },
           }}
           sx={{ flex: 1 }}
         />
@@ -571,7 +572,7 @@ export const MobileNotificationPage: React.FC = () => {
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Typography
                       variant='body2'
-                      fontWeight={notification.isRead ? 400 : 600}
+                      sx={{ fontWeight: notification.isRead ? 400 : 600 }}
                       color={notification.isRead ? 'text.secondary' : 'text.primary'}
                     >
                       {notification.title}

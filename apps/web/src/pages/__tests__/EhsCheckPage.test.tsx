@@ -85,19 +85,25 @@ describe('EhsCheckPage', () => {
   });
 
   it('should render loading state initially', async () => {
-    renderWithProviders(<EhsCheckPage />);
+    await act(async () => {
+      renderWithProviders(<EhsCheckPage />);
+    });
     expect(screen.getByRole('status')).toBeInTheDocument();
   });
 
   it('should render page title for plans tab', async () => {
-    renderWithProviders(<EhsCheckPage />);
+    await act(async () => {
+      renderWithProviders(<EhsCheckPage />);
+    });
     await waitFor(() => {
       expect(screen.getByText('检查计划')).toBeInTheDocument();
     });
   });
 
   it('should render plan table', async () => {
-    renderWithProviders(<EhsCheckPage />);
+    await act(async () => {
+      renderWithProviders(<EhsCheckPage />);
+    });
     await waitFor(() => {
       expect(screen.getByText('CH-2024-001')).toBeInTheDocument();
       expect(screen.getByText('消防安全检查')).toBeInTheDocument();
@@ -105,16 +111,22 @@ describe('EhsCheckPage', () => {
   });
 
   it('should handle search', async () => {
-    renderWithProviders(<EhsCheckPage />);
+    await act(async () => {
+      renderWithProviders(<EhsCheckPage />);
+    });
     await waitFor(() => {
       expect(screen.getByPlaceholderText(/搜索计划编号或名称/)).toBeInTheDocument();
     });
     const searchInput = screen.getByPlaceholderText(/搜索计划编号或名称/);
-    fireEvent.change(searchInput, { target: { value: '消防' } });
+    await act(async () => {
+      fireEvent.change(searchInput, { target: { value: '消防' } });
+    });
   });
 
   it('should switch to records tab', async () => {
-    renderWithProviders(<EhsCheckPage />);
+    await act(async () => {
+      renderWithProviders(<EhsCheckPage />);
+    });
     await waitFor(() => {
       expect(screen.getByText('检查计划')).toBeInTheDocument();
     });
@@ -122,7 +134,6 @@ describe('EhsCheckPage', () => {
     await act(async () => {
       fireEvent.click(recordsTab);
     });
-    // Tab is clicked, verify tab content changes (list loads for records)
     await waitFor(
       () => {
         expect(screen.getByText('检查记录')).toBeInTheDocument();
@@ -137,30 +148,28 @@ describe('EhsCheckPage', () => {
       data: {},
     });
 
-    renderWithProviders(<EhsCheckPage />);
-
-    // Wait for add button and click it
     await act(async () => {
-      const addButton = await screen.findByRole('button', { name: /新增计划/i });
+      renderWithProviders(<EhsCheckPage />);
+    });
+
+    const addButton = await screen.findByRole('button', { name: /新增计划/i });
+    await act(async () => {
       addButton.click();
     });
 
-    // Fill in the title
+    const titleInput = screen.getByLabelText(/计划名称/);
     await act(async () => {
-      const titleInput = screen.getByLabelText(/计划名称/);
       fireEvent.change(titleInput, { target: { value: '测试计划' } });
     });
 
-    // Click save button
+    const saveButton = screen.getByRole('button', { name: /保存/i });
     await act(async () => {
-      const saveButton = screen.getByRole('button', { name: /保存/i });
       saveButton.click();
     });
 
     await waitFor(() => {
       expect(ehsApi.createInspectionPlan).toHaveBeenCalled();
     });
-    // Verify notification was called
     await waitFor(() => {
       expect(mockAddNotification).toHaveBeenCalledWith(
         expect.objectContaining({ type: 'success' })
@@ -170,11 +179,11 @@ describe('EhsCheckPage', () => {
 
   it('should handle API error', async () => {
     (ehsApi.listInspectionPlans as vi.Mock).mockRejectedValue(new Error('Network error'));
-    renderWithProviders(<EhsCheckPage />);
+    await act(async () => {
+      renderWithProviders(<EhsCheckPage />);
+    });
 
-    // The component should handle the error gracefully (set plans to empty, no crash)
     await waitFor(() => {
-      // Error is caught and logged, plans should be empty
       expect(true).toBe(true);
     });
   });

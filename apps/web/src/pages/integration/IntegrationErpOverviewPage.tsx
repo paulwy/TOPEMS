@@ -30,7 +30,7 @@ import {
   RefreshCw,
   Settings,
   Database,
-  GitSync,
+  GitMerge,
   AlertCircle,
   CheckCircle2,
   Clock,
@@ -72,31 +72,123 @@ interface SyncLog {
 }
 
 const MOCK_SYNC_TASKS: SyncTask[] = [
-  { id: 'sync-001', name: '用户数据同步', type: 'IAM', status: 'success', lastSyncTime: '2024-01-15 14:30:00', records: 1250 },
-  { id: 'sync-002', name: '库存数据同步', type: 'WMS', status: 'syncing', lastSyncTime: '2024-01-15 14:25:00', records: 856, progress: 65 },
-  { id: 'sync-003', name: '订单数据同步', type: 'ERP', status: 'success', lastSyncTime: '2024-01-15 14:20:00', records: 342 },
-  { id: 'sync-004', name: '财务数据同步', type: 'FIN', status: 'error', lastSyncTime: '2024-01-15 14:15:00', records: 0 },
-  { id: 'sync-005', name: '客户数据同步', type: 'CRM', status: 'pending', lastSyncTime: '-', records: 0 },
+  {
+    id: 'sync-001',
+    name: '用户数据同步',
+    type: 'IAM',
+    status: 'success',
+    lastSyncTime: '2024-01-15 14:30:00',
+    records: 1250,
+  },
+  {
+    id: 'sync-002',
+    name: '库存数据同步',
+    type: 'WMS',
+    status: 'syncing',
+    lastSyncTime: '2024-01-15 14:25:00',
+    records: 856,
+    progress: 65,
+  },
+  {
+    id: 'sync-003',
+    name: '订单数据同步',
+    type: 'ERP',
+    status: 'success',
+    lastSyncTime: '2024-01-15 14:20:00',
+    records: 342,
+  },
+  {
+    id: 'sync-004',
+    name: '财务数据同步',
+    type: 'FIN',
+    status: 'error',
+    lastSyncTime: '2024-01-15 14:15:00',
+    records: 0,
+  },
+  {
+    id: 'sync-005',
+    name: '客户数据同步',
+    type: 'CRM',
+    status: 'pending',
+    lastSyncTime: '-',
+    records: 0,
+  },
 ];
 
 const MOCK_SYNC_LOGS: SyncLog[] = [
-  { id: 'log-001', action: '数据同步完成', module: '用户管理', user: '系统', time: '14:30:00', status: 'success' },
-  { id: 'log-002', action: '同步失败', module: '财务管理', user: '系统', time: '14:15:00', status: 'error' },
-  { id: 'log-003', action: '开始同步', module: '库存管理', user: '系统', time: '14:25:00', status: 'success' },
-  { id: 'log-004', action: '数据同步完成', module: '订单管理', user: '系统', time: '14:20:00', status: 'success' },
-  { id: 'log-005', action: '数据同步完成', module: '客户管理', user: '系统', time: '14:10:00', status: 'success' },
+  {
+    id: 'log-001',
+    action: '数据同步完成',
+    module: '用户管理',
+    user: '系统',
+    time: '14:30:00',
+    status: 'success',
+  },
+  {
+    id: 'log-002',
+    action: '同步失败',
+    module: '财务管理',
+    user: '系统',
+    time: '14:15:00',
+    status: 'error',
+  },
+  {
+    id: 'log-003',
+    action: '开始同步',
+    module: '库存管理',
+    user: '系统',
+    time: '14:25:00',
+    status: 'success',
+  },
+  {
+    id: 'log-004',
+    action: '数据同步完成',
+    module: '订单管理',
+    user: '系统',
+    time: '14:20:00',
+    status: 'success',
+  },
+  {
+    id: 'log-005',
+    action: '数据同步完成',
+    module: '客户管理',
+    user: '系统',
+    time: '14:10:00',
+    status: 'success',
+  },
 ];
 
 const getStatusIcon = (status: SyncStatus) => {
   switch (status) {
     case 'success':
-      return <CheckCircle2 size={16} color='#4caf50' />;
+      return (
+        <CheckCircle2
+          size={16}
+          color='#4caf50'
+        />
+      );
     case 'syncing':
-      return <RefreshCw size={16} color='#1976d2' className='spin' />;
+      return (
+        <RefreshCw
+          size={16}
+          color='#1976d2'
+          className='spin'
+        />
+      );
     case 'error':
-      return <AlertCircle size={16} color='#f44336' />;
+      return (
+        <AlertCircle
+          size={16}
+          color='#f44336'
+        />
+      );
     case 'pending':
-      return <Clock size={16} color='#9e9e9e' />;
+      return (
+        <Clock
+          size={16}
+          color='#9e9e9e'
+        />
+      );
   }
 };
 
@@ -130,7 +222,7 @@ export const IntegrationErpOverviewPage: React.FC = () => {
         id: 'total-syncs',
         title: '同步任务',
         value: '12',
-        icon: <GitSync size={20} />,
+        icon: <GitMerge size={20} />,
         change: 2,
         changeLabel: '较上周',
         color: 'primary',
@@ -244,7 +336,10 @@ export const IntegrationErpOverviewPage: React.FC = () => {
           <ListItemText
             primary={
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography variant='body2' fontWeight={500}>
+                <Typography
+                  variant='body2'
+                  sx={{ fontWeight: 500 }}
+                >
                   {task.name}
                 </Typography>
                 <Chip
@@ -257,11 +352,17 @@ export const IntegrationErpOverviewPage: React.FC = () => {
             }
             secondary={
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 0.5 }}>
-                <Typography variant='caption' color='text.secondary'>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   {task.lastSyncTime}
                 </Typography>
                 {task.records > 0 && (
-                  <Typography variant='caption' color='text.secondary'>
+                  <Typography
+                    variant='caption'
+                    color='text.secondary'
+                  >
                     {task.records} 条记录
                   </Typography>
                 )}
@@ -290,12 +391,11 @@ export const IntegrationErpOverviewPage: React.FC = () => {
 
   return (
     <PageContainer
-      headerProps={{
-        title: 'ERP 集成概览',
-        subTitle: '管理 ERP 系统数据同步',
-      }}
+      title='ERP 集成概览'
+      subtitle='管理 ERP 系统数据同步'
     >
       <DashboardTemplate
+        title='ERP 集成概览'
         stats={stats}
         quickActions={quickActions}
         recentItems={recentItems}
@@ -303,12 +403,20 @@ export const IntegrationErpOverviewPage: React.FC = () => {
       />
 
       {/* Sync Tasks Section */}
-      <Card variant='outlined' sx={{ mt: 3 }}>
+      <Card
+        variant='outlined'
+        sx={{ mt: 3 }}
+      >
         <CardContent>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+          <Box
+            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}
+          >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Building2 size={20} />
-              <Typography variant='subtitle1' fontWeight={600}>
+              <Typography
+                variant='subtitle1'
+                sx={{ fontWeight: 600 }}
+              >
                 同步任务
               </Typography>
             </Box>
@@ -333,91 +441,139 @@ export const IntegrationErpOverviewPage: React.FC = () => {
       </Card>
 
       {/* Connection Status */}
-      <Grid container spacing={2} sx={{ mt: 2 }}>
-        <Grid item xs={12} md={6}>
+      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 2 }}>
+        <Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>
           <Card variant='outlined'>
             <CardContent>
-              <Typography variant='subtitle2' fontWeight={600} sx={{ mb: 2 }}>
+              <Typography
+                variant='subtitle2'
+                sx={{ fontWeight: 600, mb: 2 }}
+              >
                 ERP 连接状态
               </Typography>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box
+                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Database size={16} />
                     <Typography variant='body2'>主数据库</Typography>
                   </Box>
-                  <Chip size='small' label='已连接' color='success' />
+                  <Chip
+                    size='small'
+                    label='已连接'
+                    color='success'
+                  />
                 </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box
+                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <GitSync size={16} />
+                    <GitMerge size={16} />
                     <Typography variant='body2'>实时同步服务</Typography>
                   </Box>
-                  <Chip size='small' label='运行中' color='success' />
+                  <Chip
+                    size='small'
+                    label='运行中'
+                    color='success'
+                  />
                 </Box>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box
+                  sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Bell size={16} />
                     <Typography variant='body2'>告警服务</Typography>
                   </Box>
-                  <Chip size='small' label='正常' color='success' />
+                  <Chip
+                    size='small'
+                    label='正常'
+                    color='success'
+                  />
                 </Box>
               </Box>
             </CardContent>
           </Card>
-        </Grid>
-        <Grid item xs={12} md={6}>
+        </Box>
+        <Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>
           <Card variant='outlined'>
             <CardContent>
-              <Typography variant='subtitle2' fontWeight={600} sx={{ mb: 2 }}>
+              <Typography
+                variant='subtitle2'
+                sx={{ fontWeight: 600, mb: 2 }}
+              >
                 同步统计
               </Typography>
-              <Grid container spacing={2}>
-                <Grid item xs={6}>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                <Box sx={{ flex: 1, minWidth: 'calc(50% - 8px)' }}>
                   <Box sx={{ textAlign: 'center', p: 1, bgcolor: 'success.50', borderRadius: 1 }}>
-                    <Typography variant='h5' fontWeight={600} color='success.main'>
+                    <Typography
+                      variant='h5'
+                      sx={{ fontWeight: 600, color: 'success.main' }}
+                    >
                       1,250
                     </Typography>
-                    <Typography variant='caption' color='text.secondary'>
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                    >
                       今日同步
                     </Typography>
                   </Box>
-                </Grid>
-                <Grid item xs={6}>
+                </Box>
+                <Box sx={{ flex: 1, minWidth: 'calc(50% - 8px)' }}>
                   <Box sx={{ textAlign: 'center', p: 1, bgcolor: 'primary.50', borderRadius: 1 }}>
-                    <Typography variant='h5' fontWeight={600} color='primary.main'>
+                    <Typography
+                      variant='h5'
+                      sx={{ fontWeight: 600, color: 'primary.main' }}
+                    >
                       3.2s
                     </Typography>
-                    <Typography variant='caption' color='text.secondary'>
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                    >
                       平均延迟
                     </Typography>
                   </Box>
-                </Grid>
-                <Grid item xs={6}>
+                </Box>
+                <Box sx={{ flex: 1, minWidth: 'calc(50% - 8px)' }}>
                   <Box sx={{ textAlign: 'center', p: 1, bgcolor: 'warning.50', borderRadius: 1 }}>
-                    <Typography variant='h5' fontWeight={600} color='warning.main'>
+                    <Typography
+                      variant='h5'
+                      sx={{ fontWeight: 600, color: 'warning.main' }}
+                    >
                       99.2%
                     </Typography>
-                    <Typography variant='caption' color='text.secondary'>
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                    >
                       可用率
                     </Typography>
                   </Box>
-                </Grid>
-                <Grid item xs={6}>
+                </Box>
+                <Box sx={{ flex: 1, minWidth: 'calc(50% - 8px)' }}>
                   <Box sx={{ textAlign: 'center', p: 1, bgcolor: 'info.50', borderRadius: 1 }}>
-                    <Typography variant='h5' fontWeight={600} color='info.main'>
+                    <Typography
+                      variant='h5'
+                      sx={{ fontWeight: 600, color: 'info.main' }}
+                    >
                       15
                     </Typography>
-                    <Typography variant='caption' color='text.secondary'>
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                    >
                       活跃连接
                     </Typography>
                   </Box>
-                </Grid>
-              </Grid>
+                </Box>
+              </Box>
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
     </PageContainer>
   );
 };
