@@ -11,14 +11,13 @@ import { adaptIssueToFrontend, adaptIssueToBackend } from './adapters';
 
 export const issueApi = {
   listIssues: async (): Promise<ApiResponse<QualityIssue[]>> => {
-    const response =
-      await apiClient.qms.get<PaginatedResponse<QualityIssueBackend>>('/api/qms/issues');
+    const response = await apiClient.qms.get<PaginatedResponse<QualityIssueBackend>>('/issues');
     const adaptedData = (response.data?.issues || []).map(adaptIssueToFrontend);
     return { ...response, data: adaptedData };
   },
 
   getIssue: async (id: string): Promise<ApiResponse<QualityIssue>> => {
-    const response = await apiClient.qms.get<QualityIssueBackend>(`/api/qms/issues/${id}`);
+    const response = await apiClient.qms.get<QualityIssueBackend>(`/issues/${id}`);
     return {
       ...response,
       data: response.data ? adaptIssueToFrontend(response.data) : undefined,
@@ -27,7 +26,7 @@ export const issueApi = {
 
   createIssue: async (data: CreateQualityIssueRequest): Promise<ApiResponse<QualityIssue>> => {
     const backendData = adaptIssueToBackend(data);
-    const response = await apiClient.qms.post<QualityIssueBackend>('/api/qms/issues', backendData);
+    const response = await apiClient.qms.post<QualityIssueBackend>('/issues', backendData);
     return {
       ...response,
       data: response.data ? adaptIssueToFrontend(response.data) : undefined,
@@ -45,10 +44,7 @@ export const issueApi = {
       status: data.status,
       assigned_to: data.assignee,
     };
-    const response = await apiClient.qms.put<QualityIssueBackend>(
-      `/api/qms/issues/${id}`,
-      backendData
-    );
+    const response = await apiClient.qms.put<QualityIssueBackend>(`/issues/${id}`, backendData);
     return {
       ...response,
       data: response.data ? adaptIssueToFrontend(response.data) : undefined,
@@ -56,6 +52,6 @@ export const issueApi = {
   },
 
   deleteIssue: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.qms.delete<boolean>(`/api/qms/issues/${id}`);
+    return apiClient.qms.delete<boolean>(`/issues/${id}`);
   },
 };

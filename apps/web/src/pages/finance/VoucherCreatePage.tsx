@@ -592,16 +592,9 @@ const VoucherCreatePage: React.FC = () => {
   ];
 
   return (
-    <PageContainer title='新建凭证'>
+    <PageContainer backButton={{ href: '/finance/vouchers' }}>
       <FormPageTemplate
         title=''
-        subtitle=''
-        breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: '财务', href: '/finance' },
-          { label: '凭证管理', href: '/finance/vouchers' },
-          { label: '新建凭证' },
-        ]}
         sections={sections}
         onSubmit={handleSubmit}
         onCancel={handleCancel}

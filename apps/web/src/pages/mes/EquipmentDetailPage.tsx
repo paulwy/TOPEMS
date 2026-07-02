@@ -7,7 +7,7 @@ import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 
 const EquipmentDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -232,7 +232,7 @@ const EquipmentDetailPage: React.FC = () => {
             gap: 2,
           }}
         >
-          <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
+          <Box sx={{ bgcolor: 'grey.100', borderRadius: 3, p: 2 }}>
             <Typography
               variant='body2'
               color='text.secondary'
@@ -243,7 +243,7 @@ const EquipmentDetailPage: React.FC = () => {
               {formatDate(equipment.created_at)}
             </Typography>
           </Box>
-          <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
+          <Box sx={{ bgcolor: 'grey.100', borderRadius: 3, p: 2 }}>
             <Typography
               variant='body2'
               color='text.secondary'
@@ -254,7 +254,7 @@ const EquipmentDetailPage: React.FC = () => {
               {formatDate(equipment.updated_at)}
             </Typography>
           </Box>
-          <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
+          <Box sx={{ bgcolor: 'grey.100', borderRadius: 3, p: 2 }}>
             <Typography
               variant='body2'
               color='text.secondary'
@@ -302,8 +302,12 @@ const EquipmentDetailPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='设备详情'
-      subtitle='查看和管理设备信息'
+      autoTitle
+      autoBreadcrumbs
+      headerProps={{
+        pageIcon: <Wrench style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+      }}
     >
       <DetailPageTemplate
         title=''

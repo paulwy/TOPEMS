@@ -56,7 +56,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
                   width: 40,
                   height: 40,
                   background: 'linear-gradient(135deg, primary.main 0%, secondary.main 100%)',
-                  borderRadius: 2,
+                  borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -156,7 +156,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
               onClick={onLogout}
               sx={{
                 p: 2.5,
-                borderRadius: 2,
+                borderRadius: 3,
                 color: 'grey.400',
                 transition: 'all',
                 '&:hover': {

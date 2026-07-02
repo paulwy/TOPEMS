@@ -33,7 +33,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import { ehsApi } from '@/api/ehs';
 import type { InspectionPlan, InspectionItem, InspectionRecord, RecordItem } from '@/api/ehs';
 import { useAppStore } from '@/store';
@@ -493,11 +493,7 @@ const EhsCheckPage: React.FC = () => {
   ];
 
   return (
-    <PageContainer
-      title='安全检查'
-      subtitle='Safety Inspection'
-      maxWidth='xl'
-    >
+    <PageContainer maxWidth='xl'>
       <Box sx={{ mb: 3 }}>
         <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
           <Button
@@ -545,7 +541,7 @@ const EhsCheckPage: React.FC = () => {
                         width: 40,
                         height: 40,
                         bgcolor: '#dbeafe',
-                        borderRadius: 2,
+                        borderRadius: 3,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -578,7 +574,7 @@ const EhsCheckPage: React.FC = () => {
                         width: 40,
                         height: 40,
                         bgcolor: 'success.lighter',
-                        borderRadius: 2,
+                        borderRadius: 3,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -614,7 +610,7 @@ const EhsCheckPage: React.FC = () => {
                         width: 40,
                         height: 40,
                         bgcolor: '#dbeafe',
-                        borderRadius: 2,
+                        borderRadius: 3,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -647,7 +643,7 @@ const EhsCheckPage: React.FC = () => {
                         width: 40,
                         height: 40,
                         bgcolor: 'success.lighter',
-                        borderRadius: 2,
+                        borderRadius: 3,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -680,7 +676,7 @@ const EhsCheckPage: React.FC = () => {
                         width: 40,
                         height: 40,
                         bgcolor: 'warning.light',
-                        borderRadius: 2,
+                        borderRadius: 3,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',

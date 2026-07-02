@@ -1,7 +1,7 @@
 // modules/EvidenceModule/AudioCapture.tsx
 import React, { useRef, useState, useCallback, useEffect } from 'react';
 import { Mic, Square, Pause, Play, X, Check } from 'lucide-react';
-import { Box, IconButton, Typography, Paper, Button } from '@mui/material';
+import {Box, IconButton, Typography, Paper, Button, useTheme} from '@mui/material';
 import { logger } from '@/utils/logger';
 
 interface AudioCaptureProps {
@@ -17,6 +17,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
   maxDuration = 300, // 5 minutes default
   maxFileSize = 50 * 1024 * 1024, // 50MB
 }) => {
+  const theme = useTheme();
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -171,7 +172,7 @@ const AudioCapture: React.FC<AudioCaptureProps> = ({
         >
           <X
             size={20}
-            style={{ color: 'text.disabled' }}
+            style={{ color: theme.palette.text.disabled }}
           />
         </IconButton>
       </Box>

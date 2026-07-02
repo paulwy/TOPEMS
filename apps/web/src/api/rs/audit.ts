@@ -7,7 +7,7 @@ export const auditRsApi = {
   listAuditLogs: async (
     params?: AuditLogQueryParams
   ): Promise<ApiResponse<{ audit_logs: AuditLog[]; total: number }>> => {
-    let url = '/api/rs/audit-logs';
+    let url = '/audit-logs';
     if (params) {
       const searchParams = new URLSearchParams();
       Object.entries(params).forEach(([key, value]) => {
@@ -24,13 +24,13 @@ export const auditRsApi = {
   },
 
   getAuditLog: async (id: string): Promise<ApiResponse<AuditLog>> => {
-    return apiClient.rs.get(`/api/rs/audit-logs/${id}`);
+    return apiClient.rs.get(`/audit-logs/${id}`);
   },
 
   exportAuditLogs: async (
     params?: Omit<AuditLogQueryParams, 'page' | 'pagesize'>
   ): Promise<Blob> => {
-    let url = '/api/rs/audit-logs/export';
+    let url = '/audit-logs/export';
     if (params) {
       const searchParams = new URLSearchParams();
       Object.entries(params).forEach(([key, value]) => {

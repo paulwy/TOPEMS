@@ -51,7 +51,7 @@ const generateMockSalesOrders = (): SalesOrder[] => {
   });
 };
 
-let mockSalesOrders = generateMockSalesOrders();
+const mockSalesOrders = generateMockSalesOrders();
 
 export const salesOrderApi = {
   async list(params?: PaginationParams): Promise<
@@ -132,10 +132,7 @@ export const salesOrderApi = {
     return createMockSuccessResponse(newOrder, 201, '创建成功') as ApiResponse<SalesOrder>;
   },
 
-  async update(
-    id: string,
-    data: UpdateSalesOrderRequest
-  ): Promise<ApiResponse<SalesOrder>> {
+  async update(id: string, data: UpdateSalesOrderRequest): Promise<ApiResponse<SalesOrder>> {
     const index = mockSalesOrders.findIndex((o) => o.id === id);
     if (index === -1) {
       return createMockErrorResponse('销售订单不存在', 404) as ApiResponse<SalesOrder>;

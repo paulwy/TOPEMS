@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, Card, CardContent, CardHeader, Grid } from '@mui/material';
+import {Box, Typography, Card, CardContent, CardHeader, Grid, useTheme} from '@mui/material';
 import {
   TrendingUp,
   Users,
@@ -21,7 +21,7 @@ import {
   type ChartCard,
   type QuickAction,
 } from '@/components/templates';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import { crmApi } from '@/api/crm';
 import { logger } from '@/utils/logger';
 import type { FunnelStage, OpportunityStats } from '@/api/crm';
@@ -35,6 +35,7 @@ const iconMap: Record<string, React.ComponentType<{ size?: number; className?: s
 };
 
 export const DashboardPage: React.FC = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<OpportunityStats | null>(null);
@@ -221,10 +222,12 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='客户关系管理'
+      title='客户关系仪表盘'
       subtitle={`${getGreeting()}，客户管理与销售分析`}
       padding={false}
       maxWidth={false}
+      autoTitle
+      autoBreadcrumbs
     >
       <Card sx={{ mb: 3 }}>
         <CardHeader>
@@ -287,7 +290,7 @@ export const DashboardPage: React.FC = () => {
                       <div
                         style={{
                           height: 24,
-                          backgroundColor: 'grey.100',
+                          backgroundColor: theme.palette.grey[100],
                           borderRadius: 4,
                           overflow: 'hidden',
                         }}
@@ -295,7 +298,7 @@ export const DashboardPage: React.FC = () => {
                         <div
                           style={{
                             height: '100%',
-                            backgroundColor: stageColors[item.stage] || 'grey.500',
+                            backgroundColor: stageColors[item.stage] || theme.palette.grey[500],
                             width: `${widthPercent}%`,
                             display: 'flex',
                             alignItems: 'center',

@@ -277,8 +277,6 @@ const EmergencyPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='应急演练'
-      subtitle='Emergency Drill'
       headerProps={{
         actions: headerActions,
         pageIcon: <AlertCircle sx={{ width: 20, height: 20 }} />,
@@ -302,7 +300,7 @@ const EmergencyPage: React.FC = () => {
                   width: 40,
                   height: 40,
                   bgcolor: 'warning.lighter',
-                  borderRadius: 2,
+                  borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -335,7 +333,7 @@ const EmergencyPage: React.FC = () => {
                   width: 40,
                   height: 40,
                   bgcolor: 'success.lighter',
-                  borderRadius: 2,
+                  borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -368,7 +366,7 @@ const EmergencyPage: React.FC = () => {
                   width: 40,
                   height: 40,
                   bgcolor: 'info.lighter',
-                  borderRadius: 2,
+                  borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

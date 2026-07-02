@@ -1,4 +1,4 @@
-import { lazyWithRetry } from '../utils';
+import { lazyWithRetry } from './types';
 import type { RouteModuleConfig } from './types';
 
 const MonitorDashboardPage = lazyWithRetry(
@@ -50,13 +50,6 @@ export const monitorModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'overview',
       requiredPermissions: ['monitor:read'],
-      nav: {
-        label: '仪表盘',
-        icon: 'LayoutDashboard',
-        order: 0,
-        group: 'overview',
-        showInTabs: true,
-      },
     },
     {
       path: '/monitor/alerts',
@@ -67,13 +60,6 @@ export const monitorModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'alerts',
       requiredPermissions: ['monitor:alert:read'],
-      nav: {
-        label: '告警中心',
-        icon: 'AlertTriangle',
-        order: 1,
-        group: 'alerts',
-        showInTabs: true,
-      },
     },
     {
       path: '/monitor/alerts/history',
@@ -84,12 +70,6 @@ export const monitorModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'alerts',
       requiredPermissions: ['monitor:alert:read'],
-      nav: {
-        label: '告警历史',
-        icon: 'History',
-        order: 2,
-        group: 'alerts',
-      },
     },
     {
       path: '/monitor/rules',
@@ -100,12 +80,6 @@ export const monitorModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'alerts',
       requiredPermissions: ['monitor:rule:read'],
-      nav: {
-        label: '告警规则',
-        icon: 'Settings',
-        order: 3,
-        group: 'alerts',
-      },
     },
     {
       path: '/monitor/metrics',
@@ -116,13 +90,6 @@ export const monitorModuleConfig: RouteModuleConfig = {
       template: 'stats',
       group: 'metrics',
       requiredPermissions: ['monitor:metric:read'],
-      nav: {
-        label: '指标监控',
-        icon: 'BarChart3',
-        order: 1,
-        group: 'metrics',
-        showInTabs: true,
-      },
     },
     {
       path: '/monitor/logs',
@@ -133,13 +100,6 @@ export const monitorModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'logs',
       requiredPermissions: ['monitor:log:read'],
-      nav: {
-        label: '系统日志',
-        icon: 'FileText',
-        order: 1,
-        group: 'logs',
-        showInTabs: true,
-      },
     },
     {
       path: '/monitor/settings',
@@ -150,12 +110,6 @@ export const monitorModuleConfig: RouteModuleConfig = {
       template: 'settings',
       group: 'settings',
       requiredPermissions: ['monitor:admin'],
-      nav: {
-        label: '监控设置',
-        icon: 'Settings',
-        order: 1,
-        group: 'settings',
-      },
     },
   ],
 };

@@ -34,11 +34,7 @@ import {
 } from 'recharts';
 
 import { PageContainer } from '@/components/common';
-import {
-  DashboardTemplate,
-  type StatCard,
-  type ChartCard,
-} from '@/components/templates';
+import { DashboardTemplate, type StatCard, type ChartCard } from '@/components/templates';
 import LineChartComponent from '../../components/charts/LineChart';
 import { AreaChart } from '../../components/charts/AreaChart';
 import { BarChartComponent } from '../../components/charts/BarChart';
@@ -164,8 +160,10 @@ export const MonitorMetricsPage: React.FC = () => {
     handleRefresh();
   };
 
-  const currentTimeRangeLabel = timeRangeOptions.find((o) => o.value === timeRange)?.label || '近24小时';
-  const currentServiceLabel = serviceOptions.find((o) => o.value === selectedService)?.label || '全部服务';
+  const currentTimeRangeLabel =
+    timeRangeOptions.find((o) => o.value === timeRange)?.label || '近24小时';
+  const currentServiceLabel =
+    serviceOptions.find((o) => o.value === selectedService)?.label || '全部服务';
 
   const handleRefresh = useCallback(() => {
     setLoading(true);
@@ -184,80 +182,83 @@ export const MonitorMetricsPage: React.FC = () => {
     handleRefresh();
   };
 
-  const stats: StatCard[] = useMemo(() => [
-    {
-      id: 'cpu-usage',
-      title: 'CPU 使用率',
-      value: '68.5',
-      unit: '%',
-      icon: <Cpu size={20} />,
-      change: 5.2,
-      changeLabel: '较上周期',
-      color: 'warning',
-      progress: 68.5,
-      progressLabel: '使用率',
-      trend: generateRandomData(12, 50, 85),
-    },
-    {
-      id: 'memory-usage',
-      title: '内存使用率',
-      value: '72.3',
-      unit: '%',
-      icon: <Server size={20} />,
-      change: 3.1,
-      changeLabel: '较上周期',
-      color: 'warning',
-      progress: 72.3,
-      progressLabel: '使用率',
-      trend: generateRandomData(12, 60, 80),
-    },
-    {
-      id: 'disk-usage',
-      title: '磁盘使用率',
-      value: '54.7',
-      unit: '%',
-      icon: <HardDrive size={20} />,
-      change: 1.8,
-      changeLabel: '较上周期',
-      color: 'info',
-      progress: 54.7,
-      progressLabel: '使用率',
-      trend: generateRandomData(12, 45, 60),
-    },
-    {
-      id: 'network-in',
-      title: '网络流入',
-      value: '128',
-      unit: 'MB/s',
-      icon: <Activity size={20} />,
-      change: 12.5,
-      changeLabel: '较上周期',
-      color: 'primary',
-      trend: generateRandomData(12, 80, 150),
-    },
-    {
-      id: 'network-out',
-      title: '网络流出',
-      value: '96',
-      unit: 'MB/s',
-      icon: <Network size={20} />,
-      change: 8.3,
-      changeLabel: '较上周期',
-      color: 'secondary',
-      trend: generateRandomData(12, 60, 120),
-    },
-    {
-      id: 'api-qps',
-      title: 'API QPS',
-      value: '2,856',
-      unit: '',
-      icon: <Zap size={20} />,
-      change: 15.6,
-      changeLabel: '较上周期',
-      color: 'success',
-      trend: generateRandomData(12, 2000, 3500),
-    },
-  ], []);
+  const stats: StatCard[] = useMemo(
+    () => [
+      {
+        id: 'cpu-usage',
+        title: 'CPU 使用率',
+        value: '68.5',
+        unit: '%',
+        icon: <Cpu size={20} />,
+        change: 5.2,
+        changeLabel: '较上周期',
+        color: 'warning',
+        progress: 68.5,
+        progressLabel: '使用率',
+        trend: generateRandomData(12, 50, 85),
+      },
+      {
+        id: 'memory-usage',
+        title: '内存使用率',
+        value: '72.3',
+        unit: '%',
+        icon: <Server size={20} />,
+        change: 3.1,
+        changeLabel: '较上周期',
+        color: 'warning',
+        progress: 72.3,
+        progressLabel: '使用率',
+        trend: generateRandomData(12, 60, 80),
+      },
+      {
+        id: 'disk-usage',
+        title: '磁盘使用率',
+        value: '54.7',
+        unit: '%',
+        icon: <HardDrive size={20} />,
+        change: 1.8,
+        changeLabel: '较上周期',
+        color: 'info',
+        progress: 54.7,
+        progressLabel: '使用率',
+        trend: generateRandomData(12, 45, 60),
+      },
+      {
+        id: 'network-in',
+        title: '网络流入',
+        value: '128',
+        unit: 'MB/s',
+        icon: <Activity size={20} />,
+        change: 12.5,
+        changeLabel: '较上周期',
+        color: 'primary',
+        trend: generateRandomData(12, 80, 150),
+      },
+      {
+        id: 'network-out',
+        title: '网络流出',
+        value: '96',
+        unit: 'MB/s',
+        icon: <Network size={20} />,
+        change: 8.3,
+        changeLabel: '较上周期',
+        color: 'secondary',
+        trend: generateRandomData(12, 60, 120),
+      },
+      {
+        id: 'api-qps',
+        title: 'API QPS',
+        value: '2,856',
+        unit: '',
+        icon: <Zap size={20} />,
+        change: 15.6,
+        changeLabel: '较上周期',
+        color: 'success',
+        trend: generateRandomData(12, 2000, 3500),
+      },
+    ],
+    []
+  );
 
   const cpuTrendData = useMemo(
     () => generateMultiServiceTrendData(timeLabels, serviceNames.slice(0, 4)),
@@ -309,144 +310,168 @@ export const MonitorMetricsPage: React.FC = () => {
     []
   );
 
-  const charts: ChartCard[] = useMemo(() => [
-    {
-      id: 'cpu-trend',
-      title: 'CPU 使用率趋势',
-      subtitle: '多服务 CPU 使用率对比',
-      chart: (
-        <LineChartComponent
-          data={cpuTrendData}
-          xKey="name"
-          yKeys={serviceNames.slice(0, 4).map((name, i) => ({
-            key: name,
-            name,
-            color: ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444'][i],
-          }))}
-          height={280}
-        />
-      ),
-      height: 360,
-      type: 'line',
-      onRefresh: handleRefresh,
-    },
-    {
-      id: 'memory-trend',
-      title: '内存使用率趋势',
-      subtitle: '多服务内存使用率对比',
-      chart: (
-        <LineChartComponent
-          data={memoryTrendData}
-          xKey="name"
-          yKeys={serviceNames.slice(0, 4).map((name, i) => ({
-            key: name,
-            name,
-            color: ['#8B5CF6', '#06B6D4', '#EC4899', '#10B981'][i],
-          }))}
-          height={280}
-        />
-      ),
-      height: 360,
-      type: 'line',
-      onRefresh: handleRefresh,
-    },
-    {
-      id: 'disk-io',
-      title: '磁盘 I/O',
-      subtitle: '磁盘读写吞吐量',
-      chart: (
-        <AreaChart
-          data={diskIOData}
-          xKey="name"
-          yKeys={[
-            { key: '读取', name: '读取', color: '#3b82f6' },
-            { key: '写入', name: '写入', color: '#f59e0b' },
-          ]}
-          height={280}
-        />
-      ),
-      height: 360,
-      type: 'area',
-      onRefresh: handleRefresh,
-    },
-    {
-      id: 'network-traffic',
-      title: '网络流量',
-      subtitle: '网络流入流出流量',
-      chart: (
-        <AreaChart
-          data={networkData}
-          xKey="name"
-          yKeys={[
-            { key: '流入', name: '流入', color: '#22c55e' },
-            { key: '流出', name: '流出', color: '#ef4444' },
-          ]}
-          height={280}
-        />
-      ),
-      height: 360,
-      type: 'area',
-      onRefresh: handleRefresh,
-    },
-    {
-      id: 'api-requests',
-      title: 'API 请求量',
-      subtitle: '各服务 API 请求量对比',
-      chart: (
-        <ResponsiveContainer width="100%" height={280}>
-          <BarChart data={apiRequestData}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-            <YAxis />
-            <Tooltip
-              formatter={(value) => [`${value} 次`, '请求量'] as [string, string]}
-              contentStyle={{
-                borderRadius: 8,
-                padding: 12,
-              }}
-            />
-            <Bar dataKey="请求量" radius={[4, 4, 0, 0]}>
-              {apiRequestData.map((_, index) => (
-                <Cell
-                  key={`cell-${index}`}
-                  fill={['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8B5CF6', '#06B6D4'][index]}
-                />
-              ))}
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      ),
-      height: 360,
-      type: 'bar',
-      onRefresh: handleRefresh,
-    },
-    {
-      id: 'response-time',
-      title: '响应时间分布',
-      subtitle: 'P50 / P90 / P99 响应时间分布',
-      chart: (
-        <BarChartComponent
-          data={responseTimeData}
-          xKey="name"
-          yKeys={[
-            { key: 'P50', name: 'P50', color: '#22c55e' },
-            { key: 'P90', name: 'P90', color: '#f59e0b' },
-            { key: 'P99', name: 'P99', color: '#ef4444' },
-          ]}
-          height={280}
-        />
-      ),
-      height: 360,
-      type: 'bar',
-      onRefresh: handleRefresh,
-    },
-  ], [cpuTrendData, memoryTrendData, diskIOData, networkData, apiRequestData, responseTimeData, handleRefresh]);
+  const charts: ChartCard[] = useMemo(
+    () => [
+      {
+        id: 'cpu-trend',
+        title: 'CPU 使用率趋势',
+        subtitle: '多服务 CPU 使用率对比',
+        chart: (
+          <LineChartComponent
+            data={cpuTrendData}
+            xKey='name'
+            yKeys={serviceNames.slice(0, 4).map((name, i) => ({
+              key: name,
+              name,
+              color: ['primary.main', 'success.main', 'warning.main', 'error.main'][i],
+            }))}
+            height={280}
+          />
+        ),
+        height: 360,
+        type: 'line',
+        onRefresh: handleRefresh,
+      },
+      {
+        id: 'memory-trend',
+        title: '内存使用率趋势',
+        subtitle: '多服务内存使用率对比',
+        chart: (
+          <LineChartComponent
+            data={memoryTrendData}
+            xKey='name'
+            yKeys={serviceNames.slice(0, 4).map((name, i) => ({
+              key: name,
+              name,
+              color: ['secondary.main', '#06B6D4', '#EC4899', 'success.main'][i],
+            }))}
+            height={280}
+          />
+        ),
+        height: 360,
+        type: 'line',
+        onRefresh: handleRefresh,
+      },
+      {
+        id: 'disk-io',
+        title: '磁盘 I/O',
+        subtitle: '磁盘读写吞吐量',
+        chart: (
+          <AreaChart
+            data={diskIOData}
+            xKey='name'
+            yKeys={[
+              { key: '读取', name: '读取', color: 'primary.main' },
+              { key: '写入', name: '写入', color: 'warning.main' },
+            ]}
+            height={280}
+          />
+        ),
+        height: 360,
+        type: 'area',
+        onRefresh: handleRefresh,
+      },
+      {
+        id: 'network-traffic',
+        title: '网络流量',
+        subtitle: '网络流入流出流量',
+        chart: (
+          <AreaChart
+            data={networkData}
+            xKey='name'
+            yKeys={[
+              { key: '流入', name: '流入', color: 'success.main' },
+              { key: '流出', name: '流出', color: 'error.main' },
+            ]}
+            height={280}
+          />
+        ),
+        height: 360,
+        type: 'area',
+        onRefresh: handleRefresh,
+      },
+      {
+        id: 'api-requests',
+        title: 'API 请求量',
+        subtitle: '各服务 API 请求量对比',
+        chart: (
+          <ResponsiveContainer
+            width='100%'
+            height={280}
+          >
+            <BarChart data={apiRequestData}>
+              <CartesianGrid strokeDasharray='3 3' />
+              <XAxis
+                dataKey='name'
+                tick={{ fontSize: 12 }}
+              />
+              <YAxis />
+              <Tooltip
+                formatter={(value) => [`${value} 次`, '请求量'] as [string, string]}
+                contentStyle={{
+                  borderRadius: 8,
+                  padding: 12,
+                }}
+              />
+              <Bar
+                dataKey='请求量'
+                radius={[4, 4, 0, 0]}
+              >
+                {apiRequestData.map((_, index) => (
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={['primary.main', 'success.main', 'warning.main', 'error.main', 'secondary.main', '#06B6D4'][index]}
+                  />
+                ))}
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
+        ),
+        height: 360,
+        type: 'bar',
+        onRefresh: handleRefresh,
+      },
+      {
+        id: 'response-time',
+        title: '响应时间分布',
+        subtitle: 'P50 / P90 / P99 响应时间分布',
+        chart: (
+          <BarChartComponent
+            data={responseTimeData}
+            xKey='name'
+            yKeys={[
+              { key: 'P50', name: 'P50', color: 'success.main' },
+              { key: 'P90', name: 'P90', color: 'warning.main' },
+              { key: 'P99', name: 'P99', color: 'error.main' },
+            ]}
+            height={280}
+          />
+        ),
+        height: 360,
+        type: 'bar',
+        onRefresh: handleRefresh,
+      },
+    ],
+    [
+      cpuTrendData,
+      memoryTrendData,
+      diskIOData,
+      networkData,
+      apiRequestData,
+      responseTimeData,
+      handleRefresh,
+    ]
+  );
 
   const headerContent = (
-    <Stack direction="row" spacing={2} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+    <Stack
+      direction='row'
+      spacing={2}
+      sx={{ alignItems: 'center', flexWrap: 'wrap' }}
+    >
       <Button
-        size="small"
-        variant="outlined"
+        size='small'
+        variant='outlined'
         endIcon={<ChevronDown size={16} />}
         onClick={handleTimeRangeClick}
         sx={{ textTransform: 'none' }}
@@ -470,8 +495,8 @@ export const MonitorMetricsPage: React.FC = () => {
       </Menu>
 
       <Button
-        size="small"
-        variant="outlined"
+        size='small'
+        variant='outlined'
         endIcon={<ChevronDown size={16} />}
         onClick={handleServiceClick}
         sx={{ textTransform: 'none' }}
@@ -501,15 +526,19 @@ export const MonitorMetricsPage: React.FC = () => {
       <Tabs
         value={activeCategory}
         onChange={handleCategoryChange}
-        variant="scrollable"
-        scrollButtons="auto"
+        variant='scrollable'
+        scrollButtons='auto'
       >
         {metricCategoryTabs.map((tab) => (
           <Tab
             key={tab.value}
             value={tab.value}
             label={
-              <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+              <Stack
+                direction='row'
+                spacing={1}
+                sx={{ alignItems: 'center' }}
+              >
                 {tab.icon}
                 <span>{tab.label}</span>
               </Stack>
@@ -523,8 +552,8 @@ export const MonitorMetricsPage: React.FC = () => {
 
   return (
     <PageContainer
-      title="指标监控"
-      subtitle="全方位系统指标监控与性能分析"
+      title='指标监控'
+      subtitle='全方位系统指标监控与性能分析'
       headerProps={{
         pageIcon: <BarChart3 size={20} />,
         pageGradient: 'linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)',
@@ -539,8 +568,8 @@ export const MonitorMetricsPage: React.FC = () => {
     >
       {categoryTabs}
       <DashboardTemplate
-        title=""
-        subtitle=""
+        title=''
+        subtitle=''
         loading={loading}
         stats={stats}
         charts={charts}

@@ -37,7 +37,15 @@ export const ContactCard: React.FC<ContactCardProps> = ({ contact, onClick }) =>
 
   return (
     <div
+      role='button'
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      }}
       style={{
         backgroundColor: 'white',
         borderRadius: 8,

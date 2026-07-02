@@ -7,27 +7,20 @@ import {
   DialogActions,
   TextField,
   Chip,
-  Card,
-  CardContent,
-  CardHeader,
   Typography,
   Button,
+  Grid,
+  Card,
+  CardContent,
 } from '@mui/material';
-import { Plus, DollarSign, Search, CreditCard, Receipt, TrendingUp, RefreshCw } from 'lucide-react';
-import { DataTable } from '@/components/common/DataTable';
-import { MetricCard } from '@/components/bi/MetricCard';
-import { StatsChart } from '@/components/bi/StatsChart';
-import type { ColumnDef } from '@tanstack/react-table';
+import { Plus, DollarSign, CreditCard, Receipt, TrendingUp } from 'lucide-react';
 import { srmApi } from '@/api/srm';
-import type {
-  SupplierContract,
-  PurchaseOrder,
-  CreatePurchaseOrderRequest,
-  CreateSupplierContractRequest,
-} from '@/api/srm';
+import type { SupplierContract, PurchaseOrder } from '@/api/srm';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
-import { PageContainer } from '@/components/common';
+import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+import { PageContainer } from '@/components/common/PageContainerV2';
+import { MetricCard } from '@/components/bi/MetricCard';
 
 interface FinanceRecord {
   id: string;
@@ -43,7 +36,9 @@ interface FinanceRecord {
 const SrmFinancePage: React.FC = () => {
   const [records, setRecords] = useState<FinanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [total, setTotal] = useState(0);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [formData, setFormData] = useState<{
     record_no: string;
@@ -68,7 +63,7 @@ const SrmFinancePage: React.FC = () => {
 
   useEffect(() => {
     loadRecords();
-  }, []);
+  }, [currentPage, pageSize]);
 
   const loadRecords = async () => {
     try {
@@ -105,8 +100,6 @@ const SrmFinancePage: React.FC = () => {
             description: item.remarks || '',
           }))
         );
-      } else {
-        addNotification({ title: '警告', message: '获取合同数据失败', type: 'warning' });
       }
 
       if (ordersRes.success && ordersRes.data) {
@@ -135,11 +128,11 @@ const SrmFinancePage: React.FC = () => {
             description: item.remarks || '',
           }))
         );
-      } else {
-        addNotification({ title: '警告', message: '获取订单数据失败', type: 'warning' });
       }
 
-      setRecords([...paymentRecords, ...invoiceRecords]);
+      const allRecords = [...paymentRecords, ...invoiceRecords];
+      setRecords(allRecords);
+      setTotal(allRecords.length);
     } catch (err: unknown) {
       apiLogger.error('加载财务数据失败:', err);
       addNotification({ title: '错误', message: '加载财务数据失败', type: 'error' });
@@ -189,47 +182,6 @@ const SrmFinancePage: React.FC = () => {
       />
     );
   };
-
-  const columns: ColumnDef<FinanceRecord>[] = [
-    { accessorKey: 'record_no', header: '单据编号' },
-    {
-      id: 'type',
-      header: '类型',
-      cell: ({ row }) => getTypeBadge(row.original.type),
-    },
-    { accessorKey: 'supplier_name', header: '供应商' },
-    {
-      accessorKey: 'amount',
-      header: '金额',
-      cell: ({ row }) => (
-        <Typography sx={{ fontWeight: 600, color: 'grey.800' }}>
-          ¥{row.original.amount.toLocaleString()}
-        </Typography>
-      ),
-    },
-    {
-      accessorKey: 'status',
-      header: '状态',
-      cell: ({ row }) => getStatusBadge(row.original.status),
-    },
-    {
-      accessorKey: 'date',
-      header: '日期',
-      cell: ({ row }) => {
-        const date = row.original.date;
-        return date ? new Date(date).toLocaleDateString('zh-CN') : '';
-      },
-    },
-    { accessorKey: 'description', header: '备注', maxSize: 100 },
-  ];
-
-  const filteredRecords = records.filter((r) => {
-    return (
-      r.record_no?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      r.supplier_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      r.description?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  });
 
   const handleCreate = () => {
     setFormData({
@@ -295,390 +247,242 @@ const SrmFinancePage: React.FC = () => {
       .reduce((sum, r) => sum + r.amount, 0),
   };
 
-  const typeDistribution = [
-    { name: '订单', value: stats.orders, color: 'primary.main' },
-    { name: '合同', value: stats.contracts, color: 'success.main' },
+  const columns: ColumnDef<FinanceRecord>[] = [
+    {
+      id: 'record_no',
+      label: '单据编号',
+      render: (row) => <Box sx={{ fontWeight: 500 }}>{row.record_no}</Box>,
+    },
+    {
+      id: 'type',
+      label: '类型',
+      render: (row) => getTypeBadge(row.type),
+    },
+    { id: 'supplier_name', label: '供应商' },
+    {
+      id: 'amount',
+      label: '金额',
+      align: 'right',
+      render: (row) => (
+        <Typography sx={{ fontWeight: 600, color: 'grey.800' }}>
+          ¥{row.amount.toLocaleString()}
+        </Typography>
+      ),
+    },
+    {
+      id: 'status',
+      label: '状态',
+      render: (row) => getStatusBadge(row.status),
+    },
+    {
+      id: 'date',
+      label: '日期',
+      render: (row) => {
+        const date = row.date;
+        return date ? new Date(date).toLocaleDateString('zh-CN') : '';
+      },
+    },
+    { id: 'description', label: '备注' },
   ];
 
-  const statusDistribution = [
-    {
-      name: '待处理',
-      value: records.filter((r) => r.status === '待处理').length,
-    },
-    {
-      name: '处理中',
-      value: records.filter((r) => r.status === '处理中').length,
-    },
-    {
-      name: '已完成',
-      value: records.filter((r) => r.status === '已完成').length,
-    },
-    {
-      name: '已交付',
-      value: records.filter((r) => r.status === '已交付').length,
-    },
-    {
-      name: '已取消',
-      value: records.filter((r) => r.status === '已取消').length,
-    },
-    { name: '有效', value: records.filter((r) => r.status === '有效').length },
-    {
-      name: '已过期',
-      value: records.filter((r) => r.status === '已过期').length,
-    },
-  ];
-
-  if (loading) {
-    return (
-      <PageContainer maxWidth={false}>
-        <Box
-          sx={{
-            minHeight: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'linear-gradient(135deg, success.light 0%, #f8fafc 100%)',
-          }}
-        >
-          <Box sx={{ textAlign: 'center' }}>
-            <Box
-              sx={{
-                width: 48,
-                height: 48,
-                border: 4,
-                borderColor: 'success.main',
-                borderTopColor: 'success.dark',
-                borderRadius: '50%',
-                animation: 'spin 1s linear infinite',
-                mx: 'auto',
-                mb: 2,
-              }}
-            />
-            <Typography sx={{ color: 'slate.600' }}>加载中...</Typography>
-          </Box>
-        </Box>
-      </PageContainer>
-    );
-  }
+  const StatCards = () => (
+    <Box sx={{ mb: 3 }}>
+      <Grid
+        container
+        spacing={2}
+      >
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <MetricCard
+            title='单据总数'
+            value={stats.totalRecords}
+            icon={<Receipt style={{ width: 24, height: 24 }} />}
+            gradient={['success.main', 'success.dark']}
+            subtitle={`${stats.orders}个订单, ${stats.contracts}份合同`}
+            trend='neutral'
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <MetricCard
+            title='订单数量'
+            value={stats.orders}
+            icon={<CreditCard style={{ width: 24, height: 24 }} />}
+            gradient={['primary.main', '#1D4ED8']}
+            subtitle='已记录订单'
+            trend='neutral'
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <MetricCard
+            title='合同数量'
+            value={stats.contracts}
+            icon={<Receipt style={{ width: 24, height: 24 }} />}
+            gradient={['#14B8A6', '#0D9488']}
+            subtitle='已记录合同'
+            trend='neutral'
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <MetricCard
+            title='总金额'
+            value={`¥${stats.totalAmount.toLocaleString()}`}
+            icon={<DollarSign style={{ width: 24, height: 24 }} />}
+            gradient={['#8B5CF6', '#7C3AED']}
+            subtitle='所有单据合计'
+            trend='neutral'
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <MetricCard
+            title='待结算'
+            value={`¥${stats.pendingAmount.toLocaleString()}`}
+            icon={<TrendingUp style={{ width: 24, height: 24 }} />}
+            gradient={['warning.main', '#D97706']}
+            subtitle='待处理/处理中/有效'
+            trend='neutral'
+          />
+        </Grid>
+        <Grid size={{ xs: 12, sm: 6, md: 2 }}>
+          <MetricCard
+            title='已完成'
+            value={`¥${stats.completedAmount.toLocaleString()}`}
+            icon={<DollarSign style={{ width: 24, height: 24 }} />}
+            gradient={['success.main', 'success.dark']}
+            subtitle='已完成/已交付'
+            trend='neutral'
+          />
+        </Grid>
+      </Grid>
+    </Box>
+  );
 
   return (
-    <PageContainer
-      maxWidth={false}
-      padding={false}
-    >
-      <Box
-        sx={{
-          minHeight: '100vh',
-          background: 'linear-gradient(135deg, success.light 0%, #f8fafc 100%)',
+    <PageContainer>
+      <ListPageTemplate
+        title=''
+        subtitle=''
+        columns={columns}
+        data={records}
+        loading={loading}
+        pagination={{
+          page: currentPage - 1,
+          pageSize,
+          total,
+          onPageChange: (page) => setCurrentPage(page + 1),
+          onPageSizeChange: (size) => {
+            setPageSize(size);
+            setCurrentPage(1);
+          },
         }}
+        actions={[
+          {
+            label: '新增单据',
+            onClick: handleCreate,
+            variant: 'contained' as const,
+            icon: <Plus style={{ width: 18, height: 18 }} />,
+          },
+        ]}
+        headerContent={<StatCards />}
+      />
+
+      <Dialog
+        open={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        maxWidth='md'
+        fullWidth
       >
-        <Box
-          component='header'
-          sx={{
-            bgcolor: 'background.paper',
-            boxShadow: 1,
-            borderBottom: 1,
-            borderColor: 'divider',
-            position: 'sticky',
-            top: 0,
-            zIndex: 10,
-          }}
-        >
-          <Box sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 } }}>
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                height: 64,
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Box
-                  sx={{
-                    width: 40,
-                    height: 40,
-                    background: 'linear-gradient(135deg, success.main 0%, success.dark 100%)',
-                    borderRadius: 2,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <DollarSign sx={{ width: 24, height: 24, color: 'white' }} />
-                </Box>
-                <Box>
-                  <Typography
-                    variant='h6'
-                    sx={{
-                      fontWeight: 700,
-                      color: 'slate.900',
-                      fontSize: '1.25rem',
-                    }}
-                  >
-                    财务管理
-                  </Typography>
-                  <Typography
-                    variant='caption'
-                    sx={{ color: 'slate.500', fontSize: '0.75rem' }}
-                  >
-                    Financial Management
-                  </Typography>
-                </Box>
-              </Box>
-              <Button
-                variant='contained'
-                startIcon={<Plus style={{ width: 18, height: 18 }} />}
-                onClick={handleCreate}
-                sx={{ bgcolor: 'success.main', '&:hover': { bgcolor: 'success.dark' } }}
-              >
-                新增单据
-              </Button>
-            </Box>
-          </Box>
-        </Box>
-
-        <Box
-          component='main'
-          sx={{ maxWidth: 1280, mx: 'auto', px: { xs: 2, sm: 3, lg: 4 }, py: 4 }}
-        >
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: {
-                xs: 'repeat(1, 1fr)',
-                md: 'repeat(2, 1fr)',
-                lg: 'repeat(3, 1fr)',
-                xl: 'repeat(6, 1fr)',
-              },
-              gap: 2,
-              mb: 4,
-            }}
-          >
-            <MetricCard
-              title='单据总数'
-              value={stats.totalRecords}
-              icon={<Receipt sx={{ width: 24, height: 24 }} />}
-              gradient={['success.main', 'success.dark']}
-              subtitle={`${stats.orders}个订单, ${stats.contracts}份合同`}
-              trend='neutral'
-            />
-            <MetricCard
-              title='订单数量'
-              value={stats.orders}
-              icon={<CreditCard sx={{ width: 24, height: 24 }} />}
-              gradient={['primary.main', '#1D4ED8']}
-              subtitle='已记录订单'
-              trend='neutral'
-            />
-            <MetricCard
-              title='合同数量'
-              value={stats.contracts}
-              icon={<Receipt sx={{ width: 24, height: 24 }} />}
-              gradient={['#14B8A6', '#0D9488']}
-              subtitle='已记录合同'
-              trend='neutral'
-            />
-            <MetricCard
-              title='总金额'
-              value={`¥${stats.totalAmount.toLocaleString()}`}
-              icon={<DollarSign sx={{ width: 24, height: 24 }} />}
-              gradient={['#8B5CF6', '#7C3AED']}
-              subtitle='所有单据合计'
-              trend='neutral'
-            />
-            <MetricCard
-              title='待结算'
-              value={`¥${stats.pendingAmount.toLocaleString()}`}
-              icon={<TrendingUp sx={{ width: 24, height: 24 }} />}
-              gradient={['warning.main', '#D97706']}
-              subtitle='待处理/处理中/有效'
-              trend='neutral'
-            />
-            <MetricCard
-              title='已完成'
-              value={`¥${stats.completedAmount.toLocaleString()}`}
-              icon={<DollarSign sx={{ width: 24, height: 24 }} />}
-              gradient={['success.main', 'success.dark']}
-              subtitle='已完成/已交付'
-              trend='neutral'
-            />
-          </Box>
-
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: { xs: 'repeat(1, 1fr)', lg: 'repeat(2, 1fr)' },
-              gap: 4,
-              mb: 4,
-            }}
-          >
-            <Card>
-              <CardContent>
-                <StatsChart
-                  title='单据类型分布'
-                  type='pie'
-                  data={typeDistribution}
-                  yKey='value'
-                  xKey='name'
-                />
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent>
-                <StatsChart
-                  title='状态分布'
-                  type='pie'
-                  data={statusDistribution}
-                  yKey='value'
-                  xKey='name'
-                />
-              </CardContent>
-            </Card>
-          </Box>
-
-          <Card>
-            <CardHeader
-              sx={{
-                display: 'flex',
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                pb: 0,
-              }}
-            >
-              <Typography
-                variant='h6'
-                sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-              >
-                <DollarSign style={{ width: 20, height: 20, color: 'success.main' }} />
-                财务记录
-              </Typography>
-            </CardHeader>
-            <CardContent>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mb: 3 }}>
-                <TextField
-                  size='small'
-                  placeholder='搜索单据编号、供应商或备注...'
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  sx={{ minWidth: 250 }}
-                  slotProps={{
-                    input: {
-                      startAdornment: <Search style={{ width: 18, height: 18, marginRight: 8 }} />,
-                    },
-                  }}
-                />
-              </Box>
-              <DataTable
-                columns={columns}
-                data={filteredRecords}
-                enablePagination
-              />
-            </CardContent>
-          </Card>
-        </Box>
-
-        <Dialog
-          open={showCreateModal}
-          onClose={() => setShowCreateModal(false)}
-          maxWidth='md'
-          fullWidth
-        >
-          <DialogTitle>新增财务单据</DialogTitle>
-          <DialogContent>
-            <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-                <TextField
-                  fullWidth
-                  select
-                  label='单据类型'
-                  value={formData.type}
-                  onChange={(e) =>
-                    setFormData({ ...formData, type: e.target.value as 'order' | 'contract' })
-                  }
-                >
-                  <option value='order'>订单</option>
-                  <option value='contract'>合同</option>
-                </TextField>
-                <TextField
-                  fullWidth
-                  label='单据编号 *'
-                  value={formData.record_no}
-                  onChange={(e) => setFormData({ ...formData, record_no: e.target.value })}
-                  placeholder='请输入单据编号'
-                />
-                <TextField
-                  fullWidth
-                  label='供应商名称'
-                  value={formData.supplier_name}
-                  onChange={(e) => setFormData({ ...formData, supplier_name: e.target.value })}
-                  placeholder='请输入供应商名称'
-                />
-                <TextField
-                  fullWidth
-                  label='供应商ID'
-                  value={formData.supplier_id}
-                  onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
-                  placeholder='请输入供应商ID'
-                />
-                <TextField
-                  fullWidth
-                  label='金额'
-                  type='number'
-                  value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                  placeholder='请输入金额'
-                />
-                <TextField
-                  fullWidth
-                  label='日期'
-                  type='date'
-                  value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                />
-              </Box>
+        <DialogTitle>新增财务单据</DialogTitle>
+        <DialogContent>
+          <Box sx={{ pt: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
               <TextField
                 fullWidth
                 select
-                label='状态'
-                value={formData.status}
-                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                label='单据类型'
+                value={formData.type}
+                onChange={(e) =>
+                  setFormData({ ...formData, type: e.target.value as 'order' | 'contract' })
+                }
               >
-                <option value='pending'>待处理</option>
-                <option value='processing'>处理中</option>
-                <option value='completed'>已完成</option>
-                <option value='active'>有效</option>
-                <option value='cancelled'>已取消</option>
+                <option value='order'>订单</option>
+                <option value='contract'>合同</option>
               </TextField>
               <TextField
                 fullWidth
-                label='备注'
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder='请输入备注'
-                multiline
-                rows={2}
+                label='单据编号 *'
+                value={formData.record_no}
+                onChange={(e) => setFormData({ ...formData, record_no: e.target.value })}
+                placeholder='请输入单据编号'
+              />
+              <TextField
+                fullWidth
+                label='供应商名称'
+                value={formData.supplier_name}
+                onChange={(e) => setFormData({ ...formData, supplier_name: e.target.value })}
+                placeholder='请输入供应商名称'
+              />
+              <TextField
+                fullWidth
+                label='供应商ID'
+                value={formData.supplier_id}
+                onChange={(e) => setFormData({ ...formData, supplier_id: e.target.value })}
+                placeholder='请输入供应商ID'
+              />
+              <TextField
+                fullWidth
+                label='金额'
+                type='number'
+                value={formData.amount}
+                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                placeholder='请输入金额'
+              />
+              <TextField
+                fullWidth
+                label='日期'
+                type='date'
+                value={formData.date}
+                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
               />
             </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button
-              variant='outlined'
-              onClick={() => setShowCreateModal(false)}
+            <TextField
+              fullWidth
+              select
+              label='状态'
+              value={formData.status}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
             >
-              取消
-            </Button>
-            <Button
-              variant='contained'
-              onClick={handleSave}
-              sx={{ bgcolor: 'success.main' }}
-            >
-              保存
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </Box>
+              <option value='pending'>待处理</option>
+              <option value='processing'>处理中</option>
+              <option value='completed'>已完成</option>
+              <option value='active'>有效</option>
+              <option value='cancelled'>已取消</option>
+            </TextField>
+            <TextField
+              fullWidth
+              label='备注'
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder='请输入备注'
+              multiline
+              rows={2}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant='outlined'
+            onClick={() => setShowCreateModal(false)}
+          >
+            取消
+          </Button>
+          <Button
+            variant='contained'
+            onClick={handleSave}
+            sx={{ bgcolor: 'success.main' }}
+          >
+            保存
+          </Button>
+        </DialogActions>
+      </Dialog>
     </PageContainer>
   );
 };

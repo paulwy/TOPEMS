@@ -106,7 +106,7 @@ async fn list_dict_types(
     let result = sqlx::query_as::<_, DictType>(
         r#"
         SELECT id, code, name, category, description, status, created_at, updated_at
-        FROM dict_types
+        FROM erp.dict_types
         WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
           AND ($2::text IS NULL OR category = $2)
           AND ($3::text IS NULL OR status = $3)
@@ -126,7 +126,7 @@ async fn list_dict_types(
         Ok(dict_types) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM dict_types
+                SELECT COUNT(*) FROM erp.dict_types
                 WHERE ($1::text IS NULL OR name ILIKE $1 OR code ILIKE $1)
                   AND ($2::text IS NULL OR category = $2)
                   AND ($3::text IS NULL OR status = $3)
@@ -176,7 +176,7 @@ async fn create_dict_type(
 
     let result = sqlx::query_as::<_, DictType>(
         r#"
-        INSERT INTO dict_types (id, code, name, category, description, status, created_at, updated_at)
+        INSERT INTO erp.dict_types (id, code, name, category, description, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, 'active', $6, $7)
         RETURNING id, code, name, category, description, status, created_at, updated_at
         "#,
@@ -245,7 +245,7 @@ async fn get_dict_type(
     let result = sqlx::query_as::<_, DictType>(
         r#"
         SELECT id, code, name, category, description, status, created_at, updated_at
-        FROM dict_types WHERE id = $1
+        FROM erp.dict_types WHERE id = $1
         "#,
     )
     .bind(id)
@@ -269,7 +269,7 @@ async fn update_dict_type(
     Json(req): Json<UpdateDictTypeRequest>,
 ) -> Json<ApiResponse<DictType>> {
     let existing = sqlx::query_as::<_, DictType>(
-        "SELECT id, code, name, category, description, status, created_at, updated_at FROM dict_types WHERE id = $1",
+        "SELECT id, code, name, category, description, status, created_at, updated_at FROM erp.dict_types WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -291,7 +291,7 @@ async fn update_dict_type(
 
     let result = sqlx::query_as::<_, DictType>(
         r#"
-        UPDATE sys_dict_types SET
+        UPDATE erp.dict_types SET
             name = $2, category = $3, description = $4, status = $5, updated_at = $6
         WHERE id = $1
         RETURNING id, code, name, category, description, status, created_at, updated_at
@@ -357,12 +357,12 @@ async fn delete_dict_type(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let _ = sqlx::query("DELETE FROM dict_items WHERE dict_type_id = $1")
+    let _ = sqlx::query("DELETE FROM erp.dict_items WHERE dict_type_id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
 
-    let result = sqlx::query("DELETE FROM dict_types WHERE id = $1")
+    let result = sqlx::query("DELETE FROM erp.dict_types WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -432,7 +432,7 @@ async fn list_dict_items(
     let result = sqlx::query_as::<_, DictItem>(
         r#"
         SELECT id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at
-        FROM dict_items
+        FROM erp.dict_items
         WHERE dict_type_id = $1
           AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
         ORDER BY sort_order ASC, created_at ASC
@@ -450,7 +450,7 @@ async fn list_dict_items(
         Ok(items) => {
             let count_result = sqlx::query_scalar::<_, i64>(
                 r#"
-                SELECT COUNT(*) FROM dict_items
+                SELECT COUNT(*) FROM erp.dict_items
                 WHERE dict_type_id = $1
                   AND ($2::text IS NULL OR name ILIKE $2 OR code ILIKE $2)
                 "#,
@@ -485,7 +485,7 @@ async fn create_dict_item(
 
     let result = sqlx::query_as::<_, DictItem>(
         r#"
-        INSERT INTO dict_items (id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at)
+        INSERT INTO erp.dict_items (id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10)
         RETURNING id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at
         "#,
@@ -554,7 +554,7 @@ async fn get_dict_item(
     let result = sqlx::query_as::<_, DictItem>(
         r#"
         SELECT id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at
-        FROM dict_items WHERE id = $1
+        FROM erp.dict_items WHERE id = $1
         "#,
     )
     .bind(id)
@@ -578,7 +578,7 @@ async fn update_dict_item(
     Json(req): Json<UpdateDictItemRequest>,
 ) -> Json<ApiResponse<DictItem>> {
     let existing = sqlx::query_as::<_, DictItem>(
-        "SELECT id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at FROM dict_items WHERE id = $1",
+        "SELECT id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at FROM erp.dict_items WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.db)
@@ -603,7 +603,7 @@ async fn update_dict_item(
 
     let result = sqlx::query_as::<_, DictItem>(
         r#"
-        UPDATE sys_dict_items SET
+        UPDATE erp.dict_items SET
             code = $2, name = $3, value = $4, sort_order = $5, parent_id = $6, extra_data = $7, status = $8, updated_at = $9
         WHERE id = $1
         RETURNING id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at
@@ -669,7 +669,7 @@ async fn delete_dict_item(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM dict_items WHERE id = $1")
+    let result = sqlx::query("DELETE FROM erp.dict_items WHERE id = $1")
         .bind(id)
         .execute(&state.db)
         .await;
@@ -736,7 +736,7 @@ async fn batch_create_dict_items(
 
         let result = sqlx::query_as::<_, DictItem>(
             r#"
-            INSERT INTO dict_items (id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at)
+            INSERT INTO erp.dict_items (id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9, $10)
             RETURNING id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at
             "#,
@@ -798,7 +798,7 @@ async fn export_dict_items(
     let result = sqlx::query_as::<_, DictItem>(
         r#"
         SELECT id, dict_type_id, code, name, value, sort_order, parent_id, extra_data, status, created_at, updated_at
-        FROM dict_items
+        FROM erp.dict_items
         WHERE dict_type_id = $1
         ORDER BY sort_order ASC, created_at ASC
         "#,

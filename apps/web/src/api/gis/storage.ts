@@ -21,9 +21,7 @@ export const storageApi = {
     if (params?.search) queryParams.append('search', params.search);
     if (params?.status) queryParams.append('status', params.status);
 
-    const response = await apiClient.gis.get<any>(
-      `/api/gis/warehouse-locations?${queryParams.toString()}`
-    );
+    const response = await apiClient.gis.get<any>(`/warehouse-locations?${queryParams.toString()}`);
     if (response.success && response.data) {
       response.data = adaptResponse<StorageLocation>(response.data, 'warehouse_locations');
     }
@@ -31,7 +29,7 @@ export const storageApi = {
   },
 
   getStorageLocation: async (id: string): Promise<ApiResponse<StorageLocation>> => {
-    return apiClient.gis.get<StorageLocation>(`/api/gis/warehouse-locations/${id}`);
+    return apiClient.gis.get<StorageLocation>(`/warehouse-locations/${id}`);
   },
 
   listStorageLocationsByMap: async (
@@ -43,25 +41,25 @@ export const storageApi = {
     if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
 
     return apiClient.gis.get<PaginatedResponse<StorageLocation>>(
-      `/api/gis/warehouse-locations/map/${mapId}?${queryParams.toString()}`
+      `/warehouse-locations/map/${mapId}?${queryParams.toString()}`
     );
   },
 
   createStorageLocation: async (
     data: CreateStorageLocationRequest
   ): Promise<ApiResponse<StorageLocation>> => {
-    return apiClient.gis.post<StorageLocation>('/api/gis/warehouse-locations', data);
+    return apiClient.gis.post<StorageLocation>('/warehouse-locations', data);
   },
 
   updateStorageLocation: async (
     id: string,
     data: Partial<CreateStorageLocationRequest>
   ): Promise<ApiResponse<StorageLocation>> => {
-    return apiClient.gis.put<StorageLocation>(`/api/gis/warehouse-locations/${id}`, data);
+    return apiClient.gis.put<StorageLocation>(`/warehouse-locations/${id}`, data);
   },
 
   deleteStorageLocation: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.gis.delete<void>(`/api/gis/warehouse-locations/${id}`);
+    return apiClient.gis.delete<void>(`/warehouse-locations/${id}`);
   },
 
   listEvidenceRecords: async (
@@ -72,9 +70,7 @@ export const storageApi = {
     if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
     if (params?.search) queryParams.append('search', params.search);
 
-    const response = await apiClient.gis.get<any>(
-      `/api/gis/location-photos?${queryParams.toString()}`
-    );
+    const response = await apiClient.gis.get<any>(`/location-photos?${queryParams.toString()}`);
     if (response.success && response.data) {
       response.data = adaptResponse<EvidenceRecord>(response.data, 'location_photos');
     }
@@ -82,7 +78,7 @@ export const storageApi = {
   },
 
   getEvidenceRecord: async (id: string): Promise<ApiResponse<LocationPhoto>> => {
-    return apiClient.gis.get<LocationPhoto>(`/api/gis/location-photos/${id}`);
+    return apiClient.gis.get<LocationPhoto>(`/location-photos/${id}`);
   },
 
   listEvidenceRecordsByMap: async (
@@ -94,17 +90,17 @@ export const storageApi = {
     if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
 
     return apiClient.gis.get<PaginatedResponse<EvidenceRecord>>(
-      `/api/gis/location-photos/map/${mapId}?${queryParams.toString()}`
+      `/location-photos/map/${mapId}?${queryParams.toString()}`
     );
   },
 
   createEvidenceRecord: async (
     data: CreateEvidenceRecordRequest
   ): Promise<ApiResponse<EvidenceRecord>> => {
-    return apiClient.gis.post<EvidenceRecord>('/api/gis/location-photos', data);
+    return apiClient.gis.post<EvidenceRecord>('/location-photos', data);
   },
 
   deleteEvidenceRecord: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.gis.delete<void>(`/api/gis/location-photos/${id}`);
+    return apiClient.gis.delete<void>(`/location-photos/${id}`);
   },
 };

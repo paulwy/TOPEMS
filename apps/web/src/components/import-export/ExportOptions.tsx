@@ -171,7 +171,7 @@ export const ExportOptions: React.FC<ExportOptionsProps> = ({
             <Box
               sx={{
                 border: '1px solid border.default',
-                borderRadius: 2,
+                borderRadius: 3,
                 p: 4,
                 maxHeight: 240,
                 overflowY: 'auto',
@@ -185,7 +185,7 @@ export const ExportOptions: React.FC<ExportOptionsProps> = ({
                       display: 'flex',
                       alignItems: 'center',
                       cursor: 'pointer',
-                      borderRadius: 2,
+                      borderRadius: 3,
                       p: 2,
                       '&:hover': { backgroundColor: 'grey.50' },
                     }}
@@ -210,7 +210,7 @@ export const ExportOptions: React.FC<ExportOptionsProps> = ({
             sx={{
               backgroundColor: 'primary.light',
               border: '1px solid #bfdbfe',
-              borderRadius: 2,
+              borderRadius: 3,
               p: 4,
             }}
           >
@@ -236,7 +236,7 @@ export const ExportOptions: React.FC<ExportOptionsProps> = ({
               py: 2,
               color: '#334155',
               backgroundColor: 'grey.100',
-              borderRadius: 2,
+              borderRadius: 3,
               '&:hover': { backgroundColor: 'border.default' },
             }}
           >
@@ -250,7 +250,7 @@ export const ExportOptions: React.FC<ExportOptionsProps> = ({
               py: 2,
               backgroundColor: 'primary.dark',
               color: 'white',
-              borderRadius: 2,
+              borderRadius: 3,
               display: 'flex',
               alignItems: 'center',
               '&:hover': { backgroundColor: 'primary.dark' },

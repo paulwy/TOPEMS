@@ -511,7 +511,7 @@ const PluginUploadPage: React.FC = () => {
                         sx={{
                           width: 56,
                           height: 56,
-                          borderRadius: 2,
+                          borderRadius: 3,
                           background:
                             'linear-gradient(135deg, primary.light 0%, primary.main 100%)',
                           display: 'flex',

@@ -17,15 +17,7 @@ import {
   FormControlLabel,
   Button,
 } from '@mui/material';
-import {
-  Settings,
-  Plus,
-  Edit,
-  Delete,
-  Zap,
-  Package,
-  Shield,
-} from 'lucide-react';
+import { Settings, Plus, Edit, Delete, Zap, Package, Shield } from 'lucide-react';
 import { pdmApi } from '@/api/pdm';
 import type { ProductConfig } from '@/api/pdm';
 import { useAppStore } from '@/store';
@@ -36,7 +28,7 @@ import {
   type RowAction,
   type FilterConfig,
 } from '@/components/templates';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 
 interface ConfigAttribute {
   name: string;
@@ -374,7 +366,7 @@ export const PdmProductConfigPage: React.FC = () => {
             <Box
               sx={{
                 p: 2,
-                borderRadius: 2,
+                borderRadius: 3,
                 bgcolor: 'background.paper',
                 border: 1,
                 borderColor: 'divider',
@@ -401,7 +393,7 @@ export const PdmProductConfigPage: React.FC = () => {
       <Box
         sx={{
           p: 2,
-          borderRadius: 2,
+          borderRadius: 3,
           bgcolor: 'background.paper',
           border: 1,
           borderColor: 'divider',
@@ -456,8 +448,10 @@ export const PdmProductConfigPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='产品配置管理'
-      subtitle='管理产品的配置选项和属性定义'
+      headerProps={{
+        pageIcon: <Settings style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',
+      }}
     >
       <ListPageTemplate
         title=''

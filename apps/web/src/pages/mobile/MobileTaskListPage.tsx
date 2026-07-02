@@ -383,7 +383,7 @@ const MobileTaskListPage: React.FC = () => {
                 mb: 2,
               }}
             >
-              <ListTodo style={{ width: 32, height: 32, color: 'text.secondary' }} />
+              <ListTodo style={{ width: 32, height: 32, color: theme.palette.text.secondary }} />
             </Box>
             <Typography
               variant='subtitle1'
@@ -438,7 +438,7 @@ const MobileTaskListPage: React.FC = () => {
                               style={{
                                 width: 18,
                                 height: 18,
-                                color: 'text.secondary',
+                                color: theme.palette.text.secondary,
                                 flexShrink: 0,
                               }}
                             />
@@ -484,7 +484,7 @@ const MobileTaskListPage: React.FC = () => {
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                 <UserIcon
-                                  style={{ width: 14, height: 14, color: 'text.secondary' }}
+                                  style={{ width: 14, height: 14, color: theme.palette.text.secondary }}
                                 />
                                 <Typography
                                   variant='caption'
@@ -495,7 +495,7 @@ const MobileTaskListPage: React.FC = () => {
                               </Box>
                               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                 <Calendar
-                                  style={{ width: 14, height: 14, color: 'text.secondary' }}
+                                  style={{ width: 14, height: 14, color: theme.palette.text.secondary }}
                                 />
                                 <Typography
                                   variant='caption'

@@ -315,6 +315,12 @@ start_service() {
 
     if check_port $port; then
         success "$service_name 服务启动成功 (PID: $pid, 端口: $port)"
+        
+        # 自动注册到 unified-core（跳过 iam 自身）
+        if [ "$service_name" != "iam" ]; then
+            register_plugin "$service_name"
+        fi
+        
         return 0
     else
         error "$service_name 服务启动失败，请查看日志: /tmp/topems-${service_name}.log"
@@ -374,6 +380,136 @@ logs_service() {
     local service_name=$1
     local lines=${2:-50}
     [ -f "/tmp/topems-${service_name}.log" ] && tail -n $lines "/tmp/topems-${service_name}.log" || { error "日志文件不存在"; return 1; }
+}
+
+# 服务注册到 unified-core
+register_plugin() {
+    local service_name=$1
+    local port=$(get_service_port "$service_name")
+    [ -z "$port" ] && return
+
+    local core_url="http://localhost:8000"
+    
+    if ! curl -s -f "$core_url/health" >/dev/null 2>&1; then
+        warning "unified-core 未运行，跳过插件注册"
+        return
+    fi
+
+    local service_display_name=$(get_service_display_name "$service_name")
+    local description=$(get_service_description "$service_name")
+    local runtime_url="http://localhost:$port"
+
+    detail "注册 $service_name 到 unified-core..."
+    local response=$(curl -s -X POST "$core_url/api/core/plugin/dev/plugins/${service_name}/register" \
+        -H "Content-Type: application/json" \
+        -d "{
+            \"code\": \"${service_name}\",
+            \"name\": \"${service_display_name}\",
+            \"description\": \"${description}\",
+            \"version\": \"0.1.0\",
+            \"runtime_url\": \"${runtime_url}\",
+            \"permissions\": []
+        }")
+
+    if echo "$response" | python3 -c "import sys,json; print(json.load(sys.stdin).get('success', False))" | grep -q "True"; then
+        detail "$service_name 注册成功"
+    else
+        local msg=$(echo "$response" | python3 -c "import sys,json; print(json.load(sys.stdin).get('message', 'Unknown'))")
+        warning "$service_name 注册失败: $msg"
+    fi
+}
+
+# 获取服务显示名称
+get_service_display_name() {
+    case "$1" in
+        iam) echo "统一认证服务" ;;
+        pm) echo "项目管理" ;;
+        erp) echo "ERP系统" ;;
+        finance) echo "财务管理" ;;
+        doc) echo "文档管理" ;;
+        ai) echo "AI服务" ;;
+        hrm) echo "人力资源" ;;
+        crm) echo "客户关系" ;;
+        mes) echo "生产制造" ;;
+        pdm) echo "产品数据" ;;
+        scm) echo "供应链管理" ;;
+        wms) echo "仓储管理" ;;
+        srm) echo "供应商管理" ;;
+        qms) echo "质量管理" ;;
+        lims) echo "实验室管理" ;;
+        ehs) echo "环境健康安全" ;;
+        rs) echo "研发服务" ;;
+        bi) echo "商业智能" ;;
+        report) echo "报表服务" ;;
+        monitor) echo "监控服务" ;;
+        portal) echo "门户服务" ;;
+        mobile) echo "移动服务" ;;
+        gis) echo "地理信息" ;;
+        integration) echo "集成服务" ;;
+        *) echo "${1^}服务" ;;
+    esac
+}
+
+# 获取服务描述
+get_service_description() {
+    case "$1" in
+        iam) echo "统一身份认证与权限管理服务" ;;
+        pm) echo "项目管理服务" ;;
+        erp) echo "企业资源计划系统" ;;
+        finance) echo "财务管理服务" ;;
+        doc) echo "文档管理与协作服务" ;;
+        ai) echo "AI智能服务" ;;
+        hrm) echo "人力资源管理系统" ;;
+        crm) echo "客户关系管理系统" ;;
+        mes) echo "生产制造执行系统" ;;
+        pdm) echo "产品数据管理系统" ;;
+        scm) echo "供应链管理系统" ;;
+        wms) echo "仓储管理系统" ;;
+        srm) echo "供应商关系管理" ;;
+        qms) echo "质量管理系统" ;;
+        lims) echo "实验室信息管理系统" ;;
+        ehs) echo "环境健康安全管理" ;;
+        rs) echo "研发服务管理" ;;
+        bi) echo "商业智能分析服务" ;;
+        report) echo "报表生成服务" ;;
+        monitor) echo "系统监控与告警服务" ;;
+        portal) echo "企业门户服务" ;;
+        mobile) echo "移动应用服务" ;;
+        gis) echo "地理信息服务" ;;
+        integration) echo "系统集成服务" ;;
+        *) echo "${1^}服务" ;;
+    esac
+}
+
+# 检查并重启异常服务
+check_and_restart_services() {
+    info "检查服务状态并自动重启..."
+
+    local restarted=0
+    local running=0
+    local total=0
+
+    for service in $(get_all_services); do
+        total=$((total + 1))
+        local port=$(get_service_port "$service")
+        if check_port $port; then
+            running=$((running + 1))
+        else
+            warning "$service 未运行，自动重启..."
+            if start_service "$service" 2>/dev/null; then
+                restarted=$((restarted + 1))
+            else
+                error "$service 重启失败"
+            fi
+        fi
+    done
+
+    echo ""
+    if [ $restarted -eq 0 ]; then
+        success "所有服务运行正常 (${running}/${total})"
+    else
+        info "已重启 ${restarted} 个服务"
+    fi
 }
 
 # 启动所有服务
@@ -827,15 +963,16 @@ TOPEMS 服务管理工具
 
 服务管理:
   status [服务]           查看服务状态
-  start <服务>            启动服务
+  start <服务>            启动服务（自动注册到 unified-core）
   stop <服务>             停止服务
   restart <服务>          重启服务
+  check                   检查服务状态并自动重启异常服务
   logs <服务> [行数]      查看服务日志
   build <服务>            编译服务
   build-all               全量编译所有服务（后端+前端）
   build-backend           编译所有后端服务
   build-frontend          编译前端
-  start-all               启动所有服务（含前端）
+  start-all               启动所有服务（含前端，自动注册）
   stop-all                停止所有服务（含前端）
   restart-all             重启所有服务
 
@@ -983,6 +1120,9 @@ case "${1:-help}" in
         ;;
     restart-all)
         restart_all
+        ;;
+    check)
+        check_and_restart_services
         ;;
     run)
         run_all

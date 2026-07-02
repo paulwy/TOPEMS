@@ -58,7 +58,7 @@ export const DashboardQuickActions: React.FC<DashboardQuickActionsProps> = ({
               justifyContent: 'center',
               gap: 1,
               padding: 2,
-              borderRadius: 2,
+              borderRadius: 3,
               backgroundColor: action.bgColor,
               transition: 'all 0.3s ease',
               '&:hover': {
@@ -75,7 +75,7 @@ export const DashboardQuickActions: React.FC<DashboardQuickActionsProps> = ({
               sx={{
                 width: 48,
                 height: 48,
-                borderRadius: 2,
+                borderRadius: 3,
                 backgroundColor: 'rgba(255,255,255,0.5)',
                 display: 'flex',
                 alignItems: 'center',

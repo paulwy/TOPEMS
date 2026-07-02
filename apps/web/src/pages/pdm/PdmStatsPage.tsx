@@ -1,15 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography } from '@mui/material';
-import {
-  TrendingUp,
-  Factory,
-  ClipboardList,
-  Package,
-  Activity,
-  CheckCircle,
-} from 'lucide-react';
+import { TrendingUp, Factory, ClipboardList, Package, Activity, CheckCircle } from 'lucide-react';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import { useAppStore } from '@/store';
 import { pdmApi } from '@/api/pdm';
 import type {
@@ -234,7 +227,13 @@ const PdmStatsPage: React.FC = () => {
   ];
 
   return (
-    <PageContainer padding={false}>
+    <PageContainer
+      padding={false}
+      headerProps={{
+        pageIcon: <TrendingUp style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+      }}
+    >
       <StatsPageTemplate
         title='生产统计'
         subtitle='Production Statistics'

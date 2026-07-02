@@ -241,7 +241,7 @@ export const AdministrationDashboardPage: React.FC = () => {
                 sx={{
                   boxShadow: 1,
                   p: 2.5,
-                  borderRadius: 2,
+                  borderRadius: 3,
                   transition: 'box-shadow 0.2s',
                   '&:hover': { boxShadow: 3 },
                 }}
@@ -285,7 +285,7 @@ export const AdministrationDashboardPage: React.FC = () => {
           ))}
         </Grid>
 
-        <Card sx={{ boxShadow: 1, borderRadius: 2 }}>
+        <Card sx={{ boxShadow: 1, borderRadius: 3 }}>
           <CardContent>
             <Box
               sx={{
@@ -318,7 +318,7 @@ export const AdministrationDashboardPage: React.FC = () => {
                       flexDirection: 'column',
                       alignItems: 'center',
                       p: 2,
-                      borderRadius: 2,
+                      borderRadius: 3,
                       cursor: 'pointer',
                       transition: 'background-color 0.2s',
                       '&:hover': { bgcolor: 'grey.50' },
@@ -353,7 +353,7 @@ export const AdministrationDashboardPage: React.FC = () => {
           spacing={3}
         >
           <Grid size={{ xs: 12, lg: 6 }}>
-            <Card sx={{ boxShadow: 1, borderRadius: 2 }}>
+            <Card sx={{ boxShadow: 1, borderRadius: 3 }}>
               <CardContent>
                 <Box
                   sx={{
@@ -385,7 +385,7 @@ export const AdministrationDashboardPage: React.FC = () => {
                       sx={{
                         p: 2,
                         bgcolor: 'grey.50',
-                        borderRadius: 2,
+                        borderRadius: 3,
                         cursor: 'pointer',
                         transition: 'background-color 0.2s',
                         '&:hover': { bgcolor: 'grey.100' },
@@ -456,7 +456,7 @@ export const AdministrationDashboardPage: React.FC = () => {
           </Grid>
 
           <Grid size={{ xs: 12, lg: 6 }}>
-            <Card sx={{ boxShadow: 1, borderRadius: 2 }}>
+            <Card sx={{ boxShadow: 1, borderRadius: 3 }}>
               <CardContent>
                 <Box
                   sx={{
@@ -488,7 +488,7 @@ export const AdministrationDashboardPage: React.FC = () => {
                       sx={{
                         p: 2,
                         bgcolor: 'grey.50',
-                        borderRadius: 2,
+                        borderRadius: 3,
                         cursor: 'pointer',
                         transition: 'background-color 0.2s',
                         '&:hover': { bgcolor: 'grey.100' },

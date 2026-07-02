@@ -1112,13 +1112,13 @@ export interface InstrumentDataStatistics {
 export interface AuditLog {
   id: string;
   action: string;
-  entity_type: string;
+  entity_type?: string;
   entity_id?: string;
-  entity_ids?: string[] | null;
+  entity_ids?: string[] | Record<string, unknown> | null;
   user_id?: string;
   user_name?: string;
-  request_details?: Record<string, unknown>;
-  response_details?: Record<string, unknown>;
+  request_details?: Record<string, unknown> | string;
+  response_details?: Record<string, unknown> | string;
   status: 'success' | 'partial' | 'error';
   error_message?: string;
   ip_address?: string;

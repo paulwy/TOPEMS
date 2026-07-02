@@ -207,7 +207,7 @@ const ContactDetailPage: React.FC = () => {
             gap: 2,
           }}
         >
-          <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
+          <Box sx={{ bgcolor: 'grey.100', borderRadius: 3, p: 2 }}>
             <Typography
               variant='body2'
               color='text.secondary'
@@ -218,7 +218,7 @@ const ContactDetailPage: React.FC = () => {
               {formatDate(contact.created_at)}
             </Typography>
           </Box>
-          <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
+          <Box sx={{ bgcolor: 'grey.100', borderRadius: 3, p: 2 }}>
             <Typography
               variant='body2'
               color='text.secondary'
@@ -229,7 +229,7 @@ const ContactDetailPage: React.FC = () => {
               {formatDate(contact.updated_at)}
             </Typography>
           </Box>
-          <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
+          <Box sx={{ bgcolor: 'grey.100', borderRadius: 3, p: 2 }}>
             <Typography
               variant='body2'
               color='text.secondary'
@@ -293,6 +293,8 @@ const ContactDetailPage: React.FC = () => {
     <PageContainer
       title='联系人详情'
       subtitle='查看和编辑联系人信息'
+      autoTitle
+      autoBreadcrumbs
     >
       <DetailPageTemplate
         title=''

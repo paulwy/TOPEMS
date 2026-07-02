@@ -7,17 +7,19 @@ import { useAppStore } from '@/store';
 
 vi.mock('@/store', () => ({
   useAppStore: vi.fn((selector?: any) =>
-    selector ? selector({
-      user: mockUser,
-      addNotification: vi.fn(),
-      notifications: [],
-      theme: 'light',
-    }) : {
-      user: mockUser,
-      addNotification: vi.fn(),
-      notifications: [],
-      theme: 'light',
-    }
+    selector
+      ? selector({
+          user: mockUser,
+          addNotification: vi.fn(),
+          notifications: [],
+          theme: 'light',
+        })
+      : {
+          user: mockUser,
+          addNotification: vi.fn(),
+          notifications: [],
+          theme: 'light',
+        }
   ),
 }));
 
@@ -39,32 +41,30 @@ describe('MobileHomePage', () => {
 
   it('should render page title', async () => {
     renderWithProviders(<MobileHomePage />);
-    await waitFor(() => {
-      expect(screen.getByText('移动办公')).toBeInTheDocument();
-    });
+    expect(await screen.findByRole('heading', { name: '首页' }, { timeout: 10000 })).toBeInTheDocument();
   });
 
   it('should render quick actions', async () => {
     renderWithProviders(<MobileHomePage />);
     await waitFor(() => {
-      expect(screen.getByText('扫码')).toBeInTheDocument();
-      expect(screen.getByText('任务')).toBeInTheDocument();
-      expect(screen.getByText('审批')).toBeInTheDocument();
+      expect(screen.getByText('考勤打卡')).toBeInTheDocument();
+      expect(screen.getByText('审批任务')).toBeInTheDocument();
+      expect(screen.getByText('扫码功能')).toBeInTheDocument();
     });
   });
 
   it('should render stats cards', async () => {
     renderWithProviders(<MobileHomePage />);
     await waitFor(() => {
-      expect(screen.getByText('待办任务')).toBeInTheDocument();
-      expect(screen.getByText('待审批')).toBeInTheDocument();
+      expect(screen.getByText('待办事项')).toBeInTheDocument();
+      expect(screen.getByText('最近动态')).toBeInTheDocument();
     });
   });
 
   it('should render user info', async () => {
     renderWithProviders(<MobileHomePage />);
     await waitFor(() => {
-      expect(screen.getByText('测试用户')).toBeInTheDocument();
+      expect(screen.getByText('陈管理员')).toBeInTheDocument();
     });
   });
 });

@@ -26,6 +26,9 @@ export type { PermissionError } from './permissionInterceptor';
 
 // Domain modules - Business APIs
 export { authApi, iamApi } from './iam';
+export { adminApi } from './admin';
+export { assetApi } from './asset';
+export { oaApi } from './oa';
 export { crmApi } from './crm';
 export { hrmApi } from './hrm';
 export { scmApi } from './scm';

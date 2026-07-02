@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useTheme } from '@mui/material';
 import { X, FileText, AlertCircle, Loader2 } from 'lucide-react';
 import { docApi } from '../api/doc';
 import { logger } from '@/utils/logger';
@@ -18,6 +19,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
   fileName,
   contentType,
 }) => {
+  const theme = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   const blobUrlRef = useRef<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -202,7 +204,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
               style={{
                 fontSize: '18px',
                 fontWeight: 600,
-                color: 'text.primary',
+                color: theme.palette.text.primary,
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
@@ -231,7 +233,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           style={{
             flex: 1,
             overflow: 'auto',
-            backgroundColor: 'grey.50',
+            backgroundColor: theme.palette.grey[50],
             position: 'relative',
           }}
         >
@@ -258,7 +260,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                   marginBottom: '12px',
                 }}
               />
-              <p style={{ color: 'text.secondary' }}>正在加载文档...</p>
+              <p style={{ color: theme.palette.text.secondary }}>正在加载文档...</p>
             </div>
           )}
 
@@ -283,13 +285,13 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
                   marginBottom: '12px',
                 }}
               />
-              <p style={{ color: 'error.dark', marginBottom: '16px' }}>{error}</p>
+              <p style={{ color: theme.palette.error.dark, marginBottom: '16px' }}>{error}</p>
               <button
                 onClick={onClose}
                 style={{
                   padding: '8px 16px',
-                  backgroundColor: 'grey.200',
-                  color: 'grey.700',
+                  backgroundColor: theme.palette.grey[200],
+                  color: theme.palette.grey[700],
                   borderRadius: '8px',
                   border: 'none',
                   cursor: 'pointer',
@@ -313,7 +315,7 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
           style={{
             padding: '16px',
             borderTop: '1px solid grey.200',
-            backgroundColor: 'grey.50',
+            backgroundColor: theme.palette.grey[50],
           }}
         >
           <button
@@ -321,8 +323,8 @@ export const DocumentPreviewModal: React.FC<DocumentPreviewModalProps> = ({
             style={{
               width: '100%',
               padding: '8px 16px',
-              backgroundColor: 'grey.200',
-              color: 'grey.700',
+              backgroundColor: theme.palette.grey[200],
+              color: theme.palette.grey[700],
               borderRadius: '8px',
               border: 'none',
               cursor: 'pointer',

@@ -318,9 +318,8 @@ const RsDocPage: React.FC = () => {
   ];
 
   return (
-    <PageContainer title='文档管理'>
+    <PageContainer>
       <ListPageTemplate
-        title=''
         columns={columns}
         data={paginatedDocs}
         loading={loading}

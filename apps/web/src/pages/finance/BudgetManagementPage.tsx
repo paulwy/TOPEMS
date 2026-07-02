@@ -545,7 +545,7 @@ const BudgetManagementPage: React.FC = () => {
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <BackButton href='/dashboard' />
+              <BackButton href='/finance/dashboard' />
               <Box>
                 <Typography
                   variant='h5'
@@ -590,7 +590,7 @@ const BudgetManagementPage: React.FC = () => {
 
       <Box sx={{ maxWidth: 1280, mx: 'auto', px: 3, py: 3 }}>
         {/* 组织筛选 */}
-        <Box sx={{ bgcolor: 'grey.200', borderRadius: 2, p: 2, mb: 3 }}>
+        <Box sx={{ bgcolor: 'grey.200', borderRadius: 3, p: 2, mb: 3 }}>
           <OrganizationFilter
             value={organizationFilter}
             onChange={setOrganizationFilter}

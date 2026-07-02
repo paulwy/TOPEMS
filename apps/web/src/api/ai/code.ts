@@ -14,7 +14,7 @@ export const codeApi = {
       explanation: string;
     }>
   > => {
-    return apiClient.ai.post('/api/ai/code/generate', data);
+    return apiClient.ai.post('/code/generate', data);
   },
 
   explainCode: async (data: {
@@ -27,7 +27,7 @@ export const codeApi = {
       key_points: string[];
     }>
   > => {
-    return apiClient.ai.post('/api/ai/code/explain', data);
+    return apiClient.ai.post('/code/explain', data);
   },
 
   fixCodeBug: async (data: {
@@ -41,7 +41,7 @@ export const codeApi = {
       bug_description: string;
     }>
   > => {
-    return apiClient.ai.post('/api/ai/code/fix-bug', data);
+    return apiClient.ai.post('/code/fix-bug', data);
   },
 
   optimizeCode: async (data: {
@@ -55,7 +55,7 @@ export const codeApi = {
       improvements: string[];
     }>
   > => {
-    return apiClient.ai.post('/api/ai/code/optimize', data);
+    return apiClient.ai.post('/code/optimize', data);
   },
 
   reviewCode: async (data: {
@@ -74,6 +74,6 @@ export const codeApi = {
       score: number;
     }>
   > => {
-    return apiClient.ai.post('/api/ai/code/review', data);
+    return apiClient.ai.post('/code/review', data);
   },
 };

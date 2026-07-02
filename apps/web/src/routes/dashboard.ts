@@ -1,11 +1,13 @@
 import React, { lazy } from 'react';
-import type { RouteConfig } from './utils';
+import { createSafeLazy, type RouteConfig } from './utils';
 
-const DashboardPage = lazy(() => import('../pages/shared/DashboardPage'));
-const HybridHomePage = lazy(() => import('../pages/shared/HybridHomePage'));
-const ModulesOverviewPage = lazy(() => import('../pages/shared/ModulesOverviewPage'));
-const ProfilePage = lazy(() => import('../pages/shared/ProfilePage'));
-const AddressbookPage = lazy(() => import('../pages/oa/AddressbookPage'));
+const safeLazy = createSafeLazy();
+
+const DashboardPage = safeLazy(() => import('../pages/shared/DashboardPage'));
+const HybridHomePage = safeLazy(() => import('../pages/shared/HybridHomePage'));
+const ModulesOverviewPage = safeLazy(() => import('../pages/shared/ModulesOverviewPage'));
+const ProfilePage = safeLazy(() => import('../pages/shared/ProfilePage'));
+const AddressbookPage = safeLazy(() => import('../pages/oa/AddressbookPage'));
 
 export const dashboardRoutes: RouteConfig[] = [
   {

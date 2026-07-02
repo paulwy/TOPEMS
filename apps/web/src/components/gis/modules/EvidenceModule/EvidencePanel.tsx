@@ -1,8 +1,7 @@
 // modules/EvidenceModule/EvidencePanel.tsx
 import React, { useState, useCallback } from 'react';
 import { Camera, Mic, Video, List, Grid, Search, X, Tag } from 'lucide-react';
-import {
-  Box,
+import {Box,
   Typography,
   Paper,
   TextField,
@@ -10,8 +9,7 @@ import {
   Chip,
   Grid as MuiGrid,
   Stack,
-  Button,
-} from '@mui/material';
+  Button, useTheme} from '@mui/material';
 import type { EvidenceRecord, EvidenceType } from './types';
 import PhotoCapture from './PhotoCapture';
 import AudioCapture from './AudioCapture';
@@ -36,6 +34,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
   const [captureMode, setCaptureMode] = useState<CaptureMode>(null);
   const [records, setRecords] = useState<EvidenceRecord[]>(existingRecords);
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const theme = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<EvidenceType | 'all'>('all');
 
@@ -189,7 +188,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
         >
           <X
             size={20}
-            style={{ color: 'text.secondary' }}
+            style={{ color: theme.palette.text.secondary }}
           />
         </IconButton>
       </Box>
@@ -254,7 +253,7 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
             <Box sx={{ p: 12, bgcolor: 'success.lighter', borderRadius: '9999px' }}>
               <Mic
                 size={24}
-                style={{ color: 'success.dark' }}
+                style={{ color: theme.palette.success.dark }}
               />
             </Box>
             <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'grey.700' }}>
@@ -460,19 +459,19 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
                       {record.evidence_type === 'photo' && (
                         <Camera
                           size={32}
-                          style={{ color: 'text.disabled' }}
+                          style={{ color: theme.palette.text.disabled }}
                         />
                       )}
                       {record.evidence_type === 'audio' && (
                         <Mic
                           size={32}
-                          style={{ color: 'text.disabled' }}
+                          style={{ color: theme.palette.text.disabled }}
                         />
                       )}
                       {record.evidence_type === 'video' && (
                         <Video
                           size={32}
-                          style={{ color: 'text.disabled' }}
+                          style={{ color: theme.palette.text.disabled }}
                         />
                       )}
                     </Box>
@@ -547,19 +546,19 @@ const EvidencePanel: React.FC<EvidencePanelProps> = ({
                     {record.evidence_type === 'photo' && (
                       <Camera
                         size={20}
-                        style={{ color: 'text.disabled' }}
+                        style={{ color: theme.palette.text.disabled }}
                       />
                     )}
                     {record.evidence_type === 'audio' && (
                       <Mic
                         size={20}
-                        style={{ color: 'text.disabled' }}
+                        style={{ color: theme.palette.text.disabled }}
                       />
                     )}
                     {record.evidence_type === 'video' && (
                       <Video
                         size={20}
-                        style={{ color: 'text.disabled' }}
+                        style={{ color: theme.palette.text.disabled }}
                       />
                     )}
                   </Box>

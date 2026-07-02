@@ -21,7 +21,7 @@ import {
 import { Plus, GraduationCap, FileText, Award, Search } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { ehsApi } from '@/api/ehs';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import type { TrainingPlan, TrainingRecord, TrainingCertificate } from '@/api/ehs';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
@@ -264,8 +264,6 @@ const TrainingPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='培训管理'
-      subtitle='Training Management'
       headerProps={{
         actions: headerActions,
         pageIcon: <GraduationCap sx={{ width: 20, height: 20 }} />,
@@ -289,7 +287,7 @@ const TrainingPage: React.FC = () => {
                   width: 40,
                   height: 40,
                   bgcolor: 'primary.lighter',
-                  borderRadius: 2,
+                  borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -322,7 +320,7 @@ const TrainingPage: React.FC = () => {
                   width: 40,
                   height: 40,
                   bgcolor: 'warning.lighter',
-                  borderRadius: 2,
+                  borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -355,7 +353,7 @@ const TrainingPage: React.FC = () => {
                   width: 40,
                   height: 40,
                   bgcolor: 'success.lighter',
-                  borderRadius: 2,
+                  borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -388,7 +386,7 @@ const TrainingPage: React.FC = () => {
                   width: 40,
                   height: 40,
                   bgcolor: 'info.lighter',
-                  borderRadius: 2,
+                  borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

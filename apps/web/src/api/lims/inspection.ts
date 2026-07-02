@@ -11,38 +11,38 @@ import type {
 } from './types';
 
 export const processApi = {
-  ...createCrudApi<InspectionProcess>('/api/lims/processes'),
+  ...createCrudApi<InspectionProcess>('/processes'),
 
   listProcesses: (params?: ListParams) =>
-    createCrudApi<InspectionProcess>('/api/lims/processes').list(params),
+    createCrudApi<InspectionProcess>('/processes').list(params),
 
-  getProcess: (id: string) => createCrudApi<InspectionProcess>('/api/lims/processes').get(id),
+  getProcess: (id: string) => createCrudApi<InspectionProcess>('/processes').get(id),
 };
 
 export const taskApi = {
-  ...createCrudApi<InspectionTask>('/api/lims/tasks'),
+  ...createCrudApi<InspectionTask>('/tasks'),
 
-  listTasks: (params?: ListParams) => createCrudApi<InspectionTask>('/api/lims/tasks').list(params),
+  listTasks: (params?: ListParams) => createCrudApi<InspectionTask>('/tasks').list(params),
 
   createTask: (data: CreateInspectionTaskRequest) =>
-    createCrudApi<InspectionTask>('/api/lims/tasks').create(data),
+    createCrudApi<InspectionTask>('/tasks').create(data),
 
-  getTask: (id: string) => createCrudApi<InspectionTask>('/api/lims/tasks').get(id),
+  getTask: (id: string) => createCrudApi<InspectionTask>('/tasks').get(id),
 
   updateTask: (id: string, data: Partial<CreateInspectionTaskRequest>) =>
-    createCrudApi<InspectionTask>('/api/lims/tasks').update(id, data),
+    createCrudApi<InspectionTask>('/tasks').update(id, data),
 
-  deleteTask: (id: string) => createCrudApi<InspectionTask>('/api/lims/tasks').delete(id),
+  deleteTask: (id: string) => createCrudApi<InspectionTask>('/tasks').delete(id),
 
   listTasksBySample: async (sampleId: string): Promise<ApiResponse<InspectionTask[]>> => {
-    return apiClient.lims.get(`/api/lims/tasks/sample/${sampleId}`);
+    return apiClient.lims.get(`/tasks/sample/${sampleId}`);
   },
 
   completeStep: async (
     id: string,
     data: Omit<CreateInspectionRecordRequest, 'task_id'>
   ): Promise<ApiResponse<InspectionTask>> => {
-    return apiClient.lims.post(`/api/lims/tasks/${id}/complete_step`, {
+    return apiClient.lims.post(`/tasks/${id}/complete_step`, {
       ...data,
       task_id: id,
     });
@@ -52,24 +52,23 @@ export const taskApi = {
     id: string,
     data: { result: string; conclusion: string; inspector: string; remarks?: string }
   ): Promise<ApiResponse<InspectionTask>> => {
-    return apiClient.lims.post(`/api/lims/tasks/${id}/submit-result`, data);
+    return apiClient.lims.post(`/tasks/${id}/submit-result`, data);
   },
 };
 
 export const recordApi = {
-  ...createCrudApi<InspectionRecord>('/api/lims/records'),
+  ...createCrudApi<InspectionRecord>('/records'),
 
-  listRecords: (params?: ListParams) =>
-    createCrudApi<InspectionRecord>('/api/lims/records').list(params),
+  listRecords: (params?: ListParams) => createCrudApi<InspectionRecord>('/records').list(params),
 
-  getRecord: (id: string) => createCrudApi<InspectionRecord>('/api/lims/records').get(id),
+  getRecord: (id: string) => createCrudApi<InspectionRecord>('/records').get(id),
 
   createRecord: (data: CreateInspectionRecordRequest) =>
-    createCrudApi<InspectionRecord>('/api/lims/records').create(data),
+    createCrudApi<InspectionRecord>('/records').create(data),
 
-  deleteRecord: (id: string) => createCrudApi<InspectionRecord>('/api/lims/records').delete(id),
+  deleteRecord: (id: string) => createCrudApi<InspectionRecord>('/records').delete(id),
 
   listRecordsByTask: async (taskId: string): Promise<ApiResponse<InspectionRecord[]>> => {
-    return apiClient.lims.get(`/api/lims/records/task/${taskId}`);
+    return apiClient.lims.get(`/records/task/${taskId}`);
   },
 };

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTheme } from '@mui/material';
 import { Check, Trash2, ExternalLink } from 'lucide-react';
 import type { Notification } from '@/api/notification';
 import { markAsRead, deleteNotification } from '@/api/notification';
@@ -26,7 +27,7 @@ const getNotificationIcon = (type: string) => {
           }}
         >
           <svg
-            style={{ width: 20, height: 20, color: 'primary.dark' }}
+            style={{ width: 20, height: 20, color: theme.palette.primary.dark }}
             fill='none'
             stroke='currentColor'
             viewBox='0 0 24 24'
@@ -88,7 +89,7 @@ const getNotificationIcon = (type: string) => {
           }}
         >
           <svg
-            style={{ width: 20, height: 20, color: 'error.dark' }}
+            style={{ width: 20, height: 20, color: theme.palette.error.dark }}
             fill='none'
             stroke='currentColor'
             viewBox='0 0 24 24'
@@ -144,7 +145,7 @@ const getNotificationIcon = (type: string) => {
           }}
         >
           <svg
-            style={{ width: 20, height: 20, color: 'success.dark' }}
+            style={{ width: 20, height: 20, color: theme.palette.success.dark }}
             fill='none'
             stroke='currentColor'
             viewBox='0 0 24 24'
@@ -165,14 +166,14 @@ const getNotificationIcon = (type: string) => {
             width: 40,
             height: 40,
             borderRadius: '9999px',
-            backgroundColor: 'grey.100',
+            backgroundColor: theme.palette.grey[100],
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
           }}
         >
           <svg
-            style={{ width: 20, height: 20, color: 'text.secondary' }}
+            style={{ width: 20, height: 20, color: theme.palette.text.secondary }}
             fill='none'
             stroke='currentColor'
             viewBox='0 0 24 24'
@@ -210,6 +211,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
   onUpdate,
   onDelete,
 }) => {
+  const theme = useTheme();
   const [isHovered, setIsHovered] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -299,7 +301,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
                 whiteSpace: 'nowrap',
-                color: !notification.is_read ? 'text.primary' : 'grey.700',
+                color: !notification.is_read ? theme.palette.text.primary : theme.palette.grey[700],
               }}
             >
               {notification.title}
@@ -309,7 +311,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
                 style={{
                   width: 8,
                   height: 8,
-                  backgroundColor: 'primary.main',
+                  backgroundColor: theme.palette.primary.main,
                   borderRadius: '9999px',
                   flexShrink: 0,
                   marginTop: 6,
@@ -321,7 +323,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
           <p
             style={{
               fontSize: 14,
-              color: 'text.secondary',
+              color: theme.palette.text.secondary,
               marginBottom: 8,
               overflow: 'hidden',
               display: '-webkit-box',
@@ -338,7 +340,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
               alignItems: 'center',
               gap: 12,
               fontSize: 12,
-              color: 'text.secondary',
+              color: theme.palette.text.secondary,
             }}
           >
             <span>{formatTime(notification.created_at)}</span>
@@ -369,7 +371,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
               onClick={handleMarkAsRead}
               style={{
                 padding: 6,
-                color: 'text.secondary',
+                color: theme.palette.text.secondary,
                 backgroundColor: 'transparent',
                 border: 'none',
                 borderRadius: 8,
@@ -385,7 +387,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
             onClick={handleDelete}
             style={{
               padding: 6,
-              color: 'text.secondary',
+              color: theme.palette.text.secondary,
               backgroundColor: 'transparent',
               border: 'none',
               borderRadius: 8,
@@ -404,7 +406,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
               }}
               style={{
                 padding: 6,
-                color: 'text.secondary',
+                color: theme.palette.text.secondary,
                 backgroundColor: 'transparent',
                 border: 'none',
                 borderRadius: 8,

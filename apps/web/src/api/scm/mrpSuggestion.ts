@@ -11,16 +11,16 @@ export const mrpSuggestionApi = {
   list: async (
     params?: MrpSuggestionQueryParams
   ): Promise<ApiResponse<PaginatedResponse<MrpSuggestion>>> => {
-    return apiClient.scm.get('/api/scm/mrp-suggestions', { params });
+    return apiClient.scm.get('/mrp-suggestions', { params });
   },
 
   get: async (id: string): Promise<ApiResponse<MrpSuggestion>> => {
-    return apiClient.scm.get(`/api/scm/mrp-suggestions/${id}`);
+    return apiClient.scm.get(`/mrp-suggestions/${id}`);
   },
 
   summary: async (
     params?: MrpMaterialSummaryQueryParams
   ): Promise<ApiResponse<MrpMaterialSummary[]>> => {
-    return apiClient.scm.get('/api/scm/mrp-suggestions/summary', { params });
+    return apiClient.scm.get('/mrp-suggestions/summary', { params });
   },
 };

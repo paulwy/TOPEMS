@@ -45,7 +45,7 @@ const generateMockSuppliers = (): Supplier[] => {
   });
 };
 
-let mockSuppliers = generateMockSuppliers();
+const mockSuppliers = generateMockSuppliers();
 
 export const supplierApi = {
   async list(params?: PaginationParams): Promise<
@@ -139,10 +139,7 @@ export const supplierApi = {
     return createMockSuccessResponse(newSupplier, 201, '创建成功') as ApiResponse<Supplier>;
   },
 
-  async update(
-    id: string,
-    data: UpdateSupplierRequest
-  ): Promise<ApiResponse<Supplier>> {
+  async update(id: string, data: UpdateSupplierRequest): Promise<ApiResponse<Supplier>> {
     const index = mockSuppliers.findIndex((s) => s.id === id);
     if (index === -1) {
       return createMockErrorResponse('供应商不存在', 404) as ApiResponse<Supplier>;

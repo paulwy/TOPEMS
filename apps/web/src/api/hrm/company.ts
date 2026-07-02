@@ -6,23 +6,23 @@ import { buildQueryString } from './types';
 export const companyApi: CrudOperations<Company> = {
   list: async (params?: ListParams) => {
     const queryString = buildQueryString(params);
-    return await apiClient.hrm.get(`/api/hrm/companies${queryString}`);
+    return await apiClient.hrm.get(`/companies${queryString}`);
   },
 
   get: (id: string) => {
-    return apiClient.hrm.get(`/api/hrm/companies/${id}`);
+    return apiClient.hrm.get(`/companies/${id}`);
   },
 
   create: (data: Partial<Company>) => {
-    return apiClient.hrm.post('/api/hrm/companies', data);
+    return apiClient.hrm.post('/companies', data);
   },
 
   update: (id: string, data: Partial<Company>) => {
-    return apiClient.hrm.put(`/api/hrm/companies/${id}`, data);
+    return apiClient.hrm.put(`/companies/${id}`, data);
   },
 
   delete: (id: string) => {
-    return apiClient.hrm.delete(`/api/hrm/companies/${id}`);
+    return apiClient.hrm.delete(`/companies/${id}`);
   },
 };
 

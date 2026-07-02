@@ -10,23 +10,20 @@ export const syncApi = {
     sourceSystem?: string;
     targetSystem?: string;
   }): Promise<ApiResponse<SyncRecord[]>> => {
-    const response = await apiClient.qms.get<{ records?: SyncRecordBackend[] }>(
-      '/api/qms/sync-records',
-      {
-        params: {
-          sync_type: params?.syncType,
-          status: params?.status,
-          source_system: params?.sourceSystem,
-          target_system: params?.targetSystem,
-        },
-      }
-    );
+    const response = await apiClient.qms.get<{ records?: SyncRecordBackend[] }>('/sync-records', {
+      params: {
+        sync_type: params?.syncType,
+        status: params?.status,
+        source_system: params?.sourceSystem,
+        target_system: params?.targetSystem,
+      },
+    });
     const adaptedData = (response.data?.records || []).map(adaptSyncRecordToFrontend);
     return { ...response, data: adaptedData };
   },
 
   getSyncRecord: async (id: string): Promise<ApiResponse<SyncRecord>> => {
-    const response = await apiClient.qms.get<SyncRecordBackend>(`/api/qms/sync-records/${id}`);
+    const response = await apiClient.qms.get<SyncRecordBackend>(`/sync-records/${id}`);
     return {
       ...response,
       data: response.data ? adaptSyncRecordToFrontend(response.data) : undefined,
@@ -34,14 +31,11 @@ export const syncApi = {
   },
 
   deleteSyncRecord: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.qms.delete<boolean>(`/api/qms/sync-records/${id}`);
+    return apiClient.qms.delete<boolean>(`/sync-records/${id}`);
   },
 
   retrySync: async (id: string): Promise<ApiResponse<SyncRecord>> => {
-    const response = await apiClient.qms.post<SyncRecordBackend>(
-      `/api/qms/sync-records/${id}/retry`,
-      {}
-    );
+    const response = await apiClient.qms.post<SyncRecordBackend>(`/sync-records/${id}/retry`, {});
     return {
       ...response,
       data: response.data ? adaptSyncRecordToFrontend(response.data) : undefined,
@@ -49,10 +43,9 @@ export const syncApi = {
   },
 
   syncInspectionToLims: async (inspectionId: string): Promise<ApiResponse<SyncRecord>> => {
-    const response = await apiClient.qms.post<SyncRecordBackend>(
-      '/api/qms/sync/inspection-to-lims',
-      { inspection_id: inspectionId }
-    );
+    const response = await apiClient.qms.post<SyncRecordBackend>('/sync/inspection-to-lims', {
+      inspection_id: inspectionId,
+    });
     return {
       ...response,
       data: response.data ? adaptSyncRecordToFrontend(response.data) : undefined,
@@ -60,7 +53,7 @@ export const syncApi = {
   },
 
   syncIssueToEhs: async (issueId: string): Promise<ApiResponse<SyncRecord>> => {
-    const response = await apiClient.qms.post<SyncRecordBackend>('/api/qms/sync/issue-to-ehs', {
+    const response = await apiClient.qms.post<SyncRecordBackend>('/sync/issue-to-ehs', {
       issue_id: issueId,
     });
     return {

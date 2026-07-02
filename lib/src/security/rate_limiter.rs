@@ -3,6 +3,8 @@ use axum::{
     middleware::Next,
     response::Response,
 };
+use chrono::Utc;
+use serde_json::json;
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
@@ -224,9 +226,19 @@ pub async fn rate_limit_middleware(
         .await;
 
     if !allowed {
+        let body = json!({
+            "code": 429,
+            "success": false,
+            "message": "Too Many Requests",
+            "data": null,
+            "timestamp": chrono::Utc::now().to_rfc3339(),
+        })
+        .to_string();
+
         let mut response = axum::response::Response::builder()
             .status(StatusCode::TOO_MANY_REQUESTS)
-            .body(axum::body::Body::from("Too Many Requests"))
+            .header("Content-Type", "application/json")
+            .body(axum::body::Body::from(body))
             .unwrap();
 
         add_rate_limit_headers(&mut response, max_requests, 0, reset);

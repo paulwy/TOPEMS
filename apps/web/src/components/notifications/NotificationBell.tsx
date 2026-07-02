@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTheme } from '@mui/material';
 import { Bell } from 'lucide-react';
 import NotificationPanel from './NotificationPanel';
 import { useNotificationWebSocket } from '../../hooks/useNotificationWebSocket';
@@ -11,6 +12,7 @@ interface NotificationBellProps {
 }
 
 const NotificationBell: React.FC<NotificationBellProps> = ({ onNotificationClick }) => {
+  const theme = useTheme();
   const [showPanel, setShowPanel] = useState(false);
   const [hasNewNotification, setHasNewNotification] = useState(false);
   const { user, isAuthenticated } = useAuth();
@@ -78,7 +80,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNotificationClick
         onClick={handleBellClick}
         style={{
           padding: 8,
-          color: 'text.secondary',
+          color: theme.palette.text.secondary,
           backgroundColor: 'transparent',
           border: 'none',
           borderRadius: 8,
@@ -94,7 +96,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNotificationClick
               position: 'absolute',
               top: -4,
               right: -4,
-              backgroundColor: 'error.main',
+              backgroundColor: theme.palette.error.main,
               color: 'white',
               fontSize: 12,
               fontWeight: 'bold',
@@ -118,7 +120,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNotificationClick
               right: -4,
               width: 12,
               height: 12,
-              backgroundColor: 'success.dark',
+              backgroundColor: theme.palette.success.dark,
               borderRadius: '9999px',
               animation: 'ping 1s cubic-bezier(0, 0, 0.2, 1)',
             }}
@@ -132,7 +134,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNotificationClick
               right: 4,
               width: 8,
               height: 8,
-              backgroundColor: 'success.dark',
+              backgroundColor: theme.palette.success.dark,
               borderRadius: '9999px',
             }}
             title='已连接'
@@ -142,6 +144,7 @@ const NotificationBell: React.FC<NotificationBellProps> = ({ onNotificationClick
 
       {showPanel && (
         <>
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions */}
           <div
             style={{ position: 'fixed', inset: 0, zIndex: 40 }}
             onClick={handleClose}

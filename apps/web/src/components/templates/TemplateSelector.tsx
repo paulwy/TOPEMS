@@ -1,5 +1,4 @@
-import {
-  Dialog,
+import {Dialog,
   DialogContent,
   DialogActions,
   TextField,
@@ -10,8 +9,7 @@ import {
   Typography,
   Chip,
   Box,
-  Button,
-} from '@mui/material';
+  Button, useTheme} from '@mui/material';
 import React, { useState, useEffect } from 'react';
 
 import {
@@ -64,6 +62,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
   onSelect,
   showVariables = true,
 }) => {
+  const theme = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
@@ -190,7 +189,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                   transform: 'translateY(-50%)',
                   width: 16,
                   height: 16,
-                  color: 'text.disabled',
+                  color: theme.palette.text.disabled,
                 }}
               />
               <TextField
@@ -457,7 +456,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                                 {variable.label}
                               </span>
                               {variable.required && (
-                                <span style={{ fontSize: 12, color: 'error.main' }}>必填</span>
+                                <span style={{ fontSize: 12, color: theme.palette.error.main }}>必填</span>
                               )}
                             </Box>
                             <TextField

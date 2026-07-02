@@ -271,7 +271,7 @@ export function PerformanceWarnings() {
         right: 16,
         backgroundColor: 'warning.light',
         border: '1px solid #fde68a',
-        borderRadius: 2,
+        borderRadius: 3,
         p: 4,
         maxWidth: 400,
         boxShadow: 3,

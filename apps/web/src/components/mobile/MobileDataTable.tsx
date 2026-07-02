@@ -63,8 +63,15 @@ export function MobileDataTable<T extends Record<string, unknown>>({
               borderColor: 'divider',
             }}
           >
-            <Skeleton variant="text" width="60%" sx={{ mb: 1 }} />
-            <Skeleton variant="text" width="40%" />
+            <Skeleton
+              variant='text'
+              width='60%'
+              sx={{ mb: 1 }}
+            />
+            <Skeleton
+              variant='text'
+              width='40%'
+            />
           </Box>
         ))}
       </Box>
@@ -74,7 +81,7 @@ export function MobileDataTable<T extends Record<string, unknown>>({
   if (data.length === 0) {
     return (
       <Box sx={{ ...sx, p: 4, textAlign: 'center' }}>
-        <Typography color="text.secondary">{emptyMessage}</Typography>
+        <Typography color='text.secondary'>{emptyMessage}</Typography>
       </Box>
     );
   }
@@ -85,7 +92,7 @@ export function MobileDataTable<T extends Record<string, unknown>>({
       col.key !== titleKey &&
       col.key !== subtitleKey &&
       col.key !== badgeKey &&
-      col.key !== actionsKey,
+      col.key !== actionsKey
   );
   const displayColumns = extraColumns.slice(0, 3);
 
@@ -107,9 +114,7 @@ export function MobileDataTable<T extends Record<string, unknown>>({
                 alignItems: 'center',
                 p: 2,
                 cursor: onRowClick ? 'pointer' : 'default',
-                '&:active': onRowClick
-                  ? { backgroundColor: 'action.hover' }
-                  : undefined,
+                '&:active': onRowClick ? { backgroundColor: 'action.hover' } : undefined,
                 transition: 'background-color 0.15s',
               }}
             >
@@ -117,15 +122,20 @@ export function MobileDataTable<T extends Record<string, unknown>>({
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 {/* Title row */}
                 {title && (
-                  <Typography component="p" variant="body1" sx={{ fontWeight: 500 }} noWrap>
+                  <Typography
+                    component='p'
+                    variant='body1'
+                    sx={{ fontWeight: 500 }}
+                    noWrap
+                  >
                     {title}
                   </Typography>
                 )}
                 {/* Subtitle */}
                 {subtitle && (
                   <Typography
-                    variant="body2"
-                    color="text.secondary"
+                    variant='body2'
+                    color='text.secondary'
                     noWrap
                     sx={{ mt: 0.25 }}
                   >
@@ -144,12 +154,10 @@ export function MobileDataTable<T extends Record<string, unknown>>({
                   {displayColumns.map((col, colIndex) => (
                     <Typography
                       key={col.key}
-                      variant="caption"
-                      color="text.secondary"
+                      variant='caption'
+                      color='text.secondary'
                     >
-                      {col.render
-                        ? col.render(row[col.key], row)
-                        : String(row[col.key] ?? '-')}
+                      {col.render ? col.render(row[col.key], row) : String(row[col.key] ?? '-')}
                       {colIndex < displayColumns.length - 1 && ' · '}
                     </Typography>
                   ))}
@@ -160,7 +168,7 @@ export function MobileDataTable<T extends Record<string, unknown>>({
               {badgeKey && row[badgeKey] != null && (
                 <Chip
                   label={String(row[badgeKey])}
-                  size="small"
+                  size='small'
                   sx={{ ml: 1, flexShrink: 0 }}
                 />
               )}
@@ -168,7 +176,7 @@ export function MobileDataTable<T extends Record<string, unknown>>({
               {/* Actions */}
               {(actionsKey || onActionClick) && (
                 <IconButton
-                  size="small"
+                  size='small'
                   onClick={(e) => {
                     e.stopPropagation();
                     onActionClick?.(row);

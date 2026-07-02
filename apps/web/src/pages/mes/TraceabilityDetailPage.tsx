@@ -1,15 +1,8 @@
 import { Typography, Box, InputLabel, Chip, Card, CardContent, Paper } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import {
-  Package,
-  MapPin,
-  CheckCircle,
-  Factory,
-  Truck,
-  Boxes,
-} from 'lucide-react';
-import { PageContainer } from '@/components/common';
+import { Package, MapPin, CheckCircle, Factory, Truck, Boxes } from 'lucide-react';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { traceabilityApi } from '@/api/mes';
 import type { TraceChain, QualityRecord } from '@/api/mes';
@@ -467,8 +460,12 @@ const TraceabilityDetailPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='物料追溯详情'
-      subtitle='查看物料批次追溯信息'
+      autoTitle
+      autoBreadcrumbs
+      headerProps={{
+        pageIcon: <MapPin style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #8B5CF6 0%, #4C1D95 100%)',
+      }}
     >
       <DetailPageTemplate
         title=''

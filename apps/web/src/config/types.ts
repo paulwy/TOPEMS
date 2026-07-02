@@ -28,6 +28,7 @@ export interface ServicesConfig {
   pm: string;
   migration: string;
   file: string;
+  jaeger: string;
   // [已整合] 统一服务
   communication: string;
   manufacturing: string;

@@ -78,8 +78,7 @@ export const useNotificationSettings = () => {
   const setSettings = useCallback(
     (
       newSettings:
-        | NotificationSettingsData
-        | ((prev: NotificationSettingsData) => NotificationSettingsData)
+        NotificationSettingsData | ((prev: NotificationSettingsData) => NotificationSettingsData)
     ) => {
       setSettingsState((prev) => {
         const updated = typeof newSettings === 'function' ? newSettings(prev) : newSettings;

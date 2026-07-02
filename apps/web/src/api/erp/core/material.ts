@@ -44,7 +44,7 @@ const generateMockMaterials = (): Material[] => {
   });
 };
 
-let mockMaterials = generateMockMaterials();
+const mockMaterials = generateMockMaterials();
 
 export const materialApi = {
   async list(params?: PaginationParams): Promise<
@@ -132,10 +132,7 @@ export const materialApi = {
     return createMockSuccessResponse(newMaterial, 201, '创建成功') as ApiResponse<Material>;
   },
 
-  async update(
-    id: string,
-    data: UpdateMaterialRequest
-  ): Promise<ApiResponse<Material>> {
+  async update(id: string, data: UpdateMaterialRequest): Promise<ApiResponse<Material>> {
     const index = mockMaterials.findIndex((m) => m.id === id);
     if (index === -1) {
       return createMockErrorResponse('物料不存在', 404) as ApiResponse<Material>;

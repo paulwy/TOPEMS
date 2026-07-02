@@ -123,7 +123,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
       <Box
         sx={{
           bgcolor: 'background.paper',
-          borderRadius: 2,
+          borderRadius: 3,
           width: '100%',
           maxWidth: 1152,
           maxHeight: '90vh',
@@ -169,7 +169,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                 p: 1,
                 color: 'white',
                 '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' },
-                borderRadius: 2,
+                borderRadius: 3,
                 minWidth: 'auto',
               }}
             >
@@ -229,7 +229,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                 variant='contained'
                 color='success'
                 startIcon={<Download sx={{ width: 16, height: 16 }} />}
-                sx={{ borderRadius: 2, textTransform: 'none' }}
+                sx={{ borderRadius: 3, textTransform: 'none' }}
               >
                 导出CSV
               </Button>
@@ -239,7 +239,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                 variant='contained'
                 color='secondary'
                 startIcon={<Download sx={{ width: 16, height: 16 }} />}
-                sx={{ borderRadius: 2, textTransform: 'none' }}
+                sx={{ borderRadius: 3, textTransform: 'none' }}
               >
                 导出JSON
               </Button>
@@ -249,7 +249,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                 variant='contained'
                 color='inherit'
                 startIcon={<Printer sx={{ width: 16, height: 16 }} />}
-                sx={{ borderRadius: 2, textTransform: 'none' }}
+                sx={{ borderRadius: 3, textTransform: 'none' }}
               >
                 打印
               </Button>
@@ -281,7 +281,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                   setCurrentPage(1);
                 }}
                 placeholder='搜索报表数据...'
-                sx={{ pl: 5, '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                sx={{ pl: 5, '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
               />
             </Box>
             <Button
@@ -289,7 +289,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
               size='small'
               variant='outlined'
               startIcon={<Eye sx={{ width: 16, height: 16 }} />}
-              sx={{ borderRadius: 2, textTransform: 'none' }}
+              sx={{ borderRadius: 3, textTransform: 'none' }}
             >
               {showAllColumns ? '收起列' : '显示全部列'}
             </Button>

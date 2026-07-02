@@ -26,8 +26,7 @@ import { useAppStore } from '../../store';
 import { useAuth } from '../../hooks/useAuth';
 import { PageContainer } from '@/components/common';
 
-import {
-  Box,
+import {Box,
   TextField,
   Typography,
   Card,
@@ -46,8 +45,7 @@ import {
   IconButton,
   CircularProgress,
   Divider,
-  Button,
-} from '@mui/material';
+  Button, useTheme} from '@mui/material';
 
 interface ActivityItem {
   id: string;
@@ -79,6 +77,7 @@ interface PasswordFormData {
 }
 
 const ProfilePage: React.FC = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const initialized = useRef(false);
   const addNotification = useAppStore((state) => state.addNotification);
@@ -446,7 +445,7 @@ const ProfilePage: React.FC = () => {
         <Box sx={{ textAlign: 'center' }}>
           <AlertCircle
             size={48}
-            style={{ color: 'error.main', marginBottom: 12 }}
+            style={{ color: theme.palette.error.main, marginBottom: 12 }}
           />
           <Typography color='error'>{error || '无法获取用户信息'}</Typography>
           <Button
@@ -706,7 +705,7 @@ const ProfilePage: React.FC = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                       <Shield
                         size={20}
-                        style={{ color: 'primary.dark' }}
+                        style={{ color: theme.palette.primary.dark }}
                       />
                       <Box>
                         <Typography
@@ -744,7 +743,7 @@ const ProfilePage: React.FC = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                       <Mail
                         size={20}
-                        style={{ color: 'success.dark' }}
+                        style={{ color: theme.palette.success.dark }}
                       />
                       <Box>
                         <Typography
@@ -763,7 +762,7 @@ const ProfilePage: React.FC = () => {
                     </Box>
                     <CheckCircle2
                       size={20}
-                      style={{ color: 'success.dark' }}
+                      style={{ color: theme.palette.success.dark }}
                     />
                   </Box>
 
@@ -850,7 +849,7 @@ const ProfilePage: React.FC = () => {
                     <Box sx={{ textAlign: 'center', py: 4 }}>
                       <Clock
                         size={48}
-                        style={{ color: 'text.disabled', marginBottom: 12 }}
+                        style={{ color: theme.palette.text.disabled, marginBottom: 12 }}
                       />
                       <Typography color='text.secondary'>暂无活动记录</Typography>
                     </Box>

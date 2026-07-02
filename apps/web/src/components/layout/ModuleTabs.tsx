@@ -402,7 +402,7 @@ const LegacyModuleTabs: React.FC<LegacyModuleTabsProps> = ({ tabs, pluginCode, o
               opacity: 0.7,
               '&:hover': {
                 opacity: 1,
-                backgroundColor: 'action.hover',
+                backgroundColor: theme.palette.action.hover,
               },
             }}
           >

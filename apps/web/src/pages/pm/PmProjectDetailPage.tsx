@@ -838,7 +838,7 @@ const PmProjectDetailPage: React.FC = () => {
                 gap: 2,
               }}
             >
-              <Box sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 2 }}>
+              <Box sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 3 }}>
                 <Typography
                   variant='body2'
                   sx={{ color: 'grey.500', mb: 0.5 }}
@@ -852,7 +852,7 @@ const PmProjectDetailPage: React.FC = () => {
                   -
                 </Typography>
               </Box>
-              <Box sx={{ p: 2, bgcolor: 'success.light', borderRadius: 2 }}>
+              <Box sx={{ p: 2, bgcolor: 'success.light', borderRadius: 3 }}>
                 <Typography
                   variant='body2'
                   sx={{ color: 'grey.500', mb: 0.5 }}
@@ -866,7 +866,7 @@ const PmProjectDetailPage: React.FC = () => {
                   -
                 </Typography>
               </Box>
-              <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 2 }}>
+              <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
                 <Typography
                   variant='body2'
                   sx={{ color: 'grey.500', mb: 0.5 }}
@@ -880,7 +880,7 @@ const PmProjectDetailPage: React.FC = () => {
                   -
                 </Typography>
               </Box>
-              <Box sx={{ p: 2, bgcolor: 'secondary.light', borderRadius: 2 }}>
+              <Box sx={{ p: 2, bgcolor: 'secondary.light', borderRadius: 3 }}>
                 <Typography
                   variant='body2'
                   sx={{ color: 'grey.500', mb: 0.5 }}
@@ -894,7 +894,7 @@ const PmProjectDetailPage: React.FC = () => {
                   -
                 </Typography>
               </Box>
-              <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 2 }}>
+              <Box sx={{ p: 2, bgcolor: 'grey.50', borderRadius: 3 }}>
                 <Typography
                   variant='body2'
                   sx={{ color: 'grey.500', mb: 0.5 }}

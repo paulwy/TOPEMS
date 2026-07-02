@@ -331,7 +331,7 @@ const ExpenseClaimPage: React.FC = () => {
           spacing={2}
         >
           <Grid size={{ xs: 12, lg: 8 }}>
-            <Card sx={{ boxShadow: 1, borderRadius: 2, overflow: 'hidden' }}>
+            <Card sx={{ boxShadow: 1, borderRadius: 3, overflow: 'hidden' }}>
               <TableContainer sx={{ overflowX: 'auto' }}>
                 <Table>
                   <TableHead sx={{ bgcolor: 'grey.50' }}>
@@ -414,7 +414,7 @@ const ExpenseClaimPage: React.FC = () => {
 
           <Grid size={{ xs: 12, lg: 4 }}>
             <Stack spacing={2}>
-              <Card sx={{ p: 2.5, boxShadow: 1, borderRadius: 2 }}>
+              <Card sx={{ p: 2.5, boxShadow: 1, borderRadius: 3 }}>
                 <Typography
                   variant='h6'
                   component='div'
@@ -464,7 +464,7 @@ const ExpenseClaimPage: React.FC = () => {
                   ))}
                 </Stack>
               </Card>
-              <Card sx={{ p: 2.5, boxShadow: 1, borderRadius: 2 }}>
+              <Card sx={{ p: 2.5, boxShadow: 1, borderRadius: 3 }}>
                 <Typography
                   variant='h6'
                   component='div'

@@ -563,10 +563,14 @@ const FinanceExpensePage: React.FC = () => {
     <PageContainer
       padding={false}
       maxWidth={false}
+      title='费用管理'
+      subtitle='管理费用类会计科目，维护科目结构'
+      autoTitle
+      autoBreadcrumbs
     >
       <DashboardTemplate
-        title='费用科目'
-        subtitle='管理费用类会计科目，维护科目结构'
+        title=''
+        subtitle=''
         stats={statsCards}
         onRefresh={loadData}
         headerContent={

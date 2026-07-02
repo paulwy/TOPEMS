@@ -11,27 +11,27 @@ export const interactionApi = {
   list: async (
     params?: InteractionQueryParams
   ): Promise<ApiResponse<PaginatedResponse<Interaction>>> => {
-    return apiClient.crm.get('/api/crm/interactions', { params });
+    return apiClient.crm.get('/interactions', { params });
   },
 
   create: async (data: CreateInteractionRequest): Promise<ApiResponse<Interaction>> => {
-    return apiClient.crm.post('/api/crm/interactions', data);
+    return apiClient.crm.post('/interactions', data);
   },
 
   get: async (id: string): Promise<ApiResponse<Interaction>> => {
-    return apiClient.crm.get(`/api/crm/interactions/${id}`);
+    return apiClient.crm.get(`/interactions/${id}`);
   },
 
   update: async (id: string, data: UpdateInteractionRequest): Promise<ApiResponse<Interaction>> => {
-    return apiClient.crm.put(`/api/crm/interactions/${id}`, data);
+    return apiClient.crm.put(`/interactions/${id}`, data);
   },
 
   delete: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.crm.delete(`/api/crm/interactions/${id}`);
+    return apiClient.crm.delete(`/interactions/${id}`);
   },
 
   batchDelete: async (ids: string[]): Promise<ApiResponse<void>> => {
-    return apiClient.crm.post('/api/crm/interactions/batch-delete', { ids });
+    return apiClient.crm.post('/interactions/batch-delete', { ids });
   },
 };
 

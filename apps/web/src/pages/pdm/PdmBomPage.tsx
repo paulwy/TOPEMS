@@ -24,7 +24,7 @@ import {
   type RowAction,
   type FilterConfig,
 } from '@/components/templates';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 
 interface BomItemFormData {
   part_number: string;
@@ -283,7 +283,7 @@ export const PdmBomPage: React.FC = () => {
         <Box
           sx={{
             p: 2,
-            borderRadius: 2,
+            borderRadius: 3,
             bgcolor: 'background.paper',
             border: 1,
             borderColor: 'divider',
@@ -299,7 +299,7 @@ export const PdmBomPage: React.FC = () => {
         <Box
           sx={{
             p: 2,
-            borderRadius: 2,
+            borderRadius: 3,
             bgcolor: 'background.paper',
             border: 1,
             borderColor: 'divider',
@@ -316,8 +316,6 @@ export const PdmBomPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='物料清单 (BOM)'
-      subtitle='管理产品的物料组成和成本结构'
       headerProps={{
         pageIcon: <Database style={{ width: 20, height: 20 }} />,
         pageGradient: 'linear-gradient(135deg, #06B6D4 0%, #0891B2 100%)',

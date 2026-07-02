@@ -11,8 +11,7 @@ import {
   Play,
   Plus,
 } from 'lucide-react';
-import {
-  Dialog,
+import {Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
@@ -24,8 +23,7 @@ import {
   Box,
   Typography,
   MenuItem,
-  Button,
-} from '@mui/material';
+  Button, useTheme} from '@mui/material';
 
 import { DataTable } from '@/components/common/DataTable';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -42,6 +40,7 @@ interface TaskRecord extends InspectionRecord {
 
 const LimsTaskDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const theme = useTheme();
   const navigate = useNavigate();
   const [task, setTask] = useState<InspectionTask | null>(null);
   const [records, setRecords] = useState<TaskRecord[]>([]);
@@ -208,7 +207,7 @@ const LimsTaskDetailPage: React.FC = () => {
               }}
             >
               <span style={{ color: '#475569' }}>完成进度</span>
-              <span style={{ fontWeight: 500, color: 'grey.900' }}>
+              <span style={{ fontWeight: 500, color: theme.palette.grey[900] }}>
                 {completedSteps} / {totalSteps} 步骤
               </span>
             </Box>

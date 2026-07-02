@@ -81,49 +81,44 @@ export interface DocumentSearchResult {
 export const documentApi = {
   // Documents
   list: async (params?: DocumentSearchParams): Promise<ApiResponse<PdmDocument[]>> => {
-    return apiClient.pdm.get<PdmDocument[]>('/api/pdm/documents', { params });
+    return apiClient.pdm.get<PdmDocument[]>('/documents', { params });
   },
   search: async (params: DocumentSearchParams): Promise<ApiResponse<DocumentSearchResult>> => {
-    return apiClient.pdm.post<DocumentSearchResult>('/api/pdm/documents/search', params);
+    return apiClient.pdm.post<DocumentSearchResult>('/documents/search', params);
   },
   get: async (id: string): Promise<ApiResponse<PdmDocument>> => {
-    return apiClient.pdm.get<PdmDocument>(`/api/pdm/documents/${id}`);
+    return apiClient.pdm.get<PdmDocument>(`/documents/${id}`);
   },
   create: async (data: CreatePdmDocumentRequest): Promise<ApiResponse<PdmDocument>> => {
-    return apiClient.pdm.post<PdmDocument>('/api/pdm/documents', data);
+    return apiClient.pdm.post<PdmDocument>('/documents', data);
   },
   update: async (
     id: string,
     data: Partial<CreatePdmDocumentRequest>
   ): Promise<ApiResponse<PdmDocument>> => {
-    return apiClient.pdm.put<PdmDocument>(`/api/pdm/documents/${id}`, data);
+    return apiClient.pdm.put<PdmDocument>(`/documents/${id}`, data);
   },
   delete: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.pdm.delete<boolean>(`/api/pdm/documents/${id}`);
+    return apiClient.pdm.delete<boolean>(`/documents/${id}`);
   },
   updateStatus: async (id: string, status: string): Promise<ApiResponse<PdmDocument>> => {
-    return apiClient.pdm.put<PdmDocument>(`/api/pdm/documents/${id}/status`, { status });
+    return apiClient.pdm.put<PdmDocument>(`/documents/${id}/status`, { status });
   },
 
   // Document Versions
   listVersions: async (documentId: string): Promise<ApiResponse<DocumentVersion[]>> => {
-    return apiClient.pdm.get<DocumentVersion[]>(`/api/pdm/documents/${documentId}/versions`);
+    return apiClient.pdm.get<DocumentVersion[]>(`/documents/${documentId}/versions`);
   },
   getVersion: async (
     documentId: string,
     versionId: string
   ): Promise<ApiResponse<DocumentVersion>> => {
-    return apiClient.pdm.get<DocumentVersion>(
-      `/api/pdm/documents/${documentId}/versions/${versionId}`
-    );
+    return apiClient.pdm.get<DocumentVersion>(`/documents/${documentId}/versions/${versionId}`);
   },
   createVersion: async (
     data: CreateDocumentVersionRequest
   ): Promise<ApiResponse<DocumentVersion>> => {
-    return apiClient.pdm.post<DocumentVersion>(
-      `/api/pdm/documents/${data.document_id}/versions`,
-      data
-    );
+    return apiClient.pdm.post<DocumentVersion>(`/documents/${data.document_id}/versions`, data);
   },
   updateVersion: async (
     documentId: string,
@@ -131,19 +126,19 @@ export const documentApi = {
     data: Partial<CreateDocumentVersionRequest>
   ): Promise<ApiResponse<DocumentVersion>> => {
     return apiClient.pdm.put<DocumentVersion>(
-      `/api/pdm/documents/${documentId}/versions/${versionId}`,
+      `/documents/${documentId}/versions/${versionId}`,
       data
     );
   },
   deleteVersion: async (documentId: string, versionId: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.pdm.delete<boolean>(`/api/pdm/documents/${documentId}/versions/${versionId}`);
+    return apiClient.pdm.delete<boolean>(`/documents/${documentId}/versions/${versionId}`);
   },
   publishVersion: async (
     documentId: string,
     versionId: string
   ): Promise<ApiResponse<DocumentVersion>> => {
     return apiClient.pdm.post<DocumentVersion>(
-      `/api/pdm/documents/${documentId}/versions/${versionId}/publish`,
+      `/documents/${documentId}/versions/${versionId}/publish`,
       {}
     );
   },
@@ -152,19 +147,13 @@ export const documentApi = {
   upload: async (documentId: string, file: File): Promise<ApiResponse<DocumentVersion>> => {
     const formData = new FormData();
     formData.append('file', file);
-    return apiClient.pdm.post<DocumentVersion>(
-      `/api/pdm/documents/${documentId}/upload`,
-      formData,
-      {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      }
-    );
+    return apiClient.pdm.post<DocumentVersion>(`/documents/${documentId}/upload`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
   },
 
   // Document Download
   downloadVersion: async (documentId: string, versionId: string): Promise<ApiResponse<string>> => {
-    return apiClient.pdm.get<string>(
-      `/api/pdm/documents/${documentId}/versions/${versionId}/download`
-    );
+    return apiClient.pdm.get<string>(`/documents/${documentId}/versions/${versionId}/download`);
   },
 };

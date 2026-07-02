@@ -61,10 +61,42 @@ const mockRegionData = [
 ];
 
 const mockPivotData = [
-  { category: '电子产品', '1月': 45000, '2月': 52000, '3月': 58000, '4月': 55000, '5月': 62000, '6月': 68000 },
-  { category: '服装配饰', '1月': 32000, '2月': 35000, '3月': 38000, '4月': 36000, '5月': 42000, '6月': 48000 },
-  { category: '家居用品', '1月': 28000, '2月': 30000, '3月': 32000, '4月': 31000, '5月': 35000, '6月': 38000 },
-  { category: '食品饮料', '1月': 20000, '2月': 21000, '3月': 24000, '4月': 23000, '5月': 29000, '6月': 31000 },
+  {
+    category: '电子产品',
+    '1月': 45000,
+    '2月': 52000,
+    '3月': 58000,
+    '4月': 55000,
+    '5月': 62000,
+    '6月': 68000,
+  },
+  {
+    category: '服装配饰',
+    '1月': 32000,
+    '2月': 35000,
+    '3月': 38000,
+    '4月': 36000,
+    '5月': 42000,
+    '6月': 48000,
+  },
+  {
+    category: '家居用品',
+    '1月': 28000,
+    '2月': 30000,
+    '3月': 32000,
+    '4月': 31000,
+    '5月': 35000,
+    '6月': 38000,
+  },
+  {
+    category: '食品饮料',
+    '1月': 20000,
+    '2月': 21000,
+    '3月': 24000,
+    '4月': 23000,
+    '5月': 29000,
+    '6月': 31000,
+  },
 ];
 
 const filters: FilterConfig[] = [
@@ -147,13 +179,24 @@ const DataAnalysisPage = () => {
               variant={chartType === type ? 'contained' : 'outlined'}
               onClick={() => setChartType(type)}
               startIcon={
-                type === 'bar' ? <BarChart3 size={16} /> :
-                type === 'line' ? <TrendingUp size={16} /> :
-                type === 'area' ? <Layers size={16} /> :
-                <PieChart size={16} />
+                type === 'bar' ? (
+                  <BarChart3 size={16} />
+                ) : type === 'line' ? (
+                  <TrendingUp size={16} />
+                ) : type === 'area' ? (
+                  <Layers size={16} />
+                ) : (
+                  <PieChart size={16} />
+                )
               }
             >
-              {type === 'bar' ? '柱状图' : type === 'line' ? '折线图' : type === 'area' ? '面积图' : '饼图'}
+              {type === 'bar'
+                ? '柱状图'
+                : type === 'line'
+                  ? '折线图'
+                  : type === 'area'
+                    ? '面积图'
+                    : '饼图'}
             </Button>
           ))}
         </Box>
@@ -170,7 +213,12 @@ const DataAnalysisPage = () => {
           <Button
             size='small'
             variant='outlined'
-            startIcon={<TrendingUp size={16} style={{ transform: 'rotate(180deg)' }} />}
+            startIcon={
+              <TrendingUp
+                size={16}
+                style={{ transform: 'rotate(180deg)' }}
+              />
+            }
             onClick={handleDrillUp}
             disabled={drillLevel <= 0}
           >
@@ -186,10 +234,16 @@ const DataAnalysisPage = () => {
         </Box>
       </Box>
 
-      <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
+      <Card
+        elevation={0}
+        sx={{ border: '1px solid', borderColor: 'divider' }}
+      >
         <CardContent>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-            <Typography variant='h6' sx={{ fontWeight: 600 }}>
+            <Typography
+              variant='h6'
+              sx={{ fontWeight: 600 }}
+            >
               销售趋势分析
             </Typography>
             <Chip
@@ -226,11 +280,21 @@ const DataAnalysisPage = () => {
         </CardContent>
       </Card>
 
-      <Grid container spacing={3} sx={{ mt: 3 }}>
+      <Grid
+        container
+        spacing={3}
+        sx={{ mt: 3 }}
+      >
         <Grid size={{ xs: 12, md: 6 }}>
-          <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider', height: '100%' }}>
+          <Card
+            elevation={0}
+            sx={{ border: '1px solid', borderColor: 'divider', height: '100%' }}
+          >
             <CardContent>
-              <Typography variant='subtitle1' sx={{ fontWeight: 600, mb: 2 }}>
+              <Typography
+                variant='subtitle1'
+                sx={{ fontWeight: 600, mb: 2 }}
+              >
                 地区销售分布
               </Typography>
               <ChartComponent
@@ -246,9 +310,15 @@ const DataAnalysisPage = () => {
           </Card>
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
-          <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider', height: '100%' }}>
+          <Card
+            elevation={0}
+            sx={{ border: '1px solid', borderColor: 'divider', height: '100%' }}
+          >
             <CardContent>
-              <Typography variant='subtitle1' sx={{ fontWeight: 600, mb: 2 }}>
+              <Typography
+                variant='subtitle1'
+                sx={{ fontWeight: 600, mb: 2 }}
+              >
                 关键指标
               </Typography>
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
@@ -258,14 +328,26 @@ const DataAnalysisPage = () => {
                   { label: '客户数', value: '1,270', change: '+15.2%', color: '#8B5CF6' },
                   { label: '客单价', value: '¥291.7', change: '+3.8%', color: '#F59E0B' },
                 ].map((metric, idx) => (
-                  <Box key={idx} sx={{ p: 2, backgroundColor: '#F9FAFB', borderRadius: 1 }}>
-                    <Typography variant='caption' color='text.secondary'>
+                  <Box
+                    key={idx}
+                    sx={{ p: 2, backgroundColor: '#F9FAFB', borderRadius: 1 }}
+                  >
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                    >
                       {metric.label}
                     </Typography>
-                    <Typography variant='h5' sx={{ fontWeight: 700, my: 0.5 }}>
+                    <Typography
+                      variant='h5'
+                      sx={{ fontWeight: 700, my: 0.5 }}
+                    >
                       {metric.value}
                     </Typography>
-                    <Typography variant='caption' sx={{ color: metric.color, fontWeight: 600 }}>
+                    <Typography
+                      variant='caption'
+                      sx={{ color: metric.color, fontWeight: 600 }}
+                    >
                       {metric.change}
                     </Typography>
                   </Box>
@@ -281,7 +363,10 @@ const DataAnalysisPage = () => {
   const renderPivotTable = () => (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant='subtitle1' sx={{ fontWeight: 600 }}>
+        <Typography
+          variant='subtitle1'
+          sx={{ fontWeight: 600 }}
+        >
           数据透视表
         </Typography>
         <Box sx={{ display: 'flex', gap: 1 }}>
@@ -302,7 +387,10 @@ const DataAnalysisPage = () => {
         </Box>
       </Box>
 
-      <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
+      <Card
+        elevation={0}
+        sx={{ border: '1px solid', borderColor: 'divider' }}
+      >
         <CardContent>
           <TableContainer>
             <Table size='small'>
@@ -312,7 +400,11 @@ const DataAnalysisPage = () => {
                     产品类别
                   </TableCell>
                   {['1月', '2月', '3月', '4月', '5月', '6月'].map((month) => (
-                    <TableCell key={month} align='right' sx={{ fontWeight: 600, backgroundColor: '#F9FAFB' }}>
+                    <TableCell
+                      key={month}
+                      align='right'
+                      sx={{ fontWeight: 600, backgroundColor: '#F9FAFB' }}
+                    >
                       {month}
                     </TableCell>
                   ))}
@@ -320,10 +412,11 @@ const DataAnalysisPage = () => {
               </TableHead>
               <TableBody>
                 {mockPivotData.map((row) => (
-                  <TableRow key={row.category} hover>
-                    <TableCell sx={{ fontWeight: 500 }}>
-                      {row.category}
-                    </TableCell>
+                  <TableRow
+                    key={row.category}
+                    hover
+                  >
+                    <TableCell sx={{ fontWeight: 500 }}>{row.category}</TableCell>
                     <TableCell align='right'>{row['1月'].toLocaleString()}</TableCell>
                     <TableCell align='right'>{row['2月'].toLocaleString()}</TableCell>
                     <TableCell align='right'>{row['3月'].toLocaleString()}</TableCell>
@@ -343,7 +436,10 @@ const DataAnalysisPage = () => {
   const renderDataTable = () => (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant='subtitle1' sx={{ fontWeight: 600 }}>
+        <Typography
+          variant='subtitle1'
+          sx={{ fontWeight: 600 }}
+        >
           数据明细
         </Typography>
         <Button
@@ -355,7 +451,10 @@ const DataAnalysisPage = () => {
         </Button>
       </Box>
 
-      <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider' }}>
+      <Card
+        elevation={0}
+        sx={{ border: '1px solid', borderColor: 'divider' }}
+      >
         <CardContent>
           <TableContainer>
             <Table size='small'>
@@ -372,13 +471,56 @@ const DataAnalysisPage = () => {
               </TableHead>
               <TableBody>
                 {[
-                  { date: '2026-06-28', order: 'SO-20260628-001', customer: '张三', product: '笔记本电脑', qty: 2, amount: 12800, status: '已完成' },
-                  { date: '2026-06-28', order: 'SO-20260628-002', customer: '李四', product: '无线耳机', qty: 5, amount: 1950, status: '已完成' },
-                  { date: '2026-06-27', order: 'SO-20260627-001', customer: '王五', product: '智能手表', qty: 1, amount: 2299, status: '待发货' },
-                  { date: '2026-06-27', order: 'SO-20260627-002', customer: '赵六', product: '平板电脑', qty: 3, amount: 8997, status: '已完成' },
-                  { date: '2026-06-26', order: 'SO-20260626-001', customer: '钱七', product: '蓝牙音箱', qty: 4, amount: 1196, status: '已完成' },
+                  {
+                    date: '2026-06-28',
+                    order: 'SO-20260628-001',
+                    customer: '张三',
+                    product: '笔记本电脑',
+                    qty: 2,
+                    amount: 12800,
+                    status: '已完成',
+                  },
+                  {
+                    date: '2026-06-28',
+                    order: 'SO-20260628-002',
+                    customer: '李四',
+                    product: '无线耳机',
+                    qty: 5,
+                    amount: 1950,
+                    status: '已完成',
+                  },
+                  {
+                    date: '2026-06-27',
+                    order: 'SO-20260627-001',
+                    customer: '王五',
+                    product: '智能手表',
+                    qty: 1,
+                    amount: 2299,
+                    status: '待发货',
+                  },
+                  {
+                    date: '2026-06-27',
+                    order: 'SO-20260627-002',
+                    customer: '赵六',
+                    product: '平板电脑',
+                    qty: 3,
+                    amount: 8997,
+                    status: '已完成',
+                  },
+                  {
+                    date: '2026-06-26',
+                    order: 'SO-20260626-001',
+                    customer: '钱七',
+                    product: '蓝牙音箱',
+                    qty: 4,
+                    amount: 1196,
+                    status: '已完成',
+                  },
                 ].map((row, idx) => (
-                  <TableRow key={idx} hover>
+                  <TableRow
+                    key={idx}
+                    hover
+                  >
                     <TableCell>{row.date}</TableCell>
                     <TableCell sx={{ fontFamily: 'monospace' }}>{row.order}</TableCell>
                     <TableCell>{row.customer}</TableCell>
@@ -424,7 +566,10 @@ const DataAnalysisPage = () => {
         ]}
       >
         <Box sx={{ p: 3 }}>
-          <Typography variant='h4' sx={{ fontWeight: 700, mb: 3 }}>
+          <Typography
+            variant='h4'
+            sx={{ fontWeight: 700, mb: 3 }}
+          >
             多维数据分析
           </Typography>
 
@@ -432,16 +577,24 @@ const DataAnalysisPage = () => {
             filters={filters}
             values={filterValues}
             onChange={handleFilterChange}
-            onReset={() => setFilterValues({
-              timeRange: 'last_6_months',
-              region: 'all',
-              category: 'all',
-            })}
+            onReset={() =>
+              setFilterValues({
+                timeRange: 'last_6_months',
+                region: 'all',
+                category: 'all',
+              })
+            }
           />
 
-          <Card elevation={0} sx={{ border: '1px solid', borderColor: 'divider', mb: 3 }}>
+          <Card
+            elevation={0}
+            sx={{ border: '1px solid', borderColor: 'divider', mb: 3 }}
+          >
             <CardContent sx={{ pb: 0 }}>
-              <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
+              <Tabs
+                value={activeTab}
+                onChange={(_, v) => setActiveTab(v)}
+              >
                 <Tab
                   label='图表分析'
                   icon={<BarChart3 size={16} />}

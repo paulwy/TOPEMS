@@ -259,7 +259,7 @@ const QmsDashboardPage: React.FC = () => {
                   y1={10}
                   x2={390}
                   y2={10}
-                  stroke='#ef4444'
+                  stroke='error.main'
                   strokeWidth={1}
                   strokeDasharray='4'
                 />
@@ -267,7 +267,7 @@ const QmsDashboardPage: React.FC = () => {
                   x={392}
                   y={14}
                   fontSize={10}
-                  fill='#ef4444'
+                  fill='error.main'
                 >
                   UCL
                 </text>
@@ -276,7 +276,7 @@ const QmsDashboardPage: React.FC = () => {
                   y1={100}
                   x2={390}
                   y2={100}
-                  stroke='#10b981'
+                  stroke='success.main'
                   strokeWidth={1}
                   strokeDasharray='4'
                 />
@@ -284,7 +284,7 @@ const QmsDashboardPage: React.FC = () => {
                   x={392}
                   y={104}
                   fontSize={10}
-                  fill='#10b981'
+                  fill='success.main'
                 >
                   CL
                 </text>
@@ -293,7 +293,7 @@ const QmsDashboardPage: React.FC = () => {
                   y1={190}
                   x2={390}
                   y2={190}
-                  stroke='#ef4444'
+                  stroke='error.main'
                   strokeWidth={1}
                   strokeDasharray='4'
                 />
@@ -301,7 +301,7 @@ const QmsDashboardPage: React.FC = () => {
                   x={392}
                   y={194}
                   fontSize={10}
-                  fill='#ef4444'
+                  fill='error.main'
                 >
                   LCL
                 </text>
@@ -328,28 +328,28 @@ const QmsDashboardPage: React.FC = () => {
       label: '质量标准',
       icon: <BookOpen style={{ width: 20, height: 20 }} />,
       onClick: () => navigate('/qms/standards'),
-      color: '#10b981',
+      color: 'success.main',
     },
     {
       id: 'nonconformance',
       label: '不合格品报告',
       icon: <AlertTriangle style={{ width: 20, height: 20 }} />,
       onClick: () => navigate('/qms/nonconformance'),
-      color: '#ef4444',
+      color: 'error.main',
     },
     {
       id: 'spc-analysis',
       label: 'SPC分析',
       icon: <LineChart style={{ width: 20, height: 20 }} />,
       onClick: () => navigate('/qms/spc'),
-      color: '#f59e0b',
+      color: 'warning.main',
     },
     {
       id: 'audit-management',
       label: '审核管理',
       icon: <ShieldCheck style={{ width: 20, height: 20 }} />,
       onClick: () => navigate('/qms/audits'),
-      color: '#8b5cf6',
+      color: 'secondary.main',
     },
   ];
 
@@ -402,18 +402,9 @@ const QmsDashboardPage: React.FC = () => {
   ];
 
   return (
-    <PageContainer
-      title='质量看板'
-      subtitle='Quality Dashboard'
-    >
+    <PageContainer>
       <DashboardTemplate
-        title='质量看板'
-        subtitle='QMS 质量管理概览'
-        breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: 'QMS' },
-          { label: '质量看板' },
-        ]}
+        title=''
         stats={stats}
         charts={charts}
         quickActions={quickActions}

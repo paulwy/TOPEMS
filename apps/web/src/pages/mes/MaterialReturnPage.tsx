@@ -23,7 +23,7 @@ import {
   Paper,
   Button,
 } from '@mui/material';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { MaterialReturn, CreateMaterialReturnRequest, MaterialReturnItem } from '@/api/mes';
 import { mesApi } from '@/api/mes';
@@ -293,7 +293,7 @@ const MaterialReturnPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: '#fef3c7', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: '#fef3c7', borderRadius: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <FileText
             size={18}
@@ -313,7 +313,7 @@ const MaterialReturnPage: React.FC = () => {
           {returns.filter((r) => r.status === 'pending').length}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary', mb: 1 }}
@@ -327,7 +327,7 @@ const MaterialReturnPage: React.FC = () => {
           {returns.filter((r) => r.status === 'approved').length}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <Undo2
             size={18}
@@ -347,7 +347,7 @@ const MaterialReturnPage: React.FC = () => {
           {returns.filter((r) => r.status === 'returned').length}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <Package
             size={18}
@@ -372,8 +372,12 @@ const MaterialReturnPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='物料退库管理'
-      subtitle='管理物料退库记录,包括退库单号、工单、退库人、退库原因等'
+      autoTitle
+      autoBreadcrumbs
+      headerProps={{
+        pageIcon: <Undo2 style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #EF4444 0%, #B91C1C 100%)',
+      }}
     >
       <ListPageTemplate
         title=''

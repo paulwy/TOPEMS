@@ -1,9 +1,9 @@
-import { lazyWithRetry } from '../utils';
+import { lazyWithRetry } from './types';
 import type { RouteModuleConfig } from './types';
 
 const MesDashboardPage = lazyWithRetry(
-  () => import('../../pages/mes/DashboardPage'),
-  'DashboardPage'
+  () => import('../../pages/mes/ProductionDashboardPage'),
+  'ProductionDashboardPage'
 );
 const MesQualityPage = lazyWithRetry(
   () => import('../../pages/mes/MesQualityPage'),
@@ -21,14 +21,8 @@ const TeamManagementPage = lazyWithRetry(
   () => import('../../pages/mes/TeamManagementPage'),
   'TeamManagementPage'
 );
-const WIPPage = lazyWithRetry(
-  () => import('../../pages/mes/WIPPage'),
-  'WIPPage'
-);
-const WorkOrderPage = lazyWithRetry(
-  () => import('../../pages/mes/WorkOrderPage'),
-  'WorkOrderPage'
-);
+const WIPPage = lazyWithRetry(() => import('../../pages/mes/WIPPage'), 'WIPPage');
+const WorkOrderPage = lazyWithRetry(() => import('../../pages/mes/WorkOrderPage'), 'WorkOrderPage');
 const WorkReportPage = lazyWithRetry(
   () => import('../../pages/mes/WorkReportPage'),
   'WorkReportPage'
@@ -123,13 +117,6 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'overview',
       requiredPermissions: ['mes:read'],
-      nav: {
-        label: '仪表盘',
-        icon: 'LayoutDashboard',
-        order: 0,
-        group: 'overview',
-        showInTabs: true,
-      },
     },
     {
       path: '/mes/production-orders',
@@ -140,13 +127,6 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['mes:production_order:read'],
-      nav: {
-        label: '生产订单',
-        icon: 'ClipboardList',
-        order: 1,
-        group: 'business',
-        showInTabs: true,
-      },
     },
     {
       path: '/mes/production-orders/:id',
@@ -167,12 +147,6 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['mes:work_order:read'],
-      nav: {
-        label: '工单管理',
-        icon: 'FileText',
-        order: 2,
-        group: 'business',
-      },
     },
     {
       path: '/mes/equipment',
@@ -183,12 +157,6 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['mes:equipment:read'],
-      nav: {
-        label: '设备管理',
-        icon: 'Wrench',
-        order: 3,
-        group: 'business',
-      },
     },
     {
       path: '/mes/equipment/:id',
@@ -209,12 +177,6 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['mes:work_station:read'],
-      nav: {
-        label: '工位管理',
-        icon: 'MapPin',
-        order: 4,
-        group: 'business',
-      },
     },
     {
       path: '/mes/teams',
@@ -225,12 +187,6 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['mes:team:read'],
-      nav: {
-        label: '班组管理',
-        icon: 'Users',
-        order: 5,
-        group: 'business',
-      },
     },
     {
       path: '/mes/material-requirement',
@@ -241,12 +197,6 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['mes:material:read'],
-      nav: {
-        label: '物料需求',
-        icon: 'Package',
-        order: 6,
-        group: 'business',
-      },
     },
     {
       path: '/mes/process-routes',
@@ -257,12 +207,6 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['mes:process_route:read'],
-      nav: {
-        label: '工艺路线',
-        icon: 'Route',
-        order: 1,
-        group: 'process',
-      },
     },
     {
       path: '/mes/process-flow',
@@ -273,12 +217,6 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['mes:process_flow:read'],
-      nav: {
-        label: '工艺流程',
-        icon: 'GitBranch',
-        order: 2,
-        group: 'process',
-      },
     },
     {
       path: '/mes/production-process',
@@ -289,12 +227,6 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'process',
       requiredPermissions: ['mes:production_process:read'],
-      nav: {
-        label: '生产过程',
-        icon: 'Activity',
-        order: 3,
-        group: 'process',
-      },
     },
     {
       path: '/mes/production-schedule',
@@ -305,12 +237,6 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['mes:production_schedule:read'],
-      nav: {
-        label: '生产计划',
-        icon: 'Calendar',
-        order: 4,
-        group: 'process',
-      },
     },
     {
       path: '/mes/wip',
@@ -321,12 +247,6 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['mes:wip:read'],
-      nav: {
-        label: '在制品',
-        icon: 'Box',
-        order: 5,
-        group: 'process',
-      },
     },
     {
       path: '/mes/quality-inspection',
@@ -337,12 +257,6 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['mes:quality:read'],
-      nav: {
-        label: '过程质检',
-        icon: 'CheckCircle',
-        order: 6,
-        group: 'process',
-      },
     },
     {
       path: '/mes/traceability',
@@ -353,12 +267,6 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'process',
       requiredPermissions: ['mes:traceability:read'],
-      nav: {
-        label: '质量追溯',
-        icon: 'Search',
-        order: 7,
-        group: 'process',
-      },
     },
     {
       path: '/mes/production-kanban',
@@ -369,13 +277,6 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'kanban',
       group: 'analytics',
       requiredPermissions: ['mes:kanban:read'],
-      nav: {
-        label: '生产看板',
-        icon: 'LayoutGrid',
-        order: 1,
-        group: 'analytics',
-        showInTabs: true,
-      },
     },
     {
       path: '/mes/production-record',
@@ -386,12 +287,6 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'analytics',
       requiredPermissions: ['mes:production_record:read'],
-      nav: {
-        label: '生产记录',
-        icon: 'ScrollText',
-        order: 2,
-        group: 'analytics',
-      },
     },
     {
       path: '/mes/work-report',
@@ -402,12 +297,6 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'analytics',
       requiredPermissions: ['mes:work_report:read'],
-      nav: {
-        label: '工作报告',
-        icon: 'FileCheck',
-        order: 3,
-        group: 'analytics',
-      },
     },
     {
       path: '/mes/equipment-oee',
@@ -418,12 +307,6 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'stats',
       group: 'analytics',
       requiredPermissions: ['mes:oee:read'],
-      nav: {
-        label: '设备OEE',
-        icon: 'Gauge',
-        order: 4,
-        group: 'analytics',
-      },
     },
     {
       path: '/mes/material-bom',
@@ -464,12 +347,6 @@ export const mesModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'analytics',
       requiredPermissions: ['mes:read'],
-      nav: {
-        label: '生产总览',
-        icon: 'BarChart3',
-        order: 5,
-        group: 'analytics',
-      },
     },
   ],
 };

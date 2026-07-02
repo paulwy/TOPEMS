@@ -155,7 +155,7 @@ const FinancialReportPage: React.FC = () => {
     if (activeTab === 'balance-sheet' && balanceSheet) {
       return (
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 1, md: 3 }, gap: 2, mb: 3 }}>
-          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
+          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 3, boxShadow: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: 'primary.100' }}>
                 <DollarSign sx={{ width: 24, height: 24, color: 'primary.main' }} />
@@ -176,7 +176,7 @@ const FinancialReportPage: React.FC = () => {
               </Box>
             </Box>
           </Box>
-          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
+          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 3, boxShadow: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: 'warning.100' }}>
                 <TrendingDown sx={{ width: 24, height: 24, color: 'warning.main' }} />
@@ -197,7 +197,7 @@ const FinancialReportPage: React.FC = () => {
               </Box>
             </Box>
           </Box>
-          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
+          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 3, boxShadow: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: 'success.100' }}>
                 <Wallet sx={{ width: 24, height: 24, color: 'success.main' }} />
@@ -225,7 +225,7 @@ const FinancialReportPage: React.FC = () => {
     if (activeTab === 'income-statement' && incomeStatement) {
       return (
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 1, md: 4 }, gap: 2, mb: 3 }}>
-          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
+          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 3, boxShadow: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: 'success.100' }}>
                 <TrendingUp sx={{ width: 24, height: 24, color: 'success.main' }} />
@@ -246,7 +246,7 @@ const FinancialReportPage: React.FC = () => {
               </Box>
             </Box>
           </Box>
-          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
+          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 3, boxShadow: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: 'error.100' }}>
                 <TrendingDown sx={{ width: 24, height: 24, color: 'error.main' }} />
@@ -267,7 +267,7 @@ const FinancialReportPage: React.FC = () => {
               </Box>
             </Box>
           </Box>
-          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
+          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 3, boxShadow: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: 'primary.100' }}>
                 <BarChart3 sx={{ width: 24, height: 24, color: 'primary.main' }} />
@@ -288,7 +288,7 @@ const FinancialReportPage: React.FC = () => {
               </Box>
             </Box>
           </Box>
-          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
+          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 3, boxShadow: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box
                 sx={{
@@ -331,7 +331,7 @@ const FinancialReportPage: React.FC = () => {
     if (activeTab === 'cash-flow' && cashFlowStatement) {
       return (
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 1, md: 4 }, gap: 2, mb: 3 }}>
-          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
+          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 3, boxShadow: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: 'success.100' }}>
                 <Activity sx={{ width: 24, height: 24, color: 'success.main' }} />
@@ -354,7 +354,7 @@ const FinancialReportPage: React.FC = () => {
               </Box>
             </Box>
           </Box>
-          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
+          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 3, boxShadow: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: 'warning.100' }}>
                 <Building2 sx={{ width: 24, height: 24, color: 'warning.main' }} />
@@ -377,7 +377,7 @@ const FinancialReportPage: React.FC = () => {
               </Box>
             </Box>
           </Box>
-          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
+          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 3, boxShadow: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box sx={{ p: 1.5, borderRadius: 1, bgcolor: 'primary.100' }}>
                 <DollarSign sx={{ width: 24, height: 24, color: 'primary.main' }} />
@@ -400,7 +400,7 @@ const FinancialReportPage: React.FC = () => {
               </Box>
             </Box>
           </Box>
-          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
+          <Box sx={{ p: 3, bgcolor: 'background.paper', borderRadius: 3, boxShadow: 1 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
               <Box
                 sx={{

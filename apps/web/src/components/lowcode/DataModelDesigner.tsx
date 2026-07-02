@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Box,
+import {Box,
   Paper,
   List,
   ListItem,
@@ -14,8 +13,7 @@ import {
   Tooltip,
   Typography,
   Tabs,
-  Tab,
-} from '@mui/material';
+  Tab, useTheme} from '@mui/material';
 import {
   Database,
   Plus,
@@ -122,6 +120,7 @@ export const DataModelDesigner: React.FC<DataModelDesignerProps> = ({
   onPublish,
 }) => {
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
+  const theme = useTheme();
   const [isNewField, setIsNewField] = useState(false);
   const [activeTab, setActiveTab] = useState<DesignerTab>('fields');
   const [localModel, setLocalModel] = useState<DataModel | null>(model);
@@ -258,7 +257,7 @@ export const DataModelDesigner: React.FC<DataModelDesignerProps> = ({
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Database style={{ width: 20, height: 20, color: 'primary.main' }} />
+            <Database style={{ width: 20, height: 20, color: theme.palette.primary.main }} />
             <Typography variant="h6">{localModel.label}</Typography>
             <Chip
               label={localModel.status === 'published' ? '已发布' : '草稿'}

@@ -1,14 +1,11 @@
-import { lazyWithRetry } from '../utils';
+import { lazyWithRetry } from './types';
 import type { RouteModuleConfig } from './types';
 
 const AiDashboardPage = lazyWithRetry(
   () => import('../../pages/ai/AiDashboardPage'),
   'AiDashboardPage'
 );
-const AiChatPage = lazyWithRetry(
-  () => import('../../pages/ai/AiChatPage'),
-  'AiChatPage'
-);
+const AiChatPage = lazyWithRetry(() => import('../../pages/ai/AiChatPage'), 'AiChatPage');
 const AiKnowledgeBasePage = lazyWithRetry(
   () => import('../../pages/ai/AiKnowledgeBasePage'),
   'AiKnowledgeBasePage'
@@ -50,13 +47,6 @@ export const aiModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'overview',
       requiredPermissions: ['ai:read'],
-      nav: {
-        label: 'AI助手概览',
-        icon: 'LayoutDashboard',
-        order: 0,
-        group: 'overview',
-        showInTabs: true,
-      },
     },
     {
       path: '/ai/chat',
@@ -67,13 +57,6 @@ export const aiModuleConfig: RouteModuleConfig = {
       template: 'form',
       group: 'chat',
       requiredPermissions: ['ai:chat:read'],
-      nav: {
-        label: '智能对话',
-        icon: 'MessageSquare',
-        order: 1,
-        group: 'chat',
-        showInTabs: true,
-      },
     },
     {
       path: '/ai/code',
@@ -84,12 +67,6 @@ export const aiModuleConfig: RouteModuleConfig = {
       template: 'form',
       group: 'chat',
       requiredPermissions: ['ai:code:read'],
-      nav: {
-        label: '代码助手',
-        icon: 'Code',
-        order: 2,
-        group: 'chat',
-      },
     },
     {
       path: '/ai/document',
@@ -100,13 +77,6 @@ export const aiModuleConfig: RouteModuleConfig = {
       template: 'form',
       group: 'tools',
       requiredPermissions: ['ai:document:read'],
-      nav: {
-        label: '文档分析',
-        icon: 'FileText',
-        order: 1,
-        group: 'tools',
-        showInTabs: true,
-      },
     },
     {
       path: '/ai/knowledge',
@@ -117,13 +87,6 @@ export const aiModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'knowledge',
       requiredPermissions: ['ai:knowledge:read'],
-      nav: {
-        label: '知识库',
-        icon: 'BookOpen',
-        order: 1,
-        group: 'knowledge',
-        showInTabs: true,
-      },
     },
     {
       path: '/ai/prompts',
@@ -134,12 +97,6 @@ export const aiModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'templates',
       requiredPermissions: ['ai:prompt:read'],
-      nav: {
-        label: '提示词库',
-        icon: 'Library',
-        order: 1,
-        group: 'templates',
-      },
     },
     {
       path: '/ai/settings',
@@ -150,12 +107,6 @@ export const aiModuleConfig: RouteModuleConfig = {
       template: 'settings',
       group: 'settings',
       requiredPermissions: ['ai:admin'],
-      nav: {
-        label: '模型设置',
-        icon: 'Settings',
-        order: 1,
-        group: 'settings',
-      },
     },
   ],
 };

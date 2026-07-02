@@ -210,10 +210,16 @@ const CRMSalesForecastPage: React.FC = () => {
   );
 
   return (
-    <PageContainer maxWidth='xl'>
+    <PageContainer
+      maxWidth='xl'
+      title='销售预测'
+      subtitle='基于历史数据预测未来销售趋势'
+      autoTitle
+      autoBreadcrumbs
+    >
       <StatsPageTemplate
-        title='销售预测'
-        subtitle='基于历史数据预测未来销售趋势'
+        title=''
+        subtitle=''
         statCards={statCards}
         statColumns={4}
         charts={charts}

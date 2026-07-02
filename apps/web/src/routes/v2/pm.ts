@@ -1,4 +1,4 @@
-import { lazyWithRetry } from '../utils';
+import { lazyWithRetry } from './types';
 import type { RouteModuleConfig } from './types';
 
 const PmDashboardPage = lazyWithRetry(
@@ -27,33 +27,16 @@ export const pmModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'overview',
       requiredPermissions: ['pm:read'],
-      nav: {
-        label: '仪表盘',
-        icon: 'LayoutDashboard',
-        order: 0,
-        group: 'overview',
-        showInTabs: true,
-      },
     },
     {
       path: '/pm/projects',
-      element: lazyWithRetry(
-        () => import('../../pages/pm/PmProjectListPage'),
-        'PmProjectListPage'
-      ),
+      element: lazyWithRetry(() => import('../../pages/pm/PmProjectListPage'), 'PmProjectListPage'),
       module: 'pm',
       code: 'pm-projects',
       title: '项目列表',
       template: 'list',
       group: 'business',
       requiredPermissions: ['pm:project:read'],
-      nav: {
-        label: '项目列表',
-        icon: 'FolderKanban',
-        order: 1,
-        group: 'business',
-        showInTabs: true,
-      },
     },
     {
       path: '/pm/projects/create',
@@ -93,12 +76,6 @@ export const pmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['pm:contract:read'],
-      nav: {
-        label: '合同管理',
-        icon: 'FileText',
-        order: 2,
-        group: 'business',
-      },
     },
     {
       path: '/pm/contracts/create',
@@ -128,62 +105,33 @@ export const pmModuleConfig: RouteModuleConfig = {
     },
     {
       path: '/pm/resources',
-      element: lazyWithRetry(
-        () => import('../../pages/pm/PmResourcePage'),
-        'PmResourcePage'
-      ),
+      element: lazyWithRetry(() => import('../../pages/pm/PmResourcePage'), 'PmResourcePage'),
       module: 'pm',
       code: 'pm-resources',
       title: '资源管理',
       template: 'list',
       group: 'process',
       requiredPermissions: ['pm:resource:read'],
-      nav: {
-        label: '资源管理',
-        icon: 'Users',
-        order: 1,
-        group: 'process',
-        showInTabs: true,
-      },
     },
     {
       path: '/pm/templates',
-      element: lazyWithRetry(
-        () => import('../../pages/pm/PmTemplatePage'),
-        'PmTemplatePage'
-      ),
+      element: lazyWithRetry(() => import('../../pages/pm/PmTemplatePage'), 'PmTemplatePage'),
       module: 'pm',
       code: 'pm-templates',
       title: '模板管理',
       template: 'list',
       group: 'process',
       requiredPermissions: ['pm:template:read'],
-      nav: {
-        label: '模板管理',
-        icon: 'LayoutTemplate',
-        order: 2,
-        group: 'process',
-      },
     },
     {
       path: '/pm/reports',
-      element: lazyWithRetry(
-        () => import('../../pages/pm/PmReportPage'),
-        'PmReportPage'
-      ),
+      element: lazyWithRetry(() => import('../../pages/pm/PmReportPage'), 'PmReportPage'),
       module: 'pm',
       code: 'pm-reports',
       title: '项目报表',
       template: 'stats',
       group: 'analytics',
       requiredPermissions: ['pm:report:read'],
-      nav: {
-        label: '项目报表',
-        icon: 'BarChart3',
-        order: 1,
-        group: 'analytics',
-        showInTabs: true,
-      },
     },
   ],
 };

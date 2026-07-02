@@ -28,12 +28,7 @@ export interface GeoJSONFeature {
 
 // Tool Mode - shared across map interactions
 export type ToolMode =
-  | 'select'
-  | 'measure-distance'
-  | 'measure-area'
-  | 'draw-point'
-  | 'draw-line'
-  | 'draw-polygon';
+  'select' | 'measure-distance' | 'measure-area' | 'draw-point' | 'draw-line' | 'draw-polygon';
 
 // Offline Module Types
 export interface OfflineConfig {

@@ -15,11 +15,7 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
-import type {
-  SerialNumber,
-  CreateSerialNumberRequest,
-  UpdateSerialNumberRequest,
-} from '@/api/wms';
+import type { SerialNumber, CreateSerialNumberRequest, UpdateSerialNumberRequest } from '@/api/wms';
 import { wmsApi } from '@/api/wms';
 import { useAppStore } from '@/store';
 import { Plus, Edit, Trash2, Hash, Search, Package, ArrowRightLeft, History } from 'lucide-react';
@@ -28,7 +24,10 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 
-const statusConfig: Record<string, { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }> = {
+const statusConfig: Record<
+  string,
+  { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }
+> = {
   in_stock: { label: '在库', color: 'success' },
   out_stock: { label: '已出库', color: 'default' },
   reserved: { label: '已预留', color: 'warning' },
@@ -36,7 +35,10 @@ const statusConfig: Record<string, { label: string; color: 'default' | 'primary'
   scrapped: { label: '报废', color: 'default' },
 };
 
-const qualityStatusConfig: Record<string, { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }> = {
+const qualityStatusConfig: Record<
+  string,
+  { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }
+> = {
   qualified: { label: '合格', color: 'success' },
   unqualified: { label: '不合格', color: 'error' },
   pending: { label: '待检', color: 'warning' },
@@ -313,7 +315,14 @@ const SerialNumberPage: React.FC = () => {
       label: '质检状态',
       render: (row) => {
         const config = qualityStatusConfig[row.quality_status] || qualityStatusConfig.pending;
-        return <Chip size='small' label={config.label} color={config.color} variant='outlined' />;
+        return (
+          <Chip
+            size='small'
+            label={config.label}
+            color={config.color}
+            variant='outlined'
+          />
+        );
       },
     },
     {
@@ -321,7 +330,13 @@ const SerialNumberPage: React.FC = () => {
       label: '状态',
       render: (row) => {
         const config = statusConfig[row.status] || statusConfig.in_stock;
-        return <Chip size='small' label={config.label} color={config.color} />;
+        return (
+          <Chip
+            size='small'
+            label={config.label}
+            color={config.color}
+          />
+        );
       },
     },
     {
@@ -422,20 +437,40 @@ const SerialNumberPage: React.FC = () => {
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
               sx={{ minWidth: 200 }}
             />
-            <Button variant='outlined' startIcon={<Search size={16} />} onClick={handleSearch}>
+            <Button
+              variant='outlined'
+              startIcon={<Search size={16} />}
+              onClick={handleSearch}
+            >
               搜索
             </Button>
           </Box>
         }
       />
 
-      <Dialog open={showDialog} onClose={() => setShowDialog(false)} maxWidth='lg' fullWidth>
+      <Dialog
+        open={showDialog}
+        onClose={() => setShowDialog(false)}
+        maxWidth='lg'
+        fullWidth
+      >
         <DialogTitle>{isEditing ? '编辑序列号' : '新增序列号'}</DialogTitle>
         <DialogContent>
           <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-            <Tabs value={activeTab} onChange={(_, newValue) => setActiveTab(newValue)}>
-              <Tab label='基本信息' icon={<Hash size={16} />} iconPosition='start' />
-              <Tab label='保修信息' icon={<Package size={16} />} iconPosition='start' />
+            <Tabs
+              value={activeTab}
+              onChange={(_, newValue) => setActiveTab(newValue)}
+            >
+              <Tab
+                label='基本信息'
+                icon={<Hash size={16} />}
+                iconPosition='start'
+              />
+              <Tab
+                label='保修信息'
+                icon={<Package size={16} />}
+                iconPosition='start'
+              />
             </Tabs>
           </Box>
           <form onSubmit={handleSubmit}>
@@ -586,10 +621,16 @@ const SerialNumberPage: React.FC = () => {
               sx={{ mt: 2 }}
             />
             <DialogActions sx={{ mt: 2 }}>
-              <Button variant='outlined' onClick={() => setShowDialog(false)}>
+              <Button
+                variant='outlined'
+                onClick={() => setShowDialog(false)}
+              >
                 取消
               </Button>
-              <Button type='submit' variant='contained'>
+              <Button
+                type='submit'
+                variant='contained'
+              >
                 {isEditing ? '更新' : '保存'}
               </Button>
             </DialogActions>

@@ -447,7 +447,7 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
               key={group.title}
               sx={{
                 padding: 2,
-                borderRadius: 2,
+                borderRadius: 3,
                 border: `1px solid ${colors.border}`,
                 backgroundColor: colors.bg,
               }}

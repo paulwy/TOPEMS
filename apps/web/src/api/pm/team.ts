@@ -3,7 +3,7 @@ import type { ProjectMember } from './types';
 
 export const memberApi = {
   list: async (projectId: string) => {
-    return apiClient.pm.get(`/api/pm/projects/${projectId}/members`);
+    return apiClient.pm.get(`/projects/${projectId}/members`);
   },
 
   create: async (
@@ -16,11 +16,11 @@ export const memberApi = {
       end_date?: string;
     }
   ) => {
-    return apiClient.pm.post(`/api/pm/projects/${projectId}/members`, data);
+    return apiClient.pm.post(`/projects/${projectId}/members`, data);
   },
 
   get: async (projectId: string, id: string) => {
-    return apiClient.pm.get(`/api/pm/projects/${projectId}/members/${id}`);
+    return apiClient.pm.get(`/projects/${projectId}/members/${id}`);
   },
 
   update: async (
@@ -33,11 +33,11 @@ export const memberApi = {
       end_date?: string;
     }
   ) => {
-    return apiClient.pm.put(`/api/pm/projects/${projectId}/members/${id}`, data);
+    return apiClient.pm.put(`/projects/${projectId}/members/${id}`, data);
   },
 
   delete: async (projectId: string, id: string) => {
-    return apiClient.pm.delete(`/api/pm/projects/${projectId}/members/${id}`);
+    return apiClient.pm.delete(`/projects/${projectId}/members/${id}`);
   },
 };
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography, IconButton, Tooltip } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material/styles';
 import { ChevronDown, Info } from 'lucide-react';
 
 export interface FormFieldGroupProps {
@@ -12,7 +13,7 @@ export interface FormFieldGroupProps {
   columns?: number;
   gap?: number;
   required?: boolean;
-  sx?: import('@mui/material/styles').SxProps<import('@mui/material/styles').Theme>;
+  sx?: SxProps<Theme>;
 }
 
 export const FormFieldGroup: React.FC<FormFieldGroupProps> = ({
@@ -35,7 +36,7 @@ export const FormFieldGroup: React.FC<FormFieldGroupProps> = ({
       sx={{
         border: '1px solid',
         borderColor: 'divider',
-        borderRadius: 2,
+        borderRadius: 3,
         p: 0,
         m: 0,
         overflow: 'hidden',

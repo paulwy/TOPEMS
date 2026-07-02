@@ -46,6 +46,16 @@ import { extractErrorMessage } from '@/utils/errors';
 
 import { ModeToggle } from '@/components/theme/ModeToggle';
 
+const formatDateTimeForApi = (dateTimeString: string): string => {
+  if (!dateTimeString) return '';
+  try {
+    const date = new Date(dateTimeString);
+    return date.toISOString();
+  } catch {
+    return dateTimeString;
+  }
+};
+
 interface AuditLogPageProps {
   onNavigate?: (page: string) => void;
 }
@@ -72,12 +82,13 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
   const pageSize = 20;
 
   const loadLogs = async () => {
+    if (loading) return;
     setLoading(true);
     try {
       const api = source === 'lims' ? auditLimsApi : auditRsApi;
       const params: Record<string, unknown> = {
-        page: currentPage,
-        pagesize: pageSize,
+        page: Math.max(1, currentPage),
+        pagesize: Math.min(100, Math.max(1, pageSize)),
       };
       if (filterStatus !== 'all') {
         params.status = filterStatus;
@@ -89,33 +100,53 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
         params.entity_type = filterEntityType;
       }
       if (startDate) {
-        params.start_date = startDate;
+        params.start_date = formatDateTimeForApi(startDate);
       }
       if (endDate) {
-        params.end_date = endDate;
+        params.end_date = formatDateTimeForApi(endDate);
       }
+      apiLogger.debug('加载审计日志参数:', { source, params });
       const response = await api.listAuditLogs(params);
+      apiLogger.debug('审计日志响应:', response);
       if (response.success && response.data) {
-        setLogs(response.data.audit_logs);
-        setTotal(response.data.total);
+        setLogs(response.data.audit_logs || []);
+        setTotal(response.data.total || 0);
       } else {
         setLogs([]);
         setTotal(0);
+        if (response.message) {
+          addNotification({
+            title: '提示',
+            message: response.message,
+            type: 'info',
+          });
+        }
       }
     } catch (error: unknown) {
       apiLogger.error('加载审计日志失败:', error);
       setLogs([]);
-      addNotification({
-        title: '加载失败',
-        message: extractErrorMessage(error, '加载审计日志失败'),
-        type: 'error',
-      });
+      setTotal(0);
+      const errorMsg = extractErrorMessage(error, '加载审计日志失败');
+      if (errorMsg.includes('401') || errorMsg.includes('未授权')) {
+        addNotification({
+          title: '登录失效',
+          message: '登录已过期，请重新登录',
+          type: 'error',
+        });
+      } else {
+        addNotification({
+          title: '加载失败',
+          message: errorMsg,
+          type: 'error',
+        });
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const handleExport = async () => {
+    if (exporting) return;
     setExporting(true);
     try {
       const api = source === 'lims' ? auditLimsApi : auditRsApi;
@@ -130,12 +161,14 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
         params.entity_type = filterEntityType;
       }
       if (startDate) {
-        params.start_date = startDate;
+        params.start_date = formatDateTimeForApi(startDate);
       }
       if (endDate) {
-        params.end_date = endDate;
+        params.end_date = formatDateTimeForApi(endDate);
       }
+      apiLogger.debug('导出审计日志参数:', { source, params });
       const blob = await api.exportAuditLogs(params);
+      apiLogger.debug('导出审计日志成功，blob size:', blob.size);
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -151,11 +184,20 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
       });
     } catch (error: unknown) {
       apiLogger.error('导出审计日志失败:', error);
-      addNotification({
-        title: '导出失败',
-        message: extractErrorMessage(error, '导出审计日志失败'),
-        type: 'error',
-      });
+      const errorMsg = extractErrorMessage(error, '导出审计日志失败');
+      if (errorMsg.includes('401') || errorMsg.includes('未授权')) {
+        addNotification({
+          title: '登录失效',
+          message: '登录已过期，请重新登录',
+          type: 'error',
+        });
+      } else {
+        addNotification({
+          title: '导出失败',
+          message: errorMsg,
+          type: 'error',
+        });
+      }
     } finally {
       setExporting(false);
     }
@@ -226,8 +268,12 @@ const AuditLogPage: React.FC<AuditLogPageProps> = ({ onNavigate }) => {
     );
   });
 
-  const uniqueActions = Array.from(new Set(logs.map((log) => log.action))).sort();
-  const uniqueEntityTypes = Array.from(new Set(logs.map((log) => log.entity_type))).sort();
+  const uniqueActions = Array.from(new Set(logs.map((log) => log.action)))
+    .filter((action): action is string => Boolean(action))
+    .sort();
+  const uniqueEntityTypes = Array.from(new Set(logs.map((log) => log.entity_type)))
+    .filter((type): type is string => Boolean(type))
+    .sort();
 
   const columns: ColumnDef<AuditLog>[] = useMemo(
     () => [

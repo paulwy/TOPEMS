@@ -7,12 +7,7 @@ import type { ButtonProps } from '@mui/material';
 import { Button, CircularProgress, Tooltip } from '@mui/material';
 
 export type ActionButtonVariant =
-  | 'primary'
-  | 'secondary'
-  | 'success'
-  | 'warning'
-  | 'danger'
-  | 'text';
+  'primary' | 'secondary' | 'success' | 'warning' | 'danger' | 'text';
 export type ActionButtonSize = 'small' | 'medium' | 'large';
 
 export interface ActionButtonProps {

@@ -11,7 +11,7 @@ import {
   Users,
   Tag,
 } from 'lucide-react';
-import { Card, CardContent, Box, Typography, TextField, Chip, Button } from '@mui/material';
+import {Card, CardContent, Box, Typography, TextField, Chip, Button, useTheme} from '@mui/material';
 import { AIGenerateModal } from './AIGenerateModal';
 import { aiApi } from '../../api/ai';
 import { logger } from '@/utils/logger';
@@ -72,6 +72,7 @@ export function AIAnalyzer({
   initialText = '',
   onAnalysisComplete,
 }: AIAnalyzerProps) {
+  const theme = useTheme();
   const [text, setText] = useState(initialText);
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -328,9 +329,9 @@ export function AIAnalyzer({
                     </Box>
                   </Box>
                   {expandedSections.sentiment ? (
-                    <ChevronUp style={{ width: 20, height: 20, color: 'text.disabled' }} />
+                    <ChevronUp style={{ width: 20, height: 20, color: theme.palette.text.disabled }} />
                   ) : (
-                    <ChevronDown style={{ width: 20, height: 20, color: 'text.disabled' }} />
+                    <ChevronDown style={{ width: 20, height: 20, color: theme.palette.text.disabled }} />
                   )}
                 </Box>
                 {expandedSections.sentiment && sentimentResult.details && (
@@ -457,7 +458,7 @@ export function AIAnalyzer({
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
                     <Box sx={{ p: 1.5, bgcolor: '#dbeafe', borderRadius: 1.5 }}>
-                      <BarChart3 style={{ width: 20, height: 20, color: 'primary.dark' }} />
+                      <BarChart3 style={{ width: 20, height: 20, color: theme.palette.primary.dark }} />
                     </Box>
                     <Box>
                       <Typography
@@ -490,9 +491,9 @@ export function AIAnalyzer({
                     </Box>
                   </Box>
                   {expandedSections.classify ? (
-                    <ChevronUp style={{ width: 20, height: 20, color: 'text.disabled' }} />
+                    <ChevronUp style={{ width: 20, height: 20, color: theme.palette.text.disabled }} />
                   ) : (
-                    <ChevronDown style={{ width: 20, height: 20, color: 'text.disabled' }} />
+                    <ChevronDown style={{ width: 20, height: 20, color: theme.palette.text.disabled }} />
                   )}
                 </Box>
                 {expandedSections.classify &&
@@ -584,7 +585,7 @@ export function AIAnalyzer({
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
                     <Box sx={{ p: 1.5, bgcolor: 'success.lighter', borderRadius: 1.5 }}>
-                      <Users style={{ width: 20, height: 20, color: 'success.dark' }} />
+                      <Users style={{ width: 20, height: 20, color: theme.palette.success.dark }} />
                     </Box>
                     <Box>
                       <Typography
@@ -603,9 +604,9 @@ export function AIAnalyzer({
                     </Box>
                   </Box>
                   {expandedSections.entities ? (
-                    <ChevronUp style={{ width: 20, height: 20, color: 'text.disabled' }} />
+                    <ChevronUp style={{ width: 20, height: 20, color: theme.palette.text.disabled }} />
                   ) : (
-                    <ChevronDown style={{ width: 20, height: 20, color: 'text.disabled' }} />
+                    <ChevronDown style={{ width: 20, height: 20, color: theme.palette.text.disabled }} />
                   )}
                 </Box>
                 {expandedSections.entities && (
@@ -688,9 +689,9 @@ export function AIAnalyzer({
                     </Box>
                   </Box>
                   {expandedSections.keywords ? (
-                    <ChevronUp style={{ width: 20, height: 20, color: 'text.disabled' }} />
+                    <ChevronUp style={{ width: 20, height: 20, color: theme.palette.text.disabled }} />
                   ) : (
-                    <ChevronDown style={{ width: 20, height: 20, color: 'text.disabled' }} />
+                    <ChevronDown style={{ width: 20, height: 20, color: theme.palette.text.disabled }} />
                   )}
                 </Box>
                 {expandedSections.keywords && (

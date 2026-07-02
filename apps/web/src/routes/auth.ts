@@ -1,8 +1,10 @@
 import React, { lazy } from 'react';
-import type { RouteConfig } from './utils';
+import { createSafeLazy, type RouteConfig } from './utils';
 
-const LoginPage = lazy(() => import('../pages/shared/LoginPage'));
-const ForgotPasswordPage = lazy(() => import('../pages/shared/ForgotPasswordPage'));
+const safeLazy = createSafeLazy();
+
+const LoginPage = safeLazy(() => import('../pages/shared/LoginPage'));
+const ForgotPasswordPage = safeLazy(() => import('../pages/shared/ForgotPasswordPage'));
 
 export const authRoutes: RouteConfig[] = [
   {

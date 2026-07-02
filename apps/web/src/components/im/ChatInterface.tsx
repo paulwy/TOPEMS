@@ -1,4 +1,4 @@
-import { TextField, Button } from '@mui/material';
+import {TextField, Button, useTheme} from '@mui/material';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MessageSquare, Users, Bell, Search, Plus, ChevronLeft, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -20,6 +20,7 @@ import { logger } from '@/utils/logger';
 type TabType = 'all' | 'direct' | 'group' | 'notifications' | 'contacts';
 
 export const ChatInterface: React.FC = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
 
@@ -456,7 +457,7 @@ export const ChatInterface: React.FC = () => {
               >
                 <ChevronLeft style={{ width: 20, height: 20 }} />
               </Button>
-              <h1 style={{ fontSize: 20, fontWeight: 'bold', color: 'text.primary' }}>消息</h1>
+              <h1 style={{ fontSize: 20, fontWeight: 'bold', color: theme.palette.text.primary }}>消息</h1>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div
@@ -464,7 +465,7 @@ export const ChatInterface: React.FC = () => {
                   width: 8,
                   height: 8,
                   borderRadius: '9999px',
-                  backgroundColor: isConnected ? 'success.dark' : 'error.main',
+                  backgroundColor: isConnected ? theme.palette.success.dark : theme.palette.error.main,
                 }}
               />
               <Button
@@ -486,7 +487,7 @@ export const ChatInterface: React.FC = () => {
                 transform: 'translateY(-50%)',
                 width: 16,
                 height: 16,
-                color: 'text.disabled',
+                color: theme.palette.text.disabled,
               }}
             />
             <TextField
@@ -514,12 +515,12 @@ export const ChatInterface: React.FC = () => {
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: 4,
-                  borderBottom: `2px solid ${activeTab === tab.id ? 'primary.main' : 'transparent'}`,
+                  borderBottom: `2px solid ${activeTab === tab.id ? theme.palette.primary.main : 'transparent'}`,
                   transition: 'all 0.15s',
                   backgroundColor: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
-                  color: activeTab === tab.id ? 'primary.main' : 'text.secondary',
+                  color: activeTab === tab.id ? theme.palette.primary.main : theme.palette.text.secondary,
                 }}
               >
                 <Icon style={{ width: 16, height: 16 }} />
@@ -565,12 +566,12 @@ export const ChatInterface: React.FC = () => {
                   style={{
                     width: 48,
                     height: 48,
-                    color: 'grey.300',
+                    color: theme.palette.grey[300],
                     margin: '0 auto',
                     marginBottom: 12,
                   }}
                 />
-                <p style={{ color: 'text.secondary' }}>暂无聊天记录</p>
+                <p style={{ color: theme.palette.text.secondary }}>暂无聊天记录</p>
               </div>
             ) : (
               filteredRooms.map((room) => (
@@ -610,10 +611,10 @@ export const ChatInterface: React.FC = () => {
                 }}
               >
                 <div>
-                  <h2 style={{ fontWeight: 600, color: 'text.primary' }}>
+                  <h2 style={{ fontWeight: 600, color: theme.palette.text.primary }}>
                     {selectedRoom.name || '未命名会话'}
                   </h2>
-                  <p style={{ fontSize: 14, color: 'text.secondary' }}>
+                  <p style={{ fontSize: 14, color: theme.palette.text.secondary }}>
                     {selectedRoom.room_type === 'direct' ? '私聊' : '群聊'}
                     {!isConnected && ' · 连接断开'}
                   </p>
@@ -628,7 +629,7 @@ export const ChatInterface: React.FC = () => {
                     transform: 'translateY(-50%)',
                     width: 16,
                     height: 16,
-                    color: 'text.disabled',
+                    color: theme.palette.text.disabled,
                   }}
                 />
                 <TextField
@@ -649,7 +650,7 @@ export const ChatInterface: React.FC = () => {
                 flex: 1,
                 overflowY: 'auto',
                 padding: 16,
-                backgroundColor: 'grey.50',
+                backgroundColor: theme.palette.grey[50],
               }}
             >
               {messages.length === 0 ? (
@@ -666,12 +667,12 @@ export const ChatInterface: React.FC = () => {
                       style={{
                         width: 48,
                         height: 48,
-                        color: 'grey.300',
+                        color: theme.palette.grey[300],
                         margin: '0 auto',
                         marginBottom: 12,
                       }}
                     />
-                    <p style={{ color: 'text.secondary' }}>暂无消息，开始聊天吧</p>
+                    <p style={{ color: theme.palette.text.secondary }}>暂无消息，开始聊天吧</p>
                   </div>
                 </div>
               ) : messageSearchQuery.trim() && filteredMessages.length === 0 ? (
@@ -688,12 +689,12 @@ export const ChatInterface: React.FC = () => {
                       style={{
                         width: 48,
                         height: 48,
-                        color: 'grey.300',
+                        color: theme.palette.grey[300],
                         margin: '0 auto',
                         marginBottom: 12,
                       }}
                     />
-                    <p style={{ color: 'text.secondary' }}>未找到匹配的消息</p>
+                    <p style={{ color: theme.palette.text.secondary }}>未找到匹配的消息</p>
                   </div>
                 </div>
               ) : (
@@ -743,7 +744,7 @@ export const ChatInterface: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              backgroundColor: 'grey.50',
+              backgroundColor: theme.palette.grey[50],
             }}
           >
             <div style={{ textAlign: 'center' }}>
@@ -751,7 +752,7 @@ export const ChatInterface: React.FC = () => {
                 style={{
                   width: 64,
                   height: 64,
-                  color: 'grey.300',
+                  color: theme.palette.grey[300],
                   margin: '0 auto',
                   marginBottom: 16,
                 }}
@@ -760,13 +761,13 @@ export const ChatInterface: React.FC = () => {
                 style={{
                   fontSize: 20,
                   fontWeight: 600,
-                  color: 'text.primary',
+                  color: theme.palette.text.primary,
                   marginBottom: 8,
                 }}
               >
                 欢迎使用 TOPEMS IM
               </h2>
-              <p style={{ color: 'text.secondary', marginBottom: 16 }}>
+              <p style={{ color: theme.palette.text.secondary, marginBottom: 16 }}>
                 {activeTab === 'notifications' ? '查看通知中心' : '选择一个聊天室开始聊天'}
               </p>
               {activeTab !== 'notifications' && (

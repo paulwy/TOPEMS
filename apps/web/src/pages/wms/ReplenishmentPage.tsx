@@ -542,7 +542,7 @@ const ReplenishmentPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -556,7 +556,7 @@ const ReplenishmentPage: React.FC = () => {
           {statistics?.total_suggestions || 0}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
         <Stack
           direction='row'
           spacing={1}
@@ -580,7 +580,7 @@ const ReplenishmentPage: React.FC = () => {
           {statistics?.pending_suggestions || 0}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'info.light', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'info.light', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -594,7 +594,7 @@ const ReplenishmentPage: React.FC = () => {
           {statistics?.total_orders || 0}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'success.light', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'success.light', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}

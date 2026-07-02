@@ -24,15 +24,15 @@ export const buildApi = {
             .map(([k, v]) => [k, String(v)])
         )
       : '';
-    const url = queryParams ? `/api/rs/builds?${queryParams}` : '/api/rs/builds';
+    const url = queryParams ? `/builds?${queryParams}` : '/builds';
     return apiClient.rs.get(url);
   },
 
   getBuild: async (id: string): Promise<ApiResponse<Build>> => {
-    return apiClient.rs.get(`/api/rs/builds/${id}`);
+    return apiClient.rs.get(`/builds/${id}`);
   },
 
   createBuild: async (data: CreateBuildRequest): Promise<ApiResponse<Build>> => {
-    return apiClient.rs.post('/api/rs/builds', data);
+    return apiClient.rs.post('/builds', data);
   },
 };

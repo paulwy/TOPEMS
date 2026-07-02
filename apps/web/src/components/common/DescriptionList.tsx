@@ -10,6 +10,7 @@ import {
   useMediaQuery,
   Skeleton,
 } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material/styles';
 import { Copy, Check } from 'lucide-react';
 
 export interface DescriptionItem {
@@ -28,7 +29,7 @@ export interface DescriptionListProps {
   labelWidth?: number | string;
   size?: 'sm' | 'md' | 'lg';
   divider?: boolean;
-  sx?: import('@mui/material/styles').SxProps<import('@mui/material/styles').Theme>;
+  sx?: SxProps<Theme>;
   gap?: number;
 }
 

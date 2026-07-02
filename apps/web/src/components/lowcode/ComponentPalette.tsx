@@ -131,15 +131,24 @@ const ComponentPalette: React.FC<ComponentPaletteProps> = ({
           zIndex: 1,
         }}
       >
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600 }}
+        >
           组件库
         </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <Typography
+          variant='body2'
+          color='text.secondary'
+        >
           拖拽组件到画布
         </Typography>
       </Box>
 
-      <List dense sx={{ p: 1 }}>
+      <List
+        dense
+        sx={{ p: 1 }}
+      >
         {categories.map((category) => (
           <React.Fragment key={category.id}>
             <ListItemButton
@@ -149,12 +158,13 @@ const ComponentPalette: React.FC<ComponentPaletteProps> = ({
                 mb: 0.5,
               }}
             >
-              <ListItemIcon sx={{ minWidth: 36 }}>
-                {renderIcon(category.icon)}
-              </ListItemIcon>
+              <ListItemIcon sx={{ minWidth: 36 }}>{renderIcon(category.icon)}</ListItemIcon>
               <ListItemText
                 primary={
-                  <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                  <Typography
+                    variant='subtitle2'
+                    sx={{ fontWeight: 600 }}
+                  >
                     {category.name}
                   </Typography>
                 }
@@ -166,7 +176,10 @@ const ComponentPalette: React.FC<ComponentPaletteProps> = ({
               )}
             </ListItemButton>
 
-            <Collapse in={expandedCategories.has(category.id)} timeout="auto">
+            <Collapse
+              in={expandedCategories.has(category.id)}
+              timeout='auto'
+            >
               <Box
                 sx={{
                   display: 'grid',
@@ -205,17 +218,19 @@ const ComponentPalette: React.FC<ComponentPaletteProps> = ({
                     }}
                     title={component.description}
                   >
-                    <Box sx={{ color: 'primary.main', mb: 0.5 }}>
-                      {renderIcon(component.icon)}
-                    </Box>
-                    <Typography variant="caption" noWrap sx={{ maxWidth: '100%' }}>
+                    <Box sx={{ color: 'primary.main', mb: 0.5 }}>{renderIcon(component.icon)}</Box>
+                    <Typography
+                      variant='caption'
+                      noWrap
+                      sx={{ maxWidth: '100%' }}
+                    >
                       {component.name}
                     </Typography>
                     {component.isContainer && (
                       <Chip
-                        label="容器"
-                        size="small"
-                        color="secondary"
+                        label='容器'
+                        size='small'
+                        color='secondary'
                         sx={{ mt: 0.5, height: 16, fontSize: 10 }}
                       />
                     )}

@@ -28,7 +28,10 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 
-const statusConfig: Record<string, { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }> = {
+const statusConfig: Record<
+  string,
+  { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }
+> = {
   draft: { label: '草稿', color: 'default' },
   pending: { label: '待审核', color: 'warning' },
   auditing: { label: '审核中', color: 'primary' },
@@ -38,7 +41,10 @@ const statusConfig: Record<string, { label: string; color: 'default' | 'primary'
   cancelled: { label: '已取消', color: 'default' },
 };
 
-const riskLevelConfig: Record<string, { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }> = {
+const riskLevelConfig: Record<
+  string,
+  { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }
+> = {
   low: { label: '低风险', color: 'success' },
   medium: { label: '中风险', color: 'warning' },
   high: { label: '高风险', color: 'error' },
@@ -396,7 +402,14 @@ const SupplierAdmissionPage: React.FC = () => {
       label: '风险等级',
       render: (row) => {
         const config = riskLevelConfig[row.risk_level || 'medium'] || riskLevelConfig.medium;
-        return <Chip size='small' label={config.label} color={config.color} variant='outlined' />;
+        return (
+          <Chip
+            size='small'
+            label={config.label}
+            color={config.color}
+            variant='outlined'
+          />
+        );
       },
     },
     {
@@ -404,7 +417,14 @@ const SupplierAdmissionPage: React.FC = () => {
       label: '状态',
       render: (row) => {
         const config = statusConfig[row.status] || statusConfig.draft;
-        return <Chip size='small' label={config.label} color={config.color} variant='outlined' />;
+        return (
+          <Chip
+            size='small'
+            label={config.label}
+            color={config.color}
+            variant='outlined'
+          />
+        );
       },
     },
     {
@@ -537,9 +557,20 @@ const SupplierAdmissionPage: React.FC = () => {
         <DialogTitle>{isEditing ? '编辑供应商准入' : '新增供应商准入'}</DialogTitle>
         <DialogContent>
           <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-            <Tabs value={activeTab} onChange={(_, newValue) => setActiveTab(newValue)}>
-              <Tab label='基本信息' icon={<UserCheck size={16} />} iconPosition='start' />
-              <Tab label='资质信息' icon={<ClipboardCheck size={16} />} iconPosition='start' />
+            <Tabs
+              value={activeTab}
+              onChange={(_, newValue) => setActiveTab(newValue)}
+            >
+              <Tab
+                label='基本信息'
+                icon={<UserCheck size={16} />}
+                iconPosition='start'
+              />
+              <Tab
+                label='资质信息'
+                icon={<ClipboardCheck size={16} />}
+                iconPosition='start'
+              />
             </Tabs>
           </Box>
           <form onSubmit={handleSubmit}>
@@ -578,10 +609,15 @@ const SupplierAdmissionPage: React.FC = () => {
                   <Select
                     value={formData.supplier_category}
                     label='供应商类别'
-                    onChange={(e) => setFormData({ ...formData, supplier_category: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, supplier_category: e.target.value })
+                    }
                   >
                     {Object.entries(categoryConfig).map(([key, label]) => (
-                      <MenuItem key={key} value={key}>
+                      <MenuItem
+                        key={key}
+                        value={key}
+                      >
                         {label}
                       </MenuItem>
                     ))}
@@ -650,7 +686,9 @@ const SupplierAdmissionPage: React.FC = () => {
                 <TextField
                   label='法定代表人'
                   value={formData.legal_representative}
-                  onChange={(e) => setFormData({ ...formData, legal_representative: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, legal_representative: e.target.value })
+                  }
                   size='small'
                 />
                 <TextField

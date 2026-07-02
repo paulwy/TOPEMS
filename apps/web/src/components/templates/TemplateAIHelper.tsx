@@ -1,13 +1,11 @@
-import {
-  TextField,
+import {TextField,
   FormLabel,
   Card,
   CardContent,
   CardHeader,
   Typography,
   CircularProgress,
-  Button,
-} from '@mui/material';
+  Button, useTheme} from '@mui/material';
 import React, { useState } from 'react';
 
 import { Sparkles, Wand2, Lightbulb, TrendingUp, Send } from 'lucide-react';
@@ -31,6 +29,7 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
   onContentChange,
   onVariablesChange,
 }) => {
+  const theme = useTheme();
   const [isGenerating, setIsGenerating] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [description, setDescription] = useState('');
@@ -351,7 +350,7 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
                   style={{
                     fontSize: 14,
                     color: '#92400e',
-                    backgroundColor: 'warning.light',
+                    backgroundColor: theme.palette.warning.light,
                     borderRadius: 8,
                     padding: '8px 12px',
                   }}
@@ -376,8 +375,8 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
                     padding: '8px 12px',
                     backgroundColor:
                       suggestion.includes('未使用') || suggestion.includes('未定义')
-                        ? 'error.light'
-                        : 'success.light',
+                        ? theme.palette.error.light
+                        : theme.palette.success.light,
                     color:
                       suggestion.includes('未使用') || suggestion.includes('未定义')
                         ? 'error.darker'

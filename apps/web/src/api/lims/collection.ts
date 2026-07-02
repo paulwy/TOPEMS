@@ -13,56 +13,56 @@ import type {
 
 export const collectionTaskApi = {
   listCollectionTasks: async (params?: ListParams): Promise<ApiResponse<CollectionTask[]>> => {
-    return apiClient.lims.get('/api/lims/collection-tasks', { params });
+    return apiClient.lims.get('/collection-tasks', { params });
   },
 
   getCollectionTask: async (id: string): Promise<ApiResponse<CollectionTask>> => {
-    return apiClient.lims.get(`/api/lims/collection-tasks/${id}`);
+    return apiClient.lims.get(`/collection-tasks/${id}`);
   },
 
   createCollectionTask: async (
     data: CreateCollectionTaskRequest
   ): Promise<ApiResponse<CollectionTask>> => {
-    return apiClient.lims.post('/api/lims/collection-tasks', data);
+    return apiClient.lims.post('/collection-tasks', data);
   },
 
   updateCollectionTask: async (
     id: string,
     data: UpdateCollectionTaskRequest
   ): Promise<ApiResponse<CollectionTask>> => {
-    return apiClient.lims.put(`/api/lims/collection-tasks/${id}`, data);
+    return apiClient.lims.put(`/collection-tasks/${id}`, data);
   },
 
   deleteCollectionTask: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.lims.delete(`/api/lims/collection-tasks/${id}`);
+    return apiClient.lims.delete(`/collection-tasks/${id}`);
   },
 
   triggerCollection: async (id: string): Promise<ApiResponse<InstrumentData>> => {
-    return apiClient.lims.post(`/api/lims/collection-tasks/${id}/trigger`);
+    return apiClient.lims.post(`/collection-tasks/${id}/trigger`);
   },
 };
 
 export const parseRuleApi = {
   listParseRules: async (params?: ListParams): Promise<ApiResponse<ParseRule[]>> => {
-    return apiClient.lims.get('/api/lims/parse-rules', { params });
+    return apiClient.lims.get('/parse-rules', { params });
   },
 
   getParseRule: async (id: string): Promise<ApiResponse<ParseRule>> => {
-    return apiClient.lims.get(`/api/lims/parse-rules/${id}`);
+    return apiClient.lims.get(`/parse-rules/${id}`);
   },
 
   createParseRule: async (data: CreateParseRuleRequest): Promise<ApiResponse<ParseRule>> => {
-    return apiClient.lims.post('/api/lims/parse-rules', data);
+    return apiClient.lims.post('/parse-rules', data);
   },
 
   updateParseRule: async (
     id: string,
     data: UpdateParseRuleRequest
   ): Promise<ApiResponse<ParseRule>> => {
-    return apiClient.lims.put(`/api/lims/parse-rules/${id}`, data);
+    return apiClient.lims.put(`/parse-rules/${id}`, data);
   },
 
   deleteParseRule: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.lims.delete(`/api/lims/parse-rules/${id}`);
+    return apiClient.lims.delete(`/parse-rules/${id}`);
   },
 };

@@ -1,6 +1,88 @@
 import { lazyWithRetry } from './types';
 import type { RouteModuleConfig } from './types';
 
+// ============================================
+// 页面组件导入（系统管理相关）
+// ============================================
+
+// 概览
+const DashboardPage = lazyWithRetry(
+  () => import('../../pages/admin/DashboardPage'),
+  'DashboardPage'
+);
+
+// 租户管理
+const TenantManagementPage = lazyWithRetry(
+  () => import('../../pages/admin/TenantManagementPage'),
+  'TenantManagementPage'
+);
+const TenantDetailPage = lazyWithRetry(
+  () => import('../../pages/admin/TenantDetailPage'),
+  'TenantDetailPage'
+);
+const TenantSettingsPage = lazyWithRetry(
+  () => import('../../pages/admin/TenantSettingsPage'),
+  'TenantSettingsPage'
+);
+const TenantBillingPage = lazyWithRetry(
+  () => import('../../pages/admin/TenantBillingPage'),
+  'TenantBillingPage'
+);
+
+// 账号管理
+const AccountManagementPage = lazyWithRetry(
+  () => import('../../pages/admin/AccountManagementPage'),
+  'AccountManagementPage'
+);
+const BankAccountManagementPage = lazyWithRetry(
+  () => import('../../pages/admin/BankAccountManagementPage'),
+  'BankAccountManagementPage'
+);
+
+// 系统配置
+const DictionaryManagementPage = lazyWithRetry(
+  () => import('../../pages/admin/DictionaryManagementPage'),
+  'DictionaryManagementPage'
+);
+const SystemManagementPage = lazyWithRetry(
+  () => import('../../pages/admin/SystemManagementPage'),
+  'SystemManagementPage'
+);
+const SystemSettingsPage = lazyWithRetry(
+  () => import('../../pages/admin/SystemSettingsPage'),
+  'SystemSettingsPage'
+);
+const PluginManagementPage = lazyWithRetry(
+  () => import('../../pages/admin/PluginManagementPage'),
+  'PluginManagementPage'
+);
+
+// 运维工具
+const DatabaseStructurePage = lazyWithRetry(
+  () => import('../../pages/admin/DatabaseStructurePage'),
+  'DatabaseStructurePage'
+);
+const MigrationAdminPage = lazyWithRetry(
+  () => import('../../pages/admin/MigrationAdminPage'),
+  'MigrationAdminPage'
+);
+const ConfigDebugPage = lazyWithRetry(
+  () => import('../../pages/admin/ConfigDebugPage'),
+  'ConfigDebugPage'
+);
+
+// 监控审计
+const AuditLogPage = lazyWithRetry(() => import('../../pages/admin/AuditLogPage'), 'AuditLogPage');
+const MonitorPage = lazyWithRetry(() => import('../../pages/admin/MonitorPage'), 'MonitorPage');
+const PerformanceMonitorPage = lazyWithRetry(
+  () => import('../../pages/admin/PerformanceMonitorPage'),
+  'PerformanceMonitorPage'
+);
+
+// ============================================
+// 路由模块配置
+// ============================================
+
 export const adminModuleConfig: RouteModuleConfig = {
   code: 'admin',
   name: '系统管理',
@@ -9,376 +91,190 @@ export const adminModuleConfig: RouteModuleConfig = {
   source: 'core',
   suite: 'enterprise',
   status: 'online',
-  order: 16,
-  description: '租户管理、用户管理、权限管理、系统配置',
+  order: 2,
+  description: '租户管理、系统配置、监控运维',
   permission: 'admin:read',
   routes: [
+    // ========== 概览 ==========
+    {
+      path: '/admin/dashboard',
+      element: DashboardPage,
+      module: 'admin',
+      code: 'admin-dashboard',
+      title: '仪表盘',
+      template: 'dashboard',
+      group: 'overview',
+      requiredPermissions: ['admin:read'],
+    },
+
+    // ========== 租户管理 ==========
     {
       path: '/admin/tenant',
-      element: lazyWithRetry(() => import('../../pages/admin/TenantManagementPage'), 'TenantManagementPage'),
+      element: TenantManagementPage,
       module: 'admin',
       title: '租户管理',
       code: 'admin-tenant',
       requiredPermissions: ['admin:tenant:read'],
       template: 'list',
-      group: 'business',
-      nav: {
-        label: '租户管理',
-        icon: 'Building2',
-        order: 1,
-        group: 'business',
-        showInSidebar: true,
-        showInBreadcrumb: true,
-        showInTabs: true,
-        description: '多租户管理',
-      },
+      group: 'tenant',
     },
     {
       path: '/admin/tenant-detail',
-      element: lazyWithRetry(() => import('../../pages/admin/TenantDetailPage'), 'TenantDetailPage'),
+      element: TenantDetailPage,
       module: 'admin',
       title: '租户详情',
       code: 'admin-tenant-detail',
       requiredPermissions: ['admin:tenant:read'],
       template: 'detail',
-      group: 'business',
+      group: 'tenant',
     },
     {
       path: '/admin/tenant-settings',
-      element: lazyWithRetry(() => import('../../pages/admin/TenantSettingsPage'), 'TenantSettingsPage'),
+      element: TenantSettingsPage,
       module: 'admin',
       title: '租户设置',
       code: 'admin-tenant-settings',
       requiredPermissions: ['admin:tenant:write'],
       template: 'form',
-      group: 'business',
+      group: 'tenant',
     },
     {
       path: '/admin/tenant-billing',
-      element: lazyWithRetry(() => import('../../pages/admin/TenantBillingPage'), 'TenantBillingPage'),
+      element: TenantBillingPage,
       module: 'admin',
       title: '租户计费',
       code: 'admin-tenant-billing',
       requiredPermissions: ['admin:tenant:read'],
       template: 'list',
-      group: 'business',
-      nav: {
-        label: '租户计费',
-        icon: 'Wallet',
-        order: 2,
-        group: 'business',
-        showInSidebar: true,
-        showInBreadcrumb: true,
-        description: '租户计费管理',
-      },
+      group: 'tenant',
     },
-    {
-      path: '/admin/user',
-      element: lazyWithRetry(() => import('../../pages/admin/UserManagementPage'), 'UserManagementPage'),
-      module: 'admin',
-      title: '用户管理',
-      code: 'admin-user',
-      requiredPermissions: ['admin:user:read'],
-      template: 'list',
-      group: 'business',
-      nav: {
-        label: '用户管理',
-        icon: 'User',
-        order: 3,
-        group: 'business',
-        showInSidebar: true,
-        showInBreadcrumb: true,
-        showInTabs: true,
-        description: '系统用户管理',
-      },
-    },
-    {
-      path: '/admin/role',
-      element: lazyWithRetry(() => import('../../pages/admin/RoleManagementPage'), 'RoleManagementPage'),
-      module: 'admin',
-      title: '角色管理',
-      code: 'admin-role',
-      requiredPermissions: ['admin:role:read'],
-      template: 'list',
-      group: 'business',
-      nav: {
-        label: '角色管理',
-        icon: 'Shield',
-        order: 4,
-        group: 'business',
-        showInSidebar: true,
-        showInBreadcrumb: true,
-        showInTabs: true,
-        description: '角色权限管理',
-      },
-    },
-    {
-      path: '/admin/permission',
-      element: lazyWithRetry(() => import('../../pages/admin/PermissionManagementPage'), 'PermissionManagementPage'),
-      module: 'admin',
-      title: '权限管理',
-      code: 'admin-permission',
-      requiredPermissions: ['admin:permission:read'],
-      template: 'list',
-      group: 'business',
-      nav: {
-        label: '权限管理',
-        icon: 'Key',
-        order: 5,
-        group: 'business',
-        showInSidebar: true,
-        showInBreadcrumb: true,
-        description: '权限点管理',
-      },
-    },
+
+    // ========== 账号管理 ==========
     {
       path: '/admin/account',
-      element: lazyWithRetry(() => import('../../pages/admin/AccountManagementPage'), 'AccountManagementPage'),
+      element: AccountManagementPage,
       module: 'admin',
       title: '账号管理',
       code: 'admin-account',
       requiredPermissions: ['admin:account:read'],
       template: 'list',
-      group: 'business',
-      nav: {
-        label: '账号管理',
-        icon: 'UserCircle',
-        order: 6,
-        group: 'business',
-        showInSidebar: true,
-        showInBreadcrumb: true,
-        description: '账号信息管理',
-      },
+      group: 'account',
     },
     {
+      path: '/admin/bank-account',
+      element: BankAccountManagementPage,
+      module: 'admin',
+      title: '银行账号',
+      code: 'admin-bank-account',
+      requiredPermissions: ['admin:bank:read'],
+      template: 'list',
+      group: 'account',
+    },
+
+    // ========== 系统配置 ==========
+    {
       path: '/admin/dictionary',
-      element: lazyWithRetry(() => import('../../pages/admin/DictionaryManagementPage'), 'DictionaryManagementPage'),
+      element: DictionaryManagementPage,
       module: 'admin',
       title: '数据字典',
       code: 'admin-dictionary',
       requiredPermissions: ['admin:dictionary:read'],
-      template: 'list',
+      template: 'tree',
       group: 'settings',
-      nav: {
-        label: '数据字典',
-        icon: 'BookOpen',
-        order: 1,
-        group: 'settings',
-        showInSidebar: true,
-        showInBreadcrumb: true,
-        description: '系统数据字典',
-      },
     },
     {
       path: '/admin/system',
-      element: lazyWithRetry(() => import('../../pages/admin/SystemManagementPage'), 'SystemManagementPage'),
+      element: SystemManagementPage,
       module: 'admin',
       title: '系统管理',
       code: 'admin-system',
       requiredPermissions: ['admin:system:read'],
       template: 'settings',
       group: 'settings',
-      nav: {
-        label: '系统管理',
-        icon: 'Server',
-        order: 2,
-        group: 'settings',
-        showInSidebar: true,
-        showInBreadcrumb: true,
-        showInTabs: true,
-        description: '系统基础管理',
-      },
     },
     {
       path: '/admin/system-settings',
-      element: lazyWithRetry(() => import('../../pages/admin/SystemSettingsPage'), 'SystemSettingsPage'),
+      element: SystemSettingsPage,
       module: 'admin',
       title: '系统设置',
       code: 'admin-system-settings',
       requiredPermissions: ['admin:system:write'],
       template: 'settings',
       group: 'settings',
-      nav: {
-        label: '系统设置',
-        icon: 'Settings2',
-        order: 3,
-        group: 'settings',
-        showInSidebar: true,
-        showInBreadcrumb: true,
-        description: '系统参数设置',
-      },
     },
     {
       path: '/admin/plugin',
-      element: lazyWithRetry(() => import('../../pages/admin/PluginManagementPage'), 'PluginManagementPage'),
+      element: PluginManagementPage,
       module: 'admin',
       title: '插件管理',
       code: 'admin-plugin',
       requiredPermissions: ['admin:plugin:read'],
       template: 'list',
       group: 'settings',
-      nav: {
-        label: '插件管理',
-        icon: 'Plugin',
-        order: 4,
-        group: 'settings',
-        showInSidebar: true,
-        showInBreadcrumb: true,
-        description: '系统插件管理',
-      },
     },
+
+    // ========== 运维工具 ==========
     {
       path: '/admin/database',
-      element: lazyWithRetry(() => import('../../pages/admin/DatabaseStructurePage'), 'DatabaseStructurePage'),
+      element: DatabaseStructurePage,
       module: 'admin',
       title: '数据库结构',
       code: 'admin-database',
       requiredPermissions: ['admin:database:read'],
       template: 'list',
-      group: 'settings',
-      nav: {
-        label: '数据库结构',
-        icon: 'Database',
-        order: 5,
-        group: 'settings',
-        showInSidebar: true,
-        showInBreadcrumb: true,
-        description: '数据库表结构',
-      },
+      group: 'tools',
     },
     {
       path: '/admin/migration',
-      element: lazyWithRetry(() => import('../../pages/admin/MigrationAdminPage'), 'MigrationAdminPage'),
+      element: MigrationAdminPage,
       module: 'admin',
       title: '数据迁移',
       code: 'admin-migration',
-      requiredPermissions: ['admin:migration:read'],
+      requiredPermissions: ['system:migration'],
       template: 'list',
-      group: 'settings',
-      nav: {
-        label: '数据迁移',
-        icon: 'ArrowRightLeft',
-        order: 6,
-        group: 'settings',
-        showInSidebar: true,
-        showInBreadcrumb: true,
-        description: '数据迁移管理',
-      },
+      group: 'tools',
     },
     {
       path: '/admin/config-debug',
-      element: lazyWithRetry(() => import('../../pages/admin/ConfigDebugPage'), 'ConfigDebugPage'),
+      element: ConfigDebugPage,
       module: 'admin',
       title: '配置调试',
       code: 'admin-config-debug',
       requiredPermissions: ['admin:debug:read'],
       template: 'settings',
-      group: 'settings',
-      nav: {
-        label: '配置调试',
-        icon: 'Bug',
-        order: 7,
-        group: 'settings',
-        showInSidebar: true,
-        showInBreadcrumb: true,
-        description: '系统配置调试',
-      },
+      group: 'tools',
     },
+
+    // ========== 监控审计 ==========
     {
       path: '/admin/audit-log',
-      element: lazyWithRetry(() => import('../../pages/admin/AuditLogPage'), 'AuditLogPage'),
+      element: AuditLogPage,
       module: 'admin',
       title: '审计日志',
       code: 'admin-audit-log',
       requiredPermissions: ['admin:audit:read'],
       template: 'list',
       group: 'analytics',
-      nav: {
-        label: '审计日志',
-        icon: 'FileSearch',
-        order: 1,
-        group: 'analytics',
-        showInSidebar: true,
-        showInBreadcrumb: true,
-        showInTabs: true,
-        description: '系统审计日志',
-      },
     },
     {
       path: '/admin/monitor',
-      element: lazyWithRetry(() => import('../../pages/admin/MonitorPage'), 'MonitorPage'),
+      element: MonitorPage,
       module: 'admin',
       title: '系统监控',
       code: 'admin-monitor',
       requiredPermissions: ['admin:monitor:read'],
       template: 'stats',
       group: 'analytics',
-      nav: {
-        label: '系统监控',
-        icon: 'Activity',
-        order: 2,
-        group: 'analytics',
-        showInSidebar: true,
-        showInBreadcrumb: true,
-        description: '系统状态监控',
-      },
     },
     {
       path: '/admin/performance',
-      element: lazyWithRetry(() => import('../../pages/admin/PerformanceMonitorPage'), 'PerformanceMonitorPage'),
+      element: PerformanceMonitorPage,
       module: 'admin',
       title: '性能监控',
       code: 'admin-performance',
       requiredPermissions: ['admin:monitor:read'],
       template: 'stats',
       group: 'analytics',
-      nav: {
-        label: '性能监控',
-        icon: 'Gauge',
-        order: 3,
-        group: 'analytics',
-        showInSidebar: true,
-        showInBreadcrumb: true,
-        description: '性能指标监控',
-      },
-    },
-    {
-      path: '/admin/company-structure',
-      element: lazyWithRetry(() => import('../../pages/admin/CompanyStructurePage'), 'CompanyStructurePage'),
-      module: 'admin',
-      title: '公司结构',
-      code: 'admin-company-structure',
-      requiredPermissions: ['admin:structure:read'],
-      template: 'list',
-      group: 'business',
-      nav: {
-        label: '公司结构',
-        icon: 'Network',
-        order: 7,
-        group: 'business',
-        showInSidebar: true,
-        showInBreadcrumb: true,
-        description: '公司组织结构',
-      },
-    },
-    {
-      path: '/admin/bank-account',
-      element: lazyWithRetry(() => import('../../pages/admin/BankAccountManagementPage'), 'BankAccountManagementPage'),
-      module: 'admin',
-      title: '银行账号',
-      code: 'admin-bank-account',
-      requiredPermissions: ['admin:bank-account:read'],
-      template: 'list',
-      group: 'business',
-      nav: {
-        label: '银行账号',
-        icon: 'CreditCard',
-        order: 8,
-        group: 'business',
-        showInSidebar: true,
-        showInBreadcrumb: true,
-        description: '银行账号管理',
-      },
     },
   ],
 };

@@ -468,7 +468,7 @@ const InboundPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -482,7 +482,7 @@ const InboundPage: React.FC = () => {
           {total}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -496,7 +496,7 @@ const InboundPage: React.FC = () => {
           {orders.filter((o) => o.status === 'pending').length}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'info.light', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'info.light', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -510,7 +510,7 @@ const InboundPage: React.FC = () => {
           {orders.filter((o) => o.status === 'receiving' || o.status === 'confirmed').length}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'success.light', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'success.light', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}

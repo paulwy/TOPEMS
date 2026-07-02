@@ -15,7 +15,7 @@ export const addressbookApi = {
   getContacts: async (
     params: AddressbookQueryParams
   ): Promise<ApiResponse<PaginatedResponse<AddressbookEntry>>> => {
-    const response = await apiClient.erp.get('/api/erp/addressbook', { params });
+    const response = await apiClient.erp.get('/addressbook', { params });
     return response;
   },
 
@@ -23,7 +23,7 @@ export const addressbookApi = {
     id: string,
     contactType: string
   ): Promise<ApiResponse<AddressbookDetail>> => {
-    const response = await apiClient.erp.get(`/api/erp/addressbook/${id}`, {
+    const response = await apiClient.erp.get(`/addressbook/${id}`, {
       params: { contact_type: contactType },
     });
     return response;
@@ -32,20 +32,20 @@ export const addressbookApi = {
   search: async (
     params: AddressbookSearchParams
   ): Promise<ApiResponse<Record<string, unknown>[]>> => {
-    const response = await apiClient.erp.get('/api/erp/addressbook/search', {
+    const response = await apiClient.erp.get('/addressbook/search', {
       params,
     });
     return response;
   },
 
   getDepartmentTree: async (): Promise<ApiResponse<DepartmentNode[]>> => {
-    const response = await apiClient.erp.get('/api/erp/addressbook/departments/tree');
+    const response = await apiClient.erp.get('/addressbook/departments/tree');
     return response;
   },
 
   exportContacts: async (params: ExportParams): Promise<Blob> => {
     const baseURL = (apiClient.erp as any).defaults?.baseURL || config.services.erp;
-    return downloadBlob(baseURL, '/api/erp/addressbook/export', {
+    return downloadBlob(baseURL, '/addressbook/export', {
       params: params as unknown as Record<string, unknown>,
     });
   },

@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { DashboardTemplate } from '@/components/templates';
 import type { StatCard, ChartCard, QuickAction, RecentItem } from '@/components/templates';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import BarChartComponent from '../../components/charts/BarChart';
 import LineChartComponent from '../../components/charts/LineChart';
 import PieChartComponent from '../../components/charts/PieChart';
@@ -253,14 +253,14 @@ const FinanceDashboardPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='财务管理'
+      title='财务仪表盘'
       padding={false}
       maxWidth={false}
+      autoTitle
+      autoBreadcrumbs
     >
       <DashboardTemplate
         title=''
-        subtitle=''
-        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '财务' }]}
         stats={stats}
         charts={charts}
         recentItems={recentItems}

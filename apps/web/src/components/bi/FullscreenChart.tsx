@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X, Maximize2, Minimize2, ZoomIn, ZoomOut } from 'lucide-react';
-import { Typography, Box, Button } from '@mui/material';
+import {Typography, Box, Button, useTheme} from '@mui/material';
 
 interface FullscreenChartProps {
   children: React.ReactNode;
@@ -9,6 +9,7 @@ interface FullscreenChartProps {
 }
 
 export const FullscreenChart = ({ children, title, onClose }: FullscreenChartProps) => {
+  const theme = useTheme();
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [scale, setScale] = useState(1);
 
@@ -62,7 +63,7 @@ export const FullscreenChart = ({ children, title, onClose }: FullscreenChartPro
           onMouseLeave={(e) => (e.currentTarget.style.opacity = '0')}
           title='全屏查看'
         >
-          <Maximize2 style={{ width: 16, height: 16, color: 'text.secondary' }} />
+          <Maximize2 style={{ width: 16, height: 16, color: theme.palette.text.secondary }} />
         </button>
       </div>
     );

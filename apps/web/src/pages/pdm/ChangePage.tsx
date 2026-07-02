@@ -25,7 +25,7 @@ import {
   type RowAction,
   type FilterConfig,
 } from '@/components/templates';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 
 interface ChangeOrderFormData {
   change_no: string;
@@ -349,7 +349,7 @@ export const ChangePage: React.FC = () => {
         <Box
           sx={{
             p: 2,
-            borderRadius: 2,
+            borderRadius: 3,
             bgcolor: 'background.paper',
             border: 1,
             borderColor: 'divider',
@@ -365,7 +365,7 @@ export const ChangePage: React.FC = () => {
         <Box
           sx={{
             p: 2,
-            borderRadius: 2,
+            borderRadius: 3,
             bgcolor: 'background.paper',
             border: 1,
             borderColor: 'divider',
@@ -381,7 +381,7 @@ export const ChangePage: React.FC = () => {
         <Box
           sx={{
             p: 2,
-            borderRadius: 2,
+            borderRadius: 3,
             bgcolor: 'background.paper',
             border: 1,
             borderColor: 'divider',
@@ -398,8 +398,6 @@ export const ChangePage: React.FC = () => {
 
   return (
     <PageContainer
-      title='变更管理'
-      subtitle='管理产品数据变更请求和审批流程'
       headerProps={{
         pageIcon: <FileWarning style={{ width: 20, height: 20 }} />,
         pageGradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',

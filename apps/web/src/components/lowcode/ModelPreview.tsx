@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Box,
+import {Box,
   Table,
   TableBody,
   TableCell,
@@ -14,8 +13,7 @@ import {
   Tooltip,
   Typography,
   Switch,
-  FormControlLabel,
-} from '@mui/material';
+  FormControlLabel, useTheme} from '@mui/material';
 import { RefreshCw, Eye, Pencil } from 'lucide-react';
 import type { ModelField, DataModel } from '../../api/lowcode/types';
 import { getDataPreview } from '../../api/lowcode/dataModel';
@@ -27,6 +25,7 @@ interface ModelPreviewProps {
 
 export const ModelPreview: React.FC<ModelPreviewProps> = ({ modelId, model }) => {
   const [data, setData] = useState<Record<string, unknown>[]>([]);
+  const theme = useTheme();
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
@@ -67,7 +66,7 @@ export const ModelPreview: React.FC<ModelPreviewProps> = ({ modelId, model }) =>
 
   const renderValue = (field: ModelField, value: unknown) => {
     if (value === null || value === undefined) {
-      return <span style={{ color: 'text.secondary', opacity: 0.5 }}>-</span>;
+      return <span style={{ color: theme.palette.text.secondary, opacity: 0.5 }}>-</span>;
     }
 
     switch (field.type) {

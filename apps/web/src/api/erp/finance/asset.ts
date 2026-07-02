@@ -19,23 +19,23 @@ export const assetApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/erp/assets${queryString ? `?${queryString}` : ''}`);
+    return apiClient.erp.get(`/assets${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<Asset>> {
-    return apiClient.erp.get(`/api/erp/assets/${id}`);
+    return apiClient.erp.get(`/assets/${id}`);
   },
 
   async create(data: Partial<Asset>): Promise<ApiResponse<Asset>> {
-    return apiClient.erp.post('/api/erp/assets', cleanEmptyUuids(data));
+    return apiClient.erp.post('/assets', cleanEmptyUuids(data));
   },
 
   async update(id: string, data: Partial<Asset>): Promise<ApiResponse<Asset>> {
-    return apiClient.erp.put(`/api/erp/assets/${id}`, cleanEmptyUuids(data));
+    return apiClient.erp.put(`/assets/${id}`, cleanEmptyUuids(data));
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/erp/assets/${id}`);
+    return apiClient.erp.delete(`/assets/${id}`);
   },
 };
 
@@ -51,26 +51,26 @@ export const fixedAssetApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/erp/fixed-assets${queryString ? `?${queryString}` : ''}`);
+    return apiClient.erp.get(`/fixed-assets${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<FixedAsset>> {
-    return apiClient.erp.get(`/api/erp/fixed-assets/${id}`);
+    return apiClient.erp.get(`/fixed-assets/${id}`);
   },
 
   async create(data: Partial<FixedAsset>): Promise<ApiResponse<FixedAsset>> {
-    return apiClient.erp.post('/api/erp/fixed-assets', data);
+    return apiClient.erp.post('/fixed-assets', data);
   },
 
   async update(id: string, data: Partial<FixedAsset>): Promise<ApiResponse<FixedAsset>> {
-    return apiClient.erp.put(`/api/erp/fixed-assets/${id}`, data);
+    return apiClient.erp.put(`/fixed-assets/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/erp/fixed-assets/${id}`);
+    return apiClient.erp.delete(`/fixed-assets/${id}`);
   },
 
   async depreciate(data: DepreciateRequest): Promise<ApiResponse<DepreciationResult>> {
-    return apiClient.erp.post('/api/erp/fixed-assets/depreciate', data);
+    return apiClient.erp.post('/fixed-assets/depreciate', data);
   },
 };

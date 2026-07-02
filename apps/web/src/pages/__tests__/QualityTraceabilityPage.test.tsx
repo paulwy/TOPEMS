@@ -19,17 +19,19 @@ vi.mock('@/api/mes', () => ({
 
 vi.mock('@/store', () => ({
   useAppStore: vi.fn((selector?: any) =>
-    selector ? selector({
-      addNotification: vi.fn(),
-      notifications: [],
-      user: null,
-      theme: 'light',
-    }) : {
-      addNotification: vi.fn(),
-      notifications: [],
-      user: null,
-      theme: 'light',
-    }
+    selector
+      ? selector({
+          addNotification: vi.fn(),
+          notifications: [],
+          user: null,
+          theme: 'light',
+        })
+      : {
+          addNotification: vi.fn(),
+          notifications: [],
+          user: null,
+          theme: 'light',
+        }
   ),
 }));
 

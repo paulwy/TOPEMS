@@ -505,7 +505,7 @@ const DataExport: React.FC<DataExportProps> = ({
                 overflow: 'auto',
                 border: '1px solid',
                 borderColor: 'divider',
-                borderRadius: 2,
+                borderRadius: 3,
                 '& .MuiListItem-root': {
                   borderBottom: '1px solid',
                   borderColor: 'divider',

@@ -1,5 +1,6 @@
 // modules/MapModule/MapView.tsx
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import { useTheme } from '@mui/material';
 import {
   MapContainer,
   TileLayer,
@@ -221,20 +222,20 @@ const DetailsPanel: React.FC<{
           <div
             style={{
               fontSize: '0.875rem',
-              color: 'text.secondary',
+              color: theme.palette.text.secondary,
               marginBottom: '0.25rem',
             }}
           >
             名称
           </div>
-          <div style={{ fontWeight: 500, color: 'text.primary' }}>{selectedItem.name}</div>
+          <div style={{ fontWeight: 500, color: theme.palette.text.primary }}>{selectedItem.name}</div>
         </div>
         {'device_type' in selectedItem && (
           <div style={{ marginBottom: '1rem' }}>
             <div
               style={{
                 fontSize: '0.875rem',
-                color: 'text.secondary',
+                color: theme.palette.text.secondary,
                 marginBottom: '0.25rem',
               }}
             >
@@ -248,7 +249,7 @@ const DetailsPanel: React.FC<{
             <div
               style={{
                 fontSize: '0.875rem',
-                color: 'text.secondary',
+                color: theme.palette.text.secondary,
                 marginBottom: '0.25rem',
               }}
             >
@@ -262,7 +263,7 @@ const DetailsPanel: React.FC<{
             <div
               style={{
                 fontSize: '0.875rem',
-                color: 'text.secondary',
+                color: theme.palette.text.secondary,
                 marginBottom: '0.25rem',
               }}
             >
@@ -286,7 +287,7 @@ const DetailsPanel: React.FC<{
             <div
               style={{
                 fontSize: '0.875rem',
-                color: 'text.secondary',
+                color: theme.palette.text.secondary,
                 marginBottom: '0.25rem',
               }}
             >
@@ -300,7 +301,7 @@ const DetailsPanel: React.FC<{
             <div
               style={{
                 fontSize: '0.875rem',
-                color: 'text.secondary',
+                color: theme.palette.text.secondary,
                 marginBottom: '0.25rem',
               }}
             >
@@ -314,13 +315,13 @@ const DetailsPanel: React.FC<{
             <div
               style={{
                 fontSize: '0.875rem',
-                color: 'text.secondary',
+                color: theme.palette.text.secondary,
                 marginBottom: '0.25rem',
               }}
             >
               描述
             </div>
-            <div style={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+            <div style={{ color: theme.palette.text.secondary, fontSize: '0.875rem' }}>
               {selectedItem.description}
             </div>
           </div>
@@ -334,7 +335,7 @@ const DetailsPanel: React.FC<{
           <div
             style={{
               fontSize: '0.875rem',
-              color: 'text.secondary',
+              color: theme.palette.text.secondary,
               marginBottom: '0.25rem',
             }}
           >
@@ -364,6 +365,7 @@ const MapView: React.FC<MapViewProps> = ({
 }) => {
   // State
   const [mapCenter] = useState<[number, number]>([39.9, 116.4]); // 北京
+  const theme = useTheme();
   const [zoom, setZoom] = useState(10); // 在离线瓦片范围内
   const [selectedItem, setSelectedItem] = useState<DevicePoint | StorageLocation | null>(null);
   const [showDetailsPanel, setShowDetailsPanel] = useState(false);
@@ -699,8 +701,8 @@ const MapView: React.FC<MapViewProps> = ({
                         minWidth: '120px',
                       }}
                     >
-                      <div style={{ fontWeight: 500, color: 'text.primary' }}>{pipeline.name}</div>
-                      <div style={{ fontSize: '0.875rem', color: 'text.secondary' }}>
+                      <div style={{ fontWeight: 500, color: theme.palette.text.primary }}>{pipeline.name}</div>
+                      <div style={{ fontSize: '0.875rem', color: theme.palette.text.secondary }}>
                         {pipeline.pipeline_type}
                       </div>
                     </div>
@@ -738,14 +740,14 @@ const MapView: React.FC<MapViewProps> = ({
                         style={{
                           width: '1.25rem',
                           height: '1.25rem',
-                          color: 'success.dark',
+                          color: theme.palette.success.dark,
                         }}
                       />
-                      <h4 style={{ fontWeight: 600, color: 'text.primary', margin: 0 }}>
+                      <h4 style={{ fontWeight: 600, color: theme.palette.text.primary, margin: 0 }}>
                         {point.name}
                       </h4>
                     </div>
-                    <div style={{ fontSize: '0.875rem', color: 'text.secondary' }}>
+                    <div style={{ fontSize: '0.875rem', color: theme.palette.text.secondary }}>
                       <div>类型: {point.device_type}</div>
                       <div>
                         状态:{' '}
@@ -767,7 +769,7 @@ const MapView: React.FC<MapViewProps> = ({
                       <div
                         style={{
                           fontSize: '0.875rem',
-                          color: 'text.secondary',
+                          color: theme.palette.text.secondary,
                           borderTop: '1px solid grey.200',
                           paddingTop: '0.5rem',
                           marginTop: '0.5rem',
@@ -833,14 +835,14 @@ const MapView: React.FC<MapViewProps> = ({
                         style={{
                           width: '1.25rem',
                           height: '1.25rem',
-                          color: 'warning.main',
+                          color: theme.palette.warning.main,
                         }}
                       />
-                      <h4 style={{ fontWeight: 600, color: 'text.primary', margin: 0 }}>
+                      <h4 style={{ fontWeight: 600, color: theme.palette.text.primary, margin: 0 }}>
                         {location.name}
                       </h4>
                     </div>
-                    <div style={{ fontSize: '0.875rem', color: 'text.secondary' }}>
+                    <div style={{ fontSize: '0.875rem', color: theme.palette.text.secondary }}>
                       <div>类型: {location.location_type}</div>
                       {location.capacity !== undefined && <div>容量: {location.capacity}</div>}
                       {location.current_usage !== undefined && (

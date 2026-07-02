@@ -3,11 +3,11 @@ import type { ProjectDocument, DocumentVersion, DocumentFolder } from './types';
 
 export const documentApi = {
   list: async (projectId: string) => {
-    return apiClient.pm.get(`/api/pm/projects/${projectId}/documents`);
+    return apiClient.pm.get(`/projects/${projectId}/documents`);
   },
 
   get: async (id: string) => {
-    return apiClient.pm.get(`/api/pm/documents/${id}`);
+    return apiClient.pm.get(`/documents/${id}`);
   },
 
   create: async (
@@ -24,7 +24,7 @@ export const documentApi = {
       created_by?: string;
     }
   ) => {
-    return apiClient.pm.post(`/api/pm/projects/${projectId}/documents`, data);
+    return apiClient.pm.post(`/projects/${projectId}/documents`, data);
   },
 
   update: async (
@@ -37,17 +37,17 @@ export const documentApi = {
       tags?: string[];
     }
   ) => {
-    return apiClient.pm.put(`/api/pm/documents/${id}`, data);
+    return apiClient.pm.put(`/documents/${id}`, data);
   },
 
   delete: async (id: string) => {
-    return apiClient.pm.delete(`/api/pm/documents/${id}`);
+    return apiClient.pm.delete(`/documents/${id}`);
   },
 };
 
 export const documentVersionApi = {
   list: async (documentId: string) => {
-    return apiClient.pm.get(`/api/pm/documents/${documentId}/versions`);
+    return apiClient.pm.get(`/documents/${documentId}/versions`);
   },
 
   create: async (
@@ -59,17 +59,17 @@ export const documentVersionApi = {
       created_by?: string;
     }
   ) => {
-    return apiClient.pm.post(`/api/pm/documents/${documentId}/versions`, data);
+    return apiClient.pm.post(`/documents/${documentId}/versions`, data);
   },
 };
 
 export const documentFolderApi = {
   list: async (projectId: string) => {
-    return apiClient.pm.get(`/api/pm/projects/${projectId}/folders`);
+    return apiClient.pm.get(`/projects/${projectId}/folders`);
   },
 
   get: async (id: string) => {
-    return apiClient.pm.get(`/api/pm/folders/${id}`);
+    return apiClient.pm.get(`/folders/${id}`);
   },
 
   create: async (
@@ -81,7 +81,7 @@ export const documentFolderApi = {
       created_by?: string;
     }
   ) => {
-    return apiClient.pm.post(`/api/pm/projects/${projectId}/folders`, data);
+    return apiClient.pm.post(`/projects/${projectId}/folders`, data);
   },
 
   update: async (
@@ -91,11 +91,11 @@ export const documentFolderApi = {
       description?: string;
     }
   ) => {
-    return apiClient.pm.put(`/api/pm/folders/${id}`, data);
+    return apiClient.pm.put(`/folders/${id}`, data);
   },
 
   delete: async (id: string) => {
-    return apiClient.pm.delete(`/api/pm/folders/${id}`);
+    return apiClient.pm.delete(`/folders/${id}`);
   },
 };
 

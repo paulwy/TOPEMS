@@ -49,7 +49,7 @@ const generateMockCustomers = (): Customer[] => {
   });
 };
 
-let mockCustomers = generateMockCustomers();
+const mockCustomers = generateMockCustomers();
 
 export const customerApi = {
   async list(params?: PaginationParams): Promise<
@@ -150,10 +150,7 @@ export const customerApi = {
     return createMockSuccessResponse(newCustomer, 201, '创建成功') as ApiResponse<Customer>;
   },
 
-  async update(
-    id: string,
-    data: UpdateCustomerRequest
-  ): Promise<ApiResponse<Customer>> {
+  async update(id: string, data: UpdateCustomerRequest): Promise<ApiResponse<Customer>> {
     const index = mockCustomers.findIndex((c) => c.id === id);
     if (index === -1) {
       return createMockErrorResponse('客户不存在', 404) as ApiResponse<Customer>;

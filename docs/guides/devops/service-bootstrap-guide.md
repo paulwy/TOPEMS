@@ -337,6 +337,46 @@ cargo run
 | **代码编译时间** | 长（200+行） | 短（20行） |
 | **维护时间** | 高 | 低 |
 
+## 📦 插件自动注册
+
+服务启动后会**自动向 unified-core 注册**，无需手动配置：
+
+### 注册流程
+
+```
+服务启动 → 调用注册接口 → unified-core 存储 → 前端获取插件列表
+```
+
+### 注册接口
+
+```bash
+POST /api/core/plugin/dev/plugins/{code}/register
+
+Body:
+{
+    "code": "erp",
+    "name": "ERP系统",
+    "description": "企业资源计划系统",
+    "version": "0.1.0",
+    "runtime_url": "http://localhost:8010",
+    "permissions": []
+}
+```
+
+### 验证注册
+
+```bash
+# 查看已注册插件
+curl -s http://localhost:8000/api/plugins/info | python3 -m json.tool
+```
+
+### 注意事项
+
+1. **注册接口为公共接口**：无需认证即可访问，已移到公共路由
+2. **unified-core 必须先启动**：其他服务依赖 unified-core 进行注册
+3. **注册失败不影响服务启动**：如果 unified-core 未运行，注册会跳过
+4. **重复注册安全**：同一服务多次注册不会导致数据重复
+
 ## 🎉 总结
 
 使用新的服务启动框架可以：
@@ -348,5 +388,6 @@ cargo run
 - ✅ 统一配置管理
 - ✅ 自动健康检查
 - ✅ 自动 CORS 配置
+- ✅ 自动插件注册
 
 **建议所有新服务都使用新框架，旧服务逐步迁移。**

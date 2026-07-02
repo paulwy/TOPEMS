@@ -106,7 +106,7 @@ export const logPermissionAccess = async (
       return;
     }
 
-    await apiClient.iam.post('/api/iam/access-logs', {
+    await apiClient.iam.post('/access-logs', {
       user_id: user.id,
       username: user.username,
       action,

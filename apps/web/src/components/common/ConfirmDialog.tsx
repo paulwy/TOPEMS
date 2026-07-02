@@ -188,7 +188,7 @@ const TYPE_CONFIG: Record<DialogType, { icon: LucideIcon; color: string; bgColor
  * />
  * ```
  */
-export default function ConfirmDialog({
+function ConfirmDialog({
   isOpen,
   onClose,
   onConfirm,
@@ -320,11 +320,14 @@ export default function ConfirmDialog({
       maxWidth={MAX_WIDTH_MAP[size]}
       PaperComponent={({ children: dialogChildren, ...paperProps }) => (
         <Box
-          component="div"
+          component='div'
           ref={paperRef}
           onMouseDown={handleMouseDown}
           {...paperProps}
-          sx={{ ...paperSx, ...((paperProps as Record<string, unknown>).sx as SxProps<Theme> || {}) }}
+          sx={{
+            ...paperSx,
+            ...(((paperProps as Record<string, unknown>).sx as SxProps<Theme>) || {}),
+          }}
         >
           {dialogChildren}
         </Box>
@@ -556,3 +559,5 @@ export const ConfirmationDialog: React.FC<Omit<ConfirmDialogConfig, 'type'>> = (
     type='confirm'
   />
 );
+
+export default React.memo(ConfirmDialog);

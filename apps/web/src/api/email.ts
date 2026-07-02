@@ -99,23 +99,21 @@ export const getEmailLogs = async (
   if (toEmail) {
     params.append('to_email', toEmail);
   }
-  return apiClient.notification.get<EmailLogListResponse>(
-    `/api/email/email-logs?${params.toString()}`
-  );
+  return apiClient.notification.get<EmailLogListResponse>(`/email/email-logs?${params.toString()}`);
 };
 
 export const resendEmail = async (
   id: string
 ): Promise<ApiResponse<{ id: string; status: string }>> => {
   return apiClient.notification.post<{ id: string; status: string }>(
-    `/api/email/email-logs/${id}/resend`
+    `/email/email-logs/${id}/resend`
   );
 };
 
 export const batchSendEmail = async (
   request: BatchSendEmailRequest
 ): Promise<ApiResponse<BatchSendEmailResponse>> => {
-  return apiClient.notification.post<BatchSendEmailResponse>('/api/email/batch-send', {
+  return apiClient.notification.post<BatchSendEmailResponse>('/email/batch-send', {
     to_emails: request.toEmails,
     cc_email: request.ccEmail,
     bcc_email: request.bccEmail,
@@ -127,19 +125,19 @@ export const batchSendEmail = async (
 };
 
 export const getEmailStats = async (): Promise<ApiResponse<EmailStatsResponse>> => {
-  return apiClient.notification.get<EmailStatsResponse>('/api/email/stats');
+  return apiClient.notification.get<EmailStatsResponse>('/email/stats');
 };
 
 export const getEmailLog = async (id: string): Promise<ApiResponse<EmailLog>> => {
-  return apiClient.notification.get<EmailLog>(`/api/email/email-logs/${id}`);
+  return apiClient.notification.get<EmailLog>(`/email/email-logs/${id}`);
 };
 
 export const deleteEmailLog = async (id: string): Promise<ApiResponse<string>> => {
-  return apiClient.notification.delete<string>(`/api/email/email-logs/${id}`);
+  return apiClient.notification.delete<string>(`/email/email-logs/${id}`);
 };
 
 export const sendEmail = async (request: SendEmailRequest): Promise<ApiResponse<EmailLog>> => {
-  return apiClient.notification.post<EmailLog>('/api/email/send', {
+  return apiClient.notification.post<EmailLog>('/email/send', {
     to_email: request.toEmail,
     cc_email: request.ccEmail,
     bcc_email: request.bccEmail,
@@ -153,7 +151,7 @@ export const sendEmail = async (request: SendEmailRequest): Promise<ApiResponse<
 export const sendEmailWithTemplate = async (
   request: SendEmailWithTemplateRequest
 ): Promise<ApiResponse<EmailLog>> => {
-  return apiClient.notification.post<EmailLog>('/api/email/send-with-template', {
+  return apiClient.notification.post<EmailLog>('/email/send-with-template', {
     to_email: request.toEmail,
     cc_email: request.ccEmail,
     bcc_email: request.bccEmail,
@@ -167,18 +165,18 @@ export const getEmailTemplates = async (): Promise<
   ApiResponse<{ items: EmailTemplate[]; total: number }>
 > => {
   return apiClient.notification.get<{ items: EmailTemplate[]; total: number }>(
-    '/api/email/email-templates'
+    '/email/email-templates'
   );
 };
 
 export const getEmailTemplate = async (id: string): Promise<ApiResponse<EmailTemplate>> => {
-  return apiClient.notification.get<EmailTemplate>(`/api/email/email-templates/${id}`);
+  return apiClient.notification.get<EmailTemplate>(`/email/email-templates/${id}`);
 };
 
 export const createEmailTemplate = async (
   template: Omit<EmailTemplate, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<ApiResponse<EmailTemplate>> => {
-  return apiClient.notification.post<EmailTemplate>('/api/email/email-templates', {
+  return apiClient.notification.post<EmailTemplate>('/email/email-templates', {
     template_name: template.templateName,
     subject: template.subject,
     body: template.body,
@@ -190,7 +188,7 @@ export const updateEmailTemplate = async (
   id: string,
   template: Omit<EmailTemplate, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<ApiResponse<EmailTemplate>> => {
-  return apiClient.notification.put<EmailTemplate>(`/api/email/email-templates/${id}`, {
+  return apiClient.notification.put<EmailTemplate>(`/email/email-templates/${id}`, {
     template_name: template.templateName,
     subject: template.subject,
     body: template.body,
@@ -199,5 +197,5 @@ export const updateEmailTemplate = async (
 };
 
 export const deleteEmailTemplate = async (id: string): Promise<ApiResponse<string>> => {
-  return apiClient.notification.delete<string>(`/api/email/email-templates/${id}`);
+  return apiClient.notification.delete<string>(`/email/email-templates/${id}`);
 };

@@ -4,8 +4,7 @@
  * 提供基类组件和多种特化组件，支持丰富的交互和动画效果
  */
 import React, { useEffect, useState, useRef } from 'react';
-import {
-  Box,
+import {Box,
   Typography,
   Card,
   CardHeader,
@@ -17,8 +16,7 @@ import {
   IconButton,
   Tooltip,
   LinearProgress,
-  Button,
-} from '@mui/material';
+  Button, useTheme} from '@mui/material';
 import {
   TrendingUp,
   TrendingDown,
@@ -379,6 +377,7 @@ export const StatCardBase: React.FC<StatCardBaseProps> = ({
   sx,
   children,
 }) => {
+  const theme = useTheme();
   const [displayValue, setDisplayValue] = useState(
     animate && typeof value === 'number' ? 0 : value
   );
@@ -796,6 +795,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   trendValue,
   sx,
 }) => {
+  const theme = useTheme();
   const [timeMenuAnchor, setTimeMenuAnchor] = useState<null | HTMLElement>(null);
   const [actionMenuAnchor, setActionMenuAnchor] = useState<null | HTMLElement>(null);
 
@@ -809,13 +809,13 @@ export const ChartCard: React.FC<ChartCardProps> = ({
   const getTrendIcon = () => {
     if (!trend || trend === 'stable') return null;
     return trend === 'up' ? (
-      <TrendingUp style={{ width: 16, height: 16, color: 'success.main' }} />
+      <TrendingUp style={{ width: 16, height: 16, color: theme.palette.success.main }} />
     ) : (
       <TrendingUp
         style={{
           width: 16,
           height: 16,
-          color: 'error.main',
+          color: theme.palette.error.main,
           transform: 'rotate(180deg)',
         }}
       />
@@ -963,7 +963,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                 mb: 2,
               }}
             >
-              <AlertCircle style={{ width: 24, height: 24, color: 'error.main' }} />
+              <AlertCircle style={{ width: 24, height: 24, color: theme.palette.error.main }} />
             </Box>
             <Typography
               variant='body1'

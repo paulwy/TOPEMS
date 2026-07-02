@@ -58,15 +58,13 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
   const sidebarCollapsed = useAppStore((state) => state.sidebarCollapsed);
   const toggleSidebarCollapsed = useAppStore((state) => state.toggleSidebarCollapsed);
 
-  const isTabletOnly = useMediaQuery(theme.breakpoints.between('sm', 'lg'));
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  // 响应式断点：优化计划要求 < 900px 折叠，< 768px 隐藏为 overlay
+  // md = 900px，自定义 tablet = 768px
+  const isMobile = useMediaQuery('(max-width:767px)'); // < 768px
+  const isTabletCollapsed = useMediaQuery('(min-width:768px) and (max-width:899px)'); // 768px - 900px 自动折叠
+  const shouldShowSidebar = useMediaQuery('(min-width:768px)'); // ≥ 768px 显示 Sidebar
 
-  const [tabletDrawerOpen, setTabletDrawerOpen] = useState(false);
-
-  useEffect(() => {
-    setTabletDrawerOpen(false);
-  }, [location.pathname]);
-
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [_topNavItems, setTopNavItems] = useState<NavItem[]>(() => {
     return navigationRegistryV2.getTopNavItems(checkPermission);
   });
@@ -81,7 +79,6 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
     };
   }, [checkPermission]);
 
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
@@ -206,8 +203,6 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
       <SkipToContent />
 
       <AppHeader
-        tabletDrawerOpen={tabletDrawerOpen}
-        onTabletDrawerOpen={() => setTabletDrawerOpen(true)}
         mobileMenuOpen={mobileMenuOpen}
         onMobileMenuOpen={() => setMobileMenuOpen(true)}
         onMobileMenuClose={() => setMobileMenuOpen(false)}
@@ -216,31 +211,21 @@ export const GlobalLayout: React.FC<GlobalLayoutProps> = ({ children }) => {
       />
 
       <Box sx={{ display: 'flex', flexDirection: 'row', flex: 1 }}>
-        <AppSidebar
-          collapsed={sidebarCollapsed}
-          onToggleCollapse={toggleSidebarCollapsed}
-        />
+        {/* Sidebar：≥ 768px 显示，768-900px 自动折叠为图标栏 */}
+        {shouldShowSidebar && (
+          <AppSidebar
+            collapsed={isTabletCollapsed || sidebarCollapsed}
+            onToggleCollapse={toggleSidebarCollapsed}
+          />
+        )}
 
-        {isTabletOnly && (
-          <Drawer
-            anchor='left'
-            open={tabletDrawerOpen}
-            onClose={() => setTabletDrawerOpen(false)}
-            sx={{
-              '& .MuiDrawer-paper': {
-                width: 240,
-                borderRight: '1px solid',
-                borderColor: 'divider',
-                bgcolor: 'background.paper',
-              },
-            }}
-          >
-            <AppSidebar
-              collapsed={false}
-              onToggleCollapse={() => {}}
-              forceVisible
-            />
-          </Drawer>
+        {/* < 768px 使用 MobileNav overlay */}
+        {isMobile && (
+          <MobileNav
+            open={mobileMenuOpen}
+            onClose={() => setMobileMenuOpen(false)}
+            onOpen={() => setMobileMenuOpen(true)}
+          />
         )}
 
         <Box

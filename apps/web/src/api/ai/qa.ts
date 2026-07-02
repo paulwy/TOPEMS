@@ -4,7 +4,7 @@ import type { DocumentQAAnswer, DocumentQAQuestionRequest, QAHistoryItem } from 
 
 export const qaApi = {
   documentQA: async (data: DocumentQAQuestionRequest): Promise<ApiResponse<DocumentQAAnswer>> => {
-    return apiClient.ai.post<DocumentQAAnswer>('/api/v1/documents/qa', data);
+    return apiClient.ai.post<DocumentQAAnswer>('/v1/documents/qa', data);
   },
 
   ask: async (data: {
@@ -22,7 +22,7 @@ export const qaApi = {
       confidence: number;
     }>
   > => {
-    return apiClient.ai.post('/api/ai/qa/ask', data);
+    return apiClient.ai.post('/qa/ask', data);
   },
 
   askWithContext: async (data: {
@@ -41,7 +41,7 @@ export const qaApi = {
       confidence: number;
     }>
   > => {
-    return apiClient.ai.post('/api/ai/qa/ask-with-context', data);
+    return apiClient.ai.post('/qa/ask-with-context', data);
   },
 
   askStructured: async (data: {
@@ -57,7 +57,7 @@ export const qaApi = {
       follow_up_questions: string[];
     }>
   > => {
-    return apiClient.ai.post('/api/ai/qa/ask-structured', data);
+    return apiClient.ai.post('/qa/ask-structured', data);
   },
 
   askConversation: async (data: {
@@ -77,13 +77,13 @@ export const qaApi = {
       confidence: number;
     }>
   > => {
-    return apiClient.ai.post('/api/ai/qa/ask-conversation', data);
+    return apiClient.ai.post('/qa/ask-conversation', data);
   },
 
   classifyQuestion: async (data: {
     question: string;
   }): Promise<ApiResponse<{ question_type: string }>> => {
-    return apiClient.ai.post('/api/ai/qa/classify', data);
+    return apiClient.ai.post('/qa/classify', data);
   },
 
   getQAHistory: async (params?: {
@@ -97,17 +97,17 @@ export const qaApi = {
     if (params?.query) searchParams.set('query', params.query);
 
     const queryString = searchParams.toString();
-    return apiClient.ai.get(`/api/ai/qa/history${queryString ? `?${queryString}` : ''}`);
+    return apiClient.ai.get(`/qa/history${queryString ? `?${queryString}` : ''}`);
   },
 
   deleteQAHistory: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.ai.delete(`/api/ai/qa/history/${id}`);
+    return apiClient.ai.delete(`/qa/history/${id}`);
   },
 
   batchDeleteQAHistory: async (
     ids: string[]
   ): Promise<ApiResponse<{ deleted_count: number; message: string }>> => {
-    return apiClient.ai.post('/api/ai/qa/history/batch-delete', { ids });
+    return apiClient.ai.post('/qa/history/batch-delete', { ids });
   },
 
   submitFeedback: async (data: {
@@ -115,6 +115,6 @@ export const qaApi = {
     feedback: string;
     rating?: number;
   }): Promise<ApiResponse<{ qa_id: string; message: string }>> => {
-    return apiClient.ai.post('/api/ai/qa/feedback', data);
+    return apiClient.ai.post('/qa/feedback', data);
   },
 };

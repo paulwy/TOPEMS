@@ -35,29 +35,29 @@ export const occupationalHealthApi = {
     if (params?.status) queryParams.append('status', params.status);
 
     return apiClient.ehs.get<PaginatedResponse<HealthRecord>>(
-      `/api/ehs/occupational-health/records?${queryParams.toString()}`
+      `/occupational-health/records?${queryParams.toString()}`
     );
   },
 
   getHealthRecord: async (id: string): Promise<ApiResponse<HealthRecord>> => {
-    return apiClient.ehs.get<HealthRecord>(`/api/ehs/occupational-health/records/${id}`);
+    return apiClient.ehs.get<HealthRecord>(`/occupational-health/records/${id}`);
   },
 
   createHealthRecord: async (
     data: CreateHealthRecordRequest
   ): Promise<ApiResponse<HealthRecord>> => {
-    return apiClient.ehs.post<HealthRecord>('/api/ehs/occupational-health/records', data);
+    return apiClient.ehs.post<HealthRecord>('/occupational-health/records', data);
   },
 
   updateHealthRecord: async (
     id: string,
     data: Partial<UpdateHealthRecordRequest>
   ): Promise<ApiResponse<HealthRecord>> => {
-    return apiClient.ehs.put<HealthRecord>(`/api/ehs/occupational-health/records/${id}`, data);
+    return apiClient.ehs.put<HealthRecord>(`/occupational-health/records/${id}`, data);
   },
 
   deleteHealthRecord: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(`/api/ehs/occupational-health/records/${id}`);
+    return apiClient.ehs.delete<void>(`/occupational-health/records/${id}`);
   },
 
   listHealthCheckPlans: async (
@@ -72,32 +72,29 @@ export const occupationalHealthApi = {
     if (params?.status) queryParams.append('status', params.status);
 
     return apiClient.ehs.get<PaginatedResponse<HealthCheckPlan>>(
-      `/api/ehs/occupational-health/check-plans?${queryParams.toString()}`
+      `/occupational-health/check-plans?${queryParams.toString()}`
     );
   },
 
   getHealthCheckPlan: async (id: string): Promise<ApiResponse<HealthCheckPlan>> => {
-    return apiClient.ehs.get<HealthCheckPlan>(`/api/ehs/occupational-health/check-plans/${id}`);
+    return apiClient.ehs.get<HealthCheckPlan>(`/occupational-health/check-plans/${id}`);
   },
 
   createHealthCheckPlan: async (
     data: CreateHealthCheckPlanRequest
   ): Promise<ApiResponse<HealthCheckPlan>> => {
-    return apiClient.ehs.post<HealthCheckPlan>('/api/ehs/occupational-health/check-plans', data);
+    return apiClient.ehs.post<HealthCheckPlan>('/occupational-health/check-plans', data);
   },
 
   updateHealthCheckPlan: async (
     id: string,
     data: Partial<UpdateHealthCheckPlanRequest>
   ): Promise<ApiResponse<HealthCheckPlan>> => {
-    return apiClient.ehs.put<HealthCheckPlan>(
-      `/api/ehs/occupational-health/check-plans/${id}`,
-      data
-    );
+    return apiClient.ehs.put<HealthCheckPlan>(`/occupational-health/check-plans/${id}`, data);
   },
 
   deleteHealthCheckPlan: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(`/api/ehs/occupational-health/check-plans/${id}`);
+    return apiClient.ehs.delete<void>(`/occupational-health/check-plans/${id}`);
   },
 
   listHealthCheckRecords: async (
@@ -114,35 +111,29 @@ export const occupationalHealthApi = {
     if (params?.end_date) queryParams.append('end_date', params.end_date);
 
     return apiClient.ehs.get<PaginatedResponse<HealthCheckRecord>>(
-      `/api/ehs/occupational-health/check-records?${queryParams.toString()}`
+      `/occupational-health/check-records?${queryParams.toString()}`
     );
   },
 
   getHealthCheckRecord: async (id: string): Promise<ApiResponse<HealthCheckRecord>> => {
-    return apiClient.ehs.get<HealthCheckRecord>(`/api/ehs/occupational-health/check-records/${id}`);
+    return apiClient.ehs.get<HealthCheckRecord>(`/occupational-health/check-records/${id}`);
   },
 
   createHealthCheckRecord: async (
     data: CreateHealthCheckRecordRequest
   ): Promise<ApiResponse<HealthCheckRecord>> => {
-    return apiClient.ehs.post<HealthCheckRecord>(
-      '/api/ehs/occupational-health/check-records',
-      data
-    );
+    return apiClient.ehs.post<HealthCheckRecord>('/occupational-health/check-records', data);
   },
 
   updateHealthCheckRecord: async (
     id: string,
     data: Partial<UpdateHealthCheckRecordRequest>
   ): Promise<ApiResponse<HealthCheckRecord>> => {
-    return apiClient.ehs.put<HealthCheckRecord>(
-      `/api/ehs/occupational-health/check-records/${id}`,
-      data
-    );
+    return apiClient.ehs.put<HealthCheckRecord>(`/occupational-health/check-records/${id}`, data);
   },
 
   deleteHealthCheckRecord: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(`/api/ehs/occupational-health/check-records/${id}`);
+    return apiClient.ehs.delete<void>(`/occupational-health/check-records/${id}`);
   },
 
   listContraindications: async (
@@ -157,23 +148,18 @@ export const occupationalHealthApi = {
     if (params?.hazard_factor) queryParams.append('hazard_factor', params.hazard_factor);
 
     return apiClient.ehs.get<PaginatedResponse<Contraindication>>(
-      `/api/ehs/occupational-health/contraindications?${queryParams.toString()}`
+      `/occupational-health/contraindications?${queryParams.toString()}`
     );
   },
 
   getContraindication: async (id: string): Promise<ApiResponse<Contraindication>> => {
-    return apiClient.ehs.get<Contraindication>(
-      `/api/ehs/occupational-health/contraindications/${id}`
-    );
+    return apiClient.ehs.get<Contraindication>(`/occupational-health/contraindications/${id}`);
   },
 
   createContraindication: async (
     data: CreateContraindicationRequest
   ): Promise<ApiResponse<Contraindication>> => {
-    return apiClient.ehs.post<Contraindication>(
-      '/api/ehs/occupational-health/contraindications',
-      data
-    );
+    return apiClient.ehs.post<Contraindication>('/occupational-health/contraindications', data);
   },
 
   updateContraindication: async (
@@ -181,13 +167,13 @@ export const occupationalHealthApi = {
     data: Partial<UpdateContraindicationRequest>
   ): Promise<ApiResponse<Contraindication>> => {
     return apiClient.ehs.put<Contraindication>(
-      `/api/ehs/occupational-health/contraindications/${id}`,
+      `/occupational-health/contraindications/${id}`,
       data
     );
   },
 
   deleteContraindication: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(`/api/ehs/occupational-health/contraindications/${id}`);
+    return apiClient.ehs.delete<void>(`/occupational-health/contraindications/${id}`);
   },
 };
 

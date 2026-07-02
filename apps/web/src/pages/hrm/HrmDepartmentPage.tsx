@@ -351,7 +351,7 @@ const HrmDepartmentPage: React.FC = () => {
               mb: 3,
             }}
           >
-            <Box sx={{ bgcolor: 'grey.50', borderRadius: 2, p: 2 }}>
+            <Box sx={{ bgcolor: 'grey.50', borderRadius: 3, p: 2 }}>
               <Typography
                 variant='caption'
                 color='text.secondary'
@@ -365,7 +365,7 @@ const HrmDepartmentPage: React.FC = () => {
                 {employees.length}
               </Typography>
             </Box>
-            <Box sx={{ bgcolor: 'grey.50', borderRadius: 2, p: 2 }}>
+            <Box sx={{ bgcolor: 'grey.50', borderRadius: 3, p: 2 }}>
               <Typography
                 variant='caption'
                 color='text.secondary'
@@ -381,7 +381,7 @@ const HrmDepartmentPage: React.FC = () => {
                   : '无'}
               </Typography>
             </Box>
-            <Box sx={{ bgcolor: 'grey.50', borderRadius: 2, p: 2 }}>
+            <Box sx={{ bgcolor: 'grey.50', borderRadius: 3, p: 2 }}>
               <Typography
                 variant='caption'
                 color='text.secondary'
@@ -397,7 +397,7 @@ const HrmDepartmentPage: React.FC = () => {
                   : '无'}
               </Typography>
             </Box>
-            <Box sx={{ bgcolor: 'grey.50', borderRadius: 2, p: 2 }}>
+            <Box sx={{ bgcolor: 'grey.50', borderRadius: 3, p: 2 }}>
               <Typography
                 variant='caption'
                 color='text.secondary'
@@ -473,7 +473,7 @@ const HrmDepartmentPage: React.FC = () => {
                       gap: 2,
                       p: 2,
                       bgcolor: 'grey.50',
-                      borderRadius: 2,
+                      borderRadius: 3,
                       '&:hover': { bgcolor: 'grey.100' },
                     }}
                   >

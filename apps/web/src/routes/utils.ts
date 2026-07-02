@@ -36,6 +36,24 @@ export const lazyWithRetry = <T extends ComponentType<any>>(
   });
 };
 
+export const createSafeLazy = () => {
+  return <T extends ComponentType<any>>(
+    factory: () => Promise<{ default: T }>,
+    moduleName?: string
+  ): LazyExoticComponent<T> => {
+    return lazy(async () => {
+      try {
+        const result = await factory();
+        return result;
+      } catch (error: unknown) {
+        const err = error instanceof Error ? error : new Error(String(error));
+        logger.error(`[Safe Lazy] Failed to load component ${moduleName || 'unknown'}:`, err.message);
+        return { default: ErrorPage as unknown as T };
+      }
+    });
+  };
+};
+
 export interface RouteConfig {
   path: string;
   element: ReactElement | LazyExoticComponent<ComponentType<any>>;

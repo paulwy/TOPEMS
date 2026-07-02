@@ -22,7 +22,7 @@ import {
   type StatsStatCard,
 } from '@/components/templates';
 import { StatusBadge } from '@/components/common/StatusBadge';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import {
   Button,
   TextField,
@@ -425,6 +425,10 @@ const HrmAttendancePage: React.FC = () => {
     <PageContainer
       padding={false}
       maxWidth={false}
+      title='考勤管理'
+      subtitle='查看员工考勤记录和请假申请'
+      autoTitle
+      autoBreadcrumbs
     >
       {activeTab === 'statistics' ? (
         <StatsPageTemplate

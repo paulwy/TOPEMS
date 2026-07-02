@@ -569,7 +569,7 @@ const ReportPage: React.FC = () => {
           <Button
             onClick={() => navigate('/dashboard')}
             variant='contained'
-            sx={{ px: 3, py: 1, borderRadius: 2 }}
+            sx={{ px: 3, py: 1, borderRadius: 3 }}
           >
             返回首页
           </Button>
@@ -613,7 +613,7 @@ const ReportPage: React.FC = () => {
                   p: 1,
                   color: 'grey.600',
                   '&:hover': { bgcolor: 'grey.100' },
-                  borderRadius: 2,
+                  borderRadius: 3,
                 }}
               >
                 <X sx={{ width: 20, height: 20 }} />
@@ -624,7 +624,7 @@ const ReportPage: React.FC = () => {
                     width: 40,
                     height: 40,
                     bgcolor: 'linear-gradient(135deg, primary.main 0%, primary.light 100%)',
-                    borderRadius: 2,
+                    borderRadius: 3,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -654,7 +654,7 @@ const ReportPage: React.FC = () => {
                 onClick={() => setShowBuilder(true)}
                 variant='contained'
                 startIcon={<Plus sx={{ width: 16, height: 16 }} />}
-                sx={{ borderRadius: 2, textTransform: 'none' }}
+                sx={{ borderRadius: 3, textTransform: 'none' }}
               >
                 生成报表
               </Button>
@@ -671,7 +671,7 @@ const ReportPage: React.FC = () => {
             right: 16,
             zIndex: 50,
             p: 2,
-            borderRadius: 2,
+            borderRadius: 3,
             boxShadow: 2,
             bgcolor: notification.type === 'success' ? 'success.main' : 'error.main',
             color: 'white',
@@ -709,7 +709,7 @@ const ReportPage: React.FC = () => {
                 pl: 5,
                 '& .MuiOutlinedInput-root': {
                   bgcolor: 'background.paper',
-                  borderRadius: 2,
+                  borderRadius: 3,
                 },
               }}
             />
@@ -719,7 +719,7 @@ const ReportPage: React.FC = () => {
               value={filterModule}
               onChange={(e) => setFilterModule(e.target.value)}
               size='small'
-              sx={{ minWidth: 120, bgcolor: 'background.paper', borderRadius: 2 }}
+              sx={{ minWidth: 120, bgcolor: 'background.paper', borderRadius: 3 }}
             >
               <MenuItem value='all'>全部模块</MenuItem>
               {uniqueModules.map((module) => (
@@ -739,7 +739,7 @@ const ReportPage: React.FC = () => {
             sx={{
               display: 'inline-flex',
               bgcolor: 'background.paper',
-              borderRadius: 2,
+              borderRadius: 3,
               boxShadow: 1,
               p: 1,
             }}
@@ -810,7 +810,7 @@ const ReportPage: React.FC = () => {
                       width: 48,
                       height: 48,
                       bgcolor: 'primary.light',
-                      borderRadius: 2,
+                      borderRadius: 3,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -858,7 +858,7 @@ const ReportPage: React.FC = () => {
                       width: 48,
                       height: 48,
                       bgcolor: 'warning.light',
-                      borderRadius: 2,
+                      borderRadius: 3,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -906,7 +906,7 @@ const ReportPage: React.FC = () => {
                       width: 48,
                       height: 48,
                       bgcolor: 'info.light',
-                      borderRadius: 2,
+                      borderRadius: 3,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -954,7 +954,7 @@ const ReportPage: React.FC = () => {
                       width: 48,
                       height: 48,
                       bgcolor: 'success.light',
-                      borderRadius: 2,
+                      borderRadius: 3,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -998,7 +998,7 @@ const ReportPage: React.FC = () => {
                     <Button
                       onClick={() => setShowBuilder(true)}
                       variant='contained'
-                      sx={{ mt: 2, borderRadius: 2 }}
+                      sx={{ mt: 2, borderRadius: 3 }}
                     >
                       生成第一个报表
                     </Button>
@@ -1105,7 +1105,7 @@ const ReportPage: React.FC = () => {
                             sx={{
                               color: 'info.main',
                               '&:hover': { bgcolor: 'info.light' },
-                              borderRadius: 2,
+                              borderRadius: 3,
                             }}
                           >
                             查看
@@ -1117,7 +1117,7 @@ const ReportPage: React.FC = () => {
                             sx={{
                               color: 'success.main',
                               '&:hover': { bgcolor: 'success.light' },
-                              borderRadius: 2,
+                              borderRadius: 3,
                             }}
                           >
                             导出
@@ -1128,7 +1128,7 @@ const ReportPage: React.FC = () => {
                             sx={{
                               color: 'error.main',
                               '&:hover': { bgcolor: 'error.light' },
-                              borderRadius: 2,
+                              borderRadius: 3,
                               p: 1,
                               minWidth: 'auto',
                             }}
@@ -1163,7 +1163,7 @@ const ReportPage: React.FC = () => {
                 onClick={() => setShowCreateTemplateModal(true)}
                 variant='contained'
                 startIcon={<Plus sx={{ width: 16, height: 16 }} />}
-                sx={{ borderRadius: 2, textTransform: 'none' }}
+                sx={{ borderRadius: 3, textTransform: 'none' }}
               >
                 新增模板
               </Button>
@@ -1185,7 +1185,7 @@ const ReportPage: React.FC = () => {
                   <Button
                     onClick={() => setShowCreateTemplateModal(true)}
                     variant='contained'
-                    sx={{ mt: 2, borderRadius: 2 }}
+                    sx={{ mt: 2, borderRadius: 3 }}
                   >
                     创建第一个模板
                   </Button>
@@ -1271,7 +1271,7 @@ const ReportPage: React.FC = () => {
                             sx={{
                               color: 'primary.main',
                               '&:hover': { bgcolor: 'primary.light' },
-                              borderRadius: 2,
+                              borderRadius: 3,
                             }}
                           >
                             创建报表
@@ -1283,7 +1283,7 @@ const ReportPage: React.FC = () => {
                             sx={{
                               color: 'info.main',
                               '&:hover': { bgcolor: 'info.light' },
-                              borderRadius: 2,
+                              borderRadius: 3,
                             }}
                           >
                             编辑
@@ -1294,7 +1294,7 @@ const ReportPage: React.FC = () => {
                             sx={{
                               color: 'error.main',
                               '&:hover': { bgcolor: 'error.light' },
-                              borderRadius: 2,
+                              borderRadius: 3,
                               p: 1,
                               minWidth: 'auto',
                             }}

@@ -25,29 +25,29 @@ export const environmentApi = {
     if (params?.monitor_type) queryParams.append('monitor_type', params.monitor_type);
 
     return apiClient.ehs.get<PaginatedResponse<EnvironmentMonitor>>(
-      `/api/ehs/environment/monitors?${queryParams.toString()}`
+      `/environment/monitors?${queryParams.toString()}`
     );
   },
 
   getEnvironmentMonitor: async (id: string): Promise<ApiResponse<EnvironmentMonitor>> => {
-    return apiClient.ehs.get<EnvironmentMonitor>(`/api/ehs/environment/monitors/${id}`);
+    return apiClient.ehs.get<EnvironmentMonitor>(`/environment/monitors/${id}`);
   },
 
   createEnvironmentMonitor: async (
     data: CreateEnvironmentMonitorRequest
   ): Promise<ApiResponse<EnvironmentMonitor>> => {
-    return apiClient.ehs.post<EnvironmentMonitor>('/api/ehs/environment/monitors', data);
+    return apiClient.ehs.post<EnvironmentMonitor>('/environment/monitors', data);
   },
 
   updateEnvironmentMonitor: async (
     id: string,
     data: Partial<UpdateEnvironmentMonitorRequest>
   ): Promise<ApiResponse<EnvironmentMonitor>> => {
-    return apiClient.ehs.put<EnvironmentMonitor>(`/api/ehs/environment/monitors/${id}`, data);
+    return apiClient.ehs.put<EnvironmentMonitor>(`/environment/monitors/${id}`, data);
   },
 
   deleteEnvironmentMonitor: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(`/api/ehs/environment/monitors/${id}`);
+    return apiClient.ehs.delete<void>(`/environment/monitors/${id}`);
   },
 
   listEnvironmentIndicators: async (
@@ -60,7 +60,7 @@ export const environmentApi = {
     if (params?.status) queryParams.append('status', params.status);
 
     return apiClient.ehs.get<PaginatedResponse<EnvironmentIndicator>>(
-      `/api/ehs/environment/indicators?${queryParams.toString()}`
+      `/environment/indicators?${queryParams.toString()}`
     );
   },
 
@@ -78,20 +78,20 @@ export const environmentApi = {
     if (params?.end_date) queryParams.append('end_date', params.end_date);
 
     return apiClient.ehs.get<PaginatedResponse<EnvironmentMonitorRecord>>(
-      `/api/ehs/environment/records?${queryParams.toString()}`
+      `/environment/records?${queryParams.toString()}`
     );
   },
 
   getEnvironmentMonitorRecord: async (
     id: string
   ): Promise<ApiResponse<EnvironmentMonitorRecord>> => {
-    return apiClient.ehs.get<EnvironmentMonitorRecord>(`/api/ehs/environment/records/${id}`);
+    return apiClient.ehs.get<EnvironmentMonitorRecord>(`/environment/records/${id}`);
   },
 
   createEnvironmentMonitorRecord: async (
     data: CreateEnvironmentMonitorRecordRequest
   ): Promise<ApiResponse<EnvironmentMonitorRecord>> => {
-    return apiClient.ehs.post<EnvironmentMonitorRecord>('/api/ehs/environment/records', data);
+    return apiClient.ehs.post<EnvironmentMonitorRecord>('/environment/records', data);
   },
 };
 

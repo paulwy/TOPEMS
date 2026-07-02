@@ -20,7 +20,7 @@ import {
 import { Plus, Eye, Activity, FileText, Users, Heart } from 'lucide-react';
 import { ListPageTemplate } from '@/components';
 import type { ColumnDef, RowAction, FilterConfig } from '@/components';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import { ehsApi } from '@/api/ehs';
 import type { HealthRecord } from '@/api/ehs';
 import { useAppStore } from '@/store';
@@ -285,8 +285,6 @@ const HealthManagementPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='职业健康管理'
-      subtitle='Occupational Health Management'
       headerProps={{
         actions: headerActions,
         pageIcon: <Heart sx={{ width: 20, height: 20 }} />,
@@ -310,7 +308,7 @@ const HealthManagementPage: React.FC = () => {
                   width: 40,
                   height: 40,
                   bgcolor: 'pink.lighter',
-                  borderRadius: 2,
+                  borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -343,7 +341,7 @@ const HealthManagementPage: React.FC = () => {
                   width: 40,
                   height: 40,
                   bgcolor: 'success.lighter',
-                  borderRadius: 2,
+                  borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -376,7 +374,7 @@ const HealthManagementPage: React.FC = () => {
                   width: 40,
                   height: 40,
                   bgcolor: 'warning.lighter',
-                  borderRadius: 2,
+                  borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

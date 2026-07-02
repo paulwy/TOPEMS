@@ -171,7 +171,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
       <Box
         sx={{
           bgcolor: 'background.paper',
-          borderRadius: 2,
+          borderRadius: 3,
           width: '100%',
           maxWidth: 896,
           maxHeight: '90vh',
@@ -210,7 +210,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                 p: 1,
                 color: 'white',
                 '&:hover': { bgcolor: 'rgba(255,255,255,0.2)' },
-                borderRadius: 2,
+                borderRadius: 3,
                 minWidth: 'auto',
               }}
             >
@@ -270,7 +270,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                 error={!!errors.title}
                 sx={{
                   '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
+                    borderRadius: 3,
                     '&.Mui-error': { borderColor: 'error.main' },
                   },
                 }}
@@ -311,7 +311,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                   }))
                 }
                 placeholder='可选的报表描述信息'
-                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
               />
             </Box>
           </Box>
@@ -352,7 +352,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                   sx={{
                     p: 2,
                     border: 2,
-                    borderRadius: 2,
+                    borderRadius: 3,
                     cursor: 'pointer',
                     borderColor: formData.reportType === type.type ? 'primary.main' : 'grey.200',
                     bgcolor: formData.reportType === type.type ? 'primary.light' : 'transparent',
@@ -418,7 +418,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                       startDate: e.target.value,
                     }))
                   }
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
                 />
               </Box>
               <Box>
@@ -439,7 +439,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                       endDate: e.target.value,
                     }))
                   }
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 } }}
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3 } }}
                 />
               </Box>
             </Box>
@@ -528,7 +528,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                       alignItems: 'center',
                       p: 2,
                       border: 1,
-                      borderRadius: 2,
+                      borderRadius: 3,
                       borderColor: 'grey.200',
                       cursor: 'pointer',
                       '&:hover': { bgcolor: 'grey.50' },
@@ -595,7 +595,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                   sx={{
                     p: 2,
                     border: 2,
-                    borderRadius: 2,
+                    borderRadius: 3,
                     cursor: 'pointer',
                     borderColor: formData.format === format ? 'primary.main' : 'grey.200',
                     bgcolor: formData.format === format ? 'primary.light' : 'transparent',
@@ -689,7 +689,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                 disabled={submitting}
                 variant='outlined'
                 sx={{
-                  borderRadius: 2,
+                  borderRadius: 3,
                   borderColor: 'grey.300',
                   color: 'grey.700',
                   '&:hover': { bgcolor: 'grey.100' },
@@ -714,7 +714,7 @@ const ReportBuilder: React.FC<ReportBuilderProps> = ({ onClose, reportTypes, onS
                     <FileText sx={{ width: 16, height: 16 }} />
                   )
                 }
-                sx={{ borderRadius: 2 }}
+                sx={{ borderRadius: 3 }}
               >
                 {submitting ? '生成中...' : '生成报表'}
               </Button>

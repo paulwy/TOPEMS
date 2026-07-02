@@ -18,11 +18,7 @@ import {
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import type {
-  WorkOrder,
-  CreateWorkOrderRequest,
-  UpdateWorkOrderRequest,
-} from '@/api/mes';
+import type { WorkOrder, CreateWorkOrderRequest, UpdateWorkOrderRequest } from '@/api/mes';
 import { mesApi } from '@/api/mes';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -42,6 +38,7 @@ import {
   CheckCircle,
   XCircle,
   Clock,
+  FileText,
 } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 
@@ -209,10 +206,7 @@ const WorkOrderPage: React.FC = () => {
     e.preventDefault();
     try {
       if (selectedWorkOrder) {
-        await mesApi.workOrders.update(
-          selectedWorkOrder.id,
-          formData as UpdateWorkOrderRequest
-        );
+        await mesApi.workOrders.update(selectedWorkOrder.id, formData as UpdateWorkOrderRequest);
         addNotification({
           type: 'success',
           title: '更新成功',
@@ -369,9 +363,7 @@ const WorkOrderPage: React.FC = () => {
         id: 'planned_end_time',
         label: '计划结束',
         render: (row) =>
-          row.planned_end_time
-            ? new Date(row.planned_end_time).toLocaleDateString('zh-CN')
-            : '-',
+          row.planned_end_time ? new Date(row.planned_end_time).toLocaleDateString('zh-CN') : '-',
       },
       {
         id: 'status',
@@ -493,7 +485,7 @@ const WorkOrderPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -507,7 +499,7 @@ const WorkOrderPage: React.FC = () => {
           {stats.total}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -521,7 +513,7 @@ const WorkOrderPage: React.FC = () => {
           {stats.pending}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#dbeafe', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: '#dbeafe', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -535,7 +527,7 @@ const WorkOrderPage: React.FC = () => {
           {stats.in_progress}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -549,7 +541,7 @@ const WorkOrderPage: React.FC = () => {
           {stats.completed}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -570,6 +562,10 @@ const WorkOrderPage: React.FC = () => {
     <PageContainer
       title='工单管理'
       subtitle='管理生产工单信息,包括工单号、工序、工作站、班组、数量等'
+      headerProps={{
+        pageIcon: <FileText style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+      }}
     >
       <ListPageTemplate
         title=''
@@ -659,7 +655,10 @@ const WorkOrderPage: React.FC = () => {
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <InputLabel htmlFor='priority'>优先级</InputLabel>
-                <FormControl fullWidth size='small'>
+                <FormControl
+                  fullWidth
+                  size='small'
+                >
                   <Select
                     id='priority'
                     value={formData.priority || 'normal'}
@@ -678,9 +677,7 @@ const WorkOrderPage: React.FC = () => {
                   id='work_station_id'
                   size='small'
                   value={formData.work_station_id || ''}
-                  onChange={(e) =>
-                    setFormData({ ...formData, work_station_id: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, work_station_id: e.target.value })}
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>

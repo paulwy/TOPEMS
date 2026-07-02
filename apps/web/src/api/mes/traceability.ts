@@ -4,11 +4,11 @@ import type { PaginationParams, TraceChain, QualityRecord } from './types';
 
 export const traceabilityApi = {
   async forwardTraceability(orderId: string): Promise<ApiResponse<TraceChain>> {
-    return apiClient.mes.get(`/api/mes/traceability/forward/${orderId}`);
+    return apiClient.mes.get(`/traceability/forward/${orderId}`);
   },
 
   async backwardTraceability(batchNo: string): Promise<ApiResponse<TraceChain>> {
-    return apiClient.mes.get(`/api/mes/traceability/backward/${batchNo}`);
+    return apiClient.mes.get(`/traceability/backward/${batchNo}`);
   },
 
   async getTraceChain(params: {
@@ -20,7 +20,7 @@ export const traceabilityApi = {
     searchParams.set('identifier', params.identifier);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(`/api/mes/traceability/chain${queryString ? `?${queryString}` : ''}`);
+    return apiClient.mes.get(`/traceability/chain${queryString ? `?${queryString}` : ''}`);
   },
 
   async listQualityRecords(params?: PaginationParams): Promise<
@@ -39,7 +39,7 @@ export const traceabilityApi = {
 
     const queryString = searchParams.toString();
     return apiClient.mes.get(
-      `/api/mes/traceability/quality-records${queryString ? `?${queryString}` : ''}`
+      `/traceability/quality-records${queryString ? `?${queryString}` : ''}`
     );
   },
 };

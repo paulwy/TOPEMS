@@ -103,23 +103,23 @@ export const dictTypeApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/system/dict-types${queryString ? `?${queryString}` : ''}`);
+    return apiClient.erp.get(`/system/dict-types${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<DictType>> {
-    return apiClient.erp.get(`/api/system/dict-types/${id}`);
+    return apiClient.erp.get(`/system/dict-types/${id}`);
   },
 
   async create(data: Partial<DictType>): Promise<ApiResponse<DictType>> {
-    return apiClient.erp.post('/api/system/dict-types', data);
+    return apiClient.erp.post('/system/dict-types', data);
   },
 
   async update(id: string, data: Partial<DictType>): Promise<ApiResponse<DictType>> {
-    return apiClient.erp.put(`/api/system/dict-types/${id}`, data);
+    return apiClient.erp.put(`/system/dict-types/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/system/dict-types/${id}`);
+    return apiClient.erp.delete(`/system/dict-types/${id}`);
   },
 };
 
@@ -148,32 +148,32 @@ export const dictItemApi = {
 
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/system/dict-types/${dictTypeId}/items${queryString ? `?${queryString}` : ''}`
+      `/system/dict-types/${dictTypeId}/items${queryString ? `?${queryString}` : ''}`
     );
   },
 
   async get(id: string): Promise<ApiResponse<DictItem>> {
-    return apiClient.erp.get(`/api/system/dict-items/${id}`);
+    return apiClient.erp.get(`/system/dict-items/${id}`);
   },
 
   async create(data: Partial<DictItem>): Promise<ApiResponse<DictItem>> {
-    return apiClient.erp.post('/api/system/dict-items', data);
+    return apiClient.erp.post('/system/dict-items', data);
   },
 
   async update(id: string, data: Partial<DictItem>): Promise<ApiResponse<DictItem>> {
-    return apiClient.erp.put(`/api/system/dict-items/${id}`, data);
+    return apiClient.erp.put(`/system/dict-items/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/system/dict-items/${id}`);
+    return apiClient.erp.delete(`/system/dict-items/${id}`);
   },
 
   async batchCreate(data: BatchCreateDictItemRequest): Promise<ApiResponse<DictItem[]>> {
-    return apiClient.erp.post('/api/system/dict-items/batch', data);
+    return apiClient.erp.post('/system/dict-items/batch', data);
   },
 
   async export(dictTypeId: string): Promise<string> {
-    const response = await apiClient.erp.get(`/api/system/dict-types/${dictTypeId}/items/export`, {
+    const response = await apiClient.erp.get(`/system/dict-types/${dictTypeId}/items/export`, {
       responseType: 'text',
     });
     return response.data;
@@ -190,25 +190,25 @@ export const dbStructureApi = {
     if (params?.search) searchParams.set('search', params.search);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/system/db/tables${queryString ? `?${queryString}` : ''}`);
+    return apiClient.erp.get(`/system/db/tables${queryString ? `?${queryString}` : ''}`);
   },
 
   async getTableDetail(tableName: string): Promise<ApiResponse<TableDetail>> {
-    return apiClient.erp.get(`/api/system/db/tables/${tableName}`);
+    return apiClient.erp.get(`/system/db/tables/${tableName}`);
   },
 
   async previewAddColumn(data: {
     table_name: string;
     column: DbColumnDefinition;
   }): Promise<ApiResponse<SqlPreview>> {
-    return apiClient.erp.post('/api/system/db/columns/preview', data);
+    return apiClient.erp.post('/system/db/columns/preview', data);
   },
 
   async addColumn(data: {
     table_name: string;
     column: DbColumnDefinition;
   }): Promise<ApiResponse<string>> {
-    return apiClient.erp.post('/api/system/db/columns', data);
+    return apiClient.erp.post('/system/db/columns', data);
   },
 
   async modifyColumn(
@@ -216,7 +216,7 @@ export const dbStructureApi = {
     columnName: string,
     column: DbColumnDefinition
   ): Promise<ApiResponse<string>> {
-    return apiClient.erp.put(`/api/system/db/columns/${tableName}/${columnName}`, {
+    return apiClient.erp.put(`/system/db/columns/${tableName}/${columnName}`, {
       table_name: tableName,
       column_name: columnName,
       column,
@@ -224,7 +224,7 @@ export const dbStructureApi = {
   },
 
   async dropColumn(tableName: string, columnName: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/system/db/columns/${tableName}/${columnName}`);
+    return apiClient.erp.delete(`/system/db/columns/${tableName}/${columnName}`);
   },
 
   async listChanges(
@@ -236,6 +236,6 @@ export const dbStructureApi = {
     if (params?.table_name) searchParams.set('table_name', params.table_name);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/system/db/changes${queryString ? `?${queryString}` : ''}`);
+    return apiClient.erp.get(`/system/db/changes${queryString ? `?${queryString}` : ''}`);
   },
 };

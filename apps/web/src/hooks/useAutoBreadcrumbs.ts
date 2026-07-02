@@ -376,14 +376,14 @@ function matchDynamicRoute(routePath: string, currentPath: string): DynamicMatch
 function getAllNavItemsWithHierarchy(): NavItem[] {
   const allItems: NavItem[] = [];
   const topItems = navigationRegistryV2.getTopNavItems(() => true);
-  
+
   const collectItems = (items: NavItem[]) => {
     items.forEach((item) => {
       allItems.push(item);
       if (item.children) collectItems(item.children);
     });
   };
-  
+
   collectItems(topItems);
   return allItems;
 }

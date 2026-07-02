@@ -42,7 +42,7 @@ const ConfigDebugPage: React.FC = () => {
       showResetButton={false}
     >
       <Box sx={{ mt: 2 }}>
-        <Paper sx={{ borderRadius: 2, mb: 3, overflow: 'hidden' }}>
+        <Paper sx={{ borderRadius: 3, mb: 3, overflow: 'hidden' }}>
           <CardHeader
             title={
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -93,7 +93,7 @@ const ConfigDebugPage: React.FC = () => {
           </CardContent>
         </Paper>
 
-        <Paper sx={{ borderRadius: 2, mb: 3, overflow: 'hidden' }}>
+        <Paper sx={{ borderRadius: 3, mb: 3, overflow: 'hidden' }}>
           <CardHeader
             title={
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
@@ -144,7 +144,7 @@ const ConfigDebugPage: React.FC = () => {
           </CardContent>
         </Paper>
 
-        <Paper sx={{ borderRadius: 2, overflow: 'hidden' }}>
+        <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
           <CardHeader
             title={
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>

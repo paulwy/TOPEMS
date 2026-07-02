@@ -1,10 +1,4 @@
-import type {
-  ModuleNavConfig,
-  NavItemConfig,
-  NavItem,
-  ModuleCardConfig,
-  NavGroup,
-} from './types';
+import type { ModuleNavConfig, NavItemConfig, NavItem, ModuleCardConfig, NavGroup } from './types';
 import { NAV_GROUPS } from './types';
 
 type EventListener = (...args: unknown[]) => void;
@@ -56,7 +50,7 @@ class SimpleEventEmitter {
   }
 }
 
-class NavigationRegistryV2 {
+export class NavigationRegistryV2 {
   private static instance: NavigationRegistryV2;
   private modules: Map<string, ModuleNavConfig> = new Map();
   public emitter: SimpleEventEmitter;
@@ -88,9 +82,12 @@ class NavigationRegistryV2 {
   }
 
   getAllModules(): ModuleNavConfig[] {
-    return Array.from(this.modules.values()).sort(
-      (a, b) => (a.order || 0) - (b.order || 0)
-    );
+    return Array.from(this.modules.values()).sort((a, b) => (a.order || 0) - (b.order || 0));
+  }
+
+  private getModuleFirstPath(module: ModuleNavConfig): string {
+    const firstNavItem = module.navItems.find((item) => item.path && item.showInSidebar !== false);
+    return firstNavItem?.path || module.path;
   }
 
   getTopNavItems(hasPermission?: (perm: string) => boolean): NavItem[] {
@@ -103,7 +100,7 @@ class NavigationRegistryV2 {
         code: module.code,
         label: module.name,
         icon: module.icon,
-        path: module.path,
+        path: this.getModuleFirstPath(module),
         permission: module.permission,
         order: module.order,
         moduleCode: module.code,
@@ -141,7 +138,7 @@ class NavigationRegistryV2 {
       code: module.code,
       name: module.name,
       icon: module.icon,
-      path: module.path,
+      path: this.getModuleFirstPath(module),
       permission: module.permission,
       status: module.status || 'online',
       source: module.source,
@@ -151,10 +148,7 @@ class NavigationRegistryV2 {
     };
   }
 
-  getSidebarNavItems(
-    moduleCode: string,
-    hasPermission?: (perm: string) => boolean
-  ): NavItem[] {
+  getSidebarNavItems(moduleCode: string, hasPermission?: (perm: string) => boolean): NavItem[] {
     const module = this.modules.get(moduleCode);
     if (!module) return [];
 
@@ -188,10 +182,7 @@ class NavigationRegistryV2 {
     return grouped as Record<NavGroup | 'other', NavItem[]>;
   }
 
-  getModuleTabs(
-    moduleCode: string,
-    hasPermission?: (perm: string) => boolean
-  ): NavItem[] {
+  getModuleTabs(moduleCode: string, hasPermission?: (perm: string) => boolean): NavItem[] {
     const module = this.modules.get(moduleCode);
     if (!module) return [];
 
@@ -315,6 +306,24 @@ class NavigationRegistryV2 {
       showInBreadcrumb: item.showInBreadcrumb !== false,
       showInTabs: item.showInTabs !== false,
     };
+  }
+
+
+  getNavItemsGroupedByBusinessDomain(
+    hasPermission?: (perm: string) => boolean
+  ): Record<string, ModuleCardConfig[]> {
+    const grouped: Record<string, ModuleCardConfig[]> = {};
+    const allCards = this.getModuleCards(hasPermission);
+
+    for (const card of allCards) {
+      const domain = card.suite || 'other';
+      if (!grouped[domain]) {
+        grouped[domain] = [];
+      }
+      grouped[domain].push(card);
+    }
+
+    return grouped;
   }
 
   getAllModuleCodes(): string[] {

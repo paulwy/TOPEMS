@@ -216,7 +216,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
             mb: 3,
           }}
         >
-          <Box sx={{ bgcolor: 'grey.50', borderRadius: 2, p: 3, textAlign: 'center' }}>
+          <Box sx={{ bgcolor: 'grey.50', borderRadius: 3, p: 3, textAlign: 'center' }}>
             <DollarSign sx={{ width: 32, height: 32, color: 'primary.main', mb: 1 }} />
             <Typography
               variant='h4'
@@ -231,7 +231,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
               总预算
             </Typography>
           </Box>
-          <Box sx={{ bgcolor: 'grey.50', borderRadius: 2, p: 3, textAlign: 'center' }}>
+          <Box sx={{ bgcolor: 'grey.50', borderRadius: 3, p: 3, textAlign: 'center' }}>
             <TrendingUp sx={{ width: 32, height: 32, color: 'warning.main', mb: 1 }} />
             <Typography
               variant='h4'
@@ -246,7 +246,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
               已使用
             </Typography>
           </Box>
-          <Box sx={{ bgcolor: 'grey.50', borderRadius: 2, p: 3, textAlign: 'center' }}>
+          <Box sx={{ bgcolor: 'grey.50', borderRadius: 3, p: 3, textAlign: 'center' }}>
             <CheckCircle2 sx={{ width: 32, height: 32, color: 'success.main', mb: 1 }} />
             <Typography
               variant='h4'
@@ -261,7 +261,7 @@ const FinanceBudgetDetailPage: React.FC = () => {
               剩余预算
             </Typography>
           </Box>
-          <Box sx={{ bgcolor: 'grey.50', borderRadius: 2, p: 3, textAlign: 'center' }}>
+          <Box sx={{ bgcolor: 'grey.50', borderRadius: 3, p: 3, textAlign: 'center' }}>
             <Chip
               label={statusConfig.label}
               color={statusConfig.color}

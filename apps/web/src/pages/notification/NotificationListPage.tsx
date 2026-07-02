@@ -632,7 +632,7 @@ export const NotificationListPage: React.FC = () => {
               key={stat.id}
               sx={{ flex: 1, minWidth: { xs: '50%', sm: 'calc(25% - 8px)' } }}
             >
-              <Paper sx={{ p: 2, borderRadius: 2 }}>
+              <Paper sx={{ p: 2, borderRadius: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Avatar
                     sx={{

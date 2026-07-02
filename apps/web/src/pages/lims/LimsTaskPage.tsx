@@ -596,6 +596,10 @@ const LimsTaskPage: React.FC = () => {
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #f8fafc 0%, border.default 100%)',
       }}
+      headerProps={{
+        pageIcon: <ClipboardList style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)',
+      }}
     >
       <Snackbar
         open={Boolean(notification)}
@@ -607,7 +611,7 @@ const LimsTaskPage: React.FC = () => {
           onClose={handleCloseNotification}
           severity={notification?.type || 'success'}
           variant='filled'
-          sx={{ borderRadius: 2 }}
+          sx={{ borderRadius: 3 }}
         >
           {notification?.message}
         </Alert>
@@ -857,7 +861,7 @@ const LimsTaskPage: React.FC = () => {
         onClose={() => setShowDetailModal(false)}
         maxWidth='md'
         fullWidth
-        slotProps={{ paper: { sx: { borderRadius: 2 } } }}
+        slotProps={{ paper: { sx: { borderRadius: 3 } } }}
       >
         <DialogContent sx={{ p: 3 }}>
           {selectedTask && (

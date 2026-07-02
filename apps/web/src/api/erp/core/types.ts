@@ -83,7 +83,8 @@ export interface SalesOrder {
   order_date: string;
   delivery_date?: string;
   actual_delivery_date?: string;
-  status: 'draft' | 'pending' | 'approved' | 'partially_shipped' | 'shipped' | 'completed' | 'cancelled';
+  status:
+    'draft' | 'pending' | 'approved' | 'partially_shipped' | 'shipped' | 'completed' | 'cancelled';
   remark?: string;
   created_at: string;
   updated_at: string;

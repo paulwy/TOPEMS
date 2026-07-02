@@ -10,7 +10,7 @@ import {
   Eye,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { Box, Typography, Button } from '@mui/material';
+import {Box, Typography, Button, useTheme} from '@mui/material';
 import type { ArchiveConfig, ArchivedNotification, NotificationTypeEnum } from '@/api/notification';
 import {
   getArchivedNotifications,
@@ -29,6 +29,7 @@ import {
 import { PageContainer } from '@/components/common';
 
 const NotificationArchivePage: React.FC = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const { success, error, notifications, hideNotification } = useNotification();
 
@@ -283,7 +284,7 @@ const NotificationArchivePage: React.FC = () => {
             <Box
               sx={{
                 bgcolor: 'warning.50',
-                borderRadius: 2,
+                borderRadius: 3,
                 p: 2,
                 mb: 2,
                 border: 1,
@@ -362,6 +363,7 @@ interface ArchiveConfigModalProps {
 }
 
 const ArchiveConfigModal: React.FC<ArchiveConfigModalProps> = ({ config, onClose, onSubmit }) => {
+  const theme = useTheme();
   const [formData, setFormData] = useState<ArchiveConfig>(config);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -468,7 +470,7 @@ const ArchiveConfigModal: React.FC<ArchiveConfigModalProps> = ({ config, onClose
                 width: '100%',
                 padding: '8px 12px',
                 border: '1px solid',
-                borderColor: 'grey.300',
+                borderColor: theme.palette.grey[300],
                 borderRadius: 8,
                 outline: 'none',
               }}
@@ -502,7 +504,7 @@ const ArchiveConfigModal: React.FC<ArchiveConfigModalProps> = ({ config, onClose
                 width: '100%',
                 padding: '8px 12px',
                 border: '1px solid',
-                borderColor: 'grey.300',
+                borderColor: theme.palette.grey[300],
                 borderRadius: 8,
                 outline: 'none',
               }}
@@ -533,7 +535,7 @@ const ArchiveConfigModal: React.FC<ArchiveConfigModalProps> = ({ config, onClose
               py: 1,
               color: 'grey.700',
               bgcolor: 'grey.100',
-              borderRadius: 2,
+              borderRadius: 3,
               cursor: 'pointer',
               '&:hover': { bgcolor: 'grey.200' },
             }}
@@ -547,7 +549,7 @@ const ArchiveConfigModal: React.FC<ArchiveConfigModalProps> = ({ config, onClose
               py: 1,
               bgcolor: 'primary.main',
               color: 'white',
-              borderRadius: 2,
+              borderRadius: 3,
               cursor: 'pointer',
               '&:hover': { bgcolor: 'primary.dark' },
             }}
@@ -767,7 +769,7 @@ const ArchivedNotificationDetailModal: React.FC<ArchivedNotificationDetailModalP
               py: 1,
               bgcolor: 'grey.100',
               color: 'grey.700',
-              borderRadius: 2,
+              borderRadius: 3,
               cursor: 'pointer',
               '&:hover': { bgcolor: 'grey.200' },
             }}

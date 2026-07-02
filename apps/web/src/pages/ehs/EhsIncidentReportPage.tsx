@@ -35,7 +35,7 @@ import {
 
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { ehsApi } from '@/api/ehs';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import type { Incident, IncidentAction } from '@/api/ehs';
 import { useAppStore } from '@/store';
 
@@ -51,11 +51,7 @@ const EhsIncidentReportPage: React.FC = () => {
     title: '',
     description: '',
     incident_type: 'near_miss' as
-      | 'near_miss'
-      | 'accident'
-      | 'injury'
-      | 'environmental'
-      | 'equipment',
+      'near_miss' | 'accident' | 'injury' | 'environmental' | 'equipment',
     severity: 'minor' as 'near_miss' | 'minor' | 'serious' | 'fatal',
     location: '',
     reported_by: '',
@@ -169,9 +165,9 @@ const EhsIncidentReportPage: React.FC = () => {
   const getSeverityBadge = (severity: string) => {
     const severityMap: Record<string, { bg: string; color: string; label: string }> = {
       fatal: { bg: 'error.lighter', color: 'error.dark', label: '致命' },
-      serious: { bg: '#fed7aa', color: '#ea580c', label: '严重' },
-      minor: { bg: '#fef9c3', color: '#ca8a04', label: '轻微' },
-      near_miss: { bg: '#dbeafe', color: 'primary.dark', label: '未遂' },
+      serious: { bg: '#fed7aa', color: 'warning.600', label: '严重' },
+      minor: { bg: 'warning.100', color: '#ca8a04', label: '轻微' },
+      near_miss: { bg: 'primary.100', color: 'primary.dark', label: '未遂' },
     };
     const item = severityMap[severity] || {
       bg: 'grey.100',
@@ -189,10 +185,10 @@ const EhsIncidentReportPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string; label: string }> = {
-      pending: { bg: '#fef9c3', color: '#ca8a04', label: '待处理' },
-      待处理: { bg: '#fef9c3', color: '#ca8a04', label: '待处理' },
-      investigating: { bg: '#dbeafe', color: 'primary.dark', label: '调查中' },
-      调查中: { bg: '#dbeafe', color: 'primary.dark', label: '调查中' },
+      pending: { bg: 'warning.100', color: '#ca8a04', label: '待处理' },
+      待处理: { bg: 'warning.100', color: '#ca8a04', label: '待处理' },
+      investigating: { bg: 'primary.100', color: 'primary.dark', label: '调查中' },
+      调查中: { bg: 'primary.100', color: 'primary.dark', label: '调查中' },
       resolved: { bg: 'success.lighter', color: 'success.dark', label: '已解决' },
       已解决: { bg: 'success.lighter', color: 'success.dark', label: '已解决' },
       closed: { bg: 'grey.100', color: 'text.secondary', label: '已关闭' },
@@ -238,7 +234,7 @@ const EhsIncidentReportPage: React.FC = () => {
         <Chip
           label={getTypeLabel(row.incident_type)}
           size='small'
-          sx={{ backgroundColor: '#f3e8ff', color: 'secondary.dark' }}
+          sx={{ backgroundColor: 'secondary.100', color: 'secondary.dark' }}
         />
       ),
     },
@@ -301,7 +297,7 @@ const EhsIncidentReportPage: React.FC = () => {
       render: (row) => (
         <Chip
           size='small'
-          sx={{ backgroundColor: '#dbeafe', color: 'primary.dark' }}
+          sx={{ backgroundColor: 'primary.100', color: 'primary.dark' }}
           label={
             row.action_type === 'investigation'
               ? '调查'
@@ -353,29 +349,30 @@ const EhsIncidentReportPage: React.FC = () => {
     serious: incidents.filter((i) => i.severity === 'fatal' || i.severity === 'serious').length,
   };
 
+  const headerActions = [
+    {
+      label: '上报事件',
+      icon: <Plus sx={{ fontSize: 16, mr: 1 }} />,
+      onClick: () => setShowAddModal(true),
+      variant: 'contained' as const,
+      color: 'warning' as const,
+    },
+  ];
+
   return (
     <PageContainer
-      title='事件报告'
-      subtitle='Incident Reporting'
+      headerProps={{
+        actions: headerActions,
+        pageIcon: <AlertCircle sx={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #F97316 0%, #EA580C 100%)',
+      }}
+      maxWidth='xl'
     >
       <ListPageTemplate
         title=''
-        subtitle=''
-        backButton={{
-          href: '/ehs',
-          onClick: () => navigate('/ehs'),
-        }}
         columns={columns}
         data={incidents}
         loading={loading}
-        actions={[
-          {
-            label: '上报事件',
-            icon: <Plus sx={{ fontSize: 16, mr: 1 }} />,
-            onClick: () => setShowAddModal(true),
-            variant: 'contained',
-          },
-        ]}
         headerContent={
           <Box
             sx={{
@@ -431,7 +428,7 @@ const EhsIncidentReportPage: React.FC = () => {
                   }}
                 >
                   <Box>
-                    <Typography sx={{ color: '#fef9c3', fontSize: 14 }}>待处理</Typography>
+                    <Typography sx={{ color: 'warning.100', fontSize: 14 }}>待处理</Typography>
                     <Typography
                       variant='h3'
                       sx={{ fontWeight: 700, mt: 0.5 }}
@@ -439,7 +436,7 @@ const EhsIncidentReportPage: React.FC = () => {
                       {stats.pending}
                     </Typography>
                   </Box>
-                  <Clock sx={{ fontSize: 48, color: '#fef9c3' }} />
+                  <Clock sx={{ fontSize: 48, color: 'warning.100' }} />
                 </Box>
               </CardContent>
             </Card>
@@ -551,11 +548,7 @@ const EhsIncidentReportPage: React.FC = () => {
                       setFormData((prev) => ({
                         ...prev,
                         incident_type: e.target.value as
-                          | 'near_miss'
-                          | 'accident'
-                          | 'injury'
-                          | 'environmental'
-                          | 'equipment',
+                          'near_miss' | 'accident' | 'injury' | 'environmental' | 'equipment',
                       }))
                     }
                   >
@@ -693,7 +686,7 @@ const EhsIncidentReportPage: React.FC = () => {
             variant='contained'
             onClick={handleCreateIncident}
             sx={{
-              backgroundColor: '#ea580c',
+              backgroundColor: 'warning.600',
               '&:hover': { backgroundColor: '#c2410c' },
             }}
           >
@@ -711,7 +704,7 @@ const EhsIncidentReportPage: React.FC = () => {
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
           <Box
             component={AlertCircle}
-            sx={{ fontSize: 20, color: '#ea580c' }}
+            sx={{ fontSize: 20, color: 'warning.600' }}
           />
           {selectedIncident?.title}
         </DialogTitle>
@@ -775,7 +768,7 @@ const EhsIncidentReportPage: React.FC = () => {
                     <Users sx={{ fontSize: 16 }} />
                     <Typography
                       variant='body1'
-                      sx={{ fontWeight: 500, color: '#1e40af' }}
+                      sx={{ fontWeight: 500, color: 'primary.800' }}
                     >
                       {selectedIncident.reported_by || '-'}
                     </Typography>
@@ -853,7 +846,7 @@ const EhsIncidentReportPage: React.FC = () => {
 
               <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                  <FileCheck sx={{ fontSize: 20, color: '#ea580c' }} />
+                  <FileCheck sx={{ fontSize: 20, color: 'warning.600' }} />
                   <Typography
                     variant='body1'
                     sx={{ fontWeight: 500 }}

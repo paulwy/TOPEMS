@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTheme } from '@mui/material';
 import { AlertCircle, X } from 'lucide-react';
 
 interface FieldErrorProps {
@@ -7,6 +8,7 @@ interface FieldErrorProps {
 }
 
 export const FieldError: React.FC<FieldErrorProps> = ({ error, showIcon = true }) => {
+  const theme = useTheme();
   if (!error) return null;
 
   return (
@@ -15,7 +17,7 @@ export const FieldError: React.FC<FieldErrorProps> = ({ error, showIcon = true }
         display: 'flex',
         alignItems: 'center',
         gap: '4px',
-        color: 'error.dark',
+        color: theme.palette.error.dark,
         fontSize: '14px',
         marginTop: '4px',
       }}
@@ -32,6 +34,7 @@ interface FormErrorProps {
 }
 
 export const FormError: React.FC<FormErrorProps> = ({ errors, fields = [] }) => {
+  const theme = useTheme();
   const errorList =
     fields.length > 0
       ? fields.map((field) => errors[field]).filter(Boolean)
@@ -42,7 +45,7 @@ export const FormError: React.FC<FormErrorProps> = ({ errors, fields = [] }) => 
   return (
     <div
       style={{
-        backgroundColor: 'error.light',
+        backgroundColor: theme.palette.error.light,
         border: '1px solid #fecaca',
         borderRadius: '8px',
         padding: '16px',
@@ -84,7 +87,7 @@ export const FormError: React.FC<FormErrorProps> = ({ errors, fields = [] }) => 
                   style={{
                     width: '4px',
                     height: '4px',
-                    backgroundColor: 'error.dark',
+                    backgroundColor: theme.palette.error.dark,
                     borderRadius: '9999px',
                     marginTop: '8px',
                     flexShrink: 0,
@@ -159,6 +162,7 @@ export const InlineValidation: React.FC<InlineValidationProps> = ({
 }) => {
   const [error, setError] = React.useState<string | null>(null);
 
+  const theme = useTheme();
   React.useEffect(() => {
     if (!value && rules.required) {
       setError(`${fieldName}不能为空`);
@@ -207,7 +211,7 @@ export const InlineValidation: React.FC<InlineValidationProps> = ({
         display: 'flex',
         alignItems: 'center',
         gap: '4px',
-        color: 'error.dark',
+        color: theme.palette.error.dark,
         fontSize: '14px',
         marginTop: '4px',
       }}
@@ -224,10 +228,11 @@ interface SuccessMessageProps {
 }
 
 export const SuccessMessage: React.FC<SuccessMessageProps> = ({ message, onClose }) => {
+  const theme = useTheme();
   return (
     <div
       style={{
-        backgroundColor: 'success.light',
+        backgroundColor: theme.palette.success.light,
         border: '1px solid #bbf7d0',
         borderRadius: '8px',
         padding: '16px',
@@ -249,7 +254,7 @@ export const SuccessMessage: React.FC<SuccessMessageProps> = ({ message, onClose
           }}
         >
           <svg
-            style={{ width: 20, height: 20, color: 'success.dark' }}
+            style={{ width: 20, height: 20, color: theme.palette.success.dark }}
             fill='none'
             viewBox='0 0 24 24'
             stroke='currentColor'
@@ -271,7 +276,7 @@ export const SuccessMessage: React.FC<SuccessMessageProps> = ({ message, onClose
             background: 'none',
             border: 'none',
             cursor: 'pointer',
-            color: 'success.dark',
+            color: theme.palette.success.dark,
             padding: '4px',
           }}
         >

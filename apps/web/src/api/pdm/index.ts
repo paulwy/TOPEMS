@@ -327,196 +327,196 @@ export interface CreateBomItemRequest {
 export const pdmApi = {
   // Production Processes
   listProcesses: async (): Promise<ApiResponse<ProductionProcess[]>> => {
-    return apiClient.pdm.get<ProductionProcess[]>('/api/pdm/production-processes');
+    return apiClient.pdm.get<ProductionProcess[]>('/production-processes');
   },
   getProcess: async (id: string): Promise<ApiResponse<ProductionProcess>> => {
-    return apiClient.pdm.get<ProductionProcess>(`/api/pdm/production-processes/${id}`);
+    return apiClient.pdm.get<ProductionProcess>(`/production-processes/${id}`);
   },
   createProcess: async (
     data: CreateProductionProcessRequest
   ): Promise<ApiResponse<ProductionProcess>> => {
-    return apiClient.pdm.post<ProductionProcess>('/api/pdm/production-processes', data);
+    return apiClient.pdm.post<ProductionProcess>('/production-processes', data);
   },
   updateProcess: async (
     id: string,
     data: CreateProductionProcessRequest
   ): Promise<ApiResponse<ProductionProcess>> => {
-    return apiClient.pdm.put<ProductionProcess>(`/api/pdm/production-processes/${id}`, data);
+    return apiClient.pdm.put<ProductionProcess>(`/production-processes/${id}`, data);
   },
   deleteProcess: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.pdm.delete<boolean>(`/api/pdm/production-processes/${id}`);
+    return apiClient.pdm.delete<boolean>(`/production-processes/${id}`);
   },
 
   // Production Steps
   listSteps: async (): Promise<ApiResponse<ProductionStep[]>> => {
-    return apiClient.pdm.get<ProductionStep[]>('/api/pdm/production-steps');
+    return apiClient.pdm.get<ProductionStep[]>('/production-steps');
   },
   getStep: async (id: string): Promise<ApiResponse<ProductionStep>> => {
-    return apiClient.pdm.get<ProductionStep>(`/api/pdm/production-steps/${id}`);
+    return apiClient.pdm.get<ProductionStep>(`/production-steps/${id}`);
   },
   createStep: async (data: CreateProductionStepRequest): Promise<ApiResponse<ProductionStep>> => {
-    return apiClient.pdm.post<ProductionStep>('/api/pdm/production-steps', data);
+    return apiClient.pdm.post<ProductionStep>('/production-steps', data);
   },
   updateStep: async (
     id: string,
     data: UpdateProductionStepRequest
   ): Promise<ApiResponse<ProductionStep>> => {
-    return apiClient.pdm.put<ProductionStep>(`/api/pdm/production-steps/${id}`, data);
+    return apiClient.pdm.put<ProductionStep>(`/production-steps/${id}`, data);
   },
   deleteStep: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.pdm.delete<boolean>(`/api/pdm/production-steps/${id}`);
+    return apiClient.pdm.delete<boolean>(`/production-steps/${id}`);
   },
 
   // Production Formulas
   listFormulas: async (): Promise<ApiResponse<ProductionFormula[]>> => {
-    return apiClient.pdm.get<ProductionFormula[]>('/api/pdm/production-formulas');
+    return apiClient.pdm.get<ProductionFormula[]>('/production-formulas');
   },
   getFormula: async (id: string): Promise<ApiResponse<ProductionFormula>> => {
-    return apiClient.pdm.get<ProductionFormula>(`/api/pdm/production-formulas/${id}`);
+    return apiClient.pdm.get<ProductionFormula>(`/production-formulas/${id}`);
   },
   createFormula: async (
     data: CreateProductionFormulaRequest
   ): Promise<ApiResponse<ProductionFormula>> => {
-    return apiClient.pdm.post<ProductionFormula>('/api/pdm/production-formulas', data);
+    return apiClient.pdm.post<ProductionFormula>('/production-formulas', data);
   },
   updateFormula: async (
     id: string,
     data: CreateProductionFormulaRequest
   ): Promise<ApiResponse<ProductionFormula>> => {
-    return apiClient.pdm.put<ProductionFormula>(`/api/pdm/production-formulas/${id}`, data);
+    return apiClient.pdm.put<ProductionFormula>(`/production-formulas/${id}`, data);
   },
   deleteFormula: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.pdm.delete<boolean>(`/api/pdm/production-formulas/${id}`);
+    return apiClient.pdm.delete<boolean>(`/production-formulas/${id}`);
   },
 
   // Production Batches
   listBatches: async (): Promise<ApiResponse<ProductionBatch[]>> => {
-    return apiClient.pdm.get<ProductionBatch[]>('/api/pdm/production-batches');
+    return apiClient.pdm.get<ProductionBatch[]>('/production-batches');
   },
   getBatch: async (id: string): Promise<ApiResponse<ProductionBatch>> => {
-    return apiClient.pdm.get<ProductionBatch>(`/api/pdm/production-batches/${id}`);
+    return apiClient.pdm.get<ProductionBatch>(`/production-batches/${id}`);
   },
   createBatch: async (
     data: CreateProductionBatchRequest
   ): Promise<ApiResponse<ProductionBatch>> => {
-    return apiClient.pdm.post<ProductionBatch>('/api/pdm/production-batches', data);
+    return apiClient.pdm.post<ProductionBatch>('/production-batches', data);
   },
   updateBatch: async (
     id: string,
     data: CreateProductionBatchRequest
   ): Promise<ApiResponse<ProductionBatch>> => {
-    return apiClient.pdm.put<ProductionBatch>(`/api/pdm/production-batches/${id}`, data);
+    return apiClient.pdm.put<ProductionBatch>(`/production-batches/${id}`, data);
   },
   deleteBatch: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.pdm.delete<boolean>(`/api/pdm/production-batches/${id}`);
+    return apiClient.pdm.delete<boolean>(`/production-batches/${id}`);
   },
 
   // Production Statistics
   listStatistics: async (): Promise<ApiResponse<ProductionStatistics[]>> => {
-    return apiClient.pdm.get<ProductionStatistics[]>('/api/pdm/production-statistics');
+    return apiClient.pdm.get<ProductionStatistics[]>('/production-statistics');
   },
 
   getStatistics: async (): Promise<ApiResponse<PdmStatistics>> => {
-    return apiClient.pdm.get<PdmStatistics>('/api/pdm/statistics');
+    return apiClient.pdm.get<PdmStatistics>('/statistics');
   },
 
   // Products
   listProducts: async (): Promise<ApiResponse<Product[]>> => {
-    return apiClient.pdm.get<Product[]>('/api/pdm/products');
+    return apiClient.pdm.get<Product[]>('/products');
   },
   getProduct: async (id: string): Promise<ApiResponse<Product>> => {
-    return apiClient.pdm.get<Product>(`/api/pdm/products/${id}`);
+    return apiClient.pdm.get<Product>(`/products/${id}`);
   },
   createProduct: async (data: CreateProductRequest): Promise<ApiResponse<Product>> => {
-    return apiClient.pdm.post<Product>('/api/pdm/products', data);
+    return apiClient.pdm.post<Product>('/products', data);
   },
   updateProduct: async (id: string, data: UpdateProductRequest): Promise<ApiResponse<Product>> => {
-    return apiClient.pdm.put<Product>(`/api/pdm/products/${id}`, data);
+    return apiClient.pdm.put<Product>(`/products/${id}`, data);
   },
   deleteProduct: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.pdm.delete<boolean>(`/api/pdm/products/${id}`);
+    return apiClient.pdm.delete<boolean>(`/products/${id}`);
   },
 
   // Materials
   listMaterials: async (): Promise<ApiResponse<Material[]>> => {
-    return apiClient.pdm.get<Material[]>('/api/pdm/materials');
+    return apiClient.pdm.get<Material[]>('/materials');
   },
   getMaterial: async (id: string): Promise<ApiResponse<Material>> => {
-    return apiClient.pdm.get<Material>(`/api/pdm/materials/${id}`);
+    return apiClient.pdm.get<Material>(`/materials/${id}`);
   },
   createMaterial: async (data: CreateMaterialRequest): Promise<ApiResponse<Material>> => {
-    return apiClient.pdm.post<Material>('/api/pdm/materials', data);
+    return apiClient.pdm.post<Material>('/materials', data);
   },
   updateMaterial: async (
     id: string,
     data: UpdateMaterialRequest
   ): Promise<ApiResponse<Material>> => {
-    return apiClient.pdm.put<Material>(`/api/pdm/materials/${id}`, data);
+    return apiClient.pdm.put<Material>(`/materials/${id}`, data);
   },
   deleteMaterial: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.pdm.delete<boolean>(`/api/pdm/materials/${id}`);
+    return apiClient.pdm.delete<boolean>(`/materials/${id}`);
   },
 
   // Change Orders
   listChangeOrders: async (): Promise<ApiResponse<ChangeOrder[]>> => {
-    return apiClient.pdm.get<ChangeOrder[]>('/api/pdm/change-orders');
+    return apiClient.pdm.get<ChangeOrder[]>('/change-orders');
   },
   getChangeOrder: async (id: string): Promise<ApiResponse<ChangeOrder>> => {
-    return apiClient.pdm.get<ChangeOrder>(`/api/pdm/change-orders/${id}`);
+    return apiClient.pdm.get<ChangeOrder>(`/change-orders/${id}`);
   },
   createChangeOrder: async (data: CreateChangeOrderRequest): Promise<ApiResponse<ChangeOrder>> => {
-    return apiClient.pdm.post<ChangeOrder>('/api/pdm/change-orders', data);
+    return apiClient.pdm.post<ChangeOrder>('/change-orders', data);
   },
   updateChangeOrder: async (
     id: string,
     data: UpdateChangeOrderRequest
   ): Promise<ApiResponse<ChangeOrder>> => {
-    return apiClient.pdm.put<ChangeOrder>(`/api/pdm/change-orders/${id}`, data);
+    return apiClient.pdm.put<ChangeOrder>(`/change-orders/${id}`, data);
   },
   deleteChangeOrder: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.pdm.delete<boolean>(`/api/pdm/change-orders/${id}`);
+    return apiClient.pdm.delete<boolean>(`/change-orders/${id}`);
   },
 
   // BOM Items
   listBomItems: async (): Promise<ApiResponse<BomItem[]>> => {
-    return apiClient.pdm.get<BomItem[]>('/api/pdm/bom-items');
+    return apiClient.pdm.get<BomItem[]>('/bom-items');
   },
   getBomItem: async (id: string): Promise<ApiResponse<BomItem>> => {
-    return apiClient.pdm.get<BomItem>(`/api/pdm/bom-items/${id}`);
+    return apiClient.pdm.get<BomItem>(`/bom-items/${id}`);
   },
   createBomItem: async (data: CreateBomItemRequest): Promise<ApiResponse<BomItem>> => {
-    return apiClient.pdm.post<BomItem>('/api/pdm/bom-items', data);
+    return apiClient.pdm.post<BomItem>('/bom-items', data);
   },
   updateBomItem: async (
     id: string,
     data: Partial<CreateBomItemRequest>
   ): Promise<ApiResponse<BomItem>> => {
-    return apiClient.pdm.put<BomItem>(`/api/pdm/bom-items/${id}`, data);
+    return apiClient.pdm.put<BomItem>(`/bom-items/${id}`, data);
   },
   deleteBomItem: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.pdm.delete<boolean>(`/api/pdm/bom-items/${id}`);
+    return apiClient.pdm.delete<boolean>(`/bom-items/${id}`);
   },
 
   // Product Configurations
   listProductConfigs: async (): Promise<ApiResponse<ProductConfig[]>> => {
-    return apiClient.pdm.get<ProductConfig[]>('/api/pdm/product-configs');
+    return apiClient.pdm.get<ProductConfig[]>('/product-configs');
   },
   getProductConfig: async (id: string): Promise<ApiResponse<ProductConfig>> => {
-    return apiClient.pdm.get<ProductConfig>(`/api/pdm/product-configs/${id}`);
+    return apiClient.pdm.get<ProductConfig>(`/product-configs/${id}`);
   },
   createProductConfig: async (
     data: CreateProductConfigRequest
   ): Promise<ApiResponse<ProductConfig>> => {
-    return apiClient.pdm.post<ProductConfig>('/api/pdm/product-configs', data);
+    return apiClient.pdm.post<ProductConfig>('/product-configs', data);
   },
   updateProductConfig: async (
     id: string,
     data: Partial<CreateProductConfigRequest>
   ): Promise<ApiResponse<ProductConfig>> => {
-    return apiClient.pdm.put<ProductConfig>(`/api/pdm/product-configs/${id}`, data);
+    return apiClient.pdm.put<ProductConfig>(`/product-configs/${id}`, data);
   },
   deleteProductConfig: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.pdm.delete<boolean>(`/api/pdm/product-configs/${id}`);
+    return apiClient.pdm.delete<boolean>(`/product-configs/${id}`);
   },
 
   health: async (): Promise<ApiResponse<string>> => {
@@ -527,7 +527,7 @@ export const pdmApi = {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('type', type);
-    return apiClient.pdm.post<any>('/api/pdm/import', formData, {
+    return apiClient.pdm.post<any>('/import', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },

@@ -14,7 +14,7 @@ import {
   Typography,
   Button,
 } from '@mui/material';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type {
   MaterialRequirement,
@@ -30,15 +30,7 @@ import {
   type RowAction,
   type FilterConfig,
 } from '@/components/templates';
-import {
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
-  Calculator,
-  CheckCircle,
-  Send,
-} from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Calculator, CheckCircle, Send } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 
 const MaterialRequirementPage: React.FC = () => {
@@ -345,9 +337,7 @@ const MaterialRequirementPage: React.FC = () => {
         id: 'required_date',
         label: '需求日期',
         render: (row) =>
-          row.required_date
-            ? new Date(row.required_date).toLocaleDateString('zh-CN')
-            : '-',
+          row.required_date ? new Date(row.required_date).toLocaleDateString('zh-CN') : '-',
       },
       {
         id: 'priority',
@@ -456,7 +446,7 @@ const MaterialRequirementPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -470,7 +460,7 @@ const MaterialRequirementPage: React.FC = () => {
           {stats.total}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -484,7 +474,7 @@ const MaterialRequirementPage: React.FC = () => {
           {stats.draft}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#dbeafe', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: '#dbeafe', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -498,7 +488,7 @@ const MaterialRequirementPage: React.FC = () => {
           {stats.confirmed}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -512,7 +502,7 @@ const MaterialRequirementPage: React.FC = () => {
           {stats.released}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -531,8 +521,12 @@ const MaterialRequirementPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='物料需求计划'
-      subtitle='管理物料需求计划,包括需求计算、确认、下达等功能'
+      autoTitle
+      autoBreadcrumbs
+      headerProps={{
+        pageIcon: <Calculator style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+      }}
     >
       <ListPageTemplate
         title=''
@@ -673,7 +667,10 @@ const MaterialRequirementPage: React.FC = () => {
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <InputLabel htmlFor='priority'>优先级</InputLabel>
-                <FormControl fullWidth size='small'>
+                <FormControl
+                  fullWidth
+                  size='small'
+                >
                   <Select
                     id='priority'
                     value={formData.priority || 'normal'}
@@ -792,7 +789,10 @@ const MaterialRequirementPage: React.FC = () => {
                   <Box
                     component='span'
                     sx={{
-                      color: (selectedRequirement.shortfall_quantity || 0) > 0 ? 'error.main' : 'success.main',
+                      color:
+                        (selectedRequirement.shortfall_quantity || 0) > 0
+                          ? 'error.main'
+                          : 'success.main',
                       fontWeight: 500,
                     }}
                   >

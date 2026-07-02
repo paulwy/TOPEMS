@@ -1717,12 +1717,7 @@ export interface EnvironmentalEvent {
   title: string;
   event_type: string;
   event_category:
-    | 'spill'
-    | 'leak'
-    | 'emission_exceedance'
-    | 'waste_violation'
-    | 'complaint'
-    | 'other';
+    'spill' | 'leak' | 'emission_exceedance' | 'waste_violation' | 'complaint' | 'other';
   location: string | null;
   occurred_at: string | null;
   reported_at: string | null;
@@ -1846,12 +1841,7 @@ export interface CreateEnvironmentalEventRequest {
   title: string;
   event_type: string;
   event_category:
-    | 'spill'
-    | 'leak'
-    | 'emission_exceedance'
-    | 'waste_violation'
-    | 'complaint'
-    | 'other';
+    'spill' | 'leak' | 'emission_exceedance' | 'waste_violation' | 'complaint' | 'other';
   location?: string | null;
   occurred_at?: string | null;
   reported_by?: string | null;
@@ -1872,12 +1862,7 @@ export interface UpdateEnvironmentalEventRequest {
   title?: string;
   event_type?: string;
   event_category?:
-    | 'spill'
-    | 'leak'
-    | 'emission_exceedance'
-    | 'waste_violation'
-    | 'complaint'
-    | 'other';
+    'spill' | 'leak' | 'emission_exceedance' | 'waste_violation' | 'complaint' | 'other';
   location?: string | null;
   occurred_at?: string | null;
   severity?: 'minor' | 'moderate' | 'major' | 'catastrophic';

@@ -266,9 +266,7 @@ export const formComponentCategories: ComponentCategory[] = [
             { key: 'tab2', label: '标签2' },
           ],
         },
-        propSchema: [
-          { name: 'name', label: '组件名', type: 'string', defaultValue: '标签页' },
-        ],
+        propSchema: [{ name: 'name', label: '组件名', type: 'string', defaultValue: '标签页' }],
       },
       {
         type: 'group',
@@ -280,9 +278,7 @@ export const formComponentCategories: ComponentCategory[] = [
         defaultProps: {
           title: '分组标题',
         },
-        propSchema: [
-          { name: 'title', label: '标题', type: 'string', defaultValue: '分组标题' },
-        ],
+        propSchema: [{ name: 'title', label: '标题', type: 'string', defaultValue: '分组标题' }],
       },
       {
         type: 'divider',
@@ -483,9 +479,7 @@ export const pageComponentCategories: ComponentCategory[] = [
           ],
           height: 400,
         },
-        propSchema: [
-          { name: 'height', label: '高度', type: 'number', defaultValue: 400 },
-        ],
+        propSchema: [{ name: 'height', label: '高度', type: 'number', defaultValue: 400 }],
       },
       {
         type: 'chart',
@@ -524,9 +518,7 @@ export const pageComponentCategories: ComponentCategory[] = [
         defaultProps: {
           itemKey: 'id',
         },
-        propSchema: [
-          { name: 'itemKey', label: '唯一键', type: 'string', defaultValue: 'id' },
-        ],
+        propSchema: [{ name: 'itemKey', label: '唯一键', type: 'string', defaultValue: 'id' }],
       },
     ],
   },

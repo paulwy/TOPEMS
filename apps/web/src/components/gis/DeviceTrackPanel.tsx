@@ -13,8 +13,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
-import {
-  Box,
+import {Box,
   Typography,
   Paper,
   TextField,
@@ -28,8 +27,7 @@ import {
   Stack,
   Grid,
   Divider,
-  Button,
-} from '@mui/material';
+  Button, useTheme} from '@mui/material';
 import type { DevicePoint, DeviceLocationRecord } from '../../api/gis';
 import { gisApi } from '../../api/gis';
 import { logger } from '@/utils/logger';
@@ -45,6 +43,7 @@ const MAX_TRACK_POINTS = 500;
 const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClose }) => {
   const [selectedDevice, setSelectedDevice] = useState<string>('');
   const [trackData, setTrackData] = useState<DeviceLocationRecord[]>([]);
+  const theme = useTheme();
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [statistics, setStatistics] = useState<{
@@ -348,7 +347,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                 spacing={3}
               >
                 <Grid size={4}>
-                  <Paper sx={{ bgcolor: 'primary.light', borderRadius: 2, p: 3 }}>
+                  <Paper sx={{ bgcolor: 'primary.light', borderRadius: 3, p: 3 }}>
                     <Box
                       sx={{
                         display: 'flex',
@@ -370,7 +369,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                   </Paper>
                 </Grid>
                 <Grid size={4}>
-                  <Paper sx={{ bgcolor: 'success.light', borderRadius: 2, p: 3 }}>
+                  <Paper sx={{ bgcolor: 'success.light', borderRadius: 3, p: 3 }}>
                     <Box
                       sx={{
                         display: 'flex',
@@ -392,7 +391,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                   </Paper>
                 </Grid>
                 <Grid size={4}>
-                  <Paper sx={{ bgcolor: 'white7ed', borderRadius: 2, p: 3 }}>
+                  <Paper sx={{ bgcolor: 'white7ed', borderRadius: 3, p: 3 }}>
                     <Box
                       sx={{
                         display: 'flex',
@@ -414,7 +413,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                   </Paper>
                 </Grid>
                 <Grid size={4}>
-                  <Paper sx={{ bgcolor: 'secondary.light', borderRadius: 2, p: 3 }}>
+                  <Paper sx={{ bgcolor: 'secondary.light', borderRadius: 3, p: 3 }}>
                     <Box
                       sx={{
                         display: 'flex',
@@ -436,7 +435,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                   </Paper>
                 </Grid>
                 <Grid size={4}>
-                  <Paper sx={{ bgcolor: 'grey.50', borderRadius: 2, p: 3 }}>
+                  <Paper sx={{ bgcolor: 'grey.50', borderRadius: 3, p: 3 }}>
                     <Box
                       sx={{
                         display: 'flex',
@@ -458,7 +457,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                   </Paper>
                 </Grid>
                 <Grid size={4}>
-                  <Paper sx={{ bgcolor: 'grey.50', borderRadius: 2, p: 3 }}>
+                  <Paper sx={{ bgcolor: 'grey.50', borderRadius: 3, p: 3 }}>
                     <Box
                       sx={{
                         display: 'flex',
@@ -482,7 +481,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
               </Grid>
             )}
 
-            <Paper sx={{ bgcolor: 'grey.50', borderRadius: 2, p: 4 }}>
+            <Paper sx={{ bgcolor: 'grey.50', borderRadius: 3, p: 4 }}>
               <Typography
                 variant='body2'
                 sx={{ fontWeight: 500, color: 'grey.700', mb: 2 }}
@@ -592,10 +591,10 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
                           display: 'inline',
                           color:
                             currentPoint.batterylevel > 50
-                              ? 'success.dark'
+                              ? theme.palette.success.dark
                               : currentPoint.batterylevel > 20
-                                ? 'warning.main'
-                                : 'error.main',
+                                ? theme.palette.warning.main
+                                : theme.palette.error.main,
                         }}
                       />
                       {currentPoint.batterylevel}%
@@ -608,7 +607,7 @@ const DeviceTrackPanel: React.FC<DeviceTrackPanelProps> = ({ devicePoints, onClo
             <Box
               sx={{
                 height: 256,
-                borderRadius: 2,
+                borderRadius: 3,
                 overflow: 'hidden',
                 border: 1,
                 borderColor: 'grey.200',

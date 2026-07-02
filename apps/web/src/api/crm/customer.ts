@@ -12,67 +12,67 @@ import type {
 
 export const customerApi = {
   list: async (params?: CustomerQueryParams): Promise<ApiResponse<PaginatedResponse<Customer>>> => {
-    return apiClient.crm.get('/api/crm/customers', { params });
+    return apiClient.crm.get('/customers', { params });
   },
 
   create: async (data: CreateCustomerRequest): Promise<ApiResponse<Customer>> => {
-    return apiClient.crm.post('/api/crm/customers', data);
+    return apiClient.crm.post('/customers', data);
   },
 
   get: async (id: string): Promise<ApiResponse<Customer>> => {
-    return apiClient.crm.get(`/api/crm/customers/${id}`);
+    return apiClient.crm.get(`/customers/${id}`);
   },
 
   update: async (id: string, data: UpdateCustomerRequest): Promise<ApiResponse<Customer>> => {
-    return apiClient.crm.put(`/api/crm/customers/${id}`, data);
+    return apiClient.crm.put(`/customers/${id}`, data);
   },
 
   delete: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.crm.delete(`/api/crm/customers/${id}`);
+    return apiClient.crm.delete(`/customers/${id}`);
   },
 
   batchDelete: async (ids: string[]): Promise<ApiResponse<void>> => {
-    return apiClient.crm.post('/api/crm/customers/batch-delete', { ids });
+    return apiClient.crm.post('/customers/batch-delete', { ids });
   },
 
   getTags: async (id: string): Promise<ApiResponse<Tag[]>> => {
-    return apiClient.crm.get(`/api/crm/customers/${id}/tags`);
+    return apiClient.crm.get(`/customers/${id}/tags`);
   },
 
   addTag: async (id: string, tagId: string): Promise<ApiResponse<void>> => {
-    return apiClient.crm.post(`/api/crm/customers/${id}/tags`, {
+    return apiClient.crm.post(`/customers/${id}/tags`, {
       tag_id: tagId,
     });
   },
 
   removeTag: async (id: string, tagId: string): Promise<ApiResponse<void>> => {
-    return apiClient.crm.delete(`/api/crm/customers/${id}/tags/${tagId}`);
+    return apiClient.crm.delete(`/customers/${id}/tags/${tagId}`);
   },
 };
 
 export const tagApi = {
   list: async (params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Tag>>> => {
-    return apiClient.crm.get('/api/crm/tags', { params });
+    return apiClient.crm.get('/tags', { params });
   },
 
   create: async (data: CreateTagRequest): Promise<ApiResponse<Tag>> => {
-    return apiClient.crm.post('/api/crm/tags', data);
+    return apiClient.crm.post('/tags', data);
   },
 
   get: async (id: string): Promise<ApiResponse<Tag>> => {
-    return apiClient.crm.get(`/api/crm/tags/${id}`);
+    return apiClient.crm.get(`/tags/${id}`);
   },
 
   update: async (id: string, data: UpdateTagRequest): Promise<ApiResponse<Tag>> => {
-    return apiClient.crm.put(`/api/crm/tags/${id}`, data);
+    return apiClient.crm.put(`/tags/${id}`, data);
   },
 
   delete: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.crm.delete(`/api/crm/tags/${id}`);
+    return apiClient.crm.delete(`/tags/${id}`);
   },
 
   getTaggedCustomers: async (id: string): Promise<ApiResponse<any[]>> => {
-    return apiClient.crm.get(`/api/crm/tags/${id}/customers`);
+    return apiClient.crm.get(`/tags/${id}/customers`);
   },
 };
 

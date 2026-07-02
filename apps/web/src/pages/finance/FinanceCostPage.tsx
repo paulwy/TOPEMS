@@ -263,6 +263,10 @@ const FinanceCostPage: React.FC = () => {
     <PageContainer
       padding={false}
       maxWidth={false}
+      title='成本管理'
+      subtitle='管理成本核算和成本分析'
+      autoTitle
+      autoBreadcrumbs
     >
       <MuiBox
         sx={{
@@ -289,7 +293,7 @@ const FinanceCostPage: React.FC = () => {
               sx={{ alignItems: 'center' }}
               spacing={2}
             >
-              <BackButton href='/dashboard' />
+              <BackButton href='/finance/dashboard' />
               <MuiBox>
                 <Typography
                   variant='h5'

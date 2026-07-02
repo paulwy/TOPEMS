@@ -239,9 +239,7 @@ export const MonitorAlertsPage: React.FC = () => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
-        (a) =>
-          a.name.toLowerCase().includes(query) ||
-          a.service.toLowerCase().includes(query)
+        (a) => a.name.toLowerCase().includes(query) || a.service.toLowerCase().includes(query)
       );
     }
 
@@ -269,8 +267,12 @@ export const MonitorAlertsPage: React.FC = () => {
 
   const stats = useMemo(() => {
     const activeCount = alerts.filter((a) => a.status === 'active').length;
-    const criticalCount = alerts.filter((a) => a.severity === 'critical' && a.status !== 'resolved').length;
-    const warningCount = alerts.filter((a) => a.severity === 'warning' && a.status !== 'resolved').length;
+    const criticalCount = alerts.filter(
+      (a) => a.severity === 'critical' && a.status !== 'resolved'
+    ).length;
+    const warningCount = alerts.filter(
+      (a) => a.severity === 'warning' && a.status !== 'resolved'
+    ).length;
     const todayCount = alerts.filter((a) => {
       const today = new Date().toDateString();
       return new Date(a.triggeredAt).toDateString() === today;
@@ -336,7 +338,9 @@ export const MonitorAlertsPage: React.FC = () => {
         setActionLoading(true);
         setAlerts((prev) =>
           prev.map((a) =>
-            a.id === alert.id ? { ...a, status: 'acknowledged' as const, acknowledgedBy: '当前用户' } : a
+            a.id === alert.id
+              ? { ...a, status: 'acknowledged' as const, acknowledgedBy: '当前用户' }
+              : a
           )
         );
         addNotification({
@@ -510,7 +514,11 @@ export const MonitorAlertsPage: React.FC = () => {
         label: '告警名称',
         minWidth: 200,
         render: (row) => (
-          <Stack direction='row' spacing={1.5} sx={{ alignItems: 'center' }}>
+          <Stack
+            direction='row'
+            spacing={1.5}
+            sx={{ alignItems: 'center' }}
+          >
             <Avatar
               sx={{
                 width: 36,
@@ -555,9 +563,19 @@ export const MonitorAlertsPage: React.FC = () => {
         label: '所属服务',
         width: 140,
         render: (row) => (
-          <Stack direction='row' spacing={0.5} sx={{ alignItems: 'center' }}>
-            <Server size={14} style={{ color: '#9ca3af' }} />
-            <Typography variant='body2' color='text.secondary'>
+          <Stack
+            direction='row'
+            spacing={0.5}
+            sx={{ alignItems: 'center' }}
+          >
+            <Server
+              size={14}
+              style={{ color: '#9ca3af' }}
+            />
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               {row.service}
             </Typography>
           </Stack>
@@ -587,9 +605,19 @@ export const MonitorAlertsPage: React.FC = () => {
         label: '触发时间',
         width: 160,
         render: (row) => (
-          <Stack direction='row' spacing={0.5} sx={{ alignItems: 'center' }}>
-            <Clock size={14} style={{ color: '#9ca3af' }} />
-            <Typography variant='body2' color='text.secondary'>
+          <Stack
+            direction='row'
+            spacing={0.5}
+            sx={{ alignItems: 'center' }}
+          >
+            <Clock
+              size={14}
+              style={{ color: '#9ca3af' }}
+            />
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               {new Date(row.triggeredAt).toLocaleString('zh-CN')}
             </Typography>
           </Stack>
@@ -659,7 +687,15 @@ export const MonitorAlertsPage: React.FC = () => {
         ),
       },
     ],
-    [getSeverityChip, getStatusChip, handleAcknowledge, handleResolve, handleViewDetail, handleSuppress, actionLoading]
+    [
+      getSeverityChip,
+      getStatusChip,
+      handleAcknowledge,
+      handleResolve,
+      handleViewDetail,
+      handleSuppress,
+      actionLoading,
+    ]
   );
 
   const filterOptions = useMemo(
@@ -730,11 +766,26 @@ export const MonitorAlertsPage: React.FC = () => {
             },
           }}
         >
-          <Tab label='全部告警' value='all' />
-          <Tab label='严重告警' value='critical' />
-          <Tab label='警告' value='warning' />
-          <Tab label='通知' value='info' />
-          <Tab label='已处理' value='resolved' />
+          <Tab
+            label='全部告警'
+            value='all'
+          />
+          <Tab
+            label='严重告警'
+            value='critical'
+          />
+          <Tab
+            label='警告'
+            value='warning'
+          />
+          <Tab
+            label='通知'
+            value='info'
+          />
+          <Tab
+            label='已处理'
+            value='resolved'
+          />
         </Tabs>
       </Box>
     ),
@@ -760,7 +811,11 @@ export const MonitorAlertsPage: React.FC = () => {
             }}
           >
             <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
-              <Stack direction='row' spacing={1.5} sx={{ alignItems: 'center' }}>
+              <Stack
+                direction='row'
+                spacing={1.5}
+                sx={{ alignItems: 'center' }}
+              >
                 <Box
                   sx={{
                     width: 40,
@@ -776,10 +831,16 @@ export const MonitorAlertsPage: React.FC = () => {
                   {item.icon}
                 </Box>
                 <Box>
-                  <Typography variant='h4' sx={{ fontWeight: 700, lineHeight: 1.2 }}>
+                  <Typography
+                    variant='h4'
+                    sx={{ fontWeight: 700, lineHeight: 1.2 }}
+                  >
                     {item.value}
                   </Typography>
-                  <Typography variant='body2' color='text.secondary'>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     {item.title}
                   </Typography>
                 </Box>

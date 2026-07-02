@@ -23,23 +23,23 @@ export const documentApi = {
     if (params?.category) searchParams.set('category', params.category);
 
     const queryString = searchParams.toString();
-    return apiClient.ai.get(`/api/ai/documents${queryString ? `?${queryString}` : ''}`);
+    return apiClient.ai.get(`/documents${queryString ? `?${queryString}` : ''}`);
   },
 
   getDocument: async (id: string): Promise<ApiResponse<Document>> => {
-    return apiClient.ai.get(`/api/ai/documents/${id}`);
+    return apiClient.ai.get(`/documents/${id}`);
   },
 
   createDocument: async (data: Partial<Document>): Promise<ApiResponse<Document>> => {
-    return apiClient.ai.post('/api/ai/documents', data);
+    return apiClient.ai.post('/documents', data);
   },
 
   updateDocument: async (id: string, data: Partial<Document>): Promise<ApiResponse<Document>> => {
-    return apiClient.ai.put(`/api/ai/documents/${id}`, data);
+    return apiClient.ai.put(`/documents/${id}`, data);
   },
 
   deleteDocument: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.ai.delete(`/api/ai/documents/${id}`);
+    return apiClient.ai.delete(`/documents/${id}`);
   },
 
   summarizeDocument: async (
@@ -47,7 +47,7 @@ export const documentApi = {
     data?: SummarizeDocumentRequest
   ): Promise<ApiResponse<SummarizeDocumentResponse>> => {
     return apiClient.ai.post<SummarizeDocumentResponse>(
-      `/api/v1/documents/${id}/summarize`,
+      `/v1/documents/${id}/summarize`,
       data || {}
     );
   },
@@ -57,7 +57,7 @@ export const documentApi = {
     data?: ExtractKeyPointsRequest
   ): Promise<ApiResponse<ExtractKeyPointsResponse>> => {
     return apiClient.ai.post<ExtractKeyPointsResponse>(
-      `/api/v1/documents/${id}/key-points`,
+      `/v1/documents/${id}/key-points`,
       data || {}
     );
   },
@@ -66,7 +66,7 @@ export const documentApi = {
     id: string,
     data: ExtractDocumentRequest
   ): Promise<ApiResponse<ExtractDocumentResponse>> => {
-    return apiClient.ai.post<ExtractDocumentResponse>(`/api/v1/documents/${id}/extract`, data);
+    return apiClient.ai.post<ExtractDocumentResponse>(`/v1/documents/${id}/extract`, data);
   },
 
   translateDocument: async (
@@ -83,7 +83,7 @@ export const documentApi = {
       source_language: string;
     }>
   > => {
-    return apiClient.ai.post(`/api/ai/documents/${id}/translate`, data);
+    return apiClient.ai.post(`/documents/${id}/translate`, data);
   },
 
   ocrDocument: async (
@@ -96,7 +96,7 @@ export const documentApi = {
       confidence: number;
     }>
   > => {
-    return apiClient.ai.post(`/api/ai/documents/${id}/ocr`);
+    return apiClient.ai.post(`/documents/${id}/ocr`);
   },
 
   classifyDocument: async (
@@ -109,7 +109,7 @@ export const documentApi = {
       all_categories?: Array<{ category: string; score: number }>;
     }>
   > => {
-    return apiClient.ai.post(`/api/ai/documents/${id}/classify`);
+    return apiClient.ai.post(`/documents/${id}/classify`);
   },
 
   extractDocumentEntities: async (
@@ -126,6 +126,6 @@ export const documentApi = {
       }>;
     }>
   > => {
-    return apiClient.ai.post(`/api/ai/documents/${id}/entities`);
+    return apiClient.ai.post(`/documents/${id}/entities`);
   },
 };

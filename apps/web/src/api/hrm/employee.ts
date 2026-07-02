@@ -40,39 +40,39 @@ function createCrudApi<T>(endpoint: string): CrudOperations<T> {
 export const employeeApi: CrudOperations<Employee> = {
   list: async (params?: ListParams) => {
     const queryString = buildQueryString(params);
-    return await apiClient.hrm.get(`/api/hrm/employees${queryString}`);
+    return await apiClient.hrm.get(`/employees${queryString}`);
   },
 
   get: (id: string) => {
-    return apiClient.hrm.get(`/api/hrm/employees/${id}`);
+    return apiClient.hrm.get(`/employees/${id}`);
   },
 
   create: (data: Partial<Employee>) => {
-    return apiClient.hrm.post('/api/hrm/employees', data);
+    return apiClient.hrm.post('/employees', data);
   },
 
   update: (id: string, data: Partial<Employee>) => {
-    return apiClient.hrm.put(`/api/hrm/employees/${id}`, data);
+    return apiClient.hrm.put(`/employees/${id}`, data);
   },
 
   delete: (id: string) => {
-    return apiClient.hrm.delete(`/api/hrm/employees/${id}`);
+    return apiClient.hrm.delete(`/employees/${id}`);
   },
 };
 
-export const roleApi: CrudOperations<Role> = createCrudApi<Role>('/api/hrm/roles');
+export const roleApi: CrudOperations<Role> = createCrudApi<Role>('/roles');
 
-export const positionApi: CrudOperations<Position> = createCrudApi<Position>('/api/hrm/positions');
+export const positionApi: CrudOperations<Position> = createCrudApi<Position>('/positions');
 
 export const employeePerformanceApi = {
   getReviews(
     employee_id: string
   ): Promise<ApiResponse<{ items: PerformanceReview[]; total: number }>> {
-    return apiClient.hrm.get(`/api/hrm/employees/${employee_id}/performance-reviews`);
+    return apiClient.hrm.get(`/employees/${employee_id}/performance-reviews`);
   },
 
   getGoals(employee_id: string): Promise<ApiResponse<{ items: PerformanceGoal[]; total: number }>> {
-    return apiClient.hrm.get(`/api/hrm/employees/${employee_id}/performance-goals`);
+    return apiClient.hrm.get(`/employees/${employee_id}/performance-goals`);
   },
 };
 

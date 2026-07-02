@@ -20,9 +20,7 @@ export const deviceApi = {
     if (params?.search) queryParams.append('search', params.search);
     if (params?.status) queryParams.append('status', params.status);
 
-    const response = await apiClient.gis.get<any>(
-      `/api/gis/device-locations?${queryParams.toString()}`
-    );
+    const response = await apiClient.gis.get<any>(`/device-locations?${queryParams.toString()}`);
     if (response.success && response.data) {
       const adapted = adaptResponse<any>(response.data, 'device_locations');
       adapted.data = adapted.data.map(
@@ -42,7 +40,7 @@ export const deviceApi = {
   },
 
   getDevicePoint: async (id: string): Promise<ApiResponse<DevicePoint>> => {
-    return apiClient.gis.get<DevicePoint>(`/api/gis/device-locations/${id}`);
+    return apiClient.gis.get<DevicePoint>(`/device-locations/${id}`);
   },
 
   listDevicePointsByMap: async (
@@ -54,23 +52,23 @@ export const deviceApi = {
     if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
 
     return apiClient.gis.get<PaginatedResponse<DevicePoint>>(
-      `/api/gis/device-locations/map/${mapId}?${queryParams.toString()}`
+      `/device-locations/map/${mapId}?${queryParams.toString()}`
     );
   },
 
   createDevicePoint: async (data: CreateDevicePointRequest): Promise<ApiResponse<DevicePoint>> => {
-    return apiClient.gis.post<DevicePoint>('/api/gis/device-locations', data);
+    return apiClient.gis.post<DevicePoint>('/device-locations', data);
   },
 
   updateDevicePoint: async (
     id: string,
     data: Partial<CreateDevicePointRequest>
   ): Promise<ApiResponse<DevicePoint>> => {
-    return apiClient.gis.put<DevicePoint>(`/api/gis/device-locations/${id}`, data);
+    return apiClient.gis.put<DevicePoint>(`/device-locations/${id}`, data);
   },
 
   deleteDevicePoint: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.gis.delete<void>(`/api/gis/device-locations/${id}`);
+    return apiClient.gis.delete<void>(`/device-locations/${id}`);
   },
 
   getDeviceTrack: async (
@@ -84,7 +82,7 @@ export const deviceApi = {
     if (params.pagesize) queryParams.append('pagesize', params.pagesize.toString());
 
     return apiClient.gis.get<PaginatedResponse<DeviceLocationRecord>>(
-      `/api/gis/device-tracks?${queryParams.toString()}`
+      `/device-tracks?${queryParams.toString()}`
     );
   },
 
@@ -107,10 +105,10 @@ export const deviceApi = {
       track_points: number;
       start_time: string;
       end_time: string;
-    }>(`/api/gis/device-tracks/${device_id}/statistics`);
+    }>(`/device-tracks/${device_id}/statistics`);
   },
 
   listDevicesWithTracks: async (): Promise<ApiResponse<DevicePoint[]>> => {
-    return apiClient.gis.get<DevicePoint[]>('/api/gis/device-tracks/devices');
+    return apiClient.gis.get<DevicePoint[]>('/device-tracks/devices');
   },
 };

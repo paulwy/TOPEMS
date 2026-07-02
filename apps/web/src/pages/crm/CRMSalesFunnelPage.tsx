@@ -41,8 +41,8 @@ const CRMSalesFunnelPage: React.FC = () => {
     try {
       setLoading(true);
       const [metricsRes, stagesRes] = await Promise.allSettled([
-        apiClient.crm.get('/api/crm/sales-funnel/metrics'),
-        apiClient.crm.get('/api/crm/sales-funnel'),
+        apiClient.crm.get('/sales-funnel/metrics'),
+        apiClient.crm.get('/sales-funnel'),
       ]);
       if (metricsRes.status === 'fulfilled' && metricsRes.value.success) {
         setMetrics(metricsRes.value.data as FunnelMetrics);
@@ -124,6 +124,8 @@ const CRMSalesFunnelPage: React.FC = () => {
       title='销售漏斗'
       subtitle='可视化销售机会的阶段性转化'
       maxWidth='xl'
+      autoTitle
+      autoBreadcrumbs
     >
       <StatsPageTemplate
         title='漏斗分析'

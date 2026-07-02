@@ -302,9 +302,8 @@ const RsMilestonePage: React.FC = () => {
   ];
 
   return (
-    <PageContainer title='里程碑'>
+    <PageContainer>
       <ListPageTemplate
-        title=''
         columns={columns}
         data={paginatedMilestones}
         loading={loading}

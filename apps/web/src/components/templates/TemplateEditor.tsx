@@ -1,5 +1,4 @@
-import {
-  Dialog,
+import {Dialog,
   DialogContent,
   DialogActions,
   TextField,
@@ -9,8 +8,7 @@ import {
   FormLabel,
   Typography,
   Box,
-  Button,
-} from '@mui/material';
+  Button, useTheme} from '@mui/material';
 import React, { useState, useEffect } from 'react';
 
 import { Plus, Trash2, GripVertical, Sparkles, Eye, EyeOff } from 'lucide-react';
@@ -57,6 +55,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
   categories,
   onSave,
 }) => {
+  const theme = useTheme();
   const [isPreview, setIsPreview] = useState(false);
   const [formData, setFormData] = useState<CreateTemplateRequest>({
     name: '',
@@ -338,7 +337,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                   <GripVertical
                     size={16}
                     style={{
-                      color: 'text.disabled',
+                      color: theme.palette.text.disabled,
                       marginTop: 8,
                       cursor: 'move',
                       flexShrink: 0,
@@ -553,7 +552,7 @@ const TemplateEditor: React.FC<TemplateEditorProps> = ({
                 >
                   <Sparkles
                     size={16}
-                    style={{ color: 'warning.main' }}
+                    style={{ color: theme.palette.warning.main }}
                   />
                   AI 辅助
                 </FormLabel>

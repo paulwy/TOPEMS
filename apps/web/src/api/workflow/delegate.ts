@@ -8,50 +8,48 @@ import type {
 import { createCrudApi } from './utils';
 
 export const delegateApi = {
-  ...createCrudApi<WorkflowDelegate>('/api/flow/delegates'),
+  ...createCrudApi<WorkflowDelegate>('/delegates'),
 
   listDelegates: (params?: ListParams) =>
-    createCrudApi<WorkflowDelegate>('/api/flow/delegates').list(params),
+    createCrudApi<WorkflowDelegate>('/delegates').list(params),
 
-  getDelegate: (id: string) =>
-    createCrudApi<WorkflowDelegate>('/api/flow/delegates').get(id),
+  getDelegate: (id: string) => createCrudApi<WorkflowDelegate>('/delegates').get(id),
 
   createDelegate: (data: CreateWorkflowDelegateRequest) =>
-    createCrudApi<WorkflowDelegate>('/api/flow/delegates').create(data),
+    createCrudApi<WorkflowDelegate>('/delegates').create(data),
 
   updateDelegate: (id: string, data: UpdateWorkflowDelegateRequest) =>
-    createCrudApi<WorkflowDelegate>('/api/flow/delegates').update(id, data),
+    createCrudApi<WorkflowDelegate>('/delegates').update(id, data),
 
-  deleteDelegate: (id: string) =>
-    createCrudApi<WorkflowDelegate>('/api/flow/delegates').delete(id),
+  deleteDelegate: (id: string) => createCrudApi<WorkflowDelegate>('/delegates').delete(id),
 
   activate: (id: string) => {
-    return apiClient.workflow.post(`/api/flow/delegates/${id}/activate`);
+    return apiClient.workflow.post(`/delegates/${id}/activate`);
   },
 
   deactivate: (id: string) => {
-    return apiClient.workflow.post(`/api/flow/delegates/${id}/deactivate`);
+    return apiClient.workflow.post(`/delegates/${id}/deactivate`);
   },
 
   getMyDelegates: (params?: ListParams) => {
-    return apiClient.workflow.get('/api/flow/delegates/my', { params });
+    return apiClient.workflow.get('/delegates/my', { params });
   },
 
   getMyAttorneys: (params?: ListParams) => {
-    return apiClient.workflow.get('/api/flow/delegates/my/attorneys', { params });
+    return apiClient.workflow.get('/delegates/my/attorneys', { params });
   },
 
   getActiveDelegate: (userId?: string) => {
     const params = userId ? { user_id: userId } : {};
-    return apiClient.workflow.get('/api/flow/delegates/active', { params });
+    return apiClient.workflow.get('/delegates/active', { params });
   },
 
   getDelegateWorkflows: (id: string) => {
-    return apiClient.workflow.get(`/api/flow/delegates/${id}/workflows`);
+    return apiClient.workflow.get(`/delegates/${id}/workflows`);
   },
 
   checkDelegation: (workflowId: string, userId?: string) => {
     const params = userId ? { user_id: userId } : {};
-    return apiClient.workflow.get(`/api/flow/delegates/check/${workflowId}`, { params });
+    return apiClient.workflow.get(`/delegates/check/${workflowId}`, { params });
   },
 };

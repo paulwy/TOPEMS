@@ -32,7 +32,7 @@ import {
   Thermometer,
   Box,
 } from 'lucide-react';
-import { Box as MuiBox, Typography, Paper, Chip, IconButton, Button } from '@mui/material';
+import {Box as MuiBox, Typography, Paper, Chip, IconButton, Button, useTheme} from '@mui/material';
 import type { DevicePoint, Pipeline, StorageLocation, GeoJSONFeature } from '../../api/gis';
 import DeviceTrackPanel from './DeviceTrackPanel';
 import HeatmapLayer, { HeatmapLegend } from './HeatmapLayer';
@@ -113,6 +113,7 @@ const FitBoundsControl: React.FC<{
   bounds: [number, number][] | undefined;
   mapRef: React.RefObject<any>;
 }> = ({ bounds, mapRef }) => {
+  const theme = useTheme();
   const fitBounds = useCallback(() => {
     const map = mapRef.current;
     if (map && bounds && bounds.length >= 2) {
@@ -317,6 +318,7 @@ const MapView: React.FC<MapViewProps> = ({
   storageLocations = [],
   onMarkerClick,
 }) => {
+  const theme = useTheme();
   const [mapCenter, _setMapCenter] = useState<[number, number]>([
     39.9,
     116.4, // 北京
@@ -948,7 +950,7 @@ const MapView: React.FC<MapViewProps> = ({
                     >
                       <Info
                         size={20}
-                        style={{ color: 'warning.main' }}
+                        style={{ color: theme.palette.warning.main }}
                       />
                       <Typography
                         variant='h6'
@@ -1666,12 +1668,12 @@ const MapView: React.FC<MapViewProps> = ({
           {showLayerPanel ? (
             <ChevronUp
               size={16}
-              style={{ color: 'text.secondary' }}
+              style={{ color: theme.palette.text.secondary }}
             />
           ) : (
             <ChevronDown
               size={16}
-              style={{ color: 'text.secondary' }}
+              style={{ color: theme.palette.text.secondary }}
             />
           )}
         </Button>

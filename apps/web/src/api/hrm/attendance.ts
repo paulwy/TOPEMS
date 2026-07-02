@@ -6,31 +6,31 @@ import { buildQueryString } from './types';
 export const attendanceApi = {
   list(params?: ListParams): Promise<ApiResponse<PaginatedResult<AttendanceRecord>>> {
     const queryString = buildQueryString(params);
-    return apiClient.hrm.get(`/api/hrm/attendance${queryString}`);
+    return apiClient.hrm.get(`/attendance${queryString}`);
   },
 
   get: (id: string) => {
-    return apiClient.hrm.get(`/api/hrm/attendance/${id}`);
+    return apiClient.hrm.get(`/attendance/${id}`);
   },
 
   create: (data: Partial<AttendanceRecord>) => {
-    return apiClient.hrm.post('/api/hrm/attendance', data);
+    return apiClient.hrm.post('/attendance', data);
   },
 
   update: (id: string, data: Partial<AttendanceRecord>) => {
-    return apiClient.hrm.put(`/api/hrm/attendance/${id}`, data);
+    return apiClient.hrm.put(`/attendance/${id}`, data);
   },
 
   delete: (id: string) => {
-    return apiClient.hrm.delete(`/api/hrm/attendance/${id}`);
+    return apiClient.hrm.delete(`/attendance/${id}`);
   },
 
   checkIn(employee_id: string): Promise<ApiResponse<AttendanceRecord>> {
-    return apiClient.hrm.post('/api/hrm/attendance/check-in', { employee_id });
+    return apiClient.hrm.post('/attendance/check-in', { employee_id });
   },
 
   checkOut(employee_id: string): Promise<ApiResponse<AttendanceRecord>> {
-    return apiClient.hrm.post('/api/hrm/attendance/check-out', { employee_id });
+    return apiClient.hrm.post('/attendance/check-out', { employee_id });
   },
 };
 

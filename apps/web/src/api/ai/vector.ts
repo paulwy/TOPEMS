@@ -20,7 +20,7 @@ export const vectorApi = {
       query_time_ms: number;
     }>
   > => {
-    return apiClient.ai.post('/api/ai/vector/search', data);
+    return apiClient.ai.post('/vector/search', data);
   },
 
   getVectorCollections: async (): Promise<
@@ -36,7 +36,7 @@ export const vectorApi = {
       }>
     >
   > => {
-    return apiClient.ai.get('/api/ai/vector/collections');
+    return apiClient.ai.get('/vector/collections');
   },
 
   createVectorCollection: async (data: {
@@ -44,11 +44,11 @@ export const vectorApi = {
     description?: string;
     embedding_model?: string;
   }): Promise<ApiResponse<{ id: string; name: string }>> => {
-    return apiClient.ai.post('/api/ai/vector/collections', data);
+    return apiClient.ai.post('/vector/collections', data);
   },
 
   deleteVectorCollection: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.ai.delete(`/api/ai/vector/collections/${id}`);
+    return apiClient.ai.delete(`/vector/collections/${id}`);
   },
 
   indexDocument: async (
@@ -61,6 +61,6 @@ export const vectorApi = {
       status: string;
     }>
   > => {
-    return apiClient.ai.post(`/api/ai/vector/index/${documentId}`, { collection_id: collectionId });
+    return apiClient.ai.post(`/vector/index/${documentId}`, { collection_id: collectionId });
   },
 };

@@ -4,25 +4,24 @@ import { createCrudApi } from './utils';
 import type { Reagent, CreateReagentRequest, UpdateReagentRequest, ListParams } from './types';
 
 export const reagentApi = {
-  ...createCrudApi<Reagent>('/api/lims/reagents'),
+  ...createCrudApi<Reagent>('/reagents'),
 
-  listReagents: (params?: ListParams) => createCrudApi<Reagent>('/api/lims/reagents').list(params),
+  listReagents: (params?: ListParams) => createCrudApi<Reagent>('/reagents').list(params),
 
-  getReagent: (id: string) => createCrudApi<Reagent>('/api/lims/reagents').get(id),
+  getReagent: (id: string) => createCrudApi<Reagent>('/reagents').get(id),
 
-  createReagent: (data: CreateReagentRequest) =>
-    createCrudApi<Reagent>('/api/lims/reagents').create(data),
+  createReagent: (data: CreateReagentRequest) => createCrudApi<Reagent>('/reagents').create(data),
 
   updateReagent: (id: string, data: UpdateReagentRequest) =>
-    createCrudApi<Reagent>('/api/lims/reagents').update(id, data),
+    createCrudApi<Reagent>('/reagents').update(id, data),
 
-  deleteReagent: (id: string) => createCrudApi<Reagent>('/api/lims/reagents').delete(id),
+  deleteReagent: (id: string) => createCrudApi<Reagent>('/reagents').delete(id),
 
   listLowStock: async (): Promise<ApiResponse<Reagent[]>> => {
-    return apiClient.lims.get('/api/lims/reagents/low-stock');
+    return apiClient.lims.get('/reagents/low-stock');
   },
 
   listExpiring: async (days?: number): Promise<ApiResponse<Reagent[]>> => {
-    return apiClient.lims.get('/api/lims/reagents/expiring', { params: { days } });
+    return apiClient.lims.get('/reagents/expiring', { params: { days } });
   },
 };

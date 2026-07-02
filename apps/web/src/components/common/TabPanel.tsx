@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Typography, Skeleton } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material/styles';
 
 export interface TabPanelProps {
   children?: React.ReactNode;
@@ -9,7 +10,7 @@ export interface TabPanelProps {
   emptyMessage?: string;
 
   // TOPEMS 设计系统
-  sx?: import('@mui/material/styles').SxProps<import('@mui/material/styles').Theme>;
+  sx?: SxProps<Theme>;
 }
 
 export const TabPanel: React.FC<TabPanelProps> = ({

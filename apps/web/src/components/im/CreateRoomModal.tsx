@@ -1,5 +1,4 @@
-import {
-  TextField,
+import {TextField,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -7,8 +6,7 @@ import {
   Tabs,
   Tab,
   Box,
-  Button,
-} from '@mui/material';
+  Button, useTheme} from '@mui/material';
 import React, { useState } from 'react';
 import { X, Users, User, Save, MessageSquare } from 'lucide-react';
 
@@ -29,6 +27,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
   onCreated,
   currentUserId = 'current-user',
 }) => {
+  const theme = useTheme();
   const addNotification = useAppStore((state) => state.addNotification);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'chat' | 'group'>('chat');
@@ -226,7 +225,15 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
         {activeTab === 'chat' && (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 2 }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <label style={{ fontSize: 14, fontWeight: 500, color: 'var(--mui-palette-text-secondary)' }}>聊天室类型</label>
+              <span
+                style={{
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: 'var(--mui-palette-text-secondary)',
+                }}
+              >
+                聊天室类型
+              </span>
               <Box sx={{ display: 'flex', gap: 1 }}>
                 <Button
                   variant={chatRoomType === 'direct' ? 'contained' : 'outlined'}
@@ -257,7 +264,15 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
             />
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <label style={{ fontSize: 14, fontWeight: 500, color: 'var(--mui-palette-text-secondary)' }}>添加成员</label>
+              <span
+                style={{
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: 'var(--mui-palette-text-secondary)',
+                }}
+              >
+                添加成员
+              </span>
               <Box sx={{ display: 'flex', gap: 1 }}>
                 <TextField
                   size='small'
@@ -310,7 +325,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                       <button
                         onClick={() => removeMember(chatRoomMembers, setChatRoomMembers, member)}
                         style={{
-                          color: 'text.secondary',
+                          color: theme.palette.text.secondary,
                           backgroundColor: 'transparent',
                           border: 'none',
                           cursor: 'pointer',
@@ -358,7 +373,15 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
             />
 
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <label style={{ fontSize: 14, fontWeight: 500, color: 'var(--mui-palette-text-secondary)' }}>添加成员</label>
+              <span
+                style={{
+                  fontSize: 14,
+                  fontWeight: 500,
+                  color: 'var(--mui-palette-text-secondary)',
+                }}
+              >
+                添加成员
+              </span>
               <Box sx={{ display: 'flex', gap: 1 }}>
                 <TextField
                   size='small'
@@ -411,7 +434,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({
                       <button
                         onClick={() => removeMember(groupMembers, setGroupMembers, member)}
                         style={{
-                          color: 'text.secondary',
+                          color: theme.palette.text.secondary,
                           backgroundColor: 'transparent',
                           border: 'none',
                           cursor: 'pointer',

@@ -1,11 +1,16 @@
 import React from 'react';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
+import { Boxes } from 'lucide-react';
 
 const WIPPage: React.FC = () => {
   return (
     <PageContainer
-      title='在制品管理'
-      subtitle='Work In Progress'
+      autoTitle
+      autoBreadcrumbs
+      headerProps={{
+        pageIcon: <Boxes style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+      }}
     >
       {null}
     </PageContainer>

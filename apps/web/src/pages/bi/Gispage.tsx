@@ -40,8 +40,7 @@ import type {
   FactoryMap,
   BusinessLocation,
 } from '@/api/gis';
-import {
-  Box,
+import {Box,
   Paper,
   Stack,
   Chip,
@@ -66,8 +65,7 @@ import {
   FormControlLabel,
   InputAdornment,
   CircularProgress,
-  Button,
-} from '@mui/material';
+  Button, useTheme} from '@mui/material';
 import { PageContainer } from '@/components/common';
 
 type TabType =
@@ -86,6 +84,7 @@ interface FormErrors {
 }
 
 const GisContent: React.FC = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const {
     state,
@@ -856,7 +855,7 @@ const GisContent: React.FC = () => {
         variant='body2'
         sx={{ fontWeight: 500, mb: 0.5 }}
       >
-        {label} {required && <span style={{ color: 'error.main' }}>*</span>}
+        {label} {required && <span style={{ color: theme.palette.error.main }}>*</span>}
       </Typography>
       <TextField
         fullWidth

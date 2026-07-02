@@ -168,28 +168,28 @@ export const qualityApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(`/api/mes/quality/inspections${queryString ? `?${queryString}` : ''}`);
+    return apiClient.mes.get(`/quality/inspections${queryString ? `?${queryString}` : ''}`);
   },
 
   async getInspection(id: string): Promise<ApiResponse<QualityInspection>> {
-    return apiClient.mes.get(`/api/mes/quality/inspections/${id}`);
+    return apiClient.mes.get(`/quality/inspections/${id}`);
   },
 
   async createInspection(
     data: CreateQualityInspectionRequest
   ): Promise<ApiResponse<QualityInspection>> {
-    return apiClient.mes.post('/api/mes/quality/inspections', data);
+    return apiClient.mes.post('/quality/inspections', data);
   },
 
   async updateInspection(
     id: string,
     data: UpdateQualityInspectionRequest
   ): Promise<ApiResponse<QualityInspection>> {
-    return apiClient.mes.put(`/api/mes/quality/inspections/${id}`, data);
+    return apiClient.mes.put(`/quality/inspections/${id}`, data);
   },
 
   async deleteInspection(id: string): Promise<ApiResponse<string>> {
-    return apiClient.mes.delete(`/api/mes/quality/inspections/${id}`);
+    return apiClient.mes.delete(`/quality/inspections/${id}`);
   },
 
   async listPatrolInspections(params?: PaginationParams): Promise<
@@ -207,39 +207,39 @@ export const qualityApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(`/api/mes/quality/patrols${queryString ? `?${queryString}` : ''}`);
+    return apiClient.mes.get(`/quality/patrols${queryString ? `?${queryString}` : ''}`);
   },
 
   async getPatrolInspection(id: string): Promise<ApiResponse<PatrolInspection>> {
-    return apiClient.mes.get(`/api/mes/quality/patrols/${id}`);
+    return apiClient.mes.get(`/quality/patrols/${id}`);
   },
 
   async createPatrolInspection(
     data: CreatePatrolInspectionRequest
   ): Promise<ApiResponse<PatrolInspection>> {
-    return apiClient.mes.post('/api/mes/quality/patrols', data);
+    return apiClient.mes.post('/quality/patrols', data);
   },
 
   async updatePatrolInspection(
     id: string,
     data: UpdatePatrolInspectionRequest
   ): Promise<ApiResponse<PatrolInspection>> {
-    return apiClient.mes.put(`/api/mes/quality/patrols/${id}`, data);
+    return apiClient.mes.put(`/quality/patrols/${id}`, data);
   },
 
   async deletePatrolInspection(id: string): Promise<ApiResponse<string>> {
-    return apiClient.mes.delete(`/api/mes/quality/patrols/${id}`);
+    return apiClient.mes.delete(`/quality/patrols/${id}`);
   },
 
   async getPatrolItems(patrolId: string): Promise<ApiResponse<{ items: PatrolInspectionItem[] }>> {
-    return apiClient.mes.get(`/api/mes/quality/patrols/${patrolId}/items`);
+    return apiClient.mes.get(`/quality/patrols/${patrolId}/items`);
   },
 
   async addPatrolItem(
     patrolId: string,
     data: AddPatrolInspectionItemRequest
   ): Promise<ApiResponse<PatrolInspectionItem>> {
-    return apiClient.mes.post(`/api/mes/quality/patrols/${patrolId}/items`, data);
+    return apiClient.mes.post(`/quality/patrols/${patrolId}/items`, data);
   },
 
   async listStandards(params?: PaginationParams): Promise<
@@ -257,25 +257,25 @@ export const qualityApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(`/api/mes/quality/standards${queryString ? `?${queryString}` : ''}`);
+    return apiClient.mes.get(`/quality/standards${queryString ? `?${queryString}` : ''}`);
   },
 
   async getStandard(id: string): Promise<ApiResponse<QualityStandard>> {
-    return apiClient.mes.get(`/api/mes/quality/standards/${id}`);
+    return apiClient.mes.get(`/quality/standards/${id}`);
   },
 
   async createStandard(data: CreateQualityStandardRequest): Promise<ApiResponse<QualityStandard>> {
-    return apiClient.mes.post('/api/mes/quality/standards', data);
+    return apiClient.mes.post('/quality/standards', data);
   },
 
   async updateStandard(
     id: string,
     data: Partial<CreateQualityStandardRequest>
   ): Promise<ApiResponse<QualityStandard>> {
-    return apiClient.mes.put(`/api/mes/quality/standards/${id}`, data);
+    return apiClient.mes.put(`/quality/standards/${id}`, data);
   },
 
   async deleteStandard(id: string): Promise<ApiResponse<string>> {
-    return apiClient.mes.delete(`/api/mes/quality/standards/${id}`);
+    return apiClient.mes.delete(`/quality/standards/${id}`);
   },
 };

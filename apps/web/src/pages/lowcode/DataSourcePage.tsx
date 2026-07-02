@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import {
-  Box,
+import {Box,
   TextField,
   InputAdornment,
   Button,
@@ -25,8 +24,7 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  Divider,
-} from '@mui/material';
+  Divider, useTheme} from '@mui/material';
 import {
   Search,
   Plus,
@@ -59,6 +57,7 @@ import type { DataSource, TableInfo } from '../../api/lowcode/types';
 
 const DataSourcePage = () => {
   const [datasources, setDatasources] = useState<DataSource[]>([]);
+  const theme = useTheme();
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<string>('');
@@ -240,7 +239,7 @@ const DataSourcePage = () => {
                 variant="outlined"
               />
             </Box>
-            <span style={{ fontSize: 12, color: 'text.secondary' }}>
+            <span style={{ fontSize: 12, color: theme.palette.text.secondary }}>
               {getTypeLabel(row.type)} · {row.host}:{row.port}
             </span>
           </Box>
@@ -465,7 +464,7 @@ const DataSourcePage = () => {
                   }
                 >
                   <ListItemIcon sx={{ minWidth: 40 }}>
-                    <Table style={{ width: 18, height: 18, color: 'primary.main' }} />
+                    <Table style={{ width: 18, height: 18, color: theme.palette.primary.main }} />
                   </ListItemIcon>
                   <ListItemText
                     primary={table.label || table.name}

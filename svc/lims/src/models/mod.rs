@@ -241,21 +241,27 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lab_records_task ON qa_lab_records(task_id)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lab_instruments_no ON qa_lab_instruments(instrument_no)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lab_instruments_status ON qa_lab_instruments(status)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_qa_lab_instruments_no ON qa_lab_instruments(instrument_no)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_qa_lab_instruments_status ON qa_lab_instruments(status)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lab_reagents_no ON qa_lab_reagents(reagent_no)")
         .execute(pool)
         .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lab_reagents_status ON qa_lab_reagents(status)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lab_processes_no ON qa_lab_processes(process_no)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_qa_lab_processes_no ON qa_lab_processes(process_no)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lab_sample_lifecycle_sample ON qa_lab_sample_lifecycle(sample_id)")
         .execute(pool)
         .await?;
@@ -299,12 +305,16 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lims_sync_no ON qa_lims_sync_records(sync_no)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lims_sync_type ON qa_lims_sync_records(sync_type)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lims_sync_status ON qa_lims_sync_records(status)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_qa_lims_sync_type ON qa_lims_sync_records(sync_type)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_qa_lims_sync_status ON qa_lims_sync_records(status)",
+    )
+    .execute(pool)
+    .await?;
 
     sqlx::query(
         r#"
@@ -668,12 +678,16 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lims_barcode_scan_type ON qa_lims_barcode_scan_records(scan_type)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lims_rfid_tags_tag ON qa_lims_rfid_tags(tag_id)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lims_rfid_tags_status ON qa_lims_rfid_tags(status)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_qa_lims_rfid_tags_tag ON qa_lims_rfid_tags(tag_id)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_qa_lims_rfid_tags_status ON qa_lims_rfid_tags(status)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lims_test_methods_code ON qa_lims_test_methods(method_code)")
         .execute(pool)
         .await?;
@@ -695,18 +709,26 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lims_pt_plans_no ON qa_lims_pt_plans(plan_no)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lims_pt_plans_status ON qa_lims_pt_plans(status)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lims_pt_samples_plan ON qa_lims_pt_samples(plan_id)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lims_pt_results_plan ON qa_lims_pt_results(plan_id)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lims_pt_results_sample ON qa_lims_pt_results(sample_id)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_qa_lims_pt_plans_status ON qa_lims_pt_plans(status)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_qa_lims_pt_samples_plan ON qa_lims_pt_samples(plan_id)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_qa_lims_pt_results_plan ON qa_lims_pt_results(plan_id)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_qa_lims_pt_results_sample ON qa_lims_pt_results(sample_id)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lims_pt_evaluations_plan ON qa_lims_pt_evaluations(plan_id)")
         .execute(pool)
         .await?;
@@ -829,13 +851,62 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lims_collection_tasks_instrument ON qa_lims_collection_tasks(instrument_id)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lims_parse_rules_no ON qa_lims_parse_rules(rule_no)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lims_parse_rules_status ON qa_lims_parse_rules(status)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_qa_lims_parse_rules_no ON qa_lims_parse_rules(rule_no)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_qa_lims_parse_rules_status ON qa_lims_parse_rules(status)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lims_parse_rules_protocol ON qa_lims_parse_rules(protocol)")
+        .execute(pool)
+        .await?;
+
+    sqlx::query(
+        r#"
+        CREATE TABLE IF NOT EXISTS qa_lims_audit_logs (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            action VARCHAR(64) NOT NULL,
+            entity_type VARCHAR(64),
+            entity_id UUID,
+            entity_ids JSONB,
+            user_id VARCHAR(64),
+            user_name VARCHAR(128),
+            request_details JSONB,
+            response_details JSONB,
+            status VARCHAR(32) DEFAULT 'success',
+            error_message TEXT,
+            ip_address VARCHAR(128),
+            user_agent TEXT,
+            created_at TIMESTAMP DEFAULT NOW()
+        )
+        "#,
+    )
+    .execute(pool)
+    .await?;
+
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_qa_lims_audit_logs_action ON qa_lims_audit_logs(action)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lims_audit_logs_entity_type ON qa_lims_audit_logs(entity_type)")
+        .execute(pool)
+        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_qa_lims_audit_logs_user_id ON qa_lims_audit_logs(user_id)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_qa_lims_audit_logs_status ON qa_lims_audit_logs(status)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query("CREATE INDEX IF NOT EXISTS idx_qa_lims_audit_logs_created_at ON qa_lims_audit_logs(created_at)")
         .execute(pool)
         .await?;
 

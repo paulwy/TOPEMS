@@ -33,6 +33,7 @@ lettre.workspace = true
 handlebars.workspace = true
 dashmap.workspace = true
 lazy_static.workspace = true
+migration-sdk = { path = "../migration-sdk" }
 
 [[bin]]
 name = "unified-core-service"

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import {
   DollarSign,
   FileText,
@@ -616,6 +616,10 @@ const HrmPayrollPage: React.FC = () => {
     <PageContainer
       padding={false}
       maxWidth={false}
+      title='薪酬管理'
+      subtitle='管理员工薪资发放和调薪记录'
+      autoTitle
+      autoBreadcrumbs
     >
       {/* StatCards */}
       <Box
@@ -677,7 +681,7 @@ const HrmPayrollPage: React.FC = () => {
         <Box
           sx={{
             bgcolor: 'background.paper',
-            borderRadius: 2,
+            borderRadius: 3,
             boxShadow: 1,
             p: 3,
           }}
@@ -698,7 +702,7 @@ const HrmPayrollPage: React.FC = () => {
         <Box
           sx={{
             bgcolor: 'background.paper',
-            borderRadius: 2,
+            borderRadius: 3,
             boxShadow: 1,
             p: 3,
           }}
@@ -806,7 +810,7 @@ const HrmPayrollPage: React.FC = () => {
                   alignItems: 'center',
                   px: 2,
                   py: 1,
-                  borderRadius: 2,
+                  borderRadius: 3,
                 }}
               >
                 导出
@@ -837,7 +841,7 @@ const HrmPayrollPage: React.FC = () => {
                   alignItems: 'center',
                   px: 2,
                   py: 1,
-                  borderRadius: 2,
+                  borderRadius: 3,
                 }}
               >
                 导出
@@ -851,7 +855,7 @@ const HrmPayrollPage: React.FC = () => {
         <Box
           sx={{
             bgcolor: 'background.paper',
-            borderRadius: 2,
+            borderRadius: 3,
             boxShadow: 1,
             p: 3,
           }}
@@ -888,7 +892,7 @@ const HrmPayrollPage: React.FC = () => {
                   py: 1,
                   border: 1,
                   borderColor: 'grey.300',
-                  borderRadius: 2,
+                  borderRadius: 3,
                 }}
               />
             </Box>
@@ -908,7 +912,7 @@ const HrmPayrollPage: React.FC = () => {
                   py: 1,
                   border: 1,
                   borderColor: 'grey.300',
-                  borderRadius: 2,
+                  borderRadius: 3,
                 }}
               />
             </Box>
@@ -928,7 +932,7 @@ const HrmPayrollPage: React.FC = () => {
                   py: 1,
                   border: 1,
                   borderColor: 'grey.300',
-                  borderRadius: 2,
+                  borderRadius: 3,
                 }}
               />
             </Box>
@@ -939,7 +943,7 @@ const HrmPayrollPage: React.FC = () => {
                   width: '100%',
                   px: 3,
                   py: 1,
-                  borderRadius: 2,
+                  borderRadius: 3,
                   '&:hover': { bgcolor: 'primary.dark' },
                 }}
               >

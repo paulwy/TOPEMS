@@ -14,13 +14,9 @@ import {
   Typography,
   Button,
 } from '@mui/material';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import type {
-  WorkReport,
-  CreateWorkReportRequest,
-  UpdateWorkReportRequest,
-} from '@/api/mes';
+import type { WorkReport, CreateWorkReportRequest, UpdateWorkReportRequest } from '@/api/mes';
 import { mesApi } from '@/api/mes';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -30,15 +26,7 @@ import {
   type RowAction,
   type FilterConfig,
 } from '@/components/templates';
-import {
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
-  CheckCircle,
-  XCircle,
-  Clock,
-} from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, CheckCircle, XCircle, Clock, FileText } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 
 const WorkReportPage: React.FC = () => {
@@ -110,10 +98,7 @@ const WorkReportPage: React.FC = () => {
     e.preventDefault();
     try {
       if (selectedReport) {
-        await mesApi.workReports.update(
-          selectedReport.id,
-          formData as UpdateWorkReportRequest
-        );
+        await mesApi.workReports.update(selectedReport.id, formData as UpdateWorkReportRequest);
         addNotification({
           type: 'success',
           title: '更新成功',
@@ -275,14 +260,12 @@ const WorkReportPage: React.FC = () => {
       {
         id: 'start_time',
         label: '开始时间',
-        render: (row) =>
-          row.start_time ? new Date(row.start_time).toLocaleString('zh-CN') : '-',
+        render: (row) => (row.start_time ? new Date(row.start_time).toLocaleString('zh-CN') : '-'),
       },
       {
         id: 'end_time',
         label: '结束时间',
-        render: (row) =>
-          row.end_time ? new Date(row.end_time).toLocaleString('zh-CN') : '-',
+        render: (row) => (row.end_time ? new Date(row.end_time).toLocaleString('zh-CN') : '-'),
       },
       {
         id: 'status',
@@ -386,7 +369,7 @@ const WorkReportPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -400,7 +383,7 @@ const WorkReportPage: React.FC = () => {
           {stats.total}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -414,7 +397,7 @@ const WorkReportPage: React.FC = () => {
           {stats.draft}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#dbeafe', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: '#dbeafe', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -428,7 +411,7 @@ const WorkReportPage: React.FC = () => {
           {stats.submitted}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -442,7 +425,7 @@ const WorkReportPage: React.FC = () => {
           {stats.approved}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -461,8 +444,12 @@ const WorkReportPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='报工管理'
-      subtitle='管理生产报工记录,包括报工单、操作人员、合格数量、不良数量等'
+      autoTitle
+      autoBreadcrumbs
+      headerProps={{
+        pageIcon: <FileText style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+      }}
     >
       <ListPageTemplate
         title=''

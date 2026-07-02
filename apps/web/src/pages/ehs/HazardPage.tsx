@@ -22,7 +22,7 @@ import {
 import { Plus, Eye, AlertTriangle, MapPin, ShieldAlert, Clock } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { ehsApi } from '@/api/ehs';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import type { Hazard, RiskAssessment, ControlMeasure } from '@/api/ehs';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
@@ -336,14 +336,11 @@ const HazardPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='隐患管理'
-      subtitle='Hazard Management'
       headerProps={{
         actions: headerActions,
         pageIcon: <ShieldAlert sx={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+        pageGradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
       }}
-      maxWidth='xl'
     >
       <Box
         sx={{
@@ -361,7 +358,7 @@ const HazardPage: React.FC = () => {
                   width: 40,
                   height: 40,
                   bgcolor: 'error.lighter',
-                  borderRadius: 2,
+                  borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -394,7 +391,7 @@ const HazardPage: React.FC = () => {
                   width: 40,
                   height: 40,
                   bgcolor: 'error.lighter',
-                  borderRadius: 2,
+                  borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -427,7 +424,7 @@ const HazardPage: React.FC = () => {
                   width: 40,
                   height: 40,
                   bgcolor: 'warning.lighter',
-                  borderRadius: 2,
+                  borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -460,7 +457,7 @@ const HazardPage: React.FC = () => {
                   width: 40,
                   height: 40,
                   bgcolor: 'error.light',
-                  borderRadius: 2,
+                  borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

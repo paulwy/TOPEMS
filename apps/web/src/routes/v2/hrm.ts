@@ -1,4 +1,4 @@
-import { lazyWithRetry } from '../utils';
+import { lazyWithRetry } from './types';
 import type { RouteModuleConfig } from './types';
 
 const HrmDashboardPage = lazyWithRetry(
@@ -49,10 +49,7 @@ const HrmAttendancePage = lazyWithRetry(
   () => import('../../pages/hrm/HrmAttendancePage'),
   'HrmAttendancePage'
 );
-const HrmLeavePage = lazyWithRetry(
-  () => import('../../pages/hrm/HrmLeavePage'),
-  'HrmLeavePage'
-);
+const HrmLeavePage = lazyWithRetry(() => import('../../pages/hrm/HrmLeavePage'), 'HrmLeavePage');
 const HrmPayrollPage = lazyWithRetry(
   () => import('../../pages/hrm/HrmPayrollPage'),
   'HrmPayrollPage'
@@ -103,13 +100,6 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'overview',
       requiredPermissions: ['hrm:read'],
-      nav: {
-        label: '仪表盘',
-        icon: 'LayoutDashboard',
-        order: 0,
-        group: 'overview',
-        showInTabs: true,
-      },
     },
     {
       path: '/hrm/employees',
@@ -120,13 +110,6 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['hrm:employee:read'],
-      nav: {
-        label: '员工管理',
-        icon: 'User',
-        order: 1,
-        group: 'business',
-        showInTabs: true,
-      },
     },
     {
       path: '/hrm/employees/create',
@@ -167,13 +150,6 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['hrm:department:read'],
-      nav: {
-        label: '部门管理',
-        icon: 'Sitemap',
-        order: 2,
-        group: 'business',
-        showInTabs: true,
-      },
     },
     {
       path: '/hrm/organization',
@@ -184,12 +160,6 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'tree',
       group: 'business',
       requiredPermissions: ['hrm:organization:read'],
-      nav: {
-        label: '组织架构',
-        icon: 'Building2',
-        order: 3,
-        group: 'business',
-      },
     },
     {
       path: '/hrm/positions',
@@ -200,12 +170,6 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['hrm:position:read'],
-      nav: {
-        label: '岗位管理',
-        icon: 'Briefcase',
-        order: 4,
-        group: 'business',
-      },
     },
     {
       path: '/hrm/contracts',
@@ -216,12 +180,6 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['hrm:contract:read'],
-      nav: {
-        label: '合同管理',
-        icon: 'FileText',
-        order: 5,
-        group: 'business',
-      },
     },
     {
       path: '/hrm/contracts/:id',
@@ -242,12 +200,6 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'business',
       requiredPermissions: ['hrm:company:read'],
-      nav: {
-        label: '公司信息',
-        icon: 'Building',
-        order: 6,
-        group: 'business',
-      },
     },
     {
       path: '/hrm/attendance',
@@ -258,13 +210,6 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['hrm:attendance:read'],
-      nav: {
-        label: '考勤管理',
-        icon: 'Clock',
-        order: 1,
-        group: 'process',
-        showInTabs: true,
-      },
     },
     {
       path: '/hrm/leave',
@@ -275,12 +220,6 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['hrm:leave:read'],
-      nav: {
-        label: '请假管理',
-        icon: 'Calendar',
-        order: 2,
-        group: 'process',
-      },
     },
     {
       path: '/hrm/payroll',
@@ -291,12 +230,6 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['hrm:payroll:read'],
-      nav: {
-        label: '薪资管理',
-        icon: 'Wallet',
-        order: 3,
-        group: 'process',
-      },
     },
     {
       path: '/hrm/salary-adjustment',
@@ -307,12 +240,6 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['hrm:salary_adjustment:read'],
-      nav: {
-        label: '调薪管理',
-        icon: 'TrendingUp',
-        order: 4,
-        group: 'process',
-      },
     },
     {
       path: '/hrm/recruitment',
@@ -323,12 +250,6 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['hrm:recruitment:read'],
-      nav: {
-        label: '招聘管理',
-        icon: 'UserPlus',
-        order: 5,
-        group: 'process',
-      },
     },
     {
       path: '/hrm/training',
@@ -339,12 +260,6 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['hrm:training:read'],
-      nav: {
-        label: '培训管理',
-        icon: 'GraduationCap',
-        order: 6,
-        group: 'process',
-      },
     },
     {
       path: '/hrm/performance',
@@ -355,12 +270,6 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['hrm:performance:read'],
-      nav: {
-        label: '绩效管理',
-        icon: 'Trophy',
-        order: 7,
-        group: 'process',
-      },
     },
     {
       path: '/hrm/reports',
@@ -371,13 +280,6 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'stats',
       group: 'analytics',
       requiredPermissions: ['hrm:report:read'],
-      nav: {
-        label: '统计报表',
-        icon: 'BarChart3',
-        order: 1,
-        group: 'analytics',
-        showInTabs: true,
-      },
     },
     {
       path: '/hrm/overview',
@@ -388,12 +290,6 @@ export const hrmModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'analytics',
       requiredPermissions: ['hrm:read'],
-      nav: {
-        label: '数据概览',
-        icon: 'PieChart',
-        order: 2,
-        group: 'analytics',
-      },
     },
   ],
 };

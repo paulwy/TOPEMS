@@ -18,7 +18,7 @@ import {
   Tab,
   Button,
 } from '@mui/material';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type {
   ProductionSchedule,
@@ -259,9 +259,9 @@ const ProductionSchedulePage: React.FC = () => {
         color: string;
       }
     > = {
-      scheduled: { label: '已排程', bg: '#e0e7ff', color: '#4338ca' },
-      in_progress: { label: '执行中', bg: '#dbeafe', color: 'primary.dark' },
-      completed: { label: '已完成', bg: 'success.lighter', color: '#15803d' },
+      scheduled: { label: '已排程', bg: '#e0e7ff', color: 'secondary.700' },
+      in_progress: { label: '执行中', bg: 'primary.100', color: 'primary.dark' },
+      completed: { label: '已完成', bg: 'success.lighter', color: 'success.700' },
       cancelled: { label: '已取消', bg: 'error.lighter', color: 'error.dark' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
@@ -384,7 +384,7 @@ const ProductionSchedulePage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -393,12 +393,12 @@ const ProductionSchedulePage: React.FC = () => {
         </Typography>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#4338ca' }}
+          sx={{ fontWeight: 700, color: 'secondary.700' }}
         >
           {stats.scheduled}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#dbeafe', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'primary.100', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -412,7 +412,7 @@ const ProductionSchedulePage: React.FC = () => {
           {stats.in_progress}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -426,7 +426,7 @@ const ProductionSchedulePage: React.FC = () => {
           {stats.completed}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -440,7 +440,7 @@ const ProductionSchedulePage: React.FC = () => {
           {stats.cancelled}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -515,9 +515,9 @@ const ProductionSchedulePage: React.FC = () => {
                     const width = ((end - start) / totalDuration) * 100;
 
                     let bgColor = '#6366f1';
-                    if (task.status === 'in_progress') bgColor = '#3b82f6';
-                    if (task.status === 'completed') bgColor = '#22c55e';
-                    if (task.status === 'cancelled') bgColor = '#ef4444';
+                    if (task.status === 'in_progress') bgColor = 'primary.main';
+                    if (task.status === 'completed') bgColor = 'success.main';
+                    if (task.status === 'cancelled') bgColor = 'error.main';
 
                     return (
                       <Tooltip
@@ -559,8 +559,12 @@ const ProductionSchedulePage: React.FC = () => {
 
   return (
     <PageContainer
-      title='生产排程管理'
-      subtitle='管理生产排程信息,包括工单、工序、工位、计划时间等'
+      autoTitle
+      autoBreadcrumbs
+      headerProps={{
+        pageIcon: <Calendar style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #EC4899 0%, #BE185D 100%)',
+      }}
     >
       <Box sx={{ mb: 2 }}>
         <Tabs
