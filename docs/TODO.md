@@ -121,9 +121,9 @@
 |---|---|---|---|
 | 事件架构扩展 | P1 | ✅ | 增加 ERP/SCM/CRM/Finance 模块事件类型（23 种新事件 + Payload + 便捷发布方法） |
 | 事件版本化 + Schema Registry | P1 | ✅ | 添加 event_version 字段（默认版本 1，支持 Event::with_version()），Schema Registry 待实现 |
-| 移动端适配完善 | P1 | ⏳ | 为 MES/QMS/PM/WMS 核心页面添加移动端布局（当前仅 12/277 页面有适配） |
+| 移动端适配完善 | P1 | ✅ | MES/QMS/PM/WMS 16 个核心页面适配移动端卡片视图（QMS 5/WMS 4/MES 4/PM 3），适配率从 4.3% 提升至 10.1% |
 | DataTable 移动端卡片视图 | P1 | ✅ | DataTable 新增 mobileCardRender/mobileCardTitleKey/mobileCardSubtitleKey 属性 + MobileCardView 子组件；支持自定义卡片渲染和默认卡片布局；自动响应 isMobile 断点切换；满足 44px 最小触摸目标 |
-| 硬编码颜色批量清理 | P2 | ⏳ | 替换 742 处内联颜色为 MUI theme tokens（100 个文件，GIS/IM 高频） |
+| 硬编码颜色批量清理 | P2 | ✅ | 替换 589 处硬编码颜色为 MUI theme tokens（覆盖 115 个文件）；补充 10 个高频颜色映射（#dc2626/#fee2e2/#d1fae5/#fef3c7/#ddd6fe/#fce7f3/#e5e7eb/#9ca3af/#374151/#111827）；扩展排除清单（moduleThemes/iconMapping/DesignTokens/stories/mockData）；剩余 258 处需人工审核（#6366F1/#ca8a04/#fff/rgba 透明色等需上下文判断）；TypeScript 编译 0 errors |
 | console.log 清理 | P2 | ✅ | 检查通过：10 处均为合理用途（logger 工具类、文档示例、Service Worker 独立运行环境），无需清理 |
 | Lighthouse 性能基线 | P2 | ⏳ | 建立性能基线（首次加载 <3s，FCP <1.5s） |
 | 多租户 RLS 集成验证 | P2 | ⏳ | 为核心服务（unified-core/erp/hrm）添加 RlsMiddleware 集成 |

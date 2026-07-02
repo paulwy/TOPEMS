@@ -157,6 +157,12 @@ export const colorMappings: ColorMapping[] = [
     suggestion: 'success 400',
     needsReview: false,
   },
+  {
+    hardcoded: '#d1fae5',
+    token: 'success.100',
+    suggestion: 'Green 100 - success 浅色背景',
+    needsReview: false,
+  },
 
   // ============================================================
   // Warning 色系（橙色/黄色系）
@@ -197,6 +203,12 @@ export const colorMappings: ColorMapping[] = [
     suggestion: 'warning 浅色背景',
     needsReview: false,
   },
+  {
+    hardcoded: '#fef3c7',
+    token: 'warning.100',
+    suggestion: 'Amber 100 - warning 浅色背景（另一种色调）',
+    needsReview: false,
+  },
 
   // ============================================================
   // Error 色系（红色系）
@@ -211,6 +223,18 @@ export const colorMappings: ColorMapping[] = [
     hardcoded: '#ef4444',
     token: 'error.main',
     suggestion: '错误色（小写）',
+    needsReview: false,
+  },
+  {
+    hardcoded: '#dc2626',
+    token: 'error.700',
+    suggestion: 'Red 700 - error 深色',
+    needsReview: false,
+  },
+  {
+    hardcoded: '#fee2e2',
+    token: 'error.100',
+    suggestion: 'Red 100 - error 浅色背景',
     needsReview: false,
   },
 
@@ -266,6 +290,30 @@ export const colorMappings: ColorMapping[] = [
     needsReview: false,
   },
   {
+    hardcoded: '#e5e7eb',
+    token: 'grey.200',
+    suggestion: 'Grey 200 - 浅灰背景/边框',
+    needsReview: false,
+  },
+  {
+    hardcoded: '#9ca3af',
+    token: 'grey.400',
+    suggestion: 'Grey 400 - 辅助文字/图标',
+    needsReview: false,
+  },
+  {
+    hardcoded: '#374151',
+    token: 'grey.800',
+    suggestion: 'Grey 800 - 深色文字',
+    needsReview: false,
+  },
+  {
+    hardcoded: '#111827',
+    token: 'grey.900',
+    suggestion: 'Grey 900 - 标题深色文字',
+    needsReview: false,
+  },
+  {
     hardcoded: '#e0e7ff',
     token: 'primary.100',
     suggestion: 'Indigo 100 - 浅紫背景',
@@ -275,6 +323,18 @@ export const colorMappings: ColorMapping[] = [
     hardcoded: '#f3e8ff',
     token: 'secondary.100',
     suggestion: 'Purple 100 - 浅紫背景',
+    needsReview: false,
+  },
+  {
+    hardcoded: '#ddd6fe',
+    token: 'secondary.100',
+    suggestion: 'Violet 100 - secondary 浅色背景',
+    needsReview: false,
+  },
+  {
+    hardcoded: '#fce7f3',
+    token: 'secondary.100',
+    suggestion: 'Pink 100 - secondary 浅色背景（粉色调）',
     needsReview: false,
   },
 
