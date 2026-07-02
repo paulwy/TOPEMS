@@ -66,6 +66,17 @@ const config = {
     'constants/colors.ts',
     'packages/tokens/',
     'charts/chartTheme.ts',
+    // 模块主题定义（集中管理各业务模块配色）
+    'lib/moduleThemes.ts',
+    // 图标映射文件
+    'lib/iconMapping.tsx',
+    // 设计 token 文档/Storybook 演示
+    'docs/DesignTokens.tsx',
+    'DesignTokens.stories.tsx',
+    '.stories.tsx',
+    // Mock 数据中的颜色（非 UI 渲染）
+    'api/tenant/mockData.ts',
+    'api/lowcode/app.ts',
   ],
 };
 
