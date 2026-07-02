@@ -422,7 +422,7 @@ const LocationPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -436,7 +436,7 @@ const LocationPage: React.FC = () => {
           {total}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'success.light', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'success.light', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -450,7 +450,7 @@ const LocationPage: React.FC = () => {
           {statusSummary?.empty_locations || 0}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -464,7 +464,7 @@ const LocationPage: React.FC = () => {
           {statusSummary?.partially_filled || 0}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'error.light', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'error.light', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}

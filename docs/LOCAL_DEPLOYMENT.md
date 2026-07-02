@@ -175,6 +175,41 @@ pnpm build            # 构建生产版本
 pnpm test             # 运行测试
 ```
 
+## 服务自动注册机制
+
+服务启动时会**自动向 unified-core 注册**，无需手动配置：
+
+```bash
+# 启动服务时自动注册
+./topems.sh start erp
+
+# 预期输出
+[INFO] 启动 erp 服务...
+[SUCCESS] erp 服务启动成功 (PID: xxx, 端口: 8010)
+[DETAIL] 注册 erp 到 unified-core...
+[DETAIL] erp 注册成功
+```
+
+**注册流程**：
+1. 服务启动成功后，脚本调用 `/api/core/plugin/dev/plugins/{code}/register` 接口
+2. 注册信息包含：服务代码、名称、描述、版本、运行时 URL、权限列表
+3. unified-core 将服务信息存储到数据库
+4. 前端通过 `/api/plugins/info` 获取已注册服务列表
+
+**验证注册结果**：
+
+```bash
+# 查看已注册插件列表
+curl -s http://localhost:8000/api/plugins/info | python3 -m json.tool
+```
+
+**服务自动恢复**：
+
+```bash
+# 检查并重启异常服务
+./topems.sh check
+```
+
 ## 端口分配
 
 | 端口 | 服务 | 路径 |

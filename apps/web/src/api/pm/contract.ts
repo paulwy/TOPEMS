@@ -8,11 +8,11 @@ import type {
 
 export const contractApi = {
   list: async () => {
-    return apiClient.pm.get('/api/pm/contracts');
+    return apiClient.pm.get('/contracts');
   },
 
   get: async (id: string) => {
-    return apiClient.pm.get(`/api/pm/contracts/${id}`);
+    return apiClient.pm.get(`/contracts/${id}`);
   },
 
   create: async (data: {
@@ -35,7 +35,7 @@ export const contractApi = {
     description?: string;
     created_by?: string;
   }) => {
-    return apiClient.pm.post('/api/pm/contracts', data);
+    return apiClient.pm.post('/contracts', data);
   },
 
   update: async (
@@ -57,29 +57,29 @@ export const contractApi = {
       description?: string;
     }
   ) => {
-    return apiClient.pm.put(`/api/pm/contracts/${id}`, data);
+    return apiClient.pm.put(`/contracts/${id}`, data);
   },
 
   delete: async (id: string) => {
-    return apiClient.pm.delete(`/api/pm/contracts/${id}`);
+    return apiClient.pm.delete(`/contracts/${id}`);
   },
 
   submit: async (id: string) => {
-    return apiClient.pm.post(`/api/pm/contracts/${id}/submit`);
+    return apiClient.pm.post(`/contracts/${id}/submit`);
   },
 
   approve: async (id: string) => {
-    return apiClient.pm.post(`/api/pm/contracts/${id}/approve`);
+    return apiClient.pm.post(`/contracts/${id}/approve`);
   },
 
   reject: async (id: string) => {
-    return apiClient.pm.post(`/api/pm/contracts/${id}/reject`);
+    return apiClient.pm.post(`/contracts/${id}/reject`);
   },
 };
 
 export const contractMilestoneApi = {
   list: async (contractId: string) => {
-    return apiClient.pm.get(`/api/pm/contracts/${contractId}/milestones`);
+    return apiClient.pm.get(`/contracts/${contractId}/milestones`);
   },
 
   create: async (
@@ -93,7 +93,7 @@ export const contractMilestoneApi = {
       project_milestone_id?: string;
     }
   ) => {
-    return apiClient.pm.post(`/api/pm/contracts/${contractId}/milestones`, data);
+    return apiClient.pm.post(`/contracts/${contractId}/milestones`, data);
   },
 
   update: async (
@@ -107,17 +107,17 @@ export const contractMilestoneApi = {
       payment_percent?: number;
     }
   ) => {
-    return apiClient.pm.put(`/api/pm/contracts/${contractId}/milestones/${milestoneId}`, data);
+    return apiClient.pm.put(`/contracts/${contractId}/milestones/${milestoneId}`, data);
   },
 
   delete: async (contractId: string, milestoneId: string) => {
-    return apiClient.pm.delete(`/api/pm/contracts/${contractId}/milestones/${milestoneId}`);
+    return apiClient.pm.delete(`/contracts/${contractId}/milestones/${milestoneId}`);
   },
 };
 
 export const contractPaymentApi = {
   list: async (contractId: string) => {
-    return apiClient.pm.get(`/api/pm/contracts/${contractId}/payments`);
+    return apiClient.pm.get(`/contracts/${contractId}/payments`);
   },
 
   create: async (
@@ -130,7 +130,7 @@ export const contractPaymentApi = {
       due_date: string;
     }
   ) => {
-    return apiClient.pm.post(`/api/pm/contracts/${contractId}/payments`, data);
+    return apiClient.pm.post(`/contracts/${contractId}/payments`, data);
   },
 
   update: async (
@@ -143,17 +143,17 @@ export const contractPaymentApi = {
       due_date?: string;
     }
   ) => {
-    return apiClient.pm.put(`/api/pm/contracts/${contractId}/payments/${paymentId}`, data);
+    return apiClient.pm.put(`/contracts/${contractId}/payments/${paymentId}`, data);
   },
 
   delete: async (contractId: string, paymentId: string) => {
-    return apiClient.pm.delete(`/api/pm/contracts/${contractId}/payments/${paymentId}`);
+    return apiClient.pm.delete(`/contracts/${contractId}/payments/${paymentId}`);
   },
 };
 
 export const projectContractApi = {
   list: async (projectId: string) => {
-    return apiClient.pm.get(`/api/pm/projects/${projectId}/contracts`);
+    return apiClient.pm.get(`/projects/${projectId}/contracts`);
   },
 
   create: async (
@@ -178,17 +178,17 @@ export const projectContractApi = {
       created_by?: string;
     }
   ) => {
-    return apiClient.pm.post(`/api/pm/projects/${projectId}/contracts`, data);
+    return apiClient.pm.post(`/projects/${projectId}/contracts`, data);
   },
 };
 
 export const contractTemplateApi = {
   list: async () => {
-    return apiClient.pm.get('/api/pm/contract-templates');
+    return apiClient.pm.get('/contract-templates');
   },
 
   get: async (id: string) => {
-    return apiClient.pm.get(`/api/pm/contract-templates/${id}`);
+    return apiClient.pm.get(`/contract-templates/${id}`);
   },
 
   create: async (data: {
@@ -198,7 +198,7 @@ export const contractTemplateApi = {
     content: Record<string, unknown>;
     created_by?: string;
   }) => {
-    return apiClient.pm.post('/api/pm/contract-templates', data);
+    return apiClient.pm.post('/contract-templates', data);
   },
 
   update: async (
@@ -210,11 +210,11 @@ export const contractTemplateApi = {
       content?: Record<string, unknown>;
     }
   ) => {
-    return apiClient.pm.put(`/api/pm/contract-templates/${id}`, data);
+    return apiClient.pm.put(`/contract-templates/${id}`, data);
   },
 
   delete: async (id: string) => {
-    return apiClient.pm.delete(`/api/pm/contract-templates/${id}`);
+    return apiClient.pm.delete(`/contract-templates/${id}`);
   },
 };
 

@@ -354,8 +354,8 @@ const PluginManagementPage: React.FC = () => {
   const filteredPlugins = useMemo(() => {
     return plugins.filter((plugin) => {
       const matchesSearch =
-        plugin.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        plugin.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (plugin.name && plugin.name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (plugin.code && plugin.code.toLowerCase().includes(searchQuery.toLowerCase())) ||
         (plugin.description &&
           plugin.description.toLowerCase().includes(searchQuery.toLowerCase()));
       const matchesType = typeFilter === 'all' || plugin.plugin_type === typeFilter;

@@ -95,7 +95,7 @@ export const PluginDetailModal: React.FC<PluginDetailModalProps> = ({ plugin, on
       onClose={onClose}
       maxWidth='lg'
       fullWidth
-      sx={{ borderRadius: 2 }}
+      sx={{ borderRadius: 3 }}
     >
       <DialogTitle className='flex items-center justify-between'>
         <div className='flex items-center gap-3'>

@@ -42,6 +42,8 @@ import type { ColumnDef } from '@/components/templates/ListPageTemplate';
 import { useNotification } from '@/hooks/useNotification';
 import { apiLogger } from '@/utils/logger';
 
+// TODO(v2-phase2): Replace CircularProgress with LoadingSpinner from '@/components/common/LoadingSpinner'. Complex usage found - manual review needed.
+
 // ============ 类型定义 ============
 
 interface NotificationChannel {

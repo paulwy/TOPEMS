@@ -14,7 +14,7 @@ import {
   Typography,
   Button,
 } from '@mui/material';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import React, { useState, useEffect, useMemo } from 'react';
 import type {
   ProductionProcess,
@@ -254,7 +254,7 @@ const ProductionProcessPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: '#ecfeff', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: '#ecfeff', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -268,7 +268,7 @@ const ProductionProcessPage: React.FC = () => {
           {stats.total}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -282,7 +282,7 @@ const ProductionProcessPage: React.FC = () => {
           {stats.active}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -303,8 +303,12 @@ const ProductionProcessPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='生产工序管理'
-      subtitle='管理生产工序,包括工序名称、编码、顺序、标准工时等'
+      autoTitle
+      autoBreadcrumbs
+      headerProps={{
+        pageIcon: <Settings style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+      }}
     >
       <ListPageTemplate
         title=''

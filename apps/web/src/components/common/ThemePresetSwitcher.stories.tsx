@@ -33,7 +33,7 @@ function PresetShowcase({ preset }: { preset: ThemePreset }) {
       variant="outlined"
       sx={{
         p: 2,
-        borderRadius: 2,
+        borderRadius: 3,
         display: 'flex',
         flexDirection: 'column',
         gap: 1.5,
@@ -161,7 +161,7 @@ export const AllPresets: Story = {
           gap: 2,
           mb: 3,
           p: 2,
-          borderRadius: 2,
+          borderRadius: 3,
           backgroundColor: 'grey.50',
           border: '1px solid',
           borderColor: 'divider',
@@ -198,7 +198,7 @@ export const SwitcherInContext: Story = {
           justifyContent: 'space-between',
           px: 3,
           py: 1.5,
-          borderRadius: 2,
+          borderRadius: 3,
           borderBottom: '1px solid',
           borderColor: 'divider',
           mb: 3,
@@ -213,7 +213,7 @@ export const SwitcherInContext: Story = {
       </Paper>
 
       {/* Simulated content */}
-      <Paper sx={{ p: 3, borderRadius: 2 }}>
+      <Paper sx={{ p: 3, borderRadius: 3 }}>
         <Typography variant="h6" sx={{ mb: 1 }}>
           仪表盘
         </Typography>
@@ -256,7 +256,7 @@ export const ColorPaletteGrid: Story = {
               alignItems: 'center',
               gap: 2,
               p: 1,
-              borderRadius: 2,
+              borderRadius: 3,
               '&:hover': { backgroundColor: 'grey.50' },
             }}
           >

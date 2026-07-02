@@ -37,7 +37,14 @@ import { extractErrorMessage } from '@/utils/errors';
 import { PageContainer } from '@/components/common';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 
-const METRIC_TYPE_CONFIG: Record<string, { label: string; color: 'primary' | 'success' | 'info' | 'warning' | 'default' | 'error'; icon: React.ReactNode }> = {
+const METRIC_TYPE_CONFIG: Record<
+  string,
+  {
+    label: string;
+    color: 'primary' | 'success' | 'info' | 'warning' | 'default' | 'error';
+    icon: React.ReactNode;
+  }
+> = {
   cpu: { label: 'CPU', color: 'primary', icon: <Cpu size={14} /> },
   memory: { label: '内存', color: 'success', icon: <HardDrive size={14} /> },
   disk: { label: '磁盘', color: 'warning', icon: <HardDrive size={14} /> },
@@ -281,7 +288,13 @@ export const MonitorAlertRulesPage: React.FC = () => {
           try {
             setRules((prev) =>
               prev.map((r) =>
-                r.id === ruleId ? { ...r, enabled: !r.enabled, updated_at: new Date().toISOString().split('T')[0] } : r
+                r.id === ruleId
+                  ? {
+                      ...r,
+                      enabled: !r.enabled,
+                      updated_at: new Date().toISOString().split('T')[0],
+                    }
+                  : r
               )
             );
             addNotification({
@@ -386,10 +399,34 @@ export const MonitorAlertRulesPage: React.FC = () => {
     const disabledCount = rules.filter((r) => !r.enabled).length;
     const totalTriggersToday = rules.reduce((sum, r) => sum + r.trigger_count_today, 0);
     return [
-      { id: 'total', title: '规则总数', value: total, icon: <Settings size={20} />, color: 'primary' as const },
-      { id: 'enabled', title: '启用规则', value: enabledCount, icon: <Power size={20} />, color: 'success' as const },
-      { id: 'disabled', title: '禁用规则', value: disabledCount, icon: <PowerOff size={20} />, color: 'default' as const },
-      { id: 'triggers', title: '今日触发次数', value: totalTriggersToday, icon: <AlertTriangle size={20} />, color: 'warning' as const },
+      {
+        id: 'total',
+        title: '规则总数',
+        value: total,
+        icon: <Settings size={20} />,
+        color: 'primary' as const,
+      },
+      {
+        id: 'enabled',
+        title: '启用规则',
+        value: enabledCount,
+        icon: <Power size={20} />,
+        color: 'success' as const,
+      },
+      {
+        id: 'disabled',
+        title: '禁用规则',
+        value: disabledCount,
+        icon: <PowerOff size={20} />,
+        color: 'default' as const,
+      },
+      {
+        id: 'triggers',
+        title: '今日触发次数',
+        value: totalTriggersToday,
+        icon: <AlertTriangle size={20} />,
+        color: 'warning' as const,
+      },
     ];
   }, [rules]);
 
@@ -411,13 +448,22 @@ export const MonitorAlertRulesPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <AlertTriangle size={18} color='primary.main' />
+              <AlertTriangle
+                size={18}
+                color='primary.main'
+              />
             </Box>
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
                 {row.name}
               </Typography>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 {row.metric_name}
               </Typography>
             </Box>
@@ -452,8 +498,12 @@ export const MonitorAlertRulesPage: React.FC = () => {
         id: 'condition',
         label: '触发条件',
         render: (row) => (
-          <Typography variant='body2' sx={{ fontFamily: 'monospace' }}>
-            {row.condition} {row.threshold}{row.unit}
+          <Typography
+            variant='body2'
+            sx={{ fontFamily: 'monospace' }}
+          >
+            {row.condition} {row.threshold}
+            {row.unit}
           </Typography>
         ),
       },
@@ -465,7 +515,13 @@ export const MonitorAlertRulesPage: React.FC = () => {
             label: row.severity,
             color: 'default' as const,
           };
-          return <Chip size='small' color={config.color} label={config.label} />;
+          return (
+            <Chip
+              size='small'
+              color={config.color}
+              label={config.label}
+            />
+          );
         },
       },
       {
@@ -474,7 +530,10 @@ export const MonitorAlertRulesPage: React.FC = () => {
         render: (row) => (
           <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
             {row.channels.slice(0, 3).map((channel) => {
-              const config = CHANNEL_CONFIG[channel] || { label: channel, icon: <Bell size={14} /> as React.ReactElement };
+              const config = CHANNEL_CONFIG[channel] || {
+                label: channel,
+                icon: (<Bell size={14} />) as React.ReactElement,
+              };
               return (
                 <Chip
                   key={channel}
@@ -523,8 +582,14 @@ export const MonitorAlertRulesPage: React.FC = () => {
         label: '最后触发时间',
         render: (row) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Clock size={14} color='action' />
-            <Typography variant='body2' color='text.secondary'>
+            <Clock
+              size={14}
+              color='action'
+            />
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               {row.last_triggered_at || '-'}
             </Typography>
           </Box>

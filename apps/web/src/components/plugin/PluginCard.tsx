@@ -67,7 +67,7 @@ export const PluginCard: React.FC<PluginCardProps> = ({
         sx={{
           '&:hover': { boxShadow: 3 },
           transition: 'box-shadow 0.3s ease',
-          borderRadius: 2,
+          borderRadius: 3,
         }}
       >
         <CardContent>
@@ -76,7 +76,7 @@ export const PluginCard: React.FC<PluginCardProps> = ({
               sx={{
                 width: 56,
                 height: 56,
-                borderRadius: 2,
+                borderRadius: 3,
                 flexShrink: 0,
                 background: 'linear-gradient(135deg, primary.light 0%, primary.main 100%)',
                 display: 'flex',
@@ -206,7 +206,7 @@ export const PluginCard: React.FC<PluginCardProps> = ({
         flexDirection: 'column',
         '&:hover': { boxShadow: 4 },
         transition: 'box-shadow 0.3s ease',
-        borderRadius: 2,
+        borderRadius: 3,
       }}
     >
       <CardContent sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -218,7 +218,7 @@ export const PluginCard: React.FC<PluginCardProps> = ({
               sx={{
                 width: 48,
                 height: 48,
-                borderRadius: 2,
+                borderRadius: 3,
                 background: 'linear-gradient(135deg, primary.light 0%, primary.main 100%)',
                 display: 'flex',
                 alignItems: 'center',

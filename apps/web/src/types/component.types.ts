@@ -208,12 +208,7 @@ export interface ToastMessage {
 
 export interface ToastNotificationProps {
   position?:
-    | 'top-right'
-    | 'top-left'
-    | 'bottom-right'
-    | 'bottom-left'
-    | 'top-center'
-    | 'bottom-center';
+    'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' | 'top-center' | 'bottom-center';
   maxToasts?: number;
   defaultDuration?: number;
 }

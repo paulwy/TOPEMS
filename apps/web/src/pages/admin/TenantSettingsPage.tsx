@@ -198,16 +198,23 @@ const TenantSettingsPage: React.FC = () => {
 
   if (loading || !tenant) {
     return (
-      <PageContainer title='租户设置' loading>
+      <PageContainer loading>
         <Box />
       </PageContainer>
     );
   }
 
   return (
-    <PageContainer title='租户设置' subtitle='管理当前租户的各项设置'>
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={3}>
+    <PageContainer>
+      <Grid
+        container
+        spacing={3}
+      >
+        <Grid
+          item
+          xs={12}
+          md={3}
+        >
           <Card variant='outlined'>
             <CardContent sx={{ p: 1 }}>
               {sections.map((section) => (
@@ -220,7 +227,7 @@ const TenantSettingsPage: React.FC = () => {
                     py: 1.5,
                     px: 2,
                     mb: 0.5,
-                    borderRadius: 2,
+                    borderRadius: 3,
                   }}
                   onClick={() => setActiveSection(section.id)}
                   startIcon={section.icon}
@@ -232,19 +239,33 @@ const TenantSettingsPage: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={9}>
+        <Grid
+          item
+          xs={12}
+          md={9}
+        >
           {activeSection === 'general' && (
             <Card variant='outlined'>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
                   <Building2 size={24} />
-                  <Typography variant='h6' sx={{ fontWeight: 600 }}>
+                  <Typography
+                    variant='h6'
+                    sx={{ fontWeight: 600 }}
+                  >
                     基本设置
                   </Typography>
                 </Box>
 
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
+                <Grid
+                  container
+                  spacing={3}
+                >
+                  <Grid
+                    item
+                    xs={12}
+                    md={6}
+                  >
                     <TextField
                       fullWidth
                       label='租户名称'
@@ -252,7 +273,11 @@ const TenantSettingsPage: React.FC = () => {
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid
+                    item
+                    xs={12}
+                    md={6}
+                  >
                     <TextField
                       fullWidth
                       label='租户标识 (Slug)'
@@ -261,15 +286,30 @@ const TenantSettingsPage: React.FC = () => {
                       helperText='租户标识创建后不可修改'
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid
+                    item
+                    xs={12}
+                    md={6}
+                  >
                     <TextField
                       fullWidth
                       label='当前套餐'
-                      value={{ free: '免费版', basic: '基础版', professional: '专业版', enterprise: '企业版' }[tenant.plan]}
+                      value={
+                        {
+                          free: '免费版',
+                          basic: '基础版',
+                          professional: '专业版',
+                          enterprise: '企业版',
+                        }[tenant.plan]
+                      }
                       disabled
                     />
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid
+                    item
+                    xs={12}
+                    md={6}
+                  >
                     <TextField
                       fullWidth
                       label='创建时间'
@@ -298,21 +338,34 @@ const TenantSettingsPage: React.FC = () => {
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
                   <Palette size={24} />
-                  <Typography variant='h6' sx={{ fontWeight: 600 }}>
+                  <Typography
+                    variant='h6'
+                    sx={{ fontWeight: 600 }}
+                  >
                     品牌定制
                   </Typography>
                 </Box>
 
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
-                    <Typography variant='subtitle2' sx={{ mb: 1 }}>
+                <Grid
+                  container
+                  spacing={3}
+                >
+                  <Grid
+                    item
+                    xs={12}
+                    md={6}
+                  >
+                    <Typography
+                      variant='subtitle2'
+                      sx={{ mb: 1 }}
+                    >
                       Logo
                     </Typography>
                     <Box
                       sx={{
                         border: '2px dashed',
                         borderColor: 'divider',
-                        borderRadius: 2,
+                        borderRadius: 3,
                         p: 4,
                         textAlign: 'center',
                         cursor: 'pointer',
@@ -322,51 +375,90 @@ const TenantSettingsPage: React.FC = () => {
                         },
                       }}
                     >
-                      <Upload size={32} style={{ margin: '0 auto 8px', opacity: 0.5 }} />
-                      <Typography variant='body2' color='text.secondary'>
+                      <Upload
+                        size={32}
+                        style={{ margin: '0 auto 8px', opacity: 0.5 }}
+                      />
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
                         点击上传 Logo 图片
                       </Typography>
                     </Box>
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid
+                    item
+                    xs={12}
+                    md={6}
+                  >
                     <Box sx={{ mb: 2 }}>
-                      <Typography variant='subtitle2' sx={{ mb: 1 }}>
+                      <Typography
+                        variant='subtitle2'
+                        sx={{ mb: 1 }}
+                      >
                         主色调
                       </Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         <input
                           type='color'
                           value={formData.primary_color}
-                          onChange={(e) => setFormData({ ...formData, primary_color: e.target.value })}
-                          style={{ width: 48, height: 48, border: 'none', cursor: 'pointer', borderRadius: 4 }}
+                          onChange={(e) =>
+                            setFormData({ ...formData, primary_color: e.target.value })
+                          }
+                          style={{
+                            width: 48,
+                            height: 48,
+                            border: 'none',
+                            cursor: 'pointer',
+                            borderRadius: 4,
+                          }}
                         />
                         <TextField
                           size='small'
                           value={formData.primary_color}
-                          onChange={(e) => setFormData({ ...formData, primary_color: e.target.value })}
+                          onChange={(e) =>
+                            setFormData({ ...formData, primary_color: e.target.value })
+                          }
                         />
                       </Box>
                     </Box>
                     <Box>
-                      <Typography variant='subtitle2' sx={{ mb: 1 }}>
+                      <Typography
+                        variant='subtitle2'
+                        sx={{ mb: 1 }}
+                      >
                         辅助色
                       </Typography>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         <input
                           type='color'
                           value={formData.secondary_color}
-                          onChange={(e) => setFormData({ ...formData, secondary_color: e.target.value })}
-                          style={{ width: 48, height: 48, border: 'none', cursor: 'pointer', borderRadius: 4 }}
+                          onChange={(e) =>
+                            setFormData({ ...formData, secondary_color: e.target.value })
+                          }
+                          style={{
+                            width: 48,
+                            height: 48,
+                            border: 'none',
+                            cursor: 'pointer',
+                            borderRadius: 4,
+                          }}
                         />
                         <TextField
                           size='small'
                           value={formData.secondary_color}
-                          onChange={(e) => setFormData({ ...formData, secondary_color: e.target.value })}
+                          onChange={(e) =>
+                            setFormData({ ...formData, secondary_color: e.target.value })
+                          }
                         />
                       </Box>
                     </Box>
                   </Grid>
-                  <Grid item xs={12}>
+                  <Grid
+                    item
+                    xs={12}
+                  >
                     <TextField
                       fullWidth
                       label='自定义域名'
@@ -397,7 +489,10 @@ const TenantSettingsPage: React.FC = () => {
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
                   <Shield size={24} />
-                  <Typography variant='h6' sx={{ fontWeight: 600 }}>
+                  <Typography
+                    variant='h6'
+                    sx={{ fontWeight: 600 }}
+                  >
                     安全设置
                   </Typography>
                 </Box>
@@ -411,7 +506,9 @@ const TenantSettingsPage: React.FC = () => {
                     <ListItemSecondaryAction>
                       <Switch
                         checked={formData.sso_enabled}
-                        onChange={(e) => setFormData({ ...formData, sso_enabled: e.target.checked })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, sso_enabled: e.target.checked })
+                        }
                       />
                     </ListItemSecondaryAction>
                   </ListItem>
@@ -424,7 +521,9 @@ const TenantSettingsPage: React.FC = () => {
                     <ListItemSecondaryAction>
                       <Switch
                         checked={formData.two_factor_required}
-                        onChange={(e) => setFormData({ ...formData, two_factor_required: e.target.checked })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, two_factor_required: e.target.checked })
+                        }
                       />
                     </ListItemSecondaryAction>
                   </ListItem>
@@ -437,7 +536,9 @@ const TenantSettingsPage: React.FC = () => {
                     <ListItemSecondaryAction>
                       <Switch
                         checked={formData.ip_whitelist_enabled}
-                        onChange={(e) => setFormData({ ...formData, ip_whitelist_enabled: e.target.checked })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, ip_whitelist_enabled: e.target.checked })
+                        }
                       />
                     </ListItemSecondaryAction>
                   </ListItem>
@@ -452,11 +553,17 @@ const TenantSettingsPage: React.FC = () => {
                       }
                       secondary='用户无操作多长时间后自动登出'
                     />
-                    <FormControl size='small' sx={{ minWidth: 150 }}>
+                    <FormControl
+                      size='small'
+                      sx={{ minWidth: 150 }}
+                    >
                       <Select
                         value={formData.session_timeout_minutes}
                         onChange={(e) =>
-                          setFormData({ ...formData, session_timeout_minutes: Number(e.target.value) })
+                          setFormData({
+                            ...formData,
+                            session_timeout_minutes: Number(e.target.value),
+                          })
                         }
                       >
                         <MenuItem value={15}>15 分钟</MenuItem>
@@ -487,10 +594,20 @@ const TenantSettingsPage: React.FC = () => {
           {activeSection === 'members' && (
             <Card variant='outlined'>
               <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    mb: 3,
+                  }}
+                >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                     <Users size={24} />
-                    <Typography variant='h6' sx={{ fontWeight: 600 }}>
+                    <Typography
+                      variant='h6'
+                      sx={{ fontWeight: 600 }}
+                    >
                       成员管理
                     </Typography>
                   </Box>
@@ -503,8 +620,12 @@ const TenantSettingsPage: React.FC = () => {
                   </Button>
                 </Box>
 
-                <Alert severity='info' sx={{ mb: 2 }}>
-                  当前租户共有 {members.length} 名成员，最多可添加 {tenant.settings.max_users} 名成员
+                <Alert
+                  severity='info'
+                  sx={{ mb: 2 }}
+                >
+                  当前租户共有 {members.length} 名成员，最多可添加 {tenant.settings.max_users}{' '}
+                  名成员
                 </Alert>
 
                 <List disablePadding>
@@ -526,9 +647,21 @@ const TenantSettingsPage: React.FC = () => {
                                 variant='outlined'
                               />
                               <Chip
-                                label={member.status === 'active' ? '活跃' : member.status === 'invited' ? '已邀请' : '已停用'}
+                                label={
+                                  member.status === 'active'
+                                    ? '活跃'
+                                    : member.status === 'invited'
+                                      ? '已邀请'
+                                      : '已停用'
+                                }
                                 size='small'
-                                color={member.status === 'active' ? 'success' : member.status === 'invited' ? 'warning' : 'error'}
+                                color={
+                                  member.status === 'active'
+                                    ? 'success'
+                                    : member.status === 'invited'
+                                      ? 'warning'
+                                      : 'error'
+                                }
                               />
                             </Box>
                           }
@@ -558,7 +691,10 @@ const TenantSettingsPage: React.FC = () => {
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
                   <Bell size={24} />
-                  <Typography variant='h6' sx={{ fontWeight: 600 }}>
+                  <Typography
+                    variant='h6'
+                    sx={{ fontWeight: 600 }}
+                  >
                     通知设置
                   </Typography>
                 </Box>
@@ -600,7 +736,12 @@ const TenantSettingsPage: React.FC = () => {
         </Grid>
       </Grid>
 
-      <Dialog open={showInviteDialog} onClose={() => setShowInviteDialog(false)} maxWidth='sm' fullWidth>
+      <Dialog
+        open={showInviteDialog}
+        onClose={() => setShowInviteDialog(false)}
+        maxWidth='sm'
+        fullWidth
+      >
         <DialogTitle>邀请成员</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -616,7 +757,9 @@ const TenantSettingsPage: React.FC = () => {
               <Select
                 value={inviteForm.role}
                 label='角色'
-                onChange={(e) => setInviteForm({ ...inviteForm, role: e.target.value as TenantRole })}
+                onChange={(e) =>
+                  setInviteForm({ ...inviteForm, role: e.target.value as TenantRole })
+                }
               >
                 <MenuItem value='admin'>管理员</MenuItem>
                 <MenuItem value='member'>成员</MenuItem>
@@ -627,7 +770,10 @@ const TenantSettingsPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowInviteDialog(false)}>取消</Button>
-          <Button variant='contained' onClick={handleInviteMember}>
+          <Button
+            variant='contained'
+            onClick={handleInviteMember}
+          >
             发送邀请
           </Button>
         </DialogActions>

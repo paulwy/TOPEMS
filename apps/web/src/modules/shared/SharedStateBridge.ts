@@ -41,14 +41,14 @@ export const setSharedState = (state: Partial<SharedState>): void => {
     ...state,
   };
 
-  window.dispatchEvent(new CustomEvent('topems:shared-state-change', {
-    detail: state,
-  }));
+  window.dispatchEvent(
+    new CustomEvent('topems:shared-state-change', {
+      detail: state,
+    })
+  );
 };
 
-export const subscribeToSharedState = (
-  callback: (state: SharedState) => void
-): (() => void) => {
+export const subscribeToSharedState = (callback: (state: SharedState) => void): (() => void) => {
   if (typeof window === 'undefined') return () => {};
 
   const handler = () => {

@@ -1,5 +1,4 @@
-import {
-  Card,
+import {Card,
   CardContent,
   CardHeader,
   Chip,
@@ -16,8 +15,7 @@ import {
   Tabs,
   Tab,
   Box,
-  Button,
-} from '@mui/material';
+  Button, useTheme} from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import {
   Mail,
@@ -89,6 +87,7 @@ const validateJson = (jsonString: string): boolean => {
 };
 
 const MailPage: React.FC = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
 
@@ -1355,8 +1354,8 @@ const MailPage: React.FC = () => {
                                   checked={selectedEmails.length === emails.length}
                                   style={{
                                     borderRadius: 4,
-                                    borderColor: 'grey.300',
-                                    color: 'primary.dark',
+                                    borderColor: theme.palette.grey[300],
+                                    color: theme.palette.primary.dark,
                                   }}
                                 />
                               </Box>
@@ -1482,8 +1481,8 @@ const MailPage: React.FC = () => {
                                     }}
                                     style={{
                                       borderRadius: 4,
-                                      borderColor: 'grey.300',
-                                      color: 'primary.dark',
+                                      borderColor: theme.palette.grey[300],
+                                      color: theme.palette.primary.dark,
                                     }}
                                   />
                                 </Box>

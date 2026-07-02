@@ -12,33 +12,33 @@ export const syncRecordApi = {
   list: async (
     params?: SyncRecordQueryParams
   ): Promise<ApiResponse<PaginatedResponse<SyncRecord>>> => {
-    return apiClient.scm.get('/api/scm/sync-records', { params });
+    return apiClient.scm.get('/sync-records', { params });
   },
 
   create: async (data: CreateSyncRecordRequest): Promise<ApiResponse<SyncRecord>> => {
-    return apiClient.scm.post('/api/scm/sync-records', data);
+    return apiClient.scm.post('/sync-records', data);
   },
 
   get: async (id: string): Promise<ApiResponse<SyncRecord>> => {
-    return apiClient.scm.get(`/api/scm/sync-records/${id}`);
+    return apiClient.scm.get(`/sync-records/${id}`);
   },
 
   retry: async (id: string): Promise<ApiResponse<SyncResult>> => {
-    return apiClient.scm.post(`/api/scm/sync-records/${id}/retry`);
+    return apiClient.scm.post(`/sync-records/${id}/retry`);
   },
 
   syncWithWms: async (syncType: string): Promise<ApiResponse<SyncResult>> => {
-    return apiClient.scm.post(`/api/scm/sync/wms/${syncType}`);
+    return apiClient.scm.post(`/sync/wms/${syncType}`);
   },
 
   syncWithSrm: async (syncType: string): Promise<ApiResponse<SyncResult>> => {
-    return apiClient.scm.post(`/api/scm/sync/srm/${syncType}`);
+    return apiClient.scm.post(`/sync/srm/${syncType}`);
   },
 
   details: async (
     syncId: string,
     params?: PaginationParams
   ): Promise<ApiResponse<PaginatedResponse<SyncDetailRecord>>> => {
-    return apiClient.scm.get(`/api/scm/sync-records/${syncId}/details`, { params });
+    return apiClient.scm.get(`/sync-records/${syncId}/details`, { params });
   },
 };

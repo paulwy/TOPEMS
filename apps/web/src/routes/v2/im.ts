@@ -22,16 +22,6 @@ export const imModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['im:mail:read'],
       template: 'list',
       group: 'business',
-      nav: {
-        label: '邮件管理',
-        icon: 'Mail',
-        order: 1,
-        group: 'business',
-        showInSidebar: true,
-        showInBreadcrumb: true,
-        showInTabs: true,
-        description: '邮件收发管理',
-      },
     },
   ],
 };

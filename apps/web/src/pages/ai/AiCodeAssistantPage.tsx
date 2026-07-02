@@ -242,7 +242,9 @@ export const AiCodeAssistantPage: React.FC = () => {
     setResult('');
 
     setTimeout(() => {
-      setResult(`// 修复后的代码\nfunction calculateTotal(items: Array<{ price: number; quantity: number }>): number {\n  if (!Array.isArray(items)) return 0;\n  return items.reduce((total, item) => {\n    return total + (item.price || 0) * (item.quantity || 0);\n  }, 0);\n}\n\n// 修复说明：\n// 1. 添加了 TypeScript 类型定义\n// 2. 添加了数组类型检查，防止运行时错误\n// 3. 使用 reduce 替代 for 循环，更函数式\n// 4. 添加了默认值，防止 undefined 导致 NaN`);
+      setResult(
+        `// 修复后的代码\nfunction calculateTotal(items: Array<{ price: number; quantity: number }>): number {\n  if (!Array.isArray(items)) return 0;\n  return items.reduce((total, item) => {\n    return total + (item.price || 0) * (item.quantity || 0);\n  }, 0);\n}\n\n// 修复说明：\n// 1. 添加了 TypeScript 类型定义\n// 2. 添加了数组类型检查，防止运行时错误\n// 3. 使用 reduce 替代 for 循环，更函数式\n// 4. 添加了默认值，防止 undefined 导致 NaN`
+      );
       setGenerating(false);
     }, 2000);
   }, [codeInput, addNotification]);
@@ -261,7 +263,9 @@ export const AiCodeAssistantPage: React.FC = () => {
     setResult('');
 
     setTimeout(() => {
-      setResult(`// 优化后的代码\nfunction calculateTotal(items: Array<{ price: number; quantity: number }> = []): number {\n  return items.reduce((sum, { price = 0, quantity = 0 }) => sum + price * quantity, 0);\n}\n\n// 优化点：\n// 1. 使用 Array.reduce 替代 for 循环，更简洁\n// 2. 添加参数默认值，处理空值情况\n// 3. 使用解构赋值简化代码\n// 4. 添加类型定义，提升代码健壮性\n// 5. 函数式编程风格，易于维护`);
+      setResult(
+        `// 优化后的代码\nfunction calculateTotal(items: Array<{ price: number; quantity: number }> = []): number {\n  return items.reduce((sum, { price = 0, quantity = 0 }) => sum + price * quantity, 0);\n}\n\n// 优化点：\n// 1. 使用 Array.reduce 替代 for 循环，更简洁\n// 2. 添加参数默认值，处理空值情况\n// 3. 使用解构赋值简化代码\n// 4. 添加类型定义，提升代码健壮性\n// 5. 函数式编程风格，易于维护`
+      );
       setGenerating(false);
     }, 1800);
   }, [codeInput, addNotification]);
@@ -299,11 +303,26 @@ export const AiCodeAssistantPage: React.FC = () => {
   const getSeverityIcon = (severity: 'critical' | 'warning' | 'info') => {
     switch (severity) {
       case 'critical':
-        return <AlertTriangle size={16} style={{ color: '#ef4444' }} />;
+        return (
+          <AlertTriangle
+            size={16}
+            style={{ color: '#ef4444' }}
+          />
+        );
       case 'warning':
-        return <AlertTriangle size={16} style={{ color: '#f59e0b' }} />;
+        return (
+          <AlertTriangle
+            size={16}
+            style={{ color: '#f59e0b' }}
+          />
+        );
       default:
-        return <Info size={16} style={{ color: '#3b82f6' }} />;
+        return (
+          <Info
+            size={16}
+            style={{ color: '#3b82f6' }}
+          />
+        );
     }
   };
 
@@ -319,7 +338,7 @@ export const AiCodeAssistantPage: React.FC = () => {
       }}
     >
       <Box sx={{ p: 3 }}>
-        <Paper sx={{ borderRadius: 2, overflow: 'hidden' }}>
+        <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
           {/* 标签页 */}
           <Box
             sx={{
@@ -350,9 +369,16 @@ export const AiCodeAssistantPage: React.FC = () => {
           </Box>
 
           <Box sx={{ p: 3 }}>
-            <Grid container spacing={3}>
+            <Grid
+              container
+              spacing={3}
+            >
               {/* 左侧：输入区域 */}
-              <Grid item xs={12} md={6}>
+              <Grid
+                item
+                xs={12}
+                md={6}
+              >
                 {/* 代码生成 - 输入 */}
                 {activeTab === 'generate' && (
                   <Box>
@@ -364,7 +390,10 @@ export const AiCodeAssistantPage: React.FC = () => {
                     </Typography>
 
                     <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                      <FormControl size='small' sx={{ flex: 1 }}>
+                      <FormControl
+                        size='small'
+                        sx={{ flex: 1 }}
+                      >
                         <InputLabel>编程语言</InputLabel>
                         <Select
                           value={language}
@@ -379,7 +408,10 @@ export const AiCodeAssistantPage: React.FC = () => {
                           <MenuItem value='sql'>SQL</MenuItem>
                         </Select>
                       </FormControl>
-                      <FormControl size='small' sx={{ flex: 1 }}>
+                      <FormControl
+                        size='small'
+                        sx={{ flex: 1 }}
+                      >
                         <InputLabel>框架</InputLabel>
                         <Select
                           value={framework}
@@ -428,7 +460,16 @@ export const AiCodeAssistantPage: React.FC = () => {
                     <Button
                       fullWidth
                       variant='contained'
-                      startIcon={generating ? <RefreshCw size={18} className='animate-spin' /> : <Sparkles size={18} />}
+                      startIcon={
+                        generating ? (
+                          <RefreshCw
+                            size={18}
+                            className='animate-spin'
+                          />
+                        ) : (
+                          <Sparkles size={18} />
+                        )
+                      }
                       onClick={handleGenerate}
                       disabled={generating || !prompt.trim()}
                     >
@@ -466,7 +507,16 @@ export const AiCodeAssistantPage: React.FC = () => {
                     <Button
                       fullWidth
                       variant='contained'
-                      startIcon={generating ? <RefreshCw size={18} className='animate-spin' /> : <PlayCircle size={18} />}
+                      startIcon={
+                        generating ? (
+                          <RefreshCw
+                            size={18}
+                            className='animate-spin'
+                          />
+                        ) : (
+                          <PlayCircle size={18} />
+                        )
+                      }
                       onClick={() => {
                         if (activeTab === 'explain') handleExplain();
                         if (activeTab === 'fix') handleFixBug();
@@ -490,7 +540,11 @@ export const AiCodeAssistantPage: React.FC = () => {
               </Grid>
 
               {/* 右侧：结果区域 */}
-              <Grid item xs={12} md={6}>
+              <Grid
+                item
+                xs={12}
+                md={6}
+              >
                 <Box
                   sx={{
                     display: 'flex',
@@ -529,15 +583,26 @@ export const AiCodeAssistantPage: React.FC = () => {
                   <Box sx={{ mb: 2 }}>
                     <Paper
                       variant='outlined'
-                      sx={{ p: 3, borderRadius: 2, mb: 2, textAlign: 'center' }}
+                      sx={{ p: 3, borderRadius: 3, mb: 2, textAlign: 'center' }}
                     >
                       <Typography
                         variant='h3'
-                        sx={{ fontWeight: 700, color: reviewScore >= 80 ? 'success.main' : reviewScore >= 60 ? 'warning.main' : 'error.main' }}
+                        sx={{
+                          fontWeight: 700,
+                          color:
+                            reviewScore >= 80
+                              ? 'success.main'
+                              : reviewScore >= 60
+                                ? 'warning.main'
+                                : 'error.main',
+                        }}
                       >
                         {reviewScore}
                       </Typography>
-                      <Typography variant='body2' color='text.secondary'>
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
                         代码质量评分
                       </Typography>
                     </Paper>
@@ -550,11 +615,17 @@ export const AiCodeAssistantPage: React.FC = () => {
                     </Typography>
                     <List disablePadding>
                       {reviewIssues.map((issue, index) => (
-                        <Accordion key={index} disableGutters>
+                        <Accordion
+                          key={index}
+                          disableGutters
+                        >
                           <AccordionSummary expandIcon={<ChevronDown size={16} />}>
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                               {getSeverityIcon(issue.severity)}
-                              <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                              <Typography
+                                variant='body2'
+                                sx={{ fontWeight: 500 }}
+                              >
                                 第 {issue.line} 行：{issue.description}
                               </Typography>
                             </Box>
@@ -579,7 +650,7 @@ export const AiCodeAssistantPage: React.FC = () => {
                     variant='outlined'
                     sx={{
                       p: 2,
-                      borderRadius: 2,
+                      borderRadius: 3,
                       maxHeight: 500,
                       overflow: 'auto',
                       bgcolor: 'grey.50',
@@ -611,7 +682,7 @@ export const AiCodeAssistantPage: React.FC = () => {
                       justifyContent: 'center',
                       border: '1px dashed',
                       borderColor: 'divider',
-                      borderRadius: 2,
+                      borderRadius: 3,
                     }}
                   >
                     <Code2
@@ -638,7 +709,7 @@ export const AiCodeAssistantPage: React.FC = () => {
                       justifyContent: 'center',
                       border: '1px dashed',
                       borderColor: 'divider',
-                      borderRadius: 2,
+                      borderRadius: 3,
                     }}
                   >
                     <RefreshCw

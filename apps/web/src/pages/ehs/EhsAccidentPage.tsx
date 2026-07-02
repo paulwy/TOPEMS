@@ -28,7 +28,7 @@ import {
   Trash2,
 } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import { ehsApi } from '@/api/ehs';
 import type { Accident, AccidentDetail, TreatmentAction } from '@/api/ehs';
 import { useAppStore } from '@/store';
@@ -311,7 +311,7 @@ const EhsAccidentPage: React.FC = () => {
               width: 40,
               height: 40,
               bgcolor: iconBgColor,
-              borderRadius: 2,
+              borderRadius: 3,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -448,10 +448,7 @@ const EhsAccidentPage: React.FC = () => {
   };
 
   return (
-    <PageContainer
-      title='事故记录'
-      subtitle='管理安全事故记录，包括事故上报、调查和处理'
-    >
+    <PageContainer>
       <>
         <ListPageTemplate
           title=''

@@ -448,7 +448,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
             elevation={0}
             sx={{
               background: banner.gradient,
-              borderRadius: 2,
+              borderRadius: 3,
               height: banner.height || 80,
               mb: 2,
               display: 'flex',
@@ -536,7 +536,7 @@ export const PageHeader: React.FC<PageHeaderProps> = ({
                   sx={{
                     width: compact ? 32 : 40,
                     height: compact ? 32 : 40,
-                    borderRadius: 2,
+                    borderRadius: 3,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',

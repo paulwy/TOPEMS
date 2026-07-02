@@ -272,7 +272,7 @@ const CRMCustomerScoringPage: React.FC = () => {
     color: string;
     bgColor: string;
   }> = ({ label, value, color, bgColor }) => (
-    <Box sx={{ bgcolor: bgColor, borderRadius: 2, p: 3 }}>
+    <Box sx={{ bgcolor: bgColor, borderRadius: 3, p: 3 }}>
       <Box
         sx={{
           display: 'flex',
@@ -361,6 +361,8 @@ const CRMCustomerScoringPage: React.FC = () => {
     <PageContainer
       title='客户价值评分'
       subtitle='根据客户数据自动计算客户价值评分和等级'
+      autoTitle
+      autoBreadcrumbs
     >
       <>
         <ListPageTemplate

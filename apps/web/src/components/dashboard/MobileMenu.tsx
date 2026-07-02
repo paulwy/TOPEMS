@@ -108,7 +108,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
               onClick={onClose}
               sx={{
                 p: 2,
-                borderRadius: 2,
+                borderRadius: 3,
                 '&:hover': { backgroundColor: 'grey.100' },
               }}
             >
@@ -130,7 +130,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                       alignItems: 'center',
                       gap: 3,
                       p: 3,
-                      borderRadius: 2,
+                      borderRadius: 3,
                       justifyContent: 'flex-start',
                       backgroundColor: currentPage === item.id ? 'primary.light' : 'transparent',
                       color: currentPage === item.id ? 'primary.dark' : '#334155',

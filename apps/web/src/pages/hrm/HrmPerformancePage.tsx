@@ -416,10 +416,16 @@ const HrmPerformancePage: React.FC = () => {
   })();
 
   return (
-    <PageContainer maxWidth='xl'>
+    <PageContainer
+      maxWidth='xl'
+      title='绩效管理'
+      subtitle='管理员工绩效评估、目标设定和绩效考核'
+      autoTitle
+      autoBreadcrumbs
+    >
       <StatsPageTemplate
-        title='绩效管理'
-        subtitle='管理员工绩效评估、目标设定和绩效考核'
+        title=''
+        subtitle=''
         statCards={statCards}
         statColumns={4}
         charts={charts}

@@ -5,14 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  Eye,
-  EyeOff,
-  Lock,
-  User,
-  Shield,
-  Fingerprint,
-} from 'lucide-react';
+import { Eye, EyeOff, Lock, User, Shield, Fingerprint } from 'lucide-react';
 import { isDevelopment } from '../../config/runtime';
 import { useAppStore } from '../../store';
 
@@ -88,7 +81,9 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin }) => {
           message: '欢迎回来!',
           type: 'success',
         });
-        const from = (window.history.state as { usr?: string })?.usr || '/dashboard';
+        const locationState = (window.history.state as { usr?: { from?: { pathname?: string } } })
+          ?.usr;
+        const from = locationState?.from?.pathname || '/dashboard';
         navigate(from, { replace: true });
       } else {
         addNotification({

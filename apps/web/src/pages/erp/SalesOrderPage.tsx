@@ -16,11 +16,7 @@ import {
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import type {
-  SalesOrder,
-  CreateSalesOrderRequest,
-  UpdateSalesOrderRequest,
-} from '@/api/erp';
+import type { SalesOrder, CreateSalesOrderRequest, UpdateSalesOrderRequest } from '@/api/erp';
 import { erpApi } from '@/api/erp';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -30,16 +26,7 @@ import {
   type RowAction,
   type FilterConfig,
 } from '@/components/templates';
-import {
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
-  CheckCircle,
-  XCircle,
-  Truck,
-  ShoppingBag,
-} from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, CheckCircle, XCircle, Truck, ShoppingBag } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 
 const SalesOrderPage: React.FC = () => {
@@ -320,23 +307,20 @@ const SalesOrderPage: React.FC = () => {
         id: 'total_amount',
         label: '订单金额',
         sortable: true,
-        render: (row) => `¥${row.total_amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`,
+        render: (row) =>
+          `¥${row.total_amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}`,
       },
       {
         id: 'order_date',
         label: '订单日期',
         render: (row) =>
-          row.order_date
-            ? new Date(row.order_date).toLocaleDateString('zh-CN')
-            : '-',
+          row.order_date ? new Date(row.order_date).toLocaleDateString('zh-CN') : '-',
       },
       {
         id: 'delivery_date',
         label: '交货日期',
         render: (row) =>
-          row.delivery_date
-            ? new Date(row.delivery_date).toLocaleDateString('zh-CN')
-            : '-',
+          row.delivery_date ? new Date(row.delivery_date).toLocaleDateString('zh-CN') : '-',
       },
       {
         id: 'status',
@@ -428,43 +412,73 @@ const SalesOrderPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
-        <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary' }}
+        >
           总数
         </Typography>
-        <Typography variant='h5' sx={{ fontWeight: 700 }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700 }}
+        >
           {stats.total}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 2 }}>
-        <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary' }}
+        >
           待审批
         </Typography>
-        <Typography variant='h5' sx={{ fontWeight: 700 }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700 }}
+        >
           {stats.pending}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 2 }}>
-        <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 3 }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary' }}
+        >
           已审批
         </Typography>
-        <Typography variant='h5' sx={{ fontWeight: 700, color: '#4338ca' }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700, color: '#4338ca' }}
+        >
           {stats.approved}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#bae6fd', borderRadius: 2 }}>
-        <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+      <Box sx={{ p: 2, bgcolor: '#bae6fd', borderRadius: 3 }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary' }}
+        >
           已发货
         </Typography>
-        <Typography variant='h5' sx={{ fontWeight: 700, color: '#0369a1' }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700, color: '#0369a1' }}
+        >
           {stats.shipped}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
-        <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary' }}
+        >
           已完成
         </Typography>
-        <Typography variant='h5' sx={{ fontWeight: 700 }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700 }}
+        >
           {stats.completed}
         </Typography>
       </Box>
@@ -509,7 +523,11 @@ const SalesOrderPage: React.FC = () => {
         getRowId={(row) => row.id}
       />
 
-      <Dialog open={showDialog} onClose={() => setShowDialog(false)} maxWidth='md'>
+      <Dialog
+        open={showDialog}
+        onClose={() => setShowDialog(false)}
+        maxWidth='md'
+      >
         <DialogTitle>{selectedOrder ? '编辑销售订单' : '新增销售订单'}</DialogTitle>
         <DialogContent>
           <Box
@@ -626,10 +644,17 @@ const SalesOrderPage: React.FC = () => {
               </Box>
             </Box>
             <DialogActions>
-              <Button type='button' variant='outlined' onClick={() => setShowDialog(false)}>
+              <Button
+                type='button'
+                variant='outlined'
+                onClick={() => setShowDialog(false)}
+              >
                 取消
               </Button>
-              <Button type='submit' variant='contained'>
+              <Button
+                type='submit'
+                variant='contained'
+              >
                 保存
               </Button>
             </DialogActions>
@@ -637,7 +662,11 @@ const SalesOrderPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showDetailDialog} onClose={() => setShowDetailDialog(false)} maxWidth='md'>
+      <Dialog
+        open={showDetailDialog}
+        onClose={() => setShowDetailDialog(false)}
+        maxWidth='md'
+      >
         <DialogTitle>销售订单详情</DialogTitle>
         <DialogContent>
           {selectedOrder && (
@@ -651,7 +680,10 @@ const SalesOrderPage: React.FC = () => {
               >
                 <Box>
                   <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>订单号</InputLabel>
-                  <Box component='span' sx={{ fontWeight: 500 }}>
+                  <Box
+                    component='span'
+                    sx={{ fontWeight: 500 }}
+                  >
                     {selectedOrder.order_number}
                   </Box>
                 </Box>
@@ -662,7 +694,10 @@ const SalesOrderPage: React.FC = () => {
                 <Box>
                   <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>订单金额</InputLabel>
                   <Box component='span'>
-                    ¥{selectedOrder.total_amount.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
+                    ¥
+                    {selectedOrder.total_amount.toLocaleString('zh-CN', {
+                      minimumFractionDigits: 2,
+                    })}
                   </Box>
                 </Box>
                 <Box>
@@ -687,7 +722,9 @@ const SalesOrderPage: React.FC = () => {
                 </Box>
                 {selectedOrder.actual_delivery_date && (
                   <Box>
-                    <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>实际发货日期</InputLabel>
+                    <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>
+                      实际发货日期
+                    </InputLabel>
                     <Box component='span'>
                       {new Date(selectedOrder.actual_delivery_date).toLocaleDateString('zh-CN')}
                     </Box>

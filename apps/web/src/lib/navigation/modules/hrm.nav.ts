@@ -37,7 +37,7 @@ export const hrmNavConfig: ModuleNavConfig = {
     {
       code: 'hrm-departments',
       label: '部门管理',
-      icon: 'Sitemap',
+      icon: 'Network',
       path: '/hrm/departments',
       permission: 'hrm:department:read',
       order: 2,

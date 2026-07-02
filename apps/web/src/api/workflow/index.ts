@@ -231,15 +231,15 @@ export const workflowApi = {
   getGlobalVariables: variableApi.getGlobalVariables,
 
   getStatistics: async (): Promise<ApiResponse<StatisticsResponse>> => {
-    return apiClient.workflow.get('/api/flow/statistics');
+    return apiClient.workflow.get('/statistics');
   },
 
   getPerformance: async (): Promise<ApiResponse<PerformanceStats>> => {
-    return apiClient.workflow.get('/api/flow/performance');
+    return apiClient.workflow.get('/performance');
   },
 
   resetPerformance: async (): Promise<ApiResponse<string>> => {
-    return apiClient.workflow.post('/api/flow/performance/reset');
+    return apiClient.workflow.post('/performance/reset');
   },
 
   health: async (): Promise<ApiResponse<string>> => {

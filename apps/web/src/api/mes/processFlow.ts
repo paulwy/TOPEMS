@@ -120,34 +120,34 @@ export const processFlowApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(`/api/mes/process-flows${queryString ? `?${queryString}` : ''}`);
+    return apiClient.mes.get(`/process-flows${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<ProcessFlow>> {
-    return apiClient.mes.get(`/api/mes/process-flows/${id}`);
+    return apiClient.mes.get(`/process-flows/${id}`);
   },
 
   async create(data: CreateProcessFlowRequest): Promise<ApiResponse<ProcessFlow>> {
-    return apiClient.mes.post('/api/mes/process-flows', data);
+    return apiClient.mes.post('/process-flows', data);
   },
 
   async update(id: string, data: UpdateProcessFlowRequest): Promise<ApiResponse<ProcessFlow>> {
-    return apiClient.mes.put(`/api/mes/process-flows/${id}`, data);
+    return apiClient.mes.put(`/process-flows/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.mes.delete(`/api/mes/process-flows/${id}`);
+    return apiClient.mes.delete(`/process-flows/${id}`);
   },
 
   async getSteps(flowId: string): Promise<ApiResponse<{ steps: ProcessFlowStep[] }>> {
-    return apiClient.mes.get(`/api/mes/process-flows/${flowId}/steps`);
+    return apiClient.mes.get(`/process-flows/${flowId}/steps`);
   },
 
   async addStep(
     flowId: string,
     data: AddProcessFlowStepRequest
   ): Promise<ApiResponse<ProcessFlowStep>> {
-    return apiClient.mes.post(`/api/mes/process-flows/${flowId}/steps`, data);
+    return apiClient.mes.post(`/process-flows/${flowId}/steps`, data);
   },
 
   async updateStep(
@@ -155,14 +155,14 @@ export const processFlowApi = {
     stepId: string,
     data: UpdateProcessFlowStepRequest
   ): Promise<ApiResponse<ProcessFlowStep>> {
-    return apiClient.mes.put(`/api/mes/process-flows/${flowId}/steps/${stepId}`, data);
+    return apiClient.mes.put(`/process-flows/${flowId}/steps/${stepId}`, data);
   },
 
   async removeStep(flowId: string, stepId: string): Promise<ApiResponse<string>> {
-    return apiClient.mes.delete(`/api/mes/process-flows/${flowId}/steps/${stepId}`);
+    return apiClient.mes.delete(`/process-flows/${flowId}/steps/${stepId}`);
   },
 
   async analyzeCapacity(flowId: string): Promise<ApiResponse<CapacityAnalysis>> {
-    return apiClient.mes.get(`/api/mes/process-flows/${flowId}/capacity`);
+    return apiClient.mes.get(`/process-flows/${flowId}/capacity`);
   },
 };

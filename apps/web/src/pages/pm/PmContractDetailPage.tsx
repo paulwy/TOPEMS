@@ -333,7 +333,7 @@ const PmContractDetailPage: React.FC = () => {
                   key={milestone.id}
                   sx={{
                     border: '1px solid grey.100',
-                    borderRadius: 2,
+                    borderRadius: 3,
                     p: 2,
                     transition: 'border-color 0.2s',
                     '&:hover': { borderColor: '#93c5fd' },

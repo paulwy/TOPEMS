@@ -112,7 +112,7 @@ const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, onViewDet
         flexDirection: 'column',
         '&:hover': { boxShadow: 4 },
         transition: 'box-shadow 0.3s ease',
-        borderRadius: 2,
+        borderRadius: 3,
       }}
     >
       <CardContent sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -124,7 +124,7 @@ const PluginCard: React.FC<PluginCardProps> = ({ plugin, healthStatus, onViewDet
               sx={{
                 width: 48,
                 height: 48,
-                borderRadius: 2,
+                borderRadius: 3,
                 background: 'linear-gradient(135deg, primary.main 0%, primary.main 100%)',
                 display: 'flex',
                 alignItems: 'center',
@@ -349,7 +349,7 @@ const PluginDetailModal: React.FC<{
       onClose={onClose}
       maxWidth='lg'
       fullWidth
-      sx={{ borderRadius: 2 }}
+      sx={{ borderRadius: 3 }}
     >
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
@@ -357,7 +357,7 @@ const PluginDetailModal: React.FC<{
             sx={{
               width: 48,
               height: 48,
-              borderRadius: 2,
+              borderRadius: 3,
               background: 'linear-gradient(135deg, primary.main 0%, primary.main 100%)',
               display: 'flex',
               alignItems: 'center',
@@ -943,7 +943,7 @@ const PluginMarketplacePage: React.FC = () => {
                     sx={{
                       width: 56,
                       height: 56,
-                      borderRadius: 2,
+                      borderRadius: 3,
                       background: 'linear-gradient(135deg, primary.light 0%, primary.main 100%)',
                       display: 'flex',
                       alignItems: 'center',

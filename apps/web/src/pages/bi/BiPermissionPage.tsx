@@ -72,7 +72,7 @@ const mockRowPermissions: RowLevelPermission[] = [
     description: '限制华东地区销售经理只能查看本地区数据',
     data_source_id: 'ds-001',
     table_name: 'sales_orders',
-    condition: 'region = \'east\'',
+    condition: "region = 'east'",
     roles: ['sales_manager_east'],
     users: ['user001', 'user002'],
     is_enabled: true,
@@ -86,7 +86,7 @@ const mockRowPermissions: RowLevelPermission[] = [
     description: '限制华南地区销售经理只能查看本地区数据',
     data_source_id: 'ds-001',
     table_name: 'sales_orders',
-    condition: 'region = \'south\'',
+    condition: "region = 'south'",
     roles: ['sales_manager_south'],
     users: ['user003', 'user004'],
     is_enabled: true,
@@ -280,9 +280,8 @@ const BiPermissionPage = () => {
       p.description?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const filteredDataPermissions = dataPermissions.filter(
-    (p) =>
-      p.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredDataPermissions = dataPermissions.filter((p) =>
+    p.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const getResourceTypeLabel = (type: string) => {
@@ -336,7 +335,11 @@ const BiPermissionPage = () => {
         ]}
       >
         <Box sx={{ p: 3 }}>
-          <Grid container spacing={3} sx={{ mb: 4 }}>
+          <Grid
+            container
+            spacing={3}
+            sx={{ mb: 4 }}
+          >
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Card>
                 <CardContent>
@@ -352,13 +355,22 @@ const BiPermissionPage = () => {
                         justifyContent: 'center',
                       }}
                     >
-                      <Shield sx={{ color: '#EF4444' }} size={24} />
+                      <Shield
+                        sx={{ color: '#EF4444' }}
+                        size={24}
+                      />
                     </Box>
                     <Box>
-                      <Typography variant='h5' sx={{ fontWeight: 700 }}>
+                      <Typography
+                        variant='h5'
+                        sx={{ fontWeight: 700 }}
+                      >
                         {rowPermissions.length}
                       </Typography>
-                      <Typography variant='body2' color='text.secondary'>
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
                         行级权限规则
                       </Typography>
                     </Box>
@@ -381,13 +393,22 @@ const BiPermissionPage = () => {
                         justifyContent: 'center',
                       }}
                     >
-                      <Database sx={{ color: '#3B82F6' }} size={24} />
+                      <Database
+                        sx={{ color: '#3B82F6' }}
+                        size={24}
+                      />
                     </Box>
                     <Box>
-                      <Typography variant='h5' sx={{ fontWeight: 700 }}>
+                      <Typography
+                        variant='h5'
+                        sx={{ fontWeight: 700 }}
+                      >
                         {dataPermissions.length}
                       </Typography>
-                      <Typography variant='body2' color='text.secondary'>
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
                         数据权限规则
                       </Typography>
                     </Box>
@@ -410,13 +431,22 @@ const BiPermissionPage = () => {
                         justifyContent: 'center',
                       }}
                     >
-                      <CheckCircle2 sx={{ color: '#22C55E' }} size={24} />
+                      <CheckCircle2
+                        sx={{ color: '#22C55E' }}
+                        size={24}
+                      />
                     </Box>
                     <Box>
-                      <Typography variant='h5' sx={{ fontWeight: 700 }}>
+                      <Typography
+                        variant='h5'
+                        sx={{ fontWeight: 700 }}
+                      >
                         {rowPermissions.filter((p) => p.is_enabled).length}
                       </Typography>
-                      <Typography variant='body2' color='text.secondary'>
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
                         已启用规则
                       </Typography>
                     </Box>
@@ -439,13 +469,22 @@ const BiPermissionPage = () => {
                         justifyContent: 'center',
                       }}
                     >
-                      <Users sx={{ color: '#D97706' }} size={24} />
+                      <Users
+                        sx={{ color: '#D97706' }}
+                        size={24}
+                      />
                     </Box>
                     <Box>
-                      <Typography variant='h5' sx={{ fontWeight: 700 }}>
+                      <Typography
+                        variant='h5'
+                        sx={{ fontWeight: 700 }}
+                      >
                         8
                       </Typography>
-                      <Typography variant='body2' color='text.secondary'>
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
                         关联角色数
                       </Typography>
                     </Box>
@@ -455,7 +494,10 @@ const BiPermissionPage = () => {
             </Grid>
           </Grid>
 
-          <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>
+          <Paper
+            elevation={0}
+            sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 3 }}
+          >
             <Box
               sx={{
                 p: 2,
@@ -466,7 +508,10 @@ const BiPermissionPage = () => {
                 borderColor: 'divider',
               }}
             >
-              <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
+              <Tabs
+                value={activeTab}
+                onChange={(_, v) => setActiveTab(v)}
+              >
                 <Tab
                   value='row-level'
                   label='行级权限'
@@ -489,12 +534,21 @@ const BiPermissionPage = () => {
                   sx={{ width: 250 }}
                   slotProps={{
                     input: {
-                      startAdornment: <Search size={18} style={{ marginRight: 8, color: '#9ca3af' }} />,
+                      startAdornment: (
+                        <Search
+                          size={18}
+                          style={{ marginRight: 8, color: '#9ca3af' }}
+                        />
+                      ),
                     },
                   }}
                 />
                 {activeTab === 'row-level' && (
-                  <Button variant='contained' startIcon={<Plus />} onClick={() => handleOpenDialog()}>
+                  <Button
+                    variant='contained'
+                    startIcon={<Plus />}
+                    onClick={() => handleOpenDialog()}
+                  >
                     新建规则
                   </Button>
                 )}
@@ -539,21 +593,34 @@ const BiPermissionPage = () => {
                         </TableHead>
                         <TableBody>
                           {filteredRowPermissions.map((perm) => (
-                            <TableRow key={perm.id} hover>
+                            <TableRow
+                              key={perm.id}
+                              hover
+                            >
                               <TableCell>
                                 <Box>
-                                  <Typography variant='body2' sx={{ fontWeight: 600 }}>
+                                  <Typography
+                                    variant='body2'
+                                    sx={{ fontWeight: 600 }}
+                                  >
                                     {perm.name}
                                   </Typography>
                                   {perm.description && (
-                                    <Typography variant='caption' color='text.secondary'>
+                                    <Typography
+                                      variant='caption'
+                                      color='text.secondary'
+                                    >
                                       {perm.description}
                                     </Typography>
                                   )}
                                 </Box>
                               </TableCell>
                               <TableCell>
-                                <Chip label={perm.table_name} size='small' variant='outlined' />
+                                <Chip
+                                  label={perm.table_name}
+                                  size='small'
+                                  variant='outlined'
+                                />
                               </TableCell>
                               <TableCell>
                                 <Paper
@@ -577,20 +644,37 @@ const BiPermissionPage = () => {
                                 {perm.roles.length > 0 ? (
                                   <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
                                     {perm.roles.slice(0, 2).map((role) => (
-                                      <Chip key={role} label={role} size='small' color='primary' variant='outlined' />
+                                      <Chip
+                                        key={role}
+                                        label={role}
+                                        size='small'
+                                        color='primary'
+                                        variant='outlined'
+                                      />
                                     ))}
                                     {perm.roles.length > 2 && (
-                                      <Chip label={`+${perm.roles.length - 2}`} size='small' variant='outlined' />
+                                      <Chip
+                                        label={`+${perm.roles.length - 2}`}
+                                        size='small'
+                                        variant='outlined'
+                                      />
                                     )}
                                   </Box>
                                 ) : (
-                                  <Typography variant='caption' color='text.secondary'>
+                                  <Typography
+                                    variant='caption'
+                                    color='text.secondary'
+                                  >
                                     -
                                   </Typography>
                                 )}
                               </TableCell>
                               <TableCell>
-                                <Chip label={`P${perm.priority}`} size='small' color='warning' />
+                                <Chip
+                                  label={`P${perm.priority}`}
+                                  size='small'
+                                  color='warning'
+                                />
                               </TableCell>
                               <TableCell>
                                 <FormControlLabel
@@ -607,17 +691,27 @@ const BiPermissionPage = () => {
                               </TableCell>
                               <TableCell>
                                 <Tooltip title='测试规则'>
-                                  <IconButton size='small' onClick={() => handleTest(perm)}>
+                                  <IconButton
+                                    size='small'
+                                    onClick={() => handleTest(perm)}
+                                  >
                                     <CheckCircle2 size={16} />
                                   </IconButton>
                                 </Tooltip>
                                 <Tooltip title='编辑'>
-                                  <IconButton size='small' onClick={() => handleOpenDialog(perm)}>
+                                  <IconButton
+                                    size='small'
+                                    onClick={() => handleOpenDialog(perm)}
+                                  >
                                     <Edit2 size={16} />
                                   </IconButton>
                                 </Tooltip>
                                 <Tooltip title='删除'>
-                                  <IconButton size='small' color='error' onClick={() => handleDelete(perm.id)}>
+                                  <IconButton
+                                    size='small'
+                                    color='error'
+                                    onClick={() => handleDelete(perm.id)}
+                                  >
                                     <Trash2 size={16} />
                                   </IconButton>
                                 </Tooltip>
@@ -663,9 +757,15 @@ const BiPermissionPage = () => {
                         </TableHead>
                         <TableBody>
                           {filteredDataPermissions.map((perm) => (
-                            <TableRow key={perm.id} hover>
+                            <TableRow
+                              key={perm.id}
+                              hover
+                            >
                               <TableCell>
-                                <Typography variant='body2' sx={{ fontWeight: 600 }}>
+                                <Typography
+                                  variant='body2'
+                                  sx={{ fontWeight: 600 }}
+                                >
                                   {perm.name}
                                 </Typography>
                               </TableCell>
@@ -687,14 +787,27 @@ const BiPermissionPage = () => {
                                 {perm.role_ids.length > 0 ? (
                                   <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
                                     {perm.role_ids.slice(0, 2).map((role) => (
-                                      <Chip key={role} label={role} size='small' color='primary' variant='outlined' />
+                                      <Chip
+                                        key={role}
+                                        label={role}
+                                        size='small'
+                                        color='primary'
+                                        variant='outlined'
+                                      />
                                     ))}
                                     {perm.role_ids.length > 2 && (
-                                      <Chip label={`+${perm.role_ids.length - 2}`} size='small' variant='outlined' />
+                                      <Chip
+                                        label={`+${perm.role_ids.length - 2}`}
+                                        size='small'
+                                        variant='outlined'
+                                      />
                                     )}
                                   </Box>
                                 ) : (
-                                  <Typography variant='caption' color='text.secondary'>
+                                  <Typography
+                                    variant='caption'
+                                    color='text.secondary'
+                                  >
                                     -
                                   </Typography>
                                 )}
@@ -703,7 +816,10 @@ const BiPermissionPage = () => {
                                 {perm.user_ids.length > 0 ? (
                                   `${perm.user_ids.length} 人`
                                 ) : (
-                                  <Typography variant='caption' color='text.secondary'>
+                                  <Typography
+                                    variant='caption'
+                                    color='text.secondary'
+                                  >
                                     -
                                   </Typography>
                                 )}
@@ -718,7 +834,10 @@ const BiPermissionPage = () => {
                                   </IconButton>
                                 </Tooltip>
                                 <Tooltip title='删除'>
-                                  <IconButton size='small' color='error'>
+                                  <IconButton
+                                    size='small'
+                                    color='error'
+                                  >
                                     <Trash2 size={16} />
                                   </IconButton>
                                 </Tooltip>
@@ -734,10 +853,18 @@ const BiPermissionPage = () => {
             </Box>
           </Paper>
 
-          <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)} maxWidth='md' fullWidth>
+          <Dialog
+            open={dialogOpen}
+            onClose={() => setDialogOpen(false)}
+            maxWidth='md'
+            fullWidth
+          >
             <DialogTitle>{editingItem ? '编辑行级权限规则' : '新建行级权限规则'}</DialogTitle>
             <DialogContent sx={{ mt: 2 }}>
-              <Grid container spacing={3}>
+              <Grid
+                container
+                spacing={3}
+              >
                 <Grid size={{ xs: 12 }}>
                   <TextField
                     label='规则名称'
@@ -804,7 +931,10 @@ const BiPermissionPage = () => {
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        roles: e.target.value.split(',').map((r) => r.trim()).filter(Boolean),
+                        roles: e.target.value
+                          .split(',')
+                          .map((r) => r.trim())
+                          .filter(Boolean),
                       })
                     }
                   />
@@ -817,7 +947,10 @@ const BiPermissionPage = () => {
                     onChange={(e) =>
                       setFormData({
                         ...formData,
-                        users: e.target.value.split(',').map((u) => u.trim()).filter(Boolean),
+                        users: e.target.value
+                          .split(',')
+                          .map((u) => u.trim())
+                          .filter(Boolean),
                       })
                     }
                   />
@@ -828,7 +961,9 @@ const BiPermissionPage = () => {
                     label='优先级'
                     fullWidth
                     value={formData.priority}
-                    onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) || 1 })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, priority: parseInt(e.target.value) || 1 })
+                    }
                     helperText='数字越小优先级越高'
                   />
                 </Grid>
@@ -848,7 +983,10 @@ const BiPermissionPage = () => {
 
               {testResult && (
                 <Box sx={{ mt: 3 }}>
-                  <Alert severity={testResult.success ? 'success' : 'error'} icon={testResult.success ? <CheckCircle2 /> : <AlertTriangle />}>
+                  <Alert
+                    severity={testResult.success ? 'success' : 'error'}
+                    icon={testResult.success ? <CheckCircle2 /> : <AlertTriangle />}
+                  >
                     {testResult.message}
                   </Alert>
                 </Box>
@@ -857,11 +995,18 @@ const BiPermissionPage = () => {
             <DialogActions>
               <Button onClick={() => setDialogOpen(false)}>取消</Button>
               {editingItem && (
-                <Button variant='outlined' onClick={() => handleTest(editingItem)}>
+                <Button
+                  variant='outlined'
+                  onClick={() => handleTest(editingItem)}
+                >
                   测试规则
                 </Button>
               )}
-              <Button variant='contained' onClick={handleSave} disabled={!formData.name || !formData.condition}>
+              <Button
+                variant='contained'
+                onClick={handleSave}
+                disabled={!formData.name || !formData.condition}
+              >
                 保存
               </Button>
             </DialogActions>

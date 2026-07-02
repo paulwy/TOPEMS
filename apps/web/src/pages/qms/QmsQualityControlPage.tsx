@@ -1,15 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import {
-  Shield,
-  AlertCircle,
-  CheckCircle,
-  FileText,
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
-} from 'lucide-react';
+import { Shield, AlertCircle, CheckCircle, FileText, Plus, Edit, Trash2, Eye } from 'lucide-react';
 import {
   Dialog,
   DialogTitle,
@@ -135,9 +126,9 @@ const QmsQualityControlPage: React.FC = () => {
       high: { bg: 'error.lighter', color: 'error.dark' },
       critical: { bg: 'error.lighter', color: 'error.dark' },
       严重: { bg: 'error.lighter', color: 'error.dark' },
-      medium: { bg: '#fef9c3', color: '#ca8a04' },
-      中等: { bg: '#fef9c3', color: '#ca8a04' },
-      一般: { bg: '#fef9c3', color: '#ca8a04' },
+      medium: { bg: 'warning.100', color: '#ca8a04' },
+      中等: { bg: 'warning.100', color: '#ca8a04' },
+      一般: { bg: 'warning.100', color: '#ca8a04' },
       low: { bg: 'success.lighter', color: 'success.dark' },
       轻微: { bg: 'success.lighter', color: 'success.dark' },
     };
@@ -168,14 +159,14 @@ const QmsQualityControlPage: React.FC = () => {
   const getStatusBadge = (status: string, type: string) => {
     if (type === 'audit') {
       const colors: Record<string, { bg: string; color: string }> = {
-        scheduled: { bg: '#dbeafe', color: 'primary.dark' },
-        planning: { bg: '#dbeafe', color: 'primary.dark' },
-        计划中: { bg: '#dbeafe', color: 'primary.dark' },
-        in_progress: { bg: '#fef9c3', color: '#ca8a04' },
-        进行中: { bg: '#fef9c3', color: '#ca8a04' },
+        scheduled: { bg: 'primary.100', color: 'primary.dark' },
+        planning: { bg: 'primary.100', color: 'primary.dark' },
+        计划中: { bg: 'primary.100', color: 'primary.dark' },
+        in_progress: { bg: 'warning.100', color: '#ca8a04' },
+        进行中: { bg: 'warning.100', color: '#ca8a04' },
         completed: { bg: 'success.lighter', color: 'success.dark' },
         已完成: { bg: 'success.lighter', color: 'success.dark' },
-        已计划: { bg: '#dbeafe', color: 'primary.dark' },
+        已计划: { bg: 'primary.100', color: 'primary.dark' },
       };
       const labels: Record<string, string> = {
         scheduled: '已计划',
@@ -202,8 +193,8 @@ const QmsQualityControlPage: React.FC = () => {
     const colors: Record<string, { bg: string; color: string }> = {
       open: { bg: 'error.lighter', color: 'error.dark' },
       待处理: { bg: 'error.lighter', color: 'error.dark' },
-      in_progress: { bg: '#fef9c3', color: '#ca8a04' },
-      处理中: { bg: '#fef9c3', color: '#ca8a04' },
+      in_progress: { bg: 'warning.100', color: '#ca8a04' },
+      处理中: { bg: 'warning.100', color: '#ca8a04' },
       closed: { bg: 'success.lighter', color: 'success.dark' },
       resolved: { bg: 'success.lighter', color: 'success.dark' },
       已关闭: { bg: 'success.lighter', color: 'success.dark' },
@@ -438,7 +429,7 @@ const QmsQualityControlPage: React.FC = () => {
                 width: 40,
                 height: 40,
                 bgcolor: 'error.lighter',
-                borderRadius: 2,
+                borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -470,8 +461,8 @@ const QmsQualityControlPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: '#fef9c3',
-                borderRadius: 2,
+                bgcolor: 'warning.100',
+                borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -504,7 +495,7 @@ const QmsQualityControlPage: React.FC = () => {
                 width: 40,
                 height: 40,
                 bgcolor: 'success.lighter',
-                borderRadius: 2,
+                borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -536,8 +527,8 @@ const QmsQualityControlPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: '#dbeafe',
-                borderRadius: 2,
+                bgcolor: 'primary.100',
+                borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -569,8 +560,8 @@ const QmsQualityControlPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: '#f3e8ff',
-                borderRadius: 2,
+                bgcolor: 'secondary.100',
+                borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -603,7 +594,7 @@ const QmsQualityControlPage: React.FC = () => {
                 width: 40,
                 height: 40,
                 bgcolor: 'success.lighter',
-                borderRadius: 2,
+                borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

@@ -21,10 +21,7 @@ import {
   TableBody,
   InputAdornment,
 } from '@mui/material';
-import type {
-  Bidding,
-  CreateBiddingRequest,
-} from '@/api/srm';
+import type { Bidding, CreateBiddingRequest } from '@/api/srm';
 import { srmApi } from '@/api/srm';
 import { useAppStore } from '@/store';
 import { Plus, Edit, Trash2, Send, Check, XCircle, Gavel, Users, FileText } from 'lucide-react';
@@ -33,7 +30,10 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 
-const statusConfig: Record<string, { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }> = {
+const statusConfig: Record<
+  string,
+  { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }
+> = {
   draft: { label: '草稿', color: 'default' },
   published: { label: '已发布', color: 'primary' },
   bidding: { label: '投标中', color: 'warning' },
@@ -431,15 +431,19 @@ const BiddingPage: React.FC = () => {
       id: 'budget_amount',
       label: '预算金额',
       align: 'right',
-      render: (row) =>
-        row.budget_amount ? `¥${row.budget_amount.toLocaleString()}` : '-',
+      render: (row) => (row.budget_amount ? `¥${row.budget_amount.toLocaleString()}` : '-'),
     },
     {
       id: 'supplier_count',
       label: '投标数',
       align: 'center',
       render: (row) => (
-        <Chip size='small' label={row.supplier_count || 0} color='primary' variant='outlined' />
+        <Chip
+          size='small'
+          label={row.supplier_count || 0}
+          color='primary'
+          variant='outlined'
+        />
       ),
     },
     {
@@ -447,7 +451,13 @@ const BiddingPage: React.FC = () => {
       label: '状态',
       render: (row) => {
         const config = statusConfig[row.status] || statusConfig.draft;
-        return <Chip size='small' label={config.label} color={config.color} />;
+        return (
+          <Chip
+            size='small'
+            label={config.label}
+            color={config.color}
+          />
+        );
       },
     },
     {
@@ -563,13 +573,29 @@ const BiddingPage: React.FC = () => {
         emptyMessage='暂无招标项目数据'
       />
 
-      <Dialog open={showDialog} onClose={() => setShowDialog(false)} maxWidth='lg' fullWidth>
+      <Dialog
+        open={showDialog}
+        onClose={() => setShowDialog(false)}
+        maxWidth='lg'
+        fullWidth
+      >
         <DialogTitle>{isEditing ? '编辑招标项目' : '新建招标项目'}</DialogTitle>
         <DialogContent>
           <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-            <Tabs value={activeTab} onChange={(_, newValue) => setActiveTab(newValue)}>
-              <Tab label='基本信息' icon={<Gavel size={16} />} iconPosition='start' />
-              <Tab label='招标明细' icon={<FileText size={16} />} iconPosition='start' />
+            <Tabs
+              value={activeTab}
+              onChange={(_, newValue) => setActiveTab(newValue)}
+            >
+              <Tab
+                label='基本信息'
+                icon={<Gavel size={16} />}
+                iconPosition='start'
+              />
+              <Tab
+                label='招标明细'
+                icon={<FileText size={16} />}
+                iconPosition='start'
+              />
             </Tabs>
           </Box>
           <form onSubmit={handleSubmit}>
@@ -605,7 +631,10 @@ const BiddingPage: React.FC = () => {
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                   >
                     {Object.entries(categoryConfig).map(([key, label]) => (
-                      <MenuItem key={key} value={key}>
+                      <MenuItem
+                        key={key}
+                        value={key}
+                      >
                         {label}
                       </MenuItem>
                     ))}
@@ -619,7 +648,10 @@ const BiddingPage: React.FC = () => {
                     onChange={(e) => setFormData({ ...formData, bidding_type: e.target.value })}
                   >
                     {Object.entries(biddingTypeConfig).map(([key, label]) => (
-                      <MenuItem key={key} value={key}>
+                      <MenuItem
+                        key={key}
+                        value={key}
+                      >
                         {label}
                       </MenuItem>
                     ))}
@@ -680,7 +712,11 @@ const BiddingPage: React.FC = () => {
                   <TableBody>
                     {(formData.items || []).length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} align='center' sx={{ py: 4, color: 'text.secondary' }}>
+                        <TableCell
+                          colSpan={7}
+                          align='center'
+                          sx={{ py: 4, color: 'text.secondary' }}
+                        >
                           暂无招标明细
                         </TableCell>
                       </TableRow>
@@ -722,10 +758,16 @@ const BiddingPage: React.FC = () => {
               sx={{ mt: 2 }}
             />
             <DialogActions sx={{ mt: 2 }}>
-              <Button variant='outlined' onClick={() => setShowDialog(false)}>
+              <Button
+                variant='outlined'
+                onClick={() => setShowDialog(false)}
+              >
                 取消
               </Button>
-              <Button type='submit' variant='contained'>
+              <Button
+                type='submit'
+                variant='contained'
+              >
                 {isEditing ? '更新' : '保存'}
               </Button>
             </DialogActions>
@@ -794,11 +836,7 @@ const BiddingPage: React.FC = () => {
                           size='small'
                           color='success'
                           onClick={() => {
-                            handleAward(
-                              viewingBidding!,
-                              supplier.id,
-                              supplier.supplier_name
-                            );
+                            handleAward(viewingBidding!, supplier.id, supplier.supplier_name);
                             setShowSupplierDialog(false);
                           }}
                           startIcon={<Check size={12} />}
@@ -814,7 +852,10 @@ const BiddingPage: React.FC = () => {
           </Table>
         </DialogContent>
         <DialogActions>
-          <Button variant='outlined' onClick={() => setShowSupplierDialog(false)}>
+          <Button
+            variant='outlined'
+            onClick={() => setShowSupplierDialog(false)}
+          >
             关闭
           </Button>
         </DialogActions>

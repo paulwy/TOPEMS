@@ -60,7 +60,7 @@ const generateMockInventory = (): Inventory[] => {
   });
 };
 
-let mockInventory = generateMockInventory();
+const mockInventory = generateMockInventory();
 
 export const inventoryApi = {
   async list(params?: PaginationParams): Promise<
@@ -162,10 +162,7 @@ export const inventoryApi = {
     return createMockSuccessResponse(newItem, 201, '创建成功') as ApiResponse<Inventory>;
   },
 
-  async update(
-    id: string,
-    data: UpdateInventoryRequest
-  ): Promise<ApiResponse<Inventory>> {
+  async update(id: string, data: UpdateInventoryRequest): Promise<ApiResponse<Inventory>> {
     const index = mockInventory.findIndex((i) => i.id === id);
     if (index === -1) {
       return createMockErrorResponse('库存记录不存在', 404) as ApiResponse<Inventory>;
@@ -189,13 +186,7 @@ export const inventoryApi = {
   },
 
   async getLowStock(): Promise<ApiResponse<Inventory[]>> {
-    const lowStockItems = mockInventory.filter(
-      (item) => item.quantity < (item.safety_stock || 0)
-    );
-    return createMockSuccessResponse(
-      lowStockItems,
-      200,
-      '查询成功'
-    ) as ApiResponse<Inventory[]>;
+    const lowStockItems = mockInventory.filter((item) => item.quantity < (item.safety_stock || 0));
+    return createMockSuccessResponse(lowStockItems, 200, '查询成功') as ApiResponse<Inventory[]>;
   },
 };

@@ -3,7 +3,7 @@ import type { ProjectResource, ProjectExpense } from './types';
 
 export const resourceApi = {
   list: async (projectId: string) => {
-    return apiClient.pm.get(`/api/pm/projects/${projectId}/resources`);
+    return apiClient.pm.get(`/projects/${projectId}/resources`);
   },
 
   create: async (
@@ -19,11 +19,11 @@ export const resourceApi = {
       created_by?: string;
     }
   ) => {
-    return apiClient.pm.post(`/api/pm/projects/${projectId}/resources`, data);
+    return apiClient.pm.post(`/projects/${projectId}/resources`, data);
   },
 
   get: async (projectId: string, id: string) => {
-    return apiClient.pm.get(`/api/pm/projects/${projectId}/resources/${id}`);
+    return apiClient.pm.get(`/projects/${projectId}/resources/${id}`);
   },
 
   update: async (
@@ -39,17 +39,17 @@ export const resourceApi = {
       status?: string;
     }
   ) => {
-    return apiClient.pm.put(`/api/pm/projects/${projectId}/resources/${id}`, data);
+    return apiClient.pm.put(`/projects/${projectId}/resources/${id}`, data);
   },
 
   delete: async (projectId: string, id: string) => {
-    return apiClient.pm.delete(`/api/pm/projects/${projectId}/resources/${id}`);
+    return apiClient.pm.delete(`/projects/${projectId}/resources/${id}`);
   },
 };
 
 export const expenseApi = {
   list: async (projectId: string) => {
-    return apiClient.pm.get(`/api/pm/projects/${projectId}/expenses`);
+    return apiClient.pm.get(`/projects/${projectId}/expenses`);
   },
 
   create: async (
@@ -71,11 +71,11 @@ export const expenseApi = {
       created_by?: string;
     }
   ) => {
-    return apiClient.pm.post(`/api/pm/projects/${projectId}/expenses`, data);
+    return apiClient.pm.post(`/projects/${projectId}/expenses`, data);
   },
 
   get: async (projectId: string, id: string) => {
-    return apiClient.pm.get(`/api/pm/projects/${projectId}/expenses/${id}`);
+    return apiClient.pm.get(`/projects/${projectId}/expenses/${id}`);
   },
 
   update: async (
@@ -92,11 +92,11 @@ export const expenseApi = {
       approved_by?: string;
     }
   ) => {
-    return apiClient.pm.put(`/api/pm/projects/${projectId}/expenses/${id}`, data);
+    return apiClient.pm.put(`/projects/${projectId}/expenses/${id}`, data);
   },
 
   delete: async (projectId: string, id: string) => {
-    return apiClient.pm.delete(`/api/pm/projects/${projectId}/expenses/${id}`);
+    return apiClient.pm.delete(`/projects/${projectId}/expenses/${id}`);
   },
 };
 

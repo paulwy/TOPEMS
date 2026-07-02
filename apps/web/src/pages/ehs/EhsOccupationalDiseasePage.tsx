@@ -26,7 +26,7 @@ import {
   ClipboardList,
 } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import { ehsApi } from '@/api/ehs';
 import type { CreateOccupationalDiseaseCaseRequest } from '@/api/ehs/types';
 import { useAppStore } from '@/store';
@@ -450,19 +450,27 @@ const EhsOccupationalDiseasePage: React.FC = () => {
     }
   };
 
+  const headerActions = [
+    {
+      label: '新增案例',
+      icon: <Plus sx={{ width: 16, height: 16 }} />,
+      onClick: handleCreate,
+      variant: 'contained' as const,
+      color: 'primary' as const,
+    },
+  ];
+
   return (
     <PageContainer
-      title='职业病管理'
-      subtitle='管理职业病案例记录，包括诊断、跟踪和康复管理'
+      headerProps={{
+        actions: headerActions,
+        pageIcon: <HeartPulse sx={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+      }}
+      maxWidth='xl'
     >
       <ListPageTemplate
         title=''
-        subtitle=''
-        breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: 'EHS管理', href: '/ehs' },
-          { label: '职业病管理' },
-        ]}
         columns={columns}
         data={paginatedCases}
         loading={loading}
@@ -512,14 +520,6 @@ const EhsOccupationalDiseasePage: React.FC = () => {
               setCurrentPage(0);
             },
             options: [{ label: '全部', value: '' }, ...statusOptions],
-          },
-        ]}
-        actions={[
-          {
-            label: '新增案例',
-            icon: <Plus sx={{ width: 16, height: 16 }} />,
-            onClick: handleCreate,
-            variant: 'contained',
           },
         ]}
         rowActions={rowActions}

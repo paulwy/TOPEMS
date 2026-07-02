@@ -1,4 +1,4 @@
-import { TextField, Button } from '@mui/material';
+import {TextField, Button, useTheme} from '@mui/material';
 import React, { useState, useRef } from 'react';
 import { Send, Paperclip, Image, FileText } from 'lucide-react';
 import { logger } from '@/utils/logger';
@@ -21,6 +21,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   disabled = false,
   placeholder = '输入消息...',
 }) => {
+  const theme = useTheme();
   const [message, setMessage] = useState('');
   const [showFileMenu, setShowFileMenu] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -117,7 +118,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   cursor: 'pointer',
                 }}
               >
-                <Image style={{ width: 16, height: 16, color: 'text.secondary' }} />
+                <Image style={{ width: 16, height: 16, color: theme.palette.text.secondary }} />
                 <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>图片</span>
                 <input
                   ref={imageInputRef}
@@ -137,7 +138,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
                   cursor: 'pointer',
                 }}
               >
-                <FileText style={{ width: 16, height: 16, color: 'text.secondary' }} />
+                <FileText style={{ width: 16, height: 16, color: theme.palette.text.secondary }} />
                 <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>文件</span>
                 <input
                   ref={fileInputRef}
@@ -181,7 +182,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           style={{
             marginTop: 8,
             fontSize: 14,
-            color: 'text.secondary',
+            color: theme.palette.text.secondary,
             display: 'flex',
             alignItems: 'center',
             gap: 8,
@@ -193,7 +194,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
               height: 16,
               borderRadius: '9999px',
               border: '2px solid grey.200',
-              borderTopColor: 'primary.light',
+              borderTopColor: theme.palette.primary.light,
               animation: 'spin 1s linear infinite',
             }}
           />

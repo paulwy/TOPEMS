@@ -339,25 +339,47 @@ export const hasPermission = (userPermissions: string[], requiredPermission: str
   }
 
   const parts = requiredPermission.split(':');
-  if (parts.length === 2) {
-    const [module, action] = parts;
+  if (parts.length >= 2) {
+    const [module, ...restParts] = parts;
+    const action = restParts.join(':');
+
+    // admin 模块与 iam 模块权限兼容（IAM 合并到 Admin 后的过渡期）
+    const equivalentPermissions: string[] = [];
+    if (module === 'admin') {
+      equivalentPermissions.push(`iam:${action}`);
+    } else if (module === 'iam') {
+      equivalentPermissions.push(`admin:${action}`);
+    }
+
+    for (const equivPerm of equivalentPermissions) {
+      if (userPermissions.includes(equivPerm)) {
+        return true;
+      }
+    }
 
     // 基础设施服务权限与 IAM 联动
     const infrastructureModules = ['doc', 'file', 'notification', 'integration', 'im'];
     if (infrastructureModules.includes(module)) {
-      // 有 IAM 同级权限自动获得基础设施权限
       const iamPermission = `iam:${action}`;
       if (userPermissions.includes(iamPermission)) {
         return true;
       }
-      // 有 IAM:admin 自动获得所有基础设施权限
       if (userPermissions.includes('iam:admin')) {
+        return true;
+      }
+      // admin:admin 也等价于 iam:admin
+      if (userPermissions.includes('admin:admin')) {
         return true;
       }
     }
 
     const adminPerm = `${module}:admin`;
     if (userPermissions.includes(adminPerm)) {
+      return true;
+    }
+
+    // 检查 iam:admin 是否等价于 admin:admin
+    if (module === 'admin' && userPermissions.includes('iam:admin')) {
       return true;
     }
 
@@ -368,6 +390,17 @@ export const hasPermission = (userPermissions: string[], requiredPermission: str
         const actionPart = p.split(':')[1];
         return ACTIONS.find((a) => a.action === actionPart)?.level || 0;
       });
+
+    // 同时检查 iam 前缀的权限（用于 admin 模块）
+    if (module === 'admin') {
+      const iamUserActions = userPermissions
+        .filter((p) => p.startsWith('iam:'))
+        .map((p) => {
+          const actionPart = p.split(':')[1];
+          return ACTIONS.find((a) => a.action === actionPart)?.level || 0;
+        });
+      return [...userActions, ...iamUserActions].some((level) => level >= actionLevel);
+    }
 
     return userActions.some((level) => level >= actionLevel);
   }

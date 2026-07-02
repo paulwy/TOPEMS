@@ -14,13 +14,13 @@ import type {
 export const improvementApi = {
   listImprovements: async (): Promise<ApiResponse<QualityImprovement[]>> => {
     const response =
-      await apiClient.qms.get<PaginatedResponse<CorrectiveActionBackend>>('/api/qms/actions');
+      await apiClient.qms.get<PaginatedResponse<CorrectiveActionBackend>>('/actions');
     const adaptedData = (response.data?.actions || []).map(adaptActionToFrontend);
     return { ...response, data: adaptedData };
   },
 
   getImprovement: async (id: string): Promise<ApiResponse<QualityImprovement>> => {
-    const response = await apiClient.qms.get<CorrectiveActionBackend>(`/api/qms/actions/${id}`);
+    const response = await apiClient.qms.get<CorrectiveActionBackend>(`/actions/${id}`);
     return {
       ...response,
       data: response.data ? adaptActionToFrontend(response.data) : undefined,
@@ -31,10 +31,7 @@ export const improvementApi = {
     data: CreateQualityImprovementRequest
   ): Promise<ApiResponse<QualityImprovement>> => {
     const backendData = adaptActionToBackend(data);
-    const response = await apiClient.qms.post<CorrectiveActionBackend>(
-      '/api/qms/actions',
-      backendData
-    );
+    const response = await apiClient.qms.post<CorrectiveActionBackend>('/actions', backendData);
     return {
       ...response,
       data: response.data ? adaptActionToFrontend(response.data) : undefined,
@@ -54,7 +51,7 @@ export const improvementApi = {
       verification_result: data.improvement_effect,
     };
     const response = await apiClient.qms.put<CorrectiveActionBackend>(
-      `/api/qms/actions/${id}`,
+      `/actions/${id}`,
       backendData
     );
     return {
@@ -64,6 +61,6 @@ export const improvementApi = {
   },
 
   deleteImprovement: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.qms.delete<boolean>(`/api/qms/actions/${id}`);
+    return apiClient.qms.delete<boolean>(`/actions/${id}`);
   },
 };

@@ -13,14 +13,11 @@ export const correctiveActionApi = {
     id: string,
     data: { verificationResult?: string; verifiedBy?: string; remark?: string }
   ): Promise<ApiResponse<QualityImprovement>> => {
-    const response = await apiClient.qms.post<CorrectiveActionBackend>(
-      `/api/qms/actions/${id}/complete`,
-      {
-        verification_result: data.verificationResult,
-        verified_by: data.verifiedBy,
-        remark: data.remark,
-      }
-    );
+    const response = await apiClient.qms.post<CorrectiveActionBackend>(`/actions/${id}/complete`, {
+      verification_result: data.verificationResult,
+      verified_by: data.verifiedBy,
+      remark: data.remark,
+    });
     return {
       ...response,
       data: response.data ? adaptActionToFrontend(response.data) : undefined,
@@ -29,7 +26,7 @@ export const correctiveActionApi = {
 
   getActionItems: async (actionId: string): Promise<ApiResponse<ActionItem[]>> => {
     const response = await apiClient.qms.get<{ items?: ActionItemBackend[] }>(
-      `/api/qms/actions/${actionId}/items`
+      `/actions/${actionId}/items`
     );
     const adaptedData = (response.data?.items || []).map(adaptActionItemToFrontend);
     return { ...response, data: adaptedData };

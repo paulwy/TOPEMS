@@ -2,7 +2,7 @@ import { Typography, Box, InputLabel, Chip, Card, CardContent } from '@mui/mater
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
 import { Package, CheckCircle, AlertCircle, TrendingUp } from 'lucide-react';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { mesApi } from '@/api/mes';
 import type { ProductionOrder, ProductionRecord, QualityRecord } from '@/api/mes';
@@ -502,8 +502,13 @@ const ProductionOrderDetailPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='工单详情'
-      subtitle='查看和管理生产工单详情信息'
+      backButton={{ href: '/mes/production-orders' }}
+      autoTitle
+      autoBreadcrumbs
+      headerProps={{
+        pageIcon: <Package style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+      }}
     >
       <DetailPageTemplate
         title=''

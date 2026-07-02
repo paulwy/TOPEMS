@@ -14,30 +14,30 @@ export const announcementApi = {
     if (params?.priority) searchParams.set('priority', params.priority);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/erp/announcements${queryString ? `?${queryString}` : ''}`);
+    return apiClient.erp.get(`/announcements${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<Announcement>> {
-    return apiClient.erp.get(`/api/erp/announcements/${id}`);
+    return apiClient.erp.get(`/announcements/${id}`);
   },
 
   async create(data: Partial<Announcement>): Promise<ApiResponse<Announcement>> {
-    return apiClient.erp.post('/api/erp/announcements', data);
+    return apiClient.erp.post('/announcements', data);
   },
 
   async update(id: string, data: Partial<Announcement>): Promise<ApiResponse<Announcement>> {
-    return apiClient.erp.put(`/api/erp/announcements/${id}`, data);
+    return apiClient.erp.put(`/announcements/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/erp/announcements/${id}`);
+    return apiClient.erp.delete(`/announcements/${id}`);
   },
 
   async publish(id: string): Promise<ApiResponse<Announcement>> {
-    return apiClient.erp.post(`/api/erp/announcements/${id}/publish`);
+    return apiClient.erp.post(`/announcements/${id}/publish`);
   },
 
   async unpublish(id: string): Promise<ApiResponse<Announcement>> {
-    return apiClient.erp.post(`/api/erp/announcements/${id}/unpublish`);
+    return apiClient.erp.post(`/announcements/${id}/unpublish`);
   },
 };

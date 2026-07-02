@@ -505,7 +505,7 @@ const ScmDeliveryAppointmentPage: React.FC = () => {
               flex: 1,
               border: '1px solid',
               borderColor: 'divider',
-              borderRadius: 2,
+              borderRadius: 3,
             }}
           >
             <Box sx={{ color: 'text.secondary', fontSize: 14, mb: 0.5 }}>{c.label}</Box>

@@ -142,7 +142,7 @@ export const RecentActivities: React.FC<RecentActivitiesProps> = ({
               display: 'flex',
               alignItems: 'flex-start',
               padding: 2,
-              borderRadius: 2,
+              borderRadius: 3,
               '&:hover': { backgroundColor: 'grey.50' },
               transition: 'backgroundColor 0.2s ease',
               cursor: 'pointer',
@@ -160,7 +160,7 @@ export const RecentActivities: React.FC<RecentActivitiesProps> = ({
                 sx={{
                   width: 40,
                   height: 40,
-                  borderRadius: 2,
+                  borderRadius: 3,
                   backgroundColor: colors.iconBg,
                   display: 'flex',
                   alignItems: 'center',
@@ -177,7 +177,7 @@ export const RecentActivities: React.FC<RecentActivitiesProps> = ({
                     width: 4,
                     height: 32,
                     backgroundColor: 'border.default',
-                    borderRadius: 2,
+                    borderRadius: 3,
                     marginTop: 1,
                   }}
                 >
@@ -188,7 +188,7 @@ export const RecentActivities: React.FC<RecentActivitiesProps> = ({
                       left: 0,
                       width: '100%',
                       backgroundColor: colors.bar,
-                      borderRadius: 2,
+                      borderRadius: 3,
                       transition: 'height 0.7s ease',
                     }}
                     style={{ height: progressWidth }}

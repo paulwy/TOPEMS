@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import {
-  Box,
+import {Box,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -13,8 +12,7 @@ import {
   InputLabel,
   FormControl,
   Typography,
-  Slider,
-} from '@mui/material';
+  Slider, useTheme} from '@mui/material';
 import { Plus, Edit2, Trash2, Eye, Sliders } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
@@ -137,6 +135,7 @@ const defaultFormData: DimensionFormData = {
 
 const SrmScoringDimensionPage: React.FC = () => {
   const [dimensions, setDimensions] = useState<ScoringDimension[]>([]);
+  const theme = useTheme();
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -422,7 +421,7 @@ const SrmScoringDimensionPage: React.FC = () => {
               borderRadius: 1,
             }}
           >
-            <Sliders style={{ width: 18, height: 18, color: 'primary.main' }} />
+            <Sliders style={{ width: 18, height: 18, color: theme.palette.primary.main }} />
             <Typography
               variant='body2'
               color='text.secondary'

@@ -23,30 +23,30 @@ export const workReportApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(`/api/mes/work-reports${queryString ? `?${queryString}` : ''}`);
+    return apiClient.mes.get(`/work-reports${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<WorkReport>> {
-    return apiClient.mes.get(`/api/mes/work-reports/${id}`);
+    return apiClient.mes.get(`/work-reports/${id}`);
   },
 
   async create(data: CreateWorkReportRequest): Promise<ApiResponse<WorkReport>> {
-    return apiClient.mes.post('/api/mes/work-reports', data);
+    return apiClient.mes.post('/work-reports', data);
   },
 
   async update(id: string, data: UpdateWorkReportRequest): Promise<ApiResponse<WorkReport>> {
-    return apiClient.mes.put(`/api/mes/work-reports/${id}`, data);
+    return apiClient.mes.put(`/work-reports/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.mes.delete(`/api/mes/work-reports/${id}`);
+    return apiClient.mes.delete(`/work-reports/${id}`);
   },
 
   async approve(id: string): Promise<ApiResponse<WorkReport>> {
-    return apiClient.mes.put(`/api/mes/work-reports/${id}/approve`);
+    return apiClient.mes.put(`/work-reports/${id}/approve`);
   },
 
   async reject(id: string, remark?: string): Promise<ApiResponse<WorkReport>> {
-    return apiClient.mes.put(`/api/mes/work-reports/${id}/reject`, { remark });
+    return apiClient.mes.put(`/work-reports/${id}/reject`, { remark });
   },
 };

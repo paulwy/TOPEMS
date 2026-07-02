@@ -98,7 +98,13 @@ const mockTables: Record<string, TableInfo[]> = {
       columns: [
         { name: 'id', type: 'BIGINT', nullable: false, isPrimaryKey: true, comment: '主键ID' },
         { name: 'name', type: 'VARCHAR(200)', nullable: false, comment: '客户名称' },
-        { name: 'code', type: 'VARCHAR(50)', nullable: false, isPrimaryKey: false, comment: '客户编号' },
+        {
+          name: 'code',
+          type: 'VARCHAR(50)',
+          nullable: false,
+          isPrimaryKey: false,
+          comment: '客户编号',
+        },
         { name: 'type', type: 'VARCHAR(20)', nullable: true, comment: '客户类型' },
         { name: 'contact', type: 'VARCHAR(100)', nullable: true, comment: '联系人' },
         { name: 'phone', type: 'VARCHAR(50)', nullable: true, comment: '联系电话' },
@@ -137,21 +143,20 @@ export async function listDataSources(params?: {
   status?: string;
 }) {
   let data = [...mockDataSources];
-  
+
   if (params?.search) {
     const search = params.search.toLowerCase();
-    data = data.filter(d => 
-      d.name.toLowerCase().includes(search) || 
-      d.description?.toLowerCase().includes(search)
+    data = data.filter(
+      (d) => d.name.toLowerCase().includes(search) || d.description?.toLowerCase().includes(search)
     );
   }
-  
+
   if (params?.type) {
-    data = data.filter(d => d.type === params.type);
+    data = data.filter((d) => d.type === params.type);
   }
 
   if (params?.status) {
-    data = data.filter(d => d.status === params.status);
+    data = data.filter((d) => d.status === params.status);
   }
 
   const page = params?.page || 1;
@@ -176,7 +181,7 @@ export async function listDataSources(params?: {
 }
 
 export async function getDataSource(id: string) {
-  const ds = mockDataSources.find(d => d.id === id);
+  const ds = mockDataSources.find((d) => d.id === id);
   return {
     code: 0,
     success: true,
@@ -209,7 +214,7 @@ export async function createDataSource(data: Partial<DataSource>) {
 }
 
 export async function updateDataSource(id: string, data: Partial<DataSource>) {
-  const index = mockDataSources.findIndex(d => d.id === id);
+  const index = mockDataSources.findIndex((d) => d.id === id);
   if (index !== -1) {
     mockDataSources[index] = {
       ...mockDataSources[index],
@@ -234,7 +239,7 @@ export async function updateDataSource(id: string, data: Partial<DataSource>) {
 }
 
 export async function deleteDataSource(id: string) {
-  const index = mockDataSources.findIndex(d => d.id === id);
+  const index = mockDataSources.findIndex((d) => d.id === id);
   if (index !== -1) {
     mockDataSources.splice(index, 1);
     return {
@@ -255,7 +260,7 @@ export async function deleteDataSource(id: string) {
 }
 
 export async function testDataSource(id: string) {
-  const ds = mockDataSources.find(d => d.id === id);
+  const ds = mockDataSources.find((d) => d.id === id);
   if (ds) {
     ds.lastTestAt = new Date().toISOString();
     const success = ds.type !== 'api';
@@ -294,7 +299,7 @@ export async function listTables(dataSourceId: string) {
 
 export async function getTableInfo(dataSourceId: string, tableName: string) {
   const tables = mockTables[dataSourceId] || [];
-  const table = tables.find(t => t.name === tableName);
+  const table = tables.find((t) => t.name === tableName);
   return {
     code: 0,
     success: true,

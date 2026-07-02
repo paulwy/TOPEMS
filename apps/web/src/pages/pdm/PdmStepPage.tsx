@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Box,
+import {Box,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -12,8 +11,7 @@ import {
   CardHeader,
   Typography,
   Stack,
-  Button,
-} from '@mui/material';
+  Button, useTheme} from '@mui/material';
 import { apiLogger } from '@/utils/logger';
 import { Plus, Eye, ClipboardList, Clock, ListOrdered } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
@@ -24,6 +22,7 @@ import { useAppStore } from '@/store';
 
 const PdmStepPage: React.FC = () => {
   const [steps, setSteps] = useState<ProductionStep[]>([]);
+  const theme = useTheme();
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -346,7 +345,7 @@ const PdmStepPage: React.FC = () => {
             variant='h6'
             sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
           >
-            <ClipboardList style={{ width: 20, height: 20, color: 'success.dark' }} />
+            <ClipboardList style={{ width: 20, height: 20, color: theme.palette.success.dark }} />
             工序步骤列表
           </Typography>
         </CardHeader>

@@ -14,27 +14,27 @@ export const vehicleApi = {
     if (params?.vehicle_type) searchParams.set('vehicle_type', params.vehicle_type);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/erp/vehicles${queryString ? `?${queryString}` : ''}`);
+    return apiClient.erp.get(`/vehicles${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<Vehicle>> {
-    return apiClient.erp.get(`/api/erp/vehicles/${id}`);
+    return apiClient.erp.get(`/vehicles/${id}`);
   },
 
   async create(data: Partial<Vehicle>): Promise<ApiResponse<Vehicle>> {
-    return apiClient.erp.post('/api/erp/vehicles', data);
+    return apiClient.erp.post('/vehicles', data);
   },
 
   async update(id: string, data: Partial<Vehicle>): Promise<ApiResponse<Vehicle>> {
-    return apiClient.erp.put(`/api/erp/vehicles/${id}`, data);
+    return apiClient.erp.put(`/vehicles/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/erp/vehicles/${id}`);
+    return apiClient.erp.delete(`/vehicles/${id}`);
   },
 
   async getRequests(id: string): Promise<ApiResponse<VehicleRequest[]>> {
-    return apiClient.erp.get(`/api/erp/vehicles/${id}/requests`);
+    return apiClient.erp.get(`/vehicles/${id}/requests`);
   },
 };
 
@@ -47,22 +47,22 @@ export const vehicleRequestApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/erp/vehicle-requests${queryString ? `?${queryString}` : ''}`);
+    return apiClient.erp.get(`/vehicle-requests${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<VehicleRequest>> {
-    return apiClient.erp.get(`/api/erp/vehicle-requests/${id}`);
+    return apiClient.erp.get(`/vehicle-requests/${id}`);
   },
 
   async create(data: Partial<VehicleRequest>): Promise<ApiResponse<VehicleRequest>> {
-    return apiClient.erp.post('/api/erp/vehicle-requests', data);
+    return apiClient.erp.post('/vehicle-requests', data);
   },
 
   async update(id: string, data: Partial<VehicleRequest>): Promise<ApiResponse<VehicleRequest>> {
-    return apiClient.erp.put(`/api/erp/vehicle-requests/${id}`, data);
+    return apiClient.erp.put(`/vehicle-requests/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/erp/vehicle-requests/${id}`);
+    return apiClient.erp.delete(`/vehicle-requests/${id}`);
   },
 };

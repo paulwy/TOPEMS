@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { Button, IconButton, Tooltip } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material/styles';
 import { ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useBackNavigation } from '@/hooks';
@@ -20,7 +21,7 @@ export interface BackButtonProps {
   /** 颜色 */
   color?: 'inherit' | 'primary' | 'secondary' | 'default';
   /** 自定义样式 */
-  sx?: import('@mui/material/styles').SxProps<import('@mui/material/styles').Theme>;
+  sx?: SxProps<Theme>;
   /** tooltip */
   tooltip?: string;
 }

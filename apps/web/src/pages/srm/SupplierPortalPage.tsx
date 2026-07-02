@@ -34,7 +34,8 @@ import { srmApi } from '@/api/srm';
 import type { SupplierPortalStats, Supplier } from '@/api/srm';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
-import { PageContainer } from '@/components/common';
+import { DashboardTemplate } from '@/components/templates';
+import { PageContainer } from '@/components/common/PageContainerV2';
 
 const SupplierPortalPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
@@ -87,10 +88,34 @@ const SupplierPortalPage: React.FC = () => {
           }
         } catch (e) {
           setOrders([
-            { id: '1', po_no: 'PO-2024-001', order_date: '2024-01-15', total_amount: 125000, status: 'pending' },
-            { id: '2', po_no: 'PO-2024-002', order_date: '2024-01-14', total_amount: 89000, status: 'processing' },
-            { id: '3', po_no: 'PO-2024-003', order_date: '2024-01-10', total_amount: 256000, status: 'shipped' },
-            { id: '4', po_no: 'PO-2024-004', order_date: '2024-01-08', total_amount: 45000, status: 'completed' },
+            {
+              id: '1',
+              po_no: 'PO-2024-001',
+              order_date: '2024-01-15',
+              total_amount: 125000,
+              status: 'pending',
+            },
+            {
+              id: '2',
+              po_no: 'PO-2024-002',
+              order_date: '2024-01-14',
+              total_amount: 89000,
+              status: 'processing',
+            },
+            {
+              id: '3',
+              po_no: 'PO-2024-003',
+              order_date: '2024-01-10',
+              total_amount: 256000,
+              status: 'shipped',
+            },
+            {
+              id: '4',
+              po_no: 'PO-2024-004',
+              order_date: '2024-01-08',
+              total_amount: 45000,
+              status: 'completed',
+            },
           ]);
         }
       }
@@ -116,7 +141,10 @@ const SupplierPortalPage: React.FC = () => {
     }
   };
 
-  const statusConfig: Record<string, { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }> = {
+  const statusConfig: Record<
+    string,
+    { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }
+  > = {
     pending: { label: '待处理', color: 'warning' },
     processing: { label: '处理中', color: 'primary' },
     shipped: { label: '已发货', color: 'info' as any },
@@ -168,15 +196,7 @@ const SupplierPortalPage: React.FC = () => {
   ];
 
   return (
-    <PageContainer
-      title='供应商门户'
-      subtitle='供应商自助服务平台，查看订单、发票、发货等信息'
-      maxWidth='xl'
-      headerProps={{
-        pageIcon: <Building2 style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #06B6D4, #0891B2)',
-      }}
-    >
+    <PageContainer>
       <Box sx={{ mb: 4 }}>
         <Card sx={{ borderRadius: 3, overflow: 'hidden' }}>
           <CardContent sx={{ p: 3 }}>
@@ -192,10 +212,16 @@ const SupplierPortalPage: React.FC = () => {
                 {supplier?.name?.charAt(0) || 'S'}
               </Avatar>
               <Box sx={{ flex: 1 }}>
-                <Typography variant='h5' sx={{ fontWeight: 600 }}>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 600 }}
+                >
                   {supplier?.name || '示例供应商'}
                 </Typography>
-                <Typography variant='body2' color='text.secondary'>
+                <Typography
+                  variant='body2'
+                  color='text.secondary'
+                >
                   供应商编号: {supplier?.supplier_no || 'SUP-001'}
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
@@ -232,17 +258,37 @@ const SupplierPortalPage: React.FC = () => {
         </Card>
       </Box>
 
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid
+        container
+        spacing={3}
+        sx={{ mb: 4 }}
+      >
         {statCards.map((stat, index) => (
-          <Grid size={{ xs: 12, sm: 6, md: 3 }} key={index}>
-            <Card sx={{ borderRadius: 2, height: '100%' }}>
+          <Grid
+            size={{ xs: 12, sm: 6, md: 3 }}
+            key={index}
+          >
+            <Card sx={{ borderRadius: 3, height: '100%' }}>
               <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    justifyContent: 'space-between',
+                  }}
+                >
                   <Box>
-                    <Typography variant='body2' color='text.secondary' sx={{ mb: 1 }}>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                      sx={{ mb: 1 }}
+                    >
                       {stat.title}
                     </Typography>
-                    <Typography variant='h4' sx={{ fontWeight: 700 }}>
+                    <Typography
+                      variant='h4'
+                      sx={{ fontWeight: 700 }}
+                    >
                       {stat.prefix}
                       {stat.format ? (stat.value as number).toLocaleString() : stat.value}
                       {stat.suffix}
@@ -251,7 +297,7 @@ const SupplierPortalPage: React.FC = () => {
                   <Box
                     sx={{
                       p: 1.5,
-                      borderRadius: 2,
+                      borderRadius: 3,
                       bgcolor: stat.bgColor,
                       color: stat.color,
                     }}
@@ -265,18 +311,33 @@ const SupplierPortalPage: React.FC = () => {
         ))}
       </Grid>
 
-      <Grid container spacing={3}>
+      <Grid
+        container
+        spacing={3}
+      >
         <Grid size={{ xs: 12, md: 8 }}>
-          <Card sx={{ borderRadius: 2 }}>
+          <Card sx={{ borderRadius: 3 }}>
             <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
               <Tabs
                 value={activeTab}
                 onChange={(_, newValue) => setActiveTab(newValue)}
                 sx={{ px: 2 }}
               >
-                <Tab label='最近订单' icon={<Package size={16} />} iconPosition='start' />
-                <Tab label='待办事项' icon={<Bell size={16} />} iconPosition='start' />
-                <Tab label='公告通知' icon={<AlertCircle size={16} />} iconPosition='start' />
+                <Tab
+                  label='最近订单'
+                  icon={<Package size={16} />}
+                  iconPosition='start'
+                />
+                <Tab
+                  label='待办事项'
+                  icon={<Bell size={16} />}
+                  iconPosition='start'
+                />
+                <Tab
+                  label='公告通知'
+                  icon={<AlertCircle size={16} />}
+                  iconPosition='start'
+                />
               </Tabs>
             </Box>
             <CardContent>
@@ -288,7 +349,13 @@ const SupplierPortalPage: React.FC = () => {
                       <ListItem sx={{ py: 2 }}>
                         <ListItemText
                           primary={
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                              }}
+                            >
                               <Typography variant='subtitle2'>{order.po_no}</Typography>
                               <Chip
                                 size='small'
@@ -299,16 +366,25 @@ const SupplierPortalPage: React.FC = () => {
                           }
                           secondary={
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
-                              <Typography variant='body2' color='text.secondary'>
+                              <Typography
+                                variant='body2'
+                                color='text.secondary'
+                              >
                                 {order.order_date}
                               </Typography>
-                              <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                              <Typography
+                                variant='body2'
+                                sx={{ fontWeight: 500 }}
+                              >
                                 ¥{order.total_amount?.toLocaleString()}
                               </Typography>
                             </Box>
                           }
                         />
-                        <ChevronRight size={16} style={{ color: '#94A3B8' }} />
+                        <ChevronRight
+                          size={16}
+                          style={{ color: '#94A3B8' }}
+                        />
                       </ListItem>
                     </React.Fragment>
                   ))}
@@ -318,7 +394,12 @@ const SupplierPortalPage: React.FC = () => {
                 <List disablePadding>
                   {[
                     { id: '1', title: '确认订单 PO-2024-001', type: 'order', priority: 'high' },
-                    { id: '2', title: '发货提醒 PO-2024-002', type: 'delivery', priority: 'medium' },
+                    {
+                      id: '2',
+                      title: '发货提醒 PO-2024-002',
+                      type: 'delivery',
+                      priority: 'medium',
+                    },
                     { id: '3', title: '发票对账 INV-2024-005', type: 'invoice', priority: 'low' },
                   ].map((item, index) => (
                     <React.Fragment key={item.id}>
@@ -330,14 +411,29 @@ const SupplierPortalPage: React.FC = () => {
                               <Typography variant='subtitle2'>{item.title}</Typography>
                               <Chip
                                 size='small'
-                                label={item.priority === 'high' ? '高' : item.priority === 'medium' ? '中' : '低'}
-                                color={item.priority === 'high' ? 'error' : item.priority === 'medium' ? 'warning' : 'default'}
+                                label={
+                                  item.priority === 'high'
+                                    ? '高'
+                                    : item.priority === 'medium'
+                                      ? '中'
+                                      : '低'
+                                }
+                                color={
+                                  item.priority === 'high'
+                                    ? 'error'
+                                    : item.priority === 'medium'
+                                      ? 'warning'
+                                      : 'default'
+                                }
                                 sx={{ fontSize: '0.625rem', height: 16 }}
                               />
                             </Box>
                           }
                         />
-                        <ChevronRight size={16} style={{ color: '#94A3B8' }} />
+                        <ChevronRight
+                          size={16}
+                          style={{ color: '#94A3B8' }}
+                        />
                       </ListItem>
                     </React.Fragment>
                   ))}
@@ -365,7 +461,10 @@ const SupplierPortalPage: React.FC = () => {
                           }
                           secondary={item.date}
                         />
-                        <ChevronRight size={16} style={{ color: '#94A3B8' }} />
+                        <ChevronRight
+                          size={16}
+                          style={{ color: '#94A3B8' }}
+                        />
                       </ListItem>
                     </React.Fragment>
                   ))}
@@ -376,15 +475,21 @@ const SupplierPortalPage: React.FC = () => {
         </Grid>
 
         <Grid size={{ xs: 12, md: 4 }}>
-          <Card sx={{ borderRadius: 2, mb: 3 }}>
+          <Card sx={{ borderRadius: 3, mb: 3 }}>
             <CardContent>
-              <Typography variant='subtitle1' sx={{ fontWeight: 600, mb: 2 }}>
+              <Typography
+                variant='subtitle1'
+                sx={{ fontWeight: 600, mb: 2 }}
+              >
                 绩效指标
               </Typography>
               <Box sx={{ mb: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                   <Typography variant='body2'>质量评分</Typography>
-                  <Typography variant='body2' sx={{ fontWeight: 600 }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ fontWeight: 600 }}
+                  >
                     {stats?.quality_score || 92.3}%
                   </Typography>
                 </Box>
@@ -398,7 +503,10 @@ const SupplierPortalPage: React.FC = () => {
               <Box sx={{ mb: 2 }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                   <Typography variant='body2'>按时交付率</Typography>
-                  <Typography variant='body2' sx={{ fontWeight: 600 }}>
+                  <Typography
+                    variant='body2'
+                    sx={{ fontWeight: 600 }}
+                  >
                     {stats?.on_time_delivery_rate || 95.6}%
                   </Typography>
                 </Box>
@@ -412,7 +520,12 @@ const SupplierPortalPage: React.FC = () => {
               <Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
                   <Typography variant='body2'>合作评分</Typography>
-                  <Typography variant='body2' sx={{ fontWeight: 600 }}>A</Typography>
+                  <Typography
+                    variant='body2'
+                    sx={{ fontWeight: 600 }}
+                  >
+                    A
+                  </Typography>
                 </Box>
                 <LinearProgress
                   variant='determinate'
@@ -424,12 +537,18 @@ const SupplierPortalPage: React.FC = () => {
             </CardContent>
           </Card>
 
-          <Card sx={{ borderRadius: 2 }}>
+          <Card sx={{ borderRadius: 3 }}>
             <CardContent>
-              <Typography variant='subtitle1' sx={{ fontWeight: 600, mb: 2 }}>
+              <Typography
+                variant='subtitle1'
+                sx={{ fontWeight: 600, mb: 2 }}
+              >
                 快速入口
               </Typography>
-              <Grid container spacing={2}>
+              <Grid
+                container
+                spacing={2}
+              >
                 {[
                   { icon: <Package size={20} />, label: '订单管理' },
                   { icon: <FileText size={20} />, label: '发票管理' },
@@ -438,7 +557,10 @@ const SupplierPortalPage: React.FC = () => {
                   { icon: <Star size={20} />, label: '绩效评估' },
                   { icon: <Bell size={20} />, label: '消息通知' },
                 ].map((item, index) => (
-                  <Grid size={{ xs: 4 }} key={index}>
+                  <Grid
+                    size={{ xs: 4 }}
+                    key={index}
+                  >
                     <Box
                       sx={{
                         display: 'flex',
@@ -446,7 +568,7 @@ const SupplierPortalPage: React.FC = () => {
                         alignItems: 'center',
                         gap: 1,
                         p: 2,
-                        borderRadius: 2,
+                        borderRadius: 3,
                         bgcolor: 'action.hover',
                         cursor: 'pointer',
                         transition: 'all 0.2s',

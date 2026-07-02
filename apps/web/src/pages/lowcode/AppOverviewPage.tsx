@@ -1,14 +1,12 @@
 import { useState, useEffect } from 'react';
-import {
-  Box,
+import {Box,
   Grid,
   Card,
   CardContent,
   Typography,
   Chip,
   Button,
-  Avatar,
-} from '@mui/material';
+  Avatar, useTheme} from '@mui/material';
 import {
   Database,
   LayoutGrid,
@@ -26,6 +24,7 @@ import AppCard from '../../components/lowcode/AppCard';
 import { useNavigate } from 'react-router-dom';
 
 const AppOverviewPage = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const [overview, setOverview] = useState<AppOverview | null>(null);
   const [recentApps, setRecentApps] = useState<LowCodeApp[]>([]);
@@ -147,7 +146,7 @@ const AppOverviewPage = () => {
               <Card variant="outlined">
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                    <Activity style={{ width: 20, height: 20, color: 'success.main' }} />
+                    <Activity style={{ width: 20, height: 20, color: theme.palette.success.main }} />
                     <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>使用趋势</Typography>
                   </Box>
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -178,7 +177,7 @@ const AppOverviewPage = () => {
               <Card variant="outlined">
                 <CardContent>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                    <Zap style={{ width: 20, height: 20, color: 'warning.main' }} />
+                    <Zap style={{ width: 20, height: 20, color: theme.palette.warning.main }} />
                     <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>快速入门</Typography>
                   </Box>
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>

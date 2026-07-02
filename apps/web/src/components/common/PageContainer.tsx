@@ -110,7 +110,7 @@ export const PageContainer: React.FC<PageContainerProps> = ({
     ? {
         elevation: 0,
         sx: {
-          borderRadius: 2,
+          borderRadius: 3,
           ...contentSx,
         },
       }

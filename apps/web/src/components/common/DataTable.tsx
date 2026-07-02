@@ -27,6 +27,7 @@ import {
   TextField,
   Chip,
   Button,
+  useTheme,
 } from '@mui/material';
 import {
   Search,
@@ -57,6 +58,7 @@ import {
 } from '@tanstack/react-table';
 import { useAppStore } from '@/store';
 import { useExportData } from '@/hooks/useDataTable';
+import { useResponsive } from '@/hooks/useResponsive';
 
 // ============ 类型定义 ============
 
@@ -212,6 +214,24 @@ export interface DataTableProps<TData, TValue> {
 
   /** 已选中的行ID列表（受控） */
   selectedRows?: string[];
+
+  /**
+   * 移动端卡片视图渲染函数
+   * 在小屏设备（< sm 断点）下替代表格视图，渲染为卡片列表
+   * 若未提供，则默认使用表格的水平滚动模式
+   */
+  mobileCardRender?: (row: TData, index: number) => React.ReactNode;
+
+  /**
+   * 移动端卡片视图的标题字段名
+   * 用于卡片标题展示，配合 mobileCardRender 使用更佳
+   */
+  mobileCardTitleKey?: string;
+
+  /**
+   * 移动端卡片视图的副标题字段名
+   */
+  mobileCardSubtitleKey?: string;
 }
 
 /**
@@ -323,6 +343,9 @@ export function DataTable<TData, TValue>({
   emptyState: _emptyState,
   selectedIds = [],
   selectedRows,
+  mobileCardRender,
+  mobileCardTitleKey,
+  mobileCardSubtitleKey,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -330,6 +353,10 @@ export function DataTable<TData, TValue>({
     pageIndex: currentPage,
     pageSize,
   });
+  const theme = useTheme();
+  const { isMobile } = useResponsive();
+  const shouldUseMobileCard =
+    isMobile && (Boolean(mobileCardRender) || Boolean(mobileCardTitleKey));
   const [localSearch, setLocalSearch] = useState('');
   const [showAdvancedFilterDialog, setShowAdvancedFilterDialog] = useState(false);
   const [exportAnchorEl, setExportAnchorEl] = useState<null | HTMLElement>(null);
@@ -344,7 +371,11 @@ export function DataTable<TData, TValue>({
   // Unified selection state - prefer selectedRows, fall back to selectedIds for backward compat
   const effectiveSelectedIds = selectedRows ?? selectedIds ?? [];
   const [internalSelected, setInternalSelected] = React.useState<string[]>([]);
-  const isSelected = showSelection ? (effectiveSelectedIds.length > 0 ? effectiveSelectedIds : internalSelected) : [];
+  const isSelected = showSelection
+    ? effectiveSelectedIds.length > 0
+      ? effectiveSelectedIds
+      : internalSelected
+    : [];
   const addNotification = useAppStore((state) => state.addNotification);
 
   const { exportToCSV, exportToExcel } = useExportData(columns);
@@ -402,7 +433,7 @@ export function DataTable<TData, TValue>({
   );
 
   const handleSelectAll = React.useCallback(() => {
-    const allIds = data.map(row => getRowKey(row));
+    const allIds = data.map((row) => getRowKey(row));
     const newSelected = isSelected.length === allIds.length ? [] : allIds;
     if (effectiveSelectedIds.length > 0 && onSelectionChange) {
       onSelectionChange(newSelected);
@@ -412,18 +443,21 @@ export function DataTable<TData, TValue>({
     }
   }, [data, isSelected, effectiveSelectedIds, onSelectionChange]);
 
-  const handleSelectRow = React.useCallback((row: TData) => {
-    const key = getRowKey(row);
-    const newSelected = isSelected.includes(key)
-      ? isSelected.filter(s => s !== key)
-      : [...isSelected, key];
-    if (effectiveSelectedIds.length > 0 && onSelectionChange) {
-      onSelectionChange(newSelected);
-    } else {
-      setInternalSelected(newSelected);
-      onSelectionChange?.(newSelected);
-    }
-  }, [isSelected, effectiveSelectedIds, onSelectionChange, getRowKey]);
+  const handleSelectRow = React.useCallback(
+    (row: TData) => {
+      const key = getRowKey(row);
+      const newSelected = isSelected.includes(key)
+        ? isSelected.filter((s) => s !== key)
+        : [...isSelected, key];
+      if (effectiveSelectedIds.length > 0 && onSelectionChange) {
+        onSelectionChange(newSelected);
+      } else {
+        setInternalSelected(newSelected);
+        onSelectionChange?.(newSelected);
+      }
+    },
+    [isSelected, effectiveSelectedIds, onSelectionChange, getRowKey]
+  );
 
   const handleRowExpand = useCallback(
     (row: TData) => {
@@ -527,12 +561,11 @@ export function DataTable<TData, TValue>({
                 sx={{ width: '100%', maxWidth: 320 }}
                 slotProps={{
                   input: {
-                  startAdornment: (
-                    <Search sx={{ width: 16, height: 16, mr: 1, color: 'text.secondary' }} />
-                  ),
+                    startAdornment: (
+                      <Search sx={{ width: 16, height: 16, mr: 1, color: 'text.secondary' }} />
+                    ),
                   },
                 }}
-
               />
             )}
 
@@ -633,7 +666,7 @@ export function DataTable<TData, TValue>({
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <span style={{ fontSize: '0.875rem', color: 'primary.dark' }}>
+              <span style={{ fontSize: '0.875rem', color: theme.palette.primary.dark }}>
                 已选择{' '}
                 <Chip
                   label={isSelected.length}
@@ -698,293 +731,327 @@ export function DataTable<TData, TValue>({
         </MenuItem>
       </Menu>
 
-      {/* 表格区域 */}
-      <Box
-        sx={{
-          borderRadius: 1,
-          overflow: 'hidden',
-          border: '1px solid',
-          borderColor: 'divider',
-          bgcolor: 'background.paper',
-        }}
-      >
-        <Box sx={{ overflowX: responsive ? 'auto' : 'hidden' }}>
-          <Table
-            sx={{
-              minWidth: 640,
-              ...(enableStickyHeader && {
-                thead: {
-                  position: 'sticky',
-                  top: 0,
-                  zIndex: 1,
-                  bgcolor: 'grey.50',
-                },
-              }),
+      {/* 数据区域：移动端使用卡片视图，桌面端使用表格视图 */}
+      {shouldUseMobileCard ? (
+        <Box
+          sx={{
+            borderRadius: 1,
+            border: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+            overflow: 'hidden',
+          }}
+        >
+          <MobileCardView
+            data={data}
+            cardRender={mobileCardRender}
+            titleKey={mobileCardTitleKey}
+            subtitleKey={mobileCardSubtitleKey}
+            onRowClick={onRowClick}
+            loading={loading}
+            emptyMessage={emptyMessage}
+            getRowKey={getRowKey}
+            showSelection={showSelection}
+            selectedIds={isSelected}
+            onSelectionChange={(row, selected) => {
+              const rowKey = getRowKey(row);
+              const newSelected = selected
+                ? [...isSelected, rowKey]
+                : isSelected.filter((id) => id !== rowKey);
+              setInternalSelected(newSelected);
+              onSelectionChange?.(newSelected);
             }}
-          >
-            <TableHead>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow
-                  key={headerGroup.id}
-                  sx={{ bgcolor: 'grey.50' }}
-                >
-                  {/* 选择列 */}
-                  {showSelection && (
-                    <TableCell
-                      padding='checkbox'
-                      sx={{
-                        position: 'sticky',
-                        left: 0,
-                        zIndex: 2,
-                        bgcolor: 'grey.50',
-                        width: 40,
-                      }}
-                    >
-                      <Checkbox
-                        checked={isAllSelected}
-                        onChange={(e) => handleSelectAll()}
-                        indeterminate={hasSelected && !isAllSelected}
-                      />
-                    </TableCell>
-                  )}
-                  {/* 行号列 */}
-                  {showRowNumber && (
-                    <TableCell
-                      sx={{
-                        whiteSpace: 'nowrap',
-                        fontWeight: 600,
-                        fontSize: 12,
-                        textTransform: 'uppercase',
-                        letterSpacing: 0.5,
-                        color: 'text.secondary',
-                        position: showSelection ? 'sticky' : 'relative',
-                        left: showSelection ? 56 : 0,
-                        zIndex: 2,
-                        bgcolor: 'grey.50',
-                      }}
-                    >
-                      #
-                    </TableCell>
-                  )}
-                  {/* 展开列 */}
-                  {enableRowExpansion && (
-                    <TableCell
-                      sx={{
-                        whiteSpace: 'nowrap',
-                        fontWeight: 600,
-                        fontSize: 12,
-                        textTransform: 'uppercase',
-                        letterSpacing: 0.5,
-                        color: 'text.secondary',
-                        position: showSelection || showRowNumber ? 'sticky' : 'relative',
-                        left: (showSelection ? 56 : 0) + (showRowNumber ? 64 : 0),
-                        zIndex: 2,
-                        bgcolor: 'grey.50',
-                      }}
-                    >
-                      展开
-                    </TableCell>
-                  )}
-                  {/* 数据列 */}
-                  {headerGroup.headers.map((header) => (
-                    <TableCell
-                      key={header.id}
-                      sx={{
-                        whiteSpace: 'nowrap',
-                        fontWeight: 600,
-                        fontSize: 12,
-                        textTransform: 'uppercase',
-                        letterSpacing: 0.5,
-                        color: 'text.secondary',
-                      }}
-                    >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(header.column.columnDef.header, header.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHead>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={
-                      columns.length +
-                      (showSelection ? 1 : 0) +
-                      (showRowNumber ? 1 : 0) +
-                      (enableRowExpansion ? 1 : 0)
-                    }
-                    sx={{ height: 96, textAlign: 'center' }}
+          />
+        </Box>
+      ) : (
+        /* 表格区域 */
+        <Box
+          sx={{
+            borderRadius: 1,
+            overflow: 'hidden',
+            border: '1px solid',
+            borderColor: 'divider',
+            bgcolor: 'background.paper',
+          }}
+        >
+          <Box sx={{ overflowX: responsive ? 'auto' : 'hidden' }}>
+            <Table
+              sx={{
+                minWidth: 640,
+                ...(enableStickyHeader && {
+                  thead: {
+                    position: 'sticky',
+                    top: 0,
+                    zIndex: 1,
+                    bgcolor: 'grey.50',
+                  },
+                }),
+              }}
+            >
+              <TableHead>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow
+                    key={headerGroup.id}
+                    sx={{ bgcolor: 'grey.50' }}
                   >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: 1,
-                      }}
+                    {/* 选择列 */}
+                    {showSelection && (
+                      <TableCell
+                        padding='checkbox'
+                        sx={{
+                          position: 'sticky',
+                          left: 0,
+                          zIndex: 2,
+                          bgcolor: 'grey.50',
+                          width: 40,
+                        }}
+                      >
+                        <Checkbox
+                          checked={isAllSelected}
+                          onChange={(e) => handleSelectAll()}
+                          indeterminate={hasSelected && !isAllSelected}
+                        />
+                      </TableCell>
+                    )}
+                    {/* 行号列 */}
+                    {showRowNumber && (
+                      <TableCell
+                        sx={{
+                          whiteSpace: 'nowrap',
+                          fontWeight: 600,
+                          fontSize: 12,
+                          textTransform: 'uppercase',
+                          letterSpacing: 0.5,
+                          color: 'text.secondary',
+                          position: showSelection ? 'sticky' : 'relative',
+                          left: showSelection ? 56 : 0,
+                          zIndex: 2,
+                          bgcolor: 'grey.50',
+                        }}
+                      >
+                        #
+                      </TableCell>
+                    )}
+                    {/* 展开列 */}
+                    {enableRowExpansion && (
+                      <TableCell
+                        sx={{
+                          whiteSpace: 'nowrap',
+                          fontWeight: 600,
+                          fontSize: 12,
+                          textTransform: 'uppercase',
+                          letterSpacing: 0.5,
+                          color: 'text.secondary',
+                          position: showSelection || showRowNumber ? 'sticky' : 'relative',
+                          left: (showSelection ? 56 : 0) + (showRowNumber ? 64 : 0),
+                          zIndex: 2,
+                          bgcolor: 'grey.50',
+                        }}
+                      >
+                        展开
+                      </TableCell>
+                    )}
+                    {/* 数据列 */}
+                    {headerGroup.headers.map((header) => (
+                      <TableCell
+                        key={header.id}
+                        sx={{
+                          whiteSpace: 'nowrap',
+                          fontWeight: 600,
+                          fontSize: 12,
+                          textTransform: 'uppercase',
+                          letterSpacing: 0.5,
+                          color: 'text.secondary',
+                        }}
+                      >
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(header.column.columnDef.header, header.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableHead>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={
+                        columns.length +
+                        (showSelection ? 1 : 0) +
+                        (showRowNumber ? 1 : 0) +
+                        (enableRowExpansion ? 1 : 0)
+                      }
+                      sx={{ height: 96, textAlign: 'center' }}
                     >
-                      <Skeleton
-                        variant='circular'
-                        width={24}
-                        height={24}
-                        animation='wave'
-                      />
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 1,
+                        }}
+                      >
+                        <Skeleton
+                          variant='circular'
+                          width={24}
+                          height={24}
+                          animation='wave'
+                        />
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          加载中...
+                        </Typography>
+                      </Box>
+                    </TableCell>
+                  </TableRow>
+                ) : table.getRowModel().rows.length ? (
+                  table.getRowModel().rows.map((row, rowIndex) => {
+                    const rowKey = getRowKey(row.original);
+                    const isExpanded = expandedRows.has(rowKey);
+
+                    return (
+                      <>
+                        <TableRow
+                          key={row.id}
+                          onClick={() => onRowClick?.(row.original)}
+                          sx={{
+                            cursor: onRowClick ? 'pointer' : 'default',
+                            '&:hover': {
+                              backgroundColor: onRowClick ? 'action.hover' : 'inherit',
+                            },
+                            '&:last-child td': { borderBottom: 0 },
+                            bgcolor: striped && row.index % 2 === 0 ? 'action.hover' : 'inherit',
+                            ...(compact && { fontSize: '0.875rem' }),
+                          }}
+                        >
+                          {/* 选择列 */}
+                          {showSelection && (
+                            <TableCell
+                              padding='checkbox'
+                              sx={{
+                                position: 'sticky',
+                                left: 0,
+                                zIndex: 1,
+                                bgcolor: 'inherit',
+                                width: 40,
+                              }}
+                            >
+                              <Checkbox
+                                checked={isSelected.includes(rowKey)}
+                                onChange={() => handleSelectRow(row.original)}
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            </TableCell>
+                          )}
+                          {/* 行号列 */}
+                          {showRowNumber && (
+                            <TableCell
+                              sx={{
+                                whiteSpace: 'nowrap',
+                                fontSize: 14,
+                                fontWeight: 500,
+                                position: showSelection ? 'sticky' : 'relative',
+                                left: showSelection ? 56 : 0,
+                                zIndex: 1,
+                                bgcolor: 'inherit',
+                              }}
+                            >
+                              {renderRowNumber(rowIndex)}
+                            </TableCell>
+                          )}
+                          {/* 展开列 */}
+                          {enableRowExpansion && (
+                            <TableCell
+                              sx={{
+                                whiteSpace: 'nowrap',
+                                fontSize: 14,
+                                position: showSelection || showRowNumber ? 'sticky' : 'relative',
+                                left: (showSelection ? 56 : 0) + (showRowNumber ? 64 : 0),
+                                zIndex: 1,
+                                bgcolor: 'inherit',
+                              }}
+                            >
+                              <IconButton
+                                size='small'
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleRowExpand(row.original);
+                                }}
+                              >
+                                {isExpanded ? (
+                                  <ChevronUp sx={{ width: 18, height: 18 }} />
+                                ) : (
+                                  <ChevronDown sx={{ width: 18, height: 18 }} />
+                                )}
+                              </IconButton>
+                            </TableCell>
+                          )}
+                          {/* 数据列 */}
+                          {row.getVisibleCells().map((cell) => (
+                            <TableCell
+                              key={cell.id}
+                              sx={{
+                                whiteSpace: 'nowrap',
+                                fontSize: 14,
+                                ...(compact && { py: 1 }),
+                              }}
+                            >
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                        {/* 展开行 */}
+                        {enableRowExpansion && isExpanded && expandedRowRender && (
+                          <TableRow key={`${row.id}-expanded`}>
+                            <TableCell
+                              colSpan={
+                                columns.length +
+                                (showSelection ? 1 : 0) +
+                                (showRowNumber ? 1 : 0) +
+                                (enableRowExpansion ? 1 : 0)
+                              }
+                              sx={{
+                                padding: 2,
+                                bgcolor: 'grey.50',
+                                borderTop: '1px solid',
+                                borderTopColor: 'divider',
+                              }}
+                            >
+                              {expandedRowRender(row.original)}
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </>
+                    );
+                  })
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={
+                        columns.length +
+                        (showSelection ? 1 : 0) +
+                        (showRowNumber ? 1 : 0) +
+                        (enableRowExpansion ? 1 : 0)
+                      }
+                      sx={{ height: 120, textAlign: 'center' }}
+                    >
                       <Typography
                         variant='body2'
                         color='text.secondary'
                       >
-                        加载中...
+                        {emptyMessage}
                       </Typography>
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              ) : table.getRowModel().rows.length ? (
-                table.getRowModel().rows.map((row, rowIndex) => {
-                  const rowKey = getRowKey(row.original);
-                  const isExpanded = expandedRows.has(rowKey);
-
-                  return (
-                    <>
-                      <TableRow
-                        key={row.id}
-                        onClick={() => onRowClick?.(row.original)}
-                        sx={{
-                          cursor: onRowClick ? 'pointer' : 'default',
-                          '&:hover': {
-                            backgroundColor: onRowClick ? 'action.hover' : 'inherit',
-                          },
-                          '&:last-child td': { borderBottom: 0 },
-                          bgcolor: striped && row.index % 2 === 0 ? 'action.hover' : 'inherit',
-                          ...(compact && { fontSize: '0.875rem' }),
-                        }}
-                      >
-                        {/* 选择列 */}
-                        {showSelection && (
-                          <TableCell
-                            padding='checkbox'
-                            sx={{
-                              position: 'sticky',
-                              left: 0,
-                              zIndex: 1,
-                              bgcolor: 'inherit',
-                              width: 40,
-                            }}
-                          >
-                            <Checkbox
-                              checked={isSelected.includes(rowKey)}
-                              onChange={() => handleSelectRow(row.original)}
-                              onClick={(e) => e.stopPropagation()}
-                            />
-                          </TableCell>
-                        )}
-                        {/* 行号列 */}
-                        {showRowNumber && (
-                          <TableCell
-                            sx={{
-                              whiteSpace: 'nowrap',
-                              fontSize: 14,
-                              fontWeight: 500,
-                              position: showSelection ? 'sticky' : 'relative',
-                              left: showSelection ? 56 : 0,
-                              zIndex: 1,
-                              bgcolor: 'inherit',
-                            }}
-                          >
-                            {renderRowNumber(rowIndex)}
-                          </TableCell>
-                        )}
-                        {/* 展开列 */}
-                        {enableRowExpansion && (
-                          <TableCell
-                            sx={{
-                              whiteSpace: 'nowrap',
-                              fontSize: 14,
-                              position: showSelection || showRowNumber ? 'sticky' : 'relative',
-                              left: (showSelection ? 56 : 0) + (showRowNumber ? 64 : 0),
-                              zIndex: 1,
-                              bgcolor: 'inherit',
-                            }}
-                          >
-                            <IconButton
-                              size='small'
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleRowExpand(row.original);
-                              }}
-                            >
-                              {isExpanded ? (
-                                <ChevronUp sx={{ width: 18, height: 18 }} />
-                              ) : (
-                                <ChevronDown sx={{ width: 18, height: 18 }} />
-                              )}
-                            </IconButton>
-                          </TableCell>
-                        )}
-                        {/* 数据列 */}
-                        {row.getVisibleCells().map((cell) => (
-                          <TableCell
-                            key={cell.id}
-                            sx={{
-                              whiteSpace: 'nowrap',
-                              fontSize: 14,
-                              ...(compact && { py: 1 }),
-                            }}
-                          >
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                      {/* 展开行 */}
-                      {enableRowExpansion && isExpanded && expandedRowRender && (
-                        <TableRow key={`${row.id}-expanded`}>
-                          <TableCell
-                            colSpan={
-                              columns.length +
-                              (showSelection ? 1 : 0) +
-                              (showRowNumber ? 1 : 0) +
-                              (enableRowExpansion ? 1 : 0)
-                            }
-                            sx={{
-                              padding: 2,
-                              bgcolor: 'grey.50',
-                              borderTop: '1px solid',
-                              borderTopColor: 'divider',
-                            }}
-                          >
-                            {expandedRowRender(row.original)}
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </>
-                  );
-                })
-              ) : (
-                <TableRow>
-                  <TableCell
-                    colSpan={
-                      columns.length +
-                      (showSelection ? 1 : 0) +
-                      (showRowNumber ? 1 : 0) +
-                      (enableRowExpansion ? 1 : 0)
-                    }
-                    sx={{ height: 120, textAlign: 'center' }}
-                  >
-                    <Typography
-                      variant='body2'
-                      color='text.secondary'
-                    >
-                      {emptyMessage}
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </Box>
         </Box>
-      </Box>
+      )}
 
       {/* 分页栏 */}
       {enablePagination && totalPageCount > 1 && (
@@ -1195,3 +1262,247 @@ export function DataTable<TData, TValue>({
 
 const MemoizedDataTable = React.memo(DataTable) as typeof DataTable;
 export default MemoizedDataTable;
+
+// ============ 移动端卡片视图 ============
+
+/**
+ * 移动端卡片视图属性
+ */
+export interface MobileCardViewProps<TData> {
+  /** 数据 */
+  data: TData[];
+  /** 卡片渲染函数（完全自定义） */
+  cardRender?: (row: TData, index: number) => React.ReactNode;
+  /** 标题字段名（用于默认卡片渲染） */
+  titleKey?: string;
+  /** 副标题字段名 */
+  subtitleKey?: string;
+  /** 自定义字段映射（字段名 → 标签） */
+  fieldLabels?: Record<string, string>;
+  /** 需要在卡片中展示的字段列表（默认展示所有字段） */
+  displayFields?: string[];
+  /** 行点击回调 */
+  onRowClick?: (row: TData) => void;
+  /** 是否加载中 */
+  loading?: boolean;
+  /** 空数据提示 */
+  emptyMessage?: string;
+  /** 获取行 key */
+  getRowKey?: (row: TData) => string;
+  /** 是否显示选择框 */
+  showSelection?: boolean;
+  /** 已选中的行 ID 列表 */
+  selectedIds?: string[];
+  /** 选择变化回调 */
+  onSelectionChange?: (row: TData, selected: boolean) => void;
+}
+
+/**
+ * 移动端卡片视图组件
+ * 在小屏设备下替代表格视图，将每行数据渲染为卡片
+ * 符合 project_memory 约束：DataTable/DataGrid 组件必须包含移动端优化的卡片视图
+ */
+export function MobileCardView<TData>({
+  data,
+  cardRender,
+  titleKey,
+  subtitleKey,
+  fieldLabels = {},
+  displayFields,
+  onRowClick,
+  loading = false,
+  emptyMessage = '暂无数据',
+  getRowKey = (row: TData) => (row as any).id?.toString() || Math.random().toString(),
+  showSelection = false,
+  selectedIds = [],
+  onSelectionChange,
+}: MobileCardViewProps<TData>) {
+  const isEmpty = !loading && (!data || data.length === 0);
+
+  if (loading) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, p: 1 }}>
+        {[1, 2, 3].map((i) => (
+          <Skeleton
+            key={i}
+            variant='rectangular'
+            height={120}
+            sx={{ borderRadius: 1 }}
+          />
+        ))}
+      </Box>
+    );
+  }
+
+  if (isEmpty) {
+    return (
+      <Box sx={{ p: 4, textAlign: 'center' }}>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+        >
+          {emptyMessage}
+        </Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, p: 1 }}>
+      {data.map((row, index) => {
+        const rowKey = getRowKey(row);
+        const isSelected = selectedIds.includes(rowKey);
+
+        // 优先使用自定义渲染函数
+        if (cardRender) {
+          return (
+            <Box
+              key={rowKey}
+              onClick={() => onRowClick?.(row)}
+              sx={{
+                cursor: onRowClick ? 'pointer' : 'default',
+                '&:active': onRowClick ? { opacity: 0.8 } : {},
+              }}
+            >
+              {cardRender(row, index)}
+            </Box>
+          );
+        }
+
+        // 默认卡片渲染
+        const rowObj = row as any;
+        const title = titleKey
+          ? rowObj[titleKey]
+          : rowObj.name || rowObj.title || `项目 ${index + 1}`;
+        const subtitle = subtitleKey ? rowObj[subtitleKey] : rowObj.code || rowObj.no || '';
+
+        // 确定展示的字段列表
+        const allKeys = Object.keys(rowObj).filter(
+          (k) => !['id', 'key', 'created_at', 'updated_at', 'tenant_id'].includes(k)
+        );
+        const fields = displayFields || allKeys.slice(0, 4);
+
+        return (
+          <Box
+            key={rowKey}
+            onClick={() => onRowClick?.(row)}
+            sx={{
+              cursor: onRowClick ? 'pointer' : 'default',
+              bgcolor: 'background.paper',
+              border: 1,
+              borderColor: isSelected ? 'primary.main' : 'divider',
+              borderRadius: 1,
+              p: 1.5,
+              minHeight: 44, // 满足 44px 最小触摸目标
+              '&:active': onRowClick ? { bgcolor: 'action.hover' } : {},
+              transition: 'background-color 150ms',
+            }}
+          >
+            {/* 卡片头部：标题 + 选择框 */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                justifyContent: 'space-between',
+                gap: 1,
+                mb: subtitle || fields.length > 0 ? 1 : 0,
+              }}
+            >
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography
+                  variant='subtitle2'
+                  sx={{
+                    fontWeight: 600,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {String(title ?? '')}
+                </Typography>
+                {subtitle && (
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                    sx={{
+                      fontSize: 12,
+                      mt: 0.25,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {String(subtitle)}
+                  </Typography>
+                )}
+              </Box>
+              {showSelection && (
+                <Checkbox
+                  size='small'
+                  checked={isSelected}
+                  onClick={(e) => e.stopPropagation()}
+                  onChange={(e) => onSelectionChange?.(row, e.target.checked)}
+                  sx={{ p: 0.5 }}
+                />
+              )}
+            </Box>
+
+            {/* 卡片内容：字段列表 */}
+            {fields.length > 0 && (
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  gap: 0.75,
+                }}
+              >
+                {fields.map((field) => {
+                  const value = rowObj[field];
+                  const label = fieldLabels[field] || field;
+                  const displayValue =
+                    value == null || value === ''
+                      ? '-'
+                      : typeof value === 'boolean'
+                        ? value
+                          ? '是'
+                          : '否'
+                        : String(value);
+
+                  return (
+                    <Box
+                      key={field}
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        minWidth: 0,
+                      }}
+                    >
+                      <Typography
+                        variant='caption'
+                        color='text.secondary'
+                        sx={{ fontSize: 11, fontWeight: 500 }}
+                      >
+                        {label}
+                      </Typography>
+                      <Typography
+                        variant='body2'
+                        sx={{
+                          fontSize: 13,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                        }}
+                      >
+                        {displayValue}
+                      </Typography>
+                    </Box>
+                  );
+                })}
+              </Box>
+            )}
+          </Box>
+        );
+      })}
+    </Box>
+  );
+}

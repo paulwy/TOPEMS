@@ -887,7 +887,7 @@ export function ListPageTemplate<T>({
       {/* 表格 */}
       <TableContainer
         component={Paper}
-        sx={{ borderRadius: 2 }}
+        sx={{ borderRadius: 3 }}
       >
         <Table>
           {renderTableHead()}

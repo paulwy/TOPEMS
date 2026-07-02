@@ -536,7 +536,7 @@ const QmsInspectionPage: React.FC = () => {
                 width: 40,
                 height: 40,
                 bgcolor: 'primary.light',
-                borderRadius: 2,
+                borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -569,7 +569,7 @@ const QmsInspectionPage: React.FC = () => {
                 width: 40,
                 height: 40,
                 bgcolor: '#fde047',
-                borderRadius: 2,
+                borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -602,7 +602,7 @@ const QmsInspectionPage: React.FC = () => {
                 width: 40,
                 height: 40,
                 bgcolor: '#93c5fd',
-                borderRadius: 2,
+                borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -635,7 +635,7 @@ const QmsInspectionPage: React.FC = () => {
                 width: 40,
                 height: 40,
                 bgcolor: '#d8b4fe',
-                borderRadius: 2,
+                borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -668,7 +668,7 @@ const QmsInspectionPage: React.FC = () => {
                 width: 40,
                 height: 40,
                 bgcolor: '#86efac',
-                borderRadius: 2,
+                borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -701,7 +701,7 @@ const QmsInspectionPage: React.FC = () => {
                 width: 40,
                 height: 40,
                 bgcolor: '#fca5a5',
-                borderRadius: 2,
+                borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -761,18 +761,8 @@ const QmsInspectionPage: React.FC = () => {
   }
 
   return (
-    <PageContainer
-      title='质量检验'
-      subtitle='Quality Inspection'
-    >
+    <PageContainer>
       <ListPageTemplate
-        title=''
-        subtitle=''
-        breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: 'QMS' },
-          { label: '质量检验' },
-        ]}
         columns={columns}
         data={paginatedData}
         loading={loading}

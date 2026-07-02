@@ -12,12 +12,7 @@ import {
 import { ArrowLeft, Database, Save, Upload } from 'lucide-react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PageContainer } from '@/components/common';
-import {
-  getDataModel,
-  updateDataModel,
-  listDataModels,
-  publishModel,
-} from '../../api/lowcode';
+import { getDataModel, updateDataModel, listDataModels, publishModel } from '../../api/lowcode';
 import type { DataModel } from '../../api/lowcode/types';
 import DataModelDesigner from '../../components/lowcode/DataModelDesigner';
 
@@ -95,19 +90,22 @@ const DataModelDesignerPage = () => {
         <Box>
           <Breadcrumbs sx={{ mb: 1, fontSize: '0.875rem' }}>
             <Link
-              underline="hover"
-              color="inherit"
+              underline='hover'
+              color='inherit'
               onClick={() => navigate('/lowcode/models')}
               sx={{ cursor: 'pointer' }}
             >
               数据模型
             </Link>
-            <Typography color="text.primary">
+            <Typography color='text.primary'>
               {loading ? <Skeleton width={100} /> : model?.label}
             </Typography>
           </Breadcrumbs>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <IconButton onClick={() => navigate('/lowcode/models')} size="small">
+            <IconButton
+              onClick={() => navigate('/lowcode/models')}
+              size='small'
+            >
               <ArrowLeft style={{ width: 20, height: 20 }} />
             </IconButton>
             <Box
@@ -126,19 +124,25 @@ const DataModelDesignerPage = () => {
             </Box>
             <Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography variant="h5" sx={{ fontWeight: 600 }}>
+                <Typography
+                  variant='h5'
+                  sx={{ fontWeight: 600 }}
+                >
                   {loading ? <Skeleton width={150} /> : model?.label}
                 </Typography>
                 {model && (
                   <Chip
                     label={statusLabels[model.status]}
-                    size="small"
+                    size='small'
                     color={statusColors[model.status]}
-                    variant="outlined"
+                    variant='outlined'
                   />
                 )}
               </Box>
-              <Typography variant="body2" color="text.secondary">
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
                 {loading ? <Skeleton width={200} /> : model?.name}
               </Typography>
             </Box>
@@ -148,18 +152,18 @@ const DataModelDesignerPage = () => {
       headerActions={
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Button
-            variant="outlined"
+            variant='outlined'
             startIcon={<Upload style={{ width: 16, height: 16 }} />}
-            size="small"
+            size='small'
             onClick={() => model && handlePublish(model.id)}
             disabled={model?.status === 'published'}
           >
             发布
           </Button>
           <Button
-            variant="contained"
+            variant='contained'
             startIcon={<Save style={{ width: 16, height: 16 }} />}
-            size="small"
+            size='small'
             onClick={() => model && handleSave(model)}
             disabled={saving}
           >
@@ -177,8 +181,10 @@ const DataModelDesignerPage = () => {
             onPublish={handlePublish}
           />
         ) : (
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-            <Typography color="text.secondary">加载中...</Typography>
+          <Box
+            sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}
+          >
+            <Typography color='text.secondary'>加载中...</Typography>
           </Box>
         )}
       </Box>

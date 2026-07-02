@@ -303,6 +303,8 @@ const InteractionManagementPage: React.FC = () => {
     <PageContainer
       title='交互记录管理'
       subtitle='管理客户交互记录，包括电话、邮件、会议、拜访等'
+      autoTitle
+      autoBreadcrumbs
     >
       <>
         <ListPageTemplate<Interaction>

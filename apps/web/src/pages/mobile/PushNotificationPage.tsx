@@ -191,7 +191,7 @@ const PushNotificationPage: React.FC = () => {
             sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Bell style={{ width: 20, height: 20, color: 'primary.main' }} />
+              <Bell style={{ width: 20, height: 20, color: theme.palette.primary.main }} />
               <Typography
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}

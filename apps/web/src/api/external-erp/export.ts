@@ -11,7 +11,7 @@ export const exportApi = {
     format: 'csv' | 'xlsx';
   }): Promise<Blob> => {
     const baseURL = (apiClient.integration as any).defaults?.baseURL || config.services.integration;
-    return downloadBlob(baseURL, '/api/integration/external-erp/export/sync-logs', { params });
+    return downloadBlob(baseURL, '/external-erp/export/sync-logs', { params });
   },
 
   exportMappingRules: async (params: {
@@ -20,7 +20,7 @@ export const exportApi = {
     format: 'csv' | 'xlsx';
   }): Promise<Blob> => {
     const baseURL = (apiClient.integration as any).defaults?.baseURL || config.services.integration;
-    return downloadBlob(baseURL, '/api/integration/external-erp/export/mappings', { params });
+    return downloadBlob(baseURL, '/external-erp/export/mappings', { params });
   },
 };
 

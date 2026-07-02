@@ -18,26 +18,26 @@ export const accountingSubjectApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/erp/accounting-subjects${queryString ? `?${queryString}` : ''}`);
+    return apiClient.erp.get(`/accounting-subjects${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<AccountingSubject>> {
-    return apiClient.erp.get(`/api/erp/accounting-subjects/${id}`);
+    return apiClient.erp.get(`/accounting-subjects/${id}`);
   },
 
   async create(data: Partial<AccountingSubject>): Promise<ApiResponse<AccountingSubject>> {
-    return apiClient.erp.post('/api/erp/accounting-subjects', data);
+    return apiClient.erp.post('/accounting-subjects', data);
   },
 
   async update(
     id: string,
     data: Partial<AccountingSubject>
   ): Promise<ApiResponse<AccountingSubject>> {
-    return apiClient.erp.put(`/api/erp/accounting-subjects/${id}`, data);
+    return apiClient.erp.put(`/accounting-subjects/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/erp/accounting-subjects/${id}`);
+    return apiClient.erp.delete(`/accounting-subjects/${id}`);
   },
 };
 
@@ -54,33 +54,33 @@ export const openingBalanceApi = {
 
     const queryString = searchParams.toString();
     return apiClient.erp.get(
-      `/api/erp/finance/accounts/opening-balances${queryString ? `?${queryString}` : ''}`
+      `/finance/accounts/opening-balances${queryString ? `?${queryString}` : ''}`
     );
   },
 
   async get(id: string): Promise<ApiResponse<OpeningBalance>> {
-    return apiClient.erp.get(`/api/erp/finance/accounts/opening-balances/${id}`);
+    return apiClient.erp.get(`/finance/accounts/opening-balances/${id}`);
   },
 
   async create(data: CreateOpeningBalanceRequest): Promise<ApiResponse<OpeningBalance>> {
-    return apiClient.erp.post('/api/erp/finance/accounts/opening-balances', data);
+    return apiClient.erp.post('/finance/accounts/opening-balances', data);
   },
 
   async update(id: string, data: Partial<OpeningBalance>): Promise<ApiResponse<OpeningBalance>> {
-    return apiClient.erp.put(`/api/erp/finance/accounts/opening-balances/${id}`, data);
+    return apiClient.erp.put(`/finance/accounts/opening-balances/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/erp/finance/accounts/opening-balances/${id}`);
+    return apiClient.erp.delete(`/finance/accounts/opening-balances/${id}`);
   },
 
   async batchImport(
     data: CreateOpeningBalanceRequest[]
   ): Promise<ApiResponse<Record<string, any>>> {
-    return apiClient.erp.post('/api/erp/finance/accounts/opening-balances/batch', data);
+    return apiClient.erp.post('/finance/accounts/opening-balances/batch', data);
   },
 
   async carryForward(data: CarryForwardRequest): Promise<ApiResponse<Record<string, any>>> {
-    return apiClient.erp.post('/api/erp/finance/accounts/opening-balances/carry-forward', data);
+    return apiClient.erp.post('/finance/accounts/opening-balances/carry-forward', data);
   },
 };

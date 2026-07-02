@@ -3,11 +3,11 @@ import type { Budget, BudgetItem } from './types';
 
 export const budgetApi = {
   list: async (projectId: string) => {
-    return apiClient.pm.get(`/api/pm/projects/${projectId}/budgets`);
+    return apiClient.pm.get(`/projects/${projectId}/budgets`);
   },
 
   get: async (id: string) => {
-    return apiClient.pm.get(`/api/pm/budgets/${id}`);
+    return apiClient.pm.get(`/budgets/${id}`);
   },
 
   create: async (
@@ -20,7 +20,7 @@ export const budgetApi = {
       created_by?: string;
     }
   ) => {
-    return apiClient.pm.post(`/api/pm/projects/${projectId}/budgets`, data);
+    return apiClient.pm.post(`/projects/${projectId}/budgets`, data);
   },
 
   update: async (
@@ -32,21 +32,21 @@ export const budgetApi = {
       status?: string;
     }
   ) => {
-    return apiClient.pm.put(`/api/pm/budgets/${id}`, data);
+    return apiClient.pm.put(`/budgets/${id}`, data);
   },
 
   submit: async (id: string) => {
-    return apiClient.pm.post(`/api/pm/budgets/${id}/submit`);
+    return apiClient.pm.post(`/budgets/${id}/submit`);
   },
 
   approve: async (id: string) => {
-    return apiClient.pm.post(`/api/pm/budgets/${id}/approve`);
+    return apiClient.pm.post(`/budgets/${id}/approve`);
   },
 };
 
 export const budgetItemApi = {
   list: async (budgetId: string) => {
-    return apiClient.pm.get(`/api/pm/budgets/${budgetId}/items`);
+    return apiClient.pm.get(`/budgets/${budgetId}/items`);
   },
 
   create: async (
@@ -60,7 +60,7 @@ export const budgetItemApi = {
       description?: string;
     }
   ) => {
-    return apiClient.pm.post(`/api/pm/budgets/${budgetId}/items`, data);
+    return apiClient.pm.post(`/budgets/${budgetId}/items`, data);
   },
 
   update: async (
@@ -74,11 +74,11 @@ export const budgetItemApi = {
       description?: string;
     }
   ) => {
-    return apiClient.pm.put(`/api/pm/budgets/${budgetId}/items/${itemId}`, data);
+    return apiClient.pm.put(`/budgets/${budgetId}/items/${itemId}`, data);
   },
 
   delete: async (budgetId: string, itemId: string) => {
-    return apiClient.pm.delete(`/api/pm/budgets/${budgetId}/items/${itemId}`);
+    return apiClient.pm.delete(`/budgets/${budgetId}/items/${itemId}`);
   },
 };
 

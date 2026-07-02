@@ -16,6 +16,7 @@ import {
   useMediaQuery,
   Button,
 } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material/styles';
 import { Filter, ChevronDown, ChevronUp, RotateCcw } from 'lucide-react';
 
 // ============ 类型定义 ============
@@ -25,7 +26,8 @@ export interface FilterOption {
   value: string | number;
 }
 
-export type FilterValue = string | number | string[] | Date | { start: string; end: string } | undefined;
+export type FilterValue =
+  string | number | string[] | Date | { start: string; end: string } | undefined;
 
 export interface FilterConfig {
   id: string;
@@ -35,7 +37,7 @@ export interface FilterConfig {
   options?: FilterOption[];
   value?: FilterValue;
   defaultValue?: FilterValue;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
   onChange?: (value: any, filter?: FilterConfig) => void;
   width?: number | string;
   /** 是否显示搜索框（用于multiselect） */
@@ -53,7 +55,7 @@ export interface FilterBarProps {
   variant?: 'standard' | 'outlined' | 'filled';
 
   // TOPEMS 设计系统
-  sx?: import('@mui/material/styles').SxProps<import('@mui/material/styles').Theme>;
+  sx?: SxProps<Theme>;
   disabled?: boolean;
 }
 
@@ -134,10 +136,12 @@ const FilterControl: React.FC<{
             onChange={handleChange}
             renderValue={(selected: unknown) => {
               const selectedArray = Array.isArray(selected) ? selected : [selected];
-              return selectedArray.map((val) => {
-                const option = filter.options?.find((o) => o.value === val);
-                return option?.label || String(val);
-              }).join(', ');
+              return selectedArray
+                .map((val) => {
+                  const option = filter.options?.find((o) => o.value === val);
+                  return option?.label || String(val);
+                })
+                .join(', ');
             }}
           >
             {filter.options?.map((option) => (
@@ -286,7 +290,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
     <Paper
       sx={{
         p: dense ? 1.5 : 2,
-        borderRadius: 2,
+        borderRadius: 3,
         mb: 2,
         ...sx,
       }}

@@ -49,7 +49,7 @@ const generateMockPurchaseOrders = (): PurchaseOrder[] => {
   });
 };
 
-let mockPurchaseOrders = generateMockPurchaseOrders();
+const mockPurchaseOrders = generateMockPurchaseOrders();
 
 export const purchaseOrderApi = {
   async list(params?: PaginationParams): Promise<
@@ -129,10 +129,7 @@ export const purchaseOrderApi = {
     return createMockSuccessResponse(newOrder, 201, '创建成功') as ApiResponse<PurchaseOrder>;
   },
 
-  async update(
-    id: string,
-    data: UpdatePurchaseOrderRequest
-  ): Promise<ApiResponse<PurchaseOrder>> {
+  async update(id: string, data: UpdatePurchaseOrderRequest): Promise<ApiResponse<PurchaseOrder>> {
     const index = mockPurchaseOrders.findIndex((o) => o.id === id);
     if (index === -1) {
       return createMockErrorResponse('采购订单不存在', 404) as ApiResponse<PurchaseOrder>;

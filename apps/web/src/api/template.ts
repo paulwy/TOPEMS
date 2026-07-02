@@ -4,15 +4,7 @@ import type { ApiResponse } from './client';
 export type TemplateType = 'workflow' | 'document' | 'form' | 'report' | 'notification';
 
 export type VariableType =
-  | 'string'
-  | 'number'
-  | 'date'
-  | 'select'
-  | 'multiselect'
-  | 'lookup'
-  | 'user'
-  | 'now'
-  | 'context';
+  'string' | 'number' | 'date' | 'select' | 'multiselect' | 'lookup' | 'user' | 'now' | 'context';
 
 export interface SelectOption {
   value: string;
@@ -126,23 +118,23 @@ export const templateApi = {
     if (params?.is_public !== undefined) searchParams.set('is_public', String(params.is_public));
 
     const queryString = searchParams.toString();
-    return await apiClient.doc.get(`/api/templates${queryString ? `?${queryString}` : ''}`);
+    return await apiClient.doc.get(`/templates${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<Template>> {
-    return await apiClient.doc.get(`/api/templates/${id}`);
+    return await apiClient.doc.get(`/templates/${id}`);
   },
 
   async create(data: CreateTemplateRequest): Promise<ApiResponse<Template>> {
-    return await apiClient.doc.post('/api/templates', data);
+    return await apiClient.doc.post('/templates', data);
   },
 
   async update(id: string, data: Partial<CreateTemplateRequest>): Promise<ApiResponse<Template>> {
-    return await apiClient.doc.put(`/api/templates/${id}`, data);
+    return await apiClient.doc.put(`/templates/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return await apiClient.doc.delete(`/api/templates/${id}`);
+    return await apiClient.doc.delete(`/templates/${id}`);
   },
 
   async listCategories(
@@ -153,25 +145,23 @@ export const templateApi = {
     if (params?.type) searchParams.set('type', params.type);
 
     const queryString = searchParams.toString();
-    return await apiClient.doc.get(
-      `/api/templates/categories${queryString ? `?${queryString}` : ''}`
-    );
+    return await apiClient.doc.get(`/templates/categories${queryString ? `?${queryString}` : ''}`);
   },
 
   async render(
     id: string,
     variables: Record<string, any>
   ): Promise<ApiResponse<RenderTemplateResponse>> {
-    return await apiClient.doc.post(`/api/templates/${id}/render`, {
+    return await apiClient.doc.post(`/templates/${id}/render`, {
       variables,
     });
   },
 
   async duplicate(id: string): Promise<ApiResponse<Template>> {
-    return await apiClient.doc.post(`/api/templates/${id}/duplicate`);
+    return await apiClient.doc.post(`/templates/${id}/duplicate`);
   },
 
   async toggleStatus(id: string): Promise<ApiResponse<Template>> {
-    return await apiClient.doc.put(`/api/templates/${id}/toggle-status`);
+    return await apiClient.doc.put(`/templates/${id}/toggle-status`);
   },
 };

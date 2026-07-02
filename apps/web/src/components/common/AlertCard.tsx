@@ -360,7 +360,7 @@ export const AlertCard: React.FC<AlertCardProps> = ({
           ) : undefined
         }
         sx={{
-          borderRadius: 2,
+          borderRadius: 3,
           alignItems: 'center',
           ...sx,
         }}
@@ -404,7 +404,7 @@ export const AlertCard: React.FC<AlertCardProps> = ({
       <Card
         onClick={onClick}
         sx={{
-          borderRadius: 2,
+          borderRadius: 3,
           border: '1px solid',
           borderColor: config.borderColor,
           bgcolor: config.bgColor,
@@ -552,7 +552,7 @@ export const AlertCard: React.FC<AlertCardProps> = ({
         alignItems: 'flex-start',
         gap: sizeStyles.gap,
         p: sizeStyles.padding,
-        borderRadius: 2,
+        borderRadius: 3,
         border: '1px solid',
         borderColor: config.borderColor,
         bgcolor: config.bgColor,

@@ -21,67 +21,18 @@ import {
   Menu,
   Lightbulb,
   HelpCircle,
-  Building,
-  FolderKanban,
-  FlaskConical,
-  Truck,
-  Users,
-  Bot,
-  Map,
-  MessageCircle,
-  DollarSign,
-  Package,
-  ShoppingCart,
-  ListTodo,
-  Calendar,
-  BarChart3,
-  FileText,
-  CheckSquare,
-  Rocket,
-  Warehouse,
-  Target,
-  LayoutDashboard,
-  UserPlus,
-  GraduationCap,
-  Award,
-  Layers,
-  TrendingUp,
-  MessageSquare,
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePermission } from '../../hooks/usePermission';
 import { navigationRegistryV2 } from '../../lib/navigation';
 import type { NavItem } from '../../lib/navigation/types';
+import { lucideIcons } from '../../lib/iconMapping';
 
-const iconMap: Record<string, React.ReactNode> = {
-  Home: <Home style={{ width: 20, height: 20 }} />,
-  Building: <Building style={{ width: 20, height: 20 }} />,
-  FolderKanban: <FolderKanban style={{ width: 20, height: 20 }} />,
-  FlaskConical: <FlaskConical style={{ width: 20, height: 20 }} />,
-  Truck: <Truck style={{ width: 20, height: 20 }} />,
-  Users: <Users style={{ width: 20, height: 20 }} />,
-  Bot: <Bot style={{ width: 20, height: 20 }} />,
-  Map: <Map style={{ width: 20, height: 20 }} />,
-  MessageCircle: <MessageCircle style={{ width: 20, height: 20 }} />,
-  DollarSign: <DollarSign style={{ width: 20, height: 20 }} />,
-  Package: <Package style={{ width: 20, height: 20 }} />,
-  ShoppingCart: <ShoppingCart style={{ width: 20, height: 20 }} />,
-  ListTodo: <ListTodo style={{ width: 20, height: 20 }} />,
-  Calendar: <Calendar style={{ width: 20, height: 20 }} />,
-  BarChart3: <BarChart3 style={{ width: 20, height: 20 }} />,
-  FileText: <FileText style={{ width: 20, height: 20 }} />,
-  CheckSquare: <CheckSquare style={{ width: 20, height: 20 }} />,
-  Rocket: <Rocket style={{ width: 20, height: 20 }} />,
-  Warehouse: <Warehouse style={{ width: 20, height: 20 }} />,
-  Target: <Target style={{ width: 20, height: 20 }} />,
-  LayoutDashboard: <LayoutDashboard style={{ width: 20, height: 20 }} />,
-  UserPlus: <UserPlus style={{ width: 20, height: 20 }} />,
-  GraduationCap: <GraduationCap style={{ width: 20, height: 20 }} />,
-  Award: <Award style={{ width: 20, height: 20 }} />,
-  Layers: <Layers style={{ width: 20, height: 20 }} />,
-  TrendingUp: <TrendingUp style={{ width: 20, height: 20 }} />,
-  GitBranch: <TrendingUp style={{ width: 20, height: 20 }} />,
-  MessageSquare: <MessageSquare style={{ width: 20, height: 20 }} />,
+const getIcon = (iconName?: string): React.ReactNode => {
+  if (!iconName) return <Home style={{ width: 20, height: 20 }} />;
+  const Icon = lucideIcons[iconName];
+  if (!Icon) return <Home style={{ width: 20, height: 20 }} />;
+  return <Icon style={{ width: 20, height: 20 }} />;
 };
 
 interface MobileNavProps {
@@ -142,7 +93,7 @@ export const MobileNav: React.FC<MobileNavProps> = ({ open, onClose, onOpen }) =
     const isActive =
       item.path === location.pathname ||
       (item.path && location.pathname.startsWith(`${item.path}/`));
-    const icon = iconMap[item.icon || 'Home'] || <Home style={{ width: 20, height: 20 }} />;
+    const icon = getIcon(item.icon);
 
     return (
       <React.Fragment key={item.code + depth}>

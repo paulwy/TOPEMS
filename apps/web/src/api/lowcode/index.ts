@@ -1,5 +1,3 @@
-export * from './types';
-
 import {
   listDataModels,
   getDataModel,
@@ -58,6 +56,8 @@ import {
 import { formApi } from './form';
 import { pageApi } from './page';
 import { componentApi, formComponentCategories, pageComponentCategories } from './component';
+
+export * from './types';
 
 export {
   listDataModels,

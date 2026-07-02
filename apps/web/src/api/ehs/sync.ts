@@ -31,24 +31,24 @@ export const syncApi = {
     if (params?.end_date) queryParams.append('end_date', params.end_date);
 
     return apiClient.ehs.get<PaginatedResponse<SyncRecord>>(
-      `/api/ehs/sync-records?${queryParams.toString()}`
+      `/sync-records?${queryParams.toString()}`
     );
   },
 
   getSyncRecord: async (id: string): Promise<ApiResponse<SyncRecord>> => {
-    return apiClient.ehs.get<SyncRecord>(`/api/ehs/sync-records/${id}`);
+    return apiClient.ehs.get<SyncRecord>(`/sync-records/${id}`);
   },
 
   createSync: async (data: CreateSyncRequest): Promise<ApiResponse<SyncRecord>> => {
-    return apiClient.ehs.post<SyncRecord>('/api/ehs/sync', data);
+    return apiClient.ehs.post<SyncRecord>('/sync', data);
   },
 
   retrySync: async (data: SyncRetryRequest): Promise<ApiResponse<SyncRecord>> => {
-    return apiClient.ehs.post<SyncRecord>('/api/ehs/sync/retry', data);
+    return apiClient.ehs.post<SyncRecord>('/sync/retry', data);
   },
 
   syncToQMS: async (entityType: string, entityIds?: string[]): Promise<ApiResponse<SyncRecord>> => {
-    return apiClient.ehs.post<SyncRecord>('/api/ehs/sync/to-qms', {
+    return apiClient.ehs.post<SyncRecord>('/sync/to-qms', {
       entity_type: entityType,
       entity_ids: entityIds,
     });
@@ -58,7 +58,7 @@ export const syncApi = {
     entityType: string,
     entityIds?: string[]
   ): Promise<ApiResponse<SyncRecord>> => {
-    return apiClient.ehs.post<SyncRecord>('/api/ehs/sync/to-lims', {
+    return apiClient.ehs.post<SyncRecord>('/sync/to-lims', {
       entity_type: entityType,
       entity_ids: entityIds,
     });
@@ -74,16 +74,16 @@ export const syncApi = {
     if (params?.status) queryParams.append('status', params.status);
 
     return apiClient.ehs.get<PaginatedResponse<SyncRecordDetail>>(
-      `/api/ehs/sync-records/${syncId}/details?${queryParams.toString()}`
+      `/sync-records/${syncId}/details?${queryParams.toString()}`
     );
   },
 
   listSyncConfigs: async (): Promise<ApiResponse<SyncConfig[]>> => {
-    return apiClient.ehs.get<SyncConfig[]>('/api/ehs/sync/configs');
+    return apiClient.ehs.get<SyncConfig[]>('/sync/configs');
   },
 
   getSyncConfig: async (id: string): Promise<ApiResponse<SyncConfig>> => {
-    return apiClient.ehs.get<SyncConfig>(`/api/ehs/sync/configs/${id}`);
+    return apiClient.ehs.get<SyncConfig>(`/sync/configs/${id}`);
   },
 };
 

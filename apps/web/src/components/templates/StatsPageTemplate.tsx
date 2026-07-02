@@ -289,7 +289,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
               flex: statCardDirection === 'row' ? 1 : undefined,
               minWidth: statCardDirection === 'row' ? 200 : '100%',
               p: 2.5,
-              borderRadius: 2,
+              borderRadius: 3,
               background: stat.gradient
                 ? `linear-gradient(135deg, ${stat.gradient[0]}, ${stat.gradient[1]})`
                 : undefined,
@@ -454,7 +454,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
               key={chart.id}
               sx={{
                 p: 3,
-                borderRadius: 2,
+                borderRadius: 3,
                 minHeight: chartMinHeight,
               }}
             >
@@ -507,7 +507,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
             key={table.id}
             sx={{
               p: 3,
-              borderRadius: 2,
+              borderRadius: 3,
               mb: 2,
             }}
           >
@@ -639,7 +639,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
             <Skeleton
               key={i}
               height={120}
-              sx={{ borderRadius: 2 }}
+              sx={{ borderRadius: 3 }}
             />
           ))}
         </Box>
@@ -656,7 +656,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
             <Skeleton
               key={i}
               height={300}
-              sx={{ borderRadius: 2 }}
+              sx={{ borderRadius: 3 }}
             />
           ))}
         </Box>
@@ -757,7 +757,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
 
       {/* 标签页 */}
       {tabs.length > 0 && (
-        <Paper sx={{ mb: 3, borderRadius: 2 }}>
+        <Paper sx={{ mb: 3, borderRadius: 3 }}>
           <Tabs
             value={activeTabValue}
             onChange={handleTabChange}
@@ -782,7 +782,7 @@ export const StatsPageTemplate: React.FC<StatsPageTemplateProps> = ({
       )}
 
       {/* 筛选工具栏 */}
-      <Paper sx={{ mb: 3, p: 2, borderRadius: 2 }}>
+      <Paper sx={{ mb: 3, p: 2, borderRadius: 3 }}>
         <Box
           sx={{
             display: 'flex',

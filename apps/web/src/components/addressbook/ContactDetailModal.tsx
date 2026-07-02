@@ -103,7 +103,9 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                 >
                   {contact.name}
                 </h2>
-                <p style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)', margin: 0 }}>{getTypeLabel()}</p>
+                <p style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)', margin: 0 }}>
+                  {getTypeLabel()}
+                </p>
               </div>
             </div>
             <button
@@ -157,8 +159,12 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                       justifyContent: 'space-between',
                     }}
                   >
-                    <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>编号</span>
-                    <span style={{ fontSize: 14, color: 'var(--mui-palette-text-primary)' }}>{contact.code}</span>
+                    <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
+                      编号
+                    </span>
+                    <span style={{ fontSize: 14, color: 'var(--mui-palette-text-primary)' }}>
+                      {contact.code}
+                    </span>
                   </div>
                 )}
                 {contact.position && (
@@ -169,8 +175,12 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                       justifyContent: 'space-between',
                     }}
                   >
-                    <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>职位</span>
-                    <span style={{ fontSize: 14, color: 'var(--mui-palette-text-primary)' }}>{contact.position}</span>
+                    <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
+                      职位
+                    </span>
+                    <span style={{ fontSize: 14, color: 'var(--mui-palette-text-primary)' }}>
+                      {contact.position}
+                    </span>
                   </div>
                 )}
                 {contact.department_name && (
@@ -181,7 +191,9 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                       justifyContent: 'space-between',
                     }}
                   >
-                    <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>部门</span>
+                    <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
+                      部门
+                    </span>
                     <span style={{ fontSize: 14, color: 'var(--mui-palette-text-primary)' }}>
                       {contact.department_name}
                     </span>
@@ -194,7 +206,9 @@ export const ContactDetailModal: React.FC<ContactDetailModalProps> = ({ contact,
                     justifyContent: 'space-between',
                   }}
                 >
-                  <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>状态</span>
+                  <span style={{ fontSize: 14, color: 'var(--mui-palette-text-secondary)' }}>
+                    状态
+                  </span>
                   <span
                     style={{
                       display: 'inline-flex',

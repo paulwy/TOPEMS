@@ -107,7 +107,7 @@ export const ListSearchBar: React.FC<ListSearchBarProps> = ({
                   key={option.value}
                   value={option.value}
                 >
-                  <Checkbox checked={selectedArr.some((v: string | number) => v === option.value)} />
+                  <Checkbox checked={selectedArr.includes(String(option.value))} />
                   <ListItemText primary={option.label} />
                 </MenuItem>
               ))}

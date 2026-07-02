@@ -27,7 +27,7 @@ import {
   FileWarning,
 } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import { ehsApi } from '@/api/ehs';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
@@ -131,8 +131,8 @@ const EhsHazardousMaterialPage: React.FC = () => {
   const getDangerLevelChip = (level: string) => {
     const levelMap: Record<string, { bg: string; color: string }> = {
       一级: { bg: 'error.lighter', color: 'error.dark' },
-      二级: { bg: '#fef9c3', color: '#ca8a04' },
-      三级: { bg: '#dbeafe', color: 'primary.dark' },
+      二级: { bg: 'warning.100', color: '#ca8a04' },
+      三级: { bg: 'primary.100', color: 'primary.dark' },
       四级: { bg: 'success.lighter', color: 'success.dark' },
     };
     const colors = levelMap[level] || { bg: 'grey.100', color: 'text.secondary' };
@@ -152,11 +152,11 @@ const EhsHazardousMaterialPage: React.FC = () => {
   const getCategoryChip = (category: string) => {
     const categoryMap: Record<string, { bg: string; color: string }> = {
       易燃: { bg: '#fee2e2', color: '#dc2626' },
-      易爆: { bg: '#fef9c3', color: '#ca8a04' },
-      有毒: { bg: '#e0e7ff', color: '#4338ca' },
+      易爆: { bg: 'warning.100', color: '#ca8a04' },
+      有毒: { bg: '#e0e7ff', color: 'secondary.700' },
       腐蚀: { bg: '#ffe4e6', color: '#be123c' },
-      氧化: { bg: '#fef3c7', color: '#b45309' },
-      放射性: { bg: '#f3e8ff', color: '#7c3aed' },
+      氧化: { bg: '#fef3c7', color: 'warning.700' },
+      放射性: { bg: 'secondary.100', color: 'secondary.600' },
     };
     const colors = categoryMap[category] || { bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -297,7 +297,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
                 label={status.text}
                 size='small'
                 sx={{
-                  backgroundColor: status.text === '已过期' ? 'error.lighter' : '#fef9c3',
+                  backgroundColor: status.text === '已过期' ? 'error.lighter' : 'warning.100',
                   color: status.color,
                   fontWeight: 500,
                   height: 20,
@@ -435,7 +435,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
           value={stats.expiring}
           icon={<AlertTriangle />}
           bgColor='background.paper'
-          iconBgColor='#fef9c3'
+          iconBgColor='warning.100'
           iconColor='#ca8a04'
         />
         <StatCard
@@ -451,7 +451,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
           value={stats.thisMonth}
           icon={<Clock />}
           bgColor='background.paper'
-          iconBgColor='#dbeafe'
+          iconBgColor='primary.100'
           iconColor='primary.dark'
         />
       </Box>
@@ -527,19 +527,27 @@ const EhsHazardousMaterialPage: React.FC = () => {
     }
   };
 
+  const headerActions = [
+    {
+      label: '入库登记',
+      icon: <Plus sx={{ width: 16, height: 16 }} />,
+      onClick: handleCreate,
+      variant: 'contained' as const,
+      color: 'error' as const,
+    },
+  ];
+
   return (
     <PageContainer
-      title='危化品管理'
-      subtitle='管理危险化学品信息，包括入库、库存监控和MSDS文档'
+      headerProps={{
+        actions: headerActions,
+        pageIcon: <FlaskConical sx={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #EF4444 0%, #DC2626 100%)',
+      }}
+      maxWidth='xl'
     >
       <ListPageTemplate
         title=''
-        subtitle=''
-        breadcrumbs={[
-          { label: '首页', href: '/dashboard' },
-          { label: 'EHS管理', href: '/ehs' },
-          { label: '危化品管理' },
-        ]}
         columns={columns}
         data={paginatedMaterials}
         loading={loading}
@@ -578,14 +586,6 @@ const EhsHazardousMaterialPage: React.FC = () => {
               setCurrentPage(0);
             },
             options: [{ label: '全部', value: '' }, ...dangerLevelOptions],
-          },
-        ]}
-        actions={[
-          {
-            label: '入库登记',
-            icon: <Plus sx={{ width: 16, height: 16 }} />,
-            onClick: handleCreate,
-            variant: 'contained',
           },
         ]}
         rowActions={rowActions}
@@ -816,7 +816,7 @@ const EhsHazardousMaterialPage: React.FC = () => {
                           label={status.text}
                           size='small'
                           sx={{
-                            backgroundColor: status.text === '已过期' ? 'error.lighter' : '#fef9c3',
+                            backgroundColor: status.text === '已过期' ? 'error.lighter' : 'warning.100',
                             color: status.color,
                             fontWeight: 500,
                           }}

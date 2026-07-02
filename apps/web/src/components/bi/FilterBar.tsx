@@ -66,7 +66,10 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                 <em>全部</em>
               </MenuItem>
               {filter.options?.map((opt) => (
-                <MenuItem key={String(opt.value)} value={opt.value}>
+                <MenuItem
+                  key={String(opt.value)}
+                  value={opt.value}
+                >
                   {opt.label}
                 </MenuItem>
               ))}
@@ -106,7 +109,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         mb: 3,
         border: '1px solid',
         borderColor: 'divider',
-        borderRadius: 2,
+        borderRadius: 3,
       }}
     >
       <Box
@@ -118,8 +121,14 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         }}
       >
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Filter size={18} color='text.secondary' />
-          <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
+          <Filter
+            size={18}
+            color='text.secondary'
+          />
+          <Typography
+            variant='subtitle2'
+            sx={{ fontWeight: 600 }}
+          >
             筛选条件
           </Typography>
           {activeFilters.length > 0 && (
@@ -140,7 +149,11 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             重置
           </Button>
           {onApply && (
-            <Button size='small' variant='contained' onClick={onApply}>
+            <Button
+              size='small'
+              variant='contained'
+              onClick={onApply}
+            >
               应用筛选
             </Button>
           )}

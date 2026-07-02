@@ -235,6 +235,48 @@ scripts/
 ./topems.sh deploy
 ```
 
+#### 服务自动注册
+
+服务启动时会**自动向 unified-core 注册**，无需手动配置：
+
+```bash
+# 启动服务时自动注册
+./topems.sh start erp
+
+# 预期输出
+[INFO] 启动 erp 服务...
+[SUCCESS] erp 服务启动成功 (PID: xxx, 端口: 8010)
+[DETAIL] 注册 erp 到 unified-core...
+[DETAIL] erp 注册成功
+```
+
+**注册机制说明**：
+- 服务启动后，脚本自动调用 `/api/core/plugin/dev/plugins/{code}/register` 接口
+- 注册信息包含：服务名、版本、运行时 URL、权限列表
+- 注册接口为公共接口，无需认证（已移到公共路由）
+- 如果 unified-core 未运行，注册会跳过（不会影响服务启动）
+
+**验证注册结果**：
+
+```bash
+# 查看已注册插件列表
+curl -s http://localhost:8000/api/plugins/info | python3 -m json.tool
+
+# 查看特定服务的注册状态
+./scripts/topems.sh status
+```
+
+#### 服务自动恢复
+
+```bash
+# 检查所有服务状态，自动重启异常服务
+./topems.sh check
+
+# 预期输出
+[INFO] 检查服务状态并自动重启...
+[SUCCESS] 所有服务运行正常 (5/25)
+```
+
 ---
 
 ## 部署脚本

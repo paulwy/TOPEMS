@@ -17,8 +17,7 @@ import {
   Table,
 } from 'lucide-react';
 import { BackButton } from '../common';
-import {
-  Box,
+import {Box,
   Typography,
   Button,
   Drawer,
@@ -32,8 +31,7 @@ import {
   FormControl,
   InputLabel,
   Divider,
-  Chip,
-} from '@mui/material';
+  Chip, useTheme} from '@mui/material';
 import type { ChartType, ChartDataPoint } from './ChartLibrary';
 import ChartComponent from './ChartLibrary';
 import PivotTable from './PivotTable';
@@ -119,6 +117,7 @@ export const DashboardEditor: React.FC<{
 }> = ({ initialConfig, onSave, onCancel }) => {
   const [widgets, setWidgets] = useState<DashboardWidget[]>(initialConfig?.widgets || []);
   const [selectedWidgetId, setSelectedWidgetId] = useState<string | null>(null);
+  const theme = useTheme();
   const [dashboardName, setDashboardName] = useState(initialConfig?.name || '未命名仪表盘');
   const [dashboardDescription, _setDashboardDescription] = useState(
     initialConfig?.description || ''
@@ -334,6 +333,7 @@ export const DashboardEditor: React.FC<{
   const selectedWidget = widgets.find((w) => w.id === selectedWidgetId);
 
   const renderResizeHandle = (position: string) => (
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
       className='resize-handle'
       style={{
@@ -341,7 +341,7 @@ export const DashboardEditor: React.FC<{
         width: 12,
         height: 12,
         cursor: `${position}-resize`,
-        backgroundColor: 'primary.light',
+        backgroundColor: theme.palette.primary.light,
         borderRadius: '50%',
         zIndex: 10,
         [position]: -6,
@@ -426,7 +426,7 @@ export const DashboardEditor: React.FC<{
             position: 'relative',
             minHeight: GRID_ROWS * CELL_HEIGHT,
             backgroundColor: 'white',
-            borderRadius: 2,
+            borderRadius: 3,
             boxShadow: 1,
             overflow: 'hidden',
           }}

@@ -25,15 +25,15 @@ export const deployApi = {
             .map(([k, v]) => [k, String(v)])
         )
       : '';
-    const url = queryParams ? `/api/rs/deploys?${queryParams}` : '/api/rs/deploys';
+    const url = queryParams ? `/deploys?${queryParams}` : '/deploys';
     return apiClient.rs.get(url);
   },
 
   getDeploy: async (id: string): Promise<ApiResponse<Deploy>> => {
-    return apiClient.rs.get(`/api/rs/deploys/${id}`);
+    return apiClient.rs.get(`/deploys/${id}`);
   },
 
   createDeploy: async (data: CreateDeployRequest): Promise<ApiResponse<Deploy>> => {
-    return apiClient.rs.post('/api/rs/deploys', data);
+    return apiClient.rs.post('/deploys', data);
   },
 };

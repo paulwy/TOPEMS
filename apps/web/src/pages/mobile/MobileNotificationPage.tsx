@@ -184,19 +184,14 @@ export const MobileNotificationPage: React.FC = () => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
-        (n) =>
-          n.title.toLowerCase().includes(query) ||
-          n.message.toLowerCase().includes(query)
+        (n) => n.title.toLowerCase().includes(query) || n.message.toLowerCase().includes(query)
       );
     }
 
     return result;
   }, [notifications, activeTab, searchQuery]);
 
-  const unreadCount = useMemo(
-    () => notifications.filter((n) => !n.isRead).length,
-    [notifications]
-  );
+  const unreadCount = useMemo(() => notifications.filter((n) => !n.isRead).length, [notifications]);
 
   const stats = useMemo(
     () => [
@@ -350,7 +345,11 @@ export const MobileNotificationPage: React.FC = () => {
         label: '类型',
         width: 80,
         render: (row) => (
-          <Chip size='small' label={TYPE_LABELS[row.type]} variant='outlined' />
+          <Chip
+            size='small'
+            label={TYPE_LABELS[row.type]}
+            variant='outlined'
+          />
         ),
       },
       {
@@ -358,7 +357,10 @@ export const MobileNotificationPage: React.FC = () => {
         label: '时间',
         width: 80,
         render: (row) => (
-          <Typography variant='caption' color='text.secondary'>
+          <Typography
+            variant='caption'
+            color='text.secondary'
+          >
             {row.createdAt}
           </Typography>
         ),
@@ -406,7 +408,10 @@ export const MobileNotificationPage: React.FC = () => {
       subtitle={`${unreadCount} 条未读消息`}
     >
       {/* Mobile Notification Settings */}
-      <Paper variant='outlined' sx={{ p: 2, mb: 2 }}>
+      <Paper
+        variant='outlined'
+        sx={{ p: 2, mb: 2 }}
+      >
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Settings size={18} />
@@ -450,7 +455,10 @@ export const MobileNotificationPage: React.FC = () => {
           variant='scrollable'
           scrollButtons='auto'
         >
-          <Tab value='all' label='全部' />
+          <Tab
+            value='all'
+            label='全部'
+          />
           <Tab
             value='unread'
             label={
@@ -467,9 +475,18 @@ export const MobileNotificationPage: React.FC = () => {
               </Box>
             }
           />
-          <Tab value='system' label='系统' />
-          <Tab value='approval' label='审批' />
-          <Tab value='task' label='任务' />
+          <Tab
+            value='system'
+            label='系统'
+          />
+          <Tab
+            value='approval'
+            label='审批'
+          />
+          <Tab
+            value='task'
+            label='任务'
+          />
         </Tabs>
       </Box>
 
@@ -493,10 +510,16 @@ export const MobileNotificationPage: React.FC = () => {
             }}
           >
             <Box sx={{ color: `${stat.color}.main`, mb: 0.5 }}>{stat.icon}</Box>
-            <Typography variant='h6' sx={{ fontWeight: 600 }}>
+            <Typography
+              variant='h6'
+              sx={{ fontWeight: 600 }}
+            >
               {stat.value}
             </Typography>
-            <Typography variant='caption' color='text.secondary'>
+            <Typography
+              variant='caption'
+              color='text.secondary'
+            >
               {stat.title}
             </Typography>
           </Paper>
@@ -601,16 +624,17 @@ export const MobileNotificationPage: React.FC = () => {
                     >
                       {notification.message}
                     </Typography>
-                    <Box
-                      sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}
-                    >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
                       <Chip
                         size='small'
                         label={TYPE_LABELS[notification.type]}
                         variant='outlined'
                         sx={{ height: 18, fontSize: '0.65rem' }}
                       />
-                      <Typography variant='caption' color='text.disabled'>
+                      <Typography
+                        variant='caption'
+                        color='text.disabled'
+                      >
                         {notification.createdAt}
                       </Typography>
                     </Box>
@@ -649,8 +673,15 @@ export const MobileNotificationPage: React.FC = () => {
 
         {filteredNotifications.length === 0 && (
           <Box sx={{ py: 6, textAlign: 'center' }}>
-            <BellOff size={48} style={{ opacity: 0.3 }} />
-            <Typography variant='body2' color='text.secondary' sx={{ mt: 1 }}>
+            <BellOff
+              size={48}
+              style={{ opacity: 0.3 }}
+            />
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{ mt: 1 }}
+            >
               暂无通知
             </Typography>
           </Box>

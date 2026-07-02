@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTheme } from '@mui/material';
 import { Check, Settings, RefreshCw } from 'lucide-react';
 import NotificationItem from './NotificationItem';
 import NotificationSettings from './NotificationSettings';
@@ -13,6 +14,7 @@ interface NotificationPanelProps {
 
 const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnreadCountChange }) => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const theme = useTheme();
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'all' | 'unread'>('all');
   const [showSettings, setShowSettings] = useState(false);
@@ -100,13 +102,13 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
           borderBottom: '1px solid grey.200',
         }}
       >
-        <h3 style={{ fontSize: 18, fontWeight: 600, color: 'text.primary' }}>通知中心</h3>
+        <h3 style={{ fontSize: 18, fontWeight: 600, color: theme.palette.text.primary }}>通知中心</h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <button
             onClick={() => setShowSettings(!showSettings)}
             style={{
               padding: 6,
-              color: 'text.secondary',
+              color: theme.palette.text.secondary,
               backgroundColor: 'transparent',
               border: 'none',
               borderRadius: 8,
@@ -121,7 +123,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
             onClick={fetchNotifications}
             style={{
               padding: 6,
-              color: 'text.secondary',
+              color: theme.palette.text.secondary,
               backgroundColor: 'transparent',
               border: 'none',
               borderRadius: 8,
@@ -136,7 +138,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
             onClick={onClose}
             style={{
               padding: 6,
-              color: 'text.secondary',
+              color: theme.palette.text.secondary,
               backgroundColor: 'transparent',
               border: 'none',
               borderRadius: 8,
@@ -175,7 +177,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
             backgroundColor: 'transparent',
             border: 'none',
             cursor: 'pointer',
-            color: activeTab === 'all' ? 'primary.dark' : 'text.secondary',
+            color: activeTab === 'all' ? theme.palette.primary.dark : theme.palette.text.secondary,
             borderBottom: activeTab === 'all' ? '2px solid primary.dark' : '2px solid transparent',
           }}
         >
@@ -192,7 +194,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
             backgroundColor: 'transparent',
             border: 'none',
             cursor: 'pointer',
-            color: activeTab === 'unread' ? 'primary.dark' : 'text.secondary',
+            color: activeTab === 'unread' ? theme.palette.primary.dark : theme.palette.text.secondary,
             borderBottom:
               activeTab === 'unread' ? '2px solid primary.dark' : '2px solid transparent',
             position: 'relative',
@@ -203,7 +205,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
             <span
               style={{
                 marginLeft: 6,
-                backgroundColor: 'error.main',
+                backgroundColor: theme.palette.error.main,
                 color: 'white',
                 fontSize: 12,
                 borderRadius: 9999,
@@ -220,7 +222,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
         <div
           style={{
             padding: '8px 16px',
-            backgroundColor: 'primary.light',
+            backgroundColor: theme.palette.primary.light,
             borderBottom: '1px solid #dbeafe',
           }}
         >
@@ -231,7 +233,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
               alignItems: 'center',
               gap: 8,
               fontSize: 14,
-              color: 'primary.dark',
+              color: theme.palette.primary.dark,
               fontWeight: 500,
               backgroundColor: 'transparent',
               border: 'none',
@@ -260,7 +262,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
                 height: 32,
                 borderRadius: '9999px',
                 border: '2px solid grey.200',
-                borderTopColor: 'primary.dark',
+                borderTopColor: theme.palette.primary.dark,
                 animation: 'spin 1s linear infinite',
               }}
             />
@@ -273,7 +275,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
               alignItems: 'center',
               justifyContent: 'center',
               padding: 48,
-              color: 'text.secondary',
+              color: theme.palette.text.secondary,
             }}
           >
             <svg
@@ -281,7 +283,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
                 width: 64,
                 height: 64,
                 marginBottom: 16,
-                color: 'grey.300',
+                color: theme.palette.grey[300],
               }}
               fill='none'
               stroke='currentColor'
@@ -315,7 +317,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
           style={{
             padding: 12,
             borderTop: '1px solid grey.200',
-            backgroundColor: 'grey.50',
+            backgroundColor: theme.palette.grey[50],
           }}
         >
           <a
@@ -324,7 +326,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
               display: 'block',
               textAlign: 'center',
               fontSize: 14,
-              color: 'primary.dark',
+              color: theme.palette.primary.dark,
               fontWeight: 500,
             }}
           >

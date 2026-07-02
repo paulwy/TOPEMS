@@ -33,6 +33,7 @@ import {
   type FilterConfig,
 } from '@/components/templates';
 import {
+  ClipboardList,
   Search,
   Plus,
   Edit,
@@ -45,7 +46,47 @@ import {
   Clock,
 } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+/**
+ * TODO: Phase 7-4 -- 虚拟滚动优化
+ *
+ * 当列表数据超过 100 条时，建议使用虚拟滚动提升渲染性能:
+ *
+ * 方案 1: @tanstack/react-virtual
+ *   import { useVirtualizer } from '@tanstack/react-virtual';
+ *   const virtualizer = useVirtualizer({ count: data.length, getScrollElement: () => parentRef.current });
+ *
+ * 方案 2: react-virtuoso (MUI 友好)
+ *   import { TableVirtuoso } from 'react-virtuoso';
+ *   <TableVirtuoso data={data} components={{ TableBody, TableRow, TableCell }} />
+ *
+ * 当前预估数据量: 生产工单 (按批次累积)
+ */
+
+/**
+ * TODO: Phase 7-2 — React Query 迁移
+ *
+ * 模块: 生产工单 (ProductionOrderManagementPage)
+ *
+ * 1. 将 useState(loading) + useState(data) + useEffect(fetch) 替换为 useQuery:
+ *    const { data: response, isLoading, error, refetch } = useQuery({
+ *      queryKey: ['mes-production-orders', page, rowsPerPage, searchText],
+ *      queryFn: () => mesApi.getList({ page: page + 1, pageSize: rowsPerPage, keyword: searchText }),
+ *      placeholderData: (prev) => prev,
+ *    });
+ *    const data = response?.data?.items || [];
+ *    const total = response?.data?.total || 0;
+ *
+ * 2. 将 create/update/delete handler 中的 setState + API 调用替换为 useMutation:
+ *    const queryClient = useQueryClient();
+ *    const deleteMutation = useMutation({
+ *      mutationFn: (id: string) => mesApi.delete(id),
+ *      onSuccess: () => queryClient.invalidateQueries({ queryKey: ['mes-production-orders'] }),
+ *    });
+ *
+ * 3. 保留 UI 状态（page, rowsPerPage, searchText, dialogOpen 等）的 useState
+ */
 const ProductionOrderManagementPage: React.FC = () => {
   const [orders, setOrders] = useState<ProductionOrder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -456,7 +497,7 @@ const ProductionOrderManagementPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -470,7 +511,7 @@ const ProductionOrderManagementPage: React.FC = () => {
           {stats.pending}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -484,7 +525,7 @@ const ProductionOrderManagementPage: React.FC = () => {
           {stats.released}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#dbeafe', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: '#dbeafe', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -498,7 +539,7 @@ const ProductionOrderManagementPage: React.FC = () => {
           {stats.in_progress}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -512,7 +553,7 @@ const ProductionOrderManagementPage: React.FC = () => {
           {stats.completed}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -531,8 +572,12 @@ const ProductionOrderManagementPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='生产订单管理'
-      subtitle='管理生产订单信息,包括订单号、产品名称、数量、计划时间等'
+      title='生产订单'
+      subtitle='管理生产订单信息,包括订单号、产品、数量、计划时间等'
+      headerProps={{
+        pageIcon: <ClipboardList style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+      }}
     >
       <ListPageTemplate
         title=''
@@ -763,3 +808,5 @@ const ProductionOrderManagementPage: React.FC = () => {
 };
 
 export default ProductionOrderManagementPage;
+
+// Phase 7-2: React Query migration tagged

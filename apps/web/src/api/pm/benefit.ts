@@ -3,11 +3,11 @@ import type { ProjectBenefit, BenefitAnalysis } from './types';
 
 export const benefitApi = {
   list: async (projectId: string) => {
-    return apiClient.pm.get(`/api/pm/projects/${projectId}/benefits`);
+    return apiClient.pm.get(`/projects/${projectId}/benefits`);
   },
 
   analysis: async (projectId: string) => {
-    return apiClient.pm.get(`/api/pm/projects/${projectId}/benefits/analysis`);
+    return apiClient.pm.get(`/projects/${projectId}/benefits/analysis`);
   },
 
   calculate: async (
@@ -26,7 +26,7 @@ export const benefitApi = {
       created_by?: string;
     }
   ) => {
-    return apiClient.pm.post(`/api/pm/projects/${projectId}/benefits`, data);
+    return apiClient.pm.post(`/projects/${projectId}/benefits`, data);
   },
 };
 

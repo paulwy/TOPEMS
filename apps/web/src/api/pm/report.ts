@@ -3,11 +3,11 @@ import type { ProjectReport, ReportTemplate } from './types';
 
 export const reportApi = {
   list: async (projectId: string) => {
-    return apiClient.pm.get(`/api/pm/projects/${projectId}/reports`);
+    return apiClient.pm.get(`/projects/${projectId}/reports`);
   },
 
   get: async (id: string) => {
-    return apiClient.pm.get(`/api/pm/reports/${id}`);
+    return apiClient.pm.get(`/reports/${id}`);
   },
 
   create: async (
@@ -20,7 +20,7 @@ export const reportApi = {
       generated_by?: string;
     }
   ) => {
-    return apiClient.pm.post(`/api/pm/projects/${projectId}/reports`, data);
+    return apiClient.pm.post(`/projects/${projectId}/reports`, data);
   },
 
   generate: async (
@@ -33,17 +33,17 @@ export const reportApi = {
       generated_by?: string;
     }
   ) => {
-    return apiClient.pm.post(`/api/pm/projects/${projectId}/reports/generate`, data);
+    return apiClient.pm.post(`/projects/${projectId}/reports/generate`, data);
   },
 };
 
 export const reportTemplateApi = {
   list: async () => {
-    return apiClient.pm.get('/api/pm/report-templates');
+    return apiClient.pm.get('/report-templates');
   },
 
   get: async (id: string) => {
-    return apiClient.pm.get(`/api/pm/report-templates/${id}`);
+    return apiClient.pm.get(`/report-templates/${id}`);
   },
 
   create: async (data: {
@@ -53,7 +53,7 @@ export const reportTemplateApi = {
     content: Record<string, any>;
     created_by?: string;
   }) => {
-    return apiClient.pm.post('/api/pm/report-templates', data);
+    return apiClient.pm.post('/report-templates', data);
   },
 
   update: async (
@@ -63,11 +63,11 @@ export const reportTemplateApi = {
       content?: Record<string, any>;
     }
   ) => {
-    return apiClient.pm.put(`/api/pm/report-templates/${id}`, data);
+    return apiClient.pm.put(`/report-templates/${id}`, data);
   },
 
   delete: async (id: string) => {
-    return apiClient.pm.delete(`/api/pm/report-templates/${id}`);
+    return apiClient.pm.delete(`/report-templates/${id}`);
   },
 };
 

@@ -16,11 +16,7 @@ import {
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import type {
-  Customer,
-  CreateCustomerRequest,
-  UpdateCustomerRequest,
-} from '@/api/erp';
+import type { Customer, CreateCustomerRequest, UpdateCustomerRequest } from '@/api/erp';
 import { erpApi } from '@/api/erp';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -30,13 +26,7 @@ import {
   type RowAction,
   type FilterConfig,
 } from '@/components/templates';
-import {
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
-  User,
-} from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, User } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 
 const CustomerManagementPage: React.FC = () => {
@@ -105,7 +95,15 @@ const CustomerManagementPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, pageSize, searchTerm, statusFilter, categoryFilter, industryFilter, addNotification]);
+  }, [
+    currentPage,
+    pageSize,
+    searchTerm,
+    statusFilter,
+    categoryFilter,
+    industryFilter,
+    addNotification,
+  ]);
 
   useEffect(() => {
     loadCustomers();
@@ -378,35 +376,59 @@ const CustomerManagementPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: 'primary.lighter', borderRadius: 2 }}>
-        <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+      <Box sx={{ p: 2, bgcolor: 'primary.lighter', borderRadius: 3 }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary' }}
+        >
           客户总数
         </Typography>
-        <Typography variant='h5' sx={{ fontWeight: 700 }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700 }}
+        >
           {stats.total}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
-        <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary' }}
+        >
           正常合作
         </Typography>
-        <Typography variant='h5' sx={{ fontWeight: 700 }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700 }}
+        >
           {stats.active}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
-        <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary' }}
+        >
           暂停合作
         </Typography>
-        <Typography variant='h5' sx={{ fontWeight: 700 }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700 }}
+        >
           {stats.inactive}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 2 }}>
-        <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 3 }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary' }}
+        >
           授信总额
         </Typography>
-        <Typography variant='h5' sx={{ fontWeight: 700, color: '#4338ca' }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700, color: '#4338ca' }}
+        >
           ¥{stats.totalCredit.toLocaleString('zh-CN')}
         </Typography>
       </Box>
@@ -451,7 +473,11 @@ const CustomerManagementPage: React.FC = () => {
         getRowId={(row) => row.id}
       />
 
-      <Dialog open={showDialog} onClose={() => setShowDialog(false)} maxWidth='lg'>
+      <Dialog
+        open={showDialog}
+        onClose={() => setShowDialog(false)}
+        maxWidth='lg'
+      >
         <DialogTitle>{selectedCustomer ? '编辑客户' : '新增客户'}</DialogTitle>
         <DialogContent>
           <Box
@@ -466,10 +492,17 @@ const CustomerManagementPage: React.FC = () => {
             {selectedCustomer ? '修改客户信息' : '填写新客户信息'}
           </Box>
           <form onSubmit={handleSubmit}>
-            <Typography variant='subtitle2' sx={{ mb: 1, mt: 1, fontWeight: 600 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ mb: 1, mt: 1, fontWeight: 600 }}
+            >
               基本信息
             </Typography>
-            <Grid container spacing={2} sx={{ py: 1 }}>
+            <Grid
+              container
+              spacing={2}
+              sx={{ py: 1 }}
+            >
               <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <InputLabel htmlFor='customer_code'>客户编码 *</InputLabel>
                 <TextField
@@ -504,7 +537,10 @@ const CustomerManagementPage: React.FC = () => {
               </Grid>
               <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <InputLabel htmlFor='category'>客户分类</InputLabel>
-                <FormControl size='small' fullWidth>
+                <FormControl
+                  size='small'
+                  fullWidth
+                >
                   <Select
                     id='category'
                     value={formData.category}
@@ -520,7 +556,10 @@ const CustomerManagementPage: React.FC = () => {
               </Grid>
               <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <InputLabel htmlFor='industry'>所属行业</InputLabel>
-                <FormControl size='small' fullWidth>
+                <FormControl
+                  size='small'
+                  fullWidth
+                >
                   <Select
                     id='industry'
                     value={formData.industry}
@@ -537,7 +576,10 @@ const CustomerManagementPage: React.FC = () => {
               </Grid>
               <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <InputLabel htmlFor='status'>状态</InputLabel>
-                <FormControl size='small' fullWidth>
+                <FormControl
+                  size='small'
+                  fullWidth
+                >
                   <Select
                     id='status'
                     value={formData.status}
@@ -551,10 +593,17 @@ const CustomerManagementPage: React.FC = () => {
               </Grid>
             </Grid>
 
-            <Typography variant='subtitle2' sx={{ mb: 1, mt: 2, fontWeight: 600 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ mb: 1, mt: 2, fontWeight: 600 }}
+            >
               联系信息
             </Typography>
-            <Grid container spacing={2} sx={{ py: 1 }}>
+            <Grid
+              container
+              spacing={2}
+              sx={{ py: 1 }}
+            >
               <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <InputLabel htmlFor='contact_person'>联系人</InputLabel>
                 <TextField
@@ -637,10 +686,17 @@ const CustomerManagementPage: React.FC = () => {
               </Grid>
             </Grid>
 
-            <Typography variant='subtitle2' sx={{ mb: 1, mt: 2, fontWeight: 600 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ mb: 1, mt: 2, fontWeight: 600 }}
+            >
               财务与信用
             </Typography>
-            <Grid container spacing={2} sx={{ py: 1 }}>
+            <Grid
+              container
+              spacing={2}
+              sx={{ py: 1 }}
+            >
               <Grid size={{ xs: 12, sm: 6 }}>
                 <InputLabel htmlFor='tax_number'>税号</InputLabel>
                 <TextField
@@ -689,7 +745,10 @@ const CustomerManagementPage: React.FC = () => {
               </Grid>
               <Grid size={{ xs: 12, sm: 3 }}>
                 <InputLabel htmlFor='credit_rating'>信用等级</InputLabel>
-                <FormControl size='small' fullWidth>
+                <FormControl
+                  size='small'
+                  fullWidth
+                >
                   <Select
                     id='credit_rating'
                     value={formData.credit_rating}
@@ -719,10 +778,17 @@ const CustomerManagementPage: React.FC = () => {
             </Box>
 
             <DialogActions sx={{ mt: 3 }}>
-              <Button type='button' variant='outlined' onClick={() => setShowDialog(false)}>
+              <Button
+                type='button'
+                variant='outlined'
+                onClick={() => setShowDialog(false)}
+              >
                 取消
               </Button>
-              <Button type='submit' variant='contained'>
+              <Button
+                type='submit'
+                variant='contained'
+              >
                 保存
               </Button>
             </DialogActions>
@@ -730,18 +796,31 @@ const CustomerManagementPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showDetailDialog} onClose={() => setShowDetailDialog(false)} maxWidth='lg'>
+      <Dialog
+        open={showDetailDialog}
+        onClose={() => setShowDetailDialog(false)}
+        maxWidth='lg'
+      >
         <DialogTitle>客户详情</DialogTitle>
         <DialogContent>
           {selectedCustomer && (
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Typography variant='subtitle2' sx={{ fontWeight: 600 }}>
+              <Typography
+                variant='subtitle2'
+                sx={{ fontWeight: 600 }}
+              >
                 基本信息
               </Typography>
-              <Grid container spacing={2}>
+              <Grid
+                container
+                spacing={2}
+              >
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                   <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>客户编码</InputLabel>
-                  <Box component='span' sx={{ fontWeight: 500 }}>
+                  <Box
+                    component='span'
+                    sx={{ fontWeight: 500 }}
+                  >
                     {selectedCustomer.customer_code}
                   </Box>
                 </Grid>
@@ -767,10 +846,16 @@ const CustomerManagementPage: React.FC = () => {
                 </Grid>
               </Grid>
 
-              <Typography variant='subtitle2' sx={{ fontWeight: 600, mt: 2 }}>
+              <Typography
+                variant='subtitle2'
+                sx={{ fontWeight: 600, mt: 2 }}
+              >
                 联系信息
               </Typography>
-              <Grid container spacing={2}>
+              <Grid
+                container
+                spacing={2}
+              >
                 <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                   <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>联系人</InputLabel>
                   <Box component='span'>{selectedCustomer.contact_person || '-'}</Box>
@@ -789,10 +874,16 @@ const CustomerManagementPage: React.FC = () => {
                 </Grid>
               </Grid>
 
-              <Typography variant='subtitle2' sx={{ fontWeight: 600, mt: 2 }}>
+              <Typography
+                variant='subtitle2'
+                sx={{ fontWeight: 600, mt: 2 }}
+              >
                 财务与信用
               </Typography>
-              <Grid container spacing={2}>
+              <Grid
+                container
+                spacing={2}
+              >
                 <Grid size={{ xs: 12, sm: 6 }}>
                   <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>税号</InputLabel>
                   <Box component='span'>{selectedCustomer.tax_number || '-'}</Box>
@@ -817,7 +908,10 @@ const CustomerManagementPage: React.FC = () => {
 
               {selectedCustomer.remark && (
                 <>
-                  <Typography variant='subtitle2' sx={{ fontWeight: 600, mt: 2 }}>
+                  <Typography
+                    variant='subtitle2'
+                    sx={{ fontWeight: 600, mt: 2 }}
+                  >
                     备注
                   </Typography>
                   <Box component='span'>{selectedCustomer.remark}</Box>

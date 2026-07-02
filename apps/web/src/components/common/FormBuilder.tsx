@@ -23,15 +23,7 @@ export interface FormFieldConfig {
   name: string;
   label: string;
   type:
-    | 'text'
-    | 'email'
-    | 'password'
-    | 'number'
-    | 'textarea'
-    | 'select'
-    | 'checkbox'
-    | 'date'
-    | 'file';
+    'text' | 'email' | 'password' | 'number' | 'textarea' | 'select' | 'checkbox' | 'date' | 'file';
   placeholder?: string;
   required?: boolean;
   disabled?: boolean;

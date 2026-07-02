@@ -418,11 +418,7 @@ const ScmPurchaseOrderPage: React.FC = () => {
   ];
 
   return (
-    <PageContainer
-      title='采购订单管理'
-      subtitle='管理采购订单,包括订单号、供应商、订单日期、交付日期等'
-      maxWidth='xl'
-    >
+    <PageContainer>
       <ListPageTemplate
         title=''
         subtitle=''

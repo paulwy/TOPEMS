@@ -291,13 +291,14 @@ const StatCardComponent: React.FC<StatCard & { loading?: boolean }> = ({
   size = 'medium',
   customGradient,
 }) => {
+  const theme = useTheme();
   const colorMap: Record<string, string> = {
-    primary: 'primary.main',
-    secondary: 'secondary.main',
-    success: 'success.dark',
-    warning: 'warning.main',
-    error: 'error.main',
-    info: 'info.main',
+    primary: theme.palette.primary.main,
+    secondary: theme.palette.secondary.main,
+    success: theme.palette.success.dark,
+    warning: theme.palette.warning.main,
+    error: theme.palette.error.main,
+    info: theme.palette.info.main,
   };
 
   const bgColor = colorMap[color] || colorMap.primary;
@@ -426,11 +427,11 @@ const StatCardComponent: React.FC<StatCard & { loading?: boolean }> = ({
                     }}
                   >
                     {change > 0 ? (
-                      <TrendingUp style={{ width: 14, height: 14, color: 'success.dark' }} />
+                      <TrendingUp style={{ width: 14, height: 14, color: theme.palette.success.dark }} />
                     ) : change < 0 ? (
-                      <TrendingDown style={{ width: 14, height: 14, color: 'error.main' }} />
+                      <TrendingDown style={{ width: 14, height: 14, color: theme.palette.error.main }} />
                     ) : (
-                      <Minus style={{ width: 14, height: 14, color: 'text.disabled' }} />
+                      <Minus style={{ width: 14, height: 14, color: theme.palette.text.disabled }} />
                     )}
                     <Typography
                       variant='caption'

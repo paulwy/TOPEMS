@@ -411,8 +411,10 @@ const LimsProcessPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='检验流程'
-      subtitle='Inspection Processes'
+      headerProps={{
+        pageIcon: <ClipboardList style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)',
+      }}
     >
       <ListPageTemplate
         title=''

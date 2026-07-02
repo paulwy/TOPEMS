@@ -1,16 +1,14 @@
 // modules/TrackModule/TrackPanel.tsx
 import React, { useState, useMemo } from 'react';
 import { Search, Calendar, MapPin } from 'lucide-react';
-import {
-  Box,
+import {Box,
   Typography,
   Paper,
   TextField,
   IconButton,
   Grid,
   Divider,
-  Button,
-} from '@mui/material';
+  Button, useTheme} from '@mui/material';
 import type { DevicePoint } from '../../../../api/gis';
 import type { TrackRecord, TrackStatistics, TrackPoint } from './types';
 import TrackPlayer from './TrackPlayer';
@@ -93,6 +91,7 @@ const calculateStatistics = (track: TrackRecord): TrackStatistics => {
 };
 
 const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
+  const theme = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDevice, setSelectedDevice] = useState<DevicePoint | null>(null);
   const [currentTrack, setCurrentTrack] = useState<TrackRecord | null>(null);
@@ -202,7 +201,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                   left: 12,
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  color: 'text.disabled',
+                  color: theme.palette.text.disabled,
                 }}
               />
               <TextField
@@ -238,7 +237,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                   <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: '50%' }}>
                     <MapPin
                       size={16}
-                      style={{ color: 'success.dark' }}
+                      style={{ color: theme.palette.success.dark }}
                     />
                   </Box>
                   <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -312,7 +311,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                   <table style={{ width: '100%', fontSize: '0.875rem' }}>
                     <thead
                       style={{
-                        backgroundColor: 'grey.50',
+                        backgroundColor: theme.palette.grey[50],
                         position: 'sticky',
                         top: 0,
                       }}
@@ -322,7 +321,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                           style={{
                             padding: '8px 12px',
                             textAlign: 'left',
-                            color: 'text.secondary',
+                            color: theme.palette.text.secondary,
                             fontWeight: 500,
                           }}
                         >
@@ -332,7 +331,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                           style={{
                             padding: '8px 12px',
                             textAlign: 'left',
-                            color: 'text.secondary',
+                            color: theme.palette.text.secondary,
                             fontWeight: 500,
                           }}
                         >
@@ -342,7 +341,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                           style={{
                             padding: '8px 12px',
                             textAlign: 'left',
-                            color: 'text.secondary',
+                            color: theme.palette.text.secondary,
                             fontWeight: 500,
                           }}
                         >
@@ -352,7 +351,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                           style={{
                             padding: '8px 12px',
                             textAlign: 'left',
-                            color: 'text.secondary',
+                            color: theme.palette.text.secondary,
                             fontWeight: 500,
                           }}
                         >
@@ -366,7 +365,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                           key={index}
                           style={{ borderBottom: '1px solid var(--mui-palette-grey-100)' }}
                         >
-                          <td style={{ padding: '8px 12px', color: 'text.secondary' }}>
+                          <td style={{ padding: '8px 12px', color: theme.palette.text.secondary }}>
                             {index + 1}
                           </td>
                           <td style={{ padding: '8px 12px', color: 'var(--mui-palette-text-secondary)' }}>
@@ -377,7 +376,7 @@ const TrackPanel: React.FC<TrackPanelProps> = ({ devicePoints, onClose }) => {
                               padding: '8px 12px',
                               fontFamily: 'monospace',
                               fontSize: '0.75rem',
-                              color: 'text.secondary',
+                              color: theme.palette.text.secondary,
                             }}
                           >
                             {point.position[0].toFixed(5)}, {point.position[1].toFixed(5)}

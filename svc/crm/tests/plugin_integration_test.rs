@@ -6,7 +6,7 @@ mod plugin_tests {
     use reqwest::Client;
     use serde::{Deserialize, Serialize};
 
-    const CRM_BASE_URL: &str = "http://localhost:8012";
+    const CRM_BASE_URL: &str = "http://localhost:8029";
     const TEST_USER_ID: &str = "00000000-0000-0000-0000-000000000001";
 
     #[derive(Debug, Serialize, Deserialize)]
@@ -145,10 +145,7 @@ mod plugin_tests {
     #[tokio::test]
     async fn test_health_endpoint() {
         let client = Client::new();
-        let response = client
-            .get(format!("{}/health", CRM_BASE_URL))
-            .send()
-            .await;
+        let response = client.get(format!("{}/health", CRM_BASE_URL)).send().await;
 
         assert!(response.is_ok(), "健康检查接口应该可访问");
     }

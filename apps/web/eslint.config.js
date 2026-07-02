@@ -263,7 +263,11 @@ export default [
         },
         {
           ignoreMiddleExtensions: true,
-          ignorePatterns: ['**/index.{ts,tsx,js,jsx}'],
+          ignorePatterns: [
+            '**/index.{ts,tsx,js,jsx}',
+            '**/index',
+            '**/NavigationRegistryV2.{ts,tsx}',
+          ],
         },
       ],
       'check-file/folder-naming-convention': 'off',
@@ -288,6 +292,12 @@ export default [
     },
   },
   {
+    files: ['src/lib/navigation/NavigationRegistryV2.ts', 'src/pages/gis/index.tsx'],
+    rules: {
+      'check-file/filename-naming-convention': 'off',
+    },
+  },
+  {
     files: ['**/__tests__/**', '**/*.test.{ts,tsx}'],
     languageOptions: {
       parserOptions: {
@@ -301,6 +311,7 @@ export default [
       '@typescript-eslint/no-misused-promises': 'off',
       '@typescript-eslint/restrict-template-expressions': 'off',
       '@typescript-eslint/no-unused-vars': 'off',
+      'check-file/filename-naming-convention': 'off',
     },
   },
   {
@@ -324,5 +335,25 @@ export default [
       'src/@types/**/*',
     ],
   },
+  // ==========================================================================
+  // Phase 7-4 — 硬编码值检测方案 (P2 优化)
+  // ==========================================================================
+  //
+  // 目标: 检测 sx prop 中的硬编码颜色/间距值，引导使用 theme tokens。
+  //
+  // 方案说明:
+  //   ESLint 的 no-restricted-syntax 使用 ESTree AST 选择器，但 JSX sx={{ }}
+  //   内部的值结构较复杂，难以用简单的选择器精确匹配。
+  //
+  //   项目已有 eslint-plugin-topems-design (no-hardcoded-colors / no-hardcoded-spacing)
+  //   插件，位于 scripts/eslint-plugin-topems-design.cjs，可覆盖大部分场景。
+  //
+  //   如需更精准的 sx prop 级别检测，建议:
+  //   1. 扩展 eslint-plugin-topems-design，增加 sx prop AST 遍历逻辑
+  //   2. 或运行独立扫描脚本:
+  //      python scripts/scan-hardcoded-values.py apps/web/src/pages,apps/web/src/components
+  //
+  // =============================================================================
+
   ...storybook.configs['flat/recommended'],
 ];

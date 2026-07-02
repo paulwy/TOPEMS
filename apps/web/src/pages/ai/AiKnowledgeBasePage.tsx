@@ -49,7 +49,7 @@ import {
   Edit3,
 } from 'lucide-react';
 import { PageContainer, Grid } from '@/components/common';
-import { ListPageTemplate, type ColumnDef } from '@/components/templates';
+import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { useAppStore } from '@/store';
 import { logger } from '@/utils/logger';
 
@@ -210,7 +210,16 @@ const mockDocuments: KnowledgeDocument[] = [
 const getStatusConfig = (status: KnowledgeDocument['status']) => {
   const configs = {
     indexed: { label: '已索引', color: 'success' as const, icon: <CheckCircle size={14} /> },
-    indexing: { label: '索引中', color: 'warning' as const, icon: <RefreshCw size={14} className="animate-spin" /> },
+    indexing: {
+      label: '索引中',
+      color: 'warning' as const,
+      icon: (
+        <RefreshCw
+          size={14}
+          className='animate-spin'
+        />
+      ),
+    },
     pending: { label: '待处理', color: 'default' as const, icon: <Clock size={14} /> },
     error: { label: '失败', color: 'error' as const, icon: <AlertCircle size={14} /> },
   };
@@ -218,11 +227,40 @@ const getStatusConfig = (status: KnowledgeDocument['status']) => {
 };
 
 const getFileIcon = (fileType: string) => {
-  if (fileType === 'pdf') return <FileText size={20} style={{ color: '#ef4444' }} />;
-  if (['docx', 'doc'].includes(fileType)) return <FileText size={20} style={{ color: '#3b82f6' }} />;
-  if (['xlsx', 'xls'].includes(fileType)) return <FileSpreadsheet size={20} style={{ color: '#22c55e' }} />;
-  if (['pptx', 'ppt'].includes(fileType)) return <File size={20} style={{ color: '#f97316' }} />;
-  return <File size={20} style={{ color: '#6b7280' }} />;
+  if (fileType === 'pdf')
+    return (
+      <FileText
+        size={20}
+        style={{ color: '#ef4444' }}
+      />
+    );
+  if (['docx', 'doc'].includes(fileType))
+    return (
+      <FileText
+        size={20}
+        style={{ color: '#3b82f6' }}
+      />
+    );
+  if (['xlsx', 'xls'].includes(fileType))
+    return (
+      <FileSpreadsheet
+        size={20}
+        style={{ color: '#22c55e' }}
+      />
+    );
+  if (['pptx', 'ppt'].includes(fileType))
+    return (
+      <File
+        size={20}
+        style={{ color: '#f97316' }}
+      />
+    );
+  return (
+    <File
+      size={20}
+      style={{ color: '#6b7280' }}
+    />
+  );
 };
 
 export const AiKnowledgeBasePage: React.FC = () => {
@@ -314,7 +352,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
     },
   ];
 
-  const rowActions: import('@/components/templates/list/types').RowAction<KnowledgeDocument>[] = [
+  const rowActions: RowAction<KnowledgeDocument>[] = [
     {
       label: '重新索引',
       icon: <RefreshCw size={16} />,
@@ -394,7 +432,12 @@ export const AiKnowledgeBasePage: React.FC = () => {
   };
 
   const stats = [
-    { label: '向量库数量', value: mockCollections.length, icon: <Database size={20} />, color: 'primary' },
+    {
+      label: '向量库数量',
+      value: mockCollections.length,
+      icon: <Database size={20} />,
+      color: 'primary',
+    },
     { label: '文档总数', value: '540', icon: <FileText size={20} />, color: 'success' },
     { label: '向量总数', value: '26.3K', icon: <Layers size={20} />, color: 'warning' },
     { label: '索引中', value: '3', icon: <RefreshCw size={20} />, color: 'info' },
@@ -413,10 +456,19 @@ export const AiKnowledgeBasePage: React.FC = () => {
     >
       <Box sx={{ p: 3 }}>
         {/* 统计卡片 */}
-        <Grid container spacing={3} sx={{ mb: 3 }}>
+        <Grid
+          container
+          spacing={3}
+          sx={{ mb: 3 }}
+        >
           {stats.map((stat, index) => (
-            <Grid item xs={6} sm={3} key={index}>
-              <Paper sx={{ p: 2.5, borderRadius: 2 }}>
+            <Grid
+              item
+              xs={6}
+              sm={3}
+              key={index}
+            >
+              <Paper sx={{ p: 2.5, borderRadius: 3 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Avatar
                     sx={{
@@ -449,7 +501,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
         </Grid>
 
         {/* 标签页和操作栏 */}
-        <Paper sx={{ borderRadius: 2, mb: 3 }}>
+        <Paper sx={{ borderRadius: 3, mb: 3 }}>
           <Box
             sx={{
               display: 'flex',
@@ -517,14 +569,23 @@ export const AiKnowledgeBasePage: React.FC = () => {
           {/* 向量库列表 */}
           {activeTab === 'collections' && (
             <Box sx={{ p: 2 }}>
-              <Grid container spacing={2}>
+              <Grid
+                container
+                spacing={2}
+              >
                 {mockCollections.map((collection) => (
-                  <Grid item xs={12} sm={6} md={4} key={collection.id}>
+                  <Grid
+                    item
+                    xs={12}
+                    sm={6}
+                    md={4}
+                    key={collection.id}
+                  >
                     <Paper
                       variant='outlined'
                       sx={{
                         p: 2.5,
-                        borderRadius: 2,
+                        borderRadius: 3,
                         cursor: 'pointer',
                         transition: 'all 0.2s',
                         '&:hover': {
@@ -537,7 +598,14 @@ export const AiKnowledgeBasePage: React.FC = () => {
                         setSearchQuery(collection.name);
                       }}
                     >
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'flex-start',
+                          mb: 2,
+                        }}
+                      >
                         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
                           <Avatar
                             sx={{
@@ -630,7 +698,10 @@ export const AiKnowledgeBasePage: React.FC = () => {
             <ListPageTemplate
               columns={columns}
               data={mockDocuments.filter(
-                (d) => !searchQuery || d.title.includes(searchQuery) || d.collection_name.includes(searchQuery)
+                (d) =>
+                  !searchQuery ||
+                  d.title.includes(searchQuery) ||
+                  d.collection_name.includes(searchQuery)
               )}
               searchable
               searchPlaceholder='搜索文档名称、所属库...'
@@ -671,7 +742,10 @@ export const AiKnowledgeBasePage: React.FC = () => {
             >
               目标向量库
             </Typography>
-            <FormControl fullWidth sx={{ mb: 3 }}>
+            <FormControl
+              fullWidth
+              sx={{ mb: 3 }}
+            >
               <InputLabel id='collection-select-label'>选择向量库</InputLabel>
               <Select
                 labelId='collection-select-label'
@@ -681,7 +755,10 @@ export const AiKnowledgeBasePage: React.FC = () => {
               >
                 <MenuItem value=''>请选择向量库</MenuItem>
                 {mockCollections.map((c) => (
-                  <MenuItem key={c.id} value={c.id}>
+                  <MenuItem
+                    key={c.id}
+                    value={c.id}
+                  >
                     {c.name}
                   </MenuItem>
                 ))}
@@ -699,7 +776,7 @@ export const AiKnowledgeBasePage: React.FC = () => {
               sx={{
                 border: '2px dashed',
                 borderColor: 'divider',
-                borderRadius: 2,
+                borderRadius: 3,
                 p: 4,
                 textAlign: 'center',
                 cursor: 'pointer',
@@ -762,7 +839,10 @@ export const AiKnowledgeBasePage: React.FC = () => {
                       {getFileIcon(file.name.split('.').pop() || '')}
                       <Typography variant='body2'>{file.name}</Typography>
                     </Box>
-                    <Typography variant='caption' color='text.secondary'>
+                    <Typography
+                      variant='caption'
+                      color='text.secondary'
+                    >
                       {(file.size / 1024 / 1024).toFixed(2)} MB
                     </Typography>
                   </Box>
@@ -776,7 +856,10 @@ export const AiKnowledgeBasePage: React.FC = () => {
                   <Typography variant='body2'>上传中...</Typography>
                   <Typography variant='body2'>{uploadProgress}%</Typography>
                 </Box>
-                <LinearProgress variant='determinate' value={uploadProgress} />
+                <LinearProgress
+                  variant='determinate'
+                  value={uploadProgress}
+                />
               </Box>
             )}
           </Box>

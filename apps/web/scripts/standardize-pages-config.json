@@ -1,0 +1,190 @@
+{
+  "mes": {
+    "pages": {
+      "ProductionOrderManagementPage.tsx": {
+        "title": "生产订单",
+        "subtitle": "管理生产订单信息,包括订单号、产品、数量、计划时间等",
+        "icon": "ClipboardList",
+        "gradient": "linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)"
+      },
+      "WorkStationPage.tsx": {
+        "title": "工位管理",
+        "subtitle": "管理工位信息,包括工位编号、名称、位置、状态等",
+        "icon": "MapPin",
+        "gradient": "linear-gradient(135deg, #10B981 0%, #059669 100%)"
+      },
+      "MaterialRequirementPage.tsx": {
+        "title": "物料需求",
+        "subtitle": "管理物料需求信息,包括物料编号、名称、数量、需求时间等",
+        "icon": "Package",
+        "gradient": "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)"
+      },
+      "ProcessFlowPage.tsx": {
+        "title": "工艺流程",
+        "subtitle": "管理工艺流程信息,包括流程定义、工序顺序、标准工时等",
+        "icon": "GitBranch",
+        "gradient": "linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)"
+      },
+      "ProductionProcessPage.tsx": {
+        "title": "生产过程",
+        "subtitle": "管理生产过程信息,包括生产进度、工单执行、设备状态等",
+        "icon": "Activity",
+        "gradient": "linear-gradient(135deg, #10B981 0%, #059669 100%)"
+      },
+      "ProductionSchedulePage.tsx": {
+        "title": "生产计划",
+        "subtitle": "管理生产计划信息,包括计划排程、工单分配、资源调度等",
+        "icon": "Calendar",
+        "gradient": "linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)"
+      },
+      "WIPPage.tsx": {
+        "title": "在制品管理",
+        "subtitle": "管理在制品信息,包括在制品数量、位置、状态等",
+        "icon": "Box",
+        "gradient": "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)"
+      },
+      "QualityInspectionPage.tsx": {
+        "title": "过程质检",
+        "subtitle": "管理过程质检信息,包括质检标准、检测结果、不良品处理等",
+        "icon": "CheckCircle",
+        "gradient": "linear-gradient(135deg, #10B981 0%, #059669 100%)"
+      },
+      "QualityTraceabilityPage.tsx": {
+        "title": "质量追溯",
+        "subtitle": "管理质量追溯信息,包括产品追溯、批次管理、质量记录等",
+        "icon": "Search",
+        "gradient": "linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)"
+      },
+      "ProductionKanbanPage.tsx": {
+        "title": "生产看板",
+        "subtitle": "生产进度看板,实时监控生产状态、设备运行、质量状况等",
+        "icon": "LayoutGrid",
+        "gradient": "linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)"
+      },
+      "ProductionRecordPage.tsx": {
+        "title": "生产记录",
+        "subtitle": "管理生产记录信息,包括生产过程记录、工单执行记录等",
+        "icon": "ScrollText",
+        "gradient": "linear-gradient(135deg, #10B981 0%, #059669 100%)"
+      },
+      "WorkReportPage.tsx": {
+        "title": "工作报告",
+        "subtitle": "管理工作报告信息,包括工作报告提交、审核、归档等",
+        "icon": "FileCheck",
+        "gradient": "linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)"
+      },
+      "EquipmentOEEPage.tsx": {
+        "title": "设备OEE",
+        "subtitle": "设备综合效率分析,包括设备利用率、性能率、良品率等",
+        "icon": "Gauge",
+        "gradient": "linear-gradient(135deg, #10B981 0%, #059669 100%)"
+      },
+      "MesQualityPage.tsx": {
+        "title": "质量管理",
+        "subtitle": "管理质量信息,包括质量标准、检测结果、不良品处理等",
+        "icon": "CheckCircle",
+        "gradient": "linear-gradient(135deg, #10B981 0%, #059669 100%)"
+      },
+      "MaterialBOMPage.tsx": {
+        "title": "物料BOM",
+        "subtitle": "管理物料BOM信息,包括物料清单、层级结构、用量计算等",
+        "icon": "Package",
+        "gradient": "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)"
+      },
+      "MaterialIssuePage.tsx": {
+        "title": "物料出库",
+        "subtitle": "管理物料出库信息,包括出库单、出库数量、出库时间等",
+        "icon": "Package",
+        "gradient": "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)"
+      },
+      "MaterialReturnPage.tsx": {
+        "title": "物料退回",
+        "subtitle": "管理物料退回信息,包括退回单、退回数量、退回时间等",
+        "icon": "Package",
+        "gradient": "linear-gradient(135deg, #F59E0B 0%, #D97706 100%)"
+      }
+    }
+  },
+  "lims": {
+    "pages": {
+      "LimsTaskPage.tsx": {
+        "title": "检验任务",
+        "subtitle": "管理检验任务信息,包括任务编号、样品、检验项目、进度等",
+        "icon": "ClipboardList",
+        "gradient": "linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)"
+      },
+      "LimsTaskDetailPage.tsx": {
+        "title": "任务详情",
+        "subtitle": "检验任务详情,包括检验结果、数据记录、审核意见等",
+        "icon": "ClipboardList",
+        "gradient": "linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)"
+      },
+      "InspectionTaskPage.tsx": {
+        "title": "检验任务列表",
+        "subtitle": "检验任务列表,包括任务编号、样品、检验项目、状态等",
+        "icon": "CheckSquare",
+        "gradient": "linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)"
+      },
+      "LimsProcessPage.tsx": {
+        "title": "检验流程",
+        "subtitle": "管理检验流程信息,包括流程定义、检验步骤、标准方法等",
+        "icon": "GitBranch",
+        "gradient": "linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)"
+      },
+      "LimsInstrumentPage.tsx": {
+        "title": "仪器设备",
+        "subtitle": "管理仪器设备信息,包括设备编号、名称、型号、状态等",
+        "icon": "Microscope",
+        "gradient": "linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)"
+      },
+      "LimsInstrumentDetailPage.tsx": {
+        "title": "仪器详情",
+        "subtitle": "仪器设备详情,包括设备参数、维护记录、校准历史等",
+        "icon": "Microscope",
+        "gradient": "linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)"
+      },
+      "LimsInstrumentDataPage.tsx": {
+        "title": "仪器数据",
+        "subtitle": "仪器数据管理,包括数据采集、分析结果、数据导出等",
+        "icon": "Microscope",
+        "gradient": "linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)"
+      },
+      "LimsInstrumentMaintenancePage.tsx": {
+        "title": "仪器维护",
+        "subtitle": "仪器维护管理,包括维护计划、维护记录、维护提醒等",
+        "icon": "Wrench",
+        "gradient": "linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)"
+      },
+      "LimsTestMethodPage.tsx": {
+        "title": "测试方法",
+        "subtitle": "管理测试方法信息,包括方法标准、操作步骤、结果判定等",
+        "icon": "FileText",
+        "gradient": "linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)"
+      },
+      "BarcodePage.tsx": {
+        "title": "条码管理",
+        "subtitle": "管理条码信息,包括条码生成、打印、扫描、查询等",
+        "icon": "Barcode",
+        "gradient": "linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)"
+      },
+      "LimsUncertaintyPage.tsx": {
+        "title": "不确定度",
+        "subtitle": "测量不确定度评定,包括不确定度计算、分析报告、结果验证等",
+        "icon": "Activity",
+        "gradient": "linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)"
+      },
+      "InspectionResultPage.tsx": {
+        "title": "检验结果",
+        "subtitle": "检验结果管理,包括结果审核、数据统计、报告生成等",
+        "icon": "FileCheck",
+        "gradient": "linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)"
+      },
+      "LimsProficiencyTestingPage.tsx": {
+        "title": "能力验证",
+        "subtitle": "能力验证管理,包括验证计划、验证结果、能力评定等",
+        "icon": "Award",
+        "gradient": "linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)"
+      }
+    }
+  }
+}

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTheme } from '@mui/material';
 import { ModuleStatusBadge } from '@/components/common/StatusBadge';
 import type { ModuleStatusValue } from '@/components/common/StatusBadge';
 
@@ -26,20 +27,20 @@ interface ModuleCardProps {
 }
 
 const colorToGradient: Record<string, string> = {
-  'bg-blue-500': 'linear-gradient(135deg, primary.main, primary.dark)',
-  'bg-purple-500': 'linear-gradient(135deg, secondary.main, #6d28d9)',
+  'bg-blue-500': 'linear-gradient(135deg, #3b82f6, #2563eb)',
+  'bg-purple-500': 'linear-gradient(135deg, #8b5cf6, #7c3aed)',
   'bg-green-500': 'linear-gradient(135deg, #22c55e, #16a34a)',
-  'bg-emerald-500': 'linear-gradient(135deg, success.main, success.dark)',
+  'bg-emerald-500': 'linear-gradient(135deg, #22c55e, #16a34a)',
   'bg-rose-500': 'linear-gradient(135deg, #f43f5e, #e11d48)',
   'bg-slate-600': 'linear-gradient(135deg, #64748b, #475569)',
   'bg-violet-500': 'linear-gradient(135deg, #a855f7, #9333ea)',
-  'bg-amber-500': 'linear-gradient(135deg, warning.main, #ca8a04)',
+  'bg-amber-500': 'linear-gradient(135deg, #f59e0b, #d97706)',
   'bg-teal-500': 'linear-gradient(135deg, #14b8a6, #0d9488)',
   'bg-yellow-500': 'linear-gradient(135deg, #eab308, #ca8a04)',
-  'bg-indigo-500': 'linear-gradient(135deg, primary.light, primary.main)',
+  'bg-indigo-500': 'linear-gradient(135deg, #60a5fa, #3b82f6)',
   'bg-cyan-500': 'linear-gradient(135deg, #06b6d4, #0891b2)',
   'bg-orange-500': 'linear-gradient(135deg, #f97316, #ea580c)',
-  'bg-red-500': 'linear-gradient(135deg, error.main, error.dark)',
+  'bg-red-500': 'linear-gradient(135deg, #ef4444, #dc2626)',
   'bg-sky-500': 'linear-gradient(135deg, #0ea5e9, #0284c7)',
   'bg-pink-500': 'linear-gradient(135deg, #ec4899, #db2727)',
 };
@@ -64,6 +65,7 @@ const _colorToBgLight: Record<string, string> = {
 };
 
 export const ModuleCard: React.FC<ModuleCardProps> = ({ item, onClick, size = 'medium' }) => {
+  const theme = useTheme();
   const [isHovered, setIsHovered] = useState(false);
   const [isClicked, setIsClicked] = useState(false);
   const Icon = item.icon;
@@ -78,10 +80,20 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ item, onClick, size = 'm
 
   return (
     <div
+      role='button'
+      tabIndex={0}
       onClick={() => {
         setIsClicked(true);
         setTimeout(() => setIsClicked(false), 150);
         onClick();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          setIsClicked(true);
+          setTimeout(() => setIsClicked(false), 150);
+          onClick();
+        }
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -109,7 +121,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ item, onClick, size = 'm
             item.status === 'online'
               ? 'linear-gradient(90deg, #22c55e, #16a34a)'
               : item.status === 'beta'
-                ? 'linear-gradient(90deg, warning.main, #ca8a04)'
+                ? 'linear-gradient(90deg, #f59e0b, #ca8a04)'
                 : 'linear-gradient(90deg, #94a3b8, #64748b)',
           transition: 'opacity 0.3s ease',
           opacity: isHovered ? 1 : 0.6,
@@ -129,7 +141,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ item, onClick, size = 'm
             transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             transform: isHovered ? 'scale(1.1) rotate(5deg)' : 'scale(1) rotate(0deg)',
             boxShadow: isHovered
-              ? `0 8px 24px ${colorToGradient[item.color] || 'primary.main'}40`
+              ? `0 8px 24px ${colorToGradient[item.color] || '#3b82f6'}40`
               : '0 4px 12px rgba(0,0,0,0.15)',
             animation: item.status === 'online' ? 'glow 2s ease-in-out infinite' : 'none',
           }}
@@ -157,7 +169,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ item, onClick, size = 'm
               style={{
                 fontSize: currentSize.titleSize,
                 fontWeight: 600,
-                color: isHovered ? 'primary.dark' : '#1e293b',
+                color: isHovered ? theme.palette.primary.dark : '#1e293b',
                 margin: 0,
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
@@ -172,7 +184,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ item, onClick, size = 'm
           <p
             style={{
               fontSize: currentSize.descSize,
-              color: isHovered ? 'text.secondary' : 'text.secondary',
+              color: isHovered ? theme.palette.text.secondary : theme.palette.text.secondary,
               margin: 0,
               whiteSpace: 'nowrap',
               overflow: 'hidden',
@@ -187,7 +199,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ item, onClick, size = 'm
       <style>{`
         @keyframes glow {
           0%, 100% { box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-          50% { box-shadow: 0 8px 24px ${colorToGradient[item.color] || 'primary.main'}60; }
+          50% { box-shadow: 0 8px 24px ${colorToGradient[item.color] || '#3b82f6'}60; }
         }
       `}</style>
     </div>

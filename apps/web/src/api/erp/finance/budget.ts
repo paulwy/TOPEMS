@@ -12,23 +12,23 @@ export const budgetApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/erp/budgets${queryString ? `?${queryString}` : ''}`);
+    return apiClient.erp.get(`/budgets${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<Budget>> {
-    return apiClient.erp.get(`/api/erp/budgets/${id}`);
+    return apiClient.erp.get(`/budgets/${id}`);
   },
 
   async create(data: Partial<Budget>): Promise<ApiResponse<Budget>> {
-    return apiClient.erp.post('/api/erp/budgets', cleanEmptyUuids(data));
+    return apiClient.erp.post('/budgets', cleanEmptyUuids(data));
   },
 
   async update(id: string, data: Partial<Budget>): Promise<ApiResponse<Budget>> {
-    return apiClient.erp.put(`/api/erp/budgets/${id}`, cleanEmptyUuids(data));
+    return apiClient.erp.put(`/budgets/${id}`, cleanEmptyUuids(data));
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/erp/budgets/${id}`);
+    return apiClient.erp.delete(`/budgets/${id}`);
   },
 };
 
@@ -41,22 +41,22 @@ export const expenseApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/erp/expenses${queryString ? `?${queryString}` : ''}`);
+    return apiClient.erp.get(`/expenses${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<Expense>> {
-    return apiClient.erp.get(`/api/erp/expenses/${id}`);
+    return apiClient.erp.get(`/expenses/${id}`);
   },
 
   async create(data: Partial<Expense>): Promise<ApiResponse<Expense>> {
-    return apiClient.erp.post('/api/erp/expenses', cleanEmptyUuids(data));
+    return apiClient.erp.post('/expenses', cleanEmptyUuids(data));
   },
 
   async update(id: string, data: Partial<Expense>): Promise<ApiResponse<Expense>> {
-    return apiClient.erp.put(`/api/erp/expenses/${id}`, cleanEmptyUuids(data));
+    return apiClient.erp.put(`/expenses/${id}`, cleanEmptyUuids(data));
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/erp/expenses/${id}`);
+    return apiClient.erp.delete(`/expenses/${id}`);
   },
 };

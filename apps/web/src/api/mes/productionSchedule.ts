@@ -25,30 +25,30 @@ export const productionScheduleApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(`/api/mes/schedules${queryString ? `?${queryString}` : ''}`);
+    return apiClient.mes.get(`/schedules${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<ProductionSchedule>> {
-    return apiClient.mes.get(`/api/mes/schedules/${id}`);
+    return apiClient.mes.get(`/schedules/${id}`);
   },
 
   async create(data: CreateProductionScheduleRequest): Promise<ApiResponse<ProductionSchedule>> {
-    return apiClient.mes.post('/api/mes/schedules', data);
+    return apiClient.mes.post('/schedules', data);
   },
 
   async update(
     id: string,
     data: UpdateProductionScheduleRequest
   ): Promise<ApiResponse<ProductionSchedule>> {
-    return apiClient.mes.put(`/api/mes/schedules/${id}`, data);
+    return apiClient.mes.put(`/schedules/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.mes.delete(`/api/mes/schedules/${id}`);
+    return apiClient.mes.delete(`/schedules/${id}`);
   },
 
   async adjust(id: string, data: AdjustScheduleRequest): Promise<ApiResponse<ProductionSchedule>> {
-    return apiClient.mes.put(`/api/mes/schedules/${id}/adjust`, data);
+    return apiClient.mes.put(`/schedules/${id}/adjust`, data);
   },
 
   async getGanttData(params?: {
@@ -62,6 +62,6 @@ export const productionScheduleApi = {
     if (params?.work_station_id) searchParams.set('work_station_id', params.work_station_id);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(`/api/mes/schedules/gantt${queryString ? `?${queryString}` : ''}`);
+    return apiClient.mes.get(`/schedules/gantt${queryString ? `?${queryString}` : ''}`);
   },
 };

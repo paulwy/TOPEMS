@@ -6,7 +6,7 @@ import {
   Copy,
   Check,
 } from 'lucide-react';
-import { Menu, MenuItem, Button } from '@mui/material';
+import {Menu, MenuItem, Button, useTheme} from '@mui/material';
 import { logger } from '@/utils/logger';
 
 interface ChartExportProps {
@@ -22,6 +22,7 @@ const exportFormats = [
 
 export const ChartExport = ({ chartRef, filename = 'chart' }: ChartExportProps) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const theme = useTheme();
   const [copied, setCopied] = useState(false);
 
   const handleExport = async (format: string, mimeType: string) => {
@@ -95,7 +96,7 @@ export const ChartExport = ({ chartRef, filename = 'chart' }: ChartExportProps) 
         onClose={() => setAnchorEl(null)}
       >
         <MenuItem disabled>
-          <span style={{ fontSize: 12, fontWeight: 500, color: 'text.secondary' }}>导出格式</span>
+          <span style={{ fontSize: 12, fontWeight: 500, color: theme.palette.text.secondary }}>导出格式</span>
         </MenuItem>
         {exportFormats.map((format) => (
           <MenuItem

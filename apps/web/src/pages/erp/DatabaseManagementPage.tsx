@@ -58,6 +58,8 @@ import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { useNavigate } from 'react-router-dom';
 
+// TODO(v2-phase2): Replace CircularProgress with LoadingSpinner from '@/components/common/LoadingSpinner'. Complex usage found - manual review needed.
+
 export interface DatabaseTable {
   id: string;
   table_name: string;
@@ -676,7 +678,7 @@ const DatabaseManagementPage: React.FC = () => {
             sx={{
               p: 2.5,
               bgcolor: 'background.paper',
-              borderRadius: 2,
+              borderRadius: 3,
               boxShadow: 1,
               display: 'flex',
               alignItems: 'center',
@@ -714,7 +716,7 @@ const DatabaseManagementPage: React.FC = () => {
       <Box
         sx={{
           bgcolor: 'background.paper',
-          borderRadius: 2,
+          borderRadius: 3,
           boxShadow: 1,
           overflow: 'hidden',
         }}

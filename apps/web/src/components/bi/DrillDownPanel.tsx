@@ -1,15 +1,13 @@
 import { useState } from 'react';
 import { X, ChevronRight, Search, Filter, RefreshCw } from 'lucide-react';
-import {
-  Card,
+import {Card,
   CardHeader,
   CardContent,
   TextField,
   Typography,
   Chip,
   Paper,
-  Button,
-} from '@mui/material';
+  Button, useTheme} from '@mui/material';
 
 interface DrillDownData extends Record<string, any> {
   id: string;
@@ -38,6 +36,7 @@ export function DrillDownPanel({
   columns,
   onRowClick,
 }: DrillDownPanelProps) {
+  const theme = useTheme();
   const [searchTerm, setSearchTerm] = useState('');
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -116,7 +115,7 @@ export function DrillDownPanel({
           }
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <ChevronRight style={{ width: 20, height: 20, color: 'primary.main' }} />
+            <ChevronRight style={{ width: 20, height: 20, color: theme.palette.primary.main }} />
             <Typography
               variant='h6'
               sx={{ fontWeight: 'semibold' }}
@@ -149,7 +148,7 @@ export function DrillDownPanel({
                 transform: 'translateY(-50%)',
                 width: 16,
                 height: 16,
-                color: 'text.secondary',
+                color: theme.palette.text.secondary,
               }}
             />
             <TextField
@@ -184,7 +183,7 @@ export function DrillDownPanel({
               <thead>
                 <tr
                   style={{
-                    backgroundColor: 'grey.50',
+                    backgroundColor: theme.palette.grey[50],
                     position: 'sticky',
                     top: 0,
                   }}

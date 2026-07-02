@@ -13,13 +13,13 @@ import { adaptStandardToFrontend, adaptStandardToBackend } from './adapters';
 export const standardApi = {
   listStandards: async (): Promise<ApiResponse<QualityStandard[]>> => {
     const response =
-      await apiClient.qms.get<PaginatedResponse<QualityStandardBackend>>('/api/qms/standards');
+      await apiClient.qms.get<PaginatedResponse<QualityStandardBackend>>('/standards');
     const adaptedData = (response.data?.standards || []).map(adaptStandardToFrontend);
     return { ...response, data: adaptedData };
   },
 
   getStandard: async (id: string): Promise<ApiResponse<QualityStandard>> => {
-    const response = await apiClient.qms.get<QualityStandardBackend>(`/api/qms/standards/${id}`);
+    const response = await apiClient.qms.get<QualityStandardBackend>(`/standards/${id}`);
     return {
       ...response,
       data: response.data ? adaptStandardToFrontend(response.data) : undefined,
@@ -30,10 +30,7 @@ export const standardApi = {
     data: CreateQualityStandardRequest
   ): Promise<ApiResponse<QualityStandard>> => {
     const backendData = adaptStandardToBackend(data);
-    const response = await apiClient.qms.post<QualityStandardBackend>(
-      '/api/qms/standards',
-      backendData
-    );
+    const response = await apiClient.qms.post<QualityStandardBackend>('/standards', backendData);
     return {
       ...response,
       data: response.data ? adaptStandardToFrontend(response.data) : undefined,
@@ -52,7 +49,7 @@ export const standardApi = {
       status: data.status,
     };
     const response = await apiClient.qms.put<QualityStandardBackend>(
-      `/api/qms/standards/${id}`,
+      `/standards/${id}`,
       backendData
     );
     return {
@@ -62,13 +59,13 @@ export const standardApi = {
   },
 
   deleteStandard: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.qms.delete<boolean>(`/api/qms/standards/${id}`);
+    return apiClient.qms.delete<boolean>(`/standards/${id}`);
   },
 
   listRevisions: async (standardId: string): Promise<ApiResponse<StandardRevision[]>> => {
     const response = await apiClient.qms.get<{
       revisions?: StandardRevision[];
-    }>(`/api/qms/standards/${standardId}/revisions`);
+    }>(`/standards/${standardId}/revisions`);
     return { ...response, data: response.data?.revisions || [] };
   },
 };

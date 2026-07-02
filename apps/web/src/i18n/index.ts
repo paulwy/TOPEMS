@@ -4,10 +4,10 @@ import { initReactI18next } from 'react-i18next';
 // 动态导入翻译文件以优化首屏加载
 const loadTranslations = async () => {
   const savedLanguage = localStorage.getItem('language') || 'zh';
-  
+
   const [enTranslation, zhTranslation] = await Promise.all([
-    import('./locales/en.json').then(m => m.default),
-    import('./locales/zh.json').then(m => m.default),
+    import('./locales/en.json').then((m) => m.default),
+    import('./locales/zh.json').then((m) => m.default),
   ]);
 
   return {

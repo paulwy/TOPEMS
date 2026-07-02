@@ -36,7 +36,7 @@ import { EHSStatusBadge, EHSMeasureTypeBadge, calculateRiskLevel } from '@/compo
 import { useNotification } from '@/hooks/useNotification';
 import { DetailPageTemplate, type TabConfig, type SectionConfig } from '@/components/templates';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 
 interface ControlFormData {
   measure_type: 'engineering' | 'administrative' | 'ppe';
@@ -580,13 +580,15 @@ const EhsHazardDetailPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='危险源详情'
-      subtitle='查看和管理危险源信息'
+      headerProps={{
+        pageIcon: <AlertTriangle sx={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #F97316 0%, #EA580C 100%)',
+      }}
+      backButton={{ href: '/ehs/hazards' }}
+      maxWidth='xl'
     >
       <DetailPageTemplate
         title=''
-        subtitle=''
-        backHref='/ehs'
         loading={loading}
         error={errorMessage}
         onEdit={() => setShowEditModal(true)}

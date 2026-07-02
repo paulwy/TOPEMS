@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import {
-  Card,
+import {Card,
   CardContent,
   CardHeader,
   Chip,
@@ -9,8 +8,7 @@ import {
   Box,
   Tabs,
   Tab,
-  Button,
-} from '@mui/material';
+  Button, useTheme} from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import type { ColumnDef } from '@tanstack/react-table';
 import {
@@ -114,6 +112,7 @@ const CONTROL_TYPE_CONFIG = {
 };
 
 export default function ConsolidationScopePage() {
+  const theme = useTheme();
   const navigate = useNavigate();
   const { error: notifyError } = useNotification();
 
@@ -251,7 +250,7 @@ export default function ConsolidationScopePage() {
       header: '说明',
       accessorKey: 'description',
       cell: ({ row }) => (
-        <span style={{ color: 'text.secondary', fontSize: 14 }}>
+        <span style={{ color: theme.palette.text.secondary, fontSize: 14 }}>
           {row.getValue('description') || '-'}
         </span>
       ),

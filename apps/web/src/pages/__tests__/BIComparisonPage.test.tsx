@@ -71,7 +71,7 @@ describe('BIComparisonPage', () => {
   it('should render page title', async () => {
     renderWithProviders(<BIComparisonPage />);
     await waitFor(() => {
-      expect(screen.getByText('对比分析')).toBeInTheDocument();
+      expect(screen.getByText('数据对比分析')).toBeInTheDocument();
     });
   });
 

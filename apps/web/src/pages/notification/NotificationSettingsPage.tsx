@@ -175,10 +175,17 @@ export const NotificationSettingsPage: React.FC = () => {
   const renderGeneralSettings = () => (
     <Stack spacing={3}>
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 1 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 1 }}
+        >
           通知开关
         </Typography>
-        <Typography variant='body2' color='text.secondary' sx={{ mb: 3 }}>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+          sx={{ mb: 3 }}
+        >
           配置通知总开关和基础行为
         </Typography>
         <Stack spacing={2}>
@@ -193,10 +200,16 @@ export const NotificationSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
                 总通知开关
               </Typography>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 关闭后将不再接收任何通知
               </Typography>
             </Box>
@@ -219,10 +232,16 @@ export const NotificationSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
                 声音提醒
               </Typography>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 收到通知时播放提示音
               </Typography>
             </Box>
@@ -246,10 +265,16 @@ export const NotificationSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
                 震动提醒
               </Typography>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 收到通知时设备震动
               </Typography>
             </Box>
@@ -273,10 +298,16 @@ export const NotificationSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
                 角标显示
               </Typography>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 在应用图标上显示未读数量
               </Typography>
             </Box>
@@ -295,7 +326,10 @@ export const NotificationSettingsPage: React.FC = () => {
       <Divider />
 
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           免打扰时段
         </Typography>
         <Stack spacing={2}>
@@ -310,10 +344,16 @@ export const NotificationSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
                 启用免打扰
               </Typography>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 在指定时段内静默通知
               </Typography>
             </Box>
@@ -365,10 +405,17 @@ export const NotificationSettingsPage: React.FC = () => {
   const renderChannelSettings = () => (
     <Stack spacing={3}>
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 1 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 1 }}
+        >
           通知渠道
         </Typography>
-        <Typography variant='body2' color='text.secondary' sx={{ mb: 3 }}>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+          sx={{ mb: 3 }}
+        >
           配置通知发送渠道和相关参数
         </Typography>
         <Stack spacing={2}>
@@ -394,13 +441,22 @@ export const NotificationSettingsPage: React.FC = () => {
                   justifyContent: 'center',
                 }}
               >
-                <MessageSquare size={18} color='#1976d2' />
+                <MessageSquare
+                  size={18}
+                  color='#1976d2'
+                />
               </Box>
               <Box>
-                <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                <Typography
+                  variant='body2'
+                  sx={{ fontWeight: 500 }}
+                >
                   站内信
                 </Typography>
-                <Typography variant='caption' color='text.secondary'>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   系统内消息通知
                 </Typography>
               </Box>
@@ -435,13 +491,22 @@ export const NotificationSettingsPage: React.FC = () => {
                   justifyContent: 'center',
                 }}
               >
-                <Mail size={18} color='#2e7d32' />
+                <Mail
+                  size={18}
+                  color='#2e7d32'
+                />
               </Box>
               <Box>
-                <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                <Typography
+                  variant='body2'
+                  sx={{ fontWeight: 500 }}
+                >
                   邮件通知
                 </Typography>
-                <Typography variant='caption' color='text.secondary'>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   通过邮件发送通知
                 </Typography>
               </Box>
@@ -489,13 +554,22 @@ export const NotificationSettingsPage: React.FC = () => {
                   justifyContent: 'center',
                 }}
               >
-                <Smartphone size={18} color='#ed6c02' />
+                <Smartphone
+                  size={18}
+                  color='#ed6c02'
+                />
               </Box>
               <Box>
-                <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                <Typography
+                  variant='body2'
+                  sx={{ fontWeight: 500 }}
+                >
                   短信通知
                 </Typography>
-                <Typography variant='caption' color='text.secondary'>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   通过短信发送紧急通知
                 </Typography>
               </Box>
@@ -543,13 +617,22 @@ export const NotificationSettingsPage: React.FC = () => {
                   justifyContent: 'center',
                 }}
               >
-                <Bell size={18} color='#9c27b0' />
+                <Bell
+                  size={18}
+                  color='#9c27b0'
+                />
               </Box>
               <Box>
-                <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                <Typography
+                  variant='body2'
+                  sx={{ fontWeight: 500 }}
+                >
                   推送通知
                 </Typography>
-                <Typography variant='caption' color='text.secondary'>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   浏览器/APP 推送通知
                 </Typography>
               </Box>
@@ -584,13 +667,22 @@ export const NotificationSettingsPage: React.FC = () => {
                   justifyContent: 'center',
                 }}
               >
-                <Users size={18} color='#0288d1' />
+                <Users
+                  size={18}
+                  color='#0288d1'
+                />
               </Box>
               <Box>
-                <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                <Typography
+                  variant='body2'
+                  sx={{ fontWeight: 500 }}
+                >
                   企业微信
                 </Typography>
-                <Typography variant='caption' color='text.secondary'>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   通过企业微信发送通知
                 </Typography>
               </Box>
@@ -623,10 +715,17 @@ export const NotificationSettingsPage: React.FC = () => {
   const renderMessageSettings = () => (
     <Stack spacing={3}>
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 1 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 1 }}
+        >
           消息分类
         </Typography>
-        <Typography variant='body2' color='text.secondary' sx={{ mb: 3 }}>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+          sx={{ mb: 3 }}
+        >
           配置消息展示和分类方式
         </Typography>
         <Stack spacing={2}>
@@ -641,10 +740,16 @@ export const NotificationSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
                 启用消息分类
               </Typography>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 按类型分组显示消息
               </Typography>
             </Box>
@@ -667,10 +772,16 @@ export const NotificationSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
                 按类型分组
               </Typography>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 消息列表按类型分组展示
               </Typography>
             </Box>
@@ -694,10 +805,16 @@ export const NotificationSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
                 显示发送者头像
               </Typography>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 在消息列表中显示头像
               </Typography>
             </Box>
@@ -715,10 +832,16 @@ export const NotificationSettingsPage: React.FC = () => {
       <Divider />
 
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           重要性等级
         </Typography>
-        <FormControl fullWidth size='small'>
+        <FormControl
+          fullWidth
+          size='small'
+        >
           <InputLabel>默认重要性等级</InputLabel>
           <Select
             value={messageSettings.defaultImportance}
@@ -739,7 +862,10 @@ export const NotificationSettingsPage: React.FC = () => {
       <Divider />
 
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           自动已读
         </Typography>
         <Stack spacing={2}>
@@ -754,10 +880,16 @@ export const NotificationSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
                 自动标记已读
               </Typography>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 查看一段时间后自动标记已读
               </Typography>
             </Box>
@@ -796,10 +928,16 @@ export const NotificationSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
                 打开即已读
               </Typography>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 打开消息详情时自动标记已读
               </Typography>
             </Box>
@@ -834,10 +972,17 @@ export const NotificationSettingsPage: React.FC = () => {
   const renderSubscriptionSettings = () => (
     <Stack spacing={3}>
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 1 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 1 }}
+        >
           订阅管理
         </Typography>
-        <Typography variant='body2' color='text.secondary' sx={{ mb: 3 }}>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+          sx={{ mb: 3 }}
+        >
           选择您想要接收的通知类型
         </Typography>
         <Stack spacing={2}>
@@ -852,12 +997,21 @@ export const NotificationSettingsPage: React.FC = () => {
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <AlertCircle size={18} color='#d32f2f' />
+              <AlertCircle
+                size={18}
+                color='#d32f2f'
+              />
               <Box>
-                <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                <Typography
+                  variant='body2'
+                  sx={{ fontWeight: 500 }}
+                >
                   安全告警
                 </Typography>
-                <Typography variant='caption' color='text.secondary'>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   账户安全相关的重要通知
                 </Typography>
               </Box>
@@ -884,12 +1038,21 @@ export const NotificationSettingsPage: React.FC = () => {
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Layers size={18} color='#1976d2' />
+              <Layers
+                size={18}
+                color='#1976d2'
+              />
               <Box>
-                <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                <Typography
+                  variant='body2'
+                  sx={{ fontWeight: 500 }}
+                >
                   系统公告
                 </Typography>
-                <Typography variant='caption' color='text.secondary'>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   系统维护、升级等重要公告
                 </Typography>
               </Box>
@@ -916,12 +1079,21 @@ export const NotificationSettingsPage: React.FC = () => {
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Clock size={18} color='#9c27b0' />
+              <Clock
+                size={18}
+                color='#9c27b0'
+              />
               <Box>
-                <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                <Typography
+                  variant='body2'
+                  sx={{ fontWeight: 500 }}
+                >
                   工作流通知
                 </Typography>
-                <Typography variant='caption' color='text.secondary'>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   审批流程相关的通知
                 </Typography>
               </Box>
@@ -948,12 +1120,21 @@ export const NotificationSettingsPage: React.FC = () => {
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Bell size={18} color='#ed6c02' />
+              <Bell
+                size={18}
+                color='#ed6c02'
+              />
               <Box>
-                <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                <Typography
+                  variant='body2'
+                  sx={{ fontWeight: 500 }}
+                >
                   任务提醒
                 </Typography>
-                <Typography variant='caption' color='text.secondary'>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   任务分配、截止提醒等
                 </Typography>
               </Box>
@@ -980,12 +1161,21 @@ export const NotificationSettingsPage: React.FC = () => {
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <MessageSquare size={18} color='#2e7d32' />
+              <MessageSquare
+                size={18}
+                color='#2e7d32'
+              />
               <Box>
-                <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                <Typography
+                  variant='body2'
+                  sx={{ fontWeight: 500 }}
+                >
                   消息回复
                 </Typography>
-                <Typography variant='caption' color='text.secondary'>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   收到新消息回复时通知
                 </Typography>
               </Box>
@@ -1007,7 +1197,10 @@ export const NotificationSettingsPage: React.FC = () => {
       <Divider />
 
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           通知偏好
         </Typography>
         <Stack spacing={2}>
@@ -1022,10 +1215,16 @@ export const NotificationSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
                 周报订阅
               </Typography>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 每周接收工作周报
               </Typography>
             </Box>
@@ -1051,10 +1250,16 @@ export const NotificationSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
                 产品更新
               </Typography>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 新功能上线、版本更新通知
               </Typography>
             </Box>
@@ -1080,10 +1285,16 @@ export const NotificationSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
                 营销消息
               </Typography>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 活动推广、优惠信息等
               </Typography>
             </Box>
@@ -1106,10 +1317,17 @@ export const NotificationSettingsPage: React.FC = () => {
   const renderAdvancedSettings = () => (
     <Stack spacing={3}>
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 1 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 1 }}
+        >
           重试策略
         </Typography>
-        <Typography variant='body2' color='text.secondary' sx={{ mb: 3 }}>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+          sx={{ mb: 3 }}
+        >
           配置通知发送失败后的重试策略
         </Typography>
         <Stack spacing={2}>
@@ -1124,10 +1342,16 @@ export const NotificationSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
                 启用重试
               </Typography>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 发送失败时自动重试
               </Typography>
             </Box>
@@ -1177,7 +1401,10 @@ export const NotificationSettingsPage: React.FC = () => {
       <Divider />
 
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           限速配置
         </Typography>
         <Stack spacing={2}>
@@ -1192,10 +1419,16 @@ export const NotificationSettingsPage: React.FC = () => {
             }}
           >
             <Box>
-              <Typography variant='body2' sx={{ fontWeight: 500 }}>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
                 启用限速
               </Typography>
-              <Typography variant='caption' color='text.secondary'>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 限制通知发送频率
               </Typography>
             </Box>
@@ -1251,7 +1484,10 @@ export const NotificationSettingsPage: React.FC = () => {
       <Divider />
 
       <Box>
-        <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600, mb: 2 }}
+        >
           Webhook 配置
         </Typography>
         <Stack spacing={2}>
@@ -1266,12 +1502,21 @@ export const NotificationSettingsPage: React.FC = () => {
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Webhook size={18} color='#1976d2' />
+              <Webhook
+                size={18}
+                color='#1976d2'
+              />
               <Box>
-                <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                <Typography
+                  variant='body2'
+                  sx={{ fontWeight: 500 }}
+                >
                   启用 Webhook
                 </Typography>
-                <Typography variant='caption' color='text.secondary'>
+                <Typography
+                  variant='caption'
+                  color='text.secondary'
+                >
                   将通知推送到外部系统
                 </Typography>
               </Box>
@@ -1349,7 +1594,7 @@ export const NotificationSettingsPage: React.FC = () => {
         },
       }}
     >
-      <Paper sx={{ borderRadius: 2, overflow: 'hidden' }}>
+      <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
         <Box
           sx={{
             display: 'grid',
@@ -1407,7 +1652,11 @@ export const NotificationSettingsPage: React.FC = () => {
                       >
                         {group.label}
                       </Typography>
-                      <Typography variant='caption' color='text.secondary' sx={{ display: 'block' }}>
+                      <Typography
+                        variant='caption'
+                        color='text.secondary'
+                        sx={{ display: 'block' }}
+                      >
                         {group.description}
                       </Typography>
                     </Box>
@@ -1419,10 +1668,16 @@ export const NotificationSettingsPage: React.FC = () => {
 
           <Box sx={{ p: 4 }}>
             <Box sx={{ mb: 3 }}>
-              <Typography variant='h5' sx={{ fontWeight: 600, mb: 0.5 }}>
+              <Typography
+                variant='h5'
+                sx={{ fontWeight: 600, mb: 0.5 }}
+              >
                 {currentGroup?.label}
               </Typography>
-              <Typography variant='body2' color='text.secondary'>
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
                 {currentGroup?.description}
               </Typography>
             </Box>
@@ -1441,13 +1696,20 @@ export const NotificationSettingsPage: React.FC = () => {
               }}
             >
               {hasUnsavedChanges && (
-                <Typography variant='body2' color='warning.main'>
+                <Typography
+                  variant='body2'
+                  color='warning.main'
+                >
                   有未保存的更改
                 </Typography>
               )}
               {!hasUnsavedChanges && <Box />}
               <Box sx={{ display: 'flex', gap: 1 }}>
-                <Button variant='outlined' startIcon={<RotateCcw size={16} />} onClick={handleReset}>
+                <Button
+                  variant='outlined'
+                  startIcon={<RotateCcw size={16} />}
+                  onClick={handleReset}
+                >
                   重置
                 </Button>
                 <Button

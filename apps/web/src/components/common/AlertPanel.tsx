@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Bell, Filter, ChevronDown, ChevronUp } from 'lucide-react';
-import { Card, CardContent, CardHeader, Typography, Badge, Button } from '@mui/material';
+import {Card, CardContent, CardHeader, Typography, Badge, Button, useTheme} from '@mui/material';
 import type { AlertLevel } from './AlertCard';
 import { AlertCard } from './AlertCard';
 
@@ -27,6 +27,7 @@ const filterOptions = [
 ];
 
 export const AlertPanel = ({ alerts, onAlertClick }: AlertPanelProps) => {
+  const theme = useTheme();
   const [isExpanded, setIsExpanded] = useState(true);
   const [filter, setFilter] = useState('all');
 
@@ -110,7 +111,7 @@ export const AlertPanel = ({ alerts, onAlertClick }: AlertPanelProps) => {
                   variant={filter === option.value ? 'contained' : 'outlined'}
                   size='small'
                   sx={{
-                    borderRadius: 2,
+                    borderRadius: 3,
                     textTransform: 'none',
                   }}
                 >
@@ -135,7 +136,7 @@ export const AlertPanel = ({ alerts, onAlertClick }: AlertPanelProps) => {
                 style={{
                   textAlign: 'center',
                   padding: 32,
-                  color: 'text.secondary',
+                  color: theme.palette.text.secondary,
                 }}
               >
                 <Bell

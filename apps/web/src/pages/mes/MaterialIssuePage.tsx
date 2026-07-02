@@ -23,7 +23,7 @@ import {
   Paper,
   Button,
 } from '@mui/material';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { MaterialIssue, CreateMaterialIssueRequest, MaterialIssueItem } from '@/api/mes';
 import { mesApi } from '@/api/mes';
@@ -276,7 +276,7 @@ const MaterialIssuePage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: '#fef3c7', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: '#fef3c7', borderRadius: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <FileText
             size={18}
@@ -296,7 +296,7 @@ const MaterialIssuePage: React.FC = () => {
           {issues.filter((i) => i.status === 'pending').length}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary', mb: 1 }}
@@ -310,7 +310,7 @@ const MaterialIssuePage: React.FC = () => {
           {issues.filter((i) => i.status === 'approved').length}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary', mb: 1 }}
@@ -324,7 +324,7 @@ const MaterialIssuePage: React.FC = () => {
           {issues.filter((i) => i.status === 'issued').length}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <PackageOpen
             size={18}
@@ -349,8 +349,12 @@ const MaterialIssuePage: React.FC = () => {
 
   return (
     <PageContainer
-      title='物料领用管理'
-      subtitle='管理物料领用记录,包括领用单号、工单、领用人、物料明细等'
+      autoTitle
+      autoBreadcrumbs
+      headerProps={{
+        pageIcon: <PackageOpen style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+      }}
     >
       <ListPageTemplate
         title=''

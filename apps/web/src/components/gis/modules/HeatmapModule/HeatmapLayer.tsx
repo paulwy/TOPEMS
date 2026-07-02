@@ -194,7 +194,7 @@ const HeatmapLayer: React.FC<HeatmapLayerProps> = ({
 // HeatmapLegend Component
 const HeatmapLegend: React.FC<{ mode: 'density' | 'status' }> = ({ mode }) => {
   return (
-    <Paper sx={{ borderRadius: 2, boxShadow: 3, p: 3 }}>
+    <Paper sx={{ borderRadius: 3, boxShadow: 3, p: 3 }}>
       <Typography
         variant='caption'
         sx={{ fontWeight: 500, color: 'grey.700', mb: 2 }}

@@ -68,7 +68,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
         return (
           <TextField
             fullWidth
-            size="small"
+            size='small'
             label={component.label}
             placeholder={component.placeholder}
             required={component.required}
@@ -83,8 +83,8 @@ const FormRenderer: React.FC<FormRendererProps> = ({
         return (
           <TextField
             fullWidth
-            size="small"
-            type="password"
+            size='small'
+            type='password'
             label={component.label}
             placeholder={component.placeholder}
             required={component.required}
@@ -99,7 +99,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
         return (
           <TextField
             fullWidth
-            size="small"
+            size='small'
             multiline
             rows={(component.props?.rows as number) || 4}
             label={component.label}
@@ -116,8 +116,8 @@ const FormRenderer: React.FC<FormRendererProps> = ({
         return (
           <TextField
             fullWidth
-            size="small"
-            type="number"
+            size='small'
+            type='number'
             label={component.label}
             placeholder={component.placeholder}
             required={component.required}
@@ -137,7 +137,11 @@ const FormRenderer: React.FC<FormRendererProps> = ({
 
       case 'select':
         return (
-          <FormControl fullWidth size="small" required={component.required}>
+          <FormControl
+            fullWidth
+            size='small'
+            required={component.required}
+          >
             <InputLabel>{component.label}</InputLabel>
             <Select
               value={value as string}
@@ -146,79 +150,81 @@ const FormRenderer: React.FC<FormRendererProps> = ({
               multiple={component.props?.multiple as boolean}
               onChange={(e) => handleChange(name, e.target.value)}
             >
-              {(component.props?.options as Array<{ label: string; value: string }>)?.map(
-                (opt) => (
-                  <MenuItem key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </MenuItem>
-                )
-              )}
+              {(component.props?.options as Array<{ label: string; value: string }>)?.map((opt) => (
+                <MenuItem
+                  key={opt.value}
+                  value={opt.value}
+                >
+                  {opt.label}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
         );
 
       case 'radio':
         return (
-          <FormControl component="fieldset" required={component.required}>
-            <FormLabel component="legend">{component.label}</FormLabel>
+          <FormControl
+            component='fieldset'
+            required={component.required}
+          >
+            <FormLabel component='legend'>{component.label}</FormLabel>
             <RadioGroup
               value={value as string}
               onChange={(e) => handleChange(name, e.target.value)}
               row={component.props?.direction !== 'vertical'}
             >
-              {(component.props?.options as Array<{ label: string; value: string }>)?.map(
-                (opt) => (
-                  <FormControlLabel
-                    key={opt.value}
-                    value={opt.value}
-                    control={<Radio size="small" />}
-                    label={opt.label}
-                    disabled={component.disabled || readOnly}
-                  />
-                )
-              )}
+              {(component.props?.options as Array<{ label: string; value: string }>)?.map((opt) => (
+                <FormControlLabel
+                  key={opt.value}
+                  value={opt.value}
+                  control={<Radio size='small' />}
+                  label={opt.label}
+                  disabled={component.disabled || readOnly}
+                />
+              ))}
             </RadioGroup>
           </FormControl>
         );
 
       case 'checkbox':
         return (
-          <FormControl component="fieldset" required={component.required}>
-            <FormLabel component="legend">{component.label}</FormLabel>
+          <FormControl
+            component='fieldset'
+            required={component.required}
+          >
+            <FormLabel component='legend'>{component.label}</FormLabel>
             <Box
               sx={{
                 display: 'flex',
-                flexDirection:
-                  component.props?.direction === 'vertical' ? 'column' : 'row',
+                flexDirection: component.props?.direction === 'vertical' ? 'column' : 'row',
                 flexWrap: 'wrap',
                 gap: 1,
               }}
             >
-              {(component.props?.options as Array<{ label: string; value: string }>)?.map(
-                (opt) => (
-                  <FormControlLabel
-                    key={opt.value}
-                    control={
-                      <Checkbox
-                        size="small"
-                        checked={Array.isArray(value) && value.includes(opt.value)}
-                        onChange={(e) => {
-                          const current = Array.isArray(value) ? [...value] : [];
-                          if (e.target.checked) {
-                            current.push(opt.value);
-                          } else {
-                            const idx = current.indexOf(opt.value);
-                            if (idx > -1) current.splice(idx, 1);
-                          }
-                          handleChange(name, current);
-                        }}
-                        disabled={component.disabled || readOnly}
-                      />
-                    }
-                    label={opt.label}
-                  />
-                )
-              )}
+              {(component.props?.options as Array<{ label: string; value: string }>)?.map((opt) => (
+                <FormControlLabel
+                  key={opt.value}
+                  control={
+                    <Checkbox
+                      size='small'
+                      checked={Array.isArray(value) && value.includes(opt.value)}
+                      onChange={(e) => {
+                        const current = Array.isArray(value) ? [...value] : [];
+                        if (e.target.checked) {
+                          current.push(opt.value);
+                        } else {
+                          const idx = current.indexOf(opt.value);
+                          if (idx > -1) current.splice(idx, 1);
+                        }
+                        handleChange(name, current);
+                      }}
+                      disabled={component.disabled || readOnly}
+                    />
+                  }
+                  label={opt.label}
+                />
+              ))}
             </Box>
           </FormControl>
         );
@@ -231,7 +237,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
                 checked={Boolean(value)}
                 onChange={(e) => handleChange(name, e.target.checked)}
                 disabled={component.disabled || readOnly}
-                size="small"
+                size='small'
               />
             }
             label={component.label}
@@ -305,7 +311,10 @@ const FormRenderer: React.FC<FormRendererProps> = ({
         return (
           <Divider sx={{ my: 2 }}>
             {component.props?.text ? (
-              <Typography variant="body2" color="text.secondary">
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
                 {component.props.text as string}
               </Typography>
             ) : null}
@@ -320,7 +329,10 @@ const FormRenderer: React.FC<FormRendererProps> = ({
             columns={(component.props?.columns as number) || 2}
           >
             {component.children?.map((child, idx) => (
-              <Grid size={{ xs: 12 / ((component.props?.columns as number) || 2) }} key={idx}>
+              <Grid
+                size={{ xs: 12 / ((component.props?.columns as number) || 2) }}
+                key={idx}
+              >
                 {renderComponent(child)}
               </Grid>
             ))}
@@ -329,8 +341,14 @@ const FormRenderer: React.FC<FormRendererProps> = ({
 
       case 'group':
         return (
-          <Paper variant="outlined" sx={{ p: 2 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>
+          <Paper
+            variant='outlined'
+            sx={{ p: 2 }}
+          >
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, mb: 2 }}
+            >
               {component.props?.title as string}
             </Typography>
             <Stack spacing={2}>
@@ -343,16 +361,28 @@ const FormRenderer: React.FC<FormRendererProps> = ({
 
       case 'tabs':
         return (
-          <TabsRenderComponent component={component} renderComponent={renderComponent} />
+          <TabsRenderComponent
+            component={component}
+            renderComponent={renderComponent}
+          />
         );
 
       case 'image-upload':
         return (
           <Box>
             <FormLabel>{component.label}</FormLabel>
-            <Button variant="outlined" component="label" fullWidth sx={{ mt: 1 }}>
+            <Button
+              variant='outlined'
+              component='label'
+              fullWidth
+              sx={{ mt: 1 }}
+            >
               上传图片
-              <input type="file" accept="image/*" hidden />
+              <input
+                type='file'
+                accept='image/*'
+                hidden
+              />
             </Button>
           </Box>
         );
@@ -375,10 +405,10 @@ const FormRenderer: React.FC<FormRendererProps> = ({
         return (
           <TextField
             fullWidth
-            size="small"
+            size='small'
             label={component.label || component.type}
             disabled
-            value="未知组件类型"
+            value='未知组件类型'
           />
         );
     }
@@ -388,9 +418,7 @@ const FormRenderer: React.FC<FormRendererProps> = ({
     <form onSubmit={handleSubmit}>
       <Stack spacing={2}>
         {schema.components.map((component) => (
-          <React.Fragment key={component.id}>
-            {renderComponent(component)}
-          </React.Fragment>
+          <React.Fragment key={component.id}>{renderComponent(component)}</React.Fragment>
         ))}
       </Stack>
     </form>
@@ -409,13 +437,18 @@ const TabsRenderComponent: React.FC<{
       <Tabs
         value={activeTab}
         onChange={(_, newValue) => setActiveTab(newValue)}
-        variant="scrollable"
+        variant='scrollable'
       >
         {tabs.map((tab, idx) => (
-          <Tab key={tab.key} label={tab.label} />
+          <Tab
+            key={tab.key}
+            label={tab.label}
+          />
         ))}
       </Tabs>
-      <Box sx={{ p: 2, border: 1, borderTop: 0, borderColor: 'divider', borderRadius: '0 0 4px 4px' }}>
+      <Box
+        sx={{ p: 2, border: 1, borderTop: 0, borderColor: 'divider', borderRadius: '0 0 4px 4px' }}
+      >
         {component.children?.[activeTab] && renderComponent(component.children[activeTab])}
       </Box>
     </Box>

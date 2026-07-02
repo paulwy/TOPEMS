@@ -11,27 +11,27 @@ export const meetingRoomApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/erp/meeting-rooms${queryString ? `?${queryString}` : ''}`);
+    return apiClient.erp.get(`/meeting-rooms${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<MeetingRoom>> {
-    return apiClient.erp.get(`/api/erp/meeting-rooms/${id}`);
+    return apiClient.erp.get(`/meeting-rooms/${id}`);
   },
 
   async create(data: Partial<MeetingRoom>): Promise<ApiResponse<MeetingRoom>> {
-    return apiClient.erp.post('/api/erp/meeting-rooms', data);
+    return apiClient.erp.post('/meeting-rooms', data);
   },
 
   async update(id: string, data: Partial<MeetingRoom>): Promise<ApiResponse<MeetingRoom>> {
-    return apiClient.erp.put(`/api/erp/meeting-rooms/${id}`, data);
+    return apiClient.erp.put(`/meeting-rooms/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/erp/meeting-rooms/${id}`);
+    return apiClient.erp.delete(`/meeting-rooms/${id}`);
   },
 
   async getBookings(id: string): Promise<ApiResponse<MeetingBooking[]>> {
-    return apiClient.erp.get(`/api/erp/meeting-rooms/${id}/bookings`);
+    return apiClient.erp.get(`/meeting-rooms/${id}/bookings`);
   },
 };
 
@@ -44,22 +44,22 @@ export const meetingBookingApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/erp/meeting-bookings${queryString ? `?${queryString}` : ''}`);
+    return apiClient.erp.get(`/meeting-bookings${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<MeetingBooking>> {
-    return apiClient.erp.get(`/api/erp/meeting-bookings/${id}`);
+    return apiClient.erp.get(`/meeting-bookings/${id}`);
   },
 
   async create(data: Partial<MeetingBooking>): Promise<ApiResponse<MeetingBooking>> {
-    return apiClient.erp.post('/api/erp/meeting-bookings', data);
+    return apiClient.erp.post('/meeting-bookings', data);
   },
 
   async update(id: string, data: Partial<MeetingBooking>): Promise<ApiResponse<MeetingBooking>> {
-    return apiClient.erp.put(`/api/erp/meeting-bookings/${id}`, data);
+    return apiClient.erp.put(`/meeting-bookings/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/erp/meeting-bookings/${id}`);
+    return apiClient.erp.delete(`/meeting-bookings/${id}`);
   },
 };

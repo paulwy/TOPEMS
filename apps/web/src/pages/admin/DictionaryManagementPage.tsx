@@ -17,8 +17,7 @@ import { dictTypeApi, dictItemApi, type DictType, type DictItem } from '@/api/sy
 import { useAppStore } from '../../store';
 import { apiLogger } from '@/utils/logger';
 import { extractErrorMessage } from '@/utils/errors';
-import {
-  Box,
+import {Box,
   TextField,
   Typography,
   Card,
@@ -38,8 +37,7 @@ import {
   Paper,
   Switch,
   IconButton,
-  Button,
-} from '@mui/material';
+  Button, useTheme} from '@mui/material';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 
@@ -60,6 +58,7 @@ const statusLabels: Record<string, string> = {
 };
 
 const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onNavigate }) => {
+  const theme = useTheme();
   const addNotification = useAppStore((state) => state.addNotification);
 
   const [dictTypes, setDictTypes] = useState<DictType[]>([]);
@@ -721,7 +720,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
                 >
                   <Book
                     size={28}
-                    style={{ marginRight: 12, color: 'primary.dark' }}
+                    style={{ marginRight: 12, color: theme.palette.primary.dark }}
                   />
                   字典管理
                 </Typography>
@@ -790,7 +789,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
                           >
                             <Search
                               size={16}
-                              style={{ color: 'text.disabled' }}
+                              style={{ color: theme.palette.text.disabled }}
                             />
                           </Box>
                         ),
@@ -818,7 +817,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
                           >
                             <FolderOpen
                               size={16}
-                              style={{ color: 'text.secondary' }}
+                              style={{ color: theme.palette.text.secondary }}
                             />
                             <Typography
                               variant='caption'
@@ -874,7 +873,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
                                   >
                                     <Tag
                                       size={16}
-                                      style={{ color: 'text.disabled' }}
+                                      style={{ color: theme.palette.text.disabled }}
                                     />
                                     <Box>
                                       <Typography
@@ -893,7 +892,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
                                   </Box>
                                   <ChevronRight
                                     size={16}
-                                    style={{ color: 'text.disabled' }}
+                                    style={{ color: theme.palette.text.disabled }}
                                   />
                                 </Box>
                                 <Chip
@@ -1016,7 +1015,7 @@ const DictionaryManagementPage: React.FC<DictionaryManagementPageProps> = ({ onN
                 <CardContent sx={{ p: 6, textAlign: 'center' }}>
                   <Book
                     size={64}
-                    style={{ color: 'text.disabled', marginBottom: 16 }}
+                    style={{ color: theme.palette.text.disabled, marginBottom: 16 }}
                   />
                   <Typography
                     variant='h6'

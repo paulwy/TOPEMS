@@ -211,7 +211,7 @@ const NotificationCenter: React.FC = () => {
               onClick={() => navigate('/notifications/stats')}
               sx={{
                 p: 1,
-                borderRadius: 2,
+                borderRadius: 3,
                 bgcolor: 'grey.200',
                 color: 'grey.600',
                 '&:hover': { bgcolor: 'grey.300' },
@@ -226,7 +226,7 @@ const NotificationCenter: React.FC = () => {
               onClick={() => navigate('/notifications/templates')}
               sx={{
                 p: 1,
-                borderRadius: 2,
+                borderRadius: 3,
                 bgcolor: 'grey.200',
                 color: 'grey.600',
                 '&:hover': { bgcolor: 'grey.300' },
@@ -241,7 +241,7 @@ const NotificationCenter: React.FC = () => {
               onClick={() => navigate('/notifications/archive')}
               sx={{
                 p: 1,
-                borderRadius: 2,
+                borderRadius: 3,
                 bgcolor: 'grey.200',
                 color: 'grey.600',
                 '&:hover': { bgcolor: 'grey.300' },
@@ -256,7 +256,7 @@ const NotificationCenter: React.FC = () => {
               onClick={() => toggleSetting('enableSound')}
               sx={{
                 p: 1,
-                borderRadius: 2,
+                borderRadius: 3,
                 bgcolor: settings.enableSound ? 'primary.50' : 'grey.200',
                 color: settings.enableSound ? 'primary.main' : 'grey.600',
                 '&:hover': {
@@ -273,7 +273,7 @@ const NotificationCenter: React.FC = () => {
               onClick={() => toggleSetting('enableDesktop')}
               sx={{
                 p: 1,
-                borderRadius: 2,
+                borderRadius: 3,
                 bgcolor: settings.enableDesktop ? 'primary.50' : 'grey.200',
                 color: settings.enableDesktop ? 'primary.main' : 'grey.600',
                 '&:hover': {
@@ -290,7 +290,7 @@ const NotificationCenter: React.FC = () => {
               onClick={() => setShowSettings(!showSettings)}
               sx={{
                 p: 1,
-                borderRadius: 2,
+                borderRadius: 3,
                 bgcolor: showSettings ? 'primary.50' : 'grey.200',
                 color: showSettings ? 'primary.main' : 'grey.600',
                 '&:hover': {
@@ -309,7 +309,7 @@ const NotificationCenter: React.FC = () => {
     >
       <Box sx={{ minHeight: '100vh', bgcolor: 'grey.100' }}>
         <Box sx={{ maxWidth: 1200, mx: 'auto', px: 2, py: 4 }}>
-          <Box sx={{ bgcolor: 'background.paper', borderRadius: 2, boxShadow: 1 }}>
+          <Box sx={{ bgcolor: 'background.paper', borderRadius: 3, boxShadow: 1 }}>
             {showSettings && (
               <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                 <NotificationSettings />
@@ -358,7 +358,7 @@ const NotificationCenter: React.FC = () => {
                       py: 1,
                       border: 1,
                       borderColor: 'grey.300',
-                      borderRadius: 2,
+                      borderRadius: 3,
                       '&:focus': {
                         outline: 'none',
                         borderColor: 'primary.main',
@@ -396,7 +396,7 @@ const NotificationCenter: React.FC = () => {
                       sx={{
                         px: 1.5,
                         py: 1,
-                        borderRadius: 2,
+                        borderRadius: 3,
                         fontSize: '0.875rem',
                         fontWeight: 500,
                         transition: 'all 0.2s',
@@ -424,7 +424,7 @@ const NotificationCenter: React.FC = () => {
                     gap: 1.5,
                     p: 1.5,
                     bgcolor: 'primary.50',
-                    borderRadius: 2,
+                    borderRadius: 3,
                   }}
                 >
                   <Typography
@@ -443,7 +443,7 @@ const NotificationCenter: React.FC = () => {
                       fontWeight: 500,
                       color: 'primary.main',
                       '&:hover': { bgcolor: 'primary.100' },
-                      borderRadius: 2,
+                      borderRadius: 3,
                       transition: 'all 0.2s',
                       display: 'flex',
                       alignItems: 'center',
@@ -463,7 +463,7 @@ const NotificationCenter: React.FC = () => {
                       fontWeight: 500,
                       color: 'error.main',
                       '&:hover': { bgcolor: 'error.50' },
-                      borderRadius: 2,
+                      borderRadius: 3,
                       transition: 'all 0.2s',
                       display: 'flex',
                       alignItems: 'center',
@@ -483,7 +483,7 @@ const NotificationCenter: React.FC = () => {
                       fontWeight: 500,
                       color: 'grey.600',
                       '&:hover': { bgcolor: 'grey.100' },
-                      borderRadius: 2,
+                      borderRadius: 3,
                       transition: 'all 0.2s',
                     }}
                   >
@@ -690,7 +690,7 @@ const NotificationCenter: React.FC = () => {
                       bgcolor: 'background.paper',
                       border: 1,
                       borderColor: 'grey.300',
-                      borderRadius: 2,
+                      borderRadius: 3,
                       '&:hover': { bgcolor: 'grey.50' },
                       disabled: { opacity: 0.5, cursor: 'not-allowed' },
                       display: 'flex',
@@ -714,7 +714,7 @@ const NotificationCenter: React.FC = () => {
                       bgcolor: 'background.paper',
                       border: 1,
                       borderColor: 'grey.300',
-                      borderRadius: 2,
+                      borderRadius: 3,
                       '&:hover': { bgcolor: 'grey.50' },
                       disabled: { opacity: 0.5, cursor: 'not-allowed' },
                       display: 'flex',

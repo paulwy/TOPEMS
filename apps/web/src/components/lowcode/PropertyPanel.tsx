@@ -48,7 +48,10 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
             borderColor: 'divider',
           }}
         >
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          <Typography
+            variant='h6'
+            sx={{ fontWeight: 600 }}
+          >
             属性配置
           </Typography>
         </Box>
@@ -62,7 +65,10 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
             gap: 1,
           }}
         >
-          <Typography variant="body2" color="text.secondary">
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             请选择一个组件
           </Typography>
         </Box>
@@ -95,7 +101,7 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
         return (
           <TextField
             fullWidth
-            size="small"
+            size='small'
             label={prop.label}
             value={String(value || '')}
             onChange={(e) => {
@@ -113,8 +119,8 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
         return (
           <TextField
             fullWidth
-            size="small"
-            type="number"
+            size='small'
+            type='number'
             label={prop.label}
             value={Number(value || 0)}
             onChange={(e) => {
@@ -140,7 +146,7 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
                     handlePropsChange(prop.name, e.target.checked);
                   }
                 }}
-                size="small"
+                size='small'
               />
             }
             label={prop.label}
@@ -149,7 +155,10 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
 
       case 'select':
         return (
-          <FormControl fullWidth size="small">
+          <FormControl
+            fullWidth
+            size='small'
+          >
             <InputLabel>{prop.label}</InputLabel>
             <Select
               value={String(value || '')}
@@ -163,7 +172,10 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
               }}
             >
               {prop.options?.map((opt) => (
-                <MenuItem key={String(opt.value)} value={opt.value as string}>
+                <MenuItem
+                  key={String(opt.value)}
+                  value={opt.value as string}
+                >
                   {opt.label}
                 </MenuItem>
               ))}
@@ -174,12 +186,15 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
       case 'color':
         return (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Typography variant="body2" sx={{ minWidth: 80 }}>
+            <Typography
+              variant='body2'
+              sx={{ minWidth: 80 }}
+            >
               {prop.label}
             </Typography>
             <TextField
-              size="small"
-              type="color"
+              size='small'
+              type='color'
               value={String(value || '#ffffff')}
               onChange={(e) => handlePropsChange(prop.name, e.target.value)}
               sx={{ width: 60 }}
@@ -192,7 +207,7 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
         return (
           <TextField
             fullWidth
-            size="small"
+            size='small'
             label={prop.label}
             value={String(value || '')}
             onChange={(e) => handlePropsChange(prop.name, e.target.value)}
@@ -225,10 +240,16 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
           zIndex: 1,
         }}
       >
-        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+        <Typography
+          variant='h6'
+          sx={{ fontWeight: 600 }}
+        >
           属性配置
         </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <Typography
+          variant='body2'
+          color='text.secondary'
+        >
           {componentDefinition?.name || selectedComponent.type}
         </Typography>
       </Box>
@@ -236,28 +257,31 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
       <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
         <Stack spacing={2}>
           <Box>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, mb: 1.5 }}
+            >
               基础属性
             </Typography>
             <Stack spacing={1.5}>
               <TextField
                 fullWidth
-                size="small"
-                label="组件ID"
+                size='small'
+                label='组件ID'
                 value={selectedComponent.id}
                 disabled
               />
               <TextField
                 fullWidth
-                size="small"
-                label="标签"
+                size='small'
+                label='标签'
                 value={selectedComponent.label || ''}
                 onChange={(e) => handleBaseChange('label', e.target.value)}
               />
               <TextField
                 fullWidth
-                size="small"
-                label="字段名"
+                size='small'
+                label='字段名'
                 value={selectedComponent.name || ''}
                 onChange={(e) => handleBaseChange('name', e.target.value)}
               />
@@ -266,17 +290,17 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
 
           <Divider />
 
-          {componentDefinition?.propSchema &&
-          componentDefinition.propSchema.length > 0 ? (
+          {componentDefinition?.propSchema && componentDefinition.propSchema.length > 0 ? (
             <Box>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>
+              <Typography
+                variant='subtitle2'
+                sx={{ fontWeight: 600, mb: 1.5 }}
+              >
                 组件属性
               </Typography>
               <Stack spacing={1.5}>
                 {componentDefinition.propSchema.map((prop) => (
-                  <React.Fragment key={prop.name}>
-                    {renderPropControl(prop)}
-                  </React.Fragment>
+                  <React.Fragment key={prop.name}>{renderPropControl(prop)}</React.Fragment>
                 ))}
               </Stack>
             </Box>
@@ -285,49 +309,44 @@ const PropertyPanel: React.FC<PropertyPanelProps> = ({
           <Divider />
 
           <Box>
-            <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1.5 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ fontWeight: 600, mb: 1.5 }}
+            >
               样式属性
             </Typography>
             <Stack spacing={1.5}>
               <TextField
                 fullWidth
-                size="small"
-                label="宽度"
+                size='small'
+                label='宽度'
                 value={(selectedComponent.style?.width as string) || ''}
-                placeholder="例如: 100%"
-                onChange={(e) =>
-                  onPropertyChange('style.width', e.target.value)
-                }
+                placeholder='例如: 100%'
+                onChange={(e) => onPropertyChange('style.width', e.target.value)}
               />
               <TextField
                 fullWidth
-                size="small"
-                label="高度"
+                size='small'
+                label='高度'
                 value={(selectedComponent.style?.height as string) || ''}
-                placeholder="例如: auto"
-                onChange={(e) =>
-                  onPropertyChange('style.height', e.target.value)
-                }
+                placeholder='例如: auto'
+                onChange={(e) => onPropertyChange('style.height', e.target.value)}
               />
               <TextField
                 fullWidth
-                size="small"
-                label="外边距"
+                size='small'
+                label='外边距'
                 value={(selectedComponent.style?.margin as string) || ''}
-                placeholder="例如: 8px"
-                onChange={(e) =>
-                  onPropertyChange('style.margin', e.target.value)
-                }
+                placeholder='例如: 8px'
+                onChange={(e) => onPropertyChange('style.margin', e.target.value)}
               />
               <TextField
                 fullWidth
-                size="small"
-                label="内边距"
+                size='small'
+                label='内边距'
                 value={(selectedComponent.style?.padding as string) || ''}
-                placeholder="例如: 8px"
-                onChange={(e) =>
-                  onPropertyChange('style.padding', e.target.value)
-                }
+                placeholder='例如: 8px'
+                onChange={(e) => onPropertyChange('style.padding', e.target.value)}
               />
             </Stack>
           </Box>

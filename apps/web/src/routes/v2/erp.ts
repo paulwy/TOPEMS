@@ -1,4 +1,4 @@
-import { lazyWithRetry } from '../utils';
+import { lazyWithRetry } from './types';
 import type { RouteModuleConfig } from './types';
 
 const ErpDashboardPage = lazyWithRetry(
@@ -27,13 +27,6 @@ export const erpModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'overview',
       requiredPermissions: ['erp:read'],
-      nav: {
-        label: '仪表盘',
-        icon: 'LayoutDashboard',
-        order: 0,
-        group: 'overview',
-        showInTabs: true,
-      },
     },
     {
       path: '/erp/voucher-management',
@@ -47,13 +40,6 @@ export const erpModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['erp:general_ledger:read'],
-      nav: {
-        label: '总账管理',
-        icon: 'Wallet',
-        order: 1,
-        group: 'business',
-        showInTabs: true,
-      },
     },
     {
       path: '/erp/customer-management',
@@ -67,12 +53,6 @@ export const erpModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['erp:customer:read'],
-      nav: {
-        label: '客户管理',
-        icon: 'Users',
-        order: 2,
-        group: 'business',
-      },
     },
     {
       path: '/erp/supplier-management',
@@ -86,12 +66,6 @@ export const erpModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['erp:supplier:read'],
-      nav: {
-        label: '供应商管理',
-        icon: 'Building2',
-        order: 3,
-        group: 'business',
-      },
     },
     {
       path: '/erp/inventory-management',
@@ -105,12 +79,6 @@ export const erpModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['erp:inventory:read'],
-      nav: {
-        label: '库存管理',
-        icon: 'Package',
-        order: 4,
-        group: 'business',
-      },
     },
     {
       path: '/erp/material-management',
@@ -124,12 +92,6 @@ export const erpModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['erp:material:read'],
-      nav: {
-        label: '物料管理',
-        icon: 'Layers',
-        order: 5,
-        group: 'business',
-      },
     },
     {
       path: '/erp/purchase-order',
@@ -143,32 +105,16 @@ export const erpModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'process',
       requiredPermissions: ['erp:purchase_order:read'],
-      nav: {
-        label: '采购订单',
-        icon: 'ShoppingCart',
-        order: 1,
-        group: 'process',
-        showInTabs: true,
-      },
     },
     {
       path: '/erp/sales-order',
-      element: lazyWithRetry(
-        () => import('../../pages/erp/SalesOrderPage'),
-        'SalesOrderPage'
-      ),
+      element: lazyWithRetry(() => import('../../pages/erp/SalesOrderPage'), 'SalesOrderPage'),
       module: 'erp',
       code: 'erp-sales-order',
       title: '销售订单',
       template: 'list',
       group: 'process',
       requiredPermissions: ['erp:sales_order:read'],
-      nav: {
-        label: '销售订单',
-        icon: 'FileText',
-        order: 2,
-        group: 'process',
-      },
     },
     {
       path: '/erp/financial-report',
@@ -182,13 +128,6 @@ export const erpModuleConfig: RouteModuleConfig = {
       template: 'stats',
       group: 'analytics',
       requiredPermissions: ['erp:financial_statement:read'],
-      nav: {
-        label: '财务报表',
-        icon: 'FileSpreadsheet',
-        order: 1,
-        group: 'analytics',
-        showInTabs: true,
-      },
     },
     {
       path: '/erp/dict-management',
@@ -202,12 +141,6 @@ export const erpModuleConfig: RouteModuleConfig = {
       template: 'tree',
       group: 'settings',
       requiredPermissions: ['erp:dictionary:read'],
-      nav: {
-        label: '数据字典',
-        icon: 'BookOpen',
-        order: 1,
-        group: 'settings',
-      },
     },
     {
       path: '/erp/database-management',
@@ -221,31 +154,16 @@ export const erpModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'settings',
       requiredPermissions: ['erp:database:read'],
-      nav: {
-        label: '数据库管理',
-        icon: 'Database',
-        order: 2,
-        group: 'settings',
-      },
     },
     {
       path: '/erp/audit-log',
-      element: lazyWithRetry(
-        () => import('../../pages/erp/AuditLogPage'),
-        'AuditLogPage'
-      ),
+      element: lazyWithRetry(() => import('../../pages/erp/AuditLogPage'), 'AuditLogPage'),
       module: 'erp',
       code: 'erp-audit-log',
       title: '审计日志',
       template: 'list',
       group: 'settings',
       requiredPermissions: ['erp:audit:read'],
-      nav: {
-        label: '审计日志',
-        icon: 'FileCheck',
-        order: 3,
-        group: 'settings',
-      },
     },
   ],
 };

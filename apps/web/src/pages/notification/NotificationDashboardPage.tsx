@@ -20,7 +20,13 @@ import { Box, Typography } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
 import { PageContainer } from '@/components/common';
-import { DashboardTemplate, type StatCard, type ChartCard, type QuickAction, type RecentItem } from '@/components/templates';
+import {
+  DashboardTemplate,
+  type StatCard,
+  type ChartCard,
+  type QuickAction,
+  type RecentItem,
+} from '@/components/templates';
 import { useAppStore } from '../../store';
 import { logError } from '@/utils/errors';
 
@@ -29,200 +35,236 @@ export const NotificationDashboardPage: React.FC = () => {
   const addNotification = useAppStore((state) => state.addNotification);
   const [loading, setLoading] = useState(false);
 
-  const stats: StatCard[] = useMemo(() => [
-    {
-      id: 'unread',
-      title: '未读消息',
-      value: '23',
-      icon: <Bell size={20} />,
-      change: 5,
-      changeLabel: '较昨日',
-      color: 'error',
-    },
-    {
-      id: 'today',
-      title: '今日通知',
-      value: '42',
-      icon: <Inbox size={20} />,
-      change: 8,
-      changeLabel: '较昨日',
-      color: 'primary',
-    },
-    {
-      id: 'week',
-      title: '本周通知',
-      value: '256',
-      icon: <Calendar size={20} />,
-      change: 12,
-      changeLabel: '环比增长',
-      color: 'info',
-    },
-    {
-      id: 'read-rate',
-      title: '已读率',
-      value: '87.5',
-      unit: '%',
-      icon: <CheckCheck size={20} />,
-      change: 3.2,
-      changeLabel: '较上周',
-      color: 'success',
-    },
-    {
-      id: 'channels',
-      title: '通知渠道数',
-      value: '4',
-      icon: <Layers size={20} />,
-      change: 0,
-      changeLabel: '渠道类型',
-      color: 'warning',
-    },
-    {
-      id: 'templates',
-      title: '模板数量',
-      value: '18',
-      icon: <FileText size={20} />,
-      change: 2,
-      changeLabel: '较上月',
-      color: 'secondary',
-    },
-  ], []);
-
-  const charts: ChartCard[] = useMemo(() => [
-    {
-      id: 'trend',
-      title: '通知趋势',
-      subtitle: '近7天发送与已读趋势',
-      icon: <TrendingUp size={18} />,
-      type: 'line',
-      chart: (
-        <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <NotificationTrendChart />
-        </Box>
-      ),
-      height: 300,
-      span: 2,
-    },
-    {
-      id: 'type-distribution',
-      title: '类型分布',
-      subtitle: '系统/审批/任务/消息',
-      icon: <PieChart size={18} />,
-      type: 'pie',
-      chart: (
-        <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <TypeDistributionChart />
-        </Box>
-      ),
-      height: 300,
-      span: 1,
-    },
-    {
-      id: 'channel-distribution',
-      title: '渠道分布',
-      subtitle: '邮件/短信/站内信/推送',
-      icon: <BarChart3 size={18} />,
-      type: 'bar',
-      chart: (
-        <Box sx={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-          <ChannelDistributionChart />
-        </Box>
-      ),
-      height: 300,
-      span: 1,
-    },
-  ], []);
-
-  const quickActions: QuickAction[] = useMemo(() => [
-    {
-      id: 'view-unread',
-      label: '查看未读',
-      icon: <Eye size={20} />,
-      color: 'primary.light',
-      onClick: () => {
-        navigate('/notification/list?filter=unread');
-        addNotification({
-          message: '正在跳转到未读消息列表',
-          type: 'info',
-          duration: 2000,
-        });
+  const stats: StatCard[] = useMemo(
+    () => [
+      {
+        id: 'unread',
+        title: '未读消息',
+        value: '23',
+        icon: <Bell size={20} />,
+        change: 5,
+        changeLabel: '较昨日',
+        color: 'error',
       },
-    },
-    {
-      id: 'mark-all-read',
-      label: '全部已读',
-      icon: <CheckCheck size={20} />,
-      color: 'success.light',
-      onClick: () => {
-        addNotification({
-          message: '所有消息已标记为已读',
-          type: 'success',
-          duration: 2000,
-        });
+      {
+        id: 'today',
+        title: '今日通知',
+        value: '42',
+        icon: <Inbox size={20} />,
+        change: 8,
+        changeLabel: '较昨日',
+        color: 'primary',
       },
-    },
-    {
-      id: 'notification-settings',
-      label: '通知设置',
-      icon: <Settings size={20} />,
-      color: 'info.light',
-      onClick: () => navigate('/notification/settings'),
-    },
-    {
-      id: 'template-management',
-      label: '模板管理',
-      icon: <FileText size={20} />,
-      color: 'warning.light',
-      onClick: () => navigate('/notification/templates'),
-    },
-  ], [navigate, addNotification]);
+      {
+        id: 'week',
+        title: '本周通知',
+        value: '256',
+        icon: <Calendar size={20} />,
+        change: 12,
+        changeLabel: '环比增长',
+        color: 'info',
+      },
+      {
+        id: 'read-rate',
+        title: '已读率',
+        value: '87.5',
+        unit: '%',
+        icon: <CheckCheck size={20} />,
+        change: 3.2,
+        changeLabel: '较上周',
+        color: 'success',
+      },
+      {
+        id: 'channels',
+        title: '通知渠道数',
+        value: '4',
+        icon: <Layers size={20} />,
+        change: 0,
+        changeLabel: '渠道类型',
+        color: 'warning',
+      },
+      {
+        id: 'templates',
+        title: '模板数量',
+        value: '18',
+        icon: <FileText size={20} />,
+        change: 2,
+        changeLabel: '较上月',
+        color: 'secondary',
+      },
+    ],
+    []
+  );
 
-  const recentItems: RecentItem[] = useMemo(() => [
-    {
-      id: '1',
-      title: '系统升级通知',
-      description: '系统将于今晚22:00-24:00进行升级维护',
-      time: '10分钟前',
-      icon: <AlertCircle size={18} />,
-      status: 'warning',
-      onClick: () => navigate('/notification/1'),
-    },
-    {
-      id: '2',
-      title: '采购订单审批通过',
-      description: 'PO-20240630-001 已通过审批',
-      time: '30分钟前',
-      icon: <CheckCircle size={18} />,
-      status: 'success',
-      onClick: () => navigate('/notification/2'),
-    },
-    {
-      id: '3',
-      title: '新任务分配',
-      description: '您有一个新的待处理任务：项目周报',
-      time: '1小时前',
-      icon: <MessageSquare size={18} />,
-      status: 'info',
-      onClick: () => navigate('/notification/3'),
-    },
-    {
-      id: '4',
-      title: '密码安全提醒',
-      description: '您的密码即将过期，请及时更新',
-      time: '2小时前',
-      icon: <Info size={18} />,
-      status: 'default',
-      onClick: () => navigate('/notification/4'),
-    },
-    {
-      id: '5',
-      title: '月度报告已生成',
-      description: '2024年6月运营报告已生成，请查看',
-      time: '昨天',
-      icon: <FileText size={18} />,
-      status: 'success',
-      onClick: () => navigate('/notification/5'),
-    },
-  ], [navigate]);
+  const charts: ChartCard[] = useMemo(
+    () => [
+      {
+        id: 'trend',
+        title: '通知趋势',
+        subtitle: '近7天发送与已读趋势',
+        icon: <TrendingUp size={18} />,
+        type: 'line',
+        chart: (
+          <Box
+            sx={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <NotificationTrendChart />
+          </Box>
+        ),
+        height: 300,
+        span: 2,
+      },
+      {
+        id: 'type-distribution',
+        title: '类型分布',
+        subtitle: '系统/审批/任务/消息',
+        icon: <PieChart size={18} />,
+        type: 'pie',
+        chart: (
+          <Box
+            sx={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <TypeDistributionChart />
+          </Box>
+        ),
+        height: 300,
+        span: 1,
+      },
+      {
+        id: 'channel-distribution',
+        title: '渠道分布',
+        subtitle: '邮件/短信/站内信/推送',
+        icon: <BarChart3 size={18} />,
+        type: 'bar',
+        chart: (
+          <Box
+            sx={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <ChannelDistributionChart />
+          </Box>
+        ),
+        height: 300,
+        span: 1,
+      },
+    ],
+    []
+  );
+
+  const quickActions: QuickAction[] = useMemo(
+    () => [
+      {
+        id: 'view-unread',
+        label: '查看未读',
+        icon: <Eye size={20} />,
+        color: 'primary.light',
+        onClick: () => {
+          navigate('/notification/list?filter=unread');
+          addNotification({
+            message: '正在跳转到未读消息列表',
+            type: 'info',
+            duration: 2000,
+          });
+        },
+      },
+      {
+        id: 'mark-all-read',
+        label: '全部已读',
+        icon: <CheckCheck size={20} />,
+        color: 'success.light',
+        onClick: () => {
+          addNotification({
+            message: '所有消息已标记为已读',
+            type: 'success',
+            duration: 2000,
+          });
+        },
+      },
+      {
+        id: 'notification-settings',
+        label: '通知设置',
+        icon: <Settings size={20} />,
+        color: 'info.light',
+        onClick: () => navigate('/notification/settings'),
+      },
+      {
+        id: 'template-management',
+        label: '模板管理',
+        icon: <FileText size={20} />,
+        color: 'warning.light',
+        onClick: () => navigate('/notification/templates'),
+      },
+    ],
+    [navigate, addNotification]
+  );
+
+  const recentItems: RecentItem[] = useMemo(
+    () => [
+      {
+        id: '1',
+        title: '系统升级通知',
+        description: '系统将于今晚22:00-24:00进行升级维护',
+        time: '10分钟前',
+        icon: <AlertCircle size={18} />,
+        status: 'warning',
+        onClick: () => navigate('/notification/1'),
+      },
+      {
+        id: '2',
+        title: '采购订单审批通过',
+        description: 'PO-20240630-001 已通过审批',
+        time: '30分钟前',
+        icon: <CheckCircle size={18} />,
+        status: 'success',
+        onClick: () => navigate('/notification/2'),
+      },
+      {
+        id: '3',
+        title: '新任务分配',
+        description: '您有一个新的待处理任务：项目周报',
+        time: '1小时前',
+        icon: <MessageSquare size={18} />,
+        status: 'info',
+        onClick: () => navigate('/notification/3'),
+      },
+      {
+        id: '4',
+        title: '密码安全提醒',
+        description: '您的密码即将过期，请及时更新',
+        time: '2小时前',
+        icon: <Info size={18} />,
+        status: 'default',
+        onClick: () => navigate('/notification/4'),
+      },
+      {
+        id: '5',
+        title: '月度报告已生成',
+        description: '2024年6月运营报告已生成，请查看',
+        time: '昨天',
+        icon: <FileText size={18} />,
+        status: 'success',
+        onClick: () => navigate('/notification/5'),
+      },
+    ],
+    [navigate]
+  );
 
   const handleRefresh = () => {
     setLoading(true);
@@ -287,14 +329,28 @@ const NotificationTrendChart: React.FC = () => {
       <Box sx={{ display: 'flex', gap: 2, mb: 1, justifyContent: 'flex-end' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'primary.main' }} />
-          <Typography variant='caption' color='text.secondary'>发送</Typography>
+          <Typography
+            variant='caption'
+            color='text.secondary'
+          >
+            发送
+          </Typography>
         </Box>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
           <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'success.main' }} />
-          <Typography variant='caption' color='text.secondary'>已读</Typography>
+          <Typography
+            variant='caption'
+            color='text.secondary'
+          >
+            已读
+          </Typography>
         </Box>
       </Box>
-      <svg width='100%' height='80%' preserveAspectRatio='none'>
+      <svg
+        width='100%'
+        height='80%'
+        preserveAspectRatio='none'
+      >
         {[0, 25, 50, 75, 100].map((value) => (
           <line
             key={value}
@@ -326,7 +382,11 @@ const NotificationTrendChart: React.FC = () => {
       </svg>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
         {days.map((day) => (
-          <Typography key={day} variant='caption' color='text.secondary'>
+          <Typography
+            key={day}
+            variant='caption'
+            color='text.secondary'
+          >
             {day}
           </Typography>
         ))}
@@ -351,7 +411,11 @@ const TypeDistributionChart: React.FC = () => {
 
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, width: '100%', height: '100%' }}>
-      <svg width='160' height='160' viewBox='0 0 160 160'>
+      <svg
+        width='160'
+        height='160'
+        viewBox='0 0 160 160'
+      >
         {data.map((item, index) => {
           const angle = (item.value / total) * 360;
           const startAngle = currentAngle;
@@ -370,18 +434,38 @@ const TypeDistributionChart: React.FC = () => {
 
           const pathData = `M ${center} ${center} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} Z`;
 
-          return <path key={index} d={pathData} fill={item.color} />;
+          return (
+            <path
+              key={index}
+              d={pathData}
+              fill={item.color}
+            />
+          );
         })}
-        <circle cx={center} cy={center} r={35} fill='white' />
+        <circle
+          cx={center}
+          cy={center}
+          r={35}
+          fill='white'
+        />
       </svg>
       <Box sx={{ flex: 1 }}>
         {data.map((item) => (
-          <Box key={item.label} sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+          <Box
+            key={item.label}
+            sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}
+          >
             <Box sx={{ width: 10, height: 10, borderRadius: '50%', bgcolor: item.color }} />
-            <Typography variant='body2' sx={{ flex: 1 }}>
+            <Typography
+              variant='body2'
+              sx={{ flex: 1 }}
+            >
               {item.label}
             </Typography>
-            <Typography variant='body2' color='text.secondary'>
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               {item.value}%
             </Typography>
           </Box>
@@ -403,10 +487,23 @@ const ChannelDistributionChart: React.FC = () => {
 
   return (
     <Box sx={{ width: '100%', height: '100%', p: 2 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-around', alignItems: 'flex-end', height: '75%' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-around',
+          alignItems: 'flex-end',
+          height: '75%',
+        }}
+      >
         {data.map((item) => (
-          <Box key={item.label} sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
-            <Typography variant='caption' color='text.secondary'>
+          <Box
+            key={item.label}
+            sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}
+          >
+            <Typography
+              variant='caption'
+              color='text.secondary'
+            >
               {item.value}
             </Typography>
             <Box
@@ -423,7 +520,11 @@ const ChannelDistributionChart: React.FC = () => {
       </Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-around', mt: 1 }}>
         {data.map((item) => (
-          <Typography key={item.label} variant='caption' color='text.secondary'>
+          <Typography
+            key={item.label}
+            variant='caption'
+            color='text.secondary'
+          >
             {item.label}
           </Typography>
         ))}

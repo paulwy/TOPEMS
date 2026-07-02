@@ -47,7 +47,7 @@ export const MobileButton: React.FC<MobileButtonProps> = ({
         height: getHeight(),
         fontSize: getFontSize(),
         fontWeight: 500,
-        borderRadius: 2,
+        borderRadius: 3,
         textTransform: 'none',
         minWidth: 88,
         ...sx,

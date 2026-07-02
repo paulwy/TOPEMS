@@ -225,15 +225,15 @@ const LimsInstrumentPage: React.FC = () => {
     color: string;
   } => {
     const colorMap: Record<string, { bgcolor: string; color: string }> = {
-      正常: { bgcolor: 'success.lighter', color: '#15803d' },
-      校准中: { bgcolor: 'warning.light', color: '#b45309' },
+      正常: { bgcolor: 'success.lighter', color: 'success.700' },
+      校准中: { bgcolor: 'warning.light', color: 'warning.700' },
       维修中: { bgcolor: 'error.lighter', color: 'error.darker' },
-      停用: { bgcolor: 'grey.100', color: '#475569' },
-      报废: { bgcolor: 'grey.100', color: '#475569' },
-      normal: { bgcolor: 'success.lighter', color: '#15803d' },
-      calibration: { bgcolor: 'warning.light', color: '#b45309' },
+      停用: { bgcolor: 'grey.100', color: 'grey.600' },
+      报废: { bgcolor: 'grey.100', color: 'grey.600' },
+      normal: { bgcolor: 'success.lighter', color: 'success.700' },
+      calibration: { bgcolor: 'warning.light', color: 'warning.700' },
       maintenance: { bgcolor: 'error.lighter', color: 'error.darker' },
-      disabled: { bgcolor: 'grey.100', color: '#475569' },
+      disabled: { bgcolor: 'grey.100', color: 'grey.600' },
     };
     return colorMap[status] || colorMap['normal'];
   };
@@ -488,11 +488,11 @@ const LimsInstrumentPage: React.FC = () => {
       status: {
         field: 'status',
         options: {
-          正常: { label: '正常', color: '#15803d' },
-          校准中: { label: '校准中', color: '#b45309' },
+          正常: { label: '正常', color: 'success.700' },
+          校准中: { label: '校准中', color: 'warning.700' },
           维修中: { label: '维修中', color: 'error.darker' },
-          停用: { label: '停用', color: '#475569' },
-          报废: { label: '报废', color: '#475569' },
+          停用: { label: '停用', color: 'grey.600' },
+          报废: { label: '报废', color: 'grey.600' },
         },
       },
       icon: (item: unknown) => {
@@ -693,7 +693,7 @@ const LimsInstrumentPage: React.FC = () => {
           onClose={handleCloseNotification}
           severity={notification?.type || 'success'}
           variant='filled'
-          sx={{ borderRadius: 2 }}
+          sx={{ borderRadius: 3 }}
         >
           {notification?.message}
         </Alert>
@@ -746,7 +746,7 @@ const LimsInstrumentPage: React.FC = () => {
         }}
         maxWidth='md'
         fullWidth
-        slotProps={{ paper: { sx: { borderRadius: 2 } } }}
+        slotProps={{ paper: { sx: { borderRadius: 3 } } }}
       >
         <DialogTitle
           sx={{
@@ -1047,7 +1047,7 @@ const LimsInstrumentPage: React.FC = () => {
         onClose={() => setShowInstrumentDetailModal(false)}
         maxWidth='md'
         fullWidth
-        slotProps={{ paper: { sx: { borderRadius: 2 } } }}
+        slotProps={{ paper: { sx: { borderRadius: 3 } } }}
       >
         <DialogContent sx={{ p: 3 }}>
           {selectedInstrument && (
@@ -1233,7 +1233,7 @@ const LimsInstrumentPage: React.FC = () => {
                       sx={{
                         ...{
                           color: selectedInstrument.next_calibration_date
-                            ? '#ea580c'
+                            ? 'warning.600'
                             : 'text.primary',
                         },
                         fontWeight: 'medium',
@@ -1376,7 +1376,7 @@ const LimsInstrumentPage: React.FC = () => {
         onClose={() => setShowMaintenanceModal(false)}
         maxWidth='sm'
         fullWidth
-        slotProps={{ paper: { sx: { borderRadius: 2 } } }}
+        slotProps={{ paper: { sx: { borderRadius: 3 } } }}
       >
         <DialogTitle
           sx={{

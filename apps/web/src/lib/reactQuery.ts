@@ -1,9 +1,9 @@
 import { QueryClient, QueryCache, MutationCache, type DefaultOptions } from '@tanstack/react-query';
-import { useAppStore } from '../store';
+import { useNotificationStore } from '../store';
 
 const queryCache = new QueryCache({
   onError: (error) => {
-    const addNotification = useAppStore.getState().addNotification;
+    const addNotification = useNotificationStore.getState().addNotification;
     addNotification({
       title: '数据加载失败',
       message: error.message,
@@ -14,7 +14,7 @@ const queryCache = new QueryCache({
 
 const mutationCache = new MutationCache({
   onError: (error) => {
-    const addNotification = useAppStore.getState().addNotification;
+    const addNotification = useNotificationStore.getState().addNotification;
     addNotification({
       title: '操作失败',
       message: error.message,

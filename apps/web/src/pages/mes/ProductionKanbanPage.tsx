@@ -15,7 +15,7 @@ import {
   Paper,
   Divider,
 } from '@mui/material';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import React, { useState, useEffect, useCallback } from 'react';
 import { mesApi } from '@/api/mes';
 import type { ProductionKanbanData } from '@/api/mes';
@@ -95,13 +95,22 @@ const ProductionKanbanPage: React.FC = () => {
   if (loading) return <LoadingSpinner />;
   if (!kanbanData) return null;
 
-  const { summary, order_progress, workstation_status, quality_trend, equipment_status } =
-    kanbanData;
+  const {
+    summary,
+    order_progress: orderProgress,
+    workstation_status: workstationStatus,
+    quality_trend: qualityTrend,
+    equipment_status: equipmentStatus,
+  } = kanbanData;
 
   return (
     <PageContainer
-      title='生产看板'
-      subtitle='实时监控生产状态,包括订单进度、工作站状态、质量趋势、设备状态等'
+      autoTitle
+      autoBreadcrumbs
+      headerProps={{
+        pageIcon: <Monitor style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+      }}
     >
       <Box sx={{ mb: 3 }}>
         <Grid
@@ -228,7 +237,7 @@ const ProductionKanbanPage: React.FC = () => {
               </Box>
               <Divider sx={{ mb: 2 }} />
               <Box sx={{ maxHeight: 400, overflow: 'auto' }}>
-                {order_progress.length === 0 ? (
+                {orderProgress.length === 0 ? (
                   <Typography
                     variant='body2'
                     sx={{ color: 'text.secondary', textAlign: 'center', py: 4 }}
@@ -237,7 +246,7 @@ const ProductionKanbanPage: React.FC = () => {
                   </Typography>
                 ) : (
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    {order_progress.map((order) => (
+                    {orderProgress.map((order) => (
                       <Box
                         key={order.order_id}
                         sx={{
@@ -304,10 +313,7 @@ const ProductionKanbanPage: React.FC = () => {
                                 borderRadius: 4,
                                 bgcolor: 'grey.200',
                                 '& .MuiLinearProgress-bar': {
-                                  bgcolor:
-                                    order.progress >= 100
-                                      ? 'success.main'
-                                      : 'primary.main',
+                                  bgcolor: order.progress >= 100 ? 'success.main' : 'primary.main',
                                 },
                               }}
                             />
@@ -345,7 +351,7 @@ const ProductionKanbanPage: React.FC = () => {
               </Box>
               <Divider sx={{ mb: 2 }} />
               <Box sx={{ maxHeight: 400, overflow: 'auto' }}>
-                {workstation_status.length === 0 ? (
+                {workstationStatus.length === 0 ? (
                   <Typography
                     variant='body2'
                     sx={{ color: 'text.secondary', textAlign: 'center', py: 4 }}
@@ -354,7 +360,7 @@ const ProductionKanbanPage: React.FC = () => {
                   </Typography>
                 ) : (
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                    {workstation_status.map((ws) => (
+                    {workstationStatus.map((ws) => (
                       <Box
                         key={ws.work_station_id}
                         sx={{
@@ -414,7 +420,10 @@ const ProductionKanbanPage: React.FC = () => {
                 </Typography>
               </Box>
               <Divider sx={{ mb: 2 }} />
-              <TableContainer component={Paper} variant='outlined'>
+              <TableContainer
+                component={Paper}
+                variant='outlined'
+              >
                 <Table size='small'>
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'grey.50' }}>
@@ -425,7 +434,7 @@ const ProductionKanbanPage: React.FC = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {quality_trend.length === 0 ? (
+                    {qualityTrend.length === 0 ? (
                       <TableRow>
                         <TableCell
                           colSpan={4}
@@ -436,11 +445,14 @@ const ProductionKanbanPage: React.FC = () => {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      quality_trend.map((item, index) => (
+                      qualityTrend.map((item, index) => (
                         <TableRow key={index}>
                           <TableCell>{item.date}</TableCell>
                           <TableCell align='right'>{item.total_quantity}</TableCell>
-                          <TableCell align='right' sx={{ color: 'success.main' }}>
+                          <TableCell
+                            align='right'
+                            sx={{ color: 'success.main' }}
+                          >
                             {item.good_quantity}
                           </TableCell>
                           <TableCell align='right'>
@@ -490,7 +502,10 @@ const ProductionKanbanPage: React.FC = () => {
                 </Typography>
               </Box>
               <Divider sx={{ mb: 2 }} />
-              <TableContainer component={Paper} variant='outlined'>
+              <TableContainer
+                component={Paper}
+                variant='outlined'
+              >
                 <Table size='small'>
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'grey.50' }}>
@@ -501,7 +516,7 @@ const ProductionKanbanPage: React.FC = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {equipment_status.length === 0 ? (
+                    {equipmentStatus.length === 0 ? (
                       <TableRow>
                         <TableCell
                           colSpan={4}
@@ -512,7 +527,7 @@ const ProductionKanbanPage: React.FC = () => {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      equipment_status.map((eq) => (
+                      equipmentStatus.map((eq) => (
                         <TableRow key={eq.equipment_id}>
                           <TableCell>{eq.equipment_code}</TableCell>
                           <TableCell>{eq.equipment_name}</TableCell>

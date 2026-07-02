@@ -62,6 +62,7 @@ const config: RuntimeConfig = {
     ai: getEnv('VITE_AI_SERVICE_URL', '/ai'),
     mobile: getEnv('VITE_MOBILE_SERVICE_URL', '/mobile'),
     migration: getEnv('VITE_MIGRATION_SERVICE_URL', '/migration'),
+    jaeger: getEnv('VITE_JAEGER_SERVICE_URL', 'http://localhost:14268'),
 
     // ========== [已整合] 统一服务 ==========
     communication: getEnv('VITE_COMMUNICATION_SERVICE_URL', '/comm'),

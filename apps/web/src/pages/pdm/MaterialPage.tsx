@@ -25,7 +25,7 @@ import {
   type RowAction,
   type FilterConfig,
 } from '@/components/templates';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 
 interface MaterialFormData {
   code: string;
@@ -328,7 +328,7 @@ export const MaterialPage: React.FC = () => {
         <Box
           sx={{
             p: 2,
-            borderRadius: 2,
+            borderRadius: 3,
             bgcolor: 'background.paper',
             border: 1,
             borderColor: 'divider',
@@ -344,7 +344,7 @@ export const MaterialPage: React.FC = () => {
         <Box
           sx={{
             p: 2,
-            borderRadius: 2,
+            borderRadius: 3,
             bgcolor: 'background.paper',
             border: 1,
             borderColor: 'divider',
@@ -362,7 +362,7 @@ export const MaterialPage: React.FC = () => {
         <Box
           sx={{
             p: 2,
-            borderRadius: 2,
+            borderRadius: 3,
             bgcolor: 'background.paper',
             border: 1,
             borderColor: 'divider',

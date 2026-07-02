@@ -14,22 +14,22 @@ export const officeSupplyApi = {
     if (params?.category) searchParams.set('category', params.category);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/erp/office-supplies${queryString ? `?${queryString}` : ''}`);
+    return apiClient.erp.get(`/office-supplies${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<OfficeSupply>> {
-    return apiClient.erp.get(`/api/erp/office-supplies/${id}`);
+    return apiClient.erp.get(`/office-supplies/${id}`);
   },
 
   async create(data: Partial<OfficeSupply>): Promise<ApiResponse<OfficeSupply>> {
-    return apiClient.erp.post('/api/erp/office-supplies', data);
+    return apiClient.erp.post('/office-supplies', data);
   },
 
   async update(id: string, data: Partial<OfficeSupply>): Promise<ApiResponse<OfficeSupply>> {
-    return apiClient.erp.put(`/api/erp/office-supplies/${id}`, data);
+    return apiClient.erp.put(`/office-supplies/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/erp/office-supplies/${id}`);
+    return apiClient.erp.delete(`/office-supplies/${id}`);
   },
 };

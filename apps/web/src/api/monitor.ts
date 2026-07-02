@@ -1,5 +1,6 @@
 import apiClient from './client';
 import type { ApiResponse } from './client';
+import { apiLogger } from '../utils/logger';
 
 export interface SystemMetrics {
   cpu_usage: number;
@@ -12,12 +13,16 @@ export interface SystemMetrics {
 }
 
 export interface ServiceHealth {
+  id?: string;
   service_name: string;
   status: 'healthy' | 'degraded' | 'unhealthy';
-  latency: number;
-  error_rate: number;
-  last_checked: string;
-  uptime_percentage: number;
+  uptime?: string;
+  response_time?: number;
+  latency?: number;
+  error_rate?: number;
+  last_check?: string;
+  last_checked?: string;
+  uptime_percentage?: number;
 }
 
 export interface ApiPerformance {
@@ -86,21 +91,115 @@ export interface PerformanceReport {
   generated_at: string;
 }
 
+interface RetryConfig {
+  maxRetries: number;
+  baseDelay: number;
+  maxDelay: number;
+}
+
+const DEFAULT_RETRY_CONFIG: RetryConfig = {
+  maxRetries: 2,
+  baseDelay: 100,
+  maxDelay: 500,
+};
+
+const isRetryableError = (error: unknown): boolean => {
+  if (!error) return false;
+
+  const axiosError = error as {
+    response?: { status: number };
+    code?: string;
+    message?: string;
+  };
+
+  if (axiosError.code === 'ERR_NETWORK') {
+    return true;
+  }
+
+  if (
+    axiosError.code === 'ECONNABORTED' ||
+    (axiosError.message && axiosError.message.includes('timeout'))
+  ) {
+    return true;
+  }
+
+  const status = axiosError.response?.status;
+  if (status && (status >= 500 || status === 429)) {
+    return true;
+  }
+
+  return false;
+};
+
+const withRetry = async <T>(
+  fn: () => Promise<T>,
+  config: RetryConfig = DEFAULT_RETRY_CONFIG,
+  context?: string
+): Promise<T> => {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt <= config.maxRetries; attempt++) {
+    try {
+      if (attempt > 0) {
+        const delay = Math.min(config.baseDelay * Math.pow(2, attempt - 1), config.maxDelay);
+        apiLogger.debug(
+          `[Monitor API] Retrying ${context || 'request'} (attempt ${attempt}/${config.maxRetries}), delaying ${delay}ms`
+        );
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      if (!isRetryableError(error)) {
+        apiLogger.debug(
+          `[Monitor API] Non-retryable error for ${context || 'request'}, skipping retries`
+        );
+        throw error;
+      }
+      apiLogger.warn(
+        `[Monitor API] ${context || 'request'} failed (attempt ${attempt}/${config.maxRetries}):`,
+        error
+      );
+    }
+  }
+
+  apiLogger.error(
+    `[Monitor API] ${context || 'request'} failed after ${config.maxRetries} retries`
+  );
+  throw lastError instanceof Error ? lastError : new Error(String(lastError ?? 'Unknown error'));
+};
+
 export const monitorApi = {
   getSystemMetrics: async (): Promise<ApiResponse<SystemMetrics>> => {
-    return apiClient.master.get<SystemMetrics>('/api/monitor/metrics/system');
+    return withRetry(
+      () => apiClient.master.get<SystemMetrics>('/monitor/metrics/system'),
+      DEFAULT_RETRY_CONFIG,
+      'getSystemMetrics'
+    );
   },
 
   getServiceHealth: async (): Promise<ApiResponse<ServiceHealth[]>> => {
-    return apiClient.master.get<ServiceHealth[]>('/api/monitor/health');
+    return withRetry(
+      () => apiClient.master.get<ServiceHealth[]>('/monitor/health'),
+      DEFAULT_RETRY_CONFIG,
+      'getServiceHealth'
+    );
   },
 
   getApiPerformance: async (): Promise<ApiResponse<ApiPerformance[]>> => {
-    return apiClient.master.get<ApiPerformance[]>('/api/monitor/performance/api');
+    return withRetry(
+      () => apiClient.master.get<ApiPerformance[]>('/monitor/performance/api'),
+      DEFAULT_RETRY_CONFIG,
+      'getApiPerformance'
+    );
   },
 
   getDatabaseMetrics: async (): Promise<ApiResponse<DatabaseMetrics>> => {
-    return apiClient.master.get<DatabaseMetrics>('/api/monitor/metrics/database');
+    return withRetry(
+      () => apiClient.master.get<DatabaseMetrics>('/monitor/metrics/database'),
+      DEFAULT_RETRY_CONFIG,
+      'getDatabaseMetrics'
+    );
   },
 
   listAlerts: async (params?: AlertQueryParams): Promise<ApiResponse<PaginatedResponse<Alert>>> => {
@@ -111,21 +210,36 @@ export const monitorApi = {
     if (params?.status) queryParams.append('status', params.status);
     if (params?.service_name) queryParams.append('service_name', params.service_name);
 
-    return apiClient.master.get<PaginatedResponse<Alert>>(
-      `/api/monitor/alerts?${queryParams.toString()}`
+    return withRetry(
+      () =>
+        apiClient.master.get<PaginatedResponse<Alert>>(`/monitor/alerts?${queryParams.toString()}`),
+      DEFAULT_RETRY_CONFIG,
+      'listAlerts'
     );
   },
 
   getAlert: async (id: string): Promise<ApiResponse<Alert>> => {
-    return apiClient.master.get<Alert>(`/api/monitor/alerts/${id}`);
+    return withRetry(
+      () => apiClient.master.get<Alert>(`/monitor/alerts/${id}`),
+      DEFAULT_RETRY_CONFIG,
+      `getAlert(${id})`
+    );
   },
 
   acknowledgeAlert: async (id: string): Promise<ApiResponse<Alert>> => {
-    return apiClient.master.put<Alert>(`/api/monitor/alerts/${id}/acknowledge`);
+    return withRetry(
+      () => apiClient.master.put<Alert>(`/monitor/alerts/${id}/acknowledge`),
+      DEFAULT_RETRY_CONFIG,
+      `acknowledgeAlert(${id})`
+    );
   },
 
   resolveAlert: async (id: string): Promise<ApiResponse<Alert>> => {
-    return apiClient.master.put<Alert>(`/api/monitor/alerts/${id}/resolve`);
+    return withRetry(
+      () => apiClient.master.put<Alert>(`/monitor/alerts/${id}/resolve`),
+      DEFAULT_RETRY_CONFIG,
+      `resolveAlert(${id})`
+    );
   },
 
   getPerformanceReport: async (
@@ -136,16 +250,33 @@ export const monitorApi = {
     if (periodType) queryParams.append('period_type', periodType);
     if (period) queryParams.append('period', period);
 
-    return apiClient.master.get<PerformanceReport>(
-      `/api/monitor/reports/performance?${queryParams.toString()}`
+    return withRetry(
+      () =>
+        apiClient.master.get<PerformanceReport>(
+          `/monitor/reports/performance?${queryParams.toString()}`
+        ),
+      DEFAULT_RETRY_CONFIG,
+      'getPerformanceReport'
     );
   },
 
   getRealtimeMetrics: async (): Promise<ApiResponse<SystemMetrics>> => {
-    return apiClient.master.get<SystemMetrics>('/api/monitor/metrics/realtime');
+    return withRetry(
+      () => apiClient.master.get<SystemMetrics>('/monitor/metrics/realtime'),
+      DEFAULT_RETRY_CONFIG,
+      'getRealtimeMetrics'
+    );
   },
 
   health: async (): Promise<ApiResponse<string>> => {
     return apiClient.master.get<string>('/health');
+  },
+
+  testRetry: async (): Promise<ApiResponse<SystemMetrics>> => {
+    return withRetry(
+      () => apiClient.master.get<SystemMetrics>('/monitor/metrics/test-retry'),
+      DEFAULT_RETRY_CONFIG,
+      'testRetry'
+    );
   },
 };

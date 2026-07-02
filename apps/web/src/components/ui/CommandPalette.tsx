@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import {
-  Dialog,
+import {Dialog,
   Box,
   TextField,
   InputAdornment,
@@ -11,8 +10,7 @@ import {
   Typography,
   Divider,
   Chip,
-  IconButton,
-} from '@mui/material';
+  IconButton, useTheme} from '@mui/material';
 import {
   Search,
   X,
@@ -48,6 +46,7 @@ interface CommandItem {
 }
 
 export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose }) => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const [query, setQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -302,7 +301,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
             input: {
               startAdornment: (
                 <InputAdornment position='start'>
-                  <Search style={{ width: 18, height: 18, color: 'text.secondary' }} />
+                  <Search style={{ width: 18, height: 18, color: theme.palette.text.secondary }} />
                 </InputAdornment>
               ),
               endAdornment: (
@@ -403,7 +402,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({ open, onClose })
                           width: 16,
                           height: 16,
                           opacity: isSelected ? 1 : 0,
-                          color: 'primary.main',
+                          color: theme.palette.primary.main,
                         }}
                       />
                     </ListItemButton>

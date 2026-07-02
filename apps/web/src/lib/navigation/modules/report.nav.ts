@@ -79,7 +79,7 @@ export const reportNavConfig: ModuleNavConfig = {
     {
       code: 'report-template',
       label: '模板管理',
-      icon: 'FolderTemplate',
+      icon: 'FolderKanban',
       path: '/report/template',
       permission: 'report:template:read',
       order: 1,

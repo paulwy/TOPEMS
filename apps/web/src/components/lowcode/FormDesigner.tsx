@@ -15,17 +15,7 @@ import {
   Breadcrumbs,
   Link,
 } from '@mui/material';
-import {
-  Save,
-  Play,
-  Send,
-  Trash2,
-  Copy,
-  ArrowLeft,
-  Settings,
-  Undo,
-  Redo,
-} from 'lucide-react';
+import { Save, Play, Send, Trash2, Copy, ArrowLeft, Settings, Undo, Redo } from 'lucide-react';
 import ComponentPalette from './ComponentPalette';
 import PropertyPanel from './PropertyPanel';
 import DesignCanvas from './DesignCanvas';
@@ -203,10 +193,11 @@ const FormDesigner: React.FC<FormDesignerProps> = ({
     });
   };
 
-  const renderDesignComponent = (component: ComponentSchema, isSelected: boolean): React.ReactNode => {
-    const placeholderStyle: React.CSSProperties = isSelected
-      ? {}
-      : { opacity: 0.9 };
+  const renderDesignComponent = (
+    component: ComponentSchema,
+    isSelected: boolean
+  ): React.ReactNode => {
+    const placeholderStyle: React.CSSProperties = isSelected ? {} : { opacity: 0.9 };
 
     switch (component.type) {
       case 'input':
@@ -244,7 +235,11 @@ const FormDesigner: React.FC<FormDesignerProps> = ({
               minHeight: 80,
             }}
           >
-            <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+            <Typography
+              variant='caption'
+              color='text.secondary'
+              sx={{ mb: 1, display: 'block' }}
+            >
               栅格布局 ({(component.props?.columns as number) || 2}列)
             </Typography>
             <Box
@@ -254,32 +249,38 @@ const FormDesigner: React.FC<FormDesignerProps> = ({
                 gap: 1,
               }}
             >
-              {component.children?.length ? (
-                component.children.map((child, idx) => (
-                  <Box key={idx} sx={{ border: '1px dashed', borderColor: 'divider', p: 1, borderRadius: 0.5 }}>
-                    {renderDesignComponent(child, false)}
-                  </Box>
-                ))
-              ) : (
-                Array.from({ length: component.props?.columns as number || 2 }).map((_, idx) => (
-                  <Box
-                    key={idx}
-                    sx={{
-                      border: '1px dashed',
-                      borderColor: 'grey.300',
-                      height: 60,
-                      borderRadius: 0.5,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Typography variant="caption" color="text.disabled">
-                      放置组件
-                    </Typography>
-                  </Box>
-                ))
-              )}
+              {component.children?.length
+                ? component.children.map((child, idx) => (
+                    <Box
+                      key={idx}
+                      sx={{ border: '1px dashed', borderColor: 'divider', p: 1, borderRadius: 0.5 }}
+                    >
+                      {renderDesignComponent(child, false)}
+                    </Box>
+                  ))
+                : Array.from({ length: (component.props?.columns as number) || 2 }).map(
+                    (_, idx) => (
+                      <Box
+                        key={idx}
+                        sx={{
+                          border: '1px dashed',
+                          borderColor: 'grey.300',
+                          height: 60,
+                          borderRadius: 0.5,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Typography
+                          variant='caption'
+                          color='text.disabled'
+                        >
+                          放置组件
+                        </Typography>
+                      </Box>
+                    )
+                  )}
             </Box>
           </Box>
         );
@@ -288,12 +289,18 @@ const FormDesigner: React.FC<FormDesignerProps> = ({
         return (
           <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 1, overflow: 'hidden' }}>
             <Box sx={{ bgcolor: 'grey.100', p: 1, borderBottom: 1, borderColor: 'divider' }}>
-              <Typography variant="caption" color="text.secondary">
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
                 标签页
               </Typography>
             </Box>
             <Box sx={{ p: 2, minHeight: 80 }}>
-              <Typography variant="body2" color="text.secondary">
+              <Typography
+                variant='body2'
+                color='text.secondary'
+              >
                 标签页组件
               </Typography>
             </Box>
@@ -303,18 +310,22 @@ const FormDesigner: React.FC<FormDesignerProps> = ({
       case 'group':
         return (
           <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 1, p: 2 }}>
-            <Typography variant="subtitle2" sx={{ mb: 1 }}>
+            <Typography
+              variant='subtitle2'
+              sx={{ mb: 1 }}
+            >
               {component.props?.title as string}
             </Typography>
             <Box sx={{ minHeight: 40 }}>
               {component.children?.length ? (
                 component.children.map((child, idx) => (
-                  <React.Fragment key={idx}>
-                    {renderDesignComponent(child, false)}
-                  </React.Fragment>
+                  <React.Fragment key={idx}>{renderDesignComponent(child, false)}</React.Fragment>
                 ))
               ) : (
-                <Typography variant="caption" color="text.disabled">
+                <Typography
+                  variant='caption'
+                  color='text.disabled'
+                >
                   放置子组件
                 </Typography>
               )}
@@ -325,7 +336,10 @@ const FormDesigner: React.FC<FormDesignerProps> = ({
       default:
         return (
           <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
-            <Typography variant="body2" color="text.secondary">
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               {component.label || component.type}
             </Typography>
           </Box>
@@ -343,47 +357,68 @@ const FormDesigner: React.FC<FormDesignerProps> = ({
 
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <AppBar position="static" color="default" elevation={1}>
-        <Toolbar variant="dense">
+      <AppBar
+        position='static'
+        color='default'
+        elevation={1}
+      >
+        <Toolbar variant='dense'>
           {onBack && (
-            <IconButton edge="start" onClick={onBack} sx={{ mr: 1 }}>
+            <IconButton
+              edge='start'
+              onClick={onBack}
+              sx={{ mr: 1 }}
+            >
               <ArrowLeft size={20} />
             </IconButton>
           )}
-          <Breadcrumbs separator=">">
-            <Link color="inherit" underline="hover" href="#">
+          <Breadcrumbs separator='>'>
+            <Link
+              color='inherit'
+              underline='hover'
+              href='#'
+            >
               低代码平台
             </Link>
-            <Typography color="text.primary">表单设计器</Typography>
+            <Typography color='text.primary'>表单设计器</Typography>
           </Breadcrumbs>
           <Box sx={{ flex: 1 }} />
-          <Tooltip title="撤销">
+          <Tooltip title='撤销'>
             <span>
-              <IconButton onClick={handleUndo} disabled={historyIndex <= 0}>
+              <IconButton
+                onClick={handleUndo}
+                disabled={historyIndex <= 0}
+              >
                 <Undo size={20} />
               </IconButton>
             </span>
           </Tooltip>
-          <Tooltip title="重做">
+          <Tooltip title='重做'>
             <span>
-              <IconButton onClick={handleRedo} disabled={historyIndex >= history.length - 1}>
+              <IconButton
+                onClick={handleRedo}
+                disabled={historyIndex >= history.length - 1}
+              >
                 <Redo size={20} />
               </IconButton>
             </span>
           </Tooltip>
-          <Tooltip title="预览">
+          <Tooltip title='预览'>
             <IconButton onClick={() => setShowPreview(true)}>
               <Play size={20} />
             </IconButton>
           </Tooltip>
-          <Tooltip title="保存">
-            <IconButton onClick={handleSave} color="primary">
+          <Tooltip title='保存'>
+            <IconButton
+              onClick={handleSave}
+              color='primary'
+            >
               <Save size={20} />
             </IconButton>
           </Tooltip>
           <Button
-            variant="contained"
-            size="small"
+            variant='contained'
+            size='small'
             startIcon={<Send size={16} />}
             onClick={handlePublish}
             sx={{ ml: 1 }}
@@ -404,7 +439,7 @@ const FormDesigner: React.FC<FormDesignerProps> = ({
           onMove={handleMove}
           onDelete={handleDelete}
           renderComponent={renderDesignComponent}
-          emptyText="拖拽表单组件到此处开始设计"
+          emptyText='拖拽表单组件到此处开始设计'
         />
 
         <PropertyPanel
@@ -417,7 +452,7 @@ const FormDesigner: React.FC<FormDesignerProps> = ({
       <Dialog
         open={showPreview}
         onClose={() => setShowPreview(false)}
-        maxWidth="md"
+        maxWidth='md'
         fullWidth
       >
         <DialogTitle>表单预览</DialogTitle>

@@ -14,7 +14,7 @@ import { adaptResponse } from './utils';
 
 export const mapApi = {
   getStatistics: async (): Promise<ApiResponse<GisStatistics>> => {
-    return apiClient.gis.get<GisStatistics>('/api/gis/statistics');
+    return apiClient.gis.get<GisStatistics>('/statistics');
   },
 
   listFactoryMaps: async (
@@ -25,9 +25,7 @@ export const mapApi = {
     if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
     if (params?.search) queryParams.append('search', params.search);
 
-    const response = await apiClient.gis.get<any>(
-      `/api/gis/factory-maps?${queryParams.toString()}`
-    );
+    const response = await apiClient.gis.get<any>(`/factory-maps?${queryParams.toString()}`);
     if (response.success && response.data) {
       response.data = adaptResponse<FactoryMap>(response.data, 'factory_maps');
     }
@@ -35,22 +33,22 @@ export const mapApi = {
   },
 
   getFactoryMap: async (id: string): Promise<ApiResponse<FactoryMap>> => {
-    return apiClient.gis.get<FactoryMap>(`/api/gis/factory-maps/${id}`);
+    return apiClient.gis.get<FactoryMap>(`/factory-maps/${id}`);
   },
 
   createFactoryMap: async (data: CreateFactoryMapRequest): Promise<ApiResponse<FactoryMap>> => {
-    return apiClient.gis.post<FactoryMap>('/api/gis/factory-maps', data);
+    return apiClient.gis.post<FactoryMap>('/factory-maps', data);
   },
 
   updateFactoryMap: async (
     id: string,
     data: Partial<CreateFactoryMapRequest>
   ): Promise<ApiResponse<FactoryMap>> => {
-    return apiClient.gis.put<FactoryMap>(`/api/gis/factory-maps/${id}`, data);
+    return apiClient.gis.put<FactoryMap>(`/factory-maps/${id}`, data);
   },
 
   deleteFactoryMap: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.gis.delete<void>(`/api/gis/factory-maps/${id}`);
+    return apiClient.gis.delete<void>(`/factory-maps/${id}`);
   },
 
   listMapMarkers: async (
@@ -61,7 +59,7 @@ export const mapApi = {
     if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
     if (params?.search) queryParams.append('search', params.search);
 
-    const response = await apiClient.gis.get<any>(`/api/gis/map-markers?${queryParams.toString()}`);
+    const response = await apiClient.gis.get<any>(`/map-markers?${queryParams.toString()}`);
     if (response.success && response.data) {
       response.data = adaptResponse<MapMarker>(response.data, 'map_markers');
     }
@@ -69,28 +67,28 @@ export const mapApi = {
   },
 
   createMapMarker: async (data: CreateMapMarkerRequest): Promise<ApiResponse<MapMarker>> => {
-    return apiClient.gis.post<MapMarker>('/api/gis/map-markers', data);
+    return apiClient.gis.post<MapMarker>('/map-markers', data);
   },
 
   updateMapMarker: async (
     id: string,
     data: Partial<CreateMapMarkerRequest>
   ): Promise<ApiResponse<MapMarker>> => {
-    return apiClient.gis.put<MapMarker>(`/api/gis/map-markers/${id}`, data);
+    return apiClient.gis.put<MapMarker>(`/map-markers/${id}`, data);
   },
 
   deleteMapMarker: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.gis.delete<void>(`/api/gis/map-markers/${id}`);
+    return apiClient.gis.delete<void>(`/map-markers/${id}`);
   },
 
   search: async (query: string, type?: string): Promise<ApiResponse<any>> => {
     const params = new URLSearchParams({ q: query });
     if (type) params.append('type', type);
-    return apiClient.gis.get<any>(`/api/gis/search?${params.toString()}`);
+    return apiClient.gis.get<any>(`/search?${params.toString()}`);
   },
 
   exportGeoJSON: async (): Promise<ApiResponse<GeoJSON>> => {
-    return apiClient.gis.get<GeoJSON>('/api/gis/geojson/export');
+    return apiClient.gis.get<GeoJSON>('/geojson/export');
   },
 
   health: async (): Promise<ApiResponse<string>> => {
@@ -101,7 +99,7 @@ export const mapApi = {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('type', type);
-    return apiClient.gis.post<any>('/api/gis/import', formData, {
+    return apiClient.gis.post<any>('/import', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },

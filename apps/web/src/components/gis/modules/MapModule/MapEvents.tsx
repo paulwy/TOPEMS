@@ -5,12 +5,7 @@ import { useMap, useMapEvents } from 'react-leaflet';
 import type { DrawFeature } from '../shared/types';
 
 type ToolMode =
-  | 'select'
-  | 'measure-distance'
-  | 'measure-area'
-  | 'draw-point'
-  | 'draw-line'
-  | 'draw-polygon';
+  'select' | 'measure-distance' | 'measure-area' | 'draw-point' | 'draw-line' | 'draw-polygon';
 
 interface MapEventsProps {
   toolMode: ToolMode;

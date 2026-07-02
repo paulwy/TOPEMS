@@ -128,12 +128,17 @@ pnpm dev:backend
 
 ```
 ✅ unified-core (8000) - 运行中
+[DETAIL] 注册 erp 到 unified-core...
+[DETAIL] erp 注册成功
 ✅ erp (8010) - 运行中
+[DETAIL] 注册 hrm 到 unified-core...
+[DETAIL] hrm 注册成功
 ✅ hrm (8020) - 运行中
 ... （其他服务按需启动）
 ```
 
 > 后端是 Rust 进程，**直接运行在本地端口上**，不是容器。
+> 服务启动后会**自动向 unified-core 注册**，无需手动配置。
 
 ### 步骤 6：启动前端
 
@@ -182,7 +187,35 @@ curl http://localhost:8064/health
 curl http://localhost:8020/health
 ```
 
-### 2. API 测试
+### 2. 插件注册验证
+
+服务启动后会自动向 unified-core 注册，验证注册是否成功：
+
+```bash
+# 查看已注册插件列表
+curl -s http://localhost:8000/api/plugins/info | python3 -m json.tool
+
+# 预期输出（部分）
+# {
+#     "success": true,
+#     "data": [
+#         {
+#             "code": "erp",
+#             "name": "ERP系统",
+#             "runtime_status": "running",
+#             "runtime_url": "http://localhost:8010"
+#         },
+#         {
+#             "code": "lims",
+#             "name": "实验室管理",
+#             "runtime_status": "running",
+#             "runtime_url": "http://localhost:8051"
+#         }
+#     ]
+# }
+```
+
+### 3. API 测试
 
 ```bash
 # 登录获取 Token
@@ -200,7 +233,7 @@ curl -H "Authorization: Bearer $TOKEN" \
   http://localhost:8020/api/hrm/employees
 ```
 
-### 3. AI 测试（可选）
+### 4. AI 测试（可选）
 
 ```bash
 # 启动 Ollama

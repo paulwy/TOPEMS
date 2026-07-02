@@ -5,6 +5,12 @@
  * Supports both static (bundled) and dynamic (remote) modules.
  */
 
+// ============================================================================
+// Core Modules (Remote modules loaded via Module Federation)
+// ============================================================================
+
+import { getCoreModules } from './core-modules';
+
 export interface ModuleConfig {
   /** Unique module identifier */
   id: string;
@@ -50,12 +56,6 @@ export interface ModuleRoute {
   /** Child routes */
   children?: ModuleRoute[];
 }
-
-// ============================================================================
-// Core Modules (Remote modules loaded via Module Federation)
-// ============================================================================
-
-import { getCoreModules } from './core-modules';
 
 const isStaticMode = import.meta.env.VITE_DEPLOYMENT_MODE === 'static';
 

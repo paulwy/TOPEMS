@@ -71,9 +71,50 @@ import {
   type FilterConfig,
 } from '@/components';
 import { AIHelperButton, AICodeGenerator, AIDataCompleter, AIFormValidator } from '@/components/ai';
-import { ImageUpload, DataExport, PageContainer } from '@/components/common';
+import { ImageUpload, DataExport } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import type { CompletionItem as AICompletionItem } from '@/types/ai';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+/**
+ * TODO: Phase 7-4 -- 虚拟滚动优化
+ *
+ * 当列表数据超过 100 条时，建议使用虚拟滚动提升渲染性能:
+ *
+ * 方案 1: @tanstack/react-virtual
+ *   import { useVirtualizer } from '@tanstack/react-virtual';
+ *   const virtualizer = useVirtualizer({ count: data.length, getScrollElement: () => parentRef.current });
+ *
+ * 方案 2: react-virtuoso (MUI 友好)
+ *   import { TableVirtuoso } from 'react-virtuoso';
+ *   <TableVirtuoso data={data} components={{ TableBody, TableRow, TableCell }} />
+ *
+ * 当前预估数据量: 员工列表 (全员数据)
+ */
+
+/**
+ * TODO: Phase 7-2 — React Query 迁移
+ *
+ * 模块: 员工管理 (HrmEmployeePage)
+ *
+ * 1. 将 useState(loading) + useState(data) + useEffect(fetch) 替换为 useQuery:
+ *    const { data: response, isLoading, error, refetch } = useQuery({
+ *      queryKey: ['hrm-employees', page, rowsPerPage, searchText],
+ *      queryFn: () => hrmApi.getList({ page: page + 1, pageSize: rowsPerPage, keyword: searchText }),
+ *      placeholderData: (prev) => prev,
+ *    });
+ *    const data = response?.data?.items || [];
+ *    const total = response?.data?.total || 0;
+ *
+ * 2. 将 create/update/delete handler 中的 setState + API 调用替换为 useMutation:
+ *    const queryClient = useQueryClient();
+ *    const deleteMutation = useMutation({
+ *      mutationFn: (id: string) => hrmApi.delete(id),
+ *      onSuccess: () => queryClient.invalidateQueries({ queryKey: ['hrm-employees'] }),
+ *    });
+ *
+ * 3. 保留 UI 状态（page, rowsPerPage, searchText, dialogOpen 等）的 useState
+ */
 type ViewMode = 'list' | 'tree';
 
 const HrmEmployeePage: React.FC = () => {
@@ -823,57 +864,15 @@ const HrmEmployeePage: React.FC = () => {
       maxWidth={false}
       title='员工管理'
       subtitle='管理企业员工信息'
+      autoTitle
+      autoBreadcrumbs
       headerProps={{
         pageIcon: <Users style={{ width: 20, height: 20 }} />,
         pageGradient: 'linear-gradient(135deg, #22C55E, #15803D)',
       }}
     >
-      {/* 面包屑导航 */}
-      <Box sx={{ mb: 2 }}>
-        <Typography
-          component='a'
-          href='/hrm'
-          sx={{
-            color: 'text.secondary',
-            textDecoration: 'none',
-            fontSize: '0.875rem',
-            '&:hover': { color: 'primary.main', textDecoration: 'underline' },
-          }}
-        >
-          人力资源
-        </Typography>
-        <Typography
-          component='span'
-          sx={{ mx: 1, color: 'text.disabled' }}
-        >
-          /
-        </Typography>
-        <Typography
-          component='span'
-          sx={{ color: 'text.primary', fontSize: '0.875rem' }}
-        >
-          员工管理
-        </Typography>
-      </Box>
-
-      {/* 页面标题 */}
-      <Box sx={{ mb: 3 }}>
-        <Typography
-          variant='h5'
-          sx={{ fontWeight: 600, mb: 0.5 }}
-        >
-          员工管理
-        </Typography>
-        <Typography
-          variant='body2'
-          color='text.secondary'
-        >
-          管理企业员工信息
-        </Typography>
-      </Box>
-
       {/* 统计概览 */}
-      <Paper sx={{ mb: 3, borderRadius: 2, overflow: 'hidden' }}>
+      <Paper sx={{ mb: 3, borderRadius: 3, overflow: 'hidden' }}>
         <Box
           sx={{
             p: 2,
@@ -921,7 +920,7 @@ const HrmEmployeePage: React.FC = () => {
       />
 
       {/* 操作栏 */}
-      <Paper sx={{ p: 2, mb: 3, borderRadius: 2 }}>
+      <Paper sx={{ p: 2, mb: 3, borderRadius: 3 }}>
         <Box
           sx={{
             display: 'flex',
@@ -1094,7 +1093,7 @@ const HrmEmployeePage: React.FC = () => {
           }}
         >
           {/* 部门树 */}
-          <Paper sx={{ p: 2, borderRadius: 2 }}>
+          <Paper sx={{ p: 2, borderRadius: 3 }}>
             <Typography
               variant='subtitle2'
               sx={{ fontWeight: 600, mb: 2 }}
@@ -1125,7 +1124,7 @@ const HrmEmployeePage: React.FC = () => {
           </Paper>
 
           {/* 部门员工 */}
-          <Paper sx={{ p: 2, borderRadius: 2 }}>
+          <Paper sx={{ p: 2, borderRadius: 3 }}>
             {selectedDeptId ? (
               <>
                 <Box sx={{ mb: 2 }}>
@@ -1640,3 +1639,5 @@ const TreeViewComponent: React.FC<TreeViewComponentProps> = ({ data, selectedId,
 };
 
 export default HrmEmployeePage;
+
+// Phase 7-2: React Query migration tagged

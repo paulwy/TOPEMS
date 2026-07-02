@@ -6,20 +6,36 @@ import QmsInspectionPage from '../qms/QmsInspectionPage';
 import { qmsApi } from '@/api/qms';
 import { useAppStore } from '@/store';
 
-vi.mock('@/api/qms');
+vi.mock('@/api/qms', () => ({
+  qmsApi: {
+    listChecks: vi.fn(),
+    getCheck: vi.fn(),
+    createCheck: vi.fn(),
+    updateCheck: vi.fn(),
+    deleteCheck: vi.fn(),
+    assignCheck: vi.fn(),
+    submitCheckResult: vi.fn(),
+    auditCheck: vi.fn(),
+    reworkCheck: vi.fn(),
+    getCheckResults: vi.fn(),
+    getCheckAudits: vi.fn(),
+  },
+}));
 vi.mock('@/store', () => ({
   useAppStore: vi.fn((selector?: any) =>
-    selector ? selector({
-      addNotification: mockAddNotification,
-      notifications: [],
-      user: null,
-      theme: 'light',
-    }) : {
-      addNotification: mockAddNotification,
-      notifications: [],
-      user: null,
-      theme: 'light',
-    }
+    selector
+      ? selector({
+          addNotification: mockAddNotification,
+          notifications: [],
+          user: null,
+          theme: 'light',
+        })
+      : {
+          addNotification: mockAddNotification,
+          notifications: [],
+          user: null,
+          theme: 'light',
+        }
   ),
 }));
 
@@ -52,17 +68,19 @@ describe('QmsInspectionPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (useAppStore as vi.Mock).mockImplementation((selector?: any) =>
-      selector ? selector({
-        addNotification: mockAddNotification,
-        notifications: [],
-        user: null,
-        theme: 'light',
-      }) : {
-        addNotification: mockAddNotification,
-        notifications: [],
-        user: null,
-        theme: 'light',
-      }
+      selector
+        ? selector({
+            addNotification: mockAddNotification,
+            notifications: [],
+            user: null,
+            theme: 'light',
+          })
+        : {
+            addNotification: mockAddNotification,
+            notifications: [],
+            user: null,
+            theme: 'light',
+          }
     );
     (qmsApi.listChecks as vi.Mock).mockResolvedValue({
       success: true,
@@ -75,10 +93,10 @@ describe('QmsInspectionPage', () => {
     expect(screen.getByText('加载中...')).toBeInTheDocument();
   });
 
-  it('should render page title', async () => {
+  it('should render inspection statistics after loading', async () => {
     renderWithProviders(<QmsInspectionPage />);
     await waitFor(() => {
-      expect(screen.getByText('质量检验')).toBeInTheDocument();
+      expect(screen.getByText('检验总数')).toBeInTheDocument();
     });
   });
 
@@ -109,11 +127,11 @@ describe('QmsInspectionPage', () => {
 
     renderWithProviders(<QmsInspectionPage />);
     await waitFor(() => {
-      const addButton = screen.getByText(/新建/);
+      const addButton = screen.getByRole('button', { name: /新建/ });
       fireEvent.click(addButton);
     });
 
-    const saveButton = screen.getByText('保存');
+    const saveButton = screen.getByRole('button', { name: '保存' });
     fireEvent.click(saveButton);
 
     await waitFor(() => {

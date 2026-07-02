@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Play, Eye, RotateCcw, FileSearch } from 'lucide-react';
-import {
-  Box,
+import {Box,
   Dialog,
   DialogContent,
   DialogTitle,
@@ -15,8 +14,7 @@ import {
   TableHead,
   TableRow,
   Paper,
-  Button,
-} from '@mui/material';
+  Button, useTheme} from '@mui/material';
 import { useAppStore } from '@/store';
 import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
@@ -27,6 +25,7 @@ interface ServiceStatusMap {
 }
 
 const MigrationAdminPage: React.FC = () => {
+  const theme = useTheme();
   const addNotification = useAppStore((state) => state.addNotification);
   const [services, setServices] = useState<MigrationService[]>([]);
   const [loading, setLoading] = useState(true);
@@ -364,7 +363,7 @@ const MigrationAdminPage: React.FC = () => {
         ]}
         onRefresh={fetchServices}
         emptyMessage='暂无可管理的迁移服务'
-        emptyIcon={<FileSearch style={{ width: 48, height: 48, color: 'text.disabled' }} />}
+        emptyIcon={<FileSearch style={{ width: 48, height: 48, color: theme.palette.text.disabled }} />}
       />
 
       <Dialog

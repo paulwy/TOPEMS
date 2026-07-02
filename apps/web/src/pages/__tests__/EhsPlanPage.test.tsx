@@ -9,17 +9,19 @@ import { useAppStore } from '@/store';
 vi.mock('@/api/ehs');
 vi.mock('@/store', () => ({
   useAppStore: vi.fn((selector?: any) =>
-    selector ? selector({
-      addNotification: mockAddNotification,
-      notifications: [],
-      user: null,
-      theme: 'light',
-    }) : {
-      addNotification: mockAddNotification,
-      notifications: [],
-      user: null,
-      theme: 'light',
-    }
+    selector
+      ? selector({
+          addNotification: mockAddNotification,
+          notifications: [],
+          user: null,
+          theme: 'light',
+        })
+      : {
+          addNotification: mockAddNotification,
+          notifications: [],
+          user: null,
+          theme: 'light',
+        }
   ),
 }));
 
@@ -45,17 +47,19 @@ describe('EhsPlanPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     (useAppStore as vi.Mock).mockImplementation((selector?: any) =>
-      selector ? selector({
-        addNotification: mockAddNotification,
-        notifications: [],
-        user: null,
-        theme: 'light',
-      }) : {
-        addNotification: mockAddNotification,
-        notifications: [],
-        user: null,
-        theme: 'light',
-      }
+      selector
+        ? selector({
+            addNotification: mockAddNotification,
+            notifications: [],
+            user: null,
+            theme: 'light',
+          })
+        : {
+            addNotification: mockAddNotification,
+            notifications: [],
+            user: null,
+            theme: 'light',
+          }
     );
     (ehsApi.listPlans as vi.Mock).mockResolvedValue({
       success: true,
@@ -65,13 +69,15 @@ describe('EhsPlanPage', () => {
 
   it('should render loading state initially', async () => {
     renderWithProviders(<EhsPlanPage />);
-    expect(screen.getByText('应急预案')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('应急预案列表')).toBeInTheDocument();
+    });
   });
 
   it('should render page title', async () => {
     renderWithProviders(<EhsPlanPage />);
     await waitFor(() => {
-      expect(screen.getByText('应急预案')).toBeInTheDocument();
+      expect(screen.getByText('应急预案列表')).toBeInTheDocument();
     });
   });
 

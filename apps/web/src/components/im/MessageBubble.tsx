@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTheme } from '@mui/material';
 import { User, FileText, Check, CheckCheck, MoreVertical, Trash2, Edit3 } from 'lucide-react';
 import type { ChatMessage } from '../../api/im';
 
@@ -17,6 +18,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
   onEdit,
   onDelete,
 }) => {
+  const theme = useTheme();
   const [showMenu, setShowMenu] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(message.content);
@@ -81,7 +83,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: isSent ? 'primary.main' : 'grey.300',
+            backgroundColor: isSent ? theme.palette.primary.main : theme.palette.grey[300],
             marginLeft: isSent ? 8 : 0,
             marginRight: isSent ? 0 : 8,
           }}
@@ -90,7 +92,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             style={{
               width: 16,
               height: 16,
-              color: isSent ? 'white' : 'text.secondary',
+              color: isSent ? 'white' : theme.palette.text.secondary,
             }}
           />
         </div>
@@ -99,8 +101,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             position: 'relative',
             borderRadius: 8,
             padding: 12,
-            backgroundColor: isSent ? 'primary.main' : 'grey.100',
-            color: isSent ? 'white' : 'text.primary',
+            backgroundColor: isSent ? theme.palette.primary.main : theme.palette.grey[100],
+            color: isSent ? 'white' : theme.palette.text.primary,
           }}
         >
           {isSent && (
@@ -113,13 +115,21 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 transition: 'opacity 0.15s',
                 cursor: 'pointer',
               }}
+              role='button'
+              tabIndex={0}
               onClick={() => setShowMenu(!showMenu)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setShowMenu(!showMenu);
+                }
+              }}
             >
               <MoreVertical
                 style={{
                   width: 16,
                   height: 16,
-                  color: 'text.disabled',
+                  color: theme.palette.text.disabled,
                   backgroundColor: 'white',
                   borderRadius: '9999px',
                   padding: 2,
@@ -150,7 +160,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   gap: 8,
                   padding: '8px 16px',
                   fontSize: 14,
-                  color: 'grey.700',
+                  color: theme.palette.grey[700],
                   backgroundColor: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
@@ -168,7 +178,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   gap: 8,
                   padding: '8px 16px',
                   fontSize: 14,
-                  color: 'error.dark',
+                  color: theme.palette.error.dark,
                   backgroundColor: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
@@ -205,8 +215,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   fontSize: 14,
                   resize: 'none',
                   backgroundColor: isSent ? '#4338ca' : 'white',
-                  color: isSent ? 'white' : 'text.primary',
-                  border: `1px solid ${isSent ? 'primary.light' : 'grey.300'}`,
+                  color: isSent ? 'white' : theme.palette.text.primary,
+                  border: `1px solid ${isSent ? theme.palette.primary.light : theme.palette.grey[300]}`,
                 }}
                 rows={3}
                 autoFocus
@@ -218,8 +228,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     fontSize: 12,
                     padding: '4px 12px',
                     borderRadius: 4,
-                    backgroundColor: isSent ? 'primary.light' : 'grey.200',
-                    color: isSent ? 'white' : 'grey.700',
+                    backgroundColor: isSent ? theme.palette.primary.light : theme.palette.grey[200],
+                    color: isSent ? 'white' : theme.palette.grey[700],
                     border: 'none',
                     cursor: 'pointer',
                   }}
@@ -232,8 +242,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     fontSize: 12,
                     padding: '4px 12px',
                     borderRadius: 4,
-                    backgroundColor: isSent ? 'white' : 'primary.main',
-                    color: isSent ? 'primary.main' : 'white',
+                    backgroundColor: isSent ? 'white' : theme.palette.primary.main,
+                    color: isSent ? theme.palette.primary.main : 'white',
                     border: 'none',
                     cursor: 'pointer',
                   }}
@@ -243,17 +253,20 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               </div>
             </div>
           ) : isImage && message.content ? (
-            <img
-              src={message.content}
-              alt='Shared image'
-              style={{
-                borderRadius: 8,
-                maxWidth: '100%',
-                cursor: 'pointer',
-                maxHeight: 300,
-              }}
-              onClick={() => window.open(message.content, '_blank')}
-            />
+            <>
+              {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/img-redundant-alt */}
+              <img
+                src={message.content}
+                alt='Shared image'
+                style={{
+                  borderRadius: 8,
+                  maxWidth: '100%',
+                  cursor: 'pointer',
+                  maxHeight: 300,
+                }}
+                onClick={() => window.open(message.content, '_blank')}
+              />
+            </>
           ) : isFile ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <FileText style={{ width: 20, height: 20 }} />
@@ -263,7 +276,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 rel='noopener noreferrer'
                 style={{
                   textDecoration: 'underline',
-                  color: isSent ? 'white' : 'primary.main',
+                  color: isSent ? 'white' : theme.palette.primary.main,
                 }}
               >
                 {message.file_name || message.content}
@@ -282,7 +295,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 gap: 4,
                 marginTop: 4,
                 fontSize: 12,
-                color: isSent ? 'secondary.main' : 'text.secondary',
+                color: isSent ? theme.palette.secondary.main : theme.palette.text.secondary,
               }}
             >
               <span>{formatTime(message.created_at)}</span>

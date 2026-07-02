@@ -22,7 +22,7 @@ import {
   type DepartmentFinancialSummary,
 } from '@/api/erp';
 import { useAppStore } from '@/store';
-import { Box, Button, FormControl, InputLabel, Select, MenuItem, Chip, Alert } from '@mui/material';
+import {Box, Button, FormControl, InputLabel, Select, MenuItem, Chip, Alert, useTheme} from '@mui/material';
 import { StatsPageTemplate } from '@/components/templates/StatsPageTemplate';
 import type {
   StatCard,
@@ -34,6 +34,7 @@ import { apiLogger } from '@/utils/logger';
 import { PageContainer } from '@/components/common';
 
 const FinanceReportsPage: React.FC = () => {
+  const theme = useTheme();
   const addNotification = useAppStore((state) => state.addNotification);
 
   const [period, setPeriod] = useState<string>('');
@@ -219,7 +220,7 @@ const FinanceReportsPage: React.FC = () => {
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <Calendar
           size={16}
-          style={{ color: 'text.disabled' }}
+          style={{ color: theme.palette.text.disabled }}
         />
         <FormControl
           size='small'

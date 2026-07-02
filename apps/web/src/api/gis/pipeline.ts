@@ -13,7 +13,7 @@ export const pipelineApi = {
     if (params?.search) queryParams.append('search', params.search);
     if (params?.status) queryParams.append('status', params.status);
 
-    const response = await apiClient.gis.get<any>(`/api/gis/pipelines?${queryParams.toString()}`);
+    const response = await apiClient.gis.get<any>(`/pipelines?${queryParams.toString()}`);
     if (response.success && response.data) {
       response.data = adaptResponse<Pipeline>(response.data, 'pipelines');
     }
@@ -21,7 +21,7 @@ export const pipelineApi = {
   },
 
   getPipeline: async (id: string): Promise<ApiResponse<Pipeline>> => {
-    return apiClient.gis.get<Pipeline>(`/api/gis/pipelines/${id}`);
+    return apiClient.gis.get<Pipeline>(`/pipelines/${id}`);
   },
 
   listPipelinesByMap: async (
@@ -33,22 +33,22 @@ export const pipelineApi = {
     if (params?.pagesize) queryParams.append('pagesize', params.pagesize.toString());
 
     return apiClient.gis.get<PaginatedResponse<Pipeline>>(
-      `/api/gis/pipelines/map/${mapId}?${queryParams.toString()}`
+      `/pipelines/map/${mapId}?${queryParams.toString()}`
     );
   },
 
   createPipeline: async (data: CreatePipelineRequest): Promise<ApiResponse<Pipeline>> => {
-    return apiClient.gis.post<Pipeline>('/api/gis/pipelines', data);
+    return apiClient.gis.post<Pipeline>('/pipelines', data);
   },
 
   updatePipeline: async (
     id: string,
     data: Partial<CreatePipelineRequest>
   ): Promise<ApiResponse<Pipeline>> => {
-    return apiClient.gis.put<Pipeline>(`/api/gis/pipelines/${id}`, data);
+    return apiClient.gis.put<Pipeline>(`/pipelines/${id}`, data);
   },
 
   deletePipeline: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.gis.delete<void>(`/api/gis/pipelines/${id}`);
+    return apiClient.gis.delete<void>(`/pipelines/${id}`);
   },
 };

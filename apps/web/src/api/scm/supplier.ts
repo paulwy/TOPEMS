@@ -4,22 +4,22 @@ import type { Supplier, CreateSupplierRequest, UpdateSupplierRequest } from './t
 
 export const supplierApi = {
   list: async (params?: PaginationParams): Promise<ApiResponse<PaginatedResponse<Supplier>>> => {
-    return apiClient.scm.get('/api/scm/suppliers', { params });
+    return apiClient.scm.get('/suppliers', { params });
   },
 
   create: async (data: CreateSupplierRequest): Promise<ApiResponse<Supplier>> => {
-    return apiClient.scm.post('/api/scm/suppliers', data);
+    return apiClient.scm.post('/suppliers', data);
   },
 
   get: async (id: string): Promise<ApiResponse<Supplier>> => {
-    return apiClient.scm.get(`/api/scm/suppliers/${id}`);
+    return apiClient.scm.get(`/suppliers/${id}`);
   },
 
   update: async (id: string, data: UpdateSupplierRequest): Promise<ApiResponse<Supplier>> => {
-    return apiClient.scm.put(`/api/scm/suppliers/${id}`, data);
+    return apiClient.scm.put(`/suppliers/${id}`, data);
   },
 
   delete: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.scm.delete(`/api/scm/suppliers/${id}`);
+    return apiClient.scm.delete(`/suppliers/${id}`);
   },
 };

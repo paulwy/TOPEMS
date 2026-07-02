@@ -1,21 +1,42 @@
 //! Equipment handlers
 
-use axum::{extract::Path, extract::State, extract::Extension, routing::{delete, get, post, put}, Json, Router};
-use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
+use axum::{
+    extract::Extension,
+    extract::Path,
+    extract::State,
+    routing::{delete, get, post, put},
+    Json, Router,
+};
 use chrono::Datelike;
+use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, PgPool};
 use topems_shared::auth::Claims;
 
-use crate::AppState;
 use crate::services::permission::{check_permission, ModulePermission};
+use crate::AppState;
 use topems_shared::response::ApiResponse;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/mes/equipment", get(list_equipment).post(create_equipment))
-        .route("/api/mes/equipment/{id}", get(get_equipment).put(update_equipment).delete(delete_equipment))
-        .route("/api/mes/equipment/{id}/maintenance", post(maintenance_equipment))
+        .route(
+            "/api/mes/equipment",
+            get(list_equipment).post(create_equipment),
+        )
+        .route(
+            "/api/mes/equipment/statistics",
+            get(get_equipment_statistics),
+        )
+        .route(
+            "/api/mes/equipment/{id}",
+            get(get_equipment)
+                .put(update_equipment)
+                .delete(delete_equipment),
+        )
+        .route(
+            "/api/mes/equipment/{id}/maintenance",
+            post(maintenance_equipment),
+        )
 }
 
 // ==================== Data Types ====================
@@ -73,7 +94,8 @@ pub struct ListEquipmentResponse {
 }
 
 fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
-    dt.map(|d| Utc.from_utc_datetime(&d)).unwrap_or_else(Utc::now)
+    dt.map(|d| Utc.from_utc_datetime(&d))
+        .unwrap_or_else(Utc::now)
 }
 
 // ==================== Equipment Handlers ====================
@@ -108,23 +130,26 @@ pub async fn list_equipment(
         }
     };
 
-    let equipment_list: Vec<EquipmentResponse> = equipment.into_iter().map(|r| EquipmentResponse {
-        id: r.id,
-        equipment_no: r.equipment_no,
-        name: r.name,
-        model: r.model,
-        manufacturer: r.manufacturer,
-        status: r.status.unwrap_or_else(|| "normal".to_string()),
-        location: r.location,
-        purchase_date: r.purchase_date,
-        warranty_end_date: r.warranty_end_date,
-        maintenance_cycle: r.maintenance_cycle.unwrap_or(30),
-        last_maintenance_date: r.last_maintenance_date,
-        next_maintenance_date: r.next_maintenance_date,
-        description: r.description,
-        created_at: naive_to_utc(r.created_at),
-        updated_at: naive_to_utc(r.updated_at),
-    }).collect();
+    let equipment_list: Vec<EquipmentResponse> = equipment
+        .into_iter()
+        .map(|r| EquipmentResponse {
+            id: r.id,
+            equipment_no: r.equipment_no,
+            name: r.name,
+            model: r.model,
+            manufacturer: r.manufacturer,
+            status: r.status.unwrap_or_else(|| "normal".to_string()),
+            location: r.location,
+            purchase_date: r.purchase_date,
+            warranty_end_date: r.warranty_end_date,
+            maintenance_cycle: r.maintenance_cycle.unwrap_or(30),
+            last_maintenance_date: r.last_maintenance_date,
+            next_maintenance_date: r.next_maintenance_date,
+            description: r.description,
+            created_at: naive_to_utc(r.created_at),
+            updated_at: naive_to_utc(r.updated_at),
+        })
+        .collect();
 
     let total = equipment_list.len() as i64;
 
@@ -142,12 +167,17 @@ pub async fn create_equipment(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateEquipmentRequest>,
 ) -> Json<ApiResponse<EquipmentResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentWrite).await {
+    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentWrite).await
+    {
         return e;
     }
 
     let now = Utc::now();
-    let equipment_no = format!("EQ{}{:04}", now.format("%Y%m%d"), rand::random::<u16>() % 10000);
+    let equipment_no = format!(
+        "EQ{}{:04}",
+        now.format("%Y%m%d"),
+        rand::random::<u16>() % 10000
+    );
 
     let maintenance_cycle = req.maintenance_cycle.unwrap_or(30);
     let next_maintenance_date = req.purchase_date.map(|d| {
@@ -276,7 +306,8 @@ pub async fn update_equipment(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateEquipmentRequest>,
 ) -> Json<ApiResponse<EquipmentResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentWrite).await {
+    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentWrite).await
+    {
         return e;
     }
 
@@ -357,7 +388,8 @@ pub async fn delete_equipment(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentWrite).await {
+    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentWrite).await
+    {
         return e;
     }
 
@@ -391,7 +423,8 @@ pub async fn maintenance_equipment(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<EquipmentResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentWrite).await {
+    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentWrite).await
+    {
         return e;
     }
 
@@ -451,5 +484,54 @@ pub async fn maintenance_equipment(
             Json(ApiResponse::success(equipment, "设备维护成功"))
         }
         None => Json(ApiResponse::error(404, "设备不存在")),
+    }
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct EquipmentStatisticsResponse {
+    pub total: i64,
+    pub in_use: i64,
+    pub idle: i64,
+    pub maintenance: i64,
+    pub fault: i64,
+}
+
+pub async fn get_equipment_statistics(
+    State(state): State<AppState>,
+    Extension(claims): Extension<Claims>,
+) -> Json<ApiResponse<EquipmentStatisticsResponse>> {
+    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentRead).await {
+        return e;
+    }
+
+    let result = sqlx::query!(
+        r#"
+        SELECT
+            COUNT(*) as total,
+            COUNT(*) FILTER (WHERE status IN ('normal', 'running', 'in_use', 'active')) as in_use,
+            COUNT(*) FILTER (WHERE status IN ('idle', 'standby')) as idle,
+            COUNT(*) FILTER (WHERE status = 'maintenance') as maintenance,
+            COUNT(*) FILTER (WHERE status IN ('fault', 'error', 'abnormal')) as fault
+        FROM equipment
+        "#
+    )
+    .fetch_one(&state.pool)
+    .await;
+
+    match result {
+        Ok(r) => {
+            let stats = EquipmentStatisticsResponse {
+                total: r.total.unwrap_or(0),
+                in_use: r.in_use.unwrap_or(0),
+                idle: r.idle.unwrap_or(0),
+                maintenance: r.maintenance.unwrap_or(0),
+                fault: r.fault.unwrap_or(0),
+            };
+            Json(ApiResponse::success(stats, "获取设备统计成功"))
+        }
+        Err(e) => {
+            tracing::error!("Failed to fetch equipment statistics: {}", e);
+            Json(ApiResponse::error(500, "获取设备统计失败"))
+        }
     }
 }

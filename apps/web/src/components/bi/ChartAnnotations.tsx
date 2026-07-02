@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Flag, MessageSquare, Tag, Plus, X, Edit3, Check } from 'lucide-react';
-import { TextField, Chip, Paper, Button } from '@mui/material';
+import {TextField, Chip, Paper, Button, useTheme} from '@mui/material';
 
 export interface Annotation {
   id: string;
@@ -46,6 +46,7 @@ export function ChartAnnotations({
   onDeleteAnnotation,
   enabled = true,
 }: ChartAnnotationsProps) {
+  const theme = useTheme();
   const [showAddMenu, setShowAddMenu] = useState(false);
   const [selectedType, setSelectedType] = useState<'flag' | 'note' | 'tag'>('flag');
   const [selectedColor, setSelectedColor] = useState('error.main');
@@ -124,7 +125,7 @@ export function ChartAnnotations({
             style={{
               fontSize: 12,
               fontWeight: 500,
-              color: 'text.secondary',
+              color: theme.palette.text.secondary,
               marginBottom: 8,
             }}
           >
@@ -132,7 +133,7 @@ export function ChartAnnotations({
           </div>
 
           <div style={{ marginBottom: 8 }}>
-            <div style={{ fontSize: 12, color: 'text.disabled', marginBottom: 4 }}>类型</div>
+            <div style={{ fontSize: 12, color: theme.palette.text.disabled, marginBottom: 4 }}>类型</div>
             <div style={{ display: 'flex', gap: 4 }}>
               {annotationTypes.map((type) => {
                 const Icon = type.icon;
@@ -148,7 +149,7 @@ export function ChartAnnotations({
                       borderRadius: 8,
                       border: 'none',
                       backgroundColor: selectedType === type.id ? '#DBEAFE' : 'transparent',
-                      color: selectedType === type.id ? '#1D4ED8' : 'text.secondary',
+                      color: selectedType === type.id ? '#1D4ED8' : theme.palette.text.secondary,
                       cursor: 'pointer',
                     }}
                     onMouseEnter={(e) => {
@@ -169,7 +170,7 @@ export function ChartAnnotations({
           </div>
 
           <div style={{ marginBottom: 8 }}>
-            <div style={{ fontSize: 12, color: 'text.disabled', marginBottom: 4 }}>颜色</div>
+            <div style={{ fontSize: 12, color: theme.palette.text.disabled, marginBottom: 4 }}>颜色</div>
             <div style={{ display: 'flex', gap: 4 }}>
               {annotationTypes
                 .find((t) => t.id === selectedType)
@@ -299,7 +300,7 @@ export function ChartAnnotations({
                 }}
               />
               <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: 14, color: 'text.primary', margin: 0 }}>
+                <p style={{ fontSize: 14, color: theme.palette.text.primary, margin: 0 }}>
                   {annotation.content}
                 </p>
               </div>

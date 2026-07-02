@@ -13,11 +13,7 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
-import type {
-  Batch,
-  CreateBatchRequest,
-  UpdateBatchRequest,
-} from '@/api/wms';
+import type { Batch, CreateBatchRequest, UpdateBatchRequest } from '@/api/wms';
 import { wmsApi } from '@/api/wms';
 import { useAppStore } from '@/store';
 import { Plus, Edit, Trash2, Layers, AlertTriangle, Package, ArrowRightLeft } from 'lucide-react';
@@ -26,7 +22,10 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 
-const statusConfig: Record<string, { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }> = {
+const statusConfig: Record<
+  string,
+  { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }
+> = {
   in_stock: { label: '在库', color: 'success' },
   out_stock: { label: '已出库', color: 'default' },
   reserved: { label: '已预留', color: 'warning' },
@@ -34,7 +33,10 @@ const statusConfig: Record<string, { label: string; color: 'default' | 'primary'
   scrapped: { label: '报废', color: 'default' },
 };
 
-const qualityStatusConfig: Record<string, { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }> = {
+const qualityStatusConfig: Record<
+  string,
+  { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }
+> = {
   qualified: { label: '合格', color: 'success' },
   unqualified: { label: '不合格', color: 'error' },
   pending: { label: '待检', color: 'warning' },
@@ -313,7 +315,11 @@ const BatchManagementPage: React.FC = () => {
       id: 'expiry_date',
       label: '有效期至',
       render: (row) => (
-        <Box sx={{ color: isExpired(row) ? 'error.main' : isExpiringSoon(row) ? 'warning.main' : 'inherit' }}>
+        <Box
+          sx={{
+            color: isExpired(row) ? 'error.main' : isExpiringSoon(row) ? 'warning.main' : 'inherit',
+          }}
+        >
           {row.expiry_date ? new Date(row.expiry_date).toLocaleDateString('zh-CN') : '-'}
           {row.remaining_days !== undefined && row.remaining_days >= 0 && (
             <Box sx={{ fontSize: '0.75rem' }}>剩余 {row.remaining_days} 天</Box>
@@ -326,7 +332,14 @@ const BatchManagementPage: React.FC = () => {
       label: '质检状态',
       render: (row) => {
         const config = qualityStatusConfig[row.quality_status] || qualityStatusConfig.pending;
-        return <Chip size='small' label={config.label} color={config.color} variant='outlined' />;
+        return (
+          <Chip
+            size='small'
+            label={config.label}
+            color={config.color}
+            variant='outlined'
+          />
+        );
       },
     },
     {
@@ -334,7 +347,13 @@ const BatchManagementPage: React.FC = () => {
       label: '状态',
       render: (row) => {
         const config = statusConfig[row.status] || statusConfig.in_stock;
-        return <Chip size='small' label={config.label} color={config.color} />;
+        return (
+          <Chip
+            size='small'
+            label={config.label}
+            color={config.color}
+          />
+        );
       },
     },
   ];
@@ -430,7 +449,12 @@ const BatchManagementPage: React.FC = () => {
         emptyMessage='暂无批次数据'
       />
 
-      <Dialog open={showDialog} onClose={() => setShowDialog(false)} maxWidth='lg' fullWidth>
+      <Dialog
+        open={showDialog}
+        onClose={() => setShowDialog(false)}
+        maxWidth='lg'
+        fullWidth
+      >
         <DialogTitle>{isEditing ? '编辑批次' : '新增批次'}</DialogTitle>
         <DialogContent>
           <form onSubmit={handleSubmit}>
@@ -545,7 +569,9 @@ const BatchManagementPage: React.FC = () => {
                 label='保质期(天)'
                 type='number'
                 value={formData.shelf_life_days}
-                onChange={(e) => setFormData({ ...formData, shelf_life_days: Number(e.target.value) })}
+                onChange={(e) =>
+                  setFormData({ ...formData, shelf_life_days: Number(e.target.value) })
+                }
                 size='small'
               />
               <TextField
@@ -567,10 +593,16 @@ const BatchManagementPage: React.FC = () => {
               sx={{ mt: 2 }}
             />
             <DialogActions sx={{ mt: 2 }}>
-              <Button variant='outlined' onClick={() => setShowDialog(false)}>
+              <Button
+                variant='outlined'
+                onClick={() => setShowDialog(false)}
+              >
                 取消
               </Button>
-              <Button type='submit' variant='contained'>
+              <Button
+                type='submit'
+                variant='contained'
+              >
                 {isEditing ? '更新' : '保存'}
               </Button>
             </DialogActions>

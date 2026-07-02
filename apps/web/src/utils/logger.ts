@@ -170,7 +170,7 @@ export const logger = createLogger('App', {
 });
 
 export const apiLogger = createLogger('API', {
-  level: import.meta.env.PROD ? 'warn' : 'info',
+  level: import.meta.env.PROD ? 'warn' : 'debug',
   prefix: 'API',
 });
 

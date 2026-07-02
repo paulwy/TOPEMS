@@ -258,7 +258,10 @@ const highlightText = (text: string, keyword: string): React.ReactNode => {
   return (
     <>
       {text.slice(0, index)}
-      <Box component="span" sx={{ bgcolor: 'warning.light', px: 0.25, borderRadius: 0.5 }}>
+      <Box
+        component='span'
+        sx={{ bgcolor: 'warning.light', px: 0.25, borderRadius: 0.5 }}
+      >
         {text.slice(index, index + keyword.length)}
       </Box>
       {text.slice(index + keyword.length)}
@@ -268,7 +271,7 @@ const highlightText = (text: string, keyword: string): React.ReactNode => {
 
 const truncateText = (text: string, maxLength: number): string => {
   if (text.length <= maxLength) return text;
-  return text.slice(0, maxLength) + '...';
+  return `${text.slice(0, maxLength)}...`;
 };
 
 export const MonitorLogsPage: React.FC = () => {
@@ -366,10 +369,34 @@ export const MonitorLogsPage: React.FC = () => {
     const slowQueryCount = logs.filter((l) => l.type === 'slow_query').length;
 
     return [
-      { id: 'today', title: '今日日志数', value: todayLogs.length, icon: <FileText size={20} />, color: 'primary' as const },
-      { id: 'error', title: '错误日志数', value: errorCount, icon: <AlertCircle size={20} />, color: 'error' as const },
-      { id: 'warn', title: '警告日志数', value: warnCount, icon: <AlertTriangle size={20} />, color: 'warning' as const },
-      { id: 'slow', title: '慢查询数', value: slowQueryCount, icon: <Zap size={20} />, color: 'secondary' as const },
+      {
+        id: 'today',
+        title: '今日日志数',
+        value: todayLogs.length,
+        icon: <FileText size={20} />,
+        color: 'primary' as const,
+      },
+      {
+        id: 'error',
+        title: '错误日志数',
+        value: errorCount,
+        icon: <AlertCircle size={20} />,
+        color: 'error' as const,
+      },
+      {
+        id: 'warn',
+        title: '警告日志数',
+        value: warnCount,
+        icon: <AlertTriangle size={20} />,
+        color: 'warning' as const,
+      },
+      {
+        id: 'slow',
+        title: '慢查询数',
+        value: slowQueryCount,
+        icon: <Zap size={20} />,
+        color: 'secondary' as const,
+      },
     ];
   }, [logs]);
 
@@ -383,7 +410,7 @@ export const MonitorLogsPage: React.FC = () => {
     };
     return (
       <Chip
-        size="small"
+        size='small'
         label={LEVEL_LABELS[level]}
         icon={icons[level]}
         sx={{
@@ -394,7 +421,7 @@ export const MonitorLogsPage: React.FC = () => {
           height: 24,
           '& .MuiChip-icon': { ml: 0.5, color: colors.color },
         }}
-        variant="outlined"
+        variant='outlined'
       />
     );
   }, []);
@@ -404,21 +431,27 @@ export const MonitorLogsPage: React.FC = () => {
     setDetailOpen(true);
   }, []);
 
-  const handleCopy = useCallback((text: string, label: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      addNotification({
-        title: '复制成功',
-        message: `${label}已复制到剪贴板`,
-        type: 'success',
-      });
-    }).catch(() => {
-      addNotification({
-        title: '复制失败',
-        message: '无法复制到剪贴板',
-        type: 'error',
-      });
-    });
-  }, [addNotification]);
+  const handleCopy = useCallback(
+    (text: string, label: string) => {
+      navigator.clipboard
+        .writeText(text)
+        .then(() => {
+          addNotification({
+            title: '复制成功',
+            message: `${label}已复制到剪贴板`,
+            type: 'success',
+          });
+        })
+        .catch(() => {
+          addNotification({
+            title: '复制失败',
+            message: '无法复制到剪贴板',
+            type: 'error',
+          });
+        });
+    },
+    [addNotification]
+  );
 
   const handleExport = useCallback(() => {
     try {
@@ -490,8 +523,15 @@ export const MonitorLogsPage: React.FC = () => {
         label: '时间',
         render: (row) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Clock size={14} color="text.disabled" />
-            <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+            <Clock
+              size={14}
+              color='text.disabled'
+            />
+            <Typography
+              variant='body2'
+              color='text.secondary'
+              sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
+            >
               {formatTimeWithMs(row.timestamp)}
             </Typography>
           </Box>
@@ -518,9 +558,15 @@ export const MonitorLogsPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <Server size={12} color="primary.main" />
+              <Server
+                size={12}
+                color='primary.main'
+              />
             </Box>
-            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+            <Typography
+              variant='body2'
+              sx={{ fontWeight: 500 }}
+            >
               {row.service}
             </Typography>
           </Box>
@@ -530,8 +576,19 @@ export const MonitorLogsPage: React.FC = () => {
         id: 'message',
         label: '日志内容',
         render: (row) => (
-          <Tooltip title={row.message} placement="top-start">
-            <Typography variant="body2" sx={{ maxWidth: 400, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <Tooltip
+            title={row.message}
+            placement='top-start'
+          >
+            <Typography
+              variant='body2'
+              sx={{
+                maxWidth: 400,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+              }}
+            >
               {highlightText(truncateText(row.message, 80), searchQuery)}
             </Typography>
           </Tooltip>
@@ -543,7 +600,7 @@ export const MonitorLogsPage: React.FC = () => {
         render: (row) => (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Typography
-              variant="body2"
+              variant='body2'
               sx={{
                 fontFamily: 'monospace',
                 fontSize: '0.75rem',
@@ -553,12 +610,12 @@ export const MonitorLogsPage: React.FC = () => {
               {row.trace_id}
             </Typography>
             <IconButton
-              size="small"
+              size='small'
               onClick={(e) => {
                 e.stopPropagation();
                 handleCopy(row.trace_id, 'Trace ID');
               }}
-              title="复制 Trace ID"
+              title='复制 Trace ID'
               sx={{ width: 20, height: 20 }}
             >
               <Copy size={12} />
@@ -570,11 +627,19 @@ export const MonitorLogsPage: React.FC = () => {
         id: 'duration',
         label: '耗时',
         render: (row) => {
-          if (!row.duration_ms) return <Typography variant="body2" color="text.disabled">-</Typography>;
+          if (!row.duration_ms)
+            return (
+              <Typography
+                variant='body2'
+                color='text.disabled'
+              >
+                -
+              </Typography>
+            );
           const isSlow = row.duration_ms > 1000;
           return (
             <Typography
-              variant="body2"
+              variant='body2'
               sx={{
                 fontWeight: 500,
                 color: isSlow ? 'error.main' : 'text.secondary',
@@ -591,9 +656,9 @@ export const MonitorLogsPage: React.FC = () => {
         align: 'right',
         render: (row) => (
           <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
-            <Tooltip title="查看详情">
+            <Tooltip title='查看详情'>
               <IconButton
-                size="small"
+                size='small'
                 onClick={(e) => {
                   e.stopPropagation();
                   handleViewDetail(row);
@@ -602,9 +667,9 @@ export const MonitorLogsPage: React.FC = () => {
                 <Eye size={16} />
               </IconButton>
             </Tooltip>
-            <Tooltip title="复制日志">
+            <Tooltip title='复制日志'>
               <IconButton
-                size="small"
+                size='small'
                 onClick={(e) => {
                   e.stopPropagation();
                   handleCopy(row.message, '日志内容');
@@ -613,9 +678,9 @@ export const MonitorLogsPage: React.FC = () => {
                 <Copy size={16} />
               </IconButton>
             </Tooltip>
-            <Tooltip title="关联日志">
+            <Tooltip title='关联日志'>
               <IconButton
-                size="small"
+                size='small'
                 onClick={(e) => {
                   e.stopPropagation();
                   setSearchQuery(row.trace_id);
@@ -717,11 +782,34 @@ export const MonitorLogsPage: React.FC = () => {
           },
         }}
       >
-        <Tab label="全部" value="all" />
-        <Tab label="错误日志" value="error" icon={<AlertCircle size={14} />} iconPosition="start" />
-        <Tab label="访问日志" value="access" icon={<Activity size={14} />} iconPosition="start" />
-        <Tab label="应用日志" value="application" icon={<FileText size={14} />} iconPosition="start" />
-        <Tab label="慢查询" value="slow_query" icon={<Zap size={14} />} iconPosition="start" />
+        <Tab
+          label='全部'
+          value='all'
+        />
+        <Tab
+          label='错误日志'
+          value='error'
+          icon={<AlertCircle size={14} />}
+          iconPosition='start'
+        />
+        <Tab
+          label='访问日志'
+          value='access'
+          icon={<Activity size={14} />}
+          iconPosition='start'
+        />
+        <Tab
+          label='应用日志'
+          value='application'
+          icon={<FileText size={14} />}
+          iconPosition='start'
+        />
+        <Tab
+          label='慢查询'
+          value='slow_query'
+          icon={<Zap size={14} />}
+          iconPosition='start'
+        />
       </Tabs>
     </Box>
   );
@@ -739,12 +827,18 @@ export const MonitorLogsPage: React.FC = () => {
               value={viewMode}
               exclusive
               onChange={(_, newMode) => newMode && setViewMode(newMode)}
-              size="small"
+              size='small'
             >
-              <ToggleButton value="table" title="表格视图">
+              <ToggleButton
+                value='table'
+                title='表格视图'
+              >
                 <List size={16} />
               </ToggleButton>
-              <ToggleButton value="stream" title="流式视图">
+              <ToggleButton
+                value='stream'
+                title='流式视图'
+              >
                 <Radio size={16} />
               </ToggleButton>
             </ToggleButtonGroup>
@@ -753,14 +847,14 @@ export const MonitorLogsPage: React.FC = () => {
       }}
     >
       <ListPageTemplate
-        title=""
-        subtitle=""
+        title=''
+        subtitle=''
         columns={columns}
         data={filteredLogs}
         loading={loading}
         error={error || undefined}
         searchable
-        searchPlaceholder="搜索日志内容、服务名、Trace ID..."
+        searchPlaceholder='搜索日志内容、服务名、Trace ID...'
         searchValue={searchQuery}
         onSearch={setSearchQuery}
         filters={filterOptions}
@@ -781,7 +875,13 @@ export const MonitorLogsPage: React.FC = () => {
         selectedIds={selectedIds}
         onSelectionChange={(ids) => setSelectedIds(ids as string[])}
         batchActions={[
-          { label: '批量删除', icon: <X size={16} />, color: 'error' as const, onClick: handleBatchDelete, confirm: true },
+          {
+            label: '批量删除',
+            icon: <X size={16} />,
+            color: 'error' as const,
+            onClick: handleBatchDelete,
+            confirm: true,
+          },
         ]}
         actions={[
           {
@@ -798,20 +898,25 @@ export const MonitorLogsPage: React.FC = () => {
           },
         ]}
         onRefresh={loadData}
-        emptyMessage="暂无日志数据"
+        emptyMessage='暂无日志数据'
         headerContent={headerContent}
       />
 
       <Dialog
         open={detailOpen}
         onClose={() => setDetailOpen(false)}
-        maxWidth="lg"
+        maxWidth='lg'
         fullWidth
       >
-        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <DialogTitle
+          sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+        >
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <FileText size={24} color="primary.main" />
-            <Typography variant="h6">日志详情</Typography>
+            <FileText
+              size={24}
+              color='primary.main'
+            />
+            <Typography variant='h6'>日志详情</Typography>
             {selectedLog && getLevelChip(selectedLog.level)}
           </Box>
           <IconButton onClick={() => setDetailOpen(false)}>
@@ -820,41 +925,103 @@ export const MonitorLogsPage: React.FC = () => {
         </DialogTitle>
         <DialogContent>
           {selectedLog && (
-            <Stack spacing={3} sx={{ pt: 1 }}>
+            <Stack
+              spacing={3}
+              sx={{ pt: 1 }}
+            >
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                 <Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>
                   <Paper sx={{ p: 2 }}>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                    <Typography
+                      variant='subtitle2'
+                      color='text.secondary'
+                      gutterBottom
+                    >
                       基本信息
                     </Typography>
                     <Stack spacing={1.5}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography variant="body2" color="text.secondary">日志ID</Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 500, fontFamily: 'monospace' }}>{selectedLog.id}</Typography>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          日志ID
+                        </Typography>
+                        <Typography
+                          variant='body2'
+                          sx={{ fontWeight: 500, fontFamily: 'monospace' }}
+                        >
+                          {selectedLog.id}
+                        </Typography>
                       </Box>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography variant="body2" color="text.secondary">时间</Typography>
-                        <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>{formatTimeWithMs(selectedLog.timestamp)}</Typography>
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          时间
+                        </Typography>
+                        <Typography
+                          variant='body2'
+                          sx={{ fontFamily: 'monospace' }}
+                        >
+                          {formatTimeWithMs(selectedLog.timestamp)}
+                        </Typography>
                       </Box>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Typography variant="body2" color="text.secondary">级别</Typography>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          级别
+                        </Typography>
                         {getLevelChip(selectedLog.level)}
                       </Box>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography variant="body2" color="text.secondary">类型</Typography>
-                        <Chip size="small" label={TYPE_LABELS[selectedLog.type]} variant="outlined" />
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          类型
+                        </Typography>
+                        <Chip
+                          size='small'
+                          label={TYPE_LABELS[selectedLog.type]}
+                          variant='outlined'
+                        />
                       </Box>
                     </Stack>
                   </Paper>
                 </Box>
                 <Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>
                   <Paper sx={{ p: 2 }}>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                    <Typography
+                      variant='subtitle2'
+                      color='text.secondary'
+                      gutterBottom
+                    >
                       服务信息
                     </Typography>
                     <Stack spacing={1.5}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Typography variant="body2" color="text.secondary">服务名</Typography>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          服务名
+                        </Typography>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Box
                             sx={{
@@ -867,29 +1034,62 @@ export const MonitorLogsPage: React.FC = () => {
                               justifyContent: 'center',
                             }}
                           >
-                            <Server size={10} color="primary.main" />
+                            <Server
+                              size={10}
+                              color='primary.main'
+                            />
                           </Box>
-                          <Typography variant="body2" sx={{ fontWeight: 500 }}>{selectedLog.service}</Typography>
+                          <Typography
+                            variant='body2'
+                            sx={{ fontWeight: 500 }}
+                          >
+                            {selectedLog.service}
+                          </Typography>
                         </Box>
                       </Box>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Typography variant="body2" color="text.secondary">Trace ID</Typography>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <Typography
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          Trace ID
+                        </Typography>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Typography variant="body2" sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                          <Typography
+                            variant='body2'
+                            sx={{ fontFamily: 'monospace', fontSize: '0.75rem' }}
+                          >
                             {selectedLog.trace_id}
                           </Typography>
-                          <IconButton size="small" onClick={() => handleCopy(selectedLog.trace_id, 'Trace ID')}>
+                          <IconButton
+                            size='small'
+                            onClick={() => handleCopy(selectedLog.trace_id, 'Trace ID')}
+                          >
                             <Copy size={14} />
                           </IconButton>
                         </Box>
                       </Box>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                        <Typography variant="body2" color="text.secondary">耗时</Typography>
                         <Typography
-                          variant="body2"
+                          variant='body2'
+                          color='text.secondary'
+                        >
+                          耗时
+                        </Typography>
+                        <Typography
+                          variant='body2'
                           sx={{
                             fontWeight: 500,
-                            color: selectedLog.duration_ms && selectedLog.duration_ms > 1000 ? 'error.main' : 'text.primary',
+                            color:
+                              selectedLog.duration_ms && selectedLog.duration_ms > 1000
+                                ? 'error.main'
+                                : 'text.primary',
                           }}
                         >
                           {selectedLog.duration_ms ? `${selectedLog.duration_ms}ms` : '-'}
@@ -899,12 +1099,21 @@ export const MonitorLogsPage: React.FC = () => {
                   </Paper>
                 </Box>
                 <Box sx={{ width: '100%' }}>
-                  <Paper sx={{ p: 2, bgcolor: selectedLog.level === 'error' ? 'error.light' : 'grey.50' }}>
-                    <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+                  <Paper
+                    sx={{
+                      p: 2,
+                      bgcolor: selectedLog.level === 'error' ? 'error.light' : 'grey.50',
+                    }}
+                  >
+                    <Typography
+                      variant='subtitle2'
+                      color='text.secondary'
+                      gutterBottom
+                    >
                       日志内容
                     </Typography>
                     <Typography
-                      variant="body2"
+                      variant='body2'
                       sx={{
                         fontFamily: 'monospace',
                         whiteSpace: 'pre-wrap',
@@ -952,10 +1161,10 @@ export const MonitorLogsPage: React.FC = () => {
 
       <ConfirmDialog
         isOpen={confirmOpen}
-        title="确认删除"
+        title='确认删除'
         message={`确定要删除选中的 ${selectedIds.length} 条日志吗？此操作不可撤销。`}
-        confirmLabel="删除"
-        cancelLabel="取消"
+        confirmLabel='删除'
+        cancelLabel='取消'
         danger
         onConfirm={confirmBatchDelete}
         onClose={() => setConfirmOpen(false)}

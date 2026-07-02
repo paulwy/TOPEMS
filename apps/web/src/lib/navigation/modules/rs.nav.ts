@@ -26,7 +26,7 @@ export const rsNavConfig: ModuleNavConfig = {
     {
       code: 'rs-overview',
       label: '项目总览',
-      icon: 'ViewGrid',
+      icon: 'Grid3X3',
       path: '/rs/overview',
       permission: 'rs:overview:read',
       order: 2,

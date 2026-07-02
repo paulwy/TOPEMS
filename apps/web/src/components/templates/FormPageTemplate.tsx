@@ -1119,7 +1119,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
     return (
       <Paper
         key={section.id}
-        sx={{ borderRadius: 2, mb: 3, overflow: 'hidden' }}
+        sx={{ borderRadius: 3, mb: 3, overflow: 'hidden' }}
       >
         {/* 区块标题 */}
         <Box
@@ -1314,7 +1314,7 @@ export const FormPageTemplate: React.FC<FormPageTemplateProps> = ({
     <Paper
       sx={{
         p: 2,
-        borderRadius: 2,
+        borderRadius: 3,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',

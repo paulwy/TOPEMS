@@ -16,7 +16,7 @@ import {
   Tabs,
   Tab,
 } from '@mui/material';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type {
   QualityInspection,
@@ -492,8 +492,12 @@ const MesQualityPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='MES质检管理'
-      subtitle='管理生产过程质检、巡检记录、质检标准等'
+      autoTitle
+      autoBreadcrumbs
+      headerProps={{
+        pageIcon: <ClipboardCheck style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+      }}
     >
       <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Tabs

@@ -276,6 +276,8 @@ const ContactManagementPage: React.FC = () => {
     <PageContainer
       title='联系人管理'
       subtitle='管理联系人信息，包括姓名、联系方式、职位等'
+      autoTitle
+      autoBreadcrumbs
     >
       <>
         <ListPageTemplate<Contact>

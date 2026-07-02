@@ -14,7 +14,7 @@ interface SparklineProps {
 
 const Sparkline: React.FC<SparklineProps> = ({
   data,
-  color = 'primary.main',
+  color = '#3B82F6',
   width = 80,
   height = 32,
   strokeWidth = 2,
@@ -133,22 +133,22 @@ export interface MetricCardProps {
 
 const colorMap: Record<string, { bg: string; gradient: string }> = {
   green: {
-    bg: 'success.main',
-    gradient: 'linear-gradient(135deg, success.main, success.dark)',
+    bg: '#22C55E',
+    gradient: 'linear-gradient(135deg, #22C55E, #16A34A)',
   },
   purple: {
     bg: '#8B5CF6',
     gradient: 'linear-gradient(135deg, #8B5CF6, #7C3AED)',
   },
   blue: {
-    bg: 'primary.main',
+    bg: '#3B82F6',
     gradient: 'linear-gradient(135deg, #3B82F6, #2563EB)',
   },
   orange: {
-    bg: 'warning.main',
+    bg: '#F59E0B',
     gradient: 'linear-gradient(135deg, #F59E0B, #D97706)',
   },
-  red: { bg: 'error.main', gradient: 'linear-gradient(135deg, error.main, #DC2626)' },
+  red: { bg: '#EF4444', gradient: 'linear-gradient(135deg, #EF4444, #DC2626)' },
   cyan: {
     bg: '#06B6D4',
     gradient: 'linear-gradient(135deg, #06B6D4, #0891B2)',
@@ -233,13 +233,13 @@ export const MetricCard: React.FC<MetricCardProps> = ({
         />
       );
     }
-    return computedTrend === 'up' ? <TrendingUp size={16} /> : <TrendingDown size={16} />;
+    return computedTrend === 'up' ? <TrendingUp size={16} color='#22C55E' /> : <TrendingDown size={16} color='#EF4444' />;
   };
 
   const getTrendColor = () => {
     if (!computedTrend || computedTrend === 'neutral' || computedTrend === 'stable')
       return '#64748B';
-    return computedTrend === 'up' ? 'success.main' : 'error.main';
+    return computedTrend === 'up' ? '#22C55E' : '#EF4444';
   };
 
   const renderIcon = () => {
@@ -277,7 +277,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   const getSparklineColor = () => {
     if (!computedTrend || computedTrend === 'neutral' || computedTrend === 'stable')
       return '#64748B';
-    return computedTrend === 'up' ? 'success.main' : 'error.main';
+    return computedTrend === 'up' ? '#22C55E' : '#EF4444';
   };
 
   return (
@@ -286,7 +286,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
       sx={{
         position: 'relative',
         backgroundColor: 'white',
-        borderRadius: 2,
+        borderRadius: 3,
         padding: 3,
         border: '1px solid rgba(226, 232, 240, 0.6)',
         overflow: 'hidden',

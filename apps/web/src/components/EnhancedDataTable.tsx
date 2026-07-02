@@ -1,5 +1,4 @@
-import {
-  Table,
+import {Table,
   TableBody,
   TableCell,
   TableHead,
@@ -19,8 +18,7 @@ import {
   ListItemText,
   Divider,
   CircularProgress,
-  Button,
-} from '@mui/material';
+  Button, useTheme} from '@mui/material';
 import React, { useMemo, useCallback } from 'react';
 import type {
   ColumnDef,
@@ -129,6 +127,7 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
   const [exportAnchorEl, setExportAnchorEl] = React.useState<null | HTMLElement>(null);
   const [settingsAnchorEl, setSettingsAnchorEl] = React.useState<null | HTMLElement>(null);
+  const theme = useTheme();
   const addNotification = useAppStore((state) => state.addNotification);
 
   const { exportToCSV, exportToExcel } = useExportData(columns);
@@ -416,7 +415,7 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <span style={{ fontSize: '0.875rem', color: 'primary.dark' }}>
+              <span style={{ fontSize: '0.875rem', color: theme.palette.primary.dark }}>
                 已选择{' '}
                 <Chip
                   label={selectedIds.length}
@@ -599,14 +598,14 @@ export function EnhancedDataTable<TData extends RowData, TValue>({
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <span style={{ fontSize: '0.875rem', color: 'text.secondary' }}>
+              <span style={{ fontSize: '0.875rem', color: theme.palette.text.secondary }}>
                 {totalItems !== undefined
                   ? `共 ${totalItems} 条记录`
                   : `共 ${table.getFilteredRowModel().rows.length} 条记录`}
               </span>
               {(onPageSizeChange || !enablePagination) && (
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <span style={{ fontSize: '0.875rem', color: 'text.secondary' }}>每页</span>
+                  <span style={{ fontSize: '0.875rem', color: theme.palette.text.secondary }}>每页</span>
                   <Box
                     component='select'
                     value={enablePagination ? pageSize : pagination.pageSize}

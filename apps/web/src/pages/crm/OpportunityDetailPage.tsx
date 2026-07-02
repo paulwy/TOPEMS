@@ -196,7 +196,7 @@ const OpportunityDetailPage: React.FC = () => {
             gap: 2,
           }}
         >
-          <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
+          <Box sx={{ bgcolor: 'grey.100', borderRadius: 3, p: 2 }}>
             <Typography
               variant='body2'
               color='text.secondary'
@@ -207,7 +207,7 @@ const OpportunityDetailPage: React.FC = () => {
               {formatDateTime(opportunity.created_at)}
             </Typography>
           </Box>
-          <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
+          <Box sx={{ bgcolor: 'grey.100', borderRadius: 3, p: 2 }}>
             <Typography
               variant='body2'
               color='text.secondary'
@@ -218,7 +218,7 @@ const OpportunityDetailPage: React.FC = () => {
               {formatDateTime(opportunity.updated_at)}
             </Typography>
           </Box>
-          <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
+          <Box sx={{ bgcolor: 'grey.100', borderRadius: 3, p: 2 }}>
             <Typography
               variant='body2'
               color='text.secondary'
@@ -290,6 +290,8 @@ const OpportunityDetailPage: React.FC = () => {
     <PageContainer
       title='商机详情'
       subtitle='查看和编辑商机信息'
+      autoTitle
+      autoBreadcrumbs
     >
       <DetailPageTemplate
         title=''

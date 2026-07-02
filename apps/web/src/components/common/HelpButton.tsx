@@ -81,7 +81,7 @@ export const HelpButton: React.FC<HelpButtonProps> = ({
         slotProps={{
           paper: {
             sx: {
-              borderRadius: 2,
+              borderRadius: 3,
             },
           },
         }}
