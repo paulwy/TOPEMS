@@ -1,16 +1,16 @@
 //! Flow module - Workflow Automation
 
-pub mod workflow;
-pub mod instance;
 pub mod approval;
-pub mod statistics;
+pub mod history;
+pub mod instance;
+pub mod performance;
 pub mod plugin;
+pub mod record;
+pub mod setting;
+pub mod statistics;
 pub mod template;
 pub mod version;
-pub mod history;
-pub mod performance;
-pub mod setting;
-pub mod record;
+pub mod workflow;
 
 use sqlx::PgPool;
 
@@ -78,9 +78,11 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_instances_workflow ON core_workflow_instances(workflow_id)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_tasks_instance ON core_workflow_tasks(instance_id)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_core_tasks_instance ON core_workflow_tasks(instance_id)",
+    )
+    .execute(pool)
+    .await?;
 
     Ok(())
 }

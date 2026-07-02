@@ -397,10 +397,10 @@ const NotificationTrendChart: React.FC = () => {
 
 const TypeDistributionChart: React.FC = () => {
   const data = [
-    { label: '系统', value: 35, color: '#3b82f6' },
-    { label: '审批', value: 28, color: '#10b981' },
-    { label: '任务', value: 22, color: '#f59e0b' },
-    { label: '消息', value: 15, color: '#8b5cf6' },
+    { label: '系统', value: 35, color: 'primary.main' },
+    { label: '审批', value: 28, color: 'success.main' },
+    { label: '任务', value: 22, color: 'warning.main' },
+    { label: '消息', value: 15, color: 'secondary.main' },
   ];
 
   const total = data.reduce((sum, item) => sum + item.value, 0);
@@ -477,10 +477,10 @@ const TypeDistributionChart: React.FC = () => {
 
 const ChannelDistributionChart: React.FC = () => {
   const data = [
-    { label: '邮件', value: 120, color: '#3b82f6' },
-    { label: '短信', value: 85, color: '#10b981' },
-    { label: '站内信', value: 180, color: '#f59e0b' },
-    { label: '推送', value: 95, color: '#8b5cf6' },
+    { label: '邮件', value: 120, color: 'primary.main' },
+    { label: '短信', value: 85, color: 'success.main' },
+    { label: '站内信', value: 180, color: 'warning.main' },
+    { label: '推送', value: 95, color: 'secondary.main' },
   ];
 
   const max = Math.max(...data.map((item) => item.value));

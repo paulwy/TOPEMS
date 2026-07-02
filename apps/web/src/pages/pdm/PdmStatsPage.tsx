@@ -182,7 +182,7 @@ const PdmStatsPage: React.FC = () => {
       data: [
         { name: '活跃工艺', value: stats.activeProcesses, color: '#14B8A6' },
         { name: '活跃配方', value: stats.activeFormulas, color: 'warning.main' },
-        { name: '总工序', value: stats.totalSteps, color: '#8B5CF6' },
+        { name: '总工序', value: stats.totalSteps, color: 'secondary.main' },
       ].filter((d) => d.value > 0),
     },
   ];

@@ -94,8 +94,8 @@ const LimsTestMethodPage: React.FC = () => {
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
       草稿: { bg: 'grey.100', color: 'text.secondary' },
-      已发布: { bg: 'success.lighter', color: '#15803d' },
-      已归档: { bg: '#dbeafe', color: 'primary.dark' },
+      已发布: { bg: 'success.lighter', color: 'success.700' },
+      已归档: { bg: 'primary.100', color: 'primary.dark' },
     };
     const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -333,7 +333,7 @@ const LimsTestMethodPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <BookOpen sx={{ width: 20, height: 20, color: '#15803d' }} />
+              <BookOpen sx={{ width: 20, height: 20, color: 'success.700' }} />
             </Box>
             <Box>
               <Typography
@@ -427,7 +427,7 @@ const LimsTestMethodPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: '#dbeafe',
+                bgcolor: 'primary.100',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -474,7 +474,7 @@ const LimsTestMethodPage: React.FC = () => {
               height: 48,
               border: 4,
               borderColor: 'success.main',
-              borderTopColor: '#15803d',
+              borderTopColor: 'success.700',
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
               mx: 'auto',

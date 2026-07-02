@@ -1,7 +1,7 @@
 use crate::api::ApiState;
-use axum::{extract::State, Json, Router};
-use axum::extract::Query;
 use axum::extract::Path;
+use axum::extract::Query;
+use axum::{extract::State, Json, Router};
 use serde::Deserialize;
 use serde::Serialize;
 use topems_shared::{ApiResponse, Company, Department, Employee};
@@ -143,11 +143,15 @@ impl From<Company> for AddressbookEntry {
 
 fn build_department_tree(departments: Vec<Department>) -> Vec<DepartmentNode> {
     let mut nodes: Vec<DepartmentNode> = Vec::new();
-    let mut children_map: std::collections::HashMap<Uuid, Vec<Department>> = std::collections::HashMap::new();
+    let mut children_map: std::collections::HashMap<Uuid, Vec<Department>> =
+        std::collections::HashMap::new();
 
     for dept in &departments {
         if let Some(parent_id) = dept.parent_id {
-            children_map.entry(parent_id).or_insert_with(Vec::new).push(dept.clone());
+            children_map
+                .entry(parent_id)
+                .or_insert_with(Vec::new)
+                .push(dept.clone());
         }
     }
 
@@ -160,9 +164,15 @@ fn build_department_tree(departments: Vec<Department>) -> Vec<DepartmentNode> {
     nodes
 }
 
-fn build_node(dept: Department, children_map: &std::collections::HashMap<Uuid, Vec<Department>>) -> DepartmentNode {
+fn build_node(
+    dept: Department,
+    children_map: &std::collections::HashMap<Uuid, Vec<Department>>,
+) -> DepartmentNode {
     let children = children_map.get(&dept.id).cloned().unwrap_or_default();
-    let child_nodes: Vec<DepartmentNode> = children.into_iter().map(|c| build_node(c, children_map)).collect();
+    let child_nodes: Vec<DepartmentNode> = children
+        .into_iter()
+        .map(|c| build_node(c, children_map))
+        .collect();
 
     DepartmentNode {
         id: dept.id.to_string(),
@@ -172,40 +182,37 @@ fn build_node(dept: Department, children_map: &std::collections::HashMap<Uuid, V
     }
 }
 
-async fn fetch_entries_by_type(state: &ApiState, contact_type: Option<&str>) -> Vec<AddressbookEntry> {
+async fn fetch_entries_by_type(
+    state: &ApiState,
+    contact_type: Option<&str>,
+) -> Vec<AddressbookEntry> {
     let mut entries: Vec<AddressbookEntry> = Vec::new();
 
     match contact_type {
-        Some("EMPLOYEE") => {
-            match state.hrm_client.list_employees().await {
-                Ok(employees) => {
-                    entries.extend(employees.into_iter().map(AddressbookEntry::from));
-                }
-                Err(e) => {
-                    tracing::warn!("从HRM服务获取员工列表失败: {}", e);
-                }
+        Some("EMPLOYEE") => match state.hrm_client.list_employees().await {
+            Ok(employees) => {
+                entries.extend(employees.into_iter().map(AddressbookEntry::from));
             }
-        }
-        Some("DEPARTMENT") => {
-            match state.hrm_client.list_departments().await {
-                Ok(departments) => {
-                    entries.extend(departments.into_iter().map(AddressbookEntry::from));
-                }
-                Err(e) => {
-                    tracing::warn!("从HRM服务获取部门列表失败: {}", e);
-                }
+            Err(e) => {
+                tracing::warn!("从HRM服务获取员工列表失败: {}", e);
             }
-        }
-        Some("COMPANY") => {
-            match state.hrm_client.list_companies().await {
-                Ok(companies) => {
-                    entries.extend(companies.into_iter().map(AddressbookEntry::from));
-                }
-                Err(e) => {
-                    tracing::warn!("从HRM服务获取公司列表失败: {}", e);
-                }
+        },
+        Some("DEPARTMENT") => match state.hrm_client.list_departments().await {
+            Ok(departments) => {
+                entries.extend(departments.into_iter().map(AddressbookEntry::from));
             }
-        }
+            Err(e) => {
+                tracing::warn!("从HRM服务获取部门列表失败: {}", e);
+            }
+        },
+        Some("COMPANY") => match state.hrm_client.list_companies().await {
+            Ok(companies) => {
+                entries.extend(companies.into_iter().map(AddressbookEntry::from));
+            }
+            Err(e) => {
+                tracing::warn!("从HRM服务获取公司列表失败: {}", e);
+            }
+        },
         None => {
             match state.hrm_client.list_employees().await {
                 Ok(employees) => {
@@ -251,8 +258,14 @@ async fn get_contacts(
         let search_lower = search.to_lowercase();
         all_entries.retain(|entry| {
             entry.name.to_lowercase().contains(&search_lower)
-                || entry.email.as_ref().map_or(false, |e| e.to_lowercase().contains(&search_lower))
-                || entry.phone.as_ref().map_or(false, |p| p.contains(&search_lower))
+                || entry
+                    .email
+                    .as_ref()
+                    .map_or(false, |e| e.to_lowercase().contains(&search_lower))
+                || entry
+                    .phone
+                    .as_ref()
+                    .map_or(false, |p| p.contains(&search_lower))
         });
     }
 
@@ -286,109 +299,92 @@ async fn get_contact_detail(
     Query(params): Query<ContactDetailParams>,
 ) -> Json<ApiResponse<AddressbookDetail>> {
     match Uuid::parse_str(&id) {
-        Ok(uuid) => {
-            match params.contact_type.as_str() {
-                "EMPLOYEE" => {
-                    match state.hrm_client.get_employee(uuid).await {
-                        Ok(employee) => {
-                            let entry: AddressbookEntry = employee.into();
-                            Json(ApiResponse::success(
-                                AddressbookDetail {
-                                    id: entry.id,
-                                    contact_type: entry.contact_type,
-                                    name: entry.name,
-                                    code: entry.code,
-                                    position: entry.position,
-                                    email: entry.email,
-                                    phone: entry.phone,
-                                    department_id: entry.department_id,
-                                    department_name: entry.department_name,
-                                    department_code: entry.department_code,
-                                    status: entry.status,
-                                    created_at: entry.created_at,
-                                    updated_at: entry.updated_at,
-                                    hire_date: None,
-                                },
-                                "获取联系人详情成功",
-                            ))
-                        }
-                        Err(e) => Json(ApiResponse::error(
-                            500,
-                            &format!("获取员工信息失败: {}", e),
-                        )),
+        Ok(uuid) => match params.contact_type.as_str() {
+            "EMPLOYEE" => match state.hrm_client.get_employee(uuid).await {
+                Ok(employee) => {
+                    let entry: AddressbookEntry = employee.into();
+                    Json(ApiResponse::success(
+                        AddressbookDetail {
+                            id: entry.id,
+                            contact_type: entry.contact_type,
+                            name: entry.name,
+                            code: entry.code,
+                            position: entry.position,
+                            email: entry.email,
+                            phone: entry.phone,
+                            department_id: entry.department_id,
+                            department_name: entry.department_name,
+                            department_code: entry.department_code,
+                            status: entry.status,
+                            created_at: entry.created_at,
+                            updated_at: entry.updated_at,
+                            hire_date: None,
+                        },
+                        "获取联系人详情成功",
+                    ))
+                }
+                Err(e) => Json(ApiResponse::error(500, &format!("获取员工信息失败: {}", e))),
+            },
+            "DEPARTMENT" => match state.hrm_client.list_departments().await {
+                Ok(departments) => {
+                    if let Some(dept) = departments.into_iter().find(|d| d.id == uuid) {
+                        let entry: AddressbookEntry = dept.into();
+                        Json(ApiResponse::success(
+                            AddressbookDetail {
+                                id: entry.id,
+                                contact_type: entry.contact_type,
+                                name: entry.name,
+                                code: entry.code,
+                                position: entry.position,
+                                email: entry.email,
+                                phone: entry.phone,
+                                department_id: entry.department_id,
+                                department_name: entry.department_name,
+                                department_code: entry.department_code,
+                                status: entry.status,
+                                created_at: entry.created_at,
+                                updated_at: entry.updated_at,
+                                hire_date: None,
+                            },
+                            "获取联系人详情成功",
+                        ))
+                    } else {
+                        Json(ApiResponse::error(404, "部门不存在"))
                     }
                 }
-                "DEPARTMENT" => {
-                    match state.hrm_client.list_departments().await {
-                        Ok(departments) => {
-                            if let Some(dept) = departments.into_iter().find(|d| d.id == uuid) {
-                                let entry: AddressbookEntry = dept.into();
-                                Json(ApiResponse::success(
-                                    AddressbookDetail {
-                                        id: entry.id,
-                                        contact_type: entry.contact_type,
-                                        name: entry.name,
-                                        code: entry.code,
-                                        position: entry.position,
-                                        email: entry.email,
-                                        phone: entry.phone,
-                                        department_id: entry.department_id,
-                                        department_name: entry.department_name,
-                                        department_code: entry.department_code,
-                                        status: entry.status,
-                                        created_at: entry.created_at,
-                                        updated_at: entry.updated_at,
-                                        hire_date: None,
-                                    },
-                                    "获取联系人详情成功",
-                                ))
-                            } else {
-                                Json(ApiResponse::error(404, "部门不存在"))
-                            }
-                        }
-                        Err(e) => Json(ApiResponse::error(
-                            500,
-                            &format!("获取部门信息失败: {}", e),
-                        )),
+                Err(e) => Json(ApiResponse::error(500, &format!("获取部门信息失败: {}", e))),
+            },
+            "COMPANY" => match state.hrm_client.list_companies().await {
+                Ok(companies) => {
+                    if let Some(company) = companies.into_iter().find(|c| c.id == uuid) {
+                        let entry: AddressbookEntry = company.into();
+                        Json(ApiResponse::success(
+                            AddressbookDetail {
+                                id: entry.id,
+                                contact_type: entry.contact_type,
+                                name: entry.name,
+                                code: entry.code,
+                                position: entry.position,
+                                email: entry.email,
+                                phone: entry.phone,
+                                department_id: entry.department_id,
+                                department_name: entry.department_name,
+                                department_code: entry.department_code,
+                                status: entry.status,
+                                created_at: entry.created_at,
+                                updated_at: entry.updated_at,
+                                hire_date: None,
+                            },
+                            "获取联系人详情成功",
+                        ))
+                    } else {
+                        Json(ApiResponse::error(404, "公司不存在"))
                     }
                 }
-                "COMPANY" => {
-                    match state.hrm_client.list_companies().await {
-                        Ok(companies) => {
-                            if let Some(company) = companies.into_iter().find(|c| c.id == uuid) {
-                                let entry: AddressbookEntry = company.into();
-                                Json(ApiResponse::success(
-                                    AddressbookDetail {
-                                        id: entry.id,
-                                        contact_type: entry.contact_type,
-                                        name: entry.name,
-                                        code: entry.code,
-                                        position: entry.position,
-                                        email: entry.email,
-                                        phone: entry.phone,
-                                        department_id: entry.department_id,
-                                        department_name: entry.department_name,
-                                        department_code: entry.department_code,
-                                        status: entry.status,
-                                        created_at: entry.created_at,
-                                        updated_at: entry.updated_at,
-                                        hire_date: None,
-                                    },
-                                    "获取联系人详情成功",
-                                ))
-                            } else {
-                                Json(ApiResponse::error(404, "公司不存在"))
-                            }
-                        }
-                        Err(e) => Json(ApiResponse::error(
-                            500,
-                            &format!("获取公司信息失败: {}", e),
-                        )),
-                    }
-                }
-                _ => Json(ApiResponse::error(400, "无效的联系人类型")),
-            }
-        }
+                Err(e) => Json(ApiResponse::error(500, &format!("获取公司信息失败: {}", e))),
+            },
+            _ => Json(ApiResponse::error(400, "无效的联系人类型")),
+        },
         Err(_) => Json(ApiResponse::error(400, "无效的联系人ID格式")),
     }
 }
@@ -410,8 +406,14 @@ async fn search_contacts(
         let search_lower = search_query.to_lowercase();
         all_entries.retain(|entry| {
             entry.name.to_lowercase().contains(&search_lower)
-                || entry.email.as_ref().map_or(false, |e| e.to_lowercase().contains(&search_lower))
-                || entry.phone.as_ref().map_or(false, |p| p.contains(&search_lower))
+                || entry
+                    .email
+                    .as_ref()
+                    .map_or(false, |e| e.to_lowercase().contains(&search_lower))
+                || entry
+                    .phone
+                    .as_ref()
+                    .map_or(false, |p| p.contains(&search_lower))
         });
     }
 
@@ -431,7 +433,10 @@ async fn get_department_tree(
         Err(e) => {
             tracing::warn!("获取部门列表失败: {}", e);
             // 返回空部门树而不是错误，避免前端显示"加载失败"
-            Json(ApiResponse::success(Vec::<DepartmentNode>::new(), "获取部门树成功"))
+            Json(ApiResponse::success(
+                Vec::<DepartmentNode>::new(),
+                "获取部门树成功",
+            ))
         }
     }
 }
@@ -444,7 +449,9 @@ async fn export_contacts(
 
     let content = if params.format == "csv" {
         let mut csv_lines = Vec::new();
-        csv_lines.push("ID,类型,姓名,编码,职位,邮箱,电话,部门ID,部门名称,状态,创建时间,更新时间".to_string());
+        csv_lines.push(
+            "ID,类型,姓名,编码,职位,邮箱,电话,部门ID,部门名称,状态,创建时间,更新时间".to_string(),
+        );
         for entry in all_entries {
             csv_lines.push(format!(
                 "\"{}\",\"{}\",\"{}\",\"{}\",\"{}\",\"{}\",\"{}\",\"{}\",\"{}\",\"{}\",\"{}\",\"{}\"",
@@ -481,8 +488,20 @@ fn escape_csv(s: &str) -> String {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/api/erp/addressbook", axum::routing::get(get_contacts))
-        .route("/api/erp/addressbook/{id}", axum::routing::get(get_contact_detail))
-        .route("/api/erp/addressbook/search", axum::routing::get(search_contacts))
-        .route("/api/erp/addressbook/departments/tree", axum::routing::get(get_department_tree))
-        .route("/api/erp/addressbook/export", axum::routing::get(export_contacts))
+        .route(
+            "/api/erp/addressbook/{id}",
+            axum::routing::get(get_contact_detail),
+        )
+        .route(
+            "/api/erp/addressbook/search",
+            axum::routing::get(search_contacts),
+        )
+        .route(
+            "/api/erp/addressbook/departments/tree",
+            axum::routing::get(get_department_tree),
+        )
+        .route(
+            "/api/erp/addressbook/export",
+            axum::routing::get(export_contacts),
+        )
 }

@@ -61,7 +61,7 @@ export interface Keyword {
 }
 
 const sentimentColors: Record<string, { bg: string; text: string; label: string }> = {
-  positive: { bg: 'success.lighter', text: '#15803d', label: '积极' },
+  positive: { bg: 'success.lighter', text: 'success.700', label: '积极' },
   negative: { bg: 'error.lighter', text: 'error.dark', label: '消极' },
   neutral: { bg: 'grey.100', text: 'grey.700', label: '中性' },
 };
@@ -292,7 +292,7 @@ export function AIAnalyzer({
                   onClick={() => toggleSection('sentiment')}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                    <Box sx={{ p: 1.5, bgcolor: '#f3e8ff', borderRadius: 1.5 }}>
+                    <Box sx={{ p: 1.5, bgcolor: 'secondary.100', borderRadius: 1.5 }}>
                       <TrendingUp style={{ width: 20, height: 20, color: '#9333ea' }} />
                     </Box>
                     <Box>
@@ -366,7 +366,7 @@ export function AIAnalyzer({
                                 label={word}
                                 sx={{
                                   bgcolor: 'success.light',
-                                  color: '#15803d',
+                                  color: 'success.700',
                                   borderColor: 'success.light',
                                 }}
                               />
@@ -457,7 +457,7 @@ export function AIAnalyzer({
                   onClick={() => toggleSection('classify')}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                    <Box sx={{ p: 1.5, bgcolor: '#dbeafe', borderRadius: 1.5 }}>
+                    <Box sx={{ p: 1.5, bgcolor: 'primary.100', borderRadius: 1.5 }}>
                       <BarChart3 style={{ width: 20, height: 20, color: theme.palette.primary.dark }} />
                     </Box>
                     <Box>
@@ -479,7 +479,7 @@ export function AIAnalyzer({
                         <Chip
                           size='small'
                           label={classificationResult.category}
-                          sx={{ bgcolor: '#dbeafe', color: 'primary.dark' }}
+                          sx={{ bgcolor: 'primary.100', color: 'primary.dark' }}
                         />
                         <Typography
                           variant='caption'
@@ -633,7 +633,7 @@ export function AIAnalyzer({
                         <Chip
                           size='small'
                           label={entity.entity_type}
-                          sx={{ bgcolor: 'success.lighter', color: '#15803d' }}
+                          sx={{ bgcolor: 'success.lighter', color: 'success.700' }}
                         />
                         <Typography
                           variant='body2'

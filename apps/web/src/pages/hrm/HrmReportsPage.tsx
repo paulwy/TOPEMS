@@ -304,10 +304,10 @@ const HrmReportsPage: React.FC = () => {
             dataKey: 'value',
             nameKey: 'name',
             data: [
-              { name: '准时', value: attendanceSummary?.on_time_count || 0, color: '#22c55e' },
+              { name: '准时', value: attendanceSummary?.on_time_count || 0, color: 'success.main' },
               { name: '迟到', value: attendanceSummary?.late_count || 0, color: '#eab308' },
-              { name: '缺勤', value: attendanceSummary?.absent_count || 0, color: '#ef4444' },
-              { name: '请假', value: attendanceSummary?.leave_count || 0, color: '#3b82f6' },
+              { name: '缺勤', value: attendanceSummary?.absent_count || 0, color: 'error.main' },
+              { name: '请假', value: attendanceSummary?.leave_count || 0, color: 'primary.main' },
             ].filter((d) => d.value > 0),
           },
           {
@@ -345,7 +345,7 @@ const HrmReportsPage: React.FC = () => {
             dataKey: 'value',
             nameKey: 'name',
             data: [
-              { name: '男', value: employeeSummary?.male_count || 0, color: '#3b82f6' },
+              { name: '男', value: employeeSummary?.male_count || 0, color: 'primary.main' },
               { name: '女', value: employeeSummary?.female_count || 0, color: '#ec4899' },
             ].filter((d) => d.value > 0),
           },

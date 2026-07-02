@@ -331,7 +331,7 @@ const PmContractListPage: React.FC = () => {
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box sx={{ p: 1.5, bgcolor: '#dbeafe', borderRadius: '50%' }}>
+                <Box sx={{ p: 1.5, bgcolor: 'primary.100', borderRadius: '50%' }}>
                   <FileText
                     size={24}
                     color='primary.dark'
@@ -416,6 +416,15 @@ const PmContractListPage: React.FC = () => {
             </Box>
           </Box>
         }
+        mobileCardTitleKey='contract_name'
+        mobileCardSubtitleKey='contract_code'
+        mobileCardDisplayFields={['contract_type', 'status', 'amount', 'start_date']}
+        mobileCardFieldLabels={{
+          contract_type: '合同类型',
+          status: '状态',
+          amount: '金额',
+          start_date: '开始日期',
+        }}
       />
     </PageContainer>
   );

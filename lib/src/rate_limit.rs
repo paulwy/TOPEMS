@@ -62,7 +62,9 @@ impl RateLimitMiddleware {
             return axum::response::Response::builder()
                 .status(StatusCode::TOO_MANY_REQUESTS)
                 .header("Content-Type", "application/json")
-                .body(axum::body::Body::from(r#"{"error":"Too many requests","status":429}"#))
+                .body(axum::body::Body::from(
+                    r#"{"error":"Too many requests","status":429}"#,
+                ))
                 .unwrap();
         } else {
             entry.0 += 1;

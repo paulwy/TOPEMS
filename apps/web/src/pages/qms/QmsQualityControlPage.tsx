@@ -690,6 +690,15 @@ const QmsQualityControlPage: React.FC = () => {
             searchable={false}
             filters={[]}
             actions={[]}
+            mobileCardTitleKey='title'
+            mobileCardSubtitleKey='issue_no'
+            mobileCardDisplayFields={['category', 'severity', 'status', 'assignee']}
+            mobileCardFieldLabels={{
+              category: '类别',
+              severity: '严重程度',
+              status: '状态',
+              assignee: '负责人',
+            }}
           />
         </CardContent>
       </Card>

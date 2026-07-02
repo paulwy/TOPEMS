@@ -85,14 +85,9 @@ impl RlsMiddleware {
         Ok(())
     }
 
-    pub async fn set_tenant_context(
-        &self,
-        tenant_id: Uuid,
-    ) -> Result<(), sqlx::Error> {
+    pub async fn set_tenant_context(&self, tenant_id: Uuid) -> Result<(), sqlx::Error> {
         let query = format!("SET app.tenant_id = '{}'", tenant_id);
-        sqlx::query(&query)
-            .execute(self.pool.as_ref())
-            .await?;
+        sqlx::query(&query).execute(self.pool.as_ref()).await?;
 
         Ok(())
     }
@@ -121,17 +116,13 @@ impl TenantContext {
             .and_then(|h| h.to_str().ok());
 
         let tenant_id = match tenant_id_str {
-            Some(id) => Uuid::parse_str(id)
-                .map_err(|_| TenantContextRejection::InvalidTenantId)?,
+            Some(id) => Uuid::parse_str(id).map_err(|_| TenantContextRejection::InvalidTenantId)?,
             None => {
                 return Err(TenantContextRejection::MissingTenantId);
             }
         };
 
-        let user_id_str = req
-            .headers()
-            .get("x-user-id")
-            .and_then(|h| h.to_str().ok());
+        let user_id_str = req.headers().get("x-user-id").and_then(|h| h.to_str().ok());
         let user_id = user_id_str.and_then(|id| Uuid::parse_str(id).ok());
 
         let role = req
@@ -157,14 +148,12 @@ pub enum TenantContextRejection {
 impl IntoResponse for TenantContextRejection {
     fn into_response(self) -> axum::response::Response {
         let (status, message) = match self {
-            TenantContextRejection::MissingTenantId => (
-                StatusCode::BAD_REQUEST,
-                "Missing x-tenant-id header",
-            ),
-            TenantContextRejection::InvalidTenantId => (
-                StatusCode::BAD_REQUEST,
-                "Invalid x-tenant-id format",
-            ),
+            TenantContextRejection::MissingTenantId => {
+                (StatusCode::BAD_REQUEST, "Missing x-tenant-id header")
+            }
+            TenantContextRejection::InvalidTenantId => {
+                (StatusCode::BAD_REQUEST, "Invalid x-tenant-id format")
+            }
         };
 
         (
@@ -188,10 +177,7 @@ pub async fn apply_rls_middleware<B>(
     if let Some(tenant_id_str) = tenant_id_str {
         if let Ok(tenant_id) = Uuid::parse_str(tenant_id_str) {
             let query = format!("SET app.tenant_id = '{}'", tenant_id);
-            match sqlx::query(&query)
-                .execute(pool.as_ref())
-                .await
-            {
+            match sqlx::query(&query).execute(pool.as_ref()).await {
                 Ok(_) => {
                     debug!("Applied RLS context for tenant: {}", tenant_id);
                 }

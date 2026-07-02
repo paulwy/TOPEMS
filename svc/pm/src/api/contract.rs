@@ -562,12 +562,13 @@ async fn delete_payment_schedule(
     State(pool): State<PgPool>,
     Path((id, payment_id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<()>> {
-    let result =
-        sqlx::query("DELETE FROM plugin_pm.contract_payment_schedule WHERE id = $1 AND contract_id = $2")
-            .bind(payment_id)
-            .bind(id)
-            .execute(&pool)
-            .await;
+    let result = sqlx::query(
+        "DELETE FROM plugin_pm.contract_payment_schedule WHERE id = $1 AND contract_id = $2",
+    )
+    .bind(payment_id)
+    .bind(id)
+    .execute(&pool)
+    .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除付款计划成功")),
@@ -608,11 +609,12 @@ async fn get_template(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ContractTemplate>> {
-    let template =
-        sqlx::query_as::<_, ContractTemplate>("SELECT * FROM plugin_pm.contract_templates WHERE id = $1")
-            .bind(id)
-            .fetch_one(&pool)
-            .await;
+    let template = sqlx::query_as::<_, ContractTemplate>(
+        "SELECT * FROM plugin_pm.contract_templates WHERE id = $1",
+    )
+    .bind(id)
+    .fetch_one(&pool)
+    .await;
 
     match template {
         Ok(t) => Json(ApiResponse::success(t, "获取模板详情成功")),
@@ -707,10 +709,11 @@ async fn delete_template(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
-    let result = sqlx::query("UPDATE plugin_pm.contract_templates SET is_active = false WHERE id = $1")
-        .bind(id)
-        .execute(&pool)
-        .await;
+    let result =
+        sqlx::query("UPDATE plugin_pm.contract_templates SET is_active = false WHERE id = $1")
+            .bind(id)
+            .execute(&pool)
+            .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除模板成功")),

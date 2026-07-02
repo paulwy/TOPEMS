@@ -78,8 +78,7 @@ pub async fn scan_barcode(
 
     let decoded_data = decode_barcode(&payload.barcode, &barcode_type);
 
-    let (matched_item, result_action, result_data) =
-        match_barcode(&payload.barcode, &barcode_type);
+    let (matched_item, result_action, result_data) = match_barcode(&payload.barcode, &barcode_type);
 
     let create_data = CreateBarcodeScan {
         barcode: payload.barcode.clone(),
@@ -110,7 +109,10 @@ pub async fn scan_barcode(
         result_data,
     };
 
-    (StatusCode::OK, Json(ApiResponse::success(response, "条码扫描成功")))
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(response, "条码扫描成功")),
+    )
 }
 
 fn detect_barcode_type(barcode: &str) -> String {
@@ -124,7 +126,8 @@ fn detect_barcode_type(barcode: &str) -> String {
         if barcode.len() == 8 && barcode.chars().all(|c| c.is_ascii_digit()) {
             return "EAN_8".to_string();
         }
-        if barcode.chars().all(|c| c.is_ascii_digit()) && (barcode.len() == 12 || barcode.len() == 13)
+        if barcode.chars().all(|c| c.is_ascii_digit())
+            && (barcode.len() == 12 || barcode.len() == 13)
         {
             return "UPC_A".to_string();
         }
@@ -156,7 +159,14 @@ fn decode_barcode(barcode: &str, barcode_type: &str) -> String {
     }
 }
 
-fn match_barcode(barcode: &str, barcode_type: &str) -> (Option<serde_json::Value>, Option<String>, Option<serde_json::Value>) {
+fn match_barcode(
+    barcode: &str,
+    barcode_type: &str,
+) -> (
+    Option<serde_json::Value>,
+    Option<String>,
+    Option<serde_json::Value>,
+) {
     if barcode_type == "QR_CODE" {
         if barcode.starts_with("http://") || barcode.starts_with("https://") {
             return (
@@ -238,7 +248,10 @@ pub async fn get_scan_history(
 
     let response = ScanHistoryResponse { items, total };
 
-    (StatusCode::OK, Json(ApiResponse::success(response, "获取扫描历史成功")))
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(response, "获取扫描历史成功")),
+    )
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -282,9 +295,15 @@ pub async fn get_scan_by_id(
                 );
             }
         };
-        (StatusCode::OK, Json(ApiResponse::success(scan, "获取扫描记录成功")))
+        (
+            StatusCode::OK,
+            Json(ApiResponse::success(scan, "获取扫描记录成功")),
+        )
     } else {
-        (StatusCode::NOT_FOUND, Json(ApiResponse::error(404, "扫描记录不存在")))
+        (
+            StatusCode::NOT_FOUND,
+            Json(ApiResponse::error(404, "扫描记录不存在")),
+        )
     }
 }
 
@@ -325,7 +344,10 @@ pub async fn get_supported_barcode_types(
         },
     ];
 
-    (StatusCode::OK, Json(ApiResponse::success(types, "获取支持的条码类型成功")))
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(types, "获取支持的条码类型成功")),
+    )
 }
 
 pub async fn delete_scan_record(
@@ -354,18 +376,17 @@ pub async fn delete_scan_record(
         }
     };
 
-    let result = sqlx::query(
-        "DELETE FROM barcode_scans WHERE id = $1 AND user_id = $2",
-    )
-    .bind(id)
-    .bind(user_id)
-    .execute(&pool)
-    .await;
+    let result = sqlx::query("DELETE FROM barcode_scans WHERE id = $1 AND user_id = $2")
+        .bind(id)
+        .bind(user_id)
+        .execute(&pool)
+        .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            (StatusCode::OK, Json(ApiResponse::success((), "删除扫描记录成功")))
-        }
+        Ok(r) if r.rows_affected() > 0 => (
+            StatusCode::OK,
+            Json(ApiResponse::success((), "删除扫描记录成功")),
+        ),
         Ok(_) => (
             StatusCode::NOT_FOUND,
             Json(ApiResponse::error(404, "扫描记录不存在或无权删除")),

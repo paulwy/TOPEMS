@@ -569,6 +569,15 @@ const InboundPage: React.FC = () => {
         headerContent={statsContent}
         emptyMessage='暂无入库单数据'
         getRowId={(row) => row.id}
+        mobileCardTitleKey='order_number'
+        mobileCardSubtitleKey='supplier_name'
+        mobileCardDisplayFields={['order_type', 'status', 'expected_date', 'total_quantity']}
+        mobileCardFieldLabels={{
+          order_type: '入库类型',
+          status: '状态',
+          expected_date: '预计日期',
+          total_quantity: '总数',
+        }}
       />
 
       {/* 新增对话框 */}

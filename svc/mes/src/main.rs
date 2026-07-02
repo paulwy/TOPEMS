@@ -16,22 +16,18 @@
 
 mod api;
 mod models;
-mod services;
 mod plugin;
+mod services;
 
 use std::net::SocketAddr;
 
-use axum::{
-    extract::State,
-    routing::get,
-    Json, Router,
-};
+use axum::{extract::State, routing::get, Json, Router};
 use axum_prometheus::PrometheusMetricLayer;
 use sqlx::PgPool;
 
 use topems_shared::{
     auth_middleware, create_cors_layer, get_api_info_handler, init_telemetry, simple_health_check,
-    ApiResponse, AuthState, ServiceHealth, SimpleHealthConfig, telemetry_middleware,
+    telemetry_middleware, ApiResponse, AuthState, ServiceHealth, SimpleHealthConfig,
 };
 
 // ==================== 应用状态 ====================
@@ -102,7 +98,10 @@ async fn main() {
         .route("/api/info", get(|| get_api_info_handler("mes-service")))
         .route("/api/plugins/info", get(plugin::get_plugin_info))
         .route("/api/plugins/health", get(plugin::plugin_health_check))
-        .route("/metrics", get(move || async move { metric_handle.render() }));
+        .route(
+            "/metrics",
+            get(move || async move { metric_handle.render() }),
+        );
 
     // Protected routes (auth required)
     let protected_routes = Router::new()

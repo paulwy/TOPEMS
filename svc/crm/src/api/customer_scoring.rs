@@ -5,8 +5,8 @@ use axum::{
     Json, Router,
 };
 use chrono::{DateTime, Utc};
-use rust_decimal::Decimal;
 use rust_decimal::prelude::ToPrimitive;
+use rust_decimal::Decimal;
 use serde::Deserialize;
 use uuid::Uuid;
 
@@ -31,10 +31,7 @@ pub fn create_routes() -> Router<ApiState> {
             "/api/crm/customer-scoring",
             get(list_customer_scores).post(create_customer_score),
         )
-        .route(
-            "/api/crm/customer-scoring/calculate",
-            post(batch_calculate),
-        )
+        .route("/api/crm/customer-scoring/calculate", post(batch_calculate))
         .route(
             "/api/crm/customer-scoring/{id}",
             get(get_customer_score)
@@ -151,12 +148,11 @@ async fn create_customer_score(
         Err(e) => return e,
     }
 
-    let customer = sqlx::query_scalar::<_, String>(
-        "SELECT name FROM plugin_crm.customers WHERE id = $1",
-    )
-    .bind(&req.customer_id)
-    .fetch_optional(&state.db)
-    .await;
+    let customer =
+        sqlx::query_scalar::<_, String>("SELECT name FROM plugin_crm.customers WHERE id = $1")
+            .bind(&req.customer_id)
+            .fetch_optional(&state.db)
+            .await;
 
     let customer_name = match customer {
         Ok(Some(name)) => name,
@@ -431,13 +427,14 @@ async fn batch_calculate(
     let now = Utc::now();
 
     for customer_id in &req.customer_ids {
-        let customer_info: Option<(String, DateTime<Utc>, Option<String>, Option<Decimal>)> = sqlx::query_scalar(
-            "SELECT name, created_at, status, revenue FROM plugin_crm.customers WHERE id = $1",
-        )
-        .bind(customer_id)
-        .fetch_optional(&state.db)
-        .await
-        .unwrap_or(None);
+        let customer_info: Option<(String, DateTime<Utc>, Option<String>, Option<Decimal>)> =
+            sqlx::query_scalar(
+                "SELECT name, created_at, status, revenue FROM plugin_crm.customers WHERE id = $1",
+            )
+            .bind(customer_id)
+            .fetch_optional(&state.db)
+            .await
+            .unwrap_or(None);
 
         if let Some((name, created_at, status, revenue)) = customer_info {
             let id = Uuid::new_v4();
@@ -478,16 +475,16 @@ async fn batch_calculate(
             let years_since_created = days_since_created / 365;
 
             let revenue_score = calculate_revenue_score(revenue, total_opportunity_value);
-            let opportunity_score = calculate_opportunity_score(opportunity_count, won_opportunity_count);
+            let opportunity_score =
+                calculate_opportunity_score(opportunity_count, won_opportunity_count);
             let interaction_score = calculate_interaction_score(interaction_count);
             let loyalty_score = calculate_loyalty_score(years_since_created, status.as_deref());
 
-            let total_score = (
-                revenue_score * 35 +
-                opportunity_score * 30 +
-                interaction_score * 20 +
-                loyalty_score * 15
-            ) / 100;
+            let total_score = (revenue_score * 35
+                + opportunity_score * 30
+                + interaction_score * 20
+                + loyalty_score * 15)
+                / 100;
 
             let score = total_score.max(10).min(100);
 
@@ -557,11 +554,15 @@ async fn batch_calculate(
     ))
 }
 
-fn calculate_revenue_score(revenue: Option<Decimal>, total_opportunity_value: Option<Decimal>) -> i32 {
-    let total_value = revenue.unwrap_or(Decimal::ZERO) + total_opportunity_value.unwrap_or(Decimal::ZERO);
-    
+fn calculate_revenue_score(
+    revenue: Option<Decimal>,
+    total_opportunity_value: Option<Decimal>,
+) -> i32 {
+    let total_value =
+        revenue.unwrap_or(Decimal::ZERO) + total_opportunity_value.unwrap_or(Decimal::ZERO);
+
     let value_f64: f64 = total_value.to_f64().unwrap_or(0.0);
-    
+
     if value_f64 >= 1_000_000.0 {
         100
     } else if value_f64 >= 500_000.0 {
@@ -581,7 +582,7 @@ fn calculate_opportunity_score(opportunity_count: i64, won_count: i64) -> i32 {
     if opportunity_count == 0 {
         return 10;
     }
-    
+
     let win_rate = if opportunity_count > 0 {
         (won_count as f64 / opportunity_count as f64) * 100.0
     } else {

@@ -5,9 +5,7 @@ use sqlx::FromRow;
 use utoipa::ToSchema;
 use uuid::Uuid;
 
-use topems_shared::{
-    DataMasking, EncryptionResult, FieldEncryptionService,
-};
+use topems_shared::{DataMasking, EncryptionResult, FieldEncryptionService};
 
 #[derive(Debug, Clone, FromRow, Serialize, Deserialize, ToSchema)]
 #[schema(example = json!({
@@ -406,7 +404,11 @@ mod tests {
 
         assert!(employee.phone.as_ref().unwrap().contains("****"));
         assert!(employee.email.as_ref().unwrap().contains("***"));
-        assert!(employee.id_card_number.as_ref().unwrap().contains("********"));
+        assert!(employee
+            .id_card_number
+            .as_ref()
+            .unwrap()
+            .contains("********"));
         assert!(employee.address.as_ref().unwrap().contains("******"));
     }
 }

@@ -1,4 +1,8 @@
-use axum::{extract::{Path, State}, routing::{get, post}, Json, Router};
+use axum::{
+    extract::{Path, State},
+    routing::{get, post},
+    Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row};
 use std::fmt;
@@ -9,10 +13,24 @@ use crate::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/report/subscriptions", get(list_subscriptions).post(create_subscription))
-        .route("/api/report/subscriptions/{id}", get(get_subscription).put(update_subscription).delete(delete_subscription))
-        .route("/api/report/subscriptions/{id}/toggle", post(toggle_subscription))
-        .route("/api/report/subscriptions/user/{user_id}", get(get_user_subscriptions))
+        .route(
+            "/api/report/subscriptions",
+            get(list_subscriptions).post(create_subscription),
+        )
+        .route(
+            "/api/report/subscriptions/{id}",
+            get(get_subscription)
+                .put(update_subscription)
+                .delete(delete_subscription),
+        )
+        .route(
+            "/api/report/subscriptions/{id}/toggle",
+            post(toggle_subscription),
+        )
+        .route(
+            "/api/report/subscriptions/user/{user_id}",
+            get(get_user_subscriptions),
+        )
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -77,7 +95,7 @@ pub async fn get_subscription(
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Getting subscription: {}", id);
-    
+
     let subscription = sqlx::query(
         r#"
         SELECT s.id, s.template_id, t.name as template_name, s.user_id, 
@@ -90,7 +108,7 @@ pub async fn get_subscription(
     .bind(id)
     .fetch_optional(&state.pool)
     .await;
-    
+
     match subscription {
         Ok(Some(s)) => Json(serde_json::json!({
             "success": true,
@@ -112,37 +130,39 @@ pub async fn get_subscription(
         Err(e) => Json(serde_json::json!({
             "success": false,
             "message": format!("Failed to get subscription: {}", e)
-        }))
+        })),
     }
 }
 
 pub async fn list_subscriptions(State(state): State<AppState>) -> Json<serde_json::Value> {
     info!("Listing subscriptions");
-    
+
     let subscriptions = sqlx::query(
         r#"
         SELECT s.id, s.template_id, s.user_id, s.email, s.frequency, s.enabled, s.created_at
         FROM report_subscriptions s
         ORDER BY s.created_at DESC
-        "#
+        "#,
     )
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
-    
+
     let result: Vec<serde_json::Value> = subscriptions
         .into_iter()
-        .map(|s| serde_json::json!({
-            "id": s.get::<Uuid, _>("id"),
-            "template_id": s.get::<Uuid, _>("template_id"),
-            "user_id": s.get::<String, _>("user_id"),
-            "email": s.get::<Option<String>, _>("email"),
-            "frequency": s.get::<String, _>("frequency"),
-            "enabled": s.get::<bool, _>("enabled"),
-            "created_at": s.get::<Option<chrono::DateTime<chrono::Utc>>, _>("created_at"),
-        }))
+        .map(|s| {
+            serde_json::json!({
+                "id": s.get::<Uuid, _>("id"),
+                "template_id": s.get::<Uuid, _>("template_id"),
+                "user_id": s.get::<String, _>("user_id"),
+                "email": s.get::<Option<String>, _>("email"),
+                "frequency": s.get::<String, _>("frequency"),
+                "enabled": s.get::<bool, _>("enabled"),
+                "created_at": s.get::<Option<chrono::DateTime<chrono::Utc>>, _>("created_at"),
+            })
+        })
         .collect();
-    
+
     Json(serde_json::json!({
         "success": true,
         "data": result,
@@ -155,7 +175,7 @@ pub async fn get_user_subscriptions(
     Path(user_id): Path<String>,
 ) -> Json<serde_json::Value> {
     info!("Listing subscriptions for user: {}", user_id);
-    
+
     let subscriptions = sqlx::query(
         r#"
         SELECT s.id, s.template_id, t.name as template_name, s.user_id, 
@@ -170,21 +190,23 @@ pub async fn get_user_subscriptions(
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
-    
+
     let result: Vec<serde_json::Value> = subscriptions
         .into_iter()
-        .map(|s| serde_json::json!({
-            "id": s.get::<Uuid, _>("id"),
-            "template_id": s.get::<Uuid, _>("template_id"),
-            "template_name": s.get::<Option<String>, _>("template_name"),
-            "user_id": s.get::<String, _>("user_id"),
-            "email": s.get::<Option<String>, _>("email"),
-            "frequency": s.get::<String, _>("frequency"),
-            "enabled": s.get::<bool, _>("enabled"),
-            "created_at": s.get::<Option<chrono::DateTime<chrono::Utc>>, _>("created_at"),
-        }))
+        .map(|s| {
+            serde_json::json!({
+                "id": s.get::<Uuid, _>("id"),
+                "template_id": s.get::<Uuid, _>("template_id"),
+                "template_name": s.get::<Option<String>, _>("template_name"),
+                "user_id": s.get::<String, _>("user_id"),
+                "email": s.get::<Option<String>, _>("email"),
+                "frequency": s.get::<String, _>("frequency"),
+                "enabled": s.get::<bool, _>("enabled"),
+                "created_at": s.get::<Option<chrono::DateTime<chrono::Utc>>, _>("created_at"),
+            })
+        })
         .collect();
-    
+
     Json(serde_json::json!({
         "success": true,
         "data": result,
@@ -197,9 +219,9 @@ pub async fn create_subscription(
     Json(req): Json<CreateSubscriptionRequest>,
 ) -> Json<serde_json::Value> {
     info!("Creating subscription for user: {}", req.user_id);
-    
+
     let id = Uuid::new_v4();
-    
+
     let result = sqlx::query(
         r#"
         INSERT INTO report_subscriptions (id, template_id, user_id, email, frequency, enabled)
@@ -214,7 +236,7 @@ pub async fn create_subscription(
     .bind(true)
     .execute(&state.pool)
     .await;
-    
+
     match result {
         Ok(_) => Json(serde_json::json!({
             "success": true,
@@ -224,7 +246,7 @@ pub async fn create_subscription(
         Err(e) => Json(serde_json::json!({
             "success": false,
             "message": format!("Failed to create subscription: {}", e)
-        }))
+        })),
     }
 }
 
@@ -234,7 +256,7 @@ pub async fn update_subscription(
     Json(req): Json<UpdateSubscriptionRequest>,
 ) -> Json<serde_json::Value> {
     info!("Updating subscription: {}", id);
-    
+
     let result = sqlx::query!(
         r#"
         UPDATE report_subscriptions
@@ -250,7 +272,7 @@ pub async fn update_subscription(
     )
     .execute(&state.pool)
     .await;
-    
+
     match result {
         Ok(_) => Json(serde_json::json!({
             "success": true,
@@ -259,7 +281,7 @@ pub async fn update_subscription(
         Err(e) => Json(serde_json::json!({
             "success": false,
             "message": format!("Failed to update subscription: {}", e)
-        }))
+        })),
     }
 }
 
@@ -268,7 +290,7 @@ pub async fn delete_subscription(
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Deleting subscription: {}", id);
-    
+
     let result = sqlx::query!(
         r#"
         DELETE FROM report_subscriptions
@@ -278,7 +300,7 @@ pub async fn delete_subscription(
     )
     .execute(&state.pool)
     .await;
-    
+
     match result {
         Ok(_) => Json(serde_json::json!({
             "success": true,
@@ -287,7 +309,7 @@ pub async fn delete_subscription(
         Err(e) => Json(serde_json::json!({
             "success": false,
             "message": format!("Failed to delete subscription: {}", e)
-        }))
+        })),
     }
 }
 
@@ -296,7 +318,7 @@ pub async fn toggle_subscription(
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Toggling subscription: {}", id);
-    
+
     let result = sqlx::query!(
         r#"
         UPDATE report_subscriptions
@@ -308,7 +330,7 @@ pub async fn toggle_subscription(
     )
     .fetch_optional(&state.pool)
     .await;
-    
+
     match result {
         Ok(Some(row)) => {
             let enabled = row.enabled.unwrap_or(true);
@@ -320,7 +342,7 @@ pub async fn toggle_subscription(
                     "enabled": enabled
                 }
             }))
-        },
+        }
         Ok(None) => Json(serde_json::json!({
             "success": false,
             "message": "Subscription not found"
@@ -328,6 +350,6 @@ pub async fn toggle_subscription(
         Err(e) => Json(serde_json::json!({
             "success": false,
             "message": format!("Failed to toggle subscription: {}", e)
-        }))
+        })),
     }
 }

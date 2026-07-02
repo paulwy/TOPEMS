@@ -442,7 +442,10 @@ async fn export_employees(
                 return Json(api_error(400, "导出员工ID列表不能为空"));
             }
             if ids.len() as i64 > MAX_EXPORT_COUNT {
-                return Json(api_error(400, &format!("导出数量不能超过 {}", MAX_EXPORT_COUNT)));
+                return Json(api_error(
+                    400,
+                    &format!("导出数量不能超过 {}", MAX_EXPORT_COUNT),
+                ));
             }
             sqlx::query_as::<_, Employee>(
                 r#"

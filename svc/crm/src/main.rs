@@ -30,10 +30,10 @@ use std::time::Instant;
 use utoipa::OpenApi;
 
 use topems_shared::{
-    check_http_health, create_api_info_router, create_cors_layer,
-    create_database_pool, init_telemetry, verify_jwt_token, ApiResponse, AuthState, Claims,
+    check_http_health, create_api_info_router, create_cors_layer, create_database_pool,
+    init_telemetry, telemetry_middleware, verify_jwt_token, ApiResponse, AuthState, Claims,
     DatabaseConfig, DependencyHealth, FieldEncryptionService, HealthStatus, KeyManager,
-    ServiceHealth, SystemMetrics, telemetry_middleware,
+    ServiceHealth, SystemMetrics,
 };
 
 mod api;
@@ -285,9 +285,7 @@ fn init_encryption_service() -> FieldEncryptionService {
     let master_key = env::var("ENCRYPTION_MASTER_KEY").unwrap_or_else(|_| {
         "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef".to_string()
     });
-    let key_bytes = hex::decode(&master_key).unwrap_or_else(|_| {
-        vec![0x42; 32]
-    });
+    let key_bytes = hex::decode(&master_key).unwrap_or_else(|_| vec![0x42; 32]);
     let mut key_array = [0u8; 32];
     key_array.copy_from_slice(&key_bytes[..32]);
     let key_manager = KeyManager::new(&key_array);
@@ -318,7 +316,8 @@ async fn crm_auth_middleware(
         "/api/v1/health/detailed",
         "/api/v1/metrics",
     ];
-    if public_paths.contains(&path) || path.starts_with("/metrics") || path.starts_with("/api-docs") {
+    if public_paths.contains(&path) || path.starts_with("/metrics") || path.starts_with("/api-docs")
+    {
         return next.run(req).await;
     }
 
@@ -339,7 +338,11 @@ async fn crm_auth_middleware(
                 iat: 0,
                 email: None,
                 department: None,
-                tenant_id: parts.headers.get("X-Tenant-Id").and_then(|h| h.to_str().ok()).map(|s| s.to_string()),
+                tenant_id: parts
+                    .headers
+                    .get("X-Tenant-Id")
+                    .and_then(|h| h.to_str().ok())
+                    .map(|s| s.to_string()),
             };
             parts.extensions.insert(claims);
             let req = Request::from_parts(parts, body);
@@ -356,7 +359,8 @@ async fn crm_auth_middleware(
     let token = match auth_header {
         Some(header) if header.starts_with("Bearer ") => &header[7..],
         _ => {
-            return topems_shared::response::api_error::<()>(401, "未授权：缺少有效的认证令牌").into_response();
+            return topems_shared::response::api_error::<()>(401, "未授权：缺少有效的认证令牌")
+                .into_response();
         }
     };
 
@@ -368,7 +372,8 @@ async fn crm_auth_middleware(
         }
         Err(e) => {
             tracing::error!("Token verification failed: {}", e);
-            topems_shared::response::api_error::<()>(401, &format!("认证失败：{}", e)).into_response()
+            topems_shared::response::api_error::<()>(401, &format!("认证失败：{}", e))
+                .into_response()
         }
     }
 }

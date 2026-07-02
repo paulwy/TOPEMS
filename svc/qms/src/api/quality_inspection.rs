@@ -3,7 +3,7 @@
 use axum::{extract::State, Json};
 use bigdecimal::BigDecimal;
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, Row, types::Uuid};
+use sqlx::{types::Uuid, FromRow, Row};
 use topems_shared::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -177,10 +177,19 @@ pub async fn create_inspection(
     State(state): State<crate::AppState>,
     Json(req): Json<CreateInspectionRequest>,
 ) -> Json<ApiResponse<Inspection>> {
-    let inspection_no = format!("INS-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
+    let inspection_no = format!(
+        "INS-{}",
+        uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+    );
 
-    let product_id = req.product_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
-    let standard_id = req.standard_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
+    let product_id = req
+        .product_id
+        .as_ref()
+        .and_then(|s| Uuid::parse_str(s).ok());
+    let standard_id = req
+        .standard_id
+        .as_ref()
+        .and_then(|s| Uuid::parse_str(s).ok());
 
     let inspection = sqlx::query_as::<_, Inspection>(r#"INSERT INTO qa_quality_inspections (inspection_no, inspection_type, product_id, product_name, standard_id, quantity, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7) RETURNING id, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at::TEXT, result, memo, created_by, created_at::TEXT, updated_at::TEXT"#).bind(inspection_no).bind(req.inspection_type).bind(product_id).bind(req.product_name).bind(standard_id).bind(req.quantity).bind(req.created_by)
     .fetch_one(&state.pool)
@@ -227,8 +236,14 @@ pub async fn update_inspection(
         Err(_) => return Json(ApiResponse::error(400, "无效的检查ID")),
     };
 
-    let product_id = req.product_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
-    let standard_id = req.standard_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
+    let product_id = req
+        .product_id
+        .as_ref()
+        .and_then(|s| Uuid::parse_str(s).ok());
+    let standard_id = req
+        .standard_id
+        .as_ref()
+        .and_then(|s| Uuid::parse_str(s).ok());
 
     let inspection = sqlx::query_as::<_, Inspection>(r#"UPDATE qa_quality_inspections SET inspection_type = COALESCE($2, inspection_type), product_id = COALESCE($3, product_id), product_name = COALESCE($4, product_name), standard_id = COALESCE($5, standard_id), quantity = COALESCE($6, quantity), updated_at = NOW() WHERE id = $1 RETURNING id, inspection_no, inspection_type, product_id, product_name, standard_id, quantity, qualified_quantity, unqualified_quantity, qualification_rate, status, inspector, assignee, inspected_at::TEXT, result, memo, created_by, created_at::TEXT, updated_at::TEXT"#).bind(id).bind(req.inspection_type).bind(product_id).bind(req.product_name).bind(standard_id).bind(req.quantity)
     .fetch_one(&state.pool)
@@ -252,9 +267,10 @@ pub async fn delete_inspection(
         Err(_) => return Json(ApiResponse::error(400, "无效的检查ID")),
     };
 
-    let result = sqlx::query(r#"DELETE FROM qa_quality_inspections WHERE id = $1"#).bind(id)
-    .execute(&state.pool)
-    .await;
+    let result = sqlx::query(r#"DELETE FROM qa_quality_inspections WHERE id = $1"#)
+        .bind(id)
+        .execute(&state.pool)
+        .await;
 
     match result {
         Ok(_) => Json(ApiResponse::success(true, "质量检查删除成功")),
@@ -275,9 +291,10 @@ pub async fn assign_inspection(
         Err(_) => return Json(ApiResponse::error(400, "无效的检查ID")),
     };
 
-    let current = sqlx::query(r#"SELECT status FROM qa_quality_inspections WHERE id = $1"#).bind(id)
-    .fetch_one(&state.pool)
-    .await;
+    let current = sqlx::query(r#"SELECT status FROM qa_quality_inspections WHERE id = $1"#)
+        .bind(id)
+        .fetch_one(&state.pool)
+        .await;
 
     match current {
         Ok(row) => {
@@ -321,9 +338,10 @@ pub async fn submit_result(
         Err(_) => return Json(ApiResponse::error(400, "无效的检查ID")),
     };
 
-    let current = sqlx::query(r#"SELECT status FROM qa_quality_inspections WHERE id = $1"#).bind(id)
-    .fetch_one(&state.pool)
-    .await;
+    let current = sqlx::query(r#"SELECT status FROM qa_quality_inspections WHERE id = $1"#)
+        .bind(id)
+        .fetch_one(&state.pool)
+        .await;
 
     match current {
         Ok(row) => {
@@ -385,9 +403,10 @@ pub async fn audit_inspection(
         Err(_) => return Json(ApiResponse::error(400, "无效的检查ID")),
     };
 
-    let current = sqlx::query(r#"SELECT status FROM qa_quality_inspections WHERE id = $1"#).bind(id)
-    .fetch_one(&state.pool)
-    .await;
+    let current = sqlx::query(r#"SELECT status FROM qa_quality_inspections WHERE id = $1"#)
+        .bind(id)
+        .fetch_one(&state.pool)
+        .await;
 
     match current {
         Ok(row) => {
@@ -412,7 +431,11 @@ pub async fn audit_inspection(
                     let _ = sqlx::query(r#"INSERT INTO qa_inspection_audits (inspection_id, status_from, status_to, action, operator, comment) VALUES ($1, $2, $3, $4, $5, $6)"#).bind(id).bind(current_status).bind(target_status).bind(get_action_name(current_status, target_status)).bind(req.operator).bind(req.comment)
                     .execute(&state.pool)
                     .await;
-                    let msg = if target_status == STATUS_COMPLETED { "审核通过" } else { "审核驳回" };
+                    let msg = if target_status == STATUS_COMPLETED {
+                        "审核通过"
+                    } else {
+                        "审核驳回"
+                    };
                     Json(ApiResponse::success(data, msg))
                 }
                 Err(e) => {
@@ -438,9 +461,10 @@ pub async fn rework_inspection(
         Err(_) => return Json(ApiResponse::error(400, "无效的检查ID")),
     };
 
-    let current = sqlx::query(r#"SELECT status FROM qa_quality_inspections WHERE id = $1"#).bind(id)
-    .fetch_one(&state.pool)
-    .await;
+    let current = sqlx::query(r#"SELECT status FROM qa_quality_inspections WHERE id = $1"#)
+        .bind(id)
+        .fetch_one(&state.pool)
+        .await;
 
     match current {
         Ok(row) => {

@@ -150,6 +150,7 @@ const DetailsPanel: React.FC<{
   onClose: () => void;
 }> = ({ selectedItem, onClose }) => {
   if (!selectedItem) return null;
+  const theme = useTheme();
 
   const formatCoordinate = (value: number) => value.toFixed(6);
 

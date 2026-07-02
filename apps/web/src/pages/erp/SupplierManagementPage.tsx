@@ -214,7 +214,7 @@ const SupplierManagementPage: React.FC = () => {
         color: string;
       }
     > = {
-      active: { label: '正常合作', bg: 'success.lighter', color: '#15803d' },
+      active: { label: '正常合作', bg: 'success.lighter', color: 'success.700' },
       inactive: { label: '暂停合作', bg: 'grey.100', color: 'text.secondary' },
       blacklisted: { label: '黑名单', bg: 'error.lighter', color: 'error.dark' },
     };

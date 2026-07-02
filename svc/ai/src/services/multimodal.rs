@@ -86,14 +86,23 @@ impl MultimodalService {
         Self { qa_service }
     }
 
-    pub async fn analyze_image(&self, request: ImageAnalysisRequest) -> Result<ImageAnalysisResponse, String> {
+    pub async fn analyze_image(
+        &self,
+        request: ImageAnalysisRequest,
+    ) -> Result<ImageAnalysisResponse, String> {
         let image_id = Uuid::new_v4().to_string();
-        
+
         let result = match request.analysis_type.as_str() {
-            "caption" => self.generate_image_caption(&request.image_base64, &request.prompt).await?,
+            "caption" => {
+                self.generate_image_caption(&request.image_base64, &request.prompt)
+                    .await?
+            }
             "objects" => self.detect_objects(&request.image_base64).await?,
             "text" => self.extract_text(&request.image_base64).await?,
-            "describe" => self.describe_image(&request.image_base64, &request.prompt).await?,
+            "describe" => {
+                self.describe_image(&request.image_base64, &request.prompt)
+                    .await?
+            }
             _ => self.analyze_general(&request).await?,
         };
 
@@ -105,10 +114,14 @@ impl MultimodalService {
         })
     }
 
-    pub async fn generate_image_caption(&self, image_base64: &str, prompt: &Option<String>) -> Result<serde_json::Value, String> {
+    pub async fn generate_image_caption(
+        &self,
+        image_base64: &str,
+        prompt: &Option<String>,
+    ) -> Result<serde_json::Value, String> {
         let caption = "这是一张展示现代办公环境的图片，包含多台电脑和办公设备".to_string();
         let tags = vec!["办公室", "电脑", "办公设备", "现代", "工作环境"];
-        
+
         Ok(serde_json::json!({
             "caption": caption,
             "tags": tags,
@@ -118,22 +131,37 @@ impl MultimodalService {
 
     pub async fn detect_objects(&self, image_base64: &str) -> Result<serde_json::Value, String> {
         let image_features = self.extract_image_features(image_base64);
-        
+
         let mut objects = vec![
             DetectedObject {
                 name: "电脑显示器".to_string(),
                 confidence: 0.95,
-                bounding_box: BoundingBox { x: 100, y: 80, width: 200, height: 150 },
+                bounding_box: BoundingBox {
+                    x: 100,
+                    y: 80,
+                    width: 200,
+                    height: 150,
+                },
             },
             DetectedObject {
                 name: "键盘".to_string(),
                 confidence: 0.92,
-                bounding_box: BoundingBox { x: 120, y: 250, width: 180, height: 50 },
+                bounding_box: BoundingBox {
+                    x: 120,
+                    y: 250,
+                    width: 180,
+                    height: 50,
+                },
             },
             DetectedObject {
                 name: "办公桌".to_string(),
                 confidence: 0.88,
-                bounding_box: BoundingBox { x: 50, y: 220, width: 350, height: 180 },
+                bounding_box: BoundingBox {
+                    x: 50,
+                    y: 220,
+                    width: 350,
+                    height: 180,
+                },
             },
         ];
 
@@ -141,7 +169,12 @@ impl MultimodalService {
             objects.push(DetectedObject {
                 name: "人物".to_string(),
                 confidence: 0.91,
-                bounding_box: BoundingBox { x: 300, y: 50, width: 80, height: 280 },
+                bounding_box: BoundingBox {
+                    x: 300,
+                    y: 50,
+                    width: 80,
+                    height: 280,
+                },
             });
         }
 
@@ -149,7 +182,12 @@ impl MultimodalService {
             objects.push(DetectedObject {
                 name: "文档".to_string(),
                 confidence: 0.85,
-                bounding_box: BoundingBox { x: 280, y: 180, width: 90, height: 120 },
+                bounding_box: BoundingBox {
+                    x: 280,
+                    y: 180,
+                    width: 90,
+                    height: 120,
+                },
             });
         }
 
@@ -157,7 +195,12 @@ impl MultimodalService {
             objects.push(DetectedObject {
                 name: "椅子".to_string(),
                 confidence: 0.82,
-                bounding_box: BoundingBox { x: 25, y: 240, width: 60, height: 160 },
+                bounding_box: BoundingBox {
+                    x: 25,
+                    y: 240,
+                    width: 60,
+                    height: 160,
+                },
             });
         }
 
@@ -175,12 +218,22 @@ impl MultimodalService {
             TextRegion {
                 text: "TOPEMS".to_string(),
                 confidence: 0.99,
-                bounding_box: BoundingBox { x: 150, y: 100, width: 100, height: 30 },
+                bounding_box: BoundingBox {
+                    x: 150,
+                    y: 100,
+                    width: 100,
+                    height: 30,
+                },
             },
             TextRegion {
                 text: "企业管理系统".to_string(),
                 confidence: 0.95,
-                bounding_box: BoundingBox { x: 140, y: 140, width: 120, height: 25 },
+                bounding_box: BoundingBox {
+                    x: 140,
+                    y: 140,
+                    width: 120,
+                    height: 25,
+                },
             },
         ];
 
@@ -191,23 +244,34 @@ impl MultimodalService {
         }))
     }
 
-    pub async fn describe_image(&self, image_base64: &str, prompt: &Option<String>) -> Result<serde_json::Value, String> {
+    pub async fn describe_image(
+        &self,
+        image_base64: &str,
+        prompt: &Option<String>,
+    ) -> Result<serde_json::Value, String> {
         let custom_prompt = prompt.clone().unwrap_or("请详细描述这张图片".to_string());
-        
+
         let prompt_text = format!(
             "{}：图片内容描述如下（模拟）：这是一张展示企业管理系统界面的图片，包含仪表盘、数据图表、导航菜单等元素，整体设计简洁现代，以蓝色为主色调。",
             custom_prompt
         );
 
-        let response = self.qa_service.ask(&prompt_text, None, 5).await.map(|r| r.0)?;
-        
+        let response = self
+            .qa_service
+            .ask(&prompt_text, None, 5)
+            .await
+            .map(|r| r.0)?;
+
         Ok(serde_json::json!({
             "description": response,
             "confidence": 0.82
         }))
     }
 
-    pub async fn analyze_general(&self, request: &ImageAnalysisRequest) -> Result<serde_json::Value, String> {
+    pub async fn analyze_general(
+        &self,
+        request: &ImageAnalysisRequest,
+    ) -> Result<serde_json::Value, String> {
         let prompt = format!(
             "分析图片内容，类型：{}，提示：{}",
             request.analysis_type,
@@ -215,16 +279,19 @@ impl MultimodalService {
         );
 
         let response = self.qa_service.ask(&prompt, None, 5).await.map(|r| r.0)?;
-        
+
         Ok(serde_json::json!({
             "analysis": response,
             "confidence": 0.75
         }))
     }
 
-    pub async fn analyze_video(&self, request: VideoAnalysisRequest) -> Result<VideoAnalysisResponse, String> {
+    pub async fn analyze_video(
+        &self,
+        request: VideoAnalysisRequest,
+    ) -> Result<VideoAnalysisResponse, String> {
         let video_id = Uuid::new_v4().to_string();
-        
+
         let result = match request.analysis_type.as_str() {
             "summary" => self.summarize_video(&request.video_url).await?,
             "scene_detection" => self.detect_scenes(&request.video_url).await?,
@@ -268,13 +335,16 @@ impl MultimodalService {
         }))
     }
 
-    async fn analyze_video_general(&self, request: &VideoAnalysisRequest) -> Result<serde_json::Value, String> {
+    async fn analyze_video_general(
+        &self,
+        request: &VideoAnalysisRequest,
+    ) -> Result<serde_json::Value, String> {
         let prompt = format!(
             "分析视频内容：{}，类型：{}",
             request.video_url, request.analysis_type
         );
         let response = self.qa_service.ask(&prompt, None, 5).await.map(|r| r.0)?;
-        
+
         Ok(serde_json::json!({
             "analysis": response,
             "confidence": 0.70
@@ -285,7 +355,7 @@ impl MultimodalService {
         let has_person = image_base64.len() % 7 == 0;
         let has_document = image_base64.len() % 5 == 0;
         let has_chair = image_base64.len() % 3 == 0;
-        
+
         let mut features = vec!["office".to_string(), "technology".to_string()];
         if has_person {
             features.push("person".to_string());
@@ -297,7 +367,12 @@ impl MultimodalService {
             features.push("chair".to_string());
         }
 
-        let colors = vec!["#1a73e8".to_string(), "#333333".to_string(), "#ffffff".to_string(), "#f5f5f5".to_string()];
+        let colors = vec![
+            "#1a73e8".to_string(),
+            "#333333".to_string(),
+            "#ffffff".to_string(),
+            "#f5f5f5".to_string(),
+        ];
 
         ImageFeatures {
             width: 400,
@@ -371,17 +446,20 @@ pub struct Emotion {
 }
 
 impl MultimodalService {
-    pub async fn assess_image_quality(&self, image_base64: &str) -> Result<ImageQualityAssessment, String> {
+    pub async fn assess_image_quality(
+        &self,
+        image_base64: &str,
+    ) -> Result<ImageQualityAssessment, String> {
         let features = self.extract_image_features(image_base64);
-        
+
         let sharpness = 0.85 + (image_base64.len() % 10) as f64 * 0.01;
         let brightness = 0.70 + (image_base64.len() % 15) as f64 * 0.01;
         let contrast = 0.75 + (image_base64.len() % 12) as f64 * 0.01;
         let color_balance = 0.80 + (image_base64.len() % 8) as f64 * 0.01;
         let noise_level = 0.15 - (image_base64.len() % 5) as f64 * 0.01;
-        
+
         let overall_score = (sharpness + brightness + contrast + color_balance - noise_level) / 5.0;
-        
+
         let mut recommendations = Vec::new();
         if sharpness < 0.7 {
             recommendations.push("图片清晰度较低，建议提高拍摄分辨率".to_string());
@@ -413,15 +491,35 @@ impl MultimodalService {
     pub async fn analyze_chart(&self, image_base64: &str) -> Result<ChartAnalysisResult, String> {
         let chart_types = vec!["line", "bar", "pie", "scatter", "area"];
         let chart_type = chart_types[image_base64.len() % chart_types.len()].to_string();
-        
+
         let data_points = vec![
-            DataPoint { x: "一月".to_string(), y: 120.0, label: Some("Q1".to_string()) },
-            DataPoint { x: "二月".to_string(), y: 150.0, label: None },
-            DataPoint { x: "三月".to_string(), y: 180.0, label: Some("Q1".to_string()) },
-            DataPoint { x: "四月".to_string(), y: 200.0, label: None },
-            DataPoint { x: "五月".to_string(), y: 175.0, label: None },
+            DataPoint {
+                x: "一月".to_string(),
+                y: 120.0,
+                label: Some("Q1".to_string()),
+            },
+            DataPoint {
+                x: "二月".to_string(),
+                y: 150.0,
+                label: None,
+            },
+            DataPoint {
+                x: "三月".to_string(),
+                y: 180.0,
+                label: Some("Q1".to_string()),
+            },
+            DataPoint {
+                x: "四月".to_string(),
+                y: 200.0,
+                label: None,
+            },
+            DataPoint {
+                x: "五月".to_string(),
+                y: 175.0,
+                label: None,
+            },
         ];
-        
+
         let summary = format!(
             "这是一个{}图表，展示了数据的变化趋势。从数据来看，整体呈现{}趋势。",
             match chart_type.as_str() {
@@ -430,9 +528,11 @@ impl MultimodalService {
                 "pie" => "饼",
                 "scatter" => "散点",
                 "area" => "面积",
-                _ => "未知类型"
+                _ => "未知类型",
             },
-            if data_points.last().map(|p| p.y).unwrap_or(0.0) > data_points.first().map(|p| p.y).unwrap_or(0.0) {
+            if data_points.last().map(|p| p.y).unwrap_or(0.0)
+                > data_points.first().map(|p| p.y).unwrap_or(0.0)
+            {
                 "上升"
             } else {
                 "下降"
@@ -451,13 +551,22 @@ impl MultimodalService {
 
     pub async fn detect_faces(&self, image_base64: &str) -> Result<FaceDetectionResult, String> {
         let face_count = (image_base64.len() % 4).min(3);
-        
+
         let emotions = vec![
-            Emotion { emotion: "neutral".to_string(), confidence: 0.75 },
-            Emotion { emotion: "happy".to_string(), confidence: 0.65 },
-            Emotion { emotion: "focused".to_string(), confidence: 0.70 },
+            Emotion {
+                emotion: "neutral".to_string(),
+                confidence: 0.75,
+            },
+            Emotion {
+                emotion: "happy".to_string(),
+                confidence: 0.65,
+            },
+            Emotion {
+                emotion: "focused".to_string(),
+                confidence: 0.70,
+            },
         ];
-        
+
         let faces: Vec<FaceInfo> = (0..face_count)
             .map(|i| FaceInfo {
                 bounding_box: BoundingBox {
@@ -468,7 +577,11 @@ impl MultimodalService {
                 },
                 confidence: 0.90 - (i as f64 * 0.02),
                 age_estimate: Some(25 + (i as u32 * 5)),
-                gender_estimate: Some(if i % 2 == 0 { "male".to_string() } else { "female".to_string() }),
+                gender_estimate: Some(if i % 2 == 0 {
+                    "male".to_string()
+                } else {
+                    "female".to_string()
+                }),
                 emotions: emotions.clone(),
             })
             .collect();
@@ -479,9 +592,14 @@ impl MultimodalService {
         })
     }
 
-    pub async fn compare_images(&self, image1_base64: &str, image2_base64: &str) -> Result<serde_json::Value, String> {
-        let similarity = 0.5 + ((image1_base64.len() as f64 - image2_base64.len() as f64).abs() / 1000.0).min(0.3);
-        
+    pub async fn compare_images(
+        &self,
+        image1_base64: &str,
+        image2_base64: &str,
+    ) -> Result<serde_json::Value, String> {
+        let similarity = 0.5
+            + ((image1_base64.len() as f64 - image2_base64.len() as f64).abs() / 1000.0).min(0.3);
+
         let differences = vec![
             "颜色分布差异".to_string(),
             "亮度水平差异".to_string(),
@@ -493,8 +611,13 @@ impl MultimodalService {
             image1_base64.len(),
             image2_base64.len()
         );
-        
-        let ai_comparison = self.qa_service.ask(&prompt, None, 3).await.map(|r| r.0).unwrap_or_default();
+
+        let ai_comparison = self
+            .qa_service
+            .ask(&prompt, None, 3)
+            .await
+            .map(|r| r.0)
+            .unwrap_or_default();
 
         Ok(serde_json::json!({
             "similarity_score": (similarity * 100.0).round() / 100.0,
@@ -506,12 +629,12 @@ impl MultimodalService {
 
     pub async fn generate_image_tags(&self, image_base64: &str) -> Result<Vec<String>, String> {
         let features = self.extract_image_features(image_base64);
-        
+
         let mut tags = features.features.clone();
-        
+
         tags.push("高质量".to_string());
         tags.push("专业".to_string());
-        
+
         if image_base64.len() > 1000 {
             tags.push("内容丰富".to_string());
         }

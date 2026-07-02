@@ -12,7 +12,9 @@ use serde_json::{json, Value};
 
 const API_URL: &str = "http://localhost:8000";
 
-fn create_client() -> Client { Client::new() }
+fn create_client() -> Client {
+    Client::new()
+}
 
 async fn login(username: &str, password: &str) -> Result<String, String> {
     let client = create_client();
@@ -22,15 +24,30 @@ async fn login(username: &str, password: &str) -> Result<String, String> {
         .send()
         .await
         .map_err(|e| format!("请求失败: {}", e))?;
-    let body: Value = response.json().await.map_err(|e| format!("解析响应失败: {}", e))?;
+    let body: Value = response
+        .json()
+        .await
+        .map_err(|e| format!("解析响应失败: {}", e))?;
     if body["success"].as_bool().unwrap_or(false) {
-        Ok(body["data"]["access_token"].as_str().unwrap_or("").to_string())
+        Ok(body["data"]["access_token"]
+            .as_str()
+            .unwrap_or("")
+            .to_string())
     } else {
-        Err(format!("登录失败: {}", body["message"].as_str().unwrap_or("未知错误")))
+        Err(format!(
+            "登录失败: {}",
+            body["message"].as_str().unwrap_or("未知错误")
+        ))
     }
 }
 
-async fn auth_request(client: &Client, token: &str, method: &str, endpoint: &str, body: Option<Value>) -> Result<(u16, Value), String> {
+async fn auth_request(
+    client: &Client,
+    token: &str,
+    method: &str,
+    endpoint: &str,
+    body: Option<Value>,
+) -> Result<(u16, Value), String> {
     let url = format!("{}{}", API_URL, endpoint);
     let request = match method {
         "GET" => client.get(&url),
@@ -39,12 +56,17 @@ async fn auth_request(client: &Client, token: &str, method: &str, endpoint: &str
         "DELETE" => client.delete(&url),
         _ => return Err(format!("不支持的 HTTP 方法: {}", method)),
     };
-    let response = request.bearer_auth(token).header("Content-Type", "application/json")
+    let response = request
+        .bearer_auth(token)
+        .header("Content-Type", "application/json")
         .send()
         .await
         .map_err(|e| format!("请求失败: {}", e))?;
     let status = response.status().as_u16();
-    let body: Value = response.json().await.map_err(|e| format!("解析响应失败: {}", e))?;
+    let body: Value = response
+        .json()
+        .await
+        .map_err(|e| format!("解析响应失败: {}", e))?;
     Ok((status, body))
 }
 
@@ -72,12 +94,23 @@ async fn test_scm_002_create_supplier() {
     tracing::info!("测试 SCM-002: 创建供应商");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
-    let timestamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis();
-    match auth_request(&client, &token, "POST", "/api/scm/suppliers", Some(json!({
-        "name": format!("测试供应商_{}", timestamp),
-        "contact": "李四",
-        "phone": "13900139000"
-    }))).await {
+    let timestamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_millis();
+    match auth_request(
+        &client,
+        &token,
+        "POST",
+        "/api/scm/suppliers",
+        Some(json!({
+            "name": format!("测试供应商_{}", timestamp),
+            "contact": "李四",
+            "phone": "13900139000"
+        })),
+    )
+    .await
+    {
         Ok((status, _)) => {
             assert!(status == 200 || status == 201 || status == 403 || status == 404);
             tracing::info!("SCM-002 测试通过");
@@ -110,11 +143,19 @@ async fn test_scm_004_create_purchase_plan() {
     tracing::info!("测试 SCM-004: 创建采购计划");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
-    match auth_request(&client, &token, "POST", "/api/scm/purchase-plans", Some(json!({
-        "title": "测试采购计划",
-        "items": [{ "product_id": null, "quantity": 100 }],
-        "status": "draft"
-    }))).await {
+    match auth_request(
+        &client,
+        &token,
+        "POST",
+        "/api/scm/purchase-plans",
+        Some(json!({
+            "title": "测试采购计划",
+            "items": [{ "product_id": null, "quantity": 100 }],
+            "status": "draft"
+        })),
+    )
+    .await
+    {
         Ok((status, _)) => {
             assert!(status == 200 || status == 201 || status == 403 || status == 404);
             tracing::info!("SCM-004 测试通过");
@@ -132,12 +173,22 @@ async fn test_scm_005_approve_purchase_plan() {
     let client = create_client();
     let list_result = auth_request(&client, &token, "GET", "/api/scm/purchase-plans", None).await;
     if let Ok((_, body)) = list_result {
-        let plans = body["data"]["plans"].as_array().or_else(|| body["data"].as_array());
+        let plans = body["data"]["plans"]
+            .as_array()
+            .or_else(|| body["data"].as_array());
         if let Some(list) = plans {
             let draft_plan = list.iter().find(|p| p["status"].as_str() == Some("draft"));
             if let Some(plan) = draft_plan {
                 if let Some(id) = plan["id"].as_str() {
-                    match auth_request(&client, &token, "POST", &format!("/api/scm/purchase-plans/{}/approve", id), None).await {
+                    match auth_request(
+                        &client,
+                        &token,
+                        "POST",
+                        &format!("/api/scm/purchase-plans/{}/approve", id),
+                        None,
+                    )
+                    .await
+                    {
                         Ok((status, _)) => {
                             assert!(status == 200 || status == 403 || status == 404);
                             tracing::info!("SCM-005 测试通过");
@@ -193,11 +244,19 @@ async fn test_scm_008_transfer_inventory() {
     tracing::info!("测试 SCM-008: 仓库调拨");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
-    match auth_request(&client, &token, "POST", "/api/scm/inventory/transfer", Some(json!({
-        "from_warehouse_id": null,
-        "to_warehouse_id": null,
-        "items": [{ "product_id": null, "quantity": 10 }]
-    }))).await {
+    match auth_request(
+        &client,
+        &token,
+        "POST",
+        "/api/scm/inventory/transfer",
+        Some(json!({
+            "from_warehouse_id": null,
+            "to_warehouse_id": null,
+            "items": [{ "product_id": null, "quantity": 10 }]
+        })),
+    )
+    .await
+    {
         Ok((status, _)) => {
             assert!(status == 200 || status == 201 || status == 403 || status == 404);
             tracing::info!("SCM-008 测试通过");

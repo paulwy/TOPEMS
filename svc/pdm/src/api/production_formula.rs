@@ -1,4 +1,9 @@
-use axum::{extract::Path, extract::State, routing::{delete, get, post, put}, Json, Router};
+use axum::{
+    extract::Path,
+    extract::State,
+    routing::{delete, get, post, put},
+    Json, Router,
+};
 use uuid::Uuid;
 
 use crate::AppState;
@@ -6,13 +11,17 @@ use topems_shared::ApiResponse;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/pdm/production-formulas", get(list_formulas).post(create_formula))
-        .route("/api/pdm/production-formulas/{id}", get(get_formula).put(update_formula).delete(delete_formula))
+        .route(
+            "/api/pdm/production-formulas",
+            get(list_formulas).post(create_formula),
+        )
+        .route(
+            "/api/pdm/production-formulas/{id}",
+            get(get_formula).put(update_formula).delete(delete_formula),
+        )
 }
 
-pub async fn list_formulas(
-    State(_state): State<AppState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+pub async fn list_formulas(State(_state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
     tracing::info!("list_formulas called");
     Json(ApiResponse::success(
         serde_json::json!({"formulas": [], "total": 0}),
@@ -36,10 +45,7 @@ pub async fn get_formula(
     Path(_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     tracing::info!("get_formula called");
-    Json(ApiResponse::success(
-        serde_json::json!({}),
-        "获取成功",
-    ))
+    Json(ApiResponse::success(serde_json::json!({}), "获取成功"))
 }
 
 pub async fn update_formula(
@@ -48,10 +54,7 @@ pub async fn update_formula(
     Json(_req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     tracing::info!("update_formula called");
-    Json(ApiResponse::success(
-        serde_json::json!({}),
-        "更新成功",
-    ))
+    Json(ApiResponse::success(serde_json::json!({}), "更新成功"))
 }
 
 pub async fn delete_formula(

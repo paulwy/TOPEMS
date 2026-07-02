@@ -190,9 +190,10 @@ pub async fn generate_report(
     };
 
     // Determine conclusion based on inspection results
-    let all_conforming = req.inspection_results.iter().all(|item| {
-        is_result_conforming(&item.result, &item.standard)
-    });
+    let all_conforming = req
+        .inspection_results
+        .iter()
+        .all(|item| is_result_conforming(&item.result, &item.standard));
 
     let conclusion = if all_conforming {
         "合格".to_string()
@@ -201,7 +202,8 @@ pub async fn generate_report(
     };
 
     // Convert inspection items to JSON
-    let inspection_items: Vec<serde_json::Value> = req.inspection_results
+    let inspection_items: Vec<serde_json::Value> = req
+        .inspection_results
         .iter()
         .map(|item| {
             serde_json::json!({
@@ -246,7 +248,7 @@ pub async fn generate_report(
         Ok(r) => {
             // Update sample status
             let _ = sqlx::query(
-                "UPDATE qa_lab_samples SET status = 'completed', updated_at = NOW() WHERE id = $1"
+                "UPDATE qa_lab_samples SET status = 'completed', updated_at = NOW() WHERE id = $1",
             )
             .bind(sample_id)
             .execute(&state.pool)
@@ -278,46 +280,49 @@ pub async fn generate_report(
 fn is_result_conforming(result: &str, standard: &str) -> bool {
     // Parse standard format like ">10" "<100" "5-10" "pass" etc.
     let result_val: f64 = result.trim().parse().unwrap_or(0.0);
-    
+
     let standard = standard.trim();
-    
+
     if standard.eq_ignore_ascii_case("pass") || standard.eq_ignore_ascii_case("合格") {
         return result.eq_ignore_ascii_case("pass") || result.eq_ignore_ascii_case("合格");
     }
-    
+
     if standard.contains('-') {
         let parts: Vec<&str> = standard.split('-').collect();
         if parts.len() == 2 {
-            if let (Ok(min), Ok(max)) = (parts[0].trim().parse::<f64>(), parts[1].trim().parse::<f64>()) {
+            if let (Ok(min), Ok(max)) = (
+                parts[0].trim().parse::<f64>(),
+                parts[1].trim().parse::<f64>(),
+            ) {
                 return result_val >= min && result_val <= max;
             }
         }
     }
-    
+
     if standard.starts_with('>') {
         if let Ok(threshold) = standard[1..].trim().parse::<f64>() {
             return result_val > threshold;
         }
     }
-    
+
     if standard.starts_with(">=") {
         if let Ok(threshold) = standard[2..].trim().parse::<f64>() {
             return result_val >= threshold;
         }
     }
-    
+
     if standard.starts_with('<') {
         if let Ok(threshold) = standard[1..].trim().parse::<f64>() {
             return result_val < threshold;
         }
     }
-    
+
     if standard.starts_with("<=") {
         if let Ok(threshold) = standard[2..].trim().parse::<f64>() {
             return result_val <= threshold;
         }
     }
-    
+
     // Default: compare as string
     result.eq_ignore_ascii_case(standard)
 }

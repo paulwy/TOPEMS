@@ -543,7 +543,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                   width: 20,
                   height: 20,
                   marginRight: '8px',
-                  color: '#ea580c',
+                  color: 'warning.600',
                 }}
               />
               知识库配置
@@ -760,7 +760,7 @@ const AISettingsModal: React.FC<AISettingsModalProps> = ({ isOpen, onClose }) =>
                 borderRadius: '8px',
                 display: 'flex',
                 alignItems: 'center',
-                color: '#15803d',
+                color: 'success.700',
                 fontSize: '14px',
               }}
             >

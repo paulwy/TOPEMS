@@ -62,10 +62,11 @@ async fn get_quality_check(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<QualityCheck>> {
-    let check = sqlx::query_as::<_, QualityCheck>("SELECT * FROM plugin_pm.quality_checks WHERE id = $1")
-        .bind(id)
-        .fetch_one(&pool)
-        .await;
+    let check =
+        sqlx::query_as::<_, QualityCheck>("SELECT * FROM plugin_pm.quality_checks WHERE id = $1")
+            .bind(id)
+            .fetch_one(&pool)
+            .await;
 
     match check {
         Ok(c) => Json(ApiResponse::success(c, "获取质量检查详情成功")),

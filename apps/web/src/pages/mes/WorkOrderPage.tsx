@@ -296,10 +296,10 @@ const WorkOrderPage: React.FC = () => {
         color: string;
       }
     > = {
-      pending: { label: '待开工', bg: 'warning.light', color: '#b45309' },
-      in_progress: { label: '进行中', bg: '#dbeafe', color: 'primary.dark' },
+      pending: { label: '待开工', bg: 'warning.light', color: 'warning.700' },
+      in_progress: { label: '进行中', bg: 'primary.100', color: 'primary.dark' },
       paused: { label: '已暂停', bg: 'grey.100', color: 'text.secondary' },
-      completed: { label: '已完成', bg: 'success.lighter', color: '#15803d' },
+      completed: { label: '已完成', bg: 'success.lighter', color: 'success.700' },
       cancelled: { label: '已取消', bg: 'error.lighter', color: 'error.dark' },
       closed: { label: '已结案', bg: 'grey.200', color: 'text.primary' },
     };
@@ -323,8 +323,8 @@ const WorkOrderPage: React.FC = () => {
       }
     > = {
       urgent: { label: '紧急', bg: 'error.lighter', color: 'error.dark' },
-      high: { label: '高', bg: 'warning.light', color: '#b45309' },
-      normal: { label: '普通', bg: '#dbeafe', color: 'primary.dark' },
+      high: { label: '高', bg: 'warning.light', color: 'warning.700' },
+      normal: { label: '普通', bg: 'primary.100', color: 'primary.dark' },
       low: { label: '低', bg: 'grey.100', color: 'text.secondary' },
     };
     const p = priorityMap[priority || 'normal'] || priorityMap.normal;
@@ -513,7 +513,7 @@ const WorkOrderPage: React.FC = () => {
           {stats.pending}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#dbeafe', borderRadius: 3 }}>
+      <Box sx={{ p: 2, bgcolor: 'primary.100', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -550,7 +550,7 @@ const WorkOrderPage: React.FC = () => {
         </Typography>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#4338ca' }}
+          sx={{ fontWeight: 700, color: 'secondary.700' }}
         >
           {stats.total_quantity}
         </Typography>
@@ -598,6 +598,15 @@ const WorkOrderPage: React.FC = () => {
         headerContent={statsContent}
         emptyMessage='暂无工单数据'
         getRowId={(row) => row.id}
+        mobileCardTitleKey='product_name'
+        mobileCardSubtitleKey='work_order_number'
+        mobileCardDisplayFields={['status', 'quantity', 'completed_quantity', 'work_center']}
+        mobileCardFieldLabels={{
+          status: '状态',
+          quantity: '计划数量',
+          completed_quantity: '完成数量',
+          work_center: '工作中心',
+        }}
       />
 
       <Dialog

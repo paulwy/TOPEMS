@@ -1,8 +1,8 @@
 //! Communication module - Unified Messaging (Notification + IM + Mail)
 
-pub mod notification;
 pub mod im;
 pub mod mail;
+pub mod notification;
 pub mod ws;
 
 use sqlx::PgPool;
@@ -178,15 +178,21 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .await?;
 
     // Create indexes
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_notifications_user ON core_notifications(user_id)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_chat_rooms_members ON core_chat_members(user_id)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_chat_messages_room ON core_chat_messages(room_id)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_core_notifications_user ON core_notifications(user_id)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_core_chat_rooms_members ON core_chat_members(user_id)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_core_chat_messages_room ON core_chat_messages(room_id)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_emails_user ON core_emails(user_id)")
         .execute(pool)
         .await?;

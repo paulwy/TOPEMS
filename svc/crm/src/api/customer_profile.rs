@@ -100,8 +100,14 @@ pub struct AddProfileTagRequest {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/api/crm/customers/{id}/profile", get(get_customer_profile))
-        .route("/api/crm/customers/{id}/profile/tags", post(add_profile_tags))
-        .route("/api/crm/customers/{id}/profile/tags", delete(remove_profile_tags))
+        .route(
+            "/api/crm/customers/{id}/profile/tags",
+            post(add_profile_tags),
+        )
+        .route(
+            "/api/crm/customers/{id}/profile/tags",
+            delete(remove_profile_tags),
+        )
         .route("/api/crm/customer-profiles", get(list_customer_profiles))
 }
 
@@ -190,7 +196,10 @@ async fn get_customer_profile(
     Json(ApiResponse::success(profile, "获取客户画像成功"))
 }
 
-async fn fetch_customer_score(db: &sqlx::PgPool, customer_id: Uuid) -> Option<CustomerScoreSummary> {
+async fn fetch_customer_score(
+    db: &sqlx::PgPool,
+    customer_id: Uuid,
+) -> Option<CustomerScoreSummary> {
     let result = sqlx::query(
         r#"
         SELECT score, score_level, trend, scoring_date, factors
@@ -216,7 +225,10 @@ async fn fetch_customer_score(db: &sqlx::PgPool, customer_id: Uuid) -> Option<Cu
     }
 }
 
-async fn fetch_customer_opportunities(db: &sqlx::PgPool, customer_id: Uuid) -> Vec<OpportunitySummary> {
+async fn fetch_customer_opportunities(
+    db: &sqlx::PgPool,
+    customer_id: Uuid,
+) -> Vec<OpportunitySummary> {
     let result = sqlx::query_as::<_, OpportunitySummary>(
         r#"
         SELECT id, name, value, stage, probability, close_date
@@ -239,7 +251,10 @@ async fn fetch_customer_opportunities(db: &sqlx::PgPool, customer_id: Uuid) -> V
     }
 }
 
-async fn fetch_customer_interactions(db: &sqlx::PgPool, customer_id: Uuid) -> Vec<InteractionSummary> {
+async fn fetch_customer_interactions(
+    db: &sqlx::PgPool,
+    customer_id: Uuid,
+) -> Vec<InteractionSummary> {
     let result = sqlx::query_as::<_, InteractionSummary>(
         r#"
         SELECT id, type_ as "type_", subject, content, scheduled_at, completed_at, status, created_at
@@ -285,7 +300,11 @@ async fn fetch_customer_contacts(db: &sqlx::PgPool, customer_id: Uuid) -> Vec<Co
     }
 }
 
-fn generate_profile_tags(customer: &Customer, score: &Option<CustomerScoreSummary>, opportunities: &[OpportunitySummary]) -> Vec<String> {
+fn generate_profile_tags(
+    customer: &Customer,
+    score: &Option<CustomerScoreSummary>,
+    opportunities: &[OpportunitySummary],
+) -> Vec<String> {
     let mut tags = Vec::new();
 
     tags.push(format!("状态: {}", customer.status));
@@ -372,13 +391,12 @@ async fn remove_profile_tags(
     }
 
     for tag in &req.tags {
-        let result = sqlx::query(
-            "DELETE FROM plugin_crm.customer_tags WHERE customer_id = $1 AND tag = $2",
-        )
-        .bind(id)
-        .bind(tag)
-        .execute(&state.db)
-        .await;
+        let result =
+            sqlx::query("DELETE FROM plugin_crm.customer_tags WHERE customer_id = $1 AND tag = $2")
+                .bind(id)
+                .bind(tag)
+                .execute(&state.db)
+                .await;
 
         if let Err(e) = result {
             tracing::error!("删除标签失败: {}", e);

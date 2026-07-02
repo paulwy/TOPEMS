@@ -211,11 +211,10 @@ export class NavigationRegistryV2 {
   }
 
   getNavHierarchy(path: string): NavItem[] {
-    const hierarchy: NavItem[] = [];
     const module = this.findModuleByPath(path);
-    if (!module) return hierarchy;
+    if (!module) return [];
 
-    hierarchy.push({
+    const baseItem: NavItem = {
       code: module.code,
       label: module.name,
       icon: module.icon,
@@ -224,35 +223,41 @@ export class NavigationRegistryV2 {
       order: module.order,
       moduleCode: module.code,
       moduleName: module.name,
-    });
+      showInSidebar: false,
+      showInBreadcrumb: true,
+      showInTabs: false,
+    };
 
-    const findInTree = (items: NavItemConfig[], currentHierarchy: NavItem[]): boolean => {
+    const findInTree = (
+      items: NavItemConfig[],
+      currentPath: NavItem[]
+    ): NavItem[] | null => {
       for (const item of items) {
         const enriched = this.enrichNavItem(item, module);
-        const newHierarchy = [...currentHierarchy, enriched];
+        const newPath = [...currentPath, enriched];
 
         if (item.path === path || this.matchDynamicRoute(item.path, path)) {
-          hierarchy.push(...newHierarchy.slice(1));
-          return true;
+          return newPath;
         }
 
         if (path.startsWith(`${item.path}/`)) {
-          hierarchy.push(enriched);
-          if (item.children && findInTree(item.children, newHierarchy)) {
-            return true;
+          if (item.children) {
+            const found = findInTree(item.children, newPath);
+            if (found) return found;
           }
-          return false;
+          return newPath;
         }
 
-        if (item.children && findInTree(item.children, newHierarchy)) {
-          return true;
+        if (item.children) {
+          const found = findInTree(item.children, currentPath);
+          if (found) return found;
         }
       }
-      return false;
+      return null;
     };
 
-    findInTree(module.navItems, [hierarchy[0]]);
-    return hierarchy;
+    const foundPath = findInTree(module.navItems, [baseItem]);
+    return foundPath || [baseItem];
   }
 
   private findInTree(

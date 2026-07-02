@@ -3,7 +3,7 @@
 use axum::{extract::State, Json};
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, types::Uuid};
+use sqlx::{types::Uuid, FromRow};
 use topems_shared::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -128,9 +128,15 @@ pub async fn create_eightd_report(
     State(state): State<crate::AppState>,
     Json(req): Json<CreateEightDRequest>,
 ) -> Json<ApiResponse<EightDReport>> {
-    let report_no = format!("8D-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
-    
-    let related_issue_id = req.related_issue_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
+    let report_no = format!(
+        "8D-{}",
+        uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+    );
+
+    let related_issue_id = req
+        .related_issue_id
+        .as_ref()
+        .and_then(|s| Uuid::parse_str(s).ok());
     let due_dt = req.due_date.map(|d| d.and_hms_opt(0, 0, 0).unwrap());
 
     let report = sqlx::query_as::<_, EightDReport>(r#"INSERT INTO qa_eightd_reports (report_no, title, severity, priority, related_issue_id, d2_problem_description, status, assignee, due_date, created_by) VALUES ($1, $2, $3, $4, $5, $6, 'new', $7, $8, $9) RETURNING id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#).bind(report_no).bind(req.title).bind(req.severity).bind(req.priority).bind(related_issue_id).bind(req.d2_problem_description).bind(req.assignee).bind(due_dt).bind(req.created_by)
@@ -186,7 +192,7 @@ pub async fn update_eightd_report(
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的8D报告ID")),
     };
-    
+
     let due_dt = req.due_date.map(|d| d.and_hms_opt(0, 0, 0).unwrap());
 
     let report = sqlx::query_as::<_, EightDReport>(r#"UPDATE qa_eightd_reports SET title = COALESCE($2, title), status = COALESCE($3, status), severity = COALESCE($4, severity), priority = COALESCE($5, priority), d1_team = COALESCE($6, d1_team), d1_leader = COALESCE($7, d1_leader), d2_problem_description = COALESCE($8, d2_problem_description), d3_containment_action = COALESCE($9, d3_containment_action), d4_root_cause = COALESCE($10, d4_root_cause), d4_cause_analysis = COALESCE($11, d4_cause_analysis), d5_permanent_action = COALESCE($12, d5_permanent_action), d6_verification_result = COALESCE($13, d6_verification_result), d7_preventive_action = COALESCE($14, d7_preventive_action), d8_congratulations = COALESCE($15, d8_congratulations), assignee = COALESCE($16, assignee), due_date = COALESCE($17, due_date), updated_at = NOW() WHERE id = $1 RETURNING id, report_no, title, status, severity, priority, related_issue_id::TEXT, d1_team, d1_leader, d2_problem_description, d3_containment_action, d3_implemented_at::TEXT, d4_root_cause, d4_cause_analysis, d5_permanent_action, d6_verification_result, d6_verified_at::TEXT, d7_preventive_action, d8_congratulations, d8_closed_at::TEXT, assignee, due_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#).bind(id).bind(req.title).bind(req.status).bind(req.severity).bind(req.priority).bind(req.d1_team).bind(req.d1_leader).bind(req.d2_problem_description).bind(req.d3_containment_action).bind(req.d4_root_cause).bind(req.d4_cause_analysis).bind(req.d5_permanent_action).bind(req.d6_verification_result).bind(req.d7_preventive_action).bind(req.d8_congratulations).bind(req.assignee).bind(due_dt)
@@ -211,9 +217,10 @@ pub async fn delete_eightd_report(
         Err(_) => return Json(ApiResponse::error(400, "无效的8D报告ID")),
     };
 
-    let result = sqlx::query(r#"DELETE FROM qa_eightd_reports WHERE id = $1"#).bind(id)
-    .execute(&state.pool)
-    .await;
+    let result = sqlx::query(r#"DELETE FROM qa_eightd_reports WHERE id = $1"#)
+        .bind(id)
+        .execute(&state.pool)
+        .await;
 
     match result {
         Ok(_) => Json(ApiResponse::success(true, "8D报告删除成功")),

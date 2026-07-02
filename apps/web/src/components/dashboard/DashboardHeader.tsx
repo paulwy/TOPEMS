@@ -81,7 +81,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
                 <Typography
                   sx={{
                     fontSize: '0.75rem',
-                    color: '#94a3b8',
+                    color: 'grey.400',
                     display: { xs: 'none', md: 'inline' },
                   }}
                 >
@@ -98,13 +98,13 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
                 alignItems: 'center',
                 gap: 2,
                 fontSize: '0.875rem',
-                color: '#94a3b8',
+                color: 'grey.400',
               }}
             >
               <Clock style={{ width: 16, height: 16 }} />
               <Typography
                 component='span'
-                sx={{ fontSize: '0.875rem', color: '#94a3b8' }}
+                sx={{ fontSize: '0.875rem', color: 'grey.400' }}
               >
                 {currentTime.toLocaleTimeString('zh-CN', {
                   hour: '2-digit',
@@ -146,7 +146,7 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ onLogout }) =>
                 <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'white' }}>
                   {user?.full_name || user?.username}
                 </Typography>
-                <Typography sx={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                <Typography sx={{ fontSize: '0.75rem', color: 'grey.400' }}>
                   {getRoleName()}
                 </Typography>
               </Box>

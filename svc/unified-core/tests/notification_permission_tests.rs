@@ -26,12 +26,21 @@ async fn login(username: &str, password: &str) -> Result<String, String> {
         .await
         .map_err(|e| format!("请求失败: {}", e))?;
 
-    let body: Value = response.json().await.map_err(|e| format!("解析响应失败: {}", e))?;
+    let body: Value = response
+        .json()
+        .await
+        .map_err(|e| format!("解析响应失败: {}", e))?;
 
     if body["success"].as_bool().unwrap_or(false) {
-        Ok(body["data"]["access_token"].as_str().unwrap_or("").to_string())
+        Ok(body["data"]["access_token"]
+            .as_str()
+            .unwrap_or("")
+            .to_string())
     } else {
-        Err(format!("登录失败: {}", body["message"].as_str().unwrap_or("未知错误")))
+        Err(format!(
+            "登录失败: {}",
+            body["message"].as_str().unwrap_or("未知错误")
+        ))
     }
 }
 
@@ -52,7 +61,9 @@ async fn auth_request(
         _ => return Err(format!("不支持的 HTTP 方法: {}", method)),
     };
 
-    let request = request.bearer_auth(token).header("Content-Type", "application/json");
+    let request = request
+        .bearer_auth(token)
+        .header("Content-Type", "application/json");
 
     let response = match body {
         Some(b) => request.json(&b),
@@ -63,7 +74,10 @@ async fn auth_request(
     .map_err(|e| format!("请求失败: {}", e))?;
 
     let status = response.status().as_u16();
-    let body: Value = response.json().await.map_err(|e| format!("解析响应失败: {}", e))?;
+    let body: Value = response
+        .json()
+        .await
+        .map_err(|e| format!("解析响应失败: {}", e))?;
 
     Ok((status, body))
 }
@@ -128,14 +142,13 @@ async fn test_notif_003_mark_read() {
 
     match list_result {
         Ok((_, body)) => {
-            let notifications = body["data"]["notifications"].as_array()
+            let notifications = body["data"]["notifications"]
+                .as_array()
                 .or_else(|| body["data"].as_array());
 
             if let Some(notes) = notifications {
                 // 找未读通知
-                let unread = notes.iter().find(|n| {
-                    n["is_read"].as_bool() == Some(false)
-                });
+                let unread = notes.iter().find(|n| n["is_read"].as_bool() == Some(false));
 
                 if let Some(note) = unread {
                     if let Some(note_id) = note["id"].as_str() {
@@ -175,7 +188,14 @@ async fn test_notif_004_mark_all_read() {
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
 
-    let result = auth_request(&client, &token, "PUT", "/api/v1/notifications/read-all", None).await;
+    let result = auth_request(
+        &client,
+        &token,
+        "PUT",
+        "/api/v1/notifications/read-all",
+        None,
+    )
+    .await;
 
     match result {
         Ok((status, _)) => {
@@ -202,12 +222,19 @@ async fn test_notif_005_send_notification() {
         .unwrap()
         .as_millis();
 
-    let result = auth_request(&client, &token, "POST", "/api/core/comm/notify/send", Some(json!({
-        "title": format!("测试通知_{}", timestamp),
-        "content": "这是一条自动化测试通知",
-        "type": "system",
-        "recipient_ids": []
-    }))).await;
+    let result = auth_request(
+        &client,
+        &token,
+        "POST",
+        "/api/core/comm/notify/send",
+        Some(json!({
+            "title": format!("测试通知_{}", timestamp),
+            "content": "这是一条自动化测试通知",
+            "type": "system",
+            "recipient_ids": []
+        })),
+    )
+    .await;
 
     match result {
         Ok((status, _)) => {
@@ -234,11 +261,18 @@ async fn test_notif_006_broadcast_notification() {
         .unwrap()
         .as_millis();
 
-    let result = auth_request(&client, &token, "POST", "/api/core/comm/notify/broadcast", Some(json!({
-        "title": format!("广播通知_{}", timestamp),
-        "content": "这是一条广播通知",
-        "type": "announcement"
-    }))).await;
+    let result = auth_request(
+        &client,
+        &token,
+        "POST",
+        "/api/core/comm/notify/broadcast",
+        Some(json!({
+            "title": format!("广播通知_{}", timestamp),
+            "content": "这是一条广播通知",
+            "type": "announcement"
+        })),
+    )
+    .await;
 
     match result {
         Ok((status, _)) => {

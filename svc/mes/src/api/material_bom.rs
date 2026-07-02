@@ -1,22 +1,45 @@
 //! Material BOM handlers
 
-use axum::{extract::Path, extract::State, extract::Extension, routing::{delete, get, post, put}, Json, Router};
+use axum::{
+    extract::Extension,
+    extract::Path,
+    extract::State,
+    routing::{delete, get, post, put},
+    Json, Router,
+};
 use chrono::{DateTime, NaiveDate, NaiveDateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{types::{BigDecimal, Uuid}, PgPool};
+use sqlx::{
+    types::{BigDecimal, Uuid},
+    PgPool,
+};
 use std::str::FromStr;
 use topems_shared::auth::Claims;
 
-use crate::AppState;
 use crate::services::permission::{check_permission, ModulePermission};
+use crate::AppState;
 use topems_shared::response::ApiResponse;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/mes/boms", get(list_material_boms).post(create_material_bom))
-        .route("/api/mes/boms/{id}", get(get_material_bom).put(update_material_bom).delete(delete_material_bom))
-        .route("/api/mes/material-issues", get(list_material_issues).post(create_material_issue))
-        .route("/api/mes/material-returns", get(list_material_returns).post(create_material_return))
+        .route(
+            "/api/mes/boms",
+            get(list_material_boms).post(create_material_bom),
+        )
+        .route(
+            "/api/mes/boms/{id}",
+            get(get_material_bom)
+                .put(update_material_bom)
+                .delete(delete_material_bom),
+        )
+        .route(
+            "/api/mes/material-issues",
+            get(list_material_issues).post(create_material_issue),
+        )
+        .route(
+            "/api/mes/material-returns",
+            get(list_material_returns).post(create_material_return),
+        )
 }
 
 // ==================== Data Types ====================
@@ -196,7 +219,8 @@ pub struct CreateReturnItemRequest {
 }
 
 fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
-    dt.map(|d| Utc.from_utc_datetime(&d)).unwrap_or_else(Utc::now)
+    dt.map(|d| Utc.from_utc_datetime(&d))
+        .unwrap_or_else(Utc::now)
 }
 
 fn opt_naive_to_utc(dt: Option<NaiveDateTime>) -> Option<DateTime<Utc>> {
@@ -204,7 +228,8 @@ fn opt_naive_to_utc(dt: Option<NaiveDateTime>) -> Option<DateTime<Utc>> {
 }
 
 fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
-    bd.and_then(|d| d.to_string().parse::<f64>().ok()).unwrap_or(0.0)
+    bd.and_then(|d| d.to_string().parse::<f64>().ok())
+        .unwrap_or(0.0)
 }
 
 // ==================== Material BOM Handlers ====================
@@ -213,7 +238,8 @@ pub async fn list_material_boms(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<ListMaterialBomsResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::MaterialBomRead).await {
+    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::MaterialBomRead).await
+    {
         return e;
     }
 
@@ -237,18 +263,21 @@ pub async fn list_material_boms(
         }
     };
 
-    let boms_list: Vec<MaterialBomResponse> = boms.into_iter().map(|r| MaterialBomResponse {
-        id: r.id,
-        bom_no: r.bom_no,
-        product_id: r.product_id,
-        product_name: r.product_name,
-        product_code: r.product_code,
-        version: r.version.unwrap_or_else(|| "1.0".to_string()),
-        status: r.status.unwrap_or_else(|| "draft".to_string()),
-        description: r.description,
-        created_at: naive_to_utc(r.created_at),
-        updated_at: naive_to_utc(r.updated_at),
-    }).collect();
+    let boms_list: Vec<MaterialBomResponse> = boms
+        .into_iter()
+        .map(|r| MaterialBomResponse {
+            id: r.id,
+            bom_no: r.bom_no,
+            product_id: r.product_id,
+            product_name: r.product_name,
+            product_code: r.product_code,
+            version: r.version.unwrap_or_else(|| "1.0".to_string()),
+            status: r.status.unwrap_or_else(|| "draft".to_string()),
+            description: r.description,
+            created_at: naive_to_utc(r.created_at),
+            updated_at: naive_to_utc(r.updated_at),
+        })
+        .collect();
 
     let total = boms_list.len() as i64;
 
@@ -266,12 +295,18 @@ pub async fn create_material_bom(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMaterialBomRequest>,
 ) -> Json<ApiResponse<BomDetailResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::MaterialBomWrite).await {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &ModulePermission::MaterialBomWrite).await
+    {
         return e;
     }
 
     let now = Utc::now();
-    let bom_no = format!("BOM{}{:04}", now.format("%Y%m%d"), rand::random::<u16>() % 10000);
+    let bom_no = format!(
+        "BOM{}{:04}",
+        now.format("%Y%m%d"),
+        rand::random::<u16>() % 10000
+    );
 
     let mut tx = match state.pool.begin().await {
         Ok(t) => t,
@@ -393,7 +428,8 @@ pub async fn get_material_bom(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<BomDetailResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::MaterialBomRead).await {
+    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::MaterialBomRead).await
+    {
         return e;
     }
 
@@ -454,19 +490,22 @@ pub async fn get_material_bom(
         updated_at: naive_to_utc(bom.updated_at),
     };
 
-    let item_responses: Vec<BomItemResponse> = items.into_iter().map(|i| BomItemResponse {
-        id: i.id,
-        bom_id: i.bom_id,
-        material_id: i.material_id,
-        material_code: i.material_code,
-        material_name: i.material_name,
-        specification: i.specification,
-        unit: i.unit,
-        quantity: big_decimal_to_f64(Some(i.quantity)),
-        loss_rate: big_decimal_to_f64(i.loss_rate),
-        sequence: i.sequence.unwrap_or(0),
-        notes: i.notes,
-    }).collect();
+    let item_responses: Vec<BomItemResponse> = items
+        .into_iter()
+        .map(|i| BomItemResponse {
+            id: i.id,
+            bom_id: i.bom_id,
+            material_id: i.material_id,
+            material_code: i.material_code,
+            material_name: i.material_name,
+            specification: i.specification,
+            unit: i.unit,
+            quantity: big_decimal_to_f64(Some(i.quantity)),
+            loss_rate: big_decimal_to_f64(i.loss_rate),
+            sequence: i.sequence.unwrap_or(0),
+            notes: i.notes,
+        })
+        .collect();
 
     Json(ApiResponse::success(
         BomDetailResponse {
@@ -483,7 +522,9 @@ pub async fn update_material_bom(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateMaterialBomRequest>,
 ) -> Json<ApiResponse<BomDetailResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::MaterialBomWrite).await {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &ModulePermission::MaterialBomWrite).await
+    {
         return e;
     }
 
@@ -551,7 +592,8 @@ pub async fn update_material_bom(
                 item.specification.clone(),
                 item.unit.clone(),
                 BigDecimal::from_str(&item.quantity.to_string()).unwrap_or_default(),
-                BigDecimal::from_str(&item.loss_rate.unwrap_or(0.0).to_string()).unwrap_or_default(),
+                BigDecimal::from_str(&item.loss_rate.unwrap_or(0.0).to_string())
+                    .unwrap_or_default(),
                 item.sequence.unwrap_or(idx as i32),
                 item.notes.clone(),
             )
@@ -565,11 +607,16 @@ pub async fn update_material_bom(
         return Json(ApiResponse::error(500, "更新物料BOM失败"));
     }
 
-    get_material_bom(State(AppState { 
-        auth_state: state.auth_state.clone(), 
-        pool: state.pool.clone(),
-        health_config: state.health_config.clone(),
-    }), Extension(claims), Path(id)).await
+    get_material_bom(
+        State(AppState {
+            auth_state: state.auth_state.clone(),
+            pool: state.pool.clone(),
+            health_config: state.health_config.clone(),
+        }),
+        Extension(claims),
+        Path(id),
+    )
+    .await
 }
 
 pub async fn delete_material_bom(
@@ -577,7 +624,9 @@ pub async fn delete_material_bom(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::MaterialBomWrite).await {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &ModulePermission::MaterialBomWrite).await
+    {
         return e;
     }
 
@@ -613,12 +662,18 @@ pub async fn create_material_issue(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMaterialIssueRequest>,
 ) -> Json<ApiResponse<MaterialIssueResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::MaterialBomIssue).await {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &ModulePermission::MaterialBomIssue).await
+    {
         return e;
     }
 
     let now = Utc::now();
-    let issue_no = format!("MI{}{:04}", now.format("%Y%m%d"), rand::random::<u16>() % 10000);
+    let issue_no = format!(
+        "MI{}{:04}",
+        now.format("%Y%m%d"),
+        rand::random::<u16>() % 10000
+    );
 
     let order_no = if let Some(order_id) = req.order_id {
         let order = sqlx::query!(
@@ -723,7 +778,8 @@ pub async fn list_material_issues(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<MaterialIssueResponse>>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::MaterialBomRead).await {
+    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::MaterialBomRead).await
+    {
         return e;
     }
 
@@ -748,20 +804,23 @@ pub async fn list_material_issues(
         }
     };
 
-    let issue_list: Vec<MaterialIssueResponse> = issues.into_iter().map(|r| MaterialIssueResponse {
-        id: r.id,
-        issue_no: r.issue_no,
-        order_id: r.order_id,
-        order_no: r.order_no,
-        bom_id: r.bom_id,
-        status: r.status.unwrap_or_else(|| "pending".to_string()),
-        warehouse_id: r.warehouse_id,
-        operator_id: r.operator_id,
-        issue_time: opt_naive_to_utc(r.issue_time),
-        notes: r.notes,
-        created_at: naive_to_utc(r.created_at),
-        updated_at: naive_to_utc(r.updated_at),
-    }).collect();
+    let issue_list: Vec<MaterialIssueResponse> = issues
+        .into_iter()
+        .map(|r| MaterialIssueResponse {
+            id: r.id,
+            issue_no: r.issue_no,
+            order_id: r.order_id,
+            order_no: r.order_no,
+            bom_id: r.bom_id,
+            status: r.status.unwrap_or_else(|| "pending".to_string()),
+            warehouse_id: r.warehouse_id,
+            operator_id: r.operator_id,
+            issue_time: opt_naive_to_utc(r.issue_time),
+            notes: r.notes,
+            created_at: naive_to_utc(r.created_at),
+            updated_at: naive_to_utc(r.updated_at),
+        })
+        .collect();
 
     Json(ApiResponse::success(issue_list, "获取物料领用单列表成功"))
 }
@@ -773,12 +832,18 @@ pub async fn create_material_return(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateMaterialReturnRequest>,
 ) -> Json<ApiResponse<MaterialReturnResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::MaterialBomReturn).await {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &ModulePermission::MaterialBomReturn).await
+    {
         return e;
     }
 
     let now = Utc::now();
-    let return_no = format!("MR{}{:04}", now.format("%Y%m%d"), rand::random::<u16>() % 10000);
+    let return_no = format!(
+        "MR{}{:04}",
+        now.format("%Y%m%d"),
+        rand::random::<u16>() % 10000
+    );
 
     let order_no = if let Some(order_id) = req.order_id {
         let order = sqlx::query!(
@@ -865,7 +930,9 @@ pub async fn create_material_return(
         return_no: return_record.return_no,
         order_id: return_record.order_id,
         order_no: return_record.order_no,
-        status: return_record.status.unwrap_or_else(|| "pending".to_string()),
+        status: return_record
+            .status
+            .unwrap_or_else(|| "pending".to_string()),
         warehouse_id: return_record.warehouse_id,
         operator_id: return_record.operator_id,
         return_time: opt_naive_to_utc(return_record.return_time),
@@ -881,7 +948,8 @@ pub async fn list_material_returns(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<MaterialReturnResponse>>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::MaterialBomRead).await {
+    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::MaterialBomRead).await
+    {
         return e;
     }
 
@@ -906,19 +974,22 @@ pub async fn list_material_returns(
         }
     };
 
-    let return_list: Vec<MaterialReturnResponse> = returns.into_iter().map(|r| MaterialReturnResponse {
-        id: r.id,
-        return_no: r.return_no,
-        order_id: r.order_id,
-        order_no: r.order_no,
-        status: r.status.unwrap_or_else(|| "pending".to_string()),
-        warehouse_id: r.warehouse_id,
-        operator_id: r.operator_id,
-        return_time: opt_naive_to_utc(r.return_time),
-        notes: r.notes,
-        created_at: naive_to_utc(r.created_at),
-        updated_at: naive_to_utc(r.updated_at),
-    }).collect();
+    let return_list: Vec<MaterialReturnResponse> = returns
+        .into_iter()
+        .map(|r| MaterialReturnResponse {
+            id: r.id,
+            return_no: r.return_no,
+            order_id: r.order_id,
+            order_no: r.order_no,
+            status: r.status.unwrap_or_else(|| "pending".to_string()),
+            warehouse_id: r.warehouse_id,
+            operator_id: r.operator_id,
+            return_time: opt_naive_to_utc(r.return_time),
+            notes: r.notes,
+            created_at: naive_to_utc(r.created_at),
+            updated_at: naive_to_utc(r.updated_at),
+        })
+        .collect();
 
     Json(ApiResponse::success(return_list, "获取物料退库单列表成功"))
 }

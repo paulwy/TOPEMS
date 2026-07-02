@@ -30,28 +30,62 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
         code: "pm".to_string(),
         name: "项目管理".to_string(),
         version: "1.0.0".to_string(),
-        description: "PM 项目管理系统，包含项目、任务、甘特图、合同、预算、风险、质量、验收、结算等模块".to_string(),
+        description:
+            "PM 项目管理系统，包含项目、任务、甘特图、合同、预算、风险、质量、验收、结算等模块"
+                .to_string(),
         deployment: DeploymentInfo {
             port: 8046,
             base_path: "/api/pm".to_string(),
         },
         permissions: vec![
-            PermissionDef { code: "project".to_string() },
-            PermissionDef { code: "milestone".to_string() },
-            PermissionDef { code: "phase".to_string() },
-            PermissionDef { code: "member".to_string() },
-            PermissionDef { code: "resource".to_string() },
-            PermissionDef { code: "expense".to_string() },
-            PermissionDef { code: "benefit".to_string() },
-            PermissionDef { code: "approval".to_string() },
-            PermissionDef { code: "contract".to_string() },
-            PermissionDef { code: "budget".to_string() },
-            PermissionDef { code: "risk".to_string() },
-            PermissionDef { code: "quality".to_string() },
-            PermissionDef { code: "acceptance".to_string() },
-            PermissionDef { code: "settlement".to_string() },
-            PermissionDef { code: "document".to_string() },
-            PermissionDef { code: "report".to_string() },
+            PermissionDef {
+                code: "project".to_string(),
+            },
+            PermissionDef {
+                code: "milestone".to_string(),
+            },
+            PermissionDef {
+                code: "phase".to_string(),
+            },
+            PermissionDef {
+                code: "member".to_string(),
+            },
+            PermissionDef {
+                code: "resource".to_string(),
+            },
+            PermissionDef {
+                code: "expense".to_string(),
+            },
+            PermissionDef {
+                code: "benefit".to_string(),
+            },
+            PermissionDef {
+                code: "approval".to_string(),
+            },
+            PermissionDef {
+                code: "contract".to_string(),
+            },
+            PermissionDef {
+                code: "budget".to_string(),
+            },
+            PermissionDef {
+                code: "risk".to_string(),
+            },
+            PermissionDef {
+                code: "quality".to_string(),
+            },
+            PermissionDef {
+                code: "acceptance".to_string(),
+            },
+            PermissionDef {
+                code: "settlement".to_string(),
+            },
+            PermissionDef {
+                code: "document".to_string(),
+            },
+            PermissionDef {
+                code: "report".to_string(),
+            },
         ],
     };
 
@@ -90,13 +124,23 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
     match client.post(&url).json(&info).send().await {
         Ok(response) => {
             if response.status().is_success() {
-                tracing::info!("[PM Plugin] Successfully registered to core at {}", core_url);
+                tracing::info!(
+                    "[PM Plugin] Successfully registered to core at {}",
+                    core_url
+                );
             } else {
-                tracing::warn!("[PM Plugin] Failed to register to core: {}", response.status());
+                tracing::warn!(
+                    "[PM Plugin] Failed to register to core: {}",
+                    response.status()
+                );
             }
         }
         Err(e) => {
-            tracing::warn!("[PM Plugin] Failed to connect to core at {}: {}", core_url, e);
+            tracing::warn!(
+                "[PM Plugin] Failed to connect to core at {}: {}",
+                core_url,
+                e
+            );
         }
     }
 }

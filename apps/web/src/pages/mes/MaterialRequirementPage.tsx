@@ -283,9 +283,9 @@ const MaterialRequirementPage: React.FC = () => {
       }
     > = {
       draft: { label: '草稿', bg: 'grey.100', color: 'text.secondary' },
-      confirmed: { label: '已确认', bg: '#dbeafe', color: 'primary.dark' },
-      released: { label: '已下达', bg: 'warning.light', color: '#b45309' },
-      completed: { label: '已完成', bg: 'success.lighter', color: '#15803d' },
+      confirmed: { label: '已确认', bg: 'primary.100', color: 'primary.dark' },
+      released: { label: '已下达', bg: 'warning.light', color: 'warning.700' },
+      completed: { label: '已完成', bg: 'success.lighter', color: 'success.700' },
       cancelled: { label: '已取消', bg: 'error.lighter', color: 'error.dark' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
@@ -308,8 +308,8 @@ const MaterialRequirementPage: React.FC = () => {
       }
     > = {
       urgent: { label: '紧急', bg: 'error.lighter', color: 'error.dark' },
-      high: { label: '高', bg: 'warning.light', color: '#b45309' },
-      normal: { label: '普通', bg: '#dbeafe', color: 'primary.dark' },
+      high: { label: '高', bg: 'warning.light', color: 'warning.700' },
+      normal: { label: '普通', bg: 'primary.100', color: 'primary.dark' },
       low: { label: '低', bg: 'grey.100', color: 'text.secondary' },
     };
     const p = priorityMap[priority || 'normal'] || priorityMap.normal;
@@ -474,7 +474,7 @@ const MaterialRequirementPage: React.FC = () => {
           {stats.draft}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#dbeafe', borderRadius: 3 }}>
+      <Box sx={{ p: 2, bgcolor: 'primary.100', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -511,7 +511,7 @@ const MaterialRequirementPage: React.FC = () => {
         </Typography>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#4338ca' }}
+          sx={{ fontWeight: 700, color: 'secondary.700' }}
         >
           {stats.total_required}
         </Typography>

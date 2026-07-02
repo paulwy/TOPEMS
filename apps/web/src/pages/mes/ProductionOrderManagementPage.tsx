@@ -337,10 +337,10 @@ const ProductionOrderManagementPage: React.FC = () => {
         color: string;
       }
     > = {
-      pending: { label: '待下达', bg: 'warning.light', color: '#b45309' },
-      released: { label: '已下达', bg: '#e0e7ff', color: '#4338ca' },
-      in_progress: { label: '生产中', bg: '#dbeafe', color: 'primary.dark' },
-      completed: { label: '已完成', bg: 'success.lighter', color: '#15803d' },
+      pending: { label: '待下达', bg: 'warning.light', color: 'warning.700' },
+      released: { label: '已下达', bg: '#e0e7ff', color: 'secondary.700' },
+      in_progress: { label: '生产中', bg: 'primary.100', color: 'primary.dark' },
+      completed: { label: '已完成', bg: 'success.lighter', color: 'success.700' },
       cancelled: { label: '已取消', bg: 'error.lighter', color: 'error.dark' },
       paused: { label: '已暂停', bg: 'grey.100', color: 'text.secondary' },
     };
@@ -520,12 +520,12 @@ const ProductionOrderManagementPage: React.FC = () => {
         </Typography>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#4338ca' }}
+          sx={{ fontWeight: 700, color: 'secondary.700' }}
         >
           {stats.released}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#dbeafe', borderRadius: 3 }}>
+      <Box sx={{ p: 2, bgcolor: 'primary.100', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -610,6 +610,15 @@ const ProductionOrderManagementPage: React.FC = () => {
         headerContent={statsContent}
         emptyMessage='暂无生产订单数据'
         getRowId={(row) => row.id}
+        mobileCardTitleKey='product_name'
+        mobileCardSubtitleKey='order_number'
+        mobileCardDisplayFields={['status', 'quantity', 'completed_quantity', 'planned_start_date']}
+        mobileCardFieldLabels={{
+          status: '状态',
+          quantity: '计划数量',
+          completed_quantity: '完成数量',
+          planned_start_date: '计划开始',
+        }}
       />
 
       {/* 新增/编辑对话框 */}

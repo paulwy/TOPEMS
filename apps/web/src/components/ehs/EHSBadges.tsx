@@ -3,12 +3,12 @@ import React from 'react';
 
 const colorMap: Record<string, { bg: string; color: string }> = {
   'bg-red-100': { bg: 'error.lighter', color: 'error.dark' },
-  'bg-yellow-100': { bg: '#fef9c3', color: '#ca8a04' },
+  'bg-yellow-100': { bg: 'warning.100', color: '#ca8a04' },
   'bg-green-100': { bg: 'success.lighter', color: 'success.dark' },
   'bg-gray-100': { bg: 'grey.100', color: 'text.secondary' },
-  'bg-blue-100': { bg: '#dbeafe', color: 'primary.dark' },
-  'bg-orange-100': { bg: '#ffedd5', color: '#ea580c' },
-  'bg-purple-100': { bg: '#f3e8ff', color: 'secondary.dark' },
+  'bg-blue-100': { bg: 'primary.100', color: 'primary.dark' },
+  'bg-orange-100': { bg: '#ffedd5', color: 'warning.600' },
+  'bg-purple-100': { bg: 'secondary.100', color: 'secondary.dark' },
   'bg-emerald-100': { bg: 'success.lighter', color: 'success.dark' },
 };
 

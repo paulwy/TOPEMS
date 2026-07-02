@@ -178,13 +178,13 @@ const getCategoryIcon = (category: string) => {
 
 const getCategoryColor = (category: string) => {
   const map: Record<string, string> = {
-    writing: '#3b82f6',
-    code: '#8b5cf6',
-    business: '#10b981',
-    analysis: '#f59e0b',
+    writing: 'primary.main',
+    code: 'secondary.main',
+    business: 'success.main',
+    analysis: 'warning.main',
     creative: '#ec4899',
   };
-  return map[category] || '#6b7280';
+  return map[category] || 'grey.500';
 };
 
 export const AiPromptLibraryPage: React.FC = () => {
@@ -483,8 +483,8 @@ export const AiPromptLibraryPage: React.FC = () => {
                                 <Star
                                   size={18}
                                   style={{
-                                    fill: prompt.is_favorite ? '#f59e0b' : 'none',
-                                    color: prompt.is_favorite ? '#f59e0b' : '#9ca3af',
+                                    fill: prompt.is_favorite ? 'warning.main' : 'none',
+                                    color: prompt.is_favorite ? 'warning.main' : 'grey.400',
                                   }}
                                 />
                               </IconButton>

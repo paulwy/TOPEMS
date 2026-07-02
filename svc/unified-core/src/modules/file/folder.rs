@@ -1,11 +1,12 @@
 //! Folder submodule - File folder management handlers
 
-use axum::{extract::{Path, State}, Json};
 use crate::AppState;
+use axum::{
+    extract::{Path, State},
+    Json,
+};
 
-pub async fn list_folders(
-    State(_state): State<AppState>,
-) -> Json<serde_json::Value> {
+pub async fn list_folders(State(_state): State<AppState>) -> Json<serde_json::Value> {
     tracing::info!("File folder list_folders called");
     Json(serde_json::json!({
         "success": true,
@@ -76,9 +77,7 @@ pub async fn move_folder(
     }))
 }
 
-pub async fn get_folder_tree(
-    State(_state): State<AppState>,
-) -> Json<serde_json::Value> {
+pub async fn get_folder_tree(State(_state): State<AppState>) -> Json<serde_json::Value> {
     tracing::info!("File folder get_folder_tree called");
     Json(serde_json::json!({
         "success": true,

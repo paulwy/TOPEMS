@@ -125,7 +125,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
   const getSeverityChip = (severity: string) => {
     const severityMap: Record<string, { bg: string; color: string }> = {
       轻度: { bg: 'success.lighter', color: 'success.dark' },
-      中度: { bg: '#fef9c3', color: '#ca8a04' },
+      中度: { bg: 'warning.100', color: '#ca8a04' },
       重度: { bg: 'error.lighter', color: 'error.dark' },
     };
     const colors = severityMap[severity] || { bg: 'grey.100', color: 'text.secondary' };
@@ -144,7 +144,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
 
   const getStatusChip = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      疑似: { bg: '#fef9c3', color: '#ca8a04' },
+      疑似: { bg: 'warning.100', color: '#ca8a04' },
       确诊: { bg: 'error.lighter', color: 'error.dark' },
       康复: { bg: 'success.lighter', color: 'success.dark' },
     };
@@ -361,7 +361,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
           value={stats.thisMonth}
           icon={<CalendarCheck />}
           bgColor='background.paper'
-          iconBgColor='#dbeafe'
+          iconBgColor='primary.100'
           iconColor='primary.dark'
         />
         <StatCard
@@ -369,7 +369,7 @@ const EhsOccupationalDiseasePage: React.FC = () => {
           value={stats.suspected}
           icon={<AlertCircle />}
           bgColor='background.paper'
-          iconBgColor='#fef9c3'
+          iconBgColor='warning.100'
           iconColor='#ca8a04'
         />
         <StatCard

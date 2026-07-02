@@ -55,12 +55,12 @@ const getChipSx = (colorClass: string): object => {
       color: 'grey.700',
     },
     'bg-yellow-100 text-yellow-800': {
-      backgroundColor: '#fef9c3',
+      backgroundColor: 'warning.100',
       color: '#854d0e',
     },
     'bg-blue-100 text-blue-800': {
-      backgroundColor: '#dbeafe',
-      color: '#1e40af',
+      backgroundColor: 'primary.100',
+      color: 'primary.800',
     },
     'bg-purple-100 text-purple-800': {
       backgroundColor: 'secondary.light',
@@ -332,7 +332,7 @@ export default function ConsolidationScopePage() {
           {row.original.is_parent && (
             <Chip
               size='small'
-              sx={{ backgroundColor: '#dbeafe', color: '#1e40af' }}
+              sx={{ backgroundColor: 'primary.100', color: 'primary.800' }}
               label='母公司'
             />
           )}

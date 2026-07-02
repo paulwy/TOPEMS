@@ -1,11 +1,12 @@
 //! Workflow submodule - Workflow management handlers
 
-use axum::{extract::{Path, State}, Json};
 use crate::AppState;
+use axum::{
+    extract::{Path, State},
+    Json,
+};
 
-pub async fn list_workflows(
-    State(_state): State<AppState>,
-) -> Json<serde_json::Value> {
+pub async fn list_workflows(State(_state): State<AppState>) -> Json<serde_json::Value> {
     tracing::info!("Flow workflow list_workflows called");
     Json(serde_json::json!({
         "success": true,
@@ -43,7 +44,11 @@ pub async fn update_workflow(
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Flow workflow update_workflow called with id: {} and payload: {:?}", id, payload);
+    tracing::info!(
+        "Flow workflow update_workflow called with id: {} and payload: {:?}",
+        id,
+        payload
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "update_workflow success",
@@ -127,7 +132,10 @@ pub async fn rollback_workflow(
     State(_state): State<AppState>,
     Path(workflow_id): Path<String>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Flow workflow rollback_workflow called with workflow_id: {}", workflow_id);
+    tracing::info!(
+        "Flow workflow rollback_workflow called with workflow_id: {}",
+        workflow_id
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "rollback_workflow success",

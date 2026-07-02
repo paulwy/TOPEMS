@@ -414,7 +414,7 @@ const ProductionOrderDetailPage: React.FC = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
               <CheckCircle
                 size={18}
-                color='#15803d'
+                color='success.700'
               />
               <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>已完成</InputLabel>
             </Box>
@@ -454,7 +454,7 @@ const ProductionOrderDetailPage: React.FC = () => {
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
               <TrendingUp
                 size={18}
-                color='#b45309'
+                color='warning.700'
               />
               <InputLabel sx={{ fontSize: 12, color: 'text.secondary' }}>完成率</InputLabel>
             </Box>

@@ -129,7 +129,7 @@ export const ValidationHint: React.FC<ValidationHintProps> = ({ field, rules }) 
               style={{
                 width: '4px',
                 height: '4px',
-                backgroundColor: '#94a3b8',
+                backgroundColor: 'grey.400',
                 borderRadius: '9999px',
               }}
             ></span>

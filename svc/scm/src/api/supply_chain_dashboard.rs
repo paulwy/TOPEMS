@@ -22,10 +22,7 @@ pub fn create_routes() -> Router<ApiState> {
             "/api/scm/dashboard/supplier-performance",
             get(supplier_performance),
         )
-        .route(
-            "/api/scm/dashboard/real-time-status",
-            get(real_time_status),
-        )
+        .route("/api/scm/dashboard/real-time-status", get(real_time_status))
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -49,9 +46,9 @@ async fn overview(
         let start = now - chrono::Duration::days(30);
         start.format("%Y-%m-%d").to_string()
     });
-    let end_date = params.end_date.unwrap_or_else(|| {
-        chrono::Utc::now().format("%Y-%m-%d").to_string()
-    });
+    let end_date = params
+        .end_date
+        .unwrap_or_else(|| chrono::Utc::now().format("%Y-%m-%d").to_string());
 
     let purchase_stats = sqlx::query(
         r#"
@@ -209,9 +206,9 @@ async fn purchase_inbound_outbound_stats(
         let start = now - chrono::Duration::days(90);
         start.format("%Y-%m-%d").to_string()
     });
-    let end_date = params.end_date.unwrap_or_else(|| {
-        chrono::Utc::now().format("%Y-%m-%d").to_string()
-    });
+    let end_date = params
+        .end_date
+        .unwrap_or_else(|| chrono::Utc::now().format("%Y-%m-%d").to_string());
 
     let purchase_trend = sqlx::query(
         r#"
@@ -335,7 +332,13 @@ async fn supplier_performance(
     Extension(claims): Extension<Claims>,
     Query(params): Query<DashboardQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    match check_permission(&state.db, &claims, &ModulePermission::SupplierEvaluationRead).await {
+    match check_permission(
+        &state.db,
+        &claims,
+        &ModulePermission::SupplierEvaluationRead,
+    )
+    .await
+    {
         Ok(_) => {}
         Err(e) => return e,
     }
@@ -344,9 +347,9 @@ async fn supplier_performance(
         let start = now - chrono::Duration::days(90);
         start.format("%Y-%m-%d").to_string()
     });
-    let end_date = params.end_date.unwrap_or_else(|| {
-        chrono::Utc::now().format("%Y-%m-%d").to_string()
-    });
+    let end_date = params
+        .end_date
+        .unwrap_or_else(|| chrono::Utc::now().format("%Y-%m-%d").to_string());
 
     let result = sqlx::query(
         r#"
@@ -420,9 +423,7 @@ async fn supplier_performance(
                     total_amount: row.try_get("total_amount").unwrap_or(0.0),
                     on_time_delivery_rate: row.try_get("on_time_delivery_rate").unwrap_or(0.0),
                     quality_pass_rate: row.try_get("quality_pass_rate").unwrap_or(0.0),
-                    avg_response_time_hours: row
-                        .try_get("avg_response_time_hours")
-                        .unwrap_or(0.0),
+                    avg_response_time_hours: row.try_get("avg_response_time_hours").unwrap_or(0.0),
                     overall_score: row.try_get("overall_score").unwrap_or(0.0),
                     level: row.try_get("level").unwrap_or_default(),
                 })

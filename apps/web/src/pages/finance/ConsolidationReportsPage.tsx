@@ -55,11 +55,11 @@ const REPORT_TYPE_CONFIG: Record<
 > = {
   consolidated_balance_sheet: { name: '合并资产负债表', icon: Building2, color: '#1976D2' },
   consolidated_income_statement: { name: '合并利润表', icon: TrendingUp, color: '#00C897' },
-  consolidated_cash_flow: { name: '合并现金流量表', icon: DollarSign, color: '#8B5CF6' },
+  consolidated_cash_flow: { name: '合并现金流量表', icon: DollarSign, color: 'secondary.main' },
   consolidated_statement_changes: {
     name: '合并所有者权益变动表',
     icon: BarChart3,
-    color: '#F59E0B',
+    color: 'warning.main',
   },
   elimination_work_sheet: { name: '抵消工作底稿', icon: FileSpreadsheet, color: '#6366F1' },
 };
@@ -175,7 +175,7 @@ export default function ConsolidationReportsPage() {
           { name: '草稿', value: statusDistribution.draft, color: 'grey' },
           { name: '计算中', value: statusDistribution.calculating, color: '#1976D2' },
           { name: '已完成', value: statusDistribution.completed, color: '#00C897' },
-          { name: '已发布', value: statusDistribution.published, color: '#8B5CF6' },
+          { name: '已发布', value: statusDistribution.published, color: 'secondary.main' },
         ].filter((d) => d.value > 0),
         height: 250,
       },
@@ -503,7 +503,7 @@ export default function ConsolidationReportsPage() {
                               padding: '12px',
                               borderBottom: '1px solid',
                               fontFamily: 'monospace',
-                              color: '#6B7280',
+                              color: 'grey.500',
                             }}
                           >
                             {priorPeriod.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
@@ -514,7 +514,7 @@ export default function ConsolidationReportsPage() {
                               padding: '12px',
                               borderBottom: '1px solid',
                               fontFamily: 'monospace',
-                              color: change >= 0 ? '#10B981' : '#EF4444',
+                              color: change >= 0 ? 'success.main' : 'error.main',
                             }}
                           >
                             {change.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
@@ -525,7 +525,7 @@ export default function ConsolidationReportsPage() {
                               padding: '12px',
                               borderBottom: '1px solid',
                               fontFamily: 'monospace',
-                              color: changeRate >= 0 ? '#10B981' : '#EF4444',
+                              color: changeRate >= 0 ? 'success.main' : 'error.main',
                             }}
                           >
                             {changeRate.toFixed(2)}%

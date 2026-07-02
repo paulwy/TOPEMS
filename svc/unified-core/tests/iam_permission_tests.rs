@@ -73,7 +73,9 @@ async fn auth_request(
         _ => return Err(format!("不支持的 HTTP 方法: {}", method)),
     };
 
-    let request = request.bearer_auth(token).header("Content-Type", "application/json");
+    let request = request
+        .bearer_auth(token)
+        .header("Content-Type", "application/json");
 
     let response = match body {
         Some(b) => request.json(&b),
@@ -108,8 +110,11 @@ async fn test_iam_001_superuser_list_users() {
     assert_eq!(status, 200, "状态码应为 200");
     assert!(body["success"].as_bool().unwrap_or(false), "请求应成功");
     // 用户列表返回 { total, users } 格式
-    assert!(body["data"]["users"].is_array() || body["data"].is_array(), "数据应包含用户列表");
-    
+    assert!(
+        body["data"]["users"].is_array() || body["data"].is_array(),
+        "数据应包含用户列表"
+    );
+
     let user_count = if body["data"]["users"].is_array() {
         body["data"]["users"].as_array().unwrap().len()
     } else {
@@ -137,10 +142,7 @@ async fn test_iam_002_employee_list_users() {
 
             // 可能返回 200（有限数据）或 403（无权限）
             if status == 200 {
-                assert!(
-                    body["success"].as_bool().unwrap_or(false),
-                    "请求应成功"
-                );
+                assert!(body["success"].as_bool().unwrap_or(false), "请求应成功");
                 tracing::info!("IAM-002 测试通过: 普通用户可查看部分用户");
             } else if status == 403 {
                 tracing::info!("IAM-002 测试通过: 普通用户无权限访问用户列表");
@@ -207,9 +209,10 @@ async fn test_iam_004_unauthorized_create_user() {
                 "password": "Test@123456"
             });
 
-            let (status, _) = auth_request(&client, &token, "POST", "/api/iam/users", Some(new_user))
-                .await
-                .expect("请求失败");
+            let (status, _) =
+                auth_request(&client, &token, "POST", "/api/iam/users", Some(new_user))
+                    .await
+                    .expect("请求失败");
 
             assert_eq!(status, 403, "状态码应为 403 Forbidden");
             tracing::info!("IAM-004 测试通过: 无权限用户被正确拒绝");
@@ -246,17 +249,25 @@ async fn test_iam_005_admin_delete_user() {
 
     // 找到一个可以删除的测试用户（不是admin）
     let test_user = users.iter().find(|u| {
-        u["username"].as_str().map(|s| s.starts_with("test_")).unwrap_or(false)
+        u["username"]
+            .as_str()
+            .map(|s| s.starts_with("test_"))
+            .unwrap_or(false)
     });
 
     if let Some(user) = test_user {
         let user_id = user["id"].as_str().expect("用户ID不存在");
 
         // 删除用户
-        let (delete_status, _) =
-            auth_request(&client, &token, "DELETE", &format!("/api/iam/users/{}", user_id), None)
-                .await
-                .expect("删除用户失败");
+        let (delete_status, _) = auth_request(
+            &client,
+            &token,
+            "DELETE",
+            &format!("/api/iam/users/{}", user_id),
+            None,
+        )
+        .await
+        .expect("删除用户失败");
 
         assert!(
             delete_status == 200 || delete_status == 204,
@@ -288,7 +299,9 @@ async fn test_iam_006_superuser_assign_role() {
 
     if !roles.is_empty() {
         // 找到 employee 角色
-        let employee_role = roles.iter().find(|r| r["name"].as_str() == Some("employee"));
+        let employee_role = roles
+            .iter()
+            .find(|r| r["name"].as_str() == Some("employee"));
 
         if let Some(role) = employee_role {
             let role_id = role["id"].as_str().expect("角色ID不存在");
@@ -306,7 +319,10 @@ async fn test_iam_006_superuser_assign_role() {
 
             // 找到一个测试用户
             let test_user = users.iter().find(|u| {
-                u["username"].as_str().map(|s| s.starts_with("test_")).unwrap_or(false)
+                u["username"]
+                    .as_str()
+                    .map(|s| s.starts_with("test_"))
+                    .unwrap_or(false)
             });
 
             if let Some(user) = test_user {

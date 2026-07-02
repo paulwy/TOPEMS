@@ -1,20 +1,35 @@
 //! Production Process handlers
 
-use axum::{extract::Path, extract::State, extract::Extension, routing::{delete, get, post, put}, Json, Router};
+use axum::{
+    extract::Extension,
+    extract::Path,
+    extract::State,
+    routing::{delete, get, post, put},
+    Json, Router,
+};
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, PgPool};
 use topems_shared::auth::Claims;
 
-use crate::AppState;
 use crate::services::permission::{check_permission, ModulePermission};
+use crate::AppState;
 use topems_shared::response::ApiResponse;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/mes/processes", get(list_processes).post(create_process))
-        .route("/api/mes/processes/{id}", get(get_process).put(update_process).delete(delete_process))
-        .route("/api/mes/processes/{id}/deactivate", post(deactivate_process))
+        .route(
+            "/api/mes/processes",
+            get(list_processes).post(create_process),
+        )
+        .route(
+            "/api/mes/processes/{id}",
+            get(get_process).put(update_process).delete(delete_process),
+        )
+        .route(
+            "/api/mes/processes/{id}/deactivate",
+            post(deactivate_process),
+        )
 }
 
 // ==================== Data Types ====================
@@ -61,7 +76,8 @@ pub struct ListProcessesResponse {
 }
 
 fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
-    dt.map(|d| Utc.from_utc_datetime(&d)).unwrap_or_else(Utc::now)
+    dt.map(|d| Utc.from_utc_datetime(&d))
+        .unwrap_or_else(Utc::now)
 }
 
 // ==================== Production Process Handlers ====================
@@ -95,19 +111,22 @@ pub async fn list_processes(
         }
     };
 
-    let processes_list: Vec<ProductionProcessResponse> = processes.into_iter().map(|r| ProductionProcessResponse {
-        id: r.id,
-        process_no: r.process_no,
-        name: r.name,
-        description: r.description,
-        version: r.version.unwrap_or_else(|| "1.0".to_string()),
-        status: r.status.unwrap_or_else(|| "active".to_string()),
-        sequence: r.sequence.unwrap_or(0),
-        equipment_required: r.equipment_required.unwrap_or(false),
-        estimated_duration: r.estimated_duration.unwrap_or(0),
-        created_at: naive_to_utc(r.created_at),
-        updated_at: naive_to_utc(r.updated_at),
-    }).collect();
+    let processes_list: Vec<ProductionProcessResponse> = processes
+        .into_iter()
+        .map(|r| ProductionProcessResponse {
+            id: r.id,
+            process_no: r.process_no,
+            name: r.name,
+            description: r.description,
+            version: r.version.unwrap_or_else(|| "1.0".to_string()),
+            status: r.status.unwrap_or_else(|| "active".to_string()),
+            sequence: r.sequence.unwrap_or(0),
+            equipment_required: r.equipment_required.unwrap_or(false),
+            estimated_duration: r.estimated_duration.unwrap_or(0),
+            created_at: naive_to_utc(r.created_at),
+            updated_at: naive_to_utc(r.updated_at),
+        })
+        .collect();
 
     let total = processes_list.len() as i64;
 
@@ -130,7 +149,11 @@ pub async fn create_process(
     }
 
     let now = Utc::now();
-    let process_no = format!("PROC{}{:04}", now.format("%Y%m%d"), rand::random::<u16>() % 10000);
+    let process_no = format!(
+        "PROC{}{:04}",
+        now.format("%Y%m%d"),
+        rand::random::<u16>() % 10000
+    );
 
     let result = sqlx::query!(
         r#"

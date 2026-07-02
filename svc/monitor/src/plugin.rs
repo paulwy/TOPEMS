@@ -36,9 +36,15 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
             base_path: "/api/monitor".to_string(),
         },
         permissions: vec![
-            PermissionDef { code: "alerts".to_string() },
-            PermissionDef { code: "metrics".to_string() },
-            PermissionDef { code: "health".to_string() },
+            PermissionDef {
+                code: "alerts".to_string(),
+            },
+            PermissionDef {
+                code: "metrics".to_string(),
+            },
+            PermissionDef {
+                code: "health".to_string(),
+            },
         ],
     };
 
@@ -69,9 +75,15 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
             base_path: "/api/monitor".to_string(),
         },
         permissions: vec![
-            PermissionDef { code: "alerts".to_string() },
-            PermissionDef { code: "metrics".to_string() },
-            PermissionDef { code: "health".to_string() },
+            PermissionDef {
+                code: "alerts".to_string(),
+            },
+            PermissionDef {
+                code: "metrics".to_string(),
+            },
+            PermissionDef {
+                code: "health".to_string(),
+            },
         ],
     };
 
@@ -81,13 +93,23 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
     match client.post(&url).json(&info).send().await {
         Ok(response) => {
             if response.status().is_success() {
-                tracing::info!("[Monitor Plugin] Successfully registered to core at {}", core_url);
+                tracing::info!(
+                    "[Monitor Plugin] Successfully registered to core at {}",
+                    core_url
+                );
             } else {
-                tracing::warn!("[Monitor Plugin] Failed to register to core: {}", response.status());
+                tracing::warn!(
+                    "[Monitor Plugin] Failed to register to core: {}",
+                    response.status()
+                );
             }
         }
         Err(e) => {
-            tracing::warn!("[Monitor Plugin] Failed to connect to core at {}: {}", core_url, e);
+            tracing::warn!(
+                "[Monitor Plugin] Failed to connect to core at {}: {}",
+                core_url,
+                e
+            );
         }
     }
 }

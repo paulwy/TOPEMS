@@ -80,11 +80,26 @@ where
                 .put(update_inbound_order)
                 .delete(delete_inbound_order),
         )
-        .route("/api/v1/inbound-orders/{id}/items", get(list_inbound_order_items).post(create_inbound_order_item))
-        .route("/api/v1/inbound-orders/{id}/items/{item_id}", put(update_inbound_order_item).delete(delete_inbound_order_item))
-        .route("/api/v1/inbound-orders/{id}/confirm", post(confirm_inbound_order))
-        .route("/api/v1/inbound-orders/{id}/receive", post(receive_inbound_order))
-        .route("/api/v1/inbound-orders/{id}/complete", post(complete_inbound_order))
+        .route(
+            "/api/v1/inbound-orders/{id}/items",
+            get(list_inbound_order_items).post(create_inbound_order_item),
+        )
+        .route(
+            "/api/v1/inbound-orders/{id}/items/{item_id}",
+            put(update_inbound_order_item).delete(delete_inbound_order_item),
+        )
+        .route(
+            "/api/v1/inbound-orders/{id}/confirm",
+            post(confirm_inbound_order),
+        )
+        .route(
+            "/api/v1/inbound-orders/{id}/receive",
+            post(receive_inbound_order),
+        )
+        .route(
+            "/api/v1/inbound-orders/{id}/complete",
+            post(complete_inbound_order),
+        )
 }
 
 async fn list_inbound_orders(
@@ -93,7 +108,7 @@ async fn list_inbound_orders(
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::InboundRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let page = params.page.unwrap_or(1).max(1);
@@ -164,7 +179,7 @@ async fn create_inbound_order(
     Json(req): Json<CreateInboundOrderRequest>,
 ) -> Json<ApiResponse<InboundOrder>> {
     match check_permission(&state.db, &claims, &ModulePermission::InboundWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let request_data = serde_json::to_value(&req).ok();
@@ -243,7 +258,7 @@ async fn get_inbound_order(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<InboundOrder>> {
     match check_permission(&state.db, &claims, &ModulePermission::InboundRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let result = sqlx::query_as::<_, InboundOrder>(
@@ -276,7 +291,7 @@ async fn update_inbound_order(
     Json(req): Json<UpdateInboundOrderRequest>,
 ) -> Json<ApiResponse<InboundOrder>> {
     match check_permission(&state.db, &claims, &ModulePermission::InboundWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let request_data = serde_json::to_value(&req).ok();
@@ -379,13 +394,15 @@ async fn delete_inbound_order(
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &ModulePermission::InboundWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query(r#"UPDATE wms.inbound_orders SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"#)
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(
+        r#"UPDATE wms.inbound_orders SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"#,
+    )
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -439,7 +456,7 @@ async fn list_inbound_order_items(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::InboundRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let result = sqlx::query(
@@ -460,7 +477,8 @@ async fn list_inbound_order_items(
     match result {
         Ok(items) => {
             let total: i64 = items.len() as i64;
-            let received_count: i64 = items.iter()
+            let received_count: i64 = items
+                .iter()
                 .filter(|r| r.try_get::<f64, _>("received_quantity").unwrap_or(0.0) > 0.0)
                 .count() as i64;
 
@@ -490,7 +508,7 @@ async fn create_inbound_order_item(
     Json(req): Json<InboundOrderItemRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::InboundWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let request_data = serde_json::to_value(&req).ok();
@@ -538,7 +556,10 @@ async fn create_inbound_order_item(
         Ok(item) => {
             let item_json = pg_row_to_json(item);
             (
-                Json(ApiResponse::success(item_json.clone(), "入库订单明细创建成功")),
+                Json(ApiResponse::success(
+                    item_json.clone(),
+                    "入库订单明细创建成功",
+                )),
                 "success",
                 None,
                 Some(item_json),
@@ -582,7 +603,7 @@ async fn update_inbound_order_item(
     Json(req): Json<ReceiveItemRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::InboundWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let request_data = serde_json::to_value(&req).ok();
@@ -612,7 +633,10 @@ async fn update_inbound_order_item(
         Ok(item) => {
             let item_json = pg_row_to_json(item);
             (
-                Json(ApiResponse::success(item_json.clone(), "入库订单明细更新成功")),
+                Json(ApiResponse::success(
+                    item_json.clone(),
+                    "入库订单明细更新成功",
+                )),
                 "success",
                 None,
                 Some(item_json),
@@ -655,7 +679,7 @@ async fn delete_inbound_order_item(
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &ModulePermission::InboundWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let result = sqlx::query(r#"UPDATE wms.inbound_order_items SET deleted_at = NOW() WHERE order_id = $1 AND id = $2 AND deleted_at IS NULL"#)
@@ -717,7 +741,7 @@ async fn confirm_inbound_order(
     headers: HeaderMap,
 ) -> Json<ApiResponse<InboundOrder>> {
     match check_permission(&state.db, &claims, &ModulePermission::InboundWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let now = Utc::now();
@@ -786,7 +810,7 @@ async fn receive_inbound_order(
     Json(items): Json<Vec<ReceiveItemRequest>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::InboundWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let request_data = serde_json::to_value(&items).ok();
@@ -923,7 +947,7 @@ async fn complete_inbound_order(
     headers: HeaderMap,
 ) -> Json<ApiResponse<InboundOrder>> {
     match check_permission(&state.db, &claims, &ModulePermission::InboundWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let now = Utc::now();

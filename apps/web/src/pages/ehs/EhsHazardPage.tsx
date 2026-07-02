@@ -167,7 +167,7 @@ const EhsHazardPage: React.FC = () => {
     const levelMap: Record<string, { bg: string; color: string; label: string }> = {
       major: { bg: 'error.lighter', color: 'error.dark', label: '重大' },
       serious: { bg: 'error.light', color: 'error.darker', label: '严重' },
-      general: { bg: '#fef9c3', color: '#ca8a04', label: '一般' },
+      general: { bg: 'warning.100', color: '#ca8a04', label: '一般' },
       minor: { bg: 'success.lighter', color: 'success.dark', label: '轻微' },
     };
     const colors = levelMap[level] || { bg: 'grey.100', color: 'text.secondary', label: level };
@@ -187,7 +187,7 @@ const EhsHazardPage: React.FC = () => {
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
       待整改: { bg: 'error.lighter', color: 'error.dark' },
-      整改中: { bg: '#fef9c3', color: '#ca8a04' },
+      整改中: { bg: 'warning.100', color: '#ca8a04' },
       待验收: { bg: 'primary.light', color: 'primary.dark' },
       已验收: { bg: 'success.lighter', color: 'success.dark' },
       已闭环: { bg: 'grey.100', color: 'text.secondary' },

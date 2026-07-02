@@ -51,7 +51,7 @@ const Toast = ({ id: _, title, message, type, duration, onClose }: ToastProps) =
           backgroundColor: '#f0fdf4',
           borderColor: '#bbf7d0',
           titleColor: '#166534',
-          messageColor: '#15803d',
+          messageColor: 'success.700',
         };
       case 'error':
         return {
@@ -70,10 +70,10 @@ const Toast = ({ id: _, title, message, type, duration, onClose }: ToastProps) =
       case 'info':
       default:
         return {
-          backgroundColor: '#eff6ff',
+          backgroundColor: 'primary.50',
           borderColor: '#bfdbfe',
-          titleColor: '#1e40af',
-          messageColor: '#1d4ed8',
+          titleColor: 'primary.800',
+          messageColor: 'primary.700',
         };
     }
   };
@@ -125,7 +125,7 @@ const Toast = ({ id: _, title, message, type, duration, onClose }: ToastProps) =
       <button
         onClick={handleClose}
         style={{
-          color: '#6b7280',
+          color: 'grey.500',
           border: 'none',
           background: 'transparent',
           cursor: 'pointer',

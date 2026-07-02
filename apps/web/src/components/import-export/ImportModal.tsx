@@ -160,7 +160,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                     display: 'block',
                     fontSize: 14,
                     fontWeight: 500,
-                    color: '#334155',
+                    color: 'grey.700',
                     marginBottom: 8,
                   }}
                 >
@@ -195,7 +195,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                     display: 'block',
                     fontSize: 14,
                     fontWeight: 500,
-                    color: '#334155',
+                    color: 'grey.700',
                     marginBottom: 8,
                   }}
                 >
@@ -224,7 +224,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                     display: 'block',
                     fontSize: 14,
                     fontWeight: 500,
-                    color: '#334155',
+                    color: 'grey.700',
                     marginBottom: 8,
                   }}
                 >
@@ -271,7 +271,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                         style={{
                           width: 48,
                           height: 48,
-                          color: '#94a3b8',
+                          color: 'grey.400',
                           margin: '0 auto 8px',
                         }}
                       />
@@ -330,7 +330,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                 <div
                   style={{
                     fontSize: 14,
-                    color: '#15803d',
+                    color: 'success.700',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: 4,
@@ -347,7 +347,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                   <h4
                     style={{
                       fontWeight: 500,
-                      color: '#334155',
+                      color: 'grey.700',
                       marginBottom: 8,
                     }}
                   >
@@ -401,7 +401,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
             onClick={handleClose}
             style={{
               padding: '8px 16px',
-              color: '#334155',
+              color: 'grey.700',
               backgroundColor: theme.palette.grey[100],
               borderRadius: 8,
             }}

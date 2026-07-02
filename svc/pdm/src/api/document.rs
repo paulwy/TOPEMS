@@ -1,4 +1,10 @@
-use axum::{extract::Path, extract::Query, extract::State, routing::{delete, get, post, put}, Json, Router};
+use axum::{
+    extract::Path,
+    extract::Query,
+    extract::State,
+    routing::{delete, get, post, put},
+    Json, Router,
+};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Row};
@@ -9,11 +15,28 @@ use topems_shared::ApiResponse;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/pdm/documents", get(list_documents).post(create_document))
-        .route("/api/pdm/documents/{id}", get(get_document).put(update_document).delete(delete_document))
-        .route("/api/pdm/documents/{id}/approve", post(start_document_approval))
-        .route("/api/pdm/documents/{id}/approval-history", get(get_document_approval_history))
-        .route("/api/pdm/documents/pending-approval", get(list_pending_documents))
+        .route(
+            "/api/pdm/documents",
+            get(list_documents).post(create_document),
+        )
+        .route(
+            "/api/pdm/documents/{id}",
+            get(get_document)
+                .put(update_document)
+                .delete(delete_document),
+        )
+        .route(
+            "/api/pdm/documents/{id}/approve",
+            post(start_document_approval),
+        )
+        .route(
+            "/api/pdm/documents/{id}/approval-history",
+            get(get_document_approval_history),
+        )
+        .route(
+            "/api/pdm/documents/pending-approval",
+            get(list_pending_documents),
+        )
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -322,12 +345,11 @@ pub async fn start_document_approval(
     Path(id): Path<Uuid>,
     Json(req): Json<StartDocumentApprovalRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let document_result = sqlx::query_as::<_, Document>(
-        "SELECT id, name, status FROM pdm_documents WHERE id = $1",
-    )
-    .bind(id)
-    .fetch_optional(&state.pool)
-    .await;
+    let document_result =
+        sqlx::query_as::<_, Document>("SELECT id, name, status FROM pdm_documents WHERE id = $1")
+            .bind(id)
+            .fetch_optional(&state.pool)
+            .await;
 
     let document = match document_result {
         Ok(Some(d)) => d,
@@ -361,11 +383,14 @@ pub async fn start_document_approval(
         }
     };
 
-    let steps: Vec<WorkflowStep> = 
+    let steps: Vec<WorkflowStep> =
         serde_json::from_value(workflow.get("steps")).unwrap_or_default();
     let first_step = steps.first();
-    let current_step = first_step.map(|s| s.step_name.clone()).unwrap_or("start".to_string());
-    let assignees = first_step.map(|s| serde_json::to_value(s.assignees.clone()).unwrap())
+    let current_step = first_step
+        .map(|s| s.step_name.clone())
+        .unwrap_or("start".to_string());
+    let assignees = first_step
+        .map(|s| serde_json::to_value(s.assignees.clone()).unwrap())
         .unwrap_or(serde_json::json!([]));
     let workflow_name: String = workflow.get("name");
 
@@ -457,18 +482,20 @@ pub async fn get_document_approval_history(
         Ok(instances) => {
             let history: Vec<serde_json::Value> = instances
                 .into_iter()
-                .map(|r| serde_json::json!({
-                    "instance_id": r.get::<Uuid, _>("id"),
-                    "workflow_id": r.get::<Uuid, _>("workflow_id"),
-                    "workflow_name": r.get::<String, _>("workflow_name"),
-                    "current_step": r.get::<String, _>("current_step"),
-                    "status": r.get::<String, _>("status"),
-                    "assignees": r.get::<serde_json::Value, _>("assignees"),
-                    "history": r.get::<serde_json::Value, _>("history"),
-                    "created_by": r.get::<String, _>("created_by"),
-                    "created_at": r.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
-                    "updated_at": r.get::<chrono::DateTime<chrono::Utc>, _>("updated_at"),
-                }))
+                .map(|r| {
+                    serde_json::json!({
+                        "instance_id": r.get::<Uuid, _>("id"),
+                        "workflow_id": r.get::<Uuid, _>("workflow_id"),
+                        "workflow_name": r.get::<String, _>("workflow_name"),
+                        "current_step": r.get::<String, _>("current_step"),
+                        "status": r.get::<String, _>("status"),
+                        "assignees": r.get::<serde_json::Value, _>("assignees"),
+                        "history": r.get::<serde_json::Value, _>("history"),
+                        "created_by": r.get::<String, _>("created_by"),
+                        "created_at": r.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
+                        "updated_at": r.get::<chrono::DateTime<chrono::Utc>, _>("updated_at"),
+                    })
+                })
                 .collect();
 
             Json(ApiResponse::success(
@@ -509,20 +536,22 @@ pub async fn list_pending_documents(
         Ok(rows) => {
             let documents: Vec<serde_json::Value> = rows
                 .into_iter()
-                .map(|r| serde_json::json!({
-                    "id": r.get::<Uuid, _>("id"),
-                    "document_no": r.get::<String, _>("document_no"),
-                    "name": r.get::<String, _>("name"),
-                    "description": r.get::<Option<String>, _>("description"),
-                    "document_type": r.get::<Option<String>, _>("document_type"),
-                    "version": r.get::<Option<String>, _>("version"),
-                    "status": r.get::<String, _>("status"),
-                    "created_by": r.get::<Option<String>, _>("created_by"),
-                    "created_at": r.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
-                    "updated_at": r.get::<chrono::DateTime<chrono::Utc>, _>("updated_at"),
-                    "current_step": r.get::<Option<String>, _>("current_step"),
-                    "assignees": r.get::<Option<serde_json::Value>, _>("assignees"),
-                }))
+                .map(|r| {
+                    serde_json::json!({
+                        "id": r.get::<Uuid, _>("id"),
+                        "document_no": r.get::<String, _>("document_no"),
+                        "name": r.get::<String, _>("name"),
+                        "description": r.get::<Option<String>, _>("description"),
+                        "document_type": r.get::<Option<String>, _>("document_type"),
+                        "version": r.get::<Option<String>, _>("version"),
+                        "status": r.get::<String, _>("status"),
+                        "created_by": r.get::<Option<String>, _>("created_by"),
+                        "created_at": r.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
+                        "updated_at": r.get::<chrono::DateTime<chrono::Utc>, _>("updated_at"),
+                        "current_step": r.get::<Option<String>, _>("current_step"),
+                        "assignees": r.get::<Option<serde_json::Value>, _>("assignees"),
+                    })
+                })
                 .collect();
 
             Json(ApiResponse::success(

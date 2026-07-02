@@ -133,9 +133,9 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({
                       borderRadius: 3,
                       justifyContent: 'flex-start',
                       backgroundColor: currentPage === item.id ? 'primary.light' : 'transparent',
-                      color: currentPage === item.id ? 'primary.dark' : '#334155',
+                      color: currentPage === item.id ? 'primary.dark' : 'grey.700',
                       '&:hover': {
-                        backgroundColor: currentPage === item.id ? '#dbeafe' : 'grey.100',
+                        backgroundColor: currentPage === item.id ? 'primary.100' : 'grey.100',
                       },
                     }}
                   >

@@ -410,10 +410,11 @@ async fn delete_job_opening(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM plugin_hrm.job_openings WHERE id = $1 AND status = 'draft'")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result =
+        sqlx::query("DELETE FROM plugin_hrm.job_openings WHERE id = $1 AND status = 'draft'")
+            .bind(id)
+            .execute(&state.db)
+            .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (

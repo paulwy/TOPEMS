@@ -1,4 +1,8 @@
-use axum::{extract::State, routing::{delete, get, post, put}, Json, Router};
+use axum::{
+    extract::State,
+    routing::{delete, get, post, put},
+    Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared::ApiResponse;
@@ -8,7 +12,10 @@ use crate::AppState;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/api/lims/tasks", get(list_tasks).post(create_task))
-        .route("/api/lims/tasks/{id}", get(get_task).put(update_task).delete(delete_task))
+        .route(
+            "/api/lims/tasks/{id}",
+            get(get_task).put(update_task).delete(delete_task),
+        )
         .route("/api/lims/tasks/{id}/result", post(submit_result))
 }
 
@@ -68,7 +75,8 @@ pub async fn list_tasks(
 
     match rows {
         Ok(data) => {
-            let tasks = data.into_iter()
+            let tasks = data
+                .into_iter()
                 .map(|row| InspectionTask {
                     id: row.get("id"),
                     task_no: row.get("task_no"),
@@ -106,24 +114,29 @@ pub async fn create_task(
         Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
     };
 
-    let row = sqlx::query(
-        "SELECT id, sample_no FROM qa_lab_samples WHERE id = $1"
-    )
-    .bind(sample_id)
-    .fetch_one(&state.pool)
-    .await;
+    let row = sqlx::query("SELECT id, sample_no FROM qa_lab_samples WHERE id = $1")
+        .bind(sample_id)
+        .fetch_one(&state.pool)
+        .await;
 
     let sample = match row {
         Ok(s) => s,
         Err(e) => {
             tracing::error!("Failed to fetch sample: {}", e);
-            return Json(ApiResponse::error(404, "样品不存在"))
+            return Json(ApiResponse::error(404, "样品不存在"));
         }
     };
 
-    let task_no = format!("TK-{}-{}", chrono::Local::now().format("%Y%m%d"), uuid::Uuid::new_v4().to_string()[..6].to_uppercase());
+    let task_no = format!(
+        "TK-{}-{}",
+        chrono::Local::now().format("%Y%m%d"),
+        uuid::Uuid::new_v4().to_string()[..6].to_uppercase()
+    );
 
-    let instrument_id = req.instrument_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
+    let instrument_id = req
+        .instrument_id
+        .as_ref()
+        .and_then(|s| Uuid::parse_str(s).ok());
 
     let row = sqlx::query(
         "INSERT INTO qa_lab_tasks (task_no, sample_id, sample_no, test_items, assigned_to, instrument_id, planned_date) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, task_no, sample_id, sample_no, test_items, status, assigned_to, instrument_id, planned_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, result, conclusion, recorded_by, created_at::TEXT, updated_at::TEXT"
@@ -139,24 +152,27 @@ pub async fn create_task(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(InspectionTask {
-            id: r.get("id"),
-            task_no: r.get("task_no"),
-            sample_id: r.get("sample_id"),
-            sample_no: r.get("sample_no"),
-            test_items: r.get("test_items"),
-            status: r.get("status"),
-            assigned_to: r.get("assigned_to"),
-            instrument_id: r.get("instrument_id"),
-            planned_date: r.get("planned_date"),
-            actual_start_date: r.get("actual_start_date"),
-            actual_end_date: r.get("actual_end_date"),
-            result: r.get("result"),
-            conclusion: r.get("conclusion"),
-            recorded_by: r.get("recorded_by"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "检测任务创建成功")),
+        Ok(r) => Json(ApiResponse::success(
+            InspectionTask {
+                id: r.get("id"),
+                task_no: r.get("task_no"),
+                sample_id: r.get("sample_id"),
+                sample_no: r.get("sample_no"),
+                test_items: r.get("test_items"),
+                status: r.get("status"),
+                assigned_to: r.get("assigned_to"),
+                instrument_id: r.get("instrument_id"),
+                planned_date: r.get("planned_date"),
+                actual_start_date: r.get("actual_start_date"),
+                actual_end_date: r.get("actual_end_date"),
+                result: r.get("result"),
+                conclusion: r.get("conclusion"),
+                recorded_by: r.get("recorded_by"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "检测任务创建成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to create task: {}", e);
             Json(ApiResponse::error(500, "检测任务创建失败"))
@@ -181,24 +197,27 @@ pub async fn get_task(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(InspectionTask {
-            id: r.get("id"),
-            task_no: r.get("task_no"),
-            sample_id: r.get("sample_id"),
-            sample_no: r.get("sample_no"),
-            test_items: r.get("test_items"),
-            status: r.get("status"),
-            assigned_to: r.get("assigned_to"),
-            instrument_id: r.get("instrument_id"),
-            planned_date: r.get("planned_date"),
-            actual_start_date: r.get("actual_start_date"),
-            actual_end_date: r.get("actual_end_date"),
-            result: r.get("result"),
-            conclusion: r.get("conclusion"),
-            recorded_by: r.get("recorded_by"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "获取检测任务成功")),
+        Ok(r) => Json(ApiResponse::success(
+            InspectionTask {
+                id: r.get("id"),
+                task_no: r.get("task_no"),
+                sample_id: r.get("sample_id"),
+                sample_no: r.get("sample_no"),
+                test_items: r.get("test_items"),
+                status: r.get("status"),
+                assigned_to: r.get("assigned_to"),
+                instrument_id: r.get("instrument_id"),
+                planned_date: r.get("planned_date"),
+                actual_start_date: r.get("actual_start_date"),
+                actual_end_date: r.get("actual_end_date"),
+                result: r.get("result"),
+                conclusion: r.get("conclusion"),
+                recorded_by: r.get("recorded_by"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "获取检测任务成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to fetch task: {}", e);
             Json(ApiResponse::error(500, "获取检测任务失败"))
@@ -216,7 +235,10 @@ pub async fn update_task(
         Err(_) => return Json(ApiResponse::error(400, "无效的任务ID")),
     };
 
-    let instrument_id = req.instrument_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
+    let instrument_id = req
+        .instrument_id
+        .as_ref()
+        .and_then(|s| Uuid::parse_str(s).ok());
 
     let row = sqlx::query(
         "UPDATE qa_lab_tasks SET status = COALESCE($2, status), assigned_to = COALESCE($3, assigned_to), instrument_id = COALESCE($4, instrument_id), actual_start_date = COALESCE($5, actual_start_date), actual_end_date = COALESCE($6, actual_end_date), updated_at = NOW() WHERE id = $1 RETURNING id, task_no, sample_id, sample_no, test_items, status, assigned_to, instrument_id, planned_date::TEXT, actual_start_date::TEXT, actual_end_date::TEXT, result, conclusion, recorded_by, created_at::TEXT, updated_at::TEXT"
@@ -231,24 +253,27 @@ pub async fn update_task(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(InspectionTask {
-            id: r.get("id"),
-            task_no: r.get("task_no"),
-            sample_id: r.get("sample_id"),
-            sample_no: r.get("sample_no"),
-            test_items: r.get("test_items"),
-            status: r.get("status"),
-            assigned_to: r.get("assigned_to"),
-            instrument_id: r.get("instrument_id"),
-            planned_date: r.get("planned_date"),
-            actual_start_date: r.get("actual_start_date"),
-            actual_end_date: r.get("actual_end_date"),
-            result: r.get("result"),
-            conclusion: r.get("conclusion"),
-            recorded_by: r.get("recorded_by"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "检测任务更新成功")),
+        Ok(r) => Json(ApiResponse::success(
+            InspectionTask {
+                id: r.get("id"),
+                task_no: r.get("task_no"),
+                sample_id: r.get("sample_id"),
+                sample_no: r.get("sample_no"),
+                test_items: r.get("test_items"),
+                status: r.get("status"),
+                assigned_to: r.get("assigned_to"),
+                instrument_id: r.get("instrument_id"),
+                planned_date: r.get("planned_date"),
+                actual_start_date: r.get("actual_start_date"),
+                actual_end_date: r.get("actual_end_date"),
+                result: r.get("result"),
+                conclusion: r.get("conclusion"),
+                recorded_by: r.get("recorded_by"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "检测任务更新成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to update task: {}", e);
             Json(ApiResponse::error(500, "检测任务更新失败"))
@@ -277,24 +302,27 @@ pub async fn submit_result(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(InspectionTask {
-            id: r.get("id"),
-            task_no: r.get("task_no"),
-            sample_id: r.get("sample_id"),
-            sample_no: r.get("sample_no"),
-            test_items: r.get("test_items"),
-            status: r.get("status"),
-            assigned_to: r.get("assigned_to"),
-            instrument_id: r.get("instrument_id"),
-            planned_date: r.get("planned_date"),
-            actual_start_date: r.get("actual_start_date"),
-            actual_end_date: r.get("actual_end_date"),
-            result: r.get("result"),
-            conclusion: r.get("conclusion"),
-            recorded_by: r.get("recorded_by"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "检测结果提交成功")),
+        Ok(r) => Json(ApiResponse::success(
+            InspectionTask {
+                id: r.get("id"),
+                task_no: r.get("task_no"),
+                sample_id: r.get("sample_id"),
+                sample_no: r.get("sample_no"),
+                test_items: r.get("test_items"),
+                status: r.get("status"),
+                assigned_to: r.get("assigned_to"),
+                instrument_id: r.get("instrument_id"),
+                planned_date: r.get("planned_date"),
+                actual_start_date: r.get("actual_start_date"),
+                actual_end_date: r.get("actual_end_date"),
+                result: r.get("result"),
+                conclusion: r.get("conclusion"),
+                recorded_by: r.get("recorded_by"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "检测结果提交成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to submit result: {}", e);
             Json(ApiResponse::error(500, "检测结果提交失败"))

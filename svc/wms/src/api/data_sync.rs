@@ -43,9 +43,18 @@ where
     ApiState: axum::extract::FromRef<S>,
 {
     Router::new()
-        .route("/api/wms/sync/outbound-to-shipping", post(outbound_to_shipping))
-        .route("/api/wms/sync/outbound-order/{id}/to-shipping", post(create_shipping_from_outbound))
-        .route("/api/wms/sync/inbound-from-scm", post(create_inbound_from_scm))
+        .route(
+            "/api/wms/sync/outbound-to-shipping",
+            post(outbound_to_shipping),
+        )
+        .route(
+            "/api/wms/sync/outbound-order/{id}/to-shipping",
+            post(create_shipping_from_outbound),
+        )
+        .route(
+            "/api/wms/sync/inbound-from-scm",
+            post(create_inbound_from_scm),
+        )
         .route("/api/wms/sync/sync-logs", post(get_sync_logs))
 }
 
@@ -74,7 +83,8 @@ async fn outbound_to_shipping(
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
-    create_shipping_from_outbound_internal(&state, outbound_order_id, customer_id, req.remarks).await
+    create_shipping_from_outbound_internal(&state, outbound_order_id, customer_id, req.remarks)
+        .await
 }
 
 async fn create_shipping_from_outbound(
@@ -197,7 +207,8 @@ async fn create_shipping_from_outbound_internal(
                 "success",
                 None,
                 0,
-            ).await;
+            )
+            .await;
 
             Json(ApiResponse::success(
                 serde_json::json!({
@@ -226,7 +237,8 @@ async fn create_shipping_from_outbound_internal(
                 "failed",
                 Some(e.to_string()),
                 0,
-            ).await;
+            )
+            .await;
             Json(api_error(500, "创建销售订单失败"))
         }
     }
@@ -321,7 +333,8 @@ async fn create_inbound_from_scm(
                 "success",
                 None,
                 0,
-            ).await;
+            )
+            .await;
 
             Json(ApiResponse::success(
                 serde_json::json!({
@@ -395,7 +408,10 @@ async fn get_sync_logs(
                     })
                 })
                 .collect();
-            Json(ApiResponse::success(serde_json::json!({ "logs": logs }), "同步日志查询成功"))
+            Json(ApiResponse::success(
+                serde_json::json!({ "logs": logs }),
+                "同步日志查询成功",
+            ))
         }
         Err(e) => {
             tracing::error!("查询同步日志失败: {}", e);

@@ -70,11 +70,10 @@ async fn employee_summary(
     .fetch_one(&state.db)
     .await;
 
-    let male_result = sqlx::query_scalar::<_, i64>(
-        r#"SELECT COUNT(*) FROM hrm.employees WHERE gender = 'male'"#,
-    )
-    .fetch_one(&state.db)
-    .await;
+    let male_result =
+        sqlx::query_scalar::<_, i64>(r#"SELECT COUNT(*) FROM hrm.employees WHERE gender = 'male'"#)
+            .fetch_one(&state.db)
+            .await;
 
     let female_result = sqlx::query_scalar::<_, i64>(
         r#"SELECT COUNT(*) FROM hrm.employees WHERE gender = 'female'"#,

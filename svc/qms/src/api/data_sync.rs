@@ -83,27 +83,24 @@ pub async fn list_sync_records(
         }
     }
 
-    let records = query_builder
-        .fetch_all(&state.pool)
-        .await
-        .map(|rows| {
-            rows.into_iter()
-                .map(|row| SyncRecord {
-                    id: row.get("id"),
-                    sync_no: row.get("sync_no"),
-                    sync_type: row.get("sync_type"),
-                    source_id: row.get("source_id"),
-                    target_service: row.get("target_service"),
-                    target_id: row.get("target_id"),
-                    status: row.get("status"),
-                    payload: row.get("payload"),
-                    response: row.get("response"),
-                    error_msg: row.get("error_msg"),
-                    created_at: row.get("created_at"),
-                    updated_at: row.get("updated_at"),
-                })
-                .collect()
-        });
+    let records = query_builder.fetch_all(&state.pool).await.map(|rows| {
+        rows.into_iter()
+            .map(|row| SyncRecord {
+                id: row.get("id"),
+                sync_no: row.get("sync_no"),
+                sync_type: row.get("sync_type"),
+                source_id: row.get("source_id"),
+                target_service: row.get("target_service"),
+                target_id: row.get("target_id"),
+                status: row.get("status"),
+                payload: row.get("payload"),
+                response: row.get("response"),
+                error_msg: row.get("error_msg"),
+                created_at: row.get("created_at"),
+                updated_at: row.get("updated_at"),
+            })
+            .collect()
+    });
 
     match records {
         Ok(data) => Json(ApiResponse::success(data, "获取同步记录列表成功")),
@@ -131,20 +128,23 @@ pub async fn get_sync_record(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(SyncRecord {
-            id: r.get("id"),
-            sync_no: r.get("sync_no"),
-            sync_type: r.get("sync_type"),
-            source_id: r.get("source_id"),
-            target_service: r.get("target_service"),
-            target_id: r.get("target_id"),
-            status: r.get("status"),
-            payload: r.get("payload"),
-            response: r.get("response"),
-            error_msg: r.get("error_msg"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "获取同步记录成功")),
+        Ok(r) => Json(ApiResponse::success(
+            SyncRecord {
+                id: r.get("id"),
+                sync_no: r.get("sync_no"),
+                sync_type: r.get("sync_type"),
+                source_id: r.get("source_id"),
+                target_service: r.get("target_service"),
+                target_id: r.get("target_id"),
+                status: r.get("status"),
+                payload: r.get("payload"),
+                response: r.get("response"),
+                error_msg: r.get("error_msg"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "获取同步记录成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to fetch sync record: {}", e);
             Json(ApiResponse::error(500, "获取同步记录失败"))
@@ -177,7 +177,10 @@ pub async fn sync_inspection_to_lims(
         }
     };
 
-    let sync_no = format!("SYNC-{}-LIMS", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
+    let sync_no = format!(
+        "SYNC-{}-LIMS",
+        uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+    );
     let payload = serde_json::json!({
         "inspection_id": req.inspection_id,
         "inspection_no": inspection_row.get::<String, _>("inspection_no"),
@@ -193,9 +196,16 @@ pub async fn sync_inspection_to_lims(
     });
 
     // Simulate sending to LIMS service
-    let target_task_id = req.target_task_id.unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
-    let lims_url = std::env::var("LIMS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8051".to_string());
-    tracing::info!("Syncing inspection {} to LIMS at {}", req.inspection_id, lims_url);
+    let target_task_id = req
+        .target_task_id
+        .unwrap_or_else(|| uuid::Uuid::new_v4().to_string());
+    let lims_url =
+        std::env::var("LIMS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8051".to_string());
+    tracing::info!(
+        "Syncing inspection {} to LIMS at {}",
+        req.inspection_id,
+        lims_url
+    );
 
     // In production, use reqwest to call LIMS API
     // For now, mark as completed
@@ -219,20 +229,23 @@ pub async fn sync_inspection_to_lims(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(SyncRecord {
-            id: r.get("id"),
-            sync_no: r.get("sync_no"),
-            sync_type: r.get("sync_type"),
-            source_id: r.get("source_id"),
-            target_service: r.get("target_service"),
-            target_id: r.get("target_id"),
-            status: r.get("status"),
-            payload: r.get("payload"),
-            response: r.get("response"),
-            error_msg: r.get("error_msg"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "质检结果同步到 LIMS 成功")),
+        Ok(r) => Json(ApiResponse::success(
+            SyncRecord {
+                id: r.get("id"),
+                sync_no: r.get("sync_no"),
+                sync_type: r.get("sync_type"),
+                source_id: r.get("source_id"),
+                target_service: r.get("target_service"),
+                target_id: r.get("target_id"),
+                status: r.get("status"),
+                payload: r.get("payload"),
+                response: r.get("response"),
+                error_msg: r.get("error_msg"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "质检结果同步到 LIMS 成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to create sync record: {}", e);
             Json(ApiResponse::error(500, "同步记录创建失败"))
@@ -265,7 +278,10 @@ pub async fn sync_issue_to_ehs(
         }
     };
 
-    let sync_no = format!("SYNC-{}-EHS", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
+    let sync_no = format!(
+        "SYNC-{}-EHS",
+        uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+    );
     let payload = serde_json::json!({
         "issue_id": req.issue_id,
         "issue_no": issue_row.get::<String, _>("issue_no"),
@@ -277,7 +293,8 @@ pub async fn sync_issue_to_ehs(
         "created_by": issue_row.get::<Option<String>, _>("created_by"),
     });
 
-    let ehs_url = std::env::var("EHS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8052".to_string());
+    let ehs_url =
+        std::env::var("EHS_SERVICE_URL").unwrap_or_else(|_| "http://localhost:8052".to_string());
     tracing::info!("Syncing issue {} to EHS at {}", req.issue_id, ehs_url);
 
     let target_hazard_id = uuid::Uuid::new_v4().to_string();
@@ -302,20 +319,23 @@ pub async fn sync_issue_to_ehs(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(SyncRecord {
-            id: r.get("id"),
-            sync_no: r.get("sync_no"),
-            sync_type: r.get("sync_type"),
-            source_id: r.get("source_id"),
-            target_service: r.get("target_service"),
-            target_id: r.get("target_id"),
-            status: r.get("status"),
-            payload: r.get("payload"),
-            response: r.get("response"),
-            error_msg: r.get("error_msg"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "质量问题已触发 EHS 安全检查")),
+        Ok(r) => Json(ApiResponse::success(
+            SyncRecord {
+                id: r.get("id"),
+                sync_no: r.get("sync_no"),
+                sync_type: r.get("sync_type"),
+                source_id: r.get("source_id"),
+                target_service: r.get("target_service"),
+                target_id: r.get("target_id"),
+                status: r.get("status"),
+                payload: r.get("payload"),
+                response: r.get("response"),
+                error_msg: r.get("error_msg"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "质量问题已触发 EHS 安全检查",
+        )),
         Err(e) => {
             tracing::error!("Failed to create sync record: {}", e);
             Json(ApiResponse::error(500, "同步记录创建失败"))
@@ -340,20 +360,23 @@ pub async fn retry_sync(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(SyncRecord {
-            id: r.get("id"),
-            sync_no: r.get("sync_no"),
-            sync_type: r.get("sync_type"),
-            source_id: r.get("source_id"),
-            target_service: r.get("target_service"),
-            target_id: r.get("target_id"),
-            status: r.get("status"),
-            payload: r.get("payload"),
-            response: r.get("response"),
-            error_msg: r.get("error_msg"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "同步记录已重置为待处理")),
+        Ok(r) => Json(ApiResponse::success(
+            SyncRecord {
+                id: r.get("id"),
+                sync_no: r.get("sync_no"),
+                sync_type: r.get("sync_type"),
+                source_id: r.get("source_id"),
+                target_service: r.get("target_service"),
+                target_id: r.get("target_id"),
+                status: r.get("status"),
+                payload: r.get("payload"),
+                response: r.get("response"),
+                error_msg: r.get("error_msg"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "同步记录已重置为待处理",
+        )),
         Err(e) => {
             tracing::error!("Failed to retry sync: {}", e);
             Json(ApiResponse::error(500, "同步重试失败"))

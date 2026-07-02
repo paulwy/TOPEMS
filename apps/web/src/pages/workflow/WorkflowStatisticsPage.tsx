@@ -260,10 +260,10 @@ export const WorkflowStatisticsPage: React.FC = () => {
                 key={`cell-${index}`}
                 fill={
                   index === bottleneckData.length - 1
-                    ? '#ef4444'
+                    ? 'error.main'
                     : index === bottleneckData.length - 2
-                      ? '#f59e0b'
-                      : '#3b82f6'
+                      ? 'warning.main'
+                      : 'primary.main'
                 }
               />
             ))}
@@ -285,8 +285,8 @@ export const WorkflowStatisticsPage: React.FC = () => {
             data={trendData}
             xKey='name'
             yKeys={[
-              { key: '发起数', name: '发起数', color: '#3b82f6' },
-              { key: '完成数', name: '完成数', color: '#22c55e' },
+              { key: '发起数', name: '发起数', color: 'primary.main' },
+              { key: '完成数', name: '完成数', color: 'success.main' },
             ]}
             height={280}
           />
@@ -326,7 +326,7 @@ export const WorkflowStatisticsPage: React.FC = () => {
               />
               <Bar
                 dataKey='平均耗时'
-                fill='#8B5CF6'
+                fill='secondary.main'
                 radius={[4, 4, 0, 0]}
               />
             </BarChart>
@@ -358,7 +358,7 @@ export const WorkflowStatisticsPage: React.FC = () => {
         icon: <Zap size={18} />,
         status: index < 3 ? 'success' : index < 6 ? 'info' : 'default',
         tags: [
-          { label: `#${index + 1}`, color: index < 3 ? '#f59e0b' : undefined },
+          { label: `#${index + 1}`, color: index < 3 ? 'warning.main' : undefined },
           { label: `通过率 ${item.passRate}` },
         ],
         onClick: () => navigate(`/workflow/definitions`),

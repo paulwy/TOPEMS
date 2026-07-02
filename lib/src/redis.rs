@@ -2,6 +2,7 @@ use crate::config::enhanced::RedisConfig;
 use crate::error::TopemsError;
 use crate::Result;
 use async_trait::async_trait;
+use futures::Future;
 use parking_lot::{Mutex, RwLock};
 use rand::Rng;
 use redis::{Client, Connection, RedisResult};
@@ -9,7 +10,6 @@ use serde::{Deserialize, Serialize};
 use std::hash::Hasher;
 use std::sync::Arc;
 use std::time::Duration;
-use futures::Future;
 
 #[derive(Debug)]
 pub struct RedisPool {
@@ -119,15 +119,19 @@ impl RedisCacheService {
         }
     }
 
-    async fn set_with_protection(&self, key: &str, value: &str, ttl_seconds: Option<u64>) -> Result<()> {
+    async fn set_with_protection(
+        &self,
+        key: &str,
+        value: &str,
+        ttl_seconds: Option<u64>,
+    ) -> Result<()> {
         let full_key = self.build_key(key);
 
         let ttl = match ttl_seconds {
             Some(ttl) => {
                 if self.protection_config.enable_random_ttl {
-                    let jitter = rand::thread_rng().gen_range(
-                        0..self.protection_config.random_ttl_jitter_seconds,
-                    );
+                    let jitter = rand::thread_rng()
+                        .gen_range(0..self.protection_config.random_ttl_jitter_seconds);
                     Some(ttl + jitter)
                 } else {
                     Some(ttl)
@@ -167,12 +171,7 @@ impl RedisCacheService {
         Ok(())
     }
 
-    pub async fn with_cache<T, F, Fut>(
-        &self,
-        key: &str,
-        ttl: Option<u64>,
-        fallback: F,
-    ) -> Result<T>
+    pub async fn with_cache<T, F, Fut>(&self, key: &str, ttl: Option<u64>, fallback: F) -> Result<T>
     where
         T: for<'de> Deserialize<'de> + Serialize + Send + 'static,
         F: FnOnce() -> Fut + Send + 'static,
@@ -184,7 +183,8 @@ impl RedisCacheService {
             if let Some(bloom) = &self.protection_config.bloom_filter {
                 if !bloom.might_contain(&full_key) {
                     let result = fallback().await?;
-                    let serialized = serde_json::to_string(&result).map_err(TopemsError::Serialization)?;
+                    let serialized =
+                        serde_json::to_string(&result).map_err(TopemsError::Serialization)?;
                     self.set_raw(&full_key, &serialized, ttl).await?;
                     bloom.insert(&full_key);
                     return Ok(result);
@@ -210,15 +210,15 @@ impl RedisCacheService {
             let serialized = serde_json::to_string(&result).map_err(TopemsError::Serialization)?;
             let ttl_with_jitter = if self.protection_config.enable_random_ttl {
                 ttl.map(|t| {
-                    let jitter = rand::thread_rng().gen_range(
-                        0..self.protection_config.random_ttl_jitter_seconds,
-                    );
+                    let jitter = rand::thread_rng()
+                        .gen_range(0..self.protection_config.random_ttl_jitter_seconds);
                     t + jitter
                 })
             } else {
                 ttl
             };
-            self.set_raw(&full_key, &serialized, ttl_with_jitter).await?;
+            self.set_raw(&full_key, &serialized, ttl_with_jitter)
+                .await?;
             self.release_lock(&lock_key).await?;
 
             if self.protection_config.enable_bloom_filter {
@@ -235,15 +235,15 @@ impl RedisCacheService {
         let serialized = serde_json::to_string(&result).map_err(TopemsError::Serialization)?;
         let ttl_with_jitter = if self.protection_config.enable_random_ttl {
             ttl.map(|t| {
-                let jitter = rand::thread_rng().gen_range(
-                    0..self.protection_config.random_ttl_jitter_seconds,
-                );
+                let jitter = rand::thread_rng()
+                    .gen_range(0..self.protection_config.random_ttl_jitter_seconds);
                 t + jitter
             })
         } else {
             ttl
         };
-        self.set_raw(&full_key, &serialized, ttl_with_jitter).await?;
+        self.set_raw(&full_key, &serialized, ttl_with_jitter)
+            .await?;
 
         if self.protection_config.enable_bloom_filter {
             if let Some(bloom) = &self.protection_config.bloom_filter {
@@ -274,12 +274,7 @@ impl RedisCacheService {
         Ok(())
     }
 
-    pub async fn warm_up<F>(
-        &self,
-        keys: Vec<String>,
-        fetcher: F,
-        ttl: Option<u64>,
-    ) -> Result<usize>
+    pub async fn warm_up<F>(&self, keys: Vec<String>, fetcher: F, ttl: Option<u64>) -> Result<usize>
     where
         F: Fn(&str) -> Result<String> + Send + Sync + 'static,
     {
@@ -365,7 +360,10 @@ impl CacheService for RedisCacheService {
     async fn expire(&self, key: &str, seconds: u64) -> Result<bool> {
         let full_key = self.build_key(key);
         let mut conn = self.pool.get_connection().await?;
-        let result: RedisResult<bool> = redis::cmd("EXPIRE").arg(full_key).arg(seconds).query(&mut conn);
+        let result: RedisResult<bool> = redis::cmd("EXPIRE")
+            .arg(full_key)
+            .arg(seconds)
+            .query(&mut conn);
         result.map_err(|e| TopemsError::Config(format!("Redis EXPIRE failed: {}", e)))
     }
 
@@ -500,7 +498,8 @@ impl CacheStatisticsCollector {
     }
 
     pub fn record_miss(&self) {
-        self.misses.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        self.misses
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     }
 
     pub fn record_set(&self) {
@@ -508,11 +507,13 @@ impl CacheStatisticsCollector {
     }
 
     pub fn record_delete(&self) {
-        self.deletes.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        self.deletes
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     }
 
     pub fn record_expiration(&self) {
-        self.expirations.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+        self.expirations
+            .fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     }
 
     pub fn record_latency(&self, duration: Duration) {
@@ -531,7 +532,11 @@ impl CacheStatisticsCollector {
         let expirations = self.expirations.load(std::sync::atomic::Ordering::Relaxed);
 
         let total = hits + misses;
-        let hit_rate = if total == 0 { 0.0 } else { hits as f64 / total as f64 };
+        let hit_rate = if total == 0 {
+            0.0
+        } else {
+            hits as f64 / total as f64
+        };
 
         let latencies = self.latencies.lock();
         let avg_latency = if latencies.is_empty() {
@@ -613,16 +618,25 @@ impl UnifiedCacheManager {
     pub async fn get<T: for<'de> Deserialize<'de>>(&self, parts: &[&str]) -> Result<Option<T>> {
         let key = self.key_generator.generate(parts);
         if let Ok(Some(value)) = self.redis_cache.get(&key).await {
-            serde_json::from_str(&value).map(Some).map_err(TopemsError::Serialization)
+            serde_json::from_str(&value)
+                .map(Some)
+                .map_err(TopemsError::Serialization)
         } else {
             Ok(None)
         }
     }
 
-    pub async fn set<T: Serialize>(&self, parts: &[&str], value: &T, ttl: Option<u64>) -> Result<()> {
+    pub async fn set<T: Serialize>(
+        &self,
+        parts: &[&str],
+        value: &T,
+        ttl: Option<u64>,
+    ) -> Result<()> {
         let key = self.key_generator.generate(parts);
         let serialized = serde_json::to_string(value).map_err(TopemsError::Serialization)?;
-        self.redis_cache.set(&key, &serialized, ttl.or(Some(self.default_ttl))).await
+        self.redis_cache
+            .set(&key, &serialized, ttl.or(Some(self.default_ttl)))
+            .await
     }
 
     pub async fn delete(&self, parts: &[&str]) -> Result<()> {
@@ -635,17 +649,29 @@ impl UnifiedCacheManager {
         self.redis_cache.exists(&key).await
     }
 
-    pub async fn with_cache<T, F, Fut>(&self, parts: &[&str], ttl: Option<u64>, fallback: F) -> Result<T>
+    pub async fn with_cache<T, F, Fut>(
+        &self,
+        parts: &[&str],
+        ttl: Option<u64>,
+        fallback: F,
+    ) -> Result<T>
     where
         T: for<'de> Deserialize<'de> + Serialize + Send + 'static,
         F: FnOnce() -> Fut + Send + 'static,
         Fut: Future<Output = Result<T>> + Send + 'static,
     {
         let key = self.key_generator.generate(parts);
-        self.redis_cache.with_cache(&key, ttl.or(Some(self.default_ttl)), fallback).await
+        self.redis_cache
+            .with_cache(&key, ttl.or(Some(self.default_ttl)), fallback)
+            .await
     }
 
-    pub async fn warm_up<F>(&self, key_parts_list: Vec<Vec<&str>>, fetcher: F, ttl: Option<u64>) -> Result<usize>
+    pub async fn warm_up<F>(
+        &self,
+        key_parts_list: Vec<Vec<&str>>,
+        fetcher: F,
+        ttl: Option<u64>,
+    ) -> Result<usize>
     where
         F: Fn(&str) -> Result<String> + Send + Sync + 'static,
     {

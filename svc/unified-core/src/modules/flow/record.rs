@@ -1,11 +1,12 @@
 //! Record submodule - Approval record handlers
 
-use axum::{extract::{Path, State}, Json};
 use crate::AppState;
+use axum::{
+    extract::{Path, State},
+    Json,
+};
 
-pub async fn list_records(
-    State(_state): State<AppState>,
-) -> Json<serde_json::Value> {
+pub async fn list_records(State(_state): State<AppState>) -> Json<serde_json::Value> {
     tracing::info!("Flow record list_records called");
     Json(serde_json::json!({
         "success": true,

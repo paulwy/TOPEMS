@@ -1,8 +1,8 @@
 //! Plugin data models
 
+use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-use chrono::{DateTime, Utc};
 
 /// Plugin entity
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
@@ -12,76 +12,76 @@ pub struct Plugin {
     pub name: String,
     pub description: Option<String>,
     pub version: String,
-    
+
     #[serde(rename = "plugin_type")]
     pub plugin_type: String,
-    
+
     #[serde(rename = "is_installed")]
     pub is_installed: bool,
-    
+
     #[serde(rename = "installed_at")]
     pub installed_at: Option<DateTime<Utc>>,
-    
+
     #[serde(rename = "is_active")]
     pub is_active: bool,
-    
+
     #[serde(rename = "activated_at")]
     pub activated_at: Option<DateTime<Utc>>,
-    
+
     #[serde(rename = "is_free")]
     pub is_free: bool,
-    
+
     #[serde(rename = "price_cents")]
     pub price_cents: Option<i32>,
-    
+
     #[serde(rename = "remote_url")]
     pub remote_url: Option<String>,
-    
+
     pub checksum: Option<String>,
-    
+
     #[serde(rename = "entry_point")]
     pub entry_point: Option<String>,
-    
+
     pub dependencies: Option<serde_json::Value>,
-    
+
     #[serde(rename = "install_count")]
     pub install_count: Option<i32>,
-    
+
     pub rating: Option<rust_decimal::Decimal>,
-    
+
     #[serde(rename = "rating_count")]
     pub rating_count: Option<i32>,
-    
+
     #[serde(rename = "is_published")]
     pub is_published: bool,
-    
+
     #[serde(rename = "is_featured")]
     pub is_featured: Option<bool>,
-    
+
     #[serde(rename = "is_recommended")]
     pub is_recommended: Option<bool>,
-    
+
     #[serde(rename = "author_name")]
     pub author_name: Option<String>,
-    
+
     #[serde(rename = "author_url")]
     pub author_url: Option<String>,
-    
+
     #[serde(rename = "homepage_url")]
     pub homepage_url: Option<String>,
-    
+
     pub screenshots: Option<serde_json::Value>,
-    
+
     pub tags: Option<Vec<String>>,
-    
+
     pub category: Option<String>,
-    
+
     #[serde(rename = "created_at")]
     pub created_at: DateTime<Utc>,
-    
+
     #[serde(rename = "updated_at")]
     pub updated_at: DateTime<Utc>,
-    
+
     #[serde(rename = "published_at")]
     pub published_at: Option<DateTime<Utc>>,
 }
@@ -292,34 +292,34 @@ pub struct TenantPlugin {
     pub tenant_id: uuid::Uuid,
     #[serde(rename = "plugin_id")]
     pub plugin_id: uuid::Uuid,
-    
+
     #[serde(rename = "installed_version")]
     pub installed_version: Option<String>,
-    
+
     #[serde(rename = "is_active")]
     pub is_active: bool,
-    
+
     #[serde(rename = "license_type")]
     pub license_type: Option<String>,
-    
+
     #[serde(rename = "license_expires_at")]
     pub license_expires_at: Option<DateTime<Utc>>,
-    
+
     #[serde(rename = "purchase_order_id")]
     pub purchase_order_id: Option<String>,
-    
+
     #[serde(rename = "activated_at")]
     pub activated_at: Option<DateTime<Utc>>,
-    
+
     #[serde(rename = "last_used_at")]
     pub last_used_at: Option<DateTime<Utc>>,
-    
+
     #[serde(rename = "usage_count")]
     pub usage_count: Option<i32>,
-    
+
     #[serde(rename = "created_at")]
     pub created_at: DateTime<Utc>,
-    
+
     #[serde(rename = "updated_at")]
     pub updated_at: DateTime<Utc>,
 }
@@ -332,16 +332,16 @@ pub struct PluginCategory {
     pub code: String,
     pub description: Option<String>,
     pub icon: Option<String>,
-    
+
     #[serde(rename = "sort_order")]
     pub sort_order: Option<i32>,
-    
+
     #[serde(rename = "plugin_count")]
     pub plugin_count: Option<i32>,
-    
+
     #[serde(rename = "is_active")]
     pub is_active: Option<bool>,
-    
+
     #[serde(rename = "created_at")]
     pub created_at: DateTime<Utc>,
 }
@@ -443,7 +443,7 @@ pub struct PluginFilters {
     pub category: Option<String>,
     pub search: Option<String>,
     pub is_free: Option<bool>,
-    pub sort_by: Option<String>,  // 'popular' | 'rating' | 'recent' | 'name'
+    pub sort_by: Option<String>, // 'popular' | 'rating' | 'recent' | 'name'
     pub page: Option<u32>,
     #[serde(rename = "page_size")]
     pub page_size: Option<u32>,
@@ -680,7 +680,7 @@ pub struct VersionCompareResult {
 /// 版本变更项
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct VersionChange {
-    pub change_type: String,  // 'feature' | 'bugfix' | 'improvement' | 'breaking'
+    pub change_type: String, // 'feature' | 'bugfix' | 'improvement' | 'breaking'
     pub description: String,
     pub affected_components: Option<Vec<String>>,
 }
@@ -1004,7 +1004,7 @@ pub struct UninstallResult {
 pub struct UninstallStatus {
     pub plugin_code: String,
     pub tier: UninstallTier,
-    pub status: String,  // 'pending', 'in_progress', 'completed', 'failed'
+    pub status: String, // 'pending', 'in_progress', 'completed', 'failed'
     pub progress_percent: Option<i32>,
     pub started_at: Option<DateTime<Utc>>,
     pub completed_at: Option<DateTime<Utc>>,
@@ -1017,7 +1017,7 @@ pub struct PluginBackup {
     pub id: uuid::Uuid,
     pub plugin_code: String,
     pub version: String,
-    pub backup_type: String,  // 'full', 'schema', 'data'
+    pub backup_type: String, // 'full', 'schema', 'data'
     pub file_path: String,
     pub file_size: i64,
     pub created_at: DateTime<Utc>,

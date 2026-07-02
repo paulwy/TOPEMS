@@ -36,7 +36,7 @@ export const AddressbookHeader: React.FC<AddressbookHeaderProps> = ({
                 transform: 'translateY(-50%)',
                 width: 20,
                 height: 20,
-                color: '#94a3b8',
+                color: 'grey.400',
               }}
             />
             <input
@@ -82,7 +82,7 @@ export const AddressbookHeader: React.FC<AddressbookHeaderProps> = ({
               padding: '8px 16px',
               border: '1px solid #cbd5e1',
               borderRadius: 8,
-              color: '#334155',
+              color: 'grey.700',
               backgroundColor: 'white',
               cursor: 'pointer',
               transition: 'colors 0.2s',

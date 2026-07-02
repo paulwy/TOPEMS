@@ -144,12 +144,12 @@ const SrmFinancePage: React.FC = () => {
 
   const getTypeBadge = (type: string) => {
     const typeMap: Record<string, { bg: string; color: string; label: string }> = {
-      order: { bg: '#dbeafe', color: 'primary.dark', label: '订单' },
-      contract: { bg: 'success.lighter', color: '#15803d', label: '合同' },
+      order: { bg: 'primary.100', color: 'primary.dark', label: '订单' },
+      contract: { bg: 'success.lighter', color: 'success.700', label: '合同' },
     };
     const style = typeMap[type] || {
       bg: 'grey.100',
-      color: '#475569',
+      color: 'grey.600',
       label: type,
     };
     return (
@@ -163,12 +163,12 @@ const SrmFinancePage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      待处理: { bg: 'warning.light', color: '#b45309' },
-      处理中: { bg: '#dbeafe', color: 'primary.dark' },
-      已交付: { bg: 'success.lighter', color: '#15803d' },
+      待处理: { bg: 'warning.light', color: 'warning.700' },
+      处理中: { bg: 'primary.100', color: 'primary.dark' },
+      已交付: { bg: 'success.lighter', color: 'success.700' },
       已完成: { bg: 'secondary.light', color: 'primary.light' },
       已取消: { bg: 'grey.100', color: 'grey.600' },
-      有效: { bg: 'success.lighter', color: '#15803d' },
+      有效: { bg: 'success.lighter', color: 'success.700' },
       已过期: { bg: 'error.lighter', color: 'error.darker' },
       草稿: { bg: 'grey.100', color: 'grey.600' },
       已终止: { bg: 'warning.light', color: '#92400e' },

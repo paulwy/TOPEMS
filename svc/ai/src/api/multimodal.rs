@@ -2,8 +2,10 @@ use axum::{extract::State, Json};
 use serde::Deserialize;
 use topems_shared::ApiResponse;
 
+use crate::services::multimodal::{
+    ImageAnalysisRequest, ImageAnalysisResponse, VideoAnalysisRequest, VideoAnalysisResponse,
+};
 use crate::AppState;
-use crate::services::multimodal::{ImageAnalysisRequest, ImageAnalysisResponse, VideoAnalysisRequest, VideoAnalysisResponse};
 
 #[derive(Debug, Deserialize)]
 pub struct ImageQualityRequest {
@@ -108,9 +110,15 @@ impl MultimodalApi {
         State(state): State<AppState>,
         Json(req): Json<ImageQualityRequest>,
     ) -> Json<ApiResponse<crate::services::multimodal::ImageQualityAssessment>> {
-        match state.multimodal_service.assess_image_quality(&req.image_base64).await {
+        match state
+            .multimodal_service
+            .assess_image_quality(&req.image_base64)
+            .await
+        {
             Ok(response) => Json(ApiResponse::success(response, "图片质量评估成功")),
-            Err(e) => Json(ApiResponse::<crate::services::multimodal::ImageQualityAssessment>::error(500, &e)),
+            Err(e) => Json(ApiResponse::<
+                crate::services::multimodal::ImageQualityAssessment,
+            >::error(500, &e)),
         }
     }
 
@@ -118,9 +126,15 @@ impl MultimodalApi {
         State(state): State<AppState>,
         Json(req): Json<ChartAnalysisRequest>,
     ) -> Json<ApiResponse<crate::services::multimodal::ChartAnalysisResult>> {
-        match state.multimodal_service.analyze_chart(&req.image_base64).await {
+        match state
+            .multimodal_service
+            .analyze_chart(&req.image_base64)
+            .await
+        {
             Ok(response) => Json(ApiResponse::success(response, "图表分析成功")),
-            Err(e) => Json(ApiResponse::<crate::services::multimodal::ChartAnalysisResult>::error(500, &e)),
+            Err(e) => Json(ApiResponse::<
+                crate::services::multimodal::ChartAnalysisResult,
+            >::error(500, &e)),
         }
     }
 
@@ -128,9 +142,15 @@ impl MultimodalApi {
         State(state): State<AppState>,
         Json(req): Json<ImageQualityRequest>,
     ) -> Json<ApiResponse<crate::services::multimodal::FaceDetectionResult>> {
-        match state.multimodal_service.detect_faces(&req.image_base64).await {
+        match state
+            .multimodal_service
+            .detect_faces(&req.image_base64)
+            .await
+        {
             Ok(response) => Json(ApiResponse::success(response, "人脸检测成功")),
-            Err(e) => Json(ApiResponse::<crate::services::multimodal::FaceDetectionResult>::error(500, &e)),
+            Err(e) => Json(ApiResponse::<
+                crate::services::multimodal::FaceDetectionResult,
+            >::error(500, &e)),
         }
     }
 
@@ -138,7 +158,11 @@ impl MultimodalApi {
         State(state): State<AppState>,
         Json(req): Json<ImageCompareRequest>,
     ) -> Json<ApiResponse<serde_json::Value>> {
-        match state.multimodal_service.compare_images(&req.image1_base64, &req.image2_base64).await {
+        match state
+            .multimodal_service
+            .compare_images(&req.image1_base64, &req.image2_base64)
+            .await
+        {
             Ok(response) => Json(ApiResponse::success(response, "图片比较成功")),
             Err(e) => Json(ApiResponse::<serde_json::Value>::error(500, &e)),
         }
@@ -148,7 +172,11 @@ impl MultimodalApi {
         State(state): State<AppState>,
         Json(req): Json<ImageQualityRequest>,
     ) -> Json<ApiResponse<Vec<String>>> {
-        match state.multimodal_service.generate_image_tags(&req.image_base64).await {
+        match state
+            .multimodal_service
+            .generate_image_tags(&req.image_base64)
+            .await
+        {
             Ok(response) => Json(ApiResponse::success(response, "图片标签生成成功")),
             Err(e) => Json(ApiResponse::<Vec<String>>::error(500, &e)),
         }

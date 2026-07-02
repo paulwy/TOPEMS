@@ -37,9 +37,15 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
             base_path: "/api/portal".to_string(),
         },
         permissions: vec![
-            PermissionDef { code: "announcement".to_string() },
-            PermissionDef { code: "shortcut".to_string() },
-            PermissionDef { code: "widget".to_string() },
+            PermissionDef {
+                code: "announcement".to_string(),
+            },
+            PermissionDef {
+                code: "shortcut".to_string(),
+            },
+            PermissionDef {
+                code: "widget".to_string(),
+            },
         ],
     };
 
@@ -78,13 +84,23 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
     match client.post(&url).json(&info).send().await {
         Ok(response) => {
             if response.status().is_success() {
-                tracing::info!("[Portal Plugin] Successfully registered to core at {}", core_url);
+                tracing::info!(
+                    "[Portal Plugin] Successfully registered to core at {}",
+                    core_url
+                );
             } else {
-                tracing::warn!("[Portal Plugin] Failed to register to core: {}", response.status());
+                tracing::warn!(
+                    "[Portal Plugin] Failed to register to core: {}",
+                    response.status()
+                );
             }
         }
         Err(e) => {
-            tracing::warn!("[Portal Plugin] Failed to connect to core at {}: {}", core_url, e);
+            tracing::warn!(
+                "[Portal Plugin] Failed to connect to core at {}: {}",
+                core_url,
+                e
+            );
         }
     }
 }

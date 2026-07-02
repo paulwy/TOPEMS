@@ -1,9 +1,5 @@
 use anyhow::Result;
-use axum::{
-    extract::State,
-    routing::get,
-    Json, Router,
-};
+use axum::{extract::State, routing::get, Json, Router};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 
@@ -37,11 +33,12 @@ pub async fn get_statistics(
     .await
     .unwrap_or(0);
 
-    let active_suppliers =
-        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_srm.suppliers WHERE status = 'active'")
-            .fetch_one(&state.db)
-            .await
-            .unwrap_or(0);
+    let active_suppliers = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE status = 'active'",
+    )
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
 
     let total_evaluations =
         sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_srm.supplier_evaluations")
@@ -100,11 +97,12 @@ pub async fn get_detailed_statistics(
     .await
     .unwrap_or(0);
 
-    let active_suppliers =
-        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_srm.suppliers WHERE status = 'active'")
-            .fetch_one(&state.db)
-            .await
-            .unwrap_or(0);
+    let active_suppliers = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM plugin_srm.suppliers WHERE status = 'active'",
+    )
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
 
     let total_evaluations =
         sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_srm.supplier_evaluations")
@@ -140,12 +138,11 @@ pub async fn get_detailed_statistics(
     .await
     .unwrap_or(0);
 
-    let total_orders = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.purchase_orders",
-    )
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(0);
+    let total_orders =
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_srm.purchase_orders")
+            .fetch_one(&state.db)
+            .await
+            .unwrap_or(0);
 
     let total_order_amount = sqlx::query_scalar::<_, Option<f64>>(
         "SELECT COALESCE(SUM(total_amount), 0) FROM plugin_srm.purchase_orders WHERE status != 'cancelled'",

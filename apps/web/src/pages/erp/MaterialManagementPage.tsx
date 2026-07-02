@@ -198,7 +198,7 @@ const MaterialManagementPage: React.FC = () => {
         color: string;
       }
     > = {
-      active: { label: '启用', bg: 'success.lighter', color: '#15803d' },
+      active: { label: '启用', bg: 'success.lighter', color: 'success.700' },
       inactive: { label: '停用', bg: 'grey.100', color: 'text.secondary' },
       obsolete: { label: '淘汰', bg: 'error.lighter', color: 'error.dark' },
     };

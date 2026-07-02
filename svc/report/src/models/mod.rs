@@ -105,12 +105,16 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_report_templates_code ON report_templates(code)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_report_schedules_template ON report_schedules(template_id)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_report_subscriptions_user ON report_subscriptions(user_id)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_report_schedules_template ON report_schedules(template_id)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_report_subscriptions_user ON report_subscriptions(user_id)",
+    )
+    .execute(pool)
+    .await?;
 
     Ok(())
 }

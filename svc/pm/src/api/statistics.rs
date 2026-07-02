@@ -1,8 +1,4 @@
-use axum::{
-    extract::State,
-    routing::get,
-    Json, Router,
-};
+use axum::{extract::State, routing::get, Json, Router};
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 
@@ -42,48 +38,41 @@ pub fn create_routes(db: PgPool) -> Router {
         .with_state(db)
 }
 
-pub async fn get_statistics(
-    State(db): State<PgPool>,
-) -> Json<ApiResponse<PmStatistics>> {
+pub async fn get_statistics(State(db): State<PgPool>) -> Json<ApiResponse<PmStatistics>> {
     let total_projects: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM pm_projects")
         .fetch_one(&db)
         .await
         .unwrap_or((0,));
 
-    let draft_projects: (i64,) = sqlx::query_as(
-        "SELECT COUNT(*) FROM pm_projects WHERE status = 'draft'"
-    )
-        .fetch_one(&db)
-        .await
-        .unwrap_or((0,));
+    let draft_projects: (i64,) =
+        sqlx::query_as("SELECT COUNT(*) FROM pm_projects WHERE status = 'draft'")
+            .fetch_one(&db)
+            .await
+            .unwrap_or((0,));
 
-    let pending_projects: (i64,) = sqlx::query_as(
-        "SELECT COUNT(*) FROM pm_projects WHERE status = 'pending'"
-    )
-        .fetch_one(&db)
-        .await
-        .unwrap_or((0,));
+    let pending_projects: (i64,) =
+        sqlx::query_as("SELECT COUNT(*) FROM pm_projects WHERE status = 'pending'")
+            .fetch_one(&db)
+            .await
+            .unwrap_or((0,));
 
-    let active_projects: (i64,) = sqlx::query_as(
-        "SELECT COUNT(*) FROM pm_projects WHERE status = 'active'"
-    )
-        .fetch_one(&db)
-        .await
-        .unwrap_or((0,));
+    let active_projects: (i64,) =
+        sqlx::query_as("SELECT COUNT(*) FROM pm_projects WHERE status = 'active'")
+            .fetch_one(&db)
+            .await
+            .unwrap_or((0,));
 
-    let completed_projects: (i64,) = sqlx::query_as(
-        "SELECT COUNT(*) FROM pm_projects WHERE status = 'completed'"
-    )
-        .fetch_one(&db)
-        .await
-        .unwrap_or((0,));
+    let completed_projects: (i64,) =
+        sqlx::query_as("SELECT COUNT(*) FROM pm_projects WHERE status = 'completed'")
+            .fetch_one(&db)
+            .await
+            .unwrap_or((0,));
 
-    let cancelled_projects: (i64,) = sqlx::query_as(
-        "SELECT COUNT(*) FROM pm_projects WHERE status = 'cancelled'"
-    )
-        .fetch_one(&db)
-        .await
-        .unwrap_or((0,));
+    let cancelled_projects: (i64,) =
+        sqlx::query_as("SELECT COUNT(*) FROM pm_projects WHERE status = 'cancelled'")
+            .fetch_one(&db)
+            .await
+            .unwrap_or((0,));
 
     let total_contracts: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM pm_contracts")
         .fetch_one(&db)

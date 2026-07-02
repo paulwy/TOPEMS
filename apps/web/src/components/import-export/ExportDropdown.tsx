@@ -76,7 +76,7 @@ export const ExportDropdown: React.FC<ExportDropdownProps> = ({
                   padding: '8px 16px',
                   textAlign: 'left',
                   fontSize: 14,
-                  color: '#334155',
+                  color: 'grey.700',
                   '&:hover': { backgroundColor: 'grey.100' },
                   transition: 'colors 0.2s',
                 }}

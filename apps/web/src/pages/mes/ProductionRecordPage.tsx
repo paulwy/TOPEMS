@@ -173,9 +173,9 @@ const ProductionRecordPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; bg: string; color: string }> = {
-      pending: { label: '待开始', bg: 'warning.light', color: '#b45309' },
-      in_progress: { label: '进行中', bg: '#dbeafe', color: 'primary.dark' },
-      completed: { label: '已完成', bg: 'success.lighter', color: '#15803d' },
+      pending: { label: '待开始', bg: 'warning.light', color: 'warning.700' },
+      in_progress: { label: '进行中', bg: 'primary.100', color: 'primary.dark' },
+      completed: { label: '已完成', bg: 'success.lighter', color: 'success.700' },
       cancelled: { label: '已取消', bg: 'error.lighter', color: 'error.dark' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
@@ -353,7 +353,7 @@ const ProductionRecordPage: React.FC = () => {
           {stats.completed}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#dbeafe', borderRadius: 3 }}>
+      <Box sx={{ p: 2, bgcolor: 'primary.100', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}

@@ -79,7 +79,7 @@ const PdmStepPage: React.FC = () => {
     const statusMap: Record<string, { bg: string; color: string }> = {
       启用: { bg: 'success.lighter', color: 'success.dark' },
       禁用: { bg: 'error.lighter', color: 'error.dark' },
-      正常: { bg: '#dbeafe', color: 'primary.main' },
+      正常: { bg: 'primary.100', color: 'primary.main' },
     };
     const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary' };
     return (

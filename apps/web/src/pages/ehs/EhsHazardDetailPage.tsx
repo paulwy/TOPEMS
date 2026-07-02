@@ -288,7 +288,7 @@ const EhsHazardDetailPage: React.FC = () => {
         );
         const colorMap: Record<string, { bg: string; color: string }> = {
           高风险: { bg: 'error.lighter', color: 'error.dark' },
-          中风险: { bg: '#fef9c3', color: '#ca8a04' },
+          中风险: { bg: 'warning.100', color: '#ca8a04' },
           低风险: { bg: 'success.lighter', color: 'success.dark' },
         };
         const colors = colorMap[`${riskResult.level}风险`] || {
@@ -387,10 +387,10 @@ const EhsHazardDetailPage: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Box
               component={Shield}
-              sx={{ fontSize: 48, color: '#ea580c' }}
+              sx={{ fontSize: 48, color: 'warning.600' }}
             />
             <Box>
-              <Typography sx={{ color: '#ea580c', fontSize: 14 }}>风险等级</Typography>
+              <Typography sx={{ color: 'warning.600', fontSize: 14 }}>风险等级</Typography>
               <Typography
                 sx={{
                   fontSize: 24,
@@ -562,7 +562,7 @@ const EhsHazardDetailPage: React.FC = () => {
       avatar: (
         <AlertTriangle
           size={32}
-          color='#ea580c'
+          color='warning.600'
         />
       ),
       title: hazard.name,
@@ -811,7 +811,7 @@ const EhsHazardDetailPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleUpdateHazard}
-            sx={{ backgroundColor: '#ea580c', '&:hover': { backgroundColor: '#c2410c' } }}
+            sx={{ backgroundColor: 'warning.600', '&:hover': { backgroundColor: '#c2410c' } }}
           >
             保存更改
           </Button>
@@ -921,7 +921,7 @@ const EhsHazardDetailPage: React.FC = () => {
           <Button
             variant='contained'
             onClick={handleAddControl}
-            sx={{ backgroundColor: '#ea580c', '&:hover': { backgroundColor: '#c2410c' } }}
+            sx={{ backgroundColor: 'warning.600', '&:hover': { backgroundColor: '#c2410c' } }}
           >
             添加措施
           </Button>

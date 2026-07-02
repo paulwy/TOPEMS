@@ -103,7 +103,11 @@ where
             "fields": fields,
         });
 
-        writeln!(writer, "{}", serde_json::to_string(&log_entry).unwrap_or_default())
+        writeln!(
+            writer,
+            "{}",
+            serde_json::to_string(&log_entry).unwrap_or_default()
+        )
     }
 }
 

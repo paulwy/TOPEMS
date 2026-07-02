@@ -448,7 +448,7 @@ const OpportunityManagementPage: React.FC = () => {
                 const stageColors: Record<string, string> = {
                   prospecting: 'text.disabled',
                   qualified: 'primary.main',
-                  proposal: '#8B5CF6',
+                  proposal: 'secondary.main',
                   negotiation: 'warning.main',
                   closed_won: 'success.main',
                   closed_lost: 'error.main',

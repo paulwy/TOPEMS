@@ -257,7 +257,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
                 transform: 'translateY(-50%)',
                 width: 16,
                 height: 16,
-                color: '#94a3b8',
+                color: 'grey.400',
               }}
             />
             <input
@@ -376,7 +376,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
             style={{
               fontSize: 14,
               fontWeight: 500,
-              color: '#334155',
+              color: 'grey.700',
               marginBottom: 8,
             }}
           >
@@ -465,7 +465,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
                   padding: '12px 16px',
                   textAlign: 'left',
                   fontWeight: 600,
-                  color: '#334155',
+                  color: 'grey.700',
                   borderBottom: '2px solid border.default',
                   borderRight: '1px solid border.default',
                 }}
@@ -480,7 +480,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
                     padding: '12px 16px',
                     textAlign: 'right',
                     fontWeight: 600,
-                    color: '#334155',
+                    color: 'grey.700',
                     borderBottom: '2px solid border.default',
                     borderRight:
                       col !== pivotResult.cols[pivotResult.cols.length - 1]
@@ -548,7 +548,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
                       style={{
                         padding: '12px 16px',
                         textAlign: 'right',
-                        color: '#475569',
+                        color: 'grey.600',
                         borderRight:
                           col !== pivotResult.cols[pivotResult.cols.length - 1]
                             ? '1px solid border.default'
@@ -635,7 +635,7 @@ export const PivotTable: React.FC<PivotConfig> = ({
         style={{
           marginTop: '12px',
           fontSize: '13px',
-          color: '#94a3b8',
+          color: 'grey.400',
           textAlign: 'right',
         }}
       >

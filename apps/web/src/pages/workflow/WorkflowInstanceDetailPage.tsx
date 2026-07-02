@@ -33,6 +33,7 @@ const FlowInstanceDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
+  const theme = useTheme();
 
   const [details, setDetails] = useState<InstanceDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -77,7 +78,6 @@ const FlowInstanceDetailPage: React.FC = () => {
   };
 
   const getStatusIcon = (status: string) => {
-  const theme = useTheme();
     switch (status) {
       case 'completed':
       case 'approved':

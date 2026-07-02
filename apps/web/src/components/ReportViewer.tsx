@@ -103,7 +103,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                 <p
                   style={{
                     fontSize: '14px',
-                    color: '#475569',
+                    color: 'grey.600',
                     marginTop: '4px',
                   }}
                 >
@@ -134,7 +134,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
               onClick={onClose}
               style={{
                 padding: '8px',
-                color: '#94a3b8',
+                color: 'grey.400',
                 borderRadius: '8px',
                 border: 'none',
                 background: 'transparent',
@@ -307,7 +307,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                 disabled={currentPage === 1}
                 style={{
                   padding: '8px',
-                  color: '#475569',
+                  color: 'grey.600',
                   borderRadius: '6px',
                   border: 'none',
                   background: 'transparent',
@@ -325,7 +325,7 @@ const ReportViewer: React.FC<ReportViewerProps> = ({ report, onClose }) => {
                 disabled={currentPage === totalPages}
                 style={{
                   padding: '8px',
-                  color: '#475569',
+                  color: 'grey.600',
                   borderRadius: '6px',
                   border: 'none',
                   background: 'transparent',

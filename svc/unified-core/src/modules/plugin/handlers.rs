@@ -2,13 +2,12 @@
 
 use axum::{
     extract::{Path, Query, State},
-    Json,
-    Extension,
+    Extension, Json,
 };
 use uuid::Uuid;
 
-use crate::{AppState, CoreResponse};
 use super::models::*;
+use crate::{AppState, CoreResponse};
 use topems_shared::auth::Claims;
 
 /// Get marketplace summary
@@ -16,40 +15,41 @@ pub async fn get_marketplace_summary(
     State(state): State<AppState>,
 ) -> Json<CoreResponse<MarketplaceSummary>> {
     tracing::info!("[Plugin] Getting marketplace summary");
-    
-    let total: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM core_plugins WHERE is_published = true")
-        .fetch_one(&state.pool)
-        .await
-        .unwrap_or((0,));
-    
+
+    let total: (i64,) =
+        sqlx::query_as("SELECT COUNT(*) FROM core_plugins WHERE is_published = true")
+            .fetch_one(&state.pool)
+            .await
+            .unwrap_or((0,));
+
     let categories: Vec<PluginCategory> = sqlx::query_as(
-        "SELECT * FROM core_plugin_categories WHERE is_active = true ORDER BY sort_order"
+        "SELECT * FROM core_plugin_categories WHERE is_active = true ORDER BY sort_order",
     )
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
-    
+
     let featured: Vec<Plugin> = sqlx::query_as(
         "SELECT * FROM core_plugins WHERE is_published = true AND is_featured = true ORDER BY install_count DESC LIMIT 6"
     )
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
-    
+
     let new_plugins: Vec<Plugin> = sqlx::query_as(
-        "SELECT * FROM core_plugins WHERE is_published = true ORDER BY published_at DESC LIMIT 6"
+        "SELECT * FROM core_plugins WHERE is_published = true ORDER BY published_at DESC LIMIT 6",
     )
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
-    
+
     let top_rated: Vec<Plugin> = sqlx::query_as(
         "SELECT * FROM core_plugins WHERE is_published = true AND rating_count > 0 ORDER BY rating DESC LIMIT 6"
     )
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
-    
+
     let summary = MarketplaceSummary {
         total_plugins: total.0,
         categories,
@@ -57,8 +57,11 @@ pub async fn get_marketplace_summary(
         new_plugins,
         top_rated,
     };
-    
-    Json(CoreResponse::success(summary, "Marketplace summary retrieved"))
+
+    Json(CoreResponse::success(
+        summary,
+        "Marketplace summary retrieved",
+    ))
 }
 
 /// List plugin categories
@@ -66,14 +69,14 @@ pub async fn list_categories(
     State(state): State<AppState>,
 ) -> Json<CoreResponse<Vec<PluginCategory>>> {
     tracing::info!("[Plugin] Listing categories");
-    
+
     let categories: Vec<PluginCategory> = sqlx::query_as(
-        "SELECT * FROM core_plugin_categories WHERE is_active = true ORDER BY sort_order"
+        "SELECT * FROM core_plugin_categories WHERE is_active = true ORDER BY sort_order",
     )
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
-    
+
     Json(CoreResponse::success(categories, "Categories retrieved"))
 }
 
@@ -93,17 +96,20 @@ pub async fn list_plugins(
     if let Some(ref cat) = filters.category {
         where_clauses.push(format!("category = '{}'", cat));
     }
-    
+
     if let Some(ref search) = filters.search {
-        where_clauses.push(format!("(name ILIKE '%{}%' OR description ILIKE '%{}%')", search, search));
+        where_clauses.push(format!(
+            "(name ILIKE '%{}%' OR description ILIKE '%{}%')",
+            search, search
+        ));
     }
-    
+
     if let Some(is_free) = filters.is_free {
         where_clauses.push(format!("is_free = {}", is_free));
     }
-    
+
     let where_clause = where_clauses.join(" AND ");
-    
+
     let sort_order = match filters.sort_by.as_deref() {
         Some("popular") => "install_count DESC",
         Some("rating") => "rating DESC",
@@ -111,7 +117,7 @@ pub async fn list_plugins(
         Some("name") => "name ASC",
         _ => "install_count DESC",
     };
-    
+
     let total: (i64,) = sqlx::query_as(&format!(
         "SELECT COUNT(*) FROM core_plugins WHERE {}",
         where_clause
@@ -119,20 +125,24 @@ pub async fn list_plugins(
     .fetch_one(&state.pool)
     .await
     .unwrap_or((0,));
-    
+
     let plugins: Vec<Plugin> = match sqlx::query_as::<_, Plugin>(&format!(
         "SELECT * FROM core_plugins WHERE {} ORDER BY {} LIMIT {} OFFSET {}",
         where_clause, sort_order, page_size, offset
     ))
     .fetch_all(&state.pool)
-    .await {
+    .await
+    {
         Ok(p) => p,
         Err(e) => {
             tracing::error!("[Plugin] Failed to fetch plugins: {:?}", e);
-            return Json(CoreResponse::error(&format!("Failed to fetch plugins: {}", e)));
+            return Json(CoreResponse::error(&format!(
+                "Failed to fetch plugins: {}",
+                e
+            )));
         }
     };
-    
+
     let response = PluginListResponse {
         plugins,
         total: total.0,
@@ -140,7 +150,7 @@ pub async fn list_plugins(
         page_size,
         total_pages: ((total.0 as f64) / (page_size as f64)).ceil() as u32,
     };
-    
+
     Json(CoreResponse::success(response, "Plugins retrieved"))
 }
 
@@ -150,15 +160,13 @@ pub async fn get_plugin(
     Path(code): Path<String>,
 ) -> Json<CoreResponse<Plugin>> {
     tracing::info!("[Plugin] Getting plugin: {}", code);
-    
-    let plugin: Option<Plugin> = sqlx::query_as(
-        "SELECT * FROM core_plugins WHERE code = $1"
-    )
-    .bind(&code)
-    .fetch_optional(&state.pool)
-    .await
-    .unwrap_or(None);
-    
+
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core_plugins WHERE code = $1")
+        .bind(&code)
+        .fetch_optional(&state.pool)
+        .await
+        .unwrap_or(None);
+
     match plugin {
         Some(p) => Json(CoreResponse::success(p, "Plugin retrieved")),
         None => Json(CoreResponse::error("Plugin not found")),
@@ -171,15 +179,15 @@ pub async fn get_plugin_versions(
     Path(plugin_id): Path<Uuid>,
 ) -> Json<CoreResponse<Vec<PluginVersion>>> {
     tracing::info!("[Plugin] Getting versions for plugin: {}", plugin_id);
-    
+
     let versions: Vec<PluginVersion> = sqlx::query_as(
-        "SELECT * FROM core_plugin_versions WHERE plugin_id = $1 ORDER BY created_at DESC"
+        "SELECT * FROM core_plugin_versions WHERE plugin_id = $1 ORDER BY created_at DESC",
     )
     .bind(plugin_id)
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
-    
+
     Json(CoreResponse::success(versions, "Versions retrieved"))
 }
 
@@ -189,7 +197,7 @@ pub async fn get_plugin_reviews(
     Path(plugin_id): Path<Uuid>,
 ) -> Json<CoreResponse<Vec<PluginReview>>> {
     tracing::info!("[Plugin] Getting reviews for plugin: {}", plugin_id);
-    
+
     let reviews: Vec<PluginReview> = sqlx::query_as(
         "SELECT * FROM core_plugin_reviews WHERE plugin_id = $1 ORDER BY is_featured DESC, helpful_count DESC, created_at DESC"
     )
@@ -197,7 +205,7 @@ pub async fn get_plugin_reviews(
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
-    
+
     Json(CoreResponse::success(reviews, "Reviews retrieved"))
 }
 
@@ -208,11 +216,15 @@ pub async fn create_review(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateReviewRequest>,
 ) -> Json<CoreResponse<PluginReview>> {
-    tracing::info!("[Plugin] Creating review for plugin: {} by user: {}", plugin_id, claims.username);
-    
+    tracing::info!(
+        "[Plugin] Creating review for plugin: {} by user: {}",
+        plugin_id,
+        claims.username
+    );
+
     let user_id = claims.user_id().unwrap_or_else(|_| Uuid::nil());
     let user_name = claims.username.clone();
-    
+
     let review: PluginReview = sqlx::query_as(
         r#"
         INSERT INTO core_plugin_reviews (plugin_id, user_id, user_name, rating, title, content)
@@ -229,7 +241,7 @@ pub async fn create_review(
     .fetch_one(&state.pool)
     .await
     .unwrap();
-    
+
     Json(CoreResponse::success(review, "Review created"))
 }
 
@@ -260,7 +272,10 @@ pub async fn list_tenant_plugins(
     .await
     .unwrap_or_default();
 
-    Json(CoreResponse::success(installations, "Tenant plugins retrieved"))
+    Json(CoreResponse::success(
+        installations,
+        "Tenant plugins retrieved",
+    ))
 }
 
 /// Get current user's tenant installed plugins
@@ -282,7 +297,10 @@ pub async fn list_my_plugins(
         }
     };
 
-    tracing::info!("[Plugin] Listing plugins for tenant (from claims): {}", tenant_id);
+    tracing::info!(
+        "[Plugin] Listing plugins for tenant (from claims): {}",
+        tenant_id
+    );
 
     let installations: Vec<TenantPluginWithDetails> = sqlx::query_as(
         r#"
@@ -312,22 +330,25 @@ pub async fn install_plugin(
     State(state): State<AppState>,
     Path((tenant_id, plugin_code)): Path<(Uuid, String)>,
 ) -> Json<CoreResponse<TenantPlugin>> {
-    tracing::info!("[Plugin] Installing plugin {} for tenant: {}", plugin_code, tenant_id);
-    
+    tracing::info!(
+        "[Plugin] Installing plugin {} for tenant: {}",
+        plugin_code,
+        tenant_id
+    );
+
     // Get plugin
-    let plugin: Option<Plugin> = sqlx::query_as(
-        "SELECT * FROM core_plugins WHERE code = $1 AND is_published = true"
-    )
-    .bind(&plugin_code)
-    .fetch_optional(&state.pool)
-    .await
-    .unwrap_or(None);
-    
+    let plugin: Option<Plugin> =
+        sqlx::query_as("SELECT * FROM core_plugins WHERE code = $1 AND is_published = true")
+            .bind(&plugin_code)
+            .fetch_optional(&state.pool)
+            .await
+            .unwrap_or(None);
+
     let plugin = match plugin {
         Some(p) => p,
         None => return Json(CoreResponse::error("Plugin not found")),
     };
-    
+
     // Create installation
     let installation: TenantPlugin = sqlx::query_as(
         r#"
@@ -340,18 +361,22 @@ pub async fn install_plugin(
     )
     .bind(tenant_id)
     .bind(plugin.id)
-    .bind(if plugin.is_free { "free" } else { "subscription" })
+    .bind(if plugin.is_free {
+        "free"
+    } else {
+        "subscription"
+    })
     .fetch_one(&state.pool)
     .await
     .unwrap();
-    
+
     // Update plugin install count
     sqlx::query("UPDATE core_plugins SET install_count = install_count + 1 WHERE id = $1")
         .bind(plugin.id)
         .execute(&state.pool)
         .await
         .ok();
-    
+
     Json(CoreResponse::success(installation, "Plugin installed"))
 }
 
@@ -363,13 +388,17 @@ pub async fn uninstall_plugin(
 ) -> Json<CoreResponse<UninstallResult>> {
     tracing::info!(
         "[Plugin] Uninstalling plugin {} for tenant: {} with tier: {:?}",
-        plugin_code, tenant_id, req.uninstall_tier
+        plugin_code,
+        tenant_id,
+        req.uninstall_tier
     );
 
     // Validate Tier 3 deletion
     if req.uninstall_tier == UninstallTier::Delete {
         if !req.confirmed.unwrap_or(false) {
-            return Json(CoreResponse::error("Deletion requires confirmation set to true"));
+            return Json(CoreResponse::error(
+                "Deletion requires confirmation set to true",
+            ));
         }
         if req.reason.is_none() || req.reason.as_ref().map(|s| s.is_empty()).unwrap_or(true) {
             return Json(CoreResponse::error("Deletion requires a reason"));
@@ -377,13 +406,11 @@ pub async fn uninstall_plugin(
     }
 
     // Get plugin info
-    let plugin: Option<Plugin> = sqlx::query_as(
-        "SELECT * FROM core_plugins WHERE code = $1"
-    )
-    .bind(&plugin_code)
-    .fetch_optional(&state.pool)
-    .await
-    .unwrap_or(None);
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core_plugins WHERE code = $1")
+        .bind(&plugin_code)
+        .fetch_optional(&state.pool)
+        .await
+        .unwrap_or(None);
 
     let plugin = match plugin {
         Some(p) => p,
@@ -400,7 +427,7 @@ pub async fn uninstall_plugin(
                 SET is_active = false
                 WHERE tenant_id = $1 AND plugin_id = $2
                 RETURNING *
-                "#
+                "#,
             )
             .bind(tenant_id)
             .bind(plugin.id)
@@ -410,7 +437,11 @@ pub async fn uninstall_plugin(
 
             match installation {
                 Some(_) => {
-                    tracing::info!("[Plugin] Plugin {} disabled for tenant {}", plugin_code, tenant_id);
+                    tracing::info!(
+                        "[Plugin] Plugin {} disabled for tenant {}",
+                        plugin_code,
+                        tenant_id
+                    );
                     UninstallResult {
                         success: true,
                         tier: UninstallTier::Disable,
@@ -432,7 +463,7 @@ pub async fn uninstall_plugin(
                 r#"
                 DELETE FROM core_tenant_plugins
                 WHERE tenant_id = $1 AND plugin_id = $2
-                "#
+                "#,
             )
             .bind(tenant_id)
             .bind(plugin.id)
@@ -442,11 +473,17 @@ pub async fn uninstall_plugin(
             match result {
                 Ok(r) => {
                     if r.rows_affected() > 0 {
-                        tracing::info!("[Plugin] Plugin {} uninstalled for tenant {}", plugin_code, tenant_id);
+                        tracing::info!(
+                            "[Plugin] Plugin {} uninstalled for tenant {}",
+                            plugin_code,
+                            tenant_id
+                        );
                         UninstallResult {
                             success: true,
                             tier: UninstallTier::Uninstall,
-                            message: "Plugin uninstalled successfully. Data is preserved for 90 days.".to_string(),
+                            message:
+                                "Plugin uninstalled successfully. Data is preserved for 90 days."
+                                    .to_string(),
                             backup_created: None,
                             data_retention_days: Some(90),
                             backup_url: None,
@@ -457,7 +494,10 @@ pub async fn uninstall_plugin(
                 }
                 Err(e) => {
                     tracing::error!("[Plugin] Failed to uninstall plugin: {}", e);
-                    return Json(CoreResponse::error(&format!("Failed to uninstall plugin: {}", e)));
+                    return Json(CoreResponse::error(&format!(
+                        "Failed to uninstall plugin: {}",
+                        e
+                    )));
                 }
             }
         }
@@ -466,8 +506,15 @@ pub async fn uninstall_plugin(
             let backup_created = req.backup.unwrap_or(true);
             let backup_url = if backup_created {
                 // In production, this would create a backup and return the URL
-                tracing::info!("[Plugin] Creating backup before deletion for plugin: {}", plugin_code);
-                Some(format!("/api/core/backups/plugin/{}/{}", plugin_code, uuid::Uuid::new_v4()))
+                tracing::info!(
+                    "[Plugin] Creating backup before deletion for plugin: {}",
+                    plugin_code
+                );
+                Some(format!(
+                    "/api/core/backups/plugin/{}/{}",
+                    plugin_code,
+                    uuid::Uuid::new_v4()
+                ))
             } else {
                 None
             };
@@ -478,7 +525,7 @@ pub async fn uninstall_plugin(
                 r#"
                 DELETE FROM core_tenant_plugins
                 WHERE tenant_id = $1 AND plugin_id = $2
-                "#
+                "#,
             )
             .bind(tenant_id)
             .bind(plugin.id)
@@ -487,11 +534,18 @@ pub async fn uninstall_plugin(
 
             match result {
                 Ok(_) => {
-                    tracing::info!("[Plugin] Plugin {} completely deleted for tenant {}", plugin_code, tenant_id);
+                    tracing::info!(
+                        "[Plugin] Plugin {} completely deleted for tenant {}",
+                        plugin_code,
+                        tenant_id
+                    );
                     UninstallResult {
                         success: true,
                         tier: UninstallTier::Delete,
-                        message: format!("Plugin and all associated data deleted. Reason: {}", req.reason.unwrap_or_default()),
+                        message: format!(
+                            "Plugin and all associated data deleted. Reason: {}",
+                            req.reason.unwrap_or_default()
+                        ),
                         backup_created: Some(backup_created),
                         data_retention_days: None,
                         backup_url,
@@ -499,7 +553,10 @@ pub async fn uninstall_plugin(
                 }
                 Err(e) => {
                     tracing::error!("[Plugin] Failed to delete plugin: {}", e);
-                    return Json(CoreResponse::error(&format!("Failed to delete plugin: {}", e)));
+                    return Json(CoreResponse::error(&format!(
+                        "Failed to delete plugin: {}",
+                        e
+                    )));
                 }
             }
         }
@@ -513,22 +570,26 @@ pub async fn activate_plugin(
     State(state): State<AppState>,
     Path((tenant_id, plugin_code)): Path<(Uuid, String)>,
 ) -> Json<CoreResponse<TenantPlugin>> {
-    tracing::info!("[Plugin] Activating plugin {} for tenant: {}", plugin_code, tenant_id);
-    
+    tracing::info!(
+        "[Plugin] Activating plugin {} for tenant: {}",
+        plugin_code,
+        tenant_id
+    );
+
     let installation: Option<TenantPlugin> = sqlx::query_as(
         r#"
         UPDATE core_tenant_plugins
         SET is_active = true, activated_at = NOW()
         WHERE tenant_id = $1 AND plugin_id = (SELECT id FROM core_plugins WHERE code = $2)
         RETURNING *
-        "#
+        "#,
     )
     .bind(tenant_id)
     .bind(&plugin_code)
     .fetch_optional(&state.pool)
     .await
     .unwrap_or(None);
-    
+
     match installation {
         Some(tp) => Json(CoreResponse::success(tp, "Plugin activated")),
         None => Json(CoreResponse::error("Plugin not installed")),
@@ -540,22 +601,26 @@ pub async fn deactivate_plugin(
     State(state): State<AppState>,
     Path((tenant_id, plugin_code)): Path<(Uuid, String)>,
 ) -> Json<CoreResponse<TenantPlugin>> {
-    tracing::info!("[Plugin] Deactivating plugin {} for tenant: {}", plugin_code, tenant_id);
-    
+    tracing::info!(
+        "[Plugin] Deactivating plugin {} for tenant: {}",
+        plugin_code,
+        tenant_id
+    );
+
     let installation: Option<TenantPlugin> = sqlx::query_as(
         r#"
         UPDATE core_tenant_plugins
         SET is_active = false
         WHERE tenant_id = $1 AND plugin_id = (SELECT id FROM core_plugins WHERE code = $2)
         RETURNING *
-        "#
+        "#,
     )
     .bind(tenant_id)
     .bind(&plugin_code)
     .fetch_optional(&state.pool)
     .await
     .unwrap_or(None);
-    
+
     match installation {
         Some(tp) => Json(CoreResponse::success(tp, "Plugin deactivated")),
         None => Json(CoreResponse::error("Plugin not installed")),
@@ -568,7 +633,10 @@ pub async fn get_available_plugins(
     Path(tenant_id): Path<Uuid>,
     Query(filters): Query<PluginFilters>,
 ) -> Json<CoreResponse<Vec<PluginWithStatus>>> {
-    tracing::info!("[Plugin] Getting available plugins for tenant: {}", tenant_id);
+    tracing::info!(
+        "[Plugin] Getting available plugins for tenant: {}",
+        tenant_id
+    );
 
     let category = filters.category.as_ref();
     let search = filters.search.as_ref();
@@ -580,7 +648,10 @@ pub async fn get_available_plugins(
     }
 
     if let Some(ref s) = search {
-        where_clauses.push(format!("(name ILIKE '%{}%' OR description ILIKE '%{}%')", s, s));
+        where_clauses.push(format!(
+            "(name ILIKE '%{}%' OR description ILIKE '%{}%')",
+            s, s
+        ));
     }
 
     let where_clause = where_clauses.join(" AND ");
@@ -597,7 +668,7 @@ pub async fn get_available_plugins(
 
     for plugin in plugins {
         let tenant_plugin: Option<TenantPlugin> = sqlx::query_as(
-            "SELECT * FROM core_tenant_plugins WHERE tenant_id = $1 AND plugin_id = $2"
+            "SELECT * FROM core_tenant_plugins WHERE tenant_id = $1 AND plugin_id = $2",
         )
         .bind(tenant_id)
         .bind(plugin.id)
@@ -655,7 +726,10 @@ pub async fn upload_plugin(
     .unwrap();
 
     tracing::info!("[Plugin] Plugin uploaded successfully: {}", plugin.code);
-    Json(CoreResponse::success(plugin, "Plugin uploaded successfully"))
+    Json(CoreResponse::success(
+        plugin,
+        "Plugin uploaded successfully",
+    ))
 }
 
 /// Upload a new plugin version
@@ -664,16 +738,18 @@ pub async fn upload_plugin_version(
     Path(plugin_code): Path<String>,
     Json(req): Json<UploadVersionRequest>,
 ) -> Json<CoreResponse<PluginVersion>> {
-    tracing::info!("[Plugin] Uploading new version {} for plugin: {}", req.version, plugin_code);
+    tracing::info!(
+        "[Plugin] Uploading new version {} for plugin: {}",
+        req.version,
+        plugin_code
+    );
 
     // Get plugin id
-    let plugin: Option<Plugin> = sqlx::query_as(
-        "SELECT * FROM core_plugins WHERE code = $1"
-    )
-    .bind(&plugin_code)
-    .fetch_optional(&state.pool)
-    .await
-    .unwrap_or(None);
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core_plugins WHERE code = $1")
+        .bind(&plugin_code)
+        .fetch_optional(&state.pool)
+        .await
+        .unwrap_or(None);
 
     let plugin = match plugin {
         Some(p) => p,
@@ -711,7 +787,11 @@ pub async fn upload_plugin_version(
         .await
         .ok();
 
-    tracing::info!("[Plugin] Version {} uploaded for plugin: {}", req.version, plugin_code);
+    tracing::info!(
+        "[Plugin] Version {} uploaded for plugin: {}",
+        req.version,
+        plugin_code
+    );
     Json(CoreResponse::success(version, "Plugin version uploaded"))
 }
 
@@ -728,7 +808,7 @@ pub async fn publish_plugin(
         SET is_published = true, published_at = NOW(), updated_at = NOW()
         WHERE code = $1
         RETURNING *
-        "#
+        "#,
     )
     .bind(&plugin_code)
     .fetch_optional(&state.pool)
@@ -757,7 +837,7 @@ pub async fn unpublish_plugin(
         SET is_published = false, updated_at = NOW()
         WHERE code = $1
         RETURNING *
-        "#
+        "#,
     )
     .bind(&plugin_code)
     .fetch_optional(&state.pool)
@@ -797,7 +877,7 @@ pub async fn update_plugin(
             updated_at = NOW()
         WHERE code = $1
         RETURNING *
-        "#
+        "#,
     )
     .bind(&plugin_code)
     .bind(&req.name)
@@ -877,7 +957,9 @@ pub async fn register_plugin(
     }
 
     // 3. 创建或更新运行时实例记录
-    let base_path = req.base_path.unwrap_or_else(|| format!("/api/plugins/{}", req.code));
+    let base_path = req
+        .base_path
+        .unwrap_or_else(|| format!("/api/plugins/{}", req.code));
     sqlx::query(
         r#"
         INSERT INTO core_plugin_instances (plugin_id, runtime_url, runtime_status, base_path)
@@ -903,7 +985,11 @@ pub async fn update_plugin_status(
     Path(plugin_code): Path<String>,
     Json(req): Json<PluginHeartbeatRequest>,
 ) -> Json<CoreResponse<()>> {
-    tracing::debug!("[Plugin] Updating status for plugin: {}, status: {}", plugin_code, req.status);
+    tracing::debug!(
+        "[Plugin] Updating status for plugin: {}, status: {}",
+        plugin_code,
+        req.status
+    );
 
     let result = sqlx::query(
         r#"
@@ -1033,28 +1119,28 @@ pub async fn get_plugin_details(
 ) -> Json<CoreResponse<PluginDetailsResponse>> {
     tracing::info!("[Plugin] Getting plugin details: {}", plugin_code);
 
-    let plugin: Option<Plugin> = sqlx::query_as(
-        "SELECT * FROM core_plugins WHERE code = $1"
-    )
-    .bind(&plugin_code)
-    .fetch_optional(&state.pool)
-    .await
-    .unwrap_or(None);
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core_plugins WHERE code = $1")
+        .bind(&plugin_code)
+        .fetch_optional(&state.pool)
+        .await
+        .unwrap_or(None);
 
     let plugin = match plugin {
         Some(p) => p,
         None => return Json(CoreResponse::error("Plugin not found")),
     };
 
-    let permissions: Vec<PluginPermission> = sqlx::query_as(
-        "SELECT * FROM core_plugin_permissions WHERE plugin_code = $1"
-    )
-    .bind(&plugin_code)
-    .fetch_all(&state.pool)
-    .await
-    .unwrap_or_default();
+    let permissions: Vec<PluginPermission> =
+        sqlx::query_as("SELECT * FROM core_plugin_permissions WHERE plugin_code = $1")
+            .bind(&plugin_code)
+            .fetch_all(&state.pool)
+            .await
+            .unwrap_or_default();
 
-    let details = PluginDetailsResponse { plugin, permissions };
+    let details = PluginDetailsResponse {
+        plugin,
+        permissions,
+    };
     Json(CoreResponse::success(details, "Plugin details retrieved"))
 }
 
@@ -1064,21 +1150,32 @@ pub async fn install_plugin_simple(
     Path(plugin_code): Path<String>,
     headers: axum::http::HeaderMap,
 ) -> Json<CoreResponse<TenantPlugin>> {
-    let tenant_id = match headers.get("X-Tenant-ID").and_then(|v| v.to_str().ok()).and_then(|s| Uuid::parse_str(s).ok()) {
+    let tenant_id = match headers
+        .get("X-Tenant-ID")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
         Some(id) => id,
-        None => return Json(CoreResponse::error("X-Tenant-ID header required or invalid")),
+        None => {
+            return Json(CoreResponse::error(
+                "X-Tenant-ID header required or invalid",
+            ))
+        }
     };
 
-    tracing::info!("[Plugin] Installing plugin {} for tenant: {}", plugin_code, tenant_id);
+    tracing::info!(
+        "[Plugin] Installing plugin {} for tenant: {}",
+        plugin_code,
+        tenant_id
+    );
 
     // Get plugin
-    let plugin: Option<Plugin> = sqlx::query_as(
-        "SELECT * FROM core_plugins WHERE code = $1 AND is_published = true"
-    )
-    .bind(&plugin_code)
-    .fetch_optional(&state.pool)
-    .await
-    .unwrap_or(None);
+    let plugin: Option<Plugin> =
+        sqlx::query_as("SELECT * FROM core_plugins WHERE code = $1 AND is_published = true")
+            .bind(&plugin_code)
+            .fetch_optional(&state.pool)
+            .await
+            .unwrap_or(None);
 
     let plugin = match plugin {
         Some(p) => p,
@@ -1097,7 +1194,11 @@ pub async fn install_plugin_simple(
     )
     .bind(tenant_id)
     .bind(plugin.id)
-    .bind(if plugin.is_free { "free" } else { "subscription" })
+    .bind(if plugin.is_free {
+        "free"
+    } else {
+        "subscription"
+    })
     .fetch_one(&state.pool)
     .await
     .unwrap();
@@ -1112,20 +1213,32 @@ pub async fn uninstall_plugin_simple(
     headers: axum::http::HeaderMap,
     Json(req): Json<UninstallRequest>,
 ) -> Json<CoreResponse<UninstallResult>> {
-    let tenant_id = match headers.get("X-Tenant-ID").and_then(|v| v.to_str().ok()).and_then(|s| Uuid::parse_str(s).ok()) {
+    let tenant_id = match headers
+        .get("X-Tenant-ID")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
         Some(id) => id,
-        None => return Json(CoreResponse::error("X-Tenant-ID header required or invalid")),
+        None => {
+            return Json(CoreResponse::error(
+                "X-Tenant-ID header required or invalid",
+            ))
+        }
     };
 
     tracing::info!(
         "[Plugin] Uninstalling plugin {} for tenant: {} with tier: {:?}",
-        plugin_code, tenant_id, req.uninstall_tier
+        plugin_code,
+        tenant_id,
+        req.uninstall_tier
     );
 
     // Validate Tier 3 deletion
     if req.uninstall_tier == UninstallTier::Delete {
         if !req.confirmed.unwrap_or(false) {
-            return Json(CoreResponse::error("Deletion requires confirmation set to true"));
+            return Json(CoreResponse::error(
+                "Deletion requires confirmation set to true",
+            ));
         }
         if req.reason.is_none() || req.reason.as_ref().map(|s| s.is_empty()).unwrap_or(true) {
             return Json(CoreResponse::error("Deletion requires a reason"));
@@ -1133,13 +1246,11 @@ pub async fn uninstall_plugin_simple(
     }
 
     // Get plugin info
-    let plugin: Option<Plugin> = sqlx::query_as(
-        "SELECT * FROM core_plugins WHERE code = $1"
-    )
-    .bind(&plugin_code)
-    .fetch_optional(&state.pool)
-    .await
-    .unwrap_or(None);
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core_plugins WHERE code = $1")
+        .bind(&plugin_code)
+        .fetch_optional(&state.pool)
+        .await
+        .unwrap_or(None);
 
     let plugin = match plugin {
         Some(p) => p,
@@ -1156,7 +1267,7 @@ pub async fn uninstall_plugin_simple(
                 SET is_active = false
                 WHERE tenant_id = $1 AND plugin_id = $2
                 RETURNING *
-                "#
+                "#,
             )
             .bind(tenant_id)
             .bind(plugin.id)
@@ -1166,7 +1277,11 @@ pub async fn uninstall_plugin_simple(
 
             match installation {
                 Some(_) => {
-                    tracing::info!("[Plugin] Plugin {} disabled for tenant {}", plugin_code, tenant_id);
+                    tracing::info!(
+                        "[Plugin] Plugin {} disabled for tenant {}",
+                        plugin_code,
+                        tenant_id
+                    );
                     UninstallResult {
                         success: true,
                         tier: UninstallTier::Disable,
@@ -1187,7 +1302,7 @@ pub async fn uninstall_plugin_simple(
                 r#"
                 DELETE FROM core_tenant_plugins
                 WHERE tenant_id = $1 AND plugin_id = $2
-                "#
+                "#,
             )
             .bind(tenant_id)
             .bind(plugin.id)
@@ -1197,11 +1312,17 @@ pub async fn uninstall_plugin_simple(
             match result {
                 Ok(r) => {
                     if r.rows_affected() > 0 {
-                        tracing::info!("[Plugin] Plugin {} uninstalled for tenant {}", plugin_code, tenant_id);
+                        tracing::info!(
+                            "[Plugin] Plugin {} uninstalled for tenant {}",
+                            plugin_code,
+                            tenant_id
+                        );
                         UninstallResult {
                             success: true,
                             tier: UninstallTier::Uninstall,
-                            message: "Plugin uninstalled successfully. Data is preserved for 90 days.".to_string(),
+                            message:
+                                "Plugin uninstalled successfully. Data is preserved for 90 days."
+                                    .to_string(),
                             backup_created: None,
                             data_retention_days: Some(90),
                             backup_url: None,
@@ -1212,7 +1333,10 @@ pub async fn uninstall_plugin_simple(
                 }
                 Err(e) => {
                     tracing::error!("[Plugin] Failed to uninstall plugin: {}", e);
-                    return Json(CoreResponse::error(&format!("Failed to uninstall plugin: {}", e)));
+                    return Json(CoreResponse::error(&format!(
+                        "Failed to uninstall plugin: {}",
+                        e
+                    )));
                 }
             }
         }
@@ -1220,8 +1344,15 @@ pub async fn uninstall_plugin_simple(
             // Tier 3: Delete - complete removal including all data
             let backup_created = req.backup.unwrap_or(true);
             let backup_url = if backup_created {
-                tracing::info!("[Plugin] Creating backup before deletion for plugin: {}", plugin_code);
-                Some(format!("/api/core/backups/plugin/{}/{}", plugin_code, uuid::Uuid::new_v4()))
+                tracing::info!(
+                    "[Plugin] Creating backup before deletion for plugin: {}",
+                    plugin_code
+                );
+                Some(format!(
+                    "/api/core/backups/plugin/{}/{}",
+                    plugin_code,
+                    uuid::Uuid::new_v4()
+                ))
             } else {
                 None
             };
@@ -1230,7 +1361,7 @@ pub async fn uninstall_plugin_simple(
                 r#"
                 DELETE FROM core_tenant_plugins
                 WHERE tenant_id = $1 AND plugin_id = $2
-                "#
+                "#,
             )
             .bind(tenant_id)
             .bind(plugin.id)
@@ -1239,11 +1370,18 @@ pub async fn uninstall_plugin_simple(
 
             match result {
                 Ok(_) => {
-                    tracing::info!("[Plugin] Plugin {} completely deleted for tenant {}", plugin_code, tenant_id);
+                    tracing::info!(
+                        "[Plugin] Plugin {} completely deleted for tenant {}",
+                        plugin_code,
+                        tenant_id
+                    );
                     UninstallResult {
                         success: true,
                         tier: UninstallTier::Delete,
-                        message: format!("Plugin and all associated data deleted. Reason: {}", req.reason.unwrap_or_default()),
+                        message: format!(
+                            "Plugin and all associated data deleted. Reason: {}",
+                            req.reason.unwrap_or_default()
+                        ),
                         backup_created: Some(backup_created),
                         data_retention_days: None,
                         backup_url,
@@ -1251,7 +1389,10 @@ pub async fn uninstall_plugin_simple(
                 }
                 Err(e) => {
                     tracing::error!("[Plugin] Failed to delete plugin: {}", e);
-                    return Json(CoreResponse::error(&format!("Failed to delete plugin: {}", e)));
+                    return Json(CoreResponse::error(&format!(
+                        "Failed to delete plugin: {}",
+                        e
+                    )));
                 }
             }
         }
@@ -1265,12 +1406,23 @@ pub async fn list_tenant_installed_plugins(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
 ) -> Json<CoreResponse<Vec<TenantPluginWithRuntimeStatus>>> {
-    let tenant_id = match headers.get("X-Tenant-ID").and_then(|v| v.to_str().ok()).and_then(|s| Uuid::parse_str(s).ok()) {
+    let tenant_id = match headers
+        .get("X-Tenant-ID")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
         Some(id) => id,
-        None => return Json(CoreResponse::error("X-Tenant-ID header required or invalid")),
+        None => {
+            return Json(CoreResponse::error(
+                "X-Tenant-ID header required or invalid",
+            ))
+        }
     };
 
-    tracing::info!("[Plugin] Listing installed plugins for tenant: {}", tenant_id);
+    tracing::info!(
+        "[Plugin] Listing installed plugins for tenant: {}",
+        tenant_id
+    );
 
     let plugins: Vec<TenantPluginWithRuntimeStatus> = sqlx::query_as(
         r#"
@@ -1301,12 +1453,24 @@ pub async fn enable_plugin_simple(
     Path(plugin_code): Path<String>,
     headers: axum::http::HeaderMap,
 ) -> Json<CoreResponse<TenantPlugin>> {
-    let tenant_id = match headers.get("X-Tenant-ID").and_then(|v| v.to_str().ok()).and_then(|s| Uuid::parse_str(s).ok()) {
+    let tenant_id = match headers
+        .get("X-Tenant-ID")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
         Some(id) => id,
-        None => return Json(CoreResponse::error("X-Tenant-ID header required or invalid")),
+        None => {
+            return Json(CoreResponse::error(
+                "X-Tenant-ID header required or invalid",
+            ))
+        }
     };
 
-    tracing::info!("[Plugin] Enabling plugin {} for tenant: {}", plugin_code, tenant_id);
+    tracing::info!(
+        "[Plugin] Enabling plugin {} for tenant: {}",
+        plugin_code,
+        tenant_id
+    );
 
     let installation: Option<TenantPlugin> = sqlx::query_as(
         r#"
@@ -1314,7 +1478,7 @@ pub async fn enable_plugin_simple(
         SET is_active = true, activated_at = NOW()
         WHERE tenant_id = $1 AND plugin_id = (SELECT id FROM core_plugins WHERE code = $2)
         RETURNING *
-        "#
+        "#,
     )
     .bind(tenant_id)
     .bind(&plugin_code)
@@ -1334,12 +1498,24 @@ pub async fn disable_plugin_simple(
     Path(plugin_code): Path<String>,
     headers: axum::http::HeaderMap,
 ) -> Json<CoreResponse<TenantPlugin>> {
-    let tenant_id = match headers.get("X-Tenant-ID").and_then(|v| v.to_str().ok()).and_then(|s| Uuid::parse_str(s).ok()) {
+    let tenant_id = match headers
+        .get("X-Tenant-ID")
+        .and_then(|v| v.to_str().ok())
+        .and_then(|s| Uuid::parse_str(s).ok())
+    {
         Some(id) => id,
-        None => return Json(CoreResponse::error("X-Tenant-ID header required or invalid")),
+        None => {
+            return Json(CoreResponse::error(
+                "X-Tenant-ID header required or invalid",
+            ))
+        }
     };
 
-    tracing::info!("[Plugin] Disabling plugin {} for tenant: {}", plugin_code, tenant_id);
+    tracing::info!(
+        "[Plugin] Disabling plugin {} for tenant: {}",
+        plugin_code,
+        tenant_id
+    );
 
     let installation: Option<TenantPlugin> = sqlx::query_as(
         r#"
@@ -1347,7 +1523,7 @@ pub async fn disable_plugin_simple(
         SET is_active = false
         WHERE tenant_id = $1 AND plugin_id = (SELECT id FROM core_plugins WHERE code = $2)
         RETURNING *
-        "#
+        "#,
     )
     .bind(tenant_id)
     .bind(&plugin_code)
@@ -1377,25 +1553,43 @@ pub async fn compare_plugin_versions(
     State(_state): State<AppState>,
     Path((plugin_code, from_version, to_version)): Path<(String, String, String)>,
 ) -> Json<CoreResponse<VersionCompareResult>> {
-    tracing::info!("[Plugin] Comparing versions {} -> {} for plugin: {}", from_version, to_version, plugin_code);
+    tracing::info!(
+        "[Plugin] Comparing versions {} -> {} for plugin: {}",
+        from_version,
+        to_version,
+        plugin_code
+    );
 
     let changes = parse_release_notes(from_version.clone(), to_version.clone());
-    
+
     let result = VersionCompareResult {
         from_version,
         to_version,
         changes,
     };
 
-    Json(CoreResponse::success(result, "Version comparison completed"))
+    Json(CoreResponse::success(
+        result,
+        "Version comparison completed",
+    ))
 }
 
 fn parse_release_notes(from_version: String, to_version: String) -> Vec<VersionChange> {
     let mut changes = Vec::new();
-    
-    let from_major: u32 = from_version.split('.').next().unwrap_or("0").parse().unwrap_or(0);
-    let to_major: u32 = to_version.split('.').next().unwrap_or("0").parse().unwrap_or(0);
-    
+
+    let from_major: u32 = from_version
+        .split('.')
+        .next()
+        .unwrap_or("0")
+        .parse()
+        .unwrap_or(0);
+    let to_major: u32 = to_version
+        .split('.')
+        .next()
+        .unwrap_or("0")
+        .parse()
+        .unwrap_or(0);
+
     if to_major > from_major {
         changes.push(VersionChange {
             change_type: "breaking".to_string(),
@@ -1403,25 +1597,25 @@ fn parse_release_notes(from_version: String, to_version: String) -> Vec<VersionC
             affected_components: Some(vec!["API".to_string(), "Database".to_string()]),
         });
     }
-    
+
     changes.push(VersionChange {
         change_type: "feature".to_string(),
         description: "New features and enhancements".to_string(),
         affected_components: None,
     });
-    
+
     changes.push(VersionChange {
         change_type: "bugfix".to_string(),
         description: "Bug fixes and stability improvements".to_string(),
         affected_components: None,
     });
-    
+
     changes.push(VersionChange {
         change_type: "improvement".to_string(),
         description: "Performance improvements and optimizations".to_string(),
         affected_components: None,
     });
-    
+
     changes
 }
 
@@ -1432,13 +1626,11 @@ pub async fn check_plugin_updates(
 ) -> Json<CoreResponse<UpgradeCheckResult>> {
     tracing::info!("[Plugin] Checking updates for plugin: {}", plugin_code);
 
-    let plugin: Option<Plugin> = sqlx::query_as(
-        "SELECT * FROM core_plugins WHERE code = $1"
-    )
-    .bind(&plugin_code)
-    .fetch_optional(&state.pool)
-    .await
-    .unwrap_or(None);
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core_plugins WHERE code = $1")
+        .bind(&plugin_code)
+        .fetch_optional(&state.pool)
+        .await
+        .unwrap_or(None);
 
     let plugin = match plugin {
         Some(p) => p,
@@ -1446,7 +1638,7 @@ pub async fn check_plugin_updates(
     };
 
     let current_version = plugin.version.clone();
-    
+
     let latest_version: Option<PluginVersion> = sqlx::query_as(
         "SELECT * FROM core_plugin_versions WHERE plugin_id = $1 AND is_latest = true ORDER BY created_at DESC LIMIT 1"
     )
@@ -1456,10 +1648,12 @@ pub async fn check_plugin_updates(
     .unwrap_or(None);
 
     let latest_version_info = latest_version.clone();
-    let latest_version_str = latest_version.map(|v| v.version).unwrap_or(current_version.clone());
-    
+    let latest_version_str = latest_version
+        .map(|v| v.version)
+        .unwrap_or(current_version.clone());
+
     let has_update = current_version != latest_version_str;
-    
+
     let (is_minor, is_major) = if has_update {
         compare_version_levels(&current_version, &latest_version_str)
     } else {
@@ -1472,7 +1666,9 @@ pub async fn check_plugin_updates(
         has_update,
         is_minor,
         is_major,
-        release_notes: latest_version_info.as_ref().and_then(|v| v.release_notes.clone()),
+        release_notes: latest_version_info
+            .as_ref()
+            .and_then(|v| v.release_notes.clone()),
         update_available_at: latest_version_info.and_then(|v| Some(v.created_at)),
     };
 
@@ -1482,16 +1678,16 @@ pub async fn check_plugin_updates(
 fn compare_version_levels(current: &str, latest: &str) -> (bool, bool) {
     let current_parts: Vec<u32> = current.split('.').filter_map(|s| s.parse().ok()).collect();
     let latest_parts: Vec<u32> = latest.split('.').filter_map(|s| s.parse().ok()).collect();
-    
+
     let current_major = current_parts.get(0).copied().unwrap_or(0);
     let latest_major = latest_parts.get(0).copied().unwrap_or(0);
-    
+
     let current_minor = current_parts.get(1).copied().unwrap_or(0);
     let latest_minor = latest_parts.get(1).copied().unwrap_or(0);
-    
+
     let is_major = latest_major > current_major;
     let is_minor = !is_major && latest_minor > current_minor;
-    
+
     (is_minor, is_major)
 }
 
@@ -1500,15 +1696,17 @@ pub async fn rollback_plugin_version(
     State(state): State<AppState>,
     Path((plugin_code, target_version)): Path<(String, String)>,
 ) -> Json<CoreResponse<RollbackResult>> {
-    tracing::info!("[Plugin] Rolling back plugin {} to version: {}", plugin_code, target_version);
+    tracing::info!(
+        "[Plugin] Rolling back plugin {} to version: {}",
+        plugin_code,
+        target_version
+    );
 
-    let plugin: Option<Plugin> = sqlx::query_as(
-        "SELECT * FROM core_plugins WHERE code = $1"
-    )
-    .bind(&plugin_code)
-    .fetch_optional(&state.pool)
-    .await
-    .unwrap_or(None);
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core_plugins WHERE code = $1")
+        .bind(&plugin_code)
+        .fetch_optional(&state.pool)
+        .await
+        .unwrap_or(None);
 
     let plugin = match plugin {
         Some(p) => p,
@@ -1516,27 +1714,24 @@ pub async fn rollback_plugin_version(
     };
 
     let current_version = plugin.version.clone();
-    
-    let target_version_info: Option<PluginVersion> = sqlx::query_as(
-        "SELECT * FROM core_plugin_versions WHERE plugin_id = $1 AND version = $2"
-    )
-    .bind(plugin.id)
-    .bind(&target_version)
-    .fetch_optional(&state.pool)
-    .await
-    .unwrap_or(None);
+
+    let target_version_info: Option<PluginVersion> =
+        sqlx::query_as("SELECT * FROM core_plugin_versions WHERE plugin_id = $1 AND version = $2")
+            .bind(plugin.id)
+            .bind(&target_version)
+            .fetch_optional(&state.pool)
+            .await
+            .unwrap_or(None);
 
     if target_version_info.is_none() {
         return Json(CoreResponse::error("Target version not found"));
     }
 
-    let result = sqlx::query(
-        "UPDATE core_plugins SET version = $1 WHERE id = $2"
-    )
-    .bind(&target_version)
-    .bind(plugin.id)
-    .execute(&state.pool)
-    .await;
+    let result = sqlx::query("UPDATE core_plugins SET version = $1 WHERE id = $2")
+        .bind(&target_version)
+        .bind(plugin.id)
+        .execute(&state.pool)
+        .await;
 
     match result {
         Ok(_) => {
@@ -1547,7 +1742,10 @@ pub async fn rollback_plugin_version(
                 backup_created: Some(true),
                 message: "Plugin version rolled back successfully".to_string(),
             };
-            Json(CoreResponse::success(rollback_result, "Version rolled back"))
+            Json(CoreResponse::success(
+                rollback_result,
+                "Version rolled back",
+            ))
         }
         Err(e) => {
             tracing::error!("[Plugin] Failed to rollback version: {}", e);
@@ -1569,18 +1767,17 @@ pub async fn check_all_updates(
 ) -> Json<CoreResponse<Vec<UpgradeCheckResult>>> {
     tracing::info!("[Plugin] Checking updates for all plugins");
 
-    let plugins: Vec<Plugin> = sqlx::query_as(
-        "SELECT * FROM core_plugins WHERE is_published = true"
-    )
-    .fetch_all(&state.pool)
-    .await
-    .unwrap_or_default();
+    let plugins: Vec<Plugin> =
+        sqlx::query_as("SELECT * FROM core_plugins WHERE is_published = true")
+            .fetch_all(&state.pool)
+            .await
+            .unwrap_or_default();
 
     let mut results: Vec<UpgradeCheckResult> = Vec::new();
 
     for plugin in plugins {
         let current_version = plugin.version.clone();
-        
+
         let latest_version: Option<PluginVersion> = sqlx::query_as(
             "SELECT * FROM core_plugin_versions WHERE plugin_id = $1 AND is_latest = true ORDER BY created_at DESC LIMIT 1"
         )
@@ -1590,10 +1787,12 @@ pub async fn check_all_updates(
         .unwrap_or(None);
 
         let latest_version_info = latest_version.clone();
-        let latest_version_str = latest_version.map(|v| v.version).unwrap_or(current_version.clone());
-        
+        let latest_version_str = latest_version
+            .map(|v| v.version)
+            .unwrap_or(current_version.clone());
+
         let has_update = current_version != latest_version_str;
-        
+
         let (is_minor, is_major) = if has_update {
             compare_version_levels(&current_version, &latest_version_str)
         } else {
@@ -1606,7 +1805,9 @@ pub async fn check_all_updates(
             has_update,
             is_minor,
             is_major,
-            release_notes: latest_version_info.as_ref().and_then(|v| v.release_notes.clone()),
+            release_notes: latest_version_info
+                .as_ref()
+                .and_then(|v| v.release_notes.clone()),
             update_available_at: latest_version_info.and_then(|v| Some(v.created_at)),
         });
     }
@@ -1624,15 +1825,17 @@ pub async fn start_plugin_upgrade(
     Path(plugin_code): Path<String>,
     Json(req): Json<UpgradeRequest>,
 ) -> Json<CoreResponse<UpgradeResult>> {
-    tracing::info!("[Plugin] Starting upgrade for plugin {} to version: {}", plugin_code, req.target_version);
+    tracing::info!(
+        "[Plugin] Starting upgrade for plugin {} to version: {}",
+        plugin_code,
+        req.target_version
+    );
 
-    let plugin: Option<Plugin> = sqlx::query_as(
-        "SELECT * FROM core_plugins WHERE code = $1"
-    )
-    .bind(&plugin_code)
-    .fetch_optional(&state.pool)
-    .await
-    .unwrap_or(None);
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core_plugins WHERE code = $1")
+        .bind(&plugin_code)
+        .fetch_optional(&state.pool)
+        .await
+        .unwrap_or(None);
 
     let plugin = match plugin {
         Some(p) => p,
@@ -1640,26 +1843,25 @@ pub async fn start_plugin_upgrade(
     };
 
     let current_version = plugin.version.clone();
-    
+
     if current_version == req.target_version {
         return Json(CoreResponse::error("Already at target version"));
     }
 
-    let target_version_info: Option<PluginVersion> = sqlx::query_as(
-        "SELECT * FROM core_plugin_versions WHERE plugin_id = $1 AND version = $2"
-    )
-    .bind(plugin.id)
-    .bind(&req.target_version)
-    .fetch_optional(&state.pool)
-    .await
-    .unwrap_or(None);
+    let target_version_info: Option<PluginVersion> =
+        sqlx::query_as("SELECT * FROM core_plugin_versions WHERE plugin_id = $1 AND version = $2")
+            .bind(plugin.id)
+            .bind(&req.target_version)
+            .fetch_optional(&state.pool)
+            .await
+            .unwrap_or(None);
 
     if target_version_info.is_none() {
         return Json(CoreResponse::error("Target version not found"));
     }
 
     let task_id = uuid::Uuid::new_v4();
-    
+
     let upgrade_result = execute_upgrade(
         &state,
         task_id,
@@ -1667,7 +1869,8 @@ pub async fn start_plugin_upgrade(
         &current_version,
         &req.target_version,
         req.backup.unwrap_or(true),
-    ).await;
+    )
+    .await;
 
     Json(CoreResponse::success(upgrade_result, "Upgrade completed"))
 }
@@ -1689,25 +1892,34 @@ async fn execute_upgrade(
     };
 
     // Step 2: Download package (simulated)
-    tracing::info!("[Plugin] Downloading version {} for plugin: {}", to_version, plugin.code);
+    tracing::info!(
+        "[Plugin] Downloading version {} for plugin: {}",
+        to_version,
+        plugin.code
+    );
     tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
 
     // Step 3: Install
-    tracing::info!("[Plugin] Installing version {} for plugin: {}", to_version, plugin.code);
+    tracing::info!(
+        "[Plugin] Installing version {} for plugin: {}",
+        to_version,
+        plugin.code
+    );
     tokio::time::sleep(tokio::time::Duration::from_millis(500)).await;
 
     // Step 4: Update plugin version in database
-    let update_result = sqlx::query(
-        "UPDATE core_plugins SET version = $1 WHERE id = $2"
-    )
-    .bind(to_version)
-    .bind(plugin.id)
-    .execute(&state.pool)
-    .await;
+    let update_result = sqlx::query("UPDATE core_plugins SET version = $1 WHERE id = $2")
+        .bind(to_version)
+        .bind(plugin.id)
+        .execute(&state.pool)
+        .await;
 
     match update_result {
         Ok(_) => {
-            tracing::info!("[Plugin] Upgrade completed successfully for: {}", plugin.code);
+            tracing::info!(
+                "[Plugin] Upgrade completed successfully for: {}",
+                plugin.code
+            );
             UpgradeResult {
                 task_id,
                 from_version: from_version.to_string(),
@@ -1738,15 +1950,17 @@ pub async fn verify_plugin_version(
     State(state): State<AppState>,
     Path((plugin_code, version)): Path<(String, String)>,
 ) -> Json<CoreResponse<VerificationResult>> {
-    tracing::info!("[Plugin] Verifying plugin {} version: {}", plugin_code, version);
+    tracing::info!(
+        "[Plugin] Verifying plugin {} version: {}",
+        plugin_code,
+        version
+    );
 
-    let plugin: Option<Plugin> = sqlx::query_as(
-        "SELECT * FROM core_plugins WHERE code = $1"
-    )
-    .bind(&plugin_code)
-    .fetch_optional(&state.pool)
-    .await
-    .unwrap_or(None);
+    let plugin: Option<Plugin> = sqlx::query_as("SELECT * FROM core_plugins WHERE code = $1")
+        .bind(&plugin_code)
+        .fetch_optional(&state.pool)
+        .await
+        .unwrap_or(None);
 
     if plugin.is_none() {
         let checks = vec![VerificationCheck {
@@ -1754,11 +1968,14 @@ pub async fn verify_plugin_version(
             passed: false,
             message: "Plugin not found".to_string(),
         }];
-        return Json(CoreResponse::success(VerificationResult {
-            success: false,
-            checks,
-            message: "Verification failed".to_string(),
-        }, "Verification completed"));
+        return Json(CoreResponse::success(
+            VerificationResult {
+                success: false,
+                checks,
+                message: "Verification failed".to_string(),
+            },
+            "Verification completed",
+        ));
     }
 
     let mut checks: Vec<VerificationCheck> = Vec::new();
@@ -1806,11 +2023,19 @@ pub async fn verify_plugin_version(
 
     let all_passed = checks.iter().all(|c| c.passed);
 
-    Json(CoreResponse::success(VerificationResult {
-        success: all_passed,
-        checks,
-        message: if all_passed { "All checks passed" } else { "Some checks failed" }.to_string(),
-    }, "Verification completed"))
+    Json(CoreResponse::success(
+        VerificationResult {
+            success: all_passed,
+            checks,
+            message: if all_passed {
+                "All checks passed"
+            } else {
+                "Some checks failed"
+            }
+            .to_string(),
+        },
+        "Verification completed",
+    ))
 }
 
 /// Get upgrade task status
@@ -1894,7 +2119,10 @@ pub async fn get_plugin_reviews_by_code(
     Path(plugin_code): Path<String>,
     Query(params): Query<ReviewFilterParams>,
 ) -> Json<CoreResponse<Vec<PluginReview>>> {
-    tracing::info!("[Plugin] Getting reviews for plugin: {} with filters", plugin_code);
+    tracing::info!(
+        "[Plugin] Getting reviews for plugin: {} with filters",
+        plugin_code
+    );
 
     let mut reviews = vec![
         PluginReview {
@@ -1979,9 +2207,18 @@ pub async fn get_plugin_reviews_by_code(
     if let Some(search) = &params.search {
         let search_lower = search.to_lowercase();
         reviews.retain(|r| {
-            r.title.as_ref().map(|t| t.to_lowercase().contains(&search_lower)).unwrap_or(false)
-                || r.content.as_ref().map(|c| c.to_lowercase().contains(&search_lower)).unwrap_or(false)
-                || r.user_name.as_ref().map(|n| n.to_lowercase().contains(&search_lower)).unwrap_or(false)
+            r.title
+                .as_ref()
+                .map(|t| t.to_lowercase().contains(&search_lower))
+                .unwrap_or(false)
+                || r.content
+                    .as_ref()
+                    .map(|c| c.to_lowercase().contains(&search_lower))
+                    .unwrap_or(false)
+                || r.user_name
+                    .as_ref()
+                    .map(|n| n.to_lowercase().contains(&search_lower))
+                    .unwrap_or(false)
         });
     }
 
@@ -2007,9 +2244,17 @@ pub async fn get_plugin_reviews_by_code(
         }
         "helpful_count" | "helpful" => {
             if descending {
-                reviews.sort_by(|a, b| b.helpful_count.unwrap_or(0).cmp(&a.helpful_count.unwrap_or(0)));
+                reviews.sort_by(|a, b| {
+                    b.helpful_count
+                        .unwrap_or(0)
+                        .cmp(&a.helpful_count.unwrap_or(0))
+                });
             } else {
-                reviews.sort_by(|a, b| a.helpful_count.unwrap_or(0).cmp(&b.helpful_count.unwrap_or(0)));
+                reviews.sort_by(|a, b| {
+                    a.helpful_count
+                        .unwrap_or(0)
+                        .cmp(&b.helpful_count.unwrap_or(0))
+                });
             }
         }
         "is_featured" | "featured" | _ => {
@@ -2038,7 +2283,11 @@ pub async fn create_plugin_review(
     Path(plugin_code): Path<String>,
     Json(req): Json<ReviewRequest>,
 ) -> Json<CoreResponse<PluginReview>> {
-    tracing::info!("[Plugin] Creating review for plugin {} with rating: {}", plugin_code, req.rating);
+    tracing::info!(
+        "[Plugin] Creating review for plugin {} with rating: {}",
+        plugin_code,
+        req.rating
+    );
 
     let review = PluginReview {
         id: uuid::Uuid::new_v4(),
@@ -2095,7 +2344,10 @@ pub async fn get_review_statistics(
     State(_state): State<AppState>,
     Path(plugin_code): Path<String>,
 ) -> Json<CoreResponse<ReviewStatistics>> {
-    tracing::info!("[Plugin] Getting review statistics for plugin: {}", plugin_code);
+    tracing::info!(
+        "[Plugin] Getting review statistics for plugin: {}",
+        plugin_code
+    );
 
     let stats = ReviewStatistics {
         plugin_id: uuid::Uuid::nil(),
@@ -2116,7 +2368,10 @@ pub async fn get_download_history(
     State(_state): State<AppState>,
     Path(plugin_code): Path<String>,
 ) -> Json<CoreResponse<Vec<DownloadRecord>>> {
-    tracing::info!("[Plugin] Getting download history for plugin: {}", plugin_code);
+    tracing::info!(
+        "[Plugin] Getting download history for plugin: {}",
+        plugin_code
+    );
 
     let records = vec![
         DownloadRecord {
@@ -2151,7 +2406,10 @@ pub async fn get_upgrade_schedule(
     State(_state): State<AppState>,
     Path(plugin_code): Path<String>,
 ) -> Json<CoreResponse<UpgradeSchedule>> {
-    tracing::info!("[Plugin] Getting upgrade schedule for plugin: {}", plugin_code);
+    tracing::info!(
+        "[Plugin] Getting upgrade schedule for plugin: {}",
+        plugin_code
+    );
 
     let schedule = UpgradeSchedule {
         id: uuid::Uuid::new_v4(),
@@ -2177,7 +2435,10 @@ pub async fn configure_upgrade_schedule(
     Path(plugin_code): Path<String>,
     Json(req): Json<UpgradeScheduleRequest>,
 ) -> Json<CoreResponse<UpgradeSchedule>> {
-    tracing::info!("[Plugin] Configuring upgrade schedule for plugin: {}", plugin_code);
+    tracing::info!(
+        "[Plugin] Configuring upgrade schedule for plugin: {}",
+        plugin_code
+    );
 
     let schedule = UpgradeSchedule {
         id: uuid::Uuid::new_v4(),
@@ -2187,7 +2448,9 @@ pub async fn configure_upgrade_schedule(
         cron_expression: req.cron_expression,
         window_start: req.window_start,
         window_end: req.window_end,
-        allowed_upgrade_types: req.allowed_upgrade_types.unwrap_or_else(|| vec!["minor".to_string(), "patch".to_string()]),
+        allowed_upgrade_types: req
+            .allowed_upgrade_types
+            .unwrap_or_else(|| vec!["minor".to_string(), "patch".to_string()]),
         auto_rollback: req.auto_rollback.unwrap_or(true),
         rollback_window_minutes: req.rollback_window_minutes,
         created_at: chrono::Utc::now(),
@@ -2238,8 +2501,14 @@ pub async fn add_to_upgrade_queue(
     State(_state): State<AppState>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<CoreResponse<UpgradeQueueItem>> {
-    let plugin_code = req.get("plugin_code").and_then(|v| v.as_str()).unwrap_or("unknown");
-    let target_version = req.get("target_version").and_then(|v| v.as_str()).unwrap_or("latest");
+    let plugin_code = req
+        .get("plugin_code")
+        .and_then(|v| v.as_str())
+        .unwrap_or("unknown");
+    let target_version = req
+        .get("target_version")
+        .and_then(|v| v.as_str())
+        .unwrap_or("latest");
     let priority = req.get("priority").and_then(|v| v.as_i64()).unwrap_or(5) as i32;
 
     let item = UpgradeQueueItem {
@@ -2276,7 +2545,10 @@ pub async fn batch_upgrade(
     State(_state): State<AppState>,
     Json(req): Json<BatchUpgradeRequest>,
 ) -> Json<CoreResponse<BatchUpgradeResult>> {
-    tracing::info!("[Plugin] Starting batch upgrade for {} plugins", req.plugins.len());
+    tracing::info!(
+        "[Plugin] Starting batch upgrade for {} plugins",
+        req.plugins.len()
+    );
 
     let mut results: Vec<PluginUpgradeResult> = Vec::new();
 
@@ -2286,7 +2558,12 @@ pub async fn batch_upgrade(
             plugin_code: item.plugin_code.clone(),
             success: true,
             task_id: Some(task_id),
-            message: format!("Upgrade scheduled for {}", item.target_version.as_ref().unwrap_or(&"latest".to_string())),
+            message: format!(
+                "Upgrade scheduled for {}",
+                item.target_version
+                    .as_ref()
+                    .unwrap_or(&"latest".to_string())
+            ),
         });
     }
 
@@ -2306,7 +2583,10 @@ pub async fn get_upgrade_history(
     State(_state): State<AppState>,
     Path(plugin_code): Path<String>,
 ) -> Json<CoreResponse<Vec<UpgradeHistory>>> {
-    tracing::info!("[Plugin] Getting upgrade history for plugin: {}", plugin_code);
+    tracing::info!(
+        "[Plugin] Getting upgrade history for plugin: {}",
+        plugin_code
+    );
 
     let history = vec![
         UpgradeHistory {
@@ -2317,7 +2597,9 @@ pub async fn get_upgrade_history(
             strategy: UpgradeStrategy::MaintenanceWindow,
             status: "completed".to_string(),
             started_at: chrono::Utc::now() - chrono::Duration::days(3),
-            completed_at: Some(chrono::Utc::now() - chrono::Duration::days(3) + chrono::Duration::minutes(15)),
+            completed_at: Some(
+                chrono::Utc::now() - chrono::Duration::days(3) + chrono::Duration::minutes(15),
+            ),
             duration_seconds: Some(900),
             error_message: None,
             rollback_from: None,
@@ -2330,7 +2612,9 @@ pub async fn get_upgrade_history(
             strategy: UpgradeStrategy::Scheduled,
             status: "completed".to_string(),
             started_at: chrono::Utc::now() - chrono::Duration::days(1),
-            completed_at: Some(chrono::Utc::now() - chrono::Duration::days(1) + chrono::Duration::minutes(20)),
+            completed_at: Some(
+                chrono::Utc::now() - chrono::Duration::days(1) + chrono::Duration::minutes(20),
+            ),
             duration_seconds: Some(1200),
             error_message: None,
             rollback_from: None,
@@ -2339,4 +2623,3 @@ pub async fn get_upgrade_history(
 
     Json(CoreResponse::success(history, "History retrieved"))
 }
-

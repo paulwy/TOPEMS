@@ -11,8 +11,9 @@ use uuid::Uuid;
 use super::ApiState;
 use crate::api::audit::log_audit_event;
 use crate::models::{
-    ArrivalConfirmRequest, CancelRequest, CompleteRequest, CreateSupplierDeliveryAppointmentRequest,
-    SupplierDeliveryAppointment, UpdateSupplierDeliveryAppointmentRequest,
+    ArrivalConfirmRequest, CancelRequest, CompleteRequest,
+    CreateSupplierDeliveryAppointmentRequest, SupplierDeliveryAppointment,
+    UpdateSupplierDeliveryAppointmentRequest,
 };
 use crate::services::permission::{check_permission, ModulePermission};
 use topems_shared::{api_error, auth::Claims, ApiResponse, PaginationParams};
@@ -281,7 +282,8 @@ async fn get_appointment(
         Err(e) => return e,
     }
 
-    let query = format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE id = $1");
+    let query =
+        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE id = $1");
     let result = sqlx::query_as::<_, SupplierDeliveryAppointment>(&query)
         .bind(id)
         .fetch_optional(&state.db)
@@ -316,7 +318,8 @@ async fn update_appointment(
     }
     let request_data = serde_json::to_value(&req).ok();
 
-    let select_query = format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE id = $1");
+    let select_query =
+        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE id = $1");
     let existing = sqlx::query_as::<_, SupplierDeliveryAppointment>(&select_query)
         .bind(id)
         .fetch_optional(&state.db)
@@ -330,10 +333,7 @@ async fn update_appointment(
     if !matches!(existing.status.as_str(), "pending" | "rejected") {
         return Json(api_error(
             400,
-            &format!(
-                "当前状态为 {}，仅待审批或已驳回状态可修改",
-                existing.status
-            ),
+            &format!("当前状态为 {}，仅待审批或已驳回状态可修改", existing.status),
         ));
     }
 
@@ -455,7 +455,10 @@ async fn delete_appointment(
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
-            Json(ApiResponse::success("".to_string(), "供应商送货预约删除成功")),
+            Json(ApiResponse::success(
+                "".to_string(),
+                "供应商送货预约删除成功",
+            )),
             "success",
             None,
         ),
@@ -523,7 +526,8 @@ async fn approve_appointment(
         Err(e) => return e,
     }
 
-    let select_query = format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE id = $1");
+    let select_query =
+        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE id = $1");
     let existing = sqlx::query_as::<_, SupplierDeliveryAppointment>(&select_query)
         .bind(id)
         .fetch_optional(&state.db)
@@ -631,7 +635,8 @@ async fn reject_appointment(
         Err(e) => return e,
     }
 
-    let select_query = format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE id = $1");
+    let select_query =
+        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE id = $1");
     let existing = sqlx::query_as::<_, SupplierDeliveryAppointment>(&select_query)
         .bind(id)
         .fetch_optional(&state.db)
@@ -742,7 +747,8 @@ async fn confirm_arrival(
         Err(e) => return e,
     }
 
-    let select_query = format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE id = $1");
+    let select_query =
+        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE id = $1");
     let existing = sqlx::query_as::<_, SupplierDeliveryAppointment>(&select_query)
         .bind(id)
         .fetch_optional(&state.db)
@@ -756,7 +762,10 @@ async fn confirm_arrival(
     if existing.status != "approved" {
         return Json(api_error(
             400,
-            &format!("当前状态为{}，仅已审批通过的预约可确认到货", existing.status),
+            &format!(
+                "当前状态为{}，仅已审批通过的预约可确认到货",
+                existing.status
+            ),
         ));
     }
 
@@ -846,7 +855,8 @@ async fn complete_appointment(
         Err(e) => return e,
     }
 
-    let select_query = format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE id = $1");
+    let select_query =
+        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE id = $1");
     let existing = sqlx::query_as::<_, SupplierDeliveryAppointment>(&select_query)
         .bind(id)
         .fetch_optional(&state.db)
@@ -860,7 +870,10 @@ async fn complete_appointment(
     if existing.status != "arrived" {
         return Json(api_error(
             400,
-            &format!("当前状态为{}，仅已到货确认的预约可标记完成", existing.status),
+            &format!(
+                "当前状态为{}，仅已到货确认的预约可标记完成",
+                existing.status
+            ),
         ));
     }
 
@@ -947,7 +960,8 @@ async fn cancel_appointment(
         Err(e) => return e,
     }
 
-    let select_query = format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE id = $1");
+    let select_query =
+        format!("SELECT {SELECT_COLUMNS} FROM scm.supplier_delivery_appointments WHERE id = $1");
     let existing = sqlx::query_as::<_, SupplierDeliveryAppointment>(&select_query)
         .bind(id)
         .fetch_optional(&state.db)

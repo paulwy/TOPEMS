@@ -165,12 +165,12 @@ const quickActions: QuickAction[] = [
     bg: 'secondary.light',
     path: '/oa/expense',
   },
-  { label: '会议室预订', icon: <Calendar />, color: 'blue', bg: '#dbeafe', path: '/oa/meeting' },
+  { label: '会议室预订', icon: <Calendar />, color: 'blue', bg: 'primary.100', path: '/oa/meeting' },
   { label: '办公用品', icon: <Package />, color: 'teal', bg: '#ccfbf1', path: '/oa/supplies' },
   { label: '车辆预约', icon: <Car />, color: 'red', bg: 'error.lighter', path: '/oa/vehicle' },
-  { label: '公告通知', icon: <Bell />, color: 'purple', bg: '#f3e8ff', path: '/oa/announcement' },
+  { label: '公告通知', icon: <Bell />, color: 'purple', bg: 'secondary.100', path: '/oa/announcement' },
   { label: '考勤查询', icon: <UserCheck />, color: 'green', bg: '#dcfce7', path: '/oa/attendance' },
-  { label: '证明开具', icon: <FileText />, color: 'amber', bg: '#fef3c7', path: '/oa/certificate' },
+  { label: '证明开具', icon: <FileText />, color: 'amber', bg: 'warning.100', path: '/oa/certificate' },
 ];
 
 const statCards: StatCardData[] = [
@@ -179,7 +179,7 @@ const statCards: StatCardData[] = [
     value: mockStats.employees,
     color: 'purple',
     icon: <Users />,
-    bg: '#f3e8ff',
+    bg: 'secondary.100',
   },
   {
     label: '待审批请假',
@@ -207,7 +207,7 @@ const statCards: StatCardData[] = [
     value: mockStats.meetingRooms,
     color: 'blue',
     icon: <Calendar />,
-    bg: '#dbeafe',
+    bg: 'primary.100',
   },
   {
     label: '车辆',

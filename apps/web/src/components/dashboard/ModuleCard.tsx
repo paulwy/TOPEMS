@@ -141,7 +141,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ item, onClick, size = 'm
             transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             transform: isHovered ? 'scale(1.1) rotate(5deg)' : 'scale(1) rotate(0deg)',
             boxShadow: isHovered
-              ? `0 8px 24px ${colorToGradient[item.color] || '#3b82f6'}40`
+              ? `0 8px 24px ${colorToGradient[item.color] || 'primary.main'}40`
               : '0 4px 12px rgba(0,0,0,0.15)',
             animation: item.status === 'online' ? 'glow 2s ease-in-out infinite' : 'none',
           }}
@@ -199,7 +199,7 @@ export const ModuleCard: React.FC<ModuleCardProps> = ({ item, onClick, size = 'm
       <style>{`
         @keyframes glow {
           0%, 100% { box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-          50% { box-shadow: 0 8px 24px ${colorToGradient[item.color] || '#3b82f6'}60; }
+          50% { box-shadow: 0 8px 24px ${colorToGradient[item.color] || 'primary.main'}60; }
         }
       `}</style>
     </div>

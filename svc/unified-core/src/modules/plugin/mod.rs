@@ -2,8 +2,8 @@
 //!
 //! Manages plugin registration, installation, and marketplace
 
-pub mod models;
 pub mod handlers;
+pub mod models;
 
 use sqlx::PgPool;
 
@@ -185,9 +185,11 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_plugins_code ON core_plugins(code)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_plugins_installed ON core_plugins(is_installed)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_core_plugins_installed ON core_plugins(is_installed)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_plugins_category ON core_plugins(category)")
         .execute(pool)
         .await?;

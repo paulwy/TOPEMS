@@ -50,7 +50,7 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
             cursor: 'pointer',
             borderRadius: 4,
             backgroundColor: isSelected ? 'primary.light' : 'transparent',
-            color: isSelected ? 'primary.dark' : '#334155',
+            color: isSelected ? 'primary.dark' : 'grey.700',
           }}
           role='button'
           tabIndex={0}
@@ -177,7 +177,7 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
                 border: 'none',
                 cursor: 'pointer',
                 backgroundColor: selectedType === id ? 'primary.light' : 'transparent',
-                color: selectedType === id ? 'primary.dark' : '#334155',
+                color: selectedType === id ? 'primary.dark' : 'grey.700',
                 transition: 'colors 0.2s',
                 width: '100%',
                 textAlign: 'left',
@@ -225,7 +225,7 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
               border: 'none',
               cursor: 'pointer',
               backgroundColor: selectedDepartment === null ? 'primary.light' : 'transparent',
-              color: selectedDepartment === null ? 'primary.dark' : '#334155',
+              color: selectedDepartment === null ? 'primary.dark' : 'grey.700',
               transition: 'colors 0.2s',
               width: '100%',
               textAlign: 'left',

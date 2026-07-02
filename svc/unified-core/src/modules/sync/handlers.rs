@@ -1,5 +1,5 @@
 use axum::{
-    extract::{State, Json},
+    extract::{Json, State},
     routing::{get, post},
     Router,
 };
@@ -10,8 +10,8 @@ use uuid::Uuid;
 use super::models::{CreateSyncTaskRequest, RetryFailedRequest, SyncStatistics, SyncTask};
 use super::service::{
     create_sync_task, get_pending_sync_tasks, get_sync_statistics, get_sync_task_by_id,
-    retry_failed_tasks, trigger_scm_to_wms_sync, trigger_srm_to_scm_sync,
-    trigger_wms_to_crm_sync, update_sync_task_status,
+    retry_failed_tasks, trigger_scm_to_wms_sync, trigger_srm_to_scm_sync, trigger_wms_to_crm_sync,
+    update_sync_task_status,
 };
 use crate::AppState;
 use topems_shared::{api_error, ApiResponse};
@@ -71,13 +71,15 @@ pub async fn update_status(
     Json(req): Json<UpdateStatusRequest>,
 ) -> Json<ApiResponse<SyncTask>> {
     match Uuid::parse_str(&task_id) {
-        Ok(id) => match update_sync_task_status(&state.pool, id, &req.status, req.error_message).await {
-            Ok(task) => Json(ApiResponse::success(task, "同步任务状态更新成功")),
-            Err(e) => {
-                tracing::error!("更新同步任务状态失败: {}", e);
-                Json(api_error(500, "更新同步任务状态失败"))
+        Ok(id) => {
+            match update_sync_task_status(&state.pool, id, &req.status, req.error_message).await {
+                Ok(task) => Json(ApiResponse::success(task, "同步任务状态更新成功")),
+                Err(e) => {
+                    tracing::error!("更新同步任务状态失败: {}", e);
+                    Json(api_error(500, "更新同步任务状态失败"))
+                }
             }
-        },
+        }
         Err(_) => Json(api_error(400, "任务ID格式错误")),
     }
 }

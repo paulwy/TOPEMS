@@ -8,11 +8,11 @@ import type { PriceComparison } from '@/api/scm';
 import { useAppStore } from '@/store';
 
 const STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
-  pending: { label: '询价中', bg: 'warning.light', color: '#b45309' },
-  quoted: { label: '已报价', bg: '#dbeafe', color: '#1d4ed8' },
-  comparing: { label: '比价中', bg: '#f3e8ff', color: '#7c3aed' },
-  completed: { label: '已完成', bg: 'success.lighter', color: '#15803d' },
-  cancelled: { label: '已取消', bg: 'grey.200', color: '#475569' },
+  pending: { label: '询价中', bg: 'warning.light', color: 'warning.700' },
+  quoted: { label: '已报价', bg: 'primary.100', color: 'primary.700' },
+  comparing: { label: '比价中', bg: 'secondary.100', color: 'secondary.600' },
+  completed: { label: '已完成', bg: 'success.lighter', color: 'success.700' },
+  cancelled: { label: '已取消', bg: 'grey.200', color: 'grey.600' },
 };
 
 const ScmPriceComparisonPage: React.FC = () => {

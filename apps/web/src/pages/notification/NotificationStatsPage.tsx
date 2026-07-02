@@ -119,7 +119,7 @@ const NotificationStatsPage: React.FC = () => {
       dataKey: 'value',
       nameKey: 'name',
       data: getTypeStats(),
-      colors: ['primary.main', '#8B5CF6', 'warning.main', 'error.main', 'success.main'],
+      colors: ['primary.main', 'secondary.main', 'warning.main', 'error.main', 'success.main'],
     },
     {
       id: 'daily-trend',
@@ -238,7 +238,7 @@ const NotificationStatsPage: React.FC = () => {
                     height: 12,
                     borderRadius: '50%',
                     marginRight: 12,
-                    backgroundColor: serviceStatus.status === 'healthy' ? '#16a34a' : '#dc2626',
+                    backgroundColor: serviceStatus.status === 'healthy' ? '#16a34a' : 'error.700',
                   }}
                 />
                 <span
@@ -257,7 +257,7 @@ const NotificationStatsPage: React.FC = () => {
                   alignItems: 'center',
                   gap: 24,
                   fontSize: '0.875rem',
-                  color: '#6b7280',
+                  color: 'grey.500',
                 }}
               >
                 <span>运行时长：{serviceStatus.uptime}</span>

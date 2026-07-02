@@ -43,6 +43,7 @@ interface DocumentWithFavorite extends FileMetadata {
 const DocumentCenterPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
+  const theme = useTheme();
 
   const [documents, setDocuments] = useState<DocumentWithFavorite[]>([]);
   const [folders, setFolders] = useState<FolderType[]>([]);

@@ -356,7 +356,7 @@ const BiPermissionPage = () => {
                       }}
                     >
                       <Shield
-                        sx={{ color: '#EF4444' }}
+                        sx={{ color: 'error.main' }}
                         size={24}
                       />
                     </Box>
@@ -387,14 +387,14 @@ const BiPermissionPage = () => {
                         width: 48,
                         height: 48,
                         borderRadius: 1,
-                        backgroundColor: '#EFF6FF',
+                        backgroundColor: 'primary.50',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                       }}
                     >
                       <Database
-                        sx={{ color: '#3B82F6' }}
+                        sx={{ color: 'primary.main' }}
                         size={24}
                       />
                     </Box>
@@ -432,7 +432,7 @@ const BiPermissionPage = () => {
                       }}
                     >
                       <CheckCircle2
-                        sx={{ color: '#22C55E' }}
+                        sx={{ color: 'success.main' }}
                         size={24}
                       />
                     </Box>
@@ -463,14 +463,14 @@ const BiPermissionPage = () => {
                         width: 48,
                         height: 48,
                         borderRadius: 1,
-                        backgroundColor: '#FEF3C7',
+                        backgroundColor: 'warning.100',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
                       }}
                     >
                       <Users
-                        sx={{ color: '#D97706' }}
+                        sx={{ color: 'warning.dark' }}
                         size={24}
                       />
                     </Box>

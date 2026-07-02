@@ -564,7 +564,7 @@ const ReplenishmentPage: React.FC = () => {
         >
           <AlertTriangle
             size={14}
-            color='#b45309'
+            color='warning.700'
           />
           <Typography
             variant='body2'

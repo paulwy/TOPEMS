@@ -84,7 +84,10 @@ pub fn create_routes() -> Router<crate::api::ApiState> {
             "/api/rs/patents/{id}",
             get(get_patent).put(update_patent).delete(delete_patent),
         )
-        .route("/api/rs/patents/project/{project_id}", get(list_patents_by_project))
+        .route(
+            "/api/rs/patents/project/{project_id}",
+            get(list_patents_by_project),
+        )
 }
 
 fn row_to_patent(row: sqlx::postgres::PgRow) -> Patent {
@@ -296,7 +299,10 @@ async fn update_patent(
     let name = req.name.unwrap_or(existing.name);
     let patent_number = req.patent_number.or(existing.patent_number);
     let status = req.status.unwrap_or(existing.status);
-    let inventors = req.inventors.map(|v| serde_json::to_value(v).unwrap()).unwrap_or(existing.inventors);
+    let inventors = req
+        .inventors
+        .map(|v| serde_json::to_value(v).unwrap())
+        .unwrap_or(existing.inventors);
     let assignee = req.assignee.or(existing.assignee);
     let description = req.description.or(existing.description);
     let abstract_text = req.patent_abstract.or(existing.patent_abstract);
@@ -346,7 +352,9 @@ async fn delete_patent(
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "专利删除成功")),
+        Ok(r) if r.rows_affected() > 0 => {
+            Json(ApiResponse::success("".to_string(), "专利删除成功"))
+        }
         Ok(_) => Json(ApiResponse::error(404, "专利不存在")),
         Err(e) => {
             tracing::error!("删除专利失败: {}", e);

@@ -1,6 +1,6 @@
 use prometheus::{
-    register_int_counter_vec, register_int_gauge, register_histogram_vec, IntCounterVec, IntGauge,
-    HistogramVec,
+    register_histogram_vec, register_int_counter_vec, register_int_gauge, HistogramVec,
+    IntCounterVec, IntGauge,
 };
 use std::sync::LazyLock;
 
@@ -24,11 +24,7 @@ pub static HTTP_REQUESTS_TOTAL: LazyLock<IntCounterVec> = LazyLock::new(|| {
 });
 
 pub static ACTIVE_USERS: LazyLock<IntGauge> = LazyLock::new(|| {
-    register_int_gauge!(
-        "topems_active_users",
-        "Number of currently active users"
-    )
-    .unwrap()
+    register_int_gauge!("topems_active_users", "Number of currently active users").unwrap()
 });
 
 pub static BUSINESS_OPERATION_DURATION: LazyLock<HistogramVec> = LazyLock::new(|| {

@@ -1,20 +1,29 @@
 //! Quality Traceability handlers
 
-use axum::{extract::Path, extract::State, extract::Extension, routing::get, Json, Router};
+use axum::{extract::Extension, extract::Path, extract::State, routing::get, Json, Router};
 use chrono::{DateTime, NaiveDate, NaiveDateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{types::{BigDecimal, Uuid}, PgPool};
+use sqlx::{
+    types::{BigDecimal, Uuid},
+    PgPool,
+};
 use std::str::FromStr;
 use topems_shared::auth::Claims;
 
-use crate::AppState;
 use crate::services::permission::{check_permission, ModulePermission};
+use crate::AppState;
 use topems_shared::response::ApiResponse;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/mes/traceability/forward/{order_id}", get(forward_traceability))
-        .route("/api/mes/traceability/backward/{batch_no}", get(backward_traceability))
+        .route(
+            "/api/mes/traceability/forward/{order_id}",
+            get(forward_traceability),
+        )
+        .route(
+            "/api/mes/traceability/backward/{batch_no}",
+            get(backward_traceability),
+        )
         .route("/api/mes/traceability/chain/{id}", get(get_trace_chain))
         .route("/api/mes/quality-records", get(list_quality_records))
 }
@@ -94,7 +103,8 @@ pub struct BatchRecordResponse {
 }
 
 fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
-    dt.map(|d| Utc.from_utc_datetime(&d)).unwrap_or_else(Utc::now)
+    dt.map(|d| Utc.from_utc_datetime(&d))
+        .unwrap_or_else(Utc::now)
 }
 
 fn opt_naive_to_utc(dt: Option<NaiveDateTime>) -> Option<DateTime<Utc>> {
@@ -102,7 +112,8 @@ fn opt_naive_to_utc(dt: Option<NaiveDateTime>) -> Option<DateTime<Utc>> {
 }
 
 fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
-    bd.and_then(|d| d.to_string().parse::<f64>().ok()).unwrap_or(0.0)
+    bd.and_then(|d| d.to_string().parse::<f64>().ok())
+        .unwrap_or(0.0)
 }
 
 // ==================== Quality Traceability Handlers ====================
@@ -112,7 +123,13 @@ pub async fn forward_traceability(
     Extension(claims): Extension<Claims>,
     Path(order_id): Path<Uuid>,
 ) -> Json<ApiResponse<TraceChainResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::QualityTraceabilityRead).await {
+    if let Err(e) = check_permission(
+        &state.pool,
+        &claims,
+        &ModulePermission::QualityTraceabilityRead,
+    )
+    .await
+    {
         return e;
     }
 
@@ -239,7 +256,13 @@ pub async fn backward_traceability(
     Extension(claims): Extension<Claims>,
     Path(batch_no): Path<String>,
 ) -> Json<ApiResponse<TraceChainResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::QualityTraceabilityRead).await {
+    if let Err(e) = check_permission(
+        &state.pool,
+        &claims,
+        &ModulePermission::QualityTraceabilityRead,
+    )
+    .await
+    {
         return e;
     }
 
@@ -300,7 +323,10 @@ pub async fn backward_traceability(
         unit: batch.unit.clone(),
         batch_no: Some(batch.batch_no.clone()),
         status: Some(batch.status.clone().unwrap_or_default()),
-        timestamp: batch.production_date.map(|d| d.and_hms_opt(0, 0, 0).unwrap()).map(|d| Utc.from_utc_datetime(&d)),
+        timestamp: batch
+            .production_date
+            .map(|d| d.and_hms_opt(0, 0, 0).unwrap())
+            .map(|d| Utc.from_utc_datetime(&d)),
         operator: None,
         description: Some("成品批次".to_string()),
     });
@@ -365,7 +391,13 @@ pub async fn get_trace_chain(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<TraceChainResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::QualityTraceabilityRead).await {
+    if let Err(e) = check_permission(
+        &state.pool,
+        &claims,
+        &ModulePermission::QualityTraceabilityRead,
+    )
+    .await
+    {
         return e;
     }
 
@@ -395,7 +427,13 @@ pub async fn list_quality_records(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<QualityRecordResponse>>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::QualityTraceabilityRead).await {
+    if let Err(e) = check_permission(
+        &state.pool,
+        &claims,
+        &ModulePermission::QualityTraceabilityRead,
+    )
+    .await
+    {
         return e;
     }
 
@@ -422,27 +460,30 @@ pub async fn list_quality_records(
         }
     };
 
-    let record_list: Vec<QualityRecordResponse> = records.into_iter().map(|r| QualityRecordResponse {
-        id: r.id,
-        record_no: r.record_no,
-        record_type: r.record_type.unwrap_or_else(|| "inspection".to_string()),
-        order_id: r.order_id,
-        order_no: r.order_no,
-        product_id: r.product_id,
-        product_name: r.product_name,
-        product_code: r.product_code,
-        batch_no: r.batch_no,
-        quantity: big_decimal_to_f64(Some(r.quantity)),
-        qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
-        defective_quantity: big_decimal_to_f64(r.defective_quantity),
-        quality_status: r.quality_status.unwrap_or_else(|| "pending".to_string()),
-        inspector: r.inspector,
-        inspection_time: opt_naive_to_utc(r.inspection_time),
-        defect_reason: r.defect_reason,
-        notes: r.notes,
-        created_at: naive_to_utc(r.created_at),
-        updated_at: naive_to_utc(r.updated_at),
-    }).collect();
+    let record_list: Vec<QualityRecordResponse> = records
+        .into_iter()
+        .map(|r| QualityRecordResponse {
+            id: r.id,
+            record_no: r.record_no,
+            record_type: r.record_type.unwrap_or_else(|| "inspection".to_string()),
+            order_id: r.order_id,
+            order_no: r.order_no,
+            product_id: r.product_id,
+            product_name: r.product_name,
+            product_code: r.product_code,
+            batch_no: r.batch_no,
+            quantity: big_decimal_to_f64(Some(r.quantity)),
+            qualified_quantity: big_decimal_to_f64(r.qualified_quantity),
+            defective_quantity: big_decimal_to_f64(r.defective_quantity),
+            quality_status: r.quality_status.unwrap_or_else(|| "pending".to_string()),
+            inspector: r.inspector,
+            inspection_time: opt_naive_to_utc(r.inspection_time),
+            defect_reason: r.defect_reason,
+            notes: r.notes,
+            created_at: naive_to_utc(r.created_at),
+            updated_at: naive_to_utc(r.updated_at),
+        })
+        .collect();
 
     Json(ApiResponse::success(record_list, "获取质量记录列表成功"))
 }

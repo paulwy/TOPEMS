@@ -393,20 +393,20 @@ const LimsTaskPage: React.FC = () => {
   };
 
   const getStatusColor = (status: string): { bgcolor: string; color: string } => {
-    if (!status) return { bgcolor: 'grey.100', color: '#475569' };
+    if (!status) return { bgcolor: 'grey.100', color: 'grey.600' };
     switch (status) {
       case '进行中':
-        return { bgcolor: '#dbeafe', color: 'primary.dark' };
+        return { bgcolor: 'primary.100', color: 'primary.dark' };
       case '已完成':
-        return { bgcolor: 'success.lighter', color: '#15803d' };
+        return { bgcolor: 'success.lighter', color: 'success.700' };
       case '已终止':
         return { bgcolor: 'error.lighter', color: 'error.darker' };
       case '待测试':
-        return { bgcolor: 'warning.light', color: '#b45309' };
+        return { bgcolor: 'warning.light', color: 'warning.700' };
       case '测试中':
-        return { bgcolor: '#f3e8ff', color: '#7e22ce' };
+        return { bgcolor: 'secondary.100', color: '#7e22ce' };
       default:
-        return { bgcolor: 'grey.100', color: '#475569' };
+        return { bgcolor: 'grey.100', color: 'grey.600' };
     }
   };
 

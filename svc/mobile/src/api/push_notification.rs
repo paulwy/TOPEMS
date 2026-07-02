@@ -102,7 +102,10 @@ pub async fn register_device(
         }
     };
 
-    (StatusCode::OK, Json(ApiResponse::success(device, "设备注册成功")))
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(device, "设备注册成功")),
+    )
 }
 
 pub async fn get_devices(
@@ -141,7 +144,10 @@ pub async fn get_devices(
         }
     };
 
-    (StatusCode::OK, Json(ApiResponse::success(devices, "获取设备列表成功")))
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(devices, "获取设备列表成功")),
+    )
 }
 
 pub async fn send_notification(
@@ -213,7 +219,10 @@ pub async fn send_notification(
         message: "推送通知已发送".to_string(),
     };
 
-    (StatusCode::OK, Json(ApiResponse::success(response, "推送通知已发送")))
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(response, "推送通知已发送")),
+    )
 }
 
 fn render_template(template: &str, params: &serde_json::Value) -> String {
@@ -240,7 +249,10 @@ pub async fn send_broadcast(
         Ok(d) => d,
         Err(e) => {
             tracing::error!("获取所有设备失败: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::error(500, "获取设备列表失败")));
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error(500, "获取设备列表失败")),
+            );
         }
     };
 
@@ -254,7 +266,10 @@ pub async fn send_broadcast(
             Ok(t) => t,
             Err(e) => {
                 tracing::error!("获取模板失败: {}", e);
-                return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::error(500, "获取模板失败")));
+                return (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ApiResponse::error(500, "获取模板失败")),
+                );
             }
         };
 
@@ -282,13 +297,18 @@ pub async fn send_broadcast(
         Ok(n) => n,
         Err(e) => {
             tracing::error!("创建推送通知失败: {}", e);
-            return (StatusCode::INTERNAL_SERVER_ERROR, Json(ApiResponse::error(500, "创建推送通知失败")));
+            return (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiResponse::error(500, "创建推送通知失败")),
+            );
         }
     };
 
     let target_count = target_ids.len() as i32;
 
-    if let Err(e) = db_update_push_notification_stats(&pool, notification.id, target_count, 0, 0).await {
+    if let Err(e) =
+        db_update_push_notification_stats(&pool, notification.id, target_count, 0, 0).await
+    {
         tracing::error!("更新推送统计失败: {}", e);
     }
 
@@ -299,7 +319,10 @@ pub async fn send_broadcast(
         message: "广播推送已发送".to_string(),
     };
 
-    (StatusCode::OK, Json(ApiResponse::success(response, "广播推送已发送")))
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(response, "广播推送已发送")),
+    )
 }
 
 pub async fn get_notification_list(
@@ -314,11 +337,10 @@ pub async fn get_notification_list(
     let size = params.size.unwrap_or(20);
     let offset = (page - 1) * size;
 
-    let query = sqlx::query(
-        "SELECT * FROM push_notifications ORDER BY created_at DESC LIMIT $1 OFFSET $2",
-    )
-    .bind(size)
-    .bind(offset);
+    let query =
+        sqlx::query("SELECT * FROM push_notifications ORDER BY created_at DESC LIMIT $1 OFFSET $2")
+            .bind(size)
+            .bind(offset);
 
     let items = match query.fetch_all(&pool).await {
         Ok(rows) => rows
@@ -363,25 +385,31 @@ pub async fn get_notification_stats(
 ) -> impl IntoResponse {
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
 
-    let total_sent: i64 = match sqlx::query_scalar("SELECT COALESCE(SUM(sent_count), 0) FROM push_notifications WHERE status = 'sent'")
-        .fetch_one(&pool)
-        .await
+    let total_sent: i64 = match sqlx::query_scalar(
+        "SELECT COALESCE(SUM(sent_count), 0) FROM push_notifications WHERE status = 'sent'",
+    )
+    .fetch_one(&pool)
+    .await
     {
         Ok(c) => c,
         Err(_) => 0,
     };
 
-    let delivered_count: i64 = match sqlx::query_scalar("SELECT COALESCE(SUM(delivered_count), 0) FROM push_notifications WHERE status = 'sent'")
-        .fetch_one(&pool)
-        .await
+    let delivered_count: i64 = match sqlx::query_scalar(
+        "SELECT COALESCE(SUM(delivered_count), 0) FROM push_notifications WHERE status = 'sent'",
+    )
+    .fetch_one(&pool)
+    .await
     {
         Ok(c) => c,
         Err(_) => 0,
     };
 
-    let clicked_count: i64 = match sqlx::query_scalar("SELECT COALESCE(SUM(clicked_count), 0) FROM push_notifications WHERE status = 'sent'")
-        .fetch_one(&pool)
-        .await
+    let clicked_count: i64 = match sqlx::query_scalar(
+        "SELECT COALESCE(SUM(clicked_count), 0) FROM push_notifications WHERE status = 'sent'",
+    )
+    .fetch_one(&pool)
+    .await
     {
         Ok(c) => c,
         Err(_) => 0,
@@ -407,7 +435,10 @@ pub async fn get_notification_stats(
         click_rate,
     };
 
-    (StatusCode::OK, Json(ApiResponse::success(stats, "获取推送统计成功")))
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(stats, "获取推送统计成功")),
+    )
 }
 
 pub async fn get_templates(
@@ -428,7 +459,10 @@ pub async fn get_templates(
         }
     };
 
-    (StatusCode::OK, Json(ApiResponse::success(templates, "获取模板列表成功")))
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(templates, "获取模板列表成功")),
+    )
 }
 
 pub async fn create_template(
@@ -459,7 +493,10 @@ pub async fn create_template(
         }
     };
 
-    (StatusCode::OK, Json(ApiResponse::success(template, "创建模板成功")))
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(template, "创建模板成功")),
+    )
 }
 
 pub async fn get_notification_by_id(
@@ -496,8 +533,14 @@ pub async fn get_notification_by_id(
                 );
             }
         };
-        (StatusCode::OK, Json(ApiResponse::success(notification, "获取推送通知成功")))
+        (
+            StatusCode::OK,
+            Json(ApiResponse::success(notification, "获取推送通知成功")),
+        )
     } else {
-        (StatusCode::NOT_FOUND, Json(ApiResponse::error(404, "推送通知不存在")))
+        (
+            StatusCode::NOT_FOUND,
+            Json(ApiResponse::error(404, "推送通知不存在")),
+        )
     }
 }

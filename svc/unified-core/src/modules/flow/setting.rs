@@ -1,11 +1,12 @@
 //! Setting submodule - Workflow setting management handlers
 
-use axum::{extract::{Path, State}, Json};
 use crate::AppState;
+use axum::{
+    extract::{Path, State},
+    Json,
+};
 
-pub async fn list_settings(
-    State(_state): State<AppState>,
-) -> Json<serde_json::Value> {
+pub async fn list_settings(State(_state): State<AppState>) -> Json<serde_json::Value> {
     tracing::info!("Flow setting list_settings called");
     Json(serde_json::json!({
         "success": true,
@@ -43,7 +44,11 @@ pub async fn update_setting(
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Flow setting update_setting called with id: {} and payload: {:?}", id, payload);
+    tracing::info!(
+        "Flow setting update_setting called with id: {} and payload: {:?}",
+        id,
+        payload
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "update_setting success",
@@ -67,7 +72,10 @@ pub async fn batch_update_settings(
     State(_state): State<AppState>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Flow setting batch_update_settings called with: {:?}", payload);
+    tracing::info!(
+        "Flow setting batch_update_settings called with: {:?}",
+        payload
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "batch_update_settings success",

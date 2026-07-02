@@ -33,9 +33,9 @@ interface SupplierProduct {
 }
 
 const STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
-  active: { label: '在售', bg: 'success.lighter', color: '#15803d' },
+  active: { label: '在售', bg: 'success.lighter', color: 'success.700' },
   inactive: { label: '停售', bg: 'error.lighter', color: '#b91c1c' },
-  pending: { label: '待审核', bg: 'warning.light', color: '#b45309' },
+  pending: { label: '待审核', bg: 'warning.light', color: 'warning.700' },
 };
 
 const mockProducts: SupplierProduct[] = [

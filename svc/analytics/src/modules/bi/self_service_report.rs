@@ -367,14 +367,24 @@ pub async fn query_report_data(
         .unwrap_or(&vec![])
         .iter()
         .filter(|f| f.get("type").and_then(|t| t.as_str()) == Some("dimension"))
-        .map(|f| f.get("field").and_then(|v| v.as_str()).unwrap_or("").to_string())
+        .map(|f| {
+            f.get("field")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string()
+        })
         .collect();
     let metrics: Vec<String> = fields
         .as_array()
         .unwrap_or(&vec![])
         .iter()
         .filter(|f| f.get("type").and_then(|t| t.as_str()) == Some("metric"))
-        .map(|f| f.get("field").and_then(|v| v.as_str()).unwrap_or("").to_string())
+        .map(|f| {
+            f.get("field")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string()
+        })
         .collect();
 
     let select_clause = if dimensions.is_empty() && metrics.is_empty() {
@@ -403,16 +413,10 @@ pub async fn query_report_data(
                 .map(|row| {
                     let mut map = serde_json::Map::new();
                     for col in &dimensions {
-                        map.insert(
-                            col.clone(),
-                            serde_json::Value::Null,
-                        );
+                        map.insert(col.clone(), serde_json::Value::Null);
                     }
                     for col in &metrics {
-                        map.insert(
-                            col.clone(),
-                            serde_json::Value::Null,
-                        );
+                        map.insert(col.clone(), serde_json::Value::Null);
                     }
                     serde_json::Value::Object(map)
                 })
@@ -475,7 +479,12 @@ pub async fn export_report(
         .as_array()
         .unwrap_or(&vec![])
         .iter()
-        .map(|f| f.get("field").and_then(|v| v.as_str()).unwrap_or("").to_string())
+        .map(|f| {
+            f.get("field")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_string()
+        })
         .collect();
 
     let mut csv_writer = csv::Writer::from_writer(Vec::new());
@@ -487,7 +496,12 @@ pub async fn export_report(
     if field_names.is_empty() {
         let _ = csv_writer.write_record(&["id", "value"]);
     } else {
-        let _ = csv_writer.write_record(&field_names.iter().map(|s| s.as_str()).collect::<Vec<&str>>());
+        let _ = csv_writer.write_record(
+            &field_names
+                .iter()
+                .map(|s| s.as_str())
+                .collect::<Vec<&str>>(),
+        );
     }
 
     let csv_data = match csv_writer.into_inner() {
@@ -514,11 +528,8 @@ pub async fn export_report(
         )],
         [(
             header::CONTENT_DISPOSITION,
-            header::HeaderValue::from_str(&format!(
-                "attachment; filename=\"{}\"",
-                filename
-            ))
-            .unwrap_or_else(|_| header::HeaderValue::from_static("attachment")),
+            header::HeaderValue::from_str(&format!("attachment; filename=\"{}\"", filename))
+                .unwrap_or_else(|_| header::HeaderValue::from_static("attachment")),
         )],
         csv_data,
     ))

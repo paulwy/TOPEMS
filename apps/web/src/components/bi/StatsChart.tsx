@@ -80,7 +80,7 @@ export const StatsChart: React.FC<StatsChartProps> = ({
             alignItems: 'center',
             justifyContent: 'center',
             height: '160px',
-            color: '#94a3b8',
+            color: 'grey.400',
           }}
         >
           <p>暂无数据</p>

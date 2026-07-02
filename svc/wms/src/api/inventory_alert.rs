@@ -1,5 +1,5 @@
 use axum::{
-    extract::{FromRef, Extension, Path, Query, State},
+    extract::{Extension, FromRef, Path, Query, State},
     http::HeaderMap,
     routing::{get, post},
     Json, Router,
@@ -341,7 +341,7 @@ async fn acknowledge_alert(
 
     // 检查库存是否存在
     let exists = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM wms.inventory WHERE id = $1 AND deleted_at IS NULL"
+        "SELECT COUNT(*) FROM wms.inventory WHERE id = $1 AND deleted_at IS NULL",
     )
     .bind(id)
     .fetch_optional(&state.db)

@@ -32,7 +32,7 @@ interface OfficeSupply {
 }
 
 const STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
-  normal: { label: '正常', bg: 'success.lighter', color: '#15803d' },
+  normal: { label: '正常', bg: 'success.lighter', color: 'success.700' },
   low: { label: '库存不足', bg: 'error.lighter', color: '#b91c1c' },
   out_of_stock: { label: '缺货', bg: 'error.lighter', color: '#991b1b' },
 };

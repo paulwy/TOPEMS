@@ -1,7 +1,4 @@
-use axum::{
-    extract::State,
-    Json,
-};
+use axum::{extract::State, Json};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use tracing::{info, warn};
@@ -129,7 +126,12 @@ fn simple_moving_average(data: &[f64], window_size: usize) -> Vec<Option<f64>> {
 
 fn forecast_ma(last_values: &[f64], window_size: usize, periods: usize) -> Vec<f64> {
     let mut forecasts = Vec::new();
-    let mut current_values: Vec<f64> = last_values.iter().rev().take(window_size).cloned().collect();
+    let mut current_values: Vec<f64> = last_values
+        .iter()
+        .rev()
+        .take(window_size)
+        .cloned()
+        .collect();
     current_values.reverse();
 
     for _ in 0..periods {
@@ -174,7 +176,11 @@ fn calculate_linear_regression(data: &[(f64, f64)]) -> (f64, f64, f64) {
 
     let ss_tot = sum_y2 - sum_y * sum_y / n;
     let ss_res = sum_y2 - slope * sum_xy - intercept * sum_y;
-    let r_squared = if ss_tot != 0.0 { 1.0 - ss_res / ss_tot } else { 0.0 };
+    let r_squared = if ss_tot != 0.0 {
+        1.0 - ss_res / ss_tot
+    } else {
+        0.0
+    };
 
     (slope, intercept, r_squared)
 }
@@ -221,7 +227,10 @@ pub async fn moving_average_forecast(
     State(state): State<AppState>,
     Json(req): Json<MovingAverageRequest>,
 ) -> Json<serde_json::Value> {
-    info!("Moving average forecast for datasource: {}", req.datasource_id);
+    info!(
+        "Moving average forecast for datasource: {}",
+        req.datasource_id
+    );
 
     let window_size = req.window_size.unwrap_or(7);
     let forecast_periods = req.forecast_periods.unwrap_or(7);
@@ -239,7 +248,9 @@ pub async fn moving_average_forecast(
         }
     };
 
-    let sample_data: Vec<f64> = (1..=30).map(|i| (i as f64) * 10.0 + (i % 5) as f64 * 5.0).collect();
+    let sample_data: Vec<f64> = (1..=30)
+        .map(|i| (i as f64) * 10.0 + (i % 5) as f64 * 5.0)
+        .collect();
 
     let ma_values = simple_moving_average(&sample_data, window_size as usize);
 
@@ -250,7 +261,11 @@ pub async fn moving_average_forecast(
         .cloned()
         .collect();
     let last_window: Vec<f64> = last_window.into_iter().rev().collect();
-    let forecast_values = forecast_ma(&last_window, window_size as usize, forecast_periods as usize);
+    let forecast_values = forecast_ma(
+        &last_window,
+        window_size as usize,
+        forecast_periods as usize,
+    );
 
     let historical_data: Vec<PredictionPoint> = sample_data
         .iter()
@@ -308,7 +323,10 @@ pub async fn exponential_smoothing_forecast(
     State(state): State<AppState>,
     Json(req): Json<ExponentialSmoothingRequest>,
 ) -> Json<serde_json::Value> {
-    info!("Exponential smoothing forecast for datasource: {}", req.datasource_id);
+    info!(
+        "Exponential smoothing forecast for datasource: {}",
+        req.datasource_id
+    );
 
     let alpha = req.alpha.unwrap_or(0.3);
     let forecast_periods = req.forecast_periods.unwrap_or(7);
@@ -326,7 +344,9 @@ pub async fn exponential_smoothing_forecast(
         }
     };
 
-    let sample_data: Vec<f64> = (1..=30).map(|i| (i as f64) * 10.0 + (i % 3) as f64 * 8.0).collect();
+    let sample_data: Vec<f64> = (1..=30)
+        .map(|i| (i as f64) * 10.0 + (i % 3) as f64 * 8.0)
+        .collect();
 
     let es_values = exponential_smoothing(&sample_data, alpha);
 
@@ -358,7 +378,11 @@ pub async fn exponential_smoothing_forecast(
         .collect();
 
     let actual_values: Vec<f64> = sample_data.iter().skip(1).cloned().collect();
-    let predicted_values: Vec<f64> = es_values.iter().take(es_values.len() - 1).cloned().collect();
+    let predicted_values: Vec<f64> = es_values
+        .iter()
+        .take(es_values.len() - 1)
+        .cloned()
+        .collect();
     let mape = calculate_mape(&actual_values, &predicted_values);
 
     Json(serde_json::json!({
@@ -441,7 +465,10 @@ pub async fn prediction_comparison(
     State(state): State<AppState>,
     Json(req): Json<PredictionCompareRequest>,
 ) -> Json<serde_json::Value> {
-    info!("Prediction comparison for datasource: {}", req.datasource_id);
+    info!(
+        "Prediction comparison for datasource: {}",
+        req.datasource_id
+    );
 
     let query = format!(
         "SELECT {}, {} FROM analytics_data ORDER BY {} ASC LIMIT 100",
@@ -456,8 +483,12 @@ pub async fn prediction_comparison(
         }
     };
 
-    let actual_values: Vec<f64> = (1..=30).map(|i| (i as f64) * 10.0 + (i % 5) as f64 * 3.0).collect();
-    let predicted_values: Vec<f64> = (1..=30).map(|i| (i as f64) * 10.5 + (i % 3) as f64 * 2.0).collect();
+    let actual_values: Vec<f64> = (1..=30)
+        .map(|i| (i as f64) * 10.0 + (i % 5) as f64 * 3.0)
+        .collect();
+    let predicted_values: Vec<f64> = (1..=30)
+        .map(|i| (i as f64) * 10.5 + (i % 3) as f64 * 2.0)
+        .collect();
 
     let actual_data: Vec<PredictionPoint> = actual_values
         .iter()
@@ -516,9 +547,7 @@ pub async fn prediction_comparison(
     }))
 }
 
-pub async fn get_prediction_methods(
-    State(_state): State<AppState>,
-) -> Json<serde_json::Value> {
+pub async fn get_prediction_methods(State(_state): State<AppState>) -> Json<serde_json::Value> {
     info!("Getting prediction methods");
 
     let methods = vec![

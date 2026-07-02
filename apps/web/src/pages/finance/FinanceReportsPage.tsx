@@ -113,7 +113,7 @@ const FinanceReportsPage: React.FC = () => {
         gradient:
           businessOverview.net_profit >= 0
             ? (['#00C897', '#00A878'] as [string, string])
-            : (['#EF4444', '#DC2626'] as [string, string]),
+            : (['error.main', 'error.700'] as [string, string]),
       },
     ];
   }, [businessOverview]);

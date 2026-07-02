@@ -156,9 +156,9 @@ const MaterialIssuePage: React.FC = () => {
         color: string;
       }
     > = {
-      pending: { label: '待审核', bg: 'warning.light', color: '#b45309' },
-      approved: { label: '已审核', bg: '#e0e7ff', color: '#4338ca' },
-      issued: { label: '已出库', bg: 'success.lighter', color: '#15803d' },
+      pending: { label: '待审核', bg: 'warning.light', color: 'warning.700' },
+      approved: { label: '已审核', bg: '#e0e7ff', color: 'secondary.700' },
+      issued: { label: '已出库', bg: 'success.lighter', color: 'success.700' },
       cancelled: { label: '已取消', bg: 'error.lighter', color: 'error.dark' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
@@ -276,11 +276,11 @@ const MaterialIssuePage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: '#fef3c7', borderRadius: 3 }}>
+      <Box sx={{ p: 2, bgcolor: 'warning.100', borderRadius: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <FileText
             size={18}
-            sx={{ color: '#b45309' }}
+            sx={{ color: 'warning.700' }}
           />
           <Typography
             variant='body2'
@@ -291,7 +291,7 @@ const MaterialIssuePage: React.FC = () => {
         </Box>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#b45309' }}
+          sx={{ fontWeight: 700, color: 'warning.700' }}
         >
           {issues.filter((i) => i.status === 'pending').length}
         </Typography>
@@ -305,7 +305,7 @@ const MaterialIssuePage: React.FC = () => {
         </Typography>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#4338ca' }}
+          sx={{ fontWeight: 700, color: 'secondary.700' }}
         >
           {issues.filter((i) => i.status === 'approved').length}
         </Typography>
@@ -319,7 +319,7 @@ const MaterialIssuePage: React.FC = () => {
         </Typography>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#15803d' }}
+          sx={{ fontWeight: 700, color: 'success.700' }}
         >
           {issues.filter((i) => i.status === 'issued').length}
         </Typography>

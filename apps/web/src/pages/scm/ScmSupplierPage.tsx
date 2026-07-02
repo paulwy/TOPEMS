@@ -167,10 +167,10 @@ const ScmSupplierPage: React.FC = () => {
                 '& .MuiRating-iconFilled': {
                   color:
                     performance.overall_score >= 80
-                      ? '#10B981'
+                      ? 'success.main'
                       : performance.overall_score >= 60
-                        ? '#F59E0B'
-                        : '#EF4444',
+                        ? 'warning.main'
+                        : 'error.main',
                 },
               }}
             />

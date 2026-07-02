@@ -133,14 +133,14 @@ const NotificationArchivePage: React.FC = () => {
 
   const getTypeColor = (type: NotificationTypeEnum) => {
     const colors: Record<NotificationTypeEnum, { bgcolor: string; color: string }> = {
-      system: { bgcolor: '#dbeafe', color: 'primary.dark' },
+      system: { bgcolor: 'primary.100', color: 'primary.dark' },
       workflow: { bgcolor: 'secondary.light', color: 'secondary.dark' },
-      reminder: { bgcolor: '#fef9c3', color: '#a16207' },
+      reminder: { bgcolor: 'warning.100', color: '#a16207' },
       alert: { bgcolor: 'error.lighter', color: 'error.dark' },
       message: { bgcolor: 'success.lighter', color: 'success.dark' },
       info: { bgcolor: '#cffafe', color: '#0891b2' },
       success: { bgcolor: 'success.lighter', color: 'success.dark' },
-      warning: { bgcolor: '#ffedd5', color: '#ea580c' },
+      warning: { bgcolor: '#ffedd5', color: 'warning.600' },
       error: { bgcolor: '#ffe4e6', color: '#e11d48' },
     };
     return colors[type] || { bgcolor: 'grey.100', color: 'grey.700' };

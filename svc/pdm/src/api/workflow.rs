@@ -1,4 +1,9 @@
-use axum::{extract::Path, extract::State, routing::{delete, get, post, put}, Json, Router};
+use axum::{
+    extract::Path,
+    extract::State,
+    routing::{delete, get, post, put},
+    Json, Router,
+};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -9,12 +14,26 @@ use topems_shared::ApiResponse;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/pdm/workflows", get(list_workflows).post(create_workflow))
-        .route("/api/pdm/workflows/{id}", get(get_workflow).put(update_workflow).delete(delete_workflow))
+        .route(
+            "/api/pdm/workflows",
+            get(list_workflows).post(create_workflow),
+        )
+        .route(
+            "/api/pdm/workflows/{id}",
+            get(get_workflow)
+                .put(update_workflow)
+                .delete(delete_workflow),
+        )
         .route("/api/pdm/workflows/start", post(start_workflow))
         .route("/api/pdm/workflow-instances", get(list_workflow_instances))
-        .route("/api/pdm/workflow-instances/{id}", get(get_workflow_instance))
-        .route("/api/pdm/workflow-instances/{id}/advance", post(advance_workflow))
+        .route(
+            "/api/pdm/workflow-instances/{id}",
+            get(get_workflow_instance),
+        )
+        .route(
+            "/api/pdm/workflow-instances/{id}/advance",
+            post(advance_workflow),
+        )
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -75,9 +94,7 @@ pub struct StartWorkflowRequest {
     pub created_by: String,
 }
 
-pub async fn list_workflows(
-    State(state): State<AppState>,
-) -> Json<ApiResponse<serde_json::Value>> {
+pub async fn list_workflows(State(state): State<AppState>) -> Json<ApiResponse<serde_json::Value>> {
     let result = sqlx::query_as::<_, WorkflowDefinition>(
         r#"
         SELECT id, name, description, workflow_type, steps, conditions,
@@ -253,8 +270,12 @@ pub async fn start_workflow(
 
     let steps: Vec<WorkflowStep> = serde_json::from_value(workflow.steps).unwrap_or_default();
     let first_step = steps.first();
-    let current_step = first_step.map(|s| s.step_name.clone()).unwrap_or("start".to_string());
-    let assignees = first_step.map(|s| serde_json::to_value(s.assignees.clone()).unwrap()).unwrap_or(serde_json::json!([]));
+    let current_step = first_step
+        .map(|s| s.step_name.clone())
+        .unwrap_or("start".to_string());
+    let assignees = first_step
+        .map(|s| serde_json::to_value(s.assignees.clone()).unwrap())
+        .unwrap_or(serde_json::json!([]));
 
     let id = Uuid::new_v4();
     let now = Utc::now();
@@ -361,7 +382,10 @@ pub async fn advance_workflow(
     Path(id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<WorkflowInstance>> {
-    let action = req.get("action").and_then(|v| v.as_str()).unwrap_or("approve");
+    let action = req
+        .get("action")
+        .and_then(|v| v.as_str())
+        .unwrap_or("approve");
     let user = req.get("user").and_then(|v| v.as_str()).unwrap_or("system");
     let comment = req.get("comment").and_then(|v| v.as_str()).unwrap_or("");
 
@@ -385,12 +409,11 @@ pub async fn advance_workflow(
         return Json(ApiResponse::error(400, "工作流状态不正确"));
     }
 
-    let workflow_result = sqlx::query_as::<_, WorkflowDefinition>(
-        "SELECT steps FROM pdm_workflows WHERE id = $1",
-    )
-    .bind(instance.workflow_id)
-    .fetch_optional(&state.pool)
-    .await;
+    let workflow_result =
+        sqlx::query_as::<_, WorkflowDefinition>("SELECT steps FROM pdm_workflows WHERE id = $1")
+            .bind(instance.workflow_id)
+            .fetch_optional(&state.pool)
+            .await;
 
     let workflow = match workflow_result {
         Ok(Some(w)) => w,
@@ -402,23 +425,40 @@ pub async fn advance_workflow(
     };
 
     let steps: Vec<WorkflowStep> = serde_json::from_value(workflow.steps).unwrap_or_default();
-    let current_step_index = steps.iter().position(|s| s.step_name == instance.current_step);
-    
+    let current_step_index = steps
+        .iter()
+        .position(|s| s.step_name == instance.current_step);
+
     let (new_step, new_status, new_assignees) = match action {
-        "reject" => (instance.current_step.clone(), "rejected".to_string(), instance.assignees.clone()),
-        _ => {
-            match current_step_index {
-                Some(idx) if idx < steps.len() - 1 => {
-                    let next_step = &steps[idx + 1];
-                    (next_step.step_name.clone(), "running".to_string(), serde_json::to_value(next_step.assignees.clone()).unwrap())
-                }
-                Some(_) => ("end".to_string(), "completed".to_string(), serde_json::json!([])),
-                None => (instance.current_step.clone(), "completed".to_string(), serde_json::json!([])),
+        "reject" => (
+            instance.current_step.clone(),
+            "rejected".to_string(),
+            instance.assignees.clone(),
+        ),
+        _ => match current_step_index {
+            Some(idx) if idx < steps.len() - 1 => {
+                let next_step = &steps[idx + 1];
+                (
+                    next_step.step_name.clone(),
+                    "running".to_string(),
+                    serde_json::to_value(next_step.assignees.clone()).unwrap(),
+                )
             }
-        }
+            Some(_) => (
+                "end".to_string(),
+                "completed".to_string(),
+                serde_json::json!([]),
+            ),
+            None => (
+                instance.current_step.clone(),
+                "completed".to_string(),
+                serde_json::json!([]),
+            ),
+        },
     };
 
-    let mut history: Vec<serde_json::Value> = serde_json::from_value(instance.history).unwrap_or_default();
+    let mut history: Vec<serde_json::Value> =
+        serde_json::from_value(instance.history).unwrap_or_default();
     history.push(serde_json::json!({
         "step": instance.current_step,
         "action": action,

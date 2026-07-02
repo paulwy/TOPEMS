@@ -102,25 +102,25 @@ pub struct ConversionRule {
 
     /// 状态
     pub status: RuleStatus,
-    
+
     /// 优先级 (数字越小优先级越高)
     pub priority: i32,
-    
+
     /// 是否启用
     pub is_enabled: bool,
-    
+
     /// 最大重试次数
     pub max_retries: i32,
-    
+
     /// 重试间隔(秒)
     pub retry_interval_secs: i32,
-    
+
     /// 失败后是否停止
     pub stop_on_failure: bool,
-    
+
     /// 创建时间
     pub created_at: DateTime<Utc>,
-    
+
     /// 更新时间
     pub updated_at: DateTime<Utc>,
 }
@@ -138,7 +138,9 @@ impl ValueMap {
     /// 根据源值获取目标值
     pub fn get(&self, key: &str) -> &serde_json::Value {
         self.mappings.get(key).unwrap_or_else(|| {
-            self.default_value.as_ref().unwrap_or(&serde_json::Value::Null)
+            self.default_value
+                .as_ref()
+                .unwrap_or(&serde_json::Value::Null)
         })
     }
 }
@@ -216,7 +218,7 @@ pub struct ConversionExecution {
     pub target_record_id: Option<String>,
     pub source_data: Option<serde_json::Value>,
     pub target_data: Option<serde_json::Value>,
-    pub status: String,  // pending, running, completed, failed
+    pub status: String, // pending, running, completed, failed
     pub retry_count: i32,
     pub error_message: Option<String>,
     pub started_at: Option<DateTime<Utc>>,
@@ -459,7 +461,7 @@ pub async fn init_conversion_rules_table(pool: &PgPool) -> Result<(), sqlx::Erro
 /// 获取所有转换规则
 pub async fn list_conversion_rules(pool: &PgPool) -> Result<Vec<ConversionRule>, sqlx::Error> {
     sqlx::query_as::<_, ConversionRule>(
-        "SELECT * FROM conversion_rules ORDER BY priority ASC, created_at DESC"
+        "SELECT * FROM conversion_rules ORDER BY priority ASC, created_at DESC",
     )
     .fetch_all(pool)
     .await
@@ -467,12 +469,12 @@ pub async fn list_conversion_rules(pool: &PgPool) -> Result<Vec<ConversionRule>,
 
 /// 获取指定规则的转换执行记录
 pub async fn get_rule_executions(
-    pool: &PgPool, 
-    rule_id: Uuid, 
-    limit: i64
+    pool: &PgPool,
+    rule_id: Uuid,
+    limit: i64,
 ) -> Result<Vec<ConversionExecution>, sqlx::Error> {
     sqlx::query_as::<_, ConversionExecution>(
-        "SELECT * FROM conversion_executions WHERE rule_id = $1 ORDER BY created_at DESC LIMIT $2"
+        "SELECT * FROM conversion_executions WHERE rule_id = $1 ORDER BY created_at DESC LIMIT $2",
     )
     .bind(rule_id)
     .bind(limit)

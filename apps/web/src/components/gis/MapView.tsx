@@ -1386,7 +1386,7 @@ const MapView: React.FC<MapViewProps> = ({
               display: 'flex',
               alignItems: 'center',
               gap: 1,
-              backgroundColor: '#dbeafe',
+              backgroundColor: 'primary.100',
               color: 'primary.dark',
               '&:hover': {
                 backgroundColor: 'primary.light',
@@ -1523,7 +1523,7 @@ const MapView: React.FC<MapViewProps> = ({
               backgroundColor: show3DView ? 'primary.main' : 'white',
               color: show3DView ? 'white' : 'grey.700',
               '&:hover': {
-                backgroundColor: show3DView ? '#4338ca' : 'grey.50',
+                backgroundColor: show3DView ? 'secondary.700' : 'grey.50',
               },
               fontSize: '0.75rem',
             }}

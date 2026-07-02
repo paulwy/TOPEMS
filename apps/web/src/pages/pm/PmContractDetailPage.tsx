@@ -32,10 +32,10 @@ const STATUS_LABELS: Record<string, string> = {
 
 const STATUS_COLORS: Record<string, { bgcolor: string; color: string }> = {
   draft: { bgcolor: 'grey.100', color: 'grey.700' },
-  pending: { bgcolor: '#fef9c3', color: '#a16207' },
-  approved: { bgcolor: '#f3e8ff', color: '#6b21a8' },
+  pending: { bgcolor: 'warning.100', color: '#a16207' },
+  approved: { bgcolor: 'secondary.100', color: '#6b21a8' },
   active: { bgcolor: 'success.lighter', color: '#166534' },
-  completed: { bgcolor: '#dbeafe', color: '#1e40af' },
+  completed: { bgcolor: 'primary.100', color: 'primary.800' },
   cancelled: { bgcolor: 'grey.100', color: 'grey.800' },
 };
 
@@ -107,7 +107,7 @@ const PmContractDetailPage: React.FC = () => {
       return { bgcolor: 'success.lighter', color: '#166534' };
     }
     if (status === 'pending') {
-      return { bgcolor: '#fef9c3', color: '#a16207' };
+      return { bgcolor: 'warning.100', color: '#a16207' };
     }
     return { bgcolor: 'grey.100', color: 'grey.700' };
   };
@@ -117,7 +117,7 @@ const PmContractDetailPage: React.FC = () => {
       return { bgcolor: 'success.lighter', color: '#166534' };
     }
     if (status === 'pending') {
-      return { bgcolor: '#fef9c3', color: '#a16207' };
+      return { bgcolor: 'warning.100', color: '#a16207' };
     }
     if (status === 'overdue') {
       return { bgcolor: 'error.lighter', color: '#991b1b' };

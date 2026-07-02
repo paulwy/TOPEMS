@@ -2,7 +2,7 @@
 //!
 //! Implements the plugin interface protocol for integration with unified-core
 
-use axum::{extract::State, Json, routing::get, Router};
+use axum::{extract::State, routing::get, Json, Router};
 use serde::{Deserialize, Serialize};
 use std::env;
 
@@ -38,13 +38,15 @@ pub struct PluginHeartbeat {
 
 /// 获取插件信息
 pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
-    let runtime_url = env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8010".to_string());
+    let runtime_url =
+        env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8010".to_string());
 
     let info = PluginInfo {
         code: "erp".to_string(),
         name: "企业资源计划".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
-        description: "ERP 企业资源计划系统，包含资产管理、财务管理、凭证管理、字典管理等模块".to_string(),
+        description: "ERP 企业资源计划系统，包含资产管理、财务管理、凭证管理、字典管理等模块"
+            .to_string(),
         permissions: vec![
             // 资产管理
             PermissionDef {
@@ -177,13 +179,13 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
 
 /// 插件健康检查
 pub async fn plugin_health_check(State(state): State<ApiState>) -> Json<ApiResponse<String>> {
-    let db_healthy = sqlx::query("SELECT 1")
-        .fetch_one(&state.db)
-        .await
-        .is_ok();
+    let db_healthy = sqlx::query("SELECT 1").fetch_one(&state.db).await.is_ok();
 
     if db_healthy {
-        Json(ApiResponse::success("healthy".to_string(), "Plugin is healthy"))
+        Json(ApiResponse::success(
+            "healthy".to_string(),
+            "Plugin is healthy",
+        ))
     } else {
         Json(ApiResponse::error(500, "Database connection failed"))
     }
@@ -191,8 +193,10 @@ pub async fn plugin_health_check(State(state): State<ApiState>) -> Json<ApiRespo
 
 /// 注册插件到核心平台（启动时调用）
 pub async fn register_to_core(State(_state): State<ApiState>) -> Json<ApiResponse<()>> {
-    let core_url = std::env::var("CORE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
-    let runtime_url = env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8010".to_string());
+    let core_url =
+        std::env::var("CORE_URL").unwrap_or_else(|_| "http://localhost:8000".to_string());
+    let runtime_url =
+        env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8010".to_string());
 
     // 获取插件信息
     let info = PluginInfo {
@@ -213,13 +217,22 @@ pub async fn register_to_core(State(_state): State<ApiState>) -> Json<ApiRespons
                 tracing::info!("[ERP Plugin] Successfully registered to core");
                 Json(ApiResponse::success((), "Registered to core"))
             } else {
-                tracing::warn!("[ERP Plugin] Failed to register to core: {}", response.status());
-                Json(ApiResponse::error(500, &format!("Failed to register: {}", response.status())))
+                tracing::warn!(
+                    "[ERP Plugin] Failed to register to core: {}",
+                    response.status()
+                );
+                Json(ApiResponse::error(
+                    500,
+                    &format!("Failed to register: {}", response.status()),
+                ))
             }
         }
         Err(e) => {
             tracing::warn!("[ERP Plugin] Failed to register to core: {}", e);
-            Json(ApiResponse::error(500, &format!("Failed to connect to core: {}", e)))
+            Json(ApiResponse::error(
+                500,
+                &format!("Failed to connect to core: {}", e),
+            ))
         }
     }
 }
@@ -233,7 +246,8 @@ pub fn create_routes() -> Router<ApiState> {
 /// 启动时自动注册到统一核心
 pub async fn auto_register_to_core(core_url: Option<&str>) {
     let core_url = core_url.unwrap_or("http://localhost:8000");
-    let runtime_url = env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8010".to_string());
+    let runtime_url =
+        env::var("RUNTIME_URL").unwrap_or_else(|_| "http://localhost:8010".to_string());
 
     let info = PluginInfo {
         code: "erp".to_string(),
@@ -250,13 +264,23 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
     match client.post(&url).json(&info).send().await {
         Ok(response) => {
             if response.status().is_success() {
-                tracing::info!("[ERP Plugin] Successfully registered to core at {}", core_url);
+                tracing::info!(
+                    "[ERP Plugin] Successfully registered to core at {}",
+                    core_url
+                );
             } else {
-                tracing::warn!("[ERP Plugin] Failed to register to core: {}", response.status());
+                tracing::warn!(
+                    "[ERP Plugin] Failed to register to core: {}",
+                    response.status()
+                );
             }
         }
         Err(e) => {
-            tracing::warn!("[ERP Plugin] Failed to connect to core at {}: {}", core_url, e);
+            tracing::warn!(
+                "[ERP Plugin] Failed to connect to core at {}: {}",
+                core_url,
+                e
+            );
         }
     }
 }

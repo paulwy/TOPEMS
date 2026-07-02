@@ -1,5 +1,5 @@
-pub mod analysis;
 pub mod agent;
+pub mod analysis;
 pub mod audit;
 pub mod cache;
 pub mod db;
@@ -11,8 +11,8 @@ pub mod qa;
 pub mod recommendation;
 pub mod vector;
 
-pub use analysis::{AnalysisConfig, AnalysisService};
 pub use agent::{AgentRequest, AgentResponse, AgentService};
+pub use analysis::{AnalysisConfig, AnalysisService};
 pub use db::Database;
 pub use document::DocumentService;
 pub use multimodal::MultimodalService;

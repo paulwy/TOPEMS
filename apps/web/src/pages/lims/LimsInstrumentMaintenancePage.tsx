@@ -90,8 +90,8 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
     const statusMap: Record<string, { bg: string; color: string; label: string }> = {
       normal: { bg: 'success.lighter', color: 'success.dark', label: '正常' },
       正常: { bg: 'success.lighter', color: 'success.dark', label: '正常' },
-      calibration: { bg: '#fef9c3', color: '#ca8a04', label: '校准中' },
-      校准中: { bg: '#fef9c3', color: '#ca8a04', label: '校准中' },
+      calibration: { bg: 'warning.100', color: '#ca8a04', label: '校准中' },
+      校准中: { bg: 'warning.100', color: '#ca8a04', label: '校准中' },
       maintenance: { bg: 'error.lighter', color: 'error.dark', label: '维修中' },
       维修中: { bg: 'error.lighter', color: 'error.dark', label: '维修中' },
       disabled: { bg: 'grey.100', color: 'text.secondary', label: '停用' },
@@ -303,7 +303,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
         <Chip
           label={row.maintenance_type || '-'}
           size='small'
-          sx={{ backgroundColor: '#dbeafe', color: 'primary.dark' }}
+          sx={{ backgroundColor: 'primary.100', color: 'primary.dark' }}
         />
       ),
     },
@@ -626,7 +626,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                     style={{
                       fontSize: '1.5rem',
                       fontWeight: 700,
-                      color: '#15803d',
+                      color: 'success.700',
                     }}
                   >
                     {maintenanceRecords.length}
@@ -636,7 +636,7 @@ const LimsInstrumentMaintenancePage: React.FC = () => {
                   style={{
                     textAlign: 'center',
                     padding: 12,
-                    backgroundColor: '#dbeafe',
+                    backgroundColor: 'primary.100',
                     borderRadius: 8,
                   }}
                 >

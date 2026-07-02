@@ -5,8 +5,8 @@ pub mod analytics;
 pub mod chart_service;
 pub mod comparison_analysis;
 pub mod dashboard;
-pub mod datasource;
 pub mod data_drilldown;
+pub mod datasource;
 pub mod multidimensional_analysis;
 pub mod plugin;
 pub mod predictive_analysis;
@@ -116,22 +116,28 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         .execute(pool)
         .await
         .ok();
-    sqlx::query("ALTER TABLE analytics_datasources ADD COLUMN IF NOT EXISTS connection_string TEXT")
-        .execute(pool)
-        .await
-        .ok();
+    sqlx::query(
+        "ALTER TABLE analytics_datasources ADD COLUMN IF NOT EXISTS connection_string TEXT",
+    )
+    .execute(pool)
+    .await
+    .ok();
     sqlx::query("ALTER TABLE analytics_datasources ADD COLUMN IF NOT EXISTS last_sync TIMESTAMP")
         .execute(pool)
         .await
         .ok();
-    sqlx::query("ALTER TABLE analytics_datasources ADD COLUMN IF NOT EXISTS data_volume BIGINT DEFAULT 0")
-        .execute(pool)
-        .await
-        .ok();
-    sqlx::query("ALTER TABLE analytics_datasources ADD COLUMN IF NOT EXISTS sync_frequency VARCHAR(32)")
-        .execute(pool)
-        .await
-        .ok();
+    sqlx::query(
+        "ALTER TABLE analytics_datasources ADD COLUMN IF NOT EXISTS data_volume BIGINT DEFAULT 0",
+    )
+    .execute(pool)
+    .await
+    .ok();
+    sqlx::query(
+        "ALTER TABLE analytics_datasources ADD COLUMN IF NOT EXISTS sync_frequency VARCHAR(32)",
+    )
+    .execute(pool)
+    .await
+    .ok();
     sqlx::query("ALTER TABLE analytics_datasources ADD COLUMN IF NOT EXISTS description TEXT")
         .execute(pool)
         .await
@@ -146,18 +152,24 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         .execute(pool)
         .await
         .ok();
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_datasources_type ON analytics_datasources(source_type)")
-        .execute(pool)
-        .await
-        .ok();
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_datasources_status ON analytics_datasources(status)")
-        .execute(pool)
-        .await
-        .ok();
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_datasources_enabled ON analytics_datasources(is_enabled)")
-        .execute(pool)
-        .await
-        .ok();
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_datasources_type ON analytics_datasources(source_type)",
+    )
+    .execute(pool)
+    .await
+    .ok();
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_datasources_status ON analytics_datasources(status)",
+    )
+    .execute(pool)
+    .await
+    .ok();
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_datasources_enabled ON analytics_datasources(is_enabled)",
+    )
+    .execute(pool)
+    .await
+    .ok();
 
     // Create dashboard templates table
     sqlx::query(
@@ -196,18 +208,22 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .await?;
 
     // Create indexes
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_dashboards_owner ON analytics_dashboards(owner_id)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_dashboards_owner ON analytics_dashboards(owner_id)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_analytics_dashboards_is_public ON analytics_dashboards(is_public)")
         .execute(pool)
         .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_analytics_dashboards_created_at ON analytics_dashboards(created_at)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_widgets_dashboard ON analytics_widgets(dashboard_id)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_widgets_dashboard ON analytics_widgets(dashboard_id)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_templates_active ON analytics_dashboard_templates(is_active)")
         .execute(pool)
         .await?;
@@ -302,15 +318,19 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .await?;
 
     // Create indexes for new tables
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_reports_owner ON analytics_self_service_reports(owner_id)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_reports_owner ON analytics_self_service_reports(owner_id)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_reports_datasource ON analytics_self_service_reports(datasource_id)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_drilldown_owner ON analytics_drilldown_paths(owner_id)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_drilldown_owner ON analytics_drilldown_paths(owner_id)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_drilldown_datasource ON analytics_drilldown_paths(datasource_id)")
         .execute(pool)
         .await?;
@@ -323,12 +343,16 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_rlp_datasource ON analytics_row_level_permissions(datasource_id)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_rlp_table ON analytics_row_level_permissions(table_name)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_rlp_active ON analytics_row_level_permissions(is_active)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_rlp_table ON analytics_row_level_permissions(table_name)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_rlp_active ON analytics_row_level_permissions(is_active)",
+    )
+    .execute(pool)
+    .await?;
 
     // Create BI sync records table
     sqlx::query(
@@ -355,12 +379,16 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_sync_records_datasource ON analytics_sync_records(data_source_id)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_sync_records_status ON analytics_sync_records(status)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_sync_records_type ON analytics_sync_records(sync_type)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_sync_records_status ON analytics_sync_records(status)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_sync_records_type ON analytics_sync_records(sync_type)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_sync_records_started_at ON analytics_sync_records(started_at)")
         .execute(pool)
         .await?;
@@ -405,9 +433,11 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .await?;
 
     // Create comparison indexes
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_comparison_status ON analytics_comparison_analyses(status)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_comparison_status ON analytics_comparison_analyses(status)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_comparison_type ON analytics_comparison_analyses(comparison_type)")
         .execute(pool)
         .await?;

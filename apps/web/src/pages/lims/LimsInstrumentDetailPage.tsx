@@ -113,12 +113,12 @@ const LimsInstrumentDetailPage: React.FC = () => {
     const statusMap: Record<string, { bg: string; color: string }> = {
       正常: { bg: 'success.lighter', color: 'success.700' },
       校准中: { bg: 'primary.100', color: 'primary.dark' },
-      维修中: { bg: '#fef2f2', color: '#dc2626' },
+      维修中: { bg: '#fef2f2', color: 'error.700' },
       停用: { bg: 'grey.100', color: 'grey.600' },
       报废: { bg: 'grey.100', color: 'grey.600' },
       normal: { bg: 'success.lighter', color: 'success.700' },
       calibration: { bg: 'primary.100', color: 'primary.dark' },
-      maintenance: { bg: '#fef2f2', color: '#dc2626' },
+      maintenance: { bg: '#fef2f2', color: 'error.700' },
       disabled: { bg: 'grey.100', color: 'grey.600' },
     };
     const colors = statusMap[status] || { bg: 'grey.100', color: '#475569' };

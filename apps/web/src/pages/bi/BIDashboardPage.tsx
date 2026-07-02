@@ -620,7 +620,7 @@ const BIDashboardPage = () => {
                                 createDialog.selectedTemplateId === template.id
                                   ? '#EEF2FF'
                                   : 'transparent',
-                              '&:hover': { backgroundColor: '#F5F5F5' },
+                              '&:hover': { backgroundColor: 'action.hover' },
                             }}
                             onClick={() =>
                               setCreateDialog({

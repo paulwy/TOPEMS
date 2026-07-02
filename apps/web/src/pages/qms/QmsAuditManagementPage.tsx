@@ -53,14 +53,14 @@ const QmsAuditManagementPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const colors: Record<string, { bg: string; color: string }> = {
-      scheduled: { bg: '#dbeafe', color: 'primary.dark' },
-      planning: { bg: '#dbeafe', color: 'primary.dark' },
-      计划中: { bg: '#dbeafe', color: 'primary.dark' },
-      in_progress: { bg: '#fef9c3', color: '#ca8a04' },
-      进行中: { bg: '#fef9c3', color: '#ca8a04' },
+      scheduled: { bg: 'primary.100', color: 'primary.dark' },
+      planning: { bg: 'primary.100', color: 'primary.dark' },
+      计划中: { bg: 'primary.100', color: 'primary.dark' },
+      in_progress: { bg: 'warning.100', color: '#ca8a04' },
+      进行中: { bg: 'warning.100', color: '#ca8a04' },
       completed: { bg: 'success.lighter', color: 'success.dark' },
       已完成: { bg: 'success.lighter', color: 'success.dark' },
-      已计划: { bg: '#dbeafe', color: 'primary.dark' },
+      已计划: { bg: 'primary.100', color: 'primary.dark' },
     };
     const labels: Record<string, string> = {
       scheduled: '已计划',
@@ -147,7 +147,7 @@ const QmsAuditManagementPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: '#dbeafe',
+                bgcolor: 'primary.100',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -180,7 +180,7 @@ const QmsAuditManagementPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: '#f3e8ff',
+                bgcolor: 'secondary.100',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -271,6 +271,15 @@ const QmsAuditManagementPage: React.FC = () => {
             searchable={false}
             filters={[]}
             actions={[]}
+            mobileCardTitleKey='title'
+            mobileCardSubtitleKey='plan_no'
+            mobileCardDisplayFields={['audit_type', 'status', 'auditor', 'start_date']}
+            mobileCardFieldLabels={{
+              audit_type: '审核类型',
+              status: '状态',
+              auditor: '审核人',
+              start_date: '审核日期',
+            }}
           />
         </CardContent>
       </Card>

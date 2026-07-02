@@ -264,6 +264,38 @@ export interface ListPageTemplateProps<T = any> extends BoxProps {
     onClick?: () => void;
     gradient?: string;
   };
+
+  // ============ 移动端卡片视图 ============
+
+  /**
+   * 移动端卡片视图渲染函数
+   * 在小屏设备（< md 断点）下替代表格视图，渲染为卡片列表
+   * 若未提供，但提供了 mobileCardTitleKey，则使用默认卡片布局
+   */
+  mobileCardRender?: (row: T, index: number) => React.ReactNode;
+
+  /**
+   * 移动端卡片视图的标题字段名
+   * 用于卡片标题展示，配合默认卡片渲染使用
+   */
+  mobileCardTitleKey?: string;
+
+  /**
+   * 移动端卡片视图的副标题字段名
+   */
+  mobileCardSubtitleKey?: string;
+
+  /**
+   * 移动端卡片视图中需要展示的字段列表
+   * 默认展示所有可见列的字段
+   */
+  mobileCardDisplayFields?: string[];
+
+  /**
+   * 移动端卡片视图的字段标签映射
+   * 用于将字段名转换为可读标签
+   */
+  mobileCardFieldLabels?: Record<string, string>;
 }
 
 // ============ 工具函数 ============

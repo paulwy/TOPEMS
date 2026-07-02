@@ -182,7 +182,7 @@ const ProductionKanbanPage: React.FC = () => {
             </Card>
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <Card sx={{ bgcolor: '#e0e7ff', color: '#4338ca' }}>
+            <Card sx={{ bgcolor: '#e0e7ff', color: 'secondary.700' }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <TrendingUp size={24} />
@@ -198,7 +198,7 @@ const ProductionKanbanPage: React.FC = () => {
             </Card>
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2 }}>
-            <Card sx={{ bgcolor: '#fce7f3', color: '#be185d' }}>
+            <Card sx={{ bgcolor: 'secondary.100', color: '#be185d' }}>
               <CardContent>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <Gauge size={24} />

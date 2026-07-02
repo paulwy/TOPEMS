@@ -7,8 +7,7 @@ use topems_shared::ApiResponse;
 use crate::AppState;
 
 pub fn create_routes() -> Router<AppState> {
-    Router::new()
-        .route("/api/ehs/health", get(list_records).post(create_record))
+    Router::new().route("/api/ehs/health", get(list_records).post(create_record))
 }
 
 #[derive(Debug, Deserialize)]
@@ -33,7 +32,10 @@ pub async fn list_records(
     State(_state): State<crate::AppState>,
 ) -> Json<ApiResponse<Vec<HealthRecord>>> {
     tracing::info!("Listing health records");
-    Json(ApiResponse::success(Vec::<HealthRecord>::new(), "获取健康记录列表成功"))
+    Json(ApiResponse::success(
+        Vec::<HealthRecord>::new(),
+        "获取健康记录列表成功",
+    ))
 }
 
 pub async fn create_record(
@@ -44,7 +46,10 @@ pub async fn create_record(
     Json(ApiResponse::success(
         HealthRecord {
             id: uuid::Uuid::new_v4().to_string(),
-            record_no: format!("HLT-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+            record_no: format!(
+                "HLT-{}",
+                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+            ),
             employee_name: Some("员工A".to_string()),
             check_type: Some("年度体检".to_string()),
             check_date: Some(chrono::Utc::now().to_rfc3339()),

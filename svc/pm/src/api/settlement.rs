@@ -68,10 +68,11 @@ async fn get_settlement(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Settlement>> {
-    let settlement = sqlx::query_as::<_, Settlement>("SELECT * FROM plugin_pm.settlements WHERE id = $1")
-        .bind(id)
-        .fetch_one(&pool)
-        .await;
+    let settlement =
+        sqlx::query_as::<_, Settlement>("SELECT * FROM plugin_pm.settlements WHERE id = $1")
+            .bind(id)
+            .fetch_one(&pool)
+            .await;
 
     match settlement {
         Ok(s) => Json(ApiResponse::success(s, "获取决算详情成功")),

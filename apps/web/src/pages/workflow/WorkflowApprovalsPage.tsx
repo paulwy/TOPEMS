@@ -199,10 +199,10 @@ const STATUS_COLORS: Record<ApprovalStatus, 'warning' | 'success' | 'error'> = {
 };
 
 const WORKFLOW_TYPE_COLORS: Record<string, string> = {
-  采购管理: '#3b82f6',
-  人事管理: '#10b981',
-  财务管理: '#f59e0b',
-  法务管理: '#8b5cf6',
+  采购管理: 'primary.main',
+  人事管理: 'success.main',
+  财务管理: 'warning.main',
+  法务管理: 'secondary.main',
   IT管理: '#06b6d4',
 };
 
@@ -460,8 +460,8 @@ export const WorkflowApprovalsPage: React.FC = () => {
             size='small'
             label={row.workflowType}
             sx={{
-              bgcolor: `${WORKFLOW_TYPE_COLORS[row.workflowType] || '#6b7280'}15`,
-              color: WORKFLOW_TYPE_COLORS[row.workflowType] || '#6b7280',
+              bgcolor: `${WORKFLOW_TYPE_COLORS[row.workflowType] || 'grey.500'}15`,
+              color: WORKFLOW_TYPE_COLORS[row.workflowType] || 'grey.500',
               border: 'none',
             }}
             variant='outlined'

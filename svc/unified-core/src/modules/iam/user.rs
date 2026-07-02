@@ -1,10 +1,13 @@
 //! User submodule - User management handlers
 
-use axum::{extract::{Path, State}, Json};
 use crate::AppState;
-use topems_shared::Claims;
 use axum::Extension;
+use axum::{
+    extract::{Path, State},
+    Json,
+};
 use serde::Serialize;
+use topems_shared::Claims;
 
 #[derive(Debug, Clone, Serialize)]
 struct UserResponse {
@@ -20,9 +23,7 @@ struct UserResponse {
     created_at: Option<String>,
 }
 
-pub async fn list_users(
-    State(state): State<AppState>,
-) -> Json<serde_json::Value> {
+pub async fn list_users(State(state): State<AppState>) -> Json<serde_json::Value> {
     tracing::info!("IAM user list_users called");
 
     let result = sqlx::query_as::<_, UserRow>(
@@ -33,35 +34,42 @@ pub async fn list_users(
 
     match result {
         Ok(users) => {
-            let user_responses: Vec<UserResponse> = users.into_iter().map(|u| {
-                let roles = if u.is_superuser {
-                    vec!["admin".to_string(), "user".to_string()]
-                } else {
-                    vec!["user".to_string()]
-                };
+            let user_responses: Vec<UserResponse> = users
+                .into_iter()
+                .map(|u| {
+                    let roles = if u.is_superuser {
+                        vec!["admin".to_string(), "user".to_string()]
+                    } else {
+                        vec!["user".to_string()]
+                    };
 
-                let permissions = if u.is_superuser {
-                    topems_shared::auth::get_permissions()
-                        .iter()
-                        .map(|p| p.id.clone())
-                        .collect()
-                } else {
-                    vec!["iam:users_read".to_string()]
-                };
+                    let permissions = if u.is_superuser {
+                        topems_shared::auth::get_permissions()
+                            .iter()
+                            .map(|p| p.id.clone())
+                            .collect()
+                    } else {
+                        vec!["iam:users_read".to_string()]
+                    };
 
-                UserResponse {
-                    id: u.id.to_string(),
-                    username: u.username,
-                    email: u.email,
-                    full_name: u.full_name,
-                    role: if u.is_superuser { "admin".to_string() } else { "user".to_string() },
-                    roles,
-                    permissions,
-                    is_active: u.status == "active",
-                    is_superuser: u.is_superuser,
-                    created_at: u.created_at.map(|t| t.to_string()),
-                }
-            }).collect();
+                    UserResponse {
+                        id: u.id.to_string(),
+                        username: u.username,
+                        email: u.email,
+                        full_name: u.full_name,
+                        role: if u.is_superuser {
+                            "admin".to_string()
+                        } else {
+                            "user".to_string()
+                        },
+                        roles,
+                        permissions,
+                        is_active: u.status == "active",
+                        is_superuser: u.is_superuser,
+                        created_at: u.created_at.map(|t| t.to_string()),
+                    }
+                })
+                .collect();
 
             Json(serde_json::json!({
                 "success": true,
@@ -113,7 +121,11 @@ pub async fn update_user(
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("IAM user update_user called with id: {} and payload: {:?}", id, payload);
+    tracing::info!(
+        "IAM user update_user called with id: {} and payload: {:?}",
+        id,
+        payload
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "update_user success",
@@ -162,7 +174,11 @@ pub async fn change_password(
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("IAM user change_password called with id: {} and payload: {:?}", id, payload);
+    tracing::info!(
+        "IAM user change_password called with id: {} and payload: {:?}",
+        id,
+        payload
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "change_password success",
@@ -175,7 +191,7 @@ pub async fn get_preferences(
     Extension(claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
     tracing::info!("IAM user get_preferences called for user: {}", claims.sub);
-    
+
     // 默认值
     let mut notification_settings = serde_json::json!({
         "email_notifications": true,
@@ -189,7 +205,7 @@ pub async fn get_preferences(
     ]);
     let mut language = "zh-CN".to_string();
     let mut timezone = "Asia/Shanghai".to_string();
-    
+
     // 查询用户的通知设置
     let notification_row: Option<PreferenceRow> = sqlx::query_as(
         "SELECT preference_value FROM portal.user_preferences WHERE user_id = $1 AND preference_key = 'notification_settings'"
@@ -201,13 +217,13 @@ pub async fn get_preferences(
         tracing::warn!("Failed to query notification_settings: {}", e);
         None
     });
-    
+
     if let Some(row) = notification_row {
         if let Ok(value) = serde_json::from_value::<serde_json::Value>(row.preference_value) {
             notification_settings = value;
         }
     }
-    
+
     // 查询用户的快捷方式
     let shortcuts_row: Option<PreferenceRow> = sqlx::query_as(
         "SELECT preference_value FROM portal.user_preferences WHERE user_id = $1 AND preference_key = 'shortcuts'"
@@ -219,13 +235,13 @@ pub async fn get_preferences(
         tracing::warn!("Failed to query shortcuts: {}", e);
         None
     });
-    
+
     if let Some(row) = shortcuts_row {
         if let Ok(value) = serde_json::from_value::<serde_json::Value>(row.preference_value) {
             shortcuts = value;
         }
     }
-    
+
     // 查询用户的语言设置
     let language_row: Option<PreferenceRow> = sqlx::query_as(
         "SELECT preference_value FROM portal.user_preferences WHERE user_id = $1 AND preference_key = 'language'"
@@ -237,13 +253,13 @@ pub async fn get_preferences(
         tracing::warn!("Failed to query language: {}", e);
         None
     });
-    
+
     if let Some(row) = language_row {
         if let Ok(value) = serde_json::from_value::<String>(row.preference_value) {
             language = value;
         }
     }
-    
+
     // 查询用户的时区设置
     let timezone_row: Option<PreferenceRow> = sqlx::query_as(
         "SELECT preference_value FROM portal.user_preferences WHERE user_id = $1 AND preference_key = 'timezone'"
@@ -255,13 +271,13 @@ pub async fn get_preferences(
         tracing::warn!("Failed to query timezone: {}", e);
         None
     });
-    
+
     if let Some(row) = timezone_row {
         if let Ok(value) = serde_json::from_value::<String>(row.preference_value) {
             timezone = value;
         }
     }
-    
+
     Json(serde_json::json!({
         "success": true,
         "message": "获取用户偏好设置成功",
@@ -279,8 +295,12 @@ pub async fn update_preferences(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("IAM user update_preferences called for user: {} with payload: {:?}", claims.sub, payload);
-    
+    tracing::info!(
+        "IAM user update_preferences called for user: {} with payload: {:?}",
+        claims.sub,
+        payload
+    );
+
     // 保存快捷方式
     if let Some(shortcuts) = payload.get("shortcuts") {
         let result = sqlx::query(
@@ -295,7 +315,7 @@ pub async fn update_preferences(
         .bind(shortcuts)
         .execute(&state.pool)
         .await;
-        
+
         if let Err(e) = result {
             tracing::error!("Failed to save shortcuts: {}", e);
             return Json(serde_json::json!({
@@ -306,7 +326,7 @@ pub async fn update_preferences(
             }));
         }
     }
-    
+
     // 保存通知设置
     if let Some(notification_settings) = payload.get("notification_settings") {
         let result = sqlx::query(
@@ -321,7 +341,7 @@ pub async fn update_preferences(
         .bind(notification_settings)
         .execute(&state.pool)
         .await;
-        
+
         if let Err(e) = result {
             tracing::error!("Failed to save notification_settings: {}", e);
             return Json(serde_json::json!({
@@ -332,7 +352,7 @@ pub async fn update_preferences(
             }));
         }
     }
-    
+
     // 保存语言设置
     if let Some(language) = payload.get("language") {
         let result = sqlx::query(
@@ -347,7 +367,7 @@ pub async fn update_preferences(
         .bind(language)
         .execute(&state.pool)
         .await;
-        
+
         if let Err(e) = result {
             tracing::error!("Failed to save language: {}", e);
             return Json(serde_json::json!({
@@ -358,7 +378,7 @@ pub async fn update_preferences(
             }));
         }
     }
-    
+
     // 保存时区设置
     if let Some(timezone) = payload.get("timezone") {
         let result = sqlx::query(
@@ -373,7 +393,7 @@ pub async fn update_preferences(
         .bind(timezone)
         .execute(&state.pool)
         .await;
-        
+
         if let Err(e) = result {
             tracing::error!("Failed to save timezone: {}", e);
             return Json(serde_json::json!({
@@ -384,8 +404,11 @@ pub async fn update_preferences(
             }));
         }
     }
-    
-    tracing::info!("User preferences updated successfully for user: {}", claims.sub);
+
+    tracing::info!(
+        "User preferences updated successfully for user: {}",
+        claims.sub
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "保存用户偏好设置成功",
@@ -398,7 +421,7 @@ pub async fn get_current_user(
     Extension(claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
     tracing::info!("IAM user get_current_user called for user: {}", claims.sub);
-    
+
     let user_id = match sqlx::types::Uuid::parse_str(&claims.sub) {
         Ok(id) => id,
         Err(e) => {
@@ -411,7 +434,7 @@ pub async fn get_current_user(
             }));
         }
     };
-    
+
     let user: Option<UserRow> = sqlx::query_as(
         "SELECT id, username, email, full_name, status, is_superuser, created_at FROM core_users WHERE id = $1",
     )
@@ -453,7 +476,11 @@ pub async fn get_current_user(
                 username: u.username,
                 email: u.email,
                 full_name: u.full_name,
-                role: if u.is_superuser { "admin".to_string() } else { "user".to_string() },
+                role: if u.is_superuser {
+                    "admin".to_string()
+                } else {
+                    "user".to_string()
+                },
                 roles,
                 permissions,
                 is_active: u.status == "active",

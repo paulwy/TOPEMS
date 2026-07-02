@@ -108,12 +108,12 @@ const CRMSalesFunnelPage: React.FC = () => {
         {
           name: `${stageLabelMap[stage.stage] || stage.stage}-商机数`,
           value: stage.count,
-          color: '#3b82f6',
+          color: 'primary.main',
         },
         {
           name: `${stageLabelMap[stage.stage] || stage.stage}-总价值(万)`,
           value: Math.round(Number(stage.total_value) / 10000),
-          color: '#10b981',
+          color: 'success.main',
         },
       ]),
     },
