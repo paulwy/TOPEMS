@@ -31,7 +31,9 @@ pub fn create_routes() -> Router<ApiState> {
         )
         .route(
             "/api/scm/evaluations/{id}",
-            get(get_evaluation).put(update_evaluation).delete(delete_evaluation),
+            get(get_evaluation)
+                .put(update_evaluation)
+                .delete(delete_evaluation),
         )
 }
 
@@ -40,7 +42,13 @@ async fn list_evaluations(
     Extension(claims): Extension<Claims>,
     Query(params): Query<SupplierEvaluationQueryParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    match check_permission(&state.db, &claims, &ModulePermission::SupplierEvaluationRead).await {
+    match check_permission(
+        &state.db,
+        &claims,
+        &ModulePermission::SupplierEvaluationRead,
+    )
+    .await
+    {
         Ok(_) => {}
         Err(e) => return e,
     }
@@ -100,7 +108,13 @@ async fn create_evaluation(
     headers: HeaderMap,
     Json(req): Json<CreateSupplierEvaluationRequest>,
 ) -> Json<ApiResponse<SupplierEvaluation>> {
-    match check_permission(&state.db, &claims, &ModulePermission::SupplierEvaluationWrite).await {
+    match check_permission(
+        &state.db,
+        &claims,
+        &ModulePermission::SupplierEvaluationWrite,
+    )
+    .await
+    {
         Ok(_) => {}
         Err(e) => return e,
     }
@@ -179,7 +193,13 @@ async fn get_evaluation(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<SupplierEvaluation>> {
-    match check_permission(&state.db, &claims, &ModulePermission::SupplierEvaluationRead).await {
+    match check_permission(
+        &state.db,
+        &claims,
+        &ModulePermission::SupplierEvaluationRead,
+    )
+    .await
+    {
         Ok(_) => {}
         Err(e) => return e,
     }
@@ -210,7 +230,13 @@ async fn update_evaluation(
     headers: HeaderMap,
     Json(req): Json<UpdateSupplierEvaluationRequest>,
 ) -> Json<ApiResponse<SupplierEvaluation>> {
-    match check_permission(&state.db, &claims, &ModulePermission::SupplierEvaluationWrite).await {
+    match check_permission(
+        &state.db,
+        &claims,
+        &ModulePermission::SupplierEvaluationWrite,
+    )
+    .await
+    {
         Ok(_) => {}
         Err(e) => return e,
     }
@@ -308,7 +334,13 @@ async fn delete_evaluation(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    match check_permission(&state.db, &claims, &ModulePermission::SupplierEvaluationWrite).await {
+    match check_permission(
+        &state.db,
+        &claims,
+        &ModulePermission::SupplierEvaluationWrite,
+    )
+    .await
+    {
         Ok(_) => {}
         Err(e) => return e,
     }

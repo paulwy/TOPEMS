@@ -379,7 +379,7 @@ const PmResourcePage: React.FC = () => {
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                <Box sx={{ p: 1.5, bgcolor: '#dbeafe', borderRadius: '50%' }}>
+                <Box sx={{ p: 1.5, bgcolor: 'primary.100', borderRadius: '50%' }}>
                   <Package
                     size={24}
                     color='primary.dark'
@@ -464,6 +464,15 @@ const PmResourcePage: React.FC = () => {
             </Box>
           </Box>
         }
+        mobileCardTitleKey='resource_service'
+        mobileCardSubtitleKey='resource_id'
+        mobileCardDisplayFields={['resource_type', 'role', 'allocation_percent', 'status']}
+        mobileCardFieldLabels={{
+          resource_type: '资源类型',
+          role: '角色',
+          allocation_percent: '分配比例',
+          status: '状态',
+        }}
       />
     </PageContainer>
   );

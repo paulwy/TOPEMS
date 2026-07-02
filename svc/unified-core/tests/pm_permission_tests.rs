@@ -26,12 +26,21 @@ async fn login(username: &str, password: &str) -> Result<String, String> {
         .await
         .map_err(|e| format!("请求失败: {}", e))?;
 
-    let body: Value = response.json().await.map_err(|e| format!("解析响应失败: {}", e))?;
+    let body: Value = response
+        .json()
+        .await
+        .map_err(|e| format!("解析响应失败: {}", e))?;
 
     if body["success"].as_bool().unwrap_or(false) {
-        Ok(body["data"]["access_token"].as_str().unwrap_or("").to_string())
+        Ok(body["data"]["access_token"]
+            .as_str()
+            .unwrap_or("")
+            .to_string())
     } else {
-        Err(format!("登录失败: {}", body["message"].as_str().unwrap_or("未知错误")))
+        Err(format!(
+            "登录失败: {}",
+            body["message"].as_str().unwrap_or("未知错误")
+        ))
     }
 }
 
@@ -52,7 +61,9 @@ async fn auth_request(
         _ => return Err(format!("不支持的 HTTP 方法: {}", method)),
     };
 
-    let request = request.bearer_auth(token).header("Content-Type", "application/json");
+    let request = request
+        .bearer_auth(token)
+        .header("Content-Type", "application/json");
 
     let response = match body {
         Some(b) => request.json(&b),
@@ -63,7 +74,10 @@ async fn auth_request(
     .map_err(|e| format!("请求失败: {}", e))?;
 
     let status = response.status().as_u16();
-    let body: Value = response.json().await.map_err(|e| format!("解析响应失败: {}", e))?;
+    let body: Value = response
+        .json()
+        .await
+        .map_err(|e| format!("解析响应失败: {}", e))?;
 
     Ok((status, body))
 }
@@ -112,7 +126,14 @@ async fn test_pm_002_create_project() {
         "members": []
     });
 
-    let result = auth_request(&client, &token, "POST", "/api/pm/projects", Some(new_project)).await;
+    let result = auth_request(
+        &client,
+        &token,
+        "POST",
+        "/api/pm/projects",
+        Some(new_project),
+    )
+    .await;
 
     match result {
         Ok((status, _)) => {
@@ -138,7 +159,8 @@ async fn test_pm_003_update_project() {
 
     match result {
         Ok((_, body)) => {
-            let projects = body["data"]["projects"].as_array()
+            let projects = body["data"]["projects"]
+                .as_array()
                 .or_else(|| body["data"].as_array());
 
             if let Some(proj_list) = projects {
@@ -184,12 +206,16 @@ async fn test_pm_004_delete_project() {
 
     match result {
         Ok((_, body)) => {
-            let projects = body["data"]["projects"].as_array()
+            let projects = body["data"]["projects"]
+                .as_array()
                 .or_else(|| body["data"].as_array());
 
             if let Some(proj_list) = projects {
                 let test_proj = proj_list.iter().find(|p| {
-                    p["name"].as_str().map(|s| s.starts_with("测试")).unwrap_or(false)
+                    p["name"]
+                        .as_str()
+                        .map(|s| s.starts_with("测试"))
+                        .unwrap_or(false)
                 });
 
                 if let Some(proj) = test_proj {
@@ -205,7 +231,12 @@ async fn test_pm_004_delete_project() {
 
                         match delete_result {
                             Ok((status, _)) => {
-                                assert!(status == 200 || status == 204 || status == 403 || status == 404);
+                                assert!(
+                                    status == 200
+                                        || status == 204
+                                        || status == 403
+                                        || status == 404
+                                );
                                 tracing::info!("PM-004 测试通过: 删除项目功能正常");
                                 return;
                             }
@@ -234,7 +265,8 @@ async fn test_pm_005_view_project_detail() {
 
     match result {
         Ok((_, body)) => {
-            let projects = body["data"]["projects"].as_array()
+            let projects = body["data"]["projects"]
+                .as_array()
                 .or_else(|| body["data"].as_array());
 
             if let Some(proj_list) = projects {
@@ -319,14 +351,18 @@ async fn test_pm_007_add_member() {
 
     match (proj_result, user_result) {
         (Ok((_, proj_body)), Ok((_, user_body))) => {
-            let projects = proj_body["data"]["projects"].as_array()
+            let projects = proj_body["data"]["projects"]
+                .as_array()
                 .or_else(|| proj_body["data"].as_array());
-            let users = user_body["data"]["users"].as_array()
+            let users = user_body["data"]["users"]
+                .as_array()
                 .or_else(|| user_body["data"].as_array());
 
             if let (Some(proj_list), Some(user_list)) = (projects, users) {
                 if let (Some(proj), Some(user)) = (proj_list.first(), user_list.first()) {
-                    if let (Some(proj_id), Some(user_id)) = (proj["id"].as_str(), user["id"].as_str()) {
+                    if let (Some(proj_id), Some(user_id)) =
+                        (proj["id"].as_str(), user["id"].as_str())
+                    {
                         let add_result = auth_request(
                             &client,
                             &token,
@@ -338,7 +374,13 @@ async fn test_pm_007_add_member() {
 
                         match add_result {
                             Ok((status, _)) => {
-                                assert!(status == 200 || status == 201 || status == 403 || status == 404 || status == 409);
+                                assert!(
+                                    status == 200
+                                        || status == 201
+                                        || status == 403
+                                        || status == 404
+                                        || status == 409
+                                );
                                 tracing::info!("PM-007 测试通过: 添加项目成员功能正常");
                                 return;
                             }
@@ -367,7 +409,8 @@ async fn test_pm_008_remove_member() {
 
     match result {
         Ok((_, body)) => {
-            let projects = body["data"]["projects"].as_array()
+            let projects = body["data"]["projects"]
+                .as_array()
                 .or_else(|| body["data"].as_array());
 
             if let Some(proj_list) = projects {
@@ -385,7 +428,8 @@ async fn test_pm_008_remove_member() {
 
                         match members_result {
                             Ok((_, members_body)) => {
-                                let members = members_body["data"]["members"].as_array()
+                                let members = members_body["data"]["members"]
+                                    .as_array()
                                     .or_else(|| members_body["data"].as_array());
 
                                 if let Some(member_list) = members {
@@ -395,15 +439,25 @@ async fn test_pm_008_remove_member() {
                                                 &client,
                                                 &token,
                                                 "DELETE",
-                                                &format!("/api/pm/projects/{}/members/{}", proj_id, user_id),
+                                                &format!(
+                                                    "/api/pm/projects/{}/members/{}",
+                                                    proj_id, user_id
+                                                ),
                                                 None,
                                             )
                                             .await;
 
                                             match remove_result {
                                                 Ok((status, _)) => {
-                                                    assert!(status == 200 || status == 204 || status == 403 || status == 404);
-                                                    tracing::info!("PM-008 测试通过: 移除项目成员功能正常");
+                                                    assert!(
+                                                        status == 200
+                                                            || status == 204
+                                                            || status == 403
+                                                            || status == 404
+                                                    );
+                                                    tracing::info!(
+                                                        "PM-008 测试通过: 移除项目成员功能正常"
+                                                    );
                                                     return;
                                                 }
                                                 Err(_) => {}
@@ -437,7 +491,8 @@ async fn test_pm_009_create_task() {
 
     match result {
         Ok((_, body)) => {
-            let projects = body["data"]["projects"].as_array()
+            let projects = body["data"]["projects"]
+                .as_array()
                 .or_else(|| body["data"].as_array());
 
             if let Some(proj_list) = projects {
@@ -455,18 +510,18 @@ async fn test_pm_009_create_task() {
                             "status": "todo"
                         });
 
-                        let create_result = auth_request(
-                            &client,
-                            &token,
-                            "POST",
-                            "/api/pm/tasks",
-                            Some(new_task),
-                        )
-                        .await;
+                        let create_result =
+                            auth_request(&client, &token, "POST", "/api/pm/tasks", Some(new_task))
+                                .await;
 
                         match create_result {
                             Ok((status, _)) => {
-                                assert!(status == 200 || status == 201 || status == 403 || status == 404);
+                                assert!(
+                                    status == 200
+                                        || status == 201
+                                        || status == 403
+                                        || status == 404
+                                );
                                 tracing::info!("PM-009 测试通过: 创建任务功能正常");
                                 return;
                             }
@@ -495,18 +550,21 @@ async fn test_pm_010_assign_task() {
 
     match result {
         Ok((_, body)) => {
-            let tasks = body["data"]["tasks"].as_array()
+            let tasks = body["data"]["tasks"]
+                .as_array()
                 .or_else(|| body["data"].as_array());
 
             if let Some(task_list) = tasks {
                 if let Some(task) = task_list.first() {
                     if let Some(task_id) = task["id"].as_str() {
                         // 获取用户列表
-                        let user_result = auth_request(&client, &token, "GET", "/api/iam/users", None).await;
+                        let user_result =
+                            auth_request(&client, &token, "GET", "/api/iam/users", None).await;
 
                         match user_result {
                             Ok((_, user_body)) => {
-                                let users = user_body["data"]["users"].as_array()
+                                let users = user_body["data"]["users"]
+                                    .as_array()
                                     .or_else(|| user_body["data"].as_array());
 
                                 if let Some(user_list) = users {
@@ -523,8 +581,14 @@ async fn test_pm_010_assign_task() {
 
                                             match assign_result {
                                                 Ok((status, _)) => {
-                                                    assert!(status == 200 || status == 403 || status == 404);
-                                                    tracing::info!("PM-010 测试通过: 分配任务功能正常");
+                                                    assert!(
+                                                        status == 200
+                                                            || status == 403
+                                                            || status == 404
+                                                    );
+                                                    tracing::info!(
+                                                        "PM-010 测试通过: 分配任务功能正常"
+                                                    );
                                                     return;
                                                 }
                                                 Err(_) => {}
@@ -558,7 +622,8 @@ async fn test_pm_011_update_task_status() {
 
     match result {
         Ok((_, body)) => {
-            let tasks = body["data"]["tasks"].as_array()
+            let tasks = body["data"]["tasks"]
+                .as_array()
                 .or_else(|| body["data"].as_array());
 
             if let Some(task_list) = tasks {
@@ -604,12 +669,16 @@ async fn test_pm_012_delete_task() {
 
     match result {
         Ok((_, body)) => {
-            let tasks = body["data"]["tasks"].as_array()
+            let tasks = body["data"]["tasks"]
+                .as_array()
                 .or_else(|| body["data"].as_array());
 
             if let Some(task_list) = tasks {
                 let test_task = task_list.iter().find(|t| {
-                    t["title"].as_str().map(|s| s.starts_with("测试")).unwrap_or(false)
+                    t["title"]
+                        .as_str()
+                        .map(|s| s.starts_with("测试"))
+                        .unwrap_or(false)
                 });
 
                 if let Some(task) = test_task {
@@ -625,7 +694,12 @@ async fn test_pm_012_delete_task() {
 
                         match delete_result {
                             Ok((status, _)) => {
-                                assert!(status == 200 || status == 204 || status == 403 || status == 404);
+                                assert!(
+                                    status == 200
+                                        || status == 204
+                                        || status == 403
+                                        || status == 404
+                                );
                                 tracing::info!("PM-012 测试通过: 删除任务功能正常");
                                 return;
                             }

@@ -34,10 +34,10 @@ interface Budget {
 }
 
 const STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
-  active: { label: '执行中', bg: 'success.lighter', color: '#15803d' },
-  pending: { label: '待审批', bg: 'warning.light', color: '#b45309' },
-  completed: { label: '已完成', bg: '#dbeafe', color: '#1d4ed8' },
-  frozen: { label: '冻结', bg: 'grey.200', color: '#475569' },
+  active: { label: '执行中', bg: 'success.lighter', color: 'success.700' },
+  pending: { label: '待审批', bg: 'warning.light', color: 'warning.700' },
+  completed: { label: '已完成', bg: 'primary.100', color: 'primary.700' },
+  frozen: { label: '冻结', bg: 'grey.200', color: 'grey.600' },
 };
 
 const mockBudgets: Budget[] = [

@@ -1,7 +1,7 @@
 use axum::{
+    extract::ws::{Message, WebSocket},
     extract::{Query, State, WebSocketUpgrade},
     response::IntoResponse,
-    extract::ws::{Message, WebSocket},
 };
 use futures_util::{stream::SplitSink, SinkExt, StreamExt};
 use serde::{Deserialize, Serialize};
@@ -11,7 +11,7 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::sync::RwLock;
 use tokio::time::interval;
-use tracing::{info, warn, error};
+use tracing::{error, info, warn};
 
 /// WebSocket 连接状态
 pub(crate) struct WsConnection {
@@ -32,7 +32,10 @@ impl WsConnection {
     }
 
     fn update_pong_time(&self) {
-        self.last_pong.store(chrono::Utc::now().timestamp(), std::sync::atomic::Ordering::Relaxed);
+        self.last_pong.store(
+            chrono::Utc::now().timestamp(),
+            std::sync::atomic::Ordering::Relaxed,
+        );
     }
 
     fn seconds_since_pong(&self) -> i64 {
@@ -58,14 +61,22 @@ impl WsState {
         // 移除旧连接（如果存在）
         connections.remove(&user_id);
         connections.insert(user_id.clone(), connection);
-        info!("User {} connected, total connections: {}", user_id, connections.len());
+        info!(
+            "User {} connected, total connections: {}",
+            user_id,
+            connections.len()
+        );
     }
 
     /// 移除连接
     pub async fn remove_connection(&self, user_id: &str) {
         let mut connections = self.connections.write().await;
         connections.remove(user_id);
-        info!("User {} disconnected, total connections: {}", user_id, connections.len());
+        info!(
+            "User {} disconnected, total connections: {}",
+            user_id,
+            connections.len()
+        );
     }
 
     /// 获取所有已连接用户数
@@ -100,7 +111,7 @@ impl WsState {
     pub async fn cleanup_timeout_connections(&self, timeout_secs: i64) -> Vec<String> {
         let mut connections = self.connections.write().await;
         let mut removed_users = Vec::new();
-        
+
         let timed_out: Vec<String> = connections
             .iter()
             .filter(|(_, conn)| conn.seconds_since_pong() > timeout_secs)
@@ -115,7 +126,7 @@ impl WsState {
         if !removed_users.is_empty() {
             info!("Cleaned up {} timeout connections", removed_users.len());
         }
-        
+
         removed_users
     }
 }
@@ -140,17 +151,16 @@ struct HeartbeatMessage {
     timestamp: i64,
 }
 
-async fn handle_socket(
-    socket: WebSocket,
-    state: Arc<WsState>,
-    auth_token: Option<String>,
-) {
-    info!("New WebSocket connection, auth token present: {}", auth_token.is_some());
+async fn handle_socket(socket: WebSocket, state: Arc<WsState>, auth_token: Option<String>) {
+    info!(
+        "New WebSocket connection, auth token present: {}",
+        auth_token.is_some()
+    );
 
     let mut user_id: Option<String> = None;
     let (tx, mut rx) = socket.split();
     let tx_shared = Arc::new(RwLock::new(tx));
-    
+
     // 心跳跟踪
     let connection_for_heartbeat = tx_shared.clone();
 
@@ -159,14 +169,16 @@ async fn handle_socket(
         let mut ticker = interval(Duration::from_secs(30));
         loop {
             ticker.tick().await;
-            
+
             let msg = Message::Text(
                 json!(HeartbeatMessage {
                     msg_type: "heartbeat",
                     timestamp: chrono::Utc::now().timestamp(),
-                }).to_string().into()
+                })
+                .to_string()
+                .into(),
             );
-            
+
             let mut sender = connection_for_heartbeat.write().await;
             if sender.send(msg).await.is_err() {
                 warn!("Heartbeat failed, connection may be dead");
@@ -190,7 +202,10 @@ async fn handle_socket(
                                 if let Some(id) = p.get("user_id").and_then(|v| v.as_str()) {
                                     user_id = Some(id.to_string());
                                     // Create connection with shared sender
-                                    let conn = Arc::new(WsConnection::new(id.to_string(), tx_shared.clone()));
+                                    let conn = Arc::new(WsConnection::new(
+                                        id.to_string(),
+                                        tx_shared.clone(),
+                                    ));
                                     state.add_connection(id.to_string(), conn).await;
                                     info!("User {} subscribed to notifications", id);
                                 }
@@ -205,10 +220,10 @@ async fn handle_socket(
                             }
                         }
                         Some("ping") => {
-                            {
-                                let mut tx = tx_shared.write().await;
-                                let _ = tx.send(Message::Text(json!({"type": "pong"}).to_string().into())).await;
-                            }
+                            let mut tx = tx_shared.write().await;
+                            let _ = tx
+                                .send(Message::Text(json!({"type": "pong"}).to_string().into()))
+                                .await;
                         }
                         Some("unsubscribe") => {
                             if let Some(id) = &user_id {
@@ -230,10 +245,8 @@ async fn handle_socket(
                 break;
             }
             Ok(Message::Ping(data)) => {
-                {
-                    let mut tx = tx_shared.write().await;
-                    let _ = tx.send(Message::Pong(data)).await;
-                }
+                let mut tx = tx_shared.write().await;
+                let _ = tx.send(Message::Pong(data)).await;
             }
             Ok(Message::Pong(_)) => {
                 // Pong received, connection is alive
@@ -261,11 +274,12 @@ pub async fn websocket_handler(
     Query(params): Query<WsQueryParams>,
     ws: WebSocketUpgrade,
 ) -> impl IntoResponse {
-    info!("WebSocket upgrade requested, token present: {}", params.token.is_some());
-    
-    ws.on_upgrade(move |socket| {
-        handle_socket(socket, state, params.token)
-    })
+    info!(
+        "WebSocket upgrade requested, token present: {}",
+        params.token.is_some()
+    );
+
+    ws.on_upgrade(move |socket| handle_socket(socket, state, params.token))
 }
 
 /// 通过用户 ID 发送通知
@@ -275,10 +289,16 @@ pub async fn broadcast_notification(state: &Arc<WsState>, user_id: &str, notific
         "payload": notification
     });
 
-    if state.send_to_user(user_id, Message::Text(msg.to_string().into())).await {
+    if state
+        .send_to_user(user_id, Message::Text(msg.to_string().into()))
+        .await
+    {
         info!("Notification sent to user {}", user_id);
     } else {
-        warn!("Failed to send notification to user {}, may be offline", user_id);
+        warn!(
+            "Failed to send notification to user {}, may be offline",
+            user_id
+        );
     }
 }
 
@@ -289,17 +309,24 @@ pub async fn update_unread_count(state: &Arc<WsState>, user_id: &str, count: i32
         "payload": count
     });
 
-    if state.send_to_user(user_id, Message::Text(msg.to_string().into())).await {
+    if state
+        .send_to_user(user_id, Message::Text(msg.to_string().into()))
+        .await
+    {
         info!("Unread count updated for user {}: {}", user_id, count);
     }
 }
 
 /// 广播消息给所有在线用户
 pub async fn broadcast_to_all(state: &Arc<WsState>, msg_type: &str, payload: Value) {
-    let msg = Message::Text(json!({
-        "type": msg_type,
-        "payload": payload
-    }).to_string().into());
-    
+    let msg = Message::Text(
+        json!({
+            "type": msg_type,
+            "payload": payload
+        })
+        .to_string()
+        .into(),
+    );
+
     state.broadcast(msg).await;
 }

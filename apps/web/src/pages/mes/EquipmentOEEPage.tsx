@@ -118,7 +118,7 @@ const EquipmentOEEPage: React.FC = () => {
   const getOEEColorHex = (value: number) => {
     if (value >= 85) return 'success.700';
     if (value >= 70) return 'warning.700';
-    return '#dc2626';
+    return 'error.700';
   };
 
   const getOEEBgColor = (value: number) => {
@@ -306,7 +306,7 @@ const EquipmentOEEPage: React.FC = () => {
           color='success'
         />
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#fef3c7', borderRadius: 3 }}>
+      <Box sx={{ p: 2, bgcolor: 'warning.100', borderRadius: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <TrendingUp
             size={18}
@@ -544,7 +544,7 @@ const EquipmentOEEPage: React.FC = () => {
                     {formatPercent(selectedRecord.availability)}
                   </Typography>
                 </Box>
-                <Box sx={{ p: 2, bgcolor: '#fef3c7', borderRadius: 3, textAlign: 'center' }}>
+                <Box sx={{ p: 2, bgcolor: 'warning.100', borderRadius: 3, textAlign: 'center' }}>
                   <Typography
                     variant='body2'
                     sx={{ color: 'text.secondary', mb: 0.5 }}

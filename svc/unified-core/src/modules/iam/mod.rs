@@ -1,9 +1,9 @@
 //! IAM module - Identity and Access Management
 
 pub mod auth;
-pub mod user;
-pub mod role;
 pub mod permission;
+pub mod role;
+pub mod user;
 pub mod user_permission;
 
 use sqlx::PgPool;
@@ -163,10 +163,34 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         ("qms:delete", "质量管理-删除", "质量管理", "qms", "delete"),
         ("qms:admin", "质量管理-管理", "质量管理", "qms", "admin"),
         // EHS 权限 (环境健康安全)
-        ("ehs:read", "环境健康安全-只读", "环境健康安全", "ehs", "read"),
-        ("ehs:write", "环境健康安全-写入", "环境健康安全", "ehs", "write"),
-        ("ehs:delete", "环境健康安全-删除", "环境健康安全", "ehs", "delete"),
-        ("ehs:admin", "环境健康安全-管理", "环境健康安全", "ehs", "admin"),
+        (
+            "ehs:read",
+            "环境健康安全-只读",
+            "环境健康安全",
+            "ehs",
+            "read",
+        ),
+        (
+            "ehs:write",
+            "环境健康安全-写入",
+            "环境健康安全",
+            "ehs",
+            "write",
+        ),
+        (
+            "ehs:delete",
+            "环境健康安全-删除",
+            "环境健康安全",
+            "ehs",
+            "delete",
+        ),
+        (
+            "ehs:admin",
+            "环境健康安全-管理",
+            "环境健康安全",
+            "ehs",
+            "admin",
+        ),
         // MES 权限 (制造执行)
         ("mes:read", "制造执行-只读", "制造执行", "mes", "read"),
         ("mes:write", "制造执行-写入", "制造执行", "mes", "write"),
@@ -179,10 +203,34 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         ("wms:admin", "仓储管理-管理", "仓储管理", "wms", "admin"),
         // Workflow 权限
         ("workflow:read", "工作流-只读", "工作流", "workflow", "read"),
-        ("workflow:write", "工作流-写入", "工作流", "workflow", "write"),
-        ("workflow:delete", "工作流-删除", "工作流", "workflow", "delete"),
-        ("workflow:approve", "工作流-审批", "工作流", "workflow", "approve"),
-        ("workflow:admin", "工作流-管理", "工作流", "workflow", "admin"),
+        (
+            "workflow:write",
+            "工作流-写入",
+            "工作流",
+            "workflow",
+            "write",
+        ),
+        (
+            "workflow:delete",
+            "工作流-删除",
+            "工作流",
+            "workflow",
+            "delete",
+        ),
+        (
+            "workflow:approve",
+            "工作流-审批",
+            "工作流",
+            "workflow",
+            "approve",
+        ),
+        (
+            "workflow:admin",
+            "工作流-管理",
+            "工作流",
+            "workflow",
+            "admin",
+        ),
         // Doc 权限 (基础设施，与 IAM 联动)
         ("doc:read", "文档管理-只读", "文档管理", "doc", "read"),
         ("doc:write", "文档管理-写入", "文档管理", "doc", "write"),
@@ -194,27 +242,99 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
         ("file:delete", "文件服务-删除", "文件服务", "file", "delete"),
         ("file:admin", "文件服务-管理", "文件服务", "file", "admin"),
         // Notification 权限 (基础设施，与 IAM 联动)
-        ("notification:read", "通知服务-只读", "通知服务", "notification", "read"),
-        ("notification:write", "通知服务-写入", "通知服务", "notification", "write"),
-        ("notification:delete", "通知服务-删除", "通知服务", "notification", "delete"),
-        ("notification:admin", "通知服务-管理", "通知服务", "notification", "admin"),
+        (
+            "notification:read",
+            "通知服务-只读",
+            "通知服务",
+            "notification",
+            "read",
+        ),
+        (
+            "notification:write",
+            "通知服务-写入",
+            "通知服务",
+            "notification",
+            "write",
+        ),
+        (
+            "notification:delete",
+            "通知服务-删除",
+            "通知服务",
+            "notification",
+            "delete",
+        ),
+        (
+            "notification:admin",
+            "通知服务-管理",
+            "通知服务",
+            "notification",
+            "admin",
+        ),
         // IM 权限 (基础设施，与 IAM 联动)
         ("im:read", "即时通讯-只读", "即时通讯", "im", "read"),
         ("im:write", "即时通讯-写入", "即时通讯", "im", "write"),
         ("im:delete", "即时通讯-删除", "即时通讯", "im", "delete"),
         ("im:admin", "即时通讯-管理", "即时通讯", "im", "admin"),
         // Integration 权限 (基础设施，与 IAM 联动)
-        ("integration:read", "系统集成-只读", "系统集成", "integration", "read"),
-        ("integration:write", "系统集成-写入", "系统集成", "integration", "write"),
-        ("integration:delete", "系统集成-删除", "系统集成", "integration", "delete"),
-        ("integration:admin", "系统集成-管理", "系统集成", "integration", "admin"),
+        (
+            "integration:read",
+            "系统集成-只读",
+            "系统集成",
+            "integration",
+            "read",
+        ),
+        (
+            "integration:write",
+            "系统集成-写入",
+            "系统集成",
+            "integration",
+            "write",
+        ),
+        (
+            "integration:delete",
+            "系统集成-删除",
+            "系统集成",
+            "integration",
+            "delete",
+        ),
+        (
+            "integration:admin",
+            "系统集成-管理",
+            "系统集成",
+            "integration",
+            "admin",
+        ),
         // System 权限 (系统设置)
-        ("system:settings", "系统设置", "系统设置", "system", "settings"),
-        ("system:monitor", "系统监控", "系统设置", "system", "monitor"),
+        (
+            "system:settings",
+            "系统设置",
+            "系统设置",
+            "system",
+            "settings",
+        ),
+        (
+            "system:monitor",
+            "系统监控",
+            "系统设置",
+            "system",
+            "monitor",
+        ),
         ("system:audit", "审计日志", "系统设置", "system", "audit"),
-        ("system:dictionary", "字典管理", "系统设置", "system", "dictionary"),
+        (
+            "system:dictionary",
+            "字典管理",
+            "系统设置",
+            "system",
+            "dictionary",
+        ),
         ("system:plugin", "插件管理", "系统设置", "system", "plugin"),
-        ("system:migration", "数据迁移", "系统设置", "system", "migration"),
+        (
+            "system:migration",
+            "数据迁移",
+            "系统设置",
+            "system",
+            "migration",
+        ),
     ];
 
     for (code, name, desc, resource, action) in permissions {
@@ -268,9 +388,14 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
 
     // Assign specific permissions to admin role
     let admin_permissions = vec![
-        "iam:users_read", "iam:users_create", "iam:users_update",
-        "iam:roles_read", "iam:roles_create", "iam:roles_update",
-        "iam:system_settings", "iam:system_logs",
+        "iam:users_read",
+        "iam:users_create",
+        "iam:users_update",
+        "iam:roles_read",
+        "iam:roles_create",
+        "iam:roles_update",
+        "iam:system_settings",
+        "iam:system_logs",
     ];
 
     for perm_code in admin_permissions {

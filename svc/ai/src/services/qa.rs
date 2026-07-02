@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::{Executor, Row};
 use std::sync::Arc;
 use topems_shared::ai_client::{
-    AIClient, AIModelConfig, AIClientError, ChatMessage, ChatCompletionRequest, UnifiedAIClient,
-    create_client, AIProviderType,
+    create_client, AIClient, AIClientError, AIModelConfig, AIProviderType, ChatCompletionRequest,
+    ChatMessage, UnifiedAIClient,
 };
 use uuid::Uuid;
 
@@ -134,17 +134,17 @@ impl QAService {
             base_url: "http://localhost:11434/v1".to_string(),
             ..Default::default()
         };
-        
+
         let embedding_config = AIModelConfig {
             provider: AIProviderType::Ollama,
             model_name: "nomic-embed-text".to_string(),
             base_url: "http://localhost:11434/api".to_string(),
             ..Default::default()
         };
-        
+
         let ai_client = create_client(chat_config);
         let embedding_client = create_client(embedding_config);
-        
+
         Self {
             db,
             ai_client,
@@ -422,7 +422,10 @@ impl QAService {
     /// 调用 AI API（使用统一客户端）
     async fn call_ai_api(&self, prompt: &str) -> Result<String, String> {
         let messages = vec![ChatMessage::user(prompt)];
-        self.ai_client.chat(messages).await.map_err(|e| format!("调用 AI API 失败: {}", e))
+        self.ai_client
+            .chat(messages)
+            .await
+            .map_err(|e| format!("调用 AI API 失败: {}", e))
     }
 
     /// 计算置信度
@@ -453,7 +456,7 @@ impl QAService {
     pub async fn classify_question(&self, question: &str) -> Result<QuestionType, String> {
         let prompt = format!("{}{}", QUESTION_CLASSIFICATION_PROMPT, question);
         let response = self.call_ai_api(&prompt).await?;
-        
+
         let result = match response.trim().to_lowercase().as_str() {
             "factual" => QuestionType::Factual,
             "procedural" => QuestionType::Procedural,
@@ -583,7 +586,9 @@ impl QAService {
 
         // 生成后续问题（如果需要）
         let follow_up_questions = if include_follow_up && confidence > 0.5 {
-            self.generate_follow_up_questions(question, &answer).await.unwrap_or_default()
+            self.generate_follow_up_questions(question, &answer)
+                .await
+                .unwrap_or_default()
         } else {
             Vec::new()
         };
@@ -598,7 +603,11 @@ impl QAService {
     }
 
     /// 生成后续问题建议
-    async fn generate_follow_up_questions(&self, question: &str, answer: &str) -> Result<Vec<String>, String> {
+    async fn generate_follow_up_questions(
+        &self,
+        question: &str,
+        answer: &str,
+    ) -> Result<Vec<String>, String> {
         let prompt = format!(
             r#"
 根据以下对话内容，生成3个相关的后续问题，帮助用户深入了解主题。
@@ -621,7 +630,12 @@ impl QAService {
             .filter_map(|line| {
                 let trimmed = line.trim();
                 if trimmed.starts_with(|c: char| c.is_ascii_digit()) {
-                    Some(trimmed.split_once('.').map(|(_, rest)| rest.trim().to_string()).unwrap_or(trimmed.to_string()))
+                    Some(
+                        trimmed
+                            .split_once('.')
+                            .map(|(_, rest)| rest.trim().to_string())
+                            .unwrap_or(trimmed.to_string()),
+                    )
                 } else {
                     None
                 }
@@ -689,9 +703,9 @@ impl QAService {
             .save_qa_history(
                 question,
                 &answer,
-                Some(serde_json::json!({ 
+                Some(serde_json::json!({
                     "context": context,
-                    "history_length": history.len() 
+                    "history_length": history.len()
                 })),
                 Some(context_chunks),
             )
@@ -731,18 +745,23 @@ impl QAService {
         let prompt = format!("{}{}", INTENT_RECOGNITION_PROMPT, question);
         let response = self.call_ai_api(&prompt).await?;
 
-        let result: IntentResult = serde_json::from_str(&response)
-            .map_err(|e| {
-                tracing::warn!("解析意图识别响应失败: {}, 响应: {}", e, response);
-                format!("解析意图识别响应失败: {}", e)
-            })?;
+        let result: IntentResult = serde_json::from_str(&response).map_err(|e| {
+            tracing::warn!("解析意图识别响应失败: {}, 响应: {}", e, response);
+            format!("解析意图识别响应失败: {}", e)
+        })?;
 
         Ok(result)
     }
 
     /// 评估答案质量
-    pub async fn evaluate_answer_quality(&self, question: &str, answer: &str) -> Result<i32, String> {
-        let prompt = ANSWER_QUALITY_PROMPT.replace("{}", question).replace("{}", answer);
+    pub async fn evaluate_answer_quality(
+        &self,
+        question: &str,
+        answer: &str,
+    ) -> Result<i32, String> {
+        let prompt = ANSWER_QUALITY_PROMPT
+            .replace("{}", question)
+            .replace("{}", answer);
         let response = self.call_ai_api(&prompt).await?;
 
         let score = response.trim().parse::<i32>().map_err(|e| {
@@ -761,21 +780,28 @@ impl QAService {
         context_chunks: &[SearchResult],
     ) -> Result<Vec<SearchResult>, String> {
         let intent_result = self.recognize_intent(query).await?;
-        
+
         let mut enhanced_results = context_chunks.to_vec();
-        
+
         if !intent_result.entities.is_empty() {
             let _entities_query = intent_result.entities.join(" OR ");
             enhanced_results.retain(|chunk| {
-                chunk.content.to_lowercase().contains(&query.to_lowercase()) ||
-                intent_result.entities.iter().any(|entity| {
-                    chunk.content.to_lowercase().contains(&entity.to_lowercase())
-                })
+                chunk.content.to_lowercase().contains(&query.to_lowercase())
+                    || intent_result.entities.iter().any(|entity| {
+                        chunk
+                            .content
+                            .to_lowercase()
+                            .contains(&entity.to_lowercase())
+                    })
             });
         }
-        
-        enhanced_results.sort_by(|a, b| b.similarity.partial_cmp(&a.similarity).unwrap_or(std::cmp::Ordering::Equal));
-        
+
+        enhanced_results.sort_by(|a, b| {
+            b.similarity
+                .partial_cmp(&a.similarity)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+
         Ok(enhanced_results.into_iter().take(top_k).collect())
     }
 
@@ -786,11 +812,11 @@ impl QAService {
         top_k: usize,
     ) -> Result<Vec<SearchResult>, String> {
         let query_embedding = self.generate_query_embedding(query).await?;
-        
+
         if query_embedding.is_empty() {
             return Ok(Vec::new());
         }
-        
+
         let results = self
             .db
             .pool()
@@ -822,7 +848,7 @@ impl QAService {
             )
             .await
             .map_err(|e| format!("语义搜索失败: {}", e))?;
-        
+
         let search_results = results
             .iter()
             .map(|row| SearchResult {
@@ -833,7 +859,7 @@ impl QAService {
                 document_title: row.get("document_title"),
             })
             .collect();
-        
+
         Ok(search_results)
     }
 
@@ -846,7 +872,7 @@ impl QAService {
         keyword_weight: f64,
     ) -> Result<Vec<SearchResult>, String> {
         let vector_results = self.semantic_search(query, top_k * 2).await?;
-        
+
         let keyword_results = self
             .db
             .pool()
@@ -872,15 +898,17 @@ impl QAService {
             )
             .await
             .map_err(|e| format!("关键词搜索失败: {}", e))?;
-        
+
         let mut combined_map: std::collections::HashMap<uuid::Uuid, SearchResult> =
             std::collections::HashMap::new();
-        
+
         for result in vector_results {
-            let entry = combined_map.entry(result.chunk_id).or_insert(result.clone());
+            let entry = combined_map
+                .entry(result.chunk_id)
+                .or_insert(result.clone());
             entry.similarity = result.similarity;
         }
-        
+
         for row in keyword_results.iter() {
             let chunk_id: uuid::Uuid = row.get("chunk_id");
             let score: f32 = row.get("keyword_score");
@@ -891,29 +919,41 @@ impl QAService {
                 similarity: score as f64 * keyword_weight,
                 document_title: row.get("document_title"),
             });
-            entry.similarity =
-                entry.similarity * vector_weight + (score as f64) * keyword_weight;
+            entry.similarity = entry.similarity * vector_weight + (score as f64) * keyword_weight;
         }
-        
+
         let mut results: Vec<_> = combined_map.values().cloned().collect();
         results.sort_by(|a, b| {
             b.similarity
                 .partial_cmp(&a.similarity)
                 .unwrap_or(std::cmp::Ordering::Equal)
         });
-        
+
         Ok(results.into_iter().take(top_k).collect())
     }
 
     /// 生成查询向量嵌入（使用统一客户端）
     async fn generate_query_embedding(&self, query: &str) -> Result<Vec<f32>, String> {
-        self.embedding_client.embed(query).await.map_err(|e| format!("生成嵌入失败: {}", e))
+        self.embedding_client
+            .embed(query)
+            .await
+            .map_err(|e| format!("生成嵌入失败: {}", e))
     }
 
     /// 多轮对话优化 - 检测问题是否需要上下文
     pub fn needs_context(&self, question: &str) -> bool {
-        let context_indicators = ["上次", "之前", "刚才", "继续", "接着", "之前说的", "刚才提到"];
-        context_indicators.iter().any(|indicator| question.contains(indicator))
+        let context_indicators = [
+            "上次",
+            "之前",
+            "刚才",
+            "继续",
+            "接着",
+            "之前说的",
+            "刚才提到",
+        ];
+        context_indicators
+            .iter()
+            .any(|indicator| question.contains(indicator))
     }
 
     /// 生成答案的置信区间

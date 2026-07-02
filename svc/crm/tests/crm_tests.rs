@@ -99,7 +99,12 @@ fn test_customer_types() {
 #[test]
 fn test_customer_sources() {
     let sources = vec![
-        "website", "referral", "advertisement", "cold_call", "trade_show", "social_media",
+        "website",
+        "referral",
+        "advertisement",
+        "cold_call",
+        "trade_show",
+        "social_media",
     ];
 
     for source in sources {
@@ -399,7 +404,14 @@ fn test_billing_record_creation() {
 
 #[test]
 fn test_billing_statuses() {
-    let statuses = vec!["draft", "issued", "paid", "overdue", "cancelled", "refunded"];
+    let statuses = vec![
+        "draft",
+        "issued",
+        "paid",
+        "overdue",
+        "cancelled",
+        "refunded",
+    ];
 
     for status in statuses {
         let billing = BillingRecord {

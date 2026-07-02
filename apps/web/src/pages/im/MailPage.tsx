@@ -1164,7 +1164,7 @@ const MailPage: React.FC = () => {
                         }}
                       >
                         <Box>
-                          <Typography sx={{ color: '#fef9c3', fontSize: '0.875rem' }}>
+                          <Typography sx={{ color: 'warning.100', fontSize: '0.875rem' }}>
                             待发送
                           </Typography>
                           <Typography

@@ -51,7 +51,10 @@ impl RecommendationService {
         Self { db, qa_service }
     }
 
-    pub async fn recommend(&self, request: RecommendationRequest) -> Result<RecommendationResponse, String> {
+    pub async fn recommend(
+        &self,
+        request: RecommendationRequest,
+    ) -> Result<RecommendationResponse, String> {
         let top_k = request.top_k.unwrap_or(10);
         let rec_type = &request.recommendation_type;
 
@@ -87,7 +90,11 @@ impl RecommendationService {
         })
     }
 
-    async fn recommend_documents(&self, request: &RecommendationRequest, top_k: usize) -> Result<Vec<RecommendationItem>, String> {
+    async fn recommend_documents(
+        &self,
+        request: &RecommendationRequest,
+        top_k: usize,
+    ) -> Result<Vec<RecommendationItem>, String> {
         let query = sqlx::query(
             r#"
             SELECT id, title, description, document_type
@@ -108,7 +115,7 @@ impl RecommendationService {
             let title: String = row.get("title");
             let description: Option<String> = row.get("description");
             let doc_type: String = row.get("document_type");
-            
+
             items.push(RecommendationItem {
                 id: doc_id.to_string(),
                 title,
@@ -121,7 +128,11 @@ impl RecommendationService {
         Ok(items)
     }
 
-    async fn recommend_products(&self, request: &RecommendationRequest, top_k: usize) -> Result<Vec<RecommendationItem>, String> {
+    async fn recommend_products(
+        &self,
+        request: &RecommendationRequest,
+        top_k: usize,
+    ) -> Result<Vec<RecommendationItem>, String> {
         let context_str = serde_json::to_string(&request.context)
             .map_err(|e| format!("序列化上下文失败: {}", e))?;
 
@@ -131,15 +142,23 @@ impl RecommendationService {
         );
 
         let response = self.qa_service.ask(&prompt, None, 5).await.map(|r| r.0)?;
-        let cleaned: String = response.replace("```json", "").replace("```", "").trim().to_string();
-        
-        let result: serde_json::Value = serde_json::from_str(&cleaned)
-            .map_err(|e| format!("解析推荐结果失败: {}", e))?;
+        let cleaned: String = response
+            .replace("```json", "")
+            .replace("```", "")
+            .trim()
+            .to_string();
+
+        let result: serde_json::Value =
+            serde_json::from_str(&cleaned).map_err(|e| format!("解析推荐结果失败: {}", e))?;
 
         self.extract_recommendations_from_json(result)
     }
 
-    async fn recommend_opportunities(&self, request: &RecommendationRequest, top_k: usize) -> Result<Vec<RecommendationItem>, String> {
+    async fn recommend_opportunities(
+        &self,
+        request: &RecommendationRequest,
+        top_k: usize,
+    ) -> Result<Vec<RecommendationItem>, String> {
         let items = vec![
             RecommendationItem {
                 id: "opp-1".to_string(),
@@ -170,7 +189,11 @@ impl RecommendationService {
         Ok(items.into_iter().take(top_k).collect())
     }
 
-    async fn recommend_tasks(&self, request: &RecommendationRequest, top_k: usize) -> Result<Vec<RecommendationItem>, String> {
+    async fn recommend_tasks(
+        &self,
+        request: &RecommendationRequest,
+        top_k: usize,
+    ) -> Result<Vec<RecommendationItem>, String> {
         let context_str = serde_json::to_string(&request.context)
             .map_err(|e| format!("序列化上下文失败: {}", e))?;
 
@@ -180,19 +203,31 @@ impl RecommendationService {
         );
 
         let response = self.qa_service.ask(&prompt, None, 5).await.map(|r| r.0)?;
-        let cleaned: String = response.replace("```json", "").replace("```", "").trim().to_string();
-        
-        let result: serde_json::Value = serde_json::from_str(&cleaned)
-            .map_err(|e| format!("解析推荐结果失败: {}", e))?;
+        let cleaned: String = response
+            .replace("```json", "")
+            .replace("```", "")
+            .trim()
+            .to_string();
+
+        let result: serde_json::Value =
+            serde_json::from_str(&cleaned).map_err(|e| format!("解析推荐结果失败: {}", e))?;
 
         self.extract_recommendations_from_json(result)
     }
 
-    async fn recommend_knowledge(&self, request: &RecommendationRequest, top_k: usize) -> Result<Vec<RecommendationItem>, String> {
-        let query = request.context.get("query").and_then(|v| v.as_str()).unwrap_or("");
-        
+    async fn recommend_knowledge(
+        &self,
+        request: &RecommendationRequest,
+        top_k: usize,
+    ) -> Result<Vec<RecommendationItem>, String> {
+        let query = request
+            .context
+            .get("query")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
+
         let search_results = self.qa_service.semantic_search(query, top_k).await?;
-        
+
         let items: Vec<RecommendationItem> = search_results
             .into_iter()
             .enumerate()
@@ -209,7 +244,11 @@ impl RecommendationService {
         Ok(items)
     }
 
-    async fn recommend_similar(&self, request: &RecommendationRequest, top_k: usize) -> Result<Vec<RecommendationItem>, String> {
+    async fn recommend_similar(
+        &self,
+        request: &RecommendationRequest,
+        top_k: usize,
+    ) -> Result<Vec<RecommendationItem>, String> {
         let items = vec![
             RecommendationItem {
                 id: "similar-1".to_string(),
@@ -231,7 +270,11 @@ impl RecommendationService {
         Ok(items.into_iter().take(top_k).collect())
     }
 
-    async fn recommend_general(&self, request: &RecommendationRequest, top_k: usize) -> Result<Vec<RecommendationItem>, String> {
+    async fn recommend_general(
+        &self,
+        request: &RecommendationRequest,
+        top_k: usize,
+    ) -> Result<Vec<RecommendationItem>, String> {
         let context_str = serde_json::to_string(&request.context)
             .map_err(|e| format!("序列化上下文失败: {}", e))?;
 
@@ -241,25 +284,43 @@ impl RecommendationService {
         );
 
         let response = self.qa_service.ask(&prompt, None, 5).await.map(|r| r.0)?;
-        let cleaned: String = response.replace("```json", "").replace("```", "").trim().to_string();
-        
-        let result: serde_json::Value = serde_json::from_str(&cleaned)
-            .map_err(|e| format!("解析推荐结果失败: {}", e))?;
+        let cleaned: String = response
+            .replace("```json", "")
+            .replace("```", "")
+            .trim()
+            .to_string();
+
+        let result: serde_json::Value =
+            serde_json::from_str(&cleaned).map_err(|e| format!("解析推荐结果失败: {}", e))?;
 
         self.extract_recommendations_from_json(result)
     }
 
-    fn extract_recommendations_from_json(&self, result: serde_json::Value) -> Result<Vec<RecommendationItem>, String> {
+    fn extract_recommendations_from_json(
+        &self,
+        result: serde_json::Value,
+    ) -> Result<Vec<RecommendationItem>, String> {
         let items_array = result.get("items").and_then(|v| v.as_array());
-        
+
         if let Some(items) = items_array {
             let mut recommendations = Vec::new();
             for item in items {
-                let id = item.get("id").and_then(|v| v.as_str()).unwrap_or_default().to_string();
-                let title = item.get("title").and_then(|v| v.as_str()).unwrap_or_default().to_string();
-                let description = item.get("description").and_then(|v| v.as_str()).map(|s| s.to_string());
+                let id = item
+                    .get("id")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or_default()
+                    .to_string();
+                let title = item
+                    .get("title")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or_default()
+                    .to_string();
+                let description = item
+                    .get("description")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string());
                 let score = item.get("score").and_then(|v| v.as_f64()).unwrap_or(0.5);
-                
+
                 recommendations.push(RecommendationItem {
                     id,
                     title,
@@ -306,9 +367,13 @@ impl RecommendationService {
         }
     }
 
-    pub async fn update_user_profile(&self, user_id: Uuid, updates: serde_json::Value) -> Result<UserProfile, String> {
+    pub async fn update_user_profile(
+        &self,
+        user_id: Uuid,
+        updates: serde_json::Value,
+    ) -> Result<UserProfile, String> {
         let now = chrono::Utc::now();
-        
+
         let _ = sqlx::query(
             r#"
             INSERT INTO ai.user_profiles (user_id, preferences, recent_interactions, created_at, updated_at)
@@ -331,7 +396,11 @@ impl RecommendationService {
         self.get_user_profile(user_id).await
     }
 
-    async fn recommend_articles(&self, request: &RecommendationRequest, top_k: usize) -> Result<Vec<RecommendationItem>, String> {
+    async fn recommend_articles(
+        &self,
+        request: &RecommendationRequest,
+        top_k: usize,
+    ) -> Result<Vec<RecommendationItem>, String> {
         let query = sqlx::query(
             r#"
             SELECT id, title, description, category
@@ -352,7 +421,7 @@ impl RecommendationService {
             let title: String = row.get("title");
             let description: Option<String> = row.get("description");
             let category: String = row.get("category");
-            
+
             items.push(RecommendationItem {
                 id: doc_id.to_string(),
                 title,
@@ -365,7 +434,11 @@ impl RecommendationService {
         Ok(items)
     }
 
-    async fn recommend_events(&self, request: &RecommendationRequest, top_k: usize) -> Result<Vec<RecommendationItem>, String> {
+    async fn recommend_events(
+        &self,
+        request: &RecommendationRequest,
+        top_k: usize,
+    ) -> Result<Vec<RecommendationItem>, String> {
         let items = vec![
             RecommendationItem {
                 id: "event-1".to_string(),
@@ -395,7 +468,11 @@ impl RecommendationService {
         Ok(items.into_iter().take(top_k).collect())
     }
 
-    async fn recommend_users(&self, request: &RecommendationRequest, top_k: usize) -> Result<Vec<RecommendationItem>, String> {
+    async fn recommend_users(
+        &self,
+        request: &RecommendationRequest,
+        top_k: usize,
+    ) -> Result<Vec<RecommendationItem>, String> {
         let items = vec![
             RecommendationItem {
                 id: "user-1".to_string(),
@@ -417,10 +494,18 @@ impl RecommendationService {
         Ok(items.into_iter().take(top_k).collect())
     }
 
-    async fn recommend_content(&self, request: &RecommendationRequest, top_k: usize) -> Result<Vec<RecommendationItem>, String> {
-        let query = request.context.get("query").and_then(|v| v.as_str()).unwrap_or("");
+    async fn recommend_content(
+        &self,
+        request: &RecommendationRequest,
+        top_k: usize,
+    ) -> Result<Vec<RecommendationItem>, String> {
+        let query = request
+            .context
+            .get("query")
+            .and_then(|v| v.as_str())
+            .unwrap_or("");
         let search_results = self.qa_service.semantic_search(query, top_k).await?;
-        
+
         let items: Vec<RecommendationItem> = search_results
             .into_iter()
             .enumerate()
@@ -437,7 +522,11 @@ impl RecommendationService {
         Ok(items)
     }
 
-    async fn recommend_personalized(&self, request: &RecommendationRequest, top_k: usize) -> Result<Vec<RecommendationItem>, String> {
+    async fn recommend_personalized(
+        &self,
+        request: &RecommendationRequest,
+        top_k: usize,
+    ) -> Result<Vec<RecommendationItem>, String> {
         let items = vec![
             RecommendationItem {
                 id: "personalized-1".to_string(),
@@ -459,7 +548,11 @@ impl RecommendationService {
         Ok(items.into_iter().take(top_k).collect())
     }
 
-    async fn recommend_cross_sell(&self, request: &RecommendationRequest, top_k: usize) -> Result<Vec<RecommendationItem>, String> {
+    async fn recommend_cross_sell(
+        &self,
+        request: &RecommendationRequest,
+        top_k: usize,
+    ) -> Result<Vec<RecommendationItem>, String> {
         let items = vec![
             RecommendationItem {
                 id: "cross-1".to_string(),
@@ -467,7 +560,9 @@ impl RecommendationService {
                 description: Some("与您当前产品配套的增值服务".to_string()),
                 item_type: "cross-sell".to_string(),
                 score: 0.92,
-                metadata: Some(serde_json::json!({ "related_product": "您的主产品", "discount": "10%" })),
+                metadata: Some(
+                    serde_json::json!({ "related_product": "您的主产品", "discount": "10%" }),
+                ),
             },
             RecommendationItem {
                 id: "cross-2".to_string(),
@@ -475,13 +570,19 @@ impl RecommendationService {
                 description: Some("增强您现有系统功能的扩展模块".to_string()),
                 item_type: "cross-sell".to_string(),
                 score: 0.85,
-                metadata: Some(serde_json::json!({ "related_product": "您的主产品", "discount": "15%" })),
+                metadata: Some(
+                    serde_json::json!({ "related_product": "您的主产品", "discount": "15%" }),
+                ),
             },
         ];
         Ok(items.into_iter().take(top_k).collect())
     }
 
-    async fn recommend_up_sell(&self, request: &RecommendationRequest, top_k: usize) -> Result<Vec<RecommendationItem>, String> {
+    async fn recommend_up_sell(
+        &self,
+        request: &RecommendationRequest,
+        top_k: usize,
+    ) -> Result<Vec<RecommendationItem>, String> {
         let items = vec![
             RecommendationItem {
                 id: "up-1".to_string(),
@@ -489,7 +590,9 @@ impl RecommendationService {
                 description: Some("解锁高级功能，提升工作效率".to_string()),
                 item_type: "up-sell".to_string(),
                 score: 0.9,
-                metadata: Some(serde_json::json!({ "current_plan": "标准版", "upgrade_to": "专业版", "benefits": ["更多功能", "优先支持", "API访问"] })),
+                metadata: Some(
+                    serde_json::json!({ "current_plan": "标准版", "upgrade_to": "专业版", "benefits": ["更多功能", "优先支持", "API访问"] }),
+                ),
             },
             RecommendationItem {
                 id: "up-2".to_string(),
@@ -497,26 +600,37 @@ impl RecommendationService {
                 description: Some("为大型组织定制的企业级方案".to_string()),
                 item_type: "up-sell".to_string(),
                 score: 0.82,
-                metadata: Some(serde_json::json!({ "current_plan": "专业版", "upgrade_to": "企业版", "benefits": ["私有化部署", "专属顾问", "定制开发"] })),
+                metadata: Some(
+                    serde_json::json!({ "current_plan": "专业版", "upgrade_to": "企业版", "benefits": ["私有化部署", "专属顾问", "定制开发"] }),
+                ),
             },
         ];
         Ok(items.into_iter().take(top_k).collect())
     }
 
-    async fn apply_personalization(&self, user_id: Uuid, items: Vec<RecommendationItem>) -> Result<Vec<RecommendationItem>, String> {
+    async fn apply_personalization(
+        &self,
+        user_id: Uuid,
+        items: Vec<RecommendationItem>,
+    ) -> Result<Vec<RecommendationItem>, String> {
         let profile = self.get_user_profile(user_id).await?;
-        
+
         let preferences: Vec<String> = profile
             .preferences
             .get("interests")
             .and_then(|v| v.as_array())
-            .map(|arr| arr.iter().filter_map(|v| v.as_str()).map(|s| s.to_string()).collect())
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|v| v.as_str())
+                    .map(|s| s.to_string())
+                    .collect()
+            })
             .unwrap_or_default();
 
         let mut scored_items = Vec::new();
         for item in items {
             let mut score = item.score;
-            
+
             if let Some(metadata) = &item.metadata {
                 if let Some(cat) = metadata.get("category").and_then(|v| v.as_str()) {
                     if preferences.contains(&cat.to_string()) {
@@ -524,18 +638,23 @@ impl RecommendationService {
                     }
                 }
             }
-            
-            scored_items.push(RecommendationItem {
-                score,
-                ..item
-            });
+
+            scored_items.push(RecommendationItem { score, ..item });
         }
-        
-        scored_items.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+
+        scored_items.sort_by(|a, b| {
+            b.score
+                .partial_cmp(&a.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         Ok(scored_items)
     }
 
-    async fn generate_reasoning(&self, request: &RecommendationRequest, items: Vec<RecommendationItem>) -> Result<Vec<RecommendationItem>, String> {
+    async fn generate_reasoning(
+        &self,
+        request: &RecommendationRequest,
+        items: Vec<RecommendationItem>,
+    ) -> Result<Vec<RecommendationItem>, String> {
         let context_str = serde_json::to_string(&request.context)
             .map_err(|e| format!("序列化上下文失败: {}", e))?;
 
@@ -548,8 +667,12 @@ impl RecommendationService {
         );
 
         let response = self.qa_service.ask(&prompt, None, 3).await.map(|r| r.0)?;
-        let cleaned: String = response.replace("```json", "").replace("```", "").trim().to_string();
-        
+        let cleaned: String = response
+            .replace("```json", "")
+            .replace("```", "")
+            .trim()
+            .to_string();
+
         let result: serde_json::Value = match serde_json::from_str(&cleaned) {
             Ok(v) => v,
             Err(_) => return Ok(items),
@@ -568,12 +691,12 @@ impl RecommendationService {
         let mut enhanced_items = Vec::new();
         for item in items {
             let reason = reasoning_map.get(&item.title).cloned();
-            
+
             let mut metadata = item.metadata.unwrap_or(serde_json::json!({}));
             if let Some(reason_str) = &reason {
                 metadata["reason"] = serde_json::json!(reason_str);
             }
-            
+
             enhanced_items.push(RecommendationItem {
                 metadata: Some(metadata),
                 ..item

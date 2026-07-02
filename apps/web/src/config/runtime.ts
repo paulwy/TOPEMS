@@ -72,7 +72,7 @@ const config: RuntimeConfig = {
 
     // ========== [向后兼容] 旧服务路径 -> 新服务 ==========
     // notification, im, mail -> communication
-    notification: getEnv('VITE_NOTIFICATION_SERVICE_URL', '/notification'),
+    notification: getEnv('VITE_NOTIFICATION_SERVICE_URL', '/api/core/comm/notify'),
     mail: getEnv('VITE_MAIL_SERVICE_URL', '/mail'),
     im: getEnv('VITE_IM_SERVICE_URL', '/im'),
     // mes, pdm -> manufacturing

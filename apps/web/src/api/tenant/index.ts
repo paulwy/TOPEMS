@@ -131,8 +131,8 @@ export const tenantApi = {
                 : 1000,
         features: {},
         branding: {
-          primary_color: '#3B82F6',
-          secondary_color: '#6B7280',
+          primary_color: 'primary.main',
+          secondary_color: 'grey.500',
         },
         security: {
           sso_enabled: false,

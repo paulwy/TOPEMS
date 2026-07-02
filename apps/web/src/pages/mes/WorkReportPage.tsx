@@ -232,8 +232,8 @@ const WorkReportPage: React.FC = () => {
       }
     > = {
       draft: { label: '草稿', bg: 'grey.100', color: 'text.secondary' },
-      submitted: { label: '已提交', bg: '#dbeafe', color: 'primary.dark' },
-      approved: { label: '已审核', bg: 'success.lighter', color: '#15803d' },
+      submitted: { label: '已提交', bg: 'primary.100', color: 'primary.dark' },
+      approved: { label: '已审核', bg: 'success.lighter', color: 'success.700' },
       rejected: { label: '已驳回', bg: 'error.lighter', color: 'error.dark' },
       cancelled: { label: '已取消', bg: 'grey.100', color: 'text.secondary' },
     };
@@ -397,7 +397,7 @@ const WorkReportPage: React.FC = () => {
           {stats.draft}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#dbeafe', borderRadius: 3 }}>
+      <Box sx={{ p: 2, bgcolor: 'primary.100', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -434,7 +434,7 @@ const WorkReportPage: React.FC = () => {
         </Typography>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#4338ca' }}
+          sx={{ fontWeight: 700, color: 'secondary.700' }}
         >
           {stats.totalGood}
         </Typography>

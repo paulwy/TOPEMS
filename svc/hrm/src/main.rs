@@ -34,13 +34,13 @@ use std::time::Instant;
 use utoipa::OpenApi;
 
 use api::ApiState;
-use topems_shared::{
-    check_http_health, config::CacheConfig, create_api_info_router,
-    create_cors_layer, create_database_pool, init_telemetry, verify_jwt_token, ApiResponse, AuthState,
-    CacheService, Claims, DatabaseConfig, DependencyHealth, FieldEncryptionService, HealthStatus,
-    InMemoryCache, KeyManager, RedisConfig, ServiceHealth, SystemMetrics, telemetry_middleware,
-};
 use topems_shared::redis::{RedisCacheService, RedisPool as RedisPoolTrait};
+use topems_shared::{
+    check_http_health, config::CacheConfig, create_api_info_router, create_cors_layer,
+    create_database_pool, init_telemetry, telemetry_middleware, verify_jwt_token, ApiResponse,
+    AuthState, CacheService, Claims, DatabaseConfig, DependencyHealth, FieldEncryptionService,
+    HealthStatus, InMemoryCache, KeyManager, RedisConfig, ServiceHealth, SystemMetrics,
+};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -283,11 +283,11 @@ async fn check_iam_health() -> DependencyHealth {
 fn init_encryption_service() -> FieldEncryptionService {
     let encryption_key = env::var("ENCRYPTION_KEY")
         .unwrap_or_else(|_| "base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=".to_string());
-    
+
     let key_b64 = if let Some(stripped) = encryption_key.strip_prefix("base64:") {
         stripped.to_string()
     } else {
-        use sha2::{Sha256, Digest};
+        use sha2::{Digest, Sha256};
         let mut hasher = Sha256::new();
         hasher.update(encryption_key.as_bytes());
         let result = hasher.finalize();
@@ -332,7 +332,8 @@ async fn hrm_auth_middleware(
         "/api/v1/health/detailed",
         "/api/v1/metrics",
     ];
-    if public_paths.contains(&path) || path.starts_with("/metrics") || path.starts_with("/api-docs") {
+    if public_paths.contains(&path) || path.starts_with("/metrics") || path.starts_with("/api-docs")
+    {
         return next.run(req).await;
     }
 
@@ -353,7 +354,11 @@ async fn hrm_auth_middleware(
                 iat: 0,
                 email: None,
                 department: None,
-                tenant_id: parts.headers.get("X-Tenant-Id").and_then(|h| h.to_str().ok()).map(|s| s.to_string()),
+                tenant_id: parts
+                    .headers
+                    .get("X-Tenant-Id")
+                    .and_then(|h| h.to_str().ok())
+                    .map(|s| s.to_string()),
             };
             parts.extensions.insert(claims);
             let req = Request::from_parts(parts, body);
@@ -370,7 +375,8 @@ async fn hrm_auth_middleware(
     let token = match auth_header {
         Some(header) if header.starts_with("Bearer ") => &header[7..],
         _ => {
-            return topems_shared::response::api_error::<()>(401, "未授权：缺少有效的认证令牌").into_response();
+            return topems_shared::response::api_error::<()>(401, "未授权：缺少有效的认证令牌")
+                .into_response();
         }
     };
 
@@ -382,7 +388,8 @@ async fn hrm_auth_middleware(
         }
         Err(e) => {
             tracing::error!("Token verification failed: {}", e);
-            topems_shared::response::api_error::<()>(401, &format!("认证失败：{}", e)).into_response()
+            topems_shared::response::api_error::<()>(401, &format!("认证失败：{}", e))
+                .into_response()
         }
     }
 }

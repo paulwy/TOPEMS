@@ -327,16 +327,13 @@ pub fn init_logging(service_name: &str) {
         LogFormat::Json => {
             tracing_subscriber::registry()
                 .with(env_filter)
-                .with(
-                    tracing_subscriber::fmt::layer()
-                        .event_format(JsonEventFormatter::new()),
-                )
+                .with(tracing_subscriber::fmt::layer().event_format(JsonEventFormatter::new()))
                 .init();
         }
         LogFormat::File => {
             let log_dir = std::env::var("LOG_DIR").unwrap_or_else(|_| "./logs".to_string());
             std::fs::create_dir_all(&log_dir).unwrap_or_default();
-            
+
             let _log_file = format!("{}/{}.log", log_dir, service_name);
             let file_appender = tracing_appender::rolling::hourly(&log_dir, service_name);
             let (non_blocking, _guard) = tracing_appender::non_blocking(file_appender);
@@ -358,7 +355,11 @@ pub fn init_logging(service_name: &str) {
         }
     }
 
-    tracing::info!("✅ {} 日志系统初始化完成 (format: {:?})", service_name, log_format);
+    tracing::info!(
+        "✅ {} 日志系统初始化完成 (format: {:?})",
+        service_name,
+        log_format
+    );
 }
 
 #[macro_export]
@@ -427,8 +428,8 @@ mod tests {
     #[test]
     fn test_log_entry_with_request_id() {
         let request_id = generate_request_id();
-        let entry = LogEntry::new("INFO", "test", "test-service")
-            .with_request_id(request_id.clone());
+        let entry =
+            LogEntry::new("INFO", "test", "test-service").with_request_id(request_id.clone());
         assert_eq!(entry.request_id, Some(request_id));
     }
 

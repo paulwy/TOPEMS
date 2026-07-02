@@ -17,6 +17,8 @@ const isPageRequest = (req: IncomingMessage): boolean => {
   const accept = req.headers.accept || '';
   if (url.includes('.') && !url.includes('?')) return false;
   if (url.startsWith('/api/') || url.startsWith('/ws/')) return false;
+  if (url.startsWith('/notification/v1/')) return false;
+  if (url.startsWith('/notification/api/v1/')) return false;
   if (url.endsWith('/health')) return false;
   if (url.includes('/api/')) return false;
   if (accept.includes('text/html') && req.method === 'GET') return true;
@@ -361,6 +363,16 @@ export default defineConfig({
         changeOrigin: true,
         configure: createProxyLogger('core', 'http://localhost:8000'),
       },
+      '/api/core/comm/notify': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        configure: createProxyLogger('notification', 'http://localhost:8000'),
+      },
+      '/api/core': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        configure: createProxyLogger('core', 'http://localhost:8000'),
+      },
       '/core/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
@@ -421,12 +433,12 @@ export default defineConfig({
         rewrite: (path: string) => path.replace(/^\/iam\/auth\//, '/api/v1/auth/'),
         configure: createProxyLogger('iam-auth', 'http://localhost:8000'),
       },
-      '/iam/': {
+      '/iam/': createPageSafeProxy({
         target: 'http://localhost:8000',
         changeOrigin: true,
         rewrite: (path: string) => path.replace(/^\/iam\//, '/api/core/iam/'),
         configure: createProxyLogger('iam', 'http://localhost:8000'),
-      },
+      }),
       '/doc': createPageSafeProxy({
         target: 'http://localhost:8012',
         changeOrigin: true,
@@ -448,13 +460,13 @@ export default defineConfig({
       '/notification/api/v1': {
         target: 'http://localhost:8000',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/notification\/api\/v1/, '/api/v1'),
+        rewrite: (path: string) => path.replace(/^\/notification\/api\/v1/, '/api/core/comm/notify/v1'),
         configure: createProxyLogger('notification', 'http://localhost:8000'),
       },
       '/notification/v1': {
         target: 'http://localhost:8000',
         changeOrigin: true,
-        rewrite: (path: string) => path.replace(/^\/notification\/v1/, '/api/v1'),
+        rewrite: (path: string) => path.replace(/^\/notification\/v1/, '/api/core/comm/notify/v1'),
         configure: createProxyLogger('notification', 'http://localhost:8000'),
       },
       '/notification': createPageSafeProxy({
@@ -483,6 +495,12 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path: string) => path.replace(/^\/erp\/system/, '/api/erp'),
         configure: createProxyLogger('erp', 'http://localhost:8010'),
+      },
+      '/erp/consolidation/': {
+        target: 'http://localhost:8010',
+        changeOrigin: true,
+        rewrite: (path: string) => path.replace(/^\/erp\/consolidation/, '/api/consolidation'),
+        configure: createProxyLogger('erp-consolidation', 'http://localhost:8010'),
       },
       '/erp/': {
         target: 'http://localhost:8010',

@@ -170,7 +170,7 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                   >
                     <Tag
                       size={24}
-                      color='#3b82f6'
+                      color='primary.main'
                     />
                   </Box>
                   <Box>
@@ -208,7 +208,7 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                   >
                     <Users
                       size={24}
-                      color='#10b981'
+                      color='success.main'
                     />
                   </Box>
                   <Box>
@@ -246,7 +246,7 @@ const CRMCustomerSegmentationPage: React.FC = () => {
                   >
                     <TrendingUp
                       size={24}
-                      color='#f59e0b'
+                      color='warning.main'
                     />
                   </Box>
                   <Box>

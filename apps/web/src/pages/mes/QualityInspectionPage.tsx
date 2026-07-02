@@ -224,11 +224,11 @@ const QualityInspectionPage: React.FC = () => {
         color: string;
       }
     > = {
-      pending: { label: '待检验', bg: 'warning.light', color: '#b45309' },
-      inspecting: { label: '检验中', bg: '#dbeafe', color: 'primary.dark' },
-      passed: { label: '合格', bg: 'success.lighter', color: '#15803d' },
+      pending: { label: '待检验', bg: 'warning.light', color: 'warning.700' },
+      inspecting: { label: '检验中', bg: 'primary.100', color: 'primary.dark' },
+      passed: { label: '合格', bg: 'success.lighter', color: 'success.700' },
       failed: { label: '不合格', bg: 'error.lighter', color: 'error.dark' },
-      rework: { label: '返工', bg: '#fef3c7', color: '#92400e' },
+      rework: { label: '返工', bg: 'warning.100', color: '#92400e' },
       scrapped: { label: '报废', bg: 'grey.200', color: 'text.secondary' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
@@ -250,11 +250,11 @@ const QualityInspectionPage: React.FC = () => {
         color: string;
       }
     > = {
-      incoming: { label: '来料检验', bg: '#e0e7ff', color: '#4338ca' },
-      process: { label: '过程检验', bg: '#dbeafe', color: 'primary.dark' },
-      final: { label: '成品检验', bg: 'success.lighter', color: '#15803d' },
-      outgoing: { label: '出货检验', bg: 'warning.light', color: '#b45309' },
-      patrol: { label: '巡检', bg: '#fce7f3', color: '#be185d' },
+      incoming: { label: '来料检验', bg: '#e0e7ff', color: 'secondary.700' },
+      process: { label: '过程检验', bg: 'primary.100', color: 'primary.dark' },
+      final: { label: '成品检验', bg: 'success.lighter', color: 'success.700' },
+      outgoing: { label: '出货检验', bg: 'warning.light', color: 'warning.700' },
+      patrol: { label: '巡检', bg: 'secondary.100', color: '#be185d' },
     };
     const t = typeMap[type] || { label: type, bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -450,7 +450,7 @@ const QualityInspectionPage: React.FC = () => {
         </Typography>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#4338ca' }}
+          sx={{ fontWeight: 700, color: 'secondary.700' }}
         >
           {stats.avgRate.toFixed(2)}%
         </Typography>
@@ -498,6 +498,15 @@ const QualityInspectionPage: React.FC = () => {
         headerContent={statsContent}
         emptyMessage='暂无质检数据'
         getRowId={(row) => row.id}
+        mobileCardTitleKey='product_name'
+        mobileCardSubtitleKey='inspection_no'
+        mobileCardDisplayFields={['inspection_type', 'status', 'sample_quantity', 'inspector']}
+        mobileCardFieldLabels={{
+          inspection_type: '检验类型',
+          status: '状态',
+          sample_quantity: '抽样数',
+          inspector: '检验员',
+        }}
       />
 
       <Dialog

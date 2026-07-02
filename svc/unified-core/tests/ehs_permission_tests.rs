@@ -12,7 +12,9 @@ use serde_json::{json, Value};
 
 const API_URL: &str = "http://localhost:8000";
 
-fn create_client() -> Client { Client::new() }
+fn create_client() -> Client {
+    Client::new()
+}
 
 async fn login(username: &str, password: &str) -> Result<String, String> {
     let client = create_client();
@@ -22,15 +24,30 @@ async fn login(username: &str, password: &str) -> Result<String, String> {
         .send()
         .await
         .map_err(|e| format!("请求失败: {}", e))?;
-    let body: Value = response.json().await.map_err(|e| format!("解析响应失败: {}", e))?;
+    let body: Value = response
+        .json()
+        .await
+        .map_err(|e| format!("解析响应失败: {}", e))?;
     if body["success"].as_bool().unwrap_or(false) {
-        Ok(body["data"]["access_token"].as_str().unwrap_or("").to_string())
+        Ok(body["data"]["access_token"]
+            .as_str()
+            .unwrap_or("")
+            .to_string())
     } else {
-        Err(format!("登录失败: {}", body["message"].as_str().unwrap_or("未知错误")))
+        Err(format!(
+            "登录失败: {}",
+            body["message"].as_str().unwrap_or("未知错误")
+        ))
     }
 }
 
-async fn auth_request(client: &Client, token: &str, method: &str, endpoint: &str, body: Option<Value>) -> Result<(u16, Value), String> {
+async fn auth_request(
+    client: &Client,
+    token: &str,
+    method: &str,
+    endpoint: &str,
+    body: Option<Value>,
+) -> Result<(u16, Value), String> {
     let url = format!("{}{}", API_URL, endpoint);
     let request = match method {
         "GET" => client.get(&url),
@@ -39,12 +56,17 @@ async fn auth_request(client: &Client, token: &str, method: &str, endpoint: &str
         "DELETE" => client.delete(&url),
         _ => return Err(format!("不支持的 HTTP 方法: {}", method)),
     };
-    let response = request.bearer_auth(token).header("Content-Type", "application/json")
+    let response = request
+        .bearer_auth(token)
+        .header("Content-Type", "application/json")
         .send()
         .await
         .map_err(|e| format!("请求失败: {}", e))?;
     let status = response.status().as_u16();
-    let body: Value = response.json().await.map_err(|e| format!("解析响应失败: {}", e))?;
+    let body: Value = response
+        .json()
+        .await
+        .map_err(|e| format!("解析响应失败: {}", e))?;
     Ok((status, body))
 }
 
@@ -72,12 +94,23 @@ async fn test_ehs_002_create_inspection() {
     tracing::info!("测试 EHS-002: 创建安全检查");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
-    let timestamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis();
-    match auth_request(&client, &token, "POST", "/api/ehs/inspections", Some(json!({
-        "title": format!("安全检查_{}", timestamp),
-        "location": "车间A",
-        "items": [{ "name": "灭火器检查", "status": "pass" }]
-    }))).await {
+    let timestamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_millis();
+    match auth_request(
+        &client,
+        &token,
+        "POST",
+        "/api/ehs/inspections",
+        Some(json!({
+            "title": format!("安全检查_{}", timestamp),
+            "location": "车间A",
+            "items": [{ "name": "灭火器检查", "status": "pass" }]
+        })),
+    )
+    .await
+    {
         Ok((status, _)) => {
             assert!(status == 200 || status == 201 || status == 403 || status == 404);
             tracing::info!("EHS-002 测试通过");
@@ -110,12 +143,20 @@ async fn test_ehs_004_report_incident() {
     tracing::info!("测试 EHS-004: 报告安全事故");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
-    match auth_request(&client, &token, "POST", "/api/ehs/incidents", Some(json!({
-        "title": "测试事故报告",
-        "description": "测试事故描述",
-        "severity": "minor",
-        "location": "测试位置"
-    }))).await {
+    match auth_request(
+        &client,
+        &token,
+        "POST",
+        "/api/ehs/incidents",
+        Some(json!({
+            "title": "测试事故报告",
+            "description": "测试事故描述",
+            "severity": "minor",
+            "location": "测试位置"
+        })),
+    )
+    .await
+    {
         Ok((status, _)) => {
             assert!(status == 200 || status == 201 || status == 403 || status == 404);
             tracing::info!("EHS-004 测试通过");

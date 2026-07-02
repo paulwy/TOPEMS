@@ -4,7 +4,7 @@ use axum::{extract::State, Json};
 use bigdecimal::ToPrimitive;
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, types::Uuid};
+use sqlx::{types::Uuid, FromRow};
 use topems_shared::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -186,10 +186,19 @@ pub async fn create_fmea_analysis(
     State(state): State<crate::AppState>,
     Json(req): Json<CreateFmeaRequest>,
 ) -> Json<ApiResponse<FmeaAnalysis>> {
-    let fmea_no = format!("FMEA-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
-    
-    let product_id = req.product_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
-    let process_id = req.process_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
+    let fmea_no = format!(
+        "FMEA-{}",
+        uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+    );
+
+    let product_id = req
+        .product_id
+        .as_ref()
+        .and_then(|s| Uuid::parse_str(s).ok());
+    let process_id = req
+        .process_id
+        .as_ref()
+        .and_then(|s| Uuid::parse_str(s).ok());
 
     let fmea = sqlx::query_as::<_, FmeaAnalysis>(r#"INSERT INTO qa_fmea_analyses (fmea_no, title, fmea_type, product_id, product_name, process_id, process_name, scope, status, revision, team, leader, description, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', $9, $10, $11, $12, $13) RETURNING id, fmea_no, title, fmea_type, product_id::TEXT, product_name, process_id::TEXT, process_name, scope, status, revision, team, leader, description, created_by, created_at::TEXT, updated_at::TEXT"#).bind(fmea_no).bind(req.title).bind(req.fmea_type).bind(product_id).bind(req.product_name).bind(process_id).bind(req.process_name).bind(req.scope).bind(req.revision).bind(req.team).bind(req.leader).bind(req.description).bind(req.created_by)
     .fetch_one(&state.pool)
@@ -258,9 +267,10 @@ pub async fn delete_fmea_analysis(
         Err(_) => return Json(ApiResponse::error(400, "无效的FMEA分析ID")),
     };
 
-    let result = sqlx::query(r#"DELETE FROM qa_fmea_analyses WHERE id = $1"#).bind(id)
-    .execute(&state.pool)
-    .await;
+    let result = sqlx::query(r#"DELETE FROM qa_fmea_analyses WHERE id = $1"#)
+        .bind(id)
+        .execute(&state.pool)
+        .await;
 
     match result {
         Ok(_) => Json(ApiResponse::success(true, "FMEA分析删除成功")),
@@ -310,7 +320,7 @@ pub async fn create_fmea_item(
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的FMEA分析ID")),
     };
-    
+
     let rpn = req.severity * req.occurrence * req.detection;
     let target_dt = req.target_date.map(|d| d.and_hms_opt(0, 0, 0).unwrap());
 
@@ -358,12 +368,16 @@ pub async fn update_fmea_item(
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的FMEA条目ID")),
     };
-    
-    let revised_rpn = match (req.revised_severity, req.revised_occurrence, req.revised_detection) {
+
+    let revised_rpn = match (
+        req.revised_severity,
+        req.revised_occurrence,
+        req.revised_detection,
+    ) {
         (Some(s), Some(o), Some(d)) => Some(s * o * d),
         _ => None,
     };
-    
+
     let target_dt = req.target_date.map(|d| d.and_hms_opt(0, 0, 0).unwrap());
 
     let item = sqlx::query_as::<_, FmeaItem>(r#"UPDATE qa_fmea_items SET component = COALESCE($2, component), function = COALESCE($3, function), failure_mode = COALESCE($4, failure_mode), failure_effect = COALESCE($5, failure_effect), failure_cause = COALESCE($6, failure_cause), severity = COALESCE($7, severity), occurrence = COALESCE($8, occurrence), detection = COALESCE($9, detection), rpn = COALESCE($7, severity) * COALESCE($8, occurrence) * COALESCE($9, detection), current_controls = COALESCE($10, current_controls), recommended_actions = COALESCE($11, recommended_actions), responsible = COALESCE($12, responsible), target_date = COALESCE($13, target_date), action_status = COALESCE($14, action_status), revised_severity = COALESCE($15, revised_severity), revised_occurrence = COALESCE($16, revised_occurrence), revised_detection = COALESCE($17, revised_detection), revised_rpn = COALESCE($18, revised_rpn), sort_order = COALESCE($19, sort_order), updated_at = NOW() WHERE id = $1 RETURNING id, fmea_id, component, function, failure_mode, failure_effect, failure_cause, severity, occurrence, detection, rpn, current_controls, recommended_actions, responsible, target_date::TEXT, action_status, revised_severity, revised_occurrence, revised_detection, revised_rpn, sort_order, created_at::TEXT, updated_at::TEXT"#).bind(id).bind(req.component).bind(req.function).bind(req.failure_mode).bind(req.failure_effect).bind(req.failure_cause).bind(req.severity).bind(req.occurrence).bind(req.detection).bind(req.current_controls).bind(req.recommended_actions).bind(req.responsible).bind(target_dt).bind(req.action_status).bind(req.revised_severity).bind(req.revised_occurrence).bind(req.revised_detection).bind(revised_rpn).bind(req.sort_order)
@@ -388,9 +402,10 @@ pub async fn delete_fmea_item(
         Err(_) => return Json(ApiResponse::error(400, "无效的FMEA条目ID")),
     };
 
-    let result = sqlx::query(r#"DELETE FROM qa_fmea_items WHERE id = $1"#).bind(id)
-    .execute(&state.pool)
-    .await;
+    let result = sqlx::query(r#"DELETE FROM qa_fmea_items WHERE id = $1"#)
+        .bind(id)
+        .execute(&state.pool)
+        .await;
 
     match result {
         Ok(_) => Json(ApiResponse::success(true, "FMEA条目删除成功")),
@@ -410,43 +425,63 @@ pub async fn get_fmea_statistics(
         Err(_) => return Json(ApiResponse::error(400, "无效的FMEA分析ID")),
     };
 
-    let total: Option<i64> = sqlx::query_scalar::<_, _>(r#"SELECT COUNT(*) FROM qa_fmea_items WHERE fmea_id = $1"#).bind(id)
-    .fetch_one(&state.pool)
-    .await
-    .ok();
+    let total: Option<i64> =
+        sqlx::query_scalar::<_, _>(r#"SELECT COUNT(*) FROM qa_fmea_items WHERE fmea_id = $1"#)
+            .bind(id)
+            .fetch_one(&state.pool)
+            .await
+            .ok();
     let total_items = total.unwrap_or(0);
 
-    let high_risk: Option<i64> = sqlx::query_scalar::<_, _>(r#"SELECT COUNT(*) FROM qa_fmea_items WHERE fmea_id = $1 AND rpn >= 100"#).bind(id)
+    let high_risk: Option<i64> = sqlx::query_scalar::<_, _>(
+        r#"SELECT COUNT(*) FROM qa_fmea_items WHERE fmea_id = $1 AND rpn >= 100"#,
+    )
+    .bind(id)
     .fetch_one(&state.pool)
     .await
     .ok();
     let high_risk_count = high_risk.unwrap_or(0);
 
-    let medium_risk: Option<i64> = sqlx::query_scalar::<_, _>(r#"SELECT COUNT(*) FROM qa_fmea_items WHERE fmea_id = $1 AND rpn >= 36 AND rpn < 100"#).bind(id)
+    let medium_risk: Option<i64> = sqlx::query_scalar::<_, _>(
+        r#"SELECT COUNT(*) FROM qa_fmea_items WHERE fmea_id = $1 AND rpn >= 36 AND rpn < 100"#,
+    )
+    .bind(id)
     .fetch_one(&state.pool)
     .await
     .ok();
     let medium_risk_count = medium_risk.unwrap_or(0);
 
-    let low_risk: Option<i64> = sqlx::query_scalar::<_, _>(r#"SELECT COUNT(*) FROM qa_fmea_items WHERE fmea_id = $1 AND rpn < 36"#).bind(id)
+    let low_risk: Option<i64> = sqlx::query_scalar::<_, _>(
+        r#"SELECT COUNT(*) FROM qa_fmea_items WHERE fmea_id = $1 AND rpn < 36"#,
+    )
+    .bind(id)
     .fetch_one(&state.pool)
     .await
     .ok();
     let low_risk_count = low_risk.unwrap_or(0);
 
-    let avg_rpn: Option<bigdecimal::BigDecimal> = sqlx::query_scalar::<_, _>(r#"SELECT COALESCE(AVG(rpn), 0) FROM qa_fmea_items WHERE fmea_id = $1"#).bind(id)
+    let avg_rpn: Option<bigdecimal::BigDecimal> = sqlx::query_scalar::<_, _>(
+        r#"SELECT COALESCE(AVG(rpn), 0) FROM qa_fmea_items WHERE fmea_id = $1"#,
+    )
+    .bind(id)
     .fetch_one(&state.pool)
     .await
     .ok();
     let average_rpn: f64 = avg_rpn.and_then(|v| v.to_f64()).unwrap_or(0.0);
 
-    let max_rpn_val: Option<i32> = sqlx::query_scalar::<_, _>(r#"SELECT COALESCE(MAX(rpn), 0) FROM qa_fmea_items WHERE fmea_id = $1"#).bind(id)
+    let max_rpn_val: Option<i32> = sqlx::query_scalar::<_, _>(
+        r#"SELECT COALESCE(MAX(rpn), 0) FROM qa_fmea_items WHERE fmea_id = $1"#,
+    )
+    .bind(id)
     .fetch_one(&state.pool)
     .await
     .ok();
     let max_rpn = max_rpn_val.unwrap_or(0) as i64;
 
-    let min_rpn_val: Option<i32> = sqlx::query_scalar::<_, _>(r#"SELECT COALESCE(MIN(rpn), 0) FROM qa_fmea_items WHERE fmea_id = $1"#).bind(id)
+    let min_rpn_val: Option<i32> = sqlx::query_scalar::<_, _>(
+        r#"SELECT COALESCE(MIN(rpn), 0) FROM qa_fmea_items WHERE fmea_id = $1"#,
+    )
+    .bind(id)
     .fetch_one(&state.pool)
     .await
     .ok();

@@ -77,7 +77,7 @@ const PdmFormulaPage: React.FC = () => {
       启用: { bg: 'success.lighter', color: 'success.dark' },
       禁用: { bg: 'error.lighter', color: 'error.dark' },
       草稿: { bg: 'warning.light', color: '#ca8a04' },
-      已批准: { bg: '#dbeafe', color: 'primary.main' },
+      已批准: { bg: 'primary.100', color: 'primary.main' },
     };
     const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -239,7 +239,7 @@ const PdmFormulaPage: React.FC = () => {
           {stats.draft}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#dbeafe', borderRadius: 3 }}>
+      <Box sx={{ p: 2, bgcolor: 'primary.100', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'slate.600' }}

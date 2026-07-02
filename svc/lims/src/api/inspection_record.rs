@@ -1,4 +1,8 @@
-use axum::{extract::State, routing::{delete, get, post}, Json, Router};
+use axum::{
+    extract::State,
+    routing::{delete, get, post},
+    Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared::ApiResponse;
@@ -8,7 +12,10 @@ use crate::AppState;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/api/lims/records", get(list_records).post(create_record))
-        .route("/api/lims/records/{id}", get(get_record).delete(delete_record))
+        .route(
+            "/api/lims/records/{id}",
+            get(get_record).delete(delete_record),
+        )
 }
 
 #[derive(Debug, Deserialize)]
@@ -73,7 +80,8 @@ pub async fn list_records(
 
     match rows {
         Ok(data) => {
-            let records = data.into_iter()
+            let records = data
+                .into_iter()
                 .map(|row| InspectionRecord {
                     id: row.get("id"),
                     record_no: row.get("record_no"),
@@ -99,7 +107,10 @@ pub async fn create_record(
     State(state): State<crate::AppState>,
     Json(req): Json<CreateRecordRequest>,
 ) -> Json<ApiResponse<InspectionRecord>> {
-    let record_no = format!("REC-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
+    let record_no = format!(
+        "REC-{}",
+        uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+    );
 
     let task_id = match Uuid::parse_str(&req.task_id) {
         Ok(u) => u,
@@ -119,26 +130,27 @@ pub async fn create_record(
 
     match row {
         Ok(r) => {
-            let task_no = sqlx::query(
-                "SELECT task_no FROM qa_lab_tasks WHERE id = $1"
-            )
-            .bind(task_id)
-            .fetch_optional(&state.pool)
-            .await
-            .ok()
-            .flatten()
-            .map(|r| r.get::<String, _>("task_no"));
-            Json(ApiResponse::success(InspectionRecord {
-                id: r.get("id"),
-                record_no: r.get("record_no"),
-                task_id: r.get("task_id"),
-                task_no,
-                test_data: r.get("test_data"),
-                conclusion: r.get("conclusion"),
-                recorded_by: r.get("recorded_by"),
-                recorded_at: r.get("recorded_at"),
-                created_at: r.get("created_at"),
-            }, "检测记录创建成功"))
+            let task_no = sqlx::query("SELECT task_no FROM qa_lab_tasks WHERE id = $1")
+                .bind(task_id)
+                .fetch_optional(&state.pool)
+                .await
+                .ok()
+                .flatten()
+                .map(|r| r.get::<String, _>("task_no"));
+            Json(ApiResponse::success(
+                InspectionRecord {
+                    id: r.get("id"),
+                    record_no: r.get("record_no"),
+                    task_id: r.get("task_id"),
+                    task_no,
+                    test_data: r.get("test_data"),
+                    conclusion: r.get("conclusion"),
+                    recorded_by: r.get("recorded_by"),
+                    recorded_at: r.get("recorded_at"),
+                    created_at: r.get("created_at"),
+                },
+                "检测记录创建成功",
+            ))
         }
         Err(e) => {
             tracing::error!("Failed to create record: {}", e);
@@ -164,17 +176,20 @@ pub async fn get_record(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(InspectionRecord {
-            id: r.get("id"),
-            record_no: r.get("record_no"),
-            task_id: r.get("task_id"),
-            task_no: r.get("task_no"),
-            test_data: r.get("test_data"),
-            conclusion: r.get("conclusion"),
-            recorded_by: r.get("recorded_by"),
-            recorded_at: r.get("recorded_at"),
-            created_at: r.get("created_at"),
-        }, "获取检测记录成功")),
+        Ok(r) => Json(ApiResponse::success(
+            InspectionRecord {
+                id: r.get("id"),
+                record_no: r.get("record_no"),
+                task_id: r.get("task_id"),
+                task_no: r.get("task_no"),
+                test_data: r.get("test_data"),
+                conclusion: r.get("conclusion"),
+                recorded_by: r.get("recorded_by"),
+                recorded_at: r.get("recorded_at"),
+                created_at: r.get("created_at"),
+            },
+            "获取检测记录成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to fetch record: {}", e);
             Json(ApiResponse::error(500, "获取检测记录失败"))

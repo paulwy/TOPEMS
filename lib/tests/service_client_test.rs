@@ -1,15 +1,11 @@
 use topems_shared::service_client::{
-    BaseServiceClient, ServiceClientError, 
-    create_hrm_client, create_iam_client,
-    create_notification_client, create_generic_client,
-    create_qms_client, create_mes_client, create_erp_client,
-    create_wms_client, create_scm_client, create_pm_client,
-    create_crm_client, create_finance_client, create_doc_client,
-    create_ai_client, create_pdm_client, create_srm_client,
-    create_lims_client, create_ehs_client, create_rs_client,
-    create_bi_client, create_report_client, create_mobile_client,
-    create_portal_client, create_monitor_client, create_gis_client,
-    create_integration_client,
+    create_ai_client, create_bi_client, create_crm_client, create_doc_client, create_ehs_client,
+    create_erp_client, create_finance_client, create_generic_client, create_gis_client,
+    create_hrm_client, create_iam_client, create_integration_client, create_lims_client,
+    create_mes_client, create_mobile_client, create_monitor_client, create_notification_client,
+    create_pdm_client, create_pm_client, create_portal_client, create_qms_client,
+    create_report_client, create_rs_client, create_scm_client, create_srm_client,
+    create_wms_client, BaseServiceClient, ServiceClientError,
 };
 
 #[test]
@@ -34,7 +30,7 @@ fn test_base_client_new_with_empty_url() {
 async fn test_base_client_build_url_via_request() {
     let client = BaseServiceClient::new("http://localhost:8080").unwrap();
     let result = client.get::<serde_json::Value>("/api/users").await;
-    
+
     assert!(result.is_err());
 }
 
@@ -42,7 +38,7 @@ async fn test_base_client_build_url_via_request() {
 async fn test_base_client_build_url_with_trailing_slash_via_request() {
     let client = BaseServiceClient::new("http://localhost:8080/").unwrap();
     let result = client.get::<serde_json::Value>("/api/users").await;
-    
+
     assert!(result.is_err());
 }
 
@@ -50,7 +46,7 @@ async fn test_base_client_build_url_with_trailing_slash_via_request() {
 async fn test_base_client_get_request_fails_without_server() {
     let client = BaseServiceClient::new("http://localhost:9999").unwrap();
     let result = client.get::<serde_json::Value>("/api/health").await;
-    
+
     assert!(result.is_err());
 }
 
@@ -58,8 +54,10 @@ async fn test_base_client_get_request_fails_without_server() {
 async fn test_base_client_post_request_fails_without_server() {
     let client = BaseServiceClient::new("http://localhost:9999").unwrap();
     let body = serde_json::json!({ "name": "test" });
-    let result = client.post::<serde_json::Value, _>("/api/users", &body).await;
-    
+    let result = client
+        .post::<serde_json::Value, _>("/api/users", &body)
+        .await;
+
     assert!(result.is_err());
 }
 
@@ -67,8 +65,10 @@ async fn test_base_client_post_request_fails_without_server() {
 async fn test_base_client_put_request_fails_without_server() {
     let client = BaseServiceClient::new("http://localhost:9999").unwrap();
     let body = serde_json::json!({ "name": "updated" });
-    let result = client.put::<serde_json::Value, _>("/api/users/1", &body).await;
-    
+    let result = client
+        .put::<serde_json::Value, _>("/api/users/1", &body)
+        .await;
+
     assert!(result.is_err());
 }
 
@@ -76,7 +76,7 @@ async fn test_base_client_put_request_fails_without_server() {
 async fn test_base_client_delete_request_fails_without_server() {
     let client = BaseServiceClient::new("http://localhost:9999").unwrap();
     let result = client.delete::<serde_json::Value>("/api/users/1").await;
-    
+
     assert!(result.is_err());
 }
 
@@ -84,7 +84,7 @@ async fn test_base_client_delete_request_fails_without_server() {
 async fn test_base_client_get_without_response_fails_without_server() {
     let client = BaseServiceClient::new("http://localhost:9999").unwrap();
     let result = client.get_without_response("/api/health").await;
-    
+
     assert!(result.is_err());
 }
 
@@ -158,7 +158,7 @@ fn test_service_client_error_service_error() {
 async fn test_service_client_error_http_request_error() {
     let client = BaseServiceClient::new("http://localhost:9999").unwrap();
     let result = client.get::<serde_json::Value>("/api/nonexistent").await;
-    
+
     assert!(result.is_err());
     match result {
         Err(ServiceClientError::HttpRequestError(_)) => {}
@@ -170,10 +170,10 @@ async fn test_service_client_error_http_request_error() {
 async fn test_base_client_clone() {
     let client = BaseServiceClient::new("http://localhost:8080").unwrap();
     let cloned = client.clone();
-    
+
     let result1 = client.get::<serde_json::Value>("/test").await;
     let result2 = cloned.get::<serde_json::Value>("/test").await;
-    
+
     assert!(result1.is_err());
     assert!(result2.is_err());
 }
@@ -181,11 +181,11 @@ async fn test_base_client_clone() {
 #[tokio::test]
 async fn test_base_client_timeout() {
     let client = BaseServiceClient::new("http://localhost:9999").unwrap();
-    
+
     let start = std::time::Instant::now();
     let _ = client.get::<serde_json::Value>("/api/slow").await;
     let elapsed = start.elapsed();
-    
+
     assert!(elapsed < std::time::Duration::from_secs(35));
 }
 
@@ -333,7 +333,7 @@ fn validate_client_result<T>(result: Result<T, ServiceClientError>) {
 async fn test_base_client_request_with_auth_header() {
     let mut client = BaseServiceClient::new("http://localhost:9999").unwrap();
     client.set_auth_token("test-token");
-    
+
     let result = client.get::<serde_json::Value>("/api/test").await;
     assert!(result.is_err());
 }
@@ -342,7 +342,7 @@ async fn test_base_client_request_with_auth_header() {
 async fn test_base_client_request_with_custom_headers() {
     let mut client = BaseServiceClient::new("http://localhost:9999").unwrap();
     client.add_header("X-Custom-Header", "custom-value");
-    
+
     let result = client.get::<serde_json::Value>("/api/test").await;
     assert!(result.is_err());
 }
@@ -350,9 +350,9 @@ async fn test_base_client_request_with_custom_headers() {
 #[test]
 fn test_base_client_url_formatting() {
     let client = BaseServiceClient::new("http://localhost:8080").unwrap();
-    
+
     assert_eq!(client.base_url(), "http://localhost:8080");
-    
+
     let client_with_slash = BaseServiceClient::new("http://localhost:8080/").unwrap();
     assert_eq!(client_with_slash.base_url(), "http://localhost:8080/");
 }

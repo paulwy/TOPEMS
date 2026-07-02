@@ -1,7 +1,7 @@
 //! Billing module - Subscription and Usage Tracking
 
-pub mod models;
 pub mod handlers;
+pub mod models;
 
 use sqlx::PgPool;
 
@@ -177,15 +177,21 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .await?;
 
     // Create indexes
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_subscriptions_tenant ON core_subscriptions(tenant_id)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_invoices_tenant ON core_billing_invoices(tenant_id)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_invoices_status ON core_billing_invoices(status)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_core_subscriptions_tenant ON core_subscriptions(tenant_id)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_core_invoices_tenant ON core_billing_invoices(tenant_id)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_core_invoices_status ON core_billing_invoices(status)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_core_usage_tenant_period ON core_usage_records(tenant_id, period_start)")
         .execute(pool)
         .await?;

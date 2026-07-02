@@ -704,7 +704,7 @@ export const ChatInterface: React.FC = () => {
                       style={{
                         marginBottom: 16,
                         padding: 8,
-                        backgroundColor: '#fef9c3',
+                        backgroundColor: 'warning.100',
                         border: '1px solid #fde047',
                         borderRadius: 8,
                       }}

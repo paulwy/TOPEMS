@@ -95,8 +95,8 @@ const LimsUncertaintyPage: React.FC = () => {
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
       草稿: { bg: 'grey.100', color: 'text.secondary' },
-      计算中: { bg: '#dbeafe', color: 'primary.dark' },
-      已完成: { bg: 'success.lighter', color: '#15803d' },
+      计算中: { bg: 'primary.100', color: 'primary.dark' },
+      已完成: { bg: 'success.lighter', color: 'success.700' },
     };
     const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -312,7 +312,7 @@ const LimsUncertaintyPage: React.FC = () => {
                 justifyContent: 'center',
               }}
             >
-              <Calculator sx={{ width: 20, height: 20, color: '#ea580c' }} />
+              <Calculator sx={{ width: 20, height: 20, color: 'warning.600' }} />
             </Box>
             <Box>
               <Typography
@@ -372,7 +372,7 @@ const LimsUncertaintyPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: '#dbeafe',
+                bgcolor: 'primary.100',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
@@ -453,7 +453,7 @@ const LimsUncertaintyPage: React.FC = () => {
               height: 48,
               border: 4,
               borderColor: '#fdba74',
-              borderTopColor: '#ea580c',
+              borderTopColor: 'warning.600',
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
               mx: 'auto',
@@ -587,7 +587,7 @@ const LimsUncertaintyPage: React.FC = () => {
             variant='contained'
             onClick={handleSave}
             disabled={saving}
-            sx={{ bgcolor: '#ea580c' }}
+            sx={{ bgcolor: 'warning.600' }}
           >
             {saving ? '保存中...' : '保存'}
           </Button>
@@ -751,7 +751,7 @@ const LimsUncertaintyPage: React.FC = () => {
               setShowDetailModal(false);
               if (selectedProject) handleEdit(selectedProject);
             }}
-            sx={{ bgcolor: '#ea580c' }}
+            sx={{ bgcolor: 'warning.600' }}
           >
             编辑
           </Button>

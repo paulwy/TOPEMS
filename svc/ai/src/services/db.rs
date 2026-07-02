@@ -81,9 +81,11 @@ impl Database {
             .execute(&self.pool)
             .await?;
 
-        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_documents_status ON plugin_ai.documents(status);"#)
-            .execute(&self.pool)
-            .await?;
+        sqlx::query(
+            r#"CREATE INDEX IF NOT EXISTS idx_documents_status ON plugin_ai.documents(status);"#,
+        )
+        .execute(&self.pool)
+        .await?;
 
         sqlx::query(
             r#"CREATE INDEX IF NOT EXISTS idx_documents_category ON plugin_ai.documents(category);"#,
@@ -95,9 +97,11 @@ impl Database {
             .execute(&self.pool)
             .await?;
 
-        sqlx::query(r#"CREATE INDEX IF NOT EXISTS idx_documents_title ON plugin_ai.documents(title);"#)
-            .execute(&self.pool)
-            .await?;
+        sqlx::query(
+            r#"CREATE INDEX IF NOT EXISTS idx_documents_title ON plugin_ai.documents(title);"#,
+        )
+        .execute(&self.pool)
+        .await?;
 
         sqlx::query(
             r#"CREATE INDEX IF NOT EXISTS idx_documents_deleted_at ON plugin_ai.documents(deleted_at);"#,
@@ -170,9 +174,11 @@ impl Database {
         .execute(&self.pool)
         .await?;
 
-        sqlx::query(r#"DROP TRIGGER IF EXISTS update_documents_updated_at ON plugin_ai.documents;"#)
-            .execute(&self.pool)
-            .await?;
+        sqlx::query(
+            r#"DROP TRIGGER IF EXISTS update_documents_updated_at ON plugin_ai.documents;"#,
+        )
+        .execute(&self.pool)
+        .await?;
 
         sqlx::query(
             r#"

@@ -100,8 +100,8 @@ export const RequirePermission: React.FC<RequirePermissionProps> = ({
           style={{
             width: '24px',
             height: '24px',
-            border: '2px solid #e5e7eb',
-            borderTopColor: '#3b82f6',
+            border: '2px solid grey.200',
+            borderTopColor: 'primary.main',
             borderRadius: '50%',
             animation: 'spin 1s linear infinite',
           }}
@@ -173,8 +173,8 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
             style={{
               width: '48px',
               height: '48px',
-              border: '4px solid #e5e7eb',
-              borderTopColor: '#3b82f6',
+              border: '4px solid grey.200',
+              borderTopColor: 'primary.main',
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
               margin: 'auto',
@@ -227,7 +227,7 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#f3f4f6',
+        backgroundColor: 'grey.100',
       }}
     >
       <div
@@ -250,7 +250,7 @@ export const PermissionGuard: React.FC<PermissionGuardProps> = ({
           onClick={() => window.history.back()}
           style={{
             padding: '10px 24px',
-            backgroundColor: '#3b82f6',
+            backgroundColor: 'primary.main',
             color: 'white',
             borderRadius: '8px',
             border: 'none',
@@ -306,7 +306,7 @@ export const ModulePermissionGuard: React.FC<ModulePermissionGuardProps> = ({
       <div style={{ padding: '24px' }}>
         <div
           style={{
-            backgroundColor: '#fef3c7',
+            backgroundColor: 'warning.100',
             border: '1px solid #fbbf24',
             borderRadius: '8px',
             padding: '16px',

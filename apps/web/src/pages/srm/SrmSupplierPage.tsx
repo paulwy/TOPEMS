@@ -105,14 +105,14 @@ const SrmSupplierPage: React.FC = () => {
   };
 
   const getRiskStyle = (level: string) => {
-    if (level === 'low') return { bgcolor: 'success.lighter', color: '#15803d', label: '低' };
-    if (level === 'medium') return { bgcolor: 'warning.light', color: '#b45309', label: '中' };
+    if (level === 'low') return { bgcolor: 'success.lighter', color: 'success.700', label: '低' };
+    if (level === 'medium') return { bgcolor: 'warning.light', color: 'warning.700', label: '中' };
     return { bgcolor: 'error.lighter', color: 'error.darker', label: '高' };
   };
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      启用: { bg: 'success.lighter', color: '#15803d' },
+      启用: { bg: 'success.lighter', color: 'success.700' },
       禁用: { bg: 'error.lighter', color: 'error.darker' },
     };
     const colors = statusMap[status] || { bg: 'grey.100', color: '#475569' };
@@ -304,13 +304,13 @@ const SrmSupplierPage: React.FC = () => {
 
   const getLevelColor = (level: string) => {
     const colorMap: Record<string, { bg: string; color: string }> = {
-      A: { bg: 'success.lighter', color: '#15803d' },
-      B: { bg: '#dbeafe', color: 'primary.dark' },
-      C: { bg: 'warning.light', color: '#b45309' },
+      A: { bg: 'success.lighter', color: 'success.700' },
+      B: { bg: 'primary.100', color: 'primary.dark' },
+      C: { bg: 'warning.light', color: 'warning.700' },
       D: { bg: 'warning.light', color: '#92400e' },
       E: { bg: 'error.lighter', color: 'error.darker' },
     };
-    return colorMap[level] || { bg: 'grey.100', color: '#475569' };
+    return colorMap[level] || { bg: 'grey.100', color: 'grey.600' };
   };
 
   const headerContent = useMemo(
@@ -510,7 +510,7 @@ const SrmSupplierPage: React.FC = () => {
                     sx={{
                       width: 40,
                       height: 40,
-                      bgcolor: '#dbeafe',
+                      bgcolor: 'primary.100',
                       borderRadius: 3,
                       display: 'flex',
                       alignItems: 'center',

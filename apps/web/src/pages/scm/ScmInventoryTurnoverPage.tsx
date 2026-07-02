@@ -40,11 +40,11 @@ const ScmInventoryTurnoverPage: React.FC = () => {
 
   const getAbcColor = (abc?: string) => {
     const map: Record<string, { bg: string; color: string }> = {
-      A: { bg: '#ef444420', color: '#ef4444' },
-      B: { bg: '#f59e0b20', color: '#b45309' },
-      C: { bg: '#10b98120', color: '#15803d' },
+      A: { bg: 'error.main20', color: '#ef4444' },
+      B: { bg: '#f59e0b20', color: 'warning.700' },
+      C: { bg: '#10b98120', color: 'success.700' },
     };
-    return map[abc || ''] || { bg: 'grey.100', color: '#475569' };
+    return map[abc || ''] || { bg: 'grey.100', color: 'grey.600' };
   };
 
   const columns: ColumnDef<InventoryTurnoverStat>[] = [

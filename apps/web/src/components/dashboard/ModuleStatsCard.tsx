@@ -92,7 +92,7 @@ export const ModuleStatsCard: React.FC<ModuleStatsCardProps> = ({
             <Typography
               sx={{
                 fontSize: '0.875rem',
-                color: '#94a3b8',
+                color: 'grey.400',
                 fontWeight: 500,
                 mb: 1,
               }}
@@ -125,13 +125,13 @@ export const ModuleStatsCard: React.FC<ModuleStatsCardProps> = ({
         >
           <CheckCircle2
             size={14}
-            color='#4ade80'
+            color='success.400'
           />
           <Typography
             sx={{
               fontSize: '0.875rem',
               fontWeight: 600,
-              color: '#4ade80',
+              color: 'success.400',
             }}
           >
             {active} 活跃

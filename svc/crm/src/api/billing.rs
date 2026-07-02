@@ -27,7 +27,10 @@ pub fn create_routes() -> Router<ApiState> {
                 .delete(delete_billing_record),
         )
         .route("/api/crm/billing/{id}/paid", post(mark_billing_paid))
-        .route("/api/crm/billing/{id}/notify", post(send_billing_notification))
+        .route(
+            "/api/crm/billing/{id}/notify",
+            post(send_billing_notification),
+        )
 }
 
 async fn list_billing_records(
@@ -142,12 +145,11 @@ async fn create_billing_record(
         return Json(api_error(400, "金额必须大于零"));
     }
 
-    let customer = sqlx::query_scalar::<_, String>(
-        "SELECT name FROM plugin_crm.customers WHERE id = $1",
-    )
-    .bind(&req.customer_id)
-    .fetch_optional(&state.db)
-    .await;
+    let customer =
+        sqlx::query_scalar::<_, String>("SELECT name FROM plugin_crm.customers WHERE id = $1")
+            .bind(&req.customer_id)
+            .fetch_optional(&state.db)
+            .await;
 
     let customer_name = match customer {
         Ok(Some(name)) => name,
@@ -160,7 +162,11 @@ async fn create_billing_record(
     let invoice_no = if let Some(inv_no) = &req.invoice_no {
         inv_no.clone()
     } else {
-        format!("INV-{}-{}", now.format("%Y%m%d"), id.to_string().split('-').next().unwrap())
+        format!(
+            "INV-{}-{}",
+            now.format("%Y%m%d"),
+            id.to_string().split('-').next().unwrap()
+        )
     };
     let currency = if let Some(curr) = &req.currency {
         curr.clone()
@@ -168,7 +174,8 @@ async fn create_billing_record(
         "CNY".to_string()
     };
 
-    let items_json = serde_json::to_value(&req.items).unwrap_or(serde_json::Value::Array(Default::default()));
+    let items_json =
+        serde_json::to_value(&req.items).unwrap_or(serde_json::Value::Array(Default::default()));
 
     let result = sqlx::query_as::<_, BillingRecord>(
         r#"
@@ -262,26 +269,46 @@ async fn update_billing_record(
 
     let request_data = serde_json::to_value(&req).ok();
 
-    let customer_id = req.get("customer_id").and_then(|v| v.as_str()).and_then(|s| Uuid::parse_str(s).ok());
+    let customer_id = req
+        .get("customer_id")
+        .and_then(|v| v.as_str())
+        .and_then(|s| Uuid::parse_str(s).ok());
     let customer_name = if customer_id.is_some() {
-        sqlx::query_scalar::<_, String>(
-            "SELECT name FROM plugin_crm.customers WHERE id = $1",
-        )
-        .bind(customer_id.as_ref())
-        .fetch_optional(&state.db)
-        .await
-        .ok()
-        .flatten()
-        .or(Some(existing.customer_name))
+        sqlx::query_scalar::<_, String>("SELECT name FROM plugin_crm.customers WHERE id = $1")
+            .bind(customer_id.as_ref())
+            .fetch_optional(&state.db)
+            .await
+            .ok()
+            .flatten()
+            .or(Some(existing.customer_name))
     } else {
         Some(existing.customer_name)
     };
 
-    let invoice_no = req.get("invoice_no").and_then(|v| v.as_str()).unwrap_or(&existing.invoice_no).to_string();
-    let amount = req.get("amount").and_then(|v| v.as_f64()).unwrap_or(existing.amount);
-    let currency = req.get("currency").and_then(|v| v.as_str()).unwrap_or(&existing.currency).to_string();
-    let due_date = req.get("due_date").and_then(|v| v.as_str()).and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok()).map(|dt| dt.with_timezone(&chrono::Utc));
-    let status = req.get("status").and_then(|v| v.as_str()).unwrap_or(&existing.status).to_string();
+    let invoice_no = req
+        .get("invoice_no")
+        .and_then(|v| v.as_str())
+        .unwrap_or(&existing.invoice_no)
+        .to_string();
+    let amount = req
+        .get("amount")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(existing.amount);
+    let currency = req
+        .get("currency")
+        .and_then(|v| v.as_str())
+        .unwrap_or(&existing.currency)
+        .to_string();
+    let due_date = req
+        .get("due_date")
+        .and_then(|v| v.as_str())
+        .and_then(|s| chrono::DateTime::parse_from_rfc3339(s).ok())
+        .map(|dt| dt.with_timezone(&chrono::Utc));
+    let status = req
+        .get("status")
+        .and_then(|v| v.as_str())
+        .unwrap_or(&existing.status)
+        .to_string();
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, BillingRecord>(
@@ -469,8 +496,12 @@ async fn send_billing_notification(
 
     match result {
         Ok(Some(record)) => {
-            tracing::info!("发送账单通知: 客户={}, 发票号={}, 金额={}", 
-                record.customer_name, record.invoice_no, record.amount);
+            tracing::info!(
+                "发送账单通知: 客户={}, 发票号={}, 金额={}",
+                record.customer_name,
+                record.invoice_no,
+                record.amount
+            );
             Json(ApiResponse::success("".to_string(), "账单通知已发送"))
         }
         Ok(None) => Json(api_error(404, "账单不存在")),

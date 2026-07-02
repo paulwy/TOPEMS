@@ -133,11 +133,11 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const TYPE_COLORS: Record<string, string> = {
-  pdf: '#ef4444',
-  word: '#3b82f6',
-  excel: '#22c55e',
-  ppt: '#f59e0b',
-  image: '#8B5CF6',
+  pdf: 'error.main',
+  word: 'primary.main',
+  excel: 'success.main',
+  ppt: 'warning.main',
+  image: 'secondary.main',
 };
 
 const CATEGORY_LABELS: Record<string, string> = {

@@ -46,12 +46,14 @@ impl<T: Clone + Send + Sync + 'static> InMemoryCache<T> {
 
     pub fn set(&self, key: impl Into<String>, value: T) {
         let expires_at = self.default_ttl.map(|ttl| Instant::now() + ttl);
-        self.data.insert(key.into(), CacheEntry { value, expires_at });
+        self.data
+            .insert(key.into(), CacheEntry { value, expires_at });
     }
 
     pub fn set_with_ttl(&self, key: impl Into<String>, value: T, ttl: Duration) {
         let expires_at = Some(Instant::now() + ttl);
-        self.data.insert(key.into(), CacheEntry { value, expires_at });
+        self.data
+            .insert(key.into(), CacheEntry { value, expires_at });
     }
 
     pub fn remove(&self, key: &str) -> Option<T> {

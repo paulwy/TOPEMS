@@ -62,8 +62,8 @@ const TenantSettingsPage: React.FC = () => {
   const [members, setMembers] = useState<TenantUser[]>([]);
   const [formData, setFormData] = useState({
     name: '',
-    primary_color: '#3B82F6',
-    secondary_color: '#6B7280',
+    primary_color: 'primary.main',
+    secondary_color: 'grey.500',
     custom_domain: '',
     sso_enabled: false,
     two_factor_required: false,

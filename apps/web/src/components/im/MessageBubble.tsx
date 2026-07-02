@@ -214,7 +214,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   borderRadius: 4,
                   fontSize: 14,
                   resize: 'none',
-                  backgroundColor: isSent ? '#4338ca' : 'white',
+                  backgroundColor: isSent ? 'secondary.700' : 'white',
                   color: isSent ? 'white' : theme.palette.text.primary,
                   border: `1px solid ${isSent ? theme.palette.primary.light : theme.palette.grey[300]}`,
                 }}

@@ -615,7 +615,7 @@ const QmsApqpPage: React.FC = () => {
                   }}
                 >
                   <Box>
-                    <Typography sx={{ color: '#ddd6fe', fontSize: '0.875rem' }}>验证中</Typography>
+                    <Typography sx={{ color: 'secondary.100', fontSize: '0.875rem' }}>验证中</Typography>
                     <Typography
                       variant='h4'
                       sx={{ fontWeight: 700, mt: 0.5 }}
@@ -623,7 +623,7 @@ const QmsApqpPage: React.FC = () => {
                       {stats.verifying}
                     </Typography>
                   </Box>
-                  <CheckCircle sx={{ width: 40, height: 40, color: '#ddd6fe' }} />
+                  <CheckCircle sx={{ width: 40, height: 40, color: 'secondary.100' }} />
                 </Box>
               </CardContent>
             </Card>

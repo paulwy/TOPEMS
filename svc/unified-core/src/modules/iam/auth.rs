@@ -1,11 +1,11 @@
-use axum::{extract::State, Json, Extension};
+use axum::{extract::State, Extension, Json};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use uuid::Uuid;
 
+use crate::modules::communication::mail::send_email_async;
 use topems_shared::auth::Claims;
 use topems_shared::generate_refresh_token;
-use crate::modules::communication::mail::send_email_async;
 
 #[derive(Debug, Clone, Deserialize)]
 struct LoginRequest {
@@ -52,8 +52,14 @@ pub async fn login(
     State(state): State<crate::AppState>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    let username = payload.get("username").and_then(|v| v.as_str()).unwrap_or("");
-    let password = payload.get("password").and_then(|v| v.as_str()).unwrap_or("");
+    let username = payload
+        .get("username")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    let password = payload
+        .get("password")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
 
     tracing::info!("IAM auth login called with username: {}", username);
 
@@ -116,17 +122,22 @@ pub async fn login(
     }
 
     let jwt_expire_minutes = state.auth_state.token_expiry_hours * 60;
-    
+
     // 获取用户的角色和权限
-    let (user_roles, user_permissions) = get_user_roles_and_permissions(&state, user.id, user.is_superuser).await;
-    
+    let (user_roles, user_permissions) =
+        get_user_roles_and_permissions(&state, user.id, user.is_superuser).await;
+
     // 创建完整的 Claims，包含用户的真实 is_superuser 状态
     let now = chrono::Utc::now();
     let exp = (now + chrono::Duration::minutes(jwt_expire_minutes)).timestamp() as usize;
     let claims = Claims {
         sub: user.id.to_string(),
         username: user.username.clone(),
-        role: if user.is_superuser { "admin".to_string() } else { "user".to_string() },
+        role: if user.is_superuser {
+            "admin".to_string()
+        } else {
+            "user".to_string()
+        },
         roles: user_roles.clone(),
         permissions: user_permissions.clone(),
         is_superuser: user.is_superuser,
@@ -136,7 +147,7 @@ pub async fn login(
         department: None,
         tenant_id: user.tenant_id.map(|t| t.to_string()),
     };
-    
+
     let access_token = match claims.encode(&state.auth_state.jwt_secret) {
         Ok(token) => token,
         Err(e) => {
@@ -149,12 +160,13 @@ pub async fn login(
             }));
         }
     };
-    
+
     let refresh_token = generate_refresh_token();
     let expires_in = jwt_expire_minutes * 60;
-    
+
     // 保存会话到数据库
-    let expires_at = chrono::Utc::now() + chrono::Duration::hours(state.auth_state.token_expiry_hours);
+    let expires_at =
+        chrono::Utc::now() + chrono::Duration::hours(state.auth_state.token_expiry_hours);
     match sqlx::query(
         "INSERT INTO unified_core.sessions (user_id, token, refresh_token, expires_at) VALUES ($1, $2, $3, $4) ON CONFLICT (user_id) DO UPDATE SET token = $2, refresh_token = $3, expires_at = $4",
     )
@@ -209,10 +221,19 @@ pub async fn register(
     State(state): State<crate::AppState>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    let username = payload.get("username").and_then(|v| v.as_str()).unwrap_or("");
+    let username = payload
+        .get("username")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
     let email = payload.get("email").and_then(|v| v.as_str()).unwrap_or("");
-    let password = payload.get("password").and_then(|v| v.as_str()).unwrap_or("");
-    let full_name = payload.get("full_name").and_then(|v| v.as_str()).map(|s| s.to_string());
+    let password = payload
+        .get("password")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    let full_name = payload
+        .get("full_name")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
 
     tracing::info!("IAM auth register called with username: {}", username);
 
@@ -227,7 +248,12 @@ pub async fn register(
     }
 
     // 验证用户名格式（3-20字符，只允许字母、数字、下划线）
-    if !username.chars().all(|c| c.is_ascii_alphanumeric() || c == '_') || username.len() < 3 || username.len() > 20 {
+    if !username
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || c == '_')
+        || username.len() < 3
+        || username.len() > 20
+    {
         return Json(serde_json::json!({
             "success": false,
             "message": "用户名必须为3-20个字符，只允许字母、数字和下划线",
@@ -247,7 +273,10 @@ pub async fn register(
     }
 
     // 验证密码强度（至少8字符，包含数字和字母）
-    if password.len() < 8 || !password.chars().any(|c| c.is_ascii_alphabetic()) || !password.chars().any(|c| c.is_ascii_digit()) {
+    if password.len() < 8
+        || !password.chars().any(|c| c.is_ascii_alphabetic())
+        || !password.chars().any(|c| c.is_ascii_digit())
+    {
         return Json(serde_json::json!({
             "success": false,
             "message": "密码至少8个字符，必须包含字母和数字",
@@ -257,12 +286,10 @@ pub async fn register(
     }
 
     // 检查用户名是否已存在
-    match sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM core_users WHERE username = $1",
-    )
-    .bind(username)
-    .fetch_one(&state.pool)
-    .await
+    match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM core_users WHERE username = $1")
+        .bind(username)
+        .fetch_one(&state.pool)
+        .await
     {
         Ok(count) if count > 0 => {
             return Json(serde_json::json!({
@@ -285,12 +312,10 @@ pub async fn register(
     }
 
     // 检查邮箱是否已存在
-    match sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM core_users WHERE email = $1",
-    )
-    .bind(email)
-    .fetch_one(&state.pool)
-    .await
+    match sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM core_users WHERE email = $1")
+        .bind(email)
+        .fetch_one(&state.pool)
+        .await
     {
         Ok(count) if count > 0 => {
             return Json(serde_json::json!({
@@ -371,10 +396,13 @@ pub async fn refresh_token(
     State(state): State<crate::AppState>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    let refresh_token = payload.get("refresh_token").and_then(|v| v.as_str()).unwrap_or("");
-    
+    let refresh_token = payload
+        .get("refresh_token")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+
     tracing::info!("IAM auth refresh_token called");
-    
+
     if refresh_token.is_empty() {
         return Json(serde_json::json!({
             "success": false,
@@ -383,7 +411,7 @@ pub async fn refresh_token(
             "code": 400
         }));
     }
-    
+
     // 查询会话获取用户信息
     let row = match sqlx::query(
         "SELECT s.user_id, u.username, u.is_superuser, u.email, u.status, u.tenant_id
@@ -415,14 +443,14 @@ pub async fn refresh_token(
             }));
         }
     };
-    
+
     let user_id: Uuid = row.get("user_id");
     let username: String = row.get("username");
     let is_superuser: bool = row.get("is_superuser");
     let email: String = row.get("email");
     let status: String = row.get("status");
     let tenant_id: Option<Uuid> = row.get("tenant_id");
-    
+
     if status != "active" {
         return Json(serde_json::json!({
             "success": false,
@@ -431,19 +459,24 @@ pub async fn refresh_token(
             "code": 401
         }));
     }
-    
+
     // 生成新的 access_token
     let jwt_expire_minutes = state.auth_state.token_expiry_hours * 60;
     let now = chrono::Utc::now();
     let exp = (now + chrono::Duration::minutes(jwt_expire_minutes)).timestamp() as usize;
-    
+
     // 获取用户的角色和权限（与 login 保持一致）
-    let (user_roles, user_permissions) = get_user_roles_and_permissions(&state, user_id, is_superuser).await;
-    
+    let (user_roles, user_permissions) =
+        get_user_roles_and_permissions(&state, user_id, is_superuser).await;
+
     let claims = Claims {
         sub: user_id.to_string(),
         username: username.clone(),
-        role: if is_superuser { "admin".to_string() } else { "user".to_string() },
+        role: if is_superuser {
+            "admin".to_string()
+        } else {
+            "user".to_string()
+        },
         roles: user_roles,
         permissions: user_permissions,
         is_superuser,
@@ -453,7 +486,7 @@ pub async fn refresh_token(
         department: None,
         tenant_id: tenant_id.map(|t| t.to_string()),
     };
-    
+
     let access_token = match claims.encode(&state.auth_state.jwt_secret) {
         Ok(token) => token,
         Err(e) => {
@@ -466,9 +499,10 @@ pub async fn refresh_token(
             }));
         }
     };
-    
+
     // 更新会话中的 access_token 和过期时间
-    let expires_at = chrono::Utc::now() + chrono::Duration::hours(state.auth_state.token_expiry_hours);
+    let expires_at =
+        chrono::Utc::now() + chrono::Duration::hours(state.auth_state.token_expiry_hours);
     match sqlx::query(
         "UPDATE unified_core.sessions SET token = $1, expires_at = $2 WHERE refresh_token = $3",
     )
@@ -481,7 +515,7 @@ pub async fn refresh_token(
         Ok(_) => tracing::debug!("会话更新成功"),
         Err(e) => tracing::warn!("会话更新失败: {}", e),
     }
-    
+
     Json(serde_json::json!({
         "success": true,
         "message": "Token刷新成功",
@@ -501,7 +535,7 @@ pub async fn logout(
     Extension(claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
     tracing::info!("IAM auth logout called for user: {}", claims.username);
-    
+
     let user_id = match Uuid::parse_str(&claims.sub) {
         Ok(id) => id,
         Err(e) => {
@@ -514,14 +548,12 @@ pub async fn logout(
             }));
         }
     };
-    
+
     // 删除用户会话
-    match sqlx::query(
-        "DELETE FROM unified_core.sessions WHERE user_id = $1",
-    )
-    .bind(user_id)
-    .execute(&state.pool)
-    .await
+    match sqlx::query("DELETE FROM unified_core.sessions WHERE user_id = $1")
+        .bind(user_id)
+        .execute(&state.pool)
+        .await
     {
         Ok(_) => {
             tracing::info!("Logout successful for user: {}", claims.username);
@@ -550,9 +582,9 @@ pub async fn forgot_password(
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
     let email = payload.get("email").and_then(|v| v.as_str()).unwrap_or("");
-    
+
     tracing::info!("IAM auth forgot_password called for email: {}", email);
-    
+
     if email.is_empty() {
         return Json(serde_json::json!({
             "success": false,
@@ -561,7 +593,7 @@ pub async fn forgot_password(
             "code": 400
         }));
     }
-    
+
     // 查找用户
     let user = match sqlx::query_as::<_, UserRow>(
         "SELECT id, username, email FROM core_users WHERE email = $1 AND status = 'active'",
@@ -591,11 +623,11 @@ pub async fn forgot_password(
             }));
         }
     };
-    
+
     // 生成密码重置令牌（有效期1小时）
     let reset_token = generate_refresh_token();
     let expires_at = chrono::Utc::now() + chrono::Duration::hours(1);
-    
+
     // 保存重置令牌到数据库
     match sqlx::query(
         "INSERT INTO unified_core.password_resets (user_id, token, expires_at) VALUES ($1, $2, $3) ON CONFLICT (user_id) DO UPDATE SET token = $2, expires_at = $3",
@@ -617,7 +649,7 @@ pub async fn forgot_password(
             }));
         }
     }
-    
+
     // 发送密码重置邮件
     let subject = "TOPEMS 密码重置".to_string();
     let body = format!(
@@ -642,8 +674,9 @@ pub async fn forgot_password(
         "#,
         reset_token
     );
-    
-    let from_email = std::env::var("SMTP_FROM").unwrap_or_else(|_| "noreply@topems.local".to_string());
+
+    let from_email =
+        std::env::var("SMTP_FROM").unwrap_or_else(|_| "noreply@topems.local".to_string());
     send_email_async(
         from_email,
         email.to_string(),
@@ -653,9 +686,9 @@ pub async fn forgot_password(
         None,
         None,
     );
-    
+
     tracing::info!("Password reset email sent to: {}", email);
-    
+
     Json(serde_json::json!({
         "success": true,
         "message": "如果该邮箱已注册，您将收到密码重置邮件",
@@ -669,11 +702,17 @@ pub async fn reset_password(
     State(state): State<crate::AppState>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    let reset_token = payload.get("reset_token").and_then(|v| v.as_str()).unwrap_or("");
-    let new_password = payload.get("new_password").and_then(|v| v.as_str()).unwrap_or("");
-    
+    let reset_token = payload
+        .get("reset_token")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+    let new_password = payload
+        .get("new_password")
+        .and_then(|v| v.as_str())
+        .unwrap_or("");
+
     tracing::info!("IAM auth reset_password called");
-    
+
     if reset_token.is_empty() || new_password.is_empty() {
         return Json(serde_json::json!({
             "success": false,
@@ -682,9 +721,12 @@ pub async fn reset_password(
             "code": 400
         }));
     }
-    
+
     // 验证密码强度
-    if new_password.len() < 8 || !new_password.chars().any(|c| c.is_ascii_alphabetic()) || !new_password.chars().any(|c| c.is_ascii_digit()) {
+    if new_password.len() < 8
+        || !new_password.chars().any(|c| c.is_ascii_alphabetic())
+        || !new_password.chars().any(|c| c.is_ascii_digit())
+    {
         return Json(serde_json::json!({
             "success": false,
             "message": "密码至少8个字符，必须包含字母和数字",
@@ -692,7 +734,7 @@ pub async fn reset_password(
             "code": 400
         }));
     }
-    
+
     // 查询重置令牌
     let row = match sqlx::query(
         "SELECT user_id FROM unified_core.password_resets WHERE token = $1 AND expires_at > NOW()",
@@ -721,9 +763,9 @@ pub async fn reset_password(
             }));
         }
     };
-    
+
     let user_id: Uuid = row.get("user_id");
-    
+
     // 哈希新密码
     let password_hash = match bcrypt::hash(new_password, bcrypt::DEFAULT_COST) {
         Ok(h) => h,
@@ -737,7 +779,7 @@ pub async fn reset_password(
             }));
         }
     };
-    
+
     // 更新用户密码
     let transaction = state.pool.begin().await;
     if transaction.is_err() {
@@ -750,15 +792,13 @@ pub async fn reset_password(
         }));
     }
     let mut tx = transaction.unwrap();
-    
+
     // 更新密码
-    match sqlx::query(
-        "UPDATE core_users SET password_hash = $1, updated_at = NOW() WHERE id = $2",
-    )
-    .bind(&password_hash)
-    .bind(user_id)
-    .execute(&mut *tx)
-    .await
+    match sqlx::query("UPDATE core_users SET password_hash = $1, updated_at = NOW() WHERE id = $2")
+        .bind(&password_hash)
+        .bind(user_id)
+        .execute(&mut *tx)
+        .await
     {
         Ok(_) => {}
         Err(e) => {
@@ -772,14 +812,12 @@ pub async fn reset_password(
             }));
         }
     }
-    
+
     // 删除重置令牌（使用后立即失效）
-    match sqlx::query(
-        "DELETE FROM unified_core.password_resets WHERE token = $1",
-    )
-    .bind(reset_token)
-    .execute(&mut *tx)
-    .await
+    match sqlx::query("DELETE FROM unified_core.password_resets WHERE token = $1")
+        .bind(reset_token)
+        .execute(&mut *tx)
+        .await
     {
         Ok(_) => {}
         Err(e) => {
@@ -793,21 +831,19 @@ pub async fn reset_password(
             }));
         }
     }
-    
+
     // 使所有现有会话失效
-    match sqlx::query(
-        "DELETE FROM unified_core.sessions WHERE user_id = $1",
-    )
-    .bind(user_id)
-    .execute(&mut *tx)
-    .await
+    match sqlx::query("DELETE FROM unified_core.sessions WHERE user_id = $1")
+        .bind(user_id)
+        .execute(&mut *tx)
+        .await
     {
         Ok(_) => {}
         Err(e) => {
             tracing::warn!("Failed to invalidate sessions: {}", e);
         }
     }
-    
+
     if tx.commit().await.is_err() {
         tracing::error!("Failed to commit transaction");
         return Json(serde_json::json!({
@@ -817,9 +853,9 @@ pub async fn reset_password(
             "code": 500
         }));
     }
-    
+
     tracing::info!("Password reset successful for user_id: {}", user_id);
-    
+
     Json(serde_json::json!({
         "success": true,
         "message": "密码重置成功，请使用新密码登录",
@@ -836,15 +872,18 @@ async fn get_user_roles_and_permissions(
 ) -> (Vec<String>, Vec<String>) {
     if is_superuser {
         // 超级管理员：获取所有权限
-        let all_permissions = sqlx::query_scalar::<_, String>(
-            "SELECT code FROM core_permissions ORDER BY code"
-        )
-        .fetch_all(&state.pool)
-        .await
-        .unwrap_or_default();
-        
+        let all_permissions =
+            sqlx::query_scalar::<_, String>("SELECT code FROM core_permissions ORDER BY code")
+                .fetch_all(&state.pool)
+                .await
+                .unwrap_or_default();
+
         (
-            vec!["superadmin".to_string(), "admin".to_string(), "user".to_string()],
+            vec![
+                "superadmin".to_string(),
+                "admin".to_string(),
+                "user".to_string(),
+            ],
             all_permissions,
         )
     } else {
@@ -855,13 +894,13 @@ async fn get_user_roles_and_permissions(
             INNER JOIN core_user_roles ur ON r.id = ur.role_id
             WHERE ur.user_id = $1
             ORDER BY r.name
-            "#
+            "#,
         )
         .bind(user_id)
         .fetch_all(&state.pool)
         .await
         .unwrap_or_default();
-        
+
         let permissions: Vec<String> = sqlx::query_scalar::<_, String>(
             r#"
             SELECT DISTINCT p.code FROM core_permissions p
@@ -869,15 +908,19 @@ async fn get_user_roles_and_permissions(
             INNER JOIN core_user_roles ur ON rp.role_id = ur.role_id
             WHERE ur.user_id = $1
             ORDER BY p.code
-            "#
+            "#,
         )
         .bind(user_id)
         .fetch_all(&state.pool)
         .await
         .unwrap_or_default();
-        
+
         (
-            if roles.is_empty() { vec!["user".to_string()] } else { roles },
+            if roles.is_empty() {
+                vec!["user".to_string()]
+            } else {
+                roles
+            },
             permissions,
         )
     }

@@ -42,7 +42,9 @@ pub async fn get_plugin_info() -> Json<CoreResponse<PluginInfo>> {
         id: Uuid::nil(), // Will be assigned by plugin registry
         code: "workflow".to_string(),
         name: "工作流引擎".to_string(),
-        description: Some("Workflow 工作流引擎，包含流程设计、流程实例、审批、历史记录等模块".to_string()),
+        description: Some(
+            "Workflow 工作流引擎，包含流程设计、流程实例、审批、历史记录等模块".to_string(),
+        ),
         version: "1.0.0".to_string(),
         plugin_type: "core".to_string(),
         is_published: true,
@@ -77,25 +79,85 @@ pub async fn plugin_health_check(
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/api/flow/workflows", get(super::workflow::list_workflows))
-        .route("/api/flow/workflows", post(super::workflow::create_workflow))
-        .route("/api/flow/workflows/{id}", get(super::workflow::get_workflow))
-        .route("/api/flow/workflows/{id}", put(super::workflow::update_workflow))
-        .route("/api/flow/workflows/{id}", delete(super::workflow::delete_workflow))
-        .route("/api/flow/workflows/{id}/publish", post(super::workflow::publish_workflow))
-        .route("/api/flow/workflows/{id}/unpublish", post(super::workflow::unpublish_workflow))
+        .route(
+            "/api/flow/workflows",
+            post(super::workflow::create_workflow),
+        )
+        .route(
+            "/api/flow/workflows/{id}",
+            get(super::workflow::get_workflow),
+        )
+        .route(
+            "/api/flow/workflows/{id}",
+            put(super::workflow::update_workflow),
+        )
+        .route(
+            "/api/flow/workflows/{id}",
+            delete(super::workflow::delete_workflow),
+        )
+        .route(
+            "/api/flow/workflows/{id}/publish",
+            post(super::workflow::publish_workflow),
+        )
+        .route(
+            "/api/flow/workflows/{id}/unpublish",
+            post(super::workflow::unpublish_workflow),
+        )
         .route("/api/flow/instances", get(super::instance::list_instances))
-        .route("/api/flow/instances", post(super::instance::create_instance))
-        .route("/api/flow/instances/{id}", get(super::instance::get_instance))
-        .route("/api/flow/instances/{id}/start", post(super::instance::start_instance))
-        .route("/api/flow/instances/{id}/approve", post(super::instance::approve_instance))
-        .route("/api/flow/instances/{id}/reject", post(super::instance::reject_instance))
-        .route("/api/flow/instances/{id}/cancel", post(super::instance::cancel_instance))
-        .route("/api/flow/approvals/pending", get(super::approval::list_pending_approvals))
-        .route("/api/flow/approval-tasks", get(super::approval::list_approval_tasks))
-        .route("/api/flow/approval-tasks/{id}", get(super::approval::get_approval_task))
-        .route("/api/flow/approval-tasks/{id}/approve", post(super::approval::approve_task))
-        .route("/api/flow/approval-tasks/{id}/reject", post(super::approval::reject_task))
-        .route("/api/flow/approvals/{id}/approve", post(super::approval::approve_task))
-        .route("/api/flow/approvals/{id}/reject", post(super::approval::reject_task))
-        .route("/api/flow/statistics", get(super::statistics::get_statistics))
+        .route(
+            "/api/flow/instances",
+            post(super::instance::create_instance),
+        )
+        .route(
+            "/api/flow/instances/{id}",
+            get(super::instance::get_instance),
+        )
+        .route(
+            "/api/flow/instances/{id}/start",
+            post(super::instance::start_instance),
+        )
+        .route(
+            "/api/flow/instances/{id}/approve",
+            post(super::instance::approve_instance),
+        )
+        .route(
+            "/api/flow/instances/{id}/reject",
+            post(super::instance::reject_instance),
+        )
+        .route(
+            "/api/flow/instances/{id}/cancel",
+            post(super::instance::cancel_instance),
+        )
+        .route(
+            "/api/flow/approvals/pending",
+            get(super::approval::list_pending_approvals),
+        )
+        .route(
+            "/api/flow/approval-tasks",
+            get(super::approval::list_approval_tasks),
+        )
+        .route(
+            "/api/flow/approval-tasks/{id}",
+            get(super::approval::get_approval_task),
+        )
+        .route(
+            "/api/flow/approval-tasks/{id}/approve",
+            post(super::approval::approve_task),
+        )
+        .route(
+            "/api/flow/approval-tasks/{id}/reject",
+            post(super::approval::reject_task),
+        )
+        .route(
+            "/api/flow/approvals/{id}/approve",
+            post(super::approval::approve_task),
+        )
+        .route(
+            "/api/flow/approvals/{id}/reject",
+            post(super::approval::reject_task),
+        )
+        .route(
+            "/api/flow/statistics",
+            get(super::statistics::get_statistics),
+        )
 }

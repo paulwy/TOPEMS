@@ -73,8 +73,8 @@ const PdmBatchPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      规划中: { bg: '#fef9c3', color: '#ca8a04' },
-      进行中: { bg: '#dbeafe', color: 'primary.dark' },
+      规划中: { bg: 'warning.100', color: '#ca8a04' },
+      进行中: { bg: 'primary.100', color: 'primary.dark' },
       已完成: { bg: 'success.lighter', color: 'success.dark' },
       已取消: { bg: 'error.lighter', color: 'error.dark' },
     };
@@ -217,7 +217,7 @@ const PdmBatchPage: React.FC = () => {
           {stats.total}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#fef9c3', borderRadius: 3 }}>
+      <Box sx={{ p: 2, bgcolor: 'warning.100', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'slate.600' }}
@@ -231,7 +231,7 @@ const PdmBatchPage: React.FC = () => {
           {stats.planning}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#dbeafe', borderRadius: 3 }}>
+      <Box sx={{ p: 2, bgcolor: 'primary.100', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'slate.600' }}

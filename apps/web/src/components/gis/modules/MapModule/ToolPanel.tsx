@@ -329,7 +329,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
             gap: 2,
             bgcolor: 'primary.light',
             color: 'primary.dark',
-            '&:hover': { bgcolor: '#dbeafe' },
+            '&:hover': { bgcolor: 'primary.100' },
             textTransform: 'none',
           }}
           title='导出GeoJSON'
@@ -469,7 +469,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
             gap: 2,
             bgcolor: offlineMode ? 'success.dark' : 'white',
             color: offlineMode ? 'white' : 'grey.700',
-            '&:hover': { bgcolor: offlineMode ? '#15803d' : 'grey.50' },
+            '&:hover': { bgcolor: offlineMode ? 'success.700' : 'grey.50' },
             textTransform: 'none',
           }}
           title='离线模式'

@@ -214,11 +214,12 @@ async fn remove_resource(
     State(pool): State<PgPool>,
     Path((project_id, id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<bool>> {
-    let result = sqlx::query("DELETE FROM plugin_pm.project_resources WHERE project_id = $1 AND id = $2")
-        .bind(project_id)
-        .bind(id)
-        .execute(&pool)
-        .await;
+    let result =
+        sqlx::query("DELETE FROM plugin_pm.project_resources WHERE project_id = $1 AND id = $2")
+            .bind(project_id)
+            .bind(id)
+            .execute(&pool)
+            .await;
 
     match result {
         Ok(result) if result.rows_affected() > 0 => {

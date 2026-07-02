@@ -282,11 +282,11 @@ const SalesOrderPage: React.FC = () => {
       }
     > = {
       draft: { label: '草稿', bg: 'grey.100', color: 'text.secondary' },
-      pending: { label: '待审批', bg: 'warning.light', color: '#b45309' },
-      approved: { label: '已审批', bg: '#e0e7ff', color: '#4338ca' },
-      partially_shipped: { label: '部分发货', bg: '#dbeafe', color: 'primary.dark' },
+      pending: { label: '待审批', bg: 'warning.light', color: 'warning.700' },
+      approved: { label: '已审批', bg: '#e0e7ff', color: 'secondary.700' },
+      partially_shipped: { label: '部分发货', bg: 'primary.100', color: 'primary.dark' },
       shipped: { label: '已发货', bg: '#bae6fd', color: '#0369a1' },
-      completed: { label: '已完成', bg: 'success.lighter', color: '#15803d' },
+      completed: { label: '已完成', bg: 'success.lighter', color: 'success.700' },
       cancelled: { label: '已取消', bg: 'error.lighter', color: 'error.dark' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
@@ -449,7 +449,7 @@ const SalesOrderPage: React.FC = () => {
         </Typography>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#4338ca' }}
+          sx={{ fontWeight: 700, color: 'secondary.700' }}
         >
           {stats.approved}
         </Typography>

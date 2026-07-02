@@ -64,9 +64,15 @@ pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/api/crm/sales-funnel", get(get_funnel_data))
         .route("/api/crm/sales-funnel/metrics", get(get_funnel_metrics))
-        .route("/api/crm/sales-funnel/conversion", get(get_funnel_conversion))
+        .route(
+            "/api/crm/sales-funnel/conversion",
+            get(get_funnel_conversion),
+        )
         .route("/api/crm/sales-funnel/trend", get(get_funnel_trend))
-        .route("/api/crm/sales-funnel/stage/{stage}", get(get_stage_opportunities))
+        .route(
+            "/api/crm/sales-funnel/stage/{stage}",
+            get(get_stage_opportunities),
+        )
 }
 
 async fn get_funnel_data(
@@ -79,10 +85,17 @@ async fn get_funnel_data(
         Err(e) => return e,
     }
 
-    let stage_order = ["lead", "qualified", "proposal", "negotiation", "closed_won", "closed_lost"];
-    
+    let stage_order = [
+        "lead",
+        "qualified",
+        "proposal",
+        "negotiation",
+        "closed_won",
+        "closed_lost",
+    ];
+
     let mut stages: Vec<FunnelStage> = Vec::new();
-    
+
     for stage in stage_order.iter() {
         let result = sqlx::query(
             r#"
@@ -150,7 +163,7 @@ async fn get_funnel_metrics(
             let total_value: Decimal = row.get("total_value");
             let avg_value: Decimal = row.get("avg_value");
             let won_count: i64 = row.get("won_count");
-            
+
             let conversion_rate = if total_count > 0 {
                 (won_count as f64 / total_count as f64) * 100.0
             } else {
@@ -203,19 +216,17 @@ async fn get_funnel_conversion(
         let from_stage = stage_order[i];
         let to_stage = stage_order[i + 1];
 
-        let from_count_result: Result<i64, sqlx::Error> = sqlx::query_scalar(
-            r#"SELECT COUNT(*) FROM plugin_crm.opportunities WHERE stage = $1"#,
-        )
-        .bind(from_stage)
-        .fetch_one(&state.db)
-        .await;
+        let from_count_result: Result<i64, sqlx::Error> =
+            sqlx::query_scalar(r#"SELECT COUNT(*) FROM plugin_crm.opportunities WHERE stage = $1"#)
+                .bind(from_stage)
+                .fetch_one(&state.db)
+                .await;
 
-        let to_count_result: Result<i64, sqlx::Error> = sqlx::query_scalar(
-            r#"SELECT COUNT(*) FROM plugin_crm.opportunities WHERE stage = $1"#,
-        )
-        .bind(to_stage)
-        .fetch_one(&state.db)
-        .await;
+        let to_count_result: Result<i64, sqlx::Error> =
+            sqlx::query_scalar(r#"SELECT COUNT(*) FROM plugin_crm.opportunities WHERE stage = $1"#)
+                .bind(to_stage)
+                .fetch_one(&state.db)
+                .await;
 
         match (from_count_result, to_count_result) {
             (Ok(from_count), Ok(to_count)) => {
@@ -250,7 +261,7 @@ async fn get_funnel_trend(
     }
 
     let period_type = params.period_type.unwrap_or_else(|| "month".to_string());
-    
+
     let date_format = match period_type.as_str() {
         "week" => "%Y-W%U",
         "quarter" => "%Y-Q%q",
@@ -271,10 +282,9 @@ async fn get_funnel_trend(
         "#,
         date_format
     );
-    
-    let result: Result<Vec<sqlx::postgres::PgRow>, sqlx::Error> = sqlx::query(&query_str)
-        .fetch_all(&state.db)
-        .await;
+
+    let result: Result<Vec<sqlx::postgres::PgRow>, sqlx::Error> =
+        sqlx::query(&query_str).fetch_all(&state.db).await;
 
     match result {
         Ok(rows) => {

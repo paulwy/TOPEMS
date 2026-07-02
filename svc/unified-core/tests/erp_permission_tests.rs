@@ -12,7 +12,9 @@ use serde_json::{json, Value};
 
 const API_URL: &str = "http://localhost:8000";
 
-fn create_client() -> Client { Client::new() }
+fn create_client() -> Client {
+    Client::new()
+}
 
 async fn login(username: &str, password: &str) -> Result<String, String> {
     let client = create_client();
@@ -22,15 +24,30 @@ async fn login(username: &str, password: &str) -> Result<String, String> {
         .send()
         .await
         .map_err(|e| format!("请求失败: {}", e))?;
-    let body: Value = response.json().await.map_err(|e| format!("解析响应失败: {}", e))?;
+    let body: Value = response
+        .json()
+        .await
+        .map_err(|e| format!("解析响应失败: {}", e))?;
     if body["success"].as_bool().unwrap_or(false) {
-        Ok(body["data"]["access_token"].as_str().unwrap_or("").to_string())
+        Ok(body["data"]["access_token"]
+            .as_str()
+            .unwrap_or("")
+            .to_string())
     } else {
-        Err(format!("登录失败: {}", body["message"].as_str().unwrap_or("未知错误")))
+        Err(format!(
+            "登录失败: {}",
+            body["message"].as_str().unwrap_or("未知错误")
+        ))
     }
 }
 
-async fn auth_request(client: &Client, token: &str, method: &str, endpoint: &str, body: Option<Value>) -> Result<(u16, Value), String> {
+async fn auth_request(
+    client: &Client,
+    token: &str,
+    method: &str,
+    endpoint: &str,
+    body: Option<Value>,
+) -> Result<(u16, Value), String> {
     let url = format!("{}{}", API_URL, endpoint);
     let request = match method {
         "GET" => client.get(&url),
@@ -39,12 +56,17 @@ async fn auth_request(client: &Client, token: &str, method: &str, endpoint: &str
         "DELETE" => client.delete(&url),
         _ => return Err(format!("不支持的 HTTP 方法: {}", method)),
     };
-    let response = request.bearer_auth(token).header("Content-Type", "application/json")
+    let response = request
+        .bearer_auth(token)
+        .header("Content-Type", "application/json")
         .send()
         .await
         .map_err(|e| format!("请求失败: {}", e))?;
     let status = response.status().as_u16();
-    let body: Value = response.json().await.map_err(|e| format!("解析响应失败: {}", e))?;
+    let body: Value = response
+        .json()
+        .await
+        .map_err(|e| format!("解析响应失败: {}", e))?;
     Ok((status, body))
 }
 
@@ -72,13 +94,24 @@ async fn test_erp_002_create_purchase_order() {
     tracing::info!("测试 ERP-002: 创建采购订单");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
-    let timestamp = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis();
-    match auth_request(&client, &token, "POST", "/api/erp/purchase-orders", Some(json!({
-        "supplier_id": null,
-        "items": [{ "product_id": null, "quantity": 10, "price": 100.0 }],
-        "total_amount": 1000.0,
-        "status": "draft"
-    }))).await {
+    let timestamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_millis();
+    match auth_request(
+        &client,
+        &token,
+        "POST",
+        "/api/erp/purchase-orders",
+        Some(json!({
+            "supplier_id": null,
+            "items": [{ "product_id": null, "quantity": 10, "price": 100.0 }],
+            "total_amount": 1000.0,
+            "status": "draft"
+        })),
+    )
+    .await
+    {
         Ok((status, _)) => {
             assert!(status == 200 || status == 201 || status == 403 || status == 404);
             tracing::info!("ERP-002 测试通过");
@@ -111,11 +144,19 @@ async fn test_erp_004_create_sales_order() {
     tracing::info!("测试 ERP-004: 创建销售订单");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
-    match auth_request(&client, &token, "POST", "/api/erp/sales-orders", Some(json!({
-        "customer_id": null,
-        "items": [{ "product_id": null, "quantity": 5, "price": 200.0 }],
-        "total_amount": 1000.0
-    }))).await {
+    match auth_request(
+        &client,
+        &token,
+        "POST",
+        "/api/erp/sales-orders",
+        Some(json!({
+            "customer_id": null,
+            "items": [{ "product_id": null, "quantity": 5, "price": 200.0 }],
+            "total_amount": 1000.0
+        })),
+    )
+    .await
+    {
         Ok((status, _)) => {
             assert!(status == 200 || status == 201 || status == 403 || status == 404);
             tracing::info!("ERP-004 测试通过");
@@ -148,9 +189,17 @@ async fn test_erp_006_stocktaking() {
     tracing::info!("测试 ERP-006: 库存盘点");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
-    match auth_request(&client, &token, "POST", "/api/erp/inventory/stocktaking", Some(json!({
-        "items": [{ "product_id": null, "actual_quantity": 100 }]
-    }))).await {
+    match auth_request(
+        &client,
+        &token,
+        "POST",
+        "/api/erp/inventory/stocktaking",
+        Some(json!({
+            "items": [{ "product_id": null, "actual_quantity": 100 }]
+        })),
+    )
+    .await
+    {
         Ok((status, _)) => {
             assert!(status == 200 || status == 201 || status == 403 || status == 404);
             tracing::info!("ERP-006 测试通过");

@@ -33,12 +33,21 @@ async fn login(username: &str, password: &str) -> Result<String, String> {
         .await
         .map_err(|e| format!("请求失败: {}", e))?;
 
-    let body: Value = response.json().await.map_err(|e| format!("解析响应失败: {}", e))?;
+    let body: Value = response
+        .json()
+        .await
+        .map_err(|e| format!("解析响应失败: {}", e))?;
 
     if body["success"].as_bool().unwrap_or(false) {
-        Ok(body["data"]["access_token"].as_str().unwrap_or("").to_string())
+        Ok(body["data"]["access_token"]
+            .as_str()
+            .unwrap_or("")
+            .to_string())
     } else {
-        Err(format!("登录失败: {}", body["message"].as_str().unwrap_or("未知错误")))
+        Err(format!(
+            "登录失败: {}",
+            body["message"].as_str().unwrap_or("未知错误")
+        ))
     }
 }
 
@@ -59,7 +68,9 @@ async fn auth_request(
         _ => return Err(format!("不支持的 HTTP 方法: {}", method)),
     };
 
-    let request = request.bearer_auth(token).header("Content-Type", "application/json");
+    let request = request
+        .bearer_auth(token)
+        .header("Content-Type", "application/json");
 
     let response = match body {
         Some(b) => request.json(&b),
@@ -70,7 +81,10 @@ async fn auth_request(
     .map_err(|e| format!("请求失败: {}", e))?;
 
     let status = response.status().as_u16();
-    let body: Value = response.json().await.map_err(|e| format!("解析响应失败: {}", e))?;
+    let body: Value = response
+        .json()
+        .await
+        .map_err(|e| format!("解析响应失败: {}", e))?;
 
     Ok((status, body))
 }
@@ -114,11 +128,21 @@ async fn test_wf_002_create_workflow() {
         "status": "draft"
     });
 
-    let (status, body) = auth_request(&client, &token, "POST", "/api/flow/workflows", Some(new_workflow))
-        .await
-        .expect("请求失败");
+    let (status, body) = auth_request(
+        &client,
+        &token,
+        "POST",
+        "/api/flow/workflows",
+        Some(new_workflow),
+    )
+    .await
+    .expect("请求失败");
 
-    assert!(status == 200 || status == 201, "状态码应为 200 或 201，实际为 {}", status);
+    assert!(
+        status == 200 || status == 201,
+        "状态码应为 200 或 201，实际为 {}",
+        status
+    );
 
     tracing::info!("WF-002 测试通过: 成功创建工作流");
 }
@@ -181,9 +205,9 @@ async fn test_wf_004_publish_workflow() {
 
     if let Some(workflows) = list_body["data"].as_array() {
         // 找到草稿状态的工作流
-        let draft_workflow = workflows.iter().find(|w| {
-            w["status"].as_str() == Some("draft")
-        });
+        let draft_workflow = workflows
+            .iter()
+            .find(|w| w["status"].as_str() == Some("draft"));
 
         if let Some(workflow) = draft_workflow {
             if let Some(workflow_id) = workflow["id"].as_str() {
@@ -233,11 +257,21 @@ async fn test_wf_005_start_approval() {
         "content": "自动化测试审批申请"
     });
 
-    let result = auth_request(&client, &token, "POST", "/api/flow/instances", Some(approval_request)).await;
+    let result = auth_request(
+        &client,
+        &token,
+        "POST",
+        "/api/flow/instances",
+        Some(approval_request),
+    )
+    .await;
 
     match result {
         Ok((status, _)) => {
-            assert!(status == 200 || status == 201 || status == 404, "状态码应为 200、201 或 404");
+            assert!(
+                status == 200 || status == 201 || status == 404,
+                "状态码应为 200、201 或 404"
+            );
             tracing::info!("WF-005 测试通过: 发起审批流程功能正常");
         }
         Err(e) => {
@@ -277,7 +311,9 @@ async fn test_wf_006_approve_workflow() {
                             match approve_result {
                                 Ok((approve_status, _)) => {
                                     assert!(
-                                        approve_status == 200 || approve_status == 403 || approve_status == 404,
+                                        approve_status == 200
+                                            || approve_status == 403
+                                            || approve_status == 404,
                                         "审批状态码应为 200、403 或 404"
                                     );
                                     tracing::info!("WF-006 测试通过: 审批功能正常");

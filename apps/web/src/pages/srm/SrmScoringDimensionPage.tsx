@@ -30,7 +30,7 @@ interface ScoringDimension {
 }
 
 const STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
-  active: { label: '启用', bg: 'success.lighter', color: '#15803d' },
+  active: { label: '启用', bg: 'success.lighter', color: 'success.700' },
   inactive: { label: '禁用', bg: 'error.lighter', color: '#b91c1c' },
 };
 

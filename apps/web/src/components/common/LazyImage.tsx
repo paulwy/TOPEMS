@@ -63,7 +63,7 @@ export const LazyImage: React.FC<LazyImageProps> = ({
       sx={{
         width,
         height,
-        backgroundColor: '#f5f5f5',
+        backgroundColor: 'action.hover',
         overflow: 'hidden',
         position: 'relative',
         ...style,

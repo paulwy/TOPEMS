@@ -282,10 +282,12 @@ async fn delete_warehouse(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query(r#"UPDATE wms.warehouses SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"#)
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(
+        r#"UPDATE wms.warehouses SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"#,
+    )
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (

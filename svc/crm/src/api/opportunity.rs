@@ -87,8 +87,14 @@ pub fn create_routes() -> Router<ApiState> {
         )
         .route("/api/crm/opportunities/funnel", get(get_sales_funnel))
         .route("/api/crm/opportunities/stats", get(get_opportunity_stats))
-        .route("/api/crm/opportunities/forecast", get(get_opportunity_forecast))
-        .route("/api/crm/opportunities/stage-transitions", get(get_stage_transitions))
+        .route(
+            "/api/crm/opportunities/forecast",
+            get(get_opportunity_forecast),
+        )
+        .route(
+            "/api/crm/opportunities/stage-transitions",
+            get(get_stage_transitions),
+        )
 }
 
 async fn list_opportunities(
@@ -526,13 +532,12 @@ async fn get_sales_funnel(
     let mut funnel_stages = Vec::new();
 
     for (stage, stage_label) in stages {
-        let count: i64 = sqlx::query_scalar(
-            "SELECT COUNT(*) FROM plugin_crm.opportunities WHERE stage = $1"
-        )
-        .bind(stage)
-        .fetch_one(&state.db)
-        .await
-        .unwrap_or(0);
+        let count: i64 =
+            sqlx::query_scalar("SELECT COUNT(*) FROM plugin_crm.opportunities WHERE stage = $1")
+                .bind(stage)
+                .fetch_one(&state.db)
+                .await
+                .unwrap_or(0);
 
         let total_value: Option<f64> = sqlx::query_scalar(
             "SELECT COALESCE(SUM(value), 0) FROM plugin_crm.opportunities WHERE stage = $1 AND value IS NOT NULL"
@@ -577,7 +582,7 @@ async fn get_opportunity_stats(
         .unwrap_or(0);
 
     let total_value: Option<f64> = sqlx::query_scalar(
-        "SELECT COALESCE(SUM(value), 0) FROM plugin_crm.opportunities WHERE value IS NOT NULL"
+        "SELECT COALESCE(SUM(value), 0) FROM plugin_crm.opportunities WHERE value IS NOT NULL",
     )
     .fetch_optional(&state.db)
     .await
@@ -591,7 +596,7 @@ async fn get_opportunity_stats(
     .unwrap_or(Some(0.0));
 
     let won_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM plugin_crm.opportunities WHERE stage = 'closed_won'"
+        "SELECT COUNT(*) FROM plugin_crm.opportunities WHERE stage = 'closed_won'",
     )
     .fetch_one(&state.db)
     .await
@@ -605,7 +610,7 @@ async fn get_opportunity_stats(
     .unwrap_or(Some(0.0));
 
     let lost_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM plugin_crm.opportunities WHERE stage = 'closed_lost'"
+        "SELECT COUNT(*) FROM plugin_crm.opportunities WHERE stage = 'closed_lost'",
     )
     .fetch_one(&state.db)
     .await
@@ -648,7 +653,12 @@ async fn get_opportunity_forecast(
     for i in 0..months as usize {
         let forecast_month = Utc::now() + chrono::Duration::days(i as i64 * 30);
         let month_start = Utc.from_utc_datetime(
-            &forecast_month.date_naive().with_day(1).unwrap().and_hms_opt(0, 0, 0).unwrap()
+            &forecast_month
+                .date_naive()
+                .with_day(1)
+                .unwrap()
+                .and_hms_opt(0, 0, 0)
+                .unwrap(),
         );
         let month_end = month_start + chrono::Duration::days(31);
 

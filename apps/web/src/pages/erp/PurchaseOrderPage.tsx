@@ -266,10 +266,10 @@ const PurchaseOrderPage: React.FC = () => {
       }
     > = {
       draft: { label: '草稿', bg: 'grey.100', color: 'text.secondary' },
-      pending: { label: '待审批', bg: 'warning.light', color: '#b45309' },
-      approved: { label: '已审批', bg: '#e0e7ff', color: '#4338ca' },
-      partially_received: { label: '部分收货', bg: '#dbeafe', color: 'primary.dark' },
-      received: { label: '已收货', bg: 'success.lighter', color: '#15803d' },
+      pending: { label: '待审批', bg: 'warning.light', color: 'warning.700' },
+      approved: { label: '已审批', bg: '#e0e7ff', color: 'secondary.700' },
+      partially_received: { label: '部分收货', bg: 'primary.100', color: 'primary.dark' },
+      received: { label: '已收货', bg: 'success.lighter', color: 'success.700' },
       cancelled: { label: '已取消', bg: 'error.lighter', color: 'error.dark' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
@@ -431,7 +431,7 @@ const PurchaseOrderPage: React.FC = () => {
         </Typography>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#4338ca' }}
+          sx={{ fontWeight: 700, color: 'secondary.700' }}
         >
           {stats.approved}
         </Typography>

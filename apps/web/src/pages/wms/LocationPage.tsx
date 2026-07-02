@@ -523,6 +523,15 @@ const LocationPage: React.FC = () => {
         headerContent={statsContent}
         emptyMessage='暂无库位数据'
         getRowId={(row) => row.id}
+        mobileCardTitleKey='name'
+        mobileCardSubtitleKey='code'
+        mobileCardDisplayFields={['warehouse_name', 'zone_name', 'capacity', 'status']}
+        mobileCardFieldLabels={{
+          warehouse_name: '仓库',
+          zone_name: '库区',
+          capacity: '容量',
+          status: '状态',
+        }}
       />
 
       {/* 新增对话框 */}

@@ -152,7 +152,7 @@ const LEVEL_CONFIG = {
     bgColor: 'success.light',
     borderColor: 'success.light',
     titleColor: '#166534',
-    messageColor: '#15803d',
+    messageColor: 'success.700',
     alertColor: 'success' as const,
   },
   warning: {
@@ -161,7 +161,7 @@ const LEVEL_CONFIG = {
     bgColor: 'warning.light',
     borderColor: 'warning.light',
     titleColor: '#92400e',
-    messageColor: '#b45309',
+    messageColor: 'warning.700',
     alertColor: 'warning' as const,
   },
   error: {
@@ -178,7 +178,7 @@ const LEVEL_CONFIG = {
     color: 'primary.main',
     bgColor: 'primary.light',
     borderColor: 'primary.light',
-    titleColor: '#1e40af',
+    titleColor: 'primary.800',
     messageColor: 'primary.dark',
     alertColor: 'info' as const,
   },

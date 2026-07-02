@@ -92,10 +92,10 @@ const TYPE_LABELS: Record<LogType, string> = {
 };
 
 const LEVEL_COLORS: Record<LogLevel, { bg: string; color: string; border: string }> = {
-  error: { bg: '#fee2e2', color: '#dc2626', border: '#fca5a5' },
-  warn: { bg: '#ffedd5', color: '#ea580c', border: '#fdba74' },
-  info: { bg: '#dbeafe', color: '#2563eb', border: '#93c5fd' },
-  debug: { bg: '#f3f4f6', color: '#6b7280', border: '#d1d5db' },
+  error: { bg: 'error.100', color: 'error.700', border: '#fca5a5' },
+  warn: { bg: '#ffedd5', color: 'warning.600', border: '#fdba74' },
+  info: { bg: 'primary.100', color: 'primary.dark', border: '#93c5fd' },
+  debug: { bg: 'grey.100', color: 'grey.500', border: '#d1d5db' },
 };
 
 const generateMockLogs = (): SystemLog[] => {

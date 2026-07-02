@@ -11,7 +11,7 @@ interface NotificationItemProps {
   onDelete: (id: string) => void;
 }
 
-const getNotificationIcon = (type: string) => {
+const getNotificationIcon = (type: string, theme: any) => {
   switch (type) {
     case 'system':
       return (
@@ -20,7 +20,7 @@ const getNotificationIcon = (type: string) => {
             width: 40,
             height: 40,
             borderRadius: '9999px',
-            backgroundColor: '#dbeafe',
+            backgroundColor: 'primary.100',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -54,7 +54,7 @@ const getNotificationIcon = (type: string) => {
             width: 40,
             height: 40,
             borderRadius: '9999px',
-            backgroundColor: '#f3e8ff',
+            backgroundColor: 'secondary.100',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -110,7 +110,7 @@ const getNotificationIcon = (type: string) => {
             width: 40,
             height: 40,
             borderRadius: '9999px',
-            backgroundColor: '#fef9c3',
+            backgroundColor: 'warning.100',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -192,7 +192,7 @@ const getNotificationIcon = (type: string) => {
 
 const getPriorityColor = (priority: number) => {
   if (priority >= 4) return { color: 'error.dark' };
-  if (priority >= 3) return { color: '#ea580c' };
+  if (priority >= 3) return { color: 'warning.600' };
   if (priority >= 2) return { color: '#ca8a04' };
   return { color: 'text.secondary' };
 };
@@ -282,7 +282,7 @@ const NotificationItem: React.FC<NotificationItemProps> = ({
       onClick={handleClick}
     >
       <div style={{ display: 'flex', gap: 12 }}>
-        {getNotificationIcon(notification.notification_type)}
+        {getNotificationIcon(notification.notification_type, theme)}
 
         <div style={{ flex: 1, minWidth: 0 }}>
           <div

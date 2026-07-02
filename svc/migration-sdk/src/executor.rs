@@ -1,15 +1,15 @@
 //! 迁移执行器
 
-use std::sync::Arc;
-use sqlx::PgPool;
-use tracing::{info, warn, error};
 use chrono::Utc;
-use sha2::{Sha256, Digest};
+use sha2::{Digest, Sha256};
+use sqlx::PgPool;
+use std::sync::Arc;
+use tracing::{error, info, warn};
 
 use crate::error::{MigrationError, Result};
-use crate::migration::Migration;
 use crate::history::MigrationHistory;
 use crate::lock::DistLock;
+use crate::migration::Migration;
 
 /// 迁移执行器配置
 #[derive(Clone)]
@@ -89,12 +89,21 @@ impl MigrationExecutor {
         // 获取分布式锁
         let lock_guard = if let Some(ref lock) = self.lock {
             let resource = format!("{}:{}", self.config.plugin_name, version);
-            match lock.acquire_with_ttl(&resource, std::time::Duration::from_secs(self.config.lock_timeout_secs)).await? {
+            match lock
+                .acquire_with_ttl(
+                    &resource,
+                    std::time::Duration::from_secs(self.config.lock_timeout_secs),
+                )
+                .await?
+            {
                 Some(guard) => Some(guard),
                 None => {
                     return Err(MigrationError::Locked {
                         plugin: self.config.plugin_name.clone(),
-                        reason: format!("Migration {} is being executed by another process", version),
+                        reason: format!(
+                            "Migration {} is being executed by another process",
+                            version
+                        ),
                     });
                 }
             }
@@ -180,7 +189,10 @@ impl MigrationExecutor {
     }
 
     /// 执行多个迁移
-    pub async fn execute_all<M: Migration + 'static>(&self, migrations: Vec<M>) -> Result<Vec<String>> {
+    pub async fn execute_all<M: Migration + 'static>(
+        &self,
+        migrations: Vec<M>,
+    ) -> Result<Vec<String>> {
         let mut applied = Vec::new();
 
         for migration in migrations {
@@ -293,7 +305,8 @@ impl MigrationExecutor {
 
     /// 检查是否需要迁移
     pub async fn needs_migration<M: Migration + 'static>(&self, migrations: &[M]) -> Result<bool> {
-        let latest = MigrationHistory::get_latest_version(&self.pool, &self.config.plugin_name).await?;
+        let latest =
+            MigrationHistory::get_latest_version(&self.pool, &self.config.plugin_name).await?;
 
         match latest {
             Some(ver) => {
@@ -314,16 +327,15 @@ impl MigrationExecutor {
         &self,
         migrations: &[M],
     ) -> Result<Vec<usize>> {
-        let latest = MigrationHistory::get_latest_version(&self.pool, &self.config.plugin_name).await?;
+        let latest =
+            MigrationHistory::get_latest_version(&self.pool, &self.config.plugin_name).await?;
 
         let pending: Vec<usize> = migrations
             .iter()
             .enumerate()
-            .filter(|(_, m)| {
-                match &latest {
-                    Some(ver) => m.version().as_str() > ver.as_str(),
-                    None => true,
-                }
+            .filter(|(_, m)| match &latest {
+                Some(ver) => m.version().as_str() > ver.as_str(),
+                None => true,
             })
             .map(|(i, _)| i)
             .collect();

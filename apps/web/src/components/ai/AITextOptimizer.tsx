@@ -406,7 +406,7 @@ export function AITextOptimizer({
               onChange={(e) => setOptimizedText(e.target.value)}
               sx={{
                 '& .MuiOutlinedInput-root': {
-                  '& fieldset': { borderColor: '#ddd6fe' },
+                  '& fieldset': { borderColor: 'secondary.100' },
                   '&:hover fieldset': { borderColor: '#c4b5fd' },
                   '&.Mui-focused fieldset': { borderColor: '#c4b5fd' },
                 },

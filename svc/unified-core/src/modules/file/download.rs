@@ -11,8 +11,8 @@ use std::fs;
 use std::path::Path;
 
 use crate::AppState;
-use topems_shared::auth::Claims;
 use axum::Extension;
+use topems_shared::auth::Claims;
 use uuid::Uuid;
 
 /// 下载文件
@@ -21,7 +21,11 @@ pub async fn download_file(
     Extension(claims): Extension<Claims>,
     AxumPath(id): AxumPath<String>,
 ) -> Result<Response, (StatusCode, Json<serde_json::Value>)> {
-    tracing::info!("File download download_file called with id: {} for user: {}", id, claims.username);
+    tracing::info!(
+        "File download download_file called with id: {} for user: {}",
+        id,
+        claims.username
+    );
 
     // 解析文件ID
     let file_id = match Uuid::parse_str(&id) {
@@ -98,7 +102,11 @@ pub async fn download_file(
     };
 
     if created_by != user_id && !claims.is_superuser && !claims.has_permission("file:admin") {
-        tracing::warn!("Permission denied: user {} cannot download file {}", claims.username, id);
+        tracing::warn!(
+            "Permission denied: user {} cannot download file {}",
+            claims.username,
+            id
+        );
         return Err((
             StatusCode::FORBIDDEN,
             Json(serde_json::json!({
@@ -131,7 +139,10 @@ pub async fn download_file(
     let response = Response::builder()
         .status(StatusCode::OK)
         .header(header::CONTENT_TYPE, mime_type)
-        .header(header::CONTENT_DISPOSITION, format!("attachment; filename=\"{}\"", file_name))
+        .header(
+            header::CONTENT_DISPOSITION,
+            format!("attachment; filename=\"{}\"", file_name),
+        )
         .header(header::CONTENT_LENGTH, file_content.len())
         .body(file_content.into())
         .unwrap();
@@ -145,7 +156,11 @@ pub async fn preview_file(
     Extension(claims): Extension<Claims>,
     AxumPath(id): AxumPath<String>,
 ) -> Result<Response, (StatusCode, Json<serde_json::Value>)> {
-    tracing::info!("File preview preview_file called with id: {} for user: {}", id, claims.username);
+    tracing::info!(
+        "File preview preview_file called with id: {} for user: {}",
+        id,
+        claims.username
+    );
 
     // 解析文件ID
     let file_id = match Uuid::parse_str(&id) {
@@ -222,7 +237,11 @@ pub async fn preview_file(
     };
 
     if created_by != user_id && !claims.is_superuser && !claims.has_permission("file:admin") {
-        tracing::warn!("Permission denied: user {} cannot preview file {}", claims.username, id);
+        tracing::warn!(
+            "Permission denied: user {} cannot preview file {}",
+            claims.username,
+            id
+        );
         return Err((
             StatusCode::FORBIDDEN,
             Json(serde_json::json!({
@@ -255,7 +274,10 @@ pub async fn preview_file(
     let response = Response::builder()
         .status(StatusCode::OK)
         .header(header::CONTENT_TYPE, mime_type)
-        .header(header::CONTENT_DISPOSITION, format!("inline; filename=\"{}\"", file_name))
+        .header(
+            header::CONTENT_DISPOSITION,
+            format!("inline; filename=\"{}\"", file_name),
+        )
         .header(header::CONTENT_LENGTH, file_content.len())
         .body(file_content.into())
         .unwrap();
@@ -269,7 +291,11 @@ pub async fn get_thumbnail(
     Extension(claims): Extension<Claims>,
     AxumPath(id): AxumPath<String>,
 ) -> Result<Response, (StatusCode, Json<serde_json::Value>)> {
-    tracing::info!("File thumbnail get_thumbnail called with id: {} for user: {}", id, claims.username);
+    tracing::info!(
+        "File thumbnail get_thumbnail called with id: {} for user: {}",
+        id,
+        claims.username
+    );
 
     // 解析文件ID
     let file_id = match Uuid::parse_str(&id) {
@@ -345,7 +371,11 @@ pub async fn get_thumbnail(
     };
 
     if created_by != user_id && !claims.is_superuser && !claims.has_permission("file:admin") {
-        tracing::warn!("Permission denied: user {} cannot access thumbnail {}", claims.username, id);
+        tracing::warn!(
+            "Permission denied: user {} cannot access thumbnail {}",
+            claims.username,
+            id
+        );
         return Err((
             StatusCode::FORBIDDEN,
             Json(serde_json::json!({

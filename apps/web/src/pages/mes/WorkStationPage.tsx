@@ -144,8 +144,8 @@ const WorkStationPage: React.FC = () => {
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; bg: string; color: string }> = {
       active: { label: '运行中', bg: 'success.lighter', color: 'success.dark' },
-      idle: { label: '空闲', bg: 'warning.light', color: '#b45309' },
-      maintenance: { label: '维护中', bg: '#dbeafe', color: 'primary.dark' },
+      idle: { label: '空闲', bg: 'warning.light', color: 'warning.700' },
+      maintenance: { label: '维护中', bg: 'primary.100', color: 'primary.dark' },
       offline: { label: '离线', bg: 'error.lighter', color: 'error.dark' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
@@ -284,7 +284,7 @@ const WorkStationPage: React.FC = () => {
           {stats.idle}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#dbeafe', borderRadius: 3 }}>
+      <Box sx={{ p: 2, bgcolor: 'primary.100', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}

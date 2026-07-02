@@ -6,7 +6,7 @@ use reqwest::{Client, Response};
 use std::pin::Pin;
 use std::sync::Arc;
 
-use super::client::{AIClient, AIClientError, UnifiedAIClient, create_http_client};
+use super::client::{create_http_client, AIClient, AIClientError, UnifiedAIClient};
 use super::config::{AIModelConfig, AIProviderType};
 use super::models::*;
 
@@ -24,7 +24,9 @@ impl OpenAIClient {
     }
 
     fn build_auth_header(&self) -> Option<String> {
-        self.config.get_api_key().map(|key| format!("Bearer {}", key))
+        self.config
+            .get_api_key()
+            .map(|key| format!("Bearer {}", key))
     }
 
     async fn send_request<T: serde::Serialize>(
@@ -48,13 +50,13 @@ impl OpenAIClient {
 
         if !status.is_success() {
             let body = response.text().await.unwrap_or_default();
-            
+
             if status.is_client_error() {
                 if let Ok(err) = serde_json::from_str::<ErrorResponse>(&body) {
                     return Err(AIClientError::AuthError(err.error.message));
                 }
             }
-            
+
             return Err(AIClientError::ApiError(format!("{}: {}", status, body)));
         }
 
@@ -64,7 +66,10 @@ impl OpenAIClient {
 
 #[async_trait]
 impl AIClient for OpenAIClient {
-    async fn chat_completion(&self, request: ChatCompletionRequest) -> Result<ChatCompletionResponse, AIClientError> {
+    async fn chat_completion(
+        &self,
+        request: ChatCompletionRequest,
+    ) -> Result<ChatCompletionResponse, AIClientError> {
         let response = self.send_request("chat/completions", &request).await?;
         let result: ChatCompletionResponse = response.json().await?;
         Ok(result)
@@ -73,10 +78,13 @@ impl AIClient for OpenAIClient {
     async fn chat_completion_stream(
         &self,
         mut request: ChatCompletionRequest,
-    ) -> Result<Pin<Box<dyn Stream<Item = Result<StreamingChunk, AIClientError>> + Send + 'static>>, AIClientError> {
+    ) -> Result<
+        Pin<Box<dyn Stream<Item = Result<StreamingChunk, AIClientError>> + Send + 'static>>,
+        AIClientError,
+    > {
         request.stream = Some(true);
         let url = format!("{}/chat/completions", self.config.get_base_url());
-        
+
         let mut builder = self.client.post(&url).json(&request);
         if let Some(auth) = self.build_auth_header() {
             builder = builder.header("Authorization", auth);
@@ -89,38 +97,37 @@ impl AIClient for OpenAIClient {
             return Err(AIClientError::ApiError(format!("{}: {}", status, body)));
         }
 
-        let stream = response.bytes_stream().flat_map(|result| {
-            match result {
-                Ok(bytes) => {
-                    let lines = String::from_utf8_lossy(&bytes);
-                    let mut chunks = Vec::new();
-                    
-                    for line in lines.lines() {
-                        let trimmed = line.trim();
-                        if trimmed.starts_with("data: ") {
-                            let json_str = &trimmed[6..];
-                            if json_str == "[DONE]" {
-                                continue;
-                            }
-                            match serde_json::from_str::<StreamingChunk>(json_str) {
-                                Ok(chunk) => chunks.push(Ok(chunk)),
-                                Err(e) => chunks.push(Err(AIClientError::ParseError(e.to_string()))),
-                            }
+        let stream = response.bytes_stream().flat_map(|result| match result {
+            Ok(bytes) => {
+                let lines = String::from_utf8_lossy(&bytes);
+                let mut chunks = Vec::new();
+
+                for line in lines.lines() {
+                    let trimmed = line.trim();
+                    if trimmed.starts_with("data: ") {
+                        let json_str = &trimmed[6..];
+                        if json_str == "[DONE]" {
+                            continue;
+                        }
+                        match serde_json::from_str::<StreamingChunk>(json_str) {
+                            Ok(chunk) => chunks.push(Ok(chunk)),
+                            Err(e) => chunks.push(Err(AIClientError::ParseError(e.to_string()))),
                         }
                     }
-                    
-                    futures::stream::iter(chunks)
                 }
-                Err(e) => {
-                    futures::stream::iter(vec![Err(AIClientError::NetworkError(e.to_string()))])
-                }
+
+                futures::stream::iter(chunks)
             }
+            Err(e) => futures::stream::iter(vec![Err(AIClientError::NetworkError(e.to_string()))]),
         });
 
         Ok(Box::pin(stream))
     }
 
-    async fn embeddings(&self, request: EmbeddingRequest) -> Result<EmbeddingResponse, AIClientError> {
+    async fn embeddings(
+        &self,
+        request: EmbeddingRequest,
+    ) -> Result<EmbeddingResponse, AIClientError> {
         let response = self.send_request("embeddings", &request).await?;
         let result: EmbeddingResponse = response.json().await?;
         Ok(result)
@@ -129,7 +136,7 @@ impl AIClient for OpenAIClient {
     async fn list_models(&self) -> Result<ModelListResponse, AIClientError> {
         let url = format!("{}/models", self.config.get_base_url());
         let mut request = self.client.get(&url);
-        
+
         if let Some(auth) = self.build_auth_header() {
             request = request.header("Authorization", auth);
         }
@@ -195,10 +202,16 @@ impl GeminiClient {
     /// 将标准请求转换为 Gemini 格式
     fn convert_to_gemini_request(&self, request: &ChatCompletionRequest) -> serde_json::Value {
         let mut messages = Vec::new();
-        
+
         for msg in &request.messages {
-            let role = if msg.role == "system" { "system" } else if msg.role == "assistant" { "model" } else { "user" };
-            
+            let role = if msg.role == "system" {
+                "system"
+            } else if msg.role == "assistant" {
+                "model"
+            } else {
+                "user"
+            };
+
             if let Some(tool_call) = &msg.tool_call {
                 messages.push(serde_json::json!({
                     "role": "model",
@@ -232,7 +245,7 @@ impl GeminiClient {
         let contents = response["candidates"][0]["content"].clone();
         let role = contents["role"].as_str().unwrap_or("assistant");
         let mut content = String::new();
-        
+
         if let Some(parts) = contents["parts"].as_array() {
             for part in parts {
                 if let Some(text) = part["text"].as_str() {
@@ -244,7 +257,9 @@ impl GeminiClient {
         ChatCompletionResponse {
             id: response["id"].as_str().unwrap_or("").to_string(),
             object: "chat.completion".to_string(),
-            created: response["usageMetadata"]["promptTokenCount"].as_u64().unwrap_or(0),
+            created: response["usageMetadata"]["promptTokenCount"]
+                .as_u64()
+                .unwrap_or(0),
             model: self.config.model_name.clone(),
             choices: vec![Choice {
                 index: 0,
@@ -257,9 +272,15 @@ impl GeminiClient {
                 finish_reason: Some("stop".to_string()),
             }],
             usage: Some(Usage {
-                prompt_tokens: response["usageMetadata"]["promptTokenCount"].as_u64().unwrap_or(0) as usize,
-                completion_tokens: response["usageMetadata"]["candidatesTokenCount"].as_u64().unwrap_or(0) as usize,
-                total_tokens: response["usageMetadata"]["totalTokenCount"].as_u64().unwrap_or(0) as usize,
+                prompt_tokens: response["usageMetadata"]["promptTokenCount"]
+                    .as_u64()
+                    .unwrap_or(0) as usize,
+                completion_tokens: response["usageMetadata"]["candidatesTokenCount"]
+                    .as_u64()
+                    .unwrap_or(0) as usize,
+                total_tokens: response["usageMetadata"]["totalTokenCount"]
+                    .as_u64()
+                    .unwrap_or(0) as usize,
             }),
         }
     }
@@ -267,7 +288,10 @@ impl GeminiClient {
 
 #[async_trait]
 impl AIClient for GeminiClient {
-    async fn chat_completion(&self, request: ChatCompletionRequest) -> Result<ChatCompletionResponse, AIClientError> {
+    async fn chat_completion(
+        &self,
+        request: ChatCompletionRequest,
+    ) -> Result<ChatCompletionResponse, AIClientError> {
         let gemini_request = self.convert_to_gemini_request(&request);
         let endpoint = format!("models/{}/generateContent", self.config.model_name);
         let response = self.send_request(&endpoint, &gemini_request).await?;
@@ -278,13 +302,16 @@ impl AIClient for GeminiClient {
     async fn chat_completion_stream(
         &self,
         request: ChatCompletionRequest,
-    ) -> Result<Pin<Box<dyn Stream<Item = Result<StreamingChunk, AIClientError>> + Send + 'static>>, AIClientError> {
+    ) -> Result<
+        Pin<Box<dyn Stream<Item = Result<StreamingChunk, AIClientError>> + Send + 'static>>,
+        AIClientError,
+    > {
         let mut gemini_request = self.convert_to_gemini_request(&request);
         gemini_request["generationConfig"]["stream"] = serde_json::json!(true);
-        
+
         let endpoint = format!("models/{}/streamGenerateContent", self.config.model_name);
         let url = format!("{}/{}", self.config.get_base_url(), endpoint);
-        
+
         let mut builder = self.client.post(&url).json(&gemini_request);
         if let Some(api_key) = self.config.get_api_key() {
             builder = builder.query(&[("key", api_key)]);
@@ -298,23 +325,25 @@ impl AIClient for GeminiClient {
         }
 
         let model_name = self.config.model_name.clone();
-        
-        let stream = response.bytes_stream().flat_map(move |result| {
-            match result {
+
+        let stream = response
+            .bytes_stream()
+            .flat_map(move |result| match result {
                 Ok(bytes) => {
                     let lines = String::from_utf8_lossy(&bytes);
                     let mut chunks = Vec::new();
-                    
+
                     for line in lines.lines() {
                         let trimmed = line.trim();
                         if trimmed.starts_with("data: ") {
                             let json_str = &trimmed[6..];
                             match serde_json::from_str::<serde_json::Value>(json_str) {
                                 Ok(gemini_chunk) => {
-                                    let content = gemini_chunk["candidates"][0]["content"]["parts"][0]["text"]
+                                    let content = gemini_chunk["candidates"][0]["content"]["parts"]
+                                        [0]["text"]
                                         .as_str()
                                         .unwrap_or("");
-                                    
+
                                     chunks.push(Ok(StreamingChunk {
                                         id: "stream".to_string(),
                                         object: "chat.completion.chunk".to_string(),
@@ -337,19 +366,21 @@ impl AIClient for GeminiClient {
                             }
                         }
                     }
-                    
+
                     futures::stream::iter(chunks)
                 }
                 Err(e) => {
                     futures::stream::iter(vec![Err(AIClientError::NetworkError(e.to_string()))])
                 }
-            }
-        });
+            });
 
         Ok(Box::pin(stream))
     }
 
-    async fn embeddings(&self, request: EmbeddingRequest) -> Result<EmbeddingResponse, AIClientError> {
+    async fn embeddings(
+        &self,
+        request: EmbeddingRequest,
+    ) -> Result<EmbeddingResponse, AIClientError> {
         let endpoint = format!("models/{}:embedContent", self.config.model_name);
         let gemini_request = serde_json::json!({
             "content": {
@@ -361,7 +392,7 @@ impl AIClient for GeminiClient {
 
         let response = self.send_request(&endpoint, &gemini_request).await?;
         let response_json: serde_json::Value = response.json().await?;
-        
+
         let embedding: Vec<f32> = response_json["embedding"]["values"]
             .as_array()
             .unwrap_or(&vec![])
@@ -388,7 +419,7 @@ impl AIClient for GeminiClient {
     async fn list_models(&self) -> Result<ModelListResponse, AIClientError> {
         let url = format!("{}/models", self.config.get_base_url());
         let mut request = self.client.get(&url);
-        
+
         if let Some(api_key) = self.config.get_api_key() {
             request = request.query(&[("key", api_key)]);
         }
@@ -423,7 +454,7 @@ impl AIClient for GeminiClient {
     async fn health_check(&self) -> Result<bool, AIClientError> {
         let url = format!("{}/models", self.config.get_base_url());
         let mut request = self.client.get(&url);
-        
+
         if let Some(api_key) = self.config.get_api_key() {
             request = request.query(&[("key", api_key)]);
         }
@@ -470,7 +501,10 @@ impl OllamaClient {
 
 #[async_trait]
 impl AIClient for OllamaClient {
-    async fn chat_completion(&self, mut request: ChatCompletionRequest) -> Result<ChatCompletionResponse, AIClientError> {
+    async fn chat_completion(
+        &self,
+        mut request: ChatCompletionRequest,
+    ) -> Result<ChatCompletionResponse, AIClientError> {
         request.stream = Some(false);
         let response = self.send_request("chat/completions", &request).await?;
         let result: ChatCompletionResponse = response.json().await?;
@@ -480,10 +514,13 @@ impl AIClient for OllamaClient {
     async fn chat_completion_stream(
         &self,
         mut request: ChatCompletionRequest,
-    ) -> Result<Pin<Box<dyn Stream<Item = Result<StreamingChunk, AIClientError>> + Send + 'static>>, AIClientError> {
+    ) -> Result<
+        Pin<Box<dyn Stream<Item = Result<StreamingChunk, AIClientError>> + Send + 'static>>,
+        AIClientError,
+    > {
         request.stream = Some(true);
         let url = format!("{}/chat/completions", self.config.get_base_url());
-        
+
         let response = self.client.post(&url).json(&request).send().await?;
         if !response.status().is_success() {
             let status = response.status();
@@ -491,38 +528,37 @@ impl AIClient for OllamaClient {
             return Err(AIClientError::ApiError(format!("{}: {}", status, body)));
         }
 
-        let stream = response.bytes_stream().flat_map(|result| {
-            match result {
-                Ok(bytes) => {
-                    let lines = String::from_utf8_lossy(&bytes);
-                    let mut chunks = Vec::new();
-                    
-                    for line in lines.lines() {
-                        let trimmed = line.trim();
-                        if trimmed.starts_with("data: ") {
-                            let json_str = &trimmed[6..];
-                            if json_str == "[DONE]" {
-                                continue;
-                            }
-                            match serde_json::from_str::<StreamingChunk>(json_str) {
-                                Ok(chunk) => chunks.push(Ok(chunk)),
-                                Err(e) => chunks.push(Err(AIClientError::ParseError(e.to_string()))),
-                            }
+        let stream = response.bytes_stream().flat_map(|result| match result {
+            Ok(bytes) => {
+                let lines = String::from_utf8_lossy(&bytes);
+                let mut chunks = Vec::new();
+
+                for line in lines.lines() {
+                    let trimmed = line.trim();
+                    if trimmed.starts_with("data: ") {
+                        let json_str = &trimmed[6..];
+                        if json_str == "[DONE]" {
+                            continue;
+                        }
+                        match serde_json::from_str::<StreamingChunk>(json_str) {
+                            Ok(chunk) => chunks.push(Ok(chunk)),
+                            Err(e) => chunks.push(Err(AIClientError::ParseError(e.to_string()))),
                         }
                     }
-                    
-                    futures::stream::iter(chunks)
                 }
-                Err(e) => {
-                    futures::stream::iter(vec![Err(AIClientError::NetworkError(e.to_string()))])
-                }
+
+                futures::stream::iter(chunks)
             }
+            Err(e) => futures::stream::iter(vec![Err(AIClientError::NetworkError(e.to_string()))]),
         });
 
         Ok(Box::pin(stream))
     }
 
-    async fn embeddings(&self, request: EmbeddingRequest) -> Result<EmbeddingResponse, AIClientError> {
+    async fn embeddings(
+        &self,
+        request: EmbeddingRequest,
+    ) -> Result<EmbeddingResponse, AIClientError> {
         let response = self.send_request("embeddings", &request).await?;
         let result: EmbeddingResponse = response.json().await?;
         Ok(result)
@@ -531,7 +567,7 @@ impl AIClient for OllamaClient {
     async fn list_models(&self) -> Result<ModelListResponse, AIClientError> {
         let url = format!("{}/models", self.config.get_base_url());
         let response = self.client.get(&url).send().await?;
-        
+
         if !response.status().is_success() {
             let status = response.status();
             let body = response.text().await.unwrap_or_default();
@@ -583,15 +619,24 @@ impl AzureOpenAIClient {
     }
 
     fn get_deployment_name(&self) -> String {
-        self.config.deployment_name.clone().unwrap_or(self.config.model_name.clone())
+        self.config
+            .deployment_name
+            .clone()
+            .unwrap_or(self.config.model_name.clone())
     }
 }
 
 #[async_trait]
 impl AIClient for AzureOpenAIClient {
-    async fn chat_completion(&self, request: ChatCompletionRequest) -> Result<ChatCompletionResponse, AIClientError> {
+    async fn chat_completion(
+        &self,
+        request: ChatCompletionRequest,
+    ) -> Result<ChatCompletionResponse, AIClientError> {
         let deployment = self.get_deployment_name();
-        let url = format!("{}/chat/completions?api-version=2024-02-15-preview", self.config.get_base_url());
+        let url = format!(
+            "{}/chat/completions?api-version=2024-02-15-preview",
+            self.config.get_base_url()
+        );
         let mut builder = self.client.post(&url).json(&request);
 
         if let Some(key) = self.config.get_api_key() {
@@ -612,10 +657,16 @@ impl AIClient for AzureOpenAIClient {
     async fn chat_completion_stream(
         &self,
         mut request: ChatCompletionRequest,
-    ) -> Result<Pin<Box<dyn Stream<Item = Result<StreamingChunk, AIClientError>> + Send + 'static>>, AIClientError> {
+    ) -> Result<
+        Pin<Box<dyn Stream<Item = Result<StreamingChunk, AIClientError>> + Send + 'static>>,
+        AIClientError,
+    > {
         request.stream = Some(true);
-        let url = format!("{}/chat/completions?api-version=2024-02-15-preview", self.config.get_base_url());
-        
+        let url = format!(
+            "{}/chat/completions?api-version=2024-02-15-preview",
+            self.config.get_base_url()
+        );
+
         let mut builder = self.client.post(&url).json(&request);
         if let Some(key) = self.config.get_api_key() {
             builder = builder.header("api-key", key);
@@ -628,39 +679,41 @@ impl AIClient for AzureOpenAIClient {
             return Err(AIClientError::ApiError(format!("{}: {}", status, body)));
         }
 
-        let stream = response.bytes_stream().flat_map(|result| {
-            match result {
-                Ok(bytes) => {
-                    let lines = String::from_utf8_lossy(&bytes);
-                    let mut chunks = Vec::new();
-                    
-                    for line in lines.lines() {
-                        let trimmed = line.trim();
-                        if trimmed.starts_with("data: ") {
-                            let json_str = &trimmed[6..];
-                            if json_str == "[DONE]" {
-                                continue;
-                            }
-                            match serde_json::from_str::<StreamingChunk>(json_str) {
-                                Ok(chunk) => chunks.push(Ok(chunk)),
-                                Err(e) => chunks.push(Err(AIClientError::ParseError(e.to_string()))),
-                            }
+        let stream = response.bytes_stream().flat_map(|result| match result {
+            Ok(bytes) => {
+                let lines = String::from_utf8_lossy(&bytes);
+                let mut chunks = Vec::new();
+
+                for line in lines.lines() {
+                    let trimmed = line.trim();
+                    if trimmed.starts_with("data: ") {
+                        let json_str = &trimmed[6..];
+                        if json_str == "[DONE]" {
+                            continue;
+                        }
+                        match serde_json::from_str::<StreamingChunk>(json_str) {
+                            Ok(chunk) => chunks.push(Ok(chunk)),
+                            Err(e) => chunks.push(Err(AIClientError::ParseError(e.to_string()))),
                         }
                     }
-                    
-                    futures::stream::iter(chunks)
                 }
-                Err(e) => {
-                    futures::stream::iter(vec![Err(AIClientError::NetworkError(e.to_string()))])
-                }
+
+                futures::stream::iter(chunks)
             }
+            Err(e) => futures::stream::iter(vec![Err(AIClientError::NetworkError(e.to_string()))]),
         });
 
         Ok(Box::pin(stream))
     }
 
-    async fn embeddings(&self, request: EmbeddingRequest) -> Result<EmbeddingResponse, AIClientError> {
-        let url = format!("{}/embeddings?api-version=2024-02-15-preview", self.config.get_base_url());
+    async fn embeddings(
+        &self,
+        request: EmbeddingRequest,
+    ) -> Result<EmbeddingResponse, AIClientError> {
+        let url = format!(
+            "{}/embeddings?api-version=2024-02-15-preview",
+            self.config.get_base_url()
+        );
         let mut builder = self.client.post(&url).json(&request);
 
         if let Some(key) = self.config.get_api_key() {
@@ -679,7 +732,10 @@ impl AIClient for AzureOpenAIClient {
     }
 
     async fn list_models(&self) -> Result<ModelListResponse, AIClientError> {
-        let url = format!("{}/models?api-version=2024-02-15-preview", self.config.get_base_url());
+        let url = format!(
+            "{}/models?api-version=2024-02-15-preview",
+            self.config.get_base_url()
+        );
         let mut builder = self.client.get(&url);
 
         if let Some(key) = self.config.get_api_key() {
@@ -698,7 +754,10 @@ impl AIClient for AzureOpenAIClient {
     }
 
     async fn health_check(&self) -> Result<bool, AIClientError> {
-        let url = format!("{}/models?api-version=2024-02-15-preview", self.config.get_base_url());
+        let url = format!(
+            "{}/models?api-version=2024-02-15-preview",
+            self.config.get_base_url()
+        );
         let mut builder = self.client.get(&url);
 
         if let Some(key) = self.config.get_api_key() {
@@ -720,7 +779,9 @@ pub fn create_client(config: AIModelConfig) -> UnifiedAIClient {
         AIProviderType::OpenAI => UnifiedAIClient::OpenAI(Arc::new(OpenAIClient::new(config))),
         AIProviderType::Gemini => UnifiedAIClient::Gemini(Arc::new(GeminiClient::new(config))),
         AIProviderType::Ollama => UnifiedAIClient::Ollama(Arc::new(OllamaClient::new(config))),
-        AIProviderType::AzureOpenAI => UnifiedAIClient::AzureOpenAI(Arc::new(AzureOpenAIClient::new(config))),
+        AIProviderType::AzureOpenAI => {
+            UnifiedAIClient::AzureOpenAI(Arc::new(AzureOpenAIClient::new(config)))
+        }
         AIProviderType::Custom => UnifiedAIClient::OpenAI(Arc::new(OpenAIClient::new(config))), // Custom 使用 OpenAI 兼容接口
     }
 }
@@ -763,8 +824,8 @@ pub fn get_supported_models(provider: AIProviderType) -> Vec<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::config::AIProviderType;
+    use super::*;
 
     #[test]
     fn test_get_supported_models() {
@@ -781,7 +842,7 @@ mod tests {
             provider: AIProviderType::Ollama,
             ..Default::default()
         };
-        
+
         let client = create_client(config);
         assert!(client.get_config().provider == AIProviderType::Ollama);
     }

@@ -106,7 +106,7 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
                       style={{
                         padding: '8px 16px',
                         fontSize: 14,
-                        color: '#475569',
+                        color: 'grey.600',
                       }}
                     >
                       {idx + 1}
@@ -135,7 +135,7 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
               p: 2,
               backgroundColor: 'var(--mui-palette-grey-50)',
               fontSize: 14,
-              color: '#475569',
+              color: 'grey.600',
               textAlign: 'center',
             }}
           >
@@ -149,7 +149,7 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
           <h4
             style={{
               fontWeight: 500,
-              color: '#334155',
+              color: 'grey.700',
               marginBottom: 8,
               display: 'flex',
               alignItems: 'center',
@@ -213,7 +213,7 @@ export const ImportPreview: React.FC<ImportPreviewProps> = ({
           onClick={onCancel}
           sx={{
             padding: '8px 16px',
-            color: '#334155',
+            color: 'grey.700',
             backgroundColor: 'grey.100',
             borderRadius: 2,
             '&:hover': { backgroundColor: 'border.default' },

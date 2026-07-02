@@ -1,20 +1,37 @@
 //! Production Scheduling handlers
 
-use axum::{extract::Path, extract::State, extract::Extension, routing::{delete, get, post, put}, Json, Router};
+use axum::{
+    extract::Extension,
+    extract::Path,
+    extract::State,
+    routing::{delete, get, post, put},
+    Json, Router,
+};
 use chrono::{DateTime, NaiveDate, NaiveDateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{types::{BigDecimal, Uuid}, PgPool};
+use sqlx::{
+    types::{BigDecimal, Uuid},
+    PgPool,
+};
 use std::str::FromStr;
 use topems_shared::auth::Claims;
 
-use crate::AppState;
 use crate::services::permission::{check_permission, ModulePermission};
+use crate::AppState;
 use topems_shared::response::ApiResponse;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/mes/schedules", get(list_production_schedules).post(create_production_schedule))
-        .route("/api/mes/schedules/{id}", get(get_production_schedule).put(update_production_schedule).delete(delete_production_schedule))
+        .route(
+            "/api/mes/schedules",
+            get(list_production_schedules).post(create_production_schedule),
+        )
+        .route(
+            "/api/mes/schedules/{id}",
+            get(get_production_schedule)
+                .put(update_production_schedule)
+                .delete(delete_production_schedule),
+        )
         .route("/api/mes/schedules/adjust", post(adjust_schedule))
         .route("/api/mes/schedules/gantt", get(get_gantt_data))
 }
@@ -118,7 +135,8 @@ pub struct GanttResource {
 }
 
 fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
-    dt.map(|d| Utc.from_utc_datetime(&d)).unwrap_or_else(Utc::now)
+    dt.map(|d| Utc.from_utc_datetime(&d))
+        .unwrap_or_else(Utc::now)
 }
 
 fn opt_naive_to_utc(dt: Option<NaiveDateTime>) -> Option<DateTime<Utc>> {
@@ -126,7 +144,8 @@ fn opt_naive_to_utc(dt: Option<NaiveDateTime>) -> Option<DateTime<Utc>> {
 }
 
 fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
-    bd.and_then(|d| d.to_string().parse::<f64>().ok()).unwrap_or(0.0)
+    bd.and_then(|d| d.to_string().parse::<f64>().ok())
+        .unwrap_or(0.0)
 }
 
 // ==================== Production Scheduling Handlers ====================
@@ -135,7 +154,13 @@ pub async fn list_production_schedules(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<ListProductionSchedulesResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProductionSchedulingRead).await {
+    if let Err(e) = check_permission(
+        &state.pool,
+        &claims,
+        &ModulePermission::ProductionSchedulingRead,
+    )
+    .await
+    {
         return e;
     }
 
@@ -170,32 +195,35 @@ pub async fn list_production_schedules(
         }
     };
 
-    let schedules_list: Vec<ProductionScheduleResponse> = schedules.into_iter().map(|r| ProductionScheduleResponse {
-        id: r.id,
-        schedule_no: r.schedule_no,
-        order_id: r.order_id,
-        order_no: r.order_no,
-        product_id: r.product_id,
-        product_name: r.product_name,
-        product_code: r.product_code,
-        quantity: big_decimal_to_f64(Some(r.quantity)),
-        work_station_id: r.work_station_id,
-        work_station_name: Some(r.work_station_name),
-        equipment_id: r.equipment_id,
-        equipment_name: Some(r.equipment_name),
-        process_id: r.process_id,
-        process_name: Some(r.process_name),
-        planned_start_time: opt_naive_to_utc(r.planned_start_time),
-        planned_end_time: opt_naive_to_utc(r.planned_end_time),
-        actual_start_time: opt_naive_to_utc(r.actual_start_time),
-        actual_end_time: opt_naive_to_utc(r.actual_end_time),
-        status: r.status.unwrap_or_else(|| "pending".to_string()),
-        priority: r.priority.unwrap_or(0),
-        sequence: r.sequence.unwrap_or(0),
-        notes: r.notes,
-        created_at: naive_to_utc(r.created_at),
-        updated_at: naive_to_utc(r.updated_at),
-    }).collect();
+    let schedules_list: Vec<ProductionScheduleResponse> = schedules
+        .into_iter()
+        .map(|r| ProductionScheduleResponse {
+            id: r.id,
+            schedule_no: r.schedule_no,
+            order_id: r.order_id,
+            order_no: r.order_no,
+            product_id: r.product_id,
+            product_name: r.product_name,
+            product_code: r.product_code,
+            quantity: big_decimal_to_f64(Some(r.quantity)),
+            work_station_id: r.work_station_id,
+            work_station_name: Some(r.work_station_name),
+            equipment_id: r.equipment_id,
+            equipment_name: Some(r.equipment_name),
+            process_id: r.process_id,
+            process_name: Some(r.process_name),
+            planned_start_time: opt_naive_to_utc(r.planned_start_time),
+            planned_end_time: opt_naive_to_utc(r.planned_end_time),
+            actual_start_time: opt_naive_to_utc(r.actual_start_time),
+            actual_end_time: opt_naive_to_utc(r.actual_end_time),
+            status: r.status.unwrap_or_else(|| "pending".to_string()),
+            priority: r.priority.unwrap_or(0),
+            sequence: r.sequence.unwrap_or(0),
+            notes: r.notes,
+            created_at: naive_to_utc(r.created_at),
+            updated_at: naive_to_utc(r.updated_at),
+        })
+        .collect();
 
     let total = schedules_list.len() as i64;
 
@@ -213,12 +241,22 @@ pub async fn create_production_schedule(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateProductionScheduleRequest>,
 ) -> Json<ApiResponse<ProductionScheduleResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProductionSchedulingWrite).await {
+    if let Err(e) = check_permission(
+        &state.pool,
+        &claims,
+        &ModulePermission::ProductionSchedulingWrite,
+    )
+    .await
+    {
         return e;
     }
 
     let now = Utc::now();
-    let schedule_no = format!("PS{}{:04}", now.format("%Y%m%d"), rand::random::<u16>() % 10000);
+    let schedule_no = format!(
+        "PS{}{:04}",
+        now.format("%Y%m%d"),
+        rand::random::<u16>() % 10000
+    );
 
     let order_no = if let Some(order_id) = req.order_id {
         let order = sqlx::query!(
@@ -314,7 +352,13 @@ pub async fn get_production_schedule(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProductionScheduleResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProductionSchedulingRead).await {
+    if let Err(e) = check_permission(
+        &state.pool,
+        &claims,
+        &ModulePermission::ProductionSchedulingRead,
+    )
+    .await
+    {
         return e;
     }
 
@@ -390,7 +434,13 @@ pub async fn update_production_schedule(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateProductionScheduleRequest>,
 ) -> Json<ApiResponse<ProductionScheduleResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProductionSchedulingWrite).await {
+    if let Err(e) = check_permission(
+        &state.pool,
+        &claims,
+        &ModulePermission::ProductionSchedulingWrite,
+    )
+    .await
+    {
         return e;
     }
 
@@ -479,7 +529,13 @@ pub async fn delete_production_schedule(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProductionSchedulingWrite).await {
+    if let Err(e) = check_permission(
+        &state.pool,
+        &claims,
+        &ModulePermission::ProductionSchedulingWrite,
+    )
+    .await
+    {
         return e;
     }
 
@@ -513,7 +569,13 @@ pub async fn adjust_schedule(
     Extension(claims): Extension<Claims>,
     Json(req): Json<AdjustScheduleRequest>,
 ) -> Json<ApiResponse<String>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProductionSchedulingAdjust).await {
+    if let Err(e) = check_permission(
+        &state.pool,
+        &claims,
+        &ModulePermission::ProductionSchedulingAdjust,
+    )
+    .await
+    {
         return e;
     }
 
@@ -549,7 +611,13 @@ pub async fn get_gantt_data(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<GanttDataResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProductionSchedulingRead).await {
+    if let Err(e) = check_permission(
+        &state.pool,
+        &claims,
+        &ModulePermission::ProductionSchedulingRead,
+    )
+    .await
+    {
         return e;
     }
 
@@ -584,16 +652,22 @@ pub async fn get_gantt_data(
     let mut resource_ids = std::collections::HashSet::new();
 
     for s in &schedules {
-        let start = s.planned_start_time
+        let start = s
+            .planned_start_time
             .map(|d| Utc.from_utc_datetime(&d))
             .unwrap_or_else(Utc::now);
-        let end = s.planned_end_time
+        let end = s
+            .planned_end_time
             .map(|d| Utc.from_utc_datetime(&d))
             .unwrap_or_else(|| Utc::now() + chrono::Duration::hours(1));
 
         let total = big_decimal_to_f64(Some(s.quantity.clone()));
         let completed = big_decimal_to_f64(s.completed_quantity.clone());
-        let progress = if total > 0.0 { (completed / total) * 100.0 } else { 0.0 };
+        let progress = if total > 0.0 {
+            (completed / total) * 100.0
+        } else {
+            0.0
+        };
 
         let resource_name = s.work_station_name.clone();
         if resource_ids.insert(resource_name.clone()) {
@@ -617,10 +691,7 @@ pub async fn get_gantt_data(
     }
 
     Json(ApiResponse::success(
-        GanttDataResponse {
-            tasks,
-            resources,
-        },
+        GanttDataResponse { tasks, resources },
         "获取甘特图数据成功",
     ))
 }

@@ -13,12 +13,6 @@ export interface AIFormValidatorProps {
   onFixIssue?: (_issue: ValidationIssue) => void;
 }
 
-const issueIconMap: Record<string, React.ReactNode> = {
-  error: <AlertCircle style={{ width: 20, height: 20, color: theme.palette.error.main }} />,
-  warning: <AlertTriangle style={{ width: 20, height: 20, color: theme.palette.warning.main }} />,
-  info: <Info style={{ width: 20, height: 20, color: theme.palette.primary.main }} />,
-};
-
 const issueTitleMap: Record<string, string> = {
   error: '错误',
   warning: '警告',
@@ -46,6 +40,13 @@ export function AIFormValidator({
   });
 
   const theme = useTheme();
+  
+  const issueIconMap = {
+    error: <AlertCircle style={{ width: 20, height: 20, color: theme.palette.error.main }} />,
+    warning: <AlertTriangle style={{ width: 20, height: 20, color: theme.palette.warning.main }} />,
+    info: <Info style={{ width: 20, height: 20, color: theme.palette.primary.main }} />,
+  };
+
   useEffect(() => {
     if (isOpen) {
       setIssues([]);
@@ -94,7 +95,7 @@ export function AIFormValidator({
             {isValid ? (
               <>
                 <CheckCircle style={{ width: 24, height: 24, color: theme.palette.success.dark }} />
-                <Typography sx={{ fontWeight: 500, color: '#15803d' }}>校验通过</Typography>
+                <Typography sx={{ fontWeight: 500, color: 'success.700' }}>校验通过</Typography>
               </>
             ) : (
               <>
@@ -257,7 +258,7 @@ export function AIFormValidator({
                             px: 0.5,
                             py: 0.5,
                             borderRadius: 0.5,
-                            border: '1px solid #dbeafe',
+                            border: '1px solid primary.100',
                           }}
                         >
                           {suggestion.value}

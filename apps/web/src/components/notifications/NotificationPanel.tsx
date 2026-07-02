@@ -223,7 +223,7 @@ const NotificationPanel: React.FC<NotificationPanelProps> = ({ onClose, onUnread
           style={{
             padding: '8px 16px',
             backgroundColor: theme.palette.primary.light,
-            borderBottom: '1px solid #dbeafe',
+            borderBottom: '1px solid primary.100',
           }}
         >
           <button

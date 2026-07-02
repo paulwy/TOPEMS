@@ -16,8 +16,8 @@ pub mod health;
 pub mod hrm;
 pub mod logging;
 pub mod messaging;
-pub mod migration;
 pub mod metrics;
+pub mod migration;
 pub mod monitoring;
 pub mod notification;
 pub mod ollama_client;
@@ -35,8 +35,8 @@ pub mod service_bootstrap;
 pub mod service_client;
 pub mod service_discovery;
 pub mod storage;
-pub mod tenant;
 pub mod telemetry;
+pub mod tenant;
 pub mod validation;
 pub mod vector_store;
 
@@ -79,13 +79,13 @@ pub use database::{
 };
 pub use error::{Result, TopemsError};
 pub use event::{
-    Event, EventError, EventPublisher, EventResult, EventSubscriber, EventType,
-    HrmDepartmentCreatedPayload, HrmDepartmentDeletedPayload, HrmDepartmentUpdatedPayload,
-    HrmEmployeeCreatedPayload, HrmEmployeeUpdatedPayload,
-    PmProjectCreatedPayload, PmProjectUpdatedPayload, PmTaskCreatedPayload, PmTaskDeletedPayload, PmTaskUpdatedPayload,
-    LimsSampleRegisteredPayload, LimsInspectionResultSubmittedPayload, LimsInspectionAbnormalDetectedPayload,
-    QmsInspectionCompletedPayload, QmsCorrectiveActionCreatedPayload,
-    EhsHazardReportedPayload, EhsAccidentReportedPayload,
+    EhsAccidentReportedPayload, EhsHazardReportedPayload, Event, EventError, EventPublisher,
+    EventResult, EventSubscriber, EventType, HrmDepartmentCreatedPayload,
+    HrmDepartmentDeletedPayload, HrmDepartmentUpdatedPayload, HrmEmployeeCreatedPayload,
+    HrmEmployeeUpdatedPayload, LimsInspectionAbnormalDetectedPayload,
+    LimsInspectionResultSubmittedPayload, LimsSampleRegisteredPayload, PmProjectCreatedPayload,
+    PmProjectUpdatedPayload, PmTaskCreatedPayload, PmTaskDeletedPayload, PmTaskUpdatedPayload,
+    QmsCorrectiveActionCreatedPayload, QmsInspectionCompletedPayload,
 };
 pub use health::{
     build_health_response, check_http_health, create_health_router, create_metrics_router,
@@ -126,10 +126,9 @@ pub use query_optimizer::{
 };
 pub use rate_limit::{RateLimitConfig, RateLimitMiddleware};
 pub use redis::{
-    BloomFilter, CacheKeyGenerator, CacheProtectionConfig, CacheService,
-    CacheStatisticsCollector, RedisCacheService, RedisPool, UnifiedCacheManager,
+    BloomFilter, CacheKeyGenerator, CacheProtectionConfig, CacheService, CacheStatisticsCollector,
+    RedisCacheService, RedisPool, UnifiedCacheManager,
 };
-pub use security::*;
 pub use repository::{
     PaginatedQuery, PaginatedResult as RepoPaginatedResult, QueryBuilder, Repository,
 };
@@ -142,27 +141,29 @@ pub use schema::{
     INTEGRATION_SCHEMA, LIMS_SCHEMA, MAIL_SCHEMA, MES_SCHEMA, MOBILE_SCHEMA, PDM_SCHEMA, PM_SCHEMA,
     PORTAL_SCHEMA, QMS_SCHEMA, RS_SCHEMA, SCM_SCHEMA, SRM_SCHEMA, WMS_SCHEMA,
 };
+pub use security::*;
 pub use service_bootstrap::{
     quick_bootstrap, quick_bootstrap_with_db, AppState as BootstrapAppState, BootstrapConfig,
     ServiceBootstrap,
 };
 pub use service_client::{
-    create_hrm_client, create_iam_client, create_notification_client, create_generic_client,
-    BaseServiceClient, Company, Department, Employee,
-    HrmServiceClient, IamServiceClient, NotificationSvcClient,
-    GenericServiceClient,
-    ServiceClientError, ServiceClientResult, User,
+    create_generic_client, create_hrm_client, create_iam_client, create_notification_client,
+    BaseServiceClient, Company, Department, Employee, GenericServiceClient, HrmServiceClient,
+    IamServiceClient, NotificationSvcClient, ServiceClientError, ServiceClientResult, User,
 };
 pub use service_discovery::{
     LocalServiceRegistry, PortalServiceAggregator, ServiceCategory, ServiceDiscoveryClient,
     ServiceHealthStatus, ServiceInfo, ServiceRegistryStatus,
 };
 pub use storage::{FileMetadata, LocalStorage, StorageConfig, StorageService};
+pub use telemetry::{
+    init_telemetry, inject_trace_context, telemetry_middleware, TelemetryConfig, TelemetryExporter,
+    TelemetryGuard,
+};
 pub use tenant::{
     Tenant, TenantContext, TenantError, TenantManager, TenantPlan, TenantRole, TenantSettings,
     TenantStatus, TenantUpdate, TenantUser, UsageLimitExceeded, UsageMetrics,
 };
-pub use telemetry::{init_telemetry, telemetry_middleware, inject_trace_context, TelemetryConfig, TelemetryExporter, TelemetryGuard};
 pub use validation::{ValidationError, ValidationResult, Validator};
 
 // 向量存储模块
@@ -194,9 +195,9 @@ pub use migration::{MigrationHistory, MigrationResult, MigrationSDK, MigrationSt
 
 // AI 客户端模块导出
 pub use ai_client::{
-    AIClient, AIClientError, AIModelConfig, AIProviderType, ChatCompletionRequest, 
-    ChatCompletionResponse, ChatMessage, EmbeddingRequest, EmbeddingResponse, 
-    UnifiedAIClient, create_client, get_supported_models,
+    create_client, get_supported_models, AIClient, AIClientError, AIModelConfig, AIProviderType,
+    ChatCompletionRequest, ChatCompletionResponse, ChatMessage, EmbeddingRequest,
+    EmbeddingResponse, UnifiedAIClient,
 };
 
 // 批量请求模块导出
@@ -206,6 +207,4 @@ pub use api::{
 };
 
 // 数据压缩中间件模块导出
-pub use compression::{
-    CompressionAlgorithm, CompressionConfig, CompressionMiddleware,
-};
+pub use compression::{CompressionAlgorithm, CompressionConfig, CompressionMiddleware};

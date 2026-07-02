@@ -29,7 +29,7 @@ const annotationTypes = [
     id: 'note',
     label: '注释',
     icon: MessageSquare,
-    colors: ['primary.main', '#8B5CF6', '#06B6D4'],
+    colors: ['primary.main', 'secondary.main', '#06B6D4'],
   },
   {
     id: 'tag',
@@ -148,8 +148,8 @@ export function ChartAnnotations({
                       padding: 8,
                       borderRadius: 8,
                       border: 'none',
-                      backgroundColor: selectedType === type.id ? '#DBEAFE' : 'transparent',
-                      color: selectedType === type.id ? '#1D4ED8' : theme.palette.text.secondary,
+                      backgroundColor: selectedType === type.id ? 'primary.100' : 'transparent',
+                      color: selectedType === type.id ? 'primary.700' : theme.palette.text.secondary,
                       cursor: 'pointer',
                     }}
                     onMouseEnter={(e) => {

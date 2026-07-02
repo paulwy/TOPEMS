@@ -106,8 +106,8 @@ const EhsDrillPage: React.FC = () => {
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
       已完成: { bg: 'success.lighter', color: 'success.dark' },
-      已计划: { bg: '#dbeafe', color: 'primary.main' },
-      进行中: { bg: '#fef9c3', color: '#ca8a04' },
+      已计划: { bg: 'primary.100', color: 'primary.main' },
+      进行中: { bg: 'warning.100', color: '#ca8a04' },
     };
     const colors = statusMap[status] || { bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -303,14 +303,14 @@ const EhsDrillPage: React.FC = () => {
           value={stats.scheduled}
           icon={<Clock sx={{ width: 20, height: 20, color: 'primary.main' }} />}
           bgColor='white'
-          iconBgColor='#dbeafe'
+          iconBgColor='primary.100'
         />
         <StatCard
           label='进行中'
           value={stats.inProgress}
           icon={<Clock sx={{ width: 20, height: 20, color: '#ca8a04' }} />}
           bgColor='white'
-          iconBgColor='#fef9c3'
+          iconBgColor='warning.100'
         />
       </Box>
     ),

@@ -79,7 +79,7 @@ export const ImportProgress: React.FC<ImportProgressProps> = ({
             display: 'flex',
             justifyContent: 'space-between',
             fontSize: 14,
-            color: '#475569',
+            color: 'grey.600',
             marginBottom: 4,
           }}
         >
@@ -181,7 +181,7 @@ export const ImportProgress: React.FC<ImportProgressProps> = ({
             alignItems: 'center',
             justifyContent: 'center',
             fontSize: 14,
-            color: '#475569',
+            color: 'grey.600',
           }}
         >
           <Loader2

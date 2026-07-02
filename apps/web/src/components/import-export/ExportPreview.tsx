@@ -168,7 +168,7 @@ export const ExportPreview: React.FC<ExportPreviewProps> = ({
                   padding: '8px 16px',
                   backgroundColor: 'var(--mui-palette-grey-50)',
                   fontSize: 14,
-                  color: '#475569',
+                  color: 'grey.600',
                   textAlign: 'center',
                 }}
               >
@@ -191,7 +191,7 @@ export const ExportPreview: React.FC<ExportPreviewProps> = ({
             onClick={onClose}
             style={{
               padding: '8px 16px',
-              color: '#334155',
+              color: 'grey.700',
               backgroundColor: 'grey.100',
               borderRadius: 8,
             }}

@@ -158,7 +158,12 @@ pub async fn generate_pie_chart(
     let chart_service = ChartService::new(state.pool.clone());
 
     match chart_service
-        .generate_pie_chart(&req.data_source, &req.label_column, &req.value_column, req.title)
+        .generate_pie_chart(
+            &req.data_source,
+            &req.label_column,
+            &req.value_column,
+            req.title,
+        )
         .await
     {
         Ok(chart) => Json(serde_json::json!({

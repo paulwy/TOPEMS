@@ -302,10 +302,11 @@ async fn delete_payroll_run(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result = sqlx::query("DELETE FROM plugin_hrm.payroll_runs WHERE id = $1 AND status = 'draft'")
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result =
+        sqlx::query("DELETE FROM plugin_hrm.payroll_runs WHERE id = $1 AND status = 'draft'")
+            .bind(id)
+            .execute(&state.db)
+            .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -359,11 +360,10 @@ async fn calculate_payroll_run(
 ) -> Json<ApiResponse<PayrollRun>> {
     let now = Utc::now();
 
-    let result = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM hrm.employees WHERE status = 'active'",
-    )
-    .fetch_one(&state.db)
-    .await;
+    let result =
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM hrm.employees WHERE status = 'active'")
+            .fetch_one(&state.db)
+            .await;
 
     let emp_count = result.unwrap_or(0);
     let total_amount = BigDecimal::from(emp_count) * BigDecimal::from(5000);
@@ -693,7 +693,12 @@ async fn generate_payroll_voucher(
 
     let payroll_run = match payroll_run {
         Some(r) => r,
-        None => return Json(ApiResponse::<PayrollVoucherResponse>::error(404, "薪资记录不存在")),
+        None => {
+            return Json(ApiResponse::<PayrollVoucherResponse>::error(
+                404,
+                "薪资记录不存在",
+            ))
+        }
     };
 
     // 检查薪资是否已发放
@@ -728,7 +733,11 @@ async fn generate_payroll_voucher(
     .ok();
 
     let (total_gross, total_tax, total_deductions) = match payroll_summary {
-        Some(ref s) => (s.total_gross.clone(), s.total_tax.clone(), s.total_deductions.clone()),
+        Some(ref s) => (
+            s.total_gross.clone(),
+            s.total_tax.clone(),
+            s.total_deductions.clone(),
+        ),
         None => (
             BigDecimal::from(0),
             BigDecimal::from(0),
@@ -743,9 +752,9 @@ async fn generate_payroll_voucher(
     let net_salary = &total_gross - &total_deductions;
 
     let voucher_date = req.voucher_date.unwrap_or_else(Utc::now);
-    let period = req.period.unwrap_or_else(|| {
-        voucher_date.format("%Y-%m").to_string()
-    });
+    let period = req
+        .period
+        .unwrap_or_else(|| voucher_date.format("%Y-%m").to_string());
 
     // 生成凭证号
     let voucher_number = format!(
@@ -786,13 +795,37 @@ async fn generate_payroll_voucher(
             // 创建凭证分录
             let entries = vec![
                 // 借：工资
-                (1, "660101", "工资", total_gross.clone(), BigDecimal::from(0)),
+                (
+                    1,
+                    "660101",
+                    "工资",
+                    total_gross.clone(),
+                    BigDecimal::from(0),
+                ),
                 // 贷：银行存款
-                (2, "100201", "银行存款-基本户", BigDecimal::from(0), net_salary.clone()),
+                (
+                    2,
+                    "100201",
+                    "银行存款-基本户",
+                    BigDecimal::from(0),
+                    net_salary.clone(),
+                ),
                 // 贷：应交税费-个人所得税
-                (3, "222101", "应交税费-个人所得税", BigDecimal::from(0), total_tax.clone()),
+                (
+                    3,
+                    "222101",
+                    "应交税费-个人所得税",
+                    BigDecimal::from(0),
+                    total_tax.clone(),
+                ),
                 // 贷：其他应付款-社保
-                (4, "224101", "其他应付款-社保", BigDecimal::from(0), total_social_security.clone()),
+                (
+                    4,
+                    "224101",
+                    "其他应付款-社保",
+                    BigDecimal::from(0),
+                    total_social_security.clone(),
+                ),
             ];
 
             for (line, subject_code, subject_name, debit, credit) in entries {

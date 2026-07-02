@@ -1,4 +1,4 @@
-use axum::{extract::State, extract::Path, extract::Query, Json};
+use axum::{extract::Path, extract::Query, extract::State, Json};
 use serde::{Deserialize, Serialize};
 use topems_shared::ApiResponse;
 use uuid::Uuid;
@@ -314,7 +314,10 @@ impl QaApi {
             }
         };
 
-        Json(ApiResponse::success(QAHistoryResponse { history, total }, "Success"))
+        Json(ApiResponse::success(
+            QAHistoryResponse { history, total },
+            "Success",
+        ))
     }
 
     /// DELETE /api/v1/qa/history/{id} - 删除单条问答历史

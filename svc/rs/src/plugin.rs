@@ -46,11 +46,21 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
             base_path: "/api/rs".to_string(),
         },
         permissions: vec![
-            PermissionDef { code: "project".to_string() },
-            PermissionDef { code: "experiment".to_string() },
-            PermissionDef { code: "formula".to_string() },
-            PermissionDef { code: "material".to_string() },
-            PermissionDef { code: "patent".to_string() },
+            PermissionDef {
+                code: "project".to_string(),
+            },
+            PermissionDef {
+                code: "experiment".to_string(),
+            },
+            PermissionDef {
+                code: "formula".to_string(),
+            },
+            PermissionDef {
+                code: "material".to_string(),
+            },
+            PermissionDef {
+                code: "patent".to_string(),
+            },
         ],
     };
 
@@ -91,13 +101,23 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
     match client.post(&url).json(&info).send().await {
         Ok(response) => {
             if response.status().is_success() {
-                tracing::info!("[RS Plugin] Successfully registered to core at {}", core_url);
+                tracing::info!(
+                    "[RS Plugin] Successfully registered to core at {}",
+                    core_url
+                );
             } else {
-                tracing::warn!("[RS Plugin] Failed to register to core: {}", response.status());
+                tracing::warn!(
+                    "[RS Plugin] Failed to register to core: {}",
+                    response.status()
+                );
             }
         }
         Err(e) => {
-            tracing::warn!("[RS Plugin] Failed to connect to core at {}: {}", core_url, e);
+            tracing::warn!(
+                "[RS Plugin] Failed to connect to core at {}: {}",
+                core_url,
+                e
+            );
         }
     }
 }

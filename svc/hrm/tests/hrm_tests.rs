@@ -438,7 +438,9 @@ mod http_endpoint_tests {
 
         assert_eq!(response.status(), StatusCode::OK);
 
-        let body = axum::body::to_bytes(response.into_body(), usize::MAX).await.unwrap();
+        let body = axum::body::to_bytes(response.into_body(), usize::MAX)
+            .await
+            .unwrap();
         let info: PluginInfo = serde_json::from_slice(&body).unwrap();
 
         assert_eq!(info.code, "hrm");

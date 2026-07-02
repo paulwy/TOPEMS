@@ -1,22 +1,45 @@
 //! Equipment OEE handlers
 
-use axum::{extract::Path, extract::State, extract::Extension, routing::{delete, get, post, put}, Json, Router};
+use axum::{
+    extract::Extension,
+    extract::Path,
+    extract::State,
+    routing::{delete, get, post, put},
+    Json, Router,
+};
 use chrono::{DateTime, Duration, NaiveDate, NaiveDateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{types::{BigDecimal, Uuid}, PgPool};
+use sqlx::{
+    types::{BigDecimal, Uuid},
+    PgPool,
+};
 use std::str::FromStr;
 use topems_shared::auth::Claims;
 
-use crate::AppState;
 use crate::services::permission::{check_permission, ModulePermission};
+use crate::AppState;
 use topems_shared::response::ApiResponse;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/mes/equipment-oee", get(list_oee_records).post(create_oee_record))
-        .route("/api/mes/equipment-oee/{id}", get(get_oee_record).put(update_oee_record).delete(delete_oee_record))
-        .route("/api/mes/equipment-oee/statistics", post(get_oee_statistics))
-        .route("/api/mes/equipment-oee/efficiency-analysis", get(get_equipment_efficiency_analysis))
+        .route(
+            "/api/mes/equipment-oee",
+            get(list_oee_records).post(create_oee_record),
+        )
+        .route(
+            "/api/mes/equipment-oee/{id}",
+            get(get_oee_record)
+                .put(update_oee_record)
+                .delete(delete_oee_record),
+        )
+        .route(
+            "/api/mes/equipment-oee/statistics",
+            post(get_oee_statistics),
+        )
+        .route(
+            "/api/mes/equipment-oee/efficiency-analysis",
+            get(get_equipment_efficiency_analysis),
+        )
 }
 
 // ==================== Data Types ====================
@@ -121,7 +144,8 @@ pub struct OeeStatisticsQuery {
 }
 
 fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
-    dt.map(|d| Utc.from_utc_datetime(&d)).unwrap_or_else(Utc::now)
+    dt.map(|d| Utc.from_utc_datetime(&d))
+        .unwrap_or_else(Utc::now)
 }
 
 fn opt_naive_to_utc(dt: Option<NaiveDateTime>) -> Option<DateTime<Utc>> {
@@ -133,7 +157,8 @@ fn opt_naive_date_to_utc(dt: Option<NaiveDate>) -> Option<DateTime<Utc>> {
 }
 
 fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
-    bd.and_then(|d| d.to_string().parse::<f64>().ok()).unwrap_or(0.0)
+    bd.and_then(|d| d.to_string().parse::<f64>().ok())
+        .unwrap_or(0.0)
 }
 
 fn calculate_oee(
@@ -143,16 +168,24 @@ fn calculate_oee(
     actual_output: f64,
     good_output: f64,
 ) -> (f64, f64, f64, f64) {
-    let availability = if planned_time > 0.0 { run_time / planned_time } else { 0.0 };
+    let availability = if planned_time > 0.0 {
+        run_time / planned_time
+    } else {
+        0.0
+    };
     let performance = if run_time > 0.0 && ideal_cycle_time > 0.0 {
         (actual_output * ideal_cycle_time) / run_time
     } else {
         0.0
     };
     let performance = performance.min(1.0);
-    let quality_rate = if actual_output > 0.0 { good_output / actual_output } else { 0.0 };
+    let quality_rate = if actual_output > 0.0 {
+        good_output / actual_output
+    } else {
+        0.0
+    };
     let oee = availability * performance * quality_rate;
-    
+
     (availability, performance, quality_rate, oee)
 }
 
@@ -162,7 +195,9 @@ pub async fn list_oee_records(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<ListOeeRecordsResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentOeeRead).await {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &ModulePermission::EquipmentOeeRead).await
+    {
         return e;
     }
 
@@ -191,29 +226,32 @@ pub async fn list_oee_records(
         }
     };
 
-    let records_list: Vec<OeeRecordResponse> = records.into_iter().map(|r| OeeRecordResponse {
-        id: r.id,
-        equipment_id: r.equipment_id,
-        equipment_name: Some(r.equipment_name),
-        equipment_no: Some(r.equipment_no),
-        record_date: opt_naive_date_to_utc(Some(r.record_date)).unwrap_or_else(Utc::now),
-        planned_production_time: big_decimal_to_f64(Some(r.planned_production_time)),
-        actual_run_time: big_decimal_to_f64(Some(r.actual_run_time)),
-        downtime: big_decimal_to_f64(r.downtime),
-        ideal_cycle_time: big_decimal_to_f64(Some(r.ideal_cycle_time)),
-        actual_output: big_decimal_to_f64(Some(r.actual_output)),
-        good_output: big_decimal_to_f64(Some(r.good_output)),
-        defective_output: big_decimal_to_f64(r.defective_output),
-        availability: big_decimal_to_f64(r.availability),
-        performance: big_decimal_to_f64(r.performance),
-        quality_rate: big_decimal_to_f64(r.quality_rate),
-        oee: big_decimal_to_f64(r.oee),
-        shift: r.shift,
-        operator: r.operator,
-        notes: r.notes,
-        created_at: naive_to_utc(r.created_at),
-        updated_at: naive_to_utc(r.updated_at),
-    }).collect();
+    let records_list: Vec<OeeRecordResponse> = records
+        .into_iter()
+        .map(|r| OeeRecordResponse {
+            id: r.id,
+            equipment_id: r.equipment_id,
+            equipment_name: Some(r.equipment_name),
+            equipment_no: Some(r.equipment_no),
+            record_date: opt_naive_date_to_utc(Some(r.record_date)).unwrap_or_else(Utc::now),
+            planned_production_time: big_decimal_to_f64(Some(r.planned_production_time)),
+            actual_run_time: big_decimal_to_f64(Some(r.actual_run_time)),
+            downtime: big_decimal_to_f64(r.downtime),
+            ideal_cycle_time: big_decimal_to_f64(Some(r.ideal_cycle_time)),
+            actual_output: big_decimal_to_f64(Some(r.actual_output)),
+            good_output: big_decimal_to_f64(Some(r.good_output)),
+            defective_output: big_decimal_to_f64(r.defective_output),
+            availability: big_decimal_to_f64(r.availability),
+            performance: big_decimal_to_f64(r.performance),
+            quality_rate: big_decimal_to_f64(r.quality_rate),
+            oee: big_decimal_to_f64(r.oee),
+            shift: r.shift,
+            operator: r.operator,
+            notes: r.notes,
+            created_at: naive_to_utc(r.created_at),
+            updated_at: naive_to_utc(r.updated_at),
+        })
+        .collect();
 
     let total = records_list.len() as i64;
 
@@ -231,12 +269,14 @@ pub async fn create_oee_record(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateOeeRecordRequest>,
 ) -> Json<ApiResponse<OeeRecordResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentOeeWrite).await {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &ModulePermission::EquipmentOeeWrite).await
+    {
         return e;
     }
 
     let now = Utc::now();
-    
+
     let (availability, performance, quality_rate, oee) = calculate_oee(
         req.planned_production_time,
         req.actual_run_time,
@@ -331,7 +371,9 @@ pub async fn get_oee_record(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<OeeRecordResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentOeeRead).await {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &ModulePermission::EquipmentOeeRead).await
+    {
         return e;
     }
 
@@ -398,7 +440,9 @@ pub async fn update_oee_record(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateOeeRecordRequest>,
 ) -> Json<ApiResponse<OeeRecordResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentOeeWrite).await {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &ModulePermission::EquipmentOeeWrite).await
+    {
         return e;
     }
 
@@ -422,15 +466,24 @@ pub async fn update_oee_record(
         }
     };
 
-    let planned_time = req.planned_production_time.unwrap_or(big_decimal_to_f64(Some(existing.planned_production_time)));
-    let run_time = req.actual_run_time.unwrap_or(big_decimal_to_f64(Some(existing.actual_run_time)));
-    let cycle_time = req.ideal_cycle_time.unwrap_or(big_decimal_to_f64(Some(existing.ideal_cycle_time)));
-    let output = req.actual_output.unwrap_or(big_decimal_to_f64(Some(existing.actual_output)));
-    let good = req.good_output.unwrap_or(big_decimal_to_f64(Some(existing.good_output)));
+    let planned_time = req
+        .planned_production_time
+        .unwrap_or(big_decimal_to_f64(Some(existing.planned_production_time)));
+    let run_time = req
+        .actual_run_time
+        .unwrap_or(big_decimal_to_f64(Some(existing.actual_run_time)));
+    let cycle_time = req
+        .ideal_cycle_time
+        .unwrap_or(big_decimal_to_f64(Some(existing.ideal_cycle_time)));
+    let output = req
+        .actual_output
+        .unwrap_or(big_decimal_to_f64(Some(existing.actual_output)));
+    let good = req
+        .good_output
+        .unwrap_or(big_decimal_to_f64(Some(existing.good_output)));
 
-    let (availability, performance, quality_rate, oee) = calculate_oee(
-        planned_time, run_time, cycle_time, output, good,
-    );
+    let (availability, performance, quality_rate, oee) =
+        calculate_oee(planned_time, run_time, cycle_time, output, good);
 
     let result = sqlx::query!(
         r#"
@@ -459,13 +512,20 @@ pub async fn update_oee_record(
             shift, operator, notes, created_at, updated_at
         "#,
         id,
-        req.planned_production_time.and_then(|v| BigDecimal::from_str(&v.to_string()).ok()),
-        req.actual_run_time.and_then(|v| BigDecimal::from_str(&v.to_string()).ok()),
-        req.downtime.and_then(|v| BigDecimal::from_str(&v.to_string()).ok()),
-        req.ideal_cycle_time.and_then(|v| BigDecimal::from_str(&v.to_string()).ok()),
-        req.actual_output.and_then(|v| BigDecimal::from_str(&v.to_string()).ok()),
-        req.good_output.and_then(|v| BigDecimal::from_str(&v.to_string()).ok()),
-        req.defective_output.and_then(|v| BigDecimal::from_str(&v.to_string()).ok()),
+        req.planned_production_time
+            .and_then(|v| BigDecimal::from_str(&v.to_string()).ok()),
+        req.actual_run_time
+            .and_then(|v| BigDecimal::from_str(&v.to_string()).ok()),
+        req.downtime
+            .and_then(|v| BigDecimal::from_str(&v.to_string()).ok()),
+        req.ideal_cycle_time
+            .and_then(|v| BigDecimal::from_str(&v.to_string()).ok()),
+        req.actual_output
+            .and_then(|v| BigDecimal::from_str(&v.to_string()).ok()),
+        req.good_output
+            .and_then(|v| BigDecimal::from_str(&v.to_string()).ok()),
+        req.defective_output
+            .and_then(|v| BigDecimal::from_str(&v.to_string()).ok()),
         BigDecimal::from_str(&availability.to_string()).unwrap_or_default(),
         BigDecimal::from_str(&performance.to_string()).unwrap_or_default(),
         BigDecimal::from_str(&quality_rate.to_string()).unwrap_or_default(),
@@ -522,16 +582,15 @@ pub async fn delete_oee_record(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentOeeWrite).await {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &ModulePermission::EquipmentOeeWrite).await
+    {
         return e;
     }
 
-    let result = sqlx::query!(
-        r#"DELETE FROM equipment_oee WHERE id = $1"#,
-        id,
-    )
-    .execute(&state.pool)
-    .await;
+    let result = sqlx::query!(r#"DELETE FROM equipment_oee WHERE id = $1"#, id,)
+        .execute(&state.pool)
+        .await;
 
     let result = match result {
         Ok(r) => r,
@@ -553,7 +612,9 @@ pub async fn get_oee_statistics(
     Extension(claims): Extension<Claims>,
     Json(req): Json<OeeStatisticsQuery>,
 ) -> Json<ApiResponse<Vec<OeeStatisticsResponse>>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentOeeRead).await {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &ModulePermission::EquipmentOeeRead).await
+    {
         return e;
     }
 
@@ -587,21 +648,24 @@ pub async fn get_oee_statistics(
     .await;
 
     let stats = match result {
-        Ok(rows) => rows.into_iter().map(|r| OeeStatisticsResponse {
-            equipment_id: r.equipment_id,
-            equipment_name: r.equipment_name,
-            equipment_no: r.equipment_no,
-            total_records: r.total_records.unwrap_or(0),
-            avg_availability: big_decimal_to_f64(r.avg_availability),
-            avg_performance: big_decimal_to_f64(r.avg_performance),
-            avg_quality_rate: big_decimal_to_f64(r.avg_quality_rate),
-            avg_oee: big_decimal_to_f64(r.avg_oee),
-            total_production_time: big_decimal_to_f64(r.total_production_time),
-            total_output: big_decimal_to_f64(r.total_output),
-            total_good_output: big_decimal_to_f64(r.total_good_output),
-            date_from: opt_naive_date_to_utc(r.date_from),
-            date_to: opt_naive_date_to_utc(r.date_to),
-        }).collect(),
+        Ok(rows) => rows
+            .into_iter()
+            .map(|r| OeeStatisticsResponse {
+                equipment_id: r.equipment_id,
+                equipment_name: r.equipment_name,
+                equipment_no: r.equipment_no,
+                total_records: r.total_records.unwrap_or(0),
+                avg_availability: big_decimal_to_f64(r.avg_availability),
+                avg_performance: big_decimal_to_f64(r.avg_performance),
+                avg_quality_rate: big_decimal_to_f64(r.avg_quality_rate),
+                avg_oee: big_decimal_to_f64(r.avg_oee),
+                total_production_time: big_decimal_to_f64(r.total_production_time),
+                total_output: big_decimal_to_f64(r.total_output),
+                total_good_output: big_decimal_to_f64(r.total_good_output),
+                date_from: opt_naive_date_to_utc(r.date_from),
+                date_to: opt_naive_date_to_utc(r.date_to),
+            })
+            .collect(),
         Err(e) => {
             tracing::error!("Failed to fetch OEE statistics: {}", e);
             return Json(ApiResponse::error(500, "获取OEE统计数据失败"));
@@ -615,7 +679,9 @@ pub async fn get_equipment_efficiency_analysis(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<EquipmentEfficiencyAnalysis>>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::EquipmentOeeRead).await {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &ModulePermission::EquipmentOeeRead).await
+    {
         return e;
     }
 
@@ -646,31 +712,35 @@ pub async fn get_equipment_efficiency_analysis(
         }
     };
 
-    let analysis_list: Vec<EquipmentEfficiencyAnalysis> = equipments.into_iter().enumerate().map(|(idx, r)| {
-        let oee_val = big_decimal_to_f64(r.oee);
-        let status = if oee_val >= 0.85 {
-            "excellent".to_string()
-        } else if oee_val >= 0.70 {
-            "good".to_string()
-        } else if oee_val >= 0.50 {
-            "fair".to_string()
-        } else {
-            "poor".to_string()
-        };
+    let analysis_list: Vec<EquipmentEfficiencyAnalysis> = equipments
+        .into_iter()
+        .enumerate()
+        .map(|(idx, r)| {
+            let oee_val = big_decimal_to_f64(r.oee);
+            let status = if oee_val >= 0.85 {
+                "excellent".to_string()
+            } else if oee_val >= 0.70 {
+                "good".to_string()
+            } else if oee_val >= 0.50 {
+                "fair".to_string()
+            } else {
+                "poor".to_string()
+            };
 
-        EquipmentEfficiencyAnalysis {
-            equipment_id: r.equipment_id,
-            equipment_name: r.equipment_name,
-            equipment_no: r.equipment_no,
-            oee: oee_val,
-            availability: big_decimal_to_f64(r.availability),
-            performance: big_decimal_to_f64(r.performance),
-            quality_rate: big_decimal_to_f64(r.quality_rate),
-            rank: (idx + 1) as i32,
-            trend: 0.0,
-            status,
-        }
-    }).collect();
+            EquipmentEfficiencyAnalysis {
+                equipment_id: r.equipment_id,
+                equipment_name: r.equipment_name,
+                equipment_no: r.equipment_no,
+                oee: oee_val,
+                availability: big_decimal_to_f64(r.availability),
+                performance: big_decimal_to_f64(r.performance),
+                quality_rate: big_decimal_to_f64(r.quality_rate),
+                rank: (idx + 1) as i32,
+                trend: 0.0,
+                status,
+            }
+        })
+        .collect();
 
     Json(ApiResponse::success(analysis_list, "获取设备效率分析成功"))
 }

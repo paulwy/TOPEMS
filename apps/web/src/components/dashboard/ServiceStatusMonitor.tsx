@@ -41,19 +41,19 @@ const groupColors: Record<
     bg: 'primary.light',
     border: 'primary.light',
     titleColor: 'primary.dark',
-    iconBg: '#dbeafe',
+    iconBg: 'primary.100',
     iconColor: 'primary.dark',
   },
   业务运营: {
     bg: 'success.light',
     border: 'success.light',
-    titleColor: '#15803d',
+    titleColor: 'success.700',
     iconBg: 'success.lighter',
     iconColor: 'success.dark',
   },
   研发管理: {
     bg: 'secondary.light',
-    border: '#ddd6fe',
+    border: 'secondary.100',
     titleColor: '#6d28d9',
     iconBg: 'secondary.light',
     iconColor: 'secondary.main',
@@ -82,8 +82,8 @@ const groupColors: Record<
   专业服务: {
     bg: '#eef2ff',
     border: 'secondary.main',
-    titleColor: '#4338ca',
-    iconBg: '#ddd6fe',
+    titleColor: 'secondary.700',
+    iconBg: 'secondary.100',
     iconColor: 'primary.light',
   },
   '数据/门户': {
@@ -370,7 +370,7 @@ export const ServiceStatusMonitor: React.FC<ServiceStatusMonitorProps> = ({
               服务状态监测
             </Typography>
             <Typography sx={{ fontSize: 12, color: 'grey.600' }}>实时监控各服务运行状态</Typography>
-            <Typography sx={{ fontSize: 11, color: '#94a3b8', mt: 0.5 }}>
+            <Typography sx={{ fontSize: 11, color: 'grey.400', mt: 0.5 }}>
               最后更新: {lastUpdate.toLocaleTimeString('zh-CN')}
             </Typography>
           </Box>

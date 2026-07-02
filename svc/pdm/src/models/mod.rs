@@ -35,12 +35,16 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_pdm_products_product_no ON pdm_products(product_no)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_pdm_materials_material_no ON pdm_materials(material_no)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_pdm_products_product_no ON pdm_products(product_no)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_pdm_materials_material_no ON pdm_materials(material_no)",
+    )
+    .execute(pool)
+    .await?;
 
     sqlx::query(
         r#"
@@ -66,12 +70,16 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_pdm_change_notices_ecn_no ON pdm_change_notices(ecn_no)")
-        .execute(pool)
-        .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_pdm_change_notices_status ON pdm_change_notices(status)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_pdm_change_notices_ecn_no ON pdm_change_notices(ecn_no)",
+    )
+    .execute(pool)
+    .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_pdm_change_notices_status ON pdm_change_notices(status)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_pdm_change_notices_priority ON pdm_change_notices(priority)")
         .execute(pool)
         .await?;
@@ -116,9 +124,11 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_pdm_workflows_type ON pdm_workflows(workflow_type)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_pdm_workflows_type ON pdm_workflows(workflow_type)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_pdm_workflow_instances_target ON pdm_workflow_instances(target_type, target_id)")
         .execute(pool)
         .await?;
@@ -147,9 +157,11 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     .execute(pool)
     .await?;
 
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_pdm_documents_document_no ON pdm_documents(document_no)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_pdm_documents_document_no ON pdm_documents(document_no)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_pdm_documents_status ON pdm_documents(status)")
         .execute(pool)
         .await?;

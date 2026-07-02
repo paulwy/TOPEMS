@@ -26,12 +26,21 @@ async fn login(username: &str, password: &str) -> Result<String, String> {
         .await
         .map_err(|e| format!("请求失败: {}", e))?;
 
-    let body: Value = response.json().await.map_err(|e| format!("解析响应失败: {}", e))?;
+    let body: Value = response
+        .json()
+        .await
+        .map_err(|e| format!("解析响应失败: {}", e))?;
 
     if body["success"].as_bool().unwrap_or(false) {
-        Ok(body["data"]["access_token"].as_str().unwrap_or("").to_string())
+        Ok(body["data"]["access_token"]
+            .as_str()
+            .unwrap_or("")
+            .to_string())
     } else {
-        Err(format!("登录失败: {}", body["message"].as_str().unwrap_or("未知错误")))
+        Err(format!(
+            "登录失败: {}",
+            body["message"].as_str().unwrap_or("未知错误")
+        ))
     }
 }
 
@@ -52,7 +61,9 @@ async fn auth_request(
         _ => return Err(format!("不支持的 HTTP 方法: {}", method)),
     };
 
-    let request = request.bearer_auth(token).header("Content-Type", "application/json");
+    let request = request
+        .bearer_auth(token)
+        .header("Content-Type", "application/json");
 
     let response = match body {
         Some(b) => request.json(&b),
@@ -63,7 +74,10 @@ async fn auth_request(
     .map_err(|e| format!("请求失败: {}", e))?;
 
     let status = response.status().as_u16();
-    let body: Value = response.json().await.map_err(|e| format!("解析响应失败: {}", e))?;
+    let body: Value = response
+        .json()
+        .await
+        .map_err(|e| format!("解析响应失败: {}", e))?;
 
     Ok((status, body))
 }
@@ -111,11 +125,21 @@ async fn test_doc_002_create_document() {
         "type": "markdown"
     });
 
-    let result = auth_request(&client, &token, "POST", "/api/core/doc/documents", Some(new_doc)).await;
+    let result = auth_request(
+        &client,
+        &token,
+        "POST",
+        "/api/core/doc/documents",
+        Some(new_doc),
+    )
+    .await;
 
     match result {
         Ok((status, _)) => {
-            assert!(status == 200 || status == 201 || status == 404, "状态码应为 200、201 或 404");
+            assert!(
+                status == 200 || status == 201 || status == 404,
+                "状态码应为 200、201 或 404"
+            );
             tracing::info!("DOC-002 测试通过: 创建文档功能正常");
         }
         Err(e) => {
@@ -138,7 +162,9 @@ async fn test_doc_003_edit_others_document() {
 
     match result {
         Ok((_, body)) => {
-            let docs = body["data"]["documents"].as_array().or_else(|| body["data"].as_array());
+            let docs = body["data"]["documents"]
+                .as_array()
+                .or_else(|| body["data"].as_array());
 
             if let Some(documents) = docs {
                 if let Some(doc) = documents.first() {
@@ -189,12 +215,17 @@ async fn test_doc_004_delete_document() {
 
     match result {
         Ok((_, body)) => {
-            let docs = body["data"]["documents"].as_array().or_else(|| body["data"].as_array());
+            let docs = body["data"]["documents"]
+                .as_array()
+                .or_else(|| body["data"].as_array());
 
             if let Some(documents) = docs {
                 // 找一个测试文档
                 let test_doc = documents.iter().find(|d| {
-                    d["title"].as_str().map(|s| s.starts_with("测试")).unwrap_or(false)
+                    d["title"]
+                        .as_str()
+                        .map(|s| s.starts_with("测试"))
+                        .unwrap_or(false)
                 });
 
                 if let Some(doc) = test_doc {
@@ -210,7 +241,12 @@ async fn test_doc_004_delete_document() {
 
                         match delete_result {
                             Ok((status, _)) => {
-                                assert!(status == 200 || status == 204 || status == 403 || status == 404);
+                                assert!(
+                                    status == 200
+                                        || status == 204
+                                        || status == 403
+                                        || status == 404
+                                );
                                 tracing::info!("DOC-004 测试通过: 删除文档功能正常");
                                 return;
                             }
@@ -240,13 +276,15 @@ async fn test_doc_005_publish_document() {
 
     match result {
         Ok((_, body)) => {
-            let docs = body["data"]["documents"].as_array().or_else(|| body["data"].as_array());
+            let docs = body["data"]["documents"]
+                .as_array()
+                .or_else(|| body["data"].as_array());
 
             if let Some(documents) = docs {
                 // 找草稿状态的文档
-                let draft_doc = documents.iter().find(|d| {
-                    d["status"].as_str() == Some("draft")
-                });
+                let draft_doc = documents
+                    .iter()
+                    .find(|d| d["status"].as_str() == Some("draft"));
 
                 if let Some(doc) = draft_doc {
                     if let Some(doc_id) = doc["id"].as_str() {
@@ -291,7 +329,9 @@ async fn test_doc_006_archive_document() {
 
     match result {
         Ok((_, body)) => {
-            let docs = body["data"]["documents"].as_array().or_else(|| body["data"].as_array());
+            let docs = body["data"]["documents"]
+                .as_array()
+                .or_else(|| body["data"].as_array());
 
             if let Some(documents) = docs {
                 if let Some(doc) = documents.first() {

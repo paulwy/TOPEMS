@@ -103,7 +103,12 @@ impl Event {
         }
     }
 
-    pub fn with_version(event_type: EventType, source: &str, payload: serde_json::Value, version: u32) -> Self {
+    pub fn with_version(
+        event_type: EventType,
+        source: &str,
+        payload: serde_json::Value,
+        version: u32,
+    ) -> Self {
         Self {
             event_id: Uuid::new_v4(),
             event_type,

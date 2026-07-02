@@ -6,22 +6,19 @@ use axum::{
 };
 use uuid::Uuid;
 
-use crate::{AppState, CoreResponse};
 use super::models::*;
+use crate::{AppState, CoreResponse};
 
 /// List all tenants (super admin only)
-pub async fn list_tenants(
-    State(state): State<AppState>,
-) -> Json<CoreResponse<Vec<Tenant>>> {
+pub async fn list_tenants(State(state): State<AppState>) -> Json<CoreResponse<Vec<Tenant>>> {
     tracing::info!("[Tenant] Listing all tenants");
-    
-    let tenants: Vec<Tenant> = sqlx::query_as(
-        "SELECT * FROM core_tenants ORDER BY created_at DESC"
-    )
-    .fetch_all(&state.pool)
-    .await
-    .unwrap_or_default();
-    
+
+    let tenants: Vec<Tenant> =
+        sqlx::query_as("SELECT * FROM core_tenants ORDER BY created_at DESC")
+            .fetch_all(&state.pool)
+            .await
+            .unwrap_or_default();
+
     Json(CoreResponse::success(tenants, "Tenants retrieved"))
 }
 
@@ -31,15 +28,13 @@ pub async fn get_tenant(
     Path(id): Path<Uuid>,
 ) -> Json<CoreResponse<Tenant>> {
     tracing::info!("[Tenant] Getting tenant: {}", id);
-    
-    let tenant: Option<Tenant> = sqlx::query_as(
-        "SELECT * FROM core_tenants WHERE id = $1"
-    )
-    .bind(id)
-    .fetch_optional(&state.pool)
-    .await
-    .unwrap_or(None);
-    
+
+    let tenant: Option<Tenant> = sqlx::query_as("SELECT * FROM core_tenants WHERE id = $1")
+        .bind(id)
+        .fetch_optional(&state.pool)
+        .await
+        .unwrap_or(None);
+
     match tenant {
         Some(t) => Json(CoreResponse::success(t, "Tenant retrieved")),
         None => Json(CoreResponse::error("Tenant not found")),
@@ -52,15 +47,13 @@ pub async fn get_tenant_by_code(
     Path(code): Path<String>,
 ) -> Json<CoreResponse<Tenant>> {
     tracing::info!("[Tenant] Getting tenant by code: {}", code);
-    
-    let tenant: Option<Tenant> = sqlx::query_as(
-        "SELECT * FROM core_tenants WHERE code = $1"
-    )
-    .bind(&code)
-    .fetch_optional(&state.pool)
-    .await
-    .unwrap_or(None);
-    
+
+    let tenant: Option<Tenant> = sqlx::query_as("SELECT * FROM core_tenants WHERE code = $1")
+        .bind(&code)
+        .fetch_optional(&state.pool)
+        .await
+        .unwrap_or(None);
+
     match tenant {
         Some(t) => Json(CoreResponse::success(t, "Tenant retrieved")),
         None => Json(CoreResponse::error("Tenant not found")),
@@ -73,7 +66,7 @@ pub async fn create_tenant(
     Json(req): Json<CreateTenantRequest>,
 ) -> Json<CoreResponse<Tenant>> {
     tracing::info!("[Tenant] Creating tenant: {}", req.name);
-    
+
     let tenant: Tenant = sqlx::query_as(
         r#"
         INSERT INTO core_tenants (name, code, tenant_type, plan, license_type, license_expires_at, trial_expires_at)
@@ -91,7 +84,7 @@ pub async fn create_tenant(
     .fetch_one(&state.pool)
     .await
     .unwrap();
-    
+
     Json(CoreResponse::success(tenant, "Tenant created"))
 }
 
@@ -102,7 +95,7 @@ pub async fn update_tenant(
     Json(req): Json<UpdateTenantRequest>,
 ) -> Json<CoreResponse<Tenant>> {
     tracing::info!("[Tenant] Updating tenant: {}", id);
-    
+
     let tenant: Option<Tenant> = sqlx::query_as(
         r#"
         UPDATE core_tenants
@@ -130,7 +123,7 @@ pub async fn update_tenant(
     .fetch_optional(&state.pool)
     .await
     .unwrap_or(None);
-    
+
     match tenant {
         Some(t) => Json(CoreResponse::success(t, "Tenant updated")),
         None => Json(CoreResponse::error("Tenant not found")),
@@ -143,7 +136,7 @@ pub async fn activate_tenant(
     Path(id): Path<Uuid>,
 ) -> Json<CoreResponse<Tenant>> {
     tracing::info!("[Tenant] Activating tenant: {}", id);
-    
+
     let tenant: Option<Tenant> = sqlx::query_as(
         r#"
         UPDATE core_tenants
@@ -156,7 +149,7 @@ pub async fn activate_tenant(
     .fetch_optional(&state.pool)
     .await
     .unwrap_or(None);
-    
+
     match tenant {
         Some(t) => Json(CoreResponse::success(t, "Tenant activated")),
         None => Json(CoreResponse::error("Tenant not found")),
@@ -169,7 +162,7 @@ pub async fn suspend_tenant(
     Path(id): Path<Uuid>,
 ) -> Json<CoreResponse<Tenant>> {
     tracing::info!("[Tenant] Suspending tenant: {}", id);
-    
+
     let tenant: Option<Tenant> = sqlx::query_as(
         r#"
         UPDATE core_tenants
@@ -182,7 +175,7 @@ pub async fn suspend_tenant(
     .fetch_optional(&state.pool)
     .await
     .unwrap_or(None);
-    
+
     match tenant {
         Some(t) => Json(CoreResponse::success(t, "Tenant suspended")),
         None => Json(CoreResponse::error("Tenant not found")),
@@ -195,15 +188,13 @@ pub async fn get_tenant_quota(
     Path(id): Path<Uuid>,
 ) -> Json<CoreResponse<TenantQuotaResponse>> {
     tracing::info!("[Tenant] Getting quota for tenant: {}", id);
-    
-    let tenant: Option<Tenant> = sqlx::query_as(
-        "SELECT * FROM core_tenants WHERE id = $1"
-    )
-    .bind(id)
-    .fetch_optional(&state.pool)
-    .await
-    .unwrap_or(None);
-    
+
+    let tenant: Option<Tenant> = sqlx::query_as("SELECT * FROM core_tenants WHERE id = $1")
+        .bind(id)
+        .fetch_optional(&state.pool)
+        .await
+        .unwrap_or(None);
+
     match tenant {
         Some(t) => {
             // Get current usage
@@ -236,7 +227,7 @@ pub async fn get_tenant_quota(
                 total_cost_cents: None,
                 created_at: chrono::Utc::now(),
             });
-            
+
             let quota = TenantQuotaResponse {
                 tenant_id: id,
                 plan: t.plan.clone(),
@@ -256,7 +247,7 @@ pub async fn get_tenant_quota(
                     api_calls: None,
                 },
             };
-            
+
             Json(CoreResponse::success(quota, "Quota retrieved"))
         }
         None => Json(CoreResponse::error("Tenant not found")),
@@ -269,15 +260,15 @@ pub async fn list_tenant_modules(
     Path(tenant_id): Path<Uuid>,
 ) -> Json<CoreResponse<Vec<TenantModule>>> {
     tracing::info!("[Tenant] Listing modules for tenant: {}", tenant_id);
-    
+
     let modules: Vec<TenantModule> = sqlx::query_as(
-        "SELECT * FROM core_tenant_modules WHERE tenant_id = $1 ORDER BY activated_at DESC"
+        "SELECT * FROM core_tenant_modules WHERE tenant_id = $1 ORDER BY activated_at DESC",
     )
     .bind(tenant_id)
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
-    
+
     Json(CoreResponse::success(modules, "Modules retrieved"))
 }
 
@@ -286,8 +277,12 @@ pub async fn activate_module(
     State(state): State<AppState>,
     Path((tenant_id, module_code)): Path<(Uuid, String)>,
 ) -> Json<CoreResponse<TenantModule>> {
-    tracing::info!("[Tenant] Activating module {} for tenant: {}", module_code, tenant_id);
-    
+    tracing::info!(
+        "[Tenant] Activating module {} for tenant: {}",
+        module_code,
+        tenant_id
+    );
+
     let module: TenantModule = sqlx::query_as(
         r#"
         INSERT INTO core_tenant_modules (tenant_id, module_code, is_active)
@@ -302,7 +297,7 @@ pub async fn activate_module(
     .fetch_one(&state.pool)
     .await
     .unwrap();
-    
+
     Json(CoreResponse::success(module, "Module activated"))
 }
 
@@ -311,8 +306,12 @@ pub async fn deactivate_module(
     State(state): State<AppState>,
     Path((tenant_id, module_code)): Path<(Uuid, String)>,
 ) -> Json<CoreResponse<TenantModule>> {
-    tracing::info!("[Tenant] Deactivating module {} for tenant: {}", module_code, tenant_id);
-    
+    tracing::info!(
+        "[Tenant] Deactivating module {} for tenant: {}",
+        module_code,
+        tenant_id
+    );
+
     let module: Option<TenantModule> = sqlx::query_as(
         r#"
         UPDATE core_tenant_modules
@@ -326,7 +325,7 @@ pub async fn deactivate_module(
     .fetch_optional(&state.pool)
     .await
     .unwrap_or(None);
-    
+
     match module {
         Some(m) => Json(CoreResponse::success(m, "Module deactivated")),
         None => Json(CoreResponse::error("Module not found")),

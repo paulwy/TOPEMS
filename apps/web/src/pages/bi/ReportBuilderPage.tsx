@@ -349,7 +349,7 @@ const ReportBuilderPage = () => {
                           justifyContent: 'center',
                         }}
                       >
-                        <FileText sx={{ color: '#F59E0B', fontSize: 20 }} />
+                        <FileText sx={{ color: 'warning.main', fontSize: 20 }} />
                       </Box>
                       <Box>
                         <Typography

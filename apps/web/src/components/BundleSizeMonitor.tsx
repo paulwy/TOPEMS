@@ -185,7 +185,7 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
             backgroundColor: 'white',
             borderRadius: '12px',
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-            border: '1px solid #e5e7eb',
+            border: '1px solid grey.200',
             overflow: 'hidden',
           }}
         >
@@ -196,7 +196,7 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
               alignItems: 'center',
               justifyContent: 'space-between',
               padding: '16px',
-              borderBottom: '1px solid #f3f4f6',
+              borderBottom: '1px solid grey.100',
             }}
           >
             <div className='flex items-center gap-2'>
@@ -248,7 +248,7 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
                         ? '#16a34a'
                         : getScoreColor() === 'text-yellow-500'
                           ? '#ca8a04'
-                          : '#dc2626',
+                          : 'error.700',
                   }}
                 >
                   {getScore()}
@@ -263,7 +263,7 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
                 style={{
                   marginBottom: '16px',
                   padding: '12px',
-                  backgroundColor: '#fef3c7',
+                  backgroundColor: 'warning.100',
                   borderRadius: '8px',
                 }}
               >
@@ -366,7 +366,7 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
               className='pt-3 border-t border-gray-100'
               style={{
                 paddingTop: '12px',
-                borderTop: '1px solid #f3f4f6',
+                borderTop: '1px solid grey.100',
               }}
             >
               <div className='text-xs text-gray-500 mb-2'>按类型分布</div>
@@ -462,7 +462,7 @@ export const BundleSizeMonitor: React.FC<BundleSizeMonitorProps> = ({
           alignItems: 'center',
           justifyContent: 'center',
           transition: 'all 0.2s',
-          backgroundColor: hasWarning ? '#dc2626' : '#4f46e5',
+          backgroundColor: hasWarning ? 'error.700' : '#4f46e5',
           color: 'white',
           border: 'none',
           cursor: 'pointer',

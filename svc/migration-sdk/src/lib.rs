@@ -8,14 +8,14 @@
 
 pub mod error;
 pub mod executor;
+pub mod history;
 pub mod lock;
 pub mod migration;
-pub mod history;
 pub mod runner;
 
 pub use error::MigrationError;
-pub use executor::{MigrationExecutor, ExecutorConfig};
-pub use migration::{Migration, MigrationScript, MigrationStatus, MigrationBundle, SqlMigration};
+pub use executor::{ExecutorConfig, MigrationExecutor};
 pub use history::MigrationHistory;
-pub use runner::MigrationRunner;
 pub use lock::DistLock;
+pub use migration::{Migration, MigrationBundle, MigrationScript, MigrationStatus, SqlMigration};
+pub use runner::MigrationRunner;

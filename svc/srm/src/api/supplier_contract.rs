@@ -492,11 +492,12 @@ async fn get_contract_terms(
     }
 
     // 验证合同是否存在
-    let contract_exists =
-        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_srm.supplier_contracts WHERE id = $1")
-            .bind(id)
-            .fetch_one(&state.db)
-            .await;
+    let contract_exists = sqlx::query_scalar::<_, i64>(
+        "SELECT COUNT(*) FROM plugin_srm.supplier_contracts WHERE id = $1",
+    )
+    .bind(id)
+    .fetch_one(&state.db)
+    .await;
 
     if contract_exists.unwrap_or(0) == 0 {
         return Json(ApiResponse::<Vec<ContractTerm>>::error(404, "合同不存在"));

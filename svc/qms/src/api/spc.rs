@@ -3,7 +3,7 @@
 use axum::{extract::State, Json};
 use bigdecimal::{BigDecimal, ToPrimitive};
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, types::Uuid};
+use sqlx::{types::Uuid, FromRow};
 use topems_shared::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -130,7 +130,8 @@ fn std_dev(values: &[f64], avg: f64) -> f64 {
     if values.len() < 2 {
         return 0.0;
     }
-    let variance = values.iter().map(|x| (x - avg).powi(2)).sum::<f64>() / (values.len() - 1) as f64;
+    let variance =
+        values.iter().map(|x| (x - avg).powi(2)).sum::<f64>() / (values.len() - 1) as f64;
     variance.sqrt()
 }
 
@@ -207,21 +208,21 @@ fn detect_trend(values: &[f64]) -> Option<String> {
     if values.len() < 7 {
         return None;
     }
-    
+
     let recent = &values[values.len().saturating_sub(7)..];
-    
+
     let mut increasing = true;
     let mut decreasing = true;
-    
+
     for i in 1..recent.len() {
-        if recent[i] <= recent[i-1] {
+        if recent[i] <= recent[i - 1] {
             increasing = false;
         }
-        if recent[i] >= recent[i-1] {
+        if recent[i] >= recent[i - 1] {
             decreasing = false;
         }
     }
-    
+
     if increasing {
         Some("uptrend".to_string())
     } else if decreasing {
@@ -267,9 +268,15 @@ pub async fn create_spc_chart(
     State(state): State<crate::AppState>,
     Json(req): Json<CreateSpcChartRequest>,
 ) -> Json<ApiResponse<SpcChart>> {
-    let chart_no = format!("SPC-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
-    
-    let product_id = req.product_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
+    let chart_no = format!(
+        "SPC-{}",
+        uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+    );
+
+    let product_id = req
+        .product_id
+        .as_ref()
+        .and_then(|s| Uuid::parse_str(s).ok());
 
     let chart = sqlx::query_as::<_, SpcChart>(r#"INSERT INTO qa_spc_charts (chart_no, chart_type, product_id, product_name, parameter_name, ucl, cl, lcl, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'active', $9) RETURNING id, chart_no, chart_type, product_id::TEXT, product_name, parameter_name, ucl, cl, lcl, cp, cpk, pp, ppk, sample_count, status, created_by, created_at::TEXT, updated_at::TEXT"#).bind(chart_no).bind(req.chart_type).bind(product_id).bind(req.product_name).bind(req.parameter_name).bind(req.ucl).bind(req.cl).bind(req.lcl).bind(req.created_by)
     .fetch_one(&state.pool)
@@ -338,9 +345,10 @@ pub async fn delete_spc_chart(
         Err(_) => return Json(ApiResponse::error(400, "无效的控制图ID")),
     };
 
-    let result = sqlx::query(r#"DELETE FROM qa_spc_charts WHERE id = $1"#).bind(id)
-    .execute(&state.pool)
-    .await;
+    let result = sqlx::query(r#"DELETE FROM qa_spc_charts WHERE id = $1"#)
+        .bind(id)
+        .execute(&state.pool)
+        .await;
 
     match result {
         Ok(_) => Json(ApiResponse::success(true, "SPC控制图删除成功")),
@@ -359,7 +367,7 @@ pub async fn get_spc_data_points(
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的控制图ID")),
     };
-    
+
     let limit = query.limit.unwrap_or(100);
 
     let points = sqlx::query_as::<_, SpcDataPoint>(r#"SELECT id, chart_id, sample_no, value, subgroup_size, is_out_of_control, trend_flag, measured_at::TEXT, created_at::TEXT FROM qa_spc_data_points WHERE chart_id = $1 ORDER BY sample_no DESC LIMIT $2"#).bind(chart_id).bind(limit)
@@ -391,8 +399,16 @@ pub async fn add_spc_data_point(
     .fetch_one(&state.pool)
     .await;
 
-    let ucl = chart.as_ref().ok().and_then(|c| c.ucl.as_ref().and_then(|v| v.to_f64())).unwrap_or(f64::INFINITY);
-    let lcl = chart.as_ref().ok().and_then(|c| c.lcl.as_ref().and_then(|v| v.to_f64())).unwrap_or(f64::NEG_INFINITY);
+    let ucl = chart
+        .as_ref()
+        .ok()
+        .and_then(|c| c.ucl.as_ref().and_then(|v| v.to_f64()))
+        .unwrap_or(f64::INFINITY);
+    let lcl = chart
+        .as_ref()
+        .ok()
+        .and_then(|c| c.lcl.as_ref().and_then(|v| v.to_f64()))
+        .unwrap_or(f64::NEG_INFINITY);
     let value_f64 = req.value.to_f64().unwrap_or(0.0);
     let is_out_of_control = Some(value_f64 > ucl || value_f64 < lcl);
 
@@ -420,7 +436,7 @@ pub async fn calculate_control_limits(
 ) -> Json<ApiResponse<ControlLimitResult>> {
     let values = &req.values;
     let subgroup_size = req.subgroup_size.unwrap_or(5);
-    
+
     if values.is_empty() {
         return Json(ApiResponse::error(400, "数据点不能为空"));
     }
@@ -443,19 +459,19 @@ pub async fn calculate_control_limits(
             } else {
                 range(values)
             };
-            
+
             let a2 = a2_factor(subgroup_size);
             let d3 = d3_factor(subgroup_size);
             let d4 = d4_factor(subgroup_size);
-            
+
             let x_ucl = x_bar + a2 * r_bar;
             let x_lcl = x_bar - a2 * r_bar;
             let _r_ucl = d4 * r_bar;
             let _r_lcl = d3 * r_bar;
-            
+
             let sigma_within = r_bar / d2_factor(subgroup_size);
             let sigma_overall = std_dev(values, x_bar);
-            
+
             let (cp_val, cpk_val) = if let (Some(usl), Some(lsl)) = (req.usl, req.lsl) {
                 let cp = (usl - lsl) / (6.0 * sigma_within);
                 let cpk_upper = (usl - x_bar) / (3.0 * sigma_within);
@@ -465,7 +481,7 @@ pub async fn calculate_control_limits(
             } else {
                 (None, None)
             };
-            
+
             let (pp_val, ppk_val) = if let (Some(usl), Some(lsl)) = (req.usl, req.lsl) {
                 let pp = (usl - lsl) / (6.0 * sigma_overall);
                 let ppk_upper = (usl - x_bar) / (3.0 * sigma_overall);
@@ -475,7 +491,7 @@ pub async fn calculate_control_limits(
             } else {
                 (None, None)
             };
-            
+
             (x_ucl, avg, x_lcl, cp_val, cpk_val, pp_val, ppk_val)
         }
         "x_bar_s" => {
@@ -496,14 +512,14 @@ pub async fn calculate_control_limits(
             } else {
                 std_dev(values, x_bar)
             };
-            
+
             let a3 = 3.0 / (d2_factor(subgroup_size) * (subgroup_size as f64).sqrt());
             let x_ucl = x_bar + a3 * s_bar;
             let x_lcl = x_bar - a3 * s_bar;
-            
+
             let sigma_within = s_bar * (subgroup_size as f64).sqrt() / d2_factor(subgroup_size);
             let sigma_overall = std_dev(values, x_bar);
-            
+
             let (cp_val, cpk_val) = if let (Some(usl), Some(lsl)) = (req.usl, req.lsl) {
                 let cp = (usl - lsl) / (6.0 * sigma_within);
                 let cpk_upper = (usl - x_bar) / (3.0 * sigma_within);
@@ -513,7 +529,7 @@ pub async fn calculate_control_limits(
             } else {
                 (None, None)
             };
-            
+
             let (pp_val, ppk_val) = if let (Some(usl), Some(lsl)) = (req.usl, req.lsl) {
                 let pp = (usl - lsl) / (6.0 * sigma_overall);
                 let ppk_upper = (usl - x_bar) / (3.0 * sigma_overall);
@@ -523,7 +539,7 @@ pub async fn calculate_control_limits(
             } else {
                 (None, None)
             };
-            
+
             (x_ucl, x_bar, x_lcl, cp_val, cpk_val, pp_val, ppk_val)
         }
         "p" => {
@@ -549,22 +565,30 @@ pub async fn calculate_control_limits(
     };
 
     let trend = detect_trend(values);
-    
+
     let mut out_of_control_count = 0;
-    let data_points: Vec<CalculatedDataPoint> = values.iter().enumerate().map(|(i, &val)| {
-        let ooc = val > ucl || val < lcl;
-        if ooc {
-            out_of_control_count += 1;
-        }
-        let trend_flag = if i == values.len() - 1 { trend.clone() } else { None };
-        CalculatedDataPoint {
-            sample_no: (i + 1) as i32,
-            value: val,
-            subgroup_size: Some(subgroup_size as i32),
-            is_out_of_control: Some(ooc),
-            trend_flag,
-        }
-    }).collect();
+    let data_points: Vec<CalculatedDataPoint> = values
+        .iter()
+        .enumerate()
+        .map(|(i, &val)| {
+            let ooc = val > ucl || val < lcl;
+            if ooc {
+                out_of_control_count += 1;
+            }
+            let trend_flag = if i == values.len() - 1 {
+                trend.clone()
+            } else {
+                None
+            };
+            CalculatedDataPoint {
+                sample_no: (i + 1) as i32,
+                value: val,
+                subgroup_size: Some(subgroup_size as i32),
+                is_out_of_control: Some(ooc),
+                trend_flag,
+            }
+        })
+        .collect();
 
     let result = ControlLimitResult {
         ucl,

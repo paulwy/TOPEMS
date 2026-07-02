@@ -78,8 +78,14 @@ pub fn create_routes() -> Router<ApiState> {
             "/api/rs/research-costs/{id}",
             get(get_cost).put(update_cost).delete(delete_cost),
         )
-        .route("/api/rs/research-costs/project/{project_id}", get(list_costs_by_project))
-        .route("/api/rs/research-costs/statistics", get(get_cost_statistics))
+        .route(
+            "/api/rs/research-costs/project/{project_id}",
+            get(list_costs_by_project),
+        )
+        .route(
+            "/api/rs/research-costs/statistics",
+            get(get_cost_statistics),
+        )
 }
 
 async fn list_costs(
@@ -201,8 +207,13 @@ async fn create_cost(
 
     let id = Uuid::new_v4();
     let now = Utc::now();
-    let cost_date = req.cost_date
-        .map(|d| DateTime::parse_from_rfc3339(&d).ok().map(|d| d.with_timezone(&Utc)))
+    let cost_date = req
+        .cost_date
+        .map(|d| {
+            DateTime::parse_from_rfc3339(&d)
+                .ok()
+                .map(|d| d.with_timezone(&Utc))
+        })
         .flatten()
         .unwrap_or(now);
 
@@ -302,8 +313,13 @@ async fn update_cost(
     let amount = req.amount.unwrap_or(existing.amount);
     let currency = req.currency.or(existing.currency.into());
     let description = req.description.or(existing.description);
-    let cost_date = req.cost_date
-        .map(|d| DateTime::parse_from_rfc3339(&d).ok().map(|d| d.with_timezone(&Utc)))
+    let cost_date = req
+        .cost_date
+        .map(|d| {
+            DateTime::parse_from_rfc3339(&d)
+                .ok()
+                .map(|d| d.with_timezone(&Utc))
+        })
         .flatten()
         .or(Some(existing.cost_date));
     let payer = req.payer.or(existing.payer);
@@ -358,7 +374,9 @@ async fn delete_cost(
         .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success("".to_string(), "研发费用删除成功")),
+        Ok(r) if r.rows_affected() > 0 => {
+            Json(ApiResponse::success("".to_string(), "研发费用删除成功"))
+        }
         Ok(_) => Json(ApiResponse::error(404, "研发费用不存在")),
         Err(e) => {
             tracing::error!("删除研发费用失败: {}", e);
@@ -442,7 +460,7 @@ async fn get_cost_statistics(
                 let category: String = row.get(0);
                 let amount: f64 = row.get(1);
                 let count: i64 = row.get(2);
-                
+
                 total_amount += amount;
                 total_count += count as usize;
 

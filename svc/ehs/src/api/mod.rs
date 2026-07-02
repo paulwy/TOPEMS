@@ -1,17 +1,17 @@
+pub mod accident;
+pub mod data_sync;
+pub mod emergency_drill;
+pub mod emergency_plan;
+pub mod environment;
+pub mod environmental_compliance;
+pub mod hazard;
+pub mod hazardous_material;
+pub mod health;
+pub mod occupational_disease;
+pub mod occupational_health;
 pub mod risk;
 pub mod safety;
-pub mod accident;
-pub mod environment;
 pub mod training;
-pub mod health;
-pub mod hazard;
-pub mod data_sync;
-pub mod emergency_plan;
-pub mod emergency_drill;
-pub mod occupational_health;
-pub mod occupational_disease;
-pub mod hazardous_material;
-pub mod environmental_compliance;
 
 use crate::AppState;
 use axum::Router;

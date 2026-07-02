@@ -8,8 +8,8 @@ use tracing::info;
 
 use lapin::{
     options::{
-        BasicPublishOptions, BasicQosOptions, ExchangeDeclareOptions,
-        QueueBindOptions, QueueDeclareOptions,
+        BasicPublishOptions, BasicQosOptions, ExchangeDeclareOptions, QueueBindOptions,
+        QueueDeclareOptions,
     },
     types::FieldTable,
     BasicProperties, Channel, Connection, ConnectionProperties, ExchangeKind,
@@ -24,8 +24,8 @@ pub struct RabbitMqPublisher {
 
 impl RabbitMqPublisher {
     pub async fn new(service_name: &str) -> EventResult<Self> {
-        let rabbitmq_url =
-            env::var("RABBITMQ_URL").unwrap_or_else(|_| "amqp://guest:guest@localhost:5672/%2f".to_string());
+        let rabbitmq_url = env::var("RABBITMQ_URL")
+            .unwrap_or_else(|_| "amqp://guest:guest@localhost:5672/%2f".to_string());
 
         let connection = Connection::connect(&rabbitmq_url, ConnectionProperties::default())
             .await
@@ -111,8 +111,8 @@ pub struct RabbitMqSubscriber {
 
 impl RabbitMqSubscriber {
     pub async fn new(service_name: &str) -> EventResult<Self> {
-        let rabbitmq_url =
-            env::var("RABBITMQ_URL").unwrap_or_else(|_| "amqp://guest:guest@localhost:5672/%2f".to_string());
+        let rabbitmq_url = env::var("RABBITMQ_URL")
+            .unwrap_or_else(|_| "amqp://guest:guest@localhost:5672/%2f".to_string());
 
         let connection = Connection::connect(&rabbitmq_url, ConnectionProperties::default())
             .await
@@ -124,12 +124,7 @@ impl RabbitMqSubscriber {
             .map_err(|e| super::error::EventError::ConnectionError(e.to_string()))?;
 
         channel
-            .basic_qos(
-                10,
-                BasicQosOptions {
-                    global: false,
-                },
-            )
+            .basic_qos(10, BasicQosOptions { global: false })
             .await
             .map_err(|e| super::error::EventError::ConnectionError(e.to_string()))?;
 
@@ -155,7 +150,10 @@ impl RabbitMqSubscriber {
             service_name
         );
 
-        Ok(Self { channel, queue_name })
+        Ok(Self {
+            channel,
+            queue_name,
+        })
     }
 
     pub async fn subscribe(
@@ -170,9 +168,7 @@ impl RabbitMqSubscriber {
                 &self.queue_name,
                 "topems.events",
                 &routing_key,
-                QueueBindOptions {
-                    nowait: false,
-                },
+                QueueBindOptions { nowait: false },
                 FieldTable::default(),
             )
             .await
@@ -204,23 +200,27 @@ impl RabbitMqSubscriber {
                     let event: Event = match serde_json::from_slice(&delivery.data) {
                         Ok(e) => e,
                         Err(_) => {
-                            let _ = delivery.nack(lapin::options::BasicNackOptions {
-                                multiple: false,
-                                requeue: true,
-                            }).await;
+                            let _ = delivery
+                                .nack(lapin::options::BasicNackOptions {
+                                    multiple: false,
+                                    requeue: true,
+                                })
+                                .await;
                             continue;
                         }
                     };
 
                     if handler(event).is_ok() {
-                        let _ = delivery.ack(lapin::options::BasicAckOptions {
-                            multiple: false,
-                        }).await;
+                        let _ = delivery
+                            .ack(lapin::options::BasicAckOptions { multiple: false })
+                            .await;
                     } else {
-                        let _ = delivery.nack(lapin::options::BasicNackOptions {
-                            multiple: false,
-                            requeue: true,
-                        }).await;
+                        let _ = delivery
+                            .nack(lapin::options::BasicNackOptions {
+                                multiple: false,
+                                requeue: true,
+                            })
+                            .await;
                     }
                 }
             }

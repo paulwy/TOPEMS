@@ -71,8 +71,14 @@ where
                 .put(update_inventory)
                 .delete(delete_inventory),
         )
-        .route("/api/wms/inventory/low-stock", get(list_low_stock_inventory))
-        .route("/api/wms/inventory/warehouse/{warehouse_id}", get(list_inventory_by_warehouse))
+        .route(
+            "/api/wms/inventory/low-stock",
+            get(list_low_stock_inventory),
+        )
+        .route(
+            "/api/wms/inventory/warehouse/{warehouse_id}",
+            get(list_inventory_by_warehouse),
+        )
 }
 
 async fn list_inventory(
@@ -81,7 +87,7 @@ async fn list_inventory(
     Query(params): Query<InventoryPaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let page = params.page.unwrap_or(1).max(1);
@@ -134,7 +140,8 @@ async fn list_inventory(
             .await;
 
             let total = count_result.unwrap_or(0);
-            let items_json: Vec<serde_json::Value> = items.iter().map(inventory_row_to_json).collect();
+            let items_json: Vec<serde_json::Value> =
+                items.iter().map(inventory_row_to_json).collect();
 
             Json(ApiResponse::success(
                 serde_json::json!({
@@ -160,7 +167,7 @@ async fn create_inventory(
     Json(req): Json<CreateInventoryItemRequest>,
 ) -> Json<ApiResponse<InventoryItem>> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let request_data = serde_json::to_value(&req).ok();
@@ -241,7 +248,7 @@ async fn get_inventory(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let result = sqlx::query(
@@ -280,7 +287,7 @@ async fn update_inventory(
     Json(req): Json<UpdateInventoryItemRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let request_data = serde_json::to_value(&req).ok();
@@ -302,17 +309,62 @@ async fn update_inventory(
         Err(e) => return Json(api_error(500, &format!("查询库存失败: {}", e))),
     };
 
-    let sku = req.sku.unwrap_or_else(|| existing.try_get::<String, _>("material_code").unwrap_or_default());
-    let name = req.name.unwrap_or_else(|| existing.try_get::<String, _>("material_name").unwrap_or_default());
-    let specification = req.specification.or_else(|| existing.try_get::<Option<String>, _>("specification").ok().flatten());
-    let unit = req.unit.or_else(|| existing.try_get::<Option<String>, _>("unit").ok().flatten());
-    let quantity = req.quantity.unwrap_or_else(|| existing.try_get::<f64, _>("quantity").unwrap_or(0.0));
-    let available_quantity = req.quantity.unwrap_or_else(|| existing.try_get::<f64, _>("available_quantity").unwrap_or(0.0));
-    let location_id = req.location_id.or_else(|| existing.try_get::<Option<Uuid>, _>("location_id").ok().flatten());
-    let warehouse_id = req.warehouse_id.or_else(|| existing.try_get::<Option<Uuid>, _>("warehouse_id").ok().flatten());
-    let min_quantity = req.min_quantity.or_else(|| existing.try_get::<Option<f64>, _>("min_quantity").ok().flatten());
-    let max_quantity = req.max_quantity.or_else(|| existing.try_get::<Option<f64>, _>("max_quantity").ok().flatten());
-    let status = req.status.unwrap_or_else(|| existing.try_get::<String, _>("quality_status").unwrap_or("normal".to_string()));
+    let sku = req.sku.unwrap_or_else(|| {
+        existing
+            .try_get::<String, _>("material_code")
+            .unwrap_or_default()
+    });
+    let name = req.name.unwrap_or_else(|| {
+        existing
+            .try_get::<String, _>("material_name")
+            .unwrap_or_default()
+    });
+    let specification = req.specification.or_else(|| {
+        existing
+            .try_get::<Option<String>, _>("specification")
+            .ok()
+            .flatten()
+    });
+    let unit = req
+        .unit
+        .or_else(|| existing.try_get::<Option<String>, _>("unit").ok().flatten());
+    let quantity = req
+        .quantity
+        .unwrap_or_else(|| existing.try_get::<f64, _>("quantity").unwrap_or(0.0));
+    let available_quantity = req.quantity.unwrap_or_else(|| {
+        existing
+            .try_get::<f64, _>("available_quantity")
+            .unwrap_or(0.0)
+    });
+    let location_id = req.location_id.or_else(|| {
+        existing
+            .try_get::<Option<Uuid>, _>("location_id")
+            .ok()
+            .flatten()
+    });
+    let warehouse_id = req.warehouse_id.or_else(|| {
+        existing
+            .try_get::<Option<Uuid>, _>("warehouse_id")
+            .ok()
+            .flatten()
+    });
+    let min_quantity = req.min_quantity.or_else(|| {
+        existing
+            .try_get::<Option<f64>, _>("min_quantity")
+            .ok()
+            .flatten()
+    });
+    let max_quantity = req.max_quantity.or_else(|| {
+        existing
+            .try_get::<Option<f64>, _>("max_quantity")
+            .ok()
+            .flatten()
+    });
+    let status = req.status.unwrap_or_else(|| {
+        existing
+            .try_get::<String, _>("quality_status")
+            .unwrap_or("normal".to_string())
+    });
     let now = Utc::now();
 
     let result = sqlx::query(
@@ -390,13 +442,15 @@ async fn delete_inventory(
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query(r#"UPDATE wms.inventory SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"#)
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(
+        r#"UPDATE wms.inventory SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"#,
+    )
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -449,7 +503,7 @@ async fn list_low_stock_inventory(
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let result = sqlx::query(
@@ -469,7 +523,8 @@ async fn list_low_stock_inventory(
 
     match result {
         Ok(items) => {
-            let items_json: Vec<serde_json::Value> = items.iter().map(inventory_row_to_json).collect();
+            let items_json: Vec<serde_json::Value> =
+                items.iter().map(inventory_row_to_json).collect();
             Json(ApiResponse::success(
                 serde_json::json!({
                     "items": items_json,
@@ -491,7 +546,7 @@ async fn list_inventory_by_warehouse(
     Path(warehouse_id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let result = sqlx::query(
@@ -510,11 +565,14 @@ async fn list_inventory_by_warehouse(
 
     match result {
         Ok(items) => {
-            let items_json: Vec<serde_json::Value> = items.iter().map(inventory_row_to_json).collect();
-            let total_quantity: f64 = items.iter()
+            let items_json: Vec<serde_json::Value> =
+                items.iter().map(inventory_row_to_json).collect();
+            let total_quantity: f64 = items
+                .iter()
                 .filter_map(|r| r.try_get::<f64, _>("quantity").ok())
                 .sum();
-            let total_value: f64 = items.iter()
+            let total_value: f64 = items
+                .iter()
                 .filter_map(|r| r.try_get::<f64, _>("total_value").ok())
                 .sum();
 

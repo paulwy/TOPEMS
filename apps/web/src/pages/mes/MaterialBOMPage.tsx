@@ -234,8 +234,8 @@ const MaterialBOMPage: React.FC = () => {
       }
     > = {
       draft: { label: '草稿', bg: 'grey.100', color: 'text.secondary' },
-      active: { label: '启用', bg: 'success.lighter', color: '#15803d' },
-      inactive: { label: '停用', bg: 'warning.light', color: '#b45309' },
+      active: { label: '启用', bg: 'success.lighter', color: 'success.700' },
+      inactive: { label: '停用', bg: 'warning.light', color: 'warning.700' },
       obsolete: { label: '作废', bg: 'error.lighter', color: 'error.dark' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
@@ -371,7 +371,7 @@ const MaterialBOMPage: React.FC = () => {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <Package
             size={18}
-            sx={{ color: '#4338ca' }}
+            sx={{ color: 'secondary.700' }}
           />
           <Typography
             variant='body2'
@@ -382,7 +382,7 @@ const MaterialBOMPage: React.FC = () => {
         </Box>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#4338ca' }}
+          sx={{ fontWeight: 700, color: 'secondary.700' }}
         >
           {boms.length}
         </Typography>
@@ -396,7 +396,7 @@ const MaterialBOMPage: React.FC = () => {
         </Typography>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#15803d' }}
+          sx={{ fontWeight: 700, color: 'success.700' }}
         >
           {boms.filter((b) => b.status === 'active').length}
         </Typography>
@@ -410,7 +410,7 @@ const MaterialBOMPage: React.FC = () => {
         </Typography>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#b45309' }}
+          sx={{ fontWeight: 700, color: 'warning.700' }}
         >
           {boms.filter((b) => b.status === 'inactive').length}
         </Typography>

@@ -99,9 +99,13 @@ impl AgentService {
 
         let max_iterations = request.max_iterations.unwrap_or(self.max_iterations);
 
-        let available_tools = request
-            .tools
-            .unwrap_or_else(|| vec![AgentTool::Search, AgentTool::DocumentQA, AgentTool::Calculator]);
+        let available_tools = request.tools.unwrap_or_else(|| {
+            vec![
+                AgentTool::Search,
+                AgentTool::DocumentQA,
+                AgentTool::Calculator,
+            ]
+        });
 
         let mut state = AgentState {
             conversation_id: conversation_id.clone(),
@@ -140,17 +144,14 @@ impl AgentService {
             for tool_call in &tool_calls {
                 let result = self.execute_tool(tool_call).await;
                 tools_used.push(tool_call.tool.to_string());
-                
+
                 let success = result.success;
                 let error_msg = result.error.clone();
-                
+
                 tool_results.push(result);
 
                 if success {
-                    steps.push(format!(
-                        "  - {}: 成功",
-                        tool_call.tool.to_string()
-                    ));
+                    steps.push(format!("  - {}: 成功", tool_call.tool.to_string()));
                 } else {
                     steps.push(format!(
                         "  - {}: 失败 - {}",
@@ -174,7 +175,10 @@ impl AgentService {
                 .collect::<Vec<_>>()
                 .join("\n\n");
 
-            state.context.insert("tool_results".to_string(), serde_json::json!(context_summary));
+            state.context.insert(
+                "tool_results".to_string(),
+                serde_json::json!(context_summary),
+            );
         }
 
         let final_answer = self
@@ -191,7 +195,11 @@ impl AgentService {
         })
     }
 
-    async fn decide_tools(&self, state: &AgentState, available_tools: &[AgentTool]) -> Result<Vec<ToolCall>, String> {
+    async fn decide_tools(
+        &self,
+        state: &AgentState,
+        available_tools: &[AgentTool],
+    ) -> Result<Vec<ToolCall>, String> {
         let messages_str = state
             .messages
             .iter()
@@ -212,8 +220,8 @@ impl AgentService {
 
         let response = self.qa_service.ask(&prompt, None, 5).await.map(|r| r.0)?;
 
-        let response_json: serde_json::Value = serde_json::from_str(&response)
-            .map_err(|e| format!("解析工具调用响应失败: {}", e))?;
+        let response_json: serde_json::Value =
+            serde_json::from_str(&response).map_err(|e| format!("解析工具调用响应失败: {}", e))?;
 
         let tool_calls_json = response_json.get("tool_calls").and_then(|v| v.as_array());
 
@@ -230,7 +238,8 @@ impl AgentService {
                     .and_then(|v| v.as_object())
                     .cloned()
                     .unwrap_or_default();
-                let arguments: HashMap<String, serde_json::Value> = arguments_map.into_iter().collect();
+                let arguments: HashMap<String, serde_json::Value> =
+                    arguments_map.into_iter().collect();
                 let thought = call
                     .get("thought")
                     .and_then(|v| v.as_str())
@@ -278,10 +287,7 @@ impl AgentService {
             .and_then(|v| v.as_str())
             .unwrap_or_default();
 
-        let result = self
-            .qa_service
-            .semantic_search(query, 5)
-            .await;
+        let result = self.qa_service.semantic_search(query, 5).await;
 
         match result {
             Ok(results) => {
@@ -313,10 +319,7 @@ impl AgentService {
             .and_then(|v| v.as_str())
             .unwrap_or_default();
 
-        let result = self
-            .qa_service
-            .ask(question, None, 5)
-            .await;
+        let result = self.qa_service.ask(question, None, 5).await;
 
         match result {
             Ok(response) => ToolResult {
@@ -435,7 +438,13 @@ impl AgentService {
             '+' => a + b,
             '-' => a - b,
             '*' => a * b,
-            '/' => if b != 0.0 { a / b } else { 0.0 },
+            '/' => {
+                if b != 0.0 {
+                    a / b
+                } else {
+                    0.0
+                }
+            }
             '^' => a.powf(b),
             _ => 0.0,
         };
@@ -473,7 +482,7 @@ impl AgentService {
         let weather_conditions = vec!["晴", "多云", "阴", "小雨", "中雨", "大雨", "雷阵雨", "雾霾"];
         let mut rng = rand::thread_rng();
         let idx = rand::Rng::gen_range(&mut rng, 0..weather_conditions.len());
-        
+
         WeatherData {
             condition: weather_conditions[idx].to_string(),
             temp: rand::Rng::gen_range(&mut rng, 15..35),
@@ -485,7 +494,8 @@ impl AgentService {
                 51..=100 => "良",
                 101..=150 => "轻度污染",
                 _ => "中度污染",
-            }.to_string(),
+            }
+            .to_string(),
         }
     }
 
@@ -497,7 +507,7 @@ impl AgentService {
             .unwrap_or_default();
 
         let table_name = self.extract_table_name(query);
-        
+
         let sample_data = self.generate_sample_data(table_name);
 
         ToolResult {
@@ -505,9 +515,7 @@ impl AgentService {
             success: true,
             result: format!(
                 "数据库查询结果:\n\n查询语句: {}\n\n返回记录数: {}\n\n示例数据:\n{}",
-                query,
-                sample_data.count,
-                sample_data.content
+                query, sample_data.count, sample_data.content
             ),
             error: None,
         }
@@ -517,7 +525,9 @@ impl AgentService {
         let query_lower = query.to_lowercase();
         if query_lower.contains("customer") || query_lower.contains("plugin_crm.customers") {
             "customers"
-        } else if query_lower.contains("opportunity") || query_lower.contains("plugin_crm.opportunities") {
+        } else if query_lower.contains("opportunity")
+            || query_lower.contains("plugin_crm.opportunities")
+        {
             "opportunities"
         } else if query_lower.contains("product") || query_lower.contains("plugin_pdm.products") {
             "products"
@@ -574,7 +584,7 @@ impl AgentService {
 
     fn evaluate_code(&self, code: &str) -> Result<String, String> {
         let code_clean = code.trim().to_lowercase();
-        
+
         if code_clean.contains("print") || code_clean.contains("console.log") {
             if let Some(start) = code_clean.find('"') {
                 if let Some(end) = code_clean[start + 1..].find('"') {
@@ -584,7 +594,7 @@ impl AgentService {
             }
             return Ok("Hello, World!".to_string());
         }
-        
+
         if code_clean.contains("sum") || code_clean.contains("add") {
             let nums: Vec<f64> = code_clean
                 .chars()
@@ -597,7 +607,7 @@ impl AgentService {
             let sum: f64 = nums.iter().sum();
             return Ok(format!("Sum: {}", sum));
         }
-        
+
         if code_clean.contains("len") || code_clean.contains("length") {
             if let Some(start) = code_clean.find('[') {
                 if let Some(end) = code_clean[start + 1..].find(']') {
@@ -623,10 +633,7 @@ impl AgentService {
         ToolResult {
             tool: AgentTool::WebSearch,
             success: true,
-            result: format!(
-                "Web 搜索结果 - 关于 '{}':\n\n{}",
-                query, search_results
-            ),
+            result: format!("Web 搜索结果 - 关于 '{}':\n\n{}", query, search_results),
             error: None,
         }
     }
@@ -636,34 +643,29 @@ impl AgentService {
             (
                 "TOPEMS 官方文档",
                 "https://docs.topems.com",
-                "TOPEMS 是企业级智能运营管理平台，提供全面的企业管理解决方案..."
+                "TOPEMS 是企业级智能运营管理平台，提供全面的企业管理解决方案...",
             ),
             (
                 "TOPEMS 产品介绍",
                 "https://www.topems.com/products",
-                "TOPEMS 提供 CRM、PDM、WMS、QMS 等多个模块，满足企业数字化转型需求..."
+                "TOPEMS 提供 CRM、PDM、WMS、QMS 等多个模块，满足企业数字化转型需求...",
             ),
             (
                 "TOPEMS 技术博客",
                 "https://blog.topems.com",
-                "最新技术文章和产品更新，涵盖企业管理、AI 智能、数字化转型等主题..."
+                "最新技术文章和产品更新，涵盖企业管理、AI 智能、数字化转型等主题...",
             ),
             (
                 "TOPEMS GitHub",
                 "https://github.com/topems",
-                "开源代码仓库，欢迎贡献和反馈..."
+                "开源代码仓库，欢迎贡献和反馈...",
             ),
         ];
 
         results
             .into_iter()
             .enumerate()
-            .map(|(i, (title, url, desc))| {
-                format!(
-                    "{}. [{}]({})\n   {}",
-                    i + 1, title, url, desc
-                )
-            })
+            .map(|(i, (title, url, desc))| format!("{}. [{}]({})\n   {}", i + 1, title, url, desc))
             .collect::<Vec<_>>()
             .join("\n\n")
     }
@@ -784,129 +786,139 @@ pub struct WorkflowOrchestrator {
 impl WorkflowOrchestrator {
     pub fn new(agent_service: AgentService) -> Self {
         let mut workflows = HashMap::new();
-        
+
         // Predefined workflow: Customer Service Automation
-        workflows.insert("customer_service".to_string(), AgentWorkflow {
-            id: "customer_service".to_string(),
-            name: "客户服务自动化".to_string(),
-            description: "自动处理客户咨询，提供快速响应".to_string(),
-            steps: vec![
-                WorkflowStep {
-                    id: "classify".to_string(),
-                    name: "问题分类".to_string(),
-                    description: "识别客户问题的类型".to_string(),
-                    tool: Some(AgentTool::DocumentQA),
-                    prompt: "分析以下客户问题，判断其类型（咨询/投诉/技术问题/其他）：".to_string(),
-                    condition: None,
-                    retry_count: 2,
-                    timeout_seconds: 30,
-                },
-                WorkflowStep {
-                    id: "search_kb".to_string(),
-                    name: "知识库检索".to_string(),
-                    description: "从知识库中查找相关解答".to_string(),
-                    tool: Some(AgentTool::Search),
-                    prompt: "搜索与客户问题相关的知识库内容".to_string(),
-                    condition: Some("classify.status == 'success'".to_string()),
-                    retry_count: 2,
-                    timeout_seconds: 30,
-                },
-                WorkflowStep {
-                    id: "generate_response".to_string(),
-                    name: "生成回复".to_string(),
-                    description: "根据检索结果生成回复".to_string(),
-                    tool: Some(AgentTool::DocumentQA),
-                    prompt: "基于以下信息生成专业的客户回复：".to_string(),
-                    condition: Some("search_kb.status == 'success'".to_string()),
-                    retry_count: 3,
-                    timeout_seconds: 60,
-                },
-            ],
-            max_parallel_steps: 1,
-            on_failure: "escalate".to_string(),
-        });
+        workflows.insert(
+            "customer_service".to_string(),
+            AgentWorkflow {
+                id: "customer_service".to_string(),
+                name: "客户服务自动化".to_string(),
+                description: "自动处理客户咨询，提供快速响应".to_string(),
+                steps: vec![
+                    WorkflowStep {
+                        id: "classify".to_string(),
+                        name: "问题分类".to_string(),
+                        description: "识别客户问题的类型".to_string(),
+                        tool: Some(AgentTool::DocumentQA),
+                        prompt: "分析以下客户问题，判断其类型（咨询/投诉/技术问题/其他）："
+                            .to_string(),
+                        condition: None,
+                        retry_count: 2,
+                        timeout_seconds: 30,
+                    },
+                    WorkflowStep {
+                        id: "search_kb".to_string(),
+                        name: "知识库检索".to_string(),
+                        description: "从知识库中查找相关解答".to_string(),
+                        tool: Some(AgentTool::Search),
+                        prompt: "搜索与客户问题相关的知识库内容".to_string(),
+                        condition: Some("classify.status == 'success'".to_string()),
+                        retry_count: 2,
+                        timeout_seconds: 30,
+                    },
+                    WorkflowStep {
+                        id: "generate_response".to_string(),
+                        name: "生成回复".to_string(),
+                        description: "根据检索结果生成回复".to_string(),
+                        tool: Some(AgentTool::DocumentQA),
+                        prompt: "基于以下信息生成专业的客户回复：".to_string(),
+                        condition: Some("search_kb.status == 'success'".to_string()),
+                        retry_count: 3,
+                        timeout_seconds: 60,
+                    },
+                ],
+                max_parallel_steps: 1,
+                on_failure: "escalate".to_string(),
+            },
+        );
 
         // Predefined workflow: Data Analysis Pipeline
-        workflows.insert("data_analysis".to_string(), AgentWorkflow {
-            id: "data_analysis".to_string(),
-            name: "数据分析管道".to_string(),
-            description: "自动化数据收集、分析和报告生成".to_string(),
-            steps: vec![
-                WorkflowStep {
-                    id: "collect_data".to_string(),
-                    name: "数据收集".to_string(),
-                    description: "从多个数据源收集数据".to_string(),
-                    tool: Some(AgentTool::DatabaseQuery),
-                    prompt: "执行数据查询，获取最新业务数据".to_string(),
-                    condition: None,
-                    retry_count: 3,
-                    timeout_seconds: 60,
-                },
-                WorkflowStep {
-                    id: "analyze_trends".to_string(),
-                    name: "趋势分析".to_string(),
-                    description: "分析数据趋势和模式".to_string(),
-                    tool: Some(AgentTool::Calculator),
-                    prompt: "计算关键指标，分析趋势".to_string(),
-                    condition: Some("collect_data.status == 'success'".to_string()),
-                    retry_count: 2,
-                    timeout_seconds: 45,
-                },
-                WorkflowStep {
-                    id: "generate_report".to_string(),
-                    name: "生成报告".to_string(),
-                    description: "生成分析报告摘要".to_string(),
-                    tool: Some(AgentTool::DocumentQA),
-                    prompt: "基于分析结果生成结构化报告".to_string(),
-                    condition: Some("analyze_trends.status == 'success'".to_string()),
-                    retry_count: 2,
-                    timeout_seconds: 30,
-                },
-            ],
-            max_parallel_steps: 1,
-            on_failure: "skip_and_continue".to_string(),
-        });
+        workflows.insert(
+            "data_analysis".to_string(),
+            AgentWorkflow {
+                id: "data_analysis".to_string(),
+                name: "数据分析管道".to_string(),
+                description: "自动化数据收集、分析和报告生成".to_string(),
+                steps: vec![
+                    WorkflowStep {
+                        id: "collect_data".to_string(),
+                        name: "数据收集".to_string(),
+                        description: "从多个数据源收集数据".to_string(),
+                        tool: Some(AgentTool::DatabaseQuery),
+                        prompt: "执行数据查询，获取最新业务数据".to_string(),
+                        condition: None,
+                        retry_count: 3,
+                        timeout_seconds: 60,
+                    },
+                    WorkflowStep {
+                        id: "analyze_trends".to_string(),
+                        name: "趋势分析".to_string(),
+                        description: "分析数据趋势和模式".to_string(),
+                        tool: Some(AgentTool::Calculator),
+                        prompt: "计算关键指标，分析趋势".to_string(),
+                        condition: Some("collect_data.status == 'success'".to_string()),
+                        retry_count: 2,
+                        timeout_seconds: 45,
+                    },
+                    WorkflowStep {
+                        id: "generate_report".to_string(),
+                        name: "生成报告".to_string(),
+                        description: "生成分析报告摘要".to_string(),
+                        tool: Some(AgentTool::DocumentQA),
+                        prompt: "基于分析结果生成结构化报告".to_string(),
+                        condition: Some("analyze_trends.status == 'success'".to_string()),
+                        retry_count: 2,
+                        timeout_seconds: 30,
+                    },
+                ],
+                max_parallel_steps: 1,
+                on_failure: "skip_and_continue".to_string(),
+            },
+        );
 
         // Predefined workflow: Document Processing
-        workflows.insert("document_processing".to_string(), AgentWorkflow {
-            id: "document_processing".to_string(),
-            name: "文档处理流程".to_string(),
-            description: "自动处理和分类文档".to_string(),
-            steps: vec![
-                WorkflowStep {
-                    id: "extract_content".to_string(),
-                    name: "内容提取".to_string(),
-                    description: "从文档中提取关键信息".to_string(),
-                    tool: Some(AgentTool::DocumentQA),
-                    prompt: "提取文档的主要内容要点".to_string(),
-                    condition: None,
-                    retry_count: 2,
-                    timeout_seconds: 60,
-                },
-                WorkflowStep {
-                    id: "classify_doc".to_string(),
-                    name: "文档分类".to_string(),
-                    description: "对文档进行分类".to_string(),
-                    tool: Some(AgentTool::DocumentQA),
-                    prompt: "根据内容判断文档类型（合同/报告/发票/其他）".to_string(),
-                    condition: Some("extract_content.status == 'success'".to_string()),
-                    retry_count: 2,
-                    timeout_seconds: 30,
-                },
-                WorkflowStep {
-                    id: "extract_entities".to_string(),
-                    name: "实体提取".to_string(),
-                    description: "提取文档中的关键实体".to_string(),
-                    tool: Some(AgentTool::DocumentQA),
-                    prompt: "从文档中提取关键实体（日期、金额、名称等）".to_string(),
-                    condition: Some("classify_doc.status == 'success'".to_string()),
-                    retry_count: 2,
-                    timeout_seconds: 30,
-                },
-            ],
-            max_parallel_steps: 1,
-            on_failure: "log_and_continue".to_string(),
-        });
+        workflows.insert(
+            "document_processing".to_string(),
+            AgentWorkflow {
+                id: "document_processing".to_string(),
+                name: "文档处理流程".to_string(),
+                description: "自动处理和分类文档".to_string(),
+                steps: vec![
+                    WorkflowStep {
+                        id: "extract_content".to_string(),
+                        name: "内容提取".to_string(),
+                        description: "从文档中提取关键信息".to_string(),
+                        tool: Some(AgentTool::DocumentQA),
+                        prompt: "提取文档的主要内容要点".to_string(),
+                        condition: None,
+                        retry_count: 2,
+                        timeout_seconds: 60,
+                    },
+                    WorkflowStep {
+                        id: "classify_doc".to_string(),
+                        name: "文档分类".to_string(),
+                        description: "对文档进行分类".to_string(),
+                        tool: Some(AgentTool::DocumentQA),
+                        prompt: "根据内容判断文档类型（合同/报告/发票/其他）".to_string(),
+                        condition: Some("extract_content.status == 'success'".to_string()),
+                        retry_count: 2,
+                        timeout_seconds: 30,
+                    },
+                    WorkflowStep {
+                        id: "extract_entities".to_string(),
+                        name: "实体提取".to_string(),
+                        description: "提取文档中的关键实体".to_string(),
+                        tool: Some(AgentTool::DocumentQA),
+                        prompt: "从文档中提取关键实体（日期、金额、名称等）".to_string(),
+                        condition: Some("classify_doc.status == 'success'".to_string()),
+                        retry_count: 2,
+                        timeout_seconds: 30,
+                    },
+                ],
+                max_parallel_steps: 1,
+                on_failure: "log_and_continue".to_string(),
+            },
+        );
 
         Self {
             agent_service,
@@ -936,7 +948,8 @@ impl WorkflowOrchestrator {
         &self,
         request: WorkflowExecutionRequest,
     ) -> Result<WorkflowExecutionResponse, String> {
-        let workflow = self.workflows
+        let workflow = self
+            .workflows
             .get(&request.workflow_id)
             .ok_or_else(|| format!("Workflow not found: {}", request.workflow_id))?;
 
@@ -965,7 +978,7 @@ impl WorkflowOrchestrator {
             }
 
             let step_start = std::time::Instant::now();
-            
+
             // Execute step with retry
             let mut step_success = false;
             let mut step_output: Option<String> = None;
@@ -994,7 +1007,7 @@ impl WorkflowOrchestrator {
             if !step_success {
                 has_error = true;
                 error_msg = step_error.clone();
-                
+
                 match workflow.on_failure.as_str() {
                     "escalate" | "abort" => {
                         results.push(StepResult {
@@ -1029,7 +1042,8 @@ impl WorkflowOrchestrator {
         }
 
         let final_output = if !has_error {
-            context.get("generate_response")
+            context
+                .get("generate_response")
                 .or(context.get("generate_report"))
                 .or(context.get("extract_entities"))
                 .and_then(|v| v.as_str())
@@ -1042,7 +1056,11 @@ impl WorkflowOrchestrator {
 
         Ok(WorkflowExecutionResponse {
             execution_id,
-            status: if has_error { "failed".to_string() } else { "completed".to_string() },
+            status: if has_error {
+                "failed".to_string()
+            } else {
+                "completed".to_string()
+            },
             results,
             final_output,
             error: error_msg,
@@ -1050,7 +1068,11 @@ impl WorkflowOrchestrator {
         })
     }
 
-    async fn execute_step(&self, step: &WorkflowStep, _context: &HashMap<String, serde_json::Value>) -> Result<String, String> {
+    async fn execute_step(
+        &self,
+        step: &WorkflowStep,
+        _context: &HashMap<String, serde_json::Value>,
+    ) -> Result<String, String> {
         let prompt = format!("{}\n\n请给出简洁的回答。", step.prompt);
 
         if let Some(tool) = &step.tool {
@@ -1068,11 +1090,20 @@ impl WorkflowOrchestrator {
             }
         } else {
             // Direct QA without tool
-            self.agent_service.qa_service.ask(&prompt, None, 5).await.map(|r| r.0)
+            self.agent_service
+                .qa_service
+                .ask(&prompt, None, 5)
+                .await
+                .map(|r| r.0)
         }
     }
 
-    fn evaluate_condition(&self, condition: &str, _context: &HashMap<String, serde_json::Value>, results: &[StepResult]) -> bool {
+    fn evaluate_condition(
+        &self,
+        condition: &str,
+        _context: &HashMap<String, serde_json::Value>,
+        results: &[StepResult],
+    ) -> bool {
         // Parse simple conditions like "step_id.status == 'success'"
         let parts: Vec<&str> = condition.split("==").collect();
         if parts.len() != 2 {
@@ -1082,6 +1113,8 @@ impl WorkflowOrchestrator {
         let step_id = parts[0].trim().split('.').next().unwrap_or("").trim();
         let expected = parts[1].trim().trim_matches(|c| c == '\'' || c == '"');
 
-        results.iter().any(|r| r.step_id == step_id && r.status == expected)
+        results
+            .iter()
+            .any(|r| r.step_id == step_id && r.status == expected)
     }
 }

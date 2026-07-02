@@ -104,8 +104,8 @@ const QmsStandardListPage: React.FC = () => {
     const colors: Record<string, { bg: string; color: string }> = {
       active: { bg: 'success.lighter', color: 'success.dark' },
       有效: { bg: 'success.lighter', color: 'success.dark' },
-      draft: { bg: '#fef9c3', color: '#ca8a04' },
-      草稿: { bg: '#fef9c3', color: '#ca8a04' },
+      draft: { bg: 'warning.100', color: '#ca8a04' },
+      草稿: { bg: 'warning.100', color: '#ca8a04' },
       expired: { bg: 'error.lighter', color: 'error.dark' },
       已过期: { bg: 'error.lighter', color: 'error.dark' },
       archived: { bg: 'grey.100', color: 'text.secondary' },
@@ -389,7 +389,7 @@ const QmsStandardListPage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: '#fef9c3',
+                bgcolor: 'warning.100',
                 borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',

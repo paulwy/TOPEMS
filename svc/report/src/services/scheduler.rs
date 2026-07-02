@@ -1,5 +1,5 @@
-use sqlx::types::chrono::Utc;
 use job_scheduler_ng::{Job, JobScheduler, Schedule};
+use sqlx::types::chrono::Utc;
 use sqlx::{PgPool, Row};
 use std::str::FromStr;
 use std::sync::Arc;
@@ -74,69 +74,71 @@ impl ReportScheduler {
             let expression: String = schedule.get("schedule_expression");
 
             match ScheduleType::from_str(&schedule_type) {
-                Ok(ScheduleType::Cron) => {
-                    match Schedule::from_str(&expression) {
-                        Ok(cron_schedule) => {
-                            info!("Adding cron job for schedule '{}' ({})", name, id);
-                            let pool_clone = self.pool.clone();
-                            let job_id = id.clone();
-                            let job_name = name.clone();
+                Ok(ScheduleType::Cron) => match Schedule::from_str(&expression) {
+                    Ok(cron_schedule) => {
+                        info!("Adding cron job for schedule '{}' ({})", name, id);
+                        let pool_clone = self.pool.clone();
+                        let job_id = id.clone();
+                        let job_name = name.clone();
 
-                            scheduler.add(Job::new(cron_schedule, move || {
-                                let pool = pool_clone.clone();
-                                let sid = job_id.clone();
-                                let sname = job_name.clone();
-                                tokio::spawn(async move {
-                                    if let Err(e) = execute_schedule_job(&pool, sid, &sname).await {
-                                        error!("Failed to execute schedule {}: {}", sname, e);
-                                    }
-                                });
-                            }));
-                        }
-                        Err(e) => {
-                            warn!("Invalid cron expression for schedule '{}': {}", name, e);
-                        }
+                        scheduler.add(Job::new(cron_schedule, move || {
+                            let pool = pool_clone.clone();
+                            let sid = job_id.clone();
+                            let sname = job_name.clone();
+                            tokio::spawn(async move {
+                                if let Err(e) = execute_schedule_job(&pool, sid, &sname).await {
+                                    error!("Failed to execute schedule {}: {}", sname, e);
+                                }
+                            });
+                        }));
                     }
-                }
-                Ok(ScheduleType::Interval) => {
-                    match parse_interval(&expression) {
-                        Ok(interval) => {
-                            info!("Adding interval job for schedule '{}' ({})", name, id);
-                            let pool_clone = self.pool.clone();
-                            let job_id = id.clone();
-                            let job_name = name.clone();
+                    Err(e) => {
+                        warn!("Invalid cron expression for schedule '{}': {}", name, e);
+                    }
+                },
+                Ok(ScheduleType::Interval) => match parse_interval(&expression) {
+                    Ok(interval) => {
+                        info!("Adding interval job for schedule '{}' ({})", name, id);
+                        let pool_clone = self.pool.clone();
+                        let job_id = id.clone();
+                        let job_name = name.clone();
 
-                            let cron_expr = format!("0 */{} * * * *", interval);
-                            match Schedule::from_str(&cron_expr) {
-                                Ok(schedule) => {
-                                    scheduler.add(Job::new(schedule, move || {
-                                        let pool = pool_clone.clone();
-                                        let sid = job_id.clone();
-                                        let sname = job_name.clone();
-                                        tokio::spawn(async move {
-                                            if let Err(e) =
-                                                execute_schedule_job(&pool, sid, &sname).await
-                                            {
-                                                error!("Failed to execute schedule {}: {}", sname, e);
-                                            }
-                                        });
-                                    }));
-                                }
-                                Err(e) => {
-                                    warn!("Failed to parse interval cron '{}': {}", cron_expr, e);
-                                }
+                        let cron_expr = format!("0 */{} * * * *", interval);
+                        match Schedule::from_str(&cron_expr) {
+                            Ok(schedule) => {
+                                scheduler.add(Job::new(schedule, move || {
+                                    let pool = pool_clone.clone();
+                                    let sid = job_id.clone();
+                                    let sname = job_name.clone();
+                                    tokio::spawn(async move {
+                                        if let Err(e) =
+                                            execute_schedule_job(&pool, sid, &sname).await
+                                        {
+                                            error!("Failed to execute schedule {}: {}", sname, e);
+                                        }
+                                    });
+                                }));
+                            }
+                            Err(e) => {
+                                warn!("Failed to parse interval cron '{}': {}", cron_expr, e);
                             }
                         }
-                        Err(e) => {
-                            warn!("Invalid interval expression for schedule '{}': {}", name, e);
-                        }
                     }
-                }
+                    Err(e) => {
+                        warn!("Invalid interval expression for schedule '{}': {}", name, e);
+                    }
+                },
                 Ok(ScheduleType::OneTime) => {
-                    info!("One-time schedule '{}' will be handled by periodic check", name);
+                    info!(
+                        "One-time schedule '{}' will be handled by periodic check",
+                        name
+                    );
                 }
                 Err(e) => {
-                    warn!("Unknown schedule type '{}' for schedule '{}': {}", schedule_type, name, e);
+                    warn!(
+                        "Unknown schedule type '{}' for schedule '{}': {}",
+                        schedule_type, name, e
+                    );
                 }
             }
         }
@@ -200,7 +202,11 @@ async fn check_and_execute_schedules(pool: &PgPool) -> Result<(), anyhow::Error>
     Ok(())
 }
 
-pub async fn execute_schedule_job(pool: &PgPool, schedule_id: Uuid, schedule_name: &str) -> Result<(), anyhow::Error> {
+pub async fn execute_schedule_job(
+    pool: &PgPool,
+    schedule_id: Uuid,
+    schedule_name: &str,
+) -> Result<(), anyhow::Error> {
     let execution_id = Uuid::new_v4();
     let started_at = Utc::now();
 
@@ -308,7 +314,9 @@ async fn run_report(pool: &PgPool, schedule_id: Uuid) -> Result<String, anyhow::
     .fetch_optional(pool)
     .await?;
 
-    let output_format = template.map(|t| t.output_format).unwrap_or_else(|| Some("pdf".to_string()));
+    let output_format = template
+        .map(|t| t.output_format)
+        .unwrap_or_else(|| Some("pdf".to_string()));
     let output_path = format!(
         "/tmp/reports/{}_{}.{}",
         schedule_id,
@@ -343,7 +351,11 @@ async fn notify_subscribers(pool: &PgPool, schedule_id: Uuid) -> Result<(), anyh
     .fetch_all(pool)
     .await?;
 
-    info!("Notifying {} subscribers for schedule {}", subscribers.len(), schedule_id);
+    info!(
+        "Notifying {} subscribers for schedule {}",
+        subscribers.len(),
+        schedule_id
+    );
 
     for subscriber in subscribers {
         if let Some(email) = subscriber.email {

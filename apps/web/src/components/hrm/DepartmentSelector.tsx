@@ -135,7 +135,7 @@ export const DepartmentBreadcrumb: React.FC<DepartmentBreadcrumbProps> = ({ item
               style={{
                 width: 16,
                 height: 16,
-                color: '#94a3b8',
+                color: 'grey.400',
                 margin: '0 4px',
               }}
             />
@@ -147,7 +147,7 @@ export const DepartmentBreadcrumb: React.FC<DepartmentBreadcrumbProps> = ({ item
                 fontSize: '0.875rem',
                 color: 'grey.600',
                 transition: 'color',
-                '&:hover': { color: '#334155' },
+                '&:hover': { color: 'grey.700' },
               }}
             >
               {item.label}

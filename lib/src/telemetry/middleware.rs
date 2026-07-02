@@ -95,10 +95,7 @@ struct HeaderMapInjector<'a>(&'a mut HeaderMap);
 
 impl<'a> opentelemetry::propagation::Injector for HeaderMapInjector<'a> {
     fn set(&mut self, key: &str, value: String) {
-        if let (Ok(name), Ok(val)) = (
-            HeaderName::try_from(key),
-            HeaderValue::try_from(value),
-        ) {
+        if let (Ok(name), Ok(val)) = (HeaderName::try_from(key), HeaderValue::try_from(value)) {
             self.0.insert(name, val);
         }
     }

@@ -683,6 +683,15 @@ const OutboundPage: React.FC = () => {
           headerContent={statsContent}
           emptyMessage='暂无出库单数据'
           getRowId={(row) => row.id}
+          mobileCardTitleKey='order_number'
+          mobileCardSubtitleKey='customer_name'
+          mobileCardDisplayFields={['order_type', 'status', 'expected_date', 'total_quantity']}
+          mobileCardFieldLabels={{
+            order_type: '出库类型',
+            status: '状态',
+            expected_date: '预计日期',
+            total_quantity: '总数',
+          }}
         />
       )}
 
@@ -713,6 +722,14 @@ const OutboundPage: React.FC = () => {
           actions={[]}
           emptyMessage='暂无波次拣货数据'
           getRowId={(row) => row.id}
+          mobileCardTitleKey='wave_number'
+          mobileCardDisplayFields={['status', 'total_items', 'picked_items', 'assigned_to']}
+          mobileCardFieldLabels={{
+            status: '状态',
+            total_items: '总项数',
+            picked_items: '已拣数',
+            assigned_to: '分配给',
+          }}
         />
       )}
 

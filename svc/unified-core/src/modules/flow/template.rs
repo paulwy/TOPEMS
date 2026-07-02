@@ -1,11 +1,12 @@
 //! Template submodule - Workflow template management handlers
 
-use axum::{extract::{Path, State}, Json};
 use crate::AppState;
+use axum::{
+    extract::{Path, State},
+    Json,
+};
 
-pub async fn list_templates(
-    State(_state): State<AppState>,
-) -> Json<serde_json::Value> {
+pub async fn list_templates(State(_state): State<AppState>) -> Json<serde_json::Value> {
     tracing::info!("Flow template list_templates called");
     Json(serde_json::json!({
         "success": true,
@@ -43,7 +44,11 @@ pub async fn update_template(
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Flow template update_template called with id: {} and payload: {:?}", id, payload);
+    tracing::info!(
+        "Flow template update_template called with id: {} and payload: {:?}",
+        id,
+        payload
+    );
     Json(serde_json::json!({
         "success": true,
         "message": "update_template success",

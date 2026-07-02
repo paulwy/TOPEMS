@@ -710,7 +710,9 @@ fn generate_comparison_data(
     // produce stable values.
     let seed: u64 = indicators
         .iter()
-        .fold(0u64, |acc, s| acc.wrapping_add(s.bytes().map(|b| b as u64).sum::<u64>()))
+        .fold(0u64, |acc, s| {
+            acc.wrapping_add(s.bytes().map(|b| b as u64).sum::<u64>())
+        })
         .wrapping_add(dimension_a.len() as u64)
         .wrapping_add(dimension_b.len() as u64);
 
@@ -743,10 +745,7 @@ fn round2(v: f64) -> f64 {
     (v * 100.0).round() / 100.0
 }
 
-async fn fallback_comparison_result(
-    state: &AppState,
-    id: Uuid,
-) -> Json<serde_json::Value> {
+async fn fallback_comparison_result(state: &AppState, id: Uuid) -> Json<serde_json::Value> {
     let row = sqlx::query!(
         r#"
         SELECT id, name, comparison_type, dimension_a, dimension_b, indicators
@@ -762,7 +761,10 @@ async fn fallback_comparison_result(
 
     let data_points = match row.as_ref() {
         Some(r) => {
-            let indicators_json = r.indicators.clone().unwrap_or_else(|| serde_json::json!([]));
+            let indicators_json = r
+                .indicators
+                .clone()
+                .unwrap_or_else(|| serde_json::json!([]));
             let indicator_list: Vec<String> = indicators_json
                 .as_array()
                 .map(|arr| {

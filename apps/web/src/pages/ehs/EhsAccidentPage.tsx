@@ -139,7 +139,7 @@ const EhsAccidentPage: React.FC = () => {
   const getSeverityChip = (severity: string) => {
     const severityMap: Record<string, { bg: string; color: string }> = {
       轻微: { bg: 'success.lighter', color: 'success.dark' },
-      一般: { bg: '#fef9c3', color: '#ca8a04' },
+      一般: { bg: 'warning.100', color: '#ca8a04' },
       严重: { bg: 'error.lighter', color: 'error.dark' },
       致命: { bg: 'error.light', color: 'error.darker' },
     };
@@ -159,8 +159,8 @@ const EhsAccidentPage: React.FC = () => {
 
   const getStatusChip = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      待处理: { bg: '#fef9c3', color: '#ca8a04' },
-      调查中: { bg: '#dbeafe', color: 'primary.dark' },
+      待处理: { bg: 'warning.100', color: '#ca8a04' },
+      调查中: { bg: 'primary.100', color: 'primary.dark' },
       处理中: { bg: 'warning.light', color: 'warning.dark' },
       已解决: { bg: 'success.lighter', color: 'success.dark' },
       已结案: { bg: 'grey.100', color: 'text.secondary' },
@@ -361,7 +361,7 @@ const EhsAccidentPage: React.FC = () => {
           value={stats.pending}
           icon={<AlertCircle />}
           bgColor='background.paper'
-          iconBgColor='#fef9c3'
+          iconBgColor='warning.100'
           iconColor='#ca8a04'
         />
         <StatCard
@@ -369,7 +369,7 @@ const EhsAccidentPage: React.FC = () => {
           value={stats.investigating}
           icon={<AlertTriangle />}
           bgColor='background.paper'
-          iconBgColor='#dbeafe'
+          iconBgColor='primary.100'
           iconColor='primary.dark'
         />
         <StatCard

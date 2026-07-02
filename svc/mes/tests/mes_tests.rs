@@ -47,16 +47,32 @@ fn test_mes_permission_codes_format() {
         ("mes:production_order:read", "production_order", "read"),
         ("mes:production_order:write", "production_order", "write"),
         ("mes:production_process:read", "production_process", "read"),
-        ("mes:production_process:write", "production_process", "write"),
+        (
+            "mes:production_process:write",
+            "production_process",
+            "write",
+        ),
         ("mes:production_record:read", "production_record", "read"),
         ("mes:production_record:write", "production_record", "write"),
         ("mes:equipment:read", "equipment", "read"),
         ("mes:equipment:write", "equipment", "write"),
         ("mes:work_station:read", "work_station", "read"),
         ("mes:work_station:write", "work_station", "write"),
-        ("mes:quality_traceability:read", "quality_traceability", "read"),
-        ("mes:production_scheduling:read", "production_scheduling", "read"),
-        ("mes:production_scheduling:write", "production_scheduling", "write"),
+        (
+            "mes:quality_traceability:read",
+            "quality_traceability",
+            "read",
+        ),
+        (
+            "mes:production_scheduling:read",
+            "production_scheduling",
+            "read",
+        ),
+        (
+            "mes:production_scheduling:write",
+            "production_scheduling",
+            "write",
+        ),
     ];
 
     for (code, resource, action) in permissions {
@@ -637,12 +653,7 @@ mod business_logic_tests {
 
     #[test]
     fn test_production_scheduling_priority() {
-        let priorities = vec![
-            ("low", 1),
-            ("medium", 5),
-            ("high", 10),
-            ("urgent", 100),
-        ];
+        let priorities = vec![("low", 1), ("medium", 5), ("high", 10), ("urgent", 100)];
 
         for (level, value) in priorities {
             assert!(!level.is_empty());

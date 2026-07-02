@@ -29,7 +29,8 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
         code: "bi".to_string(),
         name: "商业智能".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
-        description: "BI 商业智能系统，包含数据分析、仪表盘、数据源、可视化、报表等模块".to_string(),
+        description: "BI 商业智能系统，包含数据分析、仪表盘、数据源、可视化、报表等模块"
+            .to_string(),
         permissions: vec![
             PermissionDef {
                 code: "bi:analysis:read".to_string(),
@@ -134,13 +135,23 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
     match client.post(&url).json(&info).send().await {
         Ok(response) => {
             if response.status().is_success() {
-                tracing::info!("[BI Plugin] Successfully registered to core at {}", core_url);
+                tracing::info!(
+                    "[BI Plugin] Successfully registered to core at {}",
+                    core_url
+                );
             } else {
-                tracing::warn!("[BI Plugin] Failed to register to core: {}", response.status());
+                tracing::warn!(
+                    "[BI Plugin] Failed to register to core: {}",
+                    response.status()
+                );
             }
         }
         Err(e) => {
-            tracing::warn!("[BI Plugin] Failed to connect to core at {}: {}", core_url, e);
+            tracing::warn!(
+                "[BI Plugin] Failed to connect to core at {}: {}",
+                core_url,
+                e
+            );
         }
     }
 }

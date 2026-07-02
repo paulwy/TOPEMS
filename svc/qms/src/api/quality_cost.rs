@@ -4,7 +4,7 @@ use axum::{extract::State, Json};
 use bigdecimal::{BigDecimal, ToPrimitive};
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, Row, types::Uuid};
+use sqlx::{types::Uuid, FromRow, Row};
 use topems_shared::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -125,9 +125,15 @@ pub async fn create_quality_cost(
     State(state): State<crate::AppState>,
     Json(req): Json<CreateQualityCostRequest>,
 ) -> Json<ApiResponse<QualityCost>> {
-    let cost_no = format!("QC-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
-    
-    let related_issue_id = req.related_issue_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
+    let cost_no = format!(
+        "QC-{}",
+        uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+    );
+
+    let related_issue_id = req
+        .related_issue_id
+        .as_ref()
+        .and_then(|s| Uuid::parse_str(s).ok());
     let incurred_dt = req.incurred_date.map(|d| d.and_hms_opt(0, 0, 0).unwrap());
 
     let cost = sqlx::query_as::<_, QualityCost>(r#"INSERT INTO qa_quality_costs (cost_no, cost_category, cost_type, amount, department, description, related_issue_id, incurred_date, created_by) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#).bind(cost_no).bind(req.cost_category).bind(req.cost_type).bind(req.amount).bind(req.department).bind(req.description).bind(related_issue_id).bind(incurred_dt).bind(req.created_by)
@@ -174,8 +180,11 @@ pub async fn update_quality_cost(
         Ok(u) => u,
         Err(_) => return Json(ApiResponse::error(400, "无效的成本记录ID")),
     };
-    
-    let related_issue_id = req.related_issue_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
+
+    let related_issue_id = req
+        .related_issue_id
+        .as_ref()
+        .and_then(|s| Uuid::parse_str(s).ok());
     let incurred_dt = req.incurred_date.map(|d| d.and_hms_opt(0, 0, 0).unwrap());
 
     let cost = sqlx::query_as::<_, QualityCost>(r#"UPDATE qa_quality_costs SET cost_category = COALESCE($2, cost_category), cost_type = COALESCE($3, cost_type), amount = COALESCE($4, amount), department = COALESCE($5, department), description = COALESCE($6, description), related_issue_id = COALESCE($7, related_issue_id), incurred_date = COALESCE($8, incurred_date), updated_at = NOW() WHERE id = $1 RETURNING id, cost_no, cost_category, cost_type, amount, department, description, related_issue_id::TEXT, incurred_date::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#).bind(id).bind(req.cost_category).bind(req.cost_type).bind(req.amount).bind(req.department).bind(req.description).bind(related_issue_id).bind(incurred_dt)
@@ -200,9 +209,10 @@ pub async fn delete_quality_cost(
         Err(_) => return Json(ApiResponse::error(400, "无效的成本记录ID")),
     };
 
-    let result = sqlx::query(r#"DELETE FROM qa_quality_costs WHERE id = $1"#).bind(id)
-    .execute(&state.pool)
-    .await;
+    let result = sqlx::query(r#"DELETE FROM qa_quality_costs WHERE id = $1"#)
+        .bind(id)
+        .execute(&state.pool)
+        .await;
 
     match result {
         Ok(_) => Json(ApiResponse::success(true, "质量成本记录删除成功")),
@@ -217,10 +227,11 @@ pub async fn get_cost_statistics(
     State(state): State<crate::AppState>,
     axum::extract::Query(query): axum::extract::Query<QualityCostQuery>,
 ) -> Json<ApiResponse<QualityCostStatistics>> {
-    let total: Option<BigDecimal> = sqlx::query_scalar::<_, _>(r#"SELECT COALESCE(SUM(amount), 0) FROM qa_quality_costs"#)
-    .fetch_one(&state.pool)
-    .await
-    .ok();
+    let total: Option<BigDecimal> =
+        sqlx::query_scalar::<_, _>(r#"SELECT COALESCE(SUM(amount), 0) FROM qa_quality_costs"#)
+            .fetch_one(&state.pool)
+            .await
+            .ok();
     let total_cost: f64 = total.map(|v| v.to_f64().unwrap_or(0.0)).unwrap_or(0.0);
 
     let category_rows = sqlx::query(r#"SELECT cost_category as category, COALESCE(SUM(amount), 0) as total, COUNT(*) as count FROM qa_quality_costs GROUP BY cost_category ORDER BY total DESC"#)
@@ -228,16 +239,23 @@ pub async fn get_cost_statistics(
     .await;
 
     let category_summary = match category_rows {
-        Ok(rows) => rows.iter().map(|r| {
-            let cat_total: f64 = r.get::<BigDecimal, _>("total").to_f64().unwrap_or(0.0);
-            let percentage = if total_cost > 0.0 { (cat_total / total_cost) * 100.0 } else { 0.0 };
-            CostCategorySummary {
-                category: r.get::<String, _>("category"),
-                total_amount: cat_total,
-                count: r.get::<i64, _>("count"),
-                percentage: (percentage * 100.0).round() / 100.0,
-            }
-        }).collect(),
+        Ok(rows) => rows
+            .iter()
+            .map(|r| {
+                let cat_total: f64 = r.get::<BigDecimal, _>("total").to_f64().unwrap_or(0.0);
+                let percentage = if total_cost > 0.0 {
+                    (cat_total / total_cost) * 100.0
+                } else {
+                    0.0
+                };
+                CostCategorySummary {
+                    category: r.get::<String, _>("category"),
+                    total_amount: cat_total,
+                    count: r.get::<i64, _>("count"),
+                    percentage: (percentage * 100.0).round() / 100.0,
+                }
+            })
+            .collect(),
         Err(e) => {
             tracing::error!("Failed to fetch category summary: {}", e);
             Vec::new()
@@ -249,16 +267,25 @@ pub async fn get_cost_statistics(
     .await;
 
     let department_summary = match dept_rows {
-        Ok(rows) => rows.iter().map(|r| {
-            let dept_total: f64 = r.get::<BigDecimal, _>("total").to_f64().unwrap_or(0.0);
-            let percentage = if total_cost > 0.0 { (dept_total / total_cost) * 100.0 } else { 0.0 };
-            CostDepartmentSummary {
-                department: r.get::<Option<String>, _>("department").unwrap_or_else(|| "未分配".to_string()),
-                total_amount: dept_total,
-                count: r.get::<i64, _>("count"),
-                percentage: (percentage * 100.0).round() / 100.0,
-            }
-        }).collect(),
+        Ok(rows) => rows
+            .iter()
+            .map(|r| {
+                let dept_total: f64 = r.get::<BigDecimal, _>("total").to_f64().unwrap_or(0.0);
+                let percentage = if total_cost > 0.0 {
+                    (dept_total / total_cost) * 100.0
+                } else {
+                    0.0
+                };
+                CostDepartmentSummary {
+                    department: r
+                        .get::<Option<String>, _>("department")
+                        .unwrap_or_else(|| "未分配".to_string()),
+                    total_amount: dept_total,
+                    count: r.get::<i64, _>("count"),
+                    percentage: (percentage * 100.0).round() / 100.0,
+                }
+            })
+            .collect(),
         Err(e) => {
             tracing::error!("Failed to fetch department summary: {}", e);
             Vec::new()
@@ -279,7 +306,7 @@ pub async fn get_cost_trend(
     axum::extract::Query(query): axum::extract::Query<QualityCostQuery>,
 ) -> Json<ApiResponse<Vec<CostTrendItem>>> {
     let months: i64 = 12;
-    
+
     let rows = sqlx::query(r#"
         SELECT 
             TO_CHAR(DATE_TRUNC('month', COALESCE(incurred_date, created_at)), 'YYYY-MM') as period,
@@ -298,16 +325,23 @@ pub async fn get_cost_trend(
 
     match rows {
         Ok(data) => {
-            let trend: Vec<CostTrendItem> = data.iter().map(|r| {
-                CostTrendItem {
+            let trend: Vec<CostTrendItem> = data
+                .iter()
+                .map(|r| CostTrendItem {
                     period: r.get::<Option<String>, _>("period").unwrap_or_default(),
                     prevention: r.get::<BigDecimal, _>("prevention").to_f64().unwrap_or(0.0),
                     appraisal: r.get::<BigDecimal, _>("appraisal").to_f64().unwrap_or(0.0),
-                    internal_failure: r.get::<BigDecimal, _>("internal_failure").to_f64().unwrap_or(0.0),
-                    external_failure: r.get::<BigDecimal, _>("external_failure").to_f64().unwrap_or(0.0),
+                    internal_failure: r
+                        .get::<BigDecimal, _>("internal_failure")
+                        .to_f64()
+                        .unwrap_or(0.0),
+                    external_failure: r
+                        .get::<BigDecimal, _>("external_failure")
+                        .to_f64()
+                        .unwrap_or(0.0),
                     total: r.get::<BigDecimal, _>("total").to_f64().unwrap_or(0.0),
-                }
-            }).collect();
+                })
+                .collect();
             Json(ApiResponse::success(trend, "获取质量成本趋势成功"))
         }
         Err(e) => {

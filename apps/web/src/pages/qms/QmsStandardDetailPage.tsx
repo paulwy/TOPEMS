@@ -118,12 +118,12 @@ const QmsStandardDetailPage: React.FC = () => {
           backgroundColor: item.color.includes('green')
             ? 'success.lighter'
             : item.color.includes('yellow')
-              ? '#fef9c3'
+              ? 'warning.100'
               : item.color.includes('red')
                 ? 'error.lighter'
                 : 'grey.100',
           color: item.color.includes('green')
-            ? '#15803d'
+            ? 'success.700'
             : item.color.includes('yellow')
               ? '#a16207'
               : item.color.includes('red')
@@ -228,7 +228,7 @@ const QmsStandardDetailPage: React.FC = () => {
         <Chip
           label={`v${row.version}`}
           size='small'
-          sx={{ backgroundColor: '#f3e8ff', color: 'secondary.dark' }}
+          sx={{ backgroundColor: 'secondary.100', color: 'secondary.dark' }}
         />
       ),
     },
@@ -300,7 +300,7 @@ const QmsStandardDetailPage: React.FC = () => {
               y2={16}
             />
           </Box>
-          <Typography sx={{ color: '#475569', mb: 2 }}>质量标准不存在或已被删除</Typography>
+          <Typography sx={{ color: 'grey.600', mb: 2 }}>质量标准不存在或已被删除</Typography>
           <Button onClick={() => navigate('/qms')}>返回列表</Button>
         </Box>
       </Box>

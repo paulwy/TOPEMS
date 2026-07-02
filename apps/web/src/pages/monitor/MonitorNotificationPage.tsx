@@ -117,9 +117,9 @@ const CHANNEL_TYPE_OPTIONS: {
 }[] = [
   { value: 'email', label: '邮件', icon: <Mail size={18} />, color: '#1976D2' },
   { value: 'dingtalk', label: '钉钉', icon: <MessageSquare size={18} />, color: '#00C897' },
-  { value: 'wechat', label: '企业微信', icon: <MessageSquare size={18} />, color: '#22C55E' },
-  { value: 'sms', label: '短信', icon: <Smartphone size={18} />, color: '#8B5CF6' },
-  { value: 'webhook', label: 'Webhook', icon: <Webhook size={18} />, color: '#F59E0B' },
+  { value: 'wechat', label: '企业微信', icon: <MessageSquare size={18} />, color: 'success.main' },
+  { value: 'sms', label: '短信', icon: <Smartphone size={18} />, color: 'secondary.main' },
+  { value: 'webhook', label: 'Webhook', icon: <Webhook size={18} />, color: 'warning.main' },
 ];
 
 // ============ 示例数据 ============
@@ -389,7 +389,7 @@ const MonitorNotificationPage: React.FC = () => {
       CHANNEL_TYPE_OPTIONS.find((t) => t.value === type) || {
         label: type,
         icon: <Bell size={18} />,
-        color: '#6B7280',
+        color: 'grey.500',
       }
     );
   };

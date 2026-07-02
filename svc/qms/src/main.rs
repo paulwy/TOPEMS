@@ -18,22 +18,18 @@ mod shared;
 
 pub mod api;
 pub mod models;
-pub mod services;
 pub mod plugin;
+pub mod services;
 
 use std::net::SocketAddr;
 
-use axum::{
-    extract::State,
-    routing::get,
-    Json, Router,
-};
+use axum::{extract::State, routing::get, Json, Router};
 use axum_prometheus::PrometheusMetricLayer;
 use sqlx::PgPool;
 
 use topems_shared::{
     auth_middleware, create_cors_layer, get_api_info_handler, init_telemetry, simple_health_check,
-    ApiResponse, AuthState, ServiceHealth, SimpleHealthConfig, telemetry_middleware,
+    telemetry_middleware, ApiResponse, AuthState, ServiceHealth, SimpleHealthConfig,
 };
 
 pub use shared::*;
@@ -107,7 +103,10 @@ async fn main() {
         .route("/api/plugins/health", get(plugin::plugin_health_check))
         .route("/api", get(|| get_api_info_handler("qms-service")))
         .route("/api/info", get(|| get_api_info_handler("qms-service")))
-        .route("/metrics", get(move || async move { metric_handle.render() }));
+        .route(
+            "/metrics",
+            get(move || async move { metric_handle.render() }),
+        );
 
     // Protected routes (auth required)
     let protected_routes = Router::new()
@@ -118,7 +117,9 @@ async fn main() {
             state.auth_state.clone(),
             auth_middleware,
         ))
-        .layer(axum::middleware::from_fn(services::permission::check_permission));
+        .layer(axum::middleware::from_fn(
+            services::permission::check_permission,
+        ));
 
     let app = Router::new()
         .merge(public_routes)

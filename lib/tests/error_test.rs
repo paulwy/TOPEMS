@@ -206,10 +206,8 @@ fn test_error_recovery_try_or_default_ok() {
 
 #[test]
 fn test_error_recovery_try_or_default_err() {
-    let result = ErrorRecovery::try_or_default(
-        || Err(TopemsError::Internal("fail".to_string())),
-        42,
-    );
+    let result =
+        ErrorRecovery::try_or_default(|| Err(TopemsError::Internal("fail".to_string())), 42);
     assert_eq!(result, 42);
 }
 
@@ -244,9 +242,8 @@ fn test_error_recovery_try_or_response_validation_error() {
 
 #[test]
 fn test_error_recovery_try_or_response_not_found() {
-    let response: ApiResponse<()> = ErrorRecovery::try_or_response(|| {
-        Err(TopemsError::ResourceNotFound("item".to_string()))
-    });
+    let response: ApiResponse<()> =
+        ErrorRecovery::try_or_response(|| Err(TopemsError::ResourceNotFound("item".to_string())));
     assert!(!response.success);
     assert_eq!(response.code, 404);
 }
@@ -306,10 +303,7 @@ fn test_error_statistics_clear() {
 fn test_topems_error_from_sqlx_row_not_found() {
     let sqlx_err = sqlx::Error::RowNotFound;
     let topems_err: TopemsError = sqlx_err.into();
-    assert!(matches!(
-        topems_err,
-        TopemsError::DatabaseRecordNotFound(_)
-    ));
+    assert!(matches!(topems_err, TopemsError::DatabaseRecordNotFound(_)));
 }
 
 #[test]

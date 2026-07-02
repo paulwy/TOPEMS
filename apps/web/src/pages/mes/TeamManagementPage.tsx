@@ -217,7 +217,7 @@ const TeamManagementPage: React.FC = () => {
         color: string;
       }
     > = {
-      active: { label: '活跃', bg: 'success.lighter', color: '#15803d' },
+      active: { label: '活跃', bg: 'success.lighter', color: 'success.700' },
       inactive: { label: '停用', bg: 'grey.100', color: 'text.secondary' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
@@ -377,7 +377,7 @@ const TeamManagementPage: React.FC = () => {
         </Typography>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#4338ca' }}
+          sx={{ fontWeight: 700, color: 'secondary.700' }}
         >
           {stats.total_members}
         </Typography>
@@ -650,7 +650,7 @@ const TeamManagementPage: React.FC = () => {
                                     backgroundColor:
                                       member.status === 'active' ? 'success.lighter' : 'grey.100',
                                     color:
-                                      member.status === 'active' ? '#15803d' : 'text.secondary',
+                                      member.status === 'active' ? 'success.700' : 'text.secondary',
                                     fontWeight: 500,
                                   }}
                                 />

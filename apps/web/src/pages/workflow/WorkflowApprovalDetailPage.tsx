@@ -43,6 +43,7 @@ const FlowApprovalDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
   const user = useAppStore((state) => state.user);
+  const theme = useTheme();
 
   const [approval, setApproval] = useState<Approval | null>(null);
   const [records, setRecords] = useState<ApprovalRecord[]>([]);
@@ -196,7 +197,6 @@ const FlowApprovalDetailPage: React.FC = () => {
   };
 
   const getStatusIcon = (status: string) => {
-  const theme = useTheme();
     switch (status) {
       case 'approved':
         return (

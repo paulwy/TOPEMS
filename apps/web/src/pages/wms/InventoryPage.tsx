@@ -468,7 +468,7 @@ const InventoryPage: React.FC = () => {
         >
           <AlertTriangle
             size={16}
-            color='#b45309'
+            color='warning.700'
           />
           <Typography
             variant='body2'
@@ -479,7 +479,7 @@ const InventoryPage: React.FC = () => {
         </Stack>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#b45309' }}
+          sx={{ fontWeight: 700, color: 'warning.700' }}
         >
           {alertStats?.low_stock_count || 0}
         </Typography>
@@ -557,6 +557,15 @@ const InventoryPage: React.FC = () => {
         headerContent={statsContent}
         emptyMessage='暂无库存记录'
         getRowId={(row) => row.id}
+        mobileCardTitleKey='name'
+        mobileCardSubtitleKey='sku'
+        mobileCardDisplayFields={['specification', 'quantity', 'available_quantity', 'warehouse_name']}
+        mobileCardFieldLabels={{
+          specification: '规格',
+          quantity: '数量',
+          available_quantity: '可用数量',
+          warehouse_name: '仓库',
+        }}
       />
 
       {/* 新增对话框 */}
@@ -962,7 +971,7 @@ const InventoryPage: React.FC = () => {
           >
             <AlertTriangle
               size={20}
-              color='#b45309'
+              color='warning.700'
             />
             低库存预警列表
           </Stack>

@@ -1,8 +1,11 @@
 //! Role submodule - Role management handlers
 
-use axum::{extract::{Path, State}, Json};
 use crate::AppState;
-use serde::{Serialize, Deserialize};
+use axum::{
+    extract::{Path, State},
+    Json,
+};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -38,9 +41,7 @@ struct UpdateRoleRequest {
     permission_ids: Option<Vec<String>>,
 }
 
-pub async fn list_roles(
-    State(state): State<AppState>,
-) -> Json<serde_json::Value> {
+pub async fn list_roles(State(state): State<AppState>) -> Json<serde_json::Value> {
     tracing::info!("IAM role list_roles called");
 
     let result = sqlx::query_as::<_, RoleRow>(
@@ -55,13 +56,13 @@ pub async fn list_roles(
             for r in roles {
                 // 获取每个角色的权限数量
                 let perm_count: i64 = sqlx::query_scalar(
-                    "SELECT COUNT(*) FROM core_role_permissions WHERE role_id = $1"
+                    "SELECT COUNT(*) FROM core_role_permissions WHERE role_id = $1",
                 )
                 .bind(r.id)
                 .fetch_one(&state.pool)
                 .await
                 .unwrap_or(0);
-                
+
                 role_responses.push(RoleResponse {
                     id: r.id.to_string(),
                     name: r.name,
@@ -70,7 +71,7 @@ pub async fn list_roles(
                     permission_count: perm_count,
                 });
             }
-            
+
             Json(serde_json::json!({
                 "success": true,
                 "message": "获取角色列表成功",
@@ -107,19 +108,25 @@ pub async fn create_role(
         }
     };
 
-    let description = payload.get("description").and_then(|v| v.as_str()).map(|s| s.to_string());
+    let description = payload
+        .get("description")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
     let permission_ids: Vec<String> = serde_json::from_value(
-        payload.get("permission_ids").cloned().unwrap_or(serde_json::Value::Array(vec![]))
-    ).unwrap_or_default();
+        payload
+            .get("permission_ids")
+            .cloned()
+            .unwrap_or(serde_json::Value::Array(vec![])),
+    )
+    .unwrap_or_default();
 
     // 检查角色名是否已存在
-    let exists: bool = sqlx::query_scalar(
-        "SELECT EXISTS(SELECT 1 FROM core_roles WHERE name = $1)"
-    )
-    .bind(&name)
-    .fetch_one(&state.pool)
-    .await
-    .unwrap_or(false);
+    let exists: bool =
+        sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM core_roles WHERE name = $1)")
+            .bind(&name)
+            .fetch_one(&state.pool)
+            .await
+            .unwrap_or(false);
 
     if exists {
         return Json(serde_json::json!({
@@ -236,7 +243,7 @@ pub async fn get_role(
                 INNER JOIN core_role_permissions rp ON p.id = rp.permission_id
                 WHERE rp.role_id = $1
                 ORDER BY p.code
-                "#
+                "#,
             )
             .bind(role_uuid)
             .fetch_all(&state.pool)
@@ -255,14 +262,12 @@ pub async fn get_role(
                 }
             }))
         }
-        Ok(None) => {
-            Json(serde_json::json!({
-                "success": false,
-                "message": "角色不存在",
-                "data": null,
-                "code": 404
-            }))
-        }
+        Ok(None) => Json(serde_json::json!({
+            "success": false,
+            "message": "角色不存在",
+            "data": null,
+            "code": 404
+        })),
         Err(e) => {
             tracing::error!("获取角色失败: {}", e);
             Json(serde_json::json!({
@@ -280,7 +285,11 @@ pub async fn update_role(
     Path(id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("IAM role update_role called with id: {} and payload: {:?}", id, payload);
+    tracing::info!(
+        "IAM role update_role called with id: {} and payload: {:?}",
+        id,
+        payload
+    );
 
     let role_uuid = match Uuid::parse_str(&id) {
         Ok(uuid) => uuid,
@@ -295,13 +304,11 @@ pub async fn update_role(
     };
 
     // 检查角色是否存在
-    let exists: bool = sqlx::query_scalar(
-        "SELECT EXISTS(SELECT 1 FROM core_roles WHERE id = $1)"
-    )
-    .bind(role_uuid)
-    .fetch_one(&state.pool)
-    .await
-    .unwrap_or(false);
+    let exists: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM core_roles WHERE id = $1)")
+        .bind(role_uuid)
+        .fetch_one(&state.pool)
+        .await
+        .unwrap_or(false);
 
     if !exists {
         return Json(serde_json::json!({
@@ -312,11 +319,21 @@ pub async fn update_role(
         }));
     }
 
-    let name = payload.get("name").and_then(|v| v.as_str()).map(|s| s.to_string());
-    let description = payload.get("description").and_then(|v| v.as_str()).map(|s| s.to_string());
+    let name = payload
+        .get("name")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+    let description = payload
+        .get("description")
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
     let permission_ids: Option<Vec<String>> = serde_json::from_value(
-        payload.get("permission_ids").cloned().unwrap_or(serde_json::Value::Null)
-    ).ok();
+        payload
+            .get("permission_ids")
+            .cloned()
+            .unwrap_or(serde_json::Value::Null),
+    )
+    .ok();
 
     // 事务更新角色和权限
     let mut tx = match state.pool.begin().await {
@@ -334,13 +351,12 @@ pub async fn update_role(
 
     // 更新角色信息
     if let Some(name) = &name {
-        if let Err(e) = sqlx::query(
-            "UPDATE core_roles SET name = $1, updated_at = NOW() WHERE id = $2"
-        )
-        .bind(name)
-        .bind(role_uuid)
-        .execute(&mut *tx)
-        .await
+        if let Err(e) =
+            sqlx::query("UPDATE core_roles SET name = $1, updated_at = NOW() WHERE id = $2")
+                .bind(name)
+                .bind(role_uuid)
+                .execute(&mut *tx)
+                .await
         {
             let _ = tx.rollback().await;
             tracing::error!("更新角色名称失败: {}", e);
@@ -354,13 +370,12 @@ pub async fn update_role(
     }
 
     if let Some(desc) = &description {
-        if let Err(e) = sqlx::query(
-            "UPDATE core_roles SET description = $1, updated_at = NOW() WHERE id = $2"
-        )
-        .bind(desc)
-        .bind(role_uuid)
-        .execute(&mut *tx)
-        .await
+        if let Err(e) =
+            sqlx::query("UPDATE core_roles SET description = $1, updated_at = NOW() WHERE id = $2")
+                .bind(desc)
+                .bind(role_uuid)
+                .execute(&mut *tx)
+                .await
         {
             let _ = tx.rollback().await;
             tracing::error!("更新角色描述失败: {}", e);
@@ -376,12 +391,10 @@ pub async fn update_role(
     // 更新权限关联
     if let Some(perm_ids) = permission_ids {
         // 删除现有权限关联
-        if let Err(e) = sqlx::query(
-            "DELETE FROM core_role_permissions WHERE role_id = $1"
-        )
-        .bind(role_uuid)
-        .execute(&mut *tx)
-        .await
+        if let Err(e) = sqlx::query("DELETE FROM core_role_permissions WHERE role_id = $1")
+            .bind(role_uuid)
+            .execute(&mut *tx)
+            .await
         {
             let _ = tx.rollback().await;
             tracing::error!("删除角色权限关联失败: {}", e);
@@ -445,13 +458,11 @@ pub async fn delete_role(
     };
 
     // 检查是否是系统内置角色（不能删除）
-    let role_name: Option<String> = sqlx::query_scalar(
-        "SELECT name FROM core_roles WHERE id = $1"
-    )
-    .bind(role_uuid)
-    .fetch_optional(&state.pool)
-    .await
-    .unwrap_or(None);
+    let role_name: Option<String> = sqlx::query_scalar("SELECT name FROM core_roles WHERE id = $1")
+        .bind(role_uuid)
+        .fetch_optional(&state.pool)
+        .await
+        .unwrap_or(None);
 
     if let Some(name) = &role_name {
         if ["superadmin", "admin"].contains(&name.as_str()) {
@@ -465,13 +476,12 @@ pub async fn delete_role(
     }
 
     // 检查是否有用户使用该角色
-    let user_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM core_user_roles WHERE role_id = $1"
-    )
-    .bind(role_uuid)
-    .fetch_one(&state.pool)
-    .await
-    .unwrap_or(0);
+    let user_count: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM core_user_roles WHERE role_id = $1")
+            .bind(role_uuid)
+            .fetch_one(&state.pool)
+            .await
+            .unwrap_or(0);
 
     if user_count > 0 {
         return Json(serde_json::json!({
@@ -483,12 +493,10 @@ pub async fn delete_role(
     }
 
     // 删除角色权限关联
-    if let Err(e) = sqlx::query(
-        "DELETE FROM core_role_permissions WHERE role_id = $1"
-    )
-    .bind(role_uuid)
-    .execute(&state.pool)
-    .await
+    if let Err(e) = sqlx::query("DELETE FROM core_role_permissions WHERE role_id = $1")
+        .bind(role_uuid)
+        .execute(&state.pool)
+        .await
     {
         tracing::error!("删除角色权限关联失败: {}", e);
         return Json(serde_json::json!({
@@ -500,12 +508,10 @@ pub async fn delete_role(
     }
 
     // 删除角色
-    if let Err(e) = sqlx::query(
-        "DELETE FROM core_roles WHERE id = $1"
-    )
-    .bind(role_uuid)
-    .execute(&state.pool)
-    .await
+    if let Err(e) = sqlx::query("DELETE FROM core_roles WHERE id = $1")
+        .bind(role_uuid)
+        .execute(&state.pool)
+        .await
     {
         tracing::error!("删除角色失败: {}", e);
         return Json(serde_json::json!({

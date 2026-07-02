@@ -10,7 +10,7 @@ use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use uuid::Uuid;
 
-use crate::models::{SupplierPerformance, SupplierEvaluation};
+use crate::models::{SupplierEvaluation, SupplierPerformance};
 use crate::services::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
 use topems_shared::ApiResponse;
@@ -47,10 +47,7 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
     let state = Arc::new(AppState { db });
 
     let app = Router::new()
-        .route(
-            "/api/srm/performance/reports",
-            get(get_performance_reports),
-        )
+        .route("/api/srm/performance/reports", get(get_performance_reports))
         .route(
             "/api/srm/performance/reports/{id}",
             get(get_performance_report),
@@ -59,14 +56,8 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
             "/api/srm/performance/compare",
             get(compare_supplier_performance),
         )
-        .route(
-            "/api/srm/performance/trend",
-            get(get_performance_trend),
-        )
-        .route(
-            "/api/srm/performance/top-suppliers",
-            get(get_top_suppliers),
-        )
+        .route("/api/srm/performance/trend", get(get_performance_trend))
+        .route("/api/srm/performance/top-suppliers", get(get_top_suppliers))
         .route(
             "/api/srm/performance/export",
             get(export_performance_report),
@@ -75,10 +66,7 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
             "/api/srm/performance/score-level-distribution",
             get(get_score_level_distribution),
         )
-        .route(
-            "/api/srm/performance/summary",
-            get(get_performance_summary),
-        )
+        .route("/api/srm/performance/summary", get(get_performance_summary))
         .with_state(state);
 
     Ok(app)
@@ -371,7 +359,16 @@ async fn get_performance_report(
     .await
     .unwrap_or_default();
 
-    let contracts = sqlx::query_as::<_, (String, String, Option<DateTime<Utc>>, Option<DateTime<Utc>>, Option<f64>)>(
+    let contracts = sqlx::query_as::<
+        _,
+        (
+            String,
+            String,
+            Option<DateTime<Utc>>,
+            Option<DateTime<Utc>>,
+            Option<f64>,
+        ),
+    >(
         r#"
         SELECT contract_no, title, start_date, end_date, total_amount
         FROM plugin_srm.supplier_contracts
@@ -562,7 +559,18 @@ async fn get_performance_trend(
         _ => "6 months",
     };
 
-    let result = sqlx::query_as::<_, (String, Option<f64>, Option<f64>, Option<f64>, Option<f64>, Option<f64>, i64)>(
+    let result = sqlx::query_as::<
+        _,
+        (
+            String,
+            Option<f64>,
+            Option<f64>,
+            Option<f64>,
+            Option<f64>,
+            Option<f64>,
+            i64,
+        ),
+    >(
         r#"
         SELECT 
             TO_CHAR(evaluation_date, 'YYYY-MM') as month,
@@ -588,17 +596,19 @@ async fn get_performance_trend(
         Ok(trends) => {
             let trend_data = trends
                 .into_iter()
-                .map(|(month, quality, delivery, service, price, overall, count)| {
-                    serde_json::json!({
-                        "month": month,
-                        "avg_quality_score": quality,
-                        "avg_delivery_score": delivery,
-                        "avg_service_score": service,
-                        "avg_price_score": price,
-                        "avg_overall_score": overall,
-                        "evaluation_count": count
-                    })
-                })
+                .map(
+                    |(month, quality, delivery, service, price, overall, count)| {
+                        serde_json::json!({
+                            "month": month,
+                            "avg_quality_score": quality,
+                            "avg_delivery_score": delivery,
+                            "avg_service_score": service,
+                            "avg_price_score": price,
+                            "avg_overall_score": overall,
+                            "evaluation_count": count
+                        })
+                    },
+                )
                 .collect::<Vec<_>>();
 
             let result = serde_json::json!({

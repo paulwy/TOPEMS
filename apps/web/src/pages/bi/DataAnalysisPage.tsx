@@ -323,10 +323,10 @@ const DataAnalysisPage = () => {
               </Typography>
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
                 {[
-                  { label: '总销售额', value: '¥913,000', change: '+12.5%', color: '#10B981' },
-                  { label: '总订单数', value: '3,130', change: '+8.3%', color: '#3B82F6' },
-                  { label: '客户数', value: '1,270', change: '+15.2%', color: '#8B5CF6' },
-                  { label: '客单价', value: '¥291.7', change: '+3.8%', color: '#F59E0B' },
+                  { label: '总销售额', value: '¥913,000', change: '+12.5%', color: 'success.main' },
+                  { label: '总订单数', value: '3,130', change: '+8.3%', color: 'primary.main' },
+                  { label: '客户数', value: '1,270', change: '+15.2%', color: 'secondary.main' },
+                  { label: '客单价', value: '¥291.7', change: '+3.8%', color: 'warning.main' },
                 ].map((metric, idx) => (
                   <Box
                     key={idx}

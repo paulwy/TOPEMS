@@ -1,23 +1,50 @@
 use super::error::EventResult;
 use super::event_types::{
-    Event, EventType,
-    HrmDepartmentCreatedPayload, HrmDepartmentDeletedPayload, HrmDepartmentUpdatedPayload, HrmEmployeeCreatedPayload,
-    PmProjectCreatedPayload, PmProjectUpdatedPayload, PmTaskCreatedPayload, PmTaskDeletedPayload, PmTaskUpdatedPayload,
-    LimsSampleRegisteredPayload, LimsInspectionResultSubmittedPayload, LimsInspectionAbnormalDetectedPayload,
-    QmsInspectionCompletedPayload, QmsCorrectiveActionCreatedPayload,
-    EhsHazardReportedPayload, EhsAccidentReportedPayload,
-    // ERP Events
-    ErpSalesOrderCreatedPayload, ErpSalesOrderUpdatedPayload, ErpSalesOrderCompletedPayload,
-    ErpPurchaseOrderCreatedPayload, ErpPurchaseOrderApprovedPayload, ErpInventoryAdjustedPayload, ErpInvoiceGeneratedPayload,
-    // SCM Events
-    ScmSupplierAdmittedPayload, ScmSupplierUpdatedPayload, ScmPurchaseContractSignedPayload,
-    ScmDeliveryAppointmentScheduledPayload, ScmGoodsReceivedPayload,
+    CrmContactCreatedPayload,
     // CRM Events
-    CrmCustomerCreatedPayload, CrmCustomerUpdatedPayload, CrmOpportunityCreatedPayload,
-    CrmOpportunityStageChangedPayload, CrmContactCreatedPayload, CrmInteractionRecordedPayload,
+    CrmCustomerCreatedPayload,
+    CrmCustomerUpdatedPayload,
+    CrmInteractionRecordedPayload,
+    CrmOpportunityCreatedPayload,
+    CrmOpportunityStageChangedPayload,
+    EhsAccidentReportedPayload,
+    EhsHazardReportedPayload,
+    ErpInventoryAdjustedPayload,
+    ErpInvoiceGeneratedPayload,
+    ErpPurchaseOrderApprovedPayload,
+    ErpPurchaseOrderCreatedPayload,
+    ErpSalesOrderCompletedPayload,
+    // ERP Events
+    ErpSalesOrderCreatedPayload,
+    ErpSalesOrderUpdatedPayload,
+    Event,
+    EventType,
+    FinanceAccountingPeriodClosedPayload,
     // Finance Events
-    FinanceBillGeneratedPayload, FinancePaymentCompletedPayload, FinanceBudgetApprovedPayload,
-    FinanceAccountingPeriodClosedPayload, FinanceJournalEntryCreatedPayload,
+    FinanceBillGeneratedPayload,
+    FinanceBudgetApprovedPayload,
+    FinanceJournalEntryCreatedPayload,
+    FinancePaymentCompletedPayload,
+    HrmDepartmentCreatedPayload,
+    HrmDepartmentDeletedPayload,
+    HrmDepartmentUpdatedPayload,
+    HrmEmployeeCreatedPayload,
+    LimsInspectionAbnormalDetectedPayload,
+    LimsInspectionResultSubmittedPayload,
+    LimsSampleRegisteredPayload,
+    PmProjectCreatedPayload,
+    PmProjectUpdatedPayload,
+    PmTaskCreatedPayload,
+    PmTaskDeletedPayload,
+    PmTaskUpdatedPayload,
+    QmsCorrectiveActionCreatedPayload,
+    QmsInspectionCompletedPayload,
+    ScmDeliveryAppointmentScheduledPayload,
+    ScmGoodsReceivedPayload,
+    ScmPurchaseContractSignedPayload,
+    // SCM Events
+    ScmSupplierAdmittedPayload,
+    ScmSupplierUpdatedPayload,
 };
 use redis::Client;
 use serde::Serialize;
@@ -86,7 +113,8 @@ impl EventPublisher {
             email: email.to_string(),
             department_id,
         };
-        self.publish_event(EventType::HrmEmployeeCreated, payload).await
+        self.publish_event(EventType::HrmEmployeeCreated, payload)
+            .await
     }
 
     /// 发布 PM 项目创建事件
@@ -101,7 +129,8 @@ impl EventPublisher {
             project_name: project_name.to_string(),
             owner_id,
         };
-        self.publish_event(EventType::PmProjectCreated, payload).await
+        self.publish_event(EventType::PmProjectCreated, payload)
+            .await
     }
 
     pub async fn publish_pm_project_updated(
@@ -117,7 +146,8 @@ impl EventPublisher {
             old_data,
             new_data,
         };
-        self.publish_event(EventType::PmProjectUpdated, payload).await
+        self.publish_event(EventType::PmProjectUpdated, payload)
+            .await
     }
 
     pub async fn publish_pm_task_created(
@@ -177,7 +207,8 @@ impl EventPublisher {
             department_name: department_name.to_string(),
             parent_id,
         };
-        self.publish_event(EventType::HrmDepartmentCreated, payload).await
+        self.publish_event(EventType::HrmDepartmentCreated, payload)
+            .await
     }
 
     pub async fn publish_hrm_department_updated(
@@ -193,7 +224,8 @@ impl EventPublisher {
             old_data,
             new_data,
         };
-        self.publish_event(EventType::HrmDepartmentUpdated, payload).await
+        self.publish_event(EventType::HrmDepartmentUpdated, payload)
+            .await
     }
 
     pub async fn publish_hrm_department_deleted(
@@ -207,7 +239,8 @@ impl EventPublisher {
             department_name: department_name.to_string(),
             deleted_by,
         };
-        self.publish_event(EventType::HrmDepartmentDeleted, payload).await
+        self.publish_event(EventType::HrmDepartmentDeleted, payload)
+            .await
     }
 
     // --- LIMS Events ---
@@ -227,7 +260,8 @@ impl EventPublisher {
             sample_type: sample_type.map(|s| s.to_string()),
             source: source.map(|s| s.to_string()),
         };
-        self.publish_event(EventType::LimsSampleRegistered, payload).await
+        self.publish_event(EventType::LimsSampleRegistered, payload)
+            .await
     }
 
     pub async fn publish_lims_inspection_result_submitted(
@@ -249,7 +283,8 @@ impl EventPublisher {
             result,
             recorded_by: recorded_by.to_string(),
         };
-        self.publish_event(EventType::LimsInspectionResultSubmitted, payload).await
+        self.publish_event(EventType::LimsInspectionResultSubmitted, payload)
+            .await
     }
 
     pub async fn publish_lims_inspection_abnormal_detected(
@@ -271,7 +306,8 @@ impl EventPublisher {
             abnormal_data,
             conclusion: conclusion.to_string(),
         };
-        self.publish_event(EventType::LimsInspectionAbnormalDetected, payload).await
+        self.publish_event(EventType::LimsInspectionAbnormalDetected, payload)
+            .await
     }
 
     // --- QMS Events ---
@@ -295,7 +331,8 @@ impl EventPublisher {
             qualification_rate,
             inspector: inspector.to_string(),
         };
-        self.publish_event(EventType::QmsInspectionCompleted, payload).await
+        self.publish_event(EventType::QmsInspectionCompleted, payload)
+            .await
     }
 
     pub async fn publish_qms_corrective_action_created(
@@ -313,7 +350,8 @@ impl EventPublisher {
             description: description.map(|s| s.to_string()),
             assigned_to: assigned_to.to_string(),
         };
-        self.publish_event(EventType::QmsCorrectiveActionCreated, payload).await
+        self.publish_event(EventType::QmsCorrectiveActionCreated, payload)
+            .await
     }
 
     // --- EHS Events ---
@@ -339,7 +377,8 @@ impl EventPublisher {
             description: description.map(|s| s.to_string()),
             reported_by: reported_by.map(|s| s.to_string()),
         };
-        self.publish_event(EventType::EhsHazardReported, payload).await
+        self.publish_event(EventType::EhsHazardReported, payload)
+            .await
     }
 
     pub async fn publish_ehs_accident_reported(
@@ -359,7 +398,8 @@ impl EventPublisher {
             location: location.map(|s| s.to_string()),
             occurred_at: occurred_at.map(|s| s.to_string()),
         };
-        self.publish_event(EventType::EhsAccidentReported, payload).await
+        self.publish_event(EventType::EhsAccidentReported, payload)
+            .await
     }
 
     // --- ERP Events ---
@@ -383,7 +423,8 @@ impl EventPublisher {
             currency: currency.map(|s| s.to_string()),
             created_by: created_by.map(|s| s.to_string()),
         };
-        self.publish_event(EventType::ErpSalesOrderCreated, payload).await
+        self.publish_event(EventType::ErpSalesOrderCreated, payload)
+            .await
     }
 
     pub async fn publish_erp_sales_order_updated(
@@ -401,7 +442,8 @@ impl EventPublisher {
             old_data,
             new_data,
         };
-        self.publish_event(EventType::ErpSalesOrderUpdated, payload).await
+        self.publish_event(EventType::ErpSalesOrderUpdated, payload)
+            .await
     }
 
     pub async fn publish_erp_sales_order_completed(
@@ -419,7 +461,8 @@ impl EventPublisher {
             delivered_quantity,
             total_amount,
         };
-        self.publish_event(EventType::ErpSalesOrderCompleted, payload).await
+        self.publish_event(EventType::ErpSalesOrderCompleted, payload)
+            .await
     }
 
     pub async fn publish_erp_purchase_order_created(
@@ -441,7 +484,8 @@ impl EventPublisher {
             currency: currency.map(|s| s.to_string()),
             created_by: created_by.map(|s| s.to_string()),
         };
-        self.publish_event(EventType::ErpPurchaseOrderCreated, payload).await
+        self.publish_event(EventType::ErpPurchaseOrderCreated, payload)
+            .await
     }
 
     pub async fn publish_erp_purchase_order_approved(
@@ -459,7 +503,8 @@ impl EventPublisher {
             approved_at: approved_at.to_string(),
             approval_status: approval_status.to_string(),
         };
-        self.publish_event(EventType::ErpPurchaseOrderApproved, payload).await
+        self.publish_event(EventType::ErpPurchaseOrderApproved, payload)
+            .await
     }
 
     pub async fn publish_erp_inventory_adjusted(
@@ -483,7 +528,8 @@ impl EventPublisher {
             reason: reason.map(|s| s.to_string()),
             adjusted_by: adjusted_by.map(|s| s.to_string()),
         };
-        self.publish_event(EventType::ErpInventoryAdjusted, payload).await
+        self.publish_event(EventType::ErpInventoryAdjusted, payload)
+            .await
     }
 
     pub async fn publish_erp_invoice_generated(
@@ -507,7 +553,8 @@ impl EventPublisher {
             tax_amount,
             currency: currency.map(|s| s.to_string()),
         };
-        self.publish_event(EventType::ErpInvoiceGenerated, payload).await
+        self.publish_event(EventType::ErpInvoiceGenerated, payload)
+            .await
     }
 
     // --- SCM Events ---
@@ -529,7 +576,8 @@ impl EventPublisher {
             qualification_level: qualification_level.map(|s| s.to_string()),
             admitted_by: admitted_by.map(|s| s.to_string()),
         };
-        self.publish_event(EventType::ScmSupplierAdmitted, payload).await
+        self.publish_event(EventType::ScmSupplierAdmitted, payload)
+            .await
     }
 
     pub async fn publish_scm_supplier_updated(
@@ -547,7 +595,8 @@ impl EventPublisher {
             old_data,
             new_data,
         };
-        self.publish_event(EventType::ScmSupplierUpdated, payload).await
+        self.publish_event(EventType::ScmSupplierUpdated, payload)
+            .await
     }
 
     pub async fn publish_scm_purchase_contract_signed(
@@ -571,7 +620,8 @@ impl EventPublisher {
             expiry_date: expiry_date.map(|s| s.to_string()),
             signed_by: signed_by.map(|s| s.to_string()),
         };
-        self.publish_event(EventType::ScmPurchaseContractSigned, payload).await
+        self.publish_event(EventType::ScmPurchaseContractSigned, payload)
+            .await
     }
 
     pub async fn publish_scm_delivery_appointment_scheduled(
@@ -593,7 +643,8 @@ impl EventPublisher {
             expected_quantity,
             product_id,
         };
-        self.publish_event(EventType::ScmDeliveryAppointmentScheduled, payload).await
+        self.publish_event(EventType::ScmDeliveryAppointmentScheduled, payload)
+            .await
     }
 
     pub async fn publish_scm_goods_received(
@@ -619,7 +670,8 @@ impl EventPublisher {
             quality_status: quality_status.map(|s| s.to_string()),
             received_by: received_by.map(|s| s.to_string()),
         };
-        self.publish_event(EventType::ScmGoodsReceived, payload).await
+        self.publish_event(EventType::ScmGoodsReceived, payload)
+            .await
     }
 
     // --- CRM Events ---
@@ -645,7 +697,8 @@ impl EventPublisher {
             contact_email: contact_email.map(|s| s.to_string()),
             created_by: created_by.map(|s| s.to_string()),
         };
-        self.publish_event(EventType::CrmCustomerCreated, payload).await
+        self.publish_event(EventType::CrmCustomerCreated, payload)
+            .await
     }
 
     pub async fn publish_crm_customer_updated(
@@ -663,7 +716,8 @@ impl EventPublisher {
             old_data,
             new_data,
         };
-        self.publish_event(EventType::CrmCustomerUpdated, payload).await
+        self.publish_event(EventType::CrmCustomerUpdated, payload)
+            .await
     }
 
     pub async fn publish_crm_opportunity_created(
@@ -689,7 +743,8 @@ impl EventPublisher {
             probability,
             owner_id,
         };
-        self.publish_event(EventType::CrmOpportunityCreated, payload).await
+        self.publish_event(EventType::CrmOpportunityCreated, payload)
+            .await
     }
 
     pub async fn publish_crm_opportunity_stage_changed(
@@ -709,7 +764,8 @@ impl EventPublisher {
             changed_by: changed_by.map(|s| s.to_string()),
             changed_at: changed_at.to_string(),
         };
-        self.publish_event(EventType::CrmOpportunityStageChanged, payload).await
+        self.publish_event(EventType::CrmOpportunityStageChanged, payload)
+            .await
     }
 
     pub async fn publish_crm_contact_created(
@@ -731,7 +787,8 @@ impl EventPublisher {
             phone: phone.map(|s| s.to_string()),
             position: position.map(|s| s.to_string()),
         };
-        self.publish_event(EventType::CrmContactCreated, payload).await
+        self.publish_event(EventType::CrmContactCreated, payload)
+            .await
     }
 
     pub async fn publish_crm_interaction_recorded(
@@ -757,7 +814,8 @@ impl EventPublisher {
             interaction_date: interaction_date.to_string(),
             recorded_by: recorded_by.map(|s| s.to_string()),
         };
-        self.publish_event(EventType::CrmInteractionRecorded, payload).await
+        self.publish_event(EventType::CrmInteractionRecorded, payload)
+            .await
     }
 
     // --- Finance Events ---
@@ -783,7 +841,8 @@ impl EventPublisher {
             related_order_id,
             generated_by: generated_by.map(|s| s.to_string()),
         };
-        self.publish_event(EventType::FinanceBillGenerated, payload).await
+        self.publish_event(EventType::FinanceBillGenerated, payload)
+            .await
     }
 
     pub async fn publish_finance_payment_completed(
@@ -809,7 +868,8 @@ impl EventPublisher {
             paid_at: paid_at.to_string(),
             paid_by: paid_by.map(|s| s.to_string()),
         };
-        self.publish_event(EventType::FinancePaymentCompleted, payload).await
+        self.publish_event(EventType::FinancePaymentCompleted, payload)
+            .await
     }
 
     pub async fn publish_finance_budget_approved(
@@ -835,7 +895,8 @@ impl EventPublisher {
             approved_by,
             approved_at: approved_at.to_string(),
         };
-        self.publish_event(EventType::FinanceBudgetApproved, payload).await
+        self.publish_event(EventType::FinanceBudgetApproved, payload)
+            .await
     }
 
     pub async fn publish_finance_accounting_period_closed(
@@ -857,7 +918,8 @@ impl EventPublisher {
             closed_by: closed_by.map(|s| s.to_string()),
             closed_at: closed_at.to_string(),
         };
-        self.publish_event(EventType::FinanceAccountingPeriodClosed, payload).await
+        self.publish_event(EventType::FinanceAccountingPeriodClosed, payload)
+            .await
     }
 
     pub async fn publish_finance_journal_entry_created(
@@ -885,6 +947,7 @@ impl EventPublisher {
             description: description.map(|s| s.to_string()),
             created_by: created_by.map(|s| s.to_string()),
         };
-        self.publish_event(EventType::FinanceJournalEntryCreated, payload).await
+        self.publish_event(EventType::FinanceJournalEntryCreated, payload)
+            .await
     }
 }

@@ -1,4 +1,8 @@
-use axum::{extract::State, routing::{delete, get, post, put}, Json, Router};
+use axum::{
+    extract::State,
+    routing::{delete, get, post, put},
+    Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared::ApiResponse;
@@ -7,16 +11,40 @@ use crate::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/lims/uncertainty-projects", get(list_projects).post(create_project))
-        .route("/api/lims/uncertainty-projects/{id}", get(get_project).put(update_project).delete(delete_project))
-        .route("/api/lims/uncertainty-projects/{id}/sources", get(list_sources))
-        .route("/api/lims/uncertainty-projects/{id}/components", get(list_components))
-        .route("/api/lims/uncertainty-projects/{id}/combined", post(calculate_combined))
-        .route("/api/lims/uncertainty-projects/{id}/report", get(generate_report))
+        .route(
+            "/api/lims/uncertainty-projects",
+            get(list_projects).post(create_project),
+        )
+        .route(
+            "/api/lims/uncertainty-projects/{id}",
+            get(get_project).put(update_project).delete(delete_project),
+        )
+        .route(
+            "/api/lims/uncertainty-projects/{id}/sources",
+            get(list_sources),
+        )
+        .route(
+            "/api/lims/uncertainty-projects/{id}/components",
+            get(list_components),
+        )
+        .route(
+            "/api/lims/uncertainty-projects/{id}/combined",
+            post(calculate_combined),
+        )
+        .route(
+            "/api/lims/uncertainty-projects/{id}/report",
+            get(generate_report),
+        )
         .route("/api/lims/uncertainty-sources", post(create_source))
-        .route("/api/lims/uncertainty-sources/{id}", put(update_source).delete(delete_source))
+        .route(
+            "/api/lims/uncertainty-sources/{id}",
+            put(update_source).delete(delete_source),
+        )
         .route("/api/lims/uncertainty-components", post(create_component))
-        .route("/api/lims/uncertainty-components/{id}", put(update_component).delete(delete_component))
+        .route(
+            "/api/lims/uncertainty-components/{id}",
+            put(update_component).delete(delete_component),
+        )
         .route("/api/lims/uncertainty/type-a", post(calculate_type_a))
         .route("/api/lims/uncertainty/type-b", post(calculate_type_b))
 }
@@ -207,65 +235,86 @@ pub async fn list_projects(
     };
 
     let mut query_builder = sqlx::query(&sql);
-    match (query.status.as_ref(), query.method_id.as_ref(), query.project_name.as_ref()) {
+    match (
+        query.status.as_ref(),
+        query.method_id.as_ref(),
+        query.project_name.as_ref(),
+    ) {
         (Some(st), Some(mid), Some(pn)) => {
             let mid_uuid = Uuid::parse_str(mid).unwrap_or(Uuid::nil());
-            query_builder = query_builder.bind(st).bind(mid_uuid).bind(format!("%{}%", pn)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(st)
+                .bind(mid_uuid)
+                .bind(format!("%{}%", pn))
+                .bind(page_size)
+                .bind(offset);
         }
         (Some(st), Some(mid), None) => {
             let mid_uuid = Uuid::parse_str(mid).unwrap_or(Uuid::nil());
-            query_builder = query_builder.bind(st).bind(mid_uuid).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(st)
+                .bind(mid_uuid)
+                .bind(page_size)
+                .bind(offset);
         }
         (Some(st), None, Some(pn)) => {
-            query_builder = query_builder.bind(st).bind(format!("%{}%", pn)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(st)
+                .bind(format!("%{}%", pn))
+                .bind(page_size)
+                .bind(offset);
         }
         (Some(st), None, None) => {
             query_builder = query_builder.bind(st).bind(page_size).bind(offset);
         }
         (None, Some(mid), Some(pn)) => {
             let mid_uuid = Uuid::parse_str(mid).unwrap_or(Uuid::nil());
-            query_builder = query_builder.bind(mid_uuid).bind(format!("%{}%", pn)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(mid_uuid)
+                .bind(format!("%{}%", pn))
+                .bind(page_size)
+                .bind(offset);
         }
         (None, Some(mid), None) => {
             let mid_uuid = Uuid::parse_str(mid).unwrap_or(Uuid::nil());
             query_builder = query_builder.bind(mid_uuid).bind(page_size).bind(offset);
         }
         (None, None, Some(pn)) => {
-            query_builder = query_builder.bind(format!("%{}%", pn)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(format!("%{}%", pn))
+                .bind(page_size)
+                .bind(offset);
         }
         (None, None, None) => {
             query_builder = query_builder.bind(page_size).bind(offset);
         }
     }
 
-    let projects = query_builder
-        .fetch_all(&state.pool)
-        .await
-        .map(|rows| {
-            rows.into_iter()
-                .map(|row| UncertaintyProject {
-                    id: row.get("id"),
-                    project_no: row.get("project_no"),
-                    project_name: row.get("project_name"),
-                    method_id: row.get("method_id"),
-                    method_name: row.get("method_name"),
-                    test_item: row.get("test_item"),
-                    measurand: row.get("measurand"),
-                    measurement_range: row.get("measurement_range"),
-                    unit: row.get("unit"),
-                    status: row.get("status"),
-                    evaluator: row.get("evaluator"),
-                    evaluation_date: row.get("evaluation_date"),
-                    combined_uncertainty: row.get("combined_uncertainty"),
-                    expanded_uncertainty: row.get("expanded_uncertainty"),
-                    coverage_factor: row.get("coverage_factor"),
-                    confidence_level: row.get("confidence_level"),
-                    notes: row.get("notes"),
-                    created_at: row.get("created_at"),
-                    updated_at: row.get("updated_at"),
-                })
-                .collect()
-        });
+    let projects = query_builder.fetch_all(&state.pool).await.map(|rows| {
+        rows.into_iter()
+            .map(|row| UncertaintyProject {
+                id: row.get("id"),
+                project_no: row.get("project_no"),
+                project_name: row.get("project_name"),
+                method_id: row.get("method_id"),
+                method_name: row.get("method_name"),
+                test_item: row.get("test_item"),
+                measurand: row.get("measurand"),
+                measurement_range: row.get("measurement_range"),
+                unit: row.get("unit"),
+                status: row.get("status"),
+                evaluator: row.get("evaluator"),
+                evaluation_date: row.get("evaluation_date"),
+                combined_uncertainty: row.get("combined_uncertainty"),
+                expanded_uncertainty: row.get("expanded_uncertainty"),
+                coverage_factor: row.get("coverage_factor"),
+                confidence_level: row.get("confidence_level"),
+                notes: row.get("notes"),
+                created_at: row.get("created_at"),
+                updated_at: row.get("updated_at"),
+            })
+            .collect()
+    });
 
     match projects {
         Ok(data) => Json(ApiResponse::success(data, "获取不确定度评定项目列表成功")),
@@ -280,7 +329,10 @@ pub async fn create_project(
     State(state): State<crate::AppState>,
     Json(req): Json<CreateUncertaintyProjectRequest>,
 ) -> Json<ApiResponse<UncertaintyProject>> {
-    let project_no = format!("UNC-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
+    let project_no = format!(
+        "UNC-{}",
+        uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+    );
 
     let row = sqlx::query(
         r#"
@@ -292,7 +344,7 @@ pub async fn create_project(
                   measurand, measurement_range, unit, status, evaluator,
                   evaluation_date::TEXT, combined_uncertainty, expanded_uncertainty,
                   coverage_factor, confidence_level, notes, created_at::TEXT, updated_at::TEXT
-        "#
+        "#,
     )
     .bind(&project_no)
     .bind(&req.project_name)
@@ -308,27 +360,30 @@ pub async fn create_project(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(UncertaintyProject {
-            id: r.get("id"),
-            project_no: r.get("project_no"),
-            project_name: r.get("project_name"),
-            method_id: r.get("method_id"),
-            method_name: r.get("method_name"),
-            test_item: r.get("test_item"),
-            measurand: r.get("measurand"),
-            measurement_range: r.get("measurement_range"),
-            unit: r.get("unit"),
-            status: r.get("status"),
-            evaluator: r.get("evaluator"),
-            evaluation_date: r.get("evaluation_date"),
-            combined_uncertainty: r.get("combined_uncertainty"),
-            expanded_uncertainty: r.get("expanded_uncertainty"),
-            coverage_factor: r.get("coverage_factor"),
-            confidence_level: r.get("confidence_level"),
-            notes: r.get("notes"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "不确定度评定项目创建成功")),
+        Ok(r) => Json(ApiResponse::success(
+            UncertaintyProject {
+                id: r.get("id"),
+                project_no: r.get("project_no"),
+                project_name: r.get("project_name"),
+                method_id: r.get("method_id"),
+                method_name: r.get("method_name"),
+                test_item: r.get("test_item"),
+                measurand: r.get("measurand"),
+                measurement_range: r.get("measurement_range"),
+                unit: r.get("unit"),
+                status: r.get("status"),
+                evaluator: r.get("evaluator"),
+                evaluation_date: r.get("evaluation_date"),
+                combined_uncertainty: r.get("combined_uncertainty"),
+                expanded_uncertainty: r.get("expanded_uncertainty"),
+                coverage_factor: r.get("coverage_factor"),
+                confidence_level: r.get("confidence_level"),
+                notes: r.get("notes"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "不确定度评定项目创建成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to create uncertainty project: {}", e);
             Json(ApiResponse::error(500, "不确定度评定项目创建失败"))
@@ -353,27 +408,30 @@ pub async fn get_project(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(UncertaintyProject {
-            id: r.get("id"),
-            project_no: r.get("project_no"),
-            project_name: r.get("project_name"),
-            method_id: r.get("method_id"),
-            method_name: r.get("method_name"),
-            test_item: r.get("test_item"),
-            measurand: r.get("measurand"),
-            measurement_range: r.get("measurement_range"),
-            unit: r.get("unit"),
-            status: r.get("status"),
-            evaluator: r.get("evaluator"),
-            evaluation_date: r.get("evaluation_date"),
-            combined_uncertainty: r.get("combined_uncertainty"),
-            expanded_uncertainty: r.get("expanded_uncertainty"),
-            coverage_factor: r.get("coverage_factor"),
-            confidence_level: r.get("confidence_level"),
-            notes: r.get("notes"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "获取不确定度评定项目成功")),
+        Ok(r) => Json(ApiResponse::success(
+            UncertaintyProject {
+                id: r.get("id"),
+                project_no: r.get("project_no"),
+                project_name: r.get("project_name"),
+                method_id: r.get("method_id"),
+                method_name: r.get("method_name"),
+                test_item: r.get("test_item"),
+                measurand: r.get("measurand"),
+                measurement_range: r.get("measurement_range"),
+                unit: r.get("unit"),
+                status: r.get("status"),
+                evaluator: r.get("evaluator"),
+                evaluation_date: r.get("evaluation_date"),
+                combined_uncertainty: r.get("combined_uncertainty"),
+                expanded_uncertainty: r.get("expanded_uncertainty"),
+                coverage_factor: r.get("coverage_factor"),
+                confidence_level: r.get("confidence_level"),
+                notes: r.get("notes"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "获取不确定度评定项目成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to fetch uncertainty project: {}", e);
             Json(ApiResponse::error(500, "获取不确定度评定项目失败"))
@@ -413,7 +471,7 @@ pub async fn update_project(
                   measurand, measurement_range, unit, status, evaluator,
                   evaluation_date::TEXT, combined_uncertainty, expanded_uncertainty,
                   coverage_factor, confidence_level, notes, created_at::TEXT, updated_at::TEXT
-        "#
+        "#,
     )
     .bind(id)
     .bind(&req.project_name)
@@ -433,27 +491,30 @@ pub async fn update_project(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(UncertaintyProject {
-            id: r.get("id"),
-            project_no: r.get("project_no"),
-            project_name: r.get("project_name"),
-            method_id: r.get("method_id"),
-            method_name: r.get("method_name"),
-            test_item: r.get("test_item"),
-            measurand: r.get("measurand"),
-            measurement_range: r.get("measurement_range"),
-            unit: r.get("unit"),
-            status: r.get("status"),
-            evaluator: r.get("evaluator"),
-            evaluation_date: r.get("evaluation_date"),
-            combined_uncertainty: r.get("combined_uncertainty"),
-            expanded_uncertainty: r.get("expanded_uncertainty"),
-            coverage_factor: r.get("coverage_factor"),
-            confidence_level: r.get("confidence_level"),
-            notes: r.get("notes"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "不确定度评定项目更新成功")),
+        Ok(r) => Json(ApiResponse::success(
+            UncertaintyProject {
+                id: r.get("id"),
+                project_no: r.get("project_no"),
+                project_name: r.get("project_name"),
+                method_id: r.get("method_id"),
+                method_name: r.get("method_name"),
+                test_item: r.get("test_item"),
+                measurand: r.get("measurand"),
+                measurement_range: r.get("measurement_range"),
+                unit: r.get("unit"),
+                status: r.get("status"),
+                evaluator: r.get("evaluator"),
+                evaluation_date: r.get("evaluation_date"),
+                combined_uncertainty: r.get("combined_uncertainty"),
+                expanded_uncertainty: r.get("expanded_uncertainty"),
+                coverage_factor: r.get("coverage_factor"),
+                confidence_level: r.get("confidence_level"),
+                notes: r.get("notes"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "不确定度评定项目更新成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to update uncertainty project: {}", e);
             Json(ApiResponse::error(500, "不确定度评定项目更新失败"))
@@ -501,7 +562,7 @@ pub async fn list_sources(
         FROM qa_lims_uncertainty_sources
         WHERE project_id = $1
         ORDER BY sort_order ASC, created_at ASC
-        "#
+        "#,
     )
     .bind(id)
     .fetch_all(&state.pool)
@@ -553,7 +614,7 @@ pub async fn create_source(
         RETURNING id, project_id, source_name, source_type, description,
                   distribution_type, sensitivity_coefficient, sort_order,
                   created_at::TEXT, updated_at::TEXT
-        "#
+        "#,
     )
     .bind(project_id)
     .bind(&req.source_name)
@@ -566,18 +627,21 @@ pub async fn create_source(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(UncertaintySource {
-            id: r.get("id"),
-            project_id: r.get("project_id"),
-            source_name: r.get("source_name"),
-            source_type: r.get("source_type"),
-            description: r.get("description"),
-            distribution_type: r.get("distribution_type"),
-            sensitivity_coefficient: r.get("sensitivity_coefficient"),
-            sort_order: r.get("sort_order"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "不确定度来源创建成功")),
+        Ok(r) => Json(ApiResponse::success(
+            UncertaintySource {
+                id: r.get("id"),
+                project_id: r.get("project_id"),
+                source_name: r.get("source_name"),
+                source_type: r.get("source_type"),
+                description: r.get("description"),
+                distribution_type: r.get("distribution_type"),
+                sensitivity_coefficient: r.get("sensitivity_coefficient"),
+                sort_order: r.get("sort_order"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "不确定度来源创建成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to create uncertainty source: {}", e);
             Json(ApiResponse::error(500, "不确定度来源创建失败"))
@@ -609,7 +673,7 @@ pub async fn update_source(
         RETURNING id, project_id, source_name, source_type, description,
                   distribution_type, sensitivity_coefficient, sort_order,
                   created_at::TEXT, updated_at::TEXT
-        "#
+        "#,
     )
     .bind(id)
     .bind(&req.source_name)
@@ -622,18 +686,21 @@ pub async fn update_source(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(UncertaintySource {
-            id: r.get("id"),
-            project_id: r.get("project_id"),
-            source_name: r.get("source_name"),
-            source_type: r.get("source_type"),
-            description: r.get("description"),
-            distribution_type: r.get("distribution_type"),
-            sensitivity_coefficient: r.get("sensitivity_coefficient"),
-            sort_order: r.get("sort_order"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "不确定度来源更新成功")),
+        Ok(r) => Json(ApiResponse::success(
+            UncertaintySource {
+                id: r.get("id"),
+                project_id: r.get("project_id"),
+                source_name: r.get("source_name"),
+                source_type: r.get("source_type"),
+                description: r.get("description"),
+                distribution_type: r.get("distribution_type"),
+                sensitivity_coefficient: r.get("sensitivity_coefficient"),
+                sort_order: r.get("sort_order"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "不确定度来源更新成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to update uncertainty source: {}", e);
             Json(ApiResponse::error(500, "不确定度来源更新失败"))
@@ -683,7 +750,7 @@ pub async fn list_components(
         LEFT JOIN qa_lims_uncertainty_sources s ON c.source_id = s.id
         WHERE c.project_id = $1
         ORDER BY c.created_at ASC
-        "#
+        "#,
     )
     .bind(id)
     .fetch_all(&state.pool)
@@ -734,12 +801,11 @@ pub async fn create_component(
         Err(_) => return Json(ApiResponse::error(400, "无效的来源ID")),
     };
 
-    let source_row = sqlx::query(
-        "SELECT source_name FROM qa_lims_uncertainty_sources WHERE id = $1"
-    )
-    .bind(source_id)
-    .fetch_optional(&state.pool)
-    .await;
+    let source_row =
+        sqlx::query("SELECT source_name FROM qa_lims_uncertainty_sources WHERE id = $1")
+            .bind(source_id)
+            .fetch_optional(&state.pool)
+            .await;
 
     let source_name: Option<String> = match source_row {
         Ok(Some(row)) => Some(row.get("source_name")),
@@ -758,7 +824,7 @@ pub async fn create_component(
                   component_name, standard_uncertainty, relative_uncertainty,
                   sensitivity_coefficient, degrees_freedom, calculation_method,
                   parameters, description, created_at::TEXT, updated_at::TEXT
-        "#
+        "#,
     )
     .bind(project_id)
     .bind(source_id)
@@ -776,23 +842,26 @@ pub async fn create_component(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(UncertaintyComponent {
-            id: r.get("id"),
-            project_id: r.get("project_id"),
-            source_id: r.get("source_id"),
-            source_name: r.get("source_name"),
-            component_type: r.get("component_type"),
-            component_name: r.get("component_name"),
-            standard_uncertainty: r.get("standard_uncertainty"),
-            relative_uncertainty: r.get("relative_uncertainty"),
-            sensitivity_coefficient: r.get("sensitivity_coefficient"),
-            degrees_freedom: r.get("degrees_freedom"),
-            calculation_method: r.get("calculation_method"),
-            parameters: r.get("parameters"),
-            description: r.get("description"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "不确定度分量创建成功")),
+        Ok(r) => Json(ApiResponse::success(
+            UncertaintyComponent {
+                id: r.get("id"),
+                project_id: r.get("project_id"),
+                source_id: r.get("source_id"),
+                source_name: r.get("source_name"),
+                component_type: r.get("component_type"),
+                component_name: r.get("component_name"),
+                standard_uncertainty: r.get("standard_uncertainty"),
+                relative_uncertainty: r.get("relative_uncertainty"),
+                sensitivity_coefficient: r.get("sensitivity_coefficient"),
+                degrees_freedom: r.get("degrees_freedom"),
+                calculation_method: r.get("calculation_method"),
+                parameters: r.get("parameters"),
+                description: r.get("description"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "不确定度分量创建成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to create uncertainty component: {}", e);
             Json(ApiResponse::error(500, "不确定度分量创建失败"))
@@ -827,7 +896,7 @@ pub async fn update_component(
                   component_name, standard_uncertainty, relative_uncertainty,
                   sensitivity_coefficient, degrees_freedom, calculation_method,
                   parameters, description, created_at::TEXT, updated_at::TEXT
-        "#
+        "#,
     )
     .bind(id)
     .bind(&req.component_name)
@@ -842,23 +911,26 @@ pub async fn update_component(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(UncertaintyComponent {
-            id: r.get("id"),
-            project_id: r.get("project_id"),
-            source_id: r.get("source_id"),
-            source_name: r.get("source_name"),
-            component_type: r.get("component_type"),
-            component_name: r.get("component_name"),
-            standard_uncertainty: r.get("standard_uncertainty"),
-            relative_uncertainty: r.get("relative_uncertainty"),
-            sensitivity_coefficient: r.get("sensitivity_coefficient"),
-            degrees_freedom: r.get("degrees_freedom"),
-            calculation_method: r.get("calculation_method"),
-            parameters: r.get("parameters"),
-            description: r.get("description"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "不确定度分量更新成功")),
+        Ok(r) => Json(ApiResponse::success(
+            UncertaintyComponent {
+                id: r.get("id"),
+                project_id: r.get("project_id"),
+                source_id: r.get("source_id"),
+                source_name: r.get("source_name"),
+                component_type: r.get("component_type"),
+                component_name: r.get("component_name"),
+                standard_uncertainty: r.get("standard_uncertainty"),
+                relative_uncertainty: r.get("relative_uncertainty"),
+                sensitivity_coefficient: r.get("sensitivity_coefficient"),
+                degrees_freedom: r.get("degrees_freedom"),
+                calculation_method: r.get("calculation_method"),
+                parameters: r.get("parameters"),
+                description: r.get("description"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "不确定度分量更新成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to update uncertainty component: {}", e);
             Json(ApiResponse::error(500, "不确定度分量更新失败"))
@@ -911,9 +983,11 @@ pub async fn calculate_type_a(
     let mean = req.measurements.iter().sum::<f64>() / n;
 
     let variance = if n > 1.0 {
-        req.measurements.iter()
+        req.measurements
+            .iter()
             .map(|x| (x - mean).powi(2))
-            .sum::<f64>() / (n - 1.0)
+            .sum::<f64>()
+            / (n - 1.0)
     } else {
         0.0
     };
@@ -941,7 +1015,7 @@ pub async fn calculate_type_a(
                   component_name, standard_uncertainty, relative_uncertainty,
                   sensitivity_coefficient, degrees_freedom, calculation_method,
                   parameters, description, created_at::TEXT, updated_at::TEXT
-        "#
+        "#,
     )
     .bind(project_id)
     .bind(source_id)
@@ -954,23 +1028,26 @@ pub async fn calculate_type_a(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(UncertaintyComponent {
-            id: r.get("id"),
-            project_id: r.get("project_id"),
-            source_id: r.get("source_id"),
-            source_name: r.get("source_name"),
-            component_type: r.get("component_type"),
-            component_name: r.get("component_name"),
-            standard_uncertainty: r.get("standard_uncertainty"),
-            relative_uncertainty: r.get("relative_uncertainty"),
-            sensitivity_coefficient: r.get("sensitivity_coefficient"),
-            degrees_freedom: r.get("degrees_freedom"),
-            calculation_method: r.get("calculation_method"),
-            parameters: r.get("parameters"),
-            description: r.get("description"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "A类不确定度计算完成")),
+        Ok(r) => Json(ApiResponse::success(
+            UncertaintyComponent {
+                id: r.get("id"),
+                project_id: r.get("project_id"),
+                source_id: r.get("source_id"),
+                source_name: r.get("source_name"),
+                component_type: r.get("component_type"),
+                component_name: r.get("component_name"),
+                standard_uncertainty: r.get("standard_uncertainty"),
+                relative_uncertainty: r.get("relative_uncertainty"),
+                sensitivity_coefficient: r.get("sensitivity_coefficient"),
+                degrees_freedom: r.get("degrees_freedom"),
+                calculation_method: r.get("calculation_method"),
+                parameters: r.get("parameters"),
+                description: r.get("description"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "A类不确定度计算完成",
+        )),
         Err(e) => {
             tracing::error!("Failed to calculate Type A uncertainty: {}", e);
             Json(ApiResponse::error(500, "A类不确定度计算失败"))
@@ -1021,7 +1098,7 @@ pub async fn calculate_type_b(
                   component_name, standard_uncertainty, relative_uncertainty,
                   sensitivity_coefficient, degrees_freedom, calculation_method,
                   parameters, description, created_at::TEXT, updated_at::TEXT
-        "#
+        "#,
     )
     .bind(project_id)
     .bind(source_id)
@@ -1035,23 +1112,26 @@ pub async fn calculate_type_b(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(UncertaintyComponent {
-            id: r.get("id"),
-            project_id: r.get("project_id"),
-            source_id: r.get("source_id"),
-            source_name: r.get("source_name"),
-            component_type: r.get("component_type"),
-            component_name: r.get("component_name"),
-            standard_uncertainty: r.get("standard_uncertainty"),
-            relative_uncertainty: r.get("relative_uncertainty"),
-            sensitivity_coefficient: r.get("sensitivity_coefficient"),
-            degrees_freedom: r.get("degrees_freedom"),
-            calculation_method: r.get("calculation_method"),
-            parameters: r.get("parameters"),
-            description: r.get("description"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "B类不确定度计算完成")),
+        Ok(r) => Json(ApiResponse::success(
+            UncertaintyComponent {
+                id: r.get("id"),
+                project_id: r.get("project_id"),
+                source_id: r.get("source_id"),
+                source_name: r.get("source_name"),
+                component_type: r.get("component_type"),
+                component_name: r.get("component_name"),
+                standard_uncertainty: r.get("standard_uncertainty"),
+                relative_uncertainty: r.get("relative_uncertainty"),
+                sensitivity_coefficient: r.get("sensitivity_coefficient"),
+                degrees_freedom: r.get("degrees_freedom"),
+                calculation_method: r.get("calculation_method"),
+                parameters: r.get("parameters"),
+                description: r.get("description"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "B类不确定度计算完成",
+        )),
         Err(e) => {
             tracing::error!("Failed to calculate Type B uncertainty: {}", e);
             Json(ApiResponse::error(500, "B类不确定度计算失败"))
@@ -1113,12 +1193,11 @@ pub async fn calculate_combined(
         f64::INFINITY
     };
 
-    let project_row = sqlx::query(
-        "SELECT coverage_factor FROM qa_lims_uncertainty_projects WHERE id = $1"
-    )
-    .bind(id)
-    .fetch_optional(&state.pool)
-    .await;
+    let project_row =
+        sqlx::query("SELECT coverage_factor FROM qa_lims_uncertainty_projects WHERE id = $1")
+            .bind(id)
+            .fetch_optional(&state.pool)
+            .await;
 
     let coverage_factor = match project_row {
         Ok(Some(row)) => row.get::<Option<f64>, _>("coverage_factor").unwrap_or(2.0),
@@ -1132,7 +1211,7 @@ pub async fn calculate_combined(
         UPDATE qa_lims_uncertainty_projects 
         SET combined_uncertainty = $2, expanded_uncertainty = $3, updated_at = NOW()
         WHERE id = $1
-        "#
+        "#,
     )
     .bind(id)
     .bind(combined_uncertainty)
@@ -1202,15 +1281,18 @@ pub async fn generate_report(
     .await;
 
     let sources: Vec<serde_json::Value> = match source_rows {
-        Ok(rows) => rows.iter()
-            .map(|row| serde_json::json!({
-                "id": row.get::<String, _>("id"),
-                "source_name": row.get::<String, _>("source_name"),
-                "source_type": row.get::<String, _>("source_type"),
-                "description": row.get::<Option<String>, _>("description"),
-                "distribution_type": row.get::<Option<String>, _>("distribution_type"),
-                "sensitivity_coefficient": row.get::<Option<f64>, _>("sensitivity_coefficient"),
-            }))
+        Ok(rows) => rows
+            .iter()
+            .map(|row| {
+                serde_json::json!({
+                    "id": row.get::<String, _>("id"),
+                    "source_name": row.get::<String, _>("source_name"),
+                    "source_type": row.get::<String, _>("source_type"),
+                    "description": row.get::<Option<String>, _>("description"),
+                    "distribution_type": row.get::<Option<String>, _>("distribution_type"),
+                    "sensitivity_coefficient": row.get::<Option<f64>, _>("sensitivity_coefficient"),
+                })
+            })
             .collect(),
         Err(e) => return Json(ApiResponse::error(500, &format!("查询来源失败: {}", e))),
     };
@@ -1224,25 +1306,28 @@ pub async fn generate_report(
         LEFT JOIN qa_lims_uncertainty_sources s ON c.source_id = s.id
         WHERE c.project_id = $1
         ORDER BY c.created_at ASC
-        "#
+        "#,
     )
     .bind(id)
     .fetch_all(&state.pool)
     .await;
 
     let components: Vec<serde_json::Value> = match component_rows {
-        Ok(rows) => rows.iter()
-            .map(|row| serde_json::json!({
-                "id": row.get::<String, _>("id"),
-                "component_type": row.get::<String, _>("component_type"),
-                "component_name": row.get::<String, _>("component_name"),
-                "source_name": row.get::<Option<String>, _>("source_name"),
-                "standard_uncertainty": row.get::<Option<f64>, _>("standard_uncertainty"),
-                "relative_uncertainty": row.get::<Option<f64>, _>("relative_uncertainty"),
-                "sensitivity_coefficient": row.get::<Option<f64>, _>("sensitivity_coefficient"),
-                "degrees_freedom": row.get::<Option<f64>, _>("degrees_freedom"),
-                "calculation_method": row.get::<Option<String>, _>("calculation_method"),
-            }))
+        Ok(rows) => rows
+            .iter()
+            .map(|row| {
+                serde_json::json!({
+                    "id": row.get::<String, _>("id"),
+                    "component_type": row.get::<String, _>("component_type"),
+                    "component_name": row.get::<String, _>("component_name"),
+                    "source_name": row.get::<Option<String>, _>("source_name"),
+                    "standard_uncertainty": row.get::<Option<f64>, _>("standard_uncertainty"),
+                    "relative_uncertainty": row.get::<Option<f64>, _>("relative_uncertainty"),
+                    "sensitivity_coefficient": row.get::<Option<f64>, _>("sensitivity_coefficient"),
+                    "degrees_freedom": row.get::<Option<f64>, _>("degrees_freedom"),
+                    "calculation_method": row.get::<Option<String>, _>("calculation_method"),
+                })
+            })
             .collect(),
         Err(e) => return Json(ApiResponse::error(500, &format!("查询分量失败: {}", e))),
     };

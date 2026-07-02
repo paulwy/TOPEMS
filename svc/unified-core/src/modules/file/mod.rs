@@ -1,9 +1,9 @@
 //! File module - File Storage and Management
 
-pub mod upload;
 pub mod download;
-pub mod manage;
 pub mod folder;
+pub mod manage;
+pub mod upload;
 
 use sqlx::PgPool;
 

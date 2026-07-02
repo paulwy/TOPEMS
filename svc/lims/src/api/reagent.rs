@@ -1,4 +1,8 @@
-use axum::{extract::State, routing::{delete, get, post, put}, Json, Router};
+use axum::{
+    extract::State,
+    routing::{delete, get, post, put},
+    Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared::ApiResponse;
@@ -7,8 +11,14 @@ use crate::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/lims/reagents", get(list_reagents).post(create_reagent))
-        .route("/api/lims/reagents/{id}", get(get_reagent).put(update_reagent).delete(delete_reagent))
+        .route(
+            "/api/lims/reagents",
+            get(list_reagents).post(create_reagent),
+        )
+        .route(
+            "/api/lims/reagents/{id}",
+            get(get_reagent).put(update_reagent).delete(delete_reagent),
+        )
 }
 
 #[derive(Debug, Deserialize)]
@@ -84,40 +94,44 @@ pub async fn list_reagents(
     let mut query_builder = sqlx::query(&sql);
     match (query.status.as_ref(), query.name.as_ref()) {
         (Some(st), Some(nm)) => {
-            query_builder = query_builder.bind(st).bind(format!("%{}%", nm)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(st)
+                .bind(format!("%{}%", nm))
+                .bind(page_size)
+                .bind(offset);
         }
         (Some(st), None) => {
             query_builder = query_builder.bind(st).bind(page_size).bind(offset);
         }
         (None, Some(nm)) => {
-            query_builder = query_builder.bind(format!("%{}%", nm)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(format!("%{}%", nm))
+                .bind(page_size)
+                .bind(offset);
         }
         (None, None) => {
             query_builder = query_builder.bind(page_size).bind(offset);
         }
     }
 
-    let reagents = query_builder
-        .fetch_all(&state.pool)
-        .await
-        .map(|rows| {
-            rows.into_iter()
-                .map(|row| Reagent {
-                    id: row.get("id"),
-                    reagent_no: row.get("reagent_no"),
-                    name: row.get("name"),
-                    specification: row.get("specification"),
-                    manufacturer: row.get("manufacturer"),
-                    batch_no: row.get("batch_no"),
-                    quantity: row.get("quantity"),
-                    unit: row.get("unit"),
-                    status: row.get("status"),
-                    expired_at: row.get("expired_at"),
-                    created_at: row.get("created_at"),
-                    updated_at: row.get("updated_at"),
-                })
-                .collect()
-        });
+    let reagents = query_builder.fetch_all(&state.pool).await.map(|rows| {
+        rows.into_iter()
+            .map(|row| Reagent {
+                id: row.get("id"),
+                reagent_no: row.get("reagent_no"),
+                name: row.get("name"),
+                specification: row.get("specification"),
+                manufacturer: row.get("manufacturer"),
+                batch_no: row.get("batch_no"),
+                quantity: row.get("quantity"),
+                unit: row.get("unit"),
+                status: row.get("status"),
+                expired_at: row.get("expired_at"),
+                created_at: row.get("created_at"),
+                updated_at: row.get("updated_at"),
+            })
+            .collect()
+    });
 
     match reagents {
         Ok(data) => Json(ApiResponse::success(data, "获取试剂列表成功")),
@@ -132,7 +146,10 @@ pub async fn create_reagent(
     State(state): State<crate::AppState>,
     Json(req): Json<CreateReagentRequest>,
 ) -> Json<ApiResponse<Reagent>> {
-    let reagent_no = format!("RGT-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
+    let reagent_no = format!(
+        "RGT-{}",
+        uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+    );
 
     let row = sqlx::query(
         "INSERT INTO qa_lab_reagents (reagent_no, name, specification, manufacturer, batch_no, quantity, unit, status, expired_at) VALUES ($1, $2, $3, $4, $5, $6, $7, 'normal', $8) RETURNING id, reagent_no, name, specification, manufacturer, batch_no, quantity, unit, status, expired_at::TEXT, created_at::TEXT, updated_at::TEXT"
@@ -149,20 +166,23 @@ pub async fn create_reagent(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(Reagent {
-            id: r.get("id"),
-            reagent_no: r.get("reagent_no"),
-            name: r.get("name"),
-            specification: r.get("specification"),
-            manufacturer: r.get("manufacturer"),
-            batch_no: r.get("batch_no"),
-            quantity: r.get("quantity"),
-            unit: r.get("unit"),
-            status: r.get("status"),
-            expired_at: r.get("expired_at"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "试剂创建成功")),
+        Ok(r) => Json(ApiResponse::success(
+            Reagent {
+                id: r.get("id"),
+                reagent_no: r.get("reagent_no"),
+                name: r.get("name"),
+                specification: r.get("specification"),
+                manufacturer: r.get("manufacturer"),
+                batch_no: r.get("batch_no"),
+                quantity: r.get("quantity"),
+                unit: r.get("unit"),
+                status: r.get("status"),
+                expired_at: r.get("expired_at"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "试剂创建成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to create reagent: {}", e);
             Json(ApiResponse::error(500, "试剂创建失败"))
@@ -187,20 +207,23 @@ pub async fn get_reagent(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(Reagent {
-            id: r.get("id"),
-            reagent_no: r.get("reagent_no"),
-            name: r.get("name"),
-            specification: r.get("specification"),
-            manufacturer: r.get("manufacturer"),
-            batch_no: r.get("batch_no"),
-            quantity: r.get("quantity"),
-            unit: r.get("unit"),
-            status: r.get("status"),
-            expired_at: r.get("expired_at"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "获取试剂成功")),
+        Ok(r) => Json(ApiResponse::success(
+            Reagent {
+                id: r.get("id"),
+                reagent_no: r.get("reagent_no"),
+                name: r.get("name"),
+                specification: r.get("specification"),
+                manufacturer: r.get("manufacturer"),
+                batch_no: r.get("batch_no"),
+                quantity: r.get("quantity"),
+                unit: r.get("unit"),
+                status: r.get("status"),
+                expired_at: r.get("expired_at"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "获取试剂成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to fetch reagent: {}", e);
             Json(ApiResponse::error(500, "获取试剂失败"))
@@ -234,20 +257,23 @@ pub async fn update_reagent(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(Reagent {
-            id: r.get("id"),
-            reagent_no: r.get("reagent_no"),
-            name: r.get("name"),
-            specification: r.get("specification"),
-            manufacturer: r.get("manufacturer"),
-            batch_no: r.get("batch_no"),
-            quantity: r.get("quantity"),
-            unit: r.get("unit"),
-            status: r.get("status"),
-            expired_at: r.get("expired_at"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "试剂更新成功")),
+        Ok(r) => Json(ApiResponse::success(
+            Reagent {
+                id: r.get("id"),
+                reagent_no: r.get("reagent_no"),
+                name: r.get("name"),
+                specification: r.get("specification"),
+                manufacturer: r.get("manufacturer"),
+                batch_no: r.get("batch_no"),
+                quantity: r.get("quantity"),
+                unit: r.get("unit"),
+                status: r.get("status"),
+                expired_at: r.get("expired_at"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "试剂更新成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to update reagent: {}", e);
             Json(ApiResponse::error(500, "试剂更新失败"))
@@ -561,7 +587,7 @@ pub async fn adjust_stock(
         "set" => {
             // For "set", we need the current quantity
             let current = sqlx::query_scalar::<_, Option<f64>>(
-                "SELECT quantity FROM qa_lab_reagents WHERE id = $1"
+                "SELECT quantity FROM qa_lab_reagents WHERE id = $1",
             )
             .bind(id)
             .fetch_optional(&state.pool)

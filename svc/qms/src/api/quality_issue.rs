@@ -2,7 +2,7 @@
 
 use axum::{extract::State, Json};
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, types::Uuid};
+use sqlx::{types::Uuid, FromRow};
 use topems_shared::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -83,9 +83,15 @@ pub async fn create_issue(
     State(state): State<crate::AppState>,
     Json(req): Json<CreateIssueRequest>,
 ) -> Json<ApiResponse<QualityIssue>> {
-    let issue_no = format!("QI-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
-    
-    let related_inspection_id = req.related_inspection_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
+    let issue_no = format!(
+        "QI-{}",
+        uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+    );
+
+    let related_inspection_id = req
+        .related_inspection_id
+        .as_ref()
+        .and_then(|s| Uuid::parse_str(s).ok());
 
     let issue = sqlx::query_as::<_, QualityIssue>(r#"INSERT INTO qa_quality_issues (issue_no, title, description, severity, source, related_inspection_id, status, created_by) VALUES ($1, $2, $3, $4, $5, $6, 'open', $7) RETURNING id, issue_no, title, description, severity, status, source, related_inspection_id::TEXT, created_by, created_at::TEXT, resolved_at::TEXT, updated_at::TEXT"#).bind(issue_no).bind(req.title).bind(req.description).bind(req.severity).bind(req.source).bind(related_inspection_id).bind(req.created_by)
     .fetch_one(&state.pool)
@@ -177,9 +183,10 @@ pub async fn delete_issue(
         Err(_) => return Json(ApiResponse::error(400, "无效的问题ID")),
     };
 
-    let result = sqlx::query(r#"DELETE FROM qa_quality_issues WHERE id = $1"#).bind(id)
-    .execute(&state.pool)
-    .await;
+    let result = sqlx::query(r#"DELETE FROM qa_quality_issues WHERE id = $1"#)
+        .bind(id)
+        .execute(&state.pool)
+        .await;
 
     match result {
         Ok(_) => Json(ApiResponse::success(true, "质量问题删除成功")),

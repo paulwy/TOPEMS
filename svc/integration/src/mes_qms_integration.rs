@@ -5,10 +5,10 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, PgPool, Row, types::Uuid};
-use tracing::{info, warn, error};
+use sqlx::{types::Uuid, FromRow, PgPool, Row};
+use tracing::{error, info, warn};
 
-use crate::sync_retry::{RetryExecutor, RetryConfig, RetryResult};
+use crate::sync_retry::{RetryConfig, RetryExecutor, RetryResult};
 
 // ==================== Data Types ====================
 
@@ -148,7 +148,7 @@ pub async fn init_mes_qms_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
             created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
             updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
         )
-        "#
+        "#,
     )
     .execute(pool)
     .await?;
@@ -159,9 +159,11 @@ pub async fn init_mes_qms_tables(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_mes_qms_sync_direction ON mes_qms_sync(direction)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_mes_qms_sync_mes_record ON mes_qms_sync(mes_record_id)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_mes_qms_sync_mes_record ON mes_qms_sync(mes_record_id)",
+    )
+    .execute(pool)
+    .await?;
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_mes_qms_sync_qms_inspection ON mes_qms_sync(qms_inspection_id)")
         .execute(pool)
         .await?;
@@ -193,7 +195,7 @@ pub async fn list_mes_qms_sync(
                 product_code, batch_no, quantity, synced, sync_status, sync_error,
                 retry_count, max_retries, payload, result_payload, last_synced_at,
                 created_at, updated_at
-           FROM mes_qms_sync WHERE 1=1"
+           FROM mes_qms_sync WHERE 1=1",
     );
 
     let mut params: Vec<String> = Vec::new();
@@ -233,7 +235,7 @@ pub async fn get_mes_qms_sync(pool: &PgPool, id: Uuid) -> Result<Option<MesQmsSy
                 product_code, batch_no, quantity, synced, sync_status, sync_error,
                 retry_count, max_retries, payload, result_payload, last_synced_at,
                 created_at, updated_at
-           FROM mes_qms_sync WHERE id = $1"
+           FROM mes_qms_sync WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(pool)
@@ -247,10 +249,19 @@ pub async fn create_sync_record(
     let id = Uuid::new_v4();
     let now = Utc::now();
 
-    let mes_uuid = req.mes_record_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
-    let qms_uuid = req.qms_inspection_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
+    let mes_uuid = req
+        .mes_record_id
+        .as_ref()
+        .and_then(|s| Uuid::parse_str(s).ok());
+    let qms_uuid = req
+        .qms_inspection_id
+        .as_ref()
+        .and_then(|s| Uuid::parse_str(s).ok());
     let order_uuid = req.order_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
-    let product_uuid = req.product_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
+    let product_uuid = req
+        .product_id
+        .as_ref()
+        .and_then(|s| Uuid::parse_str(s).ok());
 
     let result = sqlx::query_as::<_, MesQmsSync>(
         "INSERT INTO mes_qms_sync (
@@ -316,7 +327,7 @@ pub async fn update_sync_status(
                   qms_inspection_id, order_id, order_no, product_id, product_name,
                   product_code, batch_no, quantity, synced, sync_status, sync_error,
                   retry_count, max_retries, payload, result_payload, last_synced_at,
-                  created_at, updated_at"
+                  created_at, updated_at",
     )
     .bind(id)
     .bind(status)
@@ -338,7 +349,7 @@ pub async fn increment_retry_count(
         "UPDATE mes_qms_sync SET 
             retry_count = retry_count + 1, sync_status = 'retrying',
             sync_error = $2, updated_at = NOW()
-         WHERE id = $1"
+         WHERE id = $1",
     )
     .bind(id)
     .bind(error)
@@ -363,12 +374,14 @@ pub async fn trigger_qms_inspection(
 
     let production_data = fetch_mes_production_record(pool, mes_url, record_id).await?;
 
-    let inspection_type = req.inspection_type
+    let inspection_type = req
+        .inspection_type
         .clone()
         .unwrap_or_else(|| "process_inspection".to_string());
 
     let quantity = req.quantity.unwrap_or_else(|| {
-        production_data.get("quantity_produced")
+        production_data
+            .get("quantity_produced")
             .and_then(|v| v.as_f64())
             .unwrap_or(0.0)
     });
@@ -379,24 +392,31 @@ pub async fn trigger_qms_inspection(
         &production_data,
         quantity,
         req.triggered_by.as_deref().unwrap_or("system"),
-    ).await?;
+    )
+    .await?;
 
-    let order_id = production_data.get("order_id")
+    let order_id = production_data
+        .get("order_id")
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
-    let order_no = production_data.get("order_no")
+    let order_no = production_data
+        .get("order_no")
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
-    let product_id = production_data.get("product_id")
+    let product_id = production_data
+        .get("product_id")
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
-    let product_name = production_data.get("product_name")
+    let product_name = production_data
+        .get("product_name")
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
-    let product_code = production_data.get("product_code")
+    let product_code = production_data
+        .get("product_code")
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
-    let batch_no = production_data.get("batch_no")
+    let batch_no = production_data
+        .get("batch_no")
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
 
@@ -416,7 +436,8 @@ pub async fn trigger_qms_inspection(
         payload: Some(production_data),
     };
 
-    let sync_record = create_sync_record(pool, &sync_req).await
+    let sync_record = create_sync_record(pool, &sync_req)
+        .await
         .map_err(|e| format!("创建同步记录失败: {}", e))?;
 
     let result_payload = serde_json::json!({
@@ -432,9 +453,14 @@ pub async fn trigger_qms_inspection(
         true,
         None,
         Some(&result_payload),
-    ).await.map_err(|e| format!("更新同步状态失败: {}", e))?;
+    )
+    .await
+    .map_err(|e| format!("更新同步状态失败: {}", e))?;
 
-    info!("QMS质检任务创建成功 - 同步ID: {}, 质检ID: {}", updated.id, qms_inspection_id);
+    info!(
+        "QMS质检任务创建成功 - 同步ID: {}, 质检ID: {}",
+        updated.id, qms_inspection_id
+    );
     Ok(updated)
 }
 
@@ -447,12 +473,13 @@ pub async fn sync_quality_result_to_mes(
 ) -> Result<MesQmsSync, String> {
     info!("同步QMS质检结果到MES - 质检ID: {}", req.inspection_id);
 
-    let inspection_id = Uuid::parse_str(&req.inspection_id)
-        .map_err(|e| format!("无效的质检ID: {}", e))?;
+    let inspection_id =
+        Uuid::parse_str(&req.inspection_id).map_err(|e| format!("无效的质检ID: {}", e))?;
 
     let inspection_data = fetch_qms_inspection(pool, qms_url, inspection_id).await?;
 
-    let status = inspection_data.get("status")
+    let status = inspection_data
+        .get("status")
         .and_then(|v| v.as_str())
         .unwrap_or("pending");
 
@@ -460,10 +487,13 @@ pub async fn sync_quality_result_to_mes(
         warn!("质检尚未完成，跳过同步 - 当前状态: {}", status);
     }
 
-    let mes_record_id = req.production_record_id.as_ref()
+    let mes_record_id = req
+        .production_record_id
+        .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok())
         .or_else(|| {
-            inspection_data.get("mes_record_id")
+            inspection_data
+                .get("mes_record_id")
                 .and_then(|v| v.as_str())
                 .and_then(|s| Uuid::parse_str(s).ok())
         });
@@ -474,26 +504,31 @@ pub async fn sync_quality_result_to_mes(
         update_mes_quality_record(pool, mes_url, mes_id, &inspection_data).await?;
     }
 
-    let order_id = inspection_data.get("order_id")
+    let order_id = inspection_data
+        .get("order_id")
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
-    let order_no = inspection_data.get("order_no")
+    let order_no = inspection_data
+        .get("order_no")
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
-    let product_id = inspection_data.get("product_id")
+    let product_id = inspection_data
+        .get("product_id")
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
-    let product_name = inspection_data.get("product_name")
+    let product_name = inspection_data
+        .get("product_name")
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
-    let product_code = inspection_data.get("product_code")
+    let product_code = inspection_data
+        .get("product_code")
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
-    let batch_no = inspection_data.get("batch_no")
+    let batch_no = inspection_data
+        .get("batch_no")
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
-    let quantity = inspection_data.get("quantity")
-        .and_then(|v| v.as_f64());
+    let quantity = inspection_data.get("quantity").and_then(|v| v.as_f64());
 
     let sync_req = CreateMesQmsSyncRequest {
         sync_type: SYNC_TYPE_QUALITY_RESULT.to_string(),
@@ -511,7 +546,8 @@ pub async fn sync_quality_result_to_mes(
         payload: Some(inspection_data.clone()),
     };
 
-    let sync_record = create_sync_record(pool, &sync_req).await
+    let sync_record = create_sync_record(pool, &sync_req)
+        .await
         .map_err(|e| format!("创建同步记录失败: {}", e))?;
 
     let result_payload = serde_json::json!({
@@ -527,7 +563,9 @@ pub async fn sync_quality_result_to_mes(
         true,
         None,
         Some(&result_payload),
-    ).await.map_err(|e| format!("更新同步状态失败: {}", e))?;
+    )
+    .await
+    .map_err(|e| format!("更新同步状态失败: {}", e))?;
 
     info!("质检结果同步到MES成功 - 同步ID: {}", updated.id);
     Ok(updated)
@@ -542,8 +580,7 @@ pub async fn sync_trace_chain_data(
 ) -> Result<MesQmsSync, String> {
     info!("同步质量追溯链数据 - 工单ID: {}", req.order_id);
 
-    let order_id = Uuid::parse_str(&req.order_id)
-        .map_err(|e| format!("无效的工单ID: {}", e))?;
+    let order_id = Uuid::parse_str(&req.order_id).map_err(|e| format!("无效的工单ID: {}", e))?;
 
     let direction = req.direction.as_deref().unwrap_or("forward");
 
@@ -556,16 +593,20 @@ pub async fn sync_trace_chain_data(
         mes_record_type: Some("trace_chain".to_string()),
         qms_inspection_id: None,
         order_id: Some(req.order_id.clone()),
-        order_no: trace_data.get("order_no")
+        order_no: trace_data
+            .get("order_no")
             .and_then(|v| v.as_str())
             .map(|s| s.to_string()),
-        product_id: trace_data.get("product_id")
+        product_id: trace_data
+            .get("product_id")
             .and_then(|v| v.as_str())
             .map(|s| s.to_string()),
-        product_name: trace_data.get("product_name")
+        product_name: trace_data
+            .get("product_name")
             .and_then(|v| v.as_str())
             .map(|s| s.to_string()),
-        product_code: trace_data.get("product_code")
+        product_code: trace_data
+            .get("product_code")
             .and_then(|v| v.as_str())
             .map(|s| s.to_string()),
         batch_no: None,
@@ -573,7 +614,8 @@ pub async fn sync_trace_chain_data(
         payload: Some(trace_data.clone()),
     };
 
-    let sync_record = create_sync_record(pool, &sync_req).await
+    let sync_record = create_sync_record(pool, &sync_req)
+        .await
         .map_err(|e| format!("创建同步记录失败: {}", e))?;
 
     let result_payload = serde_json::json!({
@@ -596,7 +638,9 @@ pub async fn sync_trace_chain_data(
         true,
         None,
         Some(&result_payload),
-    ).await.map_err(|e| format!("更新同步状态失败: {}", e))?;
+    )
+    .await
+    .map_err(|e| format!("更新同步状态失败: {}", e))?;
 
     info!("追溯链数据同步成功 - 同步ID: {}", updated.id);
     Ok(updated)
@@ -611,29 +655,33 @@ pub async fn handle_defect_handling(
 ) -> Result<MesQmsSync, String> {
     info!("处理不合格品流程联动 - 质检ID: {}", req.inspection_id);
 
-    let inspection_id = Uuid::parse_str(&req.inspection_id)
-        .map_err(|e| format!("无效的质检ID: {}", e))?;
+    let inspection_id =
+        Uuid::parse_str(&req.inspection_id).map_err(|e| format!("无效的质检ID: {}", e))?;
 
     let handling_result = match req.handling_type.as_str() {
         "rework" => {
             info!("触发返工流程 - 数量: {}", req.defect_quantity);
             trigger_mes_rework_process(
-                pool, mes_url,
+                pool,
+                mes_url,
                 &req.production_record_id,
                 req.defect_quantity,
                 &req.defect_reason,
                 req.operator.as_deref(),
-            ).await?
+            )
+            .await?
         }
         "scrap" => {
             info!("触发报废流程 - 数量: {}", req.defect_quantity);
             trigger_mes_scrap_process(
-                pool, mes_url,
+                pool,
+                mes_url,
                 &req.production_record_id,
                 req.defect_quantity,
                 &req.defect_reason,
                 req.operator.as_deref(),
-            ).await?
+            )
+            .await?
         }
         "rework_notice" => {
             info!("创建返工通知单");
@@ -654,7 +702,8 @@ pub async fn handle_defect_handling(
         }
     };
 
-    let inspection_data = fetch_qms_inspection(pool, qms_url, inspection_id).await
+    let inspection_data = fetch_qms_inspection(pool, qms_url, inspection_id)
+        .await
         .unwrap_or_else(|_| serde_json::json!({"inspection_id": req.inspection_id.clone()}));
 
     let sync_req = CreateMesQmsSyncRequest {
@@ -663,22 +712,28 @@ pub async fn handle_defect_handling(
         mes_record_id: req.production_record_id.clone(),
         mes_record_type: Some("defect_handling".to_string()),
         qms_inspection_id: Some(req.inspection_id.clone()),
-        order_id: inspection_data.get("order_id")
+        order_id: inspection_data
+            .get("order_id")
             .and_then(|v| v.as_str())
             .map(|s| s.to_string()),
-        order_no: inspection_data.get("order_no")
+        order_no: inspection_data
+            .get("order_no")
             .and_then(|v| v.as_str())
             .map(|s| s.to_string()),
-        product_id: inspection_data.get("product_id")
+        product_id: inspection_data
+            .get("product_id")
             .and_then(|v| v.as_str())
             .map(|s| s.to_string()),
-        product_name: inspection_data.get("product_name")
+        product_name: inspection_data
+            .get("product_name")
             .and_then(|v| v.as_str())
             .map(|s| s.to_string()),
-        product_code: inspection_data.get("product_code")
+        product_code: inspection_data
+            .get("product_code")
             .and_then(|v| v.as_str())
             .map(|s| s.to_string()),
-        batch_no: inspection_data.get("batch_no")
+        batch_no: inspection_data
+            .get("batch_no")
             .and_then(|v| v.as_str())
             .map(|s| s.to_string()),
         quantity: Some(req.defect_quantity),
@@ -691,7 +746,8 @@ pub async fn handle_defect_handling(
         })),
     };
 
-    let sync_record = create_sync_record(pool, &sync_req).await
+    let sync_record = create_sync_record(pool, &sync_req)
+        .await
         .map_err(|e| format!("创建同步记录失败: {}", e))?;
 
     let result_payload = serde_json::json!({
@@ -707,7 +763,9 @@ pub async fn handle_defect_handling(
         true,
         None,
         Some(&result_payload),
-    ).await.map_err(|e| format!("更新同步状态失败: {}", e))?;
+    )
+    .await
+    .map_err(|e| format!("更新同步状态失败: {}", e))?;
 
     info!("不合格品处理联动完成 - 同步ID: {}", updated.id);
     Ok(updated)
@@ -751,7 +809,10 @@ async fn create_qms_inspection_task(
     triggered_by: &str,
 ) -> Result<String, String> {
     let inspection_id = uuid::Uuid::new_v4();
-    info!("创建QMS质检任务 - 类型: {}, 数量: {}", inspection_type, quantity);
+    info!(
+        "创建QMS质检任务 - 类型: {}, 数量: {}",
+        inspection_type, quantity
+    );
 
     let _ = production_data;
     let _ = triggered_by;
@@ -907,7 +968,7 @@ pub async fn get_mes_qms_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Er
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as synced,
                 SUM(CASE WHEN sync_status = 'failed' THEN 1 ELSE 0 END) as failed
            FROM mes_qms_sync 
-          WHERE direction = 'mes_to_qms' AND sync_type = 'production_inspection'"
+          WHERE direction = 'mes_to_qms' AND sync_type = 'production_inspection'",
     )
     .fetch_one(pool)
     .await;
@@ -926,7 +987,7 @@ pub async fn get_mes_qms_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Er
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as synced,
                 SUM(CASE WHEN sync_status = 'failed' THEN 1 ELSE 0 END) as failed
            FROM mes_qms_sync 
-          WHERE direction = 'qms_to_mes' AND sync_type = 'quality_result'"
+          WHERE direction = 'qms_to_mes' AND sync_type = 'quality_result'",
     )
     .fetch_one(pool)
     .await;
@@ -944,7 +1005,7 @@ pub async fn get_mes_qms_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Er
         "SELECT COUNT(*) as total, 
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as synced
            FROM mes_qms_sync 
-          WHERE sync_type = 'trace_chain'"
+          WHERE sync_type = 'trace_chain'",
     )
     .fetch_one(pool)
     .await;
@@ -961,7 +1022,7 @@ pub async fn get_mes_qms_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Er
         "SELECT COUNT(*) as total, 
                 SUM(CASE WHEN synced THEN 1 ELSE 0 END) as completed
            FROM mes_qms_sync 
-          WHERE sync_type = 'defect_handling'"
+          WHERE sync_type = 'defect_handling'",
     )
     .fetch_one(pool)
     .await;
@@ -974,11 +1035,9 @@ pub async fn get_mes_qms_sync_stats(pool: &PgPool) -> Result<SyncStats, sqlx::Er
         Err(_) => (0, 0),
     };
 
-    let last_sync_result = sqlx::query(
-        "SELECT MAX(last_synced_at) as last_sync FROM mes_qms_sync"
-    )
-    .fetch_one(pool)
-    .await;
+    let last_sync_result = sqlx::query("SELECT MAX(last_synced_at) as last_sync FROM mes_qms_sync")
+        .fetch_one(pool)
+        .await;
 
     let last_sync = last_sync_result
         .ok()
@@ -1009,7 +1068,8 @@ pub async fn retry_failed_sync(
 ) -> Result<MesQmsSync, String> {
     info!("重试失败的同步 - ID: {}", sync_id);
 
-    let sync = get_mes_qms_sync(pool, sync_id).await
+    let sync = get_mes_qms_sync(pool, sync_id)
+        .await
         .map_err(|e| format!("获取同步记录失败: {}", e))?
         .ok_or_else(|| "同步记录不存在".to_string())?;
 
@@ -1037,22 +1097,29 @@ pub async fn retry_failed_sync(
     let sync_type = sync.sync_type.clone();
     let payload = sync.payload.clone().unwrap_or(serde_json::Value::Null);
 
-    let result = executor.execute(|| async {
-        execute_sync_by_type(pool, mes_url, qms_url, &sync_type, &payload).await
-    }).await;
+    let result = executor
+        .execute(|| async {
+            execute_sync_by_type(pool, mes_url, qms_url, &sync_type, &payload).await
+        })
+        .await;
 
     match result {
         RetryResult::Success(_) => {
-            let updated = update_sync_status(
-                pool, sync_id, STATUS_SYNCED, true, None, None,
-            ).await.map_err(|e| e.to_string())?;
+            let updated = update_sync_status(pool, sync_id, STATUS_SYNCED, true, None, None)
+                .await
+                .map_err(|e| e.to_string())?;
             info!("同步重试成功 - ID: {}", sync_id);
             Ok(updated)
         }
-        RetryResult::Failed { error, attempts } | RetryResult::MaxRetriesExceeded { error, attempts } => {
-            increment_retry_count(pool, sync_id, &error).await
+        RetryResult::Failed { error, attempts }
+        | RetryResult::MaxRetriesExceeded { error, attempts } => {
+            increment_retry_count(pool, sync_id, &error)
+                .await
                 .map_err(|e| e.to_string())?;
-            error!("同步重试失败 - ID: {}, 尝试次数: {}, 错误: {}", sync_id, attempts, error);
+            error!(
+                "同步重试失败 - ID: {}, 尝试次数: {}, 错误: {}",
+                sync_id, attempts, error
+            );
             Err(error)
         }
     }
@@ -1067,9 +1134,7 @@ async fn execute_sync_by_type(
 ) -> Result<(), String> {
     match sync_type {
         SYNC_TYPE_PRODUCTION_INSPECTION => {
-            let record_id = payload.get("id")
-                .and_then(|v| v.as_str())
-                .unwrap_or("");
+            let record_id = payload.get("id").and_then(|v| v.as_str()).unwrap_or("");
             let req = TriggerInspectionRequest {
                 production_record_id: record_id.to_string(),
                 inspection_type: Some("process_inspection".to_string()),
@@ -1080,9 +1145,7 @@ async fn execute_sync_by_type(
             Ok(())
         }
         SYNC_TYPE_QUALITY_RESULT => {
-            let inspection_id = payload.get("id")
-                .and_then(|v| v.as_str())
-                .unwrap_or("");
+            let inspection_id = payload.get("id").and_then(|v| v.as_str()).unwrap_or("");
             let req = SyncQualityResultRequest {
                 inspection_id: inspection_id.to_string(),
                 production_record_id: None,
@@ -1104,7 +1167,8 @@ pub async fn handle_mes_production_completed(
 ) -> anyhow::Result<()> {
     info!("处理MES生产完成事件 - 自动触发QMS质检");
 
-    let record_id = payload.get("record_id")
+    let record_id = payload
+        .get("record_id")
         .and_then(|v| v.as_str())
         .unwrap_or("");
 
@@ -1136,7 +1200,8 @@ pub async fn handle_qms_inspection_completed(
 ) -> anyhow::Result<()> {
     info!("处理QMS质检完成事件 - 自动回传MES");
 
-    let inspection_id = payload.get("inspection_id")
+    let inspection_id = payload
+        .get("inspection_id")
         .and_then(|v| v.as_str())
         .unwrap_or("");
 
@@ -1145,7 +1210,8 @@ pub async fn handle_qms_inspection_completed(
         return Ok(());
     }
 
-    let production_record_id = payload.get("mes_record_id")
+    let production_record_id = payload
+        .get("mes_record_id")
         .and_then(|v| v.as_str())
         .map(|s| s.to_string());
 
@@ -1156,7 +1222,10 @@ pub async fn handle_qms_inspection_completed(
 
     match sync_quality_result_to_mes(pool, mes_url, qms_url, &req).await {
         Ok(_) => info!("质检结果自动回传成功 - 质检ID: {}", inspection_id),
-        Err(e) => error!("质检结果自动回传失败 - 质检ID: {}, 错误: {}", inspection_id, e),
+        Err(e) => error!(
+            "质检结果自动回传失败 - 质检ID: {}, 错误: {}",
+            inspection_id, e
+        ),
     }
 
     Ok(())

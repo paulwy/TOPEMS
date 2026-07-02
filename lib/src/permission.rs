@@ -16,10 +16,10 @@ pub enum ModuleCode {
     Crm,
     Ai,
     Gis,
-    Qms,   // 质量管理
-    Ehs,   // 环境健康安全
-    Mes,   // 制造执行
-    Wms,   // 仓储管理
+    Qms, // 质量管理
+    Ehs, // 环境健康安全
+    Mes, // 制造执行
+    Wms, // 仓储管理
     // 特殊模块
     Workflow,
     // 基础设施模块（与 IAM 联动）
@@ -185,8 +185,9 @@ pub async fn check_module_permission<T>(
     }
 
     let module_read = ModulePermission::new(permission.module.clone(), PermissionAction::Read);
-    if permission.action.level() == module_read.action.level() && 
-       claims.has_permission(&module_read.to_string()) {
+    if permission.action.level() == module_read.action.level()
+        && claims.has_permission(&module_read.to_string())
+    {
         return Ok(());
     }
 
@@ -299,7 +300,10 @@ pub fn get_all_module_permissions() -> Vec<ModulePermission> {
     }
 
     // Workflow 特殊操作
-    perms.push(ModulePermission::new(ModuleCode::Workflow, PermissionAction::Approve));
+    perms.push(ModulePermission::new(
+        ModuleCode::Workflow,
+        PermissionAction::Approve,
+    ));
 
     perms
 }

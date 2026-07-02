@@ -713,6 +713,15 @@ const QmsEightDPage: React.FC = () => {
             filters={[]}
             actions={[]}
             onRefresh={loadReports}
+            mobileCardTitleKey='title'
+            mobileCardSubtitleKey='reportNo'
+            mobileCardDisplayFields={['severity', 'productName', 'customer', 'status']}
+            mobileCardFieldLabels={{
+              severity: '严重程度',
+              productName: '产品',
+              customer: '客户',
+              status: '状态',
+            }}
           />
         </CardContent>
       </Card>

@@ -151,11 +151,11 @@ const EhsHazardousMaterialPage: React.FC = () => {
 
   const getCategoryChip = (category: string) => {
     const categoryMap: Record<string, { bg: string; color: string }> = {
-      易燃: { bg: '#fee2e2', color: '#dc2626' },
+      易燃: { bg: 'error.100', color: 'error.700' },
       易爆: { bg: 'warning.100', color: '#ca8a04' },
       有毒: { bg: '#e0e7ff', color: 'secondary.700' },
       腐蚀: { bg: '#ffe4e6', color: '#be123c' },
-      氧化: { bg: '#fef3c7', color: 'warning.700' },
+      氧化: { bg: 'warning.100', color: 'warning.700' },
       放射性: { bg: 'secondary.100', color: 'secondary.600' },
     };
     const colors = categoryMap[category] || { bg: 'grey.100', color: 'text.secondary' };
@@ -443,8 +443,8 @@ const EhsHazardousMaterialPage: React.FC = () => {
           value={stats.severe}
           icon={<Package />}
           bgColor='background.paper'
-          iconBgColor='#fee2e2'
-          iconColor='#dc2626'
+          iconBgColor='error.100'
+          iconColor='error.700'
         />
         <StatCard
           label='本月入库'

@@ -207,7 +207,10 @@ async fn test_connection_result(
                 Err(e) => return (false, format!("Connection failed: {}", e)),
             }
         } else {
-            return (false, "Missing host/port/database/username/password".to_string());
+            return (
+                false,
+                "Missing host/port/database/username/password".to_string(),
+            );
         }
     }
 

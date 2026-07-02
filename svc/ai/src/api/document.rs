@@ -174,12 +174,18 @@ impl DocumentApi {
                 let chunks = match state.document_service.get_document_chunks(id).await {
                     Ok(c) => c,
                     Err(e) => {
-                        return Json(ApiResponse::<ExtractDocumentResponse>::error(500, &format!("获取文档分块失败: {}", e)));
+                        return Json(ApiResponse::<ExtractDocumentResponse>::error(
+                            500,
+                            &format!("获取文档分块失败: {}", e),
+                        ));
                     }
                 };
 
                 if chunks.is_empty() {
-                    return Json(ApiResponse::<ExtractDocumentResponse>::error(400, "文档内容为空"));
+                    return Json(ApiResponse::<ExtractDocumentResponse>::error(
+                        400,
+                        "文档内容为空",
+                    ));
                 }
 
                 let content = chunks
@@ -191,7 +197,10 @@ impl DocumentApi {
                 let config = match state.document_service.get_qa_config() {
                     Some(c) => c,
                     None => {
-                        return Json(ApiResponse::<ExtractDocumentResponse>::error(500, "文档问答配置未初始化"));
+                        return Json(ApiResponse::<ExtractDocumentResponse>::error(
+                            500,
+                            "文档问答配置未初始化",
+                        ));
                     }
                 };
 
@@ -203,11 +212,19 @@ impl DocumentApi {
                         );
                         match state.document_service.call_ai_api(config, &prompt).await {
                             Ok(response) => {
-                                let cleaned_response = response.replace("```json", "").replace("```", "").trim().to_string();
-                                serde_json::from_str(&cleaned_response).unwrap_or(serde_json::json!({}))
+                                let cleaned_response = response
+                                    .replace("```json", "")
+                                    .replace("```", "")
+                                    .trim()
+                                    .to_string();
+                                serde_json::from_str(&cleaned_response)
+                                    .unwrap_or(serde_json::json!({}))
                             }
                             Err(e) => {
-                                return Json(ApiResponse::<ExtractDocumentResponse>::error(500, &format!("调用 AI 服务失败: {}", e)));
+                                return Json(ApiResponse::<ExtractDocumentResponse>::error(
+                                    500,
+                                    &format!("调用 AI 服务失败: {}", e),
+                                ));
                             }
                         }
                     }
@@ -218,11 +235,19 @@ impl DocumentApi {
                         );
                         match state.document_service.call_ai_api(config, &prompt).await {
                             Ok(response) => {
-                                let cleaned_response = response.replace("```json", "").replace("```", "").trim().to_string();
-                                serde_json::from_str(&cleaned_response).unwrap_or(serde_json::json!({}))
+                                let cleaned_response = response
+                                    .replace("```json", "")
+                                    .replace("```", "")
+                                    .trim()
+                                    .to_string();
+                                serde_json::from_str(&cleaned_response)
+                                    .unwrap_or(serde_json::json!({}))
                             }
                             Err(e) => {
-                                return Json(ApiResponse::<ExtractDocumentResponse>::error(500, &format!("调用 AI 服务失败: {}", e)));
+                                return Json(ApiResponse::<ExtractDocumentResponse>::error(
+                                    500,
+                                    &format!("调用 AI 服务失败: {}", e),
+                                ));
                             }
                         }
                     }
@@ -233,11 +258,19 @@ impl DocumentApi {
                         );
                         match state.document_service.call_ai_api(config, &prompt).await {
                             Ok(response) => {
-                                let cleaned_response = response.replace("```json", "").replace("```", "").trim().to_string();
-                                serde_json::from_str(&cleaned_response).unwrap_or(serde_json::json!({}))
+                                let cleaned_response = response
+                                    .replace("```json", "")
+                                    .replace("```", "")
+                                    .trim()
+                                    .to_string();
+                                serde_json::from_str(&cleaned_response)
+                                    .unwrap_or(serde_json::json!({}))
                             }
                             Err(e) => {
-                                return Json(ApiResponse::<ExtractDocumentResponse>::error(500, &format!("调用 AI 服务失败: {}", e)));
+                                return Json(ApiResponse::<ExtractDocumentResponse>::error(
+                                    500,
+                                    &format!("调用 AI 服务失败: {}", e),
+                                ));
                             }
                         }
                     }
@@ -248,16 +281,25 @@ impl DocumentApi {
                         );
                         match state.document_service.call_ai_api(config, &prompt).await {
                             Ok(response) => {
-                                let cleaned_response = response.replace("```json", "").replace("```", "").trim().to_string();
-                                serde_json::from_str(&cleaned_response).unwrap_or(serde_json::json!({}))
+                                let cleaned_response = response
+                                    .replace("```json", "")
+                                    .replace("```", "")
+                                    .trim()
+                                    .to_string();
+                                serde_json::from_str(&cleaned_response)
+                                    .unwrap_or(serde_json::json!({}))
                             }
                             Err(e) => {
-                                return Json(ApiResponse::<ExtractDocumentResponse>::error(500, &format!("调用 AI 服务失败: {}", e)));
+                                return Json(ApiResponse::<ExtractDocumentResponse>::error(
+                                    500,
+                                    &format!("调用 AI 服务失败: {}", e),
+                                ));
                             }
                         }
                     }
                     "structure" => {
-                        let lines: Vec<&str> = content.lines().filter(|l| !l.trim().is_empty()).collect();
+                        let lines: Vec<&str> =
+                            content.lines().filter(|l| !l.trim().is_empty()).collect();
                         serde_json::json!({
                             "title": doc.title,
                             "filename": doc.filename,
@@ -280,7 +322,10 @@ impl DocumentApi {
                     "Success",
                 ))
             }
-            Ok(None) => Json(ApiResponse::<ExtractDocumentResponse>::error(404, "文档不存在")),
+            Ok(None) => Json(ApiResponse::<ExtractDocumentResponse>::error(
+                404,
+                "文档不存在",
+            )),
             Err(e) => Json(ApiResponse::<ExtractDocumentResponse>::error(500, &e)),
         }
     }
@@ -361,7 +406,7 @@ impl DocumentApi {
         Json(req): Json<DocumentQAQuestionRequest>,
     ) -> Json<ApiResponse<DocumentQAAnswerResponse>> {
         let top_k = req.top_k.unwrap_or(5);
-        
+
         match state
             .document_service
             .ask_document_qa(&req.question, req.document_ids.as_deref(), top_k)

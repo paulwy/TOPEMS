@@ -385,10 +385,11 @@ pub mod pgvector_store {
         }
 
         async fn exists(&self, key: &str) -> Result<bool> {
-            let result: Option<(i64,)> = sqlx::query_as("SELECT 1 FROM plugin_hrm.vectors WHERE key = $1")
-                .bind(key)
-                .fetch_optional(&self.pool)
-                .await?;
+            let result: Option<(i64,)> =
+                sqlx::query_as("SELECT 1 FROM plugin_hrm.vectors WHERE key = $1")
+                    .bind(key)
+                    .fetch_optional(&self.pool)
+                    .await?;
 
             Ok(result.is_some())
         }

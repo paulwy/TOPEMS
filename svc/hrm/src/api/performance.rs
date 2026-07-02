@@ -354,11 +354,12 @@ async fn delete_review(
     Path(id): Path<Uuid>,
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
-    let result =
-        sqlx::query("DELETE FROM plugin_hrm.performance_reviews WHERE id = $1 AND status = 'draft'")
-            .bind(id)
-            .execute(&state.db)
-            .await;
+    let result = sqlx::query(
+        "DELETE FROM plugin_hrm.performance_reviews WHERE id = $1 AND status = 'draft'",
+    )
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (

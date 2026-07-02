@@ -203,8 +203,8 @@ const InventoryManagementPage: React.FC = () => {
   const getStockBadge = (item: Inventory) => {
     const status = getStockStatus(item);
     const colorMap = {
-      success: { bg: 'success.lighter', color: '#15803d' },
-      warning: { bg: 'warning.light', color: '#b45309' },
+      success: { bg: 'success.lighter', color: 'success.700' },
+      warning: { bg: 'warning.light', color: 'warning.700' },
       error: { bg: 'error.lighter', color: 'error.dark' },
     };
     const s = colorMap[status.color];
@@ -372,7 +372,7 @@ const InventoryManagementPage: React.FC = () => {
         </Typography>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#4338ca' }}
+          sx={{ fontWeight: 700, color: 'secondary.700' }}
         >
           {stats.inStock}
         </Typography>
