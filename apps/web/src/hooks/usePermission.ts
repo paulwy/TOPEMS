@@ -79,32 +79,35 @@ export const usePermission = () => {
 
   const checkPermission = useCallback(
     (permission: string, useInheritance = true): boolean => {
+      if (user?.is_superuser) return true;
       if (useInheritance) {
         return hasPermissionWithInheritance(permissions, permission);
       }
       return hasPermission(permission);
     },
-    [hasPermission, permissions]
+    [hasPermission, permissions, user?.is_superuser]
   );
 
   const checkAnyPermission = useCallback(
     (permissionList: string[], useInheritance = true): boolean => {
+      if (user?.is_superuser) return true;
       if (useInheritance) {
         return permissionList.some((perm) => hasPermissionWithInheritance(permissions, perm));
       }
       return hasAnyPermission(permissionList);
     },
-    [hasAnyPermission, permissions]
+    [hasAnyPermission, permissions, user?.is_superuser]
   );
 
   const checkAllPermissions = useCallback(
     (permissionList: string[], useInheritance = true): boolean => {
+      if (user?.is_superuser) return true;
       if (useInheritance) {
         return permissionList.every((perm) => hasPermissionWithInheritance(permissions, perm));
       }
       return hasAllPermissions(permissionList);
     },
-    [hasAllPermissions, permissions]
+    [hasAllPermissions, permissions, user?.is_superuser]
   );
 
   const getModulePermissions = useCallback(

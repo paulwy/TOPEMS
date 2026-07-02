@@ -152,11 +152,11 @@ const PmReportPage: React.FC = () => {
   const projectStatusData = useMemo(
     () =>
       [
-        { name: '草稿', value: stats.draft_projects, fill: '#6b7280' },
-        { name: '待审批', value: stats.pending_projects, fill: '#f59e0b' },
-        { name: '进行中', value: stats.active_projects, fill: '#3b82f6' },
-        { name: '已完成', value: stats.completed_projects, fill: '#10b981' },
-        { name: '已取消', value: stats.cancelled_projects, fill: '#ef4444' },
+        { name: '草稿', value: stats.draft_projects, fill: 'grey.500' },
+        { name: '待审批', value: stats.pending_projects, fill: 'warning.main' },
+        { name: '进行中', value: stats.active_projects, fill: 'primary.main' },
+        { name: '已完成', value: stats.completed_projects, fill: 'success.main' },
+        { name: '已取消', value: stats.cancelled_projects, fill: 'error.main' },
       ].filter((d) => d.value > 0),
     [stats]
   );
@@ -164,9 +164,9 @@ const PmReportPage: React.FC = () => {
   const riskData = useMemo(
     () =>
       [
-        { name: '高风险', value: stats.high_risk_projects, fill: '#ef4444' },
-        { name: '中风险', value: stats.medium_risk_projects, fill: '#f59e0b' },
-        { name: '低风险', value: stats.low_risk_projects, fill: '#10b981' },
+        { name: '高风险', value: stats.high_risk_projects, fill: 'error.main' },
+        { name: '中风险', value: stats.medium_risk_projects, fill: 'warning.main' },
+        { name: '低风险', value: stats.low_risk_projects, fill: 'success.main' },
       ].filter((d) => d.value > 0),
     [stats]
   );

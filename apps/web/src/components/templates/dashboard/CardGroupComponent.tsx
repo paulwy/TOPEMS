@@ -18,7 +18,7 @@ export const CardGroupComponent: React.FC<CardGroup & { loading?: boolean }> = (
   const [activeTab, setActiveTab] = useState(0);
 
   return (
-    <Paper sx={{ borderRadius: 2, mb: 2 }}>
+    <Paper sx={{ borderRadius: 3, mb: 2 }}>
       <Box
         sx={{
           p: 2,

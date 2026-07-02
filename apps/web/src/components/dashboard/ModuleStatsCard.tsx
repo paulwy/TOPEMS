@@ -75,7 +75,7 @@ export const ModuleStatsCard: React.FC<ModuleStatsCardProps> = ({
               width: 48,
               height: 48,
               backgroundColor: iconBgColor,
-              borderRadius: 2,
+              borderRadius: 3,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -92,7 +92,7 @@ export const ModuleStatsCard: React.FC<ModuleStatsCardProps> = ({
             <Typography
               sx={{
                 fontSize: '0.875rem',
-                color: '#94a3b8',
+                color: 'grey.400',
                 fontWeight: 500,
                 mb: 1,
               }}
@@ -118,20 +118,20 @@ export const ModuleStatsCard: React.FC<ModuleStatsCardProps> = ({
             px: 3,
             py: 1.5,
             backgroundColor: 'rgba(34, 197, 94, 0.1)',
-            borderRadius: 20,
+            borderRadius: 30,
             transition: 'all 0.3s',
             transform: isHovered ? 'scale(1.05)' : 'scale(1)',
           }}
         >
           <CheckCircle2
             size={14}
-            color='#4ade80'
+            color='success.400'
           />
           <Typography
             sx={{
               fontSize: '0.875rem',
               fontWeight: 600,
-              color: '#4ade80',
+              color: 'success.400',
             }}
           >
             {active} 活跃
@@ -144,14 +144,14 @@ export const ModuleStatsCard: React.FC<ModuleStatsCardProps> = ({
           sx={{
             height: 6,
             backgroundColor: 'rgba(255, 255, 255, 0.05)',
-            borderRadius: 20,
+            borderRadius: 30,
             overflow: 'hidden',
           }}
         >
           <Box
             sx={{
               height: '100%',
-              borderRadius: 20,
+              borderRadius: 30,
               transition: 'all 0.7s ease-out',
               width: `${(active / total) * 100}%`,
               background: `linear-gradient(90deg, ${iconColor}, ${iconColor}80)`,

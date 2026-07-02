@@ -100,7 +100,12 @@ impl EventSubscriber {
                     let dlq_clone = dlq.clone();
 
                     tokio::spawn(async move {
-                        match tokio::time::timeout(tokio::time::Duration::from_secs(30), handler_clone(event_clone.clone())).await {
+                        match tokio::time::timeout(
+                            tokio::time::Duration::from_secs(30),
+                            handler_clone(event_clone.clone()),
+                        )
+                        .await
+                        {
                             Ok(_) => {}
                             Err(e) => {
                                 warn!("事件处理超时: {:?}, 事件ID: {}", e, event_clone.event_id);

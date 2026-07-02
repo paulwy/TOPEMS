@@ -1,15 +1,8 @@
 import { Typography, Box, InputLabel, Chip, Card, CardContent, Paper } from '@mui/material';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams } from 'react-router-dom';
-import {
-  Package,
-  MapPin,
-  CheckCircle,
-  Factory,
-  Truck,
-  Boxes,
-} from 'lucide-react';
-import { PageContainer } from '@/components/common';
+import { Package, MapPin, CheckCircle, Factory, Truck, Boxes } from 'lucide-react';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import { traceabilityApi } from '@/api/mes';
 import type { TraceChain, QualityRecord } from '@/api/mes';
@@ -68,28 +61,28 @@ const TraceabilityDetailPage: React.FC = () => {
         return (
           <Boxes
             size={20}
-            color='#7c3aed'
+            color='secondary.600'
           />
         );
       case 'production':
         return (
           <Factory
             size={20}
-            color='#2563eb'
+            color='primary.dark'
           />
         );
       case 'finished_goods':
         return (
           <Package
             size={20}
-            color='#059669'
+            color='success.600'
           />
         );
       case 'shipping':
         return (
           <Truck
             size={20}
-            color='#dc2626'
+            color='error.700'
           />
         );
       case 'quality':
@@ -103,7 +96,7 @@ const TraceabilityDetailPage: React.FC = () => {
         return (
           <MapPin
             size={20}
-            color='#6b7280'
+            color='grey.500'
           />
         );
     }
@@ -452,7 +445,7 @@ const TraceabilityDetailPage: React.FC = () => {
       avatar: (
         <Package
           size={32}
-          color='#7c3aed'
+          color='secondary.600'
         />
       ),
       title: rootNode?.name,
@@ -467,8 +460,12 @@ const TraceabilityDetailPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='物料追溯详情'
-      subtitle='查看物料批次追溯信息'
+      autoTitle
+      autoBreadcrumbs
+      headerProps={{
+        pageIcon: <MapPin style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #8B5CF6 0%, #4C1D95 100%)',
+      }}
     >
       <DetailPageTemplate
         title=''

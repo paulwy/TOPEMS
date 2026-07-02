@@ -348,7 +348,7 @@ const HrmCompanyPage: React.FC = () => {
               xs={6}
               sm={3}
             >
-              <Box sx={{ bgcolor: 'grey.50', borderRadius: 2, p: 2 }}>
+              <Box sx={{ bgcolor: 'grey.50', borderRadius: 3, p: 2 }}>
                 <Typography
                   variant='caption'
                   color='text.secondary'
@@ -368,7 +368,7 @@ const HrmCompanyPage: React.FC = () => {
               xs={6}
               sm={3}
             >
-              <Box sx={{ bgcolor: 'grey.50', borderRadius: 2, p: 2 }}>
+              <Box sx={{ bgcolor: 'grey.50', borderRadius: 3, p: 2 }}>
                 <Typography
                   variant='caption'
                   color='text.secondary'
@@ -388,7 +388,7 @@ const HrmCompanyPage: React.FC = () => {
               xs={6}
               sm={3}
             >
-              <Box sx={{ bgcolor: 'grey.50', borderRadius: 2, p: 2 }}>
+              <Box sx={{ bgcolor: 'grey.50', borderRadius: 3, p: 2 }}>
                 <Typography
                   variant='caption'
                   color='text.secondary'
@@ -408,7 +408,7 @@ const HrmCompanyPage: React.FC = () => {
               xs={6}
               sm={3}
             >
-              <Box sx={{ bgcolor: 'grey.50', borderRadius: 2, p: 2 }}>
+              <Box sx={{ bgcolor: 'grey.50', borderRadius: 3, p: 2 }}>
                 <Typography
                   variant='caption'
                   color='text.secondary'

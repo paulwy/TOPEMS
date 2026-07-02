@@ -50,9 +50,17 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
             cursor: 'pointer',
             borderRadius: 4,
             backgroundColor: isSelected ? 'primary.light' : 'transparent',
-            color: isSelected ? 'primary.dark' : '#334155',
+            color: isSelected ? 'primary.dark' : 'grey.700',
           }}
+          role='button'
+          tabIndex={0}
           onClick={() => onDepartmentSelect(isSelected ? null : node.id)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              onDepartmentSelect(isSelected ? null : node.id);
+            }
+          }}
           onMouseEnter={(e) => {
             if (!isSelected) {
               e.currentTarget.style.backgroundColor = 'grey.100';
@@ -130,7 +138,16 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
       }}
     >
       <div style={{ padding: 16, borderBottom: '1px solid border.default' }}>
-        <h2 style={{ fontSize: 18, fontWeight: 600, color: 'var(--mui-palette-text-primary)', margin: 0 }}>通讯录</h2>
+        <h2
+          style={{
+            fontSize: 18,
+            fontWeight: 600,
+            color: 'var(--mui-palette-text-primary)',
+            margin: 0,
+          }}
+        >
+          通讯录
+        </h2>
       </div>
 
       {/* 类型筛选 */}
@@ -160,7 +177,7 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
                 border: 'none',
                 cursor: 'pointer',
                 backgroundColor: selectedType === id ? 'primary.light' : 'transparent',
-                color: selectedType === id ? 'primary.dark' : '#334155',
+                color: selectedType === id ? 'primary.dark' : 'grey.700',
                 transition: 'colors 0.2s',
                 width: '100%',
                 textAlign: 'left',
@@ -208,7 +225,7 @@ export const AddressbookSidebar: React.FC<AddressbookSidebarProps> = ({
               border: 'none',
               cursor: 'pointer',
               backgroundColor: selectedDepartment === null ? 'primary.light' : 'transparent',
-              color: selectedDepartment === null ? 'primary.dark' : '#334155',
+              color: selectedDepartment === null ? 'primary.dark' : 'grey.700',
               transition: 'colors 0.2s',
               width: '100%',
               textAlign: 'left',

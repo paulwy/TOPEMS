@@ -53,7 +53,7 @@ import {
   type WorkStation,
 } from '@/api/mes';
 import { apiLogger } from '@/utils/logger';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 
 // ============== 类型定义 ==============
 interface RealtimeAlarm {
@@ -95,33 +95,33 @@ const EQUIPMENT_STATUS_META: Record<
   string,
   { label: string; color: string; icon: React.ReactNode }
 > = {
-  running: { label: '运行中', color: '#10B981', icon: <PlayCircle size={14} /> },
-  in_use: { label: '使用中', color: '#10B981', icon: <PlayCircle size={14} /> },
-  normal: { label: '正常', color: '#10B981', icon: <CheckCircle2 size={14} /> },
-  idle: { label: '空闲', color: '#3B82F6', icon: <PauseCircle size={14} /> },
-  maintenance: { label: '维护中', color: '#F59E0B', icon: <Wrench size={14} /> },
-  fault: { label: '故障', color: '#EF4444', icon: <AlertTriangle size={14} /> },
-  error: { label: '故障', color: '#EF4444', icon: <XCircle size={14} /> },
-  scrapped: { label: '已报废', color: '#94A3B8', icon: <PowerOff size={14} /> },
-  offline: { label: '离线', color: '#94A3B8', icon: <PowerOff size={14} /> },
+  running: { label: '运行中', color: 'success.main', icon: <PlayCircle size={14} /> },
+  in_use: { label: '使用中', color: 'success.main', icon: <PlayCircle size={14} /> },
+  normal: { label: '正常', color: 'success.main', icon: <CheckCircle2 size={14} /> },
+  idle: { label: '空闲', color: 'primary.main', icon: <PauseCircle size={14} /> },
+  maintenance: { label: '维护中', color: 'warning.main', icon: <Wrench size={14} /> },
+  fault: { label: '故障', color: 'error.main', icon: <AlertTriangle size={14} /> },
+  error: { label: '故障', color: 'error.main', icon: <XCircle size={14} /> },
+  scrapped: { label: '已报废', color: 'grey.400', icon: <PowerOff size={14} /> },
+  offline: { label: '离线', color: 'grey.400', icon: <PowerOff size={14} /> },
 };
 
 const ALARM_LEVEL_META: Record<
   RealtimeAlarm['level'],
   { label: string; color: string; bg: string }
 > = {
-  critical: { label: '严重', color: '#fff', bg: '#EF4444' },
-  warning: { label: '警告', color: '#fff', bg: '#F59E0B' },
-  info: { label: '提示', color: '#fff', bg: '#3B82F6' },
+  critical: { label: '严重', color: '#fff', bg: 'error.main' },
+  warning: { label: '警告', color: '#fff', bg: 'warning.main' },
+  info: { label: '提示', color: '#fff', bg: 'primary.main' },
 };
 
 const SCHEDULE_STATUS_META: Record<string, { label: string; color: string }> = {
-  pending: { label: '待开始', color: '#94A3B8' },
-  in_progress: { label: '进行中', color: '#3B82F6' },
-  processing: { label: '进行中', color: '#3B82F6' },
-  completed: { label: '已完成', color: '#10B981' },
-  paused: { label: '已暂停', color: '#F59E0B' },
-  delayed: { label: '延期', color: '#EF4444' },
+  pending: { label: '待开始', color: 'grey.400' },
+  in_progress: { label: '进行中', color: 'primary.main' },
+  processing: { label: '进行中', color: 'primary.main' },
+  completed: { label: '已完成', color: 'success.main' },
+  paused: { label: '已暂停', color: 'warning.main' },
+  delayed: { label: '延期', color: 'error.main' },
 };
 
 // ============== 工具函数 ==============
@@ -216,7 +216,7 @@ const StatCard: React.FC<{
       elevation={0}
       sx={{
         p: 2.5,
-        borderRadius: 2,
+        borderRadius: 3,
         border: '1px solid',
         borderColor: 'grey.200',
         backgroundColor: 'background.paper',
@@ -273,7 +273,7 @@ const StatCard: React.FC<{
           sx={{
             width: 44,
             height: 44,
-            borderRadius: 2,
+            borderRadius: 3,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -319,7 +319,7 @@ const AlarmList: React.FC<{ alarms: RealtimeAlarm[]; loading?: boolean }> = ({
       elevation={0}
       sx={{
         p: 2.5,
-        borderRadius: 2,
+        borderRadius: 3,
         border: '1px solid',
         borderColor: 'grey.200',
         height: '100%',
@@ -338,7 +338,7 @@ const AlarmList: React.FC<{ alarms: RealtimeAlarm[]; loading?: boolean }> = ({
         >
           <AlertTriangle
             size={18}
-            color='#EF4444'
+            color='error.main'
           />
           <Typography
             variant='subtitle1'
@@ -371,7 +371,7 @@ const AlarmList: React.FC<{ alarms: RealtimeAlarm[]; loading?: boolean }> = ({
           <Box sx={{ textAlign: 'center', py: 4 }}>
             <CheckCircle2
               size={32}
-              color='#10B981'
+              color='success.main'
               style={{ marginBottom: 8 }}
             />
             <Typography
@@ -468,7 +468,7 @@ const WorkStationUtilizationCard: React.FC<{
       elevation={0}
       sx={{
         p: 2.5,
-        borderRadius: 2,
+        borderRadius: 3,
         border: '1px solid',
         borderColor: 'grey.200',
         height: '100%',
@@ -487,7 +487,7 @@ const WorkStationUtilizationCard: React.FC<{
         >
           <Gauge
             size={18}
-            color='#3B82F6'
+            color='primary.main'
           />
           <Typography
             variant='subtitle1'
@@ -522,12 +522,12 @@ const WorkStationUtilizationCard: React.FC<{
               const value = Math.min(Math.max(item.utilization, 0), 1);
               const color =
                 value >= 0.85
-                  ? '#EF4444'
+                  ? 'error.main'
                   : value >= 0.6
-                    ? '#F59E0B'
+                    ? 'warning.main'
                     : value >= 0.3
-                      ? '#3B82F6'
-                      : '#94A3B8';
+                      ? 'primary.main'
+                      : 'grey.400';
               return (
                 <Box key={item.workStation.id}>
                   <Stack
@@ -613,7 +613,7 @@ const EquipmentStatusPanel: React.FC<{
       elevation={0}
       sx={{
         p: 2.5,
-        borderRadius: 2,
+        borderRadius: 3,
         border: '1px solid',
         borderColor: 'grey.200',
         height: '100%',
@@ -630,7 +630,7 @@ const EquipmentStatusPanel: React.FC<{
         >
           <Cpu
             size={18}
-            color='#8B5CF6'
+            color='secondary.main'
           />
           <Typography
             variant='subtitle1'
@@ -751,7 +751,7 @@ const ProductionGantt: React.FC<{
       elevation={0}
       sx={{
         p: 2.5,
-        borderRadius: 2,
+        borderRadius: 3,
         border: '1px solid',
         borderColor: 'grey.200',
       }}
@@ -816,7 +816,7 @@ const ProductionGantt: React.FC<{
         <Box sx={{ textAlign: 'center', py: 6 }}>
           <Calendar
             size={32}
-            color='#94A3B8'
+            color='grey.400'
             style={{ marginBottom: 8 }}
           />
           <Typography
@@ -868,7 +868,7 @@ const ProductionGantt: React.FC<{
                   top: -4,
                   bottom: -4,
                   width: 2,
-                  backgroundColor: '#EF4444',
+                  backgroundColor: 'error.main',
                   zIndex: 1,
                 }}
               >
@@ -880,7 +880,7 @@ const ProductionGantt: React.FC<{
                     width: 10,
                     height: 10,
                     borderRadius: '50%',
-                    backgroundColor: '#EF4444',
+                    backgroundColor: 'error.main',
                     boxShadow: '0 0 0 4px rgba(239, 68, 68, 0.15)',
                   }}
                 />
@@ -1350,11 +1350,11 @@ export const ProductionDashboardPage: React.FC = () => {
     <PageContainer
       padding={false}
       maxWidth={false}
-      title='MES 生产看板'
-      subtitle='实时生产数据监控 · 设备状态 · 排产进度'
+      autoTitle
+      autoBreadcrumbs
       headerProps={{
         pageIcon: <Factory style={{ width: 20, height: 20 }} />,
-        pageGradient: 'linear-gradient(135deg, #EF4444, #B91C1C)',
+        pageGradient: 'linear-gradient(135deg, #EF4444 0%, #B91C1C 100%)',
         breadcrumbs: [
           { label: '首页', href: '/dashboard' },
           { label: '生产执行', href: '/mes' },
@@ -1383,12 +1383,12 @@ export const ProductionDashboardPage: React.FC = () => {
                 {wsConnected ? (
                   <Wifi
                     size={16}
-                    color='#10B981'
+                    color='success.main'
                   />
                 ) : (
                   <WifiOff
                     size={16}
-                    color='#94A3B8'
+                    color='grey.400'
                   />
                 )}
                 <Typography
@@ -1438,7 +1438,7 @@ export const ProductionDashboardPage: React.FC = () => {
             backgroundColor: 'background.paper',
             border: '1px solid',
             borderColor: 'grey.200',
-            borderRadius: 2,
+            borderRadius: 3,
           }}
         >
           <Stack
@@ -1519,7 +1519,7 @@ export const ProductionDashboardPage: React.FC = () => {
             value={todayOutput.toLocaleString()}
             unit='件'
             icon={<Package size={22} />}
-            color='#3B82F6'
+            color='primary.main'
             delta={8.2}
             hint='当日累计完成数量'
             loading={loading}
@@ -1529,7 +1529,7 @@ export const ProductionDashboardPage: React.FC = () => {
             value={todayDefects.toLocaleString()}
             unit='件'
             icon={<XCircle size={22} />}
-            color='#EF4444'
+            color='error.main'
             delta={-3.1}
             hint='当日累计不良数'
             loading={loading}
@@ -1539,7 +1539,7 @@ export const ProductionDashboardPage: React.FC = () => {
             value={activeOrderCount}
             unit='单'
             icon={<Factory size={22} />}
-            color='#F59E0B'
+            color='warning.main'
             delta={2.4}
             hint={`已完成 ${completedOrderCount} 单`}
             loading={loading}
@@ -1548,7 +1548,7 @@ export const ProductionDashboardPage: React.FC = () => {
             title='设备综合利用率'
             value={formatPercent(overallUtilization)}
             icon={<Gauge size={22} />}
-            color='#10B981'
+            color='success.main'
             delta={overallUtilization > 0.6 ? 1.8 : -0.6}
             hint={`运行 ${runningEquipmentCount} / 总 ${equipment.length} 台`}
             loading={loading}
@@ -1568,7 +1568,7 @@ export const ProductionDashboardPage: React.FC = () => {
             elevation={0}
             sx={{
               p: 2.5,
-              borderRadius: 2,
+              borderRadius: 3,
               border: '1px solid',
               borderColor: 'grey.200',
               height: '100%',
@@ -1585,7 +1585,7 @@ export const ProductionDashboardPage: React.FC = () => {
               >
                 <TrendingUp
                   size={18}
-                  color='#10B981'
+                  color='success.main'
                 />
                 <Typography
                   variant='subtitle1'
@@ -1608,8 +1608,8 @@ export const ProductionDashboardPage: React.FC = () => {
                 xKey='name'
                 yKey='value'
                 yKeys={[
-                  { key: 'value', name: '实际产量', color: '#3B82F6' },
-                  { key: 'target', name: '目标产量', color: '#94A3B8' },
+                  { key: 'value', name: '实际产量', color: 'primary.main' },
+                  { key: 'target', name: '目标产量', color: 'grey.400' },
                 ]}
                 height={280}
               />
@@ -1619,7 +1619,7 @@ export const ProductionDashboardPage: React.FC = () => {
             elevation={0}
             sx={{
               p: 2.5,
-              borderRadius: 2,
+              borderRadius: 3,
               border: '1px solid',
               borderColor: 'grey.200',
               height: '100%',
@@ -1636,7 +1636,7 @@ export const ProductionDashboardPage: React.FC = () => {
               >
                 <Activity
                   size={18}
-                  color='#F59E0B'
+                  color='warning.main'
                 />
                 <Typography
                   variant='subtitle1'
@@ -1703,7 +1703,7 @@ export const ProductionDashboardPage: React.FC = () => {
           elevation={0}
           sx={{
             p: 2.5,
-            borderRadius: 2,
+            borderRadius: 3,
             border: '1px solid',
             borderColor: 'grey.200',
           }}
@@ -1759,7 +1759,7 @@ export const ProductionDashboardPage: React.FC = () => {
           >
             <Zap
               size={12}
-              color='#94A3B8'
+              color='grey.400'
             />
             <Typography
               variant='caption'

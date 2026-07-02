@@ -180,7 +180,7 @@ export const CommentList: React.FC<CommentListProps> = ({
   }, [newComment, onAddComment]);
 
   return (
-    <Paper sx={{ borderRadius: 2, overflow: 'hidden' }}>
+    <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
       {allowAdd && (
         <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider' }}>
           <Typography

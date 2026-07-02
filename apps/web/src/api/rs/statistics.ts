@@ -4,6 +4,6 @@ import type { RsStatistics } from './types';
 
 export const rsStatisticsApi = {
   getStatistics: async (): Promise<ApiResponse<RsStatistics>> => {
-    return apiClient.rs.get('/api/rs/statistics');
+    return apiClient.rs.get('/statistics');
   },
 };

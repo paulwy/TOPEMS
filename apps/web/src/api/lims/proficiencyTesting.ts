@@ -18,52 +18,51 @@ import type {
 } from './types';
 
 export const ptPlanApi = {
-  ...createCrudApi<PtPlan>('/api/lims/pt-plans'),
+  ...createCrudApi<PtPlan>('/pt-plans'),
 
-  listPtPlans: (params?: ListParams) => createCrudApi<PtPlan>('/api/lims/pt-plans').list(params),
+  listPtPlans: (params?: ListParams) => createCrudApi<PtPlan>('/pt-plans').list(params),
 
-  getPtPlan: (id: string) => createCrudApi<PtPlan>('/api/lims/pt-plans').get(id),
+  getPtPlan: (id: string) => createCrudApi<PtPlan>('/pt-plans').get(id),
 
-  createPtPlan: (data: CreatePtPlanRequest) =>
-    createCrudApi<PtPlan>('/api/lims/pt-plans').create(data),
+  createPtPlan: (data: CreatePtPlanRequest) => createCrudApi<PtPlan>('/pt-plans').create(data),
 
   updatePtPlan: (id: string, data: UpdatePtPlanRequest) =>
-    createCrudApi<PtPlan>('/api/lims/pt-plans').update(id, data),
+    createCrudApi<PtPlan>('/pt-plans').update(id, data),
 
-  deletePtPlan: (id: string) => createCrudApi<PtPlan>('/api/lims/pt-plans').delete(id),
+  deletePtPlan: (id: string) => createCrudApi<PtPlan>('/pt-plans').delete(id),
 
   listPlanSamples: async (planId: string): Promise<ApiResponse<PtSample[]>> => {
-    return apiClient.lims.get(`/api/lims/pt-plans/${planId}/samples`);
+    return apiClient.lims.get(`/pt-plans/${planId}/samples`);
   },
 
   listPlanResults: async (planId: string): Promise<ApiResponse<PtResult[]>> => {
-    return apiClient.lims.get(`/api/lims/pt-plans/${planId}/results`);
+    return apiClient.lims.get(`/pt-plans/${planId}/results`);
   },
 
   listPlanEvaluations: async (planId: string): Promise<ApiResponse<PtEvaluation[]>> => {
-    return apiClient.lims.get(`/api/lims/pt-plans/${planId}/evaluations`);
+    return apiClient.lims.get(`/pt-plans/${planId}/evaluations`);
   },
 
   listPlanCorrectiveActions: async (planId: string): Promise<ApiResponse<PtCorrectiveAction[]>> => {
-    return apiClient.lims.get(`/api/lims/pt-plans/${planId}/corrective-actions`);
+    return apiClient.lims.get(`/pt-plans/${planId}/corrective-actions`);
   },
 };
 
 export const ptSampleApi = {
   receivePtSample: async (data: PtSampleReceiveRequest): Promise<ApiResponse<PtSample>> => {
-    return apiClient.lims.post('/api/lims/pt-samples/receive', data);
+    return apiClient.lims.post('/pt-samples/receive', data);
   },
 };
 
 export const ptResultApi = {
   submitPtResult: async (data: CreatePtResultRequest): Promise<ApiResponse<PtResult>> => {
-    return apiClient.lims.post('/api/lims/pt-results', data);
+    return apiClient.lims.post('/pt-results', data);
   },
 };
 
 export const ptEvaluationApi = {
   evaluatePtResult: async (data: PtEvaluateRequest): Promise<ApiResponse<PtEvaluation>> => {
-    return apiClient.lims.post('/api/lims/pt-evaluations', data);
+    return apiClient.lims.post('/pt-evaluations', data);
   },
 };
 
@@ -71,13 +70,13 @@ export const ptCorrectiveActionApi = {
   createPtCorrectiveAction: async (
     data: CreatePtCorrectiveActionRequest
   ): Promise<ApiResponse<PtCorrectiveAction>> => {
-    return apiClient.lims.post('/api/lims/pt-corrective-actions', data);
+    return apiClient.lims.post('/pt-corrective-actions', data);
   },
 
   updatePtCorrectiveAction: async (
     id: string,
     data: UpdatePtCorrectiveActionRequest
   ): Promise<ApiResponse<PtCorrectiveAction>> => {
-    return apiClient.lims.put(`/api/lims/pt-corrective-actions/${id}`, data);
+    return apiClient.lims.put(`/pt-corrective-actions/${id}`, data);
   },
 };

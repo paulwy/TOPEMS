@@ -30,12 +30,19 @@ export function MobileForm({
   return (
     <Box sx={sx}>
       {title && (
-        <Typography variant="h6" sx={{ mb: 0.5 }}>
+        <Typography
+          variant='h6'
+          sx={{ mb: 0.5 }}
+        >
           {title}
         </Typography>
       )}
       {description && (
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        <Typography
+          variant='body2'
+          color='text.secondary'
+          sx={{ mb: 2 }}
+        >
           {description}
         </Typography>
       )}
@@ -50,18 +57,23 @@ export function MobileForm({
                 gap: 0.5,
               }}
             >
-              <Typography component="span" variant="body2" sx={{ fontWeight: 500 }}>
+              <Typography
+                component='span'
+                variant='body2'
+                sx={{ fontWeight: 500 }}
+              >
                 {field.label}
               </Typography>
               {field.required && (
-                <Typography variant="body2" color="error.main">
+                <Typography
+                  variant='body2'
+                  color='error.main'
+                >
                   *
                 </Typography>
               )}
             </Box>
-            {field.render(values[field.key], (val) =>
-              onChange(field.key, val),
-            )}
+            {field.render(values[field.key], (val) => onChange(field.key, val))}
           </Box>
         ))}
       </Stack>

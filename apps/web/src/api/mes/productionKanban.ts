@@ -4,7 +4,7 @@ import type { ProductionKanbanData } from './types';
 
 export const productionKanbanApi = {
   async getDashboard(): Promise<ApiResponse<ProductionKanbanData>> {
-    return apiClient.mes.get('/api/mes/kanban/dashboard');
+    return apiClient.mes.get('/kanban/dashboard');
   },
 
   async getOrderProgress(params?: { date?: string }): Promise<
@@ -23,9 +23,7 @@ export const productionKanbanApi = {
     const searchParams = new URLSearchParams();
     if (params?.date) searchParams.set('date', params.date);
     const queryString = searchParams.toString();
-    return apiClient.mes.get(
-      `/api/mes/kanban/order-progress${queryString ? `?${queryString}` : ''}`
-    );
+    return apiClient.mes.get(`/kanban/order-progress${queryString ? `?${queryString}` : ''}`);
   },
 
   async getWorkstationStatus(): Promise<
@@ -41,7 +39,7 @@ export const productionKanbanApi = {
       }>
     >
   > {
-    return apiClient.mes.get('/api/mes/kanban/workstation-status');
+    return apiClient.mes.get('/kanban/workstation-status');
   },
 
   async getQualityTrend(params?: { days?: number }): Promise<
@@ -57,9 +55,7 @@ export const productionKanbanApi = {
     const searchParams = new URLSearchParams();
     if (params?.days) searchParams.set('days', params.days.toString());
     const queryString = searchParams.toString();
-    return apiClient.mes.get(
-      `/api/mes/kanban/quality-trend${queryString ? `?${queryString}` : ''}`
-    );
+    return apiClient.mes.get(`/kanban/quality-trend${queryString ? `?${queryString}` : ''}`);
   },
 
   async getEquipmentStatus(): Promise<
@@ -73,6 +69,6 @@ export const productionKanbanApi = {
       }>
     >
   > {
-    return apiClient.mes.get('/api/mes/kanban/equipment-status');
+    return apiClient.mes.get('/kanban/equipment-status');
   },
 };

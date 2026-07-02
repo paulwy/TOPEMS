@@ -225,7 +225,7 @@ const GaugeChart = ({
           x='25'
           y='140'
           textAnchor='middle'
-          fill='#94a3b8'
+          fill='grey.400'
           fontSize='12'
         >
           {min}
@@ -234,7 +234,7 @@ const GaugeChart = ({
           x='175'
           y='140'
           textAnchor='middle'
-          fill='#94a3b8'
+          fill='grey.400'
           fontSize='12'
         >
           {max}

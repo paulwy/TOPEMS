@@ -132,7 +132,7 @@ const V4DemoPage: React.FC = () => {
           <Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(33.333% - 8px)' } }}>
             <Paper
               elevation={0}
-              sx={{ borderRadius: 2, border: 1, borderColor: 'divider' }}
+              sx={{ borderRadius: 3, border: 1, borderColor: 'divider' }}
             >
               <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
                 <Typography
@@ -163,7 +163,7 @@ const V4DemoPage: React.FC = () => {
                 >
                   <Paper
                     elevation={0}
-                    sx={{ p: 2, borderRadius: 2, border: 1, borderColor: 'divider' }}
+                    sx={{ p: 2, borderRadius: 3, border: 1, borderColor: 'divider' }}
                   >
                     <Typography
                       variant='h4'
@@ -184,7 +184,7 @@ const V4DemoPage: React.FC = () => {
 
             <Paper
               elevation={0}
-              sx={{ p: 3, borderRadius: 2, border: 1, borderColor: 'divider' }}
+              sx={{ p: 3, borderRadius: 3, border: 1, borderColor: 'divider' }}
             >
               <Typography
                 variant='subtitle2'
@@ -241,7 +241,7 @@ const V4DemoPage: React.FC = () => {
           <Box sx={{ width: '100%' }}>
             <Paper
               elevation={0}
-              sx={{ p: 3, borderRadius: 2, border: 1, borderColor: 'divider' }}
+              sx={{ p: 3, borderRadius: 3, border: 1, borderColor: 'divider' }}
             >
               <Typography
                 variant='subtitle2'
@@ -289,7 +289,7 @@ const V4DemoPage: React.FC = () => {
           <Box sx={{ width: '100%' }}>
             <Paper
               elevation={0}
-              sx={{ p: 3, borderRadius: 2, border: 1, borderColor: 'divider' }}
+              sx={{ p: 3, borderRadius: 3, border: 1, borderColor: 'divider' }}
             >
               <Typography
                 variant='subtitle2'
@@ -379,7 +379,7 @@ const V4DemoPage: React.FC = () => {
           <Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>
             <Paper
               elevation={0}
-              sx={{ p: 3, borderRadius: 2, border: 1, borderColor: 'divider' }}
+              sx={{ p: 3, borderRadius: 3, border: 1, borderColor: 'divider' }}
             >
               <Typography
                 variant='subtitle2'
@@ -419,7 +419,7 @@ const V4DemoPage: React.FC = () => {
           <Box sx={{ flex: 1, minWidth: { xs: '100%', md: 'calc(50% - 8px)' } }}>
             <Paper
               elevation={0}
-              sx={{ p: 3, borderRadius: 2, border: 1, borderColor: 'divider' }}
+              sx={{ p: 3, borderRadius: 3, border: 1, borderColor: 'divider' }}
             >
               <Typography
                 variant='subtitle2'
@@ -459,7 +459,7 @@ const V4DemoPage: React.FC = () => {
           <Box sx={{ width: '100%' }}>
             <Paper
               elevation={0}
-              sx={{ p: 3, borderRadius: 2, border: 1, borderColor: 'divider' }}
+              sx={{ p: 3, borderRadius: 3, border: 1, borderColor: 'divider' }}
             >
               <Typography
                 variant='subtitle2'
@@ -519,7 +519,7 @@ const V4DemoPage: React.FC = () => {
                   >
                     <Card
                       elevation={0}
-                      sx={{ border: 1, borderColor: 'divider', borderRadius: 2 }}
+                      sx={{ border: 1, borderColor: 'divider', borderRadius: 3 }}
                     >
                       <CardContent>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>

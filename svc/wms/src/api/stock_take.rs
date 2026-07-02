@@ -9,12 +9,15 @@ use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use uuid::Uuid;
 
-use crate::models::{CreateStockTakeItemRequest, CreateStockTakeRequest, StockTake, UpdateStockTakeItemRequest, UpdateStockTakeRequest};
 use crate::api::audit::log_audit_event;
 use crate::api::ApiState;
+use crate::models::{
+    CreateStockTakeItemRequest, CreateStockTakeRequest, StockTake, UpdateStockTakeItemRequest,
+    UpdateStockTakeRequest,
+};
 use crate::services::permission::{check_permission, ModulePermission};
 use topems_shared::auth::Claims;
-use topems_shared::{ApiResponse, api_error};
+use topems_shared::{api_error, ApiResponse};
 
 fn stock_take_row_to_json(row: &sqlx::postgres::PgRow) -> serde_json::Value {
     serde_json::json!({
@@ -73,13 +76,32 @@ where
     ApiState: FromRef<S>,
 {
     Router::new()
-        .route("/api/wms/stock-takes", get(list_stock_takes).post(create_stock_take))
-        .route("/api/v1/stock-takes/{id}", get(get_stock_take).put(update_stock_take).delete(delete_stock_take))
-        .route("/api/v1/stock-takes/{id}/items", get(list_stock_take_items).post(create_stock_take_item))
-        .route("/api/v1/stock-takes/{id}/items/{item_id}", get(get_stock_take_item).put(update_stock_take_item).delete(delete_stock_take_item))
+        .route(
+            "/api/wms/stock-takes",
+            get(list_stock_takes).post(create_stock_take),
+        )
+        .route(
+            "/api/v1/stock-takes/{id}",
+            get(get_stock_take)
+                .put(update_stock_take)
+                .delete(delete_stock_take),
+        )
+        .route(
+            "/api/v1/stock-takes/{id}/items",
+            get(list_stock_take_items).post(create_stock_take_item),
+        )
+        .route(
+            "/api/v1/stock-takes/{id}/items/{item_id}",
+            get(get_stock_take_item)
+                .put(update_stock_take_item)
+                .delete(delete_stock_take_item),
+        )
         .route("/api/v1/stock-takes/{id}/start", post(start_stock_take))
         .route("/api/v1/stock-takes/{id}/count", post(count_stock_take))
-        .route("/api/v1/stock-takes/{id}/complete", post(complete_stock_take))
+        .route(
+            "/api/v1/stock-takes/{id}/complete",
+            post(complete_stock_take),
+        )
         .route("/api/v1/stock-takes/{id}/adjust", post(adjust_stock_take))
 }
 
@@ -89,7 +111,7 @@ async fn list_stock_takes(
     Query(params): Query<StockTakePaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let page = params.page.unwrap_or(1).max(1);
@@ -142,7 +164,8 @@ async fn list_stock_takes(
             .await;
 
             let total = count_result.unwrap_or(0);
-            let stock_takes_json: Vec<serde_json::Value> = stock_takes.iter().map(stock_take_row_to_json).collect();
+            let stock_takes_json: Vec<serde_json::Value> =
+                stock_takes.iter().map(stock_take_row_to_json).collect();
 
             Json(ApiResponse::success(
                 serde_json::json!({
@@ -168,7 +191,7 @@ async fn create_stock_take(
     Json(req): Json<CreateStockTakeRequest>,
 ) -> Json<ApiResponse<StockTake>> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let request_data = serde_json::to_value(&req).ok();
@@ -200,14 +223,14 @@ async fn create_stock_take(
         Ok(stock_take) => (
             Json(ApiResponse::success(stock_take.clone(), "盘点创建成功")),
             "success",
-            None
+            None,
         ),
         Err(e) => {
             tracing::error!("创建盘点失败: {}", e);
             (
                 Json(api_error(500, "盘点创建失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -230,8 +253,9 @@ async fn create_stock_take(
         response_data,
         status.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }
@@ -242,7 +266,7 @@ async fn get_stock_take(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let result = sqlx::query(
@@ -280,11 +304,11 @@ async fn update_stock_take(
     Json(req): Json<UpdateStockTakeRequest>,
 ) -> Json<ApiResponse<StockTake>> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let request_data = serde_json::to_value(&req).ok();
-    
+
     let existing = sqlx::query_as::<_, StockTake>(
         r#"
         SELECT id, warehouse_id, location_id, stock_take_number, status, 
@@ -332,14 +356,14 @@ async fn update_stock_take(
         Ok(stock_take) => (
             Json(ApiResponse::success(stock_take.clone(), "盘点更新成功")),
             "success",
-            None
+            None,
         ),
         Err(e) => {
             tracing::error!("更新盘点失败: {}", e);
             (
                 Json(api_error(500, "盘点更新失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -362,8 +386,9 @@ async fn update_stock_take(
         response_data,
         status_str.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }
@@ -375,31 +400,33 @@ async fn delete_stock_take(
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query(r#"UPDATE wms.stock_takes SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"#)
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(
+        r#"UPDATE wms.stock_takes SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"#,
+    )
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
             Json(ApiResponse::success("".to_string(), "盘点删除成功")),
             "success",
-            None
+            None,
         ),
         Ok(_) => (
             Json(api_error(404, "盘点不存在")),
             "error",
-            Some("盘点不存在".to_string())
+            Some("盘点不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除盘点失败: {}", e);
             (
                 Json(api_error(500, "盘点删除失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -422,8 +449,9 @@ async fn delete_stock_take(
         response_data,
         status_str.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }
@@ -435,7 +463,7 @@ async fn start_stock_take(
     headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let now = Utc::now();
@@ -462,12 +490,11 @@ async fn start_stock_take(
     .execute(&mut *tx)
     .await;
 
-    let warehouse_id_result = sqlx::query_scalar::<_, Uuid>(
-        r#"SELECT warehouse_id FROM wms.stock_takes WHERE id = $1"#
-    )
-    .bind(id)
-    .fetch_one(&mut *tx)
-    .await;
+    let warehouse_id_result =
+        sqlx::query_scalar::<_, Uuid>(r#"SELECT warehouse_id FROM wms.stock_takes WHERE id = $1"#)
+            .bind(id)
+            .fetch_one(&mut *tx)
+            .await;
 
     if let Ok(warehouse_id) = warehouse_id_result {
         let _ = sqlx::query(
@@ -552,7 +579,7 @@ async fn list_stock_take_items(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
 
@@ -577,14 +604,27 @@ async fn list_stock_take_items(
     match result {
         Ok(items) => {
             let total = items.len() as i64;
-            let completed_count = items.iter()
-                .filter(|i| i.try_get::<Option<f64>, _>("counted_quantity").ok().flatten().is_some())
+            let completed_count = items
+                .iter()
+                .filter(|i| {
+                    i.try_get::<Option<f64>, _>("counted_quantity")
+                        .ok()
+                        .flatten()
+                        .is_some()
+                })
                 .count() as i64;
-            let discrepancy_count = items.iter()
-                .filter(|i| i.try_get::<Option<String>, _>("discrepancy_type").ok().flatten() != Some("none".to_string()))
+            let discrepancy_count = items
+                .iter()
+                .filter(|i| {
+                    i.try_get::<Option<String>, _>("discrepancy_type")
+                        .ok()
+                        .flatten()
+                        != Some("none".to_string())
+                })
                 .count() as i64;
 
-            let items_json: Vec<serde_json::Value> = items.iter().map(stock_take_item_row_to_json).collect();
+            let items_json: Vec<serde_json::Value> =
+                items.iter().map(stock_take_item_row_to_json).collect();
             Json(ApiResponse::success(
                 serde_json::json!({
                     "items": items_json,
@@ -610,7 +650,7 @@ async fn create_stock_take_item(
     Json(req): Json<CreateStockTakeItemRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let request_data = serde_json::to_value(&req).ok();
@@ -624,9 +664,13 @@ async fn create_stock_take_item(
     };
 
     let discrepancy_type = if let Some(v) = variance {
-        if v > 0.0 { Some("over".to_string()) }
-        else if v < 0.0 { Some("under".to_string()) }
-        else { Some("none".to_string()) }
+        if v > 0.0 {
+            Some("over".to_string())
+        } else if v < 0.0 {
+            Some("under".to_string())
+        } else {
+            Some("none".to_string())
+        }
     } else {
         None
     };
@@ -671,16 +715,16 @@ async fn create_stock_take_item(
                 Json(ApiResponse::success(item_json.clone(), "盘点明细创建成功")),
                 "success",
                 None,
-                Some(item_json)
+                Some(item_json),
             )
-        },
+        }
         Err(e) => {
             tracing::error!("创建盘点明细失败: {}", e);
             (
                 Json(api_error(500, "盘点明细创建失败")),
                 "error",
                 Some(e.to_string()),
-                None
+                None,
             )
         }
     };
@@ -697,8 +741,9 @@ async fn create_stock_take_item(
         response_data,
         status_str.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }
@@ -711,7 +756,7 @@ async fn count_stock_take(
     Json(items): Json<Vec<CountItemRequest>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let request_data = serde_json::to_value(&items).ok();
@@ -729,7 +774,7 @@ async fn count_stock_take(
 
     for item in &items {
         let system_qty_result = sqlx::query_scalar::<_, f64>(
-            r#"SELECT system_quantity FROM wms.stock_take_items WHERE id = $1"#
+            r#"SELECT system_quantity FROM wms.stock_take_items WHERE id = $1"#,
         )
         .bind(item.item_id)
         .fetch_one(&mut *tx)
@@ -737,9 +782,13 @@ async fn count_stock_take(
 
         if let Ok(system_qty) = system_qty_result {
             let discrepancy = item.counted_quantity - system_qty;
-            let discrepancy_type = if discrepancy > 0.0 { "over" }
-                else if discrepancy < 0.0 { "under" }
-                else { "none" };
+            let discrepancy_type = if discrepancy > 0.0 {
+                "over"
+            } else if discrepancy < 0.0 {
+                "under"
+            } else {
+                "none"
+            };
 
             let _ = sqlx::query(
                 r#"
@@ -782,7 +831,7 @@ async fn get_stock_take_item(
     Path((id, item_id)): Path<(Uuid, Uuid)>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let result = sqlx::query(
@@ -823,11 +872,11 @@ async fn update_stock_take_item(
     Json(req): Json<UpdateStockTakeItemRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let request_data = serde_json::to_value(&req).ok();
-    
+
     let existing = sqlx::query(
         r#"
         SELECT id, stock_take_id, system_quantity, counted_quantity, discrepancy_quantity, 
@@ -847,23 +896,43 @@ async fn update_stock_take_item(
     };
 
     let system_qty = existing.try_get::<f64, _>("system_quantity").unwrap_or(0.0);
-    let actual_quantity = req.actual_quantity.or_else(|| existing.try_get::<Option<f64>, _>("counted_quantity").ok().flatten());
+    let actual_quantity = req.actual_quantity.or_else(|| {
+        existing
+            .try_get::<Option<f64>, _>("counted_quantity")
+            .ok()
+            .flatten()
+    });
     let variance = if let Some(actual) = actual_quantity {
         Some(actual - system_qty)
     } else {
         None
     };
     let discrepancy_type = if let Some(v) = variance {
-        if v > 0.0 { "over".to_string() }
-        else if v < 0.0 { "under".to_string() }
-        else { "none".to_string() }
+        if v > 0.0 {
+            "over".to_string()
+        } else if v < 0.0 {
+            "under".to_string()
+        } else {
+            "none".to_string()
+        }
     } else {
-        existing.try_get::<String, _>("discrepancy_type").unwrap_or("none".to_string())
+        existing
+            .try_get::<String, _>("discrepancy_type")
+            .unwrap_or("none".to_string())
     };
     let status = req.status.unwrap_or_else(|| {
-        if actual_quantity.is_some() { "completed".to_string() } else { "pending".to_string() }
+        if actual_quantity.is_some() {
+            "completed".to_string()
+        } else {
+            "pending".to_string()
+        }
     });
-    let remarks = req.remarks.or_else(|| existing.try_get::<Option<String>, _>("notes").ok().flatten());
+    let remarks = req.remarks.or_else(|| {
+        existing
+            .try_get::<Option<String>, _>("notes")
+            .ok()
+            .flatten()
+    });
     let now = Utc::now();
 
     let result = sqlx::query(
@@ -895,16 +964,16 @@ async fn update_stock_take_item(
                 Json(ApiResponse::success(item_json.clone(), "盘点明细更新成功")),
                 "success",
                 None,
-                Some(item_json)
+                Some(item_json),
             )
-        },
+        }
         Err(e) => {
             tracing::error!("更新盘点明细失败: {}", e);
             (
                 Json(api_error(500, "盘点明细更新失败")),
                 "error",
                 Some(e.to_string()),
-                None
+                None,
             )
         }
     };
@@ -921,8 +990,9 @@ async fn update_stock_take_item(
         response_data,
         status_str.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }
@@ -934,7 +1004,7 @@ async fn delete_stock_take_item(
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let result = sqlx::query(r#"UPDATE wms.stock_take_items SET deleted_at = NOW() WHERE stock_take_id = $1 AND id = $2 AND deleted_at IS NULL"#)
@@ -947,19 +1017,19 @@ async fn delete_stock_take_item(
         Ok(r) if r.rows_affected() > 0 => (
             Json(ApiResponse::success("".to_string(), "盘点明细删除成功")),
             "success",
-            None
+            None,
         ),
         Ok(_) => (
             Json(api_error(404, "盘点明细不存在")),
             "error",
-            Some("盘点明细不存在".to_string())
+            Some("盘点明细不存在".to_string()),
         ),
         Err(e) => {
             tracing::error!("删除盘点明细失败: {}", e);
             (
                 Json(api_error(500, "盘点明细删除失败")),
                 "error",
-                Some(e.to_string())
+                Some(e.to_string()),
             )
         }
     };
@@ -982,8 +1052,9 @@ async fn delete_stock_take_item(
         response_data,
         status_str.to_string(),
         error_msg,
-        &headers
-    ).await;
+        &headers,
+    )
+    .await;
 
     response
 }
@@ -995,7 +1066,7 @@ async fn complete_stock_take(
     headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let now = Utc::now();
@@ -1027,17 +1098,18 @@ async fn complete_stock_take(
     .fetch_one(&mut *tx)
     .await;
 
-    let (total_items, counted_items, discrepancy_items, total_qty, counted_qty, discrepancy_qty) = match stats_result {
-        Ok(r) => (
-            r.try_get::<i64, _>("total_items").unwrap_or(0),
-            r.try_get::<i64, _>("counted_items").unwrap_or(0),
-            r.try_get::<i64, _>("discrepancy_items").unwrap_or(0),
-            r.try_get::<f64, _>("total_quantity").unwrap_or(0.0),
-            r.try_get::<f64, _>("counted_quantity").unwrap_or(0.0),
-            r.try_get::<f64, _>("discrepancy_quantity").unwrap_or(0.0),
-        ),
-        Err(_) => (0, 0, 0, 0.0, 0.0, 0.0),
-    };
+    let (total_items, counted_items, discrepancy_items, total_qty, counted_qty, discrepancy_qty) =
+        match stats_result {
+            Ok(r) => (
+                r.try_get::<i64, _>("total_items").unwrap_or(0),
+                r.try_get::<i64, _>("counted_items").unwrap_or(0),
+                r.try_get::<i64, _>("discrepancy_items").unwrap_or(0),
+                r.try_get::<f64, _>("total_quantity").unwrap_or(0.0),
+                r.try_get::<f64, _>("counted_quantity").unwrap_or(0.0),
+                r.try_get::<f64, _>("discrepancy_quantity").unwrap_or(0.0),
+            ),
+            Err(_) => (0, 0, 0, 0.0, 0.0, 0.0),
+        };
 
     let accuracy_rate = if total_items > 0 {
         (counted_items as f64 / total_items as f64) * 100.0
@@ -1137,7 +1209,7 @@ async fn adjust_stock_take(
     headers: HeaderMap,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::InventoryWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let now = Utc::now();

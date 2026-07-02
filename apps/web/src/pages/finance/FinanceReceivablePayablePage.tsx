@@ -653,6 +653,10 @@ const FinanceReceivablePayablePage: React.FC = () => {
     <PageContainer
       padding={false}
       maxWidth={false}
+      title='应收应付'
+      subtitle='管理应收账款和应付账款'
+      autoTitle
+      autoBreadcrumbs
     >
       <Box
         sx={{
@@ -1016,7 +1020,7 @@ const FinanceReceivablePayablePage: React.FC = () => {
                 sx={{
                   p: 3,
                   bgcolor: 'linear-gradient(135deg, primary.light 0%, #eef2ff 100%)',
-                  borderRadius: 2,
+                  borderRadius: 3,
                 }}
               >
                 <Box

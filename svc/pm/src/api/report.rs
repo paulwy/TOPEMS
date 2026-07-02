@@ -293,11 +293,12 @@ async fn get_template(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ReportTemplate>> {
-    let template =
-        sqlx::query_as::<_, ReportTemplate>("SELECT * FROM plugin_pm.report_templates WHERE id = $1")
-            .bind(id)
-            .fetch_one(&pool)
-            .await;
+    let template = sqlx::query_as::<_, ReportTemplate>(
+        "SELECT * FROM plugin_pm.report_templates WHERE id = $1",
+    )
+    .bind(id)
+    .fetch_one(&pool)
+    .await;
 
     match template {
         Ok(t) => Json(ApiResponse::success(t, "获取报告模板详情成功")),
@@ -388,10 +389,11 @@ async fn delete_template(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<()>> {
-    let result = sqlx::query("UPDATE plugin_pm.report_templates SET is_active = false WHERE id = $1")
-        .bind(id)
-        .execute(&pool)
-        .await;
+    let result =
+        sqlx::query("UPDATE plugin_pm.report_templates SET is_active = false WHERE id = $1")
+            .bind(id)
+            .execute(&pool)
+            .await;
 
     match result {
         Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success((), "删除报告模板成功")),

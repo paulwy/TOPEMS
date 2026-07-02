@@ -6,8 +6,8 @@ use topems_shared::AuthState;
 use topems_shared::SystemMetrics;
 
 pub mod alerts;
-pub mod metrics;
 pub mod health_check;
+pub mod metrics;
 
 #[derive(Clone)]
 pub struct ApiState {

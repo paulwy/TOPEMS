@@ -1,8 +1,8 @@
 //! 迁移运行器 - 便捷的迁移执行入口
 
-use std::sync::Arc;
 use sqlx::PgPool;
-use tracing::{info, error};
+use std::sync::Arc;
+use tracing::{error, info};
 
 use crate::error::Result;
 use crate::executor::{ExecutorConfig, MigrationExecutor};
@@ -90,7 +90,9 @@ impl MigrationRunner {
             "Starting rollback"
         );
 
-        self.executor.rollback_to(&migrations, target_version, false).await?;
+        self.executor
+            .rollback_to(&migrations, target_version, false)
+            .await?;
 
         info!(
             plugin = %self.executor.config.plugin_name,
@@ -154,7 +156,13 @@ macro_rules! migration {
         }
 
         impl __Migration {
-            fn new(version: &str, name: &str, description: &str, up: &str, down: Option<&str>) -> Self {
+            fn new(
+                version: &str,
+                name: &str,
+                description: &str,
+                up: &str,
+                down: Option<&str>,
+            ) -> Self {
                 Self {
                     script: migration_sdk::MigrationScript {
                         version: version.to_string(),
@@ -183,10 +191,9 @@ macro_rules! migration {
 
             async fn down(&self, pool: &sqlx::PgPool) -> Result<(), migration_sdk::MigrationError> {
                 if let Some(ref down_sql) = self.down_sql {
-                    sqlx::query(down_sql)
-                        .execute(pool)
-                        .await
-                        .map_err(|e| migration_sdk::MigrationError::RollbackFailed(e.to_string()))?;
+                    sqlx::query(down_sql).execute(pool).await.map_err(|e| {
+                        migration_sdk::MigrationError::RollbackFailed(e.to_string())
+                    })?;
                 }
                 Ok(())
             }

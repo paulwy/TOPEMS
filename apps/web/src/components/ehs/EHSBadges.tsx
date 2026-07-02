@@ -3,47 +3,26 @@ import React from 'react';
 
 const colorMap: Record<string, { bg: string; color: string }> = {
   'bg-red-100': { bg: 'error.lighter', color: 'error.dark' },
-  'bg-yellow-100': { bg: '#fef9c3', color: '#ca8a04' },
+  'bg-yellow-100': { bg: 'warning.100', color: '#ca8a04' },
   'bg-green-100': { bg: 'success.lighter', color: 'success.dark' },
   'bg-gray-100': { bg: 'grey.100', color: 'text.secondary' },
-  'bg-blue-100': { bg: '#dbeafe', color: 'primary.dark' },
-  'bg-orange-100': { bg: '#ffedd5', color: '#ea580c' },
-  'bg-purple-100': { bg: '#f3e8ff', color: 'secondary.dark' },
+  'bg-blue-100': { bg: 'primary.100', color: 'primary.dark' },
+  'bg-orange-100': { bg: '#ffedd5', color: 'warning.600' },
+  'bg-purple-100': { bg: 'secondary.100', color: 'secondary.dark' },
   'bg-emerald-100': { bg: 'success.lighter', color: 'success.dark' },
 };
 
 // EHS Hazard Status Types
 export type HazardStatus =
-  | 'active'
-  | 'controlled'
-  | 'eliminated'
-  | 'archived'
-  | '活动中'
-  | '已控制'
-  | '已消除'
-  | '已归档';
+  'active' | 'controlled' | 'eliminated' | 'archived' | '活动中' | '已控制' | '已消除' | '已归档';
 
 // EHS Incident Status Types
 export type IncidentStatus =
-  | 'pending'
-  | 'investigating'
-  | 'resolved'
-  | 'closed'
-  | '待处理'
-  | '调查中'
-  | '已解决'
-  | '已关闭';
+  'pending' | 'investigating' | 'resolved' | 'closed' | '待处理' | '调查中' | '已解决' | '已关闭';
 
 // EHS Control Measure Status Types
 export type ControlStatus =
-  | 'pending'
-  | 'in_progress'
-  | 'completed'
-  | 'verified'
-  | '待处理'
-  | '进行中'
-  | '已完成'
-  | '已验证';
+  'pending' | 'in_progress' | 'completed' | 'verified' | '待处理' | '进行中' | '已完成' | '已验证';
 
 interface EHSStatusBadgeProps {
   status: HazardStatus | IncidentStatus | ControlStatus | string;
@@ -239,10 +218,7 @@ const severityConfig: Record<string, { color: string; label: string }> = {
   未遂: { color: 'bg-blue-100 text-blue-700 border-blue-200', label: '未遂' },
 };
 
-export const EHSSeverityBadge: React.FC<EHSSeverityBadgeProps> = ({
-  severity,
-  className = '',
-}) => {
+export const EHSSeverityBadge: React.FC<EHSSeverityBadgeProps> = ({ severity, className = '' }) => {
   const item = severityConfig[severity] || {
     color: 'bg-gray-100 text-gray-700 border-gray-200',
     label: severity,
@@ -320,12 +296,7 @@ export const EHSRiskLevelBadge: React.FC<EHSRiskLevelBadgeProps> = ({
 // ============ Measure Type Badge ============
 
 export type MeasureType =
-  | 'engineering'
-  | 'administrative'
-  | 'ppe'
-  | '工程控制'
-  | '管理控制'
-  | '个人防护';
+  'engineering' | 'administrative' | 'ppe' | '工程控制' | '管理控制' | '个人防护';
 
 interface EHSMeasureTypeBadgeProps {
   type: MeasureType | string;

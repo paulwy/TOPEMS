@@ -62,7 +62,47 @@ import type {
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+/**
+ * TODO: Phase 7-4 -- 虚拟滚动优化
+ *
+ * 当列表数据超过 100 条时，建议使用虚拟滚动提升渲染性能:
+ *
+ * 方案 1: @tanstack/react-virtual
+ *   import { useVirtualizer } from '@tanstack/react-virtual';
+ *   const virtualizer = useVirtualizer({ count: data.length, getScrollElement: () => parentRef.current });
+ *
+ * 方案 2: react-virtuoso (MUI 友好)
+ *   import { TableVirtuoso } from 'react-virtuoso';
+ *   <TableVirtuoso data={data} components={{ TableBody, TableRow, TableCell }} />
+ *
+ * 当前预估数据量: 凭证列表 (历史累积量大)
+ */
+
+/**
+ * TODO: Phase 7-2 — React Query 迁移
+ *
+ * 模块: 凭证管理 (VoucherManagementPage)
+ *
+ * 1. 将 useState(loading) + useState(data) + useEffect(fetch) 替换为 useQuery:
+ *    const { data: response, isLoading, error, refetch } = useQuery({
+ *      queryKey: ['erp-vouchers', page, rowsPerPage, searchText],
+ *      queryFn: () => erpApi.getList({ page: page + 1, pageSize: rowsPerPage, keyword: searchText }),
+ *      placeholderData: (prev) => prev,
+ *    });
+ *    const data = response?.data?.items || [];
+ *    const total = response?.data?.total || 0;
+ *
+ * 2. 将 create/update/delete handler 中的 setState + API 调用替换为 useMutation:
+ *    const queryClient = useQueryClient();
+ *    const deleteMutation = useMutation({
+ *      mutationFn: (id: string) => erpApi.delete(id),
+ *      onSuccess: () => queryClient.invalidateQueries({ queryKey: ['erp-vouchers'] }),
+ *    });
+ *
+ * 3. 保留 UI 状态（page, rowsPerPage, searchText, dialogOpen 等）的 useState
+ */
 const VoucherManagementPage: React.FC = () => {
   const navigate = useNavigate();
   const addNotification = useAppStore((state) => state.addNotification);
@@ -510,7 +550,7 @@ const VoucherManagementPage: React.FC = () => {
             sx={{
               p: 2.5,
               bgcolor: 'background.paper',
-              borderRadius: 2,
+              borderRadius: 3,
               boxShadow: 1,
               display: 'flex',
               alignItems: 'center',
@@ -548,7 +588,7 @@ const VoucherManagementPage: React.FC = () => {
       <Box
         sx={{
           bgcolor: 'background.paper',
-          borderRadius: 2,
+          borderRadius: 3,
           boxShadow: 1,
           overflow: 'hidden',
         }}
@@ -1385,3 +1425,5 @@ const VoucherManagementPage: React.FC = () => {
 };
 
 export default VoucherManagementPage;
+
+// Phase 7-2: React Query migration tagged

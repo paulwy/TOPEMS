@@ -180,7 +180,7 @@ export const ChartCard: React.FC<ChartCardProps> = ({
                       borderRadius: 6,
                       border: 'none',
                       backgroundColor: activeChartType === type ? 'white' : 'transparent',
-                      color: activeChartType === type ? '#1D4ED8' : 'text.secondary',
+                      color: activeChartType === type ? 'primary.700' : 'text.secondary',
                       cursor: 'pointer',
                       boxShadow: activeChartType === type ? '0 1px 2px rgba(0,0,0,0.1)' : 'none',
                       transition: 'all 0.2s ease',
@@ -249,9 +249,9 @@ export const ChartCard: React.FC<ChartCardProps> = ({
               onClick={onDrillDown}
               sx={{
                 cursor: 'pointer',
-                backgroundColor: '#EFF6FF',
-                color: '#1D4ED8',
-                '&:hover': { backgroundColor: '#DBEAFE' },
+                backgroundColor: 'primary.50',
+                color: 'primary.700',
+                '&:hover': { backgroundColor: 'primary.100' },
               }}
             />
           )}

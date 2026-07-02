@@ -51,9 +51,15 @@ pub async fn create_routes(db: PgPool) -> Result<Router> {
             "/api/srm/suppliers/{id}/evaluation-history",
             get(get_evaluation_history),
         )
-        .route("/api/srm/suppliers/{id}/performance-summary", get(get_performance_summary))
+        .route(
+            "/api/srm/suppliers/{id}/performance-summary",
+            get(get_performance_summary),
+        )
         .route("/api/srm/suppliers/{id}/score-trend", get(get_score_trend))
-        .route("/api/srm/evaluations/statistics", get(get_evaluation_statistics))
+        .route(
+            "/api/srm/evaluations/statistics",
+            get(get_evaluation_statistics),
+        )
         .with_state(state);
 
     Ok(app)
@@ -648,23 +654,29 @@ async fn get_performance_summary(
             });
             Json(ApiResponse::success(summary, "获取供应商绩效汇总成功"))
         }
-        Ok(None) => Json(ApiResponse::success(serde_json::json!({
-            "supplier_id": id,
-            "total_evaluations": 0,
-            "avg_overall_score": null,
-            "avg_quality_score": null,
-            "avg_delivery_score": null,
-            "avg_service_score": null,
-            "avg_price_score": null,
-            "max_overall_score": null,
-            "min_overall_score": null,
-            "latest_evaluation_date": null,
-            "earliest_evaluation_date": null,
-            "performance_level": "no_data"
-        }), "获取供应商绩效汇总成功")),
+        Ok(None) => Json(ApiResponse::success(
+            serde_json::json!({
+                "supplier_id": id,
+                "total_evaluations": 0,
+                "avg_overall_score": null,
+                "avg_quality_score": null,
+                "avg_delivery_score": null,
+                "avg_service_score": null,
+                "avg_price_score": null,
+                "max_overall_score": null,
+                "min_overall_score": null,
+                "latest_evaluation_date": null,
+                "earliest_evaluation_date": null,
+                "performance_level": "no_data"
+            }),
+            "获取供应商绩效汇总成功",
+        )),
         Err(e) => {
             tracing::error!("获取供应商绩效汇总失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "获取供应商绩效汇总失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "获取供应商绩效汇总失败",
+            ))
         }
     }
 }
@@ -718,24 +730,31 @@ async fn get_score_trend(
 
     match result {
         Ok(rows) => {
-            let trend_data: Vec<serde_json::Value> = rows.into_iter().map(|r| {
-                serde_json::json!({
-                    "evaluation_date": r.evaluation_date,
-                    "evaluation_no": r.evaluation_no,
-                    "overall_score": r.overall_score.map(|v| (v * 100.0).round() / 100.0),
-                    "quality_score": r.quality_score.map(|v| (v * 100.0).round() / 100.0),
-                    "delivery_score": r.delivery_score.map(|v| (v * 100.0).round() / 100.0),
-                    "service_score": r.service_score.map(|v| (v * 100.0).round() / 100.0),
-                    "price_score": r.price_score.map(|v| (v * 100.0).round() / 100.0),
+            let trend_data: Vec<serde_json::Value> = rows
+                .into_iter()
+                .map(|r| {
+                    serde_json::json!({
+                        "evaluation_date": r.evaluation_date,
+                        "evaluation_no": r.evaluation_no,
+                        "overall_score": r.overall_score.map(|v| (v * 100.0).round() / 100.0),
+                        "quality_score": r.quality_score.map(|v| (v * 100.0).round() / 100.0),
+                        "delivery_score": r.delivery_score.map(|v| (v * 100.0).round() / 100.0),
+                        "service_score": r.service_score.map(|v| (v * 100.0).round() / 100.0),
+                        "price_score": r.price_score.map(|v| (v * 100.0).round() / 100.0),
+                    })
                 })
-            }).collect();
+                .collect();
 
             let summary = if !trend_data.is_empty() {
-                let first_score = trend_data.first().and_then(|d| d.get("overall_score").and_then(|s| s.as_f64()));
-                let last_score = trend_data.last().and_then(|d| d.get("overall_score").and_then(|s| s.as_f64()));
+                let first_score = trend_data
+                    .first()
+                    .and_then(|d| d.get("overall_score").and_then(|s| s.as_f64()));
+                let last_score = trend_data
+                    .last()
+                    .and_then(|d| d.get("overall_score").and_then(|s| s.as_f64()));
                 let change = match (first_score, last_score) {
                     (Some(f), Some(l)) => Some((l - f).round() / 100.0 * 100.0),
-                    _ => None
+                    _ => None,
                 };
                 serde_json::json!({
                     "trend_direction": match change {
@@ -754,15 +773,21 @@ async fn get_score_trend(
                 })
             };
 
-            Json(ApiResponse::success(serde_json::json!({
-                "supplier_id": id,
-                "trend_data": trend_data,
-                "summary": summary
-            }), "获取供应商评分趋势成功"))
+            Json(ApiResponse::success(
+                serde_json::json!({
+                    "supplier_id": id,
+                    "trend_data": trend_data,
+                    "summary": summary
+                }),
+                "获取供应商评分趋势成功",
+            ))
         }
         Err(e) => {
             tracing::error!("获取供应商评分趋势失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "获取供应商评分趋势失败"))
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "获取供应商评分趋势失败",
+            ))
         }
     }
 }
@@ -776,20 +801,19 @@ async fn get_evaluation_statistics(
         Err(e) => return e,
     }
 
-    let total_result = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.supplier_evaluations"
-    )
-    .fetch_one(&state.db)
-    .await;
+    let total_result =
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM plugin_srm.supplier_evaluations")
+            .fetch_one(&state.db)
+            .await;
 
     let completed_result = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.supplier_evaluations WHERE status = 'completed'"
+        "SELECT COUNT(*) FROM plugin_srm.supplier_evaluations WHERE status = 'completed'",
     )
     .fetch_one(&state.db)
     .await;
 
     let pending_result = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM plugin_srm.supplier_evaluations WHERE status = 'pending'"
+        "SELECT COUNT(*) FROM plugin_srm.supplier_evaluations WHERE status = 'pending'",
     )
     .fetch_one(&state.db)
     .await;
@@ -801,7 +825,7 @@ async fn get_evaluation_statistics(
     .await;
 
     let supplier_count_result = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(DISTINCT supplier_id) FROM plugin_srm.supplier_evaluations"
+        "SELECT COUNT(DISTINCT supplier_id) FROM plugin_srm.supplier_evaluations",
     )
     .fetch_one(&state.db)
     .await;

@@ -371,7 +371,7 @@ export const IntegrationErpOverviewPage: React.FC = () => {
                     <LinearProgress
                       variant='determinate'
                       value={task.progress}
-                      sx={{ height: 4, borderRadius: 2 }}
+                      sx={{ height: 4, borderRadius: 3 }}
                     />
                   </Box>
                 )}

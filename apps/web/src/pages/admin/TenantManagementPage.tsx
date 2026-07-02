@@ -1,9 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Box,
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import {Box,
   Typography,
   Chip,
-  IconButton,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -15,25 +13,29 @@ import {
   InputLabel,
   Select,
   Card,
-  CardContent,
-} from '@mui/material';
+  CardContent, useTheme} from '@mui/material';
 import {
   Plus,
   Edit,
   Trash2,
   Eye,
-  Search,
   Building2,
   Users,
   HardDrive,
   Activity,
+  Search,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { PageContainer, DataTable, Grid } from '@/components/common';
+import { PageContainer } from '@/components/common';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
+import {
+  ListPageTemplate,
+  type ColumnDef,
+  type RowAction,
+  type FilterConfig,
+} from '@/components/templates';
 import { tenantApi } from '@/api/tenant';
 import type { Tenant, TenantStatus, TenantPlan } from '@/api/tenant/types';
-import type { ColumnDef } from '@tanstack/react-table';
 
 const statusColors: Record<TenantStatus, 'success' | 'warning' | 'error' | 'default'> = {
   active: 'success',
@@ -64,13 +66,15 @@ const planColors: Record<TenantPlan, 'default' | 'primary' | 'secondary' | 'succ
 };
 
 const TenantManagementPage: React.FC = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
-  const [planFilter, setPlanFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [planFilter, setPlanFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
@@ -102,26 +106,28 @@ const TenantManagementPage: React.FC = () => {
     loadTenants();
   }, [currentPage, debouncedSearch, statusFilter, planFilter]);
 
-  const loadTenants = async () => {
+  const loadTenants = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await tenantApi.listTenants({
         page: currentPage,
         pageSize,
         search: debouncedSearch || undefined,
-        status: statusFilter || undefined,
-        plan: planFilter || undefined,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        plan: planFilter !== 'all' ? planFilter : undefined,
       });
       if (res.success && res.data) {
         setTenants(res.data.items);
         setTotal(res.data.total);
       }
-    } catch (error) {
-      console.error('Failed to load tenants:', error);
+    } catch (err) {
+      setError('加载租户列表失败');
+      console.error('Failed to load tenants:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, pageSize, debouncedSearch, statusFilter, planFilter]);
 
   const handleCreateTenant = async () => {
     try {
@@ -150,50 +156,59 @@ const TenantManagementPage: React.FC = () => {
     }
   };
 
-  const handleDeleteTenant = (tenant: Tenant) => {
-    setConfirmConfig({
-      title: '确认删除租户',
-      message: `确定要删除租户"${tenant.name}"吗？此操作不可恢复。`,
-      danger: true,
-      onConfirm: async () => {
-        try {
-          await tenantApi.deleteTenant(tenant.id);
-          setConfirmDialogOpen(false);
-          loadTenants();
-        } catch (error) {
-          console.error('Failed to delete tenant:', error);
-        }
-      },
-    });
-    setConfirmDialogOpen(true);
-  };
+  const handleDeleteTenant = useCallback(
+    (tenant: Tenant) => {
+      setConfirmConfig({
+        title: '确认删除租户',
+        message: `确定要删除租户"${tenant.name}"吗？此操作不可恢复。`,
+        danger: true,
+        onConfirm: async () => {
+          try {
+            await tenantApi.deleteTenant(tenant.id);
+            setConfirmDialogOpen(false);
+            loadTenants();
+          } catch (error) {
+            console.error('Failed to delete tenant:', error);
+          }
+        },
+      });
+      setConfirmDialogOpen(true);
+    },
+    [loadTenants]
+  );
 
-  const handleSuspendTenant = (tenant: Tenant) => {
-    setConfirmConfig({
-      title: '确认停用租户',
-      message: `确定要停用租户"${tenant.name}"吗？停用后该租户的所有用户将无法登录。`,
-      danger: true,
-      onConfirm: async () => {
-        try {
-          await tenantApi.suspendTenant(tenant.id);
-          setConfirmDialogOpen(false);
-          loadTenants();
-        } catch (error) {
-          console.error('Failed to suspend tenant:', error);
-        }
-      },
-    });
-    setConfirmDialogOpen(true);
-  };
+  const handleSuspendTenant = useCallback(
+    (tenant: Tenant) => {
+      setConfirmConfig({
+        title: '确认停用租户',
+        message: `确定要停用租户"${tenant.name}"吗？停用后该租户的所有用户将无法登录。`,
+        danger: true,
+        onConfirm: async () => {
+          try {
+            await tenantApi.suspendTenant(tenant.id);
+            setConfirmDialogOpen(false);
+            loadTenants();
+          } catch (error) {
+            console.error('Failed to suspend tenant:', error);
+          }
+        },
+      });
+      setConfirmDialogOpen(true);
+    },
+    [loadTenants]
+  );
 
-  const handleActivateTenant = async (tenant: Tenant) => {
-    try {
-      await tenantApi.activateTenant(tenant.id);
-      loadTenants();
-    } catch (error) {
-      console.error('Failed to activate tenant:', error);
-    }
-  };
+  const handleActivateTenant = useCallback(
+    async (tenant: Tenant) => {
+      try {
+        await tenantApi.activateTenant(tenant.id);
+        loadTenants();
+      } catch (error) {
+        console.error('Failed to activate tenant:', error);
+      }
+    },
+    [loadTenants]
+  );
 
   const openEditDialog = (tenant: Tenant) => {
     setSelectedTenant(tenant);
@@ -205,265 +220,310 @@ const TenantManagementPage: React.FC = () => {
     setShowEditDialog(true);
   };
 
-  const columns: ColumnDef<Tenant>[] = [
-    {
-      accessorKey: 'name',
-      header: '租户名称',
-      cell: ({ row }) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Box
-            sx={{
-              width: 40,
-              height: 40,
-              borderRadius: 2,
-              bgcolor: row.original.settings.branding.primary_color + '20',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Building2 size={20} style={{ color: row.original.settings.branding.primary_color }} />
-          </Box>
-          <Box>
-            <Typography variant='body2' sx={{ fontWeight: 600 }}>
-              {row.original.name}
-            </Typography>
-            <Typography variant='caption' color='text.secondary'>
-              {row.original.slug}
-            </Typography>
-          </Box>
-        </Box>
-      ),
-    },
-    {
-      accessorKey: 'status',
-      header: '状态',
-      cell: ({ row }) => (
-        <Chip
-          label={statusLabels[row.original.status as TenantStatus]}
-          color={statusColors[row.original.status as TenantStatus]}
-          size='small'
-        />
-      ),
-    },
-    {
-      accessorKey: 'plan',
-      header: '套餐',
-      cell: ({ row }) => (
-        <Chip
-          label={planLabels[row.original.plan as TenantPlan]}
-          color={planColors[row.original.plan as TenantPlan]}
-          size='small'
-          variant='outlined'
-        />
-      ),
-    },
-    {
-      accessorKey: 'settings.max_users',
-      header: '用户数',
-      cell: ({ row }) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Users size={16} style={{ opacity: 0.5 }} />
-          <Typography variant='body2'>
-            {row.original.settings.max_users}
-          </Typography>
-        </Box>
-      ),
-    },
-    {
-      accessorKey: 'settings.max_storage_gb',
-      header: '存储配额',
-      cell: ({ row }) => (
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <HardDrive size={16} style={{ opacity: 0.5 }} />
-          <Typography variant='body2'>
-            {row.original.settings.max_storage_gb} GB
-          </Typography>
-        </Box>
-      ),
-    },
-    {
-      accessorKey: 'created_at',
-      header: '创建时间',
-      cell: ({ row }) => (
-        <Typography variant='body2' color='text.secondary'>
-          {new Date(row.original.created_at).toLocaleDateString('zh-CN')}
-        </Typography>
-      ),
-    },
-    {
-      accessorKey: 'actions',
-      header: '操作',
-      cell: ({ row }) => (
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <IconButton
-            size='small'
-            onClick={() => navigate(`/admin/tenants/${row.original.id}`)}
-            title='查看详情'
-          >
-            <Eye size={16} />
-          </IconButton>
-          <IconButton
-            size='small'
-            onClick={() => openEditDialog(row.original)}
-            title='编辑'
-          >
-            <Edit size={16} />
-          </IconButton>
-          {row.original.status === 'active' ? (
-            <IconButton
-              size='small'
-              onClick={() => handleSuspendTenant(row.original)}
-              title='停用'
-              color='warning'
+  const columns: ColumnDef<Tenant>[] = useMemo(
+    () => [
+      {
+        id: 'name',
+        label: '租户名称',
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: 3,
+                bgcolor: row.settings?.branding?.primary_color
+                  ? `${row.settings.branding.primary_color}20`
+                  : 'primary.main10',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
             >
-              <Activity size={16} />
-            </IconButton>
-          ) : row.original.status === 'suspended' ? (
-            <IconButton
-              size='small'
-              onClick={() => handleActivateTenant(row.original)}
-              title='激活'
-              color='success'
-            >
-              <Activity size={16} />
-            </IconButton>
-          ) : null}
-          <IconButton
+              <Building2
+                size={20}
+                style={{
+                  color: row.settings?.branding?.primary_color || theme.palette.primary.main,
+                }}
+              />
+            </Box>
+            <Box>
+              <Typography
+                variant='body2'
+                sx={{ fontWeight: 600 }}
+              >
+                {row.name}
+              </Typography>
+              <Typography
+                variant='caption'
+                color='text.secondary'
+              >
+                {row.slug}
+              </Typography>
+            </Box>
+          </Box>
+        ),
+      },
+      {
+        id: 'status',
+        label: '状态',
+        render: (row) => (
+          <Chip
+            label={statusLabels[row.status as TenantStatus]}
+            color={statusColors[row.status as TenantStatus]}
             size='small'
-            onClick={() => handleDeleteTenant(row.original)}
-            title='删除'
-            color='error'
+          />
+        ),
+      },
+      {
+        id: 'plan',
+        label: '套餐',
+        render: (row) => (
+          <Chip
+            label={planLabels[row.plan as TenantPlan]}
+            color={planColors[row.plan as TenantPlan]}
+            size='small'
+            variant='outlined'
+          />
+        ),
+      },
+      {
+        id: 'max_users',
+        label: '用户数',
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Users
+              size={16}
+              style={{ opacity: 0.5 }}
+            />
+            <Typography variant='body2'>{row.settings?.max_users || '-'}</Typography>
+          </Box>
+        ),
+      },
+      {
+        id: 'max_storage',
+        label: '存储配额',
+        render: (row) => (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <HardDrive
+              size={16}
+              style={{ opacity: 0.5 }}
+            />
+            <Typography variant='body2'>
+              {row.settings?.max_storage_gb ? `${row.settings.max_storage_gb} GB` : '-'}
+            </Typography>
+          </Box>
+        ),
+      },
+      {
+        id: 'created_at',
+        label: '创建时间',
+        render: (row) => (
+          <Typography
+            variant='body2'
+            color='text.secondary'
           >
-            <Trash2 size={16} />
-          </IconButton>
-        </Box>
-      ),
-    },
-  ];
+            {row.created_at ? new Date(row.created_at).toLocaleDateString('zh-CN') : '-'}
+          </Typography>
+        ),
+      },
+    ],
+    []
+  );
 
-  const statsCards = [
-    { label: '总租户', value: total, icon: Building2, color: 'primary' },
-    { label: '活跃租户', value: tenants.filter(t => t.status === 'active').length, icon: Activity, color: 'success' },
-    { label: '试用租户', value: tenants.filter(t => t.status === 'trial').length, icon: Search, color: 'warning' },
-    { label: '已停用', value: tenants.filter(t => t.status === 'suspended').length, icon: Users, color: 'error' },
-  ];
+  const rowActions: RowAction<Tenant>[] = useMemo(
+    () => [
+      {
+        label: '查看详情',
+        icon: <Eye size={16} />,
+        onClick: (row) => navigate(`/admin/tenants/${row.id}`),
+      },
+      {
+        label: '编辑',
+        icon: <Edit size={16} />,
+        onClick: (row) => openEditDialog(row),
+      },
+      {
+        label: '停用',
+        icon: <Activity size={16} />,
+        color: 'warning',
+        show: (row) => row.status === 'active',
+        onClick: (row) => handleSuspendTenant(row),
+        confirm: true,
+        confirmMessage: '确定要停用该租户吗？',
+      },
+      {
+        label: '激活',
+        icon: <Activity size={16} />,
+        color: 'success',
+        show: (row) => row.status === 'suspended',
+        onClick: (row) => handleActivateTenant(row),
+      },
+      {
+        label: '删除',
+        icon: <Trash2 size={16} />,
+        color: 'error',
+        onClick: (row) => handleDeleteTenant(row),
+        divider: true,
+        confirm: true,
+        confirmMessage: '确定要删除该租户吗？此操作不可恢复。',
+      },
+    ],
+    [navigate, handleSuspendTenant, handleActivateTenant, handleDeleteTenant]
+  );
+
+  const filters: FilterConfig[] = useMemo(
+    () => [
+      {
+        id: 'status',
+        label: '状态',
+        type: 'select',
+        options: [
+          { label: '全部状态', value: 'all' },
+          { label: '已激活', value: 'active' },
+          { label: '试用中', value: 'trial' },
+          { label: '已停用', value: 'suspended' },
+        ],
+      },
+      {
+        id: 'plan',
+        label: '套餐',
+        type: 'select',
+        options: [
+          { label: '全部套餐', value: 'all' },
+          { label: '免费版', value: 'free' },
+          { label: '基础版', value: 'basic' },
+          { label: '专业版', value: 'professional' },
+          { label: '企业版', value: 'enterprise' },
+        ],
+      },
+    ],
+    []
+  );
+
+  const statsCards = useMemo(
+    () => [
+      { label: '总租户', value: total, icon: Building2, color: 'primary' },
+      {
+        label: '活跃租户',
+        value: tenants.filter((t) => t.status === 'active').length,
+        icon: Activity,
+        color: 'success',
+      },
+      {
+        label: '试用租户',
+        value: tenants.filter((t) => t.status === 'trial').length,
+        icon: Search,
+        color: 'warning',
+      },
+      {
+        label: '已停用',
+        value: tenants.filter((t) => t.status === 'suspended').length,
+        icon: Users,
+        color: 'error',
+      },
+    ],
+    [total, tenants]
+  );
+
+  const handleFilterChange = useCallback((filters: Record<string, any>) => {
+    if (filters.status !== undefined) {
+      setStatusFilter(filters.status);
+      setCurrentPage(1);
+    }
+    if (filters.plan !== undefined) {
+      setPlanFilter(filters.plan);
+      setCurrentPage(1);
+    }
+  }, []);
 
   return (
     <PageContainer
-      title='租户管理'
-      subtitle='管理所有租户，包括创建、配置和监控'
       headerProps={{
-        actions: [
-          {
-            label: '创建租户',
-            icon: <Plus size={18} />,
-            onClick: () => setShowCreateDialog(true),
-            variant: 'contained' as const,
-          },
-        ],
+        pageIcon: <Building2 size={20} />,
       }}
     >
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        {statsCards.map((stat, index) => (
-          <Grid item xs={12} sm={6} md={3} key={index}>
-            <Card variant='outlined'>
-              <CardContent>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: 2,
-                      bgcolor: `${stat.color}.main10`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <stat.icon size={24} />
-                  </Box>
-                  <Box>
-                    <Typography variant='h4' sx={{ fontWeight: 700 }}>
-                      {stat.value}
-                    </Typography>
-                    <Typography variant='body2' color='text.secondary'>
-                      {stat.label}
-                    </Typography>
-                  </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-
-      <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
-        <TextField
-          placeholder='搜索租户名称或标识...'
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          size='small'
-          sx={{ minWidth: 280 }}
-          slotProps={{
-            input: {
-              startAdornment: <Search size={18} style={{ marginRight: 8, opacity: 0.5 }} />,
-            },
-          }}
-        />
-        <FormControl size='small' sx={{ minWidth: 140 }}>
-          <InputLabel>状态</InputLabel>
-          <Select
-            value={statusFilter}
-            label='状态'
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
-              setCurrentPage(1);
-            }}
-          >
-            <MenuItem value=''>全部状态</MenuItem>
-            <MenuItem value='active'>已激活</MenuItem>
-            <MenuItem value='trial'>试用中</MenuItem>
-            <MenuItem value='suspended'>已停用</MenuItem>
-          </Select>
-        </FormControl>
-        <FormControl size='small' sx={{ minWidth: 140 }}>
-          <InputLabel>套餐</InputLabel>
-          <Select
-            value={planFilter}
-            label='套餐'
-            onChange={(e) => {
-              setPlanFilter(e.target.value);
-              setCurrentPage(1);
-            }}
-          >
-            <MenuItem value=''>全部套餐</MenuItem>
-            <MenuItem value='free'>免费版</MenuItem>
-            <MenuItem value='basic'>基础版</MenuItem>
-            <MenuItem value='professional'>专业版</MenuItem>
-            <MenuItem value='enterprise'>企业版</MenuItem>
-          </Select>
-        </FormControl>
-      </Box>
-
-      <DataTable<Tenant, unknown>
+      <ListPageTemplate
         columns={columns}
         data={tenants}
         loading={loading}
-        showSearch={false}
-        showFilters={false}
-        enablePagination
-        totalItems={total}
-        pageSize={pageSize}
-        currentPage={currentPage}
-        onPageChange={(page) => setCurrentPage(page)}
-        onPageSizeChange={(size) => {
-          setPageSize(size);
-          setCurrentPage(1);
+        error={error || undefined}
+        rowActions={rowActions}
+        searchable
+        searchPlaceholder='搜索租户名称或标识...'
+        searchValue={searchQuery}
+        onSearch={setSearchQuery}
+        filters={filters}
+        filtersValue={{ status: statusFilter, plan: planFilter }}
+        onFilterChange={handleFilterChange}
+        pagination={{
+          page: currentPage,
+          pageSize,
+          total,
+          onPageChange: setCurrentPage,
+          onPageSizeChange: (size) => {
+            setPageSize(size);
+            setCurrentPage(1);
+          },
         }}
+        actions={[
+          {
+            label: '创建租户',
+            icon: <Plus size={20} />,
+            onClick: () => setShowCreateDialog(true),
+          },
+        ]}
+        onRefresh={loadTenants}
+        headerContent={
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 2, mb: 2 }}>
+            {statsCards.map((stat, index) => (
+              <Card
+                variant='outlined'
+                key={index}
+              >
+                <CardContent>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box
+                      sx={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: 3,
+                        bgcolor: `${stat.color}.main10`,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <stat.icon size={24} />
+                    </Box>
+                    <Box>
+                      <Typography
+                        variant='h4'
+                        sx={{ fontWeight: 700 }}
+                      >
+                        {stat.value}
+                      </Typography>
+                      <Typography
+                        variant='body2'
+                        color='text.secondary'
+                      >
+                        {stat.label}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            ))}
+          </Box>
+        }
       />
 
-      <Dialog open={showCreateDialog} onClose={() => setShowCreateDialog(false)} maxWidth='sm' fullWidth>
+      <Dialog
+        open={showCreateDialog}
+        onClose={() => setShowCreateDialog(false)}
+        maxWidth='sm'
+        fullWidth
+      >
         <DialogTitle>创建租户</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -476,7 +536,12 @@ const TenantManagementPage: React.FC = () => {
             <TextField
               label='租户标识 (Slug)'
               value={formData.slug}
-              onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') })}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
+                })
+              }
               fullWidth
               helperText='仅支持小写字母、数字和连字符'
             />
@@ -497,11 +562,21 @@ const TenantManagementPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowCreateDialog(false)}>取消</Button>
-          <Button variant='contained' onClick={handleCreateTenant}>创建</Button>
+          <Button
+            variant='contained'
+            onClick={handleCreateTenant}
+          >
+            创建
+          </Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={showEditDialog} onClose={() => setShowEditDialog(false)} maxWidth='sm' fullWidth>
+      <Dialog
+        open={showEditDialog}
+        onClose={() => setShowEditDialog(false)}
+        maxWidth='sm'
+        fullWidth
+      >
         <DialogTitle>编辑租户</DialogTitle>
         <DialogContent>
           <Box sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -514,7 +589,12 @@ const TenantManagementPage: React.FC = () => {
             <TextField
               label='租户标识 (Slug)'
               value={formData.slug}
-              onChange={(e) => setFormData({ ...formData, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-') })}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'),
+                })
+              }
               fullWidth
             />
             <FormControl fullWidth>
@@ -534,7 +614,12 @@ const TenantManagementPage: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setShowEditDialog(false)}>取消</Button>
-          <Button variant='contained' onClick={handleUpdateTenant}>保存</Button>
+          <Button
+            variant='contained'
+            onClick={handleUpdateTenant}
+          >
+            保存
+          </Button>
         </DialogActions>
       </Dialog>
 

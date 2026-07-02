@@ -99,7 +99,7 @@ const PersonalInfoCard: React.FC = () => {
     <Box
       sx={{
         bgcolor: 'grey.50',
-        borderRadius: 2,
+        borderRadius: 3,
         p: 2.5,
         display: 'flex',
         alignItems: 'center',
@@ -175,7 +175,7 @@ const CompactHero: React.FC = () => {
       sx={{
         position: 'relative',
         background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 50%, #8b5cf6 100%)',
-        borderRadius: 2,
+        borderRadius: 3,
         p: 2.5,
         color: 'white',
         overflow: 'hidden',
@@ -233,7 +233,7 @@ const TodoList: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <Paper sx={{ borderRadius: 2, p: 2 }}>
+    <Paper sx={{ borderRadius: 3, p: 2 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
         <Typography
           variant='subtitle2'
@@ -307,7 +307,7 @@ const RecentActivities: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <Paper sx={{ borderRadius: 2, p: 2 }}>
+    <Paper sx={{ borderRadius: 3, p: 2 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
         <Typography
           variant='subtitle2'
@@ -375,7 +375,7 @@ const FrequentContacts: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <Paper sx={{ borderRadius: 2, p: 2 }}>
+    <Paper sx={{ borderRadius: 3, p: 2 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
         <Typography
           variant='subtitle2'

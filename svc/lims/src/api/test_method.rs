@@ -1,4 +1,8 @@
-use axum::{extract::State, routing::{delete, get, post, put}, Json, Router};
+use axum::{
+    extract::State,
+    routing::{delete, get, post, put},
+    Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared::ApiResponse;
@@ -7,13 +11,34 @@ use crate::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/lims/test-methods", get(list_methods).post(create_method))
-        .route("/api/lims/test-methods/{id}", get(get_method).put(update_method).delete(delete_method))
-        .route("/api/lims/test-methods/{id}/versions", get(list_method_versions))
-        .route("/api/lims/test-methods/{id}/new-version", post(create_new_version))
-        .route("/api/lims/method-categories", get(list_categories).post(create_category))
-        .route("/api/lims/method-categories/{id}", put(update_category).delete(delete_category))
-        .route("/api/lims/method-validations", get(list_validations).post(create_validation))
+        .route(
+            "/api/lims/test-methods",
+            get(list_methods).post(create_method),
+        )
+        .route(
+            "/api/lims/test-methods/{id}",
+            get(get_method).put(update_method).delete(delete_method),
+        )
+        .route(
+            "/api/lims/test-methods/{id}/versions",
+            get(list_method_versions),
+        )
+        .route(
+            "/api/lims/test-methods/{id}/new-version",
+            post(create_new_version),
+        )
+        .route(
+            "/api/lims/method-categories",
+            get(list_categories).post(create_category),
+        )
+        .route(
+            "/api/lims/method-categories/{id}",
+            put(update_category).delete(delete_category),
+        )
+        .route(
+            "/api/lims/method-validations",
+            get(list_validations).post(create_validation),
+        )
 }
 
 #[derive(Debug, Deserialize)]
@@ -197,96 +222,154 @@ pub async fn list_methods(
     };
 
     let mut query_builder = sqlx::query(&sql);
-    match (query.status.as_ref(), query.category_id.as_ref(), query.method_name.as_ref(), query.method_code.as_ref()) {
+    match (
+        query.status.as_ref(),
+        query.category_id.as_ref(),
+        query.method_name.as_ref(),
+        query.method_code.as_ref(),
+    ) {
         (Some(st), Some(cid), Some(mn), Some(mc)) => {
             let cid_uuid = Uuid::parse_str(cid).unwrap_or(Uuid::nil());
-            query_builder = query_builder.bind(st).bind(cid_uuid).bind(format!("%{}%", mn)).bind(format!("%{}%", mc)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(st)
+                .bind(cid_uuid)
+                .bind(format!("%{}%", mn))
+                .bind(format!("%{}%", mc))
+                .bind(page_size)
+                .bind(offset);
         }
         (Some(st), Some(cid), Some(mn), None) => {
             let cid_uuid = Uuid::parse_str(cid).unwrap_or(Uuid::nil());
-            query_builder = query_builder.bind(st).bind(cid_uuid).bind(format!("%{}%", mn)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(st)
+                .bind(cid_uuid)
+                .bind(format!("%{}%", mn))
+                .bind(page_size)
+                .bind(offset);
         }
         (Some(st), Some(cid), None, Some(mc)) => {
             let cid_uuid = Uuid::parse_str(cid).unwrap_or(Uuid::nil());
-            query_builder = query_builder.bind(st).bind(cid_uuid).bind(format!("%{}%", mc)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(st)
+                .bind(cid_uuid)
+                .bind(format!("%{}%", mc))
+                .bind(page_size)
+                .bind(offset);
         }
         (Some(st), Some(cid), None, None) => {
             let cid_uuid = Uuid::parse_str(cid).unwrap_or(Uuid::nil());
-            query_builder = query_builder.bind(st).bind(cid_uuid).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(st)
+                .bind(cid_uuid)
+                .bind(page_size)
+                .bind(offset);
         }
         (Some(st), None, Some(mn), Some(mc)) => {
-            query_builder = query_builder.bind(st).bind(format!("%{}%", mn)).bind(format!("%{}%", mc)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(st)
+                .bind(format!("%{}%", mn))
+                .bind(format!("%{}%", mc))
+                .bind(page_size)
+                .bind(offset);
         }
         (Some(st), None, Some(mn), None) => {
-            query_builder = query_builder.bind(st).bind(format!("%{}%", mn)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(st)
+                .bind(format!("%{}%", mn))
+                .bind(page_size)
+                .bind(offset);
         }
         (Some(st), None, None, Some(mc)) => {
-            query_builder = query_builder.bind(st).bind(format!("%{}%", mc)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(st)
+                .bind(format!("%{}%", mc))
+                .bind(page_size)
+                .bind(offset);
         }
         (Some(st), None, None, None) => {
             query_builder = query_builder.bind(st).bind(page_size).bind(offset);
         }
         (None, Some(cid), Some(mn), Some(mc)) => {
             let cid_uuid = Uuid::parse_str(cid).unwrap_or(Uuid::nil());
-            query_builder = query_builder.bind(cid_uuid).bind(format!("%{}%", mn)).bind(format!("%{}%", mc)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(cid_uuid)
+                .bind(format!("%{}%", mn))
+                .bind(format!("%{}%", mc))
+                .bind(page_size)
+                .bind(offset);
         }
         (None, Some(cid), Some(mn), None) => {
             let cid_uuid = Uuid::parse_str(cid).unwrap_or(Uuid::nil());
-            query_builder = query_builder.bind(cid_uuid).bind(format!("%{}%", mn)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(cid_uuid)
+                .bind(format!("%{}%", mn))
+                .bind(page_size)
+                .bind(offset);
         }
         (None, Some(cid), None, Some(mc)) => {
             let cid_uuid = Uuid::parse_str(cid).unwrap_or(Uuid::nil());
-            query_builder = query_builder.bind(cid_uuid).bind(format!("%{}%", mc)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(cid_uuid)
+                .bind(format!("%{}%", mc))
+                .bind(page_size)
+                .bind(offset);
         }
         (None, Some(cid), None, None) => {
             let cid_uuid = Uuid::parse_str(cid).unwrap_or(Uuid::nil());
             query_builder = query_builder.bind(cid_uuid).bind(page_size).bind(offset);
         }
         (None, None, Some(mn), Some(mc)) => {
-            query_builder = query_builder.bind(format!("%{}%", mn)).bind(format!("%{}%", mc)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(format!("%{}%", mn))
+                .bind(format!("%{}%", mc))
+                .bind(page_size)
+                .bind(offset);
         }
         (None, None, Some(mn), None) => {
-            query_builder = query_builder.bind(format!("%{}%", mn)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(format!("%{}%", mn))
+                .bind(page_size)
+                .bind(offset);
         }
         (None, None, None, Some(mc)) => {
-            query_builder = query_builder.bind(format!("%{}%", mc)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(format!("%{}%", mc))
+                .bind(page_size)
+                .bind(offset);
         }
         (None, None, None, None) => {
             query_builder = query_builder.bind(page_size).bind(offset);
         }
     }
 
-    let methods = query_builder
-        .fetch_all(&state.pool)
-        .await
-        .map(|rows| {
-            rows.into_iter()
-                .map(|row| TestMethod {
-                    id: row.get("id"),
-                    method_code: row.get("method_code"),
-                    method_name: row.get("method_name"),
-                    category_id: row.get("category_id"),
-                    category_name: row.get("category_name"),
-                    standard: row.get("standard"),
-                    version: row.get("version"),
-                    description: row.get("description"),
-                    principle: row.get("principle"),
-                    instruments: row.get("instruments"),
-                    reagents: row.get("reagents"),
-                    parameters: row.get("parameters"),
-                    steps: row.get("steps"),
-                    calculation_formula: row.get("calculation_formula"),
-                    uncertainty_ref: row.get("uncertainty_ref"),
-                    status: row.get("status"),
-                    validated: row.get("validated"),
-                    validated_at: row.get("validated_at"),
-                    validated_by: row.get("validated_by"),
-                    created_by: row.get("created_by"),
-                    created_at: row.get("created_at"),
-                    updated_at: row.get("updated_at"),
-                })
-                .collect()
-        });
+    let methods = query_builder.fetch_all(&state.pool).await.map(|rows| {
+        rows.into_iter()
+            .map(|row| TestMethod {
+                id: row.get("id"),
+                method_code: row.get("method_code"),
+                method_name: row.get("method_name"),
+                category_id: row.get("category_id"),
+                category_name: row.get("category_name"),
+                standard: row.get("standard"),
+                version: row.get("version"),
+                description: row.get("description"),
+                principle: row.get("principle"),
+                instruments: row.get("instruments"),
+                reagents: row.get("reagents"),
+                parameters: row.get("parameters"),
+                steps: row.get("steps"),
+                calculation_formula: row.get("calculation_formula"),
+                uncertainty_ref: row.get("uncertainty_ref"),
+                status: row.get("status"),
+                validated: row.get("validated"),
+                validated_at: row.get("validated_at"),
+                validated_by: row.get("validated_by"),
+                created_by: row.get("created_by"),
+                created_at: row.get("created_at"),
+                updated_at: row.get("updated_at"),
+            })
+            .collect()
+    });
 
     match methods {
         Ok(data) => Json(ApiResponse::success(data, "获取检测方法列表成功")),
@@ -315,7 +398,7 @@ pub async fn create_method(
                   parameters, steps, calculation_formula, uncertainty_ref, status,
                   validated, validated_at::TEXT, validated_by, created_by,
                   created_at::TEXT, updated_at::TEXT
-        "#
+        "#,
     )
     .bind(&req.method_code)
     .bind(&req.method_name)
@@ -334,30 +417,33 @@ pub async fn create_method(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(TestMethod {
-            id: r.get("id"),
-            method_code: r.get("method_code"),
-            method_name: r.get("method_name"),
-            category_id: r.get("category_id"),
-            category_name: r.get("category_name"),
-            standard: r.get("standard"),
-            version: r.get("version"),
-            description: r.get("description"),
-            principle: r.get("principle"),
-            instruments: r.get("instruments"),
-            reagents: r.get("reagents"),
-            parameters: r.get("parameters"),
-            steps: r.get("steps"),
-            calculation_formula: r.get("calculation_formula"),
-            uncertainty_ref: r.get("uncertainty_ref"),
-            status: r.get("status"),
-            validated: r.get("validated"),
-            validated_at: r.get("validated_at"),
-            validated_by: r.get("validated_by"),
-            created_by: r.get("created_by"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "检测方法创建成功")),
+        Ok(r) => Json(ApiResponse::success(
+            TestMethod {
+                id: r.get("id"),
+                method_code: r.get("method_code"),
+                method_name: r.get("method_name"),
+                category_id: r.get("category_id"),
+                category_name: r.get("category_name"),
+                standard: r.get("standard"),
+                version: r.get("version"),
+                description: r.get("description"),
+                principle: r.get("principle"),
+                instruments: r.get("instruments"),
+                reagents: r.get("reagents"),
+                parameters: r.get("parameters"),
+                steps: r.get("steps"),
+                calculation_formula: r.get("calculation_formula"),
+                uncertainty_ref: r.get("uncertainty_ref"),
+                status: r.get("status"),
+                validated: r.get("validated"),
+                validated_at: r.get("validated_at"),
+                validated_by: r.get("validated_by"),
+                created_by: r.get("created_by"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "检测方法创建成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to create test method: {}", e);
             Json(ApiResponse::error(500, "检测方法创建失败"))
@@ -384,37 +470,40 @@ pub async fn get_method(
         FROM qa_lims_test_methods m
         LEFT JOIN qa_lims_method_categories c ON m.category_id = c.id
         WHERE m.id = $1
-        "#
+        "#,
     )
     .bind(id)
     .fetch_one(&state.pool)
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(TestMethod {
-            id: r.get("id"),
-            method_code: r.get("method_code"),
-            method_name: r.get("method_name"),
-            category_id: r.get("category_id"),
-            category_name: r.get("category_name"),
-            standard: r.get("standard"),
-            version: r.get("version"),
-            description: r.get("description"),
-            principle: r.get("principle"),
-            instruments: r.get("instruments"),
-            reagents: r.get("reagents"),
-            parameters: r.get("parameters"),
-            steps: r.get("steps"),
-            calculation_formula: r.get("calculation_formula"),
-            uncertainty_ref: r.get("uncertainty_ref"),
-            status: r.get("status"),
-            validated: r.get("validated"),
-            validated_at: r.get("validated_at"),
-            validated_by: r.get("validated_by"),
-            created_by: r.get("created_by"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "获取检测方法成功")),
+        Ok(r) => Json(ApiResponse::success(
+            TestMethod {
+                id: r.get("id"),
+                method_code: r.get("method_code"),
+                method_name: r.get("method_name"),
+                category_id: r.get("category_id"),
+                category_name: r.get("category_name"),
+                standard: r.get("standard"),
+                version: r.get("version"),
+                description: r.get("description"),
+                principle: r.get("principle"),
+                instruments: r.get("instruments"),
+                reagents: r.get("reagents"),
+                parameters: r.get("parameters"),
+                steps: r.get("steps"),
+                calculation_formula: r.get("calculation_formula"),
+                uncertainty_ref: r.get("uncertainty_ref"),
+                status: r.get("status"),
+                validated: r.get("validated"),
+                validated_at: r.get("validated_at"),
+                validated_by: r.get("validated_by"),
+                created_by: r.get("created_by"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "获取检测方法成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to fetch test method: {}", e);
             Json(ApiResponse::error(500, "获取检测方法失败"))
@@ -454,7 +543,7 @@ pub async fn update_method(
                   parameters, steps, calculation_formula, uncertainty_ref, status,
                   validated, validated_at::TEXT, validated_by, created_by,
                   created_at::TEXT, updated_at::TEXT
-        "#
+        "#,
     )
     .bind(id)
     .bind(&req.method_name)
@@ -473,30 +562,33 @@ pub async fn update_method(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(TestMethod {
-            id: r.get("id"),
-            method_code: r.get("method_code"),
-            method_name: r.get("method_name"),
-            category_id: r.get("category_id"),
-            category_name: r.get("category_name"),
-            standard: r.get("standard"),
-            version: r.get("version"),
-            description: r.get("description"),
-            principle: r.get("principle"),
-            instruments: r.get("instruments"),
-            reagents: r.get("reagents"),
-            parameters: r.get("parameters"),
-            steps: r.get("steps"),
-            calculation_formula: r.get("calculation_formula"),
-            uncertainty_ref: r.get("uncertainty_ref"),
-            status: r.get("status"),
-            validated: r.get("validated"),
-            validated_at: r.get("validated_at"),
-            validated_by: r.get("validated_by"),
-            created_by: r.get("created_by"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "检测方法更新成功")),
+        Ok(r) => Json(ApiResponse::success(
+            TestMethod {
+                id: r.get("id"),
+                method_code: r.get("method_code"),
+                method_name: r.get("method_name"),
+                category_id: r.get("category_id"),
+                category_name: r.get("category_name"),
+                standard: r.get("standard"),
+                version: r.get("version"),
+                description: r.get("description"),
+                principle: r.get("principle"),
+                instruments: r.get("instruments"),
+                reagents: r.get("reagents"),
+                parameters: r.get("parameters"),
+                steps: r.get("steps"),
+                calculation_formula: r.get("calculation_formula"),
+                uncertainty_ref: r.get("uncertainty_ref"),
+                status: r.get("status"),
+                validated: r.get("validated"),
+                validated_at: r.get("validated_at"),
+                validated_by: r.get("validated_by"),
+                created_by: r.get("created_by"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "检测方法更新成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to update test method: {}", e);
             Json(ApiResponse::error(500, "检测方法更新失败"))
@@ -542,24 +634,21 @@ pub async fn list_categories(
         query_builder = query_builder.bind(pid_uuid);
     }
 
-    let categories = query_builder
-        .fetch_all(&state.pool)
-        .await
-        .map(|rows| {
-            rows.into_iter()
-                .map(|row| MethodCategory {
-                    id: row.get("id"),
-                    category_code: row.get("category_code"),
-                    category_name: row.get("category_name"),
-                    parent_id: row.get("parent_id"),
-                    sort_order: row.get("sort_order"),
-                    description: row.get("description"),
-                    status: row.get("status"),
-                    created_at: row.get("created_at"),
-                    updated_at: row.get("updated_at"),
-                })
-                .collect()
-        });
+    let categories = query_builder.fetch_all(&state.pool).await.map(|rows| {
+        rows.into_iter()
+            .map(|row| MethodCategory {
+                id: row.get("id"),
+                category_code: row.get("category_code"),
+                category_name: row.get("category_name"),
+                parent_id: row.get("parent_id"),
+                sort_order: row.get("sort_order"),
+                description: row.get("description"),
+                status: row.get("status"),
+                created_at: row.get("created_at"),
+                updated_at: row.get("updated_at"),
+            })
+            .collect()
+    });
 
     match categories {
         Ok(data) => Json(ApiResponse::success(data, "获取方法分类列表成功")),
@@ -592,17 +681,20 @@ pub async fn create_category(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(MethodCategory {
-            id: r.get("id"),
-            category_code: r.get("category_code"),
-            category_name: r.get("category_name"),
-            parent_id: r.get("parent_id"),
-            sort_order: r.get("sort_order"),
-            description: r.get("description"),
-            status: r.get("status"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "方法分类创建成功")),
+        Ok(r) => Json(ApiResponse::success(
+            MethodCategory {
+                id: r.get("id"),
+                category_code: r.get("category_code"),
+                category_name: r.get("category_name"),
+                parent_id: r.get("parent_id"),
+                sort_order: r.get("sort_order"),
+                description: r.get("description"),
+                status: r.get("status"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "方法分类创建成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to create method category: {}", e);
             Json(ApiResponse::error(500, "方法分类创建失败"))
@@ -643,17 +735,20 @@ pub async fn update_category(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(MethodCategory {
-            id: r.get("id"),
-            category_code: r.get("category_code"),
-            category_name: r.get("category_name"),
-            parent_id: r.get("parent_id"),
-            sort_order: r.get("sort_order"),
-            description: r.get("description"),
-            status: r.get("status"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "方法分类更新成功")),
+        Ok(r) => Json(ApiResponse::success(
+            MethodCategory {
+                id: r.get("id"),
+                category_code: r.get("category_code"),
+                category_name: r.get("category_name"),
+                parent_id: r.get("parent_id"),
+                sort_order: r.get("sort_order"),
+                description: r.get("description"),
+                status: r.get("status"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "方法分类更新成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to update method category: {}", e);
             Json(ApiResponse::error(500, "方法分类更新失败"))
@@ -699,29 +794,26 @@ pub async fn list_validations(
         query_builder = query_builder.bind(mid_uuid);
     }
 
-    let records = query_builder
-        .fetch_all(&state.pool)
-        .await
-        .map(|rows| {
-            rows.into_iter()
-                .map(|row| MethodValidationRecord {
-                    id: row.get("id"),
-                    method_id: row.get("method_id"),
-                    method_code: row.get("method_code"),
-                    method_name: row.get("method_name"),
-                    version: row.get("version"),
-                    validation_type: row.get("validation_type"),
-                    validation_date: row.get("validation_date"),
-                    validated_by: row.get("validated_by"),
-                    conclusion: row.get("conclusion"),
-                    parameters: row.get("parameters"),
-                    report_url: row.get("report_url"),
-                    notes: row.get("notes"),
-                    status: row.get("status"),
-                    created_at: row.get("created_at"),
-                })
-                .collect()
-        });
+    let records = query_builder.fetch_all(&state.pool).await.map(|rows| {
+        rows.into_iter()
+            .map(|row| MethodValidationRecord {
+                id: row.get("id"),
+                method_id: row.get("method_id"),
+                method_code: row.get("method_code"),
+                method_name: row.get("method_name"),
+                version: row.get("version"),
+                validation_type: row.get("validation_type"),
+                validation_date: row.get("validation_date"),
+                validated_by: row.get("validated_by"),
+                conclusion: row.get("conclusion"),
+                parameters: row.get("parameters"),
+                report_url: row.get("report_url"),
+                notes: row.get("notes"),
+                status: row.get("status"),
+                created_at: row.get("created_at"),
+            })
+            .collect()
+    });
 
     match records {
         Ok(data) => Json(ApiResponse::success(data, "获取方法验证记录列表成功")),
@@ -742,7 +834,7 @@ pub async fn create_validation(
     };
 
     let method_row = sqlx::query(
-        "SELECT method_code, method_name, version FROM qa_lims_test_methods WHERE id = $1"
+        "SELECT method_code, method_name, version FROM qa_lims_test_methods WHERE id = $1",
     )
     .bind(method_id)
     .fetch_optional(&state.pool)
@@ -758,7 +850,9 @@ pub async fn create_validation(
         Err(e) => return Json(ApiResponse::error(500, &format!("查询检测方法失败: {}", e))),
     };
 
-    let validation_date = req.validation_date.unwrap_or_else(|| chrono::Utc::now().to_rfc3339());
+    let validation_date = req
+        .validation_date
+        .unwrap_or_else(|| chrono::Utc::now().to_rfc3339());
 
     let row = sqlx::query(
         r#"
@@ -769,7 +863,7 @@ pub async fn create_validation(
         RETURNING id, method_id, method_code, method_name, version, validation_type,
                   validation_date::TEXT, validated_by, conclusion, parameters,
                   report_url, notes, status, created_at::TEXT
-        "#
+        "#,
     )
     .bind(method_id)
     .bind(&method_code)
@@ -797,22 +891,25 @@ pub async fn create_validation(
     }
 
     match row {
-        Ok(r) => Json(ApiResponse::success(MethodValidationRecord {
-            id: r.get("id"),
-            method_id: r.get("method_id"),
-            method_code: r.get("method_code"),
-            method_name: r.get("method_name"),
-            version: r.get("version"),
-            validation_type: r.get("validation_type"),
-            validation_date: r.get("validation_date"),
-            validated_by: r.get("validated_by"),
-            conclusion: r.get("conclusion"),
-            parameters: r.get("parameters"),
-            report_url: r.get("report_url"),
-            notes: r.get("notes"),
-            status: r.get("status"),
-            created_at: r.get("created_at"),
-        }, "方法验证记录创建成功")),
+        Ok(r) => Json(ApiResponse::success(
+            MethodValidationRecord {
+                id: r.get("id"),
+                method_id: r.get("method_id"),
+                method_code: r.get("method_code"),
+                method_name: r.get("method_name"),
+                version: r.get("version"),
+                validation_type: r.get("validation_type"),
+                validation_date: r.get("validation_date"),
+                validated_by: r.get("validated_by"),
+                conclusion: r.get("conclusion"),
+                parameters: r.get("parameters"),
+                report_url: r.get("report_url"),
+                notes: r.get("notes"),
+                status: r.get("status"),
+                created_at: r.get("created_at"),
+            },
+            "方法验证记录创建成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to create method validation: {}", e);
             Json(ApiResponse::error(500, "方法验证记录创建失败"))
@@ -876,7 +973,7 @@ pub async fn create_new_version(
     };
 
     let method_row = sqlx::query(
-        "SELECT method_code, method_name, version FROM qa_lims_test_methods WHERE id = $1"
+        "SELECT method_code, method_name, version FROM qa_lims_test_methods WHERE id = $1",
     )
     .bind(id)
     .fetch_optional(&state.pool)
@@ -926,7 +1023,7 @@ pub async fn create_new_version(
                   parameters, steps, calculation_formula, uncertainty_ref, status,
                   validated, validated_at::TEXT, validated_by, created_by,
                   created_at::TEXT, updated_at::TEXT
-        "#
+        "#,
     )
     .bind(id)
     .bind(&new_version)
@@ -934,30 +1031,33 @@ pub async fn create_new_version(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(TestMethod {
-            id: r.get("id"),
-            method_code: r.get("method_code"),
-            method_name: r.get("method_name"),
-            category_id: r.get("category_id"),
-            category_name: r.get("category_name"),
-            standard: r.get("standard"),
-            version: r.get("version"),
-            description: r.get("description"),
-            principle: r.get("principle"),
-            instruments: r.get("instruments"),
-            reagents: r.get("reagents"),
-            parameters: r.get("parameters"),
-            steps: r.get("steps"),
-            calculation_formula: r.get("calculation_formula"),
-            uncertainty_ref: r.get("uncertainty_ref"),
-            status: r.get("status"),
-            validated: r.get("validated"),
-            validated_at: r.get("validated_at"),
-            validated_by: r.get("validated_by"),
-            created_by: r.get("created_by"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, &format!("方法版本更新成功，新版本: {}", new_version))),
+        Ok(r) => Json(ApiResponse::success(
+            TestMethod {
+                id: r.get("id"),
+                method_code: r.get("method_code"),
+                method_name: r.get("method_name"),
+                category_id: r.get("category_id"),
+                category_name: r.get("category_name"),
+                standard: r.get("standard"),
+                version: r.get("version"),
+                description: r.get("description"),
+                principle: r.get("principle"),
+                instruments: r.get("instruments"),
+                reagents: r.get("reagents"),
+                parameters: r.get("parameters"),
+                steps: r.get("steps"),
+                calculation_formula: r.get("calculation_formula"),
+                uncertainty_ref: r.get("uncertainty_ref"),
+                status: r.get("status"),
+                validated: r.get("validated"),
+                validated_at: r.get("validated_at"),
+                validated_by: r.get("validated_by"),
+                created_by: r.get("created_by"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            &format!("方法版本更新成功，新版本: {}", new_version),
+        )),
         Err(e) => {
             tracing::error!("Failed to create new method version: {}", e);
             Json(ApiResponse::error(500, "方法版本更新失败"))

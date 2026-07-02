@@ -40,8 +40,7 @@ import type {
   FactoryMap,
   BusinessLocation,
 } from '@/api/gis';
-import {
-  Box,
+import {Box,
   Paper,
   Stack,
   Chip,
@@ -66,8 +65,7 @@ import {
   FormControlLabel,
   InputAdornment,
   CircularProgress,
-  Button,
-} from '@mui/material';
+  Button, useTheme} from '@mui/material';
 import { PageContainer } from '@/components/common';
 
 type TabType =
@@ -86,6 +84,7 @@ interface FormErrors {
 }
 
 const GisContent: React.FC = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const {
     state,
@@ -480,15 +479,15 @@ const GisContent: React.FC = () => {
   ];
 
   const getStatusStyle = (status: string) => {
-    if (!status) return { bgcolor: 'grey.100', color: '#475569' };
+    if (!status) return { bgcolor: 'grey.100', color: 'grey.600' };
     const s = status.toLowerCase();
     if (s.includes('active') || s.includes('启用'))
-      return { bgcolor: 'success.lighter', color: '#15803d' };
+      return { bgcolor: 'success.lighter', color: 'success.700' };
     if (s.includes('pending') || s.includes('待处理'))
-      return { bgcolor: 'warning.light', color: '#b45309' };
+      return { bgcolor: 'warning.light', color: 'warning.700' };
     if (s.includes('inactive') || s.includes('禁用'))
       return { bgcolor: 'error.lighter', color: 'error.darker' };
-    return { bgcolor: 'grey.100', color: '#475569' };
+    return { bgcolor: 'grey.100', color: 'grey.600' };
   };
 
   const StatusChip: React.FC<{ status: string }> = ({ status }) => {
@@ -856,7 +855,7 @@ const GisContent: React.FC = () => {
         variant='body2'
         sx={{ fontWeight: 500, mb: 0.5 }}
       >
-        {label} {required && <span style={{ color: 'error.main' }}>*</span>}
+        {label} {required && <span style={{ color: theme.palette.error.main }}>*</span>}
       </Typography>
       <TextField
         fullWidth
@@ -1093,7 +1092,7 @@ const GisContent: React.FC = () => {
                   {
                     name: '厂区地图',
                     value: statistics?.factory_maps || 0,
-                    color: '#8B5CF6',
+                    color: 'secondary.main',
                   },
                   {
                     name: '业务位置',

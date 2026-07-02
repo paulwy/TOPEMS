@@ -12,7 +12,9 @@ use serde_json::{json, Value};
 
 const API_URL: &str = "http://localhost:8000";
 
-fn create_client() -> Client { Client::new() }
+fn create_client() -> Client {
+    Client::new()
+}
 
 async fn login(username: &str, password: &str) -> Result<String, String> {
     let client = create_client();
@@ -22,15 +24,30 @@ async fn login(username: &str, password: &str) -> Result<String, String> {
         .send()
         .await
         .map_err(|e| format!("请求失败: {}", e))?;
-    let body: Value = response.json().await.map_err(|e| format!("解析响应失败: {}", e))?;
+    let body: Value = response
+        .json()
+        .await
+        .map_err(|e| format!("解析响应失败: {}", e))?;
     if body["success"].as_bool().unwrap_or(false) {
-        Ok(body["data"]["access_token"].as_str().unwrap_or("").to_string())
+        Ok(body["data"]["access_token"]
+            .as_str()
+            .unwrap_or("")
+            .to_string())
     } else {
-        Err(format!("登录失败: {}", body["message"].as_str().unwrap_or("未知错误")))
+        Err(format!(
+            "登录失败: {}",
+            body["message"].as_str().unwrap_or("未知错误")
+        ))
     }
 }
 
-async fn auth_request(client: &Client, token: &str, method: &str, endpoint: &str, body: Option<Value>) -> Result<(u16, Value), String> {
+async fn auth_request(
+    client: &Client,
+    token: &str,
+    method: &str,
+    endpoint: &str,
+    body: Option<Value>,
+) -> Result<(u16, Value), String> {
     let url = format!("{}{}", API_URL, endpoint);
     let request = match method {
         "GET" => client.get(&url),
@@ -39,12 +56,17 @@ async fn auth_request(client: &Client, token: &str, method: &str, endpoint: &str
         "DELETE" => client.delete(&url),
         _ => return Err(format!("不支持的 HTTP 方法: {}", method)),
     };
-    let response = request.bearer_auth(token).header("Content-Type", "application/json")
+    let response = request
+        .bearer_auth(token)
+        .header("Content-Type", "application/json")
         .send()
         .await
         .map_err(|e| format!("请求失败: {}", e))?;
     let status = response.status().as_u16();
-    let body: Value = response.json().await.map_err(|e| format!("解析响应失败: {}", e))?;
+    let body: Value = response
+        .json()
+        .await
+        .map_err(|e| format!("解析响应失败: {}", e))?;
     Ok((status, body))
 }
 
@@ -72,10 +94,18 @@ async fn test_sys_002_update_settings() {
     tracing::info!("测试 SYS-002: 更新系统设置");
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
-    match auth_request(&client, &token, "PUT", "/api/system/settings", Some(json!({
-        "site_name": "TOPEMS 企业管理系统",
-        "site_description": "测试环境"
-    }))).await {
+    match auth_request(
+        &client,
+        &token,
+        "PUT",
+        "/api/system/settings",
+        Some(json!({
+            "site_name": "TOPEMS 企业管理系统",
+            "site_description": "测试环境"
+        })),
+    )
+    .await
+    {
         Ok((status, _)) => {
             assert!(status == 200 || status == 403 || status == 404);
             tracing::info!("SYS-002 测试通过");
@@ -182,11 +212,21 @@ async fn test_sys_008_force_logout() {
     // 获取在线用户
     match auth_request(&client, &token, "GET", "/api/system/online-users", None).await {
         Ok((_, body)) => {
-            let users = body["data"]["users"].as_array().or_else(|| body["data"].as_array());
+            let users = body["data"]["users"]
+                .as_array()
+                .or_else(|| body["data"].as_array());
             if let Some(user_list) = users {
                 if let Some(user) = user_list.first() {
                     if let Some(user_id) = user["user_id"].as_str() {
-                        match auth_request(&client, &token, "POST", &format!("/api/system/force-logout/{}", user_id), None).await {
+                        match auth_request(
+                            &client,
+                            &token,
+                            "POST",
+                            &format!("/api/system/force-logout/{}", user_id),
+                            None,
+                        )
+                        .await
+                        {
                             Ok((status, _)) => {
                                 assert!(status == 200 || status == 403 || status == 404);
                                 tracing::info!("SYS-008 测试通过");
@@ -230,11 +270,21 @@ async fn test_sys_010_update_dictionary() {
     // 获取字典列表
     match auth_request(&client, &token, "GET", "/api/system/dictionaries", None).await {
         Ok((_, body)) => {
-            let dicts = body["data"]["dictionaries"].as_array().or_else(|| body["data"].as_array());
+            let dicts = body["data"]["dictionaries"]
+                .as_array()
+                .or_else(|| body["data"].as_array());
             if let Some(list) = dicts {
                 if let Some(dict) = list.first() {
                     if let Some(id) = dict["id"].as_str() {
-                        match auth_request(&client, &token, "PUT", &format!("/api/system/dictionaries/{}", id), Some(json!({ "description": "更新描述" }))).await {
+                        match auth_request(
+                            &client,
+                            &token,
+                            "PUT",
+                            &format!("/api/system/dictionaries/{}", id),
+                            Some(json!({ "description": "更新描述" })),
+                        )
+                        .await
+                        {
                             Ok((status, _)) => {
                                 assert!(status == 200 || status == 403 || status == 404);
                                 tracing::info!("SYS-010 测试通过");

@@ -266,7 +266,7 @@ export const ProductPage: React.FC = () => {
         <Box
           sx={{
             p: 2,
-            borderRadius: 2,
+            borderRadius: 3,
             bgcolor: 'background.paper',
             border: 1,
             borderColor: 'divider',
@@ -282,7 +282,7 @@ export const ProductPage: React.FC = () => {
         <Box
           sx={{
             p: 2,
-            borderRadius: 2,
+            borderRadius: 3,
             bgcolor: 'background.paper',
             border: 1,
             borderColor: 'divider',
@@ -298,7 +298,7 @@ export const ProductPage: React.FC = () => {
         <Box
           sx={{
             p: 2,
-            borderRadius: 2,
+            borderRadius: 3,
             bgcolor: 'background.paper',
             border: 1,
             borderColor: 'divider',
@@ -315,8 +315,6 @@ export const ProductPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='产品管理'
-      subtitle='管理产品信息、版本和分类'
       headerProps={{
         pageIcon: <Package style={{ width: 20, height: 20 }} />,
         pageGradient: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',

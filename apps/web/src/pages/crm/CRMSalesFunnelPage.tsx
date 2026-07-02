@@ -41,8 +41,8 @@ const CRMSalesFunnelPage: React.FC = () => {
     try {
       setLoading(true);
       const [metricsRes, stagesRes] = await Promise.allSettled([
-        apiClient.crm.get('/api/crm/sales-funnel/metrics'),
-        apiClient.crm.get('/api/crm/sales-funnel'),
+        apiClient.crm.get('/sales-funnel/metrics'),
+        apiClient.crm.get('/sales-funnel'),
       ]);
       if (metricsRes.status === 'fulfilled' && metricsRes.value.success) {
         setMetrics(metricsRes.value.data as FunnelMetrics);
@@ -108,12 +108,12 @@ const CRMSalesFunnelPage: React.FC = () => {
         {
           name: `${stageLabelMap[stage.stage] || stage.stage}-商机数`,
           value: stage.count,
-          color: '#3b82f6',
+          color: 'primary.main',
         },
         {
           name: `${stageLabelMap[stage.stage] || stage.stage}-总价值(万)`,
           value: Math.round(Number(stage.total_value) / 10000),
-          color: '#10b981',
+          color: 'success.main',
         },
       ]),
     },
@@ -124,6 +124,8 @@ const CRMSalesFunnelPage: React.FC = () => {
       title='销售漏斗'
       subtitle='可视化销售机会的阶段性转化'
       maxWidth='xl'
+      autoTitle
+      autoBreadcrumbs
     >
       <StatsPageTemplate
         title='漏斗分析'

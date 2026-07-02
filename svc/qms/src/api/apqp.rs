@@ -338,9 +338,15 @@ pub async fn create_apqp_project(
     State(state): State<crate::AppState>,
     Json(req): Json<CreateApqpProjectRequest>,
 ) -> Json<ApiResponse<ApqpProject>> {
-    let project_no = format!("APQP-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
+    let project_no = format!(
+        "APQP-{}",
+        uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+    );
 
-    let product_id = req.product_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
+    let product_id = req
+        .product_id
+        .as_ref()
+        .and_then(|s| Uuid::parse_str(s).ok());
     let start_dt = req.start_date.map(|d| d.and_hms_opt(0, 0, 0).unwrap());
     let target_dt = req.target_date.map(|d| d.and_hms_opt(0, 0, 0).unwrap());
 
@@ -438,7 +444,10 @@ pub async fn update_apqp_project(
         Err(_) => return Json(ApiResponse::error(400, "无效的APQP项目ID")),
     };
 
-    let product_id = req.product_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
+    let product_id = req
+        .product_id
+        .as_ref()
+        .and_then(|s| Uuid::parse_str(s).ok());
     let start_dt = req.start_date.map(|d| d.and_hms_opt(0, 0, 0).unwrap());
     let target_dt = req.target_date.map(|d| d.and_hms_opt(0, 0, 0).unwrap());
     let actual_end_dt = req.actual_end_date.map(|d| d.and_hms_opt(0, 0, 0).unwrap());
@@ -506,13 +515,7 @@ pub async fn transition_project_status(
         Err(_) => return Json(ApiResponse::error(400, "无效的APQP项目ID")),
     };
 
-    let valid_statuses = vec![
-        "planning",
-        "developing",
-        "verifying",
-        "released",
-        "closed",
-    ];
+    let valid_statuses = vec!["planning", "developing", "verifying", "released", "closed"];
 
     if !valid_statuses.contains(&req.target_status.as_str()) {
         return Json(ApiResponse::error(400, "无效的状态值"));
@@ -642,7 +645,9 @@ pub async fn update_apqp_phase(
 
     let start_dt = req.start_date.map(|d| d.and_hms_opt(0, 0, 0).unwrap());
     let end_dt = req.end_date.map(|d| d.and_hms_opt(0, 0, 0).unwrap());
-    let actual_start_dt = req.actual_start_date.map(|d| d.and_hms_opt(0, 0, 0).unwrap());
+    let actual_start_dt = req
+        .actual_start_date
+        .map(|d| d.and_hms_opt(0, 0, 0).unwrap());
     let actual_end_dt = req.actual_end_date.map(|d| d.and_hms_opt(0, 0, 0).unwrap());
 
     let phase = sqlx::query_as::<_, ApqpPhase>(
@@ -697,8 +702,14 @@ pub async fn list_apqp_tasks(
     State(state): State<crate::AppState>,
     axum::extract::Query(query): axum::extract::Query<ApqpTaskQuery>,
 ) -> Json<ApiResponse<Vec<ApqpTask>>> {
-    let project_id = query.project_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
-    let phase_id = query.phase_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
+    let project_id = query
+        .project_id
+        .as_ref()
+        .and_then(|s| Uuid::parse_str(s).ok());
+    let phase_id = query
+        .phase_id
+        .as_ref()
+        .and_then(|s| Uuid::parse_str(s).ok());
 
     let mut sql = String::from(
         "SELECT id, project_id, phase_id, task_name, description, task_type, deliverable, status, assignee, due_date::TEXT, completed_at::TEXT, sort_order, created_at::TEXT, updated_at::TEXT FROM qa_apqp_tasks WHERE 1=1",
@@ -873,7 +884,10 @@ pub async fn list_apqp_risks(
     State(state): State<crate::AppState>,
     axum::extract::Query(query): axum::extract::Query<ApqpRiskQuery>,
 ) -> Json<ApiResponse<Vec<ApqpRisk>>> {
-    let project_id = query.project_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
+    let project_id = query
+        .project_id
+        .as_ref()
+        .and_then(|s| Uuid::parse_str(s).ok());
 
     let mut sql = String::from(
         "SELECT id, project_id, risk_name, description, risk_category, severity, occurrence, detection, rpn, status, mitigation_plan, responsible, target_date::TEXT, created_at::TEXT, updated_at::TEXT FROM qa_apqp_risks WHERE 1=1",
@@ -1051,12 +1065,13 @@ pub async fn get_apqp_progress(
         Err(_) => return Json(ApiResponse::error(400, "无效的项目ID")),
     };
 
-    let total_phases: Option<i64> =
-        sqlx::query_scalar::<_, i64>(r#"SELECT COUNT(*) FROM qa_apqp_phases WHERE project_id = $1"#)
-            .bind(project_id)
-            .fetch_one(&state.pool)
-            .await
-            .ok();
+    let total_phases: Option<i64> = sqlx::query_scalar::<_, i64>(
+        r#"SELECT COUNT(*) FROM qa_apqp_phases WHERE project_id = $1"#,
+    )
+    .bind(project_id)
+    .fetch_one(&state.pool)
+    .await
+    .ok();
     let total_phases = total_phases.unwrap_or(0);
 
     let completed_phases: Option<i64> = sqlx::query_scalar::<_, i64>(
@@ -1154,7 +1169,9 @@ pub async fn list_apqp_approvals(
     State(state): State<crate::AppState>,
     axum::extract::Query(query): axum::extract::Query<std::collections::HashMap<String, String>>,
 ) -> Json<ApiResponse<Vec<ApqpApproval>>> {
-    let project_id = query.get("project_id").and_then(|s| Uuid::parse_str(s).ok());
+    let project_id = query
+        .get("project_id")
+        .and_then(|s| Uuid::parse_str(s).ok());
 
     let approvals = if let Some(pid) = project_id {
         sqlx::query_as::<_, ApqpApproval>(

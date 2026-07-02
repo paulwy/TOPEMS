@@ -1797,7 +1797,7 @@ export const WorkflowSettingsPage: React.FC = () => {
         },
       }}
     >
-      <Paper sx={{ borderRadius: 2, overflow: 'hidden' }}>
+      <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
         <Box
           sx={{
             display: 'grid',

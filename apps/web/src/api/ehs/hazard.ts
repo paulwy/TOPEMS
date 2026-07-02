@@ -22,43 +22,39 @@ export const hazardApi = {
     if (params?.search) queryParams.append('search', params.search);
     if (params?.status) queryParams.append('status', params.status);
 
-    return apiClient.ehs.get<PaginatedResponse<SafetyHazard>>(
-      `/api/ehs/hazards?${queryParams.toString()}`
-    );
+    return apiClient.ehs.get<PaginatedResponse<SafetyHazard>>(`/hazards?${queryParams.toString()}`);
   },
 
   getHazard: async (id: string): Promise<ApiResponse<SafetyHazard>> => {
-    return apiClient.ehs.get<SafetyHazard>(`/api/ehs/hazards/${id}`);
+    return apiClient.ehs.get<SafetyHazard>(`/hazards/${id}`);
   },
 
   createHazard: async (data: CreateSafetyHazardRequest): Promise<ApiResponse<SafetyHazard>> => {
-    return apiClient.ehs.post<SafetyHazard>('/api/ehs/hazards', data);
+    return apiClient.ehs.post<SafetyHazard>('/hazards', data);
   },
 
   updateHazard: async (
     id: string,
     data: Partial<CreateSafetyHazardRequest>
   ): Promise<ApiResponse<SafetyHazard>> => {
-    return apiClient.ehs.put<SafetyHazard>(`/api/ehs/hazards/${id}`, data);
+    return apiClient.ehs.put<SafetyHazard>(`/hazards/${id}`, data);
   },
 
   deleteHazard: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(`/api/ehs/hazards/${id}`);
+    return apiClient.ehs.delete<void>(`/hazards/${id}`);
   },
 
   listRiskAssessments: async (
     hazardId: string
   ): Promise<ApiResponse<PaginatedResponse<RiskAssessment>>> => {
-    return apiClient.ehs.get<PaginatedResponse<RiskAssessment>>(
-      `/api/ehs/hazards/${hazardId}/assessments`
-    );
+    return apiClient.ehs.get<PaginatedResponse<RiskAssessment>>(`/hazards/${hazardId}/assessments`);
   },
 
   createRiskAssessment: async (
     hazardId: string,
     data: CreateRiskAssessmentRequest
   ): Promise<ApiResponse<RiskAssessment>> => {
-    return apiClient.ehs.post<RiskAssessment>(`/api/ehs/hazards/${hazardId}/assessments`, data);
+    return apiClient.ehs.post<RiskAssessment>(`/hazards/${hazardId}/assessments`, data);
   },
 
   updateRiskAssessment: async (
@@ -67,7 +63,7 @@ export const hazardApi = {
     data: Partial<CreateRiskAssessmentRequest>
   ): Promise<ApiResponse<RiskAssessment>> => {
     return apiClient.ehs.put<RiskAssessment>(
-      `/api/ehs/hazards/${hazardId}/assessments/${assessmentId}`,
+      `/hazards/${hazardId}/assessments/${assessmentId}`,
       data
     );
   },
@@ -75,16 +71,14 @@ export const hazardApi = {
   listControlMeasures: async (
     hazardId: string
   ): Promise<ApiResponse<PaginatedResponse<ControlMeasure>>> => {
-    return apiClient.ehs.get<PaginatedResponse<ControlMeasure>>(
-      `/api/ehs/hazards/${hazardId}/controls`
-    );
+    return apiClient.ehs.get<PaginatedResponse<ControlMeasure>>(`/hazards/${hazardId}/controls`);
   },
 
   createControlMeasure: async (
     hazardId: string,
     data: CreateControlMeasureRequest
   ): Promise<ApiResponse<ControlMeasure>> => {
-    return apiClient.ehs.post<ControlMeasure>(`/api/ehs/hazards/${hazardId}/controls`, data);
+    return apiClient.ehs.post<ControlMeasure>(`/hazards/${hazardId}/controls`, data);
   },
 
   updateControlMeasure: async (
@@ -92,14 +86,11 @@ export const hazardApi = {
     measureId: string,
     data: Partial<CreateControlMeasureRequest>
   ): Promise<ApiResponse<ControlMeasure>> => {
-    return apiClient.ehs.put<ControlMeasure>(
-      `/api/ehs/hazards/${hazardId}/controls/${measureId}`,
-      data
-    );
+    return apiClient.ehs.put<ControlMeasure>(`/hazards/${hazardId}/controls/${measureId}`, data);
   },
 
   deleteControlMeasure: async (hazardId: string, measureId: string): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(`/api/ehs/hazards/${hazardId}/controls/${measureId}`);
+    return apiClient.ehs.delete<void>(`/hazards/${hazardId}/controls/${measureId}`);
   },
 };
 

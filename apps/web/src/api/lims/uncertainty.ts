@@ -19,44 +19,44 @@ import type {
 } from './types';
 
 export const uncertaintyProjectApi = {
-  ...createCrudApi<UncertaintyProject>('/api/lims/uncertainty-projects'),
+  ...createCrudApi<UncertaintyProject>('/uncertainty-projects'),
 
   listUncertaintyProjects: (params?: ListParams) =>
-    createCrudApi<UncertaintyProject>('/api/lims/uncertainty-projects').list(params),
+    createCrudApi<UncertaintyProject>('/uncertainty-projects').list(params),
 
   getUncertaintyProject: (id: string) =>
-    createCrudApi<UncertaintyProject>('/api/lims/uncertainty-projects').get(id),
+    createCrudApi<UncertaintyProject>('/uncertainty-projects').get(id),
 
   createUncertaintyProject: (data: CreateUncertaintyProjectRequest) =>
-    createCrudApi<UncertaintyProject>('/api/lims/uncertainty-projects').create(data),
+    createCrudApi<UncertaintyProject>('/uncertainty-projects').create(data),
 
   updateUncertaintyProject: (id: string, data: UpdateUncertaintyProjectRequest) =>
-    createCrudApi<UncertaintyProject>('/api/lims/uncertainty-projects').update(id, data),
+    createCrudApi<UncertaintyProject>('/uncertainty-projects').update(id, data),
 
   deleteUncertaintyProject: (id: string) =>
-    createCrudApi<UncertaintyProject>('/api/lims/uncertainty-projects').delete(id),
+    createCrudApi<UncertaintyProject>('/uncertainty-projects').delete(id),
 };
 
 export const uncertaintySourceApi = {
   listUncertaintySources: async (projectId: string): Promise<ApiResponse<UncertaintySource[]>> => {
-    return apiClient.lims.get(`/api/lims/uncertainty-projects/${projectId}/sources`);
+    return apiClient.lims.get(`/uncertainty-projects/${projectId}/sources`);
   },
 
   createUncertaintySource: async (
     data: CreateUncertaintySourceRequest
   ): Promise<ApiResponse<UncertaintySource>> => {
-    return apiClient.lims.post('/api/lims/uncertainty-sources', data);
+    return apiClient.lims.post('/uncertainty-sources', data);
   },
 
   updateUncertaintySource: async (
     id: string,
     data: UpdateUncertaintySourceRequest
   ): Promise<ApiResponse<UncertaintySource>> => {
-    return apiClient.lims.put(`/api/lims/uncertainty-sources/${id}`, data);
+    return apiClient.lims.put(`/uncertainty-sources/${id}`, data);
   },
 
   deleteUncertaintySource: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.lims.delete(`/api/lims/uncertainty-sources/${id}`);
+    return apiClient.lims.delete(`/uncertainty-sources/${id}`);
   },
 };
 
@@ -64,45 +64,45 @@ export const uncertaintyComponentApi = {
   listUncertaintyComponents: async (
     projectId: string
   ): Promise<ApiResponse<UncertaintyComponent[]>> => {
-    return apiClient.lims.get(`/api/lims/uncertainty-projects/${projectId}/components`);
+    return apiClient.lims.get(`/uncertainty-projects/${projectId}/components`);
   },
 
   createUncertaintyComponent: async (
     data: CreateUncertaintyComponentRequest
   ): Promise<ApiResponse<UncertaintyComponent>> => {
-    return apiClient.lims.post('/api/lims/uncertainty-components', data);
+    return apiClient.lims.post('/uncertainty-components', data);
   },
 
   updateUncertaintyComponent: async (
     id: string,
     data: UpdateUncertaintyComponentRequest
   ): Promise<ApiResponse<UncertaintyComponent>> => {
-    return apiClient.lims.put(`/api/lims/uncertainty-components/${id}`, data);
+    return apiClient.lims.put(`/uncertainty-components/${id}`, data);
   },
 
   deleteUncertaintyComponent: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.lims.delete(`/api/lims/uncertainty-components/${id}`);
+    return apiClient.lims.delete(`/uncertainty-components/${id}`);
   },
 
   calculateTypeA: async (
     data: TypeACalculationRequest
   ): Promise<ApiResponse<UncertaintyComponent>> => {
-    return apiClient.lims.post('/api/lims/uncertainty/type-a', data);
+    return apiClient.lims.post('/uncertainty/type-a', data);
   },
 
   calculateTypeB: async (
     data: TypeBCalculationRequest
   ): Promise<ApiResponse<UncertaintyComponent>> => {
-    return apiClient.lims.post('/api/lims/uncertainty/type-b', data);
+    return apiClient.lims.post('/uncertainty/type-b', data);
   },
 
   calculateCombinedUncertainty: async (
     projectId: string
   ): Promise<ApiResponse<UncertaintyCalculationResult>> => {
-    return apiClient.lims.post(`/api/lims/uncertainty-projects/${projectId}/combined`);
+    return apiClient.lims.post(`/uncertainty-projects/${projectId}/combined`);
   },
 
   generateUncertaintyReport: async (projectId: string): Promise<ApiResponse<UncertaintyReport>> => {
-    return apiClient.lims.get(`/api/lims/uncertainty-projects/${projectId}/report`);
+    return apiClient.lims.get(`/uncertainty-projects/${projectId}/report`);
   },
 };

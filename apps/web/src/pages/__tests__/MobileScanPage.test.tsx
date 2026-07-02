@@ -7,17 +7,19 @@ import { useAppStore } from '@/store';
 
 vi.mock('@/store', () => ({
   useAppStore: vi.fn((selector?: any) =>
-    selector ? selector({
-      user: mockUser,
-      addNotification: mockAddNotification,
-      notifications: [],
-      theme: 'light',
-    }) : {
-      user: mockUser,
-      addNotification: mockAddNotification,
-      notifications: [],
-      theme: 'light',
-    }
+    selector
+      ? selector({
+          user: mockUser,
+          addNotification: mockAddNotification,
+          notifications: [],
+          theme: 'light',
+        })
+      : {
+          user: mockUser,
+          addNotification: mockAddNotification,
+          notifications: [],
+          theme: 'light',
+        }
   ),
 }));
 

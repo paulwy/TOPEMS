@@ -58,7 +58,7 @@ export const DashboardQuickActions: React.FC<DashboardQuickActionsProps> = ({
               justifyContent: 'center',
               gap: 1,
               padding: 2,
-              borderRadius: 2,
+              borderRadius: 3,
               backgroundColor: action.bgColor,
               transition: 'all 0.3s ease',
               '&:hover': {
@@ -75,7 +75,7 @@ export const DashboardQuickActions: React.FC<DashboardQuickActionsProps> = ({
               sx={{
                 width: 48,
                 height: 48,
-                borderRadius: 2,
+                borderRadius: 3,
                 backgroundColor: 'rgba(255,255,255,0.5)',
                 display: 'flex',
                 alignItems: 'center',
@@ -138,9 +138,9 @@ export const defaultQuickActions: QuickAction[] = [
     label: '我的待办',
     icon: Clock,
     path: '/flow/approvals',
-    color: '#ea580c',
+    color: 'warning.600',
     bgColor: 'white7ed',
-    hoverColor: '#ea580c',
+    hoverColor: 'warning.600',
     service: 'flow',
   },
   {
@@ -165,9 +165,9 @@ export const defaultQuickActions: QuickAction[] = [
     label: '插件市场',
     icon: ShoppingCart,
     path: '/plugin/marketplace',
-    color: '#7c3aed',
+    color: 'secondary.600',
     bgColor: '#f5f3ff',
-    hoverColor: '#7c3aed',
+    hoverColor: 'secondary.600',
     service: null,
   },
 ];

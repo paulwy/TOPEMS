@@ -1,4 +1,8 @@
-use axum::{extract::State, routing::{delete, get, post, put}, Json, Router};
+use axum::{
+    extract::State,
+    routing::{delete, get, post, put},
+    Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared::ApiResponse;
@@ -7,8 +11,16 @@ use crate::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/lims/instruments", get(list_instruments).post(create_instrument))
-        .route("/api/lims/instruments/{id}", get(get_instrument).put(update_instrument).delete(delete_instrument))
+        .route(
+            "/api/lims/instruments",
+            get(list_instruments).post(create_instrument),
+        )
+        .route(
+            "/api/lims/instruments/{id}",
+            get(get_instrument)
+                .put(update_instrument)
+                .delete(delete_instrument),
+        )
         .route("/api/lims/instruments/{id}/calibration", post(calibrate))
 }
 
@@ -77,39 +89,43 @@ pub async fn list_instruments(
     let mut query_builder = sqlx::query(sql);
     match (query.status.as_ref(), query.name.as_ref()) {
         (Some(st), Some(nm)) => {
-            query_builder = query_builder.bind(st).bind(format!("%{}%", nm)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(st)
+                .bind(format!("%{}%", nm))
+                .bind(page_size)
+                .bind(offset);
         }
         (Some(st), None) => {
             query_builder = query_builder.bind(st).bind(page_size).bind(offset);
         }
         (None, Some(nm)) => {
-            query_builder = query_builder.bind(format!("%{}%", nm)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(format!("%{}%", nm))
+                .bind(page_size)
+                .bind(offset);
         }
         (None, None) => {
             query_builder = query_builder.bind(page_size).bind(offset);
         }
     }
 
-    let instruments = query_builder
-        .fetch_all(&state.pool)
-        .await
-        .map(|rows| {
-            rows.into_iter()
-                .map(|row| Instrument {
-                    id: row.get("id"),
-                    instrument_no: row.get("instrument_no"),
-                    name: row.get("name"),
-                    model: row.get("model"),
-                    manufacturer: row.get("manufacturer"),
-                    status: row.get("status"),
-                    location: row.get("location"),
-                    last_calibration_at: row.get("last_calibration_at"),
-                    next_calibration_at: row.get("next_calibration_at"),
-                    created_at: row.get("created_at"),
-                    updated_at: row.get("updated_at"),
-                })
-                .collect()
-        });
+    let instruments = query_builder.fetch_all(&state.pool).await.map(|rows| {
+        rows.into_iter()
+            .map(|row| Instrument {
+                id: row.get("id"),
+                instrument_no: row.get("instrument_no"),
+                name: row.get("name"),
+                model: row.get("model"),
+                manufacturer: row.get("manufacturer"),
+                status: row.get("status"),
+                location: row.get("location"),
+                last_calibration_at: row.get("last_calibration_at"),
+                next_calibration_at: row.get("next_calibration_at"),
+                created_at: row.get("created_at"),
+                updated_at: row.get("updated_at"),
+            })
+            .collect()
+    });
 
     match instruments {
         Ok(data) => Json(ApiResponse::success(data, "获取仪器列表成功")),
@@ -124,7 +140,10 @@ pub async fn create_instrument(
     State(state): State<crate::AppState>,
     Json(req): Json<CreateInstrumentRequest>,
 ) -> Json<ApiResponse<Instrument>> {
-    let instrument_no = format!("INS-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
+    let instrument_no = format!(
+        "INS-{}",
+        uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+    );
 
     let row = sqlx::query(
         "INSERT INTO qa_lab_instruments (instrument_no, name, model, manufacturer, status, location) VALUES ($1, $2, $3, $4, 'normal', $5) RETURNING id, instrument_no, name, model, manufacturer, status, location, last_calibration_at::TEXT, next_calibration_at::TEXT, created_at::TEXT, updated_at::TEXT"
@@ -138,19 +157,22 @@ pub async fn create_instrument(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(Instrument {
-            id: r.get("id"),
-            instrument_no: r.get("instrument_no"),
-            name: r.get("name"),
-            model: r.get("model"),
-            manufacturer: r.get("manufacturer"),
-            status: r.get("status"),
-            location: r.get("location"),
-            last_calibration_at: r.get("last_calibration_at"),
-            next_calibration_at: r.get("next_calibration_at"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "仪器创建成功")),
+        Ok(r) => Json(ApiResponse::success(
+            Instrument {
+                id: r.get("id"),
+                instrument_no: r.get("instrument_no"),
+                name: r.get("name"),
+                model: r.get("model"),
+                manufacturer: r.get("manufacturer"),
+                status: r.get("status"),
+                location: r.get("location"),
+                last_calibration_at: r.get("last_calibration_at"),
+                next_calibration_at: r.get("next_calibration_at"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "仪器创建成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to create instrument: {}", e);
             Json(ApiResponse::error(500, "仪器创建失败"))
@@ -175,19 +197,22 @@ pub async fn get_instrument(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(Instrument {
-            id: r.get("id"),
-            instrument_no: r.get("instrument_no"),
-            name: r.get("name"),
-            model: r.get("model"),
-            manufacturer: r.get("manufacturer"),
-            status: r.get("status"),
-            location: r.get("location"),
-            last_calibration_at: r.get("last_calibration_at"),
-            next_calibration_at: r.get("next_calibration_at"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "获取仪器成功")),
+        Ok(r) => Json(ApiResponse::success(
+            Instrument {
+                id: r.get("id"),
+                instrument_no: r.get("instrument_no"),
+                name: r.get("name"),
+                model: r.get("model"),
+                manufacturer: r.get("manufacturer"),
+                status: r.get("status"),
+                location: r.get("location"),
+                last_calibration_at: r.get("last_calibration_at"),
+                next_calibration_at: r.get("next_calibration_at"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "获取仪器成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to fetch instrument: {}", e);
             Json(ApiResponse::error(500, "获取仪器失败"))
@@ -219,19 +244,22 @@ pub async fn update_instrument(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(Instrument {
-            id: r.get("id"),
-            instrument_no: r.get("instrument_no"),
-            name: r.get("name"),
-            model: r.get("model"),
-            manufacturer: r.get("manufacturer"),
-            status: r.get("status"),
-            location: r.get("location"),
-            last_calibration_at: r.get("last_calibration_at"),
-            next_calibration_at: r.get("next_calibration_at"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "仪器更新成功")),
+        Ok(r) => Json(ApiResponse::success(
+            Instrument {
+                id: r.get("id"),
+                instrument_no: r.get("instrument_no"),
+                name: r.get("name"),
+                model: r.get("model"),
+                manufacturer: r.get("manufacturer"),
+                status: r.get("status"),
+                location: r.get("location"),
+                last_calibration_at: r.get("last_calibration_at"),
+                next_calibration_at: r.get("next_calibration_at"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "仪器更新成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to update instrument: {}", e);
             Json(ApiResponse::error(500, "仪器更新失败"))
@@ -258,19 +286,22 @@ pub async fn calibrate(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(Instrument {
-            id: r.get("id"),
-            instrument_no: r.get("instrument_no"),
-            name: r.get("name"),
-            model: r.get("model"),
-            manufacturer: r.get("manufacturer"),
-            status: r.get("status"),
-            location: r.get("location"),
-            last_calibration_at: r.get("last_calibration_at"),
-            next_calibration_at: r.get("next_calibration_at"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "仪器校准成功")),
+        Ok(r) => Json(ApiResponse::success(
+            Instrument {
+                id: r.get("id"),
+                instrument_no: r.get("instrument_no"),
+                name: r.get("name"),
+                model: r.get("model"),
+                manufacturer: r.get("manufacturer"),
+                status: r.get("status"),
+                location: r.get("location"),
+                last_calibration_at: r.get("last_calibration_at"),
+                next_calibration_at: r.get("next_calibration_at"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "仪器校准成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to calibrate instrument: {}", e);
             Json(ApiResponse::error(500, "仪器校准失败"))
@@ -415,21 +446,25 @@ pub async fn create_calibration_record(
     };
 
     // Get instrument info
-    let instrument_row = sqlx::query(
-        "SELECT instrument_no, name FROM qa_lab_instruments WHERE id = $1"
-    )
-    .bind(instrument_id)
-    .fetch_optional(&state.pool)
-    .await;
+    let instrument_row =
+        sqlx::query("SELECT instrument_no, name FROM qa_lab_instruments WHERE id = $1")
+            .bind(instrument_id)
+            .fetch_optional(&state.pool)
+            .await;
 
     let (instrument_no, instrument_name) = match instrument_row {
-        Ok(Some(row)) => (row.get::<String, _>("instrument_no"), row.get::<String, _>("name")),
+        Ok(Some(row)) => (
+            row.get::<String, _>("instrument_no"),
+            row.get::<String, _>("name"),
+        ),
         Ok(None) => return Json(ApiResponse::error(404, "仪器不存在")),
         Err(e) => return Json(ApiResponse::error(500, &format!("查询仪器失败: {}", e))),
     };
 
     let record_id = Uuid::new_v4();
-    let calibration_date = req.calibration_date.unwrap_or_else(|| chrono::Utc::now().to_rfc3339());
+    let calibration_date = req
+        .calibration_date
+        .unwrap_or_else(|| chrono::Utc::now().to_rfc3339());
 
     let row = sqlx::query(
         r#"

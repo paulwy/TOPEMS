@@ -27,30 +27,30 @@ export const riskApi = {
     if (params?.risklevel) queryParams.append('risklevel', params.risklevel);
     if (params?.category) queryParams.append('category', params.category);
 
-    return apiClient.ehs.get<PaginatedResponse<Risk>>(`/api/ehs/hazards?${queryParams.toString()}`);
+    return apiClient.ehs.get<PaginatedResponse<Risk>>(`/hazards?${queryParams.toString()}`);
   },
 
   getRisk: async (id: string): Promise<ApiResponse<Risk>> => {
-    return apiClient.ehs.get<Risk>(`/api/ehs/hazards/${id}`);
+    return apiClient.ehs.get<Risk>(`/hazards/${id}`);
   },
 
   createRisk: async (data: CreateRiskRequest): Promise<ApiResponse<Risk>> => {
-    return apiClient.ehs.post<Risk>('/api/ehs/hazards', data);
+    return apiClient.ehs.post<Risk>('/hazards', data);
   },
 
   updateRisk: async (id: string, data: Partial<UpdateRiskRequest>): Promise<ApiResponse<Risk>> => {
-    return apiClient.ehs.put<Risk>(`/api/ehs/hazards/${id}`, data);
+    return apiClient.ehs.put<Risk>(`/hazards/${id}`, data);
   },
 
   deleteRisk: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(`/api/ehs/hazards/${id}`);
+    return apiClient.ehs.delete<void>(`/hazards/${id}`);
   },
 
   listRiskMgmtAssessments: async (
     riskId: string
   ): Promise<ApiResponse<PaginatedResponse<RiskMgmtAssessment>>> => {
     return apiClient.ehs.get<PaginatedResponse<RiskMgmtAssessment>>(
-      `/api/ehs/hazards/${riskId}/assessments`
+      `/hazards/${riskId}/assessments`
     );
   },
 
@@ -58,22 +58,20 @@ export const riskApi = {
     riskId: string,
     data: CreateRiskMgmtAssessmentRequest
   ): Promise<ApiResponse<RiskMgmtAssessment>> => {
-    return apiClient.ehs.post<RiskMgmtAssessment>(`/api/ehs/hazards/${riskId}/assessments`, data);
+    return apiClient.ehs.post<RiskMgmtAssessment>(`/hazards/${riskId}/assessments`, data);
   },
 
   listRiskControlMeasures: async (
     riskId: string
   ): Promise<ApiResponse<PaginatedResponse<RiskControlMeasure>>> => {
-    return apiClient.ehs.get<PaginatedResponse<RiskControlMeasure>>(
-      `/api/ehs/hazards/${riskId}/controls`
-    );
+    return apiClient.ehs.get<PaginatedResponse<RiskControlMeasure>>(`/hazards/${riskId}/controls`);
   },
 
   createRiskControlMeasure: async (
     riskId: string,
     data: CreateRiskControlMeasureRequest
   ): Promise<ApiResponse<RiskControlMeasure>> => {
-    return apiClient.ehs.post<RiskControlMeasure>(`/api/ehs/hazards/${riskId}/controls`, data);
+    return apiClient.ehs.post<RiskControlMeasure>(`/hazards/${riskId}/controls`, data);
   },
 
   updateRiskControlMeasure: async (
@@ -81,17 +79,14 @@ export const riskApi = {
     measureId: string,
     data: Partial<UpdateRiskControlMeasureRequest>
   ): Promise<ApiResponse<RiskControlMeasure>> => {
-    return apiClient.ehs.put<RiskControlMeasure>(
-      `/api/ehs/hazards/${riskId}/controls/${measureId}`,
-      data
-    );
+    return apiClient.ehs.put<RiskControlMeasure>(`/hazards/${riskId}/controls/${measureId}`, data);
   },
 
   deleteRiskControlMeasure: async (
     riskId: string,
     measureId: string
   ): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(`/api/ehs/hazards/${riskId}/controls/${measureId}`);
+    return apiClient.ehs.delete<void>(`/hazards/${riskId}/controls/${measureId}`);
   },
 };
 

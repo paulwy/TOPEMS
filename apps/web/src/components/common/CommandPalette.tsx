@@ -12,6 +12,7 @@ import {
   Chip,
   InputAdornment,
 } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material/styles';
 import {
   Search,
   ArrowRight,
@@ -52,7 +53,7 @@ export interface CommandPaletteProps {
   hotkey?: string;
 
   // TOPEMS 设计系统
-  sx?: import('@mui/material/styles').SxProps<import('@mui/material/styles').Theme>;
+  sx?: SxProps<Theme>;
 }
 
 const defaultIcons: Record<string, React.ReactNode> = {
@@ -178,6 +179,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             boxShadow: 24,
           },
         },
+        // eslint-disable-next-line topems-design/no-hardcoded-colors
         backdrop: { style: { backgroundColor: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(4px)' } },
       }}
     >

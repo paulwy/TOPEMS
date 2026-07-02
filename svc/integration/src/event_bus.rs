@@ -142,7 +142,9 @@ impl EventBus {
         let subs = self.subscribers.read().await;
         subs.values()
             .filter(|s| {
-                s.enabled && s.source_system == source_system && s.event_types.contains(&event_type.to_string())
+                s.enabled
+                    && s.source_system == source_system
+                    && s.event_types.contains(&event_type.to_string())
             })
             .cloned()
             .collect()
@@ -230,7 +232,10 @@ impl Default for EventBus {
 
 /// 事件处理函数类型
 pub type EventHandlerFn = Arc<
-    dyn Fn(IntegrationEvent) -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), String>> + Send>>
+    dyn Fn(
+            IntegrationEvent,
+        )
+            -> std::pin::Pin<Box<dyn std::future::Future<Output = Result<(), String>> + Send>>
         + Send
         + Sync,
 >;
@@ -275,7 +280,10 @@ impl EventHandlerRegistry {
         if let Some(handler) = self.get(event_type).await {
             handler(event).await
         } else {
-            Err(format!("No handler registered for event type: {}", event_type))
+            Err(format!(
+                "No handler registered for event type: {}",
+                event_type
+            ))
         }
     }
 }
@@ -314,10 +322,7 @@ impl ConversionEventHandler {
         // 4. 更新事件状态
 
         // 这里只是记录日志
-        tracing::info!(
-            "[EventHandler] Event payload: {:?}",
-            event.payload
-        );
+        tracing::info!("[EventHandler] Event payload: {:?}", event.payload);
 
         Ok(())
     }
@@ -427,12 +432,16 @@ mod tests {
         assert_eq!(erp_order_subs.len(), 1);
         assert_eq!(erp_order_subs[0].name, "ERP Order Subscriber");
 
-        let hrm_subs = bus.get_matching_subscribers("hrm", "employee.created").await;
+        let hrm_subs = bus
+            .get_matching_subscribers("hrm", "employee.created")
+            .await;
         assert_eq!(hrm_subs.len(), 1);
         assert_eq!(hrm_subs[0].name, "HRM Employee Subscriber");
 
         // 不匹配的事件类型
-        let no_subs = bus.get_matching_subscribers("erp", "employee.created").await;
+        let no_subs = bus
+            .get_matching_subscribers("erp", "employee.created")
+            .await;
         assert!(no_subs.is_empty());
     }
 
@@ -450,20 +459,22 @@ mod tests {
             })
             .await;
 
-        assert!(bus
-            .update_status(event.id, EventStatus::Processing, None)
-            .await);
+        assert!(
+            bus.update_status(event.id, EventStatus::Processing, None)
+                .await
+        );
 
         let events = bus.get_events(1).await;
         assert_eq!(events[0].status, EventStatus::Processing);
 
-        assert!(bus
-            .update_status(
+        assert!(
+            bus.update_status(
                 event.id,
                 EventStatus::Failed,
                 Some("Target system unavailable".to_string())
             )
-            .await);
+            .await
+        );
 
         let events = bus.get_events(1).await;
         assert_eq!(events[0].status, EventStatus::Failed);
@@ -482,7 +493,9 @@ mod tests {
             tracing::info!("Handling event: {}", event.id);
             Ok(())
         };
-        registry.register("order.confirmed".to_string(), handler).await;
+        registry
+            .register("order.confirmed".to_string(), handler)
+            .await;
 
         let types = registry.list_types().await;
         assert_eq!(types, vec!["order.confirmed"]);

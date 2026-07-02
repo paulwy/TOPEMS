@@ -13,22 +13,13 @@ use topems_shared::{api_error, auth::Claims, ApiResponse, PaginationParams};
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route(
-            "/api/scm/inventory-turnover",
-            get(calculate_turnover),
-        )
-        .route(
-            "/api/scm/inventory-turnover/days",
-            get(turnover_days),
-        )
+        .route("/api/scm/inventory-turnover", get(calculate_turnover))
+        .route("/api/scm/inventory-turnover/days", get(turnover_days))
         .route(
             "/api/scm/inventory-turnover/abc-analysis",
             get(abc_analysis),
         )
-        .route(
-            "/api/scm/inventory-turnover/trend",
-            get(turnover_trend),
-        )
+        .route("/api/scm/inventory-turnover/trend", get(turnover_trend))
 }
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -76,9 +67,9 @@ async fn calculate_turnover(
         let start = now - chrono::Duration::days(90);
         start.format("%Y-%m-%d").to_string()
     });
-    let end_date = params.end_date.unwrap_or_else(|| {
-        chrono::Utc::now().format("%Y-%m-%d").to_string()
-    });
+    let end_date = params
+        .end_date
+        .unwrap_or_else(|| chrono::Utc::now().format("%Y-%m-%d").to_string());
 
     let search_pattern = pagination.search.clone().map(|s| format!("%{}%", s));
 
@@ -244,9 +235,9 @@ async fn turnover_days(
         let start = now - chrono::Duration::days(90);
         start.format("%Y-%m-%d").to_string()
     });
-    let end_date = params.end_date.unwrap_or_else(|| {
-        chrono::Utc::now().format("%Y-%m-%d").to_string()
-    });
+    let end_date = params
+        .end_date
+        .unwrap_or_else(|| chrono::Utc::now().format("%Y-%m-%d").to_string());
 
     let result = sqlx::query(
         r#"
@@ -349,9 +340,9 @@ async fn abc_analysis(
         let start = now - chrono::Duration::days(90);
         start.format("%Y-%m-%d").to_string()
     });
-    let end_date = params.end_date.unwrap_or_else(|| {
-        chrono::Utc::now().format("%Y-%m-%d").to_string()
-    });
+    let end_date = params
+        .end_date
+        .unwrap_or_else(|| chrono::Utc::now().format("%Y-%m-%d").to_string());
 
     let result = sqlx::query(
         r#"
@@ -462,9 +453,9 @@ async fn turnover_trend(
         let start = now - chrono::Duration::days(180);
         start.format("%Y-%m-%d").to_string()
     });
-    let end_date = params.end_date.unwrap_or_else(|| {
-        chrono::Utc::now().format("%Y-%m-%d").to_string()
-    });
+    let end_date = params
+        .end_date
+        .unwrap_or_else(|| chrono::Utc::now().format("%Y-%m-%d").to_string());
 
     let result = sqlx::query(
         r#"

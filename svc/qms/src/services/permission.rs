@@ -1,7 +1,4 @@
-use axum::{
-    middleware::Next,
-    response::Response,
-};
+use axum::{middleware::Next, response::Response};
 use topems_shared::ApiResponse;
 
 pub async fn check_permission(

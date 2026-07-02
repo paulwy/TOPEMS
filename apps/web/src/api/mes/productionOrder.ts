@@ -24,45 +24,45 @@ export const productionOrderApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(`/api/mes/orders${queryString ? `?${queryString}` : ''}`);
+    return apiClient.mes.get(`/orders${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<ProductionOrder>> {
-    return apiClient.mes.get(`/api/mes/orders/${id}`);
+    return apiClient.mes.get(`/orders/${id}`);
   },
 
   async create(data: CreateProductionOrderRequest): Promise<ApiResponse<ProductionOrder>> {
-    return apiClient.mes.post('/api/mes/orders', data);
+    return apiClient.mes.post('/orders', data);
   },
 
   async update(
     id: string,
     data: UpdateProductionOrderRequest
   ): Promise<ApiResponse<ProductionOrder>> {
-    return apiClient.mes.put(`/api/mes/orders/${id}`, data);
+    return apiClient.mes.put(`/orders/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.mes.delete(`/api/mes/orders/${id}`);
+    return apiClient.mes.delete(`/orders/${id}`);
   },
 
   async release(id: string): Promise<ApiResponse<ProductionOrder>> {
-    return apiClient.mes.put(`/api/mes/orders/${id}/release`);
+    return apiClient.mes.put(`/orders/${id}/release`);
   },
 
   async start(id: string): Promise<ApiResponse<ProductionOrder>> {
-    return apiClient.mes.put(`/api/mes/orders/${id}/start`);
+    return apiClient.mes.put(`/orders/${id}/start`);
   },
 
   async complete(id: string): Promise<ApiResponse<ProductionOrder>> {
-    return apiClient.mes.put(`/api/mes/orders/${id}/complete`);
+    return apiClient.mes.put(`/orders/${id}/complete`);
   },
 
   async cancel(id: string): Promise<ApiResponse<ProductionOrder>> {
-    return apiClient.mes.put(`/api/mes/orders/${id}/cancel`);
+    return apiClient.mes.put(`/orders/${id}/cancel`);
   },
 
   async createFromErp(data: CreateFromErpRequest): Promise<ApiResponse<ProductionOrder[]>> {
-    return apiClient.mes.post('/api/mes/orders/from-erp', data);
+    return apiClient.mes.post('/orders/from-erp', data);
   },
 };

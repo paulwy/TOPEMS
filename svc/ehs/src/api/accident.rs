@@ -1,6 +1,10 @@
 //! Accident handlers - Reporting, investigation, treatment, and review
 
-use axum::{extract::State, routing::{get, post, put}, Json, Router};
+use axum::{
+    extract::State,
+    routing::{get, post, put},
+    Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use topems_shared::ApiResponse;
 
@@ -8,13 +12,33 @@ use crate::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/ehs/incidents", get(list_accidents).post(report_accident))
-        .route("/api/ehs/incidents/{id}", get(get_accident).put(update_accident).delete(delete_accident))
-        .route("/api/ehs/incidents/{id}/investigation", post(start_investigation).put(update_investigation))
-        .route("/api/ehs/incidents/{id}/investigation/complete", post(complete_investigation))
+        .route(
+            "/api/ehs/incidents",
+            get(list_accidents).post(report_accident),
+        )
+        .route(
+            "/api/ehs/incidents/{id}",
+            get(get_accident)
+                .put(update_accident)
+                .delete(delete_accident),
+        )
+        .route(
+            "/api/ehs/incidents/{id}/investigation",
+            post(start_investigation).put(update_investigation),
+        )
+        .route(
+            "/api/ehs/incidents/{id}/investigation/complete",
+            post(complete_investigation),
+        )
         .route("/api/ehs/incidents/{id}/treatment", post(create_treatment))
-        .route("/api/ehs/incidents/{id}/treatment/actions/{action_id}", put(update_treatment_action))
-        .route("/api/ehs/incidents/{id}/treatment/complete", post(complete_treatment))
+        .route(
+            "/api/ehs/incidents/{id}/treatment/actions/{action_id}",
+            put(update_treatment_action),
+        )
+        .route(
+            "/api/ehs/incidents/{id}/treatment/complete",
+            post(complete_treatment),
+        )
         .route("/api/ehs/incidents/{id}/review", post(create_review))
         .route("/api/ehs/incidents/{id}/close", post(close_accident))
 }
@@ -168,7 +192,10 @@ pub async fn list_accidents(
     State(_state): State<crate::AppState>,
 ) -> Json<ApiResponse<Vec<Accident>>> {
     tracing::info!("Listing accidents");
-    Json(ApiResponse::success(Vec::<Accident>::new(), "获取事故列表成功"))
+    Json(ApiResponse::success(
+        Vec::<Accident>::new(),
+        "获取事故列表成功",
+    ))
 }
 
 pub async fn report_accident(
@@ -179,7 +206,10 @@ pub async fn report_accident(
     Json(ApiResponse::success(
         Accident {
             id: uuid::Uuid::new_v4().to_string(),
-            accident_no: format!("ACC-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase()),
+            accident_no: format!(
+                "ACC-{}",
+                uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+            ),
             title: req.title,
             description: req.description,
             accident_type: req.accident_type,
@@ -227,9 +257,18 @@ pub async fn get_accident(
                 findings: Some("操作工未佩戴防护手套，操作时注意力不集中".to_string()),
                 root_cause: Some("安全意识不足，未遵守操作规程".to_string()),
                 timeline: Some(vec![
-                    Event { time: "10:00".to_string(), description: "事故发生".to_string() },
-                    Event { time: "10:05".to_string(), description: "上报事故".to_string() },
-                    Event { time: "10:30".to_string(), description: "成立调查组".to_string() },
+                    Event {
+                        time: "10:00".to_string(),
+                        description: "事故发生".to_string(),
+                    },
+                    Event {
+                        time: "10:05".to_string(),
+                        description: "上报事故".to_string(),
+                    },
+                    Event {
+                        time: "10:30".to_string(),
+                        description: "成立调查组".to_string(),
+                    },
                 ]),
                 status: "in_progress".to_string(),
                 started_at: Some(chrono::Utc::now().to_rfc3339()),
@@ -310,8 +349,12 @@ pub async fn update_investigation(
 ) -> Json<ApiResponse<Investigation>> {
     tracing::info!("Updating investigation {}: {:?}", id, req);
     let status = req.status.unwrap_or("in_progress".to_string());
-    let completed_at = if status == "completed" { Some(chrono::Utc::now().to_rfc3339()) } else { None };
-    
+    let completed_at = if status == "completed" {
+        Some(chrono::Utc::now().to_rfc3339())
+    } else {
+        None
+    };
+
     Json(ApiResponse::success(
         Investigation {
             id,
@@ -343,10 +386,22 @@ pub async fn complete_investigation(
             findings: Some("操作工未佩戴防护手套，操作时注意力不集中".to_string()),
             root_cause: Some("安全意识不足，未遵守操作规程".to_string()),
             timeline: Some(vec![
-                Event { time: "10:00".to_string(), description: "事故发生".to_string() },
-                Event { time: "10:05".to_string(), description: "上报事故".to_string() },
-                Event { time: "10:30".to_string(), description: "成立调查组".to_string() },
-                Event { time: "14:00".to_string(), description: "调查结束".to_string() },
+                Event {
+                    time: "10:00".to_string(),
+                    description: "事故发生".to_string(),
+                },
+                Event {
+                    time: "10:05".to_string(),
+                    description: "上报事故".to_string(),
+                },
+                Event {
+                    time: "10:30".to_string(),
+                    description: "成立调查组".to_string(),
+                },
+                Event {
+                    time: "14:00".to_string(),
+                    description: "调查结束".to_string(),
+                },
             ]),
             status: "completed".to_string(),
             started_at: Some(chrono::Utc::now().to_rfc3339()),
@@ -364,15 +419,20 @@ pub async fn create_treatment(
     Json(req): Json<CreateTreatmentRequest>,
 ) -> Json<ApiResponse<Treatment>> {
     tracing::info!("Creating treatment for accident {}: {:?}", id, req);
-    let actions = req.actions.into_iter().enumerate().map(|(i, a)| TreatmentAction {
-        id: format!("action-{}", i + 1),
-        description: a.description,
-        responsible: a.responsible,
-        deadline: a.deadline,
-        status: "pending".to_string(),
-        completed_at: None,
-    }).collect();
-    
+    let actions = req
+        .actions
+        .into_iter()
+        .enumerate()
+        .map(|(i, a)| TreatmentAction {
+            id: format!("action-{}", i + 1),
+            description: a.description,
+            responsible: a.responsible,
+            deadline: a.deadline,
+            status: "pending".to_string(),
+            completed_at: None,
+        })
+        .collect();
+
     Json(ApiResponse::success(
         Treatment {
             id: uuid::Uuid::new_v4().to_string(),
@@ -394,7 +454,12 @@ pub async fn update_treatment_action(
     axum::extract::Path((accident_id, action_id)): axum::extract::Path<(String, String)>,
     Json(req): Json<UpdateTreatmentActionRequest>,
 ) -> Json<ApiResponse<TreatmentAction>> {
-    tracing::info!("Updating treatment action {} for accident {}: {:?}", action_id, accident_id, req);
+    tracing::info!(
+        "Updating treatment action {} for accident {}: {:?}",
+        action_id,
+        accident_id,
+        req
+    );
     Json(ApiResponse::success(
         TreatmentAction {
             id: action_id,

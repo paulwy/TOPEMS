@@ -287,14 +287,69 @@ pnpm dev
 # 1. 检查后端服务是否运行
 ./scripts/topems.sh status
 
-# 2. 检查 Nginx 配置
-docker compose logs nginx
-
-# 3. 检查 Vite 代理配置
+# 2. 检查 Vite 代理配置
 cat apps/web/vite.config.ts | grep proxy
 
-# 4. 直接访问后端 API
+# 3. 直接访问后端 API
 curl http://localhost:8000/api/iam/auth/login
+
+# 4. 检查特定服务的 API
+curl http://localhost:8010/api/erp/assets?page=1&pagesize=20
+curl http://localhost:8020/api/hrm/employees
+```
+
+**常见原因**：
+- 后端服务未启动或端口错误
+- Vite 代理配置缺失或错误
+- API 路径前缀问题（双重前缀）
+
+**解决方案**：
+
+```bash
+# 启动缺失的服务
+./scripts/topems.sh start erp
+./scripts/topems.sh start hrm
+
+# 验证代理配置
+cat apps/web/vite.config.ts | grep -A5 "erp"
+cat apps/web/vite.config.ts | grep -A5 "hrm"
+```
+
+---
+
+### 问题：插件注册失败
+
+**症状**：服务启动后注册到 unified-core 失败
+
+**排查步骤**：
+
+```bash
+# 1. 检查 unified-core 是否运行
+./scripts/topems.sh status iam
+
+# 2. 检查注册接口
+curl -s -X POST "http://localhost:8000/api/core/plugin/dev/plugins/test/register" \
+  -H "Content-Type: application/json" \
+  -d '{"code":"test","name":"Test","description":"Test","version":"0.1.0","runtime_url":"http://localhost:9999","permissions":[]}'
+
+# 3. 检查服务日志
+./scripts/topems.sh logs iam 100
+```
+
+**常见原因**：
+- unified-core 未运行
+- 注册接口需要认证（已修复，移到公共路由）
+- 网络问题
+
+**解决方案**：
+
+```bash
+# 确保 unified-core 先启动
+./scripts/topems.sh start iam
+
+# 等待统一核心服务启动后再启动其他服务
+sleep 3
+./scripts/topems.sh start-all
 ```
 
 ---

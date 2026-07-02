@@ -10,7 +10,10 @@ use uuid::Uuid;
 
 use super::ApiState;
 use crate::api::audit::{log_audit_event, AuditEventParams};
-use topems_shared::{api_error, ApiResponse, DataMasking, EncryptionResult, FieldEncryptionService, PaginatedResponse};
+use topems_shared::{
+    api_error, ApiResponse, DataMasking, EncryptionResult, FieldEncryptionService,
+    PaginatedResponse,
+};
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct BankAccount {
@@ -219,11 +222,14 @@ async fn create_bank_account(
     let now = Utc::now();
     let status = "active".to_string();
 
-    let encrypted_account_number = state.encryption.encrypt_to_string(&req.account_number)
+    let encrypted_account_number = state
+        .encryption
+        .encrypt_to_string(&req.account_number)
         .unwrap_or_else(|_| req.account_number.clone());
-    let encrypted_tax_number = req.tax_registration_number.as_ref().and_then(|tax| {
-        state.encryption.encrypt_to_string(tax).ok()
-    });
+    let encrypted_tax_number = req
+        .tax_registration_number
+        .as_ref()
+        .and_then(|tax| state.encryption.encrypt_to_string(tax).ok());
 
     let result = sqlx::query_as::<_, BankAccount>(
         r#"
@@ -353,13 +359,15 @@ async fn update_bank_account(
     let branch_name = req.branch_name.or(existing.branch_name);
     let account_name = req.account_name.unwrap_or(existing.account_name);
     let account_type = req.account_type.unwrap_or(existing.account_type);
-    let tax_registration_number = req.tax_registration_number.or(existing.tax_registration_number);
+    let tax_registration_number = req
+        .tax_registration_number
+        .or(existing.tax_registration_number);
     let status = req.status.unwrap_or(existing.status);
     let now = Utc::now();
 
-    let encrypted_tax_number = tax_registration_number.as_ref().and_then(|tax| {
-        state.encryption.encrypt_to_string(tax).ok()
-    });
+    let encrypted_tax_number = tax_registration_number
+        .as_ref()
+        .and_then(|tax| state.encryption.encrypt_to_string(tax).ok());
 
     let result = sqlx::query_as::<_, BankAccount>(
         r#"

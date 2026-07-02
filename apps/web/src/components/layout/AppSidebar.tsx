@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import {
-  Box,
+import {Box,
   Paper,
   Typography,
   Button,
@@ -16,8 +15,7 @@ import {
   ListItemText,
   Popover,
   Avatar,
-  Badge as MuiBadge,
-} from '@mui/material';
+  Badge as MuiBadge, useTheme} from '@mui/material';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { usePermission } from '@/hooks/usePermission';
 import { navigationRegistryV2 } from '@/lib/navigation';
@@ -70,6 +68,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
   onToggleCollapse,
   forceVisible,
 }) => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const { checkPermission } = usePermission();
@@ -330,7 +329,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
               input: {
                 startAdornment: (
                   <InputAdornment position='start'>
-                    <Search style={{ width: 14, height: 14, color: 'text.secondary' }} />
+                    <Search style={{ width: 14, height: 14, color: theme.palette.text.secondary }} />
                   </InputAdornment>
                 ),
                 endAdornment: searchQuery && (
@@ -466,7 +465,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                     }}
                     sx={{ ml: 'auto', flexShrink: 0 }}
                   >
-                    <BookmarkCheck style={{ width: 14, height: 14, color: 'warning.main' }} />
+                    <BookmarkCheck style={{ width: 14, height: 14, color: theme.palette.warning.main }} />
                   </IconButton>
                 </ListItemButton>
               ))}

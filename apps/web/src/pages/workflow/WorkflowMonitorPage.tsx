@@ -11,14 +11,7 @@
  * @path /workflow/monitor
  */
 
-import {
-  Box,
-  Typography,
-  Chip,
-  IconButton,
-  Grid,
-  Stack,
-} from '@mui/material';
+import { Box, Typography, Chip, IconButton, Grid, Stack } from '@mui/material';
 import React, { useState, useMemo, useCallback } from 'react';
 import {
   Activity,
@@ -336,7 +329,10 @@ export const WorkflowMonitorPage: React.FC = () => {
                 }
               />
             </Box>
-            <Typography variant='body2' sx={{ fontWeight: 500, fontFamily: 'monospace' }}>
+            <Typography
+              variant='body2'
+              sx={{ fontWeight: 500, fontFamily: 'monospace' }}
+            >
               {row.instanceId}
             </Typography>
           </Box>
@@ -345,15 +341,16 @@ export const WorkflowMonitorPage: React.FC = () => {
       {
         id: 'workflowName',
         label: '流程名称',
-        render: (row) => (
-          <Typography variant='body2'>{row.workflowName}</Typography>
-        ),
+        render: (row) => <Typography variant='body2'>{row.workflowName}</Typography>,
       },
       {
         id: 'currentNode',
         label: '当前节点',
         render: (row) => (
-          <Typography variant='body2' color='text.secondary'>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             {row.currentNode}
           </Typography>
         ),
@@ -392,7 +389,10 @@ export const WorkflowMonitorPage: React.FC = () => {
         id: 'occurredAt',
         label: '发生时间',
         render: (row) => (
-          <Typography variant='body2' color='text.secondary'>
+          <Typography
+            variant='body2'
+            color='text.secondary'
+          >
             {row.occurredAt}
           </Typography>
         ),
@@ -495,10 +495,19 @@ export const WorkflowMonitorPage: React.FC = () => {
 
   const renderHeaderContent = () => (
     <Box sx={{ mb: 2 }}>
-      <Grid container spacing={2}>
+      <Grid
+        container
+        spacing={2}
+      >
         {stats.map((stat) => (
-          <Grid key={stat.id} size={{ xs: 12, sm: 6, md: 3 }}>
-            <StatCardComponent {...stat} size='small' />
+          <Grid
+            key={stat.id}
+            size={{ xs: 12, sm: 6, md: 3 }}
+          >
+            <StatCardComponent
+              {...stat}
+              size='small'
+            />
           </Grid>
         ))}
       </Grid>

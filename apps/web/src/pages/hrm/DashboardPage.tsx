@@ -12,7 +12,7 @@ import {
   type ChartCard,
   type QuickAction,
 } from '@/components/templates';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import {
   employeeApi,
   attendanceApi,
@@ -306,15 +306,15 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='人力资源管理'
+      title='人力资源仪表盘'
       subtitle={`${getGreeting()}，员工管理与绩效考核`}
       padding={false}
       maxWidth={false}
+      autoTitle
+      autoBreadcrumbs
     >
       <DashboardTemplate
         title=''
-        subtitle=''
-        breadcrumbs={[{ label: '首页', href: '/dashboard' }, { label: '人力资源' }]}
         stats={stats}
         charts={charts}
         quickActions={quickActions}

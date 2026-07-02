@@ -3,6 +3,8 @@ members = [
     "lib",
     # [核心平台] 统一核心平台
     "svc/unified-core",      # IAM + Doc + Flow + File + Communication
+    # [SDK] 共享工具库
+    "svc/migration-sdk",     # 数据库迁移SDK
     # [独立服务] 业务模块（插件式架构）
     "svc/ai",
     "svc/erp",

@@ -615,12 +615,7 @@ export interface SyncDetailRecord {
  * 供应商送货预约
  */
 export type DeliveryAppointmentStatus =
-  | 'pending'
-  | 'approved'
-  | 'rejected'
-  | 'arrived'
-  | 'completed'
-  | 'cancelled';
+  'pending' | 'approved' | 'rejected' | 'arrived' | 'completed' | 'cancelled';
 
 export interface SupplierDeliveryAppointment {
   id: string;

@@ -257,7 +257,7 @@ export const PageSkeleton: React.FC<{
                 key={i}
                 sx={{
                   p: 2,
-                  borderRadius: 2,
+                  borderRadius: 3,
                   bgcolor: 'background.paper',
                   border: 1,
                   borderColor: 'divider',
@@ -283,7 +283,7 @@ export const PageSkeleton: React.FC<{
           <Box
             sx={{
               p: 3,
-              borderRadius: 2,
+              borderRadius: 3,
               bgcolor: 'background.paper',
               border: 1,
               borderColor: 'divider',

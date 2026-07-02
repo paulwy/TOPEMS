@@ -32,7 +32,7 @@ import {
   Thermometer,
   Box,
 } from 'lucide-react';
-import { Box as MuiBox, Typography, Paper, Chip, IconButton, Button } from '@mui/material';
+import {Box as MuiBox, Typography, Paper, Chip, IconButton, Button, useTheme} from '@mui/material';
 import type { DevicePoint, Pipeline, StorageLocation, GeoJSONFeature } from '../../api/gis';
 import DeviceTrackPanel from './DeviceTrackPanel';
 import HeatmapLayer, { HeatmapLegend } from './HeatmapLayer';
@@ -113,6 +113,7 @@ const FitBoundsControl: React.FC<{
   bounds: [number, number][] | undefined;
   mapRef: React.RefObject<any>;
 }> = ({ bounds, mapRef }) => {
+  const theme = useTheme();
   const fitBounds = useCallback(() => {
     const map = mapRef.current;
     if (map && bounds && bounds.length >= 2) {
@@ -317,6 +318,7 @@ const MapView: React.FC<MapViewProps> = ({
   storageLocations = [],
   onMarkerClick,
 }) => {
+  const theme = useTheme();
   const [mapCenter, _setMapCenter] = useState<[number, number]>([
     39.9,
     116.4, // 北京
@@ -948,7 +950,7 @@ const MapView: React.FC<MapViewProps> = ({
                     >
                       <Info
                         size={20}
-                        style={{ color: 'warning.main' }}
+                        style={{ color: theme.palette.warning.main }}
                       />
                       <Typography
                         variant='h6'
@@ -1384,7 +1386,7 @@ const MapView: React.FC<MapViewProps> = ({
               display: 'flex',
               alignItems: 'center',
               gap: 1,
-              backgroundColor: '#dbeafe',
+              backgroundColor: 'primary.100',
               color: 'primary.dark',
               '&:hover': {
                 backgroundColor: 'primary.light',
@@ -1521,7 +1523,7 @@ const MapView: React.FC<MapViewProps> = ({
               backgroundColor: show3DView ? 'primary.main' : 'white',
               color: show3DView ? 'white' : 'grey.700',
               '&:hover': {
-                backgroundColor: show3DView ? '#4338ca' : 'grey.50',
+                backgroundColor: show3DView ? 'secondary.700' : 'grey.50',
               },
               fontSize: '0.75rem',
             }}
@@ -1666,12 +1668,12 @@ const MapView: React.FC<MapViewProps> = ({
           {showLayerPanel ? (
             <ChevronUp
               size={16}
-              style={{ color: 'text.secondary' }}
+              style={{ color: theme.palette.text.secondary }}
             />
           ) : (
             <ChevronDown
               size={16}
-              style={{ color: 'text.secondary' }}
+              style={{ color: theme.palette.text.secondary }}
             />
           )}
         </Button>

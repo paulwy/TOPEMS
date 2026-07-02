@@ -1,17 +1,13 @@
-import { lazyWithRetry } from '../utils';
+import { lazyWithRetry } from './types';
 import type { RouteModuleConfig } from './types';
 
 const FinanceDashboardPage = lazyWithRetry(
-  () => import('../../pages/finance/DashboardPage'),
-  'DashboardPage'
+  () => import('../../pages/finance/FinanceDashboardPage'),
+  'FinanceDashboardPage'
 );
-const FinanceCostPage = lazyWithRetry(
-  () => import('../../pages/finance/FinanceCostPage'),
-  'FinanceCostPage'
-);
-const FinanceTaxPage = lazyWithRetry(
-  () => import('../../pages/finance/FinanceTaxPage'),
-  'FinanceTaxPage'
+const FinanceLedgerPage = lazyWithRetry(
+  () => import('../../pages/finance/FinanceLedgerPage'),
+  'FinanceLedgerPage'
 );
 const FinanceVoucherPage = lazyWithRetry(
   () => import('../../pages/finance/FinanceVoucherPage'),
@@ -25,25 +21,65 @@ const VoucherDetailPage = lazyWithRetry(
   () => import('../../pages/finance/VoucherDetailPage'),
   'VoucherDetailPage'
 );
-const FinanceReportsPage = lazyWithRetry(
-  () => import('../../pages/finance/FinanceReportsPage'),
-  'FinanceReportsPage'
+const FinanceReceivablePayablePage = lazyWithRetry(
+  () => import('../../pages/finance/FinanceReceivablePayablePage'),
+  'FinanceReceivablePayablePage'
 );
-const FinanceBudgetPage = lazyWithRetry(
-  () => import('../../pages/finance/FinanceBudgetPage'),
-  'FinanceBudgetPage'
+const FinanceInvoicePage = lazyWithRetry(
+  () => import('../../pages/finance/FinanceInvoicePage'),
+  'FinanceInvoicePage'
+);
+const FinanceTaxPage = lazyWithRetry(
+  () => import('../../pages/finance/FinanceTaxPage'),
+  'FinanceTaxPage'
+);
+const FinanceExpensePage = lazyWithRetry(
+  () => import('../../pages/finance/FinanceExpensePage'),
+  'FinanceExpensePage'
+);
+const FinanceCostPage = lazyWithRetry(
+  () => import('../../pages/finance/FinanceCostPage'),
+  'FinanceCostPage'
+);
+const FinanceReceiptPage = lazyWithRetry(
+  () => import('../../pages/finance/FinanceReceiptPage'),
+  'FinanceReceiptPage'
+);
+const FinancePaymentPage = lazyWithRetry(
+  () => import('../../pages/finance/FinancePaymentPage'),
+  'FinancePaymentPage'
 );
 const FinanceAssetPage = lazyWithRetry(
   () => import('../../pages/finance/FinanceAssetPage'),
   'FinanceAssetPage'
 );
-const FinanceLedgerPage = lazyWithRetry(
-  () => import('../../pages/finance/FinanceLedgerPage'),
-  'FinanceLedgerPage'
+const BudgetManagementPage = lazyWithRetry(
+  () => import('../../pages/finance/BudgetManagementPage'),
+  'BudgetManagementPage'
 );
-const FinanceReceivablePayablePage = lazyWithRetry(
-  () => import('../../pages/finance/FinanceReceivablePayablePage'),
-  'FinanceReceivablePayablePage'
+const FinanceBudgetPage = lazyWithRetry(
+  () => import('../../pages/finance/FinanceBudgetPage'),
+  'FinanceBudgetPage'
+);
+const FinanceBudgetDetailPage = lazyWithRetry(
+  () => import('../../pages/finance/FinanceBudgetDetailPage'),
+  'FinanceBudgetDetailPage'
+);
+const OpeningBalancePage = lazyWithRetry(
+  () => import('../../pages/finance/OpeningBalancePage'),
+  'OpeningBalancePage'
+);
+const ConsolidationScopePage = lazyWithRetry(
+  () => import('../../pages/finance/ConsolidationScopePage'),
+  'ConsolidationScopePage'
+);
+const ConsolidationReportsPage = lazyWithRetry(
+  () => import('../../pages/finance/ConsolidationReportsPage'),
+  'ConsolidationReportsPage'
+);
+const FinanceReportsPage = lazyWithRetry(
+  () => import('../../pages/finance/FinanceReportsPage'),
+  'FinanceReportsPage'
 );
 
 export const financeModuleConfig: RouteModuleConfig = {
@@ -51,11 +87,11 @@ export const financeModuleConfig: RouteModuleConfig = {
   name: '财务管理',
   icon: 'Wallet',
   path: '/finance',
-  source: 'core',
+  source: 'plugin',
   suite: 'finance',
   status: 'online',
-  order: 6,
-  description: '凭证、报表、应收应付、预算、税务管理',
+  order: 8,
+  description: '总账、应收应付、税务、费用、成本、报表管理',
   permission: 'finance:read',
   routes: [
     {
@@ -67,13 +103,16 @@ export const financeModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'overview',
       requiredPermissions: ['finance:read'],
-      nav: {
-        label: '仪表盘',
-        icon: 'LayoutDashboard',
-        order: 0,
-        group: 'overview',
-        showInTabs: true,
-      },
+    },
+    {
+      path: '/finance/ledger',
+      element: FinanceLedgerPage,
+      module: 'finance',
+      code: 'finance-ledger',
+      title: '总账管理',
+      template: 'list',
+      group: 'business',
+      requiredPermissions: ['finance:ledger:read'],
     },
     {
       path: '/finance/vouchers',
@@ -84,13 +123,6 @@ export const financeModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'business',
       requiredPermissions: ['finance:voucher:read'],
-      nav: {
-        label: '凭证管理',
-        icon: 'FileText',
-        order: 1,
-        group: 'business',
-        showInTabs: true,
-      },
     },
     {
       path: '/finance/vouchers/create',
@@ -113,22 +145,6 @@ export const financeModuleConfig: RouteModuleConfig = {
       requiredPermissions: ['finance:voucher:read'],
     },
     {
-      path: '/finance/ledger',
-      element: FinanceLedgerPage,
-      module: 'finance',
-      code: 'finance-ledger',
-      title: '总账管理',
-      template: 'list',
-      group: 'business',
-      requiredPermissions: ['finance:ledger:read'],
-      nav: {
-        label: '总账管理',
-        icon: 'FileSpreadsheet',
-        order: 2,
-        group: 'business',
-      },
-    },
-    {
       path: '/finance/receivable-payable',
       element: FinanceReceivablePayablePage,
       module: 'finance',
@@ -136,45 +152,37 @@ export const financeModuleConfig: RouteModuleConfig = {
       title: '应收应付',
       template: 'list',
       group: 'business',
-      requiredPermissions: ['finance:receivable:read', 'finance:payable:read'],
-      nav: {
-        label: '应收应付',
-        icon: 'TrendingUp',
-        order: 3,
-        group: 'business',
-      },
+      requiredPermissions: ['finance:receivable_payable:read'],
     },
     {
-      path: '/finance/budget',
-      element: FinanceBudgetPage,
+      path: '/finance/receipts',
+      element: FinanceReceiptPage,
       module: 'finance',
-      code: 'finance-budget',
-      title: '预算管理',
+      code: 'finance-receipts',
+      title: '收款管理',
       template: 'list',
-      group: 'process',
-      requiredPermissions: ['finance:budget:read'],
-      nav: {
-        label: '预算管理',
-        icon: 'PieChart',
-        order: 1,
-        group: 'process',
-      },
+      group: 'business',
+      requiredPermissions: ['finance:receipt:read'],
     },
     {
-      path: '/finance/asset',
-      element: FinanceAssetPage,
+      path: '/finance/payments',
+      element: FinancePaymentPage,
       module: 'finance',
-      code: 'finance-asset',
-      title: '资产管理',
+      code: 'finance-payments',
+      title: '付款管理',
       template: 'list',
-      group: 'process',
-      requiredPermissions: ['finance:asset:read'],
-      nav: {
-        label: '资产管理',
-        icon: 'Briefcase',
-        order: 2,
-        group: 'process',
-      },
+      group: 'business',
+      requiredPermissions: ['finance:payment:read'],
+    },
+    {
+      path: '/finance/invoices',
+      element: FinanceInvoicePage,
+      module: 'finance',
+      code: 'finance-invoices',
+      title: '发票管理',
+      template: 'list',
+      group: 'business',
+      requiredPermissions: ['finance:invoice:read'],
     },
     {
       path: '/finance/tax',
@@ -183,14 +191,18 @@ export const financeModuleConfig: RouteModuleConfig = {
       code: 'finance-tax',
       title: '税务管理',
       template: 'list',
-      group: 'process',
+      group: 'business',
       requiredPermissions: ['finance:tax:read'],
-      nav: {
-        label: '税务管理',
-        icon: 'FileCheck',
-        order: 3,
-        group: 'process',
-      },
+    },
+    {
+      path: '/finance/expense',
+      element: FinanceExpensePage,
+      module: 'finance',
+      code: 'finance-expense',
+      title: '费用管理',
+      template: 'list',
+      group: 'business',
+      requiredPermissions: ['finance:expense:read'],
     },
     {
       path: '/finance/cost',
@@ -198,15 +210,69 @@ export const financeModuleConfig: RouteModuleConfig = {
       module: 'finance',
       code: 'finance-cost',
       title: '成本管理',
-      template: 'stats',
-      group: 'process',
+      template: 'list',
+      group: 'business',
       requiredPermissions: ['finance:cost:read'],
-      nav: {
-        label: '成本管理',
-        icon: 'BarChart3',
-        order: 4,
-        group: 'process',
-      },
+    },
+    {
+      path: '/finance/assets',
+      element: FinanceAssetPage,
+      module: 'finance',
+      code: 'finance-assets',
+      title: '资产管理',
+      template: 'list',
+      group: 'business',
+      requiredPermissions: ['finance:asset:read'],
+    },
+    {
+      path: '/finance/budget',
+      element: BudgetManagementPage,
+      module: 'finance',
+      code: 'finance-budget',
+      title: '预算管理',
+      template: 'list',
+      group: 'business',
+      requiredPermissions: ['finance:budget:read'],
+    },
+    {
+      path: '/finance/budget-detail',
+      element: FinanceBudgetDetailPage,
+      module: 'finance',
+      code: 'finance-budget-detail',
+      title: '预算详情',
+      template: 'detail',
+      group: 'business',
+      requiredPermissions: ['finance:budget:read'],
+    },
+    {
+      path: '/finance/opening-balance',
+      element: OpeningBalancePage,
+      module: 'finance',
+      code: 'finance-opening-balance',
+      title: '期初余额',
+      template: 'form',
+      group: 'business',
+      requiredPermissions: ['finance:opening_balance:read'],
+    },
+    {
+      path: '/finance/consolidation',
+      element: ConsolidationScopePage,
+      module: 'finance',
+      code: 'finance-consolidation',
+      title: '合并报表',
+      template: 'list',
+      group: 'analytics',
+      requiredPermissions: ['finance:consolidation:read'],
+    },
+    {
+      path: '/finance/consolidation-reports',
+      element: ConsolidationReportsPage,
+      module: 'finance',
+      code: 'finance-consolidation-reports',
+      title: '合并报表详情',
+      template: 'stats',
+      group: 'analytics',
+      requiredPermissions: ['finance:consolidation:read'],
     },
     {
       path: '/finance/reports',
@@ -217,13 +283,6 @@ export const financeModuleConfig: RouteModuleConfig = {
       template: 'stats',
       group: 'analytics',
       requiredPermissions: ['finance:report:read'],
-      nav: {
-        label: '财务报表',
-        icon: 'FileSpreadsheet',
-        order: 1,
-        group: 'analytics',
-        showInTabs: true,
-      },
     },
   ],
 };

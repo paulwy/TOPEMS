@@ -144,8 +144,8 @@ const WorkStationPage: React.FC = () => {
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; bg: string; color: string }> = {
       active: { label: '运行中', bg: 'success.lighter', color: 'success.dark' },
-      idle: { label: '空闲', bg: 'warning.light', color: '#b45309' },
-      maintenance: { label: '维护中', bg: '#dbeafe', color: 'primary.dark' },
+      idle: { label: '空闲', bg: 'warning.light', color: 'warning.700' },
+      maintenance: { label: '维护中', bg: 'primary.100', color: 'primary.dark' },
       offline: { label: '离线', bg: 'error.lighter', color: 'error.dark' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
@@ -242,7 +242,7 @@ const WorkStationPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -256,7 +256,7 @@ const WorkStationPage: React.FC = () => {
           {stats.total}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -270,7 +270,7 @@ const WorkStationPage: React.FC = () => {
           {stats.active}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -284,7 +284,7 @@ const WorkStationPage: React.FC = () => {
           {stats.idle}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#dbeafe', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'primary.100', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -307,6 +307,10 @@ const WorkStationPage: React.FC = () => {
     <PageContainer
       title='工作站管理'
       subtitle='管理生产工作站,包括工作站名称、编码、位置、容量等'
+      headerProps={{
+        pageIcon: <MapPin style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+      }}
     >
       <ListPageTemplate
         title=''

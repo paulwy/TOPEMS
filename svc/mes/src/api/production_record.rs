@@ -1,20 +1,32 @@
 //! Production Record handlers
 
-use axum::{extract::Path, extract::State, extract::Extension, routing::{delete, get, post, put}, Json, Router};
+use axum::{
+    extract::Extension,
+    extract::Path,
+    extract::State,
+    routing::{delete, get, post, put},
+    Json, Router,
+};
 use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{types::{Uuid, BigDecimal}, PgPool};
+use sqlx::{
+    types::{BigDecimal, Uuid},
+    PgPool,
+};
 use std::str::FromStr;
 use topems_shared::auth::Claims;
 
-use crate::AppState;
 use crate::services::permission::{check_permission, ModulePermission};
+use crate::AppState;
 use topems_shared::response::ApiResponse;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/api/mes/records", get(list_records).post(create_record))
-        .route("/api/mes/records/{id}", get(get_record).put(update_record).delete(delete_record))
+        .route(
+            "/api/mes/records/{id}",
+            get(get_record).put(update_record).delete(delete_record),
+        )
         .route("/api/mes/records/{id}/complete", post(complete_record))
 }
 
@@ -70,7 +82,8 @@ pub struct ListRecordsResponse {
 }
 
 fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
-    dt.map(|d| Utc.from_utc_datetime(&d)).unwrap_or_else(Utc::now)
+    dt.map(|d| Utc.from_utc_datetime(&d))
+        .unwrap_or_else(Utc::now)
 }
 
 fn opt_naive_to_utc(dt: Option<NaiveDateTime>) -> Option<DateTime<Utc>> {
@@ -78,7 +91,8 @@ fn opt_naive_to_utc(dt: Option<NaiveDateTime>) -> Option<DateTime<Utc>> {
 }
 
 fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
-    bd.and_then(|d| d.to_string().parse::<f64>().ok()).unwrap_or(0.0)
+    bd.and_then(|d| d.to_string().parse::<f64>().ok())
+        .unwrap_or(0.0)
 }
 
 fn f64_to_big_decimal(f: Option<f64>) -> Option<BigDecimal> {
@@ -117,30 +131,30 @@ pub async fn list_records(
         }
     };
 
-    let records: Vec<ProductionRecordResponse> = records.into_iter().map(|r| ProductionRecordResponse {
-        id: r.id,
-        order_id: r.order_id,
-        process_id: r.process_id,
-        work_station_id: r.work_station_id,
-        equipment_id: r.equipment_id,
-        operator_id: r.operator_id,
-        start_time: naive_to_utc(Some(r.start_time)),
-        end_time: opt_naive_to_utc(r.end_time),
-        quantity_produced: big_decimal_to_f64(r.quantity_produced),
-        quantity_defective: big_decimal_to_f64(r.quantity_defective),
-        status: r.status.unwrap_or_else(|| "in_progress".to_string()),
-        notes: r.notes,
-        created_at: naive_to_utc(r.created_at),
-        updated_at: naive_to_utc(r.updated_at),
-    }).collect();
+    let records: Vec<ProductionRecordResponse> = records
+        .into_iter()
+        .map(|r| ProductionRecordResponse {
+            id: r.id,
+            order_id: r.order_id,
+            process_id: r.process_id,
+            work_station_id: r.work_station_id,
+            equipment_id: r.equipment_id,
+            operator_id: r.operator_id,
+            start_time: naive_to_utc(Some(r.start_time)),
+            end_time: opt_naive_to_utc(r.end_time),
+            quantity_produced: big_decimal_to_f64(r.quantity_produced),
+            quantity_defective: big_decimal_to_f64(r.quantity_defective),
+            status: r.status.unwrap_or_else(|| "in_progress".to_string()),
+            notes: r.notes,
+            created_at: naive_to_utc(r.created_at),
+            updated_at: naive_to_utc(r.updated_at),
+        })
+        .collect();
 
     let total = records.len() as i64;
 
     Json(ApiResponse::success(
-        ListRecordsResponse {
-            records,
-            total,
-        },
+        ListRecordsResponse { records, total },
         "获取生产记录列表成功",
     ))
 }
@@ -279,7 +293,11 @@ pub async fn update_record(
     }
 
     let now = Utc::now();
-    let status = if req.end_time.is_some() { "completed" } else { "in_progress" };
+    let status = if req.end_time.is_some() {
+        "completed"
+    } else {
+        "in_progress"
+    };
 
     let result = sqlx::query!(
         r#"

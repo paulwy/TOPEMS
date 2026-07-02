@@ -1,24 +1,47 @@
 //! Production Order handlers
 
-use axum::{extract::Path, extract::State, extract::Extension, routing::{delete, get, post, put}, Json, Router};
+use axum::{
+    extract::Extension,
+    extract::Path,
+    extract::State,
+    routing::{delete, get, post, put},
+    Json, Router,
+};
 use chrono::{DateTime, NaiveDate, NaiveDateTime, TimeZone, Utc};
 use serde::{Deserialize, Serialize};
-use sqlx::{types::{BigDecimal, Uuid}, PgPool};
+use sqlx::{
+    types::{BigDecimal, Uuid},
+    PgPool,
+};
 use std::str::FromStr;
 use topems_shared::auth::Claims;
 
-use crate::AppState;
 use crate::services::permission::{check_permission, ModulePermission};
+use crate::AppState;
 use topems_shared::response::ApiResponse;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/mes/orders", get(list_production_orders).post(create_production_order))
+        .route(
+            "/api/mes/orders",
+            get(list_production_orders).post(create_production_order),
+        )
         .route("/api/mes/orders/from-erp", post(create_from_erp))
-        .route("/api/mes/orders/{id}", get(get_production_order).put(update_production_order).delete(delete_production_order))
-        .route("/api/mes/orders/{id}/release", post(release_production_order))
+        .route(
+            "/api/mes/orders/{id}",
+            get(get_production_order)
+                .put(update_production_order)
+                .delete(delete_production_order),
+        )
+        .route(
+            "/api/mes/orders/{id}/release",
+            post(release_production_order),
+        )
         .route("/api/mes/orders/{id}/start", post(start_production_order))
-        .route("/api/mes/orders/{id}/complete", post(complete_production_order))
+        .route(
+            "/api/mes/orders/{id}/complete",
+            post(complete_production_order),
+        )
         .route("/api/mes/orders/{id}/cancel", post(cancel_production_order))
 }
 
@@ -119,7 +142,8 @@ pub struct ListProductionOrdersResponse {
 }
 
 fn naive_to_utc(dt: Option<NaiveDateTime>) -> DateTime<Utc> {
-    dt.map(|d| Utc.from_utc_datetime(&d)).unwrap_or_else(Utc::now)
+    dt.map(|d| Utc.from_utc_datetime(&d))
+        .unwrap_or_else(Utc::now)
 }
 
 fn opt_naive_to_utc(dt: Option<NaiveDateTime>) -> Option<DateTime<Utc>> {
@@ -127,7 +151,8 @@ fn opt_naive_to_utc(dt: Option<NaiveDateTime>) -> Option<DateTime<Utc>> {
 }
 
 fn big_decimal_to_f64(bd: Option<BigDecimal>) -> f64 {
-    bd.and_then(|d| d.to_string().parse::<f64>().ok()).unwrap_or(0.0)
+    bd.and_then(|d| d.to_string().parse::<f64>().ok())
+        .unwrap_or(0.0)
 }
 
 // ==================== State Transition ====================
@@ -167,7 +192,9 @@ pub async fn list_production_orders(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<ListProductionOrdersResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProductionOrderRead).await {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &ModulePermission::ProductionOrderRead).await
+    {
         return e;
     }
 
@@ -195,27 +222,30 @@ pub async fn list_production_orders(
         }
     };
 
-    let orders_list: Vec<ProductionOrderResponse> = orders.into_iter().map(|r| ProductionOrderResponse {
-        id: r.id,
-        order_no: r.order_no,
-        product_id: r.product_id,
-        product_name: r.product_name,
-        product_code: r.product_code,
-        quantity: big_decimal_to_f64(Some(r.quantity)),
-        completed_quantity: big_decimal_to_f64(r.completed_quantity),
-        status: r.status.unwrap_or_else(|| "pending".to_string()),
-        source: r.source.unwrap_or_else(|| "manual".to_string()),
-        source_order_id: r.source_order_id,
-        source_order_number: r.source_order_number,
-        planned_start_date: opt_naive_to_utc(r.planned_start_date),
-        planned_end_date: opt_naive_to_utc(r.planned_end_date),
-        actual_start_date: opt_naive_to_utc(r.actual_start_date),
-        actual_end_date: opt_naive_to_utc(r.actual_end_date),
-        workshop_id: r.workshop_id,
-        notes: r.notes,
-        created_at: naive_to_utc(r.created_at),
-        updated_at: naive_to_utc(r.updated_at),
-    }).collect();
+    let orders_list: Vec<ProductionOrderResponse> = orders
+        .into_iter()
+        .map(|r| ProductionOrderResponse {
+            id: r.id,
+            order_no: r.order_no,
+            product_id: r.product_id,
+            product_name: r.product_name,
+            product_code: r.product_code,
+            quantity: big_decimal_to_f64(Some(r.quantity)),
+            completed_quantity: big_decimal_to_f64(r.completed_quantity),
+            status: r.status.unwrap_or_else(|| "pending".to_string()),
+            source: r.source.unwrap_or_else(|| "manual".to_string()),
+            source_order_id: r.source_order_id,
+            source_order_number: r.source_order_number,
+            planned_start_date: opt_naive_to_utc(r.planned_start_date),
+            planned_end_date: opt_naive_to_utc(r.planned_end_date),
+            actual_start_date: opt_naive_to_utc(r.actual_start_date),
+            actual_end_date: opt_naive_to_utc(r.actual_end_date),
+            workshop_id: r.workshop_id,
+            notes: r.notes,
+            created_at: naive_to_utc(r.created_at),
+            updated_at: naive_to_utc(r.updated_at),
+        })
+        .collect();
 
     let total = orders_list.len() as i64;
 
@@ -233,12 +263,22 @@ pub async fn create_production_order(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateProductionOrderRequest>,
 ) -> Json<ApiResponse<ProductionOrderResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProductionOrderWrite).await {
+    if let Err(e) = check_permission(
+        &state.pool,
+        &claims,
+        &ModulePermission::ProductionOrderWrite,
+    )
+    .await
+    {
         return e;
     }
 
     let now = Utc::now();
-    let order_no = format!("MO{}{:04}", now.format("%Y%m%d"), rand::random::<u16>() % 10000);
+    let order_no = format!(
+        "MO{}{:04}",
+        now.format("%Y%m%d"),
+        rand::random::<u16>() % 10000
+    );
 
     let result = sqlx::query!(
         r#"
@@ -308,15 +348,26 @@ pub async fn create_from_erp(
     Extension(claims): Extension<Claims>,
     Json(req): Json<CreateFromErpRequest>,
 ) -> Json<ApiResponse<ProductionOrderResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProductionOrderWrite).await {
+    if let Err(e) = check_permission(
+        &state.pool,
+        &claims,
+        &ModulePermission::ProductionOrderWrite,
+    )
+    .await
+    {
         return e;
     }
 
     let now = Utc::now();
-    let order_no = format!("MO{}{:04}", now.format("%Y%m%d"), rand::random::<u16>() % 10000);
+    let order_no = format!(
+        "MO{}{:04}",
+        now.format("%Y%m%d"),
+        rand::random::<u16>() % 10000
+    );
 
     let planned_start = req.planned_start_date.unwrap_or(now);
-    let planned_end = req.planned_completion_date
+    let planned_end = req
+        .planned_completion_date
         .or_else(|| req.erp_order.delivery_date)
         .unwrap_or_else(|| now + chrono::Duration::days(7));
 
@@ -368,7 +419,9 @@ pub async fn create_from_erp(
         quantity: big_decimal_to_f64(Some(result.quantity)),
         completed_quantity: big_decimal_to_f64(result.completed_quantity),
         status: result.status.unwrap_or_else(|| "pending".to_string()),
-        source: result.source.unwrap_or_else(|| "erp_sales_order".to_string()),
+        source: result
+            .source
+            .unwrap_or_else(|| "erp_sales_order".to_string()),
         source_order_id: result.source_order_id,
         source_order_number: result.source_order_number,
         planned_start_date: opt_naive_to_utc(result.planned_start_date),
@@ -395,7 +448,9 @@ pub async fn get_production_order(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProductionOrderResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProductionOrderRead).await {
+    if let Err(e) =
+        check_permission(&state.pool, &claims, &ModulePermission::ProductionOrderRead).await
+    {
         return e;
     }
 
@@ -459,7 +514,13 @@ pub async fn update_production_order(
     Path(id): Path<Uuid>,
     Json(req): Json<UpdateProductionOrderRequest>,
 ) -> Json<ApiResponse<ProductionOrderResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProductionOrderWrite).await {
+    if let Err(e) = check_permission(
+        &state.pool,
+        &claims,
+        &ModulePermission::ProductionOrderWrite,
+    )
+    .await
+    {
         return e;
     }
 
@@ -486,7 +547,8 @@ pub async fn update_production_order(
         id,
         req.product_name,
         req.product_code,
-        req.quantity.and_then(|v| BigDecimal::from_str(&v.to_string()).ok()),
+        req.quantity
+            .and_then(|v| BigDecimal::from_str(&v.to_string()).ok()),
         req.planned_start_date.map(|d| d.naive_utc()),
         req.planned_end_date.map(|d| d.naive_utc()),
         req.workshop_id,
@@ -538,7 +600,13 @@ pub async fn delete_production_order(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<String>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProductionOrderWrite).await {
+    if let Err(e) = check_permission(
+        &state.pool,
+        &claims,
+        &ModulePermission::ProductionOrderWrite,
+    )
+    .await
+    {
         return e;
     }
 
@@ -572,7 +640,13 @@ pub async fn start_production_order(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProductionOrderResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProductionOrderStart).await {
+    if let Err(e) = check_permission(
+        &state.pool,
+        &claims,
+        &ModulePermission::ProductionOrderStart,
+    )
+    .await
+    {
         return e;
     }
 
@@ -641,7 +715,13 @@ pub async fn complete_production_order(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProductionOrderResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProductionOrderComplete).await {
+    if let Err(e) = check_permission(
+        &state.pool,
+        &claims,
+        &ModulePermission::ProductionOrderComplete,
+    )
+    .await
+    {
         return e;
     }
 
@@ -711,7 +791,13 @@ pub async fn cancel_production_order(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProductionOrderResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProductionOrderCancel).await {
+    if let Err(e) = check_permission(
+        &state.pool,
+        &claims,
+        &ModulePermission::ProductionOrderCancel,
+    )
+    .await
+    {
         return e;
     }
 
@@ -779,7 +865,13 @@ pub async fn release_production_order(
     Extension(claims): Extension<Claims>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<ProductionOrderResponse>> {
-    if let Err(e) = check_permission(&state.pool, &claims, &ModulePermission::ProductionOrderWrite).await {
+    if let Err(e) = check_permission(
+        &state.pool,
+        &claims,
+        &ModulePermission::ProductionOrderWrite,
+    )
+    .await
+    {
         return e;
     }
 

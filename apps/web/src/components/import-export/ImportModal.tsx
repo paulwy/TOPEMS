@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useTheme } from '@mui/material';
 import { X, Upload, FileSpreadsheet, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 
 export interface ImportModalProps {
@@ -31,6 +32,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [entityType, setEntityType] = useState<string>('');
   const [importMode, setImportMode] = useState<string>('create');
+  const theme = useTheme();
   const [isImporting, setIsImporting] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [error, setError] = useState<string>('');
@@ -126,7 +128,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
             style={{
               fontSize: 18,
               fontWeight: 600,
-              color: 'grey.900',
+              color: theme.palette.grey[900],
               margin: 0,
             }}
           >
@@ -158,7 +160,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                     display: 'block',
                     fontSize: 14,
                     fontWeight: 500,
-                    color: '#334155',
+                    color: 'grey.700',
                     marginBottom: 8,
                   }}
                 >
@@ -193,7 +195,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                     display: 'block',
                     fontSize: 14,
                     fontWeight: 500,
-                    color: '#334155',
+                    color: 'grey.700',
                     marginBottom: 8,
                   }}
                 >
@@ -222,7 +224,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                     display: 'block',
                     fontSize: 14,
                     fontWeight: 500,
-                    color: '#334155',
+                    color: 'grey.700',
                     marginBottom: 8,
                   }}
                 >
@@ -257,7 +259,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                         style={{
                           width: 32,
                           height: 32,
-                          color: 'success.dark',
+                          color: theme.palette.success.dark,
                           marginRight: 8,
                         }}
                       />
@@ -269,7 +271,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                         style={{
                           width: 48,
                           height: 48,
-                          color: '#94a3b8',
+                          color: 'grey.400',
                           margin: '0 auto 8px',
                         }}
                       />
@@ -289,7 +291,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    color: 'error.dark',
+                    color: theme.palette.error.dark,
                     fontSize: 14,
                   }}
                 >
@@ -302,7 +304,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
               <div
                 style={{
-                  backgroundColor: 'success.light',
+                  backgroundColor: theme.palette.success.light,
                   border: '1px solid #bbf7d0',
                   borderRadius: 8,
                   padding: 16,
@@ -319,7 +321,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                     style={{
                       width: 20,
                       height: 20,
-                      color: 'success.dark',
+                      color: theme.palette.success.dark,
                       marginRight: 8,
                     }}
                   />
@@ -328,7 +330,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                 <div
                   style={{
                     fontSize: 14,
-                    color: '#15803d',
+                    color: 'success.700',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: 4,
@@ -345,7 +347,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                   <h4
                     style={{
                       fontWeight: 500,
-                      color: '#334155',
+                      color: 'grey.700',
                       marginBottom: 8,
                     }}
                   >
@@ -353,7 +355,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                   </h4>
                   <div
                     style={{
-                      backgroundColor: 'error.light',
+                      backgroundColor: theme.palette.error.light,
                       border: '1px solid #fecaca',
                       borderRadius: 8,
                       padding: 16,
@@ -375,7 +377,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
                       </div>
                     ))}
                     {importResult.failed_rows.length > 10 && (
-                      <p style={{ fontSize: 14, color: 'error.dark', marginTop: 8 }}>
+                      <p style={{ fontSize: 14, color: theme.palette.error.dark, marginTop: 8 }}>
                         ... 还有 {importResult.failed_rows.length - 10} 个错误
                       </p>
                     )}
@@ -399,8 +401,8 @@ export const ImportModal: React.FC<ImportModalProps> = ({
             onClick={handleClose}
             style={{
               padding: '8px 16px',
-              color: '#334155',
-              backgroundColor: 'grey.100',
+              color: 'grey.700',
+              backgroundColor: theme.palette.grey[100],
               borderRadius: 8,
             }}
           >
@@ -412,7 +414,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
               disabled={!selectedFile || !entityType || isImporting}
               style={{
                 padding: '8px 16px',
-                backgroundColor: 'primary.dark',
+                backgroundColor: theme.palette.primary.dark,
                 color: 'white',
                 borderRadius: 8,
               }}

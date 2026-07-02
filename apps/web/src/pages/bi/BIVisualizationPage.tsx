@@ -398,7 +398,7 @@ const BIVisualizationPage = () => {
                     startAdornment: (
                       <Search
                         size={16}
-                        color='#94a3b8'
+                        color='grey.400'
                         sx={{ mr: 1 }}
                       />
                     ),

@@ -80,7 +80,7 @@ export const StatsChart: React.FC<StatsChartProps> = ({
             alignItems: 'center',
             justifyContent: 'center',
             height: '160px',
-            color: '#94a3b8',
+            color: 'grey.400',
           }}
         >
           <p>暂无数据</p>
@@ -101,8 +101,12 @@ export const StatsChart: React.FC<StatsChartProps> = ({
             border: '1px solid border.default',
           }}
         >
-          <p style={{ fontWeight: 500, color: 'var(--mui-palette-text-primary)' }}>{payload[0].name}</p>
-          <p style={{ fontSize: '14px', color: 'var(--mui-palette-text-secondary)' }}>{payload[0].value}</p>
+          <p style={{ fontWeight: 500, color: 'var(--mui-palette-text-primary)' }}>
+            {payload[0].name}
+          </p>
+          <p style={{ fontSize: '14px', color: 'var(--mui-palette-text-secondary)' }}>
+            {payload[0].value}
+          </p>
         </div>
       );
     }

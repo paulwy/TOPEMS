@@ -14,17 +14,7 @@ import {
   Breadcrumbs,
   Link,
 } from '@mui/material';
-import {
-  Save,
-  Play,
-  Send,
-  Trash2,
-  Copy,
-  ArrowLeft,
-  Settings,
-  Undo,
-  Redo,
-} from 'lucide-react';
+import { Save, Play, Send, Trash2, Copy, ArrowLeft, Settings, Undo, Redo } from 'lucide-react';
 import ComponentPalette from './ComponentPalette';
 import PropertyPanel from './PropertyPanel';
 import DesignCanvas from './DesignCanvas';
@@ -230,7 +220,10 @@ const PageDesigner: React.FC<PageDesignerProps> = ({
       default:
         return (
           <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 1 }}>
-            <Typography variant="body2" color="text.secondary">
+            <Typography
+              variant='body2'
+              color='text.secondary'
+            >
               {component.label || component.type}
             </Typography>
           </Box>
@@ -248,47 +241,68 @@ const PageDesigner: React.FC<PageDesignerProps> = ({
 
   return (
     <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-      <AppBar position="static" color="default" elevation={1}>
-        <Toolbar variant="dense">
+      <AppBar
+        position='static'
+        color='default'
+        elevation={1}
+      >
+        <Toolbar variant='dense'>
           {onBack && (
-            <IconButton edge="start" onClick={onBack} sx={{ mr: 1 }}>
+            <IconButton
+              edge='start'
+              onClick={onBack}
+              sx={{ mr: 1 }}
+            >
               <ArrowLeft size={20} />
             </IconButton>
           )}
-          <Breadcrumbs separator=">">
-            <Link color="inherit" underline="hover" href="#">
+          <Breadcrumbs separator='>'>
+            <Link
+              color='inherit'
+              underline='hover'
+              href='#'
+            >
               低代码平台
             </Link>
-            <Typography color="text.primary">页面设计器</Typography>
+            <Typography color='text.primary'>页面设计器</Typography>
           </Breadcrumbs>
           <Box sx={{ flex: 1 }} />
-          <Tooltip title="撤销">
+          <Tooltip title='撤销'>
             <span>
-              <IconButton onClick={handleUndo} disabled={historyIndex <= 0}>
+              <IconButton
+                onClick={handleUndo}
+                disabled={historyIndex <= 0}
+              >
                 <Undo size={20} />
               </IconButton>
             </span>
           </Tooltip>
-          <Tooltip title="重做">
+          <Tooltip title='重做'>
             <span>
-              <IconButton onClick={handleRedo} disabled={historyIndex >= history.length - 1}>
+              <IconButton
+                onClick={handleRedo}
+                disabled={historyIndex >= history.length - 1}
+              >
                 <Redo size={20} />
               </IconButton>
             </span>
           </Tooltip>
-          <Tooltip title="预览">
+          <Tooltip title='预览'>
             <IconButton onClick={() => setShowPreview(true)}>
               <Play size={20} />
             </IconButton>
           </Tooltip>
-          <Tooltip title="保存">
-            <IconButton onClick={handleSave} color="primary">
+          <Tooltip title='保存'>
+            <IconButton
+              onClick={handleSave}
+              color='primary'
+            >
               <Save size={20} />
             </IconButton>
           </Tooltip>
           <Button
-            variant="contained"
-            size="small"
+            variant='contained'
+            size='small'
             startIcon={<Send size={16} />}
             onClick={handlePublish}
             sx={{ ml: 1 }}
@@ -309,7 +323,7 @@ const PageDesigner: React.FC<PageDesignerProps> = ({
           onMove={handleMove}
           onDelete={handleDelete}
           renderComponent={renderDesignComponent}
-          emptyText="拖拽页面组件到此处开始设计"
+          emptyText='拖拽页面组件到此处开始设计'
         />
 
         <PropertyPanel
@@ -322,11 +336,14 @@ const PageDesigner: React.FC<PageDesignerProps> = ({
       <Dialog
         open={showPreview}
         onClose={() => setShowPreview(false)}
-        maxWidth="lg"
+        maxWidth='lg'
         fullWidth
       >
         <DialogTitle>页面预览</DialogTitle>
-        <DialogContent dividers sx={{ p: 3 }}>
+        <DialogContent
+          dividers
+          sx={{ p: 3 }}
+        >
           <PageRenderer schema={schema} />
         </DialogContent>
         <DialogActions>

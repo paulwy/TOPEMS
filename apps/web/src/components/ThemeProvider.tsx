@@ -30,7 +30,11 @@ function ThemeSync({ children }: ThemeProviderProps) {
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
   return (
-    <MuiThemeProvider theme={theme} defaultMode="system" disableTransitionOnChange>
+    <MuiThemeProvider
+      theme={theme}
+      defaultMode='system'
+      disableTransitionOnChange
+    >
       <CssBaseline />
       <ThemeSync>{children}</ThemeSync>
     </MuiThemeProvider>

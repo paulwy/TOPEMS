@@ -1,20 +1,25 @@
 //! Mail submodule - Email handlers with database support and real mail sending
 
-use axum::{extract::{Path, State}, Json};
-use serde::{Deserialize, Serialize};
-use sqlx::Row;
-use uuid::Uuid;
 use crate::AppState;
-use topems_shared::auth::Claims;
 use axum::Extension;
+use axum::{
+    extract::{Path, State},
+    Json,
+};
+use dashmap::DashMap;
+use handlebars::Handlebars;
 use lettre::{
     message::{Mailbox, Message},
-    transport::smtp::{authentication::Credentials, client::Tls, client::TlsParameters, SmtpTransport},
+    transport::smtp::{
+        authentication::Credentials, client::Tls, client::TlsParameters, SmtpTransport,
+    },
     Transport,
 };
-use handlebars::Handlebars;
-use dashmap::DashMap;
+use serde::{Deserialize, Serialize};
+use sqlx::Row;
 use std::sync::Arc;
+use topems_shared::auth::Claims;
+use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub struct QueuedEmail {
@@ -104,7 +109,10 @@ pub async fn list_emails(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Communication mail list_emails called for user: {}", claims.username);
+    tracing::info!(
+        "Communication mail list_emails called for user: {}",
+        claims.username
+    );
 
     let user_id = match Uuid::parse_str(&claims.sub) {
         Ok(id) => id,
@@ -137,14 +145,16 @@ pub async fn list_emails(
         Ok(rows) => {
             let emails: Vec<serde_json::Value> = rows
                 .into_iter()
-                .map(|row| serde_json::json!({
-                    "id": row.get::<Uuid, _>("id").to_string(),
-                    "from_email": row.get::<String, _>("from_email"),
-                    "to_email": row.get::<String, _>("to_email"),
-                    "subject": row.get::<String, _>("subject"),
-                    "sent_at": row.get::<chrono::DateTime<chrono::Utc>, _>("sent_at"),
-                    "is_read": row.get::<bool, _>("is_read"),
-                }))
+                .map(|row| {
+                    serde_json::json!({
+                        "id": row.get::<Uuid, _>("id").to_string(),
+                        "from_email": row.get::<String, _>("from_email"),
+                        "to_email": row.get::<String, _>("to_email"),
+                        "subject": row.get::<String, _>("subject"),
+                        "sent_at": row.get::<chrono::DateTime<chrono::Utc>, _>("sent_at"),
+                        "is_read": row.get::<bool, _>("is_read"),
+                    })
+                })
                 .collect();
 
             Json(serde_json::json!({
@@ -169,7 +179,11 @@ pub async fn send_email(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<SendEmailRequest>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Communication mail send_email called with: {:?} by user: {}", payload, claims.username);
+    tracing::info!(
+        "Communication mail send_email called with: {:?} by user: {}",
+        payload,
+        claims.username
+    );
 
     if payload.to.is_empty() || payload.subject.is_empty() || payload.body.is_empty() {
         return Json(serde_json::json!({
@@ -189,12 +203,10 @@ pub async fn send_email(
         }));
     }
 
-    let sender_email = match sqlx::query_scalar(
-        "SELECT email FROM core_users WHERE id = $1",
-    )
-    .bind(Uuid::parse_str(&claims.sub).unwrap())
-    .fetch_optional(&state.pool)
-    .await
+    let sender_email = match sqlx::query_scalar("SELECT email FROM core_users WHERE id = $1")
+        .bind(Uuid::parse_str(&claims.sub).unwrap())
+        .fetch_optional(&state.pool)
+        .await
     {
         Ok(Some(email)) => email,
         Ok(None) => "system@topems.io".to_string(),
@@ -260,7 +272,11 @@ pub async fn get_email(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Communication mail get_email called with id: {} for user: {}", id, claims.username);
+    tracing::info!(
+        "Communication mail get_email called with id: {} for user: {}",
+        id,
+        claims.username
+    );
 
     let email_id = match Uuid::parse_str(&id) {
         Ok(id) => id,
@@ -342,7 +358,11 @@ pub async fn delete_email(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Communication mail delete_email called with id: {} for user: {}", id, claims.username);
+    tracing::info!(
+        "Communication mail delete_email called with id: {} for user: {}",
+        id,
+        claims.username
+    );
 
     let email_id = match Uuid::parse_str(&id) {
         Ok(id) => id,
@@ -397,12 +417,10 @@ pub async fn delete_email(
         }
     }
 
-    match sqlx::query(
-        "UPDATE core_emails SET is_deleted = TRUE, deleted_at = NOW() WHERE id = $1",
-    )
-    .bind(email_id)
-    .execute(&state.pool)
-    .await
+    match sqlx::query("UPDATE core_emails SET is_deleted = TRUE, deleted_at = NOW() WHERE id = $1")
+        .bind(email_id)
+        .execute(&state.pool)
+        .await
     {
         Ok(r) if r.rows_affected() > 0 => Json(serde_json::json!({
             "success": true,
@@ -433,7 +451,11 @@ pub async fn mark_as_read(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Communication mail mark_as_read called with id: {} for user: {}", id, claims.username);
+    tracing::info!(
+        "Communication mail mark_as_read called with id: {} for user: {}",
+        id,
+        claims.username
+    );
 
     let email_id = match Uuid::parse_str(&id) {
         Ok(id) => id,
@@ -485,12 +507,10 @@ pub async fn mark_as_read(
         }));
     }
 
-    match sqlx::query(
-        "UPDATE core_emails SET is_read = TRUE, read_at = NOW() WHERE id = $1",
-    )
-    .bind(email_id)
-    .execute(&state.pool)
-    .await
+    match sqlx::query("UPDATE core_emails SET is_read = TRUE, read_at = NOW() WHERE id = $1")
+        .bind(email_id)
+        .execute(&state.pool)
+        .await
     {
         Ok(r) if r.rows_affected() > 0 => Json(serde_json::json!({
             "success": true,
@@ -520,7 +540,10 @@ pub async fn list_templates(
     State(state): State<AppState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Communication mail list_templates called for user: {}", claims.username);
+    tracing::info!(
+        "Communication mail list_templates called for user: {}",
+        claims.username
+    );
 
     if !claims.is_superuser && !claims.has_permission("notification:read") {
         return Json(serde_json::json!({
@@ -552,8 +575,12 @@ pub async fn list_templates(
                     subject_template: row.get::<String, _>("subject_template"),
                     body_template: row.get::<String, _>("body_template"),
                     description: row.get::<Option<String>, _>("description"),
-                    created_at: row.get::<chrono::DateTime<chrono::Utc>, _>("created_at").to_rfc3339(),
-                    updated_at: row.get::<chrono::DateTime<chrono::Utc>, _>("updated_at").to_rfc3339(),
+                    created_at: row
+                        .get::<chrono::DateTime<chrono::Utc>, _>("created_at")
+                        .to_rfc3339(),
+                    updated_at: row
+                        .get::<chrono::DateTime<chrono::Utc>, _>("updated_at")
+                        .to_rfc3339(),
                 })
                 .collect();
 
@@ -579,7 +606,11 @@ pub async fn create_template(
     Extension(claims): Extension<Claims>,
     Json(payload): Json<CreateTemplateRequest>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Communication mail create_template called with: {:?} by user: {}", payload, claims.username);
+    tracing::info!(
+        "Communication mail create_template called with: {:?} by user: {}",
+        payload,
+        claims.username
+    );
 
     if !claims.is_superuser && !claims.has_permission("notification:write") {
         return Json(serde_json::json!({
@@ -590,7 +621,10 @@ pub async fn create_template(
         }));
     }
 
-    if payload.name.is_empty() || payload.subject_template.is_empty() || payload.body_template.is_empty() {
+    if payload.name.is_empty()
+        || payload.subject_template.is_empty()
+        || payload.body_template.is_empty()
+    {
         return Json(serde_json::json!({
             "success": false,
             "message": "模板名称、主题模板和正文模板不能为空",
@@ -647,7 +681,11 @@ pub async fn get_template(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Communication mail get_template called with id: {} for user: {}", id, claims.username);
+    tracing::info!(
+        "Communication mail get_template called with id: {} for user: {}",
+        id,
+        claims.username
+    );
 
     if !claims.is_superuser && !claims.has_permission("notification:read") {
         return Json(serde_json::json!({
@@ -720,7 +758,12 @@ pub async fn update_template(
     Path(id): Path<String>,
     Json(payload): Json<UpdateTemplateRequest>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Communication mail update_template called with id: {} and payload: {:?} by user: {}", id, payload, claims.username);
+    tracing::info!(
+        "Communication mail update_template called with id: {} and payload: {:?} by user: {}",
+        id,
+        payload,
+        claims.username
+    );
 
     if !claims.is_superuser && !claims.has_permission("notification:write") {
         return Json(serde_json::json!({
@@ -802,7 +845,11 @@ pub async fn delete_template(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Communication mail delete_template called with id: {} for user: {}", id, claims.username);
+    tracing::info!(
+        "Communication mail delete_template called with id: {} for user: {}",
+        id,
+        claims.username
+    );
 
     if !claims.is_superuser && !claims.has_permission("notification:admin") {
         return Json(serde_json::json!({
@@ -863,7 +910,12 @@ pub async fn send_with_template(
     Path(id): Path<String>,
     Json(payload): Json<SendWithTemplateRequest>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("Communication mail send_with_template called with id: {} and payload: {:?} by user: {}", id, payload, claims.username);
+    tracing::info!(
+        "Communication mail send_with_template called with id: {} and payload: {:?} by user: {}",
+        id,
+        payload,
+        claims.username
+    );
 
     if !claims.is_superuser && !claims.has_permission("notification:write") {
         return Json(serde_json::json!({
@@ -923,9 +975,11 @@ pub async fn send_with_template(
     };
 
     let mut handlebars = Handlebars::new();
-    let subject = handlebars.render_template(&subject_template, &payload.variables)
+    let subject = handlebars
+        .render_template(&subject_template, &payload.variables)
         .unwrap_or_else(|_| subject_template.clone());
-    let body = handlebars.render_template(&body_template, &payload.variables)
+    let body = handlebars
+        .render_template(&body_template, &payload.variables)
         .unwrap_or_else(|_| body_template);
 
     let result = send_email_with_lettre(
@@ -965,15 +1019,7 @@ pub async fn send_notification_email(
 ) -> Result<(), String> {
     tracing::info!("Sending notification email to: {}", to);
 
-    send_email_with_lettre(
-        "system@topems.io",
-        to,
-        subject,
-        body,
-        None,
-        None,
-        None,
-    )
+    send_email_with_lettre("system@topems.io", to, subject, body, None, None, None)
 }
 
 fn build_message(
@@ -985,8 +1031,15 @@ fn build_message(
     cc: Option<&Vec<String>>,
     bcc: Option<&Vec<String>>,
 ) -> Result<Message, String> {
-    let from_addr = Mailbox::new(Some(from.to_string()), from.parse().map_err(|e| format!("Invalid from email: {}", e))?);
-    let to_addr = Mailbox::new(Some(to.to_string()), to.parse().map_err(|e| format!("Invalid to email: {}", e))?);
+    let from_addr = Mailbox::new(
+        Some(from.to_string()),
+        from.parse()
+            .map_err(|e| format!("Invalid from email: {}", e))?,
+    );
+    let to_addr = Mailbox::new(
+        Some(to.to_string()),
+        to.parse().map_err(|e| format!("Invalid to email: {}", e))?,
+    );
 
     let mut message_builder = Message::builder()
         .from(from_addr)
@@ -995,22 +1048,36 @@ fn build_message(
 
     if let Some(cc_list) = cc {
         for cc_email in cc_list {
-            let cc_addr = Mailbox::new(Some(cc_email.to_string()), cc_email.parse().map_err(|e| format!("Invalid CC email: {}", e))?);
+            let cc_addr = Mailbox::new(
+                Some(cc_email.to_string()),
+                cc_email
+                    .parse()
+                    .map_err(|e| format!("Invalid CC email: {}", e))?,
+            );
             message_builder = message_builder.cc(cc_addr);
         }
     }
 
     if let Some(bcc_list) = bcc {
         for bcc_email in bcc_list {
-            let bcc_addr = Mailbox::new(Some(bcc_email.to_string()), bcc_email.parse().map_err(|e| format!("Invalid BCC email: {}", e))?);
+            let bcc_addr = Mailbox::new(
+                Some(bcc_email.to_string()),
+                bcc_email
+                    .parse()
+                    .map_err(|e| format!("Invalid BCC email: {}", e))?,
+            );
             message_builder = message_builder.bcc(bcc_addr);
         }
     }
 
     if let Some(html) = html_body {
-        message_builder.body(format!("{}\n\n{}", body, html)).map_err(|e| format!("Failed to build message: {}", e))
+        message_builder
+            .body(format!("{}\n\n{}", body, html))
+            .map_err(|e| format!("Failed to build message: {}", e))
     } else {
-        message_builder.body(body.to_string()).map_err(|e| format!("Failed to build message: {}", e))
+        message_builder
+            .body(body.to_string())
+            .map_err(|e| format!("Failed to build message: {}", e))
     }
 }
 
@@ -1101,16 +1168,32 @@ fn send_email_with_lettre(
         let mailer = create_mailer()?;
         match mailer.send(&message) {
             Ok(_) => {
-                tracing::info!("Email sent successfully to: {} (attempt {}/{})", to, attempt, max_retries);
+                tracing::info!(
+                    "Email sent successfully to: {} (attempt {}/{})",
+                    to,
+                    attempt,
+                    max_retries
+                );
                 return Ok(());
             }
             Err(e) => {
-                tracing::warn!("Failed to send email to {} (attempt {}/{}): {}", to, attempt, max_retries, e);
+                tracing::warn!(
+                    "Failed to send email to {} (attempt {}/{}): {}",
+                    to,
+                    attempt,
+                    max_retries,
+                    e
+                );
                 if attempt < max_retries {
-                    std::thread::sleep(std::time::Duration::from_millis(retry_delay_ms * attempt as u64));
+                    std::thread::sleep(std::time::Duration::from_millis(
+                        retry_delay_ms * attempt as u64,
+                    ));
                 } else {
                     tracing::error!("Failed to send email after {} attempts: {}", max_retries, e);
-                    return Err(format!("Failed to send email after {} attempts: {}", max_retries, e));
+                    return Err(format!(
+                        "Failed to send email after {} attempts: {}",
+                        max_retries, e
+                    ));
                 }
             }
         }
@@ -1168,12 +1251,12 @@ pub fn queue_email(
         created_at: chrono::Utc::now(),
         status: EmailQueueStatus::Pending,
     };
-    
+
     EMAIL_QUEUE.insert(id.clone(), queued_email);
     tracing::info!("Email queued: {}", id);
-    
+
     process_queue();
-    
+
     id
 }
 
@@ -1184,16 +1267,16 @@ pub fn process_queue() {
             .filter(|entry| entry.status == EmailQueueStatus::Pending)
             .map(|entry| (entry.id.clone(), entry.clone()))
             .collect();
-        
+
         for (id, mut email) in pending_emails {
             if let Some(mut entry) = EMAIL_QUEUE.get_mut(&id) {
                 entry.status = EmailQueueStatus::Sending;
                 entry.attempts += 1;
             }
-            
+
             email.attempts += 1;
             email.status = EmailQueueStatus::Sending;
-            
+
             match send_email_with_lettre(
                 &email.from,
                 &email.to,
@@ -1213,10 +1296,21 @@ pub fn process_queue() {
                     if let Some(mut entry) = EMAIL_QUEUE.get_mut(&id) {
                         if entry.attempts >= entry.max_attempts {
                             entry.status = EmailQueueStatus::Failed;
-                            tracing::error!("Email queued {} failed after {} attempts: {}", id, entry.attempts, e);
+                            tracing::error!(
+                                "Email queued {} failed after {} attempts: {}",
+                                id,
+                                entry.attempts,
+                                e
+                            );
                         } else {
                             entry.status = EmailQueueStatus::Pending;
-                            tracing::warn!("Email queued {} failed attempt {}/{}: {}", id, entry.attempts, entry.max_attempts, e);
+                            tracing::warn!(
+                                "Email queued {} failed attempt {}/{}: {}",
+                                id,
+                                entry.attempts,
+                                entry.max_attempts,
+                                e
+                            );
                         }
                     }
                 }
@@ -1230,11 +1324,23 @@ pub fn get_queue_status(id: &str) -> Option<EmailQueueStatus> {
 }
 
 pub fn get_queue_stats() -> serde_json::Value {
-    let pending = EMAIL_QUEUE.iter().filter(|e| e.status == EmailQueueStatus::Pending).count();
-    let sending = EMAIL_QUEUE.iter().filter(|e| e.status == EmailQueueStatus::Sending).count();
-    let sent = EMAIL_QUEUE.iter().filter(|e| e.status == EmailQueueStatus::Sent).count();
-    let failed = EMAIL_QUEUE.iter().filter(|e| e.status == EmailQueueStatus::Failed).count();
-    
+    let pending = EMAIL_QUEUE
+        .iter()
+        .filter(|e| e.status == EmailQueueStatus::Pending)
+        .count();
+    let sending = EMAIL_QUEUE
+        .iter()
+        .filter(|e| e.status == EmailQueueStatus::Sending)
+        .count();
+    let sent = EMAIL_QUEUE
+        .iter()
+        .filter(|e| e.status == EmailQueueStatus::Sent)
+        .count();
+    let failed = EMAIL_QUEUE
+        .iter()
+        .filter(|e| e.status == EmailQueueStatus::Failed)
+        .count();
+
     serde_json::json!({
         "pending": pending,
         "sending": sending,

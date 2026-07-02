@@ -18,11 +18,7 @@ import {
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import type {
-  WorkOrder,
-  CreateWorkOrderRequest,
-  UpdateWorkOrderRequest,
-} from '@/api/mes';
+import type { WorkOrder, CreateWorkOrderRequest, UpdateWorkOrderRequest } from '@/api/mes';
 import { mesApi } from '@/api/mes';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -42,6 +38,7 @@ import {
   CheckCircle,
   XCircle,
   Clock,
+  FileText,
 } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 
@@ -209,10 +206,7 @@ const WorkOrderPage: React.FC = () => {
     e.preventDefault();
     try {
       if (selectedWorkOrder) {
-        await mesApi.workOrders.update(
-          selectedWorkOrder.id,
-          formData as UpdateWorkOrderRequest
-        );
+        await mesApi.workOrders.update(selectedWorkOrder.id, formData as UpdateWorkOrderRequest);
         addNotification({
           type: 'success',
           title: '更新成功',
@@ -302,10 +296,10 @@ const WorkOrderPage: React.FC = () => {
         color: string;
       }
     > = {
-      pending: { label: '待开工', bg: 'warning.light', color: '#b45309' },
-      in_progress: { label: '进行中', bg: '#dbeafe', color: 'primary.dark' },
+      pending: { label: '待开工', bg: 'warning.light', color: 'warning.700' },
+      in_progress: { label: '进行中', bg: 'primary.100', color: 'primary.dark' },
       paused: { label: '已暂停', bg: 'grey.100', color: 'text.secondary' },
-      completed: { label: '已完成', bg: 'success.lighter', color: '#15803d' },
+      completed: { label: '已完成', bg: 'success.lighter', color: 'success.700' },
       cancelled: { label: '已取消', bg: 'error.lighter', color: 'error.dark' },
       closed: { label: '已结案', bg: 'grey.200', color: 'text.primary' },
     };
@@ -329,8 +323,8 @@ const WorkOrderPage: React.FC = () => {
       }
     > = {
       urgent: { label: '紧急', bg: 'error.lighter', color: 'error.dark' },
-      high: { label: '高', bg: 'warning.light', color: '#b45309' },
-      normal: { label: '普通', bg: '#dbeafe', color: 'primary.dark' },
+      high: { label: '高', bg: 'warning.light', color: 'warning.700' },
+      normal: { label: '普通', bg: 'primary.100', color: 'primary.dark' },
       low: { label: '低', bg: 'grey.100', color: 'text.secondary' },
     };
     const p = priorityMap[priority || 'normal'] || priorityMap.normal;
@@ -369,9 +363,7 @@ const WorkOrderPage: React.FC = () => {
         id: 'planned_end_time',
         label: '计划结束',
         render: (row) =>
-          row.planned_end_time
-            ? new Date(row.planned_end_time).toLocaleDateString('zh-CN')
-            : '-',
+          row.planned_end_time ? new Date(row.planned_end_time).toLocaleDateString('zh-CN') : '-',
       },
       {
         id: 'status',
@@ -493,7 +485,7 @@ const WorkOrderPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -507,7 +499,7 @@ const WorkOrderPage: React.FC = () => {
           {stats.total}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -521,7 +513,7 @@ const WorkOrderPage: React.FC = () => {
           {stats.pending}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#dbeafe', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'primary.100', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -535,7 +527,7 @@ const WorkOrderPage: React.FC = () => {
           {stats.in_progress}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -549,7 +541,7 @@ const WorkOrderPage: React.FC = () => {
           {stats.completed}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -558,7 +550,7 @@ const WorkOrderPage: React.FC = () => {
         </Typography>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#4338ca' }}
+          sx={{ fontWeight: 700, color: 'secondary.700' }}
         >
           {stats.total_quantity}
         </Typography>
@@ -570,6 +562,10 @@ const WorkOrderPage: React.FC = () => {
     <PageContainer
       title='工单管理'
       subtitle='管理生产工单信息,包括工单号、工序、工作站、班组、数量等'
+      headerProps={{
+        pageIcon: <FileText style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+      }}
     >
       <ListPageTemplate
         title=''
@@ -602,6 +598,15 @@ const WorkOrderPage: React.FC = () => {
         headerContent={statsContent}
         emptyMessage='暂无工单数据'
         getRowId={(row) => row.id}
+        mobileCardTitleKey='product_name'
+        mobileCardSubtitleKey='work_order_number'
+        mobileCardDisplayFields={['status', 'quantity', 'completed_quantity', 'work_center']}
+        mobileCardFieldLabels={{
+          status: '状态',
+          quantity: '计划数量',
+          completed_quantity: '完成数量',
+          work_center: '工作中心',
+        }}
       />
 
       <Dialog
@@ -659,7 +664,10 @@ const WorkOrderPage: React.FC = () => {
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <InputLabel htmlFor='priority'>优先级</InputLabel>
-                <FormControl fullWidth size='small'>
+                <FormControl
+                  fullWidth
+                  size='small'
+                >
                   <Select
                     id='priority'
                     value={formData.priority || 'normal'}
@@ -678,9 +686,7 @@ const WorkOrderPage: React.FC = () => {
                   id='work_station_id'
                   size='small'
                   value={formData.work_station_id || ''}
-                  onChange={(e) =>
-                    setFormData({ ...formData, work_station_id: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, work_station_id: e.target.value })}
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>

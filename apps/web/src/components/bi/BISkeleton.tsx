@@ -5,7 +5,7 @@ export const MetricCardSkeleton: React.FC<{ className?: string }> = ({ className
   <Box
     sx={{
       backgroundColor: 'white',
-      borderRadius: 2,
+      borderRadius: 3,
       boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
       p: 3,
       border: '1px solid rgba(0,0,0,0.06)',
@@ -46,7 +46,7 @@ export const ChartCardSkeleton: React.FC<{
   <Box
     sx={{
       backgroundColor: 'white',
-      borderRadius: 2,
+      borderRadius: 3,
       boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
       border: '1px solid rgba(0,0,0,0.06)',
       overflow: 'hidden',
@@ -69,7 +69,7 @@ export const ModuleCardSkeleton: React.FC<{ className?: string }> = ({ className
   <Box
     sx={{
       backgroundColor: 'white',
-      borderRadius: 2,
+      borderRadius: 3,
       boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
       border: '1px solid rgba(0,0,0,0.06)',
       p: 3,
@@ -118,7 +118,7 @@ export const VisualizationCardSkeleton: React.FC<{ className?: string }> = ({ cl
   <Box
     sx={{
       backgroundColor: 'white',
-      borderRadius: 2,
+      borderRadius: 3,
       boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
       border: '1px solid rgba(0,0,0,0.06)',
       overflow: 'hidden',

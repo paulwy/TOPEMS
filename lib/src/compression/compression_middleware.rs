@@ -1,5 +1,5 @@
 use axum::{
-    body::{Body, to_bytes},
+    body::{to_bytes, Body},
     http::{header, HeaderValue, Request, Response},
     middleware::Next,
 };
@@ -121,11 +121,7 @@ impl CompressionMiddleware {
         Arc::new(self)
     }
 
-    pub async fn middleware(
-        self: Arc<Self>,
-        req: Request<Body>,
-        next: Next,
-    ) -> Response<Body> {
+    pub async fn middleware(self: Arc<Self>, req: Request<Body>, next: Next) -> Response<Body> {
         if !self.config.enabled {
             return next.run(req).await;
         }
@@ -157,13 +153,28 @@ impl CompressionMiddleware {
 
         for part in parts {
             let part = part.trim().to_lowercase();
-            if part.starts_with("br") && self.config.supported_algorithms.contains(&CompressionAlgorithm::Brotli) {
+            if part.starts_with("br")
+                && self
+                    .config
+                    .supported_algorithms
+                    .contains(&CompressionAlgorithm::Brotli)
+            {
                 return Some(CompressionAlgorithm::Brotli);
             }
-            if part.starts_with("gzip") && self.config.supported_algorithms.contains(&CompressionAlgorithm::Gzip) {
+            if part.starts_with("gzip")
+                && self
+                    .config
+                    .supported_algorithms
+                    .contains(&CompressionAlgorithm::Gzip)
+            {
                 return Some(CompressionAlgorithm::Gzip);
             }
-            if part.starts_with("deflate") && self.config.supported_algorithms.contains(&CompressionAlgorithm::Deflate) {
+            if part.starts_with("deflate")
+                && self
+                    .config
+                    .supported_algorithms
+                    .contains(&CompressionAlgorithm::Deflate)
+            {
                 return Some(CompressionAlgorithm::Deflate);
             }
         }
@@ -186,7 +197,12 @@ impl CompressionMiddleware {
             .and_then(|h| h.to_str().ok())
             .unwrap_or_default();
 
-        let mime_type = content_type.split(';').next().unwrap_or(content_type).trim().to_lowercase();
+        let mime_type = content_type
+            .split(';')
+            .next()
+            .unwrap_or(content_type)
+            .trim()
+            .to_lowercase();
         if self.config.excluded_mime_types.contains(&mime_type) {
             return false;
         }
@@ -273,9 +289,15 @@ mod tests {
 
         assert!(config.enabled);
         assert_eq!(config.min_content_length, 1024);
-        assert!(config.supported_algorithms.contains(&CompressionAlgorithm::Gzip));
-        assert!(config.supported_algorithms.contains(&CompressionAlgorithm::Deflate));
-        assert!(config.supported_algorithms.contains(&CompressionAlgorithm::Brotli));
+        assert!(config
+            .supported_algorithms
+            .contains(&CompressionAlgorithm::Gzip));
+        assert!(config
+            .supported_algorithms
+            .contains(&CompressionAlgorithm::Deflate));
+        assert!(config
+            .supported_algorithms
+            .contains(&CompressionAlgorithm::Brotli));
         assert!(config.excluded_mime_types.contains("image/png"));
         assert!(config.excluded_mime_types.contains("video/mp4"));
     }

@@ -15,7 +15,14 @@ const mockWorkflows: WorkflowDefinition[] = [
       nodes: [
         { id: 'start', type: 'start', name: '开始', x: 100, y: 100 },
         { id: 'apply', type: 'userTask', name: '提交申请', x: 300, y: 100, assignee: 'applicant' },
-        { id: 'manager_approve', type: 'userTask', name: '经理审批', x: 500, y: 100, assignee: 'manager' },
+        {
+          id: 'manager_approve',
+          type: 'userTask',
+          name: '经理审批',
+          x: 500,
+          y: 100,
+          assignee: 'manager',
+        },
         { id: 'end', type: 'end', name: '结束', x: 700, y: 100 },
       ],
       edges: [
@@ -38,9 +45,30 @@ const mockWorkflows: WorkflowDefinition[] = [
     definition: {
       nodes: [
         { id: 'start', type: 'start', name: '开始', x: 100, y: 150 },
-        { id: 'create_order', type: 'userTask', name: '创建订单', x: 300, y: 150, assignee: 'sales' },
-        { id: 'sales_manager', type: 'userTask', name: '销售经理审批', x: 550, y: 100, assignee: 'sales_manager' },
-        { id: 'finance_confirm', type: 'userTask', name: '财务确认', x: 550, y: 200, assignee: 'finance' },
+        {
+          id: 'create_order',
+          type: 'userTask',
+          name: '创建订单',
+          x: 300,
+          y: 150,
+          assignee: 'sales',
+        },
+        {
+          id: 'sales_manager',
+          type: 'userTask',
+          name: '销售经理审批',
+          x: 550,
+          y: 100,
+          assignee: 'sales_manager',
+        },
+        {
+          id: 'finance_confirm',
+          type: 'userTask',
+          name: '财务确认',
+          x: 550,
+          y: 200,
+          assignee: 'finance',
+        },
         { id: 'end', type: 'end', name: '结束', x: 800, y: 150 },
       ],
       edges: [
@@ -76,8 +104,22 @@ const mockWorkflows: WorkflowDefinition[] = [
       nodes: [
         { id: 'start', type: 'start', name: '开始', x: 100, y: 150 },
         { id: 'apply', type: 'userTask', name: '提交申请', x: 300, y: 150, assignee: 'applicant' },
-        { id: 'dept_manager', type: 'userTask', name: '部门经理审批', x: 550, y: 100, assignee: 'dept_manager' },
-        { id: 'purchase_manager', type: 'userTask', name: '采购经理审批', x: 550, y: 200, assignee: 'purchase_manager' },
+        {
+          id: 'dept_manager',
+          type: 'userTask',
+          name: '部门经理审批',
+          x: 550,
+          y: 100,
+          assignee: 'dept_manager',
+        },
+        {
+          id: 'purchase_manager',
+          type: 'userTask',
+          name: '采购经理审批',
+          x: 550,
+          y: 200,
+          assignee: 'purchase_manager',
+        },
         { id: 'end', type: 'end', name: '结束', x: 800, y: 150 },
       ],
       edges: [
@@ -98,21 +140,20 @@ export async function listWorkflows(params?: {
   appId?: string;
 }) {
   let data = [...mockWorkflows];
-  
+
   if (params?.search) {
     const search = params.search.toLowerCase();
-    data = data.filter(w => 
-      w.name.toLowerCase().includes(search) || 
-      w.description?.toLowerCase().includes(search)
+    data = data.filter(
+      (w) => w.name.toLowerCase().includes(search) || w.description?.toLowerCase().includes(search)
     );
   }
-  
+
   if (params?.status) {
-    data = data.filter(w => w.status === params.status);
+    data = data.filter((w) => w.status === params.status);
   }
 
   if (params?.appId) {
-    data = data.filter(w => w.appId === params.appId);
+    data = data.filter((w) => w.appId === params.appId);
   }
 
   const page = params?.page || 1;
@@ -137,7 +178,7 @@ export async function listWorkflows(params?: {
 }
 
 export async function getWorkflow(id: string) {
-  const workflow = mockWorkflows.find(w => w.id === id);
+  const workflow = mockWorkflows.find((w) => w.id === id);
   return {
     code: 0,
     success: true,
@@ -171,7 +212,7 @@ export async function createWorkflow(data: Partial<WorkflowDefinition>) {
 }
 
 export async function updateWorkflow(id: string, data: Partial<WorkflowDefinition>) {
-  const index = mockWorkflows.findIndex(w => w.id === id);
+  const index = mockWorkflows.findIndex((w) => w.id === id);
   if (index !== -1) {
     mockWorkflows[index] = {
       ...mockWorkflows[index],
@@ -196,7 +237,7 @@ export async function updateWorkflow(id: string, data: Partial<WorkflowDefinitio
 }
 
 export async function deleteWorkflow(id: string) {
-  const index = mockWorkflows.findIndex(w => w.id === id);
+  const index = mockWorkflows.findIndex((w) => w.id === id);
   if (index !== -1) {
     mockWorkflows.splice(index, 1);
     return {
@@ -217,7 +258,7 @@ export async function deleteWorkflow(id: string) {
 }
 
 export async function publishWorkflow(id: string) {
-  const workflow = mockWorkflows.find(w => w.id === id);
+  const workflow = mockWorkflows.find((w) => w.id === id);
   if (workflow) {
     workflow.status = 'published';
     workflow.updatedAt = new Date().toISOString();

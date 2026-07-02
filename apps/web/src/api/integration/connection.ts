@@ -15,34 +15,34 @@ export const connectionApi = {
     page?: number;
     pageSize?: number;
   }): Promise<ApiResponse<ErpConnection[]>> => {
-    return apiClient.integration.get('/api/integration/erp/connections', { params });
+    return apiClient.integration.get('/erp/connections', { params });
   },
 
   getConnection: async (id: string): Promise<ApiResponse<ErpConnection>> => {
-    return apiClient.integration.get(`/api/integration/erp/connections/${id}`);
+    return apiClient.integration.get(`/erp/connections/${id}`);
   },
 
   createConnection: async (
     data: CreateErpConnectionRequest
   ): Promise<ApiResponse<ErpConnection>> => {
-    return apiClient.integration.post('/api/integration/erp/connections', data);
+    return apiClient.integration.post('/erp/connections', data);
   },
 
   updateConnection: async (
     id: string,
     data: UpdateErpConnectionRequest
   ): Promise<ApiResponse<ErpConnection>> => {
-    return apiClient.integration.put(`/api/integration/erp/connections/${id}`, data);
+    return apiClient.integration.put(`/erp/connections/${id}`, data);
   },
 
   deleteConnection: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.integration.delete(`/api/integration/erp/connections/${id}`);
+    return apiClient.integration.delete(`/erp/connections/${id}`);
   },
 
   testConnection: async (
     data: TestConnectionRequest
   ): Promise<ApiResponse<TestConnectionResponse>> => {
-    return apiClient.integration.post('/api/integration/erp/connections/test', data);
+    return apiClient.integration.post('/erp/connections/test', data);
   },
 };
 

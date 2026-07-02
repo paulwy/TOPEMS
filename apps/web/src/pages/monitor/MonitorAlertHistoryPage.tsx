@@ -125,26 +125,26 @@ const MonitorAlertHistoryPage: React.FC = () => {
   const getSeverityColor = (severity: string) => {
     switch (severity) {
       case 'critical':
-        return '#EF4444';
+        return 'error.main';
       case 'warning':
-        return '#F59E0B';
+        return 'warning.main';
       case 'info':
-        return '#3B82F6';
+        return 'primary.main';
       default:
-        return '#6B7280';
+        return 'grey.500';
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
-        return '#EF4444';
+        return 'error.main';
       case 'acknowledged':
-        return '#F59E0B';
+        return 'warning.main';
       case 'resolved':
-        return '#22C55E';
+        return 'success.main';
       default:
-        return '#6B7280';
+        return 'grey.500';
     }
   };
 
@@ -289,17 +289,17 @@ const MonitorAlertHistoryPage: React.FC = () => {
           {
             name: '严重',
             value: alerts.filter((a) => a.severity === 'critical').length,
-            stroke: '#EF4444',
+            stroke: 'error.main',
           },
           {
             name: '警告',
             value: alerts.filter((a) => a.severity === 'warning').length,
-            stroke: '#F59E0B',
+            stroke: 'warning.main',
           },
           {
             name: '信息',
             value: alerts.filter((a) => a.severity === 'info').length,
-            stroke: '#3B82F6',
+            stroke: 'primary.main',
           },
         ],
         height: 280,
@@ -314,17 +314,17 @@ const MonitorAlertHistoryPage: React.FC = () => {
           {
             name: '严重',
             value: alerts.filter((a) => a.severity === 'critical').length,
-            color: '#EF4444',
+            color: 'error.main',
           },
           {
             name: '警告',
             value: alerts.filter((a) => a.severity === 'warning').length,
-            color: '#F59E0B',
+            color: 'warning.main',
           },
           {
             name: '信息',
             value: alerts.filter((a) => a.severity === 'info').length,
-            color: '#3B82F6',
+            color: 'primary.main',
           },
         ].filter((d) => d.value > 0),
         height: 280,

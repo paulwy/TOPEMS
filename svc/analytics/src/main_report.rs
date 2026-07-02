@@ -26,8 +26,7 @@ use axum_prometheus::PrometheusMetricLayer;
 use sqlx::PgPool;
 
 use topems_shared::{
-    auth_middleware, create_cors_layer, get_api_info_handler, init_logging,
-    ApiResponse, AuthState,
+    auth_middleware, create_cors_layer, get_api_info_handler, init_logging, ApiResponse, AuthState,
 };
 
 pub use shared::*;
@@ -53,10 +52,13 @@ async fn home() -> &'static str {
 }
 
 async fn health() -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(serde_json::json!({
-        "service": "report",
-        "status": "healthy"
-    }), "OK"))
+    Json(ApiResponse::success(
+        serde_json::json!({
+            "service": "report",
+            "status": "healthy"
+        }),
+        "OK",
+    ))
 }
 
 // ==================== 主入口 ====================
@@ -93,10 +95,7 @@ async fn main() {
     }
 
     let auth_state = AuthState::from_env();
-    let state = AppState {
-        auth_state,
-        pool,
-    };
+    let state = AppState { auth_state, pool };
 
     let cors = create_cors_layer();
     let (prometheus_layer, metric_handle) = PrometheusMetricLayer::pair();
@@ -106,30 +105,84 @@ async fn main() {
         .route("/", get(home))
         .route("/health", get(health))
         .route("/api/info", get(|| get_api_info_handler("report-service")))
-        .route("/api/plugins/info", get(modules::report::report_plugin::get_plugin_info))
-        .route("/api/plugins/health", get(modules::report::report_plugin::plugin_health_check))
-        .route("/metrics", get(move || async move { metric_handle.render() }));
+        .route(
+            "/api/plugins/info",
+            get(modules::report::report_plugin::get_plugin_info),
+        )
+        .route(
+            "/api/plugins/health",
+            get(modules::report::report_plugin::plugin_health_check),
+        )
+        .route(
+            "/metrics",
+            get(move || async move { metric_handle.render() }),
+        );
 
     // Protected routes
     let protected_routes = Router::new()
         // Report
-        .route("/api/analytics/report", get(modules::report::report::list_reports))
-        .route("/api/analytics/report", post(modules::report::report::create_report))
-        .route("/api/analytics/report/{id}", get(modules::report::report::get_report))
-        .route("/api/analytics/report/{id}", put(modules::report::report::update_report))
-        .route("/api/analytics/report/{id}", delete(modules::report::report::delete_report))
-        .route("/api/analytics/report/{id}/export", post(modules::report::report::export_report))
-        .route("/api/analytics/report/{id}/run", post(modules::report::report::run_report))
+        .route(
+            "/api/analytics/report",
+            get(modules::report::report::list_reports),
+        )
+        .route(
+            "/api/analytics/report",
+            post(modules::report::report::create_report),
+        )
+        .route(
+            "/api/analytics/report/{id}",
+            get(modules::report::report::get_report),
+        )
+        .route(
+            "/api/analytics/report/{id}",
+            put(modules::report::report::update_report),
+        )
+        .route(
+            "/api/analytics/report/{id}",
+            delete(modules::report::report::delete_report),
+        )
+        .route(
+            "/api/analytics/report/{id}/export",
+            post(modules::report::report::export_report),
+        )
+        .route(
+            "/api/analytics/report/{id}/run",
+            post(modules::report::report::run_report),
+        )
         // Template
-        .route("/api/analytics/template", get(modules::report::template::list_templates))
-        .route("/api/analytics/template", post(modules::report::template::create_template))
-        .route("/api/analytics/template/{id}", get(modules::report::template::get_template))
-        .route("/api/analytics/template/{id}", put(modules::report::template::update_template))
+        .route(
+            "/api/analytics/template",
+            get(modules::report::template::list_templates),
+        )
+        .route(
+            "/api/analytics/template",
+            post(modules::report::template::create_template),
+        )
+        .route(
+            "/api/analytics/template/{id}",
+            get(modules::report::template::get_template),
+        )
+        .route(
+            "/api/analytics/template/{id}",
+            put(modules::report::template::update_template),
+        )
         // Schedule
-        .route("/api/analytics/schedule", get(modules::report::schedule::list_schedules))
-        .route("/api/analytics/schedule", post(modules::report::schedule::create_schedule))
-        .route("/api/analytics/schedule/{id}", get(modules::report::schedule::get_schedule))
-        .route("/api/analytics/schedule/{id}", put(modules::report::schedule::update_schedule))
+        .route(
+            "/api/analytics/schedule",
+            get(modules::report::schedule::list_schedules),
+        )
+        .route(
+            "/api/analytics/schedule",
+            post(modules::report::schedule::create_schedule),
+        )
+        .route(
+            "/api/analytics/schedule/{id}",
+            get(modules::report::schedule::get_schedule),
+        )
+        .route(
+            "/api/analytics/schedule/{id}",
+            put(modules::report::schedule::update_schedule),
+        )
         .layer(axum::middleware::from_fn_with_state(
             state.auth_state.clone(),
             auth_middleware,

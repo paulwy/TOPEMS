@@ -9,11 +9,11 @@ export const authModuleApi = {
     password: string;
     full_name?: string;
   }): Promise<ApiResponse<AuthTokens>> => {
-    return apiClient.iam.post<AuthTokens>('/api/iam/auth/register', data);
+    return apiClient.iam.post<AuthTokens>('/auth/register', data);
   },
 
   login: async (data: { username: string; password: string }): Promise<ApiResponse<any>> => {
-    const response = await apiClient.iam.post<any>('/api/iam/auth/login', data);
+    const response = await apiClient.iam.post<any>('/auth/login', data);
 
     if (response.success && response.data) {
       localStorage.setItem('token', response.data.access_token);
@@ -32,7 +32,7 @@ export const authModuleApi = {
   },
 
   refreshToken: async (token: string): Promise<ApiResponse<any>> => {
-    const response = await apiClient.iam.post<any>('/api/iam/auth/refresh', {
+    const response = await apiClient.iam.post<any>('/auth/refresh', {
       refresh_token: token,
     });
 
@@ -48,11 +48,11 @@ export const authModuleApi = {
   },
 
   requestPasswordReset: async (data: ResetPasswordRequest): Promise<ApiResponse<string>> => {
-    return apiClient.iam.post<string>('/api/iam/auth/reset-password', data);
+    return apiClient.iam.post<string>('/auth/reset-password', data);
   },
 
   confirmPasswordReset: async (data: SetNewPasswordRequest): Promise<ApiResponse<string>> => {
-    return apiClient.iam.post<string>('/api/iam/auth/set-new-password', data);
+    return apiClient.iam.post<string>('/auth/set-new-password', data);
   },
 
   getPasswordPolicy: async (): Promise<
@@ -66,7 +66,7 @@ export const authModuleApi = {
       prevent_reuse: number;
     }>
   > => {
-    return apiClient.iam.get('/api/iam/auth/password-policy');
+    return apiClient.iam.get('/auth/password-policy');
   },
 
   updatePasswordPolicy: async (data: {
@@ -78,7 +78,7 @@ export const authModuleApi = {
     max_age_days?: number;
     prevent_reuse?: number;
   }): Promise<ApiResponse<any>> => {
-    return apiClient.iam.put('/api/iam/auth/password-policy', data);
+    return apiClient.iam.put('/auth/password-policy', data);
   },
 
   getActiveSessions: async (): Promise<
@@ -94,15 +94,15 @@ export const authModuleApi = {
       total: number;
     }>
   > => {
-    return apiClient.iam.get('/api/iam/auth/sessions');
+    return apiClient.iam.get('/auth/sessions');
   },
 
   revokeSession: async (sessionId: string): Promise<ApiResponse<string>> => {
-    return apiClient.iam.delete(`/api/iam/auth/sessions/${sessionId}`);
+    return apiClient.iam.delete(`/auth/sessions/${sessionId}`);
   },
 
   revokeAllOtherSessions: async (): Promise<ApiResponse<{ revoked_count: number }>> => {
-    return apiClient.iam.post<{ revoked_count: number }>('/api/iam/auth/sessions/revoke-all');
+    return apiClient.iam.post<{ revoked_count: number }>('/auth/sessions/revoke-all');
   },
 
   getSecuritySettings: async (): Promise<
@@ -113,7 +113,7 @@ export const authModuleApi = {
       session_timeout_minutes: number;
     }>
   > => {
-    return apiClient.iam.get('/api/iam/auth/security-settings');
+    return apiClient.iam.get('/auth/security-settings');
   },
 
   updateSecuritySettings: async (data: {
@@ -122,7 +122,7 @@ export const authModuleApi = {
     ip_whitelist?: string[];
     session_timeout_minutes?: number;
   }): Promise<ApiResponse<any>> => {
-    return apiClient.iam.put('/api/iam/auth/security-settings', data);
+    return apiClient.iam.put('/auth/security-settings', data);
   },
 };
 

@@ -26,7 +26,10 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 
-const statusConfig: Record<string, { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }> = {
+const statusConfig: Record<
+  string,
+  { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }
+> = {
   draft: { label: '草稿', color: 'default' },
   pending: { label: '待审批', color: 'warning' },
   approved: { label: '已审批', color: 'success' },
@@ -35,7 +38,10 @@ const statusConfig: Record<string, { label: string; color: 'default' | 'primary'
   converted: { label: '已转单', color: 'primary' },
 };
 
-const priorityConfig: Record<string, { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }> = {
+const priorityConfig: Record<
+  string,
+  { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }
+> = {
   low: { label: '低', color: 'default' },
   medium: { label: '中', color: 'primary' },
   high: { label: '高', color: 'warning' },
@@ -362,7 +368,14 @@ const PurchaseRequisitionPage: React.FC = () => {
       label: '优先级',
       render: (row) => {
         const config = priorityConfig[row.priority || 'medium'] || priorityConfig.medium;
-        return <Chip size='small' label={config.label} color={config.color} variant='outlined' />;
+        return (
+          <Chip
+            size='small'
+            label={config.label}
+            color={config.color}
+            variant='outlined'
+          />
+        );
       },
     },
     {
@@ -370,7 +383,14 @@ const PurchaseRequisitionPage: React.FC = () => {
       label: '状态',
       render: (row) => {
         const config = statusConfig[row.status] || statusConfig.draft;
-        return <Chip size='small' label={config.label} color={config.color} variant='outlined' />;
+        return (
+          <Chip
+            size='small'
+            label={config.label}
+            color={config.color}
+            variant='outlined'
+          />
+        );
       },
     },
     {

@@ -1,4 +1,8 @@
-use axum::{extract::State, routing::{delete, get, post, put}, Json, Router};
+use axum::{
+    extract::State,
+    routing::{delete, get, post, put},
+    Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared::ApiResponse;
@@ -8,11 +12,23 @@ use crate::AppState;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/api/lims/samples", get(list_samples).post(register_sample))
-        .route("/api/lims/samples/{id}", get(get_sample).put(update_sample).delete(delete_sample))
-        .route("/api/lims/samples/{id}/lifecycle", get(get_sample_lifecycle))
+        .route(
+            "/api/lims/samples/{id}",
+            get(get_sample).put(update_sample).delete(delete_sample),
+        )
+        .route(
+            "/api/lims/samples/{id}/lifecycle",
+            get(get_sample_lifecycle),
+        )
         .route("/api/lims/samples/lifecycle", post(record_lifecycle_event))
-        .route("/api/lims/samples/{id}/stage/{to_stage}", post(transition_sample_stage))
-        .route("/api/lims/samples/{id}/traceability", get(get_sample_traceability))
+        .route(
+            "/api/lims/samples/{id}/stage/{to_stage}",
+            post(transition_sample_stage),
+        )
+        .route(
+            "/api/lims/samples/{id}/traceability",
+            get(get_sample_traceability),
+        )
         .route("/api/lims/lifecycle-stages", get(get_lifecycle_stages))
 }
 
@@ -81,54 +97,78 @@ pub async fn list_samples(
     };
 
     let mut query_builder = sqlx::query(sql);
-    match (query.status.as_ref(), query.sample_no.as_ref(), query.sample_name.as_ref()) {
+    match (
+        query.status.as_ref(),
+        query.sample_no.as_ref(),
+        query.sample_name.as_ref(),
+    ) {
         (Some(st), Some(no), Some(nm)) => {
-            query_builder = query_builder.bind(st).bind(format!("%{}%", no)).bind(format!("%{}%", nm)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(st)
+                .bind(format!("%{}%", no))
+                .bind(format!("%{}%", nm))
+                .bind(page_size)
+                .bind(offset);
         }
         (Some(st), Some(no), None) => {
-            query_builder = query_builder.bind(st).bind(format!("%{}%", no)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(st)
+                .bind(format!("%{}%", no))
+                .bind(page_size)
+                .bind(offset);
         }
         (Some(st), None, Some(nm)) => {
-            query_builder = query_builder.bind(st).bind(format!("%{}%", nm)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(st)
+                .bind(format!("%{}%", nm))
+                .bind(page_size)
+                .bind(offset);
         }
         (Some(st), None, None) => {
             query_builder = query_builder.bind(st).bind(page_size).bind(offset);
         }
         (None, Some(no), Some(nm)) => {
-            query_builder = query_builder.bind(format!("%{}%", no)).bind(format!("%{}%", nm)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(format!("%{}%", no))
+                .bind(format!("%{}%", nm))
+                .bind(page_size)
+                .bind(offset);
         }
         (None, Some(no), None) => {
-            query_builder = query_builder.bind(format!("%{}%", no)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(format!("%{}%", no))
+                .bind(page_size)
+                .bind(offset);
         }
         (None, None, Some(nm)) => {
-            query_builder = query_builder.bind(format!("%{}%", nm)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(format!("%{}%", nm))
+                .bind(page_size)
+                .bind(offset);
         }
         (None, None, None) => {
             query_builder = query_builder.bind(page_size).bind(offset);
         }
     }
 
-    let samples = query_builder
-        .fetch_all(&state.pool)
-        .await
-        .map(|rows| {
-            rows.into_iter()
-                .map(|row| Sample {
-                    id: row.get("id"),
-                    sample_no: row.get("sample_no"),
-                    sample_name: row.get("sample_name"),
-                    sample_type: row.get("sample_type"),
-                    source: row.get("source"),
-                    quantity: row.get("quantity"),
-                    unit: row.get("unit"),
-                    status: row.get("status"),
-                    received_at: row.get("received_at"),
-                    expired_at: row.get("expired_at"),
-                    created_at: row.get("created_at"),
-                    updated_at: row.get("updated_at"),
-                })
-                .collect()
-        });
+    let samples = query_builder.fetch_all(&state.pool).await.map(|rows| {
+        rows.into_iter()
+            .map(|row| Sample {
+                id: row.get("id"),
+                sample_no: row.get("sample_no"),
+                sample_name: row.get("sample_name"),
+                sample_type: row.get("sample_type"),
+                source: row.get("source"),
+                quantity: row.get("quantity"),
+                unit: row.get("unit"),
+                status: row.get("status"),
+                received_at: row.get("received_at"),
+                expired_at: row.get("expired_at"),
+                created_at: row.get("created_at"),
+                updated_at: row.get("updated_at"),
+            })
+            .collect()
+    });
 
     match samples {
         Ok(data) => Json(ApiResponse::success(data, "获取样品列表成功")),
@@ -143,7 +183,10 @@ pub async fn register_sample(
     State(state): State<crate::AppState>,
     Json(req): Json<CreateSampleRequest>,
 ) -> Json<ApiResponse<Sample>> {
-    let sample_no = format!("SMP-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
+    let sample_no = format!(
+        "SMP-{}",
+        uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+    );
 
     let row = sqlx::query(
         "INSERT INTO qa_lab_samples (sample_no, sample_name, sample_type, source, quantity, unit, status) VALUES ($1, $2, $3, $4, $5, $6, 'received') RETURNING id, sample_no, sample_name, sample_type, source, quantity, unit, status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT"
@@ -158,20 +201,23 @@ pub async fn register_sample(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(Sample {
-            id: r.get("id"),
-            sample_no: r.get("sample_no"),
-            sample_name: r.get("sample_name"),
-            sample_type: r.get("sample_type"),
-            source: r.get("source"),
-            quantity: r.get("quantity"),
-            unit: r.get("unit"),
-            status: r.get("status"),
-            received_at: r.get("received_at"),
-            expired_at: r.get("expired_at"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "样品登记成功")),
+        Ok(r) => Json(ApiResponse::success(
+            Sample {
+                id: r.get("id"),
+                sample_no: r.get("sample_no"),
+                sample_name: r.get("sample_name"),
+                sample_type: r.get("sample_type"),
+                source: r.get("source"),
+                quantity: r.get("quantity"),
+                unit: r.get("unit"),
+                status: r.get("status"),
+                received_at: r.get("received_at"),
+                expired_at: r.get("expired_at"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "样品登记成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to create sample: {}", e);
             Json(ApiResponse::error(500, "样品登记失败"))
@@ -196,20 +242,23 @@ pub async fn get_sample(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(Sample {
-            id: r.get("id"),
-            sample_no: r.get("sample_no"),
-            sample_name: r.get("sample_name"),
-            sample_type: r.get("sample_type"),
-            source: r.get("source"),
-            quantity: r.get("quantity"),
-            unit: r.get("unit"),
-            status: r.get("status"),
-            received_at: r.get("received_at"),
-            expired_at: r.get("expired_at"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "获取样品成功")),
+        Ok(r) => Json(ApiResponse::success(
+            Sample {
+                id: r.get("id"),
+                sample_no: r.get("sample_no"),
+                sample_name: r.get("sample_name"),
+                sample_type: r.get("sample_type"),
+                source: r.get("source"),
+                quantity: r.get("quantity"),
+                unit: r.get("unit"),
+                status: r.get("status"),
+                received_at: r.get("received_at"),
+                expired_at: r.get("expired_at"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "获取样品成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to fetch sample: {}", e);
             Json(ApiResponse::error(500, "获取样品失败"))
@@ -242,20 +291,23 @@ pub async fn update_sample(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(Sample {
-            id: r.get("id"),
-            sample_no: r.get("sample_no"),
-            sample_name: r.get("sample_name"),
-            sample_type: r.get("sample_type"),
-            source: r.get("source"),
-            quantity: r.get("quantity"),
-            unit: r.get("unit"),
-            status: r.get("status"),
-            received_at: r.get("received_at"),
-            expired_at: r.get("expired_at"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "样品更新成功")),
+        Ok(r) => Json(ApiResponse::success(
+            Sample {
+                id: r.get("id"),
+                sample_no: r.get("sample_no"),
+                sample_name: r.get("sample_name"),
+                sample_type: r.get("sample_type"),
+                source: r.get("source"),
+                quantity: r.get("quantity"),
+                unit: r.get("unit"),
+                status: r.get("status"),
+                received_at: r.get("received_at"),
+                expired_at: r.get("expired_at"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "样品更新成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to update sample: {}", e);
             Json(ApiResponse::error(500, "样品更新失败"))
@@ -388,12 +440,10 @@ pub async fn record_lifecycle_event(
     };
 
     // Get sample info
-    let sample_row = sqlx::query(
-        "SELECT sample_no FROM qa_lab_samples WHERE id = $1"
-    )
-    .bind(sample_id)
-    .fetch_optional(&state.pool)
-    .await;
+    let sample_row = sqlx::query("SELECT sample_no FROM qa_lab_samples WHERE id = $1")
+        .bind(sample_id)
+        .fetch_optional(&state.pool)
+        .await;
 
     let sample_no = match sample_row {
         Ok(Some(row)) => row.get::<String, _>("sample_no"),
@@ -437,7 +487,7 @@ pub async fn record_lifecycle_event(
         Ok(r) => {
             // Update sample status
             let _ = sqlx::query(
-                "UPDATE qa_lab_samples SET status = $2, updated_at = NOW() WHERE id = $1"
+                "UPDATE qa_lab_samples SET status = $2, updated_at = NOW() WHERE id = $1",
             )
             .bind(sample_id)
             .bind(&req.lifecycle_stage)
@@ -477,24 +527,23 @@ pub async fn transition_sample_stage(
     };
 
     // Validate target stage
-    let valid_stage = LIFECYCLE_STAGES
-        .iter()
-        .any(|(stage, _)| *stage == to_stage);
+    let valid_stage = LIFECYCLE_STAGES.iter().any(|(stage, _)| *stage == to_stage);
 
     if !valid_stage {
         return Json(ApiResponse::error(400, "无效的目标阶段"));
     }
 
     // Get current stage
-    let current_row = sqlx::query(
-        "SELECT sample_no, status FROM qa_lab_samples WHERE id = $1"
-    )
-    .bind(sample_uuid)
-    .fetch_optional(&state.pool)
-    .await;
+    let current_row = sqlx::query("SELECT sample_no, status FROM qa_lab_samples WHERE id = $1")
+        .bind(sample_uuid)
+        .fetch_optional(&state.pool)
+        .await;
 
     let (sample_no, current_stage) = match current_row {
-        Ok(Some(row)) => (row.get::<String, _>("sample_no"), row.get::<String, _>("status")),
+        Ok(Some(row)) => (
+            row.get::<String, _>("sample_no"),
+            row.get::<String, _>("status"),
+        ),
         Ok(None) => return Json(ApiResponse::error(404, "样品不存在")),
         Err(e) => return Json(ApiResponse::error(500, &format!("查询样品失败: {}", e))),
     };
@@ -502,8 +551,11 @@ pub async fn transition_sample_stage(
     let operator = req.get("operator").and_then(|v| v.as_str());
     let notes = req.get("notes").and_then(|v| v.as_str());
     let location = req.get("location").and_then(|v| v.as_str());
-    let description = format!("样品从 [{}] 阶段转换到 [{}] 阶段", 
-        get_stage_name(&current_stage), get_stage_name(&to_stage));
+    let description = format!(
+        "样品从 [{}] 阶段转换到 [{}] 阶段",
+        get_stage_name(&current_stage),
+        get_stage_name(&to_stage)
+    );
 
     let record_id = Uuid::new_v4();
 
@@ -532,7 +584,7 @@ pub async fn transition_sample_stage(
         Ok(r) => {
             // Update sample status
             let _ = sqlx::query(
-                "UPDATE qa_lab_samples SET status = $2, updated_at = NOW() WHERE id = $1"
+                "UPDATE qa_lab_samples SET status = $2, updated_at = NOW() WHERE id = $1",
             )
             .bind(sample_uuid)
             .bind(&to_stage)
@@ -598,7 +650,7 @@ pub async fn get_sample_traceability(
         SELECT id, sample_no, sample_name, sample_type, source, quantity, unit,
                status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT
         FROM qa_lab_samples WHERE id = $1
-        "#
+        "#,
     )
     .bind(id)
     .fetch_optional(&state.pool)
@@ -630,7 +682,7 @@ pub async fn get_sample_traceability(
         FROM qa_lab_sample_lifecycle
         WHERE sample_id = $1
         ORDER BY created_at ASC
-        "#
+        "#,
     )
     .bind(id)
     .fetch_all(&state.pool)
@@ -651,12 +703,21 @@ pub async fn get_sample_traceability(
                 })
             })
             .collect(),
-        Err(e) => return Json(ApiResponse::error(500, &format!("查询生命周期记录失败: {}", e))),
+        Err(e) => {
+            return Json(ApiResponse::error(
+                500,
+                &format!("查询生命周期记录失败: {}", e),
+            ))
+        }
     };
 
     // Calculate lifecycle statistics
-    let current_status = sample.get("status").and_then(|v| v.as_str()).unwrap_or("unknown");
-    let is_expired = sample.get("expired_at")
+    let current_status = sample
+        .get("status")
+        .and_then(|v| v.as_str())
+        .unwrap_or("unknown");
+    let is_expired = sample
+        .get("expired_at")
         .and_then(|v| v.as_str())
         .map(|d| {
             chrono::DateTime::parse_from_rfc3339(d)
@@ -681,7 +742,19 @@ pub async fn get_sample_traceability(
 }
 
 fn calculate_stage_progress(current_stage: &str) -> f64 {
-    let stages_order = ["received", "registered", "testing", "completed", "stored", "retrieved", "disposed", "destroyed"];
-    let current_idx = stages_order.iter().position(|s| *s == current_stage).unwrap_or(0);
+    let stages_order = [
+        "received",
+        "registered",
+        "testing",
+        "completed",
+        "stored",
+        "retrieved",
+        "disposed",
+        "destroyed",
+    ];
+    let current_idx = stages_order
+        .iter()
+        .position(|s| *s == current_stage)
+        .unwrap_or(0);
     (current_idx as f64 / (stages_order.len() - 1) as f64 * 100.0).round() / 100.0
 }

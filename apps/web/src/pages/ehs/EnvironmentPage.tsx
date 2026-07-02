@@ -291,8 +291,6 @@ const EnvironmentPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='环境监测'
-      subtitle='Environment Monitoring'
       headerProps={{
         actions: headerActions,
         pageIcon: <Activity sx={{ width: 20, height: 20 }} />,
@@ -316,7 +314,7 @@ const EnvironmentPage: React.FC = () => {
                   width: 40,
                   height: 40,
                   bgcolor: 'success.lighter',
-                  borderRadius: 2,
+                  borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -349,7 +347,7 @@ const EnvironmentPage: React.FC = () => {
                   width: 40,
                   height: 40,
                   bgcolor: 'success.lighter',
-                  borderRadius: 2,
+                  borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -382,7 +380,7 @@ const EnvironmentPage: React.FC = () => {
                   width: 40,
                   height: 40,
                   bgcolor: 'warning.lighter',
-                  borderRadius: 2,
+                  borderRadius: 3,
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',

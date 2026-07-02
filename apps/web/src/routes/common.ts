@@ -1,9 +1,11 @@
 import { lazy } from 'react';
-import type { RouteConfig } from './utils';
+import { createSafeLazy, type RouteConfig } from './utils';
 
-const EhsAccidentPage = lazy(() => import('../pages/ehs/EhsAccidentPage'));
-const DocumentsPage = lazy(() => import('../pages/docs/DocumentsPage'));
-const V4DemoPage = lazy(() => import('../pages/shared/V4DemoPage'));
+const safeLazy = createSafeLazy();
+
+const EhsAccidentPage = safeLazy(() => import('../pages/ehs/EhsAccidentPage'));
+const DocumentsPage = safeLazy(() => import('../pages/doc/DocumentsPage'));
+const V4DemoPage = safeLazy(() => import('../pages/shared/V4DemoPage'));
 
 export const commonRoutes: RouteConfig[] = [
   {

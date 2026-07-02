@@ -135,10 +135,10 @@ const LimsSampleDetailPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string; label: string }> = {
-      pending: { bg: '#fef9c3', color: '#ca8a04', label: '待测试' },
-      待测试: { bg: '#fef9c3', color: '#ca8a04', label: '待测试' },
-      in_progress: { bg: '#dbeafe', color: 'primary.dark', label: '测试中' },
-      测试中: { bg: '#dbeafe', color: 'primary.dark', label: '测试中' },
+      pending: { bg: 'warning.100', color: '#ca8a04', label: '待测试' },
+      待测试: { bg: 'warning.100', color: '#ca8a04', label: '待测试' },
+      in_progress: { bg: 'primary.100', color: 'primary.dark', label: '测试中' },
+      测试中: { bg: 'primary.100', color: 'primary.dark', label: '测试中' },
       completed: { bg: 'success.lighter', color: 'success.dark', label: '已完成' },
       已完成: { bg: 'success.lighter', color: 'success.dark', label: '已完成' },
       cancelled: { bg: 'error.lighter', color: 'error.dark', label: '已终止' },
@@ -290,8 +290,8 @@ const LimsSampleDetailPage: React.FC = () => {
                         task.status === 'completed' || task.status === '已完成'
                           ? 'success.lighter'
                           : task.status === 'in_progress' || task.status === '进行中'
-                            ? '#dbeafe'
-                            : '#fef9c3',
+                            ? 'primary.100'
+                            : 'warning.100',
                       color:
                         task.status === 'completed' || task.status === '已完成'
                           ? 'success.dark'
@@ -390,7 +390,7 @@ const LimsSampleDetailPage: React.FC = () => {
                 textAlign: 'center',
                 p: 2,
                 bgcolor: 'grey.50',
-                borderRadius: 2,
+                borderRadius: 3,
               }}
             >
               <Typography sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'grey.900' }}>
@@ -408,7 +408,7 @@ const LimsSampleDetailPage: React.FC = () => {
                 textAlign: 'center',
                 p: 2,
                 bgcolor: 'success.light',
-                borderRadius: 2,
+                borderRadius: 3,
               }}
             >
               <Typography sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'success.dark' }}>
@@ -426,7 +426,7 @@ const LimsSampleDetailPage: React.FC = () => {
                 textAlign: 'center',
                 p: 2,
                 bgcolor: 'error.light',
-                borderRadius: 2,
+                borderRadius: 3,
               }}
             >
               <Typography sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'error.dark' }}>
@@ -444,7 +444,7 @@ const LimsSampleDetailPage: React.FC = () => {
                 textAlign: 'center',
                 p: 2,
                 bgcolor: 'warning.lighter',
-                borderRadius: 2,
+                borderRadius: 3,
               }}
             >
               <Typography sx={{ fontSize: '1.5rem', fontWeight: 700, color: '#ca8a04' }}>
@@ -548,10 +548,14 @@ const LimsSampleDetailPage: React.FC = () => {
     <PageContainer
       padding={false}
       maxWidth={false}
+      headerProps={{
+        pageIcon: <Package style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)',
+      }}
     >
       <DetailPageTemplate
-        title='样品详情'
-        subtitle='Sample Detail'
+        title=''
+        subtitle=''
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
           { label: 'LIMS', href: '/lims' },

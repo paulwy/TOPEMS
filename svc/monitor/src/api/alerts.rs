@@ -1,4 +1,8 @@
-use axum::{extract::{Extension, Path, Query, State}, Json, Router, routing::{get, post, put, delete}};
+use axum::{
+    extract::{Extension, Path, Query, State},
+    routing::{delete, get, post, put},
+    Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
@@ -29,7 +33,10 @@ impl NotificationClient {
         });
 
         reqwest::Client::new()
-            .post(format!("{}/api/core/communication/notification/send", self.base_url))
+            .post(format!(
+                "{}/api/core/communication/notification/send",
+                self.base_url
+            ))
             .json(&payload)
             .send()
             .await?;
@@ -52,7 +59,10 @@ impl NotificationClient {
         });
 
         reqwest::Client::new()
-            .post(format!("{}/api/core/communication/push/send", self.base_url))
+            .post(format!(
+                "{}/api/core/communication/push/send",
+                self.base_url
+            ))
             .json(&payload)
             .send()
             .await?;
@@ -263,26 +273,72 @@ pub struct AlertQueryParams {
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
         .route("/api/v1/monitor/alerts", get(list_alerts))
-        .route("/api/v1/monitor/alerts/{id}", get(get_alert).post(update_alert))
-        .route("/api/v1/monitor/alerts/statistics", get(get_alert_statistics))
-        .route("/api/v1/monitor/alerts/acknowledge", post(acknowledge_alerts))
+        .route(
+            "/api/v1/monitor/alerts/{id}",
+            get(get_alert).post(update_alert),
+        )
+        .route(
+            "/api/v1/monitor/alerts/statistics",
+            get(get_alert_statistics),
+        )
+        .route(
+            "/api/v1/monitor/alerts/acknowledge",
+            post(acknowledge_alerts),
+        )
         .route("/api/v1/monitor/alerts/resolve", post(resolve_alerts))
-        .route("/api/v1/monitor/alerts/{id}/history", get(get_alert_history))
-        .route("/api/v1/monitor/alerts/{id}/timeline", get(get_alert_timeline))
+        .route(
+            "/api/v1/monitor/alerts/{id}/history",
+            get(get_alert_history),
+        )
+        .route(
+            "/api/v1/monitor/alerts/{id}/timeline",
+            get(get_alert_timeline),
+        )
         // Alert Rules API
         .route("/api/v1/monitor/rules", get(list_rules).post(create_rule))
-        .route("/api/v1/monitor/rules/{id}", get(get_rule).put(update_rule).delete(delete_rule))
+        .route(
+            "/api/v1/monitor/rules/{id}",
+            get(get_rule).put(update_rule).delete(delete_rule),
+        )
         .route("/api/v1/monitor/rules/{id}/enable", post(enable_rule))
         .route("/api/v1/monitor/rules/{id}/disable", post(disable_rule))
-        .route("/api/v1/monitor/rules/{id}/advanced", get(get_advanced_rule).put(update_advanced_rule))
+        .route(
+            "/api/v1/monitor/rules/{id}/advanced",
+            get(get_advanced_rule).put(update_advanced_rule),
+        )
         // Advanced Alert Configuration
-        .route("/api/v1/monitor/rules/{id}/scheduled-trigger", get(get_scheduled_trigger).put(update_scheduled_trigger))
-        .route("/api/v1/monitor/rules/{id}/escalation", get(get_escalation).put(update_escalation))
-        .route("/api/v1/monitor/rules/{id}/routing", get(get_routing).put(update_routing))
-        .route("/api/v1/monitor/templates", get(list_templates).post(create_template))
-        .route("/api/v1/monitor/templates/{id}", get(get_template).put(update_template).delete(delete_template))
-        .route("/api/v1/monitor/suppression", get(list_suppression_rules).post(create_suppression_rule))
-        .route("/api/v1/monitor/suppression/{id}", get(get_suppression_rule).put(update_suppression_rule).delete(delete_suppression_rule))
+        .route(
+            "/api/v1/monitor/rules/{id}/scheduled-trigger",
+            get(get_scheduled_trigger).put(update_scheduled_trigger),
+        )
+        .route(
+            "/api/v1/monitor/rules/{id}/escalation",
+            get(get_escalation).put(update_escalation),
+        )
+        .route(
+            "/api/v1/monitor/rules/{id}/routing",
+            get(get_routing).put(update_routing),
+        )
+        .route(
+            "/api/v1/monitor/templates",
+            get(list_templates).post(create_template),
+        )
+        .route(
+            "/api/v1/monitor/templates/{id}",
+            get(get_template)
+                .put(update_template)
+                .delete(delete_template),
+        )
+        .route(
+            "/api/v1/monitor/suppression",
+            get(list_suppression_rules).post(create_suppression_rule),
+        )
+        .route(
+            "/api/v1/monitor/suppression/{id}",
+            get(get_suppression_rule)
+                .put(update_suppression_rule)
+                .delete(delete_suppression_rule),
+        )
 }
 
 async fn list_alerts(
@@ -418,7 +474,10 @@ async fn update_alert(
     Path(id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<Alert>> {
-    let status = req.get("status").and_then(|v| v.as_str()).unwrap_or("active");
+    let status = req
+        .get("status")
+        .and_then(|v| v.as_str())
+        .unwrap_or("active");
 
     let alert = Alert {
         id,
@@ -457,11 +516,26 @@ async fn get_alert_statistics(
         warning_count: 15,
         info_count: 128,
         top_services: vec![
-            ServiceAlertCount { service_name: "topems-erp".to_string(), alert_count: 45 },
-            ServiceAlertCount { service_name: "topems-crm".to_string(), alert_count: 38 },
-            ServiceAlertCount { service_name: "topems-pm".to_string(), alert_count: 29 },
-            ServiceAlertCount { service_name: "topems-ai".to_string(), alert_count: 22 },
-            ServiceAlertCount { service_name: "topems-wms".to_string(), alert_count: 22 },
+            ServiceAlertCount {
+                service_name: "topems-erp".to_string(),
+                alert_count: 45,
+            },
+            ServiceAlertCount {
+                service_name: "topems-crm".to_string(),
+                alert_count: 38,
+            },
+            ServiceAlertCount {
+                service_name: "topems-pm".to_string(),
+                alert_count: 29,
+            },
+            ServiceAlertCount {
+                service_name: "topems-ai".to_string(),
+                alert_count: 22,
+            },
+            ServiceAlertCount {
+                service_name: "topems-wms".to_string(),
+                alert_count: 22,
+            },
         ],
     };
 
@@ -474,9 +548,14 @@ async fn acknowledge_alerts(
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let alert_ids: Vec<String> = req.get("alert_ids")
+    let alert_ids: Vec<String> = req
+        .get("alert_ids")
         .and_then(|v| v.as_array())
-        .map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect())
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                .collect()
+        })
         .unwrap_or_default();
 
     Json(ApiResponse::success(
@@ -494,9 +573,14 @@ async fn resolve_alerts(
     Extension(claims): Extension<Claims>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let alert_ids: Vec<String> = req.get("alert_ids")
+    let alert_ids: Vec<String> = req
+        .get("alert_ids")
         .and_then(|v| v.as_array())
-        .map(|arr| arr.iter().filter_map(|v| v.as_str().map(|s| s.to_string())).collect())
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|v| v.as_str().map(|s| s.to_string()))
+                .collect()
+        })
         .unwrap_or_default();
 
     Json(ApiResponse::success(
@@ -554,13 +638,11 @@ async fn list_rules(
                 value: serde_json::json!(80),
                 comparison_type: Some("percentage".to_string()),
             },
-            actions: vec![
-                RuleAction {
-                    action_type: "notification".to_string(),
-                    target: Some("dba-team".to_string()),
-                    config: serde_json::json!({ "channel": "slack" }),
-                },
-            ],
+            actions: vec![RuleAction {
+                action_type: "notification".to_string(),
+                target: Some("dba-team".to_string()),
+                config: serde_json::json!({ "channel": "slack" }),
+            }],
             enabled: true,
             created_at: chrono::Utc::now() - chrono::Duration::days(14),
             updated_at: chrono::Utc::now(),
@@ -577,13 +659,11 @@ async fn list_rules(
                 value: serde_json::json!(500),
                 comparison_type: None,
             },
-            actions: vec![
-                RuleAction {
-                    action_type: "notification".to_string(),
-                    target: Some("warehouse-manager".to_string()),
-                    config: serde_json::json!({ "channel": "sms" }),
-                },
-            ],
+            actions: vec![RuleAction {
+                action_type: "notification".to_string(),
+                target: Some("warehouse-manager".to_string()),
+                config: serde_json::json!({ "channel": "sms" }),
+            }],
             enabled: false,
             created_at: chrono::Utc::now() - chrono::Duration::days(30),
             updated_at: chrono::Utc::now() - chrono::Duration::days(10),
@@ -631,13 +711,11 @@ async fn get_rule(
             value: serde_json::json!(150),
             comparison_type: Some("milliseconds".to_string()),
         },
-        actions: vec![
-            RuleAction {
-                action_type: "notification".to_string(),
-                target: Some("admin".to_string()),
-                config: serde_json::json!({ "channel": "email" }),
-            },
-        ],
+        actions: vec![RuleAction {
+            action_type: "notification".to_string(),
+            target: Some("admin".to_string()),
+            config: serde_json::json!({ "channel": "email" }),
+        }],
         enabled: true,
         created_at: chrono::Utc::now() - chrono::Duration::days(7),
         updated_at: chrono::Utc::now(),
@@ -988,7 +1066,10 @@ async fn delete_template(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(serde_json::json!({"id": id}), "告警模板删除成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({"id": id}),
+        "告警模板删除成功",
+    ))
 }
 
 // Suppression Rules
@@ -996,20 +1077,18 @@ async fn list_suppression_rules(
     State(state): State<ApiState>,
     Extension(claims): Extension<Claims>,
 ) -> Json<ApiResponse<Vec<SuppressionRule>>> {
-    let rules = vec![
-        SuppressionRule {
-            id: "1".to_string(),
-            name: "计划内维护窗口".to_string(),
-            description: Some("在计划维护期间抑制相关告警".to_string()),
-            conditions: vec![SuppressionCondition {
-                field: "maintenance_window".to_string(),
-                operator: "eq".to_string(),
-                value: serde_json::json!(true),
-            }],
-            duration_minutes: 120,
-            enabled: true,
-        },
-    ];
+    let rules = vec![SuppressionRule {
+        id: "1".to_string(),
+        name: "计划内维护窗口".to_string(),
+        description: Some("在计划维护期间抑制相关告警".to_string()),
+        conditions: vec![SuppressionCondition {
+            field: "maintenance_window".to_string(),
+            operator: "eq".to_string(),
+            value: serde_json::json!(true),
+        }],
+        duration_minutes: 120,
+        enabled: true,
+    }];
 
     Json(ApiResponse::success(rules, "获取抑制规则列表成功"))
 }
@@ -1057,7 +1136,10 @@ async fn delete_suppression_rule(
     Extension(claims): Extension<Claims>,
     Path(id): Path<String>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    Json(ApiResponse::success(serde_json::json!({"id": id}), "抑制规则删除成功"))
+    Json(ApiResponse::success(
+        serde_json::json!({"id": id}),
+        "抑制规则删除成功",
+    ))
 }
 
 // Advanced Rule Handler

@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import { apiLogger } from '@/utils/logger';
 import { Plus, Eye, Clock } from 'lucide-react';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import { ListPageTemplate } from '@/components/templates';
 
 import type { RowAction, FilterConfig, ColumnDef } from '@/components/templates';
@@ -73,8 +73,8 @@ const PdmBatchPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      规划中: { bg: '#fef9c3', color: '#ca8a04' },
-      进行中: { bg: '#dbeafe', color: 'primary.dark' },
+      规划中: { bg: 'warning.100', color: '#ca8a04' },
+      进行中: { bg: 'primary.100', color: 'primary.dark' },
       已完成: { bg: 'success.lighter', color: 'success.dark' },
       已取消: { bg: 'error.lighter', color: 'error.dark' },
     };
@@ -203,7 +203,7 @@ const PdmBatchPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: '#ecfeff', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: '#ecfeff', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'slate.600' }}
@@ -217,7 +217,7 @@ const PdmBatchPage: React.FC = () => {
           {stats.total}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#fef9c3', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'warning.100', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'slate.600' }}
@@ -231,7 +231,7 @@ const PdmBatchPage: React.FC = () => {
           {stats.planning}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#dbeafe', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'primary.100', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'slate.600' }}
@@ -245,7 +245,7 @@ const PdmBatchPage: React.FC = () => {
           {stats.inProgress}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'slate.600' }}
@@ -264,8 +264,10 @@ const PdmBatchPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='生产批次'
-      subtitle='Production Batch'
+      headerProps={{
+        pageIcon: <Clock style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #06B6D4 0%, #0891B2 100%)',
+      }}
     >
       <ListPageTemplate<ProductionBatch>
         title=''

@@ -1,4 +1,9 @@
-use axum::{extract::Path, extract::State, routing::{delete, get, post, put}, Json, Router};
+use axum::{
+    extract::Path,
+    extract::State,
+    routing::{delete, get, post, put},
+    Json, Router,
+};
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
@@ -9,11 +14,28 @@ use topems_shared::ApiResponse;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/pdm/change-notices", get(list_change_notices).post(create_change_notice))
-        .route("/api/pdm/change-notices/{id}", get(get_change_notice).put(update_change_notice).delete(delete_change_notice))
-        .route("/api/pdm/change-notices/{id}/submit", post(submit_change_notice))
-        .route("/api/pdm/change-notices/{id}/approve", post(approve_change_notice))
-        .route("/api/pdm/change-notices/{id}/reject", post(reject_change_notice))
+        .route(
+            "/api/pdm/change-notices",
+            get(list_change_notices).post(create_change_notice),
+        )
+        .route(
+            "/api/pdm/change-notices/{id}",
+            get(get_change_notice)
+                .put(update_change_notice)
+                .delete(delete_change_notice),
+        )
+        .route(
+            "/api/pdm/change-notices/{id}/submit",
+            post(submit_change_notice),
+        )
+        .route(
+            "/api/pdm/change-notices/{id}/approve",
+            post(approve_change_notice),
+        )
+        .route(
+            "/api/pdm/change-notices/{id}/reject",
+            post(reject_change_notice),
+        )
 }
 
 #[derive(Debug, Serialize, Deserialize, FromRow)]
@@ -101,7 +123,11 @@ pub async fn create_change_notice(
 
     let id = Uuid::new_v4();
     let now = Utc::now();
-    let ecn_no = format!("ECN-{}-{}", now.format("%Y%m%d"), id.to_string().split('-').next().unwrap());
+    let ecn_no = format!(
+        "ECN-{}-{}",
+        now.format("%Y%m%d"),
+        id.to_string().split('-').next().unwrap()
+    );
 
     let result = sqlx::query_as::<_, ChangeNotice>(
         r#"
@@ -194,15 +220,20 @@ pub async fn update_change_notice(
     let title = req.title.unwrap_or(existing.title);
     let description = req.description.or(existing.description);
     let change_type = req.change_type.unwrap_or(existing.change_type);
-    let affected_items = req.affected_items
+    let affected_items = req
+        .affected_items
         .map(|v| serde_json::to_value(v).unwrap())
         .unwrap_or(existing.affected_items);
     let reason = req.reason.or(existing.reason);
     let priority = req.priority.unwrap_or(existing.priority);
     let status = req.status.unwrap_or(existing.status);
     let approver = req.approver.or(existing.approver);
-    let approved_at = req.approved_at.or(existing.approved_at.map(|d| d.to_rfc3339()));
-    let effective_date = req.effective_date.or(existing.effective_date.map(|d| d.to_rfc3339()));
+    let approved_at = req
+        .approved_at
+        .or(existing.approved_at.map(|d| d.to_rfc3339()));
+    let effective_date = req
+        .effective_date
+        .or(existing.effective_date.map(|d| d.to_rfc3339()));
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, ChangeNotice>(
@@ -296,7 +327,10 @@ pub async fn approve_change_notice(
     Path(id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<ChangeNotice>> {
-    let approver = req.get("approver").and_then(|v| v.as_str()).unwrap_or("system");
+    let approver = req
+        .get("approver")
+        .and_then(|v| v.as_str())
+        .unwrap_or("system");
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, ChangeNotice>(
@@ -332,8 +366,14 @@ pub async fn reject_change_notice(
     Path(id): Path<Uuid>,
     Json(req): Json<serde_json::Value>,
 ) -> Json<ApiResponse<ChangeNotice>> {
-    let approver = req.get("approver").and_then(|v| v.as_str()).unwrap_or("system");
-    let reason = req.get("reason").and_then(|v| v.as_str()).unwrap_or("审批未通过");
+    let approver = req
+        .get("approver")
+        .and_then(|v| v.as_str())
+        .unwrap_or("system");
+    let reason = req
+        .get("reason")
+        .and_then(|v| v.as_str())
+        .unwrap_or("审批未通过");
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, ChangeNotice>(

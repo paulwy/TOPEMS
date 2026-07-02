@@ -118,7 +118,9 @@ impl KeyManager {
     }
 
     pub fn current_key(&self) -> &[u8; 32] {
-        self.keys.get(&self.current_version).expect("Current key must exist")
+        self.keys
+            .get(&self.current_version)
+            .expect("Current key must exist")
     }
 
     pub fn rotate_key(&mut self, new_key: &[u8; 32]) -> u32 {
@@ -267,7 +269,10 @@ impl SearchableEncryption {
         tokens
     }
 
-    pub fn encrypt_with_index(&self, plaintext: &str) -> EncryptionResult<(EncryptedField, Vec<String>)> {
+    pub fn encrypt_with_index(
+        &self,
+        plaintext: &str,
+    ) -> EncryptionResult<(EncryptedField, Vec<String>)> {
         let encrypted = self.encryption_service.encrypt(plaintext)?;
         let indexes = self.generate_field_indexes(plaintext)?;
         Ok((encrypted, indexes))
@@ -304,9 +309,17 @@ impl DataMasking {
             &digits
         };
         if phone_digits.len() >= 7 {
-            format!("{}****{}", &phone_digits[..3], &phone_digits[phone_digits.len() - 4..])
+            format!(
+                "{}****{}",
+                &phone_digits[..3],
+                &phone_digits[phone_digits.len() - 4..]
+            )
         } else if phone_digits.len() >= 4 {
-            format!("{}****{}", &phone_digits[..1], &phone_digits[phone_digits.len() - 1..])
+            format!(
+                "{}****{}",
+                &phone_digits[..1],
+                &phone_digits[phone_digits.len() - 1..]
+            )
         } else {
             "****".to_string()
         }
@@ -464,10 +477,7 @@ pub fn decrypt_optional_string(
     }
 }
 
-pub fn encrypt_string(
-    service: &FieldEncryptionService,
-    value: &str,
-) -> EncryptionResult<String> {
+pub fn encrypt_string(service: &FieldEncryptionService, value: &str) -> EncryptionResult<String> {
     service.encrypt_to_string(value)
 }
 
@@ -573,7 +583,10 @@ mod tests {
             DataMasking::bank_card("6222021234567890123"),
             "6222 *********** 0123"
         );
-        assert_eq!(DataMasking::bank_card("1234 5678 9012 3456"), "1234 ******** 3456");
+        assert_eq!(
+            DataMasking::bank_card("1234 5678 9012 3456"),
+            "1234 ******** 3456"
+        );
     }
 
     #[test]
@@ -601,7 +614,10 @@ mod tests {
 
     #[test]
     fn test_mask_by_type() {
-        assert_eq!(DataMasking::mask_by_type("13812345678", "phone"), "138****5678");
+        assert_eq!(
+            DataMasking::mask_by_type("13812345678", "phone"),
+            "138****5678"
+        );
         assert_eq!(
             DataMasking::mask_by_type("test@example.com", "email"),
             "te***@example.com"

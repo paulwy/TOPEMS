@@ -54,7 +54,7 @@ import {
   type RowAction,
   type FilterConfig,
 } from '@/components/templates';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 
 const STATUS_COLORS: Record<
   string,
@@ -445,7 +445,7 @@ export const DocumentPage: React.FC = () => {
         <Box
           sx={{
             p: 2,
-            borderRadius: 2,
+            borderRadius: 3,
             bgcolor: 'background.paper',
             border: 1,
             borderColor: 'divider',
@@ -461,7 +461,7 @@ export const DocumentPage: React.FC = () => {
         <Box
           sx={{
             p: 2,
-            borderRadius: 2,
+            borderRadius: 3,
             bgcolor: 'background.paper',
             border: 1,
             borderColor: 'divider',
@@ -477,7 +477,7 @@ export const DocumentPage: React.FC = () => {
         <Box
           sx={{
             p: 2,
-            borderRadius: 2,
+            borderRadius: 3,
             bgcolor: 'background.paper',
             border: 1,
             borderColor: 'divider',
@@ -494,8 +494,6 @@ export const DocumentPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='文档管理'
-      subtitle='文档上传、版本控制和文档检索'
       headerProps={{
         pageIcon: <FileText style={{ width: 20, height: 20 }} />,
         pageGradient: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',

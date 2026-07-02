@@ -454,6 +454,8 @@ const CRMRecommendationPage: React.FC = () => {
     <PageContainer
       title='客户推荐'
       subtitle='基于 AI 的智能客户推荐系统'
+      autoTitle
+      autoBreadcrumbs
     >
       <ListPageTemplate
         title=''

@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-import {
-  Box,
+import {Box,
   TextField,
   InputAdornment,
   Button,
@@ -14,8 +13,7 @@ import {
   FormControl,
   InputLabel,
   Select,
-  MenuItem,
-} from '@mui/material';
+  MenuItem, useTheme} from '@mui/material';
 import {
   Search,
   Plus,
@@ -41,6 +39,7 @@ import type { DataModel } from '../../api/lowcode/types';
 import { useNavigate } from 'react-router-dom';
 
 const DataModelListPage = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const [models, setModels] = useState<DataModel[]>([]);
   const [loading, setLoading] = useState(true);
@@ -144,7 +143,7 @@ const DataModelListPage = () => {
                 variant="outlined"
               />
             </Box>
-            <span style={{ fontSize: 12, color: 'text.secondary' }}>{row.name}</span>
+            <span style={{ fontSize: 12, color: theme.palette.text.secondary }}>{row.name}</span>
           </Box>
         </Box>
       ),

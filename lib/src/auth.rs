@@ -89,11 +89,13 @@ impl AuthState {
 
     pub fn from_env() -> Self {
         // 默认 JWT secret，与 Doc 服务保持一致
-        let default_jwt_secret = "topems-jwt-secret-key-must-be-at-least-32-characters-long-for-hs256";
-        let default_refresh_secret = "topems-refresh-secret-key-must-be-at-least-32-characters-for-hs256";
+        let default_jwt_secret =
+            "topems-jwt-secret-key-must-be-at-least-32-characters-long-for-hs256";
+        let default_refresh_secret =
+            "topems-refresh-secret-key-must-be-at-least-32-characters-for-hs256";
 
-        let jwt_secret = std::env::var("JWT_SECRET")
-            .unwrap_or_else(|_| default_jwt_secret.to_string());
+        let jwt_secret =
+            std::env::var("JWT_SECRET").unwrap_or_else(|_| default_jwt_secret.to_string());
         let refresh_secret = std::env::var("JWT_REFRESH_SECRET")
             .or_else(|_| std::env::var("REFRESH_SECRET"))
             .unwrap_or_else(|_| default_refresh_secret.to_string());
@@ -435,7 +437,10 @@ pub fn get_roles() -> Vec<Role> {
             id: "viewer".to_string(),
             name: "查看者".to_string(),
             description: "只读权限".to_string(),
-            permissions: vec!["pm:projects_read".to_string(), "doc:documents_read".to_string()],
+            permissions: vec![
+                "pm:projects_read".to_string(),
+                "doc:documents_read".to_string(),
+            ],
             is_default: true,
         },
     ]
@@ -474,12 +479,19 @@ pub async fn auth_middleware(
     }
 
     // Allow plugin install/uninstall APIs (requires tenant header, but no full auth)
-    if path.starts_with("/api/core/plugins/") && (path.ends_with("/install") || path.ends_with("/uninstall") || path.ends_with("/enable") || path.ends_with("/disable")) {
+    if path.starts_with("/api/core/plugins/")
+        && (path.ends_with("/install")
+            || path.ends_with("/uninstall")
+            || path.ends_with("/enable")
+            || path.ends_with("/disable"))
+    {
         return next.run(req).await;
     }
 
     // Allow GET requests for plugin browsing (public) - but NOT /my which requires auth
-    if path == "/api/core/plugins" || (path.starts_with("/api/core/plugins/") && path != "/api/core/plugins/my") {
+    if path == "/api/core/plugins"
+        || (path.starts_with("/api/core/plugins/") && path != "/api/core/plugins/my")
+    {
         let method = req.method().as_str();
         if method == "GET" {
             return next.run(req).await;

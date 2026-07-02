@@ -35,29 +35,29 @@ export const occupationalDiseaseApi = {
     if (params?.status) queryParams.append('status', params.status);
 
     return apiClient.ehs.get<PaginatedResponse<HazardFactor>>(
-      `/api/ehs/occupational-diseases/factors?${queryParams.toString()}`
+      `/occupational-diseases/factors?${queryParams.toString()}`
     );
   },
 
   getHazardFactor: async (id: string): Promise<ApiResponse<HazardFactor>> => {
-    return apiClient.ehs.get<HazardFactor>(`/api/ehs/occupational-diseases/factors/${id}`);
+    return apiClient.ehs.get<HazardFactor>(`/occupational-diseases/factors/${id}`);
   },
 
   createHazardFactor: async (
     data: CreateHazardFactorRequest
   ): Promise<ApiResponse<HazardFactor>> => {
-    return apiClient.ehs.post<HazardFactor>('/api/ehs/occupational-diseases/factors', data);
+    return apiClient.ehs.post<HazardFactor>('/occupational-diseases/factors', data);
   },
 
   updateHazardFactor: async (
     id: string,
     data: Partial<UpdateHazardFactorRequest>
   ): Promise<ApiResponse<HazardFactor>> => {
-    return apiClient.ehs.put<HazardFactor>(`/api/ehs/occupational-diseases/factors/${id}`, data);
+    return apiClient.ehs.put<HazardFactor>(`/occupational-diseases/factors/${id}`, data);
   },
 
   deleteHazardFactor: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(`/api/ehs/occupational-diseases/factors/${id}`);
+    return apiClient.ehs.delete<void>(`/occupational-diseases/factors/${id}`);
   },
 
   listHazardDetectionRecords: async (
@@ -73,13 +73,13 @@ export const occupationalDiseaseApi = {
     if (params?.end_date) queryParams.append('end_date', params.end_date);
 
     return apiClient.ehs.get<PaginatedResponse<HazardDetectionRecord>>(
-      `/api/ehs/occupational-diseases/detection-records?${queryParams.toString()}`
+      `/occupational-diseases/detection-records?${queryParams.toString()}`
     );
   },
 
   getHazardDetectionRecord: async (id: string): Promise<ApiResponse<HazardDetectionRecord>> => {
     return apiClient.ehs.get<HazardDetectionRecord>(
-      `/api/ehs/occupational-diseases/detection-records/${id}`
+      `/occupational-diseases/detection-records/${id}`
     );
   },
 
@@ -87,7 +87,7 @@ export const occupationalDiseaseApi = {
     data: CreateHazardDetectionRecordRequest
   ): Promise<ApiResponse<HazardDetectionRecord>> => {
     return apiClient.ehs.post<HazardDetectionRecord>(
-      '/api/ehs/occupational-diseases/detection-records',
+      '/occupational-diseases/detection-records',
       data
     );
   },
@@ -97,13 +97,13 @@ export const occupationalDiseaseApi = {
     data: Partial<UpdateHazardDetectionRecordRequest>
   ): Promise<ApiResponse<HazardDetectionRecord>> => {
     return apiClient.ehs.put<HazardDetectionRecord>(
-      `/api/ehs/occupational-diseases/detection-records/${id}`,
+      `/occupational-diseases/detection-records/${id}`,
       data
     );
   },
 
   deleteHazardDetectionRecord: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(`/api/ehs/occupational-diseases/detection-records/${id}`);
+    return apiClient.ehs.delete<void>(`/occupational-diseases/detection-records/${id}`);
   },
 
   listOccupationalDiseaseCases: async (
@@ -119,35 +119,29 @@ export const occupationalDiseaseApi = {
     if (params?.severity) queryParams.append('severity', params.severity);
 
     return apiClient.ehs.get<PaginatedResponse<OccupationalDiseaseCase>>(
-      `/api/ehs/occupational-diseases/cases?${queryParams.toString()}`
+      `/occupational-diseases/cases?${queryParams.toString()}`
     );
   },
 
   getOccupationalDiseaseCase: async (id: string): Promise<ApiResponse<OccupationalDiseaseCase>> => {
-    return apiClient.ehs.get<OccupationalDiseaseCase>(`/api/ehs/occupational-diseases/cases/${id}`);
+    return apiClient.ehs.get<OccupationalDiseaseCase>(`/occupational-diseases/cases/${id}`);
   },
 
   createOccupationalDiseaseCase: async (
     data: CreateOccupationalDiseaseCaseRequest
   ): Promise<ApiResponse<OccupationalDiseaseCase>> => {
-    return apiClient.ehs.post<OccupationalDiseaseCase>(
-      '/api/ehs/occupational-diseases/cases',
-      data
-    );
+    return apiClient.ehs.post<OccupationalDiseaseCase>('/occupational-diseases/cases', data);
   },
 
   updateOccupationalDiseaseCase: async (
     id: string,
     data: Partial<UpdateOccupationalDiseaseCaseRequest>
   ): Promise<ApiResponse<OccupationalDiseaseCase>> => {
-    return apiClient.ehs.put<OccupationalDiseaseCase>(
-      `/api/ehs/occupational-diseases/cases/${id}`,
-      data
-    );
+    return apiClient.ehs.put<OccupationalDiseaseCase>(`/occupational-diseases/cases/${id}`, data);
   },
 
   deleteOccupationalDiseaseCase: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(`/api/ehs/occupational-diseases/cases/${id}`);
+    return apiClient.ehs.delete<void>(`/occupational-diseases/cases/${id}`);
   },
 
   listProtectionMeasures: async (
@@ -162,21 +156,19 @@ export const occupationalDiseaseApi = {
     if (params?.status) queryParams.append('status', params.status);
 
     return apiClient.ehs.get<PaginatedResponse<ProtectionMeasure>>(
-      `/api/ehs/occupational-diseases/protection-measures?${queryParams.toString()}`
+      `/occupational-diseases/protection-measures?${queryParams.toString()}`
     );
   },
 
   getProtectionMeasure: async (id: string): Promise<ApiResponse<ProtectionMeasure>> => {
-    return apiClient.ehs.get<ProtectionMeasure>(
-      `/api/ehs/occupational-diseases/protection-measures/${id}`
-    );
+    return apiClient.ehs.get<ProtectionMeasure>(`/occupational-diseases/protection-measures/${id}`);
   },
 
   createProtectionMeasure: async (
     data: CreateProtectionMeasureRequest
   ): Promise<ApiResponse<ProtectionMeasure>> => {
     return apiClient.ehs.post<ProtectionMeasure>(
-      '/api/ehs/occupational-diseases/protection-measures',
+      '/occupational-diseases/protection-measures',
       data
     );
   },
@@ -186,13 +178,13 @@ export const occupationalDiseaseApi = {
     data: Partial<UpdateProtectionMeasureRequest>
   ): Promise<ApiResponse<ProtectionMeasure>> => {
     return apiClient.ehs.put<ProtectionMeasure>(
-      `/api/ehs/occupational-diseases/protection-measures/${id}`,
+      `/occupational-diseases/protection-measures/${id}`,
       data
     );
   },
 
   deleteProtectionMeasure: async (id: string): Promise<ApiResponse<void>> => {
-    return apiClient.ehs.delete<void>(`/api/ehs/occupational-diseases/protection-measures/${id}`);
+    return apiClient.ehs.delete<void>(`/occupational-diseases/protection-measures/${id}`);
   },
 };
 

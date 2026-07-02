@@ -265,12 +265,7 @@ export interface UpdateConversionRuleRequest {
 }
 
 export type MappingType =
-  | 'account'
-  | 'customer'
-  | 'supplier'
-  | 'project'
-  | 'department'
-  | 'employee';
+  'account' | 'customer' | 'supplier' | 'project' | 'department' | 'employee';
 export type MappingDirection = 'to_external' | 'from_external' | 'bidirectional';
 
 export interface ErpMapping {

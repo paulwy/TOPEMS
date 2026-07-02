@@ -140,13 +140,19 @@ mod tests {
     #[test]
     fn test_hrm_table() {
         assert_eq!(hrm_table("payroll_runs"), "plugin_hrm.payroll_runs");
-        assert_eq!(hrm_table("attendance_records"), "plugin_hrm.attendance_records");
+        assert_eq!(
+            hrm_table("attendance_records"),
+            "plugin_hrm.attendance_records"
+        );
     }
 
     #[test]
     fn test_erp_table() {
         assert_eq!(erp_table("assets"), "plugin_erp.assets");
-        assert_eq!(erp_table("financial_records"), "plugin_erp.financial_records");
+        assert_eq!(
+            erp_table("financial_records"),
+            "plugin_erp.financial_records"
+        );
     }
 
     #[test]

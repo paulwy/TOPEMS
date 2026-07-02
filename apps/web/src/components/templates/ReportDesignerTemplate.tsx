@@ -794,7 +794,7 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
                   border: 2,
                   borderStyle: 'dashed',
                   borderColor: 'grey.300',
-                  borderRadius: 2,
+                  borderRadius: 3,
                   textAlign: 'center',
                 }}
               >
@@ -1650,7 +1650,7 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
                     width: 12,
                     height: 12,
                     bgcolor: chartColors[idx % chartColors.length],
-                    borderRadius: 2,
+                    borderRadius: 3,
                   }}
                 />
                 <Typography variant='caption'>{yField.label}</Typography>
@@ -1742,7 +1742,7 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
         )}
       </Box>
 
-      <Paper sx={{ p: 2, mb: 3, borderRadius: 2 }}>
+      <Paper sx={{ p: 2, mb: 3, borderRadius: 3 }}>
         <TextField
           fullWidth
           label='报表标题'
@@ -1760,9 +1760,9 @@ export const ReportDesignerTemplate: React.FC<ReportDesignerTemplateProps> = ({
         />
       </Paper>
 
-      <Paper sx={{ p: 3, mb: 3, borderRadius: 2 }}>{renderDataSourcePanel()}</Paper>
+      <Paper sx={{ p: 3, mb: 3, borderRadius: 3 }}>{renderDataSourcePanel()}</Paper>
 
-      <Paper sx={{ p: 3, borderRadius: 2 }}>
+      <Paper sx={{ p: 3, borderRadius: 3 }}>
         <Tabs
           value={activeTab}
           onChange={(_, newValue) => setActiveTab(newValue)}

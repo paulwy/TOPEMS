@@ -571,7 +571,7 @@ const OutboundPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -585,7 +585,7 @@ const OutboundPage: React.FC = () => {
           {total}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -599,7 +599,7 @@ const OutboundPage: React.FC = () => {
           {orders.filter((o) => o.status === 'pending').length}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'info.light', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'info.light', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -613,7 +613,7 @@ const OutboundPage: React.FC = () => {
           {orders.filter((o) => o.status === 'picking' || o.status === 'picked').length}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'success.light', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'success.light', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -683,6 +683,15 @@ const OutboundPage: React.FC = () => {
           headerContent={statsContent}
           emptyMessage='暂无出库单数据'
           getRowId={(row) => row.id}
+          mobileCardTitleKey='order_number'
+          mobileCardSubtitleKey='customer_name'
+          mobileCardDisplayFields={['order_type', 'status', 'expected_date', 'total_quantity']}
+          mobileCardFieldLabels={{
+            order_type: '出库类型',
+            status: '状态',
+            expected_date: '预计日期',
+            total_quantity: '总数',
+          }}
         />
       )}
 
@@ -713,6 +722,14 @@ const OutboundPage: React.FC = () => {
           actions={[]}
           emptyMessage='暂无波次拣货数据'
           getRowId={(row) => row.id}
+          mobileCardTitleKey='wave_number'
+          mobileCardDisplayFields={['status', 'total_items', 'picked_items', 'assigned_to']}
+          mobileCardFieldLabels={{
+            status: '状态',
+            total_items: '总项数',
+            picked_items: '已拣数',
+            assigned_to: '分配给',
+          }}
         />
       )}
 

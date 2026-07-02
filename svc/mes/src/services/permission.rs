@@ -53,9 +53,15 @@ impl std::fmt::Display for ModulePermission {
             ModulePermission::EquipmentWrite => write!(f, "mes:equipment:write"),
             ModulePermission::WorkStationRead => write!(f, "mes:work_station:read"),
             ModulePermission::WorkStationWrite => write!(f, "mes:work_station:write"),
-            ModulePermission::ProductionSchedulingRead => write!(f, "mes:production_scheduling:read"),
-            ModulePermission::ProductionSchedulingWrite => write!(f, "mes:production_scheduling:write"),
-            ModulePermission::ProductionSchedulingAdjust => write!(f, "mes:production_scheduling:adjust"),
+            ModulePermission::ProductionSchedulingRead => {
+                write!(f, "mes:production_scheduling:read")
+            }
+            ModulePermission::ProductionSchedulingWrite => {
+                write!(f, "mes:production_scheduling:write")
+            }
+            ModulePermission::ProductionSchedulingAdjust => {
+                write!(f, "mes:production_scheduling:adjust")
+            }
             ModulePermission::MaterialBomRead => write!(f, "mes:material_bom:read"),
             ModulePermission::MaterialBomWrite => write!(f, "mes:material_bom:write"),
             ModulePermission::MaterialBomIssue => write!(f, "mes:material_bom:issue"),

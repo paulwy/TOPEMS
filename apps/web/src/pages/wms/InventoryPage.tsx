@@ -33,7 +33,47 @@ import { useAppStore } from '@/store';
 import { Plus, Edit, Trash2, Eye, Package, AlertTriangle } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 import { ConfirmDialog, PageContainer } from '@/components/common';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
+/**
+ * TODO: Phase 7-4 -- 虚拟滚动优化
+ *
+ * 当列表数据超过 100 条时，建议使用虚拟滚动提升渲染性能:
+ *
+ * 方案 1: @tanstack/react-virtual
+ *   import { useVirtualizer } from '@tanstack/react-virtual';
+ *   const virtualizer = useVirtualizer({ count: data.length, getScrollElement: () => parentRef.current });
+ *
+ * 方案 2: react-virtuoso (MUI 友好)
+ *   import { TableVirtuoso } from 'react-virtuoso';
+ *   <TableVirtuoso data={data} components={{ TableBody, TableRow, TableCell }} />
+ *
+ * 当前预估数据量: 库存列表 (SKU 数千条)
+ */
+
+/**
+ * TODO: Phase 7-2 — React Query 迁移
+ *
+ * 模块: 库存管理 (InventoryPage)
+ *
+ * 1. 将 useState(loading) + useState(data) + useEffect(fetch) 替换为 useQuery:
+ *    const { data: response, isLoading, error, refetch } = useQuery({
+ *      queryKey: ['wms-inventory', page, rowsPerPage, searchText],
+ *      queryFn: () => wmsApi.getList({ page: page + 1, pageSize: rowsPerPage, keyword: searchText }),
+ *      placeholderData: (prev) => prev,
+ *    });
+ *    const data = response?.data?.items || [];
+ *    const total = response?.data?.total || 0;
+ *
+ * 2. 将 create/update/delete handler 中的 setState + API 调用替换为 useMutation:
+ *    const queryClient = useQueryClient();
+ *    const deleteMutation = useMutation({
+ *      mutationFn: (id: string) => wmsApi.delete(id),
+ *      onSuccess: () => queryClient.invalidateQueries({ queryKey: ['wms-inventory'] }),
+ *    });
+ *
+ * 3. 保留 UI 状态（page, rowsPerPage, searchText, dialogOpen 等）的 useState
+ */
 const statusConfig: Record<
   string,
   { label: string; color: 'success' | 'warning' | 'error' | 'default' }
@@ -394,7 +434,7 @@ const InventoryPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -412,7 +452,7 @@ const InventoryPage: React.FC = () => {
         sx={{
           p: 2,
           bgcolor: 'warning.light',
-          borderRadius: 2,
+          borderRadius: 3,
           cursor: 'pointer',
           '&:hover': { opacity: 0.9 },
         }}
@@ -428,7 +468,7 @@ const InventoryPage: React.FC = () => {
         >
           <AlertTriangle
             size={16}
-            color='#b45309'
+            color='warning.700'
           />
           <Typography
             variant='body2'
@@ -439,12 +479,12 @@ const InventoryPage: React.FC = () => {
         </Stack>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#b45309' }}
+          sx={{ fontWeight: 700, color: 'warning.700' }}
         >
           {alertStats?.low_stock_count || 0}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#fef2f2', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: '#fef2f2', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -458,7 +498,7 @@ const InventoryPage: React.FC = () => {
           {alertStats?.pending_alerts || 0}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -517,6 +557,15 @@ const InventoryPage: React.FC = () => {
         headerContent={statsContent}
         emptyMessage='暂无库存记录'
         getRowId={(row) => row.id}
+        mobileCardTitleKey='name'
+        mobileCardSubtitleKey='sku'
+        mobileCardDisplayFields={['specification', 'quantity', 'available_quantity', 'warehouse_name']}
+        mobileCardFieldLabels={{
+          specification: '规格',
+          quantity: '数量',
+          available_quantity: '可用数量',
+          warehouse_name: '仓库',
+        }}
       />
 
       {/* 新增对话框 */}
@@ -922,7 +971,7 @@ const InventoryPage: React.FC = () => {
           >
             <AlertTriangle
               size={20}
-              color='#b45309'
+              color='warning.700'
             />
             低库存预警列表
           </Stack>
@@ -992,3 +1041,5 @@ const InventoryPage: React.FC = () => {
 };
 
 export default InventoryPage;
+
+// Phase 7-2: React Query migration tagged

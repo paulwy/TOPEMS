@@ -56,13 +56,34 @@ where
                 .put(update_outbound_order)
                 .delete(delete_outbound_order),
         )
-        .route("/api/v1/outbound-orders/{id}/items", get(list_outbound_order_items).post(create_outbound_order_item))
-        .route("/api/v1/outbound-orders/{id}/items/{item_id}", put(update_outbound_order_item).delete(delete_outbound_order_item))
-        .route("/api/v1/outbound-orders/{id}/confirm", post(confirm_outbound_order))
-        .route("/api/v1/outbound-orders/{id}/pick", post(pick_outbound_order))
-        .route("/api/v1/outbound-orders/{id}/pack", post(pack_outbound_order))
-        .route("/api/v1/outbound-orders/{id}/ship", post(ship_outbound_order))
-        .route("/api/v1/outbound-orders/{id}/complete", post(complete_outbound_order))
+        .route(
+            "/api/v1/outbound-orders/{id}/items",
+            get(list_outbound_order_items).post(create_outbound_order_item),
+        )
+        .route(
+            "/api/v1/outbound-orders/{id}/items/{item_id}",
+            put(update_outbound_order_item).delete(delete_outbound_order_item),
+        )
+        .route(
+            "/api/v1/outbound-orders/{id}/confirm",
+            post(confirm_outbound_order),
+        )
+        .route(
+            "/api/v1/outbound-orders/{id}/pick",
+            post(pick_outbound_order),
+        )
+        .route(
+            "/api/v1/outbound-orders/{id}/pack",
+            post(pack_outbound_order),
+        )
+        .route(
+            "/api/v1/outbound-orders/{id}/ship",
+            post(ship_outbound_order),
+        )
+        .route(
+            "/api/v1/outbound-orders/{id}/complete",
+            post(complete_outbound_order),
+        )
 }
 
 async fn list_outbound_orders(
@@ -71,7 +92,7 @@ async fn list_outbound_orders(
     Query(params): Query<PaginationParams>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::OutboundRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let page = params.page.unwrap_or(1).max(1);
@@ -142,7 +163,7 @@ async fn create_outbound_order(
     Json(req): Json<CreateOutboundOrderRequest>,
 ) -> Json<ApiResponse<OutboundOrder>> {
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let request_data = serde_json::to_value(&req).ok();
@@ -221,7 +242,7 @@ async fn get_outbound_order(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<OutboundOrder>> {
     match check_permission(&state.db, &claims, &ModulePermission::OutboundRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let result = sqlx::query_as::<_, OutboundOrder>(
@@ -254,7 +275,7 @@ async fn update_outbound_order(
     Json(req): Json<UpdateOutboundOrderRequest>,
 ) -> Json<ApiResponse<OutboundOrder>> {
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let request_data = serde_json::to_value(&req).ok();
@@ -357,13 +378,15 @@ async fn delete_outbound_order(
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
-    let result = sqlx::query(r#"UPDATE wms.outbound_orders SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"#)
-        .bind(id)
-        .execute(&state.db)
-        .await;
+    let result = sqlx::query(
+        r#"UPDATE wms.outbound_orders SET deleted_at = NOW() WHERE id = $1 AND deleted_at IS NULL"#,
+    )
+    .bind(id)
+    .execute(&state.db)
+    .await;
 
     let (response, status_str, error_msg) = match &result {
         Ok(r) if r.rows_affected() > 0 => (
@@ -417,7 +440,7 @@ async fn list_outbound_order_items(
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::OutboundRead).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let result = sqlx::query(
@@ -439,24 +462,28 @@ async fn list_outbound_order_items(
     match result {
         Ok(items) => {
             let total: i64 = items.len() as i64;
-            let shipped_count: i64 = items.iter()
+            let shipped_count: i64 = items
+                .iter()
                 .filter(|r| (*r).try_get::<f64, _>("shipped_quantity").unwrap_or(0.0) > 0.0)
                 .count() as i64;
 
-            let items_json: Vec<serde_json::Value> = items.iter().map(|row| {
-                serde_json::json!({
-                    "id": row.try_get::<Uuid, _>("id").ok(),
-                    "line_number": row.try_get::<i32, _>("line_number").ok(),
-                    "material_code": row.try_get::<String, _>("material_code").ok(),
-                    "material_name": row.try_get::<String, _>("material_name").ok(),
-                    "specification": row.try_get::<Option<String>, _>("specification").ok(),
-                    "batch_number": row.try_get::<Option<String>, _>("batch_number").ok(),
-                    "requested_quantity": row.try_get::<f64, _>("requested_quantity").ok(),
-                    "shipped_quantity": row.try_get::<f64, _>("shipped_quantity").ok(),
-                    "unit": row.try_get::<String, _>("unit").ok(),
-                    "status": row.try_get::<String, _>("status").ok(),
+            let items_json: Vec<serde_json::Value> = items
+                .iter()
+                .map(|row| {
+                    serde_json::json!({
+                        "id": row.try_get::<Uuid, _>("id").ok(),
+                        "line_number": row.try_get::<i32, _>("line_number").ok(),
+                        "material_code": row.try_get::<String, _>("material_code").ok(),
+                        "material_name": row.try_get::<String, _>("material_name").ok(),
+                        "specification": row.try_get::<Option<String>, _>("specification").ok(),
+                        "batch_number": row.try_get::<Option<String>, _>("batch_number").ok(),
+                        "requested_quantity": row.try_get::<f64, _>("requested_quantity").ok(),
+                        "shipped_quantity": row.try_get::<f64, _>("shipped_quantity").ok(),
+                        "unit": row.try_get::<String, _>("unit").ok(),
+                        "status": row.try_get::<String, _>("status").ok(),
+                    })
                 })
-            }).collect();
+                .collect();
 
             Json(ApiResponse::success(
                 serde_json::json!({
@@ -482,7 +509,7 @@ async fn create_outbound_order_item(
     Json(req): Json<OutboundOrderItemRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let request_data = serde_json::to_value(&req).ok();
@@ -538,7 +565,10 @@ async fn create_outbound_order_item(
                 "unit": item.try_get::<String, _>("unit").ok(),
             });
             (
-                Json(ApiResponse::success(item_json.clone(), "出库订单明细创建成功")),
+                Json(ApiResponse::success(
+                    item_json.clone(),
+                    "出库订单明细创建成功",
+                )),
                 "success",
                 None,
                 Some(item_json),
@@ -582,7 +612,7 @@ async fn update_outbound_order_item(
     Json(req): Json<ShipItemRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let request_data = serde_json::to_value(&req).ok();
@@ -619,7 +649,10 @@ async fn update_outbound_order_item(
                 "unit": item.try_get::<String, _>("unit").ok(),
             });
             (
-                Json(ApiResponse::success(item_json.clone(), "出库订单明细更新成功")),
+                Json(ApiResponse::success(
+                    item_json.clone(),
+                    "出库订单明细更新成功",
+                )),
                 "success",
                 None,
                 Some(item_json),
@@ -662,7 +695,7 @@ async fn delete_outbound_order_item(
     headers: HeaderMap,
 ) -> Json<ApiResponse<String>> {
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let result = sqlx::query(r#"UPDATE wms.outbound_order_items SET deleted_at = NOW() WHERE order_id = $1 AND id = $2 AND deleted_at IS NULL"#)
@@ -724,7 +757,7 @@ async fn confirm_outbound_order(
     headers: HeaderMap,
 ) -> Json<ApiResponse<OutboundOrder>> {
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let now = Utc::now();
@@ -792,7 +825,7 @@ async fn pick_outbound_order(
     headers: HeaderMap,
 ) -> Json<ApiResponse<OutboundOrder>> {
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let now = Utc::now();
@@ -860,7 +893,7 @@ async fn pack_outbound_order(
     headers: HeaderMap,
 ) -> Json<ApiResponse<OutboundOrder>> {
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let now = Utc::now();
@@ -930,7 +963,7 @@ async fn ship_outbound_order(
     Json(items): Json<Vec<ShipItemRequest>>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let request_data = serde_json::to_value(&items).ok();
@@ -1059,7 +1092,7 @@ async fn complete_outbound_order(
     headers: HeaderMap,
 ) -> Json<ApiResponse<OutboundOrder>> {
     match check_permission(&state.db, &claims, &ModulePermission::OutboundWrite).await {
-        Ok(_) => {},
+        Ok(_) => {}
         Err(e) => return e,
     }
     let now = Utc::now();

@@ -48,7 +48,7 @@ export const PluginCategoryNav: React.FC<PluginCategoryNavProps> = ({
             sx={{
               px: 2,
               py: 1,
-              borderRadius: 2,
+              borderRadius: 3,
               fontSize: 14,
               cursor: 'pointer',
               transition: 'all 0.2s ease',

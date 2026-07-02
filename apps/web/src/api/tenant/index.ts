@@ -21,7 +21,7 @@ import {
   generateMockInvoices,
 } from './mockData';
 
-let tenantsCache = [...mockTenants];
+const tenantsCache = [...mockTenants];
 const tenantUsersCache = new Map<string, TenantUser[]>();
 
 const delay = <T>(data: T, ms = 300): Promise<T> =>
@@ -49,8 +49,7 @@ export const tenantApi = {
       const searchLower = params.search.toLowerCase();
       filtered = filtered.filter(
         (t) =>
-          t.name.toLowerCase().includes(searchLower) ||
-          t.slug.toLowerCase().includes(searchLower)
+          t.name.toLowerCase().includes(searchLower) || t.slug.toLowerCase().includes(searchLower)
       );
     }
 
@@ -106,13 +105,34 @@ export const tenantApi = {
       status: 'trial',
       plan: data.plan,
       settings: {
-        max_users: data.plan === 'enterprise' ? 9999 : data.plan === 'professional' ? 100 : data.plan === 'basic' ? 25 : 5,
-        max_storage_gb: data.plan === 'enterprise' ? 9999 : data.plan === 'professional' ? 200 : data.plan === 'basic' ? 50 : 5,
-        max_api_requests_per_day: data.plan === 'enterprise' ? 9999999 : data.plan === 'professional' ? 200000 : data.plan === 'basic' ? 50000 : 1000,
+        max_users:
+          data.plan === 'enterprise'
+            ? 9999
+            : data.plan === 'professional'
+              ? 100
+              : data.plan === 'basic'
+                ? 25
+                : 5,
+        max_storage_gb:
+          data.plan === 'enterprise'
+            ? 9999
+            : data.plan === 'professional'
+              ? 200
+              : data.plan === 'basic'
+                ? 50
+                : 5,
+        max_api_requests_per_day:
+          data.plan === 'enterprise'
+            ? 9999999
+            : data.plan === 'professional'
+              ? 200000
+              : data.plan === 'basic'
+                ? 50000
+                : 1000,
         features: {},
         branding: {
-          primary_color: '#3B82F6',
-          secondary_color: '#6B7280',
+          primary_color: 'primary.main',
+          secondary_color: 'grey.500',
         },
         security: {
           sso_enabled: false,
@@ -196,7 +216,9 @@ export const tenantApi = {
       role?: string;
       status?: string;
     }
-  ): Promise<ApiResponse<{ items: TenantUser[]; total: number; page: number; pageSize: number }>> => {
+  ): Promise<
+    ApiResponse<{ items: TenantUser[]; total: number; page: number; pageSize: number }>
+  > => {
     if (!tenantUsersCache.has(tenantId)) {
       tenantUsersCache.set(tenantId, generateMockTenantUsers(tenantId));
     }

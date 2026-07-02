@@ -106,13 +106,22 @@ pub struct ComparisonItemRecord {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/scm/inquiries", get(list_inquiries).post(create_inquiry))
-        .route("/api/v1/inquiries/{id}", get(get_inquiry).delete(delete_inquiry))
+        .route(
+            "/api/scm/inquiries",
+            get(list_inquiries).post(create_inquiry),
+        )
+        .route(
+            "/api/v1/inquiries/{id}",
+            get(get_inquiry).delete(delete_inquiry),
+        )
         .route("/api/v1/inquiries/{id}/publish", post(publish_inquiry))
         .route("/api/scm/quotes", get(list_quotes).post(create_quote))
         .route("/api/v1/quotes/{id}", get(get_quote).put(update_quote))
         .route("/api/v1/quotes/{id}/submit", post(submit_quote))
-        .route("/api/scm/comparisons", get(list_comparisons).post(create_comparison))
+        .route(
+            "/api/scm/comparisons",
+            get(list_comparisons).post(create_comparison),
+        )
         .route("/api/v1/comparisons/{id}", get(get_comparison))
         .route("/api/v1/comparisons/{id}/approve", post(approve_comparison))
 }
@@ -234,7 +243,10 @@ async fn create_inquiry(
                 .await;
             }
 
-            Json(ApiResponse::success(serde_json::json!(inquiry), "创建询价单成功"))
+            Json(ApiResponse::success(
+                serde_json::json!(inquiry),
+                "创建询价单成功",
+            ))
         }
         Err(e) => Json(api_error(500, &format!("创建询价单失败: {}", e))),
     }
@@ -318,7 +330,10 @@ async fn delete_inquiry(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(serde_json::json!({"id": id}), "删除询价单成功")),
+        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
+            serde_json::json!({"id": id}),
+            "删除询价单成功",
+        )),
         Ok(_) => Json(api_error(400, "只能删除草稿状态的询价单")),
         Err(e) => Json(api_error(500, &format!("删除询价单失败: {}", e))),
     }
@@ -346,7 +361,10 @@ async fn publish_inquiry(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(serde_json::json!({"id": id}), "询价单已发布")),
+        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
+            serde_json::json!({"id": id}),
+            "询价单已发布",
+        )),
         Ok(_) => Json(api_error(400, "只能发布草稿状态的询价单")),
         Err(e) => Json(api_error(500, &format!("发布询价单失败: {}", e))),
     }
@@ -456,7 +474,10 @@ async fn create_quote(
     .await;
 
     match result {
-        Ok(_) => Json(ApiResponse::success(serde_json::json!({"id": id, "quote_no": quote_no}), "创建报价单成功")),
+        Ok(_) => Json(ApiResponse::success(
+            serde_json::json!({"id": id, "quote_no": quote_no}),
+            "创建报价单成功",
+        )),
         Err(e) => Json(api_error(500, &format!("创建报价单失败: {}", e))),
     }
 }
@@ -541,7 +562,10 @@ async fn update_quote(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(serde_json::json!({"id": id}), "更新报价单成功")),
+        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
+            serde_json::json!({"id": id}),
+            "更新报价单成功",
+        )),
         Ok(_) => Json(api_error(400, "只能更新草稿状态的报价单")),
         Err(e) => Json(api_error(500, &format!("更新报价单失败: {}", e))),
     }
@@ -569,7 +593,10 @@ async fn submit_quote(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(serde_json::json!({"id": id}), "报价单已提交")),
+        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
+            serde_json::json!({"id": id}),
+            "报价单已提交",
+        )),
         Ok(_) => Json(api_error(400, "只能提交草稿状态的报价单")),
         Err(e) => Json(api_error(500, &format!("提交报价单失败: {}", e))),
     }
@@ -686,9 +713,11 @@ async fn create_comparison(
         Ok(_) => {
             let mut rank = 1;
             for item in req.supplier_scores {
-                let item_total = item.quality_score * 0.3 + item.price_score * 0.4 + 
-                                 item.delivery_score * 0.2 + item.service_score * 0.1;
-                
+                let item_total = item.quality_score * 0.3
+                    + item.price_score * 0.4
+                    + item.delivery_score * 0.2
+                    + item.service_score * 0.1;
+
                 let _ = sqlx::query(
                     r#"
                     INSERT INTO scm.price_comparison_items (id, comparison_id, supplier_id, quote_id, quality_score, 
@@ -709,7 +738,7 @@ async fn create_comparison(
                 .bind(&item.remarks)
                 .execute(&state.db)
                 .await;
-                
+
                 rank += 1;
             }
 
@@ -805,7 +834,10 @@ async fn approve_comparison(
     .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(serde_json::json!({"id": id}), "比价分析已审批")),
+        Ok(r) if r.rows_affected() > 0 => Json(ApiResponse::success(
+            serde_json::json!({"id": id}),
+            "比价分析已审批",
+        )),
         Ok(_) => Json(api_error(404, "比价分析不存在")),
         Err(e) => Json(api_error(500, &format!("审批比价分析失败: {}", e))),
     }

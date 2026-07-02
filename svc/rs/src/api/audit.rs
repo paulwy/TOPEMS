@@ -272,23 +272,27 @@ async fn export_audit_logs(
     match result {
         Ok(logs) => {
             let csv_content = generate_csv(&logs);
-            let filename = format!(
-                "audit_logs_{}.csv",
-                Utc::now().format("%Y%m%d_%H%M%S")
-            );
-            
+            let filename = format!("audit_logs_{}.csv", Utc::now().format("%Y%m%d_%H%M%S"));
+
             let mut headers = HeaderMap::new();
-            headers.insert("Content-Type", HeaderValue::from_static("text/csv; charset=utf-8"));
+            headers.insert(
+                "Content-Type",
+                HeaderValue::from_static("text/csv; charset=utf-8"),
+            );
             headers.insert(
                 "Content-Disposition",
                 HeaderValue::from_str(&format!("attachment; filename=\"{}\"", filename)).unwrap(),
             );
-            
+
             (headers, csv_content).into_response()
         }
         Err(e) => {
             tracing::error!("导出审计日志失败: {}", e);
-            Json(ApiResponse::<serde_json::Value>::error(500, "导出审计日志失败")).into_response()
+            Json(ApiResponse::<serde_json::Value>::error(
+                500,
+                "导出审计日志失败",
+            ))
+            .into_response()
         }
     }
 }
@@ -298,23 +302,36 @@ fn generate_csv(logs: &[AuditLog]) -> String {
         .delimiter(b',')
         .quote_style(csv::QuoteStyle::Always)
         .from_writer(vec![]);
-    
+
     wtr.write_record(&[
-        "ID", "操作", "实体类型", "实体ID", "用户ID", "用户名", 
-        "状态", "错误信息", "IP地址", "创建时间", "请求详情", "响应详情"
-    ]).unwrap();
-    
+        "ID",
+        "操作",
+        "实体类型",
+        "实体ID",
+        "用户ID",
+        "用户名",
+        "状态",
+        "错误信息",
+        "IP地址",
+        "创建时间",
+        "请求详情",
+        "响应详情",
+    ])
+    .unwrap();
+
     for log in logs {
-        let request_details = log.request_details
+        let request_details = log
+            .request_details
             .as_ref()
             .and_then(|v| serde_json::to_string(v).ok())
             .unwrap_or_default();
-        
-        let response_details = log.response_details
+
+        let response_details = log
+            .response_details
             .as_ref()
             .and_then(|v| serde_json::to_string(v).ok())
             .unwrap_or_default();
-        
+
         wtr.write_record(&[
             log.id.to_string(),
             log.action.clone(),
@@ -328,8 +345,9 @@ fn generate_csv(logs: &[AuditLog]) -> String {
             log.created_at.to_rfc3339(),
             request_details,
             response_details,
-        ]).unwrap();
+        ])
+        .unwrap();
     }
-    
+
     String::from_utf8(wtr.into_inner().unwrap()).unwrap()
 }

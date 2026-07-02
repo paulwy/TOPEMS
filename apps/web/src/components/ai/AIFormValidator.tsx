@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { AlertCircle, CheckCircle, AlertTriangle, Info, Sparkles, RefreshCw } from 'lucide-react';
-import { Card, CardContent, Box, Typography, Button } from '@mui/material';
+import {Card, CardContent, Box, Typography, Button, useTheme} from '@mui/material';
 import { AIGenerateModal } from './AIGenerateModal';
 import { useAIHelper } from '../../hooks/useAIHelper';
 import type { ValidateRequest, ValidationIssue, Suggestion } from '@/types/ai';
@@ -12,12 +12,6 @@ export interface AIFormValidatorProps {
   onApplySuggestions?: (_suggestions: Suggestion[]) => void;
   onFixIssue?: (_issue: ValidationIssue) => void;
 }
-
-const issueIconMap: Record<string, React.ReactNode> = {
-  error: <AlertCircle style={{ width: 20, height: 20, color: 'error.main' }} />,
-  warning: <AlertTriangle style={{ width: 20, height: 20, color: 'warning.main' }} />,
-  info: <Info style={{ width: 20, height: 20, color: 'primary.main' }} />,
-};
 
 const issueTitleMap: Record<string, string> = {
   error: '错误',
@@ -44,6 +38,14 @@ export function AIFormValidator({
       }
     },
   });
+
+  const theme = useTheme();
+  
+  const issueIconMap = {
+    error: <AlertCircle style={{ width: 20, height: 20, color: theme.palette.error.main }} />,
+    warning: <AlertTriangle style={{ width: 20, height: 20, color: theme.palette.warning.main }} />,
+    info: <Info style={{ width: 20, height: 20, color: theme.palette.primary.main }} />,
+  };
 
   useEffect(() => {
     if (isOpen) {
@@ -92,12 +94,12 @@ export function AIFormValidator({
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             {isValid ? (
               <>
-                <CheckCircle style={{ width: 24, height: 24, color: 'success.dark' }} />
-                <Typography sx={{ fontWeight: 500, color: '#15803d' }}>校验通过</Typography>
+                <CheckCircle style={{ width: 24, height: 24, color: theme.palette.success.dark }} />
+                <Typography sx={{ fontWeight: 500, color: 'success.700' }}>校验通过</Typography>
               </>
             ) : (
               <>
-                <AlertCircle style={{ width: 24, height: 24, color: 'error.main' }} />
+                <AlertCircle style={{ width: 24, height: 24, color: theme.palette.error.main }} />
                 <Typography sx={{ fontWeight: 500, color: 'error.dark' }}>发现问题</Typography>
               </>
             )}
@@ -229,7 +231,7 @@ export function AIFormValidator({
                         style={{
                           width: 20,
                           height: 20,
-                          color: 'primary.main',
+                          color: theme.palette.primary.main,
                           marginTop: 2,
                         }}
                       />
@@ -256,7 +258,7 @@ export function AIFormValidator({
                             px: 0.5,
                             py: 0.5,
                             borderRadius: 0.5,
-                            border: '1px solid #dbeafe',
+                            border: '1px solid primary.100',
                           }}
                         >
                           {suggestion.value}
@@ -277,7 +279,7 @@ export function AIFormValidator({
                 width: 48,
                 height: 48,
                 margin: '0 auto 12px',
-                color: 'success.dark',
+                color: theme.palette.success.dark,
               }}
             />
             <Typography>表单校验通过！</Typography>

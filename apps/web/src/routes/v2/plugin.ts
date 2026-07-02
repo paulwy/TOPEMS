@@ -15,62 +15,42 @@ export const pluginModuleConfig: RouteModuleConfig = {
   routes: [
     {
       path: '/plugin/marketplace',
-      element: lazyWithRetry(() => import('../../pages/plugin/PluginMarketplacePage'), 'PluginMarketplacePage'),
+      element: lazyWithRetry(
+        () => import('../../pages/plugin/PluginMarketplacePage'),
+        'PluginMarketplacePage'
+      ),
       module: 'plugin',
       title: '插件市场',
       code: 'plugin-marketplace',
       requiredPermissions: ['plugin:marketplace:read'],
       template: 'list',
       group: 'business',
-      nav: {
-        label: '插件市场',
-        icon: 'ShoppingCart',
-        order: 1,
-        group: 'business',
-        showInSidebar: true,
-        showInBreadcrumb: true,
-        showInTabs: true,
-        description: '插件应用市场',
-      },
     },
     {
       path: '/plugin/upload',
-      element: lazyWithRetry(() => import('../../pages/plugin/PluginUploadPage'), 'PluginUploadPage'),
+      element: lazyWithRetry(
+        () => import('../../pages/plugin/PluginUploadPage'),
+        'PluginUploadPage'
+      ),
       module: 'plugin',
       title: '上传插件',
       code: 'plugin-upload',
       requiredPermissions: ['plugin:upload:write'],
       template: 'form',
       group: 'business',
-      nav: {
-        label: '上传插件',
-        icon: 'Upload',
-        order: 2,
-        group: 'business',
-        showInSidebar: true,
-        showInBreadcrumb: true,
-        showInTabs: true,
-        description: '上传自定义插件',
-      },
     },
     {
       path: '/plugin/:id',
-      element: lazyWithRetry(() => import('../../pages/plugin/PluginDetailPage'), 'PluginDetailPage'),
+      element: lazyWithRetry(
+        () => import('../../pages/plugin/PluginDetailPage'),
+        'PluginDetailPage'
+      ),
       module: 'plugin',
       title: '插件详情',
       code: 'plugin-detail',
       requiredPermissions: ['plugin:detail:read'],
       template: 'detail',
       group: 'business',
-      nav: {
-        label: '插件详情',
-        icon: 'Puzzle',
-        order: 3,
-        group: 'business',
-        showInSidebar: false,
-        showInBreadcrumb: true,
-        description: '插件详情查看',
-      },
     },
   ],
 };

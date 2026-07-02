@@ -1,4 +1,8 @@
-use axum::{extract::State, routing::{delete, get, post, put}, Json, Router};
+use axum::{
+    extract::State,
+    routing::{delete, get, post, put},
+    Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::{types::Uuid, Row};
 use topems_shared::ApiResponse;
@@ -7,17 +11,38 @@ use crate::AppState;
 
 pub fn create_routes() -> Router<AppState> {
     Router::new()
-        .route("/api/lims/barcodes", get(list_barcodes).post(generate_barcode))
-        .route("/api/lims/barcodes/{id}", get(get_barcode).put(update_barcode).delete(delete_barcode))
+        .route(
+            "/api/lims/barcodes",
+            get(list_barcodes).post(generate_barcode),
+        )
+        .route(
+            "/api/lims/barcodes/{id}",
+            get(get_barcode).put(update_barcode).delete(delete_barcode),
+        )
         .route("/api/lims/barcodes/{id}/print", post(print_barcode))
         .route("/api/lims/barcodes/scan", post(scan_barcode))
         .route("/api/lims/barcodes/types", get(get_barcode_types))
-        .route("/api/lims/barcodes/trace/{barcode}", get(trace_sample_by_barcode))
-        .route("/api/lims/print-config", get(get_print_config).put(update_print_config))
-        .route("/api/lims/rfid-tags", get(list_rfid_tags).post(create_rfid_tag))
+        .route(
+            "/api/lims/barcodes/trace/{barcode}",
+            get(trace_sample_by_barcode),
+        )
+        .route(
+            "/api/lims/print-config",
+            get(get_print_config).put(update_print_config),
+        )
+        .route(
+            "/api/lims/rfid-tags",
+            get(list_rfid_tags).post(create_rfid_tag),
+        )
         .route("/api/lims/rfid-tags/{id}", delete(delete_rfid_tag))
-        .route("/api/lims/rfid-tags/{tag_id}/assign/{sample_id}", post(assign_rfid_tag))
-        .route("/api/lims/rfid-tags/{tag_id}/unassign", post(unassign_rfid_tag))
+        .route(
+            "/api/lims/rfid-tags/{tag_id}/assign/{sample_id}",
+            post(assign_rfid_tag),
+        )
+        .route(
+            "/api/lims/rfid-tags/{tag_id}/unassign",
+            post(unassign_rfid_tag),
+        )
 }
 
 #[derive(Debug, Deserialize)]
@@ -147,55 +172,72 @@ pub async fn list_barcodes(
     };
 
     let mut query_builder = sqlx::query(sql);
-    match (query.barcode_type.as_ref(), query.status.as_ref(), query.sample_no.as_ref()) {
+    match (
+        query.barcode_type.as_ref(),
+        query.status.as_ref(),
+        query.sample_no.as_ref(),
+    ) {
         (Some(bt), Some(st), Some(sn)) => {
-            query_builder = query_builder.bind(bt).bind(st).bind(format!("%{}%", sn)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(bt)
+                .bind(st)
+                .bind(format!("%{}%", sn))
+                .bind(page_size)
+                .bind(offset);
         }
         (Some(bt), Some(st), None) => {
             query_builder = query_builder.bind(bt).bind(st).bind(page_size).bind(offset);
         }
         (Some(bt), None, Some(sn)) => {
-            query_builder = query_builder.bind(bt).bind(format!("%{}%", sn)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(bt)
+                .bind(format!("%{}%", sn))
+                .bind(page_size)
+                .bind(offset);
         }
         (Some(bt), None, None) => {
             query_builder = query_builder.bind(bt).bind(page_size).bind(offset);
         }
         (None, Some(st), Some(sn)) => {
-            query_builder = query_builder.bind(st).bind(format!("%{}%", sn)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(st)
+                .bind(format!("%{}%", sn))
+                .bind(page_size)
+                .bind(offset);
         }
         (None, Some(st), None) => {
             query_builder = query_builder.bind(st).bind(page_size).bind(offset);
         }
         (None, None, Some(sn)) => {
-            query_builder = query_builder.bind(format!("%{}%", sn)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(format!("%{}%", sn))
+                .bind(page_size)
+                .bind(offset);
         }
         (None, None, None) => {
             query_builder = query_builder.bind(page_size).bind(offset);
         }
     }
 
-    let barcodes = query_builder
-        .fetch_all(&state.pool)
-        .await
-        .map(|rows| {
-            rows.into_iter()
-                .map(|row| SampleBarcode {
-                    id: row.get("id"),
-                    barcode: row.get("barcode"),
-                    barcode_type: row.get("barcode_type"),
-                    sample_id: row.get("sample_id"),
-                    sample_no: row.get("sample_no"),
-                    rfid_tag: row.get("rfid_tag"),
-                    print_count: row.get("print_count"),
-                    status: row.get("status"),
-                    generated_by: row.get("generated_by"),
-                    generated_at: row.get("generated_at"),
-                    last_printed_at: row.get("last_printed_at"),
-                    created_at: row.get("created_at"),
-                    updated_at: row.get("updated_at"),
-                })
-                .collect()
-        });
+    let barcodes = query_builder.fetch_all(&state.pool).await.map(|rows| {
+        rows.into_iter()
+            .map(|row| SampleBarcode {
+                id: row.get("id"),
+                barcode: row.get("barcode"),
+                barcode_type: row.get("barcode_type"),
+                sample_id: row.get("sample_id"),
+                sample_no: row.get("sample_no"),
+                rfid_tag: row.get("rfid_tag"),
+                print_count: row.get("print_count"),
+                status: row.get("status"),
+                generated_by: row.get("generated_by"),
+                generated_at: row.get("generated_at"),
+                last_printed_at: row.get("last_printed_at"),
+                created_at: row.get("created_at"),
+                updated_at: row.get("updated_at"),
+            })
+            .collect()
+    });
 
     match barcodes {
         Ok(data) => Json(ApiResponse::success(data, "获取条码列表成功")),
@@ -227,12 +269,10 @@ pub async fn generate_barcode(
                 Ok(u) => u,
                 Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
             };
-            let sample_row = sqlx::query(
-                "SELECT sample_no FROM qa_lab_samples WHERE id = $1"
-            )
-            .bind(id)
-            .fetch_optional(&state.pool)
-            .await;
+            let sample_row = sqlx::query("SELECT sample_no FROM qa_lab_samples WHERE id = $1")
+                .bind(id)
+                .fetch_optional(&state.pool)
+                .await;
             match sample_row {
                 Ok(Some(row)) => {
                     sample_no = Some(row.get::<String, _>("sample_no"));
@@ -251,7 +291,11 @@ pub async fn generate_barcode(
         let barcode_value = if let Some(ref custom) = req.custom_barcode {
             custom.clone()
         } else {
-            format!("BC{}{}", chrono::Utc::now().format("%Y%m%d%H%M%S"), uuid::Uuid::new_v4().to_string()[..6].to_uppercase())
+            format!(
+                "BC{}{}",
+                chrono::Utc::now().format("%Y%m%d%H%M%S"),
+                uuid::Uuid::new_v4().to_string()[..6].to_uppercase()
+            )
         };
 
         let row = sqlx::query(
@@ -312,21 +356,24 @@ pub async fn get_barcode(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(SampleBarcode {
-            id: r.get("id"),
-            barcode: r.get("barcode"),
-            barcode_type: r.get("barcode_type"),
-            sample_id: r.get("sample_id"),
-            sample_no: r.get("sample_no"),
-            rfid_tag: r.get("rfid_tag"),
-            print_count: r.get("print_count"),
-            status: r.get("status"),
-            generated_by: r.get("generated_by"),
-            generated_at: r.get("generated_at"),
-            last_printed_at: r.get("last_printed_at"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "获取条码成功")),
+        Ok(r) => Json(ApiResponse::success(
+            SampleBarcode {
+                id: r.get("id"),
+                barcode: r.get("barcode"),
+                barcode_type: r.get("barcode_type"),
+                sample_id: r.get("sample_id"),
+                sample_no: r.get("sample_no"),
+                rfid_tag: r.get("rfid_tag"),
+                print_count: r.get("print_count"),
+                status: r.get("status"),
+                generated_by: r.get("generated_by"),
+                generated_at: r.get("generated_at"),
+                last_printed_at: r.get("last_printed_at"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "获取条码成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to fetch barcode: {}", e);
             Json(ApiResponse::error(500, "获取条码失败"))
@@ -355,21 +402,24 @@ pub async fn update_barcode(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(SampleBarcode {
-            id: r.get("id"),
-            barcode: r.get("barcode"),
-            barcode_type: r.get("barcode_type"),
-            sample_id: r.get("sample_id"),
-            sample_no: r.get("sample_no"),
-            rfid_tag: r.get("rfid_tag"),
-            print_count: r.get("print_count"),
-            status: r.get("status"),
-            generated_by: r.get("generated_by"),
-            generated_at: r.get("generated_at"),
-            last_printed_at: r.get("last_printed_at"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "条码更新成功")),
+        Ok(r) => Json(ApiResponse::success(
+            SampleBarcode {
+                id: r.get("id"),
+                barcode: r.get("barcode"),
+                barcode_type: r.get("barcode_type"),
+                sample_id: r.get("sample_id"),
+                sample_no: r.get("sample_no"),
+                rfid_tag: r.get("rfid_tag"),
+                print_count: r.get("print_count"),
+                status: r.get("status"),
+                generated_by: r.get("generated_by"),
+                generated_at: r.get("generated_at"),
+                last_printed_at: r.get("last_printed_at"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "条码更新成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to update barcode: {}", e);
             Json(ApiResponse::error(500, "条码更新失败"))
@@ -394,21 +444,24 @@ pub async fn print_barcode(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(SampleBarcode {
-            id: r.get("id"),
-            barcode: r.get("barcode"),
-            barcode_type: r.get("barcode_type"),
-            sample_id: r.get("sample_id"),
-            sample_no: r.get("sample_no"),
-            rfid_tag: r.get("rfid_tag"),
-            print_count: r.get("print_count"),
-            status: r.get("status"),
-            generated_by: r.get("generated_by"),
-            generated_at: r.get("generated_at"),
-            last_printed_at: r.get("last_printed_at"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "条码打印成功")),
+        Ok(r) => Json(ApiResponse::success(
+            SampleBarcode {
+                id: r.get("id"),
+                barcode: r.get("barcode"),
+                barcode_type: r.get("barcode_type"),
+                sample_id: r.get("sample_id"),
+                sample_no: r.get("sample_no"),
+                rfid_tag: r.get("rfid_tag"),
+                print_count: r.get("print_count"),
+                status: r.get("status"),
+                generated_by: r.get("generated_by"),
+                generated_at: r.get("generated_at"),
+                last_printed_at: r.get("last_printed_at"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "条码打印成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to print barcode: {}", e);
             Json(ApiResponse::error(500, "条码打印失败"))
@@ -449,7 +502,7 @@ pub async fn scan_barcode(
     }
 
     let barcode_row = sqlx::query(
-        "SELECT id, sample_id, sample_no FROM qa_lims_sample_barcodes WHERE barcode = $1"
+        "SELECT id, sample_id, sample_no FROM qa_lims_sample_barcodes WHERE barcode = $1",
     )
     .bind(&req.barcode)
     .fetch_optional(&state.pool)
@@ -498,7 +551,7 @@ pub async fn scan_barcode(
 
     if let (Some(sid), "receive") = (sample_id, req.scan_type.as_str()) {
         let _ = sqlx::query(
-            "UPDATE qa_lab_samples SET status = 'received', updated_at = NOW() WHERE id = $1"
+            "UPDATE qa_lab_samples SET status = 'received', updated_at = NOW() WHERE id = $1",
         )
         .bind(sid)
         .execute(&state.pool)
@@ -507,7 +560,7 @@ pub async fn scan_barcode(
 
     if let (Some(sid), "destroy") = (sample_id, req.scan_type.as_str()) {
         let _ = sqlx::query(
-            "UPDATE qa_lab_samples SET status = 'destroyed', updated_at = NOW() WHERE id = $1"
+            "UPDATE qa_lab_samples SET status = 'destroyed', updated_at = NOW() WHERE id = $1",
         )
         .bind(sid)
         .execute(&state.pool)
@@ -517,17 +570,20 @@ pub async fn scan_barcode(
     match row {
         Ok(r) => {
             let _ = scan_type_name;
-            Json(ApiResponse::success(BarcodeScanRecord {
-                id: r.get("id"),
-                barcode: r.get("barcode"),
-                scan_type: r.get("scan_type"),
-                sample_id: r.get("sample_id"),
-                sample_no: r.get("sample_no"),
-                operator: r.get("operator"),
-                location: r.get("location"),
-                notes: r.get("notes"),
-                scanned_at: r.get("scanned_at"),
-            }, "条码扫描登记成功"))
+            Json(ApiResponse::success(
+                BarcodeScanRecord {
+                    id: r.get("id"),
+                    barcode: r.get("barcode"),
+                    scan_type: r.get("scan_type"),
+                    sample_id: r.get("sample_id"),
+                    sample_no: r.get("sample_no"),
+                    operator: r.get("operator"),
+                    location: r.get("location"),
+                    notes: r.get("notes"),
+                    scanned_at: r.get("scanned_at"),
+                },
+                "条码扫描登记成功",
+            ))
         }
         Err(e) => {
             tracing::error!("Failed to scan barcode: {}", e);
@@ -594,38 +650,42 @@ pub async fn list_rfid_tags(
     let mut query_builder = sqlx::query(sql);
     match (query.status.as_ref(), query.tag_id.as_ref()) {
         (Some(st), Some(tid)) => {
-            query_builder = query_builder.bind(st).bind(format!("%{}%", tid)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(st)
+                .bind(format!("%{}%", tid))
+                .bind(page_size)
+                .bind(offset);
         }
         (Some(st), None) => {
             query_builder = query_builder.bind(st).bind(page_size).bind(offset);
         }
         (None, Some(tid)) => {
-            query_builder = query_builder.bind(format!("%{}%", tid)).bind(page_size).bind(offset);
+            query_builder = query_builder
+                .bind(format!("%{}%", tid))
+                .bind(page_size)
+                .bind(offset);
         }
         (None, None) => {
             query_builder = query_builder.bind(page_size).bind(offset);
         }
     }
 
-    let tags = query_builder
-        .fetch_all(&state.pool)
-        .await
-        .map(|rows| {
-            rows.into_iter()
-                .map(|row| RfidTag {
-                    id: row.get("id"),
-                    tag_id: row.get("tag_id"),
-                    tag_type: row.get("tag_type"),
-                    sample_id: row.get("sample_id"),
-                    sample_no: row.get("sample_no"),
-                    status: row.get("status"),
-                    assigned_at: row.get("assigned_at"),
-                    last_read_at: row.get("last_read_at"),
-                    created_at: row.get("created_at"),
-                    updated_at: row.get("updated_at"),
-                })
-                .collect()
-        });
+    let tags = query_builder.fetch_all(&state.pool).await.map(|rows| {
+        rows.into_iter()
+            .map(|row| RfidTag {
+                id: row.get("id"),
+                tag_id: row.get("tag_id"),
+                tag_type: row.get("tag_type"),
+                sample_id: row.get("sample_id"),
+                sample_no: row.get("sample_no"),
+                status: row.get("status"),
+                assigned_at: row.get("assigned_at"),
+                last_read_at: row.get("last_read_at"),
+                created_at: row.get("created_at"),
+                updated_at: row.get("updated_at"),
+            })
+            .collect()
+    });
 
     match tags {
         Ok(data) => Json(ApiResponse::success(data, "获取RFID标签列表成功")),
@@ -648,7 +708,7 @@ pub async fn create_rfid_tag(
         VALUES ($1, $2, 'unused')
         RETURNING id, tag_id, tag_type, sample_id, sample_no, status,
                   assigned_at::TEXT, last_read_at::TEXT, created_at::TEXT, updated_at::TEXT
-        "#
+        "#,
     )
     .bind(&req.tag_id)
     .bind(&tag_type)
@@ -656,18 +716,21 @@ pub async fn create_rfid_tag(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(RfidTag {
-            id: r.get("id"),
-            tag_id: r.get("tag_id"),
-            tag_type: r.get("tag_type"),
-            sample_id: r.get("sample_id"),
-            sample_no: r.get("sample_no"),
-            status: r.get("status"),
-            assigned_at: r.get("assigned_at"),
-            last_read_at: r.get("last_read_at"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "RFID标签创建成功")),
+        Ok(r) => Json(ApiResponse::success(
+            RfidTag {
+                id: r.get("id"),
+                tag_id: r.get("tag_id"),
+                tag_type: r.get("tag_type"),
+                sample_id: r.get("sample_id"),
+                sample_no: r.get("sample_no"),
+                status: r.get("status"),
+                assigned_at: r.get("assigned_at"),
+                last_read_at: r.get("last_read_at"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "RFID标签创建成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to create RFID tag: {}", e);
             Json(ApiResponse::error(500, "RFID标签创建失败"))
@@ -689,12 +752,10 @@ pub async fn assign_rfid_tag(
         Err(_) => return Json(ApiResponse::error(400, "无效的样品ID")),
     };
 
-    let sample_row = sqlx::query(
-        "SELECT sample_no FROM qa_lab_samples WHERE id = $1"
-    )
-    .bind(sample_uuid)
-    .fetch_optional(&state.pool)
-    .await;
+    let sample_row = sqlx::query("SELECT sample_no FROM qa_lab_samples WHERE id = $1")
+        .bind(sample_uuid)
+        .fetch_optional(&state.pool)
+        .await;
 
     let sample_no = match sample_row {
         Ok(Some(row)) => row.get::<String, _>("sample_no"),
@@ -718,18 +779,21 @@ pub async fn assign_rfid_tag(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(RfidTag {
-            id: r.get("id"),
-            tag_id: r.get("tag_id"),
-            tag_type: r.get("tag_type"),
-            sample_id: r.get("sample_id"),
-            sample_no: r.get("sample_no"),
-            status: r.get("status"),
-            assigned_at: r.get("assigned_at"),
-            last_read_at: r.get("last_read_at"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "RFID标签绑定成功")),
+        Ok(r) => Json(ApiResponse::success(
+            RfidTag {
+                id: r.get("id"),
+                tag_id: r.get("tag_id"),
+                tag_type: r.get("tag_type"),
+                sample_id: r.get("sample_id"),
+                sample_no: r.get("sample_no"),
+                status: r.get("status"),
+                assigned_at: r.get("assigned_at"),
+                last_read_at: r.get("last_read_at"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "RFID标签绑定成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to assign RFID tag: {}", e);
             Json(ApiResponse::error(500, "RFID标签绑定失败"))
@@ -760,18 +824,21 @@ pub async fn unassign_rfid_tag(
     .await;
 
     match row {
-        Ok(r) => Json(ApiResponse::success(RfidTag {
-            id: r.get("id"),
-            tag_id: r.get("tag_id"),
-            tag_type: r.get("tag_type"),
-            sample_id: r.get("sample_id"),
-            sample_no: r.get("sample_no"),
-            status: r.get("status"),
-            assigned_at: r.get("assigned_at"),
-            last_read_at: r.get("last_read_at"),
-            created_at: r.get("created_at"),
-            updated_at: r.get("updated_at"),
-        }, "RFID标签解绑成功")),
+        Ok(r) => Json(ApiResponse::success(
+            RfidTag {
+                id: r.get("id"),
+                tag_id: r.get("tag_id"),
+                tag_type: r.get("tag_type"),
+                sample_id: r.get("sample_id"),
+                sample_no: r.get("sample_no"),
+                status: r.get("status"),
+                assigned_at: r.get("assigned_at"),
+                last_read_at: r.get("last_read_at"),
+                created_at: r.get("created_at"),
+                updated_at: r.get("updated_at"),
+            },
+            "RFID标签解绑成功",
+        )),
         Err(e) => {
             tracing::error!("Failed to unassign RFID tag: {}", e);
             Json(ApiResponse::error(500, "RFID标签解绑失败"))
@@ -828,7 +895,7 @@ pub async fn trace_sample_by_barcode(
             SELECT id, sample_no, sample_name, sample_type, source, quantity, unit,
                    status, received_at::TEXT, expired_at::TEXT, created_at::TEXT, updated_at::TEXT
             FROM qa_lab_samples WHERE id = $1
-            "#
+            "#,
         )
         .bind(sid)
         .fetch_optional(&state.pool)

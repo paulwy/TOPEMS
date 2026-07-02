@@ -179,7 +179,9 @@ export const AiModelSettingsPage: React.FC = () => {
   const [temperature, setTemperature] = useState(0.7);
   const [maxTokens, setMaxTokens] = useState(2048);
   const [topP, setTopP] = useState(1);
-  const [systemPrompt, setSystemPrompt] = useState('你是一位专业的AI助手，请用中文回答用户的问题。回答要准确、简洁、有帮助。');
+  const [systemPrompt, setSystemPrompt] = useState(
+    '你是一位专业的AI助手，请用中文回答用户的问题。回答要准确、简洁、有帮助。'
+  );
   const [saving, setSaving] = useState(false);
 
   const handleSaveConfig = () => {
@@ -219,7 +221,7 @@ export const AiModelSettingsPage: React.FC = () => {
       }}
     >
       <Box sx={{ p: 3 }}>
-        <Paper sx={{ borderRadius: 2, overflow: 'hidden' }}>
+        <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
           {/* 标签页 */}
           <Box
             sx={{
@@ -253,13 +255,22 @@ export const AiModelSettingsPage: React.FC = () => {
             {/* 模型列表 */}
             {activeTab === 'models' && (
               <Box>
-                <Grid container spacing={2}>
+                <Grid
+                  container
+                  spacing={2}
+                >
                   {mockModels.map((model) => (
-                    <Grid item xs={12} md={6} lg={4} key={model.id}>
+                    <Grid
+                      item
+                      xs={12}
+                      md={6}
+                      lg={4}
+                      key={model.id}
+                    >
                       <Card
                         variant='outlined'
                         sx={{
-                          borderRadius: 2,
+                          borderRadius: 3,
                           borderColor: selectedModel.id === model.id ? 'primary.main' : 'divider',
                           cursor: 'pointer',
                           transition: 'all 0.2s',
@@ -270,7 +281,14 @@ export const AiModelSettingsPage: React.FC = () => {
                         onClick={() => setSelectedModel(model)}
                       >
                         <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
-                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'flex-start',
+                              mb: 2,
+                            }}
+                          >
                             <Avatar
                               sx={{
                                 width: 48,
@@ -291,7 +309,10 @@ export const AiModelSettingsPage: React.FC = () => {
                           </Box>
 
                           <Box sx={{ mb: 1 }}>
-                            <Typography variant='subtitle1' sx={{ fontWeight: 600 }}>
+                            <Typography
+                              variant='subtitle1'
+                              sx={{ fontWeight: 600 }}
+                            >
                               {model.name}
                               {model.is_default && (
                                 <Chip
@@ -302,7 +323,10 @@ export const AiModelSettingsPage: React.FC = () => {
                                 />
                               )}
                             </Typography>
-                            <Typography variant='caption' color='text.secondary'>
+                            <Typography
+                              variant='caption'
+                              color='text.secondary'
+                            >
                               {model.provider}
                             </Typography>
                           </Box>
@@ -329,20 +353,41 @@ export const AiModelSettingsPage: React.FC = () => {
 
                           <Divider sx={{ mb: 1.5 }} />
 
-                          <Grid container spacing={1}>
-                            <Grid item xs={6}>
-                              <Typography variant='caption' color='text.secondary'>
+                          <Grid
+                            container
+                            spacing={1}
+                          >
+                            <Grid
+                              item
+                              xs={6}
+                            >
+                              <Typography
+                                variant='caption'
+                                color='text.secondary'
+                              >
                                 最大Token
                               </Typography>
-                              <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                              <Typography
+                                variant='body2'
+                                sx={{ fontWeight: 500 }}
+                              >
                                 {model.max_tokens.toLocaleString()}
                               </Typography>
                             </Grid>
-                            <Grid item xs={6}>
-                              <Typography variant='caption' color='text.secondary'>
+                            <Grid
+                              item
+                              xs={6}
+                            >
+                              <Typography
+                                variant='caption'
+                                color='text.secondary'
+                              >
                                 输入价格
                               </Typography>
-                              <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                              <Typography
+                                variant='body2'
+                                sx={{ fontWeight: 500 }}
+                              >
                                 ${model.pricing.input_per_1k}/1K
                               </Typography>
                             </Grid>
@@ -357,20 +402,40 @@ export const AiModelSettingsPage: React.FC = () => {
 
             {/* 参数配置 */}
             {activeTab === 'config' && (
-              <Grid container spacing={3}>
-                <Grid item xs={12} md={8}>
-                  <Paper variant='outlined' sx={{ p: 3, borderRadius: 2 }}>
-                    <Typography variant='h6' sx={{ fontWeight: 600, mb: 2 }}>
+              <Grid
+                container
+                spacing={3}
+              >
+                <Grid
+                  item
+                  xs={12}
+                  md={8}
+                >
+                  <Paper
+                    variant='outlined'
+                    sx={{ p: 3, borderRadius: 3 }}
+                  >
+                    <Typography
+                      variant='h6'
+                      sx={{ fontWeight: 600, mb: 2 }}
+                    >
                       当前模型：{selectedModel.name}
                     </Typography>
                     <Divider sx={{ mb: 3 }} />
 
                     <Box sx={{ mb: 3 }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                        <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                        <Typography
+                          variant='body2'
+                          sx={{ fontWeight: 500 }}
+                        >
                           Temperature (温度)
                         </Typography>
-                        <Typography variant='body2' color='primary.main' sx={{ fontWeight: 600 }}>
+                        <Typography
+                          variant='body2'
+                          color='primary.main'
+                          sx={{ fontWeight: 600 }}
+                        >
                           {temperature.toFixed(1)}
                         </Typography>
                       </Box>
@@ -382,17 +447,27 @@ export const AiModelSettingsPage: React.FC = () => {
                         max={2}
                         valueLabelDisplay='auto'
                       />
-                      <Typography variant='caption' color='text.secondary'>
+                      <Typography
+                        variant='caption'
+                        color='text.secondary'
+                      >
                         控制输出随机性。值越高，输出越随机；值越低，输出越确定。
                       </Typography>
                     </Box>
 
                     <Box sx={{ mb: 3 }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                        <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                        <Typography
+                          variant='body2'
+                          sx={{ fontWeight: 500 }}
+                        >
                           最大生成长度 (Max Tokens)
                         </Typography>
-                        <Typography variant='body2' color='primary.main' sx={{ fontWeight: 600 }}>
+                        <Typography
+                          variant='body2'
+                          color='primary.main'
+                          sx={{ fontWeight: 600 }}
+                        >
                           {maxTokens}
                         </Typography>
                       </Box>
@@ -404,17 +479,27 @@ export const AiModelSettingsPage: React.FC = () => {
                         max={selectedModel.max_tokens}
                         valueLabelDisplay='auto'
                       />
-                      <Typography variant='caption' color='text.secondary'>
+                      <Typography
+                        variant='caption'
+                        color='text.secondary'
+                      >
                         限制模型生成的最大token数量。
                       </Typography>
                     </Box>
 
                     <Box sx={{ mb: 3 }}>
                       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                        <Typography variant='body2' sx={{ fontWeight: 500 }}>
+                        <Typography
+                          variant='body2'
+                          sx={{ fontWeight: 500 }}
+                        >
                           Top P
                         </Typography>
-                        <Typography variant='body2' color='primary.main' sx={{ fontWeight: 600 }}>
+                        <Typography
+                          variant='body2'
+                          color='primary.main'
+                          sx={{ fontWeight: 600 }}
+                        >
                           {topP.toFixed(1)}
                         </Typography>
                       </Box>
@@ -426,13 +511,19 @@ export const AiModelSettingsPage: React.FC = () => {
                         max={1}
                         valueLabelDisplay='auto'
                       />
-                      <Typography variant='caption' color='text.secondary'>
+                      <Typography
+                        variant='caption'
+                        color='text.secondary'
+                      >
                         控制词的多样性，值越小，输出越保守。
                       </Typography>
                     </Box>
 
                     <Box sx={{ mb: 3 }}>
-                      <Typography variant='body2' sx={{ fontWeight: 500, mb: 1 }}>
+                      <Typography
+                        variant='body2'
+                        sx={{ fontWeight: 500, mb: 1 }}
+                      >
                         系统提示词 (System Prompt)
                       </Typography>
                       <TextField
@@ -454,7 +545,16 @@ export const AiModelSettingsPage: React.FC = () => {
                       </Button>
                       <Button
                         variant='contained'
-                        startIcon={saving ? <RefreshCw size={16} className='animate-spin' /> : <Save size={16} />}
+                        startIcon={
+                          saving ? (
+                            <RefreshCw
+                              size={16}
+                              className='animate-spin'
+                            />
+                          ) : (
+                            <Save size={16} />
+                          )
+                        }
                         onClick={handleSaveConfig}
                         disabled={saving}
                       >
@@ -464,9 +564,19 @@ export const AiModelSettingsPage: React.FC = () => {
                   </Paper>
                 </Grid>
 
-                <Grid item xs={12} md={4}>
-                  <Paper variant='outlined' sx={{ p: 3, borderRadius: 2 }}>
-                    <Typography variant='subtitle1' sx={{ fontWeight: 600, mb: 2 }}>
+                <Grid
+                  item
+                  xs={12}
+                  md={4}
+                >
+                  <Paper
+                    variant='outlined'
+                    sx={{ p: 3, borderRadius: 3 }}
+                  >
+                    <Typography
+                      variant='subtitle1'
+                      sx={{ fontWeight: 600, mb: 2 }}
+                    >
                       其他设置
                     </Typography>
                     <Divider sx={{ mb: 2 }} />
@@ -512,52 +622,86 @@ export const AiModelSettingsPage: React.FC = () => {
             {activeTab === 'usage' && (
               <Box>
                 {/* 统计卡片 */}
-                <Grid container spacing={2} sx={{ mb: 3 }}>
-                  <Grid item xs={12} sm={4}>
-                    <Paper sx={{ p: 2.5, borderRadius: 2 }}>
+                <Grid
+                  container
+                  spacing={2}
+                  sx={{ mb: 3 }}
+                >
+                  <Grid
+                    item
+                    xs={12}
+                    sm={4}
+                  >
+                    <Paper sx={{ p: 2.5, borderRadius: 3 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         <Avatar sx={{ bgcolor: 'primary.50', color: 'primary.main' }}>
                           <Zap size={22} />
                         </Avatar>
                         <Box>
-                          <Typography variant='h5' sx={{ fontWeight: 700 }}>
+                          <Typography
+                            variant='h5'
+                            sx={{ fontWeight: 700 }}
+                          >
                             {Math.round(totalUsage.tokens / 1000)}K
                           </Typography>
-                          <Typography variant='body2' color='text.secondary'>
+                          <Typography
+                            variant='body2'
+                            color='text.secondary'
+                          >
                             总Token消耗
                           </Typography>
                         </Box>
                       </Box>
                     </Paper>
                   </Grid>
-                  <Grid item xs={12} sm={4}>
-                    <Paper sx={{ p: 2.5, borderRadius: 2 }}>
+                  <Grid
+                    item
+                    xs={12}
+                    sm={4}
+                  >
+                    <Paper sx={{ p: 2.5, borderRadius: 3 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         <Avatar sx={{ bgcolor: 'success.50', color: 'success.main' }}>
                           <TrendingUp size={22} />
                         </Avatar>
                         <Box>
-                          <Typography variant='h5' sx={{ fontWeight: 700 }}>
+                          <Typography
+                            variant='h5'
+                            sx={{ fontWeight: 700 }}
+                          >
                             {totalUsage.requests}
                           </Typography>
-                          <Typography variant='body2' color='text.secondary'>
+                          <Typography
+                            variant='body2'
+                            color='text.secondary'
+                          >
                             总请求次数
                           </Typography>
                         </Box>
                       </Box>
                     </Paper>
                   </Grid>
-                  <Grid item xs={12} sm={4}>
-                    <Paper sx={{ p: 2.5, borderRadius: 2 }}>
+                  <Grid
+                    item
+                    xs={12}
+                    sm={4}
+                  >
+                    <Paper sx={{ p: 2.5, borderRadius: 3 }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                         <Avatar sx={{ bgcolor: 'warning.50', color: 'warning.main' }}>
                           <DollarSign size={22} />
                         </Avatar>
                         <Box>
-                          <Typography variant='h5' sx={{ fontWeight: 700 }}>
+                          <Typography
+                            variant='h5'
+                            sx={{ fontWeight: 700 }}
+                          >
                             ${totalUsage.cost.toFixed(2)}
                           </Typography>
-                          <Typography variant='body2' color='text.secondary'>
+                          <Typography
+                            variant='body2'
+                            color='text.secondary'
+                          >
                             总费用（预估）
                           </Typography>
                         </Box>
@@ -566,10 +710,23 @@ export const AiModelSettingsPage: React.FC = () => {
                   </Grid>
                 </Grid>
 
-                <Grid container spacing={3}>
-                  <Grid item xs={12} md={8}>
-                    <Paper variant='outlined' sx={{ p: 3, borderRadius: 2 }}>
-                      <Typography variant='subtitle1' sx={{ fontWeight: 600, mb: 2 }}>
+                <Grid
+                  container
+                  spacing={3}
+                >
+                  <Grid
+                    item
+                    xs={12}
+                    md={8}
+                  >
+                    <Paper
+                      variant='outlined'
+                      sx={{ p: 3, borderRadius: 3 }}
+                    >
+                      <Typography
+                        variant='subtitle1'
+                        sx={{ fontWeight: 600, mb: 2 }}
+                      >
                         用量趋势（近7天）
                       </Typography>
                       <Box sx={{ height: 300 }}>
@@ -581,9 +738,19 @@ export const AiModelSettingsPage: React.FC = () => {
                       </Box>
                     </Paper>
                   </Grid>
-                  <Grid item xs={12} md={4}>
-                    <Paper variant='outlined' sx={{ p: 3, borderRadius: 2 }}>
-                      <Typography variant='subtitle1' sx={{ fontWeight: 600, mb: 2 }}>
+                  <Grid
+                    item
+                    xs={12}
+                    md={4}
+                  >
+                    <Paper
+                      variant='outlined'
+                      sx={{ p: 3, borderRadius: 3 }}
+                    >
+                      <Typography
+                        variant='subtitle1'
+                        sx={{ fontWeight: 600, mb: 2 }}
+                      >
                         模型使用占比
                       </Typography>
                       <Box sx={{ height: 300 }}>
@@ -594,9 +761,15 @@ export const AiModelSettingsPage: React.FC = () => {
                 </Grid>
 
                 <Box sx={{ mt: 3 }}>
-                  <Paper variant='outlined' sx={{ borderRadius: 2, overflow: 'hidden' }}>
+                  <Paper
+                    variant='outlined'
+                    sx={{ borderRadius: 3, overflow: 'hidden' }}
+                  >
                     <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-                      <Typography variant='subtitle1' sx={{ fontWeight: 600 }}>
+                      <Typography
+                        variant='subtitle1'
+                        sx={{ fontWeight: 600 }}
+                      >
                         每日用量明细
                       </Typography>
                     </Box>
@@ -630,9 +803,22 @@ export const AiModelSettingsPage: React.FC = () => {
             {/* API密钥 */}
             {activeTab === 'api' && (
               <Box>
-                <Paper variant='outlined' sx={{ p: 3, borderRadius: 2, mb: 3 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Typography variant='subtitle1' sx={{ fontWeight: 600 }}>
+                <Paper
+                  variant='outlined'
+                  sx={{ p: 3, borderRadius: 3, mb: 3 }}
+                >
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      mb: 2,
+                    }}
+                  >
+                    <Typography
+                      variant='subtitle1'
+                      sx={{ fontWeight: 600 }}
+                    >
                       API 密钥管理
                     </Typography>
                     <Button
@@ -726,33 +912,56 @@ export const AiModelSettingsPage: React.FC = () => {
                   </TableContainer>
                 </Paper>
 
-                <Paper variant='outlined' sx={{ p: 3, borderRadius: 2 }}>
-                  <Typography variant='subtitle1' sx={{ fontWeight: 600, mb: 2 }}>
+                <Paper
+                  variant='outlined'
+                  sx={{ p: 3, borderRadius: 3 }}
+                >
+                  <Typography
+                    variant='subtitle1'
+                    sx={{ fontWeight: 600, mb: 2 }}
+                  >
                     使用提示
                   </Typography>
                   <List disablePadding>
                     <ListItem sx={{ px: 0, py: 1 }}>
                       <ListItemIcon sx={{ minWidth: 32 }}>
-                        <AlertCircle size={16} style={{ color: '#f59e0b' }} />
+                        <AlertCircle
+                          size={16}
+                          style={{ color: '#f59e0b' }}
+                        />
                       </ListItemIcon>
                       <ListItemText
-                        primary={<Typography variant='body2'>请妥善保管API密钥，不要泄露给他人</Typography>}
+                        primary={
+                          <Typography variant='body2'>请妥善保管API密钥，不要泄露给他人</Typography>
+                        }
                       />
                     </ListItem>
                     <ListItem sx={{ px: 0, py: 1 }}>
                       <ListItemIcon sx={{ minWidth: 32 }}>
-                        <AlertCircle size={16} style={{ color: '#f59e0b' }} />
+                        <AlertCircle
+                          size={16}
+                          style={{ color: '#f59e0b' }}
+                        />
                       </ListItemIcon>
                       <ListItemText
-                        primary={<Typography variant='body2'>建议定期轮换密钥以确保安全</Typography>}
+                        primary={
+                          <Typography variant='body2'>建议定期轮换密钥以确保安全</Typography>
+                        }
                       />
                     </ListItem>
                     <ListItem sx={{ px: 0, py: 1 }}>
                       <ListItemIcon sx={{ minWidth: 32 }}>
-                        <AlertCircle size={16} style={{ color: '#f59e0b' }} />
+                        <AlertCircle
+                          size={16}
+                          style={{ color: '#f59e0b' }}
+                        />
                       </ListItemIcon>
                       <ListItemText
-                        primary={<Typography variant='body2'>可以为不同环境创建不同的密钥，便于管理和排查问题</Typography>}
+                        primary={
+                          <Typography variant='body2'>
+                            可以为不同环境创建不同的密钥，便于管理和排查问题
+                          </Typography>
+                        }
                       />
                     </ListItem>
                   </List>

@@ -300,6 +300,10 @@ const ProcessRoutePage: React.FC = () => {
     <PageContainer
       title='工序路线管理'
       subtitle='管理生产工序路线,包括路线定义、工序顺序、标准工时等'
+      headerProps={{
+        pageIcon: <Route style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)',
+      }}
     >
       <ListPageTemplate
         title=''

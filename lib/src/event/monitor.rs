@@ -51,7 +51,8 @@ pub struct EventMonitor {
 
 impl EventMonitor {
     pub fn new() -> EventResult<Self> {
-        let redis_url = env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string());
+        let redis_url =
+            env::var("REDIS_URL").unwrap_or_else(|_| "redis://localhost:6379".to_string());
         let redis_client = Client::open(redis_url)?;
         Ok(Self {
             redis_client,
@@ -75,20 +76,33 @@ impl EventMonitor {
         metrics.last_event_time = event.occurred_at;
         let metrics_json = serde_json::to_string(&*metrics)?;
         let mut con = self.redis_client.get_multiplexed_async_connection().await?;
-        let _: () = redis::cmd("SET").arg(format!("{}:current", METRICS_KEY_PREFIX)).arg(&metrics_json).query_async(&mut con).await?;
+        let _: () = redis::cmd("SET")
+            .arg(format!("{}:current", METRICS_KEY_PREFIX))
+            .arg(&metrics_json)
+            .query_async(&mut con)
+            .await?;
         Ok(())
     }
 
-    pub async fn record_processed(&self, _event: &Event, processing_time_ms: u64) -> EventResult<()> {
+    pub async fn record_processed(
+        &self,
+        _event: &Event,
+        processing_time_ms: u64,
+    ) -> EventResult<()> {
         let mut metrics = self.metrics.write().await;
         metrics.processing_times.push(processing_time_ms);
         if metrics.processing_times.len() > 100 {
             metrics.processing_times.remove(0);
         }
-        metrics.avg_processing_time_ms = metrics.processing_times.iter().sum::<u64>() as f64 / metrics.processing_times.len() as f64;
+        metrics.avg_processing_time_ms = metrics.processing_times.iter().sum::<u64>() as f64
+            / metrics.processing_times.len() as f64;
         let metrics_json = serde_json::to_string(&*metrics)?;
         let mut con = self.redis_client.get_multiplexed_async_connection().await?;
-        let _: () = redis::cmd("SET").arg(format!("{}:current", METRICS_KEY_PREFIX)).arg(&metrics_json).query_async(&mut con).await?;
+        let _: () = redis::cmd("SET")
+            .arg(format!("{}:current", METRICS_KEY_PREFIX))
+            .arg(&metrics_json)
+            .query_async(&mut con)
+            .await?;
         Ok(())
     }
 
@@ -98,8 +112,15 @@ impl EventMonitor {
         *metrics.errors_by_type.entry(type_str).or_insert(0) += 1;
         let metrics_json = serde_json::to_string(&*metrics)?;
         let mut con = self.redis_client.get_multiplexed_async_connection().await?;
-        let _: () = redis::cmd("SET").arg(format!("{}:current", METRICS_KEY_PREFIX)).arg(&metrics_json).query_async(&mut con).await?;
-        warn!("事件处理错误 - 事件ID: {}, 类型: {:?}, 错误: {}", event.event_id, event.event_type, error);
+        let _: () = redis::cmd("SET")
+            .arg(format!("{}:current", METRICS_KEY_PREFIX))
+            .arg(&metrics_json)
+            .query_async(&mut con)
+            .await?;
+        warn!(
+            "事件处理错误 - 事件ID: {}, 类型: {:?}, 错误: {}",
+            event.event_id, event.event_type, error
+        );
         Ok(())
     }
 
@@ -109,7 +130,10 @@ impl EventMonitor {
 
     pub async fn get_metrics_from_redis(&self) -> EventResult<Option<EventMetrics>> {
         let mut con = self.redis_client.get_multiplexed_async_connection().await?;
-        let result: Option<String> = redis::cmd("GET").arg(format!("{}:current", METRICS_KEY_PREFIX)).query_async(&mut con).await?;
+        let result: Option<String> = redis::cmd("GET")
+            .arg(format!("{}:current", METRICS_KEY_PREFIX))
+            .query_async(&mut con)
+            .await?;
         if let Some(metrics_json) = result {
             let metrics: EventMetrics = serde_json::from_str(&metrics_json)?;
             Ok(Some(metrics))
@@ -120,7 +144,12 @@ impl EventMonitor {
 
     pub async fn log_metrics(&self) -> EventResult<()> {
         let metrics = self.get_metrics().await?;
-        info!("事件监控统计 - 总事件数: {}, 平均处理时间: {:.2}ms, 错误数: {}", metrics.total_events, metrics.avg_processing_time_ms, metrics.errors_by_type.values().sum::<u64>());
+        info!(
+            "事件监控统计 - 总事件数: {}, 平均处理时间: {:.2}ms, 错误数: {}",
+            metrics.total_events,
+            metrics.avg_processing_time_ms,
+            metrics.errors_by_type.values().sum::<u64>()
+        );
         Ok(())
     }
 }

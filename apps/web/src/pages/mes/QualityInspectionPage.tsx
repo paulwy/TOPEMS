@@ -14,7 +14,7 @@ import {
   Typography,
   Button,
 } from '@mui/material';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { QualityInspection } from '@/api/mes/quality';
 import { qualityApi } from '@/api/mes/quality';
@@ -26,14 +26,7 @@ import {
   type RowAction,
   type FilterConfig,
 } from '@/components/templates';
-import {
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
-  CheckCircle,
-  XCircle,
-} from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, CheckCircle, XCircle } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 
 const QualityInspectionPage: React.FC = () => {
@@ -126,9 +119,7 @@ const QualityInspectionPage: React.FC = () => {
       const requestData = {
         ...formData,
         qualification_rate:
-          formData.quantity > 0
-            ? (formData.qualified_quantity / formData.quantity) * 100
-            : 0,
+          formData.quantity > 0 ? (formData.qualified_quantity / formData.quantity) * 100 : 0,
       };
 
       if (selectedInspection) {
@@ -233,11 +224,11 @@ const QualityInspectionPage: React.FC = () => {
         color: string;
       }
     > = {
-      pending: { label: '待检验', bg: 'warning.light', color: '#b45309' },
-      inspecting: { label: '检验中', bg: '#dbeafe', color: 'primary.dark' },
-      passed: { label: '合格', bg: 'success.lighter', color: '#15803d' },
+      pending: { label: '待检验', bg: 'warning.light', color: 'warning.700' },
+      inspecting: { label: '检验中', bg: 'primary.100', color: 'primary.dark' },
+      passed: { label: '合格', bg: 'success.lighter', color: 'success.700' },
       failed: { label: '不合格', bg: 'error.lighter', color: 'error.dark' },
-      rework: { label: '返工', bg: '#fef3c7', color: '#92400e' },
+      rework: { label: '返工', bg: 'warning.100', color: '#92400e' },
       scrapped: { label: '报废', bg: 'grey.200', color: 'text.secondary' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
@@ -259,11 +250,11 @@ const QualityInspectionPage: React.FC = () => {
         color: string;
       }
     > = {
-      incoming: { label: '来料检验', bg: '#e0e7ff', color: '#4338ca' },
-      process: { label: '过程检验', bg: '#dbeafe', color: 'primary.dark' },
-      final: { label: '成品检验', bg: 'success.lighter', color: '#15803d' },
-      outgoing: { label: '出货检验', bg: 'warning.light', color: '#b45309' },
-      patrol: { label: '巡检', bg: '#fce7f3', color: '#be185d' },
+      incoming: { label: '来料检验', bg: '#e0e7ff', color: 'secondary.700' },
+      process: { label: '过程检验', bg: 'primary.100', color: 'primary.dark' },
+      final: { label: '成品检验', bg: 'success.lighter', color: 'success.700' },
+      outgoing: { label: '出货检验', bg: 'warning.light', color: 'warning.700' },
+      patrol: { label: '巡检', bg: 'secondary.100', color: '#be185d' },
     };
     const t = typeMap[type] || { label: type, bg: 'grey.100', color: 'text.secondary' };
     return (
@@ -300,9 +291,7 @@ const QualityInspectionPage: React.FC = () => {
         id: 'inspection_time',
         label: '检验时间',
         render: (row) =>
-          row.inspection_time
-            ? new Date(row.inspection_time).toLocaleString('zh-CN')
-            : '-',
+          row.inspection_time ? new Date(row.inspection_time).toLocaleString('zh-CN') : '-',
       },
       {
         id: 'status',
@@ -396,7 +385,7 @@ const QualityInspectionPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -410,7 +399,7 @@ const QualityInspectionPage: React.FC = () => {
           {stats.total}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -424,7 +413,7 @@ const QualityInspectionPage: React.FC = () => {
           {stats.pending}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -438,7 +427,7 @@ const QualityInspectionPage: React.FC = () => {
           {stats.passed}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'error.lighter', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -452,7 +441,7 @@ const QualityInspectionPage: React.FC = () => {
           {stats.failed}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary' }}
@@ -461,7 +450,7 @@ const QualityInspectionPage: React.FC = () => {
         </Typography>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#4338ca' }}
+          sx={{ fontWeight: 700, color: 'secondary.700' }}
         >
           {stats.avgRate.toFixed(2)}%
         </Typography>
@@ -471,8 +460,12 @@ const QualityInspectionPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='质检管理'
-      subtitle='管理生产质检记录,包括来料检验、过程检验、成品检验等'
+      autoTitle
+      autoBreadcrumbs
+      headerProps={{
+        pageIcon: <CheckCircle style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+      }}
     >
       <ListPageTemplate
         title=''
@@ -505,6 +498,15 @@ const QualityInspectionPage: React.FC = () => {
         headerContent={statsContent}
         emptyMessage='暂无质检数据'
         getRowId={(row) => row.id}
+        mobileCardTitleKey='product_name'
+        mobileCardSubtitleKey='inspection_no'
+        mobileCardDisplayFields={['inspection_type', 'status', 'sample_quantity', 'inspector']}
+        mobileCardFieldLabels={{
+          inspection_type: '检验类型',
+          status: '状态',
+          sample_quantity: '抽样数',
+          inspector: '检验员',
+        }}
       />
 
       <Dialog
@@ -556,13 +558,14 @@ const QualityInspectionPage: React.FC = () => {
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <InputLabel htmlFor='inspection_type'>检验类型 *</InputLabel>
-                <FormControl fullWidth size='small'>
+                <FormControl
+                  fullWidth
+                  size='small'
+                >
                   <Select
                     id='inspection_type'
                     value={formData.inspection_type}
-                    onChange={(e) =>
-                      setFormData({ ...formData, inspection_type: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, inspection_type: e.target.value })}
                   >
                     <MenuItem value='incoming'>来料检验</MenuItem>
                     <MenuItem value='process'>过程检验</MenuItem>
@@ -634,9 +637,7 @@ const QualityInspectionPage: React.FC = () => {
                   type='datetime-local'
                   size='small'
                   value={formData.inspection_time}
-                  onChange={(e) =>
-                    setFormData({ ...formData, inspection_time: e.target.value })
-                  }
+                  onChange={(e) => setFormData({ ...formData, inspection_time: e.target.value })}
                 />
               </Box>
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, gridColumn: '1 / -1' }}>
@@ -732,13 +733,19 @@ const QualityInspectionPage: React.FC = () => {
                 </Box>
                 <Box>
                   <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>合格数量</InputLabel>
-                  <Box component='span' sx={{ color: 'success.main' }}>
+                  <Box
+                    component='span'
+                    sx={{ color: 'success.main' }}
+                  >
                     {selectedInspection.qualified_quantity}
                   </Box>
                 </Box>
                 <Box>
                   <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>不合格数量</InputLabel>
-                  <Box component='span' sx={{ color: 'error.main' }}>
+                  <Box
+                    component='span'
+                    sx={{ color: 'error.main' }}
+                  >
                     {selectedInspection.unqualified_quantity}
                   </Box>
                 </Box>

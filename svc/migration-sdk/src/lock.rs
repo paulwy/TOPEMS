@@ -1,6 +1,6 @@
 //! 分布式锁实现
 
-use redis::{Client, AsyncCommands};
+use redis::{AsyncCommands, Client};
 use std::time::Duration;
 use uuid::Uuid;
 
@@ -38,8 +38,7 @@ impl DistLock {
 
     /// 获取连接
     fn get_client(&self) -> Result<Client> {
-        Client::open(self.redis_url.as_str())
-            .map_err(|e| MigrationError::Redis(e))
+        Client::open(self.redis_url.as_str()).map_err(|e| MigrationError::Redis(e))
     }
 
     /// 尝试获取锁
@@ -48,7 +47,11 @@ impl DistLock {
     }
 
     /// 尝试获取锁，带超时
-    pub async fn acquire_with_ttl(&self, resource: &str, ttl: Duration) -> Result<Option<LockGuard>> {
+    pub async fn acquire_with_ttl(
+        &self,
+        resource: &str,
+        ttl: Duration,
+    ) -> Result<Option<LockGuard>> {
         let lock_key = format!("{}{}", self.lock_prefix, resource);
         let lock_value = Uuid::new_v4().to_string();
 

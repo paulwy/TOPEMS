@@ -111,15 +111,15 @@ const LimsInstrumentDetailPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string }> = {
-      正常: { bg: 'success.lighter', color: '#15803d' },
-      校准中: { bg: '#dbeafe', color: 'primary.dark' },
-      维修中: { bg: '#fef2f2', color: '#dc2626' },
-      停用: { bg: 'grey.100', color: '#475569' },
-      报废: { bg: 'grey.100', color: '#475569' },
-      normal: { bg: 'success.lighter', color: '#15803d' },
-      calibration: { bg: '#dbeafe', color: 'primary.dark' },
-      maintenance: { bg: '#fef2f2', color: '#dc2626' },
-      disabled: { bg: 'grey.100', color: '#475569' },
+      正常: { bg: 'success.lighter', color: 'success.700' },
+      校准中: { bg: 'primary.100', color: 'primary.dark' },
+      维修中: { bg: '#fef2f2', color: 'error.700' },
+      停用: { bg: 'grey.100', color: 'grey.600' },
+      报废: { bg: 'grey.100', color: 'grey.600' },
+      normal: { bg: 'success.lighter', color: 'success.700' },
+      calibration: { bg: 'primary.100', color: 'primary.dark' },
+      maintenance: { bg: '#fef2f2', color: 'error.700' },
+      disabled: { bg: 'grey.100', color: 'grey.600' },
     };
     const colors = statusMap[status] || { bg: 'grey.100', color: '#475569' };
     return (
@@ -227,8 +227,8 @@ const LimsInstrumentDetailPage: React.FC = () => {
                         task.status === '已完成' || task.status === 'completed'
                           ? 'success.lighter'
                           : task.status === '进行中' || task.status === 'in_progress'
-                            ? '#dbeafe'
-                            : '#fef9c3',
+                            ? 'primary.100'
+                            : 'warning.100',
                       color:
                         task.status === '已完成' || task.status === 'completed'
                           ? 'success.dark'
@@ -420,7 +420,7 @@ const LimsInstrumentDetailPage: React.FC = () => {
             <Typography
               sx={{
                 fontWeight: 'medium',
-                color: instrument.next_calibration_date ? '#ea580c' : 'text.primary',
+                color: instrument.next_calibration_date ? 'warning.600' : 'text.primary',
               }}
             >
               {instrument.next_calibration_date
@@ -609,10 +609,14 @@ const LimsInstrumentDetailPage: React.FC = () => {
     <PageContainer
       padding={false}
       maxWidth={false}
+      headerProps={{
+        pageIcon: <Settings style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)',
+      }}
     >
       <DetailPageTemplate
-        title='仪器详情'
-        subtitle='Instrument Detail'
+        title=''
+        subtitle=''
         breadcrumbs={[
           { label: '首页', href: '/dashboard' },
           { label: 'LIMS', href: '/lims' },

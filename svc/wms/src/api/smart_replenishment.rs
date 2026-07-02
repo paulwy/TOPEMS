@@ -236,9 +236,10 @@ async fn compute_replenishment(
         }
     };
 
-    let clear_result = sqlx::query("DELETE FROM wms.replenishment_suggestions WHERE status = 'draft'")
-        .execute(&mut *tx)
-        .await;
+    let clear_result =
+        sqlx::query("DELETE FROM wms.replenishment_suggestions WHERE status = 'draft'")
+            .execute(&mut *tx)
+            .await;
 
     if let Err(e) = clear_result {
         tracing::error!("清理草稿建议失败: {}", e);
@@ -380,8 +381,7 @@ async fn compute_replenishment(
         return Json(api_error(500, "补货计算失败"));
     }
 
-    let items_json: Vec<serde_json::Value> =
-        items.iter().map(suggestion_row_to_json).collect();
+    let items_json: Vec<serde_json::Value> = items.iter().map(suggestion_row_to_json).collect();
     let count = items.len() as i64;
     let response_data = Some(serde_json::json!({ "generated_count": count }));
 
@@ -449,7 +449,10 @@ async fn confirm_suggestion(
 
     let status: String = existing.try_get("status").unwrap_or_default();
     if status != "draft" {
-        return Json(api_error(400, &format!("补货建议当前状态为{}，无法确认", status)));
+        return Json(api_error(
+            400,
+            &format!("补货建议当前状态为{}，无法确认", status),
+        ));
     }
 
     let confirmed_qty = req
@@ -762,12 +765,10 @@ async fn update_rule(
     let request_data = serde_json::to_value(&req).ok();
     let now = Utc::now().naive_utc();
 
-    let existing = sqlx::query(
-        "SELECT id FROM wms.replenishment_rules WHERE id = $1",
-    )
-    .bind(id)
-    .fetch_optional(&state.db)
-    .await;
+    let existing = sqlx::query("SELECT id FROM wms.replenishment_rules WHERE id = $1")
+        .bind(id)
+        .fetch_optional(&state.db)
+        .await;
 
     if existing.is_err() {
         return Json(api_error(500, "查询补货规则失败"));

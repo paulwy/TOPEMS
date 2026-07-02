@@ -99,19 +99,30 @@ impl MigrationSDK {
         let lock_value = generate_lock_value();
         let expires_at = Utc::now() + chrono::Duration::seconds(self.lock_timeout_seconds as i64);
 
-        let acquired = self.acquire_lock(plugin_code, &lock_value, expires_at).await?;
+        let acquired = self
+            .acquire_lock(plugin_code, &lock_value, expires_at)
+            .await?;
         if !acquired {
-            return Err(TopemsError::Internal("Migration lock already held by another process".to_string()));
+            return Err(TopemsError::Internal(
+                "Migration lock already held by another process".to_string(),
+            ));
         }
 
-        let results = self.execute_migrations_unlocked(plugin_code, migrations_dir, executed_by).await;
+        let results = self
+            .execute_migrations_unlocked(plugin_code, migrations_dir, executed_by)
+            .await;
 
         let _ = self.release_lock(plugin_code, &lock_value).await;
 
         results
     }
 
-    async fn acquire_lock(&self, plugin_code: &str, lock_value: &str, expires_at: DateTime<Utc>) -> Result<bool> {
+    async fn acquire_lock(
+        &self,
+        plugin_code: &str,
+        lock_value: &str,
+        expires_at: DateTime<Utc>,
+    ) -> Result<bool> {
         let query = r#"
             INSERT INTO core_migration_locks (plugin_code, lock_value, expires_at)
             VALUES ($1, $2, $3)
@@ -159,11 +170,14 @@ impl MigrationSDK {
                 continue;
             }
 
-            let result = self.execute_migration(plugin_code, &migration, executed_by).await;
+            let result = self
+                .execute_migration(plugin_code, &migration, executed_by)
+                .await;
             results.push(result.clone());
 
             if !result.success {
-                self.rollback_migrations(plugin_code, &migration.version).await?;
+                self.rollback_migrations(plugin_code, &migration.version)
+                    .await?;
                 return Ok(results);
             }
         }
@@ -230,15 +244,17 @@ impl MigrationSDK {
 
         match result {
             Ok(_) => {
-                let _ = self.record_migration(
-                    plugin_code,
-                    &migration.version,
-                    &migration.name,
-                    &migration.checksum,
-                    executed_by,
-                    MigrationStatus::Success,
-                    None,
-                ).await;
+                let _ = self
+                    .record_migration(
+                        plugin_code,
+                        &migration.version,
+                        &migration.name,
+                        &migration.checksum,
+                        executed_by,
+                        MigrationStatus::Success,
+                        None,
+                    )
+                    .await;
 
                 MigrationResult {
                     success: true,
@@ -248,15 +264,17 @@ impl MigrationSDK {
                 }
             }
             Err(e) => {
-                let _ = self.record_migration(
-                    plugin_code,
-                    &migration.version,
-                    &migration.name,
-                    &migration.checksum,
-                    executed_by,
-                    MigrationStatus::Failed,
-                    Some(e.to_string()),
-                ).await;
+                let _ = self
+                    .record_migration(
+                        plugin_code,
+                        &migration.version,
+                        &migration.name,
+                        &migration.checksum,
+                        executed_by,
+                        MigrationStatus::Failed,
+                        Some(e.to_string()),
+                    )
+                    .await;
 
                 MigrationResult {
                     success: false,
@@ -342,14 +360,20 @@ impl MigrationSDK {
         Ok(format!("-- Rollback migration {}", version))
     }
 
-    pub async fn get_migration_history(&self, plugin_code: Option<&str>) -> Result<Vec<MigrationHistory>> {
+    pub async fn get_migration_history(
+        &self,
+        plugin_code: Option<&str>,
+    ) -> Result<Vec<MigrationHistory>> {
         let query = if let Some(_code) = plugin_code {
             format!(
                 "SELECT * FROM {} WHERE plugin_code = $1 ORDER BY applied_at DESC",
                 self.migration_table
             )
         } else {
-            format!("SELECT * FROM {} ORDER BY applied_at DESC", self.migration_table)
+            format!(
+                "SELECT * FROM {} ORDER BY applied_at DESC",
+                self.migration_table
+            )
         };
 
         let rows = sqlx::query(&query)
@@ -357,21 +381,24 @@ impl MigrationSDK {
             .fetch_all(&*self.db_pool)
             .await?;
 
-        Ok(rows.into_iter().map(|r| MigrationHistory {
-            id: r.get("id"),
-            plugin_code: r.get("plugin_code"),
-            version: r.get("version"),
-            name: r.get("name"),
-            applied_at: r.get("applied_at"),
-            status: match r.get::<String, _>("status").as_str() {
-                "failed" => MigrationStatus::Failed,
-                "rolling_back" => MigrationStatus::RollingBack,
-                _ => MigrationStatus::Success,
-            },
-            checksum: r.get("checksum"),
-            executed_by: r.get("executed_by"),
-            error_message: r.get("error_message"),
-        }).collect())
+        Ok(rows
+            .into_iter()
+            .map(|r| MigrationHistory {
+                id: r.get("id"),
+                plugin_code: r.get("plugin_code"),
+                version: r.get("version"),
+                name: r.get("name"),
+                applied_at: r.get("applied_at"),
+                status: match r.get::<String, _>("status").as_str() {
+                    "failed" => MigrationStatus::Failed,
+                    "rolling_back" => MigrationStatus::RollingBack,
+                    _ => MigrationStatus::Success,
+                },
+                checksum: r.get("checksum"),
+                executed_by: r.get("executed_by"),
+                error_message: r.get("error_message"),
+            })
+            .collect())
     }
 }
 
@@ -389,11 +416,16 @@ fn extract_version(filename: &str) -> String {
 }
 
 fn extract_name(filename: &str) -> String {
-    filename.replace(".sql", "").split('_').skip(1).collect::<Vec<_>>().join("_")
+    filename
+        .replace(".sql", "")
+        .split('_')
+        .skip(1)
+        .collect::<Vec<_>>()
+        .join("_")
 }
 
 fn calculate_checksum(content: &str) -> String {
-    use sha2::{Sha256, Digest};
+    use sha2::{Digest, Sha256};
     let mut hasher = Sha256::new();
     hasher.update(content.as_bytes());
     hex::encode(hasher.finalize())

@@ -88,9 +88,11 @@ pub async fn create_location(
 
 /// 获取位置列表
 pub async fn list_locations(State(pool): State<PgPool>) -> Json<ApiResponse<serde_json::Value>> {
-    match sqlx::query_as::<_, Location>("SELECT * FROM plugin_gis.locations ORDER BY created_at DESC")
-        .fetch_all(&pool)
-        .await
+    match sqlx::query_as::<_, Location>(
+        "SELECT * FROM plugin_gis.locations ORDER BY created_at DESC",
+    )
+    .fetch_all(&pool)
+    .await
     {
         Ok(locations) => Json(ApiResponse::success(
             serde_json::json!({
@@ -225,9 +227,11 @@ pub async fn nearby_locations(
     Json(payload): Json<NearbyRequest>,
 ) -> Json<ApiResponse<serde_json::Value>> {
     // Get all locations and filter by distance
-    match sqlx::query_as::<_, Location>("SELECT * FROM plugin_gis.locations WHERE status = 'active'")
-        .fetch_all(&pool)
-        .await
+    match sqlx::query_as::<_, Location>(
+        "SELECT * FROM plugin_gis.locations WHERE status = 'active'",
+    )
+    .fetch_all(&pool)
+    .await
     {
         Ok(locations) => {
             let nearby = locations

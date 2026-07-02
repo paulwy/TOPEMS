@@ -14,15 +14,7 @@ import {
   Tooltip,
   Button,
 } from '@mui/material';
-import {
-  FileJson,
-  Calendar,
-  Calculator,
-  Shield,
-  Copy,
-  Check,
-  ArrowRightLeft,
-} from 'lucide-react';
+import { FileJson, Calendar, Calculator, Shield, Copy, Check, ArrowRightLeft } from 'lucide-react';
 
 const JsonFormatter: React.FC = () => {
   const [input, setInput] = useState('');

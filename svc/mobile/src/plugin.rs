@@ -120,7 +120,10 @@ pub async fn plugin_health_check(State(state): State<AppState>) -> Json<ServiceH
         Err(_) => false,
     };
 
-    Json(topems_shared::build_health_response("topems-mobile", db_status))
+    Json(topems_shared::build_health_response(
+        "topems-mobile",
+        db_status,
+    ))
 }
 
 // Create plugin routes
@@ -135,7 +138,7 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
     use std::env;
 
     let core_url = core_url.unwrap_or("http://localhost:8000");
-    
+
     let info = PluginInfo {
         code: "mobile".to_string(),
         name: "移动端服务".to_string(),
@@ -152,13 +155,23 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
     match client.post(&url).json(&info).send().await {
         Ok(response) => {
             if response.status().is_success() {
-                tracing::info!("[MOBILE Plugin] Successfully registered to core at {}", core_url);
+                tracing::info!(
+                    "[MOBILE Plugin] Successfully registered to core at {}",
+                    core_url
+                );
             } else {
-                tracing::warn!("[MOBILE Plugin] Failed to register to core: {}", response.status());
+                tracing::warn!(
+                    "[MOBILE Plugin] Failed to register to core: {}",
+                    response.status()
+                );
             }
         }
         Err(e) => {
-            tracing::warn!("[MOBILE Plugin] Failed to connect to core at {}: {}", core_url, e);
+            tracing::warn!(
+                "[MOBILE Plugin] Failed to connect to core at {}: {}",
+                core_url,
+                e
+            );
         }
     }
 }

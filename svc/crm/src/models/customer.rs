@@ -326,6 +326,10 @@ mod tests {
 
         assert!(customer.phone.as_ref().unwrap().contains("****"));
         assert!(customer.email.as_ref().unwrap().contains("***"));
-        assert!(customer.id_card_number.as_ref().unwrap().contains("********"));
+        assert!(customer
+            .id_card_number
+            .as_ref()
+            .unwrap()
+            .contains("********"));
     }
 }

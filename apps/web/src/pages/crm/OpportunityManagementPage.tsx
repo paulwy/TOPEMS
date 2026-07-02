@@ -330,6 +330,8 @@ const OpportunityManagementPage: React.FC = () => {
     <PageContainer
       title='商机管理'
       subtitle='管理商机信息，跟踪销售机会和成交进度'
+      autoTitle
+      autoBreadcrumbs
     >
       <>
         <Box
@@ -446,7 +448,7 @@ const OpportunityManagementPage: React.FC = () => {
                 const stageColors: Record<string, string> = {
                   prospecting: 'text.disabled',
                   qualified: 'primary.main',
-                  proposal: '#8B5CF6',
+                  proposal: 'secondary.main',
                   negotiation: 'warning.main',
                   closed_won: 'success.main',
                   closed_lost: 'error.main',
@@ -512,7 +514,7 @@ const OpportunityManagementPage: React.FC = () => {
                           <LinearProgress
                             variant='determinate'
                             value={item.avg_probability}
-                            sx={{ flex: 1, height: 4, borderRadius: 2 }}
+                            sx={{ flex: 1, height: 4, borderRadius: 3 }}
                           />
                           <Typography
                             variant='caption'

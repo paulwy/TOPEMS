@@ -51,6 +51,7 @@ export interface NavItemConfig {
   showInSidebar?: boolean;
   showInBreadcrumb?: boolean;
   showInTabs?: boolean;
+  crossModuleRef?: boolean;
 }
 
 export interface ModuleNavConfig {

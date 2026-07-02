@@ -1,4 +1,4 @@
-import { Button } from '@mui/material';
+import {Button, useTheme} from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { Bell, Check, CheckCheck, Clock } from 'lucide-react';
 
@@ -11,6 +11,7 @@ interface NotificationListProps {
 }
 
 export const NotificationList: React.FC<NotificationListProps> = ({ userId = 'current-user' }) => {
+  const theme = useTheme();
   const addNotification = useAppStore((state) => state.addNotification);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(false);
@@ -121,7 +122,7 @@ export const NotificationList: React.FC<NotificationListProps> = ({ userId = 'cu
             {unreadCount > 0 && (
               <span
                 style={{
-                  backgroundColor: 'error.main',
+                  backgroundColor: theme.palette.error.main,
                   color: 'white',
                   fontSize: 12,
                   padding: '2px 8px',
@@ -168,7 +169,7 @@ export const NotificationList: React.FC<NotificationListProps> = ({ userId = 'cu
             />
           </div>
         ) : notifications.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: 48, color: 'text.secondary' }}>
+          <div style={{ textAlign: 'center', padding: 48, color: theme.palette.text.secondary }}>
             <Bell
               sx={{
                 width: 48,
@@ -188,7 +189,7 @@ export const NotificationList: React.FC<NotificationListProps> = ({ userId = 'cu
                 style={{
                   padding: 16,
                   transition: 'background-color 0.15s',
-                  backgroundColor: !notification.is_read ? 'primary.light' : undefined,
+                  backgroundColor: !notification.is_read ? theme.palette.primary.light : undefined,
                 }}
               >
                 <div style={{ display: 'flex', gap: 12 }}>
@@ -204,7 +205,7 @@ export const NotificationList: React.FC<NotificationListProps> = ({ userId = 'cu
                         gap: 8,
                       }}
                     >
-                      <h3 style={{ fontWeight: 500, color: 'text.primary' }}>
+                      <h3 style={{ fontWeight: 500, color: theme.palette.text.primary }}>
                         {notification.title}
                       </h3>
                       <div
@@ -217,7 +218,7 @@ export const NotificationList: React.FC<NotificationListProps> = ({ userId = 'cu
                         <span
                           style={{
                             fontSize: 12,
-                            color: 'text.secondary',
+                            color: theme.palette.text.secondary,
                             display: 'flex',
                             alignItems: 'center',
                             gap: 4,
@@ -238,7 +239,7 @@ export const NotificationList: React.FC<NotificationListProps> = ({ userId = 'cu
                         )}
                       </div>
                     </div>
-                    <p style={{ fontSize: 14, color: 'text.secondary', marginTop: 4 }}>
+                    <p style={{ fontSize: 14, color: theme.palette.text.secondary, marginTop: 4 }}>
                       {notification.content}
                     </p>
                   </div>

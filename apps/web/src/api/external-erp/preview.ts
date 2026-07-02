@@ -10,7 +10,7 @@ export const previewApi = {
     }
   ) =>
     apiClient.integration.get(
-      `/api/integration/external-erp/connections/${configId}/preview/accounts`,
+      `/integration/external-erp/connections/${configId}/preview/accounts`,
       { params }
     ),
 
@@ -23,7 +23,7 @@ export const previewApi = {
     }
   ) =>
     apiClient.integration.get(
-      `/api/integration/external-erp/connections/${configId}/preview/customers`,
+      `/integration/external-erp/connections/${configId}/preview/customers`,
       { params }
     ),
 
@@ -36,7 +36,7 @@ export const previewApi = {
     }
   ) =>
     apiClient.integration.get(
-      `/api/integration/external-erp/connections/${configId}/preview/suppliers`,
+      `/integration/external-erp/connections/${configId}/preview/suppliers`,
       { params }
     ),
 
@@ -50,7 +50,7 @@ export const previewApi = {
     }
   ) =>
     apiClient.integration.get(
-      `/api/integration/external-erp/connections/${configId}/preview/vouchers`,
+      `/integration/external-erp/connections/${configId}/preview/vouchers`,
       { params }
     ),
 };

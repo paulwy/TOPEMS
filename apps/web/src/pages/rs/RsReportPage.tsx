@@ -72,7 +72,7 @@ const RsReportPage: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const response = await apiClient.rs.get('/api/rs/reports/summary');
+      const response = await apiClient.rs.get('/reports/summary');
       if (response.success && response.data) {
         setReportData(response.data);
       }

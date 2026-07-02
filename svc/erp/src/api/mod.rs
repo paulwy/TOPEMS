@@ -4,7 +4,9 @@ use axum::{extract::FromRef, Router};
 use sqlx::postgres::PgPool;
 use std::sync::Arc;
 use std::time::Instant;
-use topems_shared::{AuthState, FieldEncryptionService, HrmServiceClient, NotificationServiceClient, SystemMetrics};
+use topems_shared::{
+    AuthState, FieldEncryptionService, HrmServiceClient, NotificationServiceClient, SystemMetrics,
+};
 
 pub mod addressbook;
 pub mod announcement;
@@ -22,10 +24,10 @@ pub mod hrm_integration_example;
 pub mod meeting_room;
 pub mod office_supplies;
 pub mod opening_balance;
+pub mod plugin;
 pub mod production_order;
 pub mod vehicles;
 pub mod voucher;
-pub mod plugin;
 
 // 财务数据缓存 TTL (秒)
 const FINANCE_CACHE_TTL: u64 = 300;

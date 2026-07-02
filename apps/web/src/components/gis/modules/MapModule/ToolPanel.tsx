@@ -16,12 +16,7 @@ import { Box as MuiBox, Typography, Paper, Divider, Button } from '@mui/material
 import type { DrawFeature } from '../shared/types';
 
 type ToolMode =
-  | 'select'
-  | 'measure-distance'
-  | 'measure-area'
-  | 'draw-point'
-  | 'draw-line'
-  | 'draw-polygon';
+  'select' | 'measure-distance' | 'measure-area' | 'draw-point' | 'draw-line' | 'draw-polygon';
 
 interface ToolPanelProps {
   toolMode: ToolMode;
@@ -82,7 +77,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
         position: 'absolute',
         top: 16,
         left: 16,
-        borderRadius: 2,
+        borderRadius: 3,
         boxShadow: 2,
         overflow: 'hidden',
       }}
@@ -101,7 +96,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
           sx={{
             width: '100%',
             p: 2,
-            borderRadius: 2,
+            borderRadius: 3,
             display: 'flex',
             alignItems: 'center',
             gap: 2,
@@ -130,7 +125,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
           sx={{
             width: '100%',
             p: 2,
-            borderRadius: 2,
+            borderRadius: 3,
             display: 'flex',
             alignItems: 'center',
             gap: 2,
@@ -153,7 +148,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
           sx={{
             width: '100%',
             p: 2,
-            borderRadius: 2,
+            borderRadius: 3,
             display: 'flex',
             alignItems: 'center',
             gap: 2,
@@ -176,7 +171,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
           sx={{
             width: '100%',
             p: 2,
-            borderRadius: 2,
+            borderRadius: 3,
             display: 'flex',
             alignItems: 'center',
             gap: 2,
@@ -197,7 +192,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
           sx={{
             width: '100%',
             p: 2,
-            borderRadius: 2,
+            borderRadius: 3,
             display: 'flex',
             alignItems: 'center',
             gap: 2,
@@ -219,7 +214,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
           sx={{
             width: '100%',
             p: 2,
-            borderRadius: 2,
+            borderRadius: 3,
             display: 'flex',
             alignItems: 'center',
             gap: 2,
@@ -244,7 +239,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
               sx={{
                 width: '100%',
                 p: 2,
-                borderRadius: 2,
+                borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
                 gap: 2,
@@ -265,7 +260,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
             sx={{
               width: '100%',
               p: 2,
-              borderRadius: 2,
+              borderRadius: 3,
               display: 'flex',
               alignItems: 'center',
               gap: 2,
@@ -287,7 +282,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
             sx={{
               width: '100%',
               p: 2,
-              borderRadius: 2,
+              borderRadius: 3,
               display: 'flex',
               alignItems: 'center',
               gap: 2,
@@ -308,7 +303,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
           sx={{
             width: '100%',
             p: 2,
-            borderRadius: 2,
+            borderRadius: 3,
             display: 'flex',
             alignItems: 'center',
             gap: 2,
@@ -328,13 +323,13 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
           sx={{
             width: '100%',
             p: 2,
-            borderRadius: 2,
+            borderRadius: 3,
             display: 'flex',
             alignItems: 'center',
             gap: 2,
             bgcolor: 'primary.light',
             color: 'primary.dark',
-            '&:hover': { bgcolor: '#dbeafe' },
+            '&:hover': { bgcolor: 'primary.100' },
             textTransform: 'none',
           }}
           title='导出GeoJSON'
@@ -347,7 +342,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
           sx={{
             width: '100%',
             p: 2,
-            borderRadius: 2,
+            borderRadius: 3,
             display: 'flex',
             alignItems: 'center',
             gap: 2,
@@ -368,7 +363,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
           sx={{
             width: '100%',
             p: 2,
-            borderRadius: 2,
+            borderRadius: 3,
             display: 'flex',
             alignItems: 'center',
             gap: 2,
@@ -388,7 +383,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
           sx={{
             width: '100%',
             p: 2,
-            borderRadius: 2,
+            borderRadius: 3,
             display: 'flex',
             alignItems: 'center',
             gap: 2,
@@ -448,7 +443,7 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
           sx={{
             width: '100%',
             p: 2,
-            borderRadius: 2,
+            borderRadius: 3,
             display: 'flex',
             alignItems: 'center',
             gap: 2,
@@ -468,13 +463,13 @@ const ToolPanel: React.FC<ToolPanelProps> = ({
           sx={{
             width: '100%',
             p: 2,
-            borderRadius: 2,
+            borderRadius: 3,
             display: 'flex',
             alignItems: 'center',
             gap: 2,
             bgcolor: offlineMode ? 'success.dark' : 'white',
             color: offlineMode ? 'white' : 'grey.700',
-            '&:hover': { bgcolor: offlineMode ? '#15803d' : 'grey.50' },
+            '&:hover': { bgcolor: offlineMode ? 'success.700' : 'grey.50' },
             textTransform: 'none',
           }}
           title='离线模式'

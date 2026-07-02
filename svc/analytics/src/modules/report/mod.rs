@@ -1,9 +1,9 @@
 //! Report module
 
 pub mod report;
-pub mod template;
-pub mod schedule;
 pub mod report_plugin;
+pub mod schedule;
+pub mod template;
 
 use sqlx::PgPool;
 
@@ -72,9 +72,11 @@ pub async fn init_database(pool: &PgPool) -> Result<(), sqlx::Error> {
     sqlx::query("CREATE INDEX IF NOT EXISTS idx_reports_status ON analytics_reports(status)")
         .execute(pool)
         .await?;
-    sqlx::query("CREATE INDEX IF NOT EXISTS idx_schedules_report ON analytics_report_schedules(report_id)")
-        .execute(pool)
-        .await?;
+    sqlx::query(
+        "CREATE INDEX IF NOT EXISTS idx_schedules_report ON analytics_report_schedules(report_id)",
+    )
+    .execute(pool)
+    .await?;
 
     Ok(())
 }

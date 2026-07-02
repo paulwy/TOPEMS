@@ -53,8 +53,16 @@ fn test_scm_permission_codes_format() {
         ("scm:purchase_item:write", "purchase_item", "write"),
         ("scm:price_comparison:read", "price_comparison", "read"),
         ("scm:price_comparison:write", "price_comparison", "write"),
-        ("scm:supplier_evaluation:read", "supplier_evaluation", "read"),
-        ("scm:supplier_evaluation:write", "supplier_evaluation", "write"),
+        (
+            "scm:supplier_evaluation:read",
+            "supplier_evaluation",
+            "read",
+        ),
+        (
+            "scm:supplier_evaluation:write",
+            "supplier_evaluation",
+            "write",
+        ),
         ("scm:mrp:read", "mrp", "read"),
         ("scm:mrp:write", "mrp", "write"),
     ];
@@ -126,9 +134,7 @@ fn test_supplier_minimal() {
 
 #[test]
 fn test_supplier_statuses() {
-    let statuses = vec![
-        "active", "inactive", "pending", "suspended", "blacklisted",
-    ];
+    let statuses = vec!["active", "inactive", "pending", "suspended", "blacklisted"];
 
     for status in statuses {
         let supplier = Supplier {
@@ -321,7 +327,10 @@ fn test_purchase_item_amount_calculation() {
     };
 
     assert_eq!(item.amount.unwrap(), expected_amount);
-    assert_eq!(item.quantity * item.unit_price.unwrap(), item.amount.unwrap());
+    assert_eq!(
+        item.quantity * item.unit_price.unwrap(),
+        item.amount.unwrap()
+    );
 }
 
 #[test]
@@ -572,14 +581,7 @@ mod business_logic_tests {
 
     #[test]
     fn test_supplier_categories() {
-        let categories = vec![
-            "原材料",
-            "零部件",
-            "设备",
-            "服务",
-            "办公用品",
-            "包装材料",
-        ];
+        let categories = vec!["原材料", "零部件", "设备", "服务", "办公用品", "包装材料"];
 
         for category in categories {
             assert!(!category.is_empty());

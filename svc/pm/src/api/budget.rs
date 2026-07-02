@@ -20,7 +20,10 @@ pub fn create_routes(pool: PgPool) -> Router {
             "/api/pm/projects/{project_id}/budgets",
             get(get_project_budgets).post(create_budget),
         )
-        .route("/api/plugin_pm.budgets/{id}", get(get_budget).put(update_budget))
+        .route(
+            "/api/plugin_pm.budgets/{id}",
+            get(get_budget).put(update_budget),
+        )
         .route("/api/plugin_pm.budgets/{id}/submit", post(submit_budget))
         .route("/api/plugin_pm.budgets/{id}/approve", post(approve_budget))
         .route(
@@ -213,11 +216,12 @@ async fn get_budget_items(
     State(pool): State<PgPool>,
     Path(id): Path<Uuid>,
 ) -> Json<ApiResponse<Vec<BudgetItem>>> {
-    let items =
-        sqlx::query_as::<_, BudgetItem>("SELECT * FROM plugin_pm.budget_items WHERE budget_id = $1")
-            .bind(id)
-            .fetch_all(&pool)
-            .await;
+    let items = sqlx::query_as::<_, BudgetItem>(
+        "SELECT * FROM plugin_pm.budget_items WHERE budget_id = $1",
+    )
+    .bind(id)
+    .fetch_all(&pool)
+    .await;
 
     match items {
         Ok(i) => Json(ApiResponse::success(i, "获取预算项列表成功")),

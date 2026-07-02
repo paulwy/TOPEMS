@@ -5,6 +5,7 @@
  */
 import React from 'react';
 import { Chip, Box, Typography } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material/styles';
 import {
   CheckCircle,
   AlertCircle,
@@ -44,13 +45,7 @@ import {
  * 状态颜色类型
  */
 export type StatusColor =
-  | 'default'
-  | 'primary'
-  | 'secondary'
-  | 'success'
-  | 'warning'
-  | 'error'
-  | 'info';
+  'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info';
 
 /**
  * 状态变体类型
@@ -63,10 +58,7 @@ export type StatusVariant = 'filled' | 'outlined' | 'soft';
 export type StatusSize = 'sm' | 'md' | 'lg';
 
 export type EmployeeStatus =
-  | 'employeeactive'
-  | 'employee_inactive'
-  | 'employee_probation'
-  | 'employee_pending';
+  'employeeactive' | 'employee_inactive' | 'employee_probation' | 'employee_pending';
 export type AttendanceStatus =
   | 'attendance_normal'
   | 'attendance_late'
@@ -75,10 +67,7 @@ export type AttendanceStatus =
   | 'attendance_leave';
 export type LeaveStatus = 'leave_pending' | 'leave_approved' | 'leave_rejected' | 'leave_cancelled';
 export type PayrollStatus =
-  | 'payroll_draft'
-  | 'payroll_calculated'
-  | 'payroll_paid'
-  | 'payroll_processing';
+  'payroll_draft' | 'payroll_calculated' | 'payroll_paid' | 'payroll_processing';
 export type PerformanceStatus =
   | 'performance_pending'
   | 'performance_self_review'
@@ -87,10 +76,7 @@ export type PerformanceStatus =
   | 'performance_not_started'
   | 'performance_in_progress';
 export type CustomerStatus =
-  | 'customeractive'
-  | 'customer_inactive'
-  | 'customer_blocked'
-  | 'customer_potential';
+  'customeractive' | 'customer_inactive' | 'customer_blocked' | 'customer_potential';
 export type OpportunityStatus =
   | 'opportunity_new'
   | 'opportunity_qualifying'
@@ -111,11 +97,7 @@ export type WorkflowStatus =
   | 'workflow_rejected'
   | 'workflow_processing';
 export type FinanceStatus =
-  | 'finance_draft'
-  | 'finance_pending'
-  | 'finance_approved'
-  | 'finance_posted'
-  | 'finance_imported';
+  'finance_draft' | 'finance_pending' | 'finance_approved' | 'finance_posted' | 'finance_imported';
 export type ModuleStatusValue = 'online' | 'beta' | 'plan' | 'new';
 export type ModuleStatus = ModuleStatusValue;
 export type CommonStatus =
@@ -199,7 +181,7 @@ export interface StatusBadgeProps {
   disabled?: boolean;
 
   /** 自定义样式 */
-  sx?: import('@mui/material').SxProps<import('@mui/material').Theme>;
+  sx?: SxProps<Theme>;
 
   /** 使用Chip组件渲染（默认true） */
   useChip?: boolean;
@@ -609,6 +591,7 @@ interface SizeStyleConfig {
   fontSize: string;
   fontWeight: number;
   height: number;
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   '& .MuiBox-root > svg'?: { fontSize: string };
 }
 
@@ -633,7 +616,7 @@ const SIZE_STYLES: Record<StatusSize, SizeStyleConfig> = {
 // ============ 变体样式映射 ============
 
 interface VariantStyleResult {
-  sx: import('@mui/material').SxProps<import('@mui/material').Theme>;
+  sx: SxProps<Theme>;
   bgcolor?: string;
   color?: string;
   borderColor?: string;

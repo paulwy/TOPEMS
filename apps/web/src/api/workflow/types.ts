@@ -203,7 +203,15 @@ export interface Task {
   initiator_name?: string;
   candidate_users?: string[];
   candidate_groups?: string[];
-  status: 'pending' | 'running' | 'completed' | 'rejected' | 'suspended' | 'claimed' | 'finished' | string;
+  status:
+    | 'pending'
+    | 'running'
+    | 'completed'
+    | 'rejected'
+    | 'suspended'
+    | 'claimed'
+    | 'finished'
+    | string;
   priority?: number;
   description?: string;
   due_time?: string;
@@ -376,7 +384,19 @@ export interface FormField {
   id: string;
   name: string;
   label: string;
-  type: 'input' | 'textarea' | 'select' | 'radio' | 'checkbox' | 'date' | 'datetime' | 'number' | 'upload' | 'user' | 'dept' | 'table';
+  type:
+    | 'input'
+    | 'textarea'
+    | 'select'
+    | 'radio'
+    | 'checkbox'
+    | 'date'
+    | 'datetime'
+    | 'number'
+    | 'upload'
+    | 'user'
+    | 'dept'
+    | 'table';
   placeholder?: string;
   required?: boolean;
   default_value?: unknown;
@@ -580,7 +600,17 @@ export interface ProcessLog {
   node_id?: string;
   node_name?: string;
   action: string;
-  action_type: 'start' | 'end' | 'approve' | 'reject' | 'delegate' | 'transfer' | 'claim' | 'unclaim' | 'timeout' | 'error';
+  action_type:
+    | 'start'
+    | 'end'
+    | 'approve'
+    | 'reject'
+    | 'delegate'
+    | 'transfer'
+    | 'claim'
+    | 'unclaim'
+    | 'timeout'
+    | 'error';
   actor_id?: string;
   actor_name?: string;
   comment?: string;

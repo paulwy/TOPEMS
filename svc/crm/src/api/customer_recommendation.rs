@@ -53,8 +53,14 @@ pub struct RecommendationQueryParams {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/crm/recommendations", get(list_recommendations).post(create_recommendation))
-        .route("/api/crm/customers/{id}/recommendations", get(get_customer_recommendations))
+        .route(
+            "/api/crm/recommendations",
+            get(list_recommendations).post(create_recommendation),
+        )
+        .route(
+            "/api/crm/customers/{id}/recommendations",
+            get(get_customer_recommendations),
+        )
         .route("/api/crm/recommendations/{id}", get(get_recommendation))
 }
 
@@ -108,7 +114,8 @@ async fn list_recommendations(
             let recommendations: Vec<RecommendationResult> = records
                 .into_iter()
                 .map(|r| {
-                    let items: Vec<RecommendationItem> = serde_json::from_value(r.get(3)).unwrap_or_default();
+                    let items: Vec<RecommendationItem> =
+                        serde_json::from_value(r.get(3)).unwrap_or_default();
                     RecommendationResult {
                         customer_id: r.get(1),
                         customer_name: r.get(2),
@@ -160,7 +167,8 @@ async fn get_recommendation(
 
     match result {
         Ok(Some(r)) => {
-            let items: Vec<RecommendationItem> = serde_json::from_value(r.get(3)).unwrap_or_default();
+            let items: Vec<RecommendationItem> =
+                serde_json::from_value(r.get(3)).unwrap_or_default();
             Json(ApiResponse::success(
                 RecommendationResult {
                     customer_id: r.get(1),
@@ -192,12 +200,11 @@ async fn create_recommendation(
         Err(e) => return e,
     }
 
-    let customer_name_result = sqlx::query_scalar::<_, Option<String>>(
-        "SELECT name FROM crm.customers WHERE id = $1",
-    )
-    .bind(&req.customer_id)
-    .fetch_optional(&state.db)
-    .await;
+    let customer_name_result =
+        sqlx::query_scalar::<_, Option<String>>("SELECT name FROM crm.customers WHERE id = $1")
+            .bind(&req.customer_id)
+            .fetch_optional(&state.db)
+            .await;
 
     let customer_name = match customer_name_result {
         Ok(Some(name)) => name,
@@ -206,9 +213,11 @@ async fn create_recommendation(
     };
 
     let top_k = req.top_k.unwrap_or(10);
-    let recommendations = generate_recommendations(&state, &req.customer_id, &req.recommendation_type, top_k).await;
+    let recommendations =
+        generate_recommendations(&state, &req.customer_id, &req.recommendation_type, top_k).await;
 
-    let recommendations_json = serde_json::to_value(&recommendations).unwrap_or(serde_json::json!([]));
+    let recommendations_json =
+        serde_json::to_value(&recommendations).unwrap_or(serde_json::json!([]));
     let confidence = calculate_overall_confidence(&recommendations);
 
     let id = Uuid::new_v4();
@@ -235,7 +244,8 @@ async fn create_recommendation(
 
     match result {
         Ok(r) => {
-            let items: Vec<RecommendationItem> = serde_json::from_value(r.get(3)).unwrap_or_default();
+            let items: Vec<RecommendationItem> =
+                serde_json::from_value(r.get(3)).unwrap_or_default();
             Json(ApiResponse::success(
                 RecommendationResult {
                     customer_id: r.get(1),
@@ -267,12 +277,11 @@ async fn get_customer_recommendations(
         Err(e) => return e,
     }
 
-    let customer_name_result = sqlx::query_scalar::<_, Option<String>>(
-        "SELECT name FROM crm.customers WHERE id = $1",
-    )
-    .bind(id)
-    .fetch_optional(&state.db)
-    .await;
+    let customer_name_result =
+        sqlx::query_scalar::<_, Option<String>>("SELECT name FROM crm.customers WHERE id = $1")
+            .bind(id)
+            .fetch_optional(&state.db)
+            .await;
 
     let customer_name = match customer_name_result {
         Ok(Some(name)) => name,
@@ -300,7 +309,12 @@ async fn get_customer_recommendations(
     ))
 }
 
-async fn generate_recommendations(state: &ApiState, customer_id: &Uuid, rec_type: &str, top_k: i32) -> Vec<RecommendationItem> {
+async fn generate_recommendations(
+    state: &ApiState,
+    customer_id: &Uuid,
+    rec_type: &str,
+    top_k: i32,
+) -> Vec<RecommendationItem> {
     match rec_type {
         "product" => recommend_products(state, customer_id, top_k).await,
         "opportunity" => recommend_opportunities(state, customer_id, top_k).await,
@@ -312,7 +326,11 @@ async fn generate_recommendations(state: &ApiState, customer_id: &Uuid, rec_type
     }
 }
 
-async fn recommend_products(_state: &ApiState, _customer_id: &Uuid, top_k: i32) -> Vec<RecommendationItem> {
+async fn recommend_products(
+    _state: &ApiState,
+    _customer_id: &Uuid,
+    top_k: i32,
+) -> Vec<RecommendationItem> {
     vec![
         RecommendationItem {
             id: Uuid::new_v4(),
@@ -347,15 +365,21 @@ async fn recommend_products(_state: &ApiState, _customer_id: &Uuid, top_k: i32) 
     .collect()
 }
 
-async fn recommend_opportunities(state: &ApiState, customer_id: &Uuid, top_k: i32) -> Vec<RecommendationItem> {
-    let industry_result = sqlx::query_scalar::<_, Option<String>>(
-        "SELECT industry FROM crm.customers WHERE id = $1",
-    )
-    .bind(customer_id)
-    .fetch_optional(&state.db)
-    .await;
+async fn recommend_opportunities(
+    state: &ApiState,
+    customer_id: &Uuid,
+    top_k: i32,
+) -> Vec<RecommendationItem> {
+    let industry_result =
+        sqlx::query_scalar::<_, Option<String>>("SELECT industry FROM crm.customers WHERE id = $1")
+            .bind(customer_id)
+            .fetch_optional(&state.db)
+            .await;
 
-    let industry = industry_result.unwrap_or(None).flatten().unwrap_or("其他".to_string());
+    let industry = industry_result
+        .unwrap_or(None)
+        .flatten()
+        .unwrap_or("其他".to_string());
 
     vec![
         RecommendationItem {
@@ -391,7 +415,11 @@ async fn recommend_opportunities(state: &ApiState, customer_id: &Uuid, top_k: i3
     .collect()
 }
 
-async fn recommend_services(_state: &ApiState, _customer_id: &Uuid, top_k: i32) -> Vec<RecommendationItem> {
+async fn recommend_services(
+    _state: &ApiState,
+    _customer_id: &Uuid,
+    top_k: i32,
+) -> Vec<RecommendationItem> {
     vec![
         RecommendationItem {
             id: Uuid::new_v4(),
@@ -426,7 +454,11 @@ async fn recommend_services(_state: &ApiState, _customer_id: &Uuid, top_k: i32) 
     .collect()
 }
 
-async fn recommend_cross_sell(_state: &ApiState, _customer_id: &Uuid, top_k: i32) -> Vec<RecommendationItem> {
+async fn recommend_cross_sell(
+    _state: &ApiState,
+    _customer_id: &Uuid,
+    top_k: i32,
+) -> Vec<RecommendationItem> {
     vec![
         RecommendationItem {
             id: Uuid::new_v4(),
@@ -461,7 +493,11 @@ async fn recommend_cross_sell(_state: &ApiState, _customer_id: &Uuid, top_k: i32
     .collect()
 }
 
-async fn recommend_upsell(_state: &ApiState, _customer_id: &Uuid, top_k: i32) -> Vec<RecommendationItem> {
+async fn recommend_upsell(
+    _state: &ApiState,
+    _customer_id: &Uuid,
+    top_k: i32,
+) -> Vec<RecommendationItem> {
     vec![
         RecommendationItem {
             id: Uuid::new_v4(),
@@ -496,7 +532,11 @@ async fn recommend_upsell(_state: &ApiState, _customer_id: &Uuid, top_k: i32) ->
     .collect()
 }
 
-async fn recommend_content(_state: &ApiState, _customer_id: &Uuid, top_k: i32) -> Vec<RecommendationItem> {
+async fn recommend_content(
+    _state: &ApiState,
+    _customer_id: &Uuid,
+    top_k: i32,
+) -> Vec<RecommendationItem> {
     vec![
         RecommendationItem {
             id: Uuid::new_v4(),
@@ -531,7 +571,11 @@ async fn recommend_content(_state: &ApiState, _customer_id: &Uuid, top_k: i32) -
     .collect()
 }
 
-async fn recommend_general(_state: &ApiState, _customer_id: &Uuid, top_k: i32) -> Vec<RecommendationItem> {
+async fn recommend_general(
+    _state: &ApiState,
+    _customer_id: &Uuid,
+    top_k: i32,
+) -> Vec<RecommendationItem> {
     vec![
         RecommendationItem {
             id: Uuid::new_v4(),

@@ -327,7 +327,7 @@ async fn main() -> anyhow::Result<()> {
             axum::routing::put(mark_all_read),
         )
         .route(
-            "/api/mobile/notifications/:id/read",
+            "/api/mobile/notifications/{id}/read",
             axum::routing::put(mark_read),
         )
         // Scan Routes

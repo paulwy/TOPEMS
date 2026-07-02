@@ -89,10 +89,7 @@ impl NotificationSvcClient {
         page_size: i32,
         notification_type: Option<&str>,
     ) -> ServiceClientResult<NotificationListResponse> {
-        let mut path = format!(
-            "/api/v1/notifications?page={}&pagesize={}",
-            page, page_size
-        );
+        let mut path = format!("/api/v1/notifications?page={}&pagesize={}", page, page_size);
         if let Some(nt) = notification_type {
             path.push_str(&format!("&notification_type={}", nt));
         }
@@ -104,7 +101,9 @@ impl NotificationSvcClient {
     }
 
     pub async fn get_unread_count(&self) -> ServiceClientResult<i32> {
-        self.base_client.get("/api/v1/notifications/unread-count").await
+        self.base_client
+            .get("/api/v1/notifications/unread-count")
+            .await
     }
 
     pub async fn mark_as_read(&self, id: &str) -> ServiceClientResult<Notification> {

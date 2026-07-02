@@ -26,7 +26,10 @@ import { ListPageTemplate, type ColumnDef } from '@/components/templates';
 import { PageContainer } from '@/components/common';
 import ConfirmDialog from '@/components/common/ConfirmDialog';
 
-const statusConfig: Record<string, { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }> = {
+const statusConfig: Record<
+  string,
+  { label: string; color: 'default' | 'primary' | 'success' | 'warning' | 'error' }
+> = {
   draft: { label: '草稿', color: 'default' },
   pending: { label: '待审批', color: 'warning' },
   approved: { label: '已审批', color: 'success' },
@@ -427,7 +430,14 @@ const PurchaseContractPage: React.FC = () => {
       label: '状态',
       render: (row) => {
         const config = statusConfig[row.status] || statusConfig.draft;
-        return <Chip size='small' label={config.label} color={config.color} variant='outlined' />;
+        return (
+          <Chip
+            size='small'
+            label={config.label}
+            color={config.color}
+            variant='outlined'
+          />
+        );
       },
     },
     {
@@ -587,7 +597,10 @@ const PurchaseContractPage: React.FC = () => {
                   onChange={(e) => setFormData({ ...formData, contract_type: e.target.value })}
                 >
                   {Object.entries(contractTypeConfig).map(([key, label]) => (
-                    <MenuItem key={key} value={key}>
+                    <MenuItem
+                      key={key}
+                      value={key}
+                    >
                       {label}
                     </MenuItem>
                   ))}

@@ -5,7 +5,7 @@ use axum::{
     Json,
 };
 use chrono::Utc;
-use lopdf::{Document, Dictionary, Object, Stream};
+use lopdf::{Dictionary, Document, Object, Stream};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Uuid;
 use tracing::{info, warn};
@@ -422,9 +422,7 @@ pub struct DashboardTemplateListResponse {
     pub total: i64,
 }
 
-pub async fn list_dashboard_templates(
-    State(state): State<AppState>,
-) -> Json<serde_json::Value> {
+pub async fn list_dashboard_templates(State(state): State<AppState>) -> Json<serde_json::Value> {
     info!("Listing dashboard templates");
 
     let rows = match sqlx::query!(
@@ -859,9 +857,9 @@ pub async fn create_share_link(
     let share_id = Uuid::new_v4();
     let now = Utc::now().naive_utc();
 
-    let expires_at = req.expires_at.and_then(|s| {
-        chrono::NaiveDateTime::parse_from_str(&s, "%Y-%m-%dT%H:%M:%S").ok()
-    });
+    let expires_at = req
+        .expires_at
+        .and_then(|s| chrono::NaiveDateTime::parse_from_str(&s, "%Y-%m-%dT%H:%M:%S").ok());
 
     let result = sqlx::query!(
         r#"
@@ -1189,12 +1187,15 @@ pub async fn export_dashboard_pdf(
     let mut page = Dictionary::new();
     page.set("Type", Object::Name(b"Page".to_vec()));
     page.set("Parent", Object::Reference(pages_id));
-    page.set("MediaBox", Object::Array(vec![
-        Object::Integer(0),
-        Object::Integer(0),
-        Object::Integer(612),
-        Object::Integer(792),
-    ]));
+    page.set(
+        "MediaBox",
+        Object::Array(vec![
+            Object::Integer(0),
+            Object::Integer(0),
+            Object::Integer(612),
+            Object::Integer(792),
+        ]),
+    );
     page.set("Contents", Object::Reference(content_id));
 
     let mut font_dict = Dictionary::new();
@@ -1231,18 +1232,20 @@ pub async fn export_dashboard_pdf(
     }
 
     Ok((
-        [(
-            header::CONTENT_TYPE,
-            header::HeaderValue::from_static("application/pdf"),
-        ),
-        (
-            header::CONTENT_DISPOSITION,
-            header::HeaderValue::from_str(&format!(
-                "attachment; filename=\"dashboard_{}.pdf\"",
-                id
-            ))
-            .unwrap_or_else(|_| header::HeaderValue::from_static("attachment")),
-        )],
+        [
+            (
+                header::CONTENT_TYPE,
+                header::HeaderValue::from_static("application/pdf"),
+            ),
+            (
+                header::CONTENT_DISPOSITION,
+                header::HeaderValue::from_str(&format!(
+                    "attachment; filename=\"dashboard_{}.pdf\"",
+                    id
+                ))
+                .unwrap_or_else(|_| header::HeaderValue::from_static("attachment")),
+            ),
+        ],
         pdf_bytes,
     ))
 }
@@ -1308,15 +1311,9 @@ pub async fn export_dashboard_excel(
     let _ = csv_writer.write_record(&["Dashboard Export"]);
     let _ = csv_writer.write_record(&["ID", &dashboard.id.to_string()]);
     let _ = csv_writer.write_record(&["Name", &dashboard.name]);
-    let _ = csv_writer.write_record(&[
-        "Description",
-        &dashboard.description.unwrap_or_default(),
-    ]);
+    let _ = csv_writer.write_record(&["Description", &dashboard.description.unwrap_or_default()]);
     let _ = csv_writer.write_record(&["Owner", &dashboard.owner_id]);
-    let _ = csv_writer.write_record(&[
-        "Public",
-        &dashboard.is_public.unwrap_or(false).to_string(),
-    ]);
+    let _ = csv_writer.write_record(&["Public", &dashboard.is_public.unwrap_or(false).to_string()]);
     let _ = csv_writer.write_record(&[""; 0]);
 
     // Write widgets info
@@ -1345,20 +1342,20 @@ pub async fn export_dashboard_excel(
     };
 
     Ok((
-        [(
-            header::CONTENT_TYPE,
-            header::HeaderValue::from_static(
-                "text/csv; charset=utf-8",
+        [
+            (
+                header::CONTENT_TYPE,
+                header::HeaderValue::from_static("text/csv; charset=utf-8"),
             ),
-        ),
-        (
-            header::CONTENT_DISPOSITION,
-            header::HeaderValue::from_str(&format!(
-                "attachment; filename=\"dashboard_{}.csv\"",
-                id
-            ))
-            .unwrap_or_else(|_| header::HeaderValue::from_static("attachment")),
-        )],
+            (
+                header::CONTENT_DISPOSITION,
+                header::HeaderValue::from_str(&format!(
+                    "attachment; filename=\"dashboard_{}.csv\"",
+                    id
+                ))
+                .unwrap_or_else(|_| header::HeaderValue::from_static("attachment")),
+            ),
+        ],
         csv_data,
     ))
 }
@@ -1530,10 +1527,7 @@ pub async fn query_dashboard_realtime_data(
         let payload = match chart_service.generate_chart(chart_query).await {
             Ok(chart_result) => serde_json::to_value(&chart_result).unwrap_or_default(),
             Err(e) => {
-                warn!(
-                    "Failed to generate chart for widget {}: {}",
-                    widget.id, e
-                );
+                warn!("Failed to generate chart for widget {}: {}", widget.id, e);
                 serde_json::json!({ "error": e })
             }
         };

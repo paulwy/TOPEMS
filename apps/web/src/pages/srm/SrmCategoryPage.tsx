@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import {
-  Box,
+import {Box,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -12,8 +11,7 @@ import {
   MenuItem,
   InputLabel,
   FormControl,
-  Typography,
-} from '@mui/material';
+  Typography, useTheme} from '@mui/material';
 import { Plus, Edit2, Trash2, Eye, FolderTree } from 'lucide-react';
 import { ListPageTemplate, type ColumnDef, type RowAction } from '@/components/templates';
 import { PageContainer } from '@/components/common';
@@ -32,7 +30,7 @@ interface SupplierCategory {
 }
 
 const STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
-  active: { label: '启用', bg: 'success.lighter', color: '#15803d' },
+  active: { label: '启用', bg: 'success.lighter', color: 'success.700' },
   inactive: { label: '禁用', bg: 'error.lighter', color: '#b91c1c' },
 };
 
@@ -145,6 +143,7 @@ const defaultFormData: CategoryFormData = {
 
 const SrmCategoryPage: React.FC = () => {
   const [categories, setCategories] = useState<SupplierCategory[]>([]);
+  const theme = useTheme();
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -230,7 +229,7 @@ const SrmCategoryPage: React.FC = () => {
           {Array.from({ length: row.level }).map((_, i) => (
             <FolderTree
               key={i}
-              style={{ width: 14, height: 14, color: 'primary.main' }}
+              style={{ width: 14, height: 14, color: theme.palette.primary.main }}
             />
           ))}
         </Box>

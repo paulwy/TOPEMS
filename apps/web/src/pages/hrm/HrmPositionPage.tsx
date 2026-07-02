@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Typography, Box, Button, DialogContent, DialogActions } from '@mui/material';
+import {Typography, Box, Button, DialogContent, DialogActions, useTheme} from '@mui/material';
 import { Briefcase, Plus, Edit, Trash2, Eye, Users, CheckCircle, XCircle } from 'lucide-react';
 import {
   positionApi,
@@ -23,6 +23,7 @@ import {
 interface PositionManagementPageProps {}
 
 const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
+  const theme = useTheme();
   const addNotification = useAppStore((state) => state.addNotification);
 
   const [loading, setLoading] = useState(false);
@@ -262,7 +263,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
                   justifyContent: 'center',
                 }}
               >
-                <Briefcase style={{ width: 20, height: 20, color: 'primary.main' }} />
+                <Briefcase style={{ width: 20, height: 20, color: theme.palette.primary.main }} />
               </Box>
               <Box>
                 <Typography
@@ -429,7 +430,7 @@ const PositionManagementPage: React.FC<PositionManagementPageProps> = () => {
           ]}
           onRefresh={() => fetchPositions()}
           emptyMessage='暂无岗位数据'
-          emptyIcon={<Briefcase style={{ width: 48, height: 48, color: 'text.disabled' }} />}
+          emptyIcon={<Briefcase style={{ width: 48, height: 48, color: theme.palette.text.disabled }} />}
           headerContent={
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <ModeToggle />

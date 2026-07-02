@@ -56,9 +56,7 @@ const mockApps: LowCodeApp[] = [
       { id: 'p-004', name: '员工列表', path: '/employees', type: 'list' },
       { id: 'p-005', name: '部门架构', path: '/departments', type: 'tree' },
     ],
-    forms: [
-      { id: 'f-003', name: '员工信息表单', modelId: 'dm-004' },
-    ],
+    forms: [{ id: 'f-003', name: '员工信息表单', modelId: 'dm-004' }],
     dataModels: ['dm-004', 'dm-005'],
     workflows: ['wf-003'],
   },
@@ -81,12 +79,8 @@ const mockApps: LowCodeApp[] = [
     createdBy: 'admin',
     createdAt: '2024-05-10T10:00:00Z',
     updatedAt: '2024-06-28T16:00:00Z',
-    pages: [
-      { id: 'p-006', name: '产品列表', path: '/products', type: 'list' },
-    ],
-    forms: [
-      { id: 'f-004', name: '产品表单', modelId: 'dm-003' },
-    ],
+    pages: [{ id: 'p-006', name: '产品列表', path: '/products', type: 'list' }],
+    forms: [{ id: 'f-004', name: '产品表单', modelId: 'dm-003' }],
     dataModels: ['dm-003'],
     workflows: [],
   },
@@ -170,17 +164,71 @@ const mockApps: LowCodeApp[] = [
 
 const mockVersions: Record<string, AppVersion[]> = {
   'app-001': [
-    { id: 'v-001', version: '2.1.0', description: '新增商机管理模块', status: 'published', publishedAt: '2024-06-25T14:30:00Z', publishedBy: 'admin', createdAt: '2024-06-20T10:00:00Z' },
-    { id: 'v-002', version: '2.0.0', description: '重大版本升级，重构数据模型', status: 'published', publishedAt: '2024-05-10T09:00:00Z', publishedBy: 'admin', createdAt: '2024-04-25T08:00:00Z' },
-    { id: 'v-003', version: '1.5.0', description: '优化客户列表性能', status: 'deprecated', publishedAt: '2024-03-15T10:00:00Z', publishedBy: 'admin', createdAt: '2024-03-01T09:00:00Z' },
-    { id: 'v-004', version: '1.0.0', description: '初始版本发布', status: 'deprecated', publishedAt: '2024-01-20T11:00:00Z', publishedBy: 'admin', createdAt: '2024-01-10T08:00:00Z' },
+    {
+      id: 'v-001',
+      version: '2.1.0',
+      description: '新增商机管理模块',
+      status: 'published',
+      publishedAt: '2024-06-25T14:30:00Z',
+      publishedBy: 'admin',
+      createdAt: '2024-06-20T10:00:00Z',
+    },
+    {
+      id: 'v-002',
+      version: '2.0.0',
+      description: '重大版本升级，重构数据模型',
+      status: 'published',
+      publishedAt: '2024-05-10T09:00:00Z',
+      publishedBy: 'admin',
+      createdAt: '2024-04-25T08:00:00Z',
+    },
+    {
+      id: 'v-003',
+      version: '1.5.0',
+      description: '优化客户列表性能',
+      status: 'deprecated',
+      publishedAt: '2024-03-15T10:00:00Z',
+      publishedBy: 'admin',
+      createdAt: '2024-03-01T09:00:00Z',
+    },
+    {
+      id: 'v-004',
+      version: '1.0.0',
+      description: '初始版本发布',
+      status: 'deprecated',
+      publishedAt: '2024-01-20T11:00:00Z',
+      publishedBy: 'admin',
+      createdAt: '2024-01-10T08:00:00Z',
+    },
   ],
   'app-002': [
-    { id: 'v-005', version: '1.0.0', description: '员工管理系统首个测试版本', status: 'draft', createdAt: '2024-05-20T10:00:00Z' },
+    {
+      id: 'v-005',
+      version: '1.0.0',
+      description: '员工管理系统首个测试版本',
+      status: 'draft',
+      createdAt: '2024-05-20T10:00:00Z',
+    },
   ],
   'app-005': [
-    { id: 'v-006', version: '1.2.0', description: '新增采购订单模块', status: 'published', publishedAt: '2024-06-10T13:00:00Z', publishedBy: 'admin', createdAt: '2024-05-25T09:00:00Z' },
-    { id: 'v-007', version: '1.0.0', description: '采购申请初始版本', status: 'published', publishedAt: '2024-04-01T09:00:00Z', publishedBy: 'admin', createdAt: '2024-02-15T11:00:00Z' },
+    {
+      id: 'v-006',
+      version: '1.2.0',
+      description: '新增采购订单模块',
+      status: 'published',
+      publishedAt: '2024-06-10T13:00:00Z',
+      publishedBy: 'admin',
+      createdAt: '2024-05-25T09:00:00Z',
+    },
+    {
+      id: 'v-007',
+      version: '1.0.0',
+      description: '采购申请初始版本',
+      status: 'published',
+      publishedAt: '2024-04-01T09:00:00Z',
+      publishedBy: 'admin',
+      createdAt: '2024-02-15T11:00:00Z',
+    },
   ],
 };
 
@@ -192,22 +240,23 @@ export async function listApps(params?: {
   category?: string;
 }) {
   let data = [...mockApps];
-  
+
   if (params?.search) {
     const search = params.search.toLowerCase();
-    data = data.filter(a => 
-      a.name.toLowerCase().includes(search) || 
-      a.code.toLowerCase().includes(search) ||
-      a.description?.toLowerCase().includes(search)
+    data = data.filter(
+      (a) =>
+        a.name.toLowerCase().includes(search) ||
+        a.code.toLowerCase().includes(search) ||
+        a.description?.toLowerCase().includes(search)
     );
   }
-  
+
   if (params?.status) {
-    data = data.filter(a => a.status === params.status);
+    data = data.filter((a) => a.status === params.status);
   }
 
   if (params?.category) {
-    data = data.filter(a => a.category === params.category);
+    data = data.filter((a) => a.category === params.category);
   }
 
   const page = params?.page || 1;
@@ -232,7 +281,7 @@ export async function listApps(params?: {
 }
 
 export async function getApp(id: string) {
-  const app = mockApps.find(a => a.id === id);
+  const app = mockApps.find((a) => a.id === id);
   return {
     code: 0,
     success: true,
@@ -272,7 +321,7 @@ export async function createApp(data: Partial<LowCodeApp>) {
 }
 
 export async function updateApp(id: string, data: Partial<LowCodeApp>) {
-  const index = mockApps.findIndex(a => a.id === id);
+  const index = mockApps.findIndex((a) => a.id === id);
   if (index !== -1) {
     mockApps[index] = {
       ...mockApps[index],
@@ -297,7 +346,7 @@ export async function updateApp(id: string, data: Partial<LowCodeApp>) {
 }
 
 export async function deleteApp(id: string) {
-  const index = mockApps.findIndex(a => a.id === id);
+  const index = mockApps.findIndex((a) => a.id === id);
   if (index !== -1) {
     mockApps.splice(index, 1);
     return {
@@ -329,7 +378,7 @@ export async function getAppVersions(appId: string) {
 }
 
 export async function publishApp(params: AppPublishParams) {
-  const app = mockApps.find(a => a.id === params.appId);
+  const app = mockApps.find((a) => a.id === params.appId);
   if (app) {
     const newVersion: AppVersion = {
       id: `v-${Date.now()}`,
@@ -340,17 +389,17 @@ export async function publishApp(params: AppPublishParams) {
       publishedBy: 'current_user',
       createdAt: new Date().toISOString(),
     };
-    
+
     if (!mockVersions[params.appId]) {
       mockVersions[params.appId] = [];
     }
     mockVersions[params.appId].unshift(newVersion);
-    
+
     app.status = 'published';
     app.version = params.version;
     app.publishedAt = new Date().toISOString();
     app.updatedAt = new Date().toISOString();
-    
+
     return {
       code: 0,
       success: true,
@@ -370,13 +419,13 @@ export async function publishApp(params: AppPublishParams) {
 
 export async function getAppOverview() {
   const total = mockApps.length;
-  const published = mockApps.filter(a => a.status === 'published').length;
-  const developing = mockApps.filter(a => a.status === 'developing').length;
-  const testing = mockApps.filter(a => a.status === 'testing').length;
-  const draft = mockApps.filter(a => a.status === 'draft').length;
-  
+  const published = mockApps.filter((a) => a.status === 'published').length;
+  const developing = mockApps.filter((a) => a.status === 'developing').length;
+  const testing = mockApps.filter((a) => a.status === 'testing').length;
+  const draft = mockApps.filter((a) => a.status === 'draft').length;
+
   const categoryStats: Record<string, number> = {};
-  mockApps.forEach(a => {
+  mockApps.forEach((a) => {
     if (a.category) {
       categoryStats[a.category] = (categoryStats[a.category] || 0) + 1;
     }

@@ -32,7 +32,8 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
         code: "mes".to_string(),
         name: "制造执行系统".to_string(),
         version: env!("CARGO_PKG_VERSION").to_string(),
-        description: "MES 制造执行系统，包含生产工单、生产工艺、生产记录、设备管理、工位管理等模块".to_string(),
+        description: "MES 制造执行系统，包含生产工单、生产工艺、生产记录、设备管理、工位管理等模块"
+            .to_string(),
         permissions: vec![
             PermissionDef {
                 code: "mes:production_order:read".to_string(),
@@ -144,13 +145,23 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
     match client.post(&url).json(&info).send().await {
         Ok(response) => {
             if response.status().is_success() {
-                tracing::info!("[MES Plugin] Successfully registered to core at {}", core_url);
+                tracing::info!(
+                    "[MES Plugin] Successfully registered to core at {}",
+                    core_url
+                );
             } else {
-                tracing::warn!("[MES Plugin] Failed to register to core: {}", response.status());
+                tracing::warn!(
+                    "[MES Plugin] Failed to register to core: {}",
+                    response.status()
+                );
             }
         }
         Err(e) => {
-            tracing::warn!("[MES Plugin] Failed to connect to core at {}: {}", core_url, e);
+            tracing::warn!(
+                "[MES Plugin] Failed to connect to core at {}: {}",
+                core_url,
+                e
+            );
         }
     }
 }

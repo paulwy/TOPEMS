@@ -95,8 +95,11 @@ export function ThemePresetSwitcher({ sx }: ThemePresetSwitcherProps) {
 
   return (
     <Box sx={sx}>
-      <Tooltip title="切换主题配色">
-        <IconButton size="small" onClick={(e) => setAnchorEl(e.currentTarget)}>
+      <Tooltip title='切换主题配色'>
+        <IconButton
+          size='small'
+          onClick={(e) => setAnchorEl(e.currentTarget)}
+        >
           <Palette size={18} />
         </IconButton>
       </Tooltip>
@@ -108,7 +111,10 @@ export function ThemePresetSwitcher({ sx }: ThemePresetSwitcherProps) {
         transformOrigin={{ vertical: 'top', horizontal: 'right' }}
         slotProps={{ paper: { sx: { p: 2, minWidth: 320 } } }}
       >
-        <Typography variant="subtitle2" sx={{ mb: 1.5 }}>
+        <Typography
+          variant='subtitle2'
+          sx={{ mb: 1.5 }}
+        >
           选择主题配色
         </Typography>
         <Stack spacing={1}>
@@ -117,8 +123,8 @@ export function ThemePresetSwitcher({ sx }: ThemePresetSwitcherProps) {
               key={preset.id}
               elevation={0}
               sx={{
-                border: `2px solid ${activePreset === preset.id ? (preset.primary?.main || 'primary.main') : 'transparent'}`,
-                borderRadius: 2,
+                border: `2px solid ${activePreset === preset.id ? preset.primary?.main || 'primary.main' : 'transparent'}`,
+                borderRadius: 3,
                 transition: 'border-color 0.2s',
               }}
             >
@@ -148,18 +154,26 @@ export function ThemePresetSwitcher({ sx }: ThemePresetSwitcherProps) {
                     ))}
                   </Box>
                   <Box sx={{ flex: 1 }}>
-                    <Typography component="span" variant="body2" sx={{ fontWeight: 500 }}>
+                    <Typography
+                      component='span'
+                      variant='body2'
+                      sx={{ fontWeight: 500 }}
+                    >
                       {preset.nameZh}
                     </Typography>
-                    <Typography component="span" variant="caption" color="text.secondary">
+                    <Typography
+                      component='span'
+                      variant='caption'
+                      color='text.secondary'
+                    >
                       {preset.description}
                     </Typography>
                   </Box>
                   {activePreset === preset.id && (
                     <Typography
-                      component="span"
-                      variant="caption"
-                      color="primary.main"
+                      component='span'
+                      variant='caption'
+                      color='primary.main'
                       sx={{ fontWeight: 600 }}
                     >
                       当前

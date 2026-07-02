@@ -1,6 +1,4 @@
-use topems_shared::response::{
-    api_error, ApiResponse, PaginatedResponse, PaginationParams,
-};
+use topems_shared::response::{api_error, ApiResponse, PaginatedResponse, PaginationParams};
 
 #[test]
 fn test_api_response_success() {

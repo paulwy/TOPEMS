@@ -88,36 +88,34 @@ pub async fn sync_data(
             Ok(operation) => {
                 match db_update_offline_operation_status(&pool, operation.id, "syncing", None).await
                 {
-                    Ok(_) => {
-                        match apply_operation(&pool, &operation).await {
-                            Ok(_) => {
-                                let _ = db_update_offline_operation_status(
-                                    &pool,
-                                    operation.id,
-                                    "synced",
-                                    None,
-                                )
-                                .await;
-                                synced_count += 1;
-                            }
-                            Err(e) => {
-                                let _ = db_update_offline_operation_status(
-                                    &pool,
-                                    operation.id,
-                                    "failed",
-                                    Some(&e.to_string()),
-                                )
-                                .await;
-                                failed_count += 1;
-                                failed_operations.push(FailedOperation {
-                                    operation_id: operation.id,
-                                    entity_type: op.entity_type,
-                                    entity_id: op.entity_id,
-                                    error: e.to_string(),
-                                });
-                            }
+                    Ok(_) => match apply_operation(&pool, &operation).await {
+                        Ok(_) => {
+                            let _ = db_update_offline_operation_status(
+                                &pool,
+                                operation.id,
+                                "synced",
+                                None,
+                            )
+                            .await;
+                            synced_count += 1;
                         }
-                    }
+                        Err(e) => {
+                            let _ = db_update_offline_operation_status(
+                                &pool,
+                                operation.id,
+                                "failed",
+                                Some(&e.to_string()),
+                            )
+                            .await;
+                            failed_count += 1;
+                            failed_operations.push(FailedOperation {
+                                operation_id: operation.id,
+                                entity_type: op.entity_type,
+                                entity_id: op.entity_id,
+                                error: e.to_string(),
+                            });
+                        }
+                    },
                     Err(e) => {
                         failed_count += 1;
                         failed_operations.push(FailedOperation {
@@ -323,12 +321,10 @@ pub async fn get_sync_history(
         }
     };
 
-    let total = match sqlx::query(
-        "SELECT COUNT(*) FROM offline_operations WHERE user_id = $1",
-    )
-    .bind(user_id)
-    .fetch_one(&pool)
-    .await
+    let total = match sqlx::query("SELECT COUNT(*) FROM offline_operations WHERE user_id = $1")
+        .bind(user_id)
+        .fetch_one(&pool)
+        .await
     {
         Ok(row) => row.try_get::<i64, _>(0).unwrap_or(0),
         Err(_) => 0,
@@ -386,9 +382,15 @@ pub async fn get_sync_policy(
     };
 
     if let Some(policy) = policy {
-        (StatusCode::OK, Json(ApiResponse::success(policy, "获取同步策略成功")))
+        (
+            StatusCode::OK,
+            Json(ApiResponse::success(policy, "获取同步策略成功")),
+        )
     } else {
-        (StatusCode::NOT_FOUND, Json(ApiResponse::error(404, "同步策略不存在")))
+        (
+            StatusCode::NOT_FOUND,
+            Json(ApiResponse::error(404, "同步策略不存在")),
+        )
     }
 }
 
@@ -429,7 +431,10 @@ pub async fn update_sync_policy(
         }
     };
 
-    (StatusCode::OK, Json(ApiResponse::success(policy, "更新同步策略成功")))
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(policy, "更新同步策略成功")),
+    )
 }
 
 pub async fn retry_failed_sync(

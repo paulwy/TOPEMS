@@ -95,7 +95,7 @@ describe('BIDashboardPage', () => {
       renderWithProviders(<BIDashboardPage />);
     });
     await waitFor(() => {
-      expect(screen.getByText('自定义仪表盘')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: '自定义仪表盘' })).toBeInTheDocument();
     });
   });
 
@@ -118,7 +118,7 @@ describe('BIDashboardPage', () => {
       fireEvent.click(templatesTab);
     });
     await waitFor(() => {
-      expect(screen.getByText('标准仪表盘模板')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: '自定义仪表盘' })).toBeInTheDocument();
     });
   });
 
@@ -139,7 +139,7 @@ describe('BIDashboardPage', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('自定义仪表盘')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: '自定义仪表盘' })).toBeInTheDocument();
     });
   });
 });

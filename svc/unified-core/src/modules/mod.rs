@@ -6,6 +6,7 @@ pub mod communication;
 pub mod file;
 pub mod flow;
 pub mod iam;
+pub mod migration;
 pub mod plugin;
 pub mod sync;
 pub mod tenant;

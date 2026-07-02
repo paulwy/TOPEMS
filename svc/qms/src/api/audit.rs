@@ -2,7 +2,7 @@
 
 use axum::{extract::State, Json};
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, Row, types::Uuid};
+use sqlx::{types::Uuid, FromRow, Row};
 use topems_shared::ApiResponse;
 
 #[derive(Debug, Deserialize)]
@@ -149,8 +149,14 @@ pub async fn create_audit_plan(
     State(state): State<crate::AppState>,
     Json(req): Json<CreateAuditPlanRequest>,
 ) -> Json<ApiResponse<AuditPlan>> {
-    let plan_no = format!("AP-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
-    let standard_id = req.standard_id.as_ref().and_then(|s| Uuid::parse_str(s).ok());
+    let plan_no = format!(
+        "AP-{}",
+        uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+    );
+    let standard_id = req
+        .standard_id
+        .as_ref()
+        .and_then(|s| Uuid::parse_str(s).ok());
 
     let plan = sqlx::query_as::<_, AuditPlan>(r#"INSERT INTO qa_audit_plans (plan_no, title, audit_type, scope, standard_id, status, scheduled_start, scheduled_end, created_by) VALUES ($1, $2, $3, $4, $5, 'draft', $6, $7, $8) RETURNING id, plan_no, title, audit_type, scope, standard_id::TEXT, status, scheduled_start::TEXT, scheduled_end::TEXT, actual_start::TEXT, actual_end::TEXT, created_by, created_at::TEXT, updated_at::TEXT"#).bind(plan_no).bind(req.title).bind(req.audit_type).bind(req.scope).bind(standard_id).bind(req.scheduled_start).bind(req.scheduled_end).bind(req.created_by)
     .fetch_one(&state.pool)
@@ -275,7 +281,10 @@ pub async fn create_audit_task(
         Err(_) => return Json(ApiResponse::error(400, "无效的计划ID")),
     };
 
-    let task_no = format!("AT-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
+    let task_no = format!(
+        "AT-{}",
+        uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+    );
 
     let task = sqlx::query_as::<_, AuditTask>(r#"INSERT INTO qa_audit_tasks (task_no, plan_id, title, description, auditor, status) VALUES ($1, $2, $3, $4, $5, 'pending') RETURNING id, task_no, plan_id::TEXT, title, description, auditor, status, completed_at::TEXT, finding_count, created_at::TEXT, updated_at::TEXT"#).bind(task_no).bind(plan_id).bind(req.title).bind(req.description).bind(req.auditor)
     .fetch_one(&state.pool)
@@ -368,12 +377,16 @@ pub async fn create_audit_finding(
         Err(_) => return Json(ApiResponse::error(400, "无效的任务ID")),
     };
 
-    let finding_no = format!("AF-{}", uuid::Uuid::new_v4().to_string()[..8].to_uppercase());
+    let finding_no = format!(
+        "AF-{}",
+        uuid::Uuid::new_v4().to_string()[..8].to_uppercase()
+    );
     let severity = req.severity.unwrap_or_else(|| "minor".to_string());
 
-    let task = sqlx::query(r#"SELECT plan_id FROM qa_audit_tasks WHERE id = $1"#).bind(task_id)
-    .fetch_one(&state.pool)
-    .await;
+    let task = sqlx::query(r#"SELECT plan_id FROM qa_audit_tasks WHERE id = $1"#)
+        .bind(task_id)
+        .fetch_one(&state.pool)
+        .await;
 
     let plan_id = match task {
         Ok(row) => row.get::<Uuid, _>("plan_id"),
@@ -389,7 +402,10 @@ pub async fn create_audit_finding(
 
     match finding {
         Ok(data) => {
-            let _ = sqlx::query(r#"UPDATE qa_audit_tasks SET finding_count = finding_count + 1 WHERE id = $1"#).bind(task_id)
+            let _ = sqlx::query(
+                r#"UPDATE qa_audit_tasks SET finding_count = finding_count + 1 WHERE id = $1"#,
+            )
+            .bind(task_id)
             .execute(&state.pool)
             .await;
             Json(ApiResponse::success(data, "审核发现创建成功"))

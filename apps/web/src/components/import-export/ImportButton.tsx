@@ -27,7 +27,7 @@ export const ImportButton: React.FC<ImportButtonProps> = ({
         py: 2,
         backgroundColor: 'success.dark',
         color: 'white',
-        borderRadius: 2,
+        borderRadius: 3,
         transition: 'all',
         '&:hover': {
           backgroundColor: 'success.dark',

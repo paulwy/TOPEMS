@@ -27,23 +27,23 @@ export const materialBomApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(`/api/mes/boms${queryString ? `?${queryString}` : ''}`);
+    return apiClient.mes.get(`/boms${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<MaterialBom>> {
-    return apiClient.mes.get(`/api/mes/boms/${id}`);
+    return apiClient.mes.get(`/boms/${id}`);
   },
 
   async create(data: CreateMaterialBomRequest): Promise<ApiResponse<MaterialBom>> {
-    return apiClient.mes.post('/api/mes/boms', data);
+    return apiClient.mes.post('/boms', data);
   },
 
   async update(id: string, data: UpdateMaterialBomRequest): Promise<ApiResponse<MaterialBom>> {
-    return apiClient.mes.put(`/api/mes/boms/${id}`, data);
+    return apiClient.mes.put(`/boms/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.mes.delete(`/api/mes/boms/${id}`);
+    return apiClient.mes.delete(`/boms/${id}`);
   },
 };
 
@@ -63,11 +63,11 @@ export const materialIssueApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(`/api/mes/material-issues${queryString ? `?${queryString}` : ''}`);
+    return apiClient.mes.get(`/material-issues${queryString ? `?${queryString}` : ''}`);
   },
 
   async create(data: CreateMaterialIssueRequest): Promise<ApiResponse<MaterialIssue>> {
-    return apiClient.mes.post('/api/mes/material-issues', data);
+    return apiClient.mes.post('/material-issues', data);
   },
 };
 
@@ -87,10 +87,10 @@ export const materialReturnApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(`/api/mes/material-returns${queryString ? `?${queryString}` : ''}`);
+    return apiClient.mes.get(`/material-returns${queryString ? `?${queryString}` : ''}`);
   },
 
   async create(data: CreateMaterialReturnRequest): Promise<ApiResponse<MaterialReturn>> {
-    return apiClient.mes.post('/api/mes/material-returns', data);
+    return apiClient.mes.post('/material-returns', data);
   },
 };

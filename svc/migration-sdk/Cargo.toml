@@ -6,8 +6,6 @@ resolver = "2"
 description = "TOPEMS Migration SDK - 插件数据库迁移工具"
 license = "MIT"
 
-[workspace]
-
 [dependencies]
 # 数据库 - 仅使用 postgres 特性避免 sqlite 冲突
 sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio", "postgres", "uuid", "chrono", "rust_decimal", "derive"] }

@@ -41,7 +41,7 @@ export const ServiceStatusCard: React.FC<ServiceStatusCardProps> = ({
     <Box
       sx={{
         padding: 1.5,
-        borderRadius: 2,
+        borderRadius: 3,
         border: `1px solid ${colors.border}`,
         backgroundColor: colors.bg,
         transition: 'all 0.3s ease',

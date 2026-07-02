@@ -480,7 +480,7 @@ const IntegrationExternalErpOverviewPage: React.FC = () => {
                     size='small'
                     variant='contained'
                     startIcon={<Settings size={14} />}
-                    sx={{ mt: 2, bgcolor: '#ea580c' }}
+                    sx={{ mt: 2, bgcolor: 'warning.600' }}
                   >
                     管理连接
                   </Button>

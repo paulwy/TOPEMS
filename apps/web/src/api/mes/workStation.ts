@@ -23,30 +23,30 @@ export const workStationApi = {
     if (params?.status) searchParams.set('status', params.status);
 
     const queryString = searchParams.toString();
-    return apiClient.mes.get(`/api/mes/workstations${queryString ? `?${queryString}` : ''}`);
+    return apiClient.mes.get(`/workstations${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<WorkStation>> {
-    return apiClient.mes.get(`/api/mes/workstations/${id}`);
+    return apiClient.mes.get(`/workstations/${id}`);
   },
 
   async create(data: CreateWorkStationRequest): Promise<ApiResponse<WorkStation>> {
-    return apiClient.mes.post('/api/mes/workstations', data);
+    return apiClient.mes.post('/workstations', data);
   },
 
   async update(id: string, data: UpdateWorkStationRequest): Promise<ApiResponse<WorkStation>> {
-    return apiClient.mes.put(`/api/mes/workstations/${id}`, data);
+    return apiClient.mes.put(`/workstations/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.mes.delete(`/api/mes/workstations/${id}`);
+    return apiClient.mes.delete(`/workstations/${id}`);
   },
 
   async activate(id: string): Promise<ApiResponse<WorkStation>> {
-    return apiClient.mes.put(`/api/mes/workstations/${id}/activate`);
+    return apiClient.mes.put(`/workstations/${id}/activate`);
   },
 
   async deactivate(id: string): Promise<ApiResponse<WorkStation>> {
-    return apiClient.mes.put(`/api/mes/workstations/${id}/deactivate`);
+    return apiClient.mes.put(`/workstations/${id}/deactivate`);
   },
 };

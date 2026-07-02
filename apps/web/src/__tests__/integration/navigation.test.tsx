@@ -36,7 +36,7 @@ describe('Navigation Integration', () => {
     expect(modules.some(m => m.code === 'iam')).toBe(true);
     expect(modules.some(m => m.code === 'workflow')).toBe(true);
     expect(modules.some(m => m.code === 'notification')).toBe(true);
-    expect(modules.some(m => m.code === 'document')).toBe(true);
+    expect(modules.some(m => m.code === 'doc')).toBe(true);
     expect(modules.some(m => m.code === 'hrm')).toBe(true);
     expect(modules.some(m => m.code === 'finance')).toBe(true);
     expect(modules.some(m => m.code === 'crm')).toBe(true);
@@ -63,11 +63,11 @@ describe('Navigation Integration', () => {
   });
 
   it('should get Document nav items', () => {
-    const documentNavItems = navigationRegistryV2.getSidebarNavItems('document');
+    const documentNavItems = navigationRegistryV2.getSidebarNavItems('doc');
     expect(documentNavItems.length).toBeGreaterThan(0);
-    expect(documentNavItems.some(item => item.code === 'document-dashboard')).toBe(true);
-    expect(documentNavItems.some(item => item.code === 'document-list')).toBe(true);
-    expect(documentNavItems.some(item => item.code === 'document-knowledge-base')).toBe(true);
+    expect(documentNavItems.some(item => item.code === 'doc-dashboard')).toBe(true);
+    expect(documentNavItems.some(item => item.code === 'doc-list')).toBe(true);
+    expect(documentNavItems.some(item => item.code === 'doc-knowledge-base')).toBe(true);
   });
 
   it('should get Notification nav items', () => {
@@ -100,8 +100,8 @@ describe('Navigation Integration', () => {
   });
 
   it('should find Document module by path', () => {
-    const module = navigationRegistryV2.findModuleByPath('/document/list');
-    expect(module?.code).toBe('document');
+    const module = navigationRegistryV2.findModuleByPath('/doc/list');
+    expect(module?.code).toBe('doc');
   });
 
   it('should get top nav items', () => {

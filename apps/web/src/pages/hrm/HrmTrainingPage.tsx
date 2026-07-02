@@ -575,10 +575,14 @@ const HrmTrainingPage: React.FC = () => {
     <PageContainer
       padding={false}
       maxWidth={false}
+      title='培训管理'
+      subtitle='管理培训计划、课程和培训记录'
+      autoTitle
+      autoBreadcrumbs
     >
       <StatsPageTemplate
-        title='培训管理'
-        subtitle='管理培训计划、课程和培训记录'
+        title=''
+        subtitle=''
         statCards={statCards}
         showStatCards={true}
         customToolbar={
@@ -946,7 +950,7 @@ const HrmTrainingPage: React.FC = () => {
           <DialogTitle>培训记录详情</DialogTitle>
           <DialogContent>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              <Box sx={{ bgcolor: 'grey.100', borderRadius: 2, p: 2 }}>
+              <Box sx={{ bgcolor: 'grey.100', borderRadius: 3, p: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
                   <Avatar
                     sx={{ width: 48, height: 48, bgcolor: 'primary.light', color: 'primary.dark' }}

@@ -94,9 +94,9 @@ const QmsNonconformancePage: React.FC = () => {
       high: { bg: 'error.lighter', color: 'error.dark' },
       critical: { bg: 'error.lighter', color: 'error.dark' },
       严重: { bg: 'error.lighter', color: 'error.dark' },
-      medium: { bg: '#fef9c3', color: '#ca8a04' },
-      中等: { bg: '#fef9c3', color: '#ca8a04' },
-      一般: { bg: '#fef9c3', color: '#ca8a04' },
+      medium: { bg: 'warning.100', color: '#ca8a04' },
+      中等: { bg: 'warning.100', color: '#ca8a04' },
+      一般: { bg: 'warning.100', color: '#ca8a04' },
       low: { bg: 'success.lighter', color: 'success.dark' },
       轻微: { bg: 'success.lighter', color: 'success.dark' },
     };
@@ -128,8 +128,8 @@ const QmsNonconformancePage: React.FC = () => {
     const colors: Record<string, { bg: string; color: string }> = {
       open: { bg: 'error.lighter', color: 'error.dark' },
       待处理: { bg: 'error.lighter', color: 'error.dark' },
-      in_progress: { bg: '#fef9c3', color: '#ca8a04' },
-      处理中: { bg: '#fef9c3', color: '#ca8a04' },
+      in_progress: { bg: 'warning.100', color: '#ca8a04' },
+      处理中: { bg: 'warning.100', color: '#ca8a04' },
       closed: { bg: 'success.lighter', color: 'success.dark' },
       resolved: { bg: 'success.lighter', color: 'success.dark' },
       已关闭: { bg: 'success.lighter', color: 'success.dark' },
@@ -328,7 +328,7 @@ const QmsNonconformancePage: React.FC = () => {
                 width: 40,
                 height: 40,
                 bgcolor: 'error.lighter',
-                borderRadius: 2,
+                borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -360,8 +360,8 @@ const QmsNonconformancePage: React.FC = () => {
               sx={{
                 width: 40,
                 height: 40,
-                bgcolor: '#fef9c3',
-                borderRadius: 2,
+                bgcolor: 'warning.100',
+                borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -394,7 +394,7 @@ const QmsNonconformancePage: React.FC = () => {
                 width: 40,
                 height: 40,
                 bgcolor: 'success.lighter',
-                borderRadius: 2,
+                borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -444,8 +444,6 @@ const QmsNonconformancePage: React.FC = () => {
 
   return (
     <PageContainer
-      title='不合格品管理'
-      subtitle='Nonconformance Management'
       headerProps={{
         pageIcon: <AlertCircle style={{ width: 20, height: 20 }} />,
         pageGradient: 'linear-gradient(135deg, #EF4444, #F97316)',
@@ -471,6 +469,15 @@ const QmsNonconformancePage: React.FC = () => {
             searchable={false}
             filters={[]}
             actions={[]}
+            mobileCardTitleKey='title'
+            mobileCardSubtitleKey='issue_no'
+            mobileCardDisplayFields={['category', 'severity', 'status', 'assignee']}
+            mobileCardFieldLabels={{
+              category: '类别',
+              severity: '严重程度',
+              status: '状态',
+              assignee: '负责人',
+            }}
           />
         </CardContent>
       </Card>

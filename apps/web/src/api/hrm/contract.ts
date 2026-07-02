@@ -6,25 +6,25 @@ import { buildQueryString } from './types';
 export const contractApi = {
   list: async (params?: ListParams): Promise<ApiResponse<PaginatedResult<Contract>>> => {
     const queryString = buildQueryString(params);
-    return apiClient.hrm.get(`/api/hrm/contracts${queryString}`);
+    return apiClient.hrm.get(`/contracts${queryString}`);
   },
 
   get: async (
     id: string
   ): Promise<ApiResponse<{ contract: Contract; renewals: ContractRenewal[] }>> => {
-    return apiClient.hrm.get(`/api/hrm/contracts/${id}`);
+    return apiClient.hrm.get(`/contracts/${id}`);
   },
 
   create: async (data: Partial<Contract>): Promise<ApiResponse<Contract>> => {
-    return apiClient.hrm.post('/api/hrm/contracts', data);
+    return apiClient.hrm.post('/contracts', data);
   },
 
   update: async (id: string, data: Partial<Contract>): Promise<ApiResponse<Contract>> => {
-    return apiClient.hrm.put(`/api/hrm/contracts/${id}`, data);
+    return apiClient.hrm.put(`/contracts/${id}`, data);
   },
 
   delete: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.hrm.delete(`/api/hrm/contracts/${id}`);
+    return apiClient.hrm.delete(`/contracts/${id}`);
   },
 
   getExpiring: async (params?: {
@@ -33,50 +33,50 @@ export const contractApi = {
     pagesize?: number;
   }): Promise<ApiResponse<PaginatedResult<Contract>>> => {
     const queryString = buildQueryString(params);
-    return apiClient.hrm.get(`/api/hrm/contracts/expiring${queryString}`);
+    return apiClient.hrm.get(`/contracts/expiring${queryString}`);
   },
 
   renew: async (
     contract_id: string,
     data: Partial<ContractRenewal>
   ): Promise<ApiResponse<ContractRenewal>> => {
-    return apiClient.hrm.post(`/api/hrm/contracts/${contract_id}/renew`, data);
+    return apiClient.hrm.post(`/contracts/${contract_id}/renew`, data);
   },
 };
 
 export const contractRenewalApi = {
   list: async (params?: ListParams): Promise<ApiResponse<PaginatedResult<ContractRenewal>>> => {
     const queryString = buildQueryString(params);
-    return apiClient.hrm.get(`/api/hrm/contract-renewals${queryString}`);
+    return apiClient.hrm.get(`/contract-renewals${queryString}`);
   },
 
   get: async (id: string): Promise<ApiResponse<ContractRenewal>> => {
-    return apiClient.hrm.get(`/api/hrm/contract-renewals/${id}`);
+    return apiClient.hrm.get(`/contract-renewals/${id}`);
   },
 
   update: async (
     id: string,
     data: Partial<ContractRenewal>
   ): Promise<ApiResponse<ContractRenewal>> => {
-    return apiClient.hrm.put(`/api/hrm/contract-renewals/${id}`, data);
+    return apiClient.hrm.put(`/contract-renewals/${id}`, data);
   },
 
   delete: async (id: string): Promise<ApiResponse<string>> => {
-    return apiClient.hrm.delete(`/api/hrm/contract-renewals/${id}`);
+    return apiClient.hrm.delete(`/contract-renewals/${id}`);
   },
 
   approve: async (id: string): Promise<ApiResponse<ContractRenewal>> => {
-    return apiClient.hrm.put(`/api/hrm/contract-renewals/${id}/approve`);
+    return apiClient.hrm.put(`/contract-renewals/${id}/approve`);
   },
 
   reject: async (id: string, reason: string): Promise<ApiResponse<ContractRenewal>> => {
-    return apiClient.hrm.put(`/api/hrm/contract-renewals/${id}/reject`, {
+    return apiClient.hrm.put(`/contract-renewals/${id}/reject`, {
       reason,
     });
   },
 
   execute: async (id: string): Promise<ApiResponse<any>> => {
-    return apiClient.hrm.put(`/api/hrm/contract-renewals/${id}/execute`);
+    return apiClient.hrm.put(`/contract-renewals/${id}/execute`);
   },
 };
 

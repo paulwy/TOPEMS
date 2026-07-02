@@ -17,10 +17,25 @@ const mockRolePermissions: RolePermission[] = [
     appId: 'app-001',
     permissions: ['app:read', 'data:read', 'data:write'],
     dataPermissions: [
-      { id: 'dp-001', name: '仅看自己的客户', modelId: 'dm-001', condition: 'createdBy = currentUser', field: 'createdBy', operator: 'eq', value: 'currentUser' },
+      {
+        id: 'dp-001',
+        name: '仅看自己的客户',
+        modelId: 'dm-001',
+        condition: 'createdBy = currentUser',
+        field: 'createdBy',
+        operator: 'eq',
+        value: 'currentUser',
+      },
     ],
     fieldPermissions: [
-      { id: 'fp-001', modelId: 'dm-001', fieldId: 'f-011', roleId: 'role-sales', visible: false, editable: false },
+      {
+        id: 'fp-001',
+        modelId: 'dm-001',
+        fieldId: 'f-011',
+        roleId: 'role-sales',
+        visible: false,
+        editable: false,
+      },
     ],
   },
   {
@@ -30,7 +45,15 @@ const mockRolePermissions: RolePermission[] = [
     appId: 'app-001',
     permissions: ['app:read', 'data:read', 'data:write', 'data:delete'],
     dataPermissions: [
-      { id: 'dp-002', name: '看本部门客户', modelId: 'dm-001', condition: 'department = currentUser.department', field: 'department', operator: 'eq', value: 'currentUser.department' },
+      {
+        id: 'dp-002',
+        name: '看本部门客户',
+        modelId: 'dm-001',
+        condition: 'department = currentUser.department',
+        field: 'department',
+        operator: 'eq',
+        value: 'currentUser.department',
+      },
     ],
     fieldPermissions: [],
   },
@@ -42,7 +65,14 @@ const mockRolePermissions: RolePermission[] = [
     permissions: ['app:read', 'app:write', 'data:read', 'data:write'],
     dataPermissions: [],
     fieldPermissions: [
-      { id: 'fp-002', modelId: 'dm-004', fieldId: 'f-049', roleId: 'role-hr', visible: true, editable: true },
+      {
+        id: 'fp-002',
+        modelId: 'dm-004',
+        fieldId: 'f-049',
+        roleId: 'role-hr',
+        visible: true,
+        editable: true,
+      },
     ],
   },
   {
@@ -53,23 +83,27 @@ const mockRolePermissions: RolePermission[] = [
     permissions: ['app:read', 'data:read'],
     dataPermissions: [],
     fieldPermissions: [
-      { id: 'fp-003', modelId: 'dm-004', fieldId: 'f-049', roleId: 'role-viewer', visible: false, editable: false },
+      {
+        id: 'fp-003',
+        modelId: 'dm-004',
+        fieldId: 'f-049',
+        roleId: 'role-viewer',
+        visible: false,
+        editable: false,
+      },
     ],
   },
 ];
 
-export async function listRolePermissions(params?: {
-  appId?: string;
-  roleId?: string;
-}) {
+export async function listRolePermissions(params?: { appId?: string; roleId?: string }) {
   let data = [...mockRolePermissions];
-  
+
   if (params?.appId) {
-    data = data.filter(p => p.appId === params.appId);
+    data = data.filter((p) => p.appId === params.appId);
   }
-  
+
   if (params?.roleId) {
-    data = data.filter(p => p.roleId === params.roleId);
+    data = data.filter((p) => p.roleId === params.roleId);
   }
 
   return {
@@ -82,7 +116,7 @@ export async function listRolePermissions(params?: {
 }
 
 export async function getRolePermission(id: string) {
-  const permission = mockRolePermissions.find(p => p.id === id);
+  const permission = mockRolePermissions.find((p) => p.id === id);
   return {
     code: 0,
     success: true,
@@ -93,7 +127,7 @@ export async function getRolePermission(id: string) {
 }
 
 export async function updateRolePermissions(roleId: string, appId: string, permissions: string[]) {
-  const index = mockRolePermissions.findIndex(p => p.roleId === roleId && p.appId === appId);
+  const index = mockRolePermissions.findIndex((p) => p.roleId === roleId && p.appId === appId);
   if (index !== -1) {
     mockRolePermissions[index].permissions = permissions;
   } else {
@@ -117,16 +151,16 @@ export async function updateRolePermissions(roleId: string, appId: string, permi
 
 export async function listDataPermissions(modelId: string) {
   const allDataPermissions: DataPermissionRule[] = [];
-  mockRolePermissions.forEach(rp => {
+  mockRolePermissions.forEach((rp) => {
     if (rp.dataPermissions) {
-      rp.dataPermissions.forEach(dp => {
+      rp.dataPermissions.forEach((dp) => {
         if (dp.modelId === modelId) {
           allDataPermissions.push(dp);
         }
       });
     }
   });
-  
+
   return {
     code: 0,
     success: true,
@@ -138,16 +172,16 @@ export async function listDataPermissions(modelId: string) {
 
 export async function listFieldPermissions(modelId: string) {
   const allFieldPermissions: FieldPermissionRule[] = [];
-  mockRolePermissions.forEach(rp => {
+  mockRolePermissions.forEach((rp) => {
     if (rp.fieldPermissions) {
-      rp.fieldPermissions.forEach(fp => {
+      rp.fieldPermissions.forEach((fp) => {
         if (fp.modelId === modelId) {
           allFieldPermissions.push(fp);
         }
       });
     }
   });
-  
+
   return {
     code: 0,
     success: true,
@@ -157,11 +191,15 @@ export async function listFieldPermissions(modelId: string) {
   };
 }
 
-export async function updateFieldPermission(permission: Partial<FieldPermissionRule> & { modelId: string; fieldId: string; roleId: string }) {
+export async function updateFieldPermission(
+  permission: Partial<FieldPermissionRule> & { modelId: string; fieldId: string; roleId: string }
+) {
   for (const rp of mockRolePermissions) {
     if (rp.roleId === permission.roleId) {
       rp.fieldPermissions = rp.fieldPermissions || [];
-      const idx = rp.fieldPermissions.findIndex(fp => fp.modelId === permission.modelId && fp.fieldId === permission.fieldId);
+      const idx = rp.fieldPermissions.findIndex(
+        (fp) => fp.modelId === permission.modelId && fp.fieldId === permission.fieldId
+      );
       if (idx !== -1) {
         rp.fieldPermissions[idx] = { ...rp.fieldPermissions[idx], ...permission };
       } else {
@@ -177,7 +215,7 @@ export async function updateFieldPermission(permission: Partial<FieldPermissionR
       break;
     }
   }
-  
+
   return {
     code: 0,
     success: true,

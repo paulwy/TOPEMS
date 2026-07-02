@@ -1,4 +1,4 @@
-import { lazyWithRetry } from '../utils';
+import { lazyWithRetry } from './types';
 import type { RouteModuleConfig } from './types';
 
 const IntegrationDashboardPage = lazyWithRetry(
@@ -58,13 +58,6 @@ export const integrationModuleConfig: RouteModuleConfig = {
       template: 'dashboard',
       group: 'overview',
       requiredPermissions: ['integration:read'],
-      nav: {
-        label: '集成概览',
-        icon: 'LayoutDashboard',
-        order: 0,
-        group: 'overview',
-        showInTabs: true,
-      },
     },
     {
       path: '/integration/connections',
@@ -75,13 +68,6 @@ export const integrationModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'connections',
       requiredPermissions: ['integration:connection:read'],
-      nav: {
-        label: '连接管理',
-        icon: 'Plug',
-        order: 1,
-        group: 'connections',
-        showInTabs: true,
-      },
     },
     {
       path: '/integration/mappings',
@@ -92,12 +78,6 @@ export const integrationModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'mappings',
       requiredPermissions: ['integration:mapping:read'],
-      nav: {
-        label: '数据映射',
-        icon: 'GitMerge',
-        order: 1,
-        group: 'mappings',
-      },
     },
     {
       path: '/integration/events',
@@ -108,13 +88,6 @@ export const integrationModuleConfig: RouteModuleConfig = {
       template: 'list',
       group: 'logs',
       requiredPermissions: ['integration:event:read'],
-      nav: {
-        label: '事件日志',
-        icon: 'Activity',
-        order: 1,
-        group: 'logs',
-        showInTabs: true,
-      },
     },
     {
       path: '/integration/erp-overview',
@@ -125,12 +98,6 @@ export const integrationModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'scenarios',
       requiredPermissions: ['integration:erp:read'],
-      nav: {
-        label: 'ERP集成',
-        icon: 'Building2',
-        order: 1,
-        group: 'scenarios',
-      },
     },
     {
       path: '/integration/lims-qms',
@@ -141,12 +108,6 @@ export const integrationModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'scenarios',
       requiredPermissions: ['integration:lims:read'],
-      nav: {
-        label: 'LIMS-QMS集成',
-        icon: 'FlaskConical',
-        order: 2,
-        group: 'scenarios',
-      },
     },
     {
       path: '/integration/mes-erp',
@@ -157,12 +118,6 @@ export const integrationModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'scenarios',
       requiredPermissions: ['integration:mes:read'],
-      nav: {
-        label: 'MES-ERP集成',
-        icon: 'Factory',
-        order: 3,
-        group: 'scenarios',
-      },
     },
     {
       path: '/integration/wms-scm',
@@ -173,12 +128,6 @@ export const integrationModuleConfig: RouteModuleConfig = {
       template: 'detail',
       group: 'scenarios',
       requiredPermissions: ['integration:wms:read'],
-      nav: {
-        label: 'WMS-SCM集成',
-        icon: 'Warehouse',
-        order: 4,
-        group: 'scenarios',
-      },
     },
     {
       path: '/integration/settings',
@@ -189,12 +138,6 @@ export const integrationModuleConfig: RouteModuleConfig = {
       template: 'settings',
       group: 'settings',
       requiredPermissions: ['integration:admin'],
-      nav: {
-        label: '集成设置',
-        icon: 'Settings',
-        order: 1,
-        group: 'settings',
-      },
     },
   ],
 };

@@ -379,7 +379,7 @@ const PluginDetailPage: React.FC = () => {
                       onChange={() =>
                         setExpandedVersion(expandedVersion === version.id ? null : version.id)
                       }
-                      sx={{ mb: 2, borderRadius: 2 }}
+                      sx={{ mb: 2, borderRadius: 3 }}
                     >
                       <AccordionSummary
                         expandIcon={

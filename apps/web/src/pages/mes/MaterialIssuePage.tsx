@@ -23,7 +23,7 @@ import {
   Paper,
   Button,
 } from '@mui/material';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type { MaterialIssue, CreateMaterialIssueRequest, MaterialIssueItem } from '@/api/mes';
 import { mesApi } from '@/api/mes';
@@ -156,9 +156,9 @@ const MaterialIssuePage: React.FC = () => {
         color: string;
       }
     > = {
-      pending: { label: '待审核', bg: 'warning.light', color: '#b45309' },
-      approved: { label: '已审核', bg: '#e0e7ff', color: '#4338ca' },
-      issued: { label: '已出库', bg: 'success.lighter', color: '#15803d' },
+      pending: { label: '待审核', bg: 'warning.light', color: 'warning.700' },
+      approved: { label: '已审核', bg: '#e0e7ff', color: 'secondary.700' },
+      issued: { label: '已出库', bg: 'success.lighter', color: 'success.700' },
       cancelled: { label: '已取消', bg: 'error.lighter', color: 'error.dark' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
@@ -276,11 +276,11 @@ const MaterialIssuePage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: '#fef3c7', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'warning.100', borderRadius: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <FileText
             size={18}
-            sx={{ color: '#b45309' }}
+            sx={{ color: 'warning.700' }}
           />
           <Typography
             variant='body2'
@@ -291,12 +291,12 @@ const MaterialIssuePage: React.FC = () => {
         </Box>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#b45309' }}
+          sx={{ fontWeight: 700, color: 'warning.700' }}
         >
           {issues.filter((i) => i.status === 'pending').length}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary', mb: 1 }}
@@ -305,12 +305,12 @@ const MaterialIssuePage: React.FC = () => {
         </Typography>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#4338ca' }}
+          sx={{ fontWeight: 700, color: 'secondary.700' }}
         >
           {issues.filter((i) => i.status === 'approved').length}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary', mb: 1 }}
@@ -319,12 +319,12 @@ const MaterialIssuePage: React.FC = () => {
         </Typography>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#15803d' }}
+          sx={{ fontWeight: 700, color: 'success.700' }}
         >
           {issues.filter((i) => i.status === 'issued').length}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <PackageOpen
             size={18}
@@ -349,8 +349,12 @@ const MaterialIssuePage: React.FC = () => {
 
   return (
     <PageContainer
-      title='物料领用管理'
-      subtitle='管理物料领用记录,包括领用单号、工单、领用人、物料明细等'
+      autoTitle
+      autoBreadcrumbs
+      headerProps={{
+        pageIcon: <PackageOpen style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)',
+      }}
     >
       <ListPageTemplate
         title=''

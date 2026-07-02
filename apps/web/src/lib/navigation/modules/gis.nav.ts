@@ -48,7 +48,7 @@ export const gisNavConfig: ModuleNavConfig = {
     {
       code: 'gis-fence',
       label: '地理围栏',
-      icon: 'Polygon',
+      icon: 'MapPin',
       path: '/gis/fence',
       permission: 'gis:fence:read',
       order: 3,

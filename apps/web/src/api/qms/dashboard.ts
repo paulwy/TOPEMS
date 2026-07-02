@@ -10,7 +10,7 @@ export const qualityDashboardApi = {
     department?: string;
   }): Promise<ApiResponse<QualityOverview>> => {
     const response = await apiClient.qms.get<QualityOverviewBackend>(
-      '/api/qms/quality-dashboard/overview',
+      '/quality-dashboard/overview',
       {
         params: {
           start_date: params?.startDate,

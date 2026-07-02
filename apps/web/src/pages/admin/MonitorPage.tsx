@@ -1,13 +1,11 @@
-import {
-  Box,
+import {Box,
   Card,
   CardContent,
   CardHeader,
   Chip,
   Typography,
   LinearProgress,
-  Button,
-} from '@mui/material';
+  Button, useTheme} from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import { monitorApi } from '@/api/monitor';
 import { apiLogger } from '@/utils/logger';
@@ -26,6 +24,7 @@ import {
 import { PageContainer } from '@/components/common/PageContainer';
 
 const MonitorPage: React.FC = () => {
+  const theme = useTheme();
   const [loading, setLoading] = useState(true);
   const [systemMetrics, setSystemMetrics] = useState<{
     cpu_usage: number;
@@ -40,10 +39,10 @@ const MonitorPage: React.FC = () => {
     {
       service_name: string;
       status: 'healthy' | 'degraded' | 'unhealthy';
-      latency: number;
-      error_rate: number;
-      last_checked: string;
-      uptime_percentage: number;
+      latency?: number;
+      error_rate?: number;
+      last_checked?: string;
+      uptime_percentage?: number;
     }[]
   >([]);
   const [alerts, setAlerts] = useState<
@@ -299,7 +298,7 @@ const MonitorPage: React.FC = () => {
           <CardContent>
             <Box sx={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', fontSize: '0.875rem' }}>
-                <thead style={{ backgroundColor: 'grey.100' }}>
+                <thead style={{ backgroundColor: theme.palette.grey[100] }}>
                   <tr>
                     <th
                       style={{
@@ -391,13 +390,13 @@ const MonitorPage: React.FC = () => {
                           {service.latency}
                         </td>
                         <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                          {service.error_rate.toFixed(2)}%
+                          {service.error_rate?.toFixed(2) ?? '0.00'}%
                         </td>
                         <td style={{ padding: '12px 16px', textAlign: 'right' }}>
-                          {service.uptime_percentage.toFixed(1)}%
+                          {service.uptime_percentage?.toFixed(1) ?? '0.0'}%
                         </td>
                         <td style={{ padding: '12px 16px' }}>
-                          {new Date(service.last_checked).toLocaleString()}
+                          {service.last_checked ? new Date(service.last_checked).toLocaleString() : '-'}
                         </td>
                       </tr>
                     ))
@@ -408,7 +407,7 @@ const MonitorPage: React.FC = () => {
                         style={{
                           padding: '32px 16px',
                           textAlign: 'center',
-                          color: 'text.disabled',
+                          color: theme.palette.text.disabled,
                         }}
                       >
                         暂无服务健康数据
@@ -445,7 +444,7 @@ const MonitorPage: React.FC = () => {
           <CardContent>
             <Box sx={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', fontSize: '0.875rem' }}>
-                <thead style={{ backgroundColor: 'grey.100' }}>
+                <thead style={{ backgroundColor: theme.palette.grey[100] }}>
                   <tr>
                     <th
                       style={{
@@ -566,7 +565,7 @@ const MonitorPage: React.FC = () => {
                         style={{
                           padding: '32px 16px',
                           textAlign: 'center',
-                          color: 'text.disabled',
+                          color: theme.palette.text.disabled,
                         }}
                       >
                         暂无告警记录

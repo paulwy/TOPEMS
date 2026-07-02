@@ -40,8 +40,8 @@ export const RadarChart: React.FC<RadarChartProps> = ({
   return (
     <Box sx={{ height }}>
       <ResponsiveContainer
-        width="100%"
-        height="100%"
+        width='100%'
+        height='100%'
         minWidth={0}
         minHeight={0}
       >
@@ -68,7 +68,7 @@ export const RadarChart: React.FC<RadarChartProps> = ({
           {showLegend && (
             <Legend
               wrapperStyle={{ paddingTop: '10px' }}
-              iconType="circle"
+              iconType='circle'
               iconSize={8}
               formatter={(value) => (
                 <Typography sx={{ fontSize: '0.875rem', color: chartTheme.textColor }}>
@@ -89,7 +89,7 @@ export const RadarChart: React.FC<RadarChartProps> = ({
               onClick={handleClick}
               cursor={onRadarClick ? 'pointer' : 'default'}
               animationDuration={animate ? 800 + index * 100 : 0}
-              animationEasing="ease-out"
+              animationEasing='ease-out'
             />
           ))}
         </RechartsRadarChart>

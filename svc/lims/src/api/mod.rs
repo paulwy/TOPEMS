@@ -1,16 +1,17 @@
-pub mod sample;
-pub mod inspection_task;
-pub mod inspection_record;
-pub mod instrument;
-pub mod reagent;
-pub mod statistics;
+pub mod audit;
 pub mod data_sync;
-pub mod sample_barcode;
-pub mod test_method;
-pub mod proficiency_testing;
-pub mod uncertainty;
+pub mod inspection_record;
+pub mod inspection_task;
+pub mod instrument;
 pub mod instrument_data;
+pub mod proficiency_testing;
+pub mod reagent;
 pub mod report;
+pub mod sample;
+pub mod sample_barcode;
+pub mod statistics;
+pub mod test_method;
+pub mod uncertainty;
 
 use crate::AppState;
 use axum::Router;
@@ -29,4 +30,5 @@ pub fn create_api_routes() -> Router<AppState> {
         .merge(proficiency_testing::create_routes())
         .merge(uncertainty::create_routes())
         .merge(instrument_data::create_routes())
+        .merge(audit::create_routes())
 }

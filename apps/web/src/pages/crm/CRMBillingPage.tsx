@@ -346,6 +346,8 @@ const CRMBillingPage: React.FC = () => {
     <PageContainer
       title='账单管理'
       subtitle='管理客户账单、收款和账龄分析'
+      autoTitle
+      autoBreadcrumbs
     >
       <ListPageTemplate
         title=''

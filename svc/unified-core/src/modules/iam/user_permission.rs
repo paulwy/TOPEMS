@@ -1,8 +1,11 @@
 //! User Permission submodule - User permission management handlers
 
-use axum::{extract::{Path, State}, Json};
 use crate::AppState;
-use serde::{Serialize, Deserialize};
+use axum::{
+    extract::{Path, State},
+    Json,
+};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
@@ -28,7 +31,10 @@ pub async fn get_user_permissions(
     State(state): State<AppState>,
     Path(user_id): Path<String>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("IAM user_permission get_user_permissions called with user_id: {}", user_id);
+    tracing::info!(
+        "IAM user_permission get_user_permissions called with user_id: {}",
+        user_id
+    );
 
     let user_uuid = match Uuid::parse_str(&user_id) {
         Ok(id) => id,
@@ -43,32 +49,31 @@ pub async fn get_user_permissions(
     };
 
     // 检查用户是否是超级管理员
-    let is_superuser: bool = match sqlx::query_scalar(
-        "SELECT is_superuser FROM core_users WHERE id = $1"
-    )
-    .bind(user_uuid)
-    .fetch_optional(&state.pool)
-    .await
-    {
-        Ok(Some(v)) => v,
-        Ok(None) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": "用户不存在",
-                "data": null,
-                "code": 404
-            }));
-        }
-        Err(e) => {
-            tracing::error!("查询用户超级管理员状态失败: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("查询失败: {}", e),
-                "data": null,
-                "code": 500
-            }));
-        }
-    };
+    let is_superuser: bool =
+        match sqlx::query_scalar("SELECT is_superuser FROM core_users WHERE id = $1")
+            .bind(user_uuid)
+            .fetch_optional(&state.pool)
+            .await
+        {
+            Ok(Some(v)) => v,
+            Ok(None) => {
+                return Json(serde_json::json!({
+                    "success": false,
+                    "message": "用户不存在",
+                    "data": null,
+                    "code": 404
+                }));
+            }
+            Err(e) => {
+                tracing::error!("查询用户超级管理员状态失败: {}", e);
+                return Json(serde_json::json!({
+                    "success": false,
+                    "message": format!("查询失败: {}", e),
+                    "data": null,
+                    "code": 500
+                }));
+            }
+        };
 
     // 超级管理员拥有所有权限
     if is_superuser {
@@ -90,16 +95,19 @@ pub async fn get_user_permissions(
             }
         };
 
-        let permission_responses: Vec<UserPermissionResponse> = all_permissions.into_iter().map(|p| {
-            let category = p.code.split(':').next().unwrap_or("other").to_string();
-            UserPermissionResponse {
-                id: p.permission_id.to_string(),
-                code: p.code,
-                name: p.name,
-                description: p.description,
-                category,
-            }
-        }).collect();
+        let permission_responses: Vec<UserPermissionResponse> = all_permissions
+            .into_iter()
+            .map(|p| {
+                let category = p.code.split(':').next().unwrap_or("other").to_string();
+                UserPermissionResponse {
+                    id: p.permission_id.to_string(),
+                    code: p.code,
+                    name: p.name,
+                    description: p.description,
+                    category,
+                }
+            })
+            .collect();
 
         return Json(serde_json::json!({
             "success": true,
@@ -117,7 +125,7 @@ pub async fn get_user_permissions(
         INNER JOIN core_user_roles ur ON rp.role_id = ur.role_id
         WHERE ur.user_id = $1
         ORDER BY p.code
-        "#
+        "#,
     )
     .bind(user_uuid)
     .fetch_all(&state.pool)
@@ -125,16 +133,19 @@ pub async fn get_user_permissions(
 
     match result {
         Ok(permissions) => {
-            let permission_responses: Vec<UserPermissionResponse> = permissions.into_iter().map(|p| {
-                let category = p.code.split(':').next().unwrap_or("other").to_string();
-                UserPermissionResponse {
-                    id: p.permission_id.to_string(),
-                    code: p.code,
-                    name: p.name,
-                    description: p.description,
-                    category,
-                }
-            }).collect();
+            let permission_responses: Vec<UserPermissionResponse> = permissions
+                .into_iter()
+                .map(|p| {
+                    let category = p.code.split(':').next().unwrap_or("other").to_string();
+                    UserPermissionResponse {
+                        id: p.permission_id.to_string(),
+                        code: p.code,
+                        name: p.name,
+                        description: p.description,
+                        category,
+                    }
+                })
+                .collect();
 
             Json(serde_json::json!({
                 "success": true,
@@ -164,7 +175,11 @@ pub async fn update_user_permissions(
     Path(user_id): Path<String>,
     Json(payload): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
-    tracing::info!("IAM user_permission update_user_permissions called with user_id: {} and payload: {:?}", user_id, payload);
+    tracing::info!(
+        "IAM user_permission update_user_permissions called with user_id: {} and payload: {:?}",
+        user_id,
+        payload
+    );
 
     let user_uuid = match Uuid::parse_str(&user_id) {
         Ok(id) => id,
@@ -180,8 +195,12 @@ pub async fn update_user_permissions(
 
     // 解析请求
     let role_ids: Vec<String> = serde_json::from_value(
-        payload.get("role_ids").cloned().unwrap_or(serde_json::Value::Array(vec![]))
-    ).unwrap_or_default();
+        payload
+            .get("role_ids")
+            .cloned()
+            .unwrap_or(serde_json::Value::Array(vec![])),
+    )
+    .unwrap_or_default();
 
     // 验证所有角色ID都是有效的 UUID
     for role_id in &role_ids {
@@ -196,24 +215,23 @@ pub async fn update_user_permissions(
     }
 
     // 检查用户是否存在
-    let user_exists: bool = match sqlx::query_scalar(
-        "SELECT EXISTS(SELECT 1 FROM core_users WHERE id = $1)"
-    )
-    .bind(user_uuid)
-    .fetch_one(&state.pool)
-    .await
-    {
-        Ok(exists) => exists,
-        Err(e) => {
-            tracing::error!("检查用户存在性失败: {}", e);
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("检查用户失败: {}", e),
-                "data": null,
-                "code": 500
-            }));
-        }
-    };
+    let user_exists: bool =
+        match sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM core_users WHERE id = $1)")
+            .bind(user_uuid)
+            .fetch_one(&state.pool)
+            .await
+        {
+            Ok(exists) => exists,
+            Err(e) => {
+                tracing::error!("检查用户存在性失败: {}", e);
+                return Json(serde_json::json!({
+                    "success": false,
+                    "message": format!("检查用户失败: {}", e),
+                    "data": null,
+                    "code": 500
+                }));
+            }
+        };
 
     if !user_exists {
         return Json(serde_json::json!({
@@ -258,7 +276,7 @@ pub async fn update_user_permissions(
     for role_id in &role_ids {
         let role_uuid = Uuid::parse_str(role_id).unwrap();
         if let Err(e) = sqlx::query(
-            "INSERT INTO core_user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING"
+            "INSERT INTO core_user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING",
         )
         .bind(user_uuid)
         .bind(role_uuid)

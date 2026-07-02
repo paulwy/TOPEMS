@@ -282,7 +282,10 @@ pub async fn create_sync_record(
     State(state): State<AppState>,
     Json(req): Json<CreateSyncRecordRequest>,
 ) -> Json<serde_json::Value> {
-    info!("Creating BI sync record for data_source: {}", req.data_source_id);
+    info!(
+        "Creating BI sync record for data_source: {}",
+        req.data_source_id
+    );
 
     let id = Uuid::new_v4();
     let now = Utc::now().naive_utc();
@@ -290,19 +293,20 @@ pub async fn create_sync_record(
     let started_at = req.started_at.unwrap_or_else(Utc::now).naive_utc();
 
     // Verify data source exists
-    let ds_exists: Option<Uuid> = match sqlx::query_scalar("SELECT id FROM analytics_datasources WHERE id = $1")
-        .bind(req.data_source_id)
-        .fetch_optional(&state.pool)
-        .await
-    {
-        Ok(r) => r,
-        Err(e) => {
-            return Json(serde_json::json!({
-                "success": false,
-                "message": format!("Failed to validate data source: {}", e)
-            }));
-        }
-    };
+    let ds_exists: Option<Uuid> =
+        match sqlx::query_scalar("SELECT id FROM analytics_datasources WHERE id = $1")
+            .bind(req.data_source_id)
+            .fetch_optional(&state.pool)
+            .await
+        {
+            Ok(r) => r,
+            Err(e) => {
+                return Json(serde_json::json!({
+                    "success": false,
+                    "message": format!("Failed to validate data source: {}", e)
+                }));
+            }
+        };
     if ds_exists.is_none() {
         return Json(serde_json::json!({
             "success": false,

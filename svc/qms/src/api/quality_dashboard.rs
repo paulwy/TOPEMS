@@ -3,7 +3,7 @@
 use axum::{extract::State, Json};
 use bigdecimal::{BigDecimal, ToPrimitive};
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, Row, types::Uuid};
+use sqlx::{types::Uuid, FromRow, Row};
 use topems_shared::ApiResponse;
 
 #[derive(Debug, Serialize)]
@@ -141,7 +141,9 @@ pub struct CreateAlertMessageRequest {
 pub async fn get_quality_overview(
     State(state): State<crate::AppState>,
 ) -> Json<ApiResponse<QualityOverview>> {
-    let total_insp: Option<i64> = sqlx::query_scalar::<_, _>("SELECT COUNT(*) FROM qa_quality_inspections WHERE status = 'completed'")
+    let total_insp: Option<i64> = sqlx::query_scalar::<_, _>(
+        "SELECT COUNT(*) FROM qa_quality_inspections WHERE status = 'completed'",
+    )
     .fetch_one(&state.pool)
     .await
     .ok();
@@ -166,26 +168,37 @@ pub async fn get_quality_overview(
     let qualification_rate: f64 = avg_rate.map(|v| v.to_f64().unwrap_or(0.0)).unwrap_or(0.0);
     let defect_rate = 100.0 - qualification_rate;
 
-    let total_issues_count: Option<i64> = sqlx::query_scalar::<_, _>("SELECT COUNT(*) FROM qa_quality_issues")
-    .fetch_one(&state.pool)
-    .await
-    .ok();
+    let total_issues_count: Option<i64> =
+        sqlx::query_scalar::<_, _>("SELECT COUNT(*) FROM qa_quality_issues")
+            .fetch_one(&state.pool)
+            .await
+            .ok();
     let total_issues = total_issues_count.unwrap_or(0);
 
-    let open_issues_count: Option<i64> = sqlx::query_scalar::<_, _>("SELECT COUNT(*) FROM qa_quality_issues WHERE status = 'open' OR status = 'in_progress'")
+    let open_issues_count: Option<i64> = sqlx::query_scalar::<_, _>(
+        "SELECT COUNT(*) FROM qa_quality_issues WHERE status = 'open' OR status = 'in_progress'",
+    )
     .fetch_one(&state.pool)
     .await
     .ok();
     let open_issues = open_issues_count.unwrap_or(0);
 
-    let complaint_count_val: Option<i64> = sqlx::query_scalar::<_, _>("SELECT COUNT(*) FROM qa_quality_issues WHERE source = 'customer_complaint'")
+    let complaint_count_val: Option<i64> = sqlx::query_scalar::<_, _>(
+        "SELECT COUNT(*) FROM qa_quality_issues WHERE source = 'customer_complaint'",
+    )
     .fetch_one(&state.pool)
     .await
     .ok();
     let complaint_count = complaint_count_val.unwrap_or(0);
-    let complaint_rate = if total_inspections > 0 { (complaint_count as f64 / total_inspections as f64) * 100.0 } else { 0.0 };
+    let complaint_rate = if total_inspections > 0 {
+        (complaint_count as f64 / total_inspections as f64) * 100.0
+    } else {
+        0.0
+    };
 
-    let in_progress_8d: Option<i64> = sqlx::query_scalar::<_, _>("SELECT COUNT(*) FROM qa_eightd_reports WHERE status = 'in_progress'")
+    let in_progress_8d: Option<i64> = sqlx::query_scalar::<_, _>(
+        "SELECT COUNT(*) FROM qa_eightd_reports WHERE status = 'in_progress'",
+    )
     .fetch_one(&state.pool)
     .await
     .ok();
@@ -220,7 +233,7 @@ pub async fn get_quality_trend(
 ) -> Json<ApiResponse<Vec<QualityTrendItem>>> {
     let days = query.days.unwrap_or(30);
     let days_str = days.to_string();
-    
+
     let rows = sqlx::query(r#"
         SELECT 
             TO_CHAR(DATE_TRUNC('day', created_at), 'YYYY-MM-DD') as period,
@@ -237,16 +250,22 @@ pub async fn get_quality_trend(
 
     match rows {
         Ok(data) => {
-            let trend: Vec<QualityTrendItem> = data.iter().map(|r| {
-                let rate: f64 = r.get::<BigDecimal, _>("qualification_rate").to_f64().unwrap_or(0.0);
-                QualityTrendItem {
-                    period: r.get::<Option<String>, _>("period").unwrap_or_default(),
-                    total_count: r.get::<Option<i64>, _>("total_count").unwrap_or(0),
-                    qualified_count: r.get::<Option<i64>, _>("qualified_count").unwrap_or(0),
-                    qualification_rate: (rate * 100.0).round() / 100.0,
-                    issue_count: 0,
-                }
-            }).collect();
+            let trend: Vec<QualityTrendItem> = data
+                .iter()
+                .map(|r| {
+                    let rate: f64 = r
+                        .get::<BigDecimal, _>("qualification_rate")
+                        .to_f64()
+                        .unwrap_or(0.0);
+                    QualityTrendItem {
+                        period: r.get::<Option<String>, _>("period").unwrap_or_default(),
+                        total_count: r.get::<Option<i64>, _>("total_count").unwrap_or(0),
+                        qualified_count: r.get::<Option<i64>, _>("qualified_count").unwrap_or(0),
+                        qualification_rate: (rate * 100.0).round() / 100.0,
+                        issue_count: 0,
+                    }
+                })
+                .collect();
             Json(ApiResponse::success(trend, "获取质量趋势成功"))
         }
         Err(e) => {
@@ -259,13 +278,16 @@ pub async fn get_quality_trend(
 pub async fn get_defect_distribution(
     State(state): State<crate::AppState>,
 ) -> Json<ApiResponse<Vec<QualityDefectDistribution>>> {
-    let total: Option<i64> = sqlx::query_scalar::<_, _>("SELECT COUNT(*) FROM qa_inspection_results WHERE is_qualified = false")
+    let total: Option<i64> = sqlx::query_scalar::<_, _>(
+        "SELECT COUNT(*) FROM qa_inspection_results WHERE is_qualified = false",
+    )
     .fetch_one(&state.pool)
     .await
     .ok();
     let total_count = total.unwrap_or(0);
 
-    let rows = sqlx::query(r#"
+    let rows = sqlx::query(
+        r#"
         SELECT 
             item_name as category,
             COUNT(*) as count
@@ -274,21 +296,29 @@ pub async fn get_defect_distribution(
         GROUP BY item_name
         ORDER BY count DESC
         LIMIT 10
-        "#)
+        "#,
+    )
     .fetch_all(&state.pool)
     .await;
 
     match rows {
         Ok(data) => {
-            let distribution: Vec<QualityDefectDistribution> = data.iter().map(|r| {
-                let cnt = r.get::<Option<i64>, _>("count").unwrap_or(0);
-                let percentage = if total_count > 0 { (cnt as f64 / total_count as f64) * 100.0 } else { 0.0 };
-                QualityDefectDistribution {
-                    category: r.get::<String, _>("category"),
-                    count: cnt,
-                    percentage: (percentage * 100.0).round() / 100.0,
-                }
-            }).collect();
+            let distribution: Vec<QualityDefectDistribution> = data
+                .iter()
+                .map(|r| {
+                    let cnt = r.get::<Option<i64>, _>("count").unwrap_or(0);
+                    let percentage = if total_count > 0 {
+                        (cnt as f64 / total_count as f64) * 100.0
+                    } else {
+                        0.0
+                    };
+                    QualityDefectDistribution {
+                        category: r.get::<String, _>("category"),
+                        count: cnt,
+                        percentage: (percentage * 100.0).round() / 100.0,
+                    }
+                })
+                .collect();
             Json(ApiResponse::success(distribution, "获取不良分布成功"))
         }
         Err(e) => {
@@ -401,9 +431,10 @@ pub async fn delete_alert_rule(
         Err(_) => return Json(ApiResponse::error(400, "无效的预警规则ID")),
     };
 
-    let result = sqlx::query(r#"DELETE FROM qa_alert_rules WHERE id = $1"#).bind(id)
-    .execute(&state.pool)
-    .await;
+    let result = sqlx::query(r#"DELETE FROM qa_alert_rules WHERE id = $1"#)
+        .bind(id)
+        .execute(&state.pool)
+        .await;
 
     match result {
         Ok(_) => Json(ApiResponse::success(true, "预警规则删除成功")),

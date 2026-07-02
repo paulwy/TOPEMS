@@ -2,6 +2,39 @@
 
 > 记录项目所有重要的变更、新功能、修复和改进
 
+## [3.2.0] - 2026-07-01
+
+### 🎉 重大变更
+- **插件自动注册机制** - 服务启动时自动向 unified-core 注册，无需手动配置
+- **服务自动恢复** - `topems.sh` 脚本增加 `check` 命令，自动检查并重启异常服务
+- **公共注册接口** - 插件注册路由移到公共路由，无需认证即可注册
+
+### ✨ 新功能
+- **API 请求重试机制** - 为 monitor.ts 增加指数退避重试策略，支持可配置重试次数和延迟
+- **结构化 API 日志** - 在 api/client.ts 中增强请求/响应拦截器，添加详细日志记录
+- **防御性数据处理** - 前端 API 响应处理增加可选链和默认值，防止字段缺失导致运行时错误
+
+### 🐛 修复
+- **修复文档中心 TypeError** - 修复 `filesResponse.data.files is undefined` 错误，添加防御性检查
+- **修复 LIMS 审计日志 404** - 修复双重 URL 前缀问题（`/api/lims/audit-logs` → `/audit-logs`）
+- **修复 MonitorPage error_rate TypeError** - 修复 `service.error_rate` 未定义错误，添加类型检查
+- **修复 ERP dict-types 404** - 修复 SQL 查询表名错误（`dict_types` → `erp.dict_types`）
+- **修复插件注册 401** - 将注册接口移到公共路由，解决服务启动时自动注册被拒绝问题
+- **修复多个服务健康检查 502/404** - 修复 `/plugin-health/monitor`、`/plugin-health/lims`、`/plugin-health/workflow` 等接口错误
+
+### 🔧 改进
+- **Vite 代理配置完善** - 添加 LIMS、ERP、monitor、doc 等服务的代理规则
+- **单元测试增强** - 为 LIMS 审计日志 API 添加 8 个单元测试，覆盖错误处理逻辑
+- **注册结果解析优化** - 修复 topems.sh 中插件注册结果的 JSON 解析逻辑
+
+### 📚 文档
+- 更新 [脚本工具说明](./guides/devops/scripts-guide.md) - 添加插件自动注册功能说明
+- 更新 [快速入门指南](./QUICKSTART.md) - 反映新的启动和注册流程
+- 更新 [本地部署指南](./LOCAL_DEPLOYMENT.md) - 添加服务注册机制说明
+- 更新 [故障排查手册](./TROUBLESHOOTING.md) - 添加常见问题解决方案
+
+---
+
 ## [3.1.0] - 2026-06-25
 
 ### 🎉 重大变更

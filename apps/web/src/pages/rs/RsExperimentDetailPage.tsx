@@ -16,8 +16,6 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Tabs,
-  Tab,
   Stack,
   CircularProgress,
   Dialog,
@@ -30,8 +28,11 @@ import {
   Select,
   MenuItem,
   Button,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
+import { DetailPageTemplate, type TabConfig } from '@/components/templates';
 import {
   Timeline,
   TimelineItem,
@@ -56,6 +57,8 @@ import {
 } from '@/api/rs';
 import { useAppStore } from '@/store';
 import { apiLogger } from '@/utils/logger';
+
+// TODO(v2-phase2): Replace CircularProgress with LoadingSpinner from '@/components/common/LoadingSpinner'. Complex usage found - manual review needed.
 
 interface ExperimentWithProject extends Experiment {
   project_name?: string;
@@ -389,7 +392,7 @@ const RsExperimentDetailPage: React.FC = () => {
       <Paper>
         <Tabs
           value={activeTab}
-          onChange={(_, v) => setActiveTab(v)}
+          onChange={(_: React.SyntheticEvent, v: number) => setActiveTab(v)}
         >
           <Tab
             label='实验记录'

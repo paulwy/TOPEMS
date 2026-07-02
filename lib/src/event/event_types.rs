@@ -47,6 +47,37 @@ pub enum EventType {
     EhsToQmsTriggered,
     LimsToEhsTriggered,
 
+    // ERP Events
+    ErpSalesOrderCreated,
+    ErpSalesOrderUpdated,
+    ErpSalesOrderCompleted,
+    ErpPurchaseOrderCreated,
+    ErpPurchaseOrderApproved,
+    ErpInventoryAdjusted,
+    ErpInvoiceGenerated,
+
+    // SCM Events
+    ScmSupplierAdmitted,
+    ScmSupplierUpdated,
+    ScmPurchaseContractSigned,
+    ScmDeliveryAppointmentScheduled,
+    ScmGoodsReceived,
+
+    // CRM Events
+    CrmCustomerCreated,
+    CrmCustomerUpdated,
+    CrmOpportunityCreated,
+    CrmOpportunityStageChanged,
+    CrmContactCreated,
+    CrmInteractionRecorded,
+
+    // Finance Events
+    FinanceBillGenerated,
+    FinancePaymentCompleted,
+    FinanceBudgetApproved,
+    FinanceAccountingPeriodClosed,
+    FinanceJournalEntryCreated,
+
     HealthCheck,
 }
 
@@ -54,6 +85,7 @@ pub enum EventType {
 pub struct Event {
     pub event_id: Uuid,
     pub event_type: EventType,
+    pub event_version: u32, // 事件版本号，默认为 1
     pub source: String,
     pub payload: serde_json::Value,
     pub occurred_at: DateTime<Utc>,
@@ -64,6 +96,23 @@ impl Event {
         Self {
             event_id: Uuid::new_v4(),
             event_type,
+            event_version: 1, // 默认版本 1
+            source: source.to_string(),
+            payload,
+            occurred_at: Utc::now(),
+        }
+    }
+
+    pub fn with_version(
+        event_type: EventType,
+        source: &str,
+        payload: serde_json::Value,
+        version: u32,
+    ) -> Self {
+        Self {
+            event_id: Uuid::new_v4(),
+            event_type,
+            event_version: version,
             source: source.to_string(),
             payload,
             occurred_at: Utc::now(),
@@ -273,4 +322,271 @@ impl std::fmt::Display for EventType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?}", self)
     }
+}
+
+// --- ERP Events Payloads ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ErpSalesOrderCreatedPayload {
+    pub order_id: Uuid,
+    pub order_no: String,
+    pub customer_id: Uuid,
+    pub customer_name: Option<String>,
+    pub total_amount: f64,
+    pub currency: Option<String>,
+    pub created_by: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ErpSalesOrderUpdatedPayload {
+    pub order_id: Uuid,
+    pub order_no: String,
+    pub updated_fields: Vec<String>,
+    pub old_data: Option<serde_json::Value>,
+    pub new_data: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ErpSalesOrderCompletedPayload {
+    pub order_id: Uuid,
+    pub order_no: String,
+    pub completion_date: String,
+    pub delivered_quantity: f64,
+    pub total_amount: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ErpPurchaseOrderCreatedPayload {
+    pub order_id: Uuid,
+    pub order_no: String,
+    pub supplier_id: Uuid,
+    pub supplier_name: Option<String>,
+    pub total_amount: f64,
+    pub currency: Option<String>,
+    pub created_by: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ErpPurchaseOrderApprovedPayload {
+    pub order_id: Uuid,
+    pub order_no: String,
+    pub approved_by: Uuid,
+    pub approved_at: String,
+    pub approval_status: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ErpInventoryAdjustedPayload {
+    pub adjustment_id: Uuid,
+    pub warehouse_id: Uuid,
+    pub product_id: Uuid,
+    pub product_no: String,
+    pub adjustment_type: String,
+    pub quantity: i32,
+    pub reason: Option<String>,
+    pub adjusted_by: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ErpInvoiceGeneratedPayload {
+    pub invoice_id: Uuid,
+    pub invoice_no: String,
+    pub order_id: Option<Uuid>,
+    pub order_no: Option<String>,
+    pub customer_id: Uuid,
+    pub total_amount: f64,
+    pub tax_amount: Option<f64>,
+    pub currency: Option<String>,
+}
+
+// --- SCM Events Payloads ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScmSupplierAdmittedPayload {
+    pub supplier_id: Uuid,
+    pub supplier_no: String,
+    pub supplier_name: String,
+    pub category: Option<String>,
+    pub qualification_level: Option<String>,
+    pub admitted_by: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScmSupplierUpdatedPayload {
+    pub supplier_id: Uuid,
+    pub supplier_no: String,
+    pub updated_fields: Vec<String>,
+    pub old_data: Option<serde_json::Value>,
+    pub new_data: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScmPurchaseContractSignedPayload {
+    pub contract_id: Uuid,
+    pub contract_no: String,
+    pub supplier_id: Uuid,
+    pub supplier_name: Option<String>,
+    pub contract_amount: f64,
+    pub effective_date: String,
+    pub expiry_date: Option<String>,
+    pub signed_by: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScmDeliveryAppointmentScheduledPayload {
+    pub appointment_id: Uuid,
+    pub appointment_no: String,
+    pub supplier_id: Uuid,
+    pub warehouse_id: Uuid,
+    pub scheduled_date: String,
+    pub expected_quantity: i32,
+    pub product_id: Option<Uuid>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScmGoodsReceivedPayload {
+    pub receipt_id: Uuid,
+    pub receipt_no: String,
+    pub warehouse_id: Uuid,
+    pub supplier_id: Uuid,
+    pub product_id: Uuid,
+    pub product_no: String,
+    pub received_quantity: i32,
+    pub quality_status: Option<String>,
+    pub received_by: Option<String>,
+}
+
+// --- CRM Events Payloads ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CrmCustomerCreatedPayload {
+    pub customer_id: Uuid,
+    pub customer_no: String,
+    pub customer_name: String,
+    pub customer_type: Option<String>,
+    pub industry: Option<String>,
+    pub contact_name: Option<String>,
+    pub contact_email: Option<String>,
+    pub created_by: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CrmCustomerUpdatedPayload {
+    pub customer_id: Uuid,
+    pub customer_no: String,
+    pub updated_fields: Vec<String>,
+    pub old_data: Option<serde_json::Value>,
+    pub new_data: Option<serde_json::Value>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CrmOpportunityCreatedPayload {
+    pub opportunity_id: Uuid,
+    pub opportunity_no: String,
+    pub opportunity_name: String,
+    pub customer_id: Uuid,
+    pub customer_name: Option<String>,
+    pub estimated_amount: Option<f64>,
+    pub stage: String,
+    pub probability: Option<f64>,
+    pub owner_id: Option<Uuid>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CrmOpportunityStageChangedPayload {
+    pub opportunity_id: Uuid,
+    pub opportunity_no: String,
+    pub old_stage: String,
+    pub new_stage: String,
+    pub changed_by: Option<String>,
+    pub changed_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CrmContactCreatedPayload {
+    pub contact_id: Uuid,
+    pub contact_name: String,
+    pub customer_id: Option<Uuid>,
+    pub customer_name: Option<String>,
+    pub email: Option<String>,
+    pub phone: Option<String>,
+    pub position: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CrmInteractionRecordedPayload {
+    pub interaction_id: Uuid,
+    pub customer_id: Uuid,
+    pub customer_name: Option<String>,
+    pub contact_id: Option<Uuid>,
+    pub interaction_type: String,
+    pub subject: String,
+    pub content: Option<String>,
+    pub interaction_date: String,
+    pub recorded_by: Option<String>,
+}
+
+// --- Finance Events Payloads ---
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FinanceBillGeneratedPayload {
+    pub bill_id: Uuid,
+    pub bill_no: String,
+    pub bill_type: String,
+    pub amount: f64,
+    pub currency: Option<String>,
+    pub due_date: Option<String>,
+    pub related_order_id: Option<Uuid>,
+    pub generated_by: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FinancePaymentCompletedPayload {
+    pub payment_id: Uuid,
+    pub payment_no: String,
+    pub bill_id: Uuid,
+    pub bill_no: String,
+    pub amount: f64,
+    pub currency: Option<String>,
+    pub payment_method: String,
+    pub paid_at: String,
+    pub paid_by: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FinanceBudgetApprovedPayload {
+    pub budget_id: Uuid,
+    pub budget_no: String,
+    pub department_id: Option<Uuid>,
+    pub department_name: Option<String>,
+    pub fiscal_year: String,
+    pub total_amount: f64,
+    pub currency: Option<String>,
+    pub approved_by: Uuid,
+    pub approved_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FinanceAccountingPeriodClosedPayload {
+    pub period_id: Uuid,
+    pub period_name: String,
+    pub start_date: String,
+    pub end_date: String,
+    pub fiscal_year: String,
+    pub closed_by: Option<String>,
+    pub closed_at: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FinanceJournalEntryCreatedPayload {
+    pub entry_id: Uuid,
+    pub entry_no: String,
+    pub period_id: Option<Uuid>,
+    pub period_name: Option<String>,
+    pub entry_type: String,
+    pub total_debit: f64,
+    pub total_credit: f64,
+    pub currency: Option<String>,
+    pub description: Option<String>,
+    pub created_by: Option<String>,
 }

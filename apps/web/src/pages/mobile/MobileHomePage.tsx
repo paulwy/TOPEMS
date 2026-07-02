@@ -290,7 +290,7 @@ export const MobileHomePage: React.FC = () => {
                   sx={{
                     width: 4,
                     height: 40,
-                    borderRadius: 2,
+                    borderRadius: 3,
                     bgcolor:
                       todo.priority === 'high'
                         ? 'error.main'

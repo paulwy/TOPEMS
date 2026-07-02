@@ -321,7 +321,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           summary?.key_metrics?.map((metric: any) => ({
             name: metric.title,
             value: metric.value,
-            color: metric.icon || '#3b82f6',
+            color: metric.icon || 'primary.main',
           })) || [],
         monthlyTrend:
           flowStats?.monthly_data?.map((item: any) => ({

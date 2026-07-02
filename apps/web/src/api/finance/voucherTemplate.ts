@@ -13,41 +13,41 @@ export const voucherTemplateApi = {
     page?: number;
     pagesize?: number;
   }): Promise<ApiResponse<PaginatedResult<VoucherTemplate>>> => {
-    return createApiClient().get('/api/finance/voucher-templates', {
+    return createApiClient().get('/finance/voucher-templates', {
       params,
     });
   },
 
   get: (id: string): Promise<ApiResponse<VoucherTemplate>> => {
-    return createApiClient().get(`/api/finance/voucher-templates/${id}`);
+    return createApiClient().get(`/finance/voucher-templates/${id}`);
   },
 
   create: (data: Partial<VoucherTemplate>): Promise<ApiResponse<VoucherTemplate>> => {
-    return createApiClient().post('/api/finance/voucher-templates', data);
+    return createApiClient().post('/finance/voucher-templates', data);
   },
 
   update: (id: string, data: Partial<VoucherTemplate>): Promise<ApiResponse<VoucherTemplate>> => {
-    return createApiClient().put(`/api/finance/voucher-templates/${id}`, data);
+    return createApiClient().put(`/finance/voucher-templates/${id}`, data);
   },
 
   delete: (id: string): Promise<ApiResponse<void>> => {
-    return createApiClient().delete(`/api/finance/voucher-templates/${id}`);
+    return createApiClient().delete(`/finance/voucher-templates/${id}`);
   },
 
   copy: (id: string, newName: string): Promise<ApiResponse<VoucherTemplate>> => {
-    return createApiClient().post(`/api/finance/voucher-templates/${id}/copy`, {
+    return createApiClient().post(`/finance/voucher-templates/${id}/copy`, {
       name: newName,
     });
   },
 
   preview: (id: string, sourceData: Record<string, any>): Promise<ApiResponse<Voucher>> => {
-    return createApiClient().post(`/api/finance/voucher-templates/${id}/preview`, {
+    return createApiClient().post(`/finance/voucher-templates/${id}/preview`, {
       source_data: sourceData,
     });
   },
 
   setDefault: (id: string): Promise<ApiResponse<void>> => {
-    return createApiClient().post(`/api/finance/voucher-templates/${id}/set-default`, {});
+    return createApiClient().post(`/finance/voucher-templates/${id}/set-default`, {});
   },
 };
 

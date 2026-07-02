@@ -21,30 +21,30 @@ export const voucherApi = {
     if (params?.period) searchParams.set('period', params.period);
 
     const queryString = searchParams.toString();
-    return apiClient.erp.get(`/api/erp/vouchers${queryString ? `?${queryString}` : ''}`);
+    return apiClient.erp.get(`/vouchers${queryString ? `?${queryString}` : ''}`);
   },
 
   async get(id: string): Promise<ApiResponse<FinancialVoucher>> {
-    return apiClient.erp.get(`/api/erp/vouchers/${id}`);
+    return apiClient.erp.get(`/vouchers/${id}`);
   },
 
   async getItems(id: string): Promise<ApiResponse<VoucherItem[]>> {
-    return apiClient.erp.get(`/api/erp/vouchers/${id}/items`);
+    return apiClient.erp.get(`/vouchers/${id}/items`);
   },
 
   async create(data: CreateFinancialVoucherRequest): Promise<ApiResponse<FinancialVoucher>> {
-    return apiClient.erp.post('/api/erp/vouchers', data);
+    return apiClient.erp.post('/vouchers', data);
   },
 
   async update(
     id: string,
     data: Partial<FinancialVoucher>
   ): Promise<ApiResponse<FinancialVoucher>> {
-    return apiClient.erp.put(`/api/erp/vouchers/${id}`, data);
+    return apiClient.erp.put(`/vouchers/${id}`, data);
   },
 
   async delete(id: string): Promise<ApiResponse<string>> {
-    return apiClient.erp.delete(`/api/erp/vouchers/${id}`);
+    return apiClient.erp.delete(`/vouchers/${id}`);
   },
 
   async importU8(data: {
@@ -52,6 +52,6 @@ export const voucherApi = {
     file_content: string;
     import_mode: string;
   }): Promise<ApiResponse<VoucherImportResult>> {
-    return apiClient.erp.post('/api/erp/vouchers/import/u8', data);
+    return apiClient.erp.post('/vouchers/import/u8', data);
   },
 };

@@ -152,7 +152,7 @@ const LEVEL_CONFIG = {
     bgColor: 'success.light',
     borderColor: 'success.light',
     titleColor: '#166534',
-    messageColor: '#15803d',
+    messageColor: 'success.700',
     alertColor: 'success' as const,
   },
   warning: {
@@ -161,7 +161,7 @@ const LEVEL_CONFIG = {
     bgColor: 'warning.light',
     borderColor: 'warning.light',
     titleColor: '#92400e',
-    messageColor: '#b45309',
+    messageColor: 'warning.700',
     alertColor: 'warning' as const,
   },
   error: {
@@ -178,7 +178,7 @@ const LEVEL_CONFIG = {
     color: 'primary.main',
     bgColor: 'primary.light',
     borderColor: 'primary.light',
-    titleColor: '#1e40af',
+    titleColor: 'primary.800',
     messageColor: 'primary.dark',
     alertColor: 'info' as const,
   },
@@ -360,7 +360,7 @@ export const AlertCard: React.FC<AlertCardProps> = ({
           ) : undefined
         }
         sx={{
-          borderRadius: 2,
+          borderRadius: 3,
           alignItems: 'center',
           ...sx,
         }}
@@ -404,7 +404,7 @@ export const AlertCard: React.FC<AlertCardProps> = ({
       <Card
         onClick={onClick}
         sx={{
-          borderRadius: 2,
+          borderRadius: 3,
           border: '1px solid',
           borderColor: config.borderColor,
           bgcolor: config.bgColor,
@@ -552,7 +552,7 @@ export const AlertCard: React.FC<AlertCardProps> = ({
         alignItems: 'flex-start',
         gap: sizeStyles.gap,
         p: sizeStyles.padding,
-        borderRadius: 2,
+        borderRadius: 3,
         border: '1px solid',
         borderColor: config.borderColor,
         bgcolor: config.bgColor,

@@ -4,7 +4,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { usePermission } from '../../hooks/usePermission';
 import { useRole } from '../../hooks/useRole';
-import { Button, Box, Typography } from '@mui/material';
+import {Button, Box, Typography, useTheme} from '@mui/material';
 
 interface ProtectedRouteProps {
   children: ReactNode;
@@ -24,6 +24,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { isAuthenticated, isLoading, logout } = useAuth();
   const { checkAnyPermission, checkAllPermissions } = usePermission();
   const { checkAnyRole } = useRole();
+  const theme = useTheme();
   const location = useLocation();
 
   if (isLoading) {
@@ -185,6 +186,7 @@ export const PermissionRoute: React.FC<PermissionRouteProps> = ({
   action = 'read',
   fallbackComponent,
 }) => {
+  const theme = useTheme();
   const { canAccessModule, canWriteModule, canDeleteModule, canAdminModule } = usePermission();
 
   const checkAction = () => {
@@ -219,7 +221,7 @@ export const PermissionRoute: React.FC<PermissionRouteProps> = ({
           <div style={{ display: 'flex', alignItems: 'flex-start' }}>
             <div style={{ flexShrink: 0 }}>
               <svg
-                style={{ height: 20, width: 20, color: 'warning.main' }}
+                style={{ height: 20, width: 20, color: theme.palette.warning.main }}
                 viewBox='0 0 20 20'
                 fill='currentColor'
               >

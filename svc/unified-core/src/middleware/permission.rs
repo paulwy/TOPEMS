@@ -15,7 +15,7 @@
 use axum::{
     body::Body,
     extract::{Request, State},
-    http::{StatusCode, header},
+    http::{header, StatusCode},
     middleware::Next,
     response::{IntoResponse, Response},
 };
@@ -43,7 +43,7 @@ pub fn has_role(claims: &Claims, role: &str) -> bool {
 // ============================================================
 
 /// 创建权限验证中间件的工厂函数
-/// 
+///
 /// # 示例
 /// ```rust
 /// .route("/api/core/iam/users", post(create_user))
@@ -52,25 +52,46 @@ pub fn has_role(claims: &Claims, role: &str) -> bool {
 ///     require_permission("iam:write"),
 /// ))
 /// ```
-pub fn require_permission(permission: &'static str) -> impl Fn(State<AppState>, Request<Body>, Next) -> std::pin::Pin<Box<dyn std::future::Future<Output = Response> + Send>> + Clone + Send + Sync {
+pub fn require_permission(
+    permission: &'static str,
+) -> impl Fn(
+    State<AppState>,
+    Request<Body>,
+    Next,
+) -> std::pin::Pin<Box<dyn std::future::Future<Output = Response> + Send>>
+       + Clone
+       + Send
+       + Sync {
     move |State(_state): State<AppState>, req: Request<Body>, next: Next| {
         let permission = permission;
         Box::pin(async move {
             let claims = match extract_claims(&req) {
                 Some(c) => c,
                 None => {
-                    return (StatusCode::UNAUTHORIZED, [(header::CONTENT_TYPE, "application/json")],
-                        r#"{"success":false,"message":"未授权：缺少认证信息","code":401}"#).into_response();
+                    return (
+                        StatusCode::UNAUTHORIZED,
+                        [(header::CONTENT_TYPE, "application/json")],
+                        r#"{"success":false,"message":"未授权：缺少认证信息","code":401}"#,
+                    )
+                        .into_response();
                 }
             };
 
             if !has_permission(&claims, permission) {
                 tracing::warn!(
                     "Permission denied: user={}, permission={}",
-                    claims.username, permission
+                    claims.username,
+                    permission
                 );
-                return (StatusCode::FORBIDDEN, [(header::CONTENT_TYPE, "application/json")],
-                    format!(r#"{{"success":false,"message":"权限不足：需要 {} 权限","code":403}}"#, permission)).into_response();
+                return (
+                    StatusCode::FORBIDDEN,
+                    [(header::CONTENT_TYPE, "application/json")],
+                    format!(
+                        r#"{{"success":false,"message":"权限不足：需要 {} 权限","code":403}}"#,
+                        permission
+                    ),
+                )
+                    .into_response();
             }
 
             next.run(req).await
@@ -79,25 +100,42 @@ pub fn require_permission(permission: &'static str) -> impl Fn(State<AppState>, 
 }
 
 /// 创建角色验证中间件的工厂函数
-pub fn require_role(role: &'static str) -> impl Fn(State<AppState>, Request<Body>, Next) -> std::pin::Pin<Box<dyn std::future::Future<Output = Response> + Send>> + Clone + Send + Sync {
+pub fn require_role(
+    role: &'static str,
+) -> impl Fn(
+    State<AppState>,
+    Request<Body>,
+    Next,
+) -> std::pin::Pin<Box<dyn std::future::Future<Output = Response> + Send>>
+       + Clone
+       + Send
+       + Sync {
     move |State(_state): State<AppState>, req: Request<Body>, next: Next| {
         let role = role;
         Box::pin(async move {
             let claims = match extract_claims(&req) {
                 Some(c) => c,
                 None => {
-                    return (StatusCode::UNAUTHORIZED, [(header::CONTENT_TYPE, "application/json")],
-                        r#"{"success":false,"message":"未授权：缺少认证信息","code":401}"#).into_response();
+                    return (
+                        StatusCode::UNAUTHORIZED,
+                        [(header::CONTENT_TYPE, "application/json")],
+                        r#"{"success":false,"message":"未授权：缺少认证信息","code":401}"#,
+                    )
+                        .into_response();
                 }
             };
 
             if !has_role(&claims, role) {
-                tracing::warn!(
-                    "Role denied: user={}, role={}",
-                    claims.username, role
-                );
-                return (StatusCode::FORBIDDEN, [(header::CONTENT_TYPE, "application/json")],
-                    format!(r#"{{"success":false,"message":"权限不足：需要 {} 角色","code":403}}"#, role)).into_response();
+                tracing::warn!("Role denied: user={}, role={}", claims.username, role);
+                return (
+                    StatusCode::FORBIDDEN,
+                    [(header::CONTENT_TYPE, "application/json")],
+                    format!(
+                        r#"{{"success":false,"message":"权限不足：需要 {} 角色","code":403}}"#,
+                        role
+                    ),
+                )
+                    .into_response();
             }
 
             next.run(req).await
@@ -106,24 +144,36 @@ pub fn require_role(role: &'static str) -> impl Fn(State<AppState>, Request<Body
 }
 
 /// 超级管理员验证中间件工厂函数
-pub fn require_superuser() -> impl Fn(State<AppState>, Request<Body>, Next) -> std::pin::Pin<Box<dyn std::future::Future<Output = Response> + Send>> + Clone + Send + Sync {
+pub fn require_superuser() -> impl Fn(
+    State<AppState>,
+    Request<Body>,
+    Next,
+) -> std::pin::Pin<Box<dyn std::future::Future<Output = Response> + Send>>
+       + Clone
+       + Send
+       + Sync {
     move |State(_state): State<AppState>, req: Request<Body>, next: Next| {
         Box::pin(async move {
             let claims = match extract_claims(&req) {
                 Some(c) => c,
                 None => {
-                    return (StatusCode::UNAUTHORIZED, [(header::CONTENT_TYPE, "application/json")],
-                        r#"{"success":false,"message":"未授权：缺少认证信息","code":401}"#).into_response();
+                    return (
+                        StatusCode::UNAUTHORIZED,
+                        [(header::CONTENT_TYPE, "application/json")],
+                        r#"{"success":false,"message":"未授权：缺少认证信息","code":401}"#,
+                    )
+                        .into_response();
                 }
             };
 
             if !claims.is_superuser {
-                tracing::warn!(
-                    "Superuser access denied: user={}",
-                    claims.username
-                );
-                return (StatusCode::FORBIDDEN, [(header::CONTENT_TYPE, "application/json")],
-                    r#"{"success":false,"message":"权限不足：需要超级管理员权限","code":403}"#).into_response();
+                tracing::warn!("Superuser access denied: user={}", claims.username);
+                return (
+                    StatusCode::FORBIDDEN,
+                    [(header::CONTENT_TYPE, "application/json")],
+                    r#"{"success":false,"message":"权限不足：需要超级管理员权限","code":403}"#,
+                )
+                    .into_response();
             }
 
             next.run(req).await
@@ -132,15 +182,28 @@ pub fn require_superuser() -> impl Fn(State<AppState>, Request<Body>, Next) -> s
 }
 
 /// 创建多权限验证中间件（需要任意一个权限）
-pub fn require_any_permission(permissions: &'static [&'static str]) -> impl Fn(State<AppState>, Request<Body>, Next) -> std::pin::Pin<Box<dyn std::future::Future<Output = Response> + Send>> + Clone + Send + Sync {
+pub fn require_any_permission(
+    permissions: &'static [&'static str],
+) -> impl Fn(
+    State<AppState>,
+    Request<Body>,
+    Next,
+) -> std::pin::Pin<Box<dyn std::future::Future<Output = Response> + Send>>
+       + Clone
+       + Send
+       + Sync {
     move |State(_state): State<AppState>, req: Request<Body>, next: Next| {
         let permissions = permissions;
         Box::pin(async move {
             let claims = match extract_claims(&req) {
                 Some(c) => c,
                 None => {
-                    return (StatusCode::UNAUTHORIZED, [(header::CONTENT_TYPE, "application/json")],
-                        r#"{"success":false,"message":"未授权：缺少认证信息","code":401}"#).into_response();
+                    return (
+                        StatusCode::UNAUTHORIZED,
+                        [(header::CONTENT_TYPE, "application/json")],
+                        r#"{"success":false,"message":"未授权：缺少认证信息","code":401}"#,
+                    )
+                        .into_response();
                 }
             };
 
@@ -148,7 +211,8 @@ pub fn require_any_permission(permissions: &'static [&'static str]) -> impl Fn(S
             if !has_any {
                 tracing::warn!(
                     "Permission denied: user={}, required_any={:?}",
-                    claims.username, permissions
+                    claims.username,
+                    permissions
                 );
                 return (StatusCode::FORBIDDEN, [(header::CONTENT_TYPE, "application/json")],
                     format!(r#"{{"success":false,"message":"权限不足：需要以下任一权限: {}","code":403}}"#, 
@@ -161,15 +225,28 @@ pub fn require_any_permission(permissions: &'static [&'static str]) -> impl Fn(S
 }
 
 /// 创建多权限验证中间件（需要所有权限）
-pub fn require_all_permissions(permissions: &'static [&'static str]) -> impl Fn(State<AppState>, Request<Body>, Next) -> std::pin::Pin<Box<dyn std::future::Future<Output = Response> + Send>> + Clone + Send + Sync {
+pub fn require_all_permissions(
+    permissions: &'static [&'static str],
+) -> impl Fn(
+    State<AppState>,
+    Request<Body>,
+    Next,
+) -> std::pin::Pin<Box<dyn std::future::Future<Output = Response> + Send>>
+       + Clone
+       + Send
+       + Sync {
     move |State(_state): State<AppState>, req: Request<Body>, next: Next| {
         let permissions = permissions;
         Box::pin(async move {
             let claims = match extract_claims(&req) {
                 Some(c) => c,
                 None => {
-                    return (StatusCode::UNAUTHORIZED, [(header::CONTENT_TYPE, "application/json")],
-                        r#"{"success":false,"message":"未授权：缺少认证信息","code":401}"#).into_response();
+                    return (
+                        StatusCode::UNAUTHORIZED,
+                        [(header::CONTENT_TYPE, "application/json")],
+                        r#"{"success":false,"message":"未授权：缺少认证信息","code":401}"#,
+                    )
+                        .into_response();
                 }
             };
 
@@ -177,7 +254,8 @@ pub fn require_all_permissions(permissions: &'static [&'static str]) -> impl Fn(
             if !has_all {
                 tracing::warn!(
                     "Permission denied: user={}, required_all={:?}",
-                    claims.username, permissions
+                    claims.username,
+                    permissions
                 );
                 return (StatusCode::FORBIDDEN, [(header::CONTENT_TYPE, "application/json")],
                     format!(r#"{{"success":false,"message":"权限不足：需要以下所有权限: {}","code":403}}"#, 
@@ -194,7 +272,7 @@ pub fn require_all_permissions(permissions: &'static [&'static str]) -> impl Fn(
 // ============================================================
 
 /// 权限验证中间件工厂函数（已废弃，请使用 require_permission）
-/// 
+///
 /// # 示例
 /// ```rust
 /// // 在路由中使用
@@ -213,23 +291,37 @@ pub async fn permission_required(
     let claims = match extract_claims(&req) {
         Some(c) => c,
         None => {
-            return (StatusCode::UNAUTHORIZED, [(header::CONTENT_TYPE, "application/json")],
-                r#"{"success":false,"message":"未授权：缺少认证信息","code":401}"#).into_response();
+            return (
+                StatusCode::UNAUTHORIZED,
+                [(header::CONTENT_TYPE, "application/json")],
+                r#"{"success":false,"message":"未授权：缺少认证信息","code":401}"#,
+            )
+                .into_response();
         }
     };
 
     // 从请求扩展中获取所需的权限（需要先设置扩展）
-    let permission = req.extensions().get::<&'static str>()
+    let permission = req
+        .extensions()
+        .get::<&'static str>()
         .copied()
         .unwrap_or("");
 
     if !has_permission(&claims, permission) {
         tracing::warn!(
             "Permission denied: user={}, permission={}",
-            claims.username, permission
+            claims.username,
+            permission
         );
-        return (StatusCode::FORBIDDEN, [(header::CONTENT_TYPE, "application/json")],
-            format!(r#"{{"success":false,"message":"权限不足：需要 {} 权限","code":403}}"#, permission)).into_response();
+        return (
+            StatusCode::FORBIDDEN,
+            [(header::CONTENT_TYPE, "application/json")],
+            format!(
+                r#"{{"success":false,"message":"权限不足：需要 {} 权限","code":403}}"#,
+                permission
+            ),
+        )
+            .into_response();
     }
 
     next.run(req).await
@@ -246,18 +338,26 @@ pub async fn role_required(
     let claims = match extract_claims(&req) {
         Some(c) => c,
         None => {
-            return (StatusCode::UNAUTHORIZED, [(header::CONTENT_TYPE, "application/json")],
-                r#"{"success":false,"message":"未授权：缺少认证信息","code":401}"#).into_response();
+            return (
+                StatusCode::UNAUTHORIZED,
+                [(header::CONTENT_TYPE, "application/json")],
+                r#"{"success":false,"message":"未授权：缺少认证信息","code":401}"#,
+            )
+                .into_response();
         }
     };
 
     if !has_role(&claims, role) {
-        tracing::warn!(
-            "Role denied: user={}, role={}",
-            claims.username, role
-        );
-        return (StatusCode::FORBIDDEN, [(header::CONTENT_TYPE, "application/json")],
-            format!(r#"{{"success":false,"message":"权限不足：需要 {} 角色","code":403}}"#, role)).into_response();
+        tracing::warn!("Role denied: user={}, role={}", claims.username, role);
+        return (
+            StatusCode::FORBIDDEN,
+            [(header::CONTENT_TYPE, "application/json")],
+            format!(
+                r#"{{"success":false,"message":"权限不足：需要 {} 角色","code":403}}"#,
+                role
+            ),
+        )
+            .into_response();
     }
 
     next.run(req).await
@@ -273,18 +373,23 @@ pub async fn superuser_required(
     let claims = match extract_claims(&req) {
         Some(c) => c,
         None => {
-            return (StatusCode::UNAUTHORIZED, [(header::CONTENT_TYPE, "application/json")],
-                r#"{"success":false,"message":"未授权：缺少认证信息","code":401}"#).into_response();
+            return (
+                StatusCode::UNAUTHORIZED,
+                [(header::CONTENT_TYPE, "application/json")],
+                r#"{"success":false,"message":"未授权：缺少认证信息","code":401}"#,
+            )
+                .into_response();
         }
     };
 
     if !claims.is_superuser {
-        tracing::warn!(
-            "Superuser access denied: user={}",
-            claims.username
-        );
-        return (StatusCode::FORBIDDEN, [(header::CONTENT_TYPE, "application/json")],
-            r#"{"success":false,"message":"权限不足：需要超级管理员权限","code":403}"#).into_response();
+        tracing::warn!("Superuser access denied: user={}", claims.username);
+        return (
+            StatusCode::FORBIDDEN,
+            [(header::CONTENT_TYPE, "application/json")],
+            r#"{"success":false,"message":"权限不足：需要超级管理员权限","code":403}"#,
+        )
+            .into_response();
     }
 
     next.run(req).await
@@ -301,8 +406,12 @@ pub async fn any_permission_required(
     let claims = match extract_claims(&req) {
         Some(c) => c,
         None => {
-            return (StatusCode::UNAUTHORIZED, [(header::CONTENT_TYPE, "application/json")],
-                r#"{"success":false,"message":"未授权：缺少认证信息","code":401}"#).into_response();
+            return (
+                StatusCode::UNAUTHORIZED,
+                [(header::CONTENT_TYPE, "application/json")],
+                r#"{"success":false,"message":"未授权：缺少认证信息","code":401}"#,
+            )
+                .into_response();
         }
     };
 
@@ -310,11 +419,18 @@ pub async fn any_permission_required(
     if !has_any {
         tracing::warn!(
             "Permission denied: user={}, required_any={:?}",
-            claims.username, permissions
+            claims.username,
+            permissions
         );
-        return (StatusCode::FORBIDDEN, [(header::CONTENT_TYPE, "application/json")],
-            format!(r#"{{"success":false,"message":"权限不足：需要以下任一权限: {}","code":403}}"#, 
-                permissions.join(", "))).into_response();
+        return (
+            StatusCode::FORBIDDEN,
+            [(header::CONTENT_TYPE, "application/json")],
+            format!(
+                r#"{{"success":false,"message":"权限不足：需要以下任一权限: {}","code":403}}"#,
+                permissions.join(", ")
+            ),
+        )
+            .into_response();
     }
 
     next.run(req).await
@@ -331,8 +447,12 @@ pub async fn all_permissions_required(
     let claims = match extract_claims(&req) {
         Some(c) => c,
         None => {
-            return (StatusCode::UNAUTHORIZED, [(header::CONTENT_TYPE, "application/json")],
-                r#"{"success":false,"message":"未授权：缺少认证信息","code":401}"#).into_response();
+            return (
+                StatusCode::UNAUTHORIZED,
+                [(header::CONTENT_TYPE, "application/json")],
+                r#"{"success":false,"message":"未授权：缺少认证信息","code":401}"#,
+            )
+                .into_response();
         }
     };
 
@@ -340,23 +460,30 @@ pub async fn all_permissions_required(
     if !has_all {
         tracing::warn!(
             "Permission denied: user={}, required_all={:?}",
-            claims.username, permissions
+            claims.username,
+            permissions
         );
-        return (StatusCode::FORBIDDEN, [(header::CONTENT_TYPE, "application/json")],
-            format!(r#"{{"success":false,"message":"权限不足：需要以下所有权限: {}","code":403}}"#, 
-                permissions.join(", "))).into_response();
+        return (
+            StatusCode::FORBIDDEN,
+            [(header::CONTENT_TYPE, "application/json")],
+            format!(
+                r#"{{"success":false,"message":"权限不足：需要以下所有权限: {}","code":403}}"#,
+                permissions.join(", ")
+            ),
+        )
+            .into_response();
     }
 
     next.run(req).await
 }
 
 /// 模块级权限检查辅助函数
-/// 
+///
 /// # 参数
 /// - `claims`: 用户 Claims
 /// - `module`: 模块名称（如 "iam", "hrm", "doc"）
 /// - `action`: 操作类型（"read", "write", "delete", "admin"）
-/// 
+///
 /// # 示例
 /// ```rust
 /// if !check_module_action(&claims, "iam", "write") {
@@ -370,18 +497,18 @@ pub fn check_module_action(claims: &Claims, module: &str, action: &str) -> bool 
     }
 
     let permission = format!("{}:{}", module, action);
-    
+
     // 检查具体权限
     if claims.has_permission(&permission) {
         return true;
     }
-    
+
     // admin 权限隐式包含所有同级权限
     let admin_permission = format!("{}:admin", module);
     if claims.has_permission(&admin_permission) {
         return true;
     }
-    
+
     // 基础设施模块与 IAM 联动
     let infra_modules = ["doc", "file", "notification", "im", "integration"];
     if infra_modules.contains(&module) {
@@ -395,7 +522,7 @@ pub fn check_module_action(claims: &Claims, module: &str, action: &str) -> bool 
             return true;
         }
     }
-    
+
     false
 }
 
@@ -421,7 +548,11 @@ mod tests {
         Claims {
             sub: "test-user-id".to_string(),
             username: "test".to_string(),
-            role: if is_superuser { "admin".to_string() } else { "user".to_string() },
+            role: if is_superuser {
+                "admin".to_string()
+            } else {
+                "user".to_string()
+            },
             roles: roles.into_iter().map(|s| s.to_string()).collect(),
             permissions: permissions.into_iter().map(|s| s.to_string()).collect(),
             is_superuser,
@@ -444,7 +575,7 @@ mod tests {
     #[test]
     fn test_normal_user_specific_permission() {
         let claims = create_test_claims(false, vec!["iam:read", "hrm:write"], vec!["user"]);
-        
+
         assert!(check_module_action(&claims, "iam", "read"));
         assert!(check_module_action(&claims, "hrm", "write"));
         assert!(!check_module_action(&claims, "iam", "write"));
@@ -454,7 +585,7 @@ mod tests {
     #[test]
     fn test_admin_permission_implies_all() {
         let claims = create_test_claims(false, vec!["iam:admin"], vec!["admin"]);
-        
+
         assert!(check_module_action(&claims, "iam", "read"));
         assert!(check_module_action(&claims, "iam", "write"));
         assert!(check_module_action(&claims, "iam", "delete"));
@@ -465,13 +596,13 @@ mod tests {
     fn test_infrastructure_module_linkage() {
         let claims_read = create_test_claims(false, vec!["iam:read"], vec!["user"]);
         let claims_write = create_test_claims(false, vec!["iam:read", "iam:write"], vec!["user"]);
-        
+
         // IAM:read 应该隐式获得 doc:read, file:read 等基础设施模块的 read 权限
         assert!(check_module_action(&claims_read, "doc", "read"));
         assert!(check_module_action(&claims_read, "file", "read"));
         // IAM:read 不包含 doc:write
         assert!(!check_module_action(&claims_read, "doc", "write"));
-        
+
         // IAM:write 应该包含 doc:write
         assert!(check_module_action(&claims_write, "doc", "write"));
         assert!(check_module_action(&claims_write, "file", "write"));
@@ -480,7 +611,7 @@ mod tests {
     #[test]
     fn test_iam_admin_implies_all_infra() {
         let claims = create_test_claims(false, vec!["iam:admin"], vec!["admin"]);
-        
+
         assert!(check_module_action(&claims, "doc", "read"));
         assert!(check_module_action(&claims, "doc", "write"));
         assert!(check_module_action(&claims, "doc", "delete"));

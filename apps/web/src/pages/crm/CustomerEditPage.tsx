@@ -250,6 +250,8 @@ const CustomerEditPage: React.FC = () => {
     <PageContainer
       title='编辑客户'
       subtitle='修改客户档案信息'
+      autoTitle
+      autoBreadcrumbs
     >
       <FormPageTemplate
         title=''

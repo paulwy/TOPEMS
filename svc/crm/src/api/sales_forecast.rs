@@ -22,20 +22,14 @@ pub fn create_routes() -> Router<ApiState> {
             "/api/crm/sales-forecast",
             get(list_sales_forecasts).post(create_sales_forecast),
         )
-        .route(
-            "/api/crm/sales-forecast/generate",
-            post(generate_forecast),
-        )
+        .route("/api/crm/sales-forecast/generate", post(generate_forecast))
         .route(
             "/api/crm/sales-forecast/{id}",
             get(get_sales_forecast)
                 .put(update_sales_forecast)
                 .delete(delete_sales_forecast),
         )
-        .route(
-            "/api/crm/sales-forecast/trend",
-            get(get_sales_trend),
-        )
+        .route("/api/crm/sales-forecast/trend", get(get_sales_trend))
         .route(
             "/api/crm/sales-forecast/compare",
             get(compare_sales_forecasts),
@@ -317,12 +311,26 @@ async fn update_sales_forecast(
 
     let request_data = serde_json::to_value(&req).ok();
 
-    let predicted_amount = req.get("predicted_amount").and_then(|v| v.as_f64()).unwrap_or(existing.predicted_amount);
+    let predicted_amount = req
+        .get("predicted_amount")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(existing.predicted_amount);
     let actual_amount = req.get("actual_amount").and_then(|v| v.as_f64());
     let accuracy = req.get("accuracy").and_then(|v| v.as_f64());
-    let trend = req.get("trend").and_then(|v| v.as_str()).unwrap_or(&existing.trend).to_string();
-    let confidence_level = req.get("confidence_level").and_then(|v| v.as_f64()).unwrap_or(existing.confidence_level);
-    let status = req.get("status").and_then(|v| v.as_str()).unwrap_or(&existing.status).to_string();
+    let trend = req
+        .get("trend")
+        .and_then(|v| v.as_str())
+        .unwrap_or(&existing.trend)
+        .to_string();
+    let confidence_level = req
+        .get("confidence_level")
+        .and_then(|v| v.as_f64())
+        .unwrap_or(existing.confidence_level);
+    let status = req
+        .get("status")
+        .and_then(|v| v.as_str())
+        .unwrap_or(&existing.status)
+        .to_string();
     let now = Utc::now();
 
     let result = sqlx::query_as::<_, SalesForecast>(
@@ -486,21 +494,29 @@ async fn get_sales_trend(
         Ok(rows) => {
             let trend_data: Vec<serde_json::Value> = rows
                 .into_iter()
-                .map(|r| serde_json::json!({
-                    "period": r.get::<String, _>("period"),
-                    "predicted_amount": r.get::<f64, _>("predicted_amount"),
-                    "actual_amount": r.get::<Option<f64>, _>("actual_amount"),
-                    "accuracy": r.get::<Option<f64>, _>("accuracy"),
-                    "trend": r.get::<String, _>("trend"),
-                }))
+                .map(|r| {
+                    serde_json::json!({
+                        "period": r.get::<String, _>("period"),
+                        "predicted_amount": r.get::<f64, _>("predicted_amount"),
+                        "actual_amount": r.get::<Option<f64>, _>("actual_amount"),
+                        "accuracy": r.get::<Option<f64>, _>("accuracy"),
+                        "trend": r.get::<String, _>("trend"),
+                    })
+                })
                 .collect();
 
             let mut comparison_data = Vec::new();
             for i in 1..trend_data.len() {
                 let prev = &trend_data[i - 1];
                 let curr = &trend_data[i];
-                let prev_predicted = prev.get("predicted_amount").and_then(|v| v.as_f64()).unwrap_or(0.0);
-                let curr_predicted = curr.get("predicted_amount").and_then(|v| v.as_f64()).unwrap_or(0.0);
+                let prev_predicted = prev
+                    .get("predicted_amount")
+                    .and_then(|v| v.as_f64())
+                    .unwrap_or(0.0);
+                let curr_predicted = curr
+                    .get("predicted_amount")
+                    .and_then(|v| v.as_f64())
+                    .unwrap_or(0.0);
                 let change_rate = if prev_predicted != 0.0 {
                     ((curr_predicted - prev_predicted) / prev_predicted * 100.0).round() / 100.0
                 } else {
@@ -570,19 +586,27 @@ async fn compare_sales_forecasts(
         Ok(rows) => {
             let forecasts: Vec<serde_json::Value> = rows
                 .into_iter()
-                .map(|r| serde_json::json!({
-                    "period": r.get::<String, _>("period"),
-                    "predicted_amount": r.get::<f64, _>("predicted_amount"),
-                    "actual_amount": r.get::<Option<f64>, _>("actual_amount"),
-                    "accuracy": r.get::<Option<f64>, _>("accuracy"),
-                    "confidence_level": r.get::<f64, _>("confidence_level"),
-                    "trend": r.get::<String, _>("trend"),
-                }))
+                .map(|r| {
+                    serde_json::json!({
+                        "period": r.get::<String, _>("period"),
+                        "predicted_amount": r.get::<f64, _>("predicted_amount"),
+                        "actual_amount": r.get::<Option<f64>, _>("actual_amount"),
+                        "accuracy": r.get::<Option<f64>, _>("accuracy"),
+                        "confidence_level": r.get::<f64, _>("confidence_level"),
+                        "trend": r.get::<String, _>("trend"),
+                    })
+                })
                 .collect();
 
             let base_period = forecasts.first().unwrap();
-            let base_predicted = base_period.get("predicted_amount").and_then(|v| v.as_f64()).unwrap_or(0.0);
-            let base_actual = base_period.get("actual_amount").and_then(|v| v.as_f64()).unwrap_or(0.0);
+            let base_predicted = base_period
+                .get("predicted_amount")
+                .and_then(|v| v.as_f64())
+                .unwrap_or(0.0);
+            let base_actual = base_period
+                .get("actual_amount")
+                .and_then(|v| v.as_f64())
+                .unwrap_or(0.0);
 
             let comparisons: Vec<serde_json::Value> = forecasts
                 .iter()
@@ -609,7 +633,8 @@ async fn compare_sales_forecasts(
                 .filter_map(|f| f.get("accuracy").and_then(|v| v.as_f64()))
                 .collect::<Vec<f64>>()
                 .into_iter()
-                .sum::<f64>() / forecasts.len() as f64;
+                .sum::<f64>()
+                / forecasts.len() as f64;
 
             Json(ApiResponse::success(
                 serde_json::json!({
@@ -688,12 +713,14 @@ async fn get_accuracy_report(
             let avg_accuracy: f64 = records
                 .iter()
                 .filter_map(|r| r.get("accuracy").and_then(|v| v.as_f64()))
-                .sum::<f64>() / total_records as f64;
+                .sum::<f64>()
+                / total_records as f64;
 
             let avg_deviation: f64 = records
                 .iter()
                 .filter_map(|r| r.get("deviation").and_then(|v| v.as_f64()))
-                .sum::<f64>() / total_records as f64;
+                .sum::<f64>()
+                / total_records as f64;
 
             let max_accuracy = records
                 .iter()
@@ -707,16 +734,25 @@ async fn get_accuracy_report(
 
             let high_confidence_count = records
                 .iter()
-                .filter(|r| r.get("confidence_level").and_then(|v| v.as_f64()).unwrap_or(0.0) >= 0.8)
+                .filter(|r| {
+                    r.get("confidence_level")
+                        .and_then(|v| v.as_f64())
+                        .unwrap_or(0.0)
+                        >= 0.8
+                })
                 .count();
 
             let trend_analysis = if records.len() >= 3 {
                 let recent: Vec<&serde_json::Value> = records.iter().rev().take(3).rev().collect();
-                let accuracy_trend = recent.windows(2).map(|w| {
-                    let acc1 = w[0].get("accuracy").and_then(|v| v.as_f64()).unwrap_or(0.0);
-                    let acc2 = w[1].get("accuracy").and_then(|v| v.as_f64()).unwrap_or(0.0);
-                    acc2 - acc1
-                }).sum::<f64>() / 2.0;
+                let accuracy_trend = recent
+                    .windows(2)
+                    .map(|w| {
+                        let acc1 = w[0].get("accuracy").and_then(|v| v.as_f64()).unwrap_or(0.0);
+                        let acc2 = w[1].get("accuracy").and_then(|v| v.as_f64()).unwrap_or(0.0);
+                        acc2 - acc1
+                    })
+                    .sum::<f64>()
+                    / 2.0;
 
                 if accuracy_trend > 0.01 {
                     "improving".to_string()

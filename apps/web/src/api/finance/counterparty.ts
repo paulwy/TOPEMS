@@ -13,25 +13,25 @@ const createApiClient = () => {
 
 export const counterpartyFinanceApi = {
   getCustomerFinance: (customerId: string): Promise<ApiResponse<CounterpartyFinanceInfo>> => {
-    return createApiClient().get(`/api/finance/counterparty/customers/${customerId}`);
+    return createApiClient().get(`/finance/counterparty/customers/${customerId}`);
   },
 
   updateCustomerFinance: (
     customerId: string,
     data: Partial<CounterpartyFinanceInfo>
   ): Promise<ApiResponse<CounterpartyFinanceInfo>> => {
-    return createApiClient().put(`/api/finance/counterparty/customers/${customerId}`, data);
+    return createApiClient().put(`/finance/counterparty/customers/${customerId}`, data);
   },
 
   getSupplierFinance: (supplierId: string): Promise<ApiResponse<CounterpartyFinanceInfo>> => {
-    return createApiClient().get(`/api/finance/counterparty/suppliers/${supplierId}`);
+    return createApiClient().get(`/finance/counterparty/suppliers/${supplierId}`);
   },
 
   updateSupplierFinance: (
     supplierId: string,
     data: Partial<CounterpartyFinanceInfo>
   ): Promise<ApiResponse<CounterpartyFinanceInfo>> => {
-    return createApiClient().put(`/api/finance/counterparty/suppliers/${supplierId}`, data);
+    return createApiClient().put(`/finance/counterparty/suppliers/${supplierId}`, data);
   },
 
   listCustomersWithFinance: (params?: {
@@ -41,7 +41,7 @@ export const counterpartyFinanceApi = {
   }): Promise<
     ApiResponse<PaginatedResult<Customer & { finance_info?: CounterpartyFinanceInfo }>>
   > => {
-    return createApiClient().get('/api/finance/counterparty/customers', {
+    return createApiClient().get('/finance/counterparty/customers', {
       params,
     });
   },
@@ -53,7 +53,7 @@ export const counterpartyFinanceApi = {
   }): Promise<
     ApiResponse<PaginatedResult<Supplier & { finance_info?: CounterpartyFinanceInfo }>>
   > => {
-    return createApiClient().get('/api/finance/counterparty/suppliers', {
+    return createApiClient().get('/finance/counterparty/suppliers', {
       params,
     });
   },

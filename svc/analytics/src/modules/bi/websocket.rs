@@ -19,7 +19,10 @@ pub async fn dashboard_websocket(
     Path(dashboard_id): Path<Uuid>,
     ws: WebSocketUpgrade,
 ) -> impl IntoResponse {
-    info!("WebSocket connection requested for dashboard: {}", dashboard_id);
+    info!(
+        "WebSocket connection requested for dashboard: {}",
+        dashboard_id
+    );
     ws.on_upgrade(move |socket| handle_dashboard_socket(socket, state, dashboard_id))
 }
 
@@ -28,7 +31,10 @@ async fn handle_dashboard_socket(
     state: AppState,
     dashboard_id: Uuid,
 ) {
-    info!("WebSocket connection established for dashboard: {}", dashboard_id);
+    info!(
+        "WebSocket connection established for dashboard: {}",
+        dashboard_id
+    );
 
     let (mut sender, mut receiver) = socket.split();
 
@@ -88,7 +94,9 @@ async fn handle_dashboard_socket(
     });
 
     if sender
-        .send(axum::extract::ws::Message::Text(init_msg.to_string().into()))
+        .send(axum::extract::ws::Message::Text(
+            init_msg.to_string().into(),
+        ))
         .await
         .is_err()
     {
@@ -198,7 +206,9 @@ async fn handle_dashboard_socket(
     });
 
     if sender
-        .send(axum::extract::ws::Message::Text(data_msg.to_string().into()))
+        .send(axum::extract::ws::Message::Text(
+            data_msg.to_string().into(),
+        ))
         .await
         .is_err()
     {
@@ -260,10 +270,7 @@ async fn handle_dashboard_socket(
     }
 }
 
-async fn refresh_widget_data(
-    state: &AppState,
-    dashboard_id: Uuid,
-) -> Vec<serde_json::Value> {
+async fn refresh_widget_data(state: &AppState, dashboard_id: Uuid) -> Vec<serde_json::Value> {
     let widgets = match sqlx::query!(
         r#"
         SELECT id, name, widget_type, config, query_config, cache_ttl_seconds

@@ -6,7 +6,19 @@ import LimsSamplePage from '../lims/LimsSamplePage';
 import { limsApi } from '@/api/lims';
 import { useAppStore } from '@/store';
 
-vi.mock('@/api/lims');
+vi.mock('@/api/lims', () => ({
+  limsApi: {
+    listSamples: vi.fn(),
+    getSample: vi.fn(),
+    createSample: vi.fn(),
+    updateSample: vi.fn(),
+    deleteSample: vi.fn(),
+    batchCreateSamples: vi.fn(),
+    batchDeleteSamples: vi.fn(),
+    exportSamples: vi.fn(),
+    importSamples: vi.fn(),
+  },
+}));
 vi.mock('@/store', () => ({
   useAppStore: vi.fn((selector?: any) =>
     selector
@@ -71,8 +83,7 @@ describe('LimsSamplePage', () => {
   it('should render page title', async () => {
     renderWithProviders(<LimsSamplePage />);
     await waitFor(() => {
-      const titles = screen.getAllByText('样品管理');
-      expect(titles.length).toBeGreaterThan(0);
+      expect(screen.getByRole('heading', { name: '样品管理' })).toBeInTheDocument();
     });
   });
 
@@ -91,6 +102,13 @@ describe('LimsSamplePage', () => {
     });
   });
 
+  it('should render statistics cards', async () => {
+    renderWithProviders(<LimsSamplePage />);
+    await waitFor(() => {
+      expect(screen.getByText('样品总数')).toBeInTheDocument();
+    });
+  });
+
   it('should handle create sample', async () => {
     (limsApi.createSample as vi.Mock).mockResolvedValue({
       success: true,
@@ -100,15 +118,12 @@ describe('LimsSamplePage', () => {
     renderWithProviders(<LimsSamplePage />);
 
     await waitFor(() => {
-      const buttons = screen.getAllByRole('button');
-      const addButton = buttons.find((btn) => btn.textContent?.includes('新增'));
-      if (addButton) {
-        fireEvent.click(addButton);
-      }
+      const addButton = screen.getByRole('button', { name: /样品登记/ });
+      fireEvent.click(addButton);
     });
 
     await waitFor(() => {
-      expect(screen.getByLabelText(/样品名称/)).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: '样品登记' })).toBeInTheDocument();
     });
 
     await act(async () => {
@@ -117,16 +132,14 @@ describe('LimsSamplePage', () => {
     });
 
     await act(async () => {
-      const buttons = screen.getAllByRole('button');
-      const saveButton = buttons.find((btn) => btn.textContent?.includes('保存'));
-      if (saveButton) {
-        fireEvent.click(saveButton);
-      }
+      const saveButton = screen.getByRole('button', { name: '保存' });
+      fireEvent.click(saveButton);
     });
 
     await waitFor(() => {
       expect(limsApi.createSample).toHaveBeenCalled();
     });
+    expect(mockAddNotification).toHaveBeenCalledWith(expect.objectContaining({ type: 'success' }));
   });
 
   it('should handle API error', async () => {
@@ -134,7 +147,7 @@ describe('LimsSamplePage', () => {
     renderWithProviders(<LimsSamplePage />);
 
     await waitFor(() => {
-      expect(screen.getByText('样品管理')).toBeInTheDocument();
+      expect(mockAddNotification).toHaveBeenCalledWith(expect.objectContaining({ type: 'error' }));
     });
   });
 });

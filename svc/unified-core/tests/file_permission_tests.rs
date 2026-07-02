@@ -26,12 +26,21 @@ async fn login(username: &str, password: &str) -> Result<String, String> {
         .await
         .map_err(|e| format!("请求失败: {}", e))?;
 
-    let body: Value = response.json().await.map_err(|e| format!("解析响应失败: {}", e))?;
+    let body: Value = response
+        .json()
+        .await
+        .map_err(|e| format!("解析响应失败: {}", e))?;
 
     if body["success"].as_bool().unwrap_or(false) {
-        Ok(body["data"]["access_token"].as_str().unwrap_or("").to_string())
+        Ok(body["data"]["access_token"]
+            .as_str()
+            .unwrap_or("")
+            .to_string())
     } else {
-        Err(format!("登录失败: {}", body["message"].as_str().unwrap_or("未知错误")))
+        Err(format!(
+            "登录失败: {}",
+            body["message"].as_str().unwrap_or("未知错误")
+        ))
     }
 }
 
@@ -52,7 +61,9 @@ async fn auth_request(
         _ => return Err(format!("不支持的 HTTP 方法: {}", method)),
     };
 
-    let request = request.bearer_auth(token).header("Content-Type", "application/json");
+    let request = request
+        .bearer_auth(token)
+        .header("Content-Type", "application/json");
 
     let response = match body {
         Some(b) => request.json(&b),
@@ -63,7 +74,10 @@ async fn auth_request(
     .map_err(|e| format!("请求失败: {}", e))?;
 
     let status = response.status().as_u16();
-    let body: Value = response.json().await.map_err(|e| format!("解析响应失败: {}", e))?;
+    let body: Value = response
+        .json()
+        .await
+        .map_err(|e| format!("解析响应失败: {}", e))?;
 
     Ok((status, body))
 }
@@ -78,11 +92,18 @@ async fn test_file_001_upload_file() {
     let client = create_client();
 
     // 注意: 实际文件上传需要 multipart/form-data，这里测试 API 端点是否存在
-    let result = auth_request(&client, &token, "POST", "/api/core/file/upload", Some(json!({
-        "filename": "test.txt",
-        "content_type": "text/plain",
-        "size": 100
-    }))).await;
+    let result = auth_request(
+        &client,
+        &token,
+        "POST",
+        "/api/core/file/upload",
+        Some(json!({
+            "filename": "test.txt",
+            "content_type": "text/plain",
+            "size": 100
+        })),
+    )
+    .await;
 
     match result {
         Ok((status, _)) => {
@@ -104,12 +125,19 @@ async fn test_file_002_batch_upload() {
     let token = login("admin", "admin123").await.expect("管理员登录失败");
     let client = create_client();
 
-    let result = auth_request(&client, &token, "POST", "/api/core/file/upload/multiple", Some(json!({
-        "files": [
-            { "filename": "test1.txt", "content_type": "text/plain" },
-            { "filename": "test2.txt", "content_type": "text/plain" }
-        ]
-    }))).await;
+    let result = auth_request(
+        &client,
+        &token,
+        "POST",
+        "/api/core/file/upload/multiple",
+        Some(json!({
+            "files": [
+                { "filename": "test1.txt", "content_type": "text/plain" },
+                { "filename": "test2.txt", "content_type": "text/plain" }
+            ]
+        })),
+    )
+    .await;
 
     match result {
         Ok((status, _)) => {
@@ -136,7 +164,9 @@ async fn test_file_003_download_file() {
 
     match list_result {
         Ok((_, body)) => {
-            let files = body["data"]["files"].as_array().or_else(|| body["data"].as_array());
+            let files = body["data"]["files"]
+                .as_array()
+                .or_else(|| body["data"].as_array());
 
             if let Some(file_list) = files {
                 if let Some(file) = file_list.first() {
@@ -221,12 +251,17 @@ async fn test_file_005_delete_file() {
 
     match list_result {
         Ok((_, body)) => {
-            let files = body["data"]["files"].as_array().or_else(|| body["data"].as_array());
+            let files = body["data"]["files"]
+                .as_array()
+                .or_else(|| body["data"].as_array());
 
             if let Some(file_list) = files {
                 // 找测试文件
                 let test_file = file_list.iter().find(|f| {
-                    f["filename"].as_str().map(|s| s.starts_with("test")).unwrap_or(false)
+                    f["filename"]
+                        .as_str()
+                        .map(|s| s.starts_with("test"))
+                        .unwrap_or(false)
                 });
 
                 if let Some(file) = test_file {
@@ -242,7 +277,12 @@ async fn test_file_005_delete_file() {
 
                         match delete_result {
                             Ok((status, _)) => {
-                                assert!(status == 200 || status == 204 || status == 403 || status == 404);
+                                assert!(
+                                    status == 200
+                                        || status == 204
+                                        || status == 403
+                                        || status == 404
+                                );
                                 tracing::info!("FILE-005 测试通过: 删除文件功能正常");
                                 return;
                             }
@@ -272,7 +312,9 @@ async fn test_file_006_move_file() {
 
     match list_result {
         Ok((_, body)) => {
-            let files = body["data"]["files"].as_array().or_else(|| body["data"].as_array());
+            let files = body["data"]["files"]
+                .as_array()
+                .or_else(|| body["data"].as_array());
 
             if let Some(file_list) = files {
                 if let Some(file) = file_list.first() {
@@ -318,10 +360,17 @@ async fn test_file_007_create_folder() {
         .unwrap()
         .as_millis();
 
-    let result = auth_request(&client, &token, "POST", "/api/core/file/folders", Some(json!({
-        "name": format!("测试文件夹_{}", timestamp),
-        "parent_id": null
-    }))).await;
+    let result = auth_request(
+        &client,
+        &token,
+        "POST",
+        "/api/core/file/folders",
+        Some(json!({
+            "name": format!("测试文件夹_{}", timestamp),
+            "parent_id": null
+        })),
+    )
+    .await;
 
     match result {
         Ok((status, _)) => {
@@ -348,12 +397,17 @@ async fn test_file_008_delete_folder() {
 
     match list_result {
         Ok((_, body)) => {
-            let folders = body["data"]["folders"].as_array().or_else(|| body["data"].as_array());
+            let folders = body["data"]["folders"]
+                .as_array()
+                .or_else(|| body["data"].as_array());
 
             if let Some(folder_list) = folders {
                 // 找测试文件夹
                 let test_folder = folder_list.iter().find(|f| {
-                    f["name"].as_str().map(|s| s.starts_with("测试")).unwrap_or(false)
+                    f["name"]
+                        .as_str()
+                        .map(|s| s.starts_with("测试"))
+                        .unwrap_or(false)
                 });
 
                 if let Some(folder) = test_folder {
@@ -369,7 +423,12 @@ async fn test_file_008_delete_folder() {
 
                         match delete_result {
                             Ok((status, _)) => {
-                                assert!(status == 200 || status == 204 || status == 403 || status == 404);
+                                assert!(
+                                    status == 200
+                                        || status == 204
+                                        || status == 403
+                                        || status == 404
+                                );
                                 tracing::info!("FILE-008 测试通过: 删除文件夹功能正常");
                                 return;
                             }

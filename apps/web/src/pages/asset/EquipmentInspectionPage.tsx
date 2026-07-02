@@ -313,7 +313,7 @@ const EquipmentInspectionPage: React.FC = () => {
         <DialogContent>
           <form onSubmit={handleCreateInspection}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-              <Box sx={{ backgroundColor: 'grey.50', p: 2, borderRadius: 2 }}>
+              <Box sx={{ backgroundColor: 'grey.50', p: 2, borderRadius: 3 }}>
                 <Typography
                   sx={{
                     fontSize: '0.875rem',

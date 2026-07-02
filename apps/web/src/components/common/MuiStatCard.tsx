@@ -65,9 +65,9 @@ export const StatCard: React.FC<StatCardProps> = ({
 
   // 颜色映射
   const colorMap: Record<string, { main: string; light: string; dark: string }> = {
-    primary: { main: 'primary.main', light: '#60a5fa', dark: 'primary.dark' },
+    primary: { main: 'primary.main', light: 'primary.light', dark: 'primary.dark' },
     secondary: { main: 'secondary.main', light: 'secondary.light', dark: 'secondary.dark' },
-    success: { main: 'success.dark', light: '#4ade80', dark: 'success.dark' },
+    success: { main: 'success.dark', light: 'success.400', dark: 'success.dark' },
     warning: { main: 'warning.main', light: 'warning.light', dark: 'warning.dark' },
     error: { main: 'error.main', light: 'error.light', dark: 'error.dark' },
     info: { main: 'info.main', light: '#22d3ee', dark: '#0891b2' },

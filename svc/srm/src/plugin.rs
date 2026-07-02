@@ -2,7 +2,7 @@ use axum::{routing::get, Json, Router};
 use serde::{Deserialize, Serialize};
 use std::env;
 
-use topems_shared::{ApiResponse, ServiceHealth, build_health_response};
+use topems_shared::{build_health_response, ApiResponse, ServiceHealth};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginInfo {
@@ -46,11 +46,21 @@ pub async fn get_plugin_info() -> Json<ApiResponse<PluginInfo>> {
             base_path: "/api/srm".to_string(),
         },
         permissions: vec![
-            PermissionDef { code: "supplier".to_string() },
-            PermissionDef { code: "category".to_string() },
-            PermissionDef { code: "contract".to_string() },
-            PermissionDef { code: "evaluation".to_string() },
-            PermissionDef { code: "product".to_string() },
+            PermissionDef {
+                code: "supplier".to_string(),
+            },
+            PermissionDef {
+                code: "category".to_string(),
+            },
+            PermissionDef {
+                code: "contract".to_string(),
+            },
+            PermissionDef {
+                code: "evaluation".to_string(),
+            },
+            PermissionDef {
+                code: "product".to_string(),
+            },
         ],
     };
 
@@ -91,13 +101,23 @@ pub async fn auto_register_to_core(core_url: Option<&str>) {
     match client.post(&url).json(&info).send().await {
         Ok(response) => {
             if response.status().is_success() {
-                tracing::info!("[SRM Plugin] Successfully registered to core at {}", core_url);
+                tracing::info!(
+                    "[SRM Plugin] Successfully registered to core at {}",
+                    core_url
+                );
             } else {
-                tracing::warn!("[SRM Plugin] Failed to register to core: {}", response.status());
+                tracing::warn!(
+                    "[SRM Plugin] Failed to register to core: {}",
+                    response.status()
+                );
             }
         }
         Err(e) => {
-            tracing::warn!("[SRM Plugin] Failed to connect to core at {}: {}", core_url, e);
+            tracing::warn!(
+                "[SRM Plugin] Failed to connect to core at {}: {}",
+                core_url,
+                e
+            );
         }
     }
 }

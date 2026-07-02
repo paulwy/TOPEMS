@@ -2,7 +2,7 @@
 
 > 统一身份认证与授权管理、文档管理、AI协作、流程自动化、数据分析、质量管理、供应链管理
 
-![Version](https://img.shields.io/badge/version-2.6.0-blue)
+![Version](https://img.shields.io/badge/version-3.2.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Rust](https://img.shields.io/badge/rust-1.76%2B-orange)
 ![React](https://img.shields.io/badge/react-19-blue)
@@ -232,6 +232,31 @@ cargo run
 
 # 或使用一键启动脚本（含数据库和前端）
 ./scripts/start-local.sh
+```
+
+### 服务自动注册机制
+
+服务启动时会**自动向 unified-core 注册**，无需手动配置：
+
+```bash
+# 启动服务时自动注册
+./scripts/topems.sh start erp
+
+# 预期输出
+[INFO] 启动 erp 服务...
+[SUCCESS] erp 服务启动成功 (PID: xxx, 端口: 8010)
+[DETAIL] 注册 erp 到 unified-core...
+[DETAIL] erp 注册成功
+
+# 验证注册结果
+curl -s http://localhost:8000/api/plugins/info | python3 -m json.tool
+```
+
+### 服务自动恢复
+
+```bash
+# 检查并重启异常服务
+./scripts/topems.sh check
 ```
 
 ## 🔌 端口配置规范
@@ -757,6 +782,6 @@ MIT License
 
 ---
 
-**最后更新**: 2026-06-28
-**版本**: v2.6.0 (服务拆分版)
+**最后更新**: 2026-07-01
+**版本**: v3.2.0 (服务注册版)
 **文档版本**: v2.0

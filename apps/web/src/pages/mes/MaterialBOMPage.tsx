@@ -23,7 +23,7 @@ import {
   Paper,
   Button,
 } from '@mui/material';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import type {
   MaterialBom,
@@ -234,8 +234,8 @@ const MaterialBOMPage: React.FC = () => {
       }
     > = {
       draft: { label: '草稿', bg: 'grey.100', color: 'text.secondary' },
-      active: { label: '启用', bg: 'success.lighter', color: '#15803d' },
-      inactive: { label: '停用', bg: 'warning.light', color: '#b45309' },
+      active: { label: '启用', bg: 'success.lighter', color: 'success.700' },
+      inactive: { label: '停用', bg: 'warning.light', color: 'warning.700' },
       obsolete: { label: '作废', bg: 'error.lighter', color: 'error.dark' },
     };
     const s = statusMap[status] || { label: status, bg: 'grey.100', color: 'text.secondary' };
@@ -367,11 +367,11 @@ const MaterialBOMPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 3 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
           <Package
             size={18}
-            sx={{ color: '#4338ca' }}
+            sx={{ color: 'secondary.700' }}
           />
           <Typography
             variant='body2'
@@ -382,12 +382,12 @@ const MaterialBOMPage: React.FC = () => {
         </Box>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#4338ca' }}
+          sx={{ fontWeight: 700, color: 'secondary.700' }}
         >
           {boms.length}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary', mb: 1 }}
@@ -396,12 +396,12 @@ const MaterialBOMPage: React.FC = () => {
         </Typography>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#15803d' }}
+          sx={{ fontWeight: 700, color: 'success.700' }}
         >
           {boms.filter((b) => b.status === 'active').length}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary', mb: 1 }}
@@ -410,12 +410,12 @@ const MaterialBOMPage: React.FC = () => {
         </Typography>
         <Typography
           variant='h5'
-          sx={{ fontWeight: 700, color: '#b45309' }}
+          sx={{ fontWeight: 700, color: 'warning.700' }}
         >
           {boms.filter((b) => b.status === 'inactive').length}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 2 }}>
+      <Box sx={{ p: 2, bgcolor: 'grey.100', borderRadius: 3 }}>
         <Typography
           variant='body2'
           sx={{ color: 'text.secondary', mb: 1 }}
@@ -434,8 +434,12 @@ const MaterialBOMPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='物料BOM管理'
-      subtitle='管理物料清单(BOM),包括产品结构、子项物料、版本等信息'
+      autoTitle
+      autoBreadcrumbs
+      headerProps={{
+        pageIcon: <Package style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)',
+      }}
     >
       <ListPageTemplate
         title=''

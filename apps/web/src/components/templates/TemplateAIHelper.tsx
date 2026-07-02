@@ -1,13 +1,11 @@
-import {
-  TextField,
+import {TextField,
   FormLabel,
   Card,
   CardContent,
   CardHeader,
   Typography,
   CircularProgress,
-  Button,
-} from '@mui/material';
+  Button, useTheme} from '@mui/material';
 import React, { useState } from 'react';
 
 import { Sparkles, Wand2, Lightbulb, TrendingUp, Send } from 'lucide-react';
@@ -31,6 +29,7 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
   onContentChange,
   onVariablesChange,
 }) => {
+  const theme = useTheme();
   const [isGenerating, setIsGenerating] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [description, setDescription] = useState('');
@@ -251,7 +250,7 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
       </CardHeader>
       <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <div>
-          <FormLabel sx={{ fontSize: 14, fontWeight: 500, color: '#b45309' }}>
+          <FormLabel sx={{ fontSize: 14, fontWeight: 500, color: 'warning.700' }}>
             描述模板用途
           </FormLabel>
           <TextField
@@ -295,7 +294,7 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
             disabled={isAnalyzing || !content.trim()}
             sx={{
               borderColor: '#fcd34d',
-              color: '#b45309',
+              color: 'warning.700',
               '&:hover': { backgroundColor: 'warning.light', borderColor: '#fcd34d' },
             }}
             startIcon={<Lightbulb style={{ width: 16, height: 16 }} />}
@@ -308,7 +307,7 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
             disabled={isGenerating || !content.trim()}
             sx={{
               borderColor: '#fcd34d',
-              color: '#b45309',
+              color: 'warning.700',
               '&:hover': { backgroundColor: 'warning.light', borderColor: '#fcd34d' },
             }}
             startIcon={<TrendingUp style={{ width: 16, height: 16 }} />}
@@ -324,7 +323,7 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
           sx={{
             width: '100%',
             borderColor: '#fcd34d',
-            color: '#b45309',
+            color: 'warning.700',
             '&:hover': { backgroundColor: 'warning.light', borderColor: '#fcd34d' },
           }}
           startIcon={
@@ -343,7 +342,7 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
 
         {suggestions.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <FormLabel sx={{ fontSize: 12, fontWeight: 500, color: '#b45309' }}>AI 建议</FormLabel>
+            <FormLabel sx={{ fontSize: 12, fontWeight: 500, color: 'warning.700' }}>AI 建议</FormLabel>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {suggestions.map((suggestion, index) => (
                 <div
@@ -351,7 +350,7 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
                   style={{
                     fontSize: 14,
                     color: '#92400e',
-                    backgroundColor: 'warning.light',
+                    backgroundColor: theme.palette.warning.light,
                     borderRadius: 8,
                     padding: '8px 12px',
                   }}
@@ -365,7 +364,7 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
 
         {analysisResult && analysisResult.suggestions.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <FormLabel sx={{ fontSize: 12, fontWeight: 500, color: '#b45309' }}>分析结果</FormLabel>
+            <FormLabel sx={{ fontSize: 12, fontWeight: 500, color: 'warning.700' }}>分析结果</FormLabel>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
               {analysisResult.suggestions.map((suggestion, index) => (
                 <div
@@ -376,12 +375,12 @@ const TemplateAIHelper: React.FC<TemplateAIHelperProps> = ({
                     padding: '8px 12px',
                     backgroundColor:
                       suggestion.includes('未使用') || suggestion.includes('未定义')
-                        ? 'error.light'
-                        : 'success.light',
+                        ? theme.palette.error.light
+                        : theme.palette.success.light,
                     color:
                       suggestion.includes('未使用') || suggestion.includes('未定义')
                         ? 'error.darker'
-                        : '#15803d',
+                        : 'success.700',
                   }}
                 >
                   {suggestion}

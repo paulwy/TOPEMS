@@ -11,8 +11,7 @@ import {
   Play,
   Plus,
 } from 'lucide-react';
-import {
-  Dialog,
+import {Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
@@ -24,8 +23,7 @@ import {
   Box,
   Typography,
   MenuItem,
-  Button,
-} from '@mui/material';
+  Button, useTheme} from '@mui/material';
 
 import { DataTable } from '@/components/common/DataTable';
 import type { ColumnDef } from '@tanstack/react-table';
@@ -42,6 +40,7 @@ interface TaskRecord extends InspectionRecord {
 
 const LimsTaskDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const theme = useTheme();
   const navigate = useNavigate();
   const [task, setTask] = useState<InspectionTask | null>(null);
   const [records, setRecords] = useState<TaskRecord[]>([]);
@@ -208,7 +207,7 @@ const LimsTaskDetailPage: React.FC = () => {
               }}
             >
               <span style={{ color: '#475569' }}>完成进度</span>
-              <span style={{ fontWeight: 500, color: 'grey.900' }}>
+              <span style={{ fontWeight: 500, color: theme.palette.grey[900] }}>
                 {completedSteps} / {totalSteps} 步骤
               </span>
             </Box>
@@ -274,14 +273,14 @@ const LimsTaskDetailPage: React.FC = () => {
                           fontSize: '0.875rem',
                           fontWeight: 500,
                           bgcolor: isCompleted ? 'success.dark' : 'grey.400',
-                          color: isCompleted ? 'white' : '#475569',
+                          color: isCompleted ? 'white' : 'grey.600',
                         }}
                       >
                         {isCompleted ? <CheckCircle sx={{ width: 16, height: 16 }} /> : index + 1}
                       </Box>
                       <Typography
                         sx={{
-                          color: isCompleted ? '#15803d' : '#475569',
+                          color: isCompleted ? 'success.700' : 'grey.600',
                           fontSize: '0.875rem',
                         }}
                       >
@@ -398,10 +397,10 @@ const LimsTaskDetailPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { bg: string; color: string; label: string }> = {
-      pending: { bg: '#fef9c3', color: '#ca8a04', label: '待测试' },
-      待测试: { bg: '#fef9c3', color: '#ca8a04', label: '待测试' },
-      in_progress: { bg: '#dbeafe', color: 'primary.dark', label: '进行中' },
-      进行中: { bg: '#dbeafe', color: 'primary.dark', label: '进行中' },
+      pending: { bg: 'warning.100', color: '#ca8a04', label: '待测试' },
+      待测试: { bg: 'warning.100', color: '#ca8a04', label: '待测试' },
+      in_progress: { bg: 'primary.100', color: 'primary.dark', label: '进行中' },
+      进行中: { bg: 'primary.100', color: 'primary.dark', label: '进行中' },
       completed: { bg: 'success.lighter', color: 'success.dark', label: '已完成' },
       已完成: { bg: 'success.lighter', color: 'success.dark', label: '已完成' },
       cancelled: { bg: 'error.lighter', color: 'error.dark', label: '已终止' },
@@ -591,7 +590,7 @@ const LimsTaskDetailPage: React.FC = () => {
               onClick={() => setShowCompleteModal(false)}
               sx={{
                 backgroundColor: 'success.dark',
-                '&:hover': { backgroundColor: '#15803d' },
+                '&:hover': { backgroundColor: 'success.700' },
               }}
             >
               确认完成

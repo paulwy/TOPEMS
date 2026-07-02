@@ -27,7 +27,23 @@ import {
   fetchWidgetData,
 } from './widget';
 
-import { fetchReports, fetchReport, createReport, updateReport, deleteReport } from './report';
+import {
+  fetchReports,
+  fetchReport,
+  createReport,
+  updateReport,
+  deleteReport,
+  exportReport,
+  listExportJobs,
+  getExportJob,
+  downloadExport,
+  listSchedules,
+  createSchedule,
+  updateSchedule,
+  deleteSchedule,
+  runSchedule,
+  toggleSchedule,
+} from './report';
 
 import {
   fetchSummaryDashboard,
@@ -131,19 +147,6 @@ import {
   exportChart,
   getFullscreenChart,
 } from './visualization';
-
-import {
-  exportReport,
-  listExportJobs,
-  getExportJob,
-  downloadExport,
-  listSchedules,
-  createSchedule,
-  updateSchedule,
-  deleteSchedule,
-  runSchedule,
-  toggleSchedule,
-} from './report';
 
 export * from './types';
 

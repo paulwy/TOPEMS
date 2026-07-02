@@ -67,14 +67,29 @@ pub struct SyncErrorDetail {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/scm/sync/purchase-to-inbound", post(purchase_to_inbound))
-        .route("/api/scm/sync/purchase-order/{id}/to-inbound", post(create_inbound_from_purchase))
-        .route("/api/scm/sync/supplier-from-srm", post(sync_supplier_from_srm))
-        .route("/api/scm/sync/suppliers-from-srm", post(sync_all_suppliers_from_srm))
+        .route(
+            "/api/scm/sync/purchase-to-inbound",
+            post(purchase_to_inbound),
+        )
+        .route(
+            "/api/scm/sync/purchase-order/{id}/to-inbound",
+            post(create_inbound_from_purchase),
+        )
+        .route(
+            "/api/scm/sync/supplier-from-srm",
+            post(sync_supplier_from_srm),
+        )
+        .route(
+            "/api/scm/sync/suppliers-from-srm",
+            post(sync_all_suppliers_from_srm),
+        )
         .route("/api/scm/sync/retry-failed", post(retry_failed_syncs))
         .route("/api/scm/sync/statistics", post(get_sync_statistics))
         .route("/api/scm/sync/sync-logs", post(get_sync_logs))
-        .route("/api/scm/sync/purchase-batch", post(batch_sync_purchase_to_wms))
+        .route(
+            "/api/scm/sync/purchase-batch",
+            post(batch_sync_purchase_to_wms),
+        )
         .route("/api/scm/sync/consistency-check", post(check_consistency))
 }
 
@@ -103,7 +118,8 @@ async fn purchase_to_inbound(
         .as_ref()
         .and_then(|s| Uuid::parse_str(s).ok());
 
-    create_inbound_from_purchase_internal(&state, purchase_order_id, warehouse_id, req.remarks).await
+    create_inbound_from_purchase_internal(&state, purchase_order_id, warehouse_id, req.remarks)
+        .await
 }
 
 async fn create_inbound_from_purchase(
@@ -147,7 +163,8 @@ async fn create_inbound_from_purchase_internal(
                 "failed",
                 Some("采购订单不存在或状态不是已批准".to_string()),
                 0,
-            ).await;
+            )
+            .await;
             return Json(ApiResponse::success(
                 serde_json::json!({
                     "success": false,
@@ -175,7 +192,8 @@ async fn create_inbound_from_purchase_internal(
                 "failed",
                 Some(format!("查询采购订单失败: {}", e)),
                 0,
-            ).await;
+            )
+            .await;
             return Json(api_error(500, "查询采购订单失败"));
         }
     };
@@ -205,7 +223,8 @@ async fn create_inbound_from_purchase_internal(
             "success",
             Some("该采购订单已创建入库单".to_string()),
             0,
-        ).await;
+        )
+        .await;
         return Json(ApiResponse::success(
             serde_json::json!({
                 "success": false,
@@ -271,7 +290,8 @@ async fn create_inbound_from_purchase_internal(
                 "success",
                 None,
                 0,
-            ).await;
+            )
+            .await;
 
             Json(ApiResponse::success(
                 serde_json::json!({
@@ -286,17 +306,17 @@ async fn create_inbound_from_purchase_internal(
         }
         Err(e) => {
             tracing::error!("创建入库单失败: {}", e);
-            
+
             let retry_count = get_retry_count(state, purchase_order_id).await.unwrap_or(0);
             let new_retry_count = retry_count + 1;
             let max_retries = 3;
-            
+
             let status = if new_retry_count >= max_retries {
                 "failed"
             } else {
                 "pending"
             };
-            
+
             let next_retry_at = if new_retry_count < max_retries {
                 Some(now + Duration::seconds((new_retry_count as i64 * 60 * 2).into()))
             } else {
@@ -331,7 +351,8 @@ async fn create_inbound_from_purchase_internal(
                 status,
                 Some(e.to_string()),
                 new_retry_count,
-            ).await;
+            )
+            .await;
 
             if new_retry_count < max_retries {
                 Json(ApiResponse::success(
@@ -354,13 +375,12 @@ async fn create_inbound_from_purchase_internal(
 }
 
 async fn get_retry_count(state: &ApiState, purchase_order_id: Uuid) -> Result<i32, sqlx::Error> {
-    let count: Option<i32> = sqlx::query_scalar(
-        "SELECT sync_retry_count FROM scm.purchase_orders WHERE id = $1"
-    )
-    .bind(purchase_order_id)
-    .fetch_optional(&state.db)
-    .await?;
-    
+    let count: Option<i32> =
+        sqlx::query_scalar("SELECT sync_retry_count FROM scm.purchase_orders WHERE id = $1")
+            .bind(purchase_order_id)
+            .fetch_optional(&state.db)
+            .await?;
+
     Ok(count.unwrap_or(0))
 }
 
@@ -383,7 +403,21 @@ async fn sync_supplier_from_srm(
         }
     };
 
-    let srm_supplier = sqlx::query_as::<_, (Uuid, String, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, String)>(
+    let srm_supplier = sqlx::query_as::<
+        _,
+        (
+            Uuid,
+            String,
+            Option<String>,
+            Option<String>,
+            Option<String>,
+            Option<String>,
+            Option<String>,
+            Option<String>,
+            Option<String>,
+            String,
+        ),
+    >(
         r#"
         SELECT id, name, legal_name, contact_person, phone, email, address, tax_id, website, status
         FROM srm.suppliers
@@ -394,35 +428,39 @@ async fn sync_supplier_from_srm(
     .fetch_optional(&state.db)
     .await;
 
-    let (id, name, legal_name, contact_person, phone, email, address, tax_number, website, status) = match srm_supplier {
-        Ok(Some(s)) => s,
-        Ok(None) => {
-            return Json(ApiResponse::success(
-                serde_json::json!({
-                    "success": false,
-                    "message": "SRM供应商不存在".to_string(),
-                    "supplier_id": supplier_id,
-                    "action": "none",
-                }),
-                "SRM供应商不存在",
-            ));
-        }
-        Err(e) => {
-            tracing::error!("查询SRM供应商失败: {}", e);
-            return Json(api_error(500, "查询SRM供应商失败"));
-        }
-    };
+    let (id, name, legal_name, contact_person, phone, email, address, tax_number, website, status) =
+        match srm_supplier {
+            Ok(Some(s)) => s,
+            Ok(None) => {
+                return Json(ApiResponse::success(
+                    serde_json::json!({
+                        "success": false,
+                        "message": "SRM供应商不存在".to_string(),
+                        "supplier_id": supplier_id,
+                        "action": "none",
+                    }),
+                    "SRM供应商不存在",
+                ));
+            }
+            Err(e) => {
+                tracing::error!("查询SRM供应商失败: {}", e);
+                return Json(api_error(500, "查询SRM供应商失败"));
+            }
+        };
 
-    let existing_count = sqlx::query_scalar::<_, i64>(
-        "SELECT COUNT(*) FROM scm.suppliers WHERE id = $1",
-    )
-    .bind(id)
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(0);
+    let existing_count =
+        sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM scm.suppliers WHERE id = $1")
+            .bind(id)
+            .fetch_one(&state.db)
+            .await
+            .unwrap_or(0);
 
     let now = Utc::now();
-    let action = if existing_count > 0 { "update" } else { "create" };
+    let action = if existing_count > 0 {
+        "update"
+    } else {
+        "create"
+    };
 
     if existing_count > 0 {
         let result = sqlx::query(
@@ -466,7 +504,8 @@ async fn sync_supplier_from_srm(
                     "success",
                     None,
                     0,
-                ).await;
+                )
+                .await;
                 Json(ApiResponse::success(
                     serde_json::json!({
                         "success": true,
@@ -493,7 +532,8 @@ async fn sync_supplier_from_srm(
                     "failed",
                     Some(e.to_string()),
                     0,
-                ).await;
+                )
+                .await;
                 Json(api_error(500, "更新供应商失败"))
             }
         }
@@ -539,7 +579,8 @@ async fn sync_supplier_from_srm(
                     "success",
                     None,
                     0,
-                ).await;
+                )
+                .await;
                 Json(ApiResponse::success(
                     serde_json::json!({
                         "success": true,
@@ -566,7 +607,8 @@ async fn sync_supplier_from_srm(
                     "failed",
                     Some(e.to_string()),
                     0,
-                ).await;
+                )
+                .await;
                 Json(api_error(500, "创建供应商失败"))
             }
         }
@@ -576,7 +618,21 @@ async fn sync_supplier_from_srm(
 async fn sync_all_suppliers_from_srm(
     State(state): State<ApiState>,
 ) -> Json<ApiResponse<serde_json::Value>> {
-    let srm_suppliers = sqlx::query_as::<_, (Uuid, String, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, Option<String>, String)>(
+    let srm_suppliers = sqlx::query_as::<
+        _,
+        (
+            Uuid,
+            String,
+            Option<String>,
+            Option<String>,
+            Option<String>,
+            Option<String>,
+            Option<String>,
+            Option<String>,
+            Option<String>,
+            String,
+        ),
+    >(
         r#"
         SELECT id, name, legal_name, contact_person, phone, email, address, tax_id, website, status
         FROM srm.suppliers
@@ -600,13 +656,24 @@ async fn sync_all_suppliers_from_srm(
     let mut failed_count = 0;
     let now = Utc::now();
 
-    for (id, name, legal_name, contact_person, phone, email, address, tax_number, website, status) in srm_suppliers {
-        let existing = sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM scm.suppliers WHERE id = $1",
-        )
-        .bind(id)
-        .fetch_one(&state.db)
-        .await;
+    for (
+        id,
+        name,
+        legal_name,
+        contact_person,
+        phone,
+        email,
+        address,
+        tax_number,
+        website,
+        status,
+    ) in srm_suppliers
+    {
+        let existing =
+            sqlx::query_scalar::<_, i64>("SELECT COUNT(*) FROM scm.suppliers WHERE id = $1")
+                .bind(id)
+                .fetch_one(&state.db)
+                .await;
 
         if existing.unwrap_or(0) > 0 {
             let result = sqlx::query(
@@ -748,7 +815,10 @@ async fn get_sync_logs(
                     })
                 })
                 .collect();
-            Json(ApiResponse::success(serde_json::json!({ "logs": logs }), "同步日志查询成功"))
+            Json(ApiResponse::success(
+                serde_json::json!({ "logs": logs }),
+                "同步日志查询成功",
+            ))
         }
         Err(e) => {
             tracing::error!("查询同步日志失败: {}", e);
@@ -793,7 +863,7 @@ async fn retry_failed_syncs(
                 let sync_source_id: Option<Uuid> = row.get("source_id");
                 let sync_retry_count: i32 = row.get("retry_count");
                 let new_retry_count = sync_retry_count + 1;
-                
+
                 let update_result = sqlx::query(
                     r#"
                     UPDATE scm.sync_logs 
@@ -811,7 +881,7 @@ async fn retry_failed_syncs(
 
                 if update_result.is_ok() {
                     retried_count += 1;
-                    
+
                     if sync_entity == "purchase_order" && sync_source_id.is_some() {
                         let _ = sqlx::query(
                             r#"
@@ -848,41 +918,35 @@ async fn retry_failed_syncs(
     }
 }
 
-async fn get_sync_statistics(
-    State(state): State<ApiState>,
-) -> Json<ApiResponse<SyncStatistics>> {
+async fn get_sync_statistics(State(state): State<ApiState>) -> Json<ApiResponse<SyncStatistics>> {
     let total_syncs: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM scm.sync_logs")
         .fetch_one(&state.db)
         .await
         .unwrap_or(0);
 
-    let success_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM scm.sync_logs WHERE status = 'success'"
-    )
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(0);
+    let success_count: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM scm.sync_logs WHERE status = 'success'")
+            .fetch_one(&state.db)
+            .await
+            .unwrap_or(0);
 
-    let failed_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM scm.sync_logs WHERE status = 'failed'"
-    )
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(0);
+    let failed_count: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM scm.sync_logs WHERE status = 'failed'")
+            .fetch_one(&state.db)
+            .await
+            .unwrap_or(0);
 
-    let pending_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM scm.sync_logs WHERE status = 'pending'"
-    )
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(0);
+    let pending_count: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM scm.sync_logs WHERE status = 'pending'")
+            .fetch_one(&state.db)
+            .await
+            .unwrap_or(0);
 
-    let in_progress_count: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM scm.sync_logs WHERE status = 'in_progress'"
-    )
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(0);
+    let in_progress_count: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM scm.sync_logs WHERE status = 'in_progress'")
+            .fetch_one(&state.db)
+            .await
+            .unwrap_or(0);
 
     let retry_needed_count: i64 = sqlx::query_scalar(
         r#"
@@ -931,7 +995,7 @@ async fn batch_sync_purchase_to_wms(
 
             for po in purchase_orders {
                 let existing_inbound = sqlx::query_scalar::<_, i64>(
-                    "SELECT COUNT(*) FROM wms.inbound_orders WHERE order_number = $1"
+                    "SELECT COUNT(*) FROM wms.inbound_orders WHERE order_number = $1",
                 )
                 .bind(&po.order_number)
                 .fetch_one(&state.db)
@@ -1001,19 +1065,20 @@ async fn batch_sync_purchase_to_wms(
                             "success",
                             None,
                             0,
-                        ).await;
+                        )
+                        .await;
 
                         success_count += 1;
                     }
                     Err(e) => {
                         let po_retry_count = sqlx::query_scalar::<_, i32>(
-                            "SELECT sync_retry_count FROM scm.purchase_orders WHERE id = $1"
+                            "SELECT sync_retry_count FROM scm.purchase_orders WHERE id = $1",
                         )
                         .bind(po.id)
                         .fetch_one(&state.db)
                         .await
                         .unwrap_or(0);
-                        
+
                         let new_retry_count = po_retry_count + 1;
 
                         if new_retry_count >= 3 {
@@ -1038,7 +1103,8 @@ async fn batch_sync_purchase_to_wms(
                                 "failed",
                                 Some(e.to_string()),
                                 new_retry_count,
-                            ).await;
+                            )
+                            .await;
                         } else {
                             retry_count += 1;
                             let _ = sqlx::query(
@@ -1069,7 +1135,8 @@ async fn batch_sync_purchase_to_wms(
                                 "pending",
                                 Some(e.to_string()),
                                 new_retry_count,
-                            ).await;
+                            )
+                            .await;
                         }
                     }
                 }
@@ -1241,7 +1308,7 @@ async fn check_supplier_sync_consistency(state: &ApiState) -> ConsistencyCheckRe
             } else if scm_id.is_some() && srm_id.is_some() {
                 let scm_sync = scm_sync_from_srm.unwrap_or(false);
                 let srm_sync = srm_sync_from_scm.unwrap_or(false);
-                
+
                 if !scm_sync && !srm_sync {
                     details.push(InconsistencyDetail {
                         source_id: scm_id.unwrap().to_string(),
@@ -1284,7 +1351,7 @@ async fn record_sync_log(
     retry_count: i32,
 ) -> Result<(), sqlx::Error> {
     let now = Utc::now();
-    
+
     let next_retry_at = if status == "pending" && retry_count < 3 {
         Some(now + Duration::seconds((retry_count * 60).into()))
     } else {
@@ -1318,6 +1385,6 @@ async fn record_sync_log(
     .bind(now)
     .execute(&state.db)
     .await?;
-    
+
     Ok(())
 }

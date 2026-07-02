@@ -390,7 +390,7 @@ export const MarkdownEditorTemplate: React.FC<MarkdownEditorTemplateProps> = ({
     blockquote { border-left: 4px solid #ddd; margin: 0; padding-left: 1rem; color: #666; }
     table { border-collapse: collapse; width: 100%; }
     th, td { border: 1px solid #ddd; padding: 0.5rem; text-align: left; }
-    th { background: #f5f5f5; }
+    th { background: action.hover; }
   </style>
 </head>
 <body>

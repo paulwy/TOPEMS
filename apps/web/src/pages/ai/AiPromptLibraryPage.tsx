@@ -75,7 +75,8 @@ const mockPrompts: PromptTemplate[] = [
     name: '专业邮件写作',
     description: '根据主题和要点生成专业的商务邮件',
     category: 'writing',
-    content: '你是一位专业的商务助理。请根据以下信息撰写一封专业的邮件：\n\n主题：{subject}\n收件人：{recipient}\n要点：{key_points}\n\n要求：\n1. 语气专业、礼貌\n2. 结构清晰，重点突出\n3. 结尾包含行动号召',
+    content:
+      '你是一位专业的商务助理。请根据以下信息撰写一封专业的邮件：\n\n主题：{subject}\n收件人：{recipient}\n要点：{key_points}\n\n要求：\n1. 语气专业、礼貌\n2. 结构清晰，重点突出\n3. 结尾包含行动号召',
     variables: ['subject', 'recipient', 'key_points'],
     usage_count: 234,
     is_favorite: true,
@@ -88,7 +89,8 @@ const mockPrompts: PromptTemplate[] = [
     name: '代码审查助手',
     description: '对代码进行全面审查并给出改进建议',
     category: 'code',
-    content: '你是一位资深代码审查专家。请审查以下代码：\n\n```{language}\n{code}\n```\n\n请从以下方面进行审查：\n1. 代码质量和可读性\n2. 潜在的Bug和安全问题\n3. 性能优化建议\n4. 最佳实践建议\n\n请按优先级排序你的建议。',
+    content:
+      '你是一位资深代码审查专家。请审查以下代码：\n\n```{language}\n{code}\n```\n\n请从以下方面进行审查：\n1. 代码质量和可读性\n2. 潜在的Bug和安全问题\n3. 性能优化建议\n4. 最佳实践建议\n\n请按优先级排序你的建议。',
     variables: ['language', 'code'],
     usage_count: 189,
     is_favorite: true,
@@ -101,7 +103,8 @@ const mockPrompts: PromptTemplate[] = [
     name: '数据分析报告',
     description: '根据数据生成专业的分析报告',
     category: 'analysis',
-    content: '你是一位数据分析师。请根据以下数据分析并生成报告：\n\n数据：{data}\n\n分析维度：\n1. 总体趋势\n2. 关键指标\n3. 异常发现\n4. 建议措施\n\n请以清晰、专业的方式呈现你的分析。',
+    content:
+      '你是一位数据分析师。请根据以下数据分析并生成报告：\n\n数据：{data}\n\n分析维度：\n1. 总体趋势\n2. 关键指标\n3. 异常发现\n4. 建议措施\n\n请以清晰、专业的方式呈现你的分析。',
     variables: ['data'],
     usage_count: 156,
     is_favorite: false,
@@ -114,7 +117,8 @@ const mockPrompts: PromptTemplate[] = [
     name: '会议纪要生成',
     description: '根据会议记录生成结构化纪要',
     category: 'business',
-    content: '请根据以下会议内容生成结构化的会议纪要：\n\n会议内容：{meeting_content}\n\n请包含以下部分：\n1. 会议基本信息\n2. 讨论要点\n3. 决议事项\n4. 行动项（含负责人和截止时间）\n5. 待跟进问题',
+    content:
+      '请根据以下会议内容生成结构化的会议纪要：\n\n会议内容：{meeting_content}\n\n请包含以下部分：\n1. 会议基本信息\n2. 讨论要点\n3. 决议事项\n4. 行动项（含负责人和截止时间）\n5. 待跟进问题',
     variables: ['meeting_content'],
     usage_count: 312,
     is_favorite: false,
@@ -127,7 +131,8 @@ const mockPrompts: PromptTemplate[] = [
     name: '营销文案创作',
     description: '创作吸引人的营销推广文案',
     category: 'creative',
-    content: '你是一位创意营销专家。请为以下产品/活动创作营销文案：\n\n产品/活动：{product}\n目标受众：{target_audience}\n核心卖点：{selling_points}\n\n要求：\n1. 标题吸引人\n2. 突出核心价值\n3. 有号召力的行动号召\n4. 字数控制在200字以内',
+    content:
+      '你是一位创意营销专家。请为以下产品/活动创作营销文案：\n\n产品/活动：{product}\n目标受众：{target_audience}\n核心卖点：{selling_points}\n\n要求：\n1. 标题吸引人\n2. 突出核心价值\n3. 有号召力的行动号召\n4. 字数控制在200字以内',
     variables: ['product', 'target_audience', 'selling_points'],
     usage_count: 278,
     is_favorite: true,
@@ -140,7 +145,8 @@ const mockPrompts: PromptTemplate[] = [
     name: 'SQL查询生成',
     description: '根据需求描述生成SQL查询语句',
     category: 'code',
-    content: '你是一位SQL专家。请根据以下需求生成SQL查询：\n\n需求：{requirement}\n表结构：{table_structure}\n\n请提供：\n1. 优化后的SQL语句\n2. 查询说明\n3. 性能优化建议（如果有）',
+    content:
+      '你是一位SQL专家。请根据以下需求生成SQL查询：\n\n需求：{requirement}\n表结构：{table_structure}\n\n请提供：\n1. 优化后的SQL语句\n2. 查询说明\n3. 性能优化建议（如果有）',
     variables: ['requirement', 'table_structure'],
     usage_count: 145,
     is_favorite: false,
@@ -172,13 +178,13 @@ const getCategoryIcon = (category: string) => {
 
 const getCategoryColor = (category: string) => {
   const map: Record<string, string> = {
-    writing: '#3b82f6',
-    code: '#8b5cf6',
-    business: '#10b981',
-    analysis: '#f59e0b',
+    writing: 'primary.main',
+    code: 'secondary.main',
+    business: 'success.main',
+    analysis: 'warning.main',
     creative: '#ec4899',
   };
-  return map[category] || '#6b7280';
+  return map[category] || 'grey.500';
 };
 
 export const AiPromptLibraryPage: React.FC = () => {
@@ -195,7 +201,8 @@ export const AiPromptLibraryPage: React.FC = () => {
 
   const filteredPrompts = mockPrompts.filter((p) => {
     const matchCategory = activeCategory === 'all' || p.category === activeCategory;
-    const matchSearch = !searchQuery ||
+    const matchSearch =
+      !searchQuery ||
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchFavorite = !showFavoritesOnly || p.is_favorite;
@@ -268,10 +275,17 @@ export const AiPromptLibraryPage: React.FC = () => {
       }}
     >
       <Box sx={{ p: 3 }}>
-        <Grid container spacing={3}>
+        <Grid
+          container
+          spacing={3}
+        >
           {/* 左侧分类 */}
-          <Grid item xs={12} md={2}>
-            <Paper sx={{ p: 2, borderRadius: 2 }}>
+          <Grid
+            item
+            xs={12}
+            md={2}
+          >
+            <Paper sx={{ p: 2, borderRadius: 3 }}>
               <Box sx={{ mb: 2 }}>
                 <Typography
                   variant='subtitle2'
@@ -279,7 +293,10 @@ export const AiPromptLibraryPage: React.FC = () => {
                 >
                   分类
                 </Typography>
-                <List disablePadding dense>
+                <List
+                  disablePadding
+                  dense
+                >
                   {categories.map((cat) => (
                     <ListItem
                       key={cat.id}
@@ -331,8 +348,12 @@ export const AiPromptLibraryPage: React.FC = () => {
           </Grid>
 
           {/* 右侧模板列表 */}
-          <Grid item xs={12} md={10}>
-            <Paper sx={{ borderRadius: 2, overflow: 'hidden' }}>
+          <Grid
+            item
+            xs={12}
+            md={10}
+          >
+            <Paper sx={{ borderRadius: 3, overflow: 'hidden' }}>
               <Box
                 sx={{
                   p: 2,
@@ -368,7 +389,12 @@ export const AiPromptLibraryPage: React.FC = () => {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     slotProps={{
                       input: {
-                        startAdornment: <Search size={16} style={{ marginRight: 8, color: '#9ca3af' }} />,
+                        startAdornment: (
+                          <Search
+                            size={16}
+                            style={{ marginRight: 8, color: '#9ca3af' }}
+                          />
+                        ),
                       },
                     }}
                     sx={{ width: 250 }}
@@ -391,14 +417,23 @@ export const AiPromptLibraryPage: React.FC = () => {
               </Box>
 
               <Box sx={{ p: 3 }}>
-                <Grid container spacing={2}>
+                <Grid
+                  container
+                  spacing={2}
+                >
                   {filteredPrompts.map((prompt) => (
-                    <Grid item xs={12} sm={6} md={4} key={prompt.id}>
+                    <Grid
+                      item
+                      xs={12}
+                      sm={6}
+                      md={4}
+                      key={prompt.id}
+                    >
                       <Card
                         variant='outlined'
                         sx={{
                           height: '100%',
-                          borderRadius: 2,
+                          borderRadius: 3,
                           transition: 'all 0.2s',
                           '&:hover': {
                             boxShadow: 2,
@@ -420,7 +455,14 @@ export const AiPromptLibraryPage: React.FC = () => {
                           }}
                         >
                           <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'flex-start',
+                                mb: 1.5,
+                              }}
+                            >
                               <Avatar
                                 sx={{
                                   width: 40,
@@ -441,8 +483,8 @@ export const AiPromptLibraryPage: React.FC = () => {
                                 <Star
                                   size={18}
                                   style={{
-                                    fill: prompt.is_favorite ? '#f59e0b' : 'none',
-                                    color: prompt.is_favorite ? '#f59e0b' : '#9ca3af',
+                                    fill: prompt.is_favorite ? 'warning.main' : 'none',
+                                    color: prompt.is_favorite ? 'warning.main' : 'grey.400',
                                   }}
                                 />
                               </IconButton>
@@ -556,7 +598,10 @@ export const AiPromptLibraryPage: React.FC = () => {
       >
         <DialogTitle>
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant='h6' sx={{ fontWeight: 600 }}>
+            <Typography
+              variant='h6'
+              sx={{ fontWeight: 600 }}
+            >
               {selectedPrompt?.name}
             </Typography>
             <IconButton
@@ -598,7 +643,14 @@ export const AiPromptLibraryPage: React.FC = () => {
               ))}
             </Box>
 
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                mb: 1.5,
+              }}
+            >
               <Typography
                 variant='subtitle2'
                 sx={{ fontWeight: 600 }}
@@ -632,7 +684,10 @@ export const AiPromptLibraryPage: React.FC = () => {
                     className='animate-pulse'
                     style={{ margin: '0 auto 8px', color: '#6366f1' }}
                   />
-                  <Typography variant='body2' color='text.secondary'>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     正在生成...
                   </Typography>
                 </Box>
@@ -655,7 +710,10 @@ export const AiPromptLibraryPage: React.FC = () => {
                     size={32}
                     style={{ margin: '0 auto 8px', color: '#cbd5e1' }}
                   />
-                  <Typography variant='body2' color='text.secondary'>
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                  >
                     填写变量后点击生成
                   </Typography>
                 </Box>

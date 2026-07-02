@@ -47,6 +47,23 @@ docker-compose.override.yml
 coverage/
 *.lcov
 .nyc_output
+apps/web/playwright-report/
+apps/web/test-results/
+test-results*.json
+test-latest.json
+
+# AI Contest decks (large files)
+docs/topems-ai-contest-deck/
+trae-ai-contest/
+
+# Backup files
+.backups/
+.bak-*/
+*.bak
+*.bak.*
+
+# Lock files (large)
+# pnpm-lock.yaml is tracked for reproducibility
 
 # Build
 *.exe
@@ -76,3 +93,4 @@ debug_jwt.rs
 
 *storybook.log
 storybook-static
+apps/web/playwright-report/

@@ -86,8 +86,8 @@ export const ExportOptions: React.FC<ExportOptionsProps> = ({
           <IconButton
             onClick={onClose}
             sx={{
-              color: '#94a3b8',
-              '&:hover': { color: '#475569' },
+              color: 'grey.400',
+              '&:hover': { color: 'grey.600' },
             }}
           >
             <X style={{ width: 20, height: 20 }} />
@@ -109,7 +109,7 @@ export const ExportOptions: React.FC<ExportOptionsProps> = ({
               sx={{
                 fontSize: '0.875rem',
                 fontWeight: 500,
-                color: '#334155',
+                color: 'grey.700',
                 mb: 2,
               }}
             >
@@ -125,7 +125,7 @@ export const ExportOptions: React.FC<ExportOptionsProps> = ({
                   onChange={(e) => setFormat(e.target.value)}
                   style={{ marginRight: 8 }}
                 />
-                <Typography sx={{ fontSize: '0.875rem', color: '#334155' }}>
+                <Typography sx={{ fontSize: '0.875rem', color: 'grey.700' }}>
                   CSV (逗号分隔)
                 </Typography>
               </Box>
@@ -138,7 +138,7 @@ export const ExportOptions: React.FC<ExportOptionsProps> = ({
                   onChange={(e) => setFormat(e.target.value)}
                   style={{ marginRight: 8 }}
                 />
-                <Typography sx={{ fontSize: '0.875rem', color: '#334155' }}>
+                <Typography sx={{ fontSize: '0.875rem', color: 'grey.700' }}>
                   Excel (.xlsx)
                 </Typography>
               </Box>
@@ -154,7 +154,7 @@ export const ExportOptions: React.FC<ExportOptionsProps> = ({
                 mb: 2,
               }}
             >
-              <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: '#334155' }}>
+              <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'grey.700' }}>
                 选择导出列
               </Typography>
               <Button
@@ -171,7 +171,7 @@ export const ExportOptions: React.FC<ExportOptionsProps> = ({
             <Box
               sx={{
                 border: '1px solid border.default',
-                borderRadius: 2,
+                borderRadius: 3,
                 p: 4,
                 maxHeight: 240,
                 overflowY: 'auto',
@@ -185,7 +185,7 @@ export const ExportOptions: React.FC<ExportOptionsProps> = ({
                       display: 'flex',
                       alignItems: 'center',
                       cursor: 'pointer',
-                      borderRadius: 2,
+                      borderRadius: 3,
                       p: 2,
                       '&:hover': { backgroundColor: 'grey.50' },
                     }}
@@ -197,7 +197,7 @@ export const ExportOptions: React.FC<ExportOptionsProps> = ({
                       onChange={() => handleToggleColumn(column.key)}
                       style={{ marginRight: 12 }}
                     />
-                    <Typography sx={{ fontSize: '0.875rem', color: '#334155' }}>
+                    <Typography sx={{ fontSize: '0.875rem', color: 'grey.700' }}>
                       {column.label}
                     </Typography>
                   </Box>
@@ -210,11 +210,11 @@ export const ExportOptions: React.FC<ExportOptionsProps> = ({
             sx={{
               backgroundColor: 'primary.light',
               border: '1px solid #bfdbfe',
-              borderRadius: 2,
+              borderRadius: 3,
               p: 4,
             }}
           >
-            <Typography sx={{ fontSize: '0.875rem', color: '#1e40af' }}>
+            <Typography sx={{ fontSize: '0.875rem', color: 'primary.800' }}>
               已选择 {selectedColumns.length} 列，共 {availableColumns.length} 列
             </Typography>
           </Box>
@@ -234,9 +234,9 @@ export const ExportOptions: React.FC<ExportOptionsProps> = ({
             sx={{
               px: 4,
               py: 2,
-              color: '#334155',
+              color: 'grey.700',
               backgroundColor: 'grey.100',
-              borderRadius: 2,
+              borderRadius: 3,
               '&:hover': { backgroundColor: 'border.default' },
             }}
           >
@@ -250,7 +250,7 @@ export const ExportOptions: React.FC<ExportOptionsProps> = ({
               py: 2,
               backgroundColor: 'primary.dark',
               color: 'white',
-              borderRadius: 2,
+              borderRadius: 3,
               display: 'flex',
               alignItems: 'center',
               '&:hover': { backgroundColor: 'primary.dark' },

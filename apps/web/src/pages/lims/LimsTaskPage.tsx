@@ -393,20 +393,20 @@ const LimsTaskPage: React.FC = () => {
   };
 
   const getStatusColor = (status: string): { bgcolor: string; color: string } => {
-    if (!status) return { bgcolor: 'grey.100', color: '#475569' };
+    if (!status) return { bgcolor: 'grey.100', color: 'grey.600' };
     switch (status) {
       case '进行中':
-        return { bgcolor: '#dbeafe', color: 'primary.dark' };
+        return { bgcolor: 'primary.100', color: 'primary.dark' };
       case '已完成':
-        return { bgcolor: 'success.lighter', color: '#15803d' };
+        return { bgcolor: 'success.lighter', color: 'success.700' };
       case '已终止':
         return { bgcolor: 'error.lighter', color: 'error.darker' };
       case '待测试':
-        return { bgcolor: 'warning.light', color: '#b45309' };
+        return { bgcolor: 'warning.light', color: 'warning.700' };
       case '测试中':
-        return { bgcolor: '#f3e8ff', color: '#7e22ce' };
+        return { bgcolor: 'secondary.100', color: '#7e22ce' };
       default:
-        return { bgcolor: 'grey.100', color: '#475569' };
+        return { bgcolor: 'grey.100', color: 'grey.600' };
     }
   };
 
@@ -596,6 +596,10 @@ const LimsTaskPage: React.FC = () => {
         minHeight: '100vh',
         background: 'linear-gradient(135deg, #f8fafc 0%, border.default 100%)',
       }}
+      headerProps={{
+        pageIcon: <ClipboardList style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)',
+      }}
     >
       <Snackbar
         open={Boolean(notification)}
@@ -607,7 +611,7 @@ const LimsTaskPage: React.FC = () => {
           onClose={handleCloseNotification}
           severity={notification?.type || 'success'}
           variant='filled'
-          sx={{ borderRadius: 2 }}
+          sx={{ borderRadius: 3 }}
         >
           {notification?.message}
         </Alert>
@@ -857,7 +861,7 @@ const LimsTaskPage: React.FC = () => {
         onClose={() => setShowDetailModal(false)}
         maxWidth='md'
         fullWidth
-        slotProps={{ paper: { sx: { borderRadius: 2 } } }}
+        slotProps={{ paper: { sx: { borderRadius: 3 } } }}
       >
         <DialogContent sx={{ p: 3 }}>
           {selectedTask && (

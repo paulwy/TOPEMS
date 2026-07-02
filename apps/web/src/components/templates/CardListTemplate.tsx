@@ -272,7 +272,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
             key={stat.id}
             sx={{
               p: 2,
-              borderRadius: 2,
+              borderRadius: 3,
               background: stat.gradient
                 ? `linear-gradient(135deg, ${stat.gradient[0]}, ${stat.gradient[1]})`
                 : undefined,
@@ -454,7 +454,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
 
     if (showFilterCollapse) {
       return (
-        <Paper sx={{ mb: 2, p: 2, borderRadius: 2 }}>
+        <Paper sx={{ mb: 2, p: 2, borderRadius: 3 }}>
           <Box
             sx={{
               display: 'flex',
@@ -487,7 +487,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
       );
     }
 
-    return <Paper sx={{ mb: 2, p: 2, borderRadius: 2 }}>{filterContent}</Paper>;
+    return <Paper sx={{ mb: 2, p: 2, borderRadius: 3 }}>{filterContent}</Paper>;
   };
 
   // 渲染单个卡片
@@ -524,7 +524,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
       <Paper
         key={item.id || index}
         sx={{
-          borderRadius: 2,
+          borderRadius: 3,
           overflow: 'hidden',
           cursor: onCardClick ? 'pointer' : 'default',
           transition: 'all 0.2s ease',
@@ -847,7 +847,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
 
       {/* 统计概览 */}
       {showStatsOverview && metricStats.length > 0 && (
-        <Paper sx={{ mb: 3, p: 2, borderRadius: 2 }}>
+        <Paper sx={{ mb: 3, p: 2, borderRadius: 3 }}>
           <Box
             sx={{
               display: 'flex',
@@ -880,7 +880,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
       {renderFilters()}
 
       {/* 卡片列表 */}
-      <Paper sx={{ borderRadius: 2 }}>
+      <Paper sx={{ borderRadius: 3 }}>
         {loading ? (
           <Box
             sx={{
@@ -899,7 +899,7 @@ export const CardListTemplate: React.FC<CardListTemplateProps> = ({
               <Skeleton
                 key={i}
                 height={200}
-                sx={{ borderRadius: 2 }}
+                sx={{ borderRadius: 3 }}
               />
             ))}
           </Box>

@@ -618,7 +618,7 @@ const VoucherDetailPage: React.FC = () => {
               gap: 2,
               p: 2,
               bgcolor: 'grey.50',
-              borderRadius: 2,
+              borderRadius: 3,
             }}
           >
             <Box
@@ -657,7 +657,7 @@ const VoucherDetailPage: React.FC = () => {
                 gap: 2,
                 p: 2,
                 bgcolor: 'grey.50',
-                borderRadius: 2,
+                borderRadius: 3,
               }}
             >
               <Box
@@ -697,7 +697,7 @@ const VoucherDetailPage: React.FC = () => {
                 gap: 2,
                 p: 2,
                 bgcolor: 'grey.50',
-                borderRadius: 2,
+                borderRadius: 3,
               }}
             >
               <Box

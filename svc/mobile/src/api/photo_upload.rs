@@ -167,7 +167,10 @@ pub async fn upload_photo(
 
     let thumbnail_url = Some(format!("/api/mobile/photos/{}/thumbnail", upload.id));
 
-    if let Err(e) = db_update_photo_upload_status(&pool, upload.id, "completed", 100, thumbnail_url.as_deref()).await {
+    if let Err(e) =
+        db_update_photo_upload_status(&pool, upload.id, "completed", 100, thumbnail_url.as_deref())
+            .await
+    {
         tracing::error!("更新上传状态失败: {}", e);
     }
 
@@ -179,7 +182,10 @@ pub async fn upload_photo(
         message: "上传成功".to_string(),
     };
 
-    (StatusCode::OK, Json(ApiResponse::success(response, "照片上传成功")))
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(response, "照片上传成功")),
+    )
 }
 
 pub async fn batch_upload_photos(
@@ -229,8 +235,15 @@ pub async fn batch_upload_photos(
         match db_create_photo_upload(&pool, user_id, create_data).await {
             Ok(upload) => {
                 let thumbnail_url = Some(format!("/api/mobile/photos/{}/thumbnail", upload.id));
-                let _ = db_update_photo_upload_status(&pool, upload.id, "completed", 100, thumbnail_url.as_deref()).await;
-                
+                let _ = db_update_photo_upload_status(
+                    &pool,
+                    upload.id,
+                    "completed",
+                    100,
+                    thumbnail_url.as_deref(),
+                )
+                .await;
+
                 results.push(PhotoUploadResponse {
                     upload_id: upload.id,
                     file_path: upload.file_path,
@@ -260,7 +273,10 @@ pub async fn batch_upload_photos(
         results,
     };
 
-    (StatusCode::OK, Json(ApiResponse::success(response, "批量上传完成")))
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(response, "批量上传完成")),
+    )
 }
 
 pub async fn get_photo_list(
@@ -310,7 +326,10 @@ pub async fn get_photo_list(
 
     let response = PhotoListResponse { items, total };
 
-    (StatusCode::OK, Json(ApiResponse::success(response, "获取照片列表成功")))
+    (
+        StatusCode::OK,
+        Json(ApiResponse::success(response, "获取照片列表成功")),
+    )
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -354,9 +373,15 @@ pub async fn get_photo_by_id(
                 );
             }
         };
-        (StatusCode::OK, Json(ApiResponse::success(photo, "获取照片成功")))
+        (
+            StatusCode::OK,
+            Json(ApiResponse::success(photo, "获取照片成功")),
+        )
     } else {
-        (StatusCode::NOT_FOUND, Json(ApiResponse::error(404, "照片不存在")))
+        (
+            StatusCode::NOT_FOUND,
+            Json(ApiResponse::error(404, "照片不存在")),
+        )
     }
 }
 
@@ -368,10 +393,12 @@ pub async fn get_upload_progress(
 ) -> impl IntoResponse {
     let _ = extract_user_id_from_token(&headers, &auth_state.jwt_secret);
 
-    let row = match sqlx::query("SELECT upload_progress, upload_status, file_path FROM photo_uploads WHERE id = $1")
-        .bind(id)
-        .fetch_optional(&pool)
-        .await
+    let row = match sqlx::query(
+        "SELECT upload_progress, upload_status, file_path FROM photo_uploads WHERE id = $1",
+    )
+    .bind(id)
+    .fetch_optional(&pool)
+    .await
     {
         Ok(r) => r,
         Err(e) => {
@@ -387,12 +414,20 @@ pub async fn get_upload_progress(
         let response = UploadProgressResponse {
             upload_id: id,
             progress: row.try_get("upload_progress").unwrap_or(0),
-            status: row.try_get("upload_status").unwrap_or("unknown".to_string()),
+            status: row
+                .try_get("upload_status")
+                .unwrap_or("unknown".to_string()),
             file_url: row.try_get("file_path").ok(),
         };
-        (StatusCode::OK, Json(ApiResponse::success(response, "获取上传进度成功")))
+        (
+            StatusCode::OK,
+            Json(ApiResponse::success(response, "获取上传进度成功")),
+        )
     } else {
-        (StatusCode::NOT_FOUND, Json(ApiResponse::error(404, "上传记录不存在")))
+        (
+            StatusCode::NOT_FOUND,
+            Json(ApiResponse::error(404, "上传记录不存在")),
+        )
     }
 }
 
@@ -422,18 +457,17 @@ pub async fn delete_photo(
         }
     };
 
-    let result = sqlx::query(
-        "DELETE FROM photo_uploads WHERE id = $1 AND user_id = $2",
-    )
-    .bind(id)
-    .bind(user_id)
-    .execute(&pool)
-    .await;
+    let result = sqlx::query("DELETE FROM photo_uploads WHERE id = $1 AND user_id = $2")
+        .bind(id)
+        .bind(user_id)
+        .execute(&pool)
+        .await;
 
     match result {
-        Ok(r) if r.rows_affected() > 0 => {
-            (StatusCode::OK, Json(ApiResponse::success((), "删除照片成功")))
-        }
+        Ok(r) if r.rows_affected() > 0 => (
+            StatusCode::OK,
+            Json(ApiResponse::success((), "删除照片成功")),
+        ),
         Ok(_) => (
             StatusCode::NOT_FOUND,
             Json(ApiResponse::error(404, "照片不存在或无权删除")),

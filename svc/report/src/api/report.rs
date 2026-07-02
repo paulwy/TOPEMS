@@ -1,4 +1,8 @@
-use axum::{extract::{Path, State}, routing::{get, post}, Json, Router};
+use axum::{
+    extract::{Path, State},
+    routing::{get, post},
+    Json, Router,
+};
 use serde::{Deserialize, Serialize};
 use sqlx::Row;
 use tracing::info;
@@ -9,8 +13,14 @@ use crate::AppState;
 pub fn create_routes() -> Router<AppState> {
     Router::new()
         .route("/api/report/reports", get(list_reports).post(create_report))
-        .route("/api/report/reports/from-template", post(create_report_from_template))
-        .route("/api/report/reports/{id}", get(get_report).put(update_report).delete(delete_report))
+        .route(
+            "/api/report/reports/from-template",
+            post(create_report_from_template),
+        )
+        .route(
+            "/api/report/reports/{id}",
+            get(get_report).put(update_report).delete(delete_report),
+        )
         .route("/api/report/reports/{id}/export", post(export_report))
         .route("/api/report/reports/{id}/run", post(run_report))
 }
@@ -34,32 +44,34 @@ pub struct CreateReportFromTemplateRequest {
 
 pub async fn list_reports(State(state): State<AppState>) -> Json<serde_json::Value> {
     info!("Listing reports");
-    
+
     let reports = sqlx::query(
         r#"
         SELECT id, name, description, report_type, status, template_id, created_by, created_at
         FROM reports
         ORDER BY created_at DESC
-        "#
+        "#,
     )
     .fetch_all(&state.pool)
     .await
     .unwrap_or_default();
-    
+
     let result: Vec<serde_json::Value> = reports
         .into_iter()
-        .map(|r| serde_json::json!({
-            "id": r.get::<Uuid, _>("id"),
-            "name": r.get::<String, _>("name"),
-            "description": r.get::<Option<String>, _>("description"),
-            "report_type": r.get::<String, _>("report_type"),
-            "status": r.get::<String, _>("status"),
-            "template_id": r.get::<Option<Uuid>, _>("template_id"),
-            "created_by": r.get::<String, _>("created_by"),
-            "created_at": r.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
-        }))
+        .map(|r| {
+            serde_json::json!({
+                "id": r.get::<Uuid, _>("id"),
+                "name": r.get::<String, _>("name"),
+                "description": r.get::<Option<String>, _>("description"),
+                "report_type": r.get::<String, _>("report_type"),
+                "status": r.get::<String, _>("status"),
+                "template_id": r.get::<Option<Uuid>, _>("template_id"),
+                "created_by": r.get::<String, _>("created_by"),
+                "created_at": r.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
+            })
+        })
         .collect();
-    
+
     Json(serde_json::json!({
         "success": true,
         "data": result,
@@ -72,10 +84,10 @@ pub async fn create_report(
     Json(req): Json<CreateReportRequest>,
 ) -> Json<serde_json::Value> {
     info!("Creating report");
-    
+
     let id = Uuid::new_v4();
     let now = chrono::Utc::now();
-    
+
     let result = sqlx::query(
         r#"
         INSERT INTO reports (id, name, description, report_type, config, template_id, created_by, status, created_at, updated_at)
@@ -94,7 +106,7 @@ pub async fn create_report(
     .bind(now)
     .execute(&state.pool)
     .await;
-    
+
     match result {
         Ok(_) => Json(serde_json::json!({
             "success": true,
@@ -104,7 +116,7 @@ pub async fn create_report(
         Err(e) => Json(serde_json::json!({
             "success": false,
             "message": format!("Failed to create report: {}", e)
-        }))
+        })),
     }
 }
 
@@ -113,7 +125,7 @@ pub async fn create_report_from_template(
     Json(req): Json<CreateReportFromTemplateRequest>,
 ) -> Json<serde_json::Value> {
     info!("Creating report from template: {}", req.template_id);
-    
+
     let template = sqlx::query(
         r#"
         SELECT id, name, report_type, data_source, layout_config, filter_config, style_config, columns, output_format
@@ -124,7 +136,7 @@ pub async fn create_report_from_template(
     .bind(req.template_id)
     .fetch_optional(&state.pool)
     .await;
-    
+
     match template {
         Ok(Some(row)) => {
             let id = Uuid::new_v4();
@@ -137,8 +149,10 @@ pub async fn create_report_from_template(
             let t_style_config: serde_json::Value = row.get("style_config");
             let t_columns: serde_json::Value = row.get("columns");
             let t_output_format: String = row.get("output_format");
-            let report_name = req.report_name.unwrap_or_else(|| format!("{} - Report", t_name));
-            
+            let report_name = req
+                .report_name
+                .unwrap_or_else(|| format!("{} - Report", t_name));
+
             let config = serde_json::json!({
                 "report_type": t_report_type,
                 "data_source": t_data_source,
@@ -149,7 +163,7 @@ pub async fn create_report_from_template(
                 "output_format": t_output_format,
                 "parameters": req.parameters.unwrap_or(serde_json::json!({}))
             });
-            
+
             let result = sqlx::query(
                 r#"
                 INSERT INTO reports (id, name, description, report_type, config, template_id, created_by, status, created_at, updated_at)
@@ -168,7 +182,7 @@ pub async fn create_report_from_template(
             .bind(now)
             .execute(&state.pool)
             .await;
-            
+
             match result {
                 Ok(_) => Json(serde_json::json!({
                     "success": true,
@@ -183,9 +197,9 @@ pub async fn create_report_from_template(
                 Err(e) => Json(serde_json::json!({
                     "success": false,
                     "message": format!("Failed to create report: {}", e)
-                }))
+                })),
             }
-        },
+        }
         Ok(None) => Json(serde_json::json!({
             "success": false,
             "message": "Template not found or inactive"
@@ -193,7 +207,7 @@ pub async fn create_report_from_template(
         Err(e) => Json(serde_json::json!({
             "success": false,
             "message": format!("Failed to get template: {}", e)
-        }))
+        })),
     }
 }
 
@@ -202,7 +216,7 @@ pub async fn get_report(
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Getting report: {}", id);
-    
+
     let report = sqlx::query!(
         r#"
         SELECT id, name, description, report_type, config, template_id, created_by, status, last_run_at, created_at, updated_at
@@ -213,7 +227,7 @@ pub async fn get_report(
     )
     .fetch_optional(&state.pool)
     .await;
-    
+
     match report {
         Ok(Some(r)) => Json(serde_json::json!({
             "success": true,
@@ -238,7 +252,7 @@ pub async fn get_report(
         Err(e) => Json(serde_json::json!({
             "success": false,
             "message": format!("Failed to get report: {}", e)
-        }))
+        })),
     }
 }
 
@@ -248,12 +262,12 @@ pub async fn update_report(
     Json(req): Json<serde_json::Value>,
 ) -> Json<serde_json::Value> {
     info!("Updating report: {}", id);
-    
+
     let name = req.get("name").and_then(|v| v.as_str());
     let description = req.get("description").and_then(|v| v.as_str());
     let status = req.get("status").and_then(|v| v.as_str());
     let config = req.get("config");
-    
+
     let result = sqlx::query(
         r#"
         UPDATE reports
@@ -273,7 +287,7 @@ pub async fn update_report(
     .bind(id)
     .execute(&state.pool)
     .await;
-    
+
     match result {
         Ok(_) => Json(serde_json::json!({
             "success": true,
@@ -282,7 +296,7 @@ pub async fn update_report(
         Err(e) => Json(serde_json::json!({
             "success": false,
             "message": format!("Failed to update report: {}", e)
-        }))
+        })),
     }
 }
 
@@ -291,7 +305,7 @@ pub async fn delete_report(
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Deleting report: {}", id);
-    
+
     let result = sqlx::query!(
         r#"
         DELETE FROM reports
@@ -301,7 +315,7 @@ pub async fn delete_report(
     )
     .execute(&state.pool)
     .await;
-    
+
     match result {
         Ok(_) => Json(serde_json::json!({
             "success": true,
@@ -310,7 +324,7 @@ pub async fn delete_report(
         Err(e) => Json(serde_json::json!({
             "success": false,
             "message": format!("Failed to delete report: {}", e)
-        }))
+        })),
     }
 }
 
@@ -319,7 +333,7 @@ pub async fn export_report(
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Exporting report: {}", id);
-    
+
     let report = sqlx::query(
         r#"
         SELECT name, report_type, config, output_format
@@ -330,7 +344,7 @@ pub async fn export_report(
     .bind(id)
     .fetch_optional(&state.pool)
     .await;
-    
+
     match report {
         Ok(Some(row)) => {
             let r_name: String = row.get("name");
@@ -347,7 +361,7 @@ pub async fn export_report(
                     "output_format": r_config.as_object().and_then(|c| c.get("output_format").and_then(|v| v.as_str())).unwrap_or(&r_output_format.unwrap_or_else(|| "pdf".to_string()))
                 }
             }))
-        },
+        }
         Ok(None) => Json(serde_json::json!({
             "success": false,
             "message": "Report not found"
@@ -355,7 +369,7 @@ pub async fn export_report(
         Err(e) => Json(serde_json::json!({
             "success": false,
             "message": format!("Failed to export report: {}", e)
-        }))
+        })),
     }
 }
 
@@ -364,7 +378,7 @@ pub async fn run_report(
     Path(id): Path<Uuid>,
 ) -> Json<serde_json::Value> {
     info!("Running report: {}", id);
-    
+
     let result = sqlx::query(
         r#"
         UPDATE reports
@@ -376,7 +390,7 @@ pub async fn run_report(
     .bind(id)
     .execute(&state.pool)
     .await;
-    
+
     match result {
         Ok(_) => Json(serde_json::json!({
             "success": true,
@@ -386,6 +400,6 @@ pub async fn run_report(
         Err(e) => Json(serde_json::json!({
             "success": false,
             "message": format!("Failed to run report: {}", e)
-        }))
+        })),
     }
 }

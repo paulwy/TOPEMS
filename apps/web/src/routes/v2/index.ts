@@ -1,16 +1,15 @@
 import { aiModuleConfig } from './ai';
 import { adminModuleConfig } from './admin';
 import { assetModuleConfig } from './asset';
+import { iamModuleConfig } from './iam';
 import { biModuleConfig } from './bi';
 import { crmModuleConfig } from './crm';
-import { documentModuleConfig } from './document';
-import { docsModuleConfig } from './docs';
+import { docModuleConfig } from './doc';
 import { ehsModuleConfig } from './ehs';
 import { erpModuleConfig } from './erp';
 import { financeModuleConfig } from './finance';
 import { gisModuleConfig } from './gis';
 import { hrmModuleConfig } from './hrm';
-import { iamModuleConfig } from './iam';
 import { imModuleConfig } from './im';
 import { integrationModuleConfig } from './integration';
 import { limsModuleConfig } from './lims';
@@ -31,14 +30,14 @@ import { srmModuleConfig } from './srm';
 import { wmsModuleConfig } from './wms';
 import { workflowModuleConfig } from './workflow';
 import { flattenRoutes } from './types';
-import type { RouteModuleConfig, RouteConfigV2 } from './types';
+import type { RouteModuleConfig, RouteConfigV2, RouteConfig } from './types';
 
 export const coreModuleRoutes: RouteModuleConfig[] = [
   iamModuleConfig,
   adminModuleConfig,
   workflowModuleConfig,
   notificationModuleConfig,
-  documentModuleConfig,
+  docModuleConfig,
   reportModuleConfig,
   monitorModuleConfig,
   integrationModuleConfig,
@@ -61,7 +60,6 @@ export const coreModuleRoutes: RouteModuleConfig[] = [
   lowcodeModuleConfig,
   rsModuleConfig,
   assetModuleConfig,
-  docsModuleConfig,
   pluginModuleConfig,
   imModuleConfig,
   biModuleConfig,
@@ -87,5 +85,23 @@ export function findRouteByPath(path: string): RouteConfigV2 | undefined {
   return allRoutes.find((r) => r.path === path);
 }
 
-export { iamModuleConfig };
+export function toFlatRouteConfig(modules: RouteModuleConfig[]): RouteConfig[] {
+  const result: RouteConfig[] = [];
+  modules.forEach((moduleConfig) => {
+    const flatRoutes = flattenRoutes(moduleConfig.routes);
+    flatRoutes.forEach((route) => {
+      result.push({
+        path: route.path,
+        element: route.element,
+        requiredPermissions: route.requiredPermissions,
+        module: route.module,
+        action: route.action,
+      });
+    });
+  });
+  return result;
+}
+
+export const allV2FlatRoutes: RouteConfig[] = toFlatRouteConfig(coreModuleRoutes);
+
 export type { RouteModuleConfig, RouteConfigV2 } from './types';

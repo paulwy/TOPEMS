@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import {
-  Dialog,
+import {Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
@@ -16,8 +15,7 @@ import {
   Alert,
   FormControlLabel,
   Switch,
-  LinearProgress,
-} from '@mui/material';
+  LinearProgress, useTheme} from '@mui/material';
 import { Upload, CheckCircle, AlertTriangle, Rocket } from 'lucide-react';
 import type { LowCodeApp } from '../../api/lowcode/types';
 
@@ -40,6 +38,7 @@ export const AppPublishDialog: React.FC<AppPublishDialogProps> = ({
   onClose,
   onPublish,
 }) => {
+  const theme = useTheme();
   const [activeStep, setActiveStep] = useState(0);
   const [version, setVersion] = useState('');
   const [description, setDescription] = useState('');
@@ -117,7 +116,7 @@ export const AppPublishDialog: React.FC<AppPublishDialogProps> = ({
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <Rocket style={{ width: 24, height: 24, color: 'primary.main' }} />
+        <Rocket style={{ width: 24, height: 24, color: theme.palette.primary.main }} />
         发布应用
       </DialogTitle>
       <DialogContent dividers>
@@ -148,7 +147,7 @@ export const AppPublishDialog: React.FC<AppPublishDialogProps> = ({
                   helperText="例如: 1.0.0, 1.1.0, 2.0.0"
                   slotProps={{
                     input: {
-                      startAdornment: <span style={{ color: 'text.secondary', marginRight: 4 }}>v</span>,
+                      startAdornment: <span style={{ color: theme.palette.text.secondary, marginRight: 4 }}>v</span>,
                     },
                   }}
                 />
@@ -203,7 +202,7 @@ export const AppPublishDialog: React.FC<AppPublishDialogProps> = ({
               <Box sx={{ py: 2, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
                 {publishResult === 'success' ? (
                   <>
-                    <CheckCircle style={{ width: 64, height: 64, color: 'success.main' }} />
+                    <CheckCircle style={{ width: 64, height: 64, color: theme.palette.success.main }} />
                     <Typography variant="h6" color="success.main">发布成功</Typography>
                     <Typography variant="body2" color="text.secondary">
                       v{version} 版本已成功发布
@@ -211,7 +210,7 @@ export const AppPublishDialog: React.FC<AppPublishDialogProps> = ({
                   </>
                 ) : publishResult === 'error' ? (
                   <>
-                    <AlertTriangle style={{ width: 64, height: 64, color: 'error.main' }} />
+                    <AlertTriangle style={{ width: 64, height: 64, color: theme.palette.error.main }} />
                     <Typography variant="h6" color="error.main">发布失败</Typography>
                     <Typography variant="body2" color="text.secondary">
                       请稍后重试或联系技术支持
@@ -219,7 +218,7 @@ export const AppPublishDialog: React.FC<AppPublishDialogProps> = ({
                   </>
                 ) : (
                   <>
-                    <Upload style={{ width: 64, height: 64, color: 'primary.main', animation: 'pulse 2s infinite' }} />
+                    <Upload style={{ width: 64, height: 64, color: theme.palette.primary.main, animation: 'pulse 2s infinite' }} />
                     <Typography variant="h6">正在发布...</Typography>
                     <Box sx={{ width: '100%', maxWidth: 200 }}>
                       <LinearProgress />

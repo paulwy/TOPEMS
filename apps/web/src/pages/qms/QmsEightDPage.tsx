@@ -535,7 +535,7 @@ const QmsEightDPage: React.FC = () => {
                 width: 40,
                 height: 40,
                 bgcolor: 'primary.light',
-                borderRadius: 2,
+                borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -568,7 +568,7 @@ const QmsEightDPage: React.FC = () => {
                 width: 40,
                 height: 40,
                 bgcolor: 'error.lighter',
-                borderRadius: 2,
+                borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -601,7 +601,7 @@ const QmsEightDPage: React.FC = () => {
                 width: 40,
                 height: 40,
                 bgcolor: 'primary.light',
-                borderRadius: 2,
+                borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -634,7 +634,7 @@ const QmsEightDPage: React.FC = () => {
                 width: 40,
                 height: 40,
                 bgcolor: 'success.lighter',
-                borderRadius: 2,
+                borderRadius: 3,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -713,6 +713,15 @@ const QmsEightDPage: React.FC = () => {
             filters={[]}
             actions={[]}
             onRefresh={loadReports}
+            mobileCardTitleKey='title'
+            mobileCardSubtitleKey='reportNo'
+            mobileCardDisplayFields={['severity', 'productName', 'customer', 'status']}
+            mobileCardFieldLabels={{
+              severity: '严重程度',
+              productName: '产品',
+              customer: '客户',
+              status: '状态',
+            }}
           />
         </CardContent>
       </Card>

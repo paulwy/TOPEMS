@@ -15,11 +15,7 @@ import {
 } from '@mui/material';
 import { PageContainer } from '@/components/common';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import type {
-  Inventory,
-  CreateInventoryRequest,
-  UpdateInventoryRequest,
-} from '@/api/erp';
+import type { Inventory, CreateInventoryRequest, UpdateInventoryRequest } from '@/api/erp';
 import { erpApi } from '@/api/erp';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/common/LoadingSpinner';
@@ -29,14 +25,7 @@ import {
   type RowAction,
   type FilterConfig,
 } from '@/components/templates';
-import {
-  Plus,
-  Edit,
-  Trash2,
-  Eye,
-  Package,
-  AlertTriangle,
-} from 'lucide-react';
+import { Plus, Edit, Trash2, Eye, Package, AlertTriangle } from 'lucide-react';
 import { apiLogger } from '@/utils/logger';
 
 const InventoryManagementPage: React.FC = () => {
@@ -214,8 +203,8 @@ const InventoryManagementPage: React.FC = () => {
   const getStockBadge = (item: Inventory) => {
     const status = getStockStatus(item);
     const colorMap = {
-      success: { bg: 'success.lighter', color: '#15803d' },
-      warning: { bg: 'warning.light', color: '#b45309' },
+      success: { bg: 'success.lighter', color: 'success.700' },
+      warning: { bg: 'warning.light', color: 'warning.700' },
       error: { bg: 'error.lighter', color: 'error.dark' },
     };
     const s = colorMap[status.color];
@@ -311,9 +300,7 @@ const InventoryManagementPage: React.FC = () => {
 
   const stats = useMemo(() => {
     const totalValue = items.reduce((sum, item) => sum + (item.total_cost || 0), 0);
-    const lowStock = items.filter(
-      (i) => i.safety_stock && i.quantity < i.safety_stock
-    ).length;
+    const lowStock = items.filter((i) => i.safety_stock && i.quantity < i.safety_stock).length;
     const totalItems = items.length;
     return {
       totalItems,
@@ -334,35 +321,59 @@ const InventoryManagementPage: React.FC = () => {
         mb: 3,
       }}
     >
-      <Box sx={{ p: 2, bgcolor: 'primary.lighter', borderRadius: 2 }}>
-        <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+      <Box sx={{ p: 2, bgcolor: 'primary.lighter', borderRadius: 3 }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary' }}
+        >
           物料总数
         </Typography>
-        <Typography variant='h5' sx={{ fontWeight: 700 }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700 }}
+        >
           {stats.totalItems}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 2 }}>
-        <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+      <Box sx={{ p: 2, bgcolor: 'success.lighter', borderRadius: 3 }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary' }}
+        >
           库存总金额
         </Typography>
-        <Typography variant='h5' sx={{ fontWeight: 700 }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700 }}
+        >
           ¥{stats.totalValue.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 2 }}>
-        <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+      <Box sx={{ p: 2, bgcolor: 'warning.light', borderRadius: 3 }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary' }}
+        >
           低于安全库存
         </Typography>
-        <Typography variant='h5' sx={{ fontWeight: 700 }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700 }}
+        >
           {stats.lowStock}
         </Typography>
       </Box>
-      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 2 }}>
-        <Typography variant='body2' sx={{ color: 'text.secondary' }}>
+      <Box sx={{ p: 2, bgcolor: '#e0e7ff', borderRadius: 3 }}>
+        <Typography
+          variant='body2'
+          sx={{ color: 'text.secondary' }}
+        >
           有库存物料
         </Typography>
-        <Typography variant='h5' sx={{ fontWeight: 700, color: '#4338ca' }}>
+        <Typography
+          variant='h5'
+          sx={{ fontWeight: 700, color: 'secondary.700' }}
+        >
           {stats.inStock}
         </Typography>
       </Box>
@@ -407,7 +418,11 @@ const InventoryManagementPage: React.FC = () => {
         getRowId={(row) => row.id}
       />
 
-      <Dialog open={showDialog} onClose={() => setShowDialog(false)} maxWidth='md'>
+      <Dialog
+        open={showDialog}
+        onClose={() => setShowDialog(false)}
+        maxWidth='md'
+      >
         <DialogTitle>{selectedItem ? '编辑库存' : '新增库存'}</DialogTitle>
         <DialogContent>
           <Box
@@ -580,10 +595,17 @@ const InventoryManagementPage: React.FC = () => {
               </Box>
             </Box>
             <DialogActions>
-              <Button type='button' variant='outlined' onClick={() => setShowDialog(false)}>
+              <Button
+                type='button'
+                variant='outlined'
+                onClick={() => setShowDialog(false)}
+              >
                 取消
               </Button>
-              <Button type='submit' variant='contained'>
+              <Button
+                type='submit'
+                variant='contained'
+              >
                 保存
               </Button>
             </DialogActions>
@@ -591,7 +613,11 @@ const InventoryManagementPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showDetailDialog} onClose={() => setShowDetailDialog(false)} maxWidth='md'>
+      <Dialog
+        open={showDetailDialog}
+        onClose={() => setShowDetailDialog(false)}
+        maxWidth='md'
+      >
         <DialogTitle>库存详情</DialogTitle>
         <DialogContent>
           {selectedItem && (
@@ -605,7 +631,10 @@ const InventoryManagementPage: React.FC = () => {
               >
                 <Box>
                   <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>物料编码</InputLabel>
-                  <Box component='span' sx={{ fontWeight: 500 }}>
+                  <Box
+                    component='span'
+                    sx={{ fontWeight: 500 }}
+                  >
                     {selectedItem.material_code}
                   </Box>
                 </Box>
@@ -640,9 +669,7 @@ const InventoryManagementPage: React.FC = () => {
                 <Box>
                   <InputLabel sx={{ color: 'text.secondary', fontSize: 12 }}>单位成本</InputLabel>
                   <Box component='span'>
-                    {selectedItem.unit_cost
-                      ? `¥${selectedItem.unit_cost.toFixed(2)}`
-                      : '-'}
+                    {selectedItem.unit_cost ? `¥${selectedItem.unit_cost.toFixed(2)}` : '-'}
                   </Box>
                 </Box>
                 <Box>

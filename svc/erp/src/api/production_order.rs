@@ -25,10 +25,15 @@ pub struct PaginationParams {
 
 pub fn create_routes() -> Router<ApiState> {
     Router::new()
-        .route("/api/erp/production-orders", get(list_production_orders).post(create_production_order))
+        .route(
+            "/api/erp/production-orders",
+            get(list_production_orders).post(create_production_order),
+        )
         .route(
             "/api/erp/production-orders/{id}",
-            get(get_production_order).put(update_production_order).delete(delete_production_order),
+            get(get_production_order)
+                .put(update_production_order)
+                .delete(delete_production_order),
         )
         .route(
             "/api/erp/production-orders/{id}/progress",
@@ -445,7 +450,10 @@ async fn receive_mes_progress(
 
     match result {
         Ok(Some(order)) => {
-            tracing::info!("[ERP] Received MES progress update for order: {}", order.order_no);
+            tracing::info!(
+                "[ERP] Received MES progress update for order: {}",
+                order.order_no
+            );
             Json(ApiResponse::success(order, "MES生产进度同步成功"))
         }
         Ok(None) => Json(api_error(404, "生产订单不存在")),

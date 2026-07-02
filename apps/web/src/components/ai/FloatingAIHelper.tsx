@@ -866,7 +866,7 @@ export const FloatingAIHelper: React.FC = () => {
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Sparkles style={{ width: 18, height: 18, color: 'primary.main' }} />
+              <Sparkles style={{ width: 18, height: 18, color: theme.palette.primary.main }} />
               <Typography
                 variant='body2'
                 sx={{ fontWeight: 500 }}

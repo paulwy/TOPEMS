@@ -9,11 +9,11 @@ interface PieChartProps {
 }
 
 const DEFAULT_COLORS = [
-  '#3b82f6', // Blue (primary)
-  '#22c55e', // Emerald (success)
-  '#f59e0b', // Amber (warning)
-  '#ef4444', // Red (error)
-  '#8B5CF6', // Violet
+  'primary.main', // Blue (primary)
+  'success.main', // Emerald (success)
+  'warning.main', // Amber (warning)
+  'error.main', // Red (error)
+  'secondary.main', // Violet
   '#06B6D4', // Cyan
   '#EC4899', // Pink
   '#84CC16', // Lime

@@ -656,7 +656,7 @@ const FinanceVoucherPage: React.FC = () => {
                 label='返回'
                 icon={<ChevronLeft size={20} />}
                 variant='text'
-                onClick={() => navigate('/dashboard')}
+                onClick={() => navigate('/finance/dashboard')}
               />
               <Box>
                 <Typography

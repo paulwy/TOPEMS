@@ -1,9 +1,11 @@
 use crate::services::pdf::PdfParser;
-use crate::services::vector::{CreateDocumentRequest, SaveChunkRequest, SearchResult, VectorService};
+use crate::services::vector::{
+    CreateDocumentRequest, SaveChunkRequest, SearchResult, VectorService,
+};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::io::{Read, BufRead, BufReader};
+use std::io::{BufRead, BufReader, Read};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use topems_shared::file_client::FileServiceClient;
@@ -157,18 +159,21 @@ impl DocumentService {
     /// 分块文本 - 改进版，支持智能段落分割
     fn split_into_chunks(&self, content: &str, chunk_size: usize, overlap: usize) -> Vec<String> {
         let mut chunks = Vec::new();
-        
-        let paragraphs = content.split("\n\n").filter(|p| !p.trim().is_empty()).collect::<Vec<_>>();
-        
+
+        let paragraphs = content
+            .split("\n\n")
+            .filter(|p| !p.trim().is_empty())
+            .collect::<Vec<_>>();
+
         if paragraphs.is_empty() {
             return self.split_by_size(content, chunk_size, overlap);
         }
 
         let mut current_chunk = String::new();
-        
+
         for paragraph in paragraphs {
             let trimmed = paragraph.trim();
-            
+
             if current_chunk.len() + trimmed.len() + 2 <= chunk_size {
                 if !current_chunk.is_empty() {
                     current_chunk.push('\n');
@@ -178,7 +183,7 @@ impl DocumentService {
                 if !current_chunk.is_empty() && current_chunk.len() >= MIN_CHUNK_SIZE {
                     chunks.push(current_chunk.trim().to_string());
                 }
-                
+
                 if trimmed.len() > chunk_size {
                     let sub_chunks = self.split_by_size(trimmed, chunk_size, overlap);
                     chunks.extend(sub_chunks);
@@ -191,11 +196,11 @@ impl DocumentService {
                 }
             }
         }
-        
+
         if !current_chunk.is_empty() {
             chunks.push(current_chunk.trim().to_string());
         }
-        
+
         chunks
     }
 
@@ -256,19 +261,22 @@ impl DocumentService {
     /// 提取文档元数据
     fn extract_document_metadata(&self, filename: &str, content: &str) -> serde_json::Value {
         let mut metadata = HashMap::new();
-        
+
         metadata.insert("filename".to_string(), filename.to_string());
         metadata.insert("content_length".to_string(), content.len().to_string());
-        
+
         let line_count = content.lines().count();
         metadata.insert("line_count".to_string(), line_count.to_string());
-        
+
         let word_count = content.split_whitespace().count();
         metadata.insert("word_count".to_string(), word_count.to_string());
-        
-        let paragraphs = content.split("\n\n").filter(|p| !p.trim().is_empty()).count();
+
+        let paragraphs = content
+            .split("\n\n")
+            .filter(|p| !p.trim().is_empty())
+            .count();
         metadata.insert("paragraph_count".to_string(), paragraphs.to_string());
-        
+
         let ext = std::path::Path::new(filename)
             .extension()
             .and_then(|e| e.to_str())
@@ -409,15 +417,15 @@ impl DocumentService {
             "txt" | "md" | "markdown" => {
                 String::from_utf8(data.to_vec()).map_err(|e| format!("文件编码错误: {}", e))
             }
-            "csv" => {
-                self.extract_text_from_csv(data).map_err(|e| format!("解析 CSV 失败: {}", e))
-            }
-            "json" => {
-                self.extract_text_from_json(data).map_err(|e| format!("解析 JSON 失败: {}", e))
-            }
-            "xml" | "html" | "htm" => {
-                self.extract_text_from_xml_content(data).map_err(|e| format!("解析 XML/HTML 失败: {}", e))
-            }
+            "csv" => self
+                .extract_text_from_csv(data)
+                .map_err(|e| format!("解析 CSV 失败: {}", e)),
+            "json" => self
+                .extract_text_from_json(data)
+                .map_err(|e| format!("解析 JSON 失败: {}", e)),
+            "xml" | "html" | "htm" => self
+                .extract_text_from_xml_content(data)
+                .map_err(|e| format!("解析 XML/HTML 失败: {}", e)),
             "yaml" | "yml" => {
                 String::from_utf8(data.to_vec()).map_err(|e| format!("文件编码错误: {}", e))
             }
@@ -430,38 +438,37 @@ impl DocumentService {
                 let _ = std::fs::remove_file(&temp_file);
                 Ok(text)
             }
-            "docx" => {
-                self.extract_text_from_docx(data).map_err(|e| format!("解析 DOCX 失败: {}", e))
-            }
-            "doc" => {
-                self.extract_text_from_doc(data).map_err(|e| format!("解析 DOC 失败: {}", e))
-            }
-            "xlsx" => {
-                self.extract_text_from_xlsx(data).map_err(|e| format!("解析 XLSX 失败: {}", e))
-            }
-            "xls" => {
-                self.extract_text_from_xls(data).map_err(|e| format!("解析 XLS 失败: {}", e))
-            }
-            "pptx" => {
-                self.extract_text_from_pptx(data).map_err(|e| format!("解析 PPTX 失败: {}", e))
-            }
-            "rtf" => {
-                self.extract_text_from_rtf(data).map_err(|e| format!("解析 RTF 失败: {}", e))
-            }
-            "odt" | "ods" | "odp" => {
-                self.extract_text_from_opendocument(data, &ext).map_err(|e| format!("解析 OpenDocument 失败: {}", e))
-            }
-            _ => {
-                Ok(String::from_utf8(data.to_vec()).unwrap_or("[无法解析的文件内容]".to_string()))
-            }
+            "docx" => self
+                .extract_text_from_docx(data)
+                .map_err(|e| format!("解析 DOCX 失败: {}", e)),
+            "doc" => self
+                .extract_text_from_doc(data)
+                .map_err(|e| format!("解析 DOC 失败: {}", e)),
+            "xlsx" => self
+                .extract_text_from_xlsx(data)
+                .map_err(|e| format!("解析 XLSX 失败: {}", e)),
+            "xls" => self
+                .extract_text_from_xls(data)
+                .map_err(|e| format!("解析 XLS 失败: {}", e)),
+            "pptx" => self
+                .extract_text_from_pptx(data)
+                .map_err(|e| format!("解析 PPTX 失败: {}", e)),
+            "rtf" => self
+                .extract_text_from_rtf(data)
+                .map_err(|e| format!("解析 RTF 失败: {}", e)),
+            "odt" | "ods" | "odp" => self
+                .extract_text_from_opendocument(data, &ext)
+                .map_err(|e| format!("解析 OpenDocument 失败: {}", e)),
+            _ => Ok(String::from_utf8(data.to_vec()).unwrap_or("[无法解析的文件内容]".to_string())),
         }
     }
 
     /// 从 CSV 文件提取文本
     fn extract_text_from_csv(&self, data: &[u8]) -> Result<String, String> {
-        let content = String::from_utf8(data.to_vec()).map_err(|e| format!("CSV 编码错误: {}", e))?;
+        let content =
+            String::from_utf8(data.to_vec()).map_err(|e| format!("CSV 编码错误: {}", e))?;
         let mut result = String::new();
-        
+
         for (i, line) in content.lines().enumerate() {
             if i == 0 {
                 result.push_str("表头: ");
@@ -471,21 +478,23 @@ impl DocumentService {
             result.push_str(line);
             result.push('\n');
         }
-        
+
         Ok(result)
     }
 
     /// 从 JSON 文件提取文本
     fn extract_text_from_json(&self, data: &[u8]) -> Result<String, String> {
-        let content = String::from_utf8(data.to_vec()).map_err(|e| format!("JSON 编码错误: {}", e))?;
-        let value: serde_json::Value = serde_json::from_str(&content)
-            .map_err(|e| format!("JSON 解析错误: {}", e))?;
+        let content =
+            String::from_utf8(data.to_vec()).map_err(|e| format!("JSON 编码错误: {}", e))?;
+        let value: serde_json::Value =
+            serde_json::from_str(&content).map_err(|e| format!("JSON 解析错误: {}", e))?;
         Ok(value.to_string())
     }
 
     /// 从 XML/HTML 内容提取文本
     fn extract_text_from_xml_content(&self, data: &[u8]) -> Result<String, String> {
-        let content = String::from_utf8(data.to_vec()).map_err(|e| format!("XML/HTML 编码错误: {}", e))?;
+        let content =
+            String::from_utf8(data.to_vec()).map_err(|e| format!("XML/HTML 编码错误: {}", e))?;
         Ok(self.extract_text_from_xml(&content))
     }
 
@@ -494,7 +503,7 @@ impl DocumentService {
         let mut reader = BufReader::new(data);
         let mut buffer = [0; 1024];
         let mut text = String::new();
-        
+
         while let Ok(n) = reader.read(&mut buffer) {
             if n == 0 {
                 break;
@@ -502,33 +511,47 @@ impl DocumentService {
             let part = String::from_utf8_lossy(&buffer[..n]).into_owned();
             text.push_str(&part);
         }
-        
-        text = text.replace(&['\x00', '\x01', '\x02', '\x03', '\x04', '\x05', '\x06', '\x07', '\x08', '\x0b', '\x0c', '\x0e', '\x0f', '\x10', '\x11', '\x12', '\x13', '\x14', '\x15', '\x16', '\x17', '\x18', '\x19', '\x1a', '\x1b', '\x1c', '\x1d', '\x1e', '\x1f'][..], " ");
-        
+
+        text = text.replace(
+            &[
+                '\x00', '\x01', '\x02', '\x03', '\x04', '\x05', '\x06', '\x07', '\x08', '\x0b',
+                '\x0c', '\x0e', '\x0f', '\x10', '\x11', '\x12', '\x13', '\x14', '\x15', '\x16',
+                '\x17', '\x18', '\x19', '\x1a', '\x1b', '\x1c', '\x1d', '\x1e', '\x1f',
+            ][..],
+            " ",
+        );
+
         Ok(text.trim().to_string())
     }
 
     /// 从 XLS 文件提取文本（简化版）
     fn extract_text_from_xls(&self, data: &[u8]) -> Result<String, String> {
         let content = String::from_utf8_lossy(data).into_owned();
-        let text: String = content.chars().filter(|c| c.is_ascii_graphic() || c.is_whitespace()).collect();
+        let text: String = content
+            .chars()
+            .filter(|c| c.is_ascii_graphic() || c.is_whitespace())
+            .collect();
         Ok(text.trim().to_string())
     }
 
     /// 从 PPTX 文件提取文本
     fn extract_text_from_pptx(&self, data: &[u8]) -> Result<String, String> {
-        use zip::ZipArchive;
         use std::io::Cursor;
+        use zip::ZipArchive;
 
         let cursor = Cursor::new(data);
-        let mut archive = ZipArchive::new(cursor).map_err(|e| format!("无法打开 PPTX 文件: {}", e))?;
+        let mut archive =
+            ZipArchive::new(cursor).map_err(|e| format!("无法打开 PPTX 文件: {}", e))?;
 
         let mut text = String::new();
         for i in 0..archive.len() {
-            let mut file = archive.by_index(i).map_err(|e| format!("读取 PPTX 条目失败: {}", e))?;
+            let mut file = archive
+                .by_index(i)
+                .map_err(|e| format!("读取 PPTX 条目失败: {}", e))?;
             if file.name().starts_with("ppt/slides/slide") && file.name().ends_with(".xml") {
                 let mut content = String::new();
-                file.read_to_string(&mut content).map_err(|e| format!("读取幻灯片内容失败: {}", e))?;
+                file.read_to_string(&mut content)
+                    .map_err(|e| format!("读取幻灯片内容失败: {}", e))?;
                 text.push_str(&format!("幻灯片 {}:\n", i));
                 text.push_str(&self.extract_text_from_xml(&content));
                 text.push('\n');
@@ -543,7 +566,7 @@ impl DocumentService {
         let content = String::from_utf8_lossy(data).into_owned();
         let mut text = String::new();
         let mut in_tag = false;
-        
+
         for c in content.chars() {
             if c == '{' {
                 in_tag = true;
@@ -553,20 +576,24 @@ impl DocumentService {
                 text.push(c);
             }
         }
-        
-        text = text.replace("\\par", "\n").replace("\\tab", "\t").replace("\\n", "\n");
+
+        text = text
+            .replace("\\par", "\n")
+            .replace("\\tab", "\t")
+            .replace("\\n", "\n");
         text = text.split_whitespace().collect::<Vec<_>>().join(" ");
-        
+
         Ok(text)
     }
 
     /// 从 OpenDocument 文件提取文本
     fn extract_text_from_opendocument(&self, data: &[u8], ext: &str) -> Result<String, String> {
-        use zip::ZipArchive;
         use std::io::Cursor;
+        use zip::ZipArchive;
 
         let cursor = Cursor::new(data);
-        let mut archive = ZipArchive::new(cursor).map_err(|e| format!("无法打开 OpenDocument 文件: {}", e))?;
+        let mut archive =
+            ZipArchive::new(cursor).map_err(|e| format!("无法打开 OpenDocument 文件: {}", e))?;
 
         let mut text = String::new();
         let target_file = match ext {
@@ -577,10 +604,13 @@ impl DocumentService {
         };
 
         for i in 0..archive.len() {
-            let mut file = archive.by_index(i).map_err(|e| format!("读取 OpenDocument 条目失败: {}", e))?;
+            let mut file = archive
+                .by_index(i)
+                .map_err(|e| format!("读取 OpenDocument 条目失败: {}", e))?;
             if file.name() == target_file {
                 let mut content = String::new();
-                file.read_to_string(&mut content).map_err(|e| format!("读取内容失败: {}", e))?;
+                file.read_to_string(&mut content)
+                    .map_err(|e| format!("读取内容失败: {}", e))?;
                 text = self.extract_text_from_xml(&content);
                 break;
             }
@@ -591,18 +621,22 @@ impl DocumentService {
 
     /// 从 DOCX 文件提取文本
     fn extract_text_from_docx(&self, data: &[u8]) -> Result<String, String> {
-        use zip::ZipArchive;
         use std::io::Cursor;
+        use zip::ZipArchive;
 
         let cursor = Cursor::new(data);
-        let mut archive = ZipArchive::new(cursor).map_err(|e| format!("无法打开 DOCX 文件: {}", e))?;
+        let mut archive =
+            ZipArchive::new(cursor).map_err(|e| format!("无法打开 DOCX 文件: {}", e))?;
 
         let mut text = String::new();
         for i in 0..archive.len() {
-            let mut file = archive.by_index(i).map_err(|e| format!("读取 DOCX 条目失败: {}", e))?;
+            let mut file = archive
+                .by_index(i)
+                .map_err(|e| format!("读取 DOCX 条目失败: {}", e))?;
             if file.name() == "word/document.xml" {
                 let mut content = String::new();
-                file.read_to_string(&mut content).map_err(|e| format!("读取文档内容失败: {}", e))?;
+                file.read_to_string(&mut content)
+                    .map_err(|e| format!("读取文档内容失败: {}", e))?;
                 text = self.extract_text_from_xml(&content);
                 break;
             }
@@ -613,18 +647,22 @@ impl DocumentService {
 
     /// 从 XLSX 文件提取文本
     fn extract_text_from_xlsx(&self, data: &[u8]) -> Result<String, String> {
-        use zip::ZipArchive;
         use std::io::Cursor;
+        use zip::ZipArchive;
 
         let cursor = Cursor::new(data);
-        let mut archive = ZipArchive::new(cursor).map_err(|e| format!("无法打开 XLSX 文件: {}", e))?;
+        let mut archive =
+            ZipArchive::new(cursor).map_err(|e| format!("无法打开 XLSX 文件: {}", e))?;
 
         let mut text = String::new();
         for i in 0..archive.len() {
-            let mut file = archive.by_index(i).map_err(|e| format!("读取 XLSX 条目失败: {}", e))?;
+            let mut file = archive
+                .by_index(i)
+                .map_err(|e| format!("读取 XLSX 条目失败: {}", e))?;
             if file.name().starts_with("xl/worksheets/sheet") && file.name().ends_with(".xml") {
                 let mut content = String::new();
-                file.read_to_string(&mut content).map_err(|e| format!("读取工作表内容失败: {}", e))?;
+                file.read_to_string(&mut content)
+                    .map_err(|e| format!("读取工作表内容失败: {}", e))?;
                 text.push_str(&self.extract_text_from_xml(&content));
                 text.push('\n');
             }
@@ -637,7 +675,7 @@ impl DocumentService {
     fn extract_text_from_xml(&self, xml_content: &str) -> String {
         let mut result = String::new();
         let mut in_tag = false;
-        
+
         for c in xml_content.chars() {
             if c == '<' {
                 in_tag = true;
@@ -647,7 +685,7 @@ impl DocumentService {
                 result.push(c);
             }
         }
-        
+
         result
             .replace("\n", " ")
             .replace("\r", "")
@@ -666,7 +704,8 @@ impl DocumentService {
         let config = self.qa_config.as_ref().ok_or("文档问答配置未初始化")?;
 
         let context_chunks = if let Some(doc_ids) = document_ids {
-            self.search_relevant_chunks(question, doc_ids, top_k).await?
+            self.search_relevant_chunks(question, doc_ids, top_k)
+                .await?
         } else {
             self.search_all_relevant_chunks(question, top_k).await?
         };
@@ -711,7 +750,9 @@ impl DocumentService {
             .into_iter()
             .take(top_k.min(5))
             .map(|chunk| {
-                let doc_title = chunk.document_title.unwrap_or_else(|| "未知文档".to_string());
+                let doc_title = chunk
+                    .document_title
+                    .unwrap_or_else(|| "未知文档".to_string());
                 DocumentQASource {
                     document_id: chunk.document_id,
                     document_title: doc_title,
@@ -722,7 +763,9 @@ impl DocumentService {
             .collect();
 
         let follow_up_questions = if confidence > 0.5 {
-            self.generate_follow_up_questions(question, &answer, config).await.unwrap_or_default()
+            self.generate_follow_up_questions(question, &answer, config)
+                .await
+                .unwrap_or_default()
         } else {
             vec![]
         };
@@ -765,7 +808,11 @@ impl DocumentService {
             }
         }
 
-        all_chunks.sort_by(|a, b| b.similarity.partial_cmp(&a.similarity).unwrap_or(std::cmp::Ordering::Equal));
+        all_chunks.sort_by(|a, b| {
+            b.similarity
+                .partial_cmp(&a.similarity)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         Ok(all_chunks.into_iter().take(top_k).collect())
     }
 
@@ -776,15 +823,15 @@ impl DocumentService {
         top_k: usize,
     ) -> Result<Vec<SearchResult>, String> {
         let vs = self.vector_service.read().await;
-        
+
         if let Ok(docs) = vs.list_documents().await {
             let mut all_chunks: Vec<SearchResult> = Vec::new();
-            
+
             for doc in docs {
                 if doc.status != "processed" {
                     continue;
                 }
-                
+
                 if let Ok(chunks) = vs.get_document_chunks(doc.id).await {
                     for chunk in chunks {
                         let similarity = self.calculate_text_similarity(question, &chunk.content);
@@ -800,11 +847,15 @@ impl DocumentService {
                     }
                 }
             }
-            
-            all_chunks.sort_by(|a, b| b.similarity.partial_cmp(&a.similarity).unwrap_or(std::cmp::Ordering::Equal));
+
+            all_chunks.sort_by(|a, b| {
+                b.similarity
+                    .partial_cmp(&a.similarity)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            });
             return Ok(all_chunks.into_iter().take(top_k).collect());
         }
-        
+
         Ok(Vec::new())
     }
 
@@ -812,14 +863,14 @@ impl DocumentService {
     fn calculate_text_similarity(&self, query: &str, text: &str) -> f64 {
         let query_words: std::collections::HashSet<_> = query.split_whitespace().collect();
         let text_words: std::collections::HashSet<_> = text.split_whitespace().collect();
-        
+
         if query_words.is_empty() || text_words.is_empty() {
             return 0.0;
         }
-        
+
         let intersection_size = query_words.intersection(&text_words).count();
         let union_size = query_words.union(&text_words).count();
-        
+
         intersection_size as f64 / union_size as f64
     }
 
@@ -835,7 +886,16 @@ impl DocumentService {
             0.3
         };
 
-        let uncertainty_phrases = ["不知道", "不确定", "无法", "抱歉", "没有找到", "不清楚", "无法确定", "未提及"];
+        let uncertainty_phrases = [
+            "不知道",
+            "不确定",
+            "无法",
+            "抱歉",
+            "没有找到",
+            "不清楚",
+            "无法确定",
+            "未提及",
+        ];
         let has_uncertainty = uncertainty_phrases
             .iter()
             .any(|phrase| answer.contains(phrase));
@@ -843,14 +903,16 @@ impl DocumentService {
         let uncertainty_penalty = if has_uncertainty { 0.5 } else { 1.0 };
 
         let context_score = if !context_chunks.is_empty() {
-            let avg_similarity = context_chunks.iter().map(|c| c.similarity).sum::<f64>() / context_chunks.len() as f64;
+            let avg_similarity = context_chunks.iter().map(|c| c.similarity).sum::<f64>()
+                / context_chunks.len() as f64;
             0.5 + 0.5 * avg_similarity
         } else {
             0.3
         };
 
-        let final_confidence = (length_score * 0.4 + context_score * 0.4 + uncertainty_penalty * 0.2).clamp(0.0, 1.0);
-        
+        let final_confidence =
+            (length_score * 0.4 + context_score * 0.4 + uncertainty_penalty * 0.2).clamp(0.0, 1.0);
+
         final_confidence
     }
 
@@ -862,7 +924,13 @@ impl DocumentService {
     ) -> Result<String, String> {
         let config = self.qa_config.as_ref().ok_or("文档问答配置未初始化")?;
 
-        let chunks = self.vector_service.read().await.get_document_chunks(document_id).await.map_err(|e| format!("获取文档分块失败: {}", e))?;
+        let chunks = self
+            .vector_service
+            .read()
+            .await
+            .get_document_chunks(document_id)
+            .await
+            .map_err(|e| format!("获取文档分块失败: {}", e))?;
 
         if chunks.is_empty() {
             return Err("文档内容为空".to_string());
@@ -891,7 +959,13 @@ impl DocumentService {
     ) -> Result<Vec<String>, String> {
         let config = self.qa_config.as_ref().ok_or("文档问答配置未初始化")?;
 
-        let chunks = self.vector_service.read().await.get_document_chunks(document_id).await.map_err(|e| format!("获取文档分块失败: {}", e))?;
+        let chunks = self
+            .vector_service
+            .read()
+            .await
+            .get_document_chunks(document_id)
+            .await
+            .map_err(|e| format!("获取文档分块失败: {}", e))?;
 
         if chunks.is_empty() {
             return Err("文档内容为空".to_string());
@@ -910,14 +984,19 @@ impl DocumentService {
         );
 
         let response = self.call_ai_api(config, &prompt).await?;
-        
+
         let points: Vec<String> = response
             .lines()
             .filter(|line| !line.trim().is_empty())
             .filter_map(|line| {
                 let trimmed = line.trim();
                 if trimmed.starts_with(|c: char| c.is_ascii_digit()) {
-                    Some(trimmed.split_once('.').map(|(_, rest)| rest.trim().to_string()).unwrap_or(trimmed.to_string()))
+                    Some(
+                        trimmed
+                            .split_once('.')
+                            .map(|(_, rest)| rest.trim().to_string())
+                            .unwrap_or(trimmed.to_string()),
+                    )
                 } else {
                     None
                 }
@@ -928,7 +1007,11 @@ impl DocumentService {
     }
 
     /// 调用 AI API
-    pub async fn call_ai_api(&self, config: &DocumentQAConfig, prompt: &str) -> Result<String, String> {
+    pub async fn call_ai_api(
+        &self,
+        config: &DocumentQAConfig,
+        prompt: &str,
+    ) -> Result<String, String> {
         let api_url = format!("{}/chat/completions", config.base_url);
 
         #[derive(Serialize)]
@@ -1043,7 +1126,12 @@ impl DocumentService {
             .filter_map(|line| {
                 let trimmed = line.trim();
                 if trimmed.starts_with(|c: char| c.is_ascii_digit()) {
-                    Some(trimmed.split_once('.').map(|(_, rest)| rest.trim().to_string()).unwrap_or(trimmed.to_string()))
+                    Some(
+                        trimmed
+                            .split_once('.')
+                            .map(|(_, rest)| rest.trim().to_string())
+                            .unwrap_or(trimmed.to_string()),
+                    )
                 } else {
                     None
                 }

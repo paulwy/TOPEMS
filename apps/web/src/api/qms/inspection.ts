@@ -17,13 +17,13 @@ import { adaptInspectionToFrontend, adaptInspectionToBackend } from './adapters'
 export const inspectionApi = {
   listChecks: async (): Promise<ApiResponse<QualityCheck[]>> => {
     const response =
-      await apiClient.qms.get<PaginatedResponse<QualityInspectionBackend>>('/api/qms/checks');
+      await apiClient.qms.get<PaginatedResponse<QualityInspectionBackend>>('/checks');
     const adaptedData = (response.data?.inspections || []).map(adaptInspectionToFrontend);
     return { ...response, data: adaptedData };
   },
 
   getCheck: async (id: string): Promise<ApiResponse<QualityCheck>> => {
-    const response = await apiClient.qms.get<QualityInspectionBackend>(`/api/qms/checks/${id}`);
+    const response = await apiClient.qms.get<QualityInspectionBackend>(`/checks/${id}`);
     return {
       ...response,
       data: response.data ? adaptInspectionToFrontend(response.data) : undefined,
@@ -32,10 +32,7 @@ export const inspectionApi = {
 
   createCheck: async (data: CreateQualityCheckRequest): Promise<ApiResponse<QualityCheck>> => {
     const backendData = adaptInspectionToBackend(data);
-    const response = await apiClient.qms.post<QualityInspectionBackend>(
-      '/api/qms/checks',
-      backendData
-    );
+    const response = await apiClient.qms.post<QualityInspectionBackend>('/checks', backendData);
     return {
       ...response,
       data: response.data ? adaptInspectionToFrontend(response.data) : undefined,
@@ -53,7 +50,7 @@ export const inspectionApi = {
       quantity: data.quantity,
     };
     const response = await apiClient.qms.put<QualityInspectionBackend>(
-      `/api/qms/checks/${id}`,
+      `/checks/${id}`,
       backendData
     );
     return {
@@ -63,7 +60,7 @@ export const inspectionApi = {
   },
 
   deleteCheck: async (id: string): Promise<ApiResponse<boolean>> => {
-    return apiClient.qms.delete<boolean>(`/api/qms/checks/${id}`);
+    return apiClient.qms.delete<boolean>(`/checks/${id}`);
   },
 
   assignCheck: async (
@@ -71,7 +68,7 @@ export const inspectionApi = {
     data: AssignInspectionRequestBackend
   ): Promise<ApiResponse<QualityCheck>> => {
     const response = await apiClient.qms.post<QualityInspectionBackend>(
-      `/api/qms/checks/${id}/assign`,
+      `/checks/${id}/assign`,
       data
     );
     return {
@@ -85,7 +82,7 @@ export const inspectionApi = {
     data: SubmitInspectionResultRequestBackend
   ): Promise<ApiResponse<QualityCheck>> => {
     const response = await apiClient.qms.post<QualityInspectionBackend>(
-      `/api/qms/checks/${id}/submit`,
+      `/checks/${id}/submit`,
       data
     );
     return {
@@ -99,7 +96,7 @@ export const inspectionApi = {
     data: AuditInspectionRequestBackend
   ): Promise<ApiResponse<QualityCheck>> => {
     const response = await apiClient.qms.post<QualityInspectionBackend>(
-      `/api/qms/checks/${id}/audit`,
+      `/checks/${id}/audit`,
       data
     );
     return {
@@ -113,7 +110,7 @@ export const inspectionApi = {
     data: AuditInspectionRequestBackend
   ): Promise<ApiResponse<QualityCheck>> => {
     const response = await apiClient.qms.post<QualityInspectionBackend>(
-      `/api/qms/checks/${id}/rework`,
+      `/checks/${id}/rework`,
       data
     );
     return {
@@ -124,14 +121,14 @@ export const inspectionApi = {
 
   getCheckResults: async (id: string): Promise<ApiResponse<InspectionResult[]>> => {
     const response = await apiClient.qms.get<{ results?: InspectionResult[] }>(
-      `/api/qms/checks/${id}/results`
+      `/checks/${id}/results`
     );
     return { ...response, data: response.data?.results || [] };
   },
 
   getCheckAudits: async (id: string): Promise<ApiResponse<InspectionAudit[]>> => {
     const response = await apiClient.qms.get<{ audits?: InspectionAudit[] }>(
-      `/api/qms/checks/${id}/audits`
+      `/checks/${id}/audits`
     );
     return { ...response, data: response.data?.audits || [] };
   },

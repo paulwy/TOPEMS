@@ -32,10 +32,10 @@ interface Vehicle {
 }
 
 const STATUS_MAP: Record<string, { label: string; bg: string; color: string }> = {
-  available: { label: '可用', bg: 'success.lighter', color: '#15803d' },
-  in_use: { label: '使用中', bg: '#dbeafe', color: '#1d4ed8' },
-  maintenance: { label: '维修中', bg: 'warning.light', color: '#b45309' },
-  retired: { label: '已退役', bg: 'grey.200', color: '#475569' },
+  available: { label: '可用', bg: 'success.lighter', color: 'success.700' },
+  in_use: { label: '使用中', bg: 'primary.100', color: 'primary.700' },
+  maintenance: { label: '维修中', bg: 'warning.light', color: 'warning.700' },
+  retired: { label: '已退役', bg: 'grey.200', color: 'grey.600' },
 };
 
 const mockVehicles: Vehicle[] = [

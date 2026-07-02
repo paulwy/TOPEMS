@@ -339,6 +339,15 @@ const PmProjectListPage: React.FC = () => {
         persistColumnConfig
         columnConfigStorageKey='pm-projects-columns'
         onRefresh={() => loadProjects(currentPage)}
+        mobileCardTitleKey='name'
+        mobileCardSubtitleKey='code'
+        mobileCardDisplayFields={['project_type', 'status', 'progress', 'start_date']}
+        mobileCardFieldLabels={{
+          project_type: '项目类型',
+          status: '状态',
+          progress: '进度',
+          start_date: '开始日期',
+        }}
       />
     </PageContainer>
   );

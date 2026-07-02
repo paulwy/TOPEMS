@@ -571,7 +571,7 @@ const RsDeployPage: React.FC = () => {
                     sx={{
                       mt: 1,
                       p: 2,
-                      bgcolor: '#f5f5f5',
+                      bgcolor: 'action.hover',
                       borderRadius: 1,
                       fontFamily: 'monospace',
                       fontSize: '0.75rem',

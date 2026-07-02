@@ -360,7 +360,7 @@ const FinanceBudgetPage: React.FC = () => {
       {
         name: '已冻结',
         value: budgets.filter((b) => b.status === 'frozen').length,
-        color: '#94a3b8',
+        color: 'grey.400',
       },
       {
         name: '已过期',

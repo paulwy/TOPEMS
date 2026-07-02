@@ -26,7 +26,7 @@ import {
   type RowAction,
   type FilterConfig,
 } from '@/components/templates';
-import { PageContainer } from '@/components/common';
+import { PageContainer } from '@/components/common/PageContainerV2';
 import { apiLogger } from '@/utils/logger';
 
 interface FormData {
@@ -448,8 +448,10 @@ export const PdmVersionPage: React.FC = () => {
 
   return (
     <PageContainer
-      title='版本管理'
-      subtitle='管理文档和产品的版本历史与变更记录'
+      headerProps={{
+        pageIcon: <GitBranch style={{ width: 20, height: 20 }} />,
+        pageGradient: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)',
+      }}
     >
       <ListPageTemplate
         title=''
